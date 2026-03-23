@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Legislation Activities | OCR GCSE Computer Science</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', sans-serif;
+    background: #0f1b2d;
+    color: #e2e8f0;
+    padding: 28px 20px 60px;
+    min-height: 100vh;
+  }
+  h1 { text-align: center; font-size: 1.45rem; color: #7dd3fc; margin-bottom: 4px; }
+  .subtitle { text-align: center; font-size: 0.82rem; color: #94a3b8; margin-bottom: 30px; }
+
+  /* ── TAB NAV ── */
+  .tabs {
+    display: flex; gap: 6px; justify-content: center;
+    margin-bottom: 28px; flex-wrap: wrap;
+  }
+  .tab-btn {
+    padding: 8px 20px; border: 2px solid #334155;
+    border-radius: 20px; background: #1e2f45;
+    color: #94a3b8; font-size: 0.85rem; font-weight: 600;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .tab-btn.active { background: #0ea5e9; border-color: #0ea5e9; color: white; }
+  .tab-btn:hover:not(.active) { border-color: #38bdf8; color: #e2e8f0; }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ── SHARED LAYOUT ── */
+  .max-w { max-width: 880px; margin: 0 auto; }
+  .section {
+    background: #1e2f45; border-left: 4px solid #38bdf8;
+    border-radius: 8px; padding: 18px 22px; margin-bottom: 22px;
+  }
+  .section h2 {
+    font-size: 0.9rem; color: #38bdf8; margin-bottom: 14px;
+    text-transform: uppercase; letter-spacing: 0.8px;
+  }
+  .sentence {
+    font-size: 0.88rem; line-height: 2.4rem;
+    margin-bottom: 4px; color: #cbd5e1;
+  }
+
+  /* ── WORD BANK (draggable tiles) ── */
+  .word-bank {
+    background: #162032; border: 1px dashed #334155;
+    border-radius: 8px; padding: 14px 18px; margin-bottom: 22px;
+  }
+  .word-bank h3 {
+    font-size: 0.72rem; color: #64748b; text-transform: uppercase;
+    letter-spacing: 1px; margin-bottom: 10px;
+  }
+  .word-bank .tiles { display: flex; flex-wrap: wrap; gap: 8px; min-height: 36px; }
+  .tile {
+    background: #1e3a5f; border: 1.5px solid #38bdf8;
+    border-radius: 5px; padding: 4px 14px;
+    font-size: 0.83rem; color: #7dd3fc;
+    cursor: grab; user-select: none;
+    transition: background 0.15s, opacity 0.2s;
+  }
+  .tile:hover { background: #1e4a7a; }
+  .tile.dragging { opacity: 0.35; }
+  .tile.used { opacity: 0.3; pointer-events: none; }
+
+  /* ── DROP ZONES (inline blanks) ── */
+  .drop-zone {
+    display: inline-block; min-width: 110px; height: 28px;
+    border-bottom: 2px solid #38bdf8; vertical-align: middle;
+    border-radius: 3px; padding: 0 8px; font-size: 0.85rem;
+    color: #f0f9ff; text-align: center; line-height: 26px;
+    background: #0f1b2d; cursor: pointer; transition: all 0.2s;
+    position: relative;
+  }
+  .drop-zone.drag-over { background: #1e4a7a; border-color: #7dd3fc; border-style: dashed; }
+  .drop-zone.correct { border-color: #4ade80; background: #052e16; color: #86efac; }
+  .drop-zone.incorrect { border-color: #f87171; background: #2d0a0a; color: #fca5a5; }
+  .drop-zone.filled { border-style: solid; }
+
+  /* ── CONTROLS ── */
+  .controls {
+    display: flex; gap: 10px; justify-content: center;
+    margin-top: 24px; flex-wrap: wrap;
+  }
+  .controls button {
+    padding: 10px 24px; border: none; border-radius: 6px;
+    font-size: 0.88rem; font-weight: 600; cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+  }
+  .controls button:hover { opacity: 0.85; transform: translateY(-1px); }
+  .btn-check { background: #0ea5e9; color: white; }
+  .btn-reveal { background: #64748b; color: white; }
+  .btn-reset { background: #1e2f45; color: #94a3b8; border: 1px solid #334155 !important; }
+  .score-box {
+    text-align: center; margin-top: 16px;
+    font-size: 1rem; font-weight: 700; color: #7dd3fc; min-height: 1.4rem;
+  }
+
+  /* ── SCENARIO TABLE (Ex 3) ── */
+  .scenario-intro {
+    font-size: 0.85rem; color: #94a3b8; margin-bottom: 18px; line-height: 1.6;
+  }
+  table.scenario-table {
+    width: 100%; border-collapse: collapse; font-size: 0.85rem;
+  }
+  table.scenario-table th {
+    background: #0f1b2d; color: #38bdf8; padding: 10px 12px;
+    border: 1px solid #334155; text-align: left; font-size: 0.8rem;
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  table.scenario-table td {
+    border: 1px solid #334155; padding: 10px 12px;
+    vertical-align: middle; color: #cbd5e1; line-height: 1.4;
+  }
+  table.scenario-table tr:nth-child(even) td { background: #162032; }
+  .act-drop {
+    display: block; min-width: 100px; min-height: 30px;
+    border: 2px dashed #334155; border-radius: 5px;
+    padding: 4px 10px; font-size: 0.8rem; color: #7dd3fc;
+    text-align: center; line-height: 22px;
+    transition: all 0.2s; cursor: pointer;
+  }
+  .act-drop.drag-over { border-color: #7dd3fc; background: #1e4a7a; }
+  .act-drop.correct { border-color: #4ade80; background: #052e16; color: #86efac; border-style: solid; }
+  .act-drop.incorrect { border-color: #f87171; background: #2d0a0a; color: #fca5a5; border-style: solid; }
+  .act-drop.filled { border-style: solid; border-color: #38bdf8; }
+  .act-tiles { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+  .act-tile {
+    background: #1e3a5f; border: 1.5px solid #38bdf8;
+    border-radius: 5px; padding: 5px 14px;
+    font-size: 0.82rem; color: #7dd3fc;
+    cursor: grab; user-select: none; transition: all 0.15s;
+  }
+  .act-tile:hover { background: #1e4a7a; }
+  .act-tile.dragging { opacity: 0.3; }
+</style>
+</head>
+<body>
+
+<h1>📋 Legislation Activities</h1>
+<p class="subtitle">OCR GCSE Computer Science &nbsp;·&nbsp; Year 11</p>
+
+<div class="tabs">
+  <button class="tab-btn active" onclick="switchTab('ex1')">Exercise 1 — Key Terms</button>
+  <button class="tab-btn" onclick="switchTab('ex2')">Exercise 2 — DPA Responsibilities</button>
+  <button class="tab-btn" onclick="switchTab('ex3')">Exercise 3 — Scenarios</button>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     EXERCISE 1 — Key Terms Fill in the Blanks
+════════════════════════════════════════════════════ -->
+<div id="ex1" class="tab-panel active">
+<div class="max-w">
+
+  <div class="word-bank" id="wb1">
+    <h3>Word Bank — drag tiles onto the blanks</h3>
+    <div class="tiles" id="tiles1"></div>
+  </div>
+
+  <div class="section">
+    <h2>🔒 Data Protection Act 2018</h2>
+    <div class="sentence">1. The Data Protection Act was last updated in <span class="drop-zone" data-answer="2018" data-bank="1"></span> to bring UK law in line with GDPR regulations.</div>
+    <div class="sentence">2. The Act controls how <span class="drop-zone" data-answer="personal" data-bank="1"></span> data about individuals is collected, stored, and used by organisations.</div>
+    <div class="sentence">3. The organisation that decides why and how data is collected is called the data <span class="drop-zone" data-answer="controller" data-bank="1"></span>, while the organisation that handles the data on their behalf is the data <span class="drop-zone" data-answer="processor" data-bank="1"></span>.</div>
+    <div class="sentence">4. One of the key principles is data <span class="drop-zone" data-answer="accuracy" data-bank="1"></span> — organisations must ensure the data they hold is up to date and correct.</div>
+    <div class="sentence">5. Data may only be used for the <span class="drop-zone" data-answer="purpose" data-bank="1"></span> it was originally collected for and should not be kept longer than necessary.</div>
+    <div class="sentence">6. The Act requires that data is processed fairly, lawfully, and <span class="drop-zone" data-answer="impartially" data-bank="1"></span>.</div>
+  </div>
+
+  <div class="section">
+    <h2>💻 Computer Misuse Act 1990</h2>
+    <div class="sentence">7. The Computer Misuse Act was introduced in <span class="drop-zone" data-answer="1990" data-bank="1"></span> largely in response to high-profile cases of <span class="drop-zone" data-answer="hacking" data-bank="1"></span> and digital intrusion.</div>
+    <div class="sentence">8. The Act makes it an offence to access computer material without <span class="drop-zone" data-answer="authorisation" data-bank="1"></span> — even if no data is changed or stolen.</div>
+    <div class="sentence">9. All three offences under the Act carry <span class="drop-zone" data-answer="criminal" data-bank="1"></span> penalties, including fines and imprisonment.</div>
+    <div class="sentence">10. The most serious offence can lead to up to <span class="drop-zone" data-answer="ten" data-bank="1"></span> years in <span class="drop-zone" data-answer="prison" data-bank="1"></span>.</div>
+    <div class="sentence">11. Creating or distributing malware is illegal under this Act because it involves unauthorised <span class="drop-zone" data-answer="modification" data-bank="1"></span> of computer material.</div>
+  </div>
+
+  <div class="section">
+    <h2>📄 Copyright, Designs and Patents Act 1988</h2>
+    <div class="sentence">12. The Copyright, Designs and Patents Act was passed in <span class="drop-zone" data-answer="1988" data-bank="1"></span> to protect the intellectual property of creators.</div>
+    <div class="sentence">13. Under this Act, you cannot legally copy, distribute, or sell someone else's <span class="drop-zone" data-answer="software" data-bank="1"></span> without their permission.</div>
+    <div class="sentence">14. To legally use most commercial software, a user must purchase a <span class="drop-zone" data-answer="licence" data-bank="1"></span> from the copyright holder.</div>
+    <div class="sentence">15. The Act also prevents users from modifying or <span class="drop-zone" data-answer="reverse-engineering" data-bank="1"></span> software unless the licence explicitly permits it.</div>
+    <div class="sentence">16. Copyright is automatically applied to creative works in the UK — creators do not need to <span class="drop-zone" data-answer="register" data-bank="1"></span> it.</div>
+    <div class="sentence">17. In the UK, copyright on software typically lasts for <span class="drop-zone" data-answer="seventy" data-bank="1"></span> years after the death of the creator.</div>
+  </div>
+
+  <div class="controls">
+    <button class="btn-check" onclick="checkEx('ex1')">✅ Check Answers</button>
+    <button class="btn-reveal" onclick="revealEx('ex1')">👁 Reveal All</button>
+    <button class="btn-reset" onclick="resetEx('ex1')">🔄 Reset</button>
+  </div>
+  <div class="score-box" id="score-ex1"></div>
+
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     EXERCISE 2 — DPA Responsibilities
+════════════════════════════════════════════════════ -->
+<div id="ex2" class="tab-panel">
+<div class="max-w">
+
+  <div class="word-bank" id="wb2">
+    <h3>Word Bank — drag tiles onto the blanks</h3>
+    <div class="tiles" id="tiles2"></div>
+  </div>
+
+  <div class="section">
+    <h2>🔒 Data Protection Act 2018 — Duties of Organisations</h2>
+
+    <div class="sentence">1. Every organisation that handles personal data must designate a Data <span class="drop-zone" data-answer="Protection" data-bank="2"></span> Officer who is responsible for overseeing compliance.</div>
+    <div class="sentence">2. Organisations have a duty to protect data from being accessed by <span class="drop-zone" data-answer="unauthorised" data-bank="2"></span> individuals — this can be achieved through measures such as firewalls, access rights, and <span class="drop-zone" data-answer="encryption" data-bank="2"></span>.</div>
+    <div class="sentence">3. Before passing personal data to a third party, organisations must first obtain the individual's <span class="drop-zone" data-answer="consent" data-bank="2"></span>.</div>
+    <div class="sentence">4. Collecting data from users without their knowledge or agreement is a <span class="drop-zone" data-answer="breach" data-bank="2"></span> of the Act.</div>
+    <div class="sentence">5. Organisations should only collect data that is <span class="drop-zone" data-answer="necessary" data-bank="2"></span> for their stated purpose — gathering excessive information is not permitted.</div>
+    <div class="sentence">6. Once data is no longer <span class="drop-zone" data-answer="required" data-bank="2"></span>, it must be securely and permanently deleted.</div>
+    <div class="sentence">7. It is the organisation's responsibility to keep personal data <span class="drop-zone" data-answer="up-to-date" data-bank="2"></span> and to correct any errors when they are identified.</div>
+    <div class="sentence">8. Using someone's personal data for a reason other than the one it was collected for would be considered a <span class="drop-zone" data-answer="misuse" data-bank="2"></span> of that data.</div>
+    <div class="sentence">9. Transferring personal data to a country that does not offer an <span class="drop-zone" data-answer="equivalent" data-bank="2"></span> level of data protection is prohibited.</div>
+    <div class="sentence">10. If a person asks for their data to be corrected or removed, the organisation must act on that <span class="drop-zone" data-answer="request" data-bank="2"></span> promptly.</div>
+    <div class="sentence">11. Individuals are legally entitled to see the data held about them by submitting a Subject <span class="drop-zone" data-answer="Access" data-bank="2"></span> Request.</div>
+    <div class="sentence">12. When a security incident puts personal data at risk, the organisation must <span class="drop-zone" data-answer="inform" data-bank="2"></span> those affected without undue delay.</div>
+    <div class="sentence">13. Organisations must ensure that all <span class="drop-zone" data-answer="staff" data-bank="2"></span> who work with personal data understand their responsibilities under the Act.</div>
+  </div>
+
+  <div class="controls">
+    <button class="btn-check" onclick="checkEx('ex2')">✅ Check Answers</button>
+    <button class="btn-reveal" onclick="revealEx('ex2')">👁 Reveal All</button>
+    <button class="btn-reset" onclick="resetEx('ex2')">🔄 Reset</button>
+  </div>
+  <div class="score-box" id="score-ex2"></div>
+
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     EXERCISE 3 — Scenario Matching
+════════════════════════════════════════════════════ -->
+<div id="ex3" class="tab-panel">
+<div class="max-w">
+
+  <div class="section" style="border-left-color: #a78bfa;">
+    <h2 style="color: #a78bfa;">⚖️ Scenario Matching — Which Act Applies?</h2>
+    <p class="scenario-intro">Each scenario below involves someone breaking the law. Drag the correct Act from the word bank onto each row. Acts can be used more than once.</p>
+
+    <div class="act-tiles" id="act-tiles">
+      <!-- populated by JS -->
+    </div>
+
+    <table class="scenario-table">
+      <thead>
+        <tr>
+          <th style="width:55%">Scenario</th>
+          <th>Which Act applies?</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>A graphic designer uses a photograph they found online in a client's brochure without checking who owns the image.</td>
+          <td><span class="act-drop" data-answer="Copyright, Designs and Patents Act 1988"></span></td>
+        </tr>
+        <tr>
+          <td>An employee guesses a colleague's password and logs into their work account to read their private messages.</td>
+          <td><span class="act-drop" data-answer="Computer Misuse Act 1990"></span></td>
+        </tr>
+        <tr>
+          <td>A music streaming app sells its users' listening habits and personal details to an advertising agency without telling them.</td>
+          <td><span class="act-drop" data-answer="Data Protection Act 2018"></span></td>
+        </tr>
+        <tr>
+          <td>A student downloads a cracked version of an expensive piece of video editing software and shares it with their friends.</td>
+          <td><span class="act-drop" data-answer="Copyright, Designs and Patents Act 1988"></span></td>
+        </tr>
+        <tr>
+          <td>A hacker sends a flood of traffic to a school's server, causing the network to crash and preventing students from accessing their work.</td>
+          <td><span class="act-drop" data-answer="Computer Misuse Act 1990"></span></td>
+        </tr>
+        <tr>
+          <td>A gym continues to send marketing emails to a member five years after they cancelled their membership and asked to be removed from the mailing list.</td>
+          <td><span class="act-drop" data-answer="Data Protection Act 2018"></span></td>
+        </tr>
+        <tr>
+          <td>A YouTuber includes a full copyrighted song in the background of their video without obtaining a licence from the record label.</td>
+          <td><span class="act-drop" data-answer="Copyright, Designs and Patents Act 1988"></span></td>
+        </tr>
+        <tr>
+          <td>An IT technician uses remote access tools to browse through a manager's personal files on their laptop without being asked to.</td>
+          <td><span class="act-drop" data-answer="Computer Misuse Act 1990"></span></td>
+        </tr>
+        <tr>
+          <td>An online retailer suffers a data breach exposing thousands of customers' home addresses and payment details, but decides not to tell those affected.</td>
+          <td><span class="act-drop" data-answer="Data Protection Act 2018"></span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="controls">
+    <button class="btn-check" onclick="checkEx3()">✅ Check Answers</button>
+    <button class="btn-reveal" onclick="revealEx3()">👁 Reveal All</button>
+    <button class="btn-reset" onclick="resetEx3()">🔄 Reset</button>
+  </div>
+  <div class="score-box" id="score-ex3"></div>
+
+</div>
+</div>
+
+<!-- ═══════════ SCRIPT ═══════════ -->
+<script>
+// ── Tab switching ──
+function switchTab(id) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// ── Word bank data ──
+const words1 = [
+  '2018','personal','controller','processor','accuracy','purpose','impartially',
+  '1990','hacking','authorisation','criminal','ten','prison','modification',
+  '1988','software','licence','reverse-engineering','register','seventy'
+];
+const words2 = [
+  'Protection','unauthorised','encryption','consent','breach',
+  'necessary','required','up-to-date','misuse','equivalent',
+  'request','Access','inform','staff'
+];
+
+// ── Build word banks ──
+function buildBank(words, bankId, containerId) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = '';
+  const shuffled = [...words].sort(() => Math.random() - 0.5);
+  shuffled.forEach(w => {
+    const t = document.createElement('span');
+    t.className = 'tile';
+    t.textContent = w;
+    t.draggable = true;
+    t.dataset.word = w;
+    t.dataset.bank = bankId;
+    addTileDrag(t);
+    container.appendChild(t);
+  });
+}
+
+let dragWord = null;
+let dragTile = null;
+
+function addTileDrag(tile) {
+  tile.addEventListener('dragstart', e => {
+    dragWord = tile.dataset.word;
+    dragTile = tile;
+    tile.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+  });
+  tile.addEventListener('dragend', () => tile.classList.remove('dragging'));
+}
+
+// ── Drop zones ──
+function initDropZones(selector) {
+  document.querySelectorAll(selector).forEach(zone => {
+    zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+    zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+    zone.addEventListener('drop', e => {
+      e.preventDefault();
+      zone.classList.remove('drag-over');
+      if (!dragWord) return;
+      const prev = zone.dataset.current;
+      if (prev) returnToBank(prev, zone.dataset.bank);
+      zone.textContent = dragWord;
+      zone.dataset.current = dragWord;
+      zone.classList.add('filled');
+      zone.classList.remove('correct','incorrect');
+      if (dragTile) dragTile.classList.add('used');
+      liveCheck(zone);
+      dragWord = null; dragTile = null;
+    });
+    zone.addEventListener('click', () => {
+      if (!zone.dataset.current) return;
+      returnToBank(zone.dataset.current, zone.dataset.bank);
+      zone.textContent = '';
+      zone.dataset.current = '';
+      zone.classList.remove('filled','correct','incorrect');
+    });
+  });
+}
+
+function returnToBank(word, bankId) {
+  const bankContainer = bankId === '1' ? document.getElementById('tiles1') : document.getElementById('tiles2');
+  const tiles = bankContainer.querySelectorAll('.tile');
+  tiles.forEach(t => { if (t.dataset.word === word) t.classList.remove('used'); });
+}
+
+function liveCheck(zone) {
+  const cur = (zone.dataset.current || '').trim().toLowerCase();
+  const ans = (zone.dataset.answer || '').trim().toLowerCase();
+  if (!cur) return;
+  zone.classList.remove('correct','incorrect');
+  if (cur === ans) zone.classList.add('correct');
+}
+
+// ── Check / Reveal / Reset for Ex1 & Ex2 ──
+function checkEx(exId) {
+  const panel = document.getElementById(exId);
+  const zones = panel.querySelectorAll('.drop-zone');
+  let correct = 0, attempted = 0;
+  zones.forEach(z => {
+    const cur = (z.dataset.current || '').trim().toLowerCase();
+    const ans = (z.dataset.answer || '').trim().toLowerCase();
+    z.classList.remove('correct','incorrect');
+    if (!cur) return;
+    attempted++;
+    if (cur === ans) { z.classList.add('correct'); correct++; }
+    else z.classList.add('incorrect');
+  });
+  const scoreEl = document.getElementById('score-' + exId);
+  scoreEl.textContent = attempted === 0
+    ? 'Drag some words onto the blanks first!'
+    : 'Score: ' + correct + ' / ' + zones.length + ' correct';
+}
+
+function revealEx(exId) {
+  const panel = document.getElementById(exId);
+  const bankId = exId === 'ex1' ? '1' : '2';
+  panel.querySelectorAll('.drop-zone').forEach(z => {
+    const prev = z.dataset.current;
+    if (prev) returnToBank(prev, bankId);
+    const ans = z.dataset.answer;
+    z.textContent = ans;
+    z.dataset.current = ans;
+    z.classList.add('filled','correct');
+    z.classList.remove('incorrect');
+    const bankContainer = document.getElementById('tiles' + bankId);
+    bankContainer.querySelectorAll('.tile').forEach(t => {
+      if (t.dataset.word === ans) t.classList.add('used');
+    });
+  });
+  document.getElementById('score-' + exId).textContent = 'All answers revealed.';
+}
+
+function resetEx(exId) {
+  const panel = document.getElementById(exId);
+  const bankId = exId === 'ex1' ? '1' : '2';
+  panel.querySelectorAll('.drop-zone').forEach(z => {
+    z.textContent = '';
+    z.dataset.current = '';
+    z.classList.remove('filled','correct','incorrect');
+  });
+  buildBank(bankId === '1' ? words1 : words2, bankId, 'tiles' + bankId);
+  initDropZones('#' + exId + ' .drop-zone');
+  document.getElementById('score-' + exId).textContent = '';
+}
+
+// ── Exercise 3 — Act matching ──
+const actLabels = [
+  'Data Protection Act 2018',
+  'Computer Misuse Act 1990',
+  'Copyright, Designs and Patents Act 1988'
+];
+
+// Three permanent tiles — always available, can be reused across all six rows
+function buildActTiles() {
+  const container = document.getElementById('act-tiles');
+  container.innerHTML = '';
+  const shuffledActs = [...actLabels].sort(() => Math.random() - 0.5);
+  shuffledActs.forEach(label => {
+    const t = document.createElement('span');
+    t.className = 'act-tile';
+    t.textContent = label;
+    t.draggable = true;
+    t.dataset.word = label;
+    t.addEventListener('dragstart', e => {
+      dragWord = label;
+      dragTile = t;
+      t.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    t.addEventListener('dragend', () => t.classList.remove('dragging'));
+    container.appendChild(t);
+  });
+}
+
+function initActDrops() {
+  document.querySelectorAll('.act-drop').forEach(zone => {
+    zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+    zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+    zone.addEventListener('drop', e => {
+      e.preventDefault();
+      zone.classList.remove('drag-over');
+      if (!dragWord) return;
+      // Just stamp the label into this zone — tiles are never consumed
+      zone.textContent = dragWord;
+      zone.dataset.current = dragWord;
+      zone.classList.add('filled');
+      zone.classList.remove('correct','incorrect');
+      liveCheckAct(zone);
+      dragWord = null; dragTile = null;
+    });
+    // Click a filled zone to clear it
+    zone.addEventListener('click', () => {
+      if (!zone.dataset.current) return;
+      zone.textContent = '';
+      zone.dataset.current = '';
+      zone.classList.remove('filled','correct','incorrect');
+      checkAllCorrectEx3();
+    });
+  });
+}
+
+function liveCheckAct(zone) {
+  const cur = (zone.dataset.current || '').trim().toLowerCase();
+  const ans = (zone.dataset.answer || '').trim().toLowerCase();
+  zone.classList.remove('correct','incorrect');
+  if (cur && cur === ans) zone.classList.add('correct');
+  checkAllCorrectEx3();
+}
+
+function checkAllCorrectEx3() {
+  const zones = [...document.querySelectorAll('.act-drop')];
+  const total = zones.length;
+  const allFilled = zones.every(z => z.dataset.current && z.dataset.current.trim() !== '');
+  const allCorrect = zones.every(z => {
+    const cur = (z.dataset.current || '').trim().toLowerCase();
+    const ans = (z.dataset.answer || '').trim().toLowerCase();
+    return cur === ans;
+  });
+  const panel = document.getElementById('ex3');
+  const section = panel.querySelector('.section');
+  if (allCorrect && total > 0 && allFilled) {
+    section.style.transition = 'background 0.8s ease';
+    section.style.background = '#052e16';
+    section.style.borderLeftColor = '#4ade80';
+    document.getElementById('score-ex3').textContent = '🎉 All correct! Well done!';
+    launchFireworks();
+  } else {
+    section.style.background = '';
+    section.style.borderLeftColor = '';
+    if (document.getElementById('score-ex3').textContent === '🎉 All correct! Well done!') {
+      document.getElementById('score-ex3').textContent = '';
+    }
+  }
+}
+
+function checkEx3() {
+  const zones = document.querySelectorAll('.act-drop');
+  let correct = 0, attempted = 0;
+  zones.forEach(z => {
+    const cur = (z.dataset.current || '').trim().toLowerCase();
+    const ans = (z.dataset.answer || '').trim().toLowerCase();
+    z.classList.remove('correct','incorrect');
+    if (!cur) return;
+    attempted++;
+    if (cur === ans) { z.classList.add('correct'); correct++; }
+    else z.classList.add('incorrect');
+  });
+  const scoreEl = document.getElementById('score-ex3');
+  if (attempted === 0) {
+    scoreEl.textContent = 'Drag some Act labels onto the table first!';
+  } else {
+    scoreEl.textContent = 'Score: ' + correct + ' / ' + zones.length + ' correct';
+    checkAllCorrectEx3();
+  }
+}
+
+function revealEx3() {
+  document.querySelectorAll('.act-drop').forEach(z => {
+    const ans = z.dataset.answer;
+    z.textContent = ans;
+    z.dataset.current = ans;
+    z.classList.add('filled','correct');
+    z.classList.remove('incorrect');
+  });
+  checkAllCorrectEx3();
+}
+
+function resetEx3() {
+  const panel = document.getElementById('ex3');
+  const section = panel.querySelector('.section');
+  section.style.background = '';
+  section.style.borderLeftColor = '';
+  document.querySelectorAll('.act-drop').forEach(z => {
+    z.textContent = '';
+    z.dataset.current = '';
+    z.classList.remove('filled','correct','incorrect');
+  });
+  document.getElementById('score-ex3').textContent = '';
+  stopFireworks();
+}
+
+// ══════════════════════════════
+// FIREWORKS
+// ══════════════════════════════
+let fwCanvas, fwCtx, fwParticles, fwAnimId, fwActive = false;
+
+function launchFireworks() {
+  if (fwActive) return;
+  fwActive = true;
+
+  fwCanvas = document.createElement('canvas');
+  fwCanvas.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999;';
+  document.body.appendChild(fwCanvas);
+  fwCanvas.width = window.innerWidth;
+  fwCanvas.height = window.innerHeight;
+  fwCtx = fwCanvas.getContext('2d');
+  fwParticles = [];
+
+  const colours = ['#7dd3fc','#4ade80','#fbbf24','#f472b6','#a78bfa','#fb923c'];
+  let bursts = 0;
+  const maxBursts = 18;
+
+  function burst() {
+    if (bursts >= maxBursts) return;
+    bursts++;
+    const x = Math.random() * fwCanvas.width;
+    const y = Math.random() * fwCanvas.height * 0.65 + 40;
+    const colour = colours[Math.floor(Math.random() * colours.length)];
+    const count = 60 + Math.floor(Math.random() * 40);
+    for (let i = 0; i < count; i++) {
+      const angle = (Math.PI * 2 / count) * i;
+      const speed = 2 + Math.random() * 5;
+      fwParticles.push({
+        x, y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        alpha: 1,
+        colour,
+        size: 3 + Math.random() * 3,
+        gravity: 0.08 + Math.random() * 0.05
+      });
+    }
+    if (bursts < maxBursts) {
+      setTimeout(burst, 300 + Math.random() * 400);
+    }
+  }
+
+  burst(); burst(); burst();
+
+  function animate() {
+    fwCtx.clearRect(0, 0, fwCanvas.width, fwCanvas.height);
+    fwParticles = fwParticles.filter(p => p.alpha > 0.02);
+    fwParticles.forEach(p => {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += p.gravity;
+      p.vx *= 0.98;
+      p.alpha -= 0.012;
+      fwCtx.globalAlpha = Math.max(0, p.alpha);
+      fwCtx.fillStyle = p.colour;
+      fwCtx.beginPath();
+      fwCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      fwCtx.fill();
+    });
+    fwCtx.globalAlpha = 1;
+    if (fwParticles.length > 0 || bursts < maxBursts) {
+      fwAnimId = requestAnimationFrame(animate);
+    } else {
+      stopFireworks();
+    }
+  }
+  animate();
+}
+
+function stopFireworks() {
+  fwActive = false;
+  if (fwAnimId) cancelAnimationFrame(fwAnimId);
+  if (fwCanvas && fwCanvas.parentNode) fwCanvas.parentNode.removeChild(fwCanvas);
+  fwCanvas = null;
+}
+
+// ── Initialise ──
+buildBank(words1, '1', 'tiles1');
+buildBank(words2, '2', 'tiles2');
+initDropZones('#ex1 .drop-zone');
+initDropZones('#ex2 .drop-zone');
+buildActTiles();
+initActDrops();
+</script>
+
+</body>
+</html>

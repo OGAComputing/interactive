@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAM vs ROM — Sorting Exercise</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;700&display=swap');
+
+  :root {
+    --bg:        #0f1117;
+    --surface:   #161b27;
+    --surface2:  #1e2535;
+    --border:    #2a3347;
+    --ram:       #0d7377;
+    --ram-l:     #14a8ad;
+    --ram-ll:    #7ee8ea;
+    --rom:       #7b2d8b;
+    --rom-l:     #b44fc7;
+    --rom-ll:    #e0a8ec;
+    --cache:     #1d4ed8;
+    --cache-l:   #60a5fa;
+    --cache-ll:  #bfdbfe;
+    --green:     #16a34a;
+    --green-l:   #4ade80;
+    --gold:      #b45309;
+    --gold-l:    #f59e0b;
+    --gold-ll:   #fde68a;
+    --red:       #b91c1c;
+    --red-l:     #f87171;
+    --amber:     #b45309;
+    --amber-l:   #fbbf24;
+    --white:     #f0f4f8;
+    --grey:      #64748b;
+    --grey-l:    #94a3b8;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  @keyframes pulse-green { 0%,100%{background-color:#065f46} 50%{background-color:#059669} }
+  @keyframes pulse-gold  { 0%,100%{background-color:#92400e} 50%{background-color:#d97706} }
+
+  body {
+    background: var(--bg); color: var(--white);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh; padding: 36px 20px 80px;
+    transition: background 1.4s ease;
+  }
+  body.complete-green { animation: pulse-green 2.5s ease-in-out infinite; }
+  body.complete-gold  { animation: pulse-gold  2.5s ease-in-out infinite; }
+
+  #fwCanvas { position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:999; }
+
+  .completion-banner {
+    position:fixed; top:0; left:0; right:0; padding:22px 20px;
+    text-align:center; font-family:'Space Mono',monospace;
+    font-size:20px; letter-spacing:2px; font-weight:700;
+    transform:translateY(-110%);
+    transition:transform 0.55s cubic-bezier(0.34,1.56,0.64,1);
+    z-index:1000; display:none;
+  }
+  .completion-banner.show { transform:translateY(0); display:block; }
+  .completion-banner.green-banner { background:#047857; border-bottom:4px solid #6ee7b7; color:#fff; }
+  .completion-banner.gold-banner  { background:#b45309; border-bottom:4px solid #fde68a; color:#fff; }
+
+  .kicker { font-family:'Space Mono',monospace; font-size:11px; letter-spacing:3px; text-transform:uppercase; color:var(--ram-l); text-align:center; margin-bottom:8px; }
+  h1 { font-size:28px; font-weight:700; text-align:center; margin-bottom:28px; }
+
+  /* ── Tab nav ── */
+  .tab-nav { display:flex; justify-content:center; gap:10px; max-width:960px; margin:0 auto 36px; flex-wrap:wrap; }
+  .tab-btn {
+    font-family:'DM Sans',sans-serif; font-size:15px; font-weight:600;
+    padding:11px 26px; border-radius:9px; border:2px solid var(--border);
+    background:var(--surface); color:var(--grey-l); cursor:pointer;
+    transition:all 0.2s; position:relative;
+  }
+  .tab-btn:hover { border-color:var(--ram-l); color:var(--white); }
+  .tab-btn.active     { background:var(--ram);    border-color:var(--ram);    color:#fff; }
+  .tab-btn.done-green { background:var(--green);  border-color:var(--green);  color:#fff; }
+  .tab-btn.done-gold  { background:var(--gold-l); border-color:var(--gold-l); color:#000; }
+  .tab-btn.done-green:hover { background:var(--green-l);  border-color:var(--green-l);  color:#000; }
+  .tab-btn.done-gold:hover  { background:var(--gold-ll); border-color:var(--gold-ll); color:#000; }
+  .tab-tick {
+    display:none; position:absolute; top:-8px; right:-8px;
+    width:20px; height:20px; border-radius:50%;
+    font-size:11px; font-weight:700; border:2px solid var(--bg);
+    align-items:center; justify-content:center;
+  }
+  .tab-tick.show { display:flex; }
+  .tab-tick.tick-green { background:var(--green);  color:#fff; }
+  .tab-tick.tick-gold  { background:var(--gold-l); color:#000; }
+
+  .tab-panel { display:none; }
+  .tab-panel.active { display:block; }
+
+  /* ── Shared ── */
+  .subtitle { font-size:14px; color:var(--grey-l); text-align:center; margin-bottom:36px; }
+  .progress-wrap { max-width:680px; margin:0 auto 32px; display:flex; align-items:center; gap:12px; }
+  .progress-track { flex:1; height:6px; background:var(--surface2); border-radius:99px; overflow:hidden; }
+  .progress-fill { height:100%; background:linear-gradient(90deg,var(--ram-l),var(--rom-l)); border-radius:99px; width:0%; transition:width 0.4s ease; }
+  .progress-label { font-family:'Space Mono',monospace; font-size:12px; color:var(--grey-l); white-space:nowrap; }
+  .how-to { max-width:680px; margin:0 auto 28px; background:var(--surface); border:1.5px solid var(--border); border-radius:10px; padding:13px 18px; font-size:13px; color:var(--grey-l); line-height:1.6; text-align:center; }
+  .how-to strong { color:var(--white); }
+  .btn-main { font-family:'DM Sans',sans-serif; font-size:15px; font-weight:700; padding:12px 32px; border-radius:9px; border:none; cursor:pointer; transition:all 0.2s; }
+  .btn-check-main { background:var(--ram-l); color:#000; }
+  .btn-check-main:hover { background:var(--ram-ll); }
+  .btn-reset-main { background:transparent; color:var(--grey-l); border:1.5px solid var(--grey); }
+  .btn-reset-main:hover { border-color:var(--white); color:var(--white); }
+  .actions { max-width:960px; margin:24px auto 0; display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+  .result-msg { font-family:'Space Mono',monospace; font-size:13px; padding:10px 18px; border-radius:8px; background:var(--surface2); display:none; }
+  .result-msg.show{display:inline-block;} .result-msg.all-correct{color:var(--green-l);} .result-msg.all-gold{color:var(--gold-l);} .result-msg.partial{color:var(--amber-l);}
+  @keyframes shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-6px)} 60%{transform:translateX(6px)} }
+
+  /* ── Task 1 arena ── */
+  .arena { max-width:960px; margin:0 auto; display:grid; grid-template-columns:1fr 320px 1fr; gap:16px; align-items:start; }
+  .col-header { border-radius:12px 12px 0 0; padding:14px 20px; text-align:center; }
+  .col-header .abbr { font-family:'Space Mono',monospace; font-size:22px; font-weight:700; letter-spacing:2px; }
+  .col-header .full { font-size:12px; margin-top:2px; opacity:0.8; }
+  .ram-header { background:var(--ram); color:#fff; }
+  .rom-header { background:var(--rom); color:#fff; }
+  .drop-col { background:var(--surface); border:2px dashed var(--border); border-radius:0 0 12px 12px; min-height:340px; padding:14px; display:flex; flex-direction:column; gap:10px; transition:background 0.15s,border-color 0.15s,box-shadow 0.15s; }
+  .drop-col.ram-col { border-color:var(--ram); }
+  .drop-col.rom-col { border-color:var(--rom); }
+  .drop-col.drag-over.ram-col { background:#061a1b; box-shadow:inset 0 0 0 2px var(--ram-l); border-style:solid; }
+  .drop-col.drag-over.rom-col { background:#1a0626; box-shadow:inset 0 0 0 2px var(--rom-l); border-style:solid; }
+  #cardPool.drag-over { background:var(--surface2); box-shadow:inset 0 0 0 2px var(--grey-l); }
+  .col-empty-hint { font-size:13px; color:var(--grey); text-align:center; margin:auto; pointer-events:none; font-style:italic; }
+  .pool-wrap { grid-row:1/3; grid-column:2; display:flex; flex-direction:column; }
+  .pool-header { background:var(--surface2); border:1.5px solid var(--border); border-bottom:none; border-radius:12px 12px 0 0; padding:12px 16px; text-align:center; }
+  .pool-header p { font-family:'Space Mono',monospace; font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--grey-l); }
+  .card-pool { background:var(--surface); border:1.5px solid var(--border); border-top:none; border-radius:0 0 12px 12px; padding:14px; display:flex; flex-direction:column; gap:9px; min-height:120px; transition:background 0.15s,box-shadow 0.15s; }
+  .stmt-card { background:var(--surface2); border:1.5px solid var(--border); border-radius:9px; padding:11px 14px; font-size:13.5px; font-weight:500; line-height:1.45; cursor:grab; position:relative; user-select:none; transition:transform 0.15s,border-color 0.15s,box-shadow 0.15s,opacity 0.15s; }
+  .stmt-card:hover { transform:translateY(-2px); box-shadow:0 6px 20px rgba(0,0,0,0.4); }
+  .stmt-card:active { cursor:grabbing; }
+  .stmt-card.dragging { opacity:0.35; transform:scale(0.96); }
+  .stmt-card.placed-ram { background:#082226; border-color:var(--ram-l); color:var(--ram-ll); }
+  .stmt-card.placed-rom { background:#1e0a24; border-color:var(--rom-l); color:var(--rom-ll); }
+  .stmt-card.correct-card { border-color:var(--green); background:#052012; color:var(--green-l); cursor:default; }
+  .stmt-card.correct-card:hover { transform:none; box-shadow:none; }
+  .stmt-card.wrong-card { border-color:var(--red); background:#1f0505; color:var(--red-l); animation:shake 0.35s ease; }
+  .card-badge { position:absolute; right:10px; top:50%; transform:translateY(-50%); font-size:14px; display:none; }
+  .correct-card .card-badge { display:block; color:var(--green-l); }
+  .wrong-card   .card-badge { display:block; color:var(--red-l); }
+
+  /* ── Task 2 layout ── */
+  .task2-title { font-size:22px; font-weight:700; text-align:center; margin-bottom:6px; }
+  .task2-sub   { font-size:14px; color:var(--grey-l); text-align:center; margin-bottom:28px; }
+  .section-label { font-family:'Space Mono',monospace; font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--grey-l); margin-bottom:14px; }
+  .section-divider { display:flex; align-items:center; gap:16px; max-width:960px; margin:36px auto 24px; }
+  .section-divider::before,.section-divider::after { content:''; flex:1; height:1px; background:var(--border); }
+  .section-divider span { font-family:'Space Mono',monospace; font-size:11px; letter-spacing:3px; text-transform:uppercase; color:var(--grey); white-space:nowrap; }
+
+  /* Part A — device cards */
+  .device-grid { max-width:960px; margin:0 auto 10px; display:grid; grid-template-columns:repeat(auto-fill,minmax(148px,1fr)); gap:12px; }
+  .device-card { background:var(--surface2); border:2px solid var(--border); border-radius:12px; padding:16px 10px 12px; text-align:center; cursor:pointer; user-select:none; position:relative; transition:border-color 0.15s,transform 0.15s,box-shadow 0.15s; }
+  .device-card:hover { transform:translateY(-3px); box-shadow:0 8px 24px rgba(0,0,0,0.4); }
+  .device-card.dev-selected  { border-color:var(--amber-l); box-shadow:0 0 0 2px var(--amber); }
+  .device-card.dev-primary   { border-color:#7c3aed; background:#1a0b35; }
+  .device-card.dev-secondary { border-color:#b45309; background:#1f1000; }
+  .device-card.dev-correct   { border-color:var(--green); background:#052012; cursor:default; }
+  .device-card.dev-correct:hover { transform:none; }
+  .device-card.dev-wrong     { border-color:var(--red); background:#1f0505; animation:shake 0.35s ease; }
+  .device-icon { font-size:32px; margin-bottom:8px; display:block; }
+  .device-name { font-size:13px; font-weight:600; line-height:1.3; }
+  .device-badge { position:absolute; top:6px; right:8px; font-size:13px; display:none; }
+  .dev-correct .device-badge { display:block; color:var(--green-l); }
+  .dev-wrong   .device-badge { display:block; color:var(--red-l); }
+
+  .t3-assign-wrap { max-width:960px; margin:0 auto; }
+  .t3-assign-btns { display:none; gap:10px; justify-content:center; margin-bottom:20px; flex-wrap:wrap; }
+  .t3-assign-btns.visible { display:flex; }
+  .t3-btn { font-family:'DM Sans',sans-serif; font-weight:700; font-size:14px; padding:10px 24px; border-radius:8px; border:none; cursor:pointer; transition:opacity 0.15s,transform 0.15s; }
+  .t3-btn:hover { opacity:0.85; transform:scale(1.03); }
+  .t3-btn-primary   { background:#7c3aed; color:#fff; }
+  .t3-btn-secondary { background:#b45309; color:#fff; }
+  .t3-btn-clear     { background:transparent; color:var(--grey-l); border:1.5px solid var(--grey); font-weight:500; }
+
+  /* Part B — RAM/ROM/Cache comparison */
+  .partb-wrap { max-width:960px; margin:0 auto; }
+  .partb-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:16px; }
+  .partb-col-hdr { border-radius:10px 10px 0 0; padding:12px; text-align:center; font-weight:700; font-size:14px; }
+  .ram-hdr   { background:#0c3540; color:var(--ram-ll);   border:1.5px solid var(--ram);   border-bottom:none; }
+  .rom-hdr   { background:#2d1060; color:var(--rom-ll);   border:1.5px solid var(--rom);   border-bottom:none; }
+  .cache-hdr { background:#1e3a80; color:var(--cache-ll); border:1.5px solid var(--cache); border-bottom:none; }
+  .partb-drop { border:2px dashed var(--border); border-radius:0 0 10px 10px; min-height:120px; padding:10px; display:flex; flex-direction:column; gap:8px; background:var(--surface); }
+  .ram-drop   { border-color:var(--ram);   }
+  .rom-drop   { border-color:var(--rom);   }
+  .cache-drop { border-color:var(--cache); }
+
+  .fact-pool { background:var(--surface); border:1.5px solid var(--border); border-radius:10px; padding:14px; display:flex; flex-direction:column; gap:8px; margin-bottom:14px; }
+  .fact-card { background:var(--surface2); border:1.5px solid var(--border); border-radius:8px; padding:9px 32px 9px 12px; font-size:12.5px; font-weight:500; line-height:1.4; cursor:pointer; position:relative; user-select:none; transition:transform 0.12s,border-color 0.12s,box-shadow 0.12s; }
+  .fact-card:hover { transform:translateY(-2px); }
+  .fact-card.fact-selected { border-color:var(--amber-l); box-shadow:0 0 0 2px var(--amber); }
+  .fact-card.fact-ram   { background:#061c22; border-color:var(--ram);   color:var(--ram-ll);   }
+  .fact-card.fact-rom   { background:#1a0633; border-color:var(--rom);   color:var(--rom-ll);   }
+  .fact-card.fact-cache { background:#0d1f4a; border-color:var(--cache); color:var(--cache-ll); }
+  .fact-card.fact-correct { border-color:var(--green); background:#052012; color:var(--green-l); cursor:default; }
+  .fact-card.fact-correct:hover { transform:none; }
+  .fact-card.fact-wrong { border-color:var(--red); background:#1f0505; color:var(--red-l); animation:shake 0.35s ease; }
+  .fact-badge { position:absolute; right:9px; top:50%; transform:translateY(-50%); font-size:12px; display:none; }
+  .fact-correct .fact-badge { display:block; color:var(--green-l); }
+  .fact-wrong   .fact-badge { display:block; color:var(--red-l); }
+
+  .t3-assign-btns-b { display:none; gap:10px; justify-content:center; margin-bottom:18px; flex-wrap:wrap; }
+  .t3-assign-btns-b.visible { display:flex; }
+  .t3-btn-ram   { background:var(--ram);   color:#fff; }
+  .t3-btn-rom   { background:var(--rom);   color:#fff; }
+  .t3-btn-cache { background:var(--cache); color:#fff; }
+
+  .t3-actions { max-width:960px; margin:0 auto; display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+  .t3-result { font-family:'Space Mono',monospace; font-size:13px; padding:10px 18px; border-radius:8px; background:var(--surface2); display:none; }
+  .t3-result.show{display:inline-block;} .t3-result.ok{color:var(--green-l);} .t3-result.gold{color:var(--gold-l);} .t3-result.part{color:var(--amber-l);}
+
+  /* ── Task 3 — Spot the mistake ── */
+  .task3-title { font-size:22px; font-weight:700; text-align:center; margin-bottom:6px; }
+  .task3-sub   { font-size:14px; color:var(--grey-l); text-align:center; margin-bottom:28px; }
+
+  .stm-list { max-width:820px; margin:0 auto; display:flex; flex-direction:column; gap:14px; }
+
+  .stm-card {
+    background:var(--surface); border:1.5px solid var(--border);
+    border-radius:12px; padding:18px 20px 14px;
+  }
+  .stm-card.stm-correct { border-color:var(--green); background:rgba(5,150,105,0.08); }
+  .stm-card.stm-wrong   { border-color:var(--red);   background:rgba(185,28,28,0.08); animation:shake 0.35s ease; }
+
+  .stm-statement {
+    font-size:16px; line-height:1.6; color:var(--white); margin-bottom:12px;
+  }
+  /* The wrong word is highlighted amber so students can see it */
+  .stm-error {
+    color:var(--amber-l); font-weight:700;
+    border-bottom:2px solid var(--amber);
+    cursor:default;
+  }
+  .stm-correct-state .stm-error {
+    color:var(--green-l); border-bottom-color:var(--green); text-decoration:line-through;
+  }
+
+  .stm-options {
+    display:flex; flex-wrap:wrap; gap:8px; margin-top:4px;
+  }
+  .stm-opt {
+    font-family:'Space Mono',monospace; font-size:13px;
+    padding:6px 16px; border-radius:6px;
+    background:var(--surface2); border:1.5px solid var(--border);
+    color:var(--grey-l); cursor:pointer;
+    transition:all 0.15s; user-select:none;
+  }
+  .stm-opt:hover { border-color:var(--ram-l); color:var(--white); transform:translateY(-1px); }
+  .stm-opt.stm-selected { border-color:var(--amber-l); color:var(--amber-l); background:#1a1000; box-shadow:0 0 0 2px var(--amber); }
+  .stm-opt.stm-opt-correct { border-color:var(--green); color:var(--green-l); background:#052012; pointer-events:none; }
+  .stm-opt.stm-opt-wrong   { border-color:var(--red);   color:var(--red-l);   background:#1f0505; }
+  .stm-opt.stm-opt-disabled { opacity:0.35; pointer-events:none; }
+
+  .stm-badge { font-size:14px; float:right; margin-top:2px; display:none; }
+  .stm-correct .stm-badge { display:inline; color:var(--green-l); }
+  .stm-wrong   .stm-badge { display:inline; color:var(--red-l); }
+
+  .t4-actions { max-width:820px; margin:24px auto 0; display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+  .t4-result { font-family:'Space Mono',monospace; font-size:13px; padding:10px 18px; border-radius:8px; background:var(--surface2); display:none; }
+  .t4-result.show{display:inline-block;} .t4-result.ok{color:var(--green-l);} .t4-result.gold{color:var(--gold-l);} .t4-result.part{color:var(--amber-l);}
+
+  @media(max-width:700px){
+    .arena{grid-template-columns:1fr;} .pool-wrap{grid-row:auto;grid-column:auto;}
+    .partb-grid{grid-template-columns:1fr;}
+    .tab-btn{padding:10px 14px;font-size:13px;}
+  }
+</style>
+</head>
+<body>
+
+<canvas id="fwCanvas"></canvas>
+<div class="completion-banner" id="completionBanner"></div>
+
+<p class="kicker">Year 9 Computing</p>
+<h1>Memory &amp; Storage</h1>
+
+<nav class="tab-nav">
+  <button class="tab-btn active" id="tab-btn-1" onclick="switchTab(1)">
+    Task 1 — RAM vs ROM
+    <span class="tab-tick" id="tick-1"></span>
+  </button>
+  <button class="tab-btn" id="tab-btn-2" onclick="switchTab(2)">
+    Task 2 — Types of Memory
+    <span class="tab-tick" id="tick-2"></span>
+  </button>
+  <button class="tab-btn" id="tab-btn-3" onclick="switchTab(3)">
+    Task 3 — Why Secondary Storage?
+    <span class="tab-tick" id="tick-3"></span>
+  </button>
+</nav>
+
+<!-- ══ TASK 1 — RAM vs ROM drag sort ══ -->
+<div class="tab-panel active" id="panel-1">
+  <p class="subtitle">Drag each card into the correct column — or click to select, then use the buttons</p>
+  <div class="progress-wrap">
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-label" id="progressLabel">0 / 12 placed</div>
+  </div>
+  <div class="how-to">
+    <strong>Drag</strong> a card into the <strong style="color:var(--ram-ll)">RAM</strong> or <strong style="color:var(--rom-ll)">ROM</strong> column — or <strong>click</strong> to select, then use the buttons. Drag a placed card back to move it.
+  </div>
+  <div class="arena">
+    <div>
+      <div class="col-header ram-header"><div class="abbr">RAM</div><div class="full">Random Access Memory</div></div>
+      <div class="drop-col ram-col" id="col-ram"><span class="col-empty-hint">Drop RAM cards here</span></div>
+    </div>
+    <div class="pool-wrap">
+      <div class="pool-header"><p>Statement cards</p></div>
+      <div class="card-pool" id="cardPool"></div>
+      <div id="assignBtns" style="display:none;gap:8px;justify-content:center;margin-top:14px;flex-wrap:wrap;">
+        <button style="font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;padding:10px 22px;border-radius:8px;border:none;cursor:pointer;background:var(--ram);color:#fff;" onclick="assignSelected('ram')">&#9654; RAM</button>
+        <button style="font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;padding:10px 22px;border-radius:8px;border:none;cursor:pointer;background:var(--rom);color:#fff;" onclick="assignSelected('rom')">&#9654; ROM</button>
+        <button style="font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;padding:10px 22px;border-radius:8px;border:1.5px solid var(--grey);background:transparent;color:var(--grey-l);cursor:pointer;" onclick="clearSelected()">&#10005; Deselect</button>
+      </div>
+    </div>
+    <div>
+      <div class="col-header rom-header"><div class="abbr">ROM</div><div class="full">Read Only Memory</div></div>
+      <div class="drop-col rom-col" id="col-rom"><span class="col-empty-hint">Drop ROM cards here</span></div>
+    </div>
+  </div>
+  <div class="actions">
+    <button class="btn-main btn-check-main" onclick="checkAnswers()">Check answers</button>
+    <button class="btn-main btn-reset-main" onclick="resetAll()">Start again</button>
+    <div class="result-msg" id="resultMsg"></div>
+  </div>
+</div>
+
+<!-- ══ TASK 2 — Types of Memory ══ -->
+<div class="tab-panel" id="panel-2">
+  <p class="task2-title">Types of Primary Memory</p>
+  <p class="task2-sub">Part A: Sort each device into Primary Memory or Secondary Storage. &nbsp;|&nbsp; Part B: Match each fact to RAM, ROM, or Cache.</p>
+
+  <!-- Part A -->
+  <div style="max-width:960px;margin:0 auto 6px;"><p class="section-label">Part A — Primary Memory or Secondary Storage?</p></div>
+  <div class="how-to" style="margin-bottom:18px;">
+    <strong>How to play:</strong> Click a device, then press <strong style="color:#c084fc">Primary Memory</strong> or <strong style="color:var(--amber-l)">Secondary Storage</strong>.
+  </div>
+  <div class="device-grid" id="deviceGrid"></div>
+  <div class="t3-assign-wrap">
+    <div class="t3-assign-btns" id="devAssignBtns">
+      <button class="t3-btn t3-btn-primary"   onclick="assignDevice('primary')">&#9654; Primary Memory</button>
+      <button class="t3-btn t3-btn-secondary" onclick="assignDevice('secondary')">&#9654; Secondary Storage</button>
+      <button class="t3-btn t3-btn-clear"     onclick="clearDeviceSelected()">&#10005; Deselect</button>
+    </div>
+  </div>
+  <div class="actions" style="margin-top:16px;">
+    <button class="btn-main btn-check-main" onclick="checkPartA()">Check Part A</button>
+    <button class="btn-main btn-reset-main" onclick="resetPartA()">Reset Part A</button>
+    <div class="result-msg" id="partAResult"></div>
+  </div>
+
+  <!-- Part B -->
+  <div class="section-divider"><span>Part B — RAM, ROM, or Cache?</span></div>
+  <div class="partb-wrap">
+    <div class="how-to" style="margin-bottom:18px;">
+      <strong>How to play:</strong> Click a fact card, then assign it to <strong style="color:var(--ram-ll)">RAM</strong>, <strong style="color:var(--rom-ll)">ROM</strong>, or <strong style="color:var(--cache-ll)">Cache</strong>.
+    </div>
+    <div class="fact-pool" id="factPool"></div>
+    <div class="t3-assign-btns-b" id="factAssignBtns">
+      <button class="t3-btn t3-btn-ram"   onclick="assignFact('ram')">&#9654; RAM</button>
+      <button class="t3-btn t3-btn-rom"   onclick="assignFact('rom')">&#9654; ROM</button>
+      <button class="t3-btn t3-btn-cache" onclick="assignFact('cache')">&#9654; Cache</button>
+      <button class="t3-btn t3-btn-clear" onclick="clearFactSelected()">&#10005; Deselect</button>
+    </div>
+    <div class="partb-grid">
+      <div>
+        <div class="partb-col-hdr ram-hdr">RAM</div>
+        <div class="partb-drop ram-drop" id="drop-ram"><span class="col-empty-hint" style="margin:auto;display:block;padding:8px 0;">RAM facts here</span></div>
+      </div>
+      <div>
+        <div class="partb-col-hdr rom-hdr">ROM</div>
+        <div class="partb-drop rom-drop" id="drop-rom"><span class="col-empty-hint" style="margin:auto;display:block;padding:8px 0;">ROM facts here</span></div>
+      </div>
+      <div>
+        <div class="partb-col-hdr cache-hdr">Cache</div>
+        <div class="partb-drop cache-drop" id="drop-cache"><span class="col-empty-hint" style="margin:auto;display:block;padding:8px 0;">Cache facts here</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="t3-actions">
+    <button class="btn-main btn-check-main" onclick="checkPartB()">Check Part B</button>
+    <button class="btn-main btn-reset-main" onclick="resetPartB()">Reset Part B</button>
+    <div class="t3-result" id="t3Result"></div>
+  </div>
+</div>
+
+<!-- ══ TASK 3 — Spot the Mistake ══ -->
+<div class="tab-panel" id="panel-3">
+  <p class="task3-title">Spot the Mistake</p>
+  <p class="task3-sub">Each statement contains one deliberate mistake. Click the correct replacement from the options below each statement.</p>
+
+  <div class="how-to">
+    Each statement has one word that is <strong style="color:var(--amber-l)">highlighted in amber</strong> — that is the incorrect word. <strong>Click the correct replacement</strong> from the options below. You only get one attempt per statement.
+  </div>
+
+  <div class="stm-list" id="stmList"></div>
+
+  <div class="t4-actions">
+    <button class="btn-main btn-check-main" onclick="checkTask3()">Check answers</button>
+    <button class="btn-main btn-reset-main" onclick="resetTask3()">Start again</button>
+    <div class="t4-result" id="t4Result"></div>
+  </div>
+</div>
+
+<script>
+const shuffle = arr => [...arr].sort(() => Math.random() - 0.5);
+
+// ════════════════════════════════════════
+// FIREWORKS
+// ════════════════════════════════════════
+const fwCanvas=document.getElementById('fwCanvas'),fwCtx=fwCanvas.getContext('2d');
+let fwParticles=[],fwRunning=false,fwStart=0,fwGold=false;
+const FW_DURATION=8000;
+function resizeFW(){fwCanvas.width=window.innerWidth;fwCanvas.height=window.innerHeight;}
+window.addEventListener('resize',resizeFW);resizeFW();
+function rndFWCol(){if(fwGold){const h=[35,42,48,55][Math.floor(Math.random()*4)];return`hsl(${h},100%,${55+Math.random()*15}%)`;}const hues=[0,30,55,120,180,200,260,300,330];return`hsl(${hues[Math.floor(Math.random()*hues.length)]},100%,65%)`;}
+function launchFW(){const x=0.15*fwCanvas.width+Math.random()*0.7*fwCanvas.width;const ty=fwCanvas.height*(0.08+Math.random()*0.45);const col=rndFWCol(),n=70+Math.floor(Math.random()*70);for(let i=0;i<n;i++){const angle=(Math.PI*2/n)*i+(Math.random()-0.5)*0.4,speed=1.5+Math.random()*5.5;fwParticles.push({x,y:ty,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,alpha:1,col,r:1.5+Math.random()*2.5,decay:0.011+Math.random()*0.009,trail:[]});}}
+function fwFrame(ts){if(!fwRunning)return;const elapsed=ts-fwStart;fwCtx.fillStyle='rgba(0,0,0,0.16)';fwCtx.fillRect(0,0,fwCanvas.width,fwCanvas.height);if(elapsed<FW_DURATION&&Math.random()<0.045)launchFW();fwParticles=fwParticles.filter(p=>p.alpha>0.02);fwParticles.forEach(p=>{p.trail.push({x:p.x,y:p.y,a:p.alpha});if(p.trail.length>7)p.trail.shift();p.x+=p.vx;p.y+=p.vy;p.vy+=0.07;p.vx*=0.98;p.vy*=0.98;p.alpha-=p.decay;p.trail.forEach((t,i)=>{const a=t.a*(i/p.trail.length)*0.35;fwCtx.beginPath();fwCtx.arc(t.x,t.y,p.r*(i/p.trail.length)*0.6,0,Math.PI*2);fwCtx.fillStyle=p.col.replace('hsl','hsla').replace(')',','+a+')');fwCtx.fill();});fwCtx.beginPath();fwCtx.arc(p.x,p.y,p.r,0,Math.PI*2);fwCtx.fillStyle=p.col.replace('hsl','hsla').replace(')',','+p.alpha+')');fwCtx.fill();});if(elapsed<FW_DURATION||fwParticles.length>0)requestAnimationFrame(fwFrame);else{fwRunning=false;fwCtx.clearRect(0,0,fwCanvas.width,fwCanvas.height);}}
+function startFW(gold){fwGold=gold;if(fwRunning)return;fwRunning=true;fwParticles=[];fwStart=performance.now();for(let i=0;i<6;i++)setTimeout(launchFW,i*150);requestAnimationFrame(fwFrame);}
+
+// ════════════════════════════════════════
+// COMPLETION STATE
+// ════════════════════════════════════════
+let task1Done=false,task1Perfect=false;
+let task2Done=false,task2Perfect=false;
+let task3Done=false,task3Perfect=false;
+
+function checkAllComplete(){
+  if(!task1Done||!task2Done||!task3Done)return;
+  const perfect=task1Perfect&&task2Perfect&&task3Perfect;
+  setTimeout(()=>triggerCompletion(perfect),400);
+}
+function triggerCompletion(perfect){
+  const body=document.body,banner=document.getElementById('completionBanner');
+  body.classList.remove('complete-green','complete-gold');
+  banner.classList.remove('green-banner','gold-banner');
+  if(perfect){body.classList.add('complete-gold');banner.classList.add('gold-banner');banner.textContent='🌟  Superstar! Perfect score on all tasks — first time!  🌟';startFW(true);}
+  else{body.classList.add('complete-green');banner.classList.add('green-banner');banner.textContent='🎉  Well done — all tasks complete!  🎉';}
+  banner.style.display='block';setTimeout(()=>banner.classList.add('show'),10);
+}
+function cancelCompletion(){
+  document.body.classList.remove('complete-green','complete-gold');
+  const banner=document.getElementById('completionBanner');
+  banner.classList.remove('show');
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('done-green','done-gold'));
+  task1Done=false;task1Perfect=false;task2Done=false;task2Perfect=false;task3Done=false;task3Perfect=false;
+}
+function setTabTick(num,perfect){
+  const tick=document.getElementById('tick-'+num);
+  tick.classList.remove('tick-green','tick-gold');
+  tick.classList.add(perfect?'tick-gold':'tick-green');
+  tick.textContent=perfect?'★':'✓';
+  tick.classList.add('show');
+  const btn=document.getElementById('tab-btn-'+num);
+  if(btn){btn.classList.remove('done-green','done-gold');btn.classList.add(perfect?'done-gold':'done-green');}
+}
+
+// ════════════════════════════════════════
+// TAB SWITCHING
+// ════════════════════════════════════════
+function switchTab(n){
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('panel-'+n).classList.add('active');
+  document.getElementById('tab-btn-'+n).classList.add('active');
+}
+
+// ════════════════════════════════════════
+// TASK 1 — RAM vs ROM drag sort
+// ════════════════════════════════════════
+const statements=[
+  {id:'r1',text:'Stands for Random Access Memory',               answer:'ram'},
+  {id:'r2',text:'Volatile — loses all data when powered off',    answer:'ram'},
+  {id:'r3',text:'Holds a relatively large amount of data',       answer:'ram'},
+  {id:'r4',text:'Can be both read from and written to',          answer:'ram'},
+  {id:'r5',text:'Stores the programs and data currently in use', answer:'ram'},
+  {id:'r6',text:'Can be upgraded — extra modules can be added',  answer:'ram'},
+  {id:'m1',text:'Stands for Read Only Memory',                   answer:'rom'},
+  {id:'m2',text:'Stores the boot-up instructions (BIOS/UEFI)',   answer:'rom'},
+  {id:'m3',text:'Non-volatile — keeps data when powered off',    answer:'rom'},
+  {id:'m4',text:'Holds only a small amount of data',             answer:'rom'},
+  {id:'m5',text:'Can only be read — data cannot be changed',     answer:'rom'},
+  {id:'m6',text:'Cannot be upgraded — soldered to the motherboard',answer:'rom'},
+];
+let cardState={},selectedId=null,dragId=null,t1EverWrong=false;
+function initState(){cardState={};selectedId=null;dragId=null;t1EverWrong=false;task1Done=false;task1Perfect=false;statements.forEach(s=>{cardState[s.id]={placed:null,locked:false};});}
+function buildCards(){
+  const pool=document.getElementById('cardPool');
+  document.getElementById('col-ram').innerHTML='<span class="col-empty-hint">Drop RAM cards here</span>';
+  document.getElementById('col-rom').innerHTML='<span class="col-empty-hint">Drop ROM cards here</span>';
+  pool.innerHTML='';hideAssignBtns();
+  document.getElementById('resultMsg').classList.remove('show','all-correct','all-gold','partial');
+  updateProgress();shuffle(statements).forEach(s=>pool.appendChild(makeCard(s)));setupDropZones();
+}
+function makeCard(s){
+  const el=document.createElement('div');el.className='stmt-card';el.id='card-'+s.id;el.dataset.id=s.id;el.draggable=true;
+  el.innerHTML=s.text+'<span class="card-badge"></span>';
+  el.addEventListener('dragstart',e=>{const st=cardState[s.id];if(st.locked){e.preventDefault();return;}dragId=s.id;clearSelected();setTimeout(()=>el.classList.add('dragging'),0);e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',s.id);});
+  el.addEventListener('dragend',()=>{el.classList.remove('dragging');dragId=null;});
+  el.addEventListener('click',()=>onCardClick(s.id));
+  return el;
+}
+function setupDropZones(){
+  [{el:document.getElementById('col-ram'),target:'ram'},{el:document.getElementById('col-rom'),target:'rom'},{el:document.getElementById('cardPool'),target:'pool'}].forEach(({el,target})=>{
+    el.addEventListener('dragover',e=>{e.preventDefault();e.dataTransfer.dropEffect='move';el.classList.add('drag-over');});
+    el.addEventListener('dragleave',e=>{if(!el.contains(e.relatedTarget))el.classList.remove('drag-over');});
+    el.addEventListener('drop',e=>{e.preventDefault();el.classList.remove('drag-over');const id=e.dataTransfer.getData('text/plain')||dragId;if(!id)return;const st=cardState[id];if(st.locked)return;if(target==='pool'){if(st.placed)returnToPool(id);}else placeCard(id,target);});
+  });
+}
+function placeCard(id,target){
+  const el=document.getElementById('card-'+id),st=cardState[id];if(!el||st.locked)return;
+  if(st.placed&&st.placed!==target){const oldCol=document.getElementById('col-'+st.placed);if(!oldCol.querySelector('.stmt-card:not(#card-'+id+')')){const h=document.createElement('span');h.className='col-empty-hint';h.textContent='Drop '+(st.placed.toUpperCase())+' cards here';oldCol.appendChild(h);}}
+  el.classList.remove('placed-ram','placed-rom','selected');
+  const col=document.getElementById('col-'+target);col.querySelector('.col-empty-hint')?.remove();
+  col.appendChild(el);el.classList.add(target==='ram'?'placed-ram':'placed-rom');st.placed=target;clearSelected();updateProgress();
+}
+function returnToPool(id){
+  const el=document.getElementById('card-'+id),st=cardState[id];if(!el||st.locked)return;
+  el.classList.remove('placed-ram','placed-rom','selected','correct-card','wrong-card');el.querySelector('.card-badge').textContent='';
+  const col=document.getElementById('col-'+st.placed);st.placed=null;document.getElementById('cardPool').appendChild(el);
+  if(!col.querySelector('.stmt-card')){const h=document.createElement('span');h.className='col-empty-hint';h.textContent='Drop '+(col.id==='col-ram'?'RAM':'ROM')+' cards here';col.appendChild(h);}
+  updateProgress();
+}
+function onCardClick(id){const st=cardState[id];if(st.locked)return;if(selectedId===id){clearSelected();return;}clearSelected();selectedId=id;document.getElementById('card-'+id).classList.add('selected');showAssignBtns();}
+function showAssignBtns(){document.getElementById('assignBtns').style.display='flex';}
+function hideAssignBtns(){document.getElementById('assignBtns').style.display='none';}
+function clearSelected(){if(selectedId)document.getElementById('card-'+selectedId)?.classList.remove('selected');selectedId=null;hideAssignBtns();}
+function assignSelected(target){if(!selectedId)return;placeCard(selectedId,target);}
+function updateProgress(){const placed=Object.values(cardState).filter(s=>s.placed!==null).length;document.getElementById('progressFill').style.width=(placed/statements.length*100)+'%';document.getElementById('progressLabel').textContent=placed+' / '+statements.length+' placed';}
+function checkAnswers(){
+  clearSelected();let correct=0,checked=0,anyWrong=false;
+  statements.forEach(s=>{const st=cardState[s.id];if(st.placed===null)return;if(st.locked){correct++;checked++;return;}checked++;const el=document.getElementById('card-'+s.id);const badge=el.querySelector('.card-badge');
+    if(st.placed===s.answer){el.classList.remove('placed-ram','placed-rom','wrong-card');el.classList.add('correct-card');el.draggable=false;badge.textContent='✓';st.locked=true;correct++;}
+    else{anyWrong=true;el.classList.add('wrong-card');badge.textContent='✗';setTimeout(()=>{el.classList.remove('wrong-card','placed-ram','placed-rom');badge.textContent='';returnToPool(s.id);},600);}
+  });
+  if(anyWrong)t1EverWrong=true;
+  const msg=document.getElementById('resultMsg');msg.classList.remove('all-correct','all-gold','partial');msg.classList.add('show');
+  if(correct===statements.length){const perfect=!t1EverWrong;msg.textContent=perfect?'🌟 Perfect first time!':'✅ All correct — well done!';msg.classList.add(perfect?'all-gold':'all-correct');task1Done=true;task1Perfect=perfect;setTabTick(1,perfect);checkAllComplete();}
+  else if(checked===0){msg.textContent='Place some cards first, then check.';msg.style.color='var(--grey-l)';}
+  else{msg.textContent=correct+' correct · '+(checked-correct)+' wrong — those cards returned, try again.';msg.classList.add('partial');}
+}
+function resetAll(){cancelCompletion();initState();buildCards();document.getElementById('tick-1').classList.remove('show');}
+
+// ════════════════════════════════════════
+// TASK 2 — Part A: Primary vs Secondary
+// ════════════════════════════════════════
+const devices=[
+  {id:'dv1',icon:'SVG_RAM',name:'RAM',               answer:'primary'},
+  {id:'dv2',icon:'SVG_ROM',name:'ROM',               answer:'primary'},
+  {id:'dv3',icon:'SVG_HDD',name:'Hard Disk Drive',   answer:'secondary'},
+  {id:'dv4',icon:'SVG_SSD',name:'Solid State Drive', answer:'secondary'},
+  {id:'dv5',icon:'SVG_USB',name:'USB Stick',         answer:'secondary'},
+  {id:'dv6',icon:'SVG_CACHE',name:'Cache Memory',      answer:'primary'},
+];
+let devState={},selectedDevId=null,partADone=false,partAEverWrong=false;
+function initDevState(){devState={};selectedDevId=null;partADone=false;devices.forEach(d=>{devState[d.id]={placed:null,locked:false};});}
+const SVG_ICONS = {
+  SVG_RAM: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="38" height="38" style="display:block;margin:0 auto 4px;">
+  <!-- Bottom DIMM -->
+  <rect x="3" y="26" width="42" height="10" rx="2" fill="#0d7377" stroke="#14a8ad" stroke-width="1.5"/>
+  <rect x="3" y="34" width="42" height="3" rx="0" fill="#0a5558"/>
+  <!-- Chips on bottom DIMM -->
+  <rect x="7"  y="28" width="5" height="5" rx="1" fill="#7ee8ea" opacity="0.85"/>
+  <rect x="15" y="28" width="5" height="5" rx="1" fill="#7ee8ea" opacity="0.85"/>
+  <rect x="23" y="28" width="5" height="5" rx="1" fill="#7ee8ea" opacity="0.85"/>
+  <rect x="31" y="28" width="5" height="5" rx="1" fill="#7ee8ea" opacity="0.85"/>
+  <rect x="39" y="28" width="3" height="5" rx="1" fill="#7ee8ea" opacity="0.85"/>
+  <!-- Notch bottom -->
+  <rect x="20" y="35" width="6" height="4" rx="1" fill="#0f1117"/>
+  <!-- Top DIMM -->
+  <rect x="3" y="12" width="42" height="10" rx="2" fill="#0d7377" stroke="#14a8ad" stroke-width="1.5"/>
+  <rect x="3" y="20" width="42" height="3" rx="0" fill="#0a5558"/>
+  <!-- Chips on top DIMM -->
+  <rect x="7"  y="14" width="5" height="5" rx="1" fill="#7ee8ea" opacity="0.85"/>
+  <rect x="15" y="14" width="5" height="5" rx="1" fill="#7ee8ea" opacity="0.85"/>
+  <rect x="23" y="14" width="5" height="5" rx="1" fill="#7ee8ea" opacity="0.85"/>
+  <rect x="31" y="14" width="5" height="5" rx="1" fill="#7ee8ea" opacity="0.85"/>
+  <rect x="39" y="14" width="3" height="5" rx="1" fill="#7ee8ea" opacity="0.85"/>
+  <!-- Notch top -->
+  <rect x="20" y="21" width="6" height="4" rx="1" fill="#0f1117"/>
+</svg>`,
+  SVG_ROM: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="38" height="38" style="display:block;margin:0 auto 4px;">
+  <!-- PCB base -->
+  <rect x="2" y="36" width="44" height="5" rx="2" fill="#1a3a1a" stroke="#2d5a2d" stroke-width="1"/>
+  <!-- IC body -->
+  <rect x="10" y="12" width="28" height="24" rx="3" fill="#2d1060" stroke="#b44fc7" stroke-width="1.5"/>
+  <!-- Chip label -->
+  <rect x="15" y="17" width="18" height="10" rx="2" fill="#1e0a24" opacity="0.8"/>
+  <line x1="17" y1="20" x2="31" y2="20" stroke="#e0a8ec" stroke-width="1" opacity="0.7"/>
+  <line x1="17" y1="23" x2="28" y2="23" stroke="#e0a8ec" stroke-width="1" opacity="0.5"/>
+  <!-- Orientation dot -->
+  <circle cx="13" cy="15" r="2" fill="#e0a8ec"/>
+  <!-- Left pins -->
+  <rect x="4"  y="15" width="6" height="2.5" rx="1" fill="#94a3b8"/>
+  <rect x="4"  y="20" width="6" height="2.5" rx="1" fill="#94a3b8"/>
+  <rect x="4"  y="25" width="6" height="2.5" rx="1" fill="#94a3b8"/>
+  <rect x="4"  y="30" width="6" height="2.5" rx="1" fill="#94a3b8"/>
+  <!-- Right pins -->
+  <rect x="38" y="15" width="6" height="2.5" rx="1" fill="#94a3b8"/>
+  <rect x="38" y="20" width="6" height="2.5" rx="1" fill="#94a3b8"/>
+  <rect x="38" y="25" width="6" height="2.5" rx="1" fill="#94a3b8"/>
+  <rect x="38" y="30" width="6" height="2.5" rx="1" fill="#94a3b8"/>
+  <!-- Solder points on PCB -->
+  <circle cx="10" cy="38" r="1.5" fill="#64748b"/>
+  <circle cx="18" cy="38" r="1.5" fill="#64748b"/>
+  <circle cx="26" cy="38" r="1.5" fill="#64748b"/>
+  <circle cx="34" cy="38" r="1.5" fill="#64748b"/>
+</svg>`,
+  SVG_HDD: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="38" height="38" style="display:block;margin:0 auto 4px;">
+  <!-- Drive casing -->
+  <rect x="3" y="6" width="42" height="36" rx="4" fill="#1e2535" stroke="#3b5278" stroke-width="1.5"/>
+  <!-- Platter -->
+  <circle cx="22" cy="24" r="13" fill="#334155" stroke="#475569" stroke-width="1"/>
+  <circle cx="22" cy="24" r="8"  fill="#1e2535" stroke="#475569" stroke-width="0.8"/>
+  <circle cx="22" cy="24" r="3"  fill="#64748b"/>
+  <circle cx="22" cy="24" r="1.5" fill="#94a3b8"/>
+  <!-- Read arm -->
+  <line x1="35" y1="10" x2="24" y2="22" stroke="#60a5fa" stroke-width="2" stroke-linecap="round"/>
+  <circle cx="35" cy="10" r="2.5" fill="#1d4ed8"/>
+  <circle cx="24" cy="22" r="2"   fill="#93c5fd"/>
+  <!-- Screw corners -->
+  <circle cx="7"  cy="10" r="2" fill="#475569" stroke="#64748b" stroke-width="0.8"/>
+  <circle cx="41" cy="10" r="2" fill="#475569" stroke="#64748b" stroke-width="0.8"/>
+  <circle cx="7"  cy="38" r="2" fill="#475569" stroke="#64748b" stroke-width="0.8"/>
+  <circle cx="41" cy="38" r="2" fill="#475569" stroke="#64748b" stroke-width="0.8"/>
+</svg>`,
+  SVG_SSD: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="38" height="38" style="display:block;margin:0 auto 4px;">
+  <!-- PCB -->
+  <rect x="6" y="10" width="36" height="14" rx="2" fill="#1a1060" stroke="#4338ca" stroke-width="1.5"/>
+  <!-- Flash chips -->
+  <rect x="9"  y="12" width="7" height="9" rx="1" fill="#312e81" stroke="#6366f1" stroke-width="1"/>
+  <rect x="19" y="12" width="7" height="9" rx="1" fill="#312e81" stroke="#6366f1" stroke-width="1"/>
+  <rect x="29" y="12" width="7" height="9" rx="1" fill="#312e81" stroke="#6366f1" stroke-width="1"/>
+  <!-- Controller chip -->
+  <rect x="9" y="26" width="12" height="9" rx="1" fill="#1e1060" stroke="#818cf8" stroke-width="1.2"/>
+  <line x1="12" y1="29" x2="18" y2="29" stroke="#a5b4fc" stroke-width="0.8"/>
+  <line x1="12" y1="31" x2="16" y2="31" stroke="#a5b4fc" stroke-width="0.8"/>
+  <line x1="12" y1="33" x2="18" y2="33" stroke="#a5b4fc" stroke-width="0.8"/>
+  <!-- M.2 connector gold fingers -->
+  <rect x="6" y="37" width="36" height="4" rx="1" fill="#0f172a" stroke="#4338ca" stroke-width="1"/>
+  <rect x="9"  y="38" width="3" height="2" rx="0.5" fill="#fbbf24"/>
+  <rect x="14" y="38" width="3" height="2" rx="0.5" fill="#fbbf24"/>
+  <rect x="19" y="38" width="3" height="2" rx="0.5" fill="#fbbf24"/>
+  <rect x="24" y="38" width="3" height="2" rx="0.5" fill="#fbbf24"/>
+  <rect x="29" y="38" width="3" height="2" rx="0.5" fill="#fbbf24"/>
+  <rect x="34" y="38" width="3" height="2" rx="0.5" fill="#fbbf24"/>
+</svg>`,
+  SVG_USB: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 32" width="38" height="26" style="display:block;margin:0 auto 6px;">
+  <!-- Body of USB stick -->
+  <rect x="2" y="8" width="32" height="16" rx="3" ry="3" fill="#94a3b8" stroke="#64748b" stroke-width="1.5"/>
+  <!-- Label area on body -->
+  <rect x="6" y="11" width="20" height="10" rx="2" fill="#cbd5e1" opacity="0.6"/>
+  <!-- LED dot -->
+  <circle cx="30" cy="16" r="2" fill="#34d399" opacity="0.9"/>
+  <!-- USB connector -->
+  <rect x="34" y="12" width="12" height="8" rx="1" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1"/>
+  <!-- Connector inner slot -->
+  <rect x="36" y="14" width="8" height="4" rx="0.5" fill="#475569"/>
+  <!-- Keychain hole -->
+  <circle cx="5" cy="16" r="3" fill="none" stroke="#64748b" stroke-width="1.5"/>
+</svg>`,
+  SVG_CACHE: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="38" height="38" style="display:block;margin:0 auto 4px;">
+  <!-- CPU package -->
+  <rect x="4" y="4" width="40" height="40" rx="4" fill="#1e2535" stroke="#3b5278" stroke-width="1.5"/>
+  <!-- CPU die -->
+  <rect x="9" y="9" width="30" height="30" rx="2" fill="#0d1b2a" stroke="#1d4ed8" stroke-width="1"/>
+  <!-- Cache rings (concentric, glowing) -->
+  <rect x="13" y="13" width="22" height="22" rx="2" fill="none" stroke="#60a5fa" stroke-width="1.5" opacity="0.5"/>
+  <rect x="16" y="16" width="16" height="16" rx="2" fill="none" stroke="#60a5fa" stroke-width="1.5" opacity="0.7"/>
+  <!-- Core in centre -->
+  <rect x="19" y="19" width="10" height="10" rx="1" fill="#1d4ed8" stroke="#93c5fd" stroke-width="1"/>
+  <!-- Corner pins -->
+  <rect x="1"  y="8"  width="4" height="2" rx="0.5" fill="#64748b"/>
+  <rect x="1"  y="14" width="4" height="2" rx="0.5" fill="#64748b"/>
+  <rect x="1"  y="20" width="4" height="2" rx="0.5" fill="#64748b"/>
+  <rect x="1"  y="26" width="4" height="2" rx="0.5" fill="#64748b"/>
+  <rect x="1"  y="32" width="4" height="2" rx="0.5" fill="#64748b"/>
+  <rect x="43" y="8"  width="4" height="2" rx="0.5" fill="#64748b"/>
+  <rect x="43" y="14" width="4" height="2" rx="0.5" fill="#64748b"/>
+  <rect x="43" y="20" width="4" height="2" rx="0.5" fill="#64748b"/>
+  <rect x="43" y="26" width="4" height="2" rx="0.5" fill="#64748b"/>
+  <rect x="43" y="32" width="4" height="2" rx="0.5" fill="#64748b"/>
+</svg>`
+};
+
+function buildDevices(){
+  const grid=document.getElementById('deviceGrid');grid.innerHTML='';document.getElementById('devAssignBtns').classList.remove('visible');
+  shuffle(devices).forEach(d=>{const el=document.createElement('div');el.className='device-card';el.id='dev-'+d.id;el.dataset.id=d.id;const iconHtml = d.icon.startsWith('SVG_')
+      ? '<span class="device-icon" style="font-size:0;line-height:0;">'+SVG_ICONS[d.icon]+'</span>'
+      : '<span class="device-icon">'+d.icon+'</span>';
+    el.innerHTML=iconHtml+'<div class="device-name">'+d.name+'</div><span class="device-badge"></span>';el.onclick=()=>onDevClick(d.id);grid.appendChild(el);});
+}
+function onDevClick(id){if(devState[id].locked)return;if(selectedDevId===id)clearDeviceSelected();else selectDev(id);}
+function selectDev(id){if(selectedDevId)document.getElementById('dev-'+selectedDevId)?.classList.remove('dev-selected');selectedDevId=id;document.getElementById('dev-'+id)?.classList.add('dev-selected');document.getElementById('devAssignBtns').classList.add('visible');}
+function clearDeviceSelected(){if(selectedDevId)document.getElementById('dev-'+selectedDevId)?.classList.remove('dev-selected');selectedDevId=null;document.getElementById('devAssignBtns').classList.remove('visible');}
+function assignDevice(target){if(!selectedDevId)return;const id=selectedDevId,st=devState[id];if(st.locked){clearDeviceSelected();return;}const el=document.getElementById('dev-'+id);el.classList.remove('dev-selected','dev-primary','dev-secondary');el.classList.add(target==='primary'?'dev-primary':'dev-secondary');st.placed=target;clearDeviceSelected();}
+
+function checkPartA(){
+  clearDeviceSelected();let correct=0,checked=0,anyWrong=false;
+  devices.forEach(d=>{const st=devState[d.id];if(st.placed===null)return;if(st.locked){correct++;checked++;return;}checked++;const el=document.getElementById('dev-'+d.id);const badge=el.querySelector('.device-badge');
+    if(st.placed===d.answer){el.classList.remove('dev-primary','dev-secondary','dev-wrong');el.classList.add('dev-correct');badge.textContent='✓';st.locked=true;correct++;}
+    else{anyWrong=true;el.classList.add('dev-wrong');badge.textContent='✗';setTimeout(()=>{el.classList.remove('dev-wrong','dev-primary','dev-secondary');badge.textContent='';st.placed=null;},600);}
+  });
+  if(anyWrong)partAEverWrong=true;
+  const res=document.getElementById('partAResult');res.classList.remove('show','all-correct','all-gold','partial');res.classList.add('show');
+  if(correct===devices.length){const perfect=!partAEverWrong;res.textContent=perfect?'🌟 Part A perfect!':'✅ Part A complete!';res.classList.add(perfect?'all-gold':'all-correct');partADone=true;checkTask2Complete();}
+  else if(checked===0){res.textContent='Sort some devices first.';res.style.color='var(--grey-l)';}
+  else{res.textContent=correct+' correct · '+(checked-correct)+' wrong — returned, keep going!';res.classList.add('partial');}
+}
+function resetPartA(){partAEverWrong=false;partADone=false;initDevState();buildDevices();document.getElementById('partAResult').classList.remove('show','all-correct','all-gold','partial');checkTask2Complete();}
+
+// ════════════════════════════════════════
+// TASK 2 — Part B: RAM / ROM / Cache facts
+// ════════════════════════════════════════
+const facts=[
+  // RAM
+  {id:'f1', text:'Volatile — contents are lost when the computer is switched off',          answer:'ram'},
+  {id:'f2', text:'Can be read from and written to by the CPU',                             answer:'ram'},
+  {id:'f3', text:'Temporarily holds programs and data currently being used',               answer:'ram'},
+  {id:'f4', text:'Can be upgraded — extra modules can be added to the motherboard',        answer:'ram'},
+  // ROM
+  {id:'f5', text:'Non-volatile — keeps its contents when power is off',                    answer:'rom'},
+  {id:'f6', text:'Can only be read — the data cannot be changed',                          answer:'rom'},
+  {id:'f7', text:'Contains the boot-up instructions the computer needs to start',          answer:'rom'},
+  {id:'f8', text:'Permanently fixed to the motherboard — cannot be upgraded',              answer:'rom'},
+  // Cache
+  {id:'f9', text:'Extremely fast memory built directly into or close to the CPU',          answer:'cache'},
+  {id:'f10',text:'Stores frequently used instructions so the CPU does not have to wait',   answer:'cache'},
+  {id:'f11',text:'Very small capacity but the fastest of all memory types',                answer:'cache'},
+  {id:'f12',text:'Acts as a buffer between the CPU and the slower RAM',                    answer:'cache'},
+];
+let factState={},selectedFactId=null,partBDone=false,partBEverWrong=false;
+function initFactState(){factState={};selectedFactId=null;partBDone=false;facts.forEach(f=>{factState[f.id]={placed:null,locked:false};});}
+function buildFacts(){
+  const pool=document.getElementById('factPool');pool.innerHTML='';
+  ['ram','rom','cache'].forEach(t=>{const drop=document.getElementById('drop-'+t);drop.innerHTML='<span class="col-empty-hint" style="margin:auto;display:block;padding:8px 0;">'+(t==='cache'?'Cache':t.toUpperCase())+' facts here</span>';});
+  document.getElementById('factAssignBtns').classList.remove('visible');
+  shuffle(facts).forEach(f=>pool.appendChild(makeFactCard(f)));
+}
+function makeFactCard(f){const el=document.createElement('div');el.className='fact-card';el.id='fact-'+f.id;el.dataset.id=f.id;el.innerHTML=f.text+'<span class="fact-badge"></span>';el.onclick=()=>onFactClick(f.id);return el;}
+function onFactClick(id){const st=factState[id];if(st.locked)return;if(st.placed){returnFactToPool(id);selectFact(id);return;}if(selectedFactId===id)clearFactSelected();else selectFact(id);}
+function selectFact(id){if(selectedFactId)document.getElementById('fact-'+selectedFactId)?.classList.remove('fact-selected');selectedFactId=id;document.getElementById('fact-'+id)?.classList.add('fact-selected');document.getElementById('factAssignBtns').classList.add('visible');}
+function clearFactSelected(){if(selectedFactId)document.getElementById('fact-'+selectedFactId)?.classList.remove('fact-selected');selectedFactId=null;document.getElementById('factAssignBtns').classList.remove('visible');}
+function assignFact(target){
+  if(!selectedFactId)return;const id=selectedFactId,st=factState[id];if(st.locked){clearFactSelected();return;}
+  const el=document.getElementById('fact-'+id);el.classList.remove('fact-selected','fact-ram','fact-rom','fact-cache');
+  const drop=document.getElementById('drop-'+target);drop.querySelector('.col-empty-hint')?.remove();
+  drop.appendChild(el);el.classList.add('fact-'+target);st.placed=target;clearFactSelected();
+}
+function returnFactToPool(id){
+  const el=document.getElementById('fact-'+id),st=factState[id];if(!el||st.locked)return;
+  el.classList.remove('fact-ram','fact-rom','fact-cache','fact-selected','fact-correct','fact-wrong');el.querySelector('.fact-badge').textContent='';
+  const drop=document.getElementById('drop-'+st.placed);st.placed=null;document.getElementById('factPool').appendChild(el);
+  if(!drop.querySelector('.fact-card')){const h=document.createElement('span');h.className='col-empty-hint';h.style.cssText='margin:auto;display:block;padding:8px 0;';const t=drop.id.replace('drop-','');h.textContent=(t==='cache'?'Cache':t.toUpperCase())+' facts here';drop.appendChild(h);}
+}
+
+function checkPartB(){
+  clearFactSelected();let correct=0,checked=0,anyWrong=false;
+  facts.forEach(f=>{const st=factState[f.id];if(st.placed===null)return;if(st.locked){correct++;checked++;return;}checked++;const el=document.getElementById('fact-'+f.id);const badge=el.querySelector('.fact-badge');
+    if(st.placed===f.answer){el.classList.remove('fact-ram','fact-rom','fact-cache','fact-wrong');el.classList.add('fact-correct');badge.textContent='✓';st.locked=true;correct++;}
+    else{anyWrong=true;el.classList.add('fact-wrong');badge.textContent='✗';setTimeout(()=>{el.classList.remove('fact-wrong','fact-ram','fact-rom','fact-cache');badge.textContent='';returnFactToPool(f.id);},600);}
+  });
+  if(anyWrong)partBEverWrong=true;
+  const res=document.getElementById('t3Result');res.classList.remove('ok','gold','part');res.classList.add('show');
+  if(correct===facts.length){const perfect=!partBEverWrong;res.textContent=perfect?'🌟 Part B perfect!':'✅ Part B complete!';res.classList.add(perfect?'gold':'ok');partBDone=true;checkTask2Complete();}
+  else if(checked===0){res.textContent='Assign some facts first.';res.style.color='var(--grey-l)';}
+  else{res.textContent=correct+' correct · '+(checked-correct)+' wrong — returned, keep going!';res.classList.add('part');}
+}
+function resetPartB(){partBEverWrong=false;partBDone=false;initFactState();buildFacts();document.getElementById('t3Result').classList.remove('show','ok','gold','part');checkTask2Complete();}
+
+function checkTask2Complete(){
+  if(partADone&&partBDone){
+    const perfect=!partAEverWrong&&!partBEverWrong;
+    task2Done=true;task2Perfect=perfect;setTabTick(2,perfect);checkAllComplete();
+  }
+}
+function resetTask2(){cancelCompletion();partAEverWrong=false;partBEverWrong=false;initDevState();initFactState();buildDevices();buildFacts();document.getElementById('partAResult').classList.remove('show','all-correct','all-gold','partial');document.getElementById('t3Result').classList.remove('show','ok','gold','part');document.getElementById('tick-2').classList.remove('show');task2Done=false;task2Perfect=false;}
+
+// ════════════════════════════════════════
+// TASK 3 — Spot the Mistake
+// ════════════════════════════════════════
+// Each item has: the statement split around the error word,
+// the error word, the correct replacement, and two plausible distractors.
+const stmItems = [
+  {
+    id:'q1',
+    pre:'Secondary storage is ',
+    error:'volatile',
+    post:', which means data is kept permanently even when the computer is switched off.',
+    correct:'non-volatile',
+    distractors:['read-only','temporary']
+  },
+  {
+    id:'q2',
+    pre:'RAM is ',
+    error:'non-volatile',
+    post:' — its contents are lost as soon as the computer is switched off.',
+    correct:'volatile',
+    distractors:['read-only','permanent']
+  },
+  {
+    id:'q3',
+    pre:'ROM stores the ',
+    error:'operating system',
+    post:' — the instructions the computer needs to start up.',
+    correct:'boot-up instructions',
+    distractors:['user files','cache data']
+  },
+  {
+    id:'q4',
+    pre:'ROM is ',
+    error:'read-write',
+    post:' — you can access its data but you cannot change it.',
+    correct:'read-only',
+    distractors:['volatile','upgradeable']
+  },
+  {
+    id:'q5',
+    pre:'Secondary storage has a much larger ',
+    error:'speed',
+    post:' than RAM or ROM, so it can store the operating system, programs, and user files.',
+    correct:'capacity',
+    distractors:['voltage','clock rate']
+  },
+  {
+    id:'q6',
+    pre:'RAM cannot be used to store data permanently because it ',
+    error:'fills up too quickly',
+    post:' when the computer is switched off.',
+    correct:'loses its contents',
+    distractors:['becomes read-only','corrupts data']
+  },
+  {
+    id:'q7',
+    pre:'Cache is the ',
+    error:'slowest',
+    post:' type of primary memory, but it holds only a very small amount of data.',
+    correct:'fastest',
+    distractors:['largest','cheapest']
+  },
+  {
+    id:'q8',
+    pre:'ROM cannot replace secondary storage because it holds only a ',
+    error:'large',
+    post:' amount of data and its contents cannot be changed.',
+    correct:'small',
+    distractors:['volatile','random']
+  },
+];
+
+let stmState = {};  // id -> { selected: null|string, locked: bool }
+let t3EverWrong = false;
+
+function initWhyState(){
+  stmState = {};
+  stmItems.forEach(q => { stmState[q.id] = { selected:null, locked:false }; });
+  t3EverWrong = false; task3Done = false; task3Perfect = false;
+}
+
+function buildTask3(){
+  const list = document.getElementById('stmList');
+  list.innerHTML = '';
+  document.getElementById('t4Result').classList.remove('show','ok','gold','part');
+
+  stmItems.forEach(q => {
+    const card = document.createElement('div');
+    card.className = 'stm-card';
+    card.id = 'stm-' + q.id;
+
+    // Statement with error word highlighted
+    const stmt = document.createElement('div');
+    stmt.className = 'stm-statement';
+    stmt.appendChild(document.createTextNode(q.pre));
+    const errSpan = document.createElement('span');
+    errSpan.className = 'stm-error';
+    errSpan.id = 'err-' + q.id;
+    errSpan.textContent = q.error;
+    stmt.appendChild(errSpan);
+    stmt.appendChild(document.createTextNode(q.post));
+
+    const badge = document.createElement('span');
+    badge.className = 'stm-badge';
+    badge.id = 'badge-' + q.id;
+    stmt.appendChild(badge);
+
+    card.appendChild(stmt);
+
+    // Options (correct + distractors, shuffled)
+    const allOpts = shuffle([q.correct, ...q.distractors]);
+    const optsRow = document.createElement('div');
+    optsRow.className = 'stm-options';
+    optsRow.id = 'opts-' + q.id;
+
+    allOpts.forEach(opt => {
+      const btn = document.createElement('button');
+      btn.className = 'stm-opt';
+      btn.textContent = opt;
+      btn.dataset.value = opt;
+      btn.onclick = () => selectOption(q.id, opt, btn);
+      optsRow.appendChild(btn);
+    });
+
+    card.appendChild(optsRow);
+    list.appendChild(card);
+  });
+}
+
+function selectOption(id, value, btn){
+  const st = stmState[id];
+  if(st.locked) return;
+
+  // Deselect previous if same question
+  const opts = document.querySelectorAll('#opts-'+id+' .stm-opt');
+  opts.forEach(b => b.classList.remove('stm-selected'));
+
+  if(st.selected === value){
+    // Toggle off
+    st.selected = null;
+  } else {
+    st.selected = value;
+    btn.classList.add('stm-selected');
+  }
+}
+
+function checkTask3(){
+  let correct = 0, checked = 0, anyWrong = false;
+
+  stmItems.forEach(q => {
+    const st = stmState[q.id];
+    if(st.locked){ correct++; checked++; return; }
+    if(st.selected === null) return; // not answered yet — skip
+
+    checked++;
+    const card  = document.getElementById('stm-' + q.id);
+    const badge = document.getElementById('badge-' + q.id);
+    const opts  = document.querySelectorAll('#opts-' + q.id + ' .stm-opt');
+    const errSpan = document.getElementById('err-' + q.id);
+
+    if(st.selected === q.correct){
+      // Lock and show correct
+      card.classList.add('stm-correct');
+      badge.textContent = '✓'; badge.style.display = 'inline';
+      // Update the highlighted word to show the fix
+      errSpan.textContent = q.correct;
+      errSpan.style.color = 'var(--green-l)';
+      errSpan.style.borderBottomColor = 'var(--green)';
+      errSpan.style.textDecoration = 'none';
+      // Style the options
+      opts.forEach(b => {
+        b.classList.remove('stm-selected');
+        b.classList.add('stm-opt-disabled');
+        if(b.dataset.value === q.correct) b.classList.add('stm-opt-correct');
+      });
+      st.locked = true;
+      correct++;
+    } else {
+      // Wrong — show which was right, mark theirs wrong, lock
+      anyWrong = true;
+      card.classList.add('stm-wrong');
+      badge.textContent = '✗'; badge.style.display = 'inline';
+      opts.forEach(b => {
+        b.classList.remove('stm-selected');
+        b.classList.add('stm-opt-disabled');
+        if(b.dataset.value === q.correct)   b.classList.add('stm-opt-correct');
+        if(b.dataset.value === st.selected) b.classList.add('stm-opt-wrong');
+      });
+      // Shake then clear wrong state but keep locked
+      setTimeout(() => { card.classList.remove('stm-wrong'); }, 400);
+      st.locked = true; // lock after wrong — one attempt per question
+    }
+  });
+
+  if(anyWrong) t3EverWrong = true;
+
+  const res = document.getElementById('t4Result');
+  res.classList.remove('ok','gold','part'); res.classList.add('show');
+
+  const allLocked = stmItems.every(q => stmState[q.id].locked);
+  if(allLocked || correct === stmItems.length){
+    if(correct === stmItems.length){
+      const perfect = !t3EverWrong;
+      res.textContent = perfect ? '🌟 Perfect — all mistakes found first time!' : '✅ All correct — well done!';
+      res.classList.add(perfect ? 'gold' : 'ok');
+      task3Done = true; task3Perfect = perfect;
+      setTabTick(3, perfect); checkAllComplete();
+    } else {
+      res.textContent = correct + ' / ' + stmItems.length + ' correct — see the correct answers highlighted above.';
+      res.classList.add('part');
+      // Still mark task done (they've used all their attempts)
+      task3Done = true; task3Perfect = false;
+      setTabTick(3, false); checkAllComplete();
+    }
+  } else if(checked === 0){
+    res.textContent = 'Select a replacement word for at least one statement, then check.';
+    res.style.color = 'var(--grey-l)';
+  } else {
+    const wrong = checked - correct;
+    res.textContent = correct + ' correct · ' + wrong + ' wrong — correct answers shown above.';
+    res.classList.add('part');
+  }
+}
+
+function resetTask3(){
+  cancelCompletion();
+  initWhyState();
+  buildTask3();
+  document.getElementById('tick-3').classList.remove('show');
+}
+
+
+// Init
+initState();    buildCards();
+initDevState(); buildDevices();
+initFactState();buildFacts();
+initWhyState(); buildTask3();
+</script>
+</body>
+</html>

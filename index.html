@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Python Programming · Year 8</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Trebuchet MS', Calibri, sans-serif;
+      background: #0f1c2e;
+      color: #e8edf2;
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      background: #0a1520;
+      border-bottom: 3px solid #00b4b4;
+      padding: 2rem 2.5rem 1.5rem;
+    }
+    .header-inner { max-width: 960px; margin: 0 auto; }
+    .header-eyebrow {
+      font-size: 0.8rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: #00b4b4;
+      margin-bottom: 0.4rem;
+    }
+    header h1 {
+      font-size: 2rem;
+      font-weight: 800;
+      color: #ffffff;
+    }
+    header h1 span { color: #00b4b4; }
+    .header-sub {
+      margin-top: 0.5rem;
+      font-size: 0.9rem;
+      color: #7a9ab5;
+    }
+
+    /* ── Main ── */
+    main {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 2rem 2.5rem 4rem;
+    }
+
+    /* ── Loading / error states ── */
+    #status {
+      font-size: 0.9rem;
+      color: #7a9ab5;
+      padding: 2rem 0;
+    }
+    #status.error { color: #e05555; }
+
+    /* ── Lesson groups ── */
+    .lesson-group { margin-bottom: 2.5rem; }
+    .lesson-heading {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #7a9ab5;
+      border-bottom: 1px solid #1e3048;
+      padding-bottom: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    .card-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 1rem;
+    }
+
+    /* ── Cards ── */
+    .card {
+      background: #162032;
+      border-radius: 8px;
+      padding: 1.1rem 1.2rem 1rem;
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    }
+    .card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.2rem;
+    }
+    .badge {
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: #0a1520;
+      padding: 0.2em 0.6em;
+      border-radius: 4px;
+    }
+    .stars { font-size: 0.75rem; color: #f5a623; }
+    .card-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #ffffff;
+      line-height: 1.25;
+    }
+    .card-desc {
+      font-size: 0.8rem;
+      color: #7a9ab5;
+      line-height: 1.4;
+      flex: 1;
+    }
+    .card-arrow {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #00b4b4;
+      margin-top: 0.3rem;
+    }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center;
+      font-size: 0.75rem;
+      color: #2a4060;
+      padding: 1.5rem;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="header-eyebrow">Python Programming</div>
+    <h1>Year 8 <span>Activities</span></h1>
+    <p class="header-sub">Select an activity to open it</p>
+  </div>
+</header>
+
+<main>
+  <div id="status">Loading activities…</div>
+  <div id="content"></div>
+</main>
+
+<footer>Python Programming · Year 8</footer>
+
+<script>
+  const COLOR = {
+    teal:  { border: '#00b4b4', badge: '#00b4b4' },
+    amber: { border: '#f5a623', badge: '#f5a623' },
+    red:   { border: '#e05555', badge: '#e05555' },
+    green: { border: '#2ecc71', badge: '#2ecc71' },
+  };
+
+  function stars(n) {
+    if (!n) return '';
+    return `<span class="stars">${'★'.repeat(n)}${'☆'.repeat(4 - n)}</span>`;
+  }
+
+  function buildCards(activities) {
+    // Group by lesson
+    const groups = {};
+    activities.forEach(a => {
+      if (!groups[a.lesson]) groups[a.lesson] = [];
+      groups[a.lesson].push(a);
+    });
+
+    return Object.keys(groups).sort().map(lesson => {
+      const cards = groups[lesson].map(a => {
+        const c = COLOR[a.color] || COLOR.teal;
+        return `
+          <a class="card" href="${a.page}" style="border-top:4px solid ${c.border}">
+            <div class="card-top">
+              <span class="badge" style="background:${c.badge}">${a.type}</span>
+              ${stars(a.stars)}
+            </div>
+            <div class="card-title">${a.title}</div>
+            <div class="card-desc">${a.desc}</div>
+            <div class="card-arrow">Open →</div>
+          </a>`;
+      }).join('');
+
+      return `
+        <div class="lesson-group">
+          <h2 class="lesson-heading">${lesson}</h2>
+          <div class="card-row">${cards}</div>
+        </div>`;
+    }).join('');
+  }
+
+  // Fetch activities.json and render
+  // Cache-busting query string ensures updated JSON is always fetched
+  // after a new deployment, not served from the browser cache.
+  fetch('activities.json?v=' + Date.now())
+    .then(r => {
+      if (!r.ok) throw new Error('Could not load activities.json — ' + r.status);
+      return r.json();
+    })
+    .then(activities => {
+      document.getElementById('status').remove();
+      document.getElementById('content').innerHTML = buildCards(activities);
+    })
+    .catch(err => {
+      const el = document.getElementById('status');
+      el.className = 'error';
+      el.textContent = 'Could not load activities: ' + err.message;
+    });
+</script>
+
+</body>
+</html>

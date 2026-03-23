@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Casting Exercises — Year 8 Python</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#DCE9F5;--navy:#1A2E4A;--navyMid:#1E3A5F;
+  --teal:#00B4D8;--tealDark:#006D8F;
+  --amber:#E07B2A;--amberLight:#FEF0E4;
+  --green:#2E7D52;--greenLight:#E6F4ED;--greenBright:#22c55e;
+  --gold:#F5C300;--goldDark:#B8860B;--goldBg:#FFFBDC;--goldMid:#ffe066;
+  --red:#dc2626;--cellBg:#E4EEF7;
+  --codeBg:#1E2D40;--codeText:#A8DADC;--muted:#6B8CAE;
+  --purple:#7B5EA7;--purpleLight:#F0EBF8;
+  --blue:#1565C0;--blueLight:#E3F0FC;
+  --r1:#00B4D8;--r2:#E07B2A;--r3:#E07B2A;--r4:#7B5EA7;--r5:#2E7D52;--r6:#1565C0;
+}
+body{font-family:'Trebuchet MS',Calibri,Arial,sans-serif;background:var(--bg);min-height:100vh;display:flex;flex-direction:column;color:var(--navy);transition:background .7s}
+body.bg-gold{background:#fffacd}
+body.bg-green{background:#c8f5d8}
+
+/* ── tabs ── */
+.tab-bar{display:flex;padding:12px 28px 0;border-bottom:2px solid var(--teal)}
+.tab-btn{padding:8px 20px;border:2px solid var(--teal);border-bottom:none;border-radius:6px 6px 0 0;background:var(--cellBg);color:var(--navy);font-family:'Trebuchet MS',sans-serif;font-size:12.5px;font-weight:bold;cursor:pointer;margin-right:4px;position:relative;bottom:-2px;transition:background .15s,color .15s,border-color .15s}
+.tab-btn:hover{background:var(--tealDark);color:#fff}
+.tab-btn.active{background:var(--navy);color:var(--teal);border-color:var(--navy);z-index:1}
+.tab-btn.tab-gold{border-color:var(--gold)}
+.tab-btn.tab-gold:not(.active){color:var(--goldDark)}
+.tab-btn.tab-gold.active{color:var(--goldMid)}
+.tab-btn.tab-green{border-color:var(--greenBright)}
+.tab-btn.tab-green:not(.active){color:var(--green)}
+.tab-btn.tab-green.active{color:var(--greenBright)}
+.tab-panel{display:none;flex-direction:column;flex:1}
+.tab-panel.active{display:flex}
+
+/* ── shared header ── */
+.chip-wrap{padding:12px 28px 0}
+.section-chip{display:inline-block;background:var(--green);color:#fff;font-size:10px;font-weight:bold;letter-spacing:.1em;padding:4px 12px;border-radius:3px;text-transform:uppercase}
+.page-title{font-size:26px;font-weight:bold;color:var(--navy);padding:4px 28px 8px}
+.inst{margin:0 28px 8px;padding:7px 14px;background:#1E2D40;border-left:4px solid var(--amber);border-radius:0 4px 4px 0;font-size:12.5px;color:#c8dce8;line-height:1.6}
+.inst .hl{color:var(--amber);font-weight:bold}
+
+/* ── TAB 1 table ── */
+.tw{padding:0 28px;flex:1}
+.ch{display:grid;grid-template-columns:36px 1.1fr 26px 1.25fr 26px .9fr}
+.ch-cell{background:var(--navy);color:#fff;font-size:12px;font-weight:bold;padding:6px 14px}
+.ch-cell.a{color:var(--teal)}
+.ch-arrow{display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px;background:var(--navy)}
+.qrows{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.qrow{display:grid;grid-template-columns:36px 1.1fr 26px 1.25fr 26px .9fr;min-height:68px;align-items:stretch}
+.rn{display:flex;align-items:center;justify-content:center;padding-right:5px}
+.rn span{width:24px;height:24px;border-radius:50%;background:var(--teal);color:var(--navy);font-size:12px;font-weight:bold;display:flex;align-items:center;justify-content:center}
+.ar{display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px}
+.cc{background:var(--codeBg);border-left:4px solid;padding:10px 14px;font-family:'Courier New',monospace;font-size:12px;color:var(--codeText);line-height:1.65;display:flex;flex-direction:column;justify-content:center}
+.qrow[data-r="1"] .cc{border-left-color:var(--r1)} .qrow[data-r="2"] .cc{border-left-color:var(--r2)} .qrow[data-r="3"] .cc{border-left-color:var(--r3)} .qrow[data-r="4"] .cc{border-left-color:var(--r4)} .qrow[data-r="5"] .cc{border-left-color:var(--r5)} .qrow[data-r="6"] .cc{border-left-color:var(--r6)}
+.le{color:var(--amber)} .lo{color:var(--codeText)}
+.ce{border:2px solid;padding:8px 14px;display:flex;align-items:center;justify-content:center}
+.qrow[data-r="1"] .ce{border-color:var(--r1);background:#ddf4fb} .qrow[data-r="2"] .ce{border-color:var(--r2);background:var(--amberLight)} .qrow[data-r="3"] .ce{border-color:var(--r3);background:var(--amberLight)} .qrow[data-r="4"] .ce{border-color:var(--r4);background:var(--purpleLight)} .qrow[data-r="5"] .ce{border-color:var(--r5);background:var(--greenLight)} .qrow[data-r="6"] .ce{border-color:var(--r6);background:var(--blueLight)}
+.el{font-family:'Courier New',monospace;font-size:11px;font-weight:bold;text-align:center;line-height:1.5}
+.ep{display:block;font-size:10px;font-weight:normal;opacity:.75;margin-bottom:2px}
+.qrow[data-r="1"] .el{color:var(--tealDark)} .qrow[data-r="2"] .el{color:var(--amber)} .qrow[data-r="3"] .el{color:var(--amber)} .qrow[data-r="4"] .el{color:var(--purple)} .qrow[data-r="5"] .el{color:var(--green)} .qrow[data-r="6"] .el{color:var(--blue)}
+.cf{background:var(--cellBg);border:2px solid;padding:8px 12px;display:flex;flex-direction:column;justify-content:center;position:relative;transition:background .25s,border-color .25s}
+.qrow[data-r="1"] .cf{border-color:var(--r1)} .qrow[data-r="2"] .cf{border-color:var(--r2)} .qrow[data-r="3"] .cf{border-color:var(--r3)} .qrow[data-r="4"] .cf{border-color:var(--r4)} .qrow[data-r="5"] .cf{border-color:var(--r5)} .qrow[data-r="6"] .cf{border-color:var(--r6)}
+.cf .ph{font-size:20px;color:#9cb3cc;text-align:center;font-weight:bold}
+.cf input{width:100%;background:transparent;border:none;border-bottom:1px solid #9cb3cc;outline:none;font-family:'Courier New',monospace;font-size:12px;color:var(--navy);padding:2px 0}
+.cf input::placeholder{color:#9cb3cc;font-family:'Trebuchet MS',sans-serif;font-size:11px;font-style:italic}
+.rv{display:none}
+.cf.ok{background:var(--codeBg)!important;border-color:var(--greenBright)!important}
+.cf.ok input,.cf.ok .ph{display:none}
+.cf.ok .rv{display:block;font-family:'Courier New',monospace;font-size:11.5px;color:var(--codeText);line-height:1.6}
+.tk{position:absolute;top:4px;right:8px;font-size:13px;color:var(--greenBright);display:none}
+.cf.ok .tk{display:block}
+.hr{display:none;padding:6px 14px;font-size:11.5px;border-left:3px solid var(--amber);background:#fff8ec;color:#7a4000;margin-bottom:2px}
+.hr.show{display:block}
+.wrong{animation:shake .35s;border-color:var(--red)!important;background:#fff0f0!important}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+
+/* ── TAB 2 ── */
+.t2r{display:flex;flex-direction:column;gap:8px;margin:0 28px;flex:1}
+.t2row{display:grid;grid-template-columns:36px 1fr 1fr;min-height:72px;align-items:stretch}
+.t2c{background:var(--codeBg);border-left:4px solid;padding:10px 14px;font-family:'Courier New',monospace;font-size:12px;color:var(--codeText);line-height:1.65;display:flex;flex-direction:column;justify-content:center}
+.t2row[data-r="1"] .t2c{border-left-color:var(--r1)} .t2row[data-r="2"] .t2c{border-left-color:var(--r2)} .t2row[data-r="3"] .t2c{border-left-color:var(--r3)} .t2row[data-r="4"] .t2c{border-left-color:var(--r4)} .t2row[data-r="5"] .t2c{border-left-color:var(--r5)} .t2row[data-r="6"] .t2c{border-left-color:var(--r6)}
+.t2ch{background:var(--cellBg);border:2px solid;padding:10px 14px;display:flex;flex-direction:column;justify-content:center;gap:6px;position:relative;transition:background .25s,border-color .25s}
+.t2row[data-r="1"] .t2ch{border-color:var(--r1)} .t2row[data-r="2"] .t2ch{border-color:var(--r2)} .t2row[data-r="3"] .t2ch{border-color:var(--r3)} .t2row[data-r="4"] .t2ch{border-color:var(--r4)} .t2row[data-r="5"] .t2ch{border-color:var(--r5)} .t2row[data-r="6"] .t2ch{border-color:var(--r6)}
+.cg{display:flex;gap:8px;flex-wrap:wrap}
+.cb{padding:5px 14px;border:2px solid var(--muted);border-radius:20px;background:transparent;font-family:'Trebuchet MS',sans-serif;font-size:12px;color:var(--navy);cursor:pointer;transition:background .15s,border-color .15s}
+.cb:hover{border-color:var(--teal);background:#ddf4fb}
+.cb.sn{background:#ddeeff;border-color:var(--tealDark);color:var(--tealDark);font-weight:bold}
+.cb.si{background:var(--amberLight);border-color:var(--amber);color:var(--amber);font-weight:bold}
+.cb.ss{background:var(--purpleLight);border-color:var(--purple);color:var(--purple);font-weight:bold}
+.t2ch.ok{background:var(--codeBg);border-color:var(--greenBright)!important}
+.t2ch.ok .cg{display:none}
+.t2ch.ok .t2rv{display:flex;align-items:center;gap:8px}
+.t2rv{display:none;font-family:'Courier New',monospace;font-size:12px;color:var(--greenBright)}
+.t2tk{position:absolute;top:4px;right:8px;font-size:13px;color:var(--greenBright);display:none}
+.t2ch.ok .t2tk{display:block}
+
+/* ── TAB 3 ── */
+.t3r{display:flex;flex-direction:column;gap:12px;margin:0 28px;flex:1}
+
+/* card */
+.t3card{border-radius:6px;overflow:hidden;border:2px solid var(--teal)}
+.t3card[data-r="2"]{border-color:var(--amber)} .t3card[data-r="3"]{border-color:var(--amber)} .t3card[data-r="4"]{border-color:var(--purple)} .t3card[data-r="5"]{border-color:var(--green)} .t3card[data-r="6"]{border-color:var(--blue)}
+.t3card.ok{border-color:var(--greenBright)!important}
+
+/* card header */
+.t3hd{display:flex;align-items:center;gap:10px;background:var(--navy);padding:6px 14px}
+.t3num{width:22px;height:22px;border-radius:50%;background:var(--teal);color:var(--navy);font-size:11px;font-weight:bold;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.t3card[data-r="2"] .t3num{background:var(--amber)} .t3card[data-r="3"] .t3num{background:var(--amber)} .t3card[data-r="4"] .t3num{background:var(--purple)} .t3card[data-r="5"] .t3num{background:var(--green)} .t3card[data-r="6"] .t3num{background:var(--blue)}
+.t3ctx{font-size:12px;font-weight:bold;color:#fff;flex:1}
+.t3tick{font-size:14px;color:var(--greenBright);display:none}
+.t3card.ok .t3tick{display:block}
+
+/* body: code left, input right */
+.t3body{display:flex;align-items:stretch}
+.t3starter{flex:0 0 42%;background:var(--codeBg);padding:10px 14px;font-family:'Courier New',monospace;font-size:11.5px;color:var(--codeText);line-height:1.7;white-space:pre}
+.t3right{flex:1;display:flex;flex-direction:column;background:var(--cellBg)}
+
+/* input area */
+.t3input-area{flex:1;padding:10px 12px;display:flex;flex-direction:column;gap:6px}
+.t3input-label{font-size:11px;font-weight:bold;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.t3ta{width:100%;min-height:90px;resize:vertical;background:#fff;border:2px solid var(--muted);border-radius:4px;outline:none;font-family:'Courier New',monospace;font-size:11.5px;color:var(--navy);padding:6px 9px;line-height:1.65;transition:border-color .2s;tab-size:4}
+.t3ta:focus{border-color:var(--teal)}
+.t3ta::placeholder{color:#9cb3cc;font-family:'Trebuchet MS',sans-serif;font-size:11px;font-style:italic}
+.t3card.ok .t3ta{display:none}
+
+/* revealed code */
+.t3revealed{display:none;background:var(--codeBg);margin:0;padding:10px 14px;font-family:'Courier New',monospace;font-size:11.5px;color:var(--codeText);line-height:1.7;white-space:pre;flex:1}
+.t3card.ok .t3revealed{display:block}
+
+/* hint bar */
+.t3hint{display:none;padding:6px 14px;font-size:11.5px;color:#7a4000;background:#fff8ec;border-top:1px solid #fce4b0;border-left:3px solid var(--amber)}
+.t3hint.show{display:block}
+
+/* ── controls ── */
+.ctrl{padding:10px 28px 8px;display:flex;gap:10px;align-items:center}
+.btn{padding:8px 22px;border:none;border-radius:4px;font-family:'Trebuchet MS',sans-serif;font-size:13px;font-weight:bold;cursor:pointer;transition:opacity .15s,transform .1s}
+.btn:active{transform:scale(.97)}
+.btn-c{background:var(--teal);color:var(--navy)}
+.btn-r{background:transparent;border:1px solid #9cb3cc;color:var(--muted)}
+.btn-r:hover{border-color:var(--navy);color:var(--navy)}
+.sc{margin-left:auto;font-size:12px;color:var(--muted)}
+.sc strong{color:var(--navy)}
+.fb{display:none;margin:4px 28px;padding:8px 14px;border-radius:4px;font-size:13px;font-weight:bold}
+.fb.ok-green{display:block;background:var(--greenLight);border:1.5px solid var(--green);color:var(--green)}
+.fb.ok-gold{display:block;background:var(--goldBg);border:1.5px solid var(--gold);color:var(--goldDark)}
+
+/* ── gold banner ── */
+.gbanner{display:none;margin:6px 28px;padding:13px 18px;border-radius:6px;font-size:15px;font-weight:bold;text-align:center;background:var(--goldBg);border:2px solid var(--gold);color:var(--goldDark)}
+.gbanner.show{display:block}
+
+/* ── fireworks ── */
+#fwc{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:999;display:none}
+#fwc.show{display:block}
+
+/* ── bottom bar ── */
+.bb{margin-top:auto;background:var(--teal);padding:5px 28px;display:flex;align-items:center}
+.bb span{font-size:10px;font-weight:bold;letter-spacing:.08em;color:var(--navy);text-transform:uppercase}
+.bb .pg{margin-left:auto}
+</style>
+</head>
+<body>
+<canvas id="fwc"></canvas>
+
+<div class="tab-bar">
+  <button class="tab-btn active" id="tbtn1" onclick="goTab(1)">1 &#8212; Write the Fix</button>
+  <button class="tab-btn" id="tbtn2" onclick="goTab(2)">2 &#8212; Do I Need to Cast?</button>
+  <button class="tab-btn" id="tbtn3" onclick="goTab(3)">3 &#8212; Mixed Casting</button>
+</div>
+
+<!-- ═══════════════════ TAB 1 ═══════════════════ -->
+<div class="tab-panel active" id="tab1">
+  <div class="chip-wrap"><span class="section-chip">MATCH-UP EXERCISE</span></div>
+  <div class="page-title">Match: Code &#8594; Error &#8594; Fix</div>
+  <div class="inst">&#128221;&nbsp; For each row, type the <span class="hl">fixed version of the orange line only</span> &#8212; not the whole program</div>
+  <div class="tw">
+    <div class="ch"><div></div><div class="ch-cell a">A &#8212; Broken Code</div><div class="ch-arrow">&#8594;</div><div class="ch-cell b">B &#8212; Error</div><div class="ch-arrow">&#8594;</div><div class="ch-cell c">C &#8212; Fix the &#127820; line</div></div>
+    <div class="qrows">
+      <div class="qrow" data-r="1"><div class="rn"><span>1</span></div><div class="cc"><div class="le">score = input("Score: ")</div><div class="lo">if score &gt; 50:</div><div class="lo">&nbsp;&nbsp;&nbsp;&nbsp;print("pass")</div></div><div class="ar">&#8594;</div><div class="ce"><span class="el"><span class="ep">TypeError:</span>'&gt;' not supported between instances of 'str' and 'int'</span></div><div class="ar">&#8594;</div><div class="cf" id="c1"><span class="ph">?</span><input id="ci1" type="text" placeholder="Fix line 1&#8230;" autocomplete="off" spellcheck="false"><span class="rv" id="cr1"></span><span class="tk">&#10003;</span></div></div>
+      <div class="hr" id="h1">&#128161; <strong>Hint:</strong> <code>input()</code> always returns a string &#8212; you can&#39;t compare a string with <code>&gt; 50</code>. Wrap the whole <code>input()</code> in <code>int()</code>.</div>
+      <div class="qrow" data-r="2"><div class="rn"><span>2</span></div><div class="cc"><div class="le">year = input("Birth year: ")</div><div class="lo">age = 2026 - year</div><div class="lo">print(age)</div></div><div class="ar">&#8594;</div><div class="ce"><span class="el"><span class="ep">TypeError:</span>unsupported operand type(s) for -: 'int' and 'str'</span></div><div class="ar">&#8594;</div><div class="cf" id="c2"><span class="ph">?</span><input id="ci2" type="text" placeholder="Fix line 1&#8230;" autocomplete="off" spellcheck="false"><span class="rv" id="cr2"></span><span class="tk">&#10003;</span></div></div>
+      <div class="hr" id="h2">&#128161; <strong>Hint:</strong> You can&#39;t subtract a string from a number. Wrap <code>input()</code> in <code>int()</code> on line 1.</div>
+      <div class="qrow" data-r="3"><div class="rn"><span>3</span></div><div class="cc"><div class="lo">age = int(input("Age: "))</div><div class="le">print("You are " + age + " years old")</div></div><div class="ar">&#8594;</div><div class="ce"><span class="el"><span class="ep">TypeError:</span>can only concatenate str (not "int") to str</span></div><div class="ar">&#8594;</div><div class="cf" id="c3"><span class="ph">?</span><input id="ci3" type="text" placeholder="Fix line 2&#8230;" autocomplete="off" spellcheck="false"><span class="rv" id="cr3"></span><span class="tk">&#10003;</span></div></div>
+      <div class="hr" id="h3">&#128161; <strong>Hint:</strong> <code>age</code> is an integer. You can&#39;t join an int to a string with <code>+</code>. Wrap <code>age</code> in <code>str()</code>.</div>
+      <div class="qrow" data-r="4"><div class="rn"><span>4</span></div><div class="cc"><div class="lo">points = int(input("Points: "))</div><div class="le">print("Your score: " + points)</div></div><div class="ar">&#8594;</div><div class="ce"><span class="el"><span class="ep">TypeError:</span>can only concatenate str (not "int") to str</span></div><div class="ar">&#8594;</div><div class="cf" id="c4"><span class="ph">?</span><input id="ci4" type="text" placeholder="Fix line 2&#8230;" autocomplete="off" spellcheck="false"><span class="rv" id="cr4"></span><span class="tk">&#10003;</span></div></div>
+      <div class="hr" id="h4">&#128161; <strong>Hint:</strong> <code>points</code> is an integer. Wrap it in <code>str()</code> when joining with <code>+</code>, or use a comma in <code>print()</code>.</div>
+      <div class="qrow" data-r="5"><div class="rn"><span>5</span></div><div class="cc"><div class="le">num = input("Enter a number: ")</div><div class="lo">answer = num + 10</div><div class="lo">print(answer)</div></div><div class="ar">&#8594;</div><div class="ce"><span class="el"><span class="ep">TypeError:</span>unsupported operand type(s) for +: 'str' and 'int'</span></div><div class="ar">&#8594;</div><div class="cf" id="c5"><span class="ph">?</span><input id="ci5" type="text" placeholder="Fix line 1&#8230;" autocomplete="off" spellcheck="false"><span class="rv" id="cr5"></span><span class="tk">&#10003;</span></div></div>
+      <div class="hr" id="h5">&#128161; <strong>Hint:</strong> <code>input()</code> always returns a string. Wrap <code>input()</code> in <code>int()</code> on line 1.</div>
+      <div class="qrow" data-r="6"><div class="rn"><span>6</span></div><div class="cc"><div class="lo">total = int(input("Total: "))</div><div class="le">print("Final total: " + total)</div></div><div class="ar">&#8594;</div><div class="ce"><span class="el"><span class="ep">TypeError:</span>can only concatenate str (not "int") to str</span></div><div class="ar">&#8594;</div><div class="cf" id="c6"><span class="ph">?</span><input id="ci6" type="text" placeholder="Fix line 2&#8230;" autocomplete="off" spellcheck="false"><span class="rv" id="cr6"></span><span class="tk">&#10003;</span></div></div>
+      <div class="hr" id="h6">&#128161; <strong>Hint:</strong> <code>total</code> is an integer. Wrap it in <code>str()</code>, or use a comma inside <code>print()</code>.</div>
+    </div>
+  </div>
+  <div class="fb" id="fb1"></div>
+  <div class="ctrl"><button class="btn btn-c" onclick="t1All()">Check Answers</button><button class="btn btn-r" onclick="t1Rst()">Reset</button><div class="sc">Score: <strong id="s1">0</strong> / 6</div></div>
+</div>
+
+<!-- ═══════════════════ TAB 2 ═══════════════════ -->
+<div class="tab-panel" id="tab2">
+  <div class="chip-wrap"><span class="section-chip">DO I NEED TO CAST?</span></div>
+  <div class="page-title">Do I Need to Cast?</div>
+  <div class="inst">&#128221;&nbsp; Look at how the <span class="hl">highlighted variable</span> is used &#8212; decide if casting is needed, and to which type</div>
+  <div class="t2r">
+    <div class="t2row" data-r="1"><div class="rn"><span>1</span></div><div class="t2c"><div class="le">name = input("What is your name? ")</div><div class="lo">print("Hello, " + name)</div></div><div class="t2ch" id="t2c1"><div class="cg"><button class="cb" onclick="t2s(1,'none',this)">No cast needed</button><button class="cb" onclick="t2s(1,'int',this)">Cast to int()</button><button class="cb" onclick="t2s(1,'str',this)">Cast to str()</button></div><div class="t2rv" id="t2v1"></div><span class="t2tk">&#10003;</span></div></div>
+    <div class="hr" id="t2h1">&#128161; <strong>Hint:</strong> <code>name</code> is a string from <code>input()</code>, joined to another string with <code>+</code>. str&#160;+&#160;str is fine &#8212; no cast needed.</div>
+    <div class="t2row" data-r="2"><div class="rn"><span>2</span></div><div class="t2c"><div class="le">n = input("Enter a number: ")</div><div class="lo">result = n * 5</div></div><div class="t2ch" id="t2c2"><div class="cg"><button class="cb" onclick="t2s(2,'none',this)">No cast needed</button><button class="cb" onclick="t2s(2,'int',this)">Cast to int()</button><button class="cb" onclick="t2s(2,'str',this)">Cast to str()</button></div><div class="t2rv" id="t2v2"></div><span class="t2tk">&#10003;</span></div></div>
+    <div class="hr" id="t2h2">&#128161; <strong>Hint:</strong> <code>n</code> is a string from <code>input()</code>. You can&#39;t multiply a string by 5 as a number. Wrap <code>input()</code> in <code>int()</code>.</div>
+    <div class="t2row" data-r="3"><div class="rn"><span>3</span></div><div class="t2c"><div class="lo">age = int(input("Age: "))</div><div class="le">print("You are " + age + " years old")</div></div><div class="t2ch" id="t2c3"><div class="cg"><button class="cb" onclick="t2s(3,'none',this)">No cast needed</button><button class="cb" onclick="t2s(3,'int',this)">Cast to int()</button><button class="cb" onclick="t2s(3,'str',this)">Cast to str()</button></div><div class="t2rv" id="t2v3"></div><span class="t2tk">&#10003;</span></div></div>
+    <div class="hr" id="t2h3">&#128161; <strong>Hint:</strong> <code>age</code> is already an integer (<code>int()</code> was used). You can&#39;t join an int to a string with <code>+</code> &#8212; it needs <code>str()</code> in the print line.</div>
+    <div class="t2row" data-r="4"><div class="rn"><span>4</span></div><div class="t2c"><div class="lo">x = int(input("Enter x: "))</div><div class="le">y = x + 3</div></div><div class="t2ch" id="t2c4"><div class="cg"><button class="cb" onclick="t2s(4,'none',this)">No cast needed</button><button class="cb" onclick="t2s(4,'int',this)">Cast to int()</button><button class="cb" onclick="t2s(4,'str',this)">Cast to str()</button></div><div class="t2rv" id="t2v4"></div><span class="t2tk">&#10003;</span></div></div>
+    <div class="hr" id="t2h4">&#128161; <strong>Hint:</strong> <code>x</code> is already an integer &#8212; <code>int()</code> was used on line&#160;1. Adding two integers works fine. No cast needed.</div>
+    <div class="t2row" data-r="5"><div class="rn"><span>5</span></div><div class="t2c"><div class="le">price = input("Price in pence: ")</div><div class="lo">total = price + 50</div></div><div class="t2ch" id="t2c5"><div class="cg"><button class="cb" onclick="t2s(5,'none',this)">No cast needed</button><button class="cb" onclick="t2s(5,'int',this)">Cast to int()</button><button class="cb" onclick="t2s(5,'str',this)">Cast to str()</button></div><div class="t2rv" id="t2v5"></div><span class="t2tk">&#10003;</span></div></div>
+    <div class="hr" id="t2h5">&#128161; <strong>Hint:</strong> <code>price</code> is a string from <code>input()</code>. You can&#39;t add 50 to a string. Wrap <code>input()</code> in <code>int()</code>.</div>
+    <div class="t2row" data-r="6"><div class="rn"><span>6</span></div><div class="t2c"><div class="lo">count = int(input("Count: "))</div><div class="le">print("Items: " + count)</div></div><div class="t2ch" id="t2c6"><div class="cg"><button class="cb" onclick="t2s(6,'none',this)">No cast needed</button><button class="cb" onclick="t2s(6,'int',this)">Cast to int()</button><button class="cb" onclick="t2s(6,'str',this)">Cast to str()</button></div><div class="t2rv" id="t2v6"></div><span class="t2tk">&#10003;</span></div></div>
+    <div class="hr" id="t2h6">&#128161; <strong>Hint:</strong> <code>count</code> is an integer. You can&#39;t join an int to a string with <code>+</code>. Wrap <code>count</code> in <code>str()</code>.</div>
+  </div>
+  <div class="fb" id="fb2"></div>
+  <div class="ctrl"><button class="btn btn-c" onclick="t2All()">Check Answers</button><button class="btn btn-r" onclick="t2Rst()">Reset</button><div class="sc">Score: <strong id="s2">0</strong> / 6</div></div>
+</div>
+
+<!-- ═══════════════════ TAB 3 ═══════════════════ -->
+<div class="tab-panel" id="tab3">
+  <div class="chip-wrap"><span class="section-chip">MIXED CASTING</span></div>
+  <div class="page-title">Mixed Casting</div>
+  <div class="inst">
+    &#128221;&nbsp; Copy the <span class="hl">broken code</span> into Thonny. Fix it so it runs without errors, then <span class="hl">paste your working code back</span> into the box on the right and click Check.<br>
+    <span style="opacity:.75;font-size:11.5px">&#128161; Tip: the prompt text inside quotes doesn&#39;t matter &#8212; only the casting does.</span>
+  </div>
+  <div class="t3r">
+
+    <!-- Q1: name→none, age→none (already correct — no casting needed) -->
+    <div class="t3card" data-r="1" id="q3-1">
+      <div class="t3hd"><div class="t3num">1</div><div class="t3ctx">Greeting program &#8212; <em style="font-weight:normal;opacity:.8">some of these lines may already be correct!</em></div><span class="t3tick">&#10003;</span></div>
+      <div class="t3body">
+        <div class="t3starter" id="starter3-1">name = input("Name: ")
+age = input("Age: ")
+print("Hi " + name + ", you are " + age + " years old")</div>
+        <div class="t3right">
+          <div class="t3input-area">
+            <div class="t3input-label">Paste your fixed code here</div>
+            <textarea class="t3ta" id="ta3-1" placeholder="Paste your working code from Thonny here&#8230;" spellcheck="false"></textarea>
+          </div>
+          <pre class="t3revealed" id="rv3-1">name = input("Name: ")
+age = input("Age: ")
+print("Hi " + name + ", you are " + age + " years old")</pre>
+        </div>
+      </div>
+      <div class="t3hint" id="t3h1">&#128161; <strong>Hint:</strong> Both <code>name</code> and <code>age</code> are strings joined to other strings with <code>+</code>. str&#160;+&#160;str is always fine &#8212; neither needs casting. Try running it in Thonny as-is!</div>
+    </div>
+
+    <!-- Q2: score needs int(), bonus already correct -->
+    <div class="t3card" data-r="2" id="q3-2">
+      <div class="t3hd"><div class="t3num">2</div><div class="t3ctx">Score display</div><span class="t3tick">&#10003;</span></div>
+      <div class="t3body">
+        <div class="t3starter" id="starter3-2">score = input("Score: ")
+bonus = int(input("Bonus: "))
+print("Total: " + str(score + bonus))</div>
+        <div class="t3right">
+          <div class="t3input-area">
+            <div class="t3input-label">Paste your fixed code here</div>
+            <textarea class="t3ta" id="ta3-2" placeholder="Paste your working code from Thonny here&#8230;" spellcheck="false"></textarea>
+          </div>
+          <pre class="t3revealed" id="rv3-2">score = int(input("Score: "))
+bonus = int(input("Bonus: "))
+print("Total: " + str(score + bonus))</pre>
+        </div>
+      </div>
+      <div class="t3hint" id="t3h2">&#128161; <strong>Hint:</strong> <code>bonus</code> is already correctly cast with <code>int()</code>. Look at <code>score</code> &#8212; it&#39;s collected with plain <code>input()</code>, but is then added to <code>bonus</code> as a number. Wrap <code>score</code>&#39;s <code>input()</code> in <code>int()</code>.</div>
+    </div>
+
+    <!-- Q3: birth_year needs int(), name is fine -->
+    <div class="t3card" data-r="3" id="q3-3">
+      <div class="t3hd"><div class="t3num">3</div><div class="t3ctx">Age calculator</div><span class="t3tick">&#10003;</span></div>
+      <div class="t3body">
+        <div class="t3starter" id="starter3-3">birth_year = input("Birth year: ")
+name = input("Name: ")
+age = 2026 - birth_year
+print(name + " is " + str(age) + " years old")</div>
+        <div class="t3right">
+          <div class="t3input-area">
+            <div class="t3input-label">Paste your fixed code here</div>
+            <textarea class="t3ta" id="ta3-3" placeholder="Paste your working code from Thonny here&#8230;" spellcheck="false"></textarea>
+          </div>
+          <pre class="t3revealed" id="rv3-3">birth_year = int(input("Birth year: "))
+name = input("Name: ")
+age = 2026 - birth_year
+print(name + " is " + str(age) + " years old")</pre>
+        </div>
+      </div>
+      <div class="t3hint" id="t3h3">&#128161; <strong>Hint:</strong> <code>birth_year</code> is subtracted from a number &#8212; you can&#39;t subtract a string, so it needs <code>int()</code>. <code>name</code> is joined with other strings using <code>+</code>, so no cast is needed there.</div>
+    </div>
+
+    <!-- Q4: num is fine (int() applied next line), doubled needs str(result) -->
+    <div class="t3card" data-r="4" id="q3-4">
+      <div class="t3hd"><div class="t3num">4</div><div class="t3ctx">Doubling machine</div><span class="t3tick">&#10003;</span></div>
+      <div class="t3body">
+        <div class="t3starter" id="starter3-4">num = input("Number: ")
+result = int(num) * 2
+doubled = "Double: " + result</div>
+        <div class="t3right">
+          <div class="t3input-area">
+            <div class="t3input-label">Paste your fixed code here</div>
+            <textarea class="t3ta" id="ta3-4" placeholder="Paste your working code from Thonny here&#8230;" spellcheck="false"></textarea>
+          </div>
+          <pre class="t3revealed" id="rv3-4">num = input("Number: ")
+result = int(num) * 2
+doubled = "Double: " + str(result)</pre>
+        </div>
+      </div>
+      <div class="t3hint" id="t3h4">&#128161; <strong>Hint:</strong> <code>num</code> is passed into <code>int()</code> on the very next line &#8212; no need to cast it when collecting. The error is on the <code>doubled</code> line: <code>result</code> is an integer being joined to a string, so wrap it in <code>str()</code>.</div>
+    </div>
+
+    <!-- Q5: first→int, second→int, label→none -->
+    <div class="t3card" data-r="5" id="q3-5">
+      <div class="t3hd"><div class="t3num">5</div><div class="t3ctx">Three inputs</div><span class="t3tick">&#10003;</span></div>
+      <div class="t3body">
+        <div class="t3starter" id="starter3-5">first = input("First number: ")
+second = input("Second number: ")
+label = input("Label: ")
+total = first + second
+print(label + ": " + str(total))</div>
+        <div class="t3right">
+          <div class="t3input-area">
+            <div class="t3input-label">Paste your fixed code here</div>
+            <textarea class="t3ta" id="ta3-5" placeholder="Paste your working code from Thonny here&#8230;" spellcheck="false"></textarea>
+          </div>
+          <pre class="t3revealed" id="rv3-5">first = int(input("First number: "))
+second = int(input("Second number: "))
+label = input("Label: ")
+total = first + second
+print(label + ": " + str(total))</pre>
+        </div>
+      </div>
+      <div class="t3hint" id="t3h5">&#128161; <strong>Hint:</strong> <code>first</code> and <code>second</code> need to be added as numbers &#8212; both need <code>int()</code>. <code>label</code> is only ever joined to other strings with <code>+</code>, so it doesn&#39;t need casting.</div>
+    </div>
+
+    <!-- Q6: qty→int, item→none, price already int -->
+    <div class="t3card" data-r="6" id="q3-6">
+      <div class="t3hd"><div class="t3num">6</div><div class="t3ctx">Mixed bag</div><span class="t3tick">&#10003;</span></div>
+      <div class="t3body">
+        <div class="t3starter" id="starter3-6">qty = input("Quantity: ")
+item = input("Item name: ")
+price = int(input("Price (p): "))
+total = qty * price
+print(item + ": " + str(total) + "p")</div>
+        <div class="t3right">
+          <div class="t3input-area">
+            <div class="t3input-label">Paste your fixed code here</div>
+            <textarea class="t3ta" id="ta3-6" placeholder="Paste your working code from Thonny here&#8230;" spellcheck="false"></textarea>
+          </div>
+          <pre class="t3revealed" id="rv3-6">qty = int(input("Quantity: "))
+item = input("Item name: ")
+price = int(input("Price (p): "))
+total = qty * price
+print(item + ": " + str(total) + "p")</pre>
+        </div>
+      </div>
+      <div class="t3hint" id="t3h6">&#128161; <strong>Hint:</strong> <code>qty</code> is multiplied by an integer &#8212; it needs <code>int()</code>. <code>item</code> is only joined with other strings, so no cast needed. <code>price</code> already has <code>int()</code> applied when it&#39;s collected.</div>
+    </div>
+
+  </div>
+  <div class="fb" id="fb3"></div>
+  <div class="ctrl"><button class="btn btn-c" onclick="t3All()">Check Answers</button><button class="btn btn-r" onclick="t3Rst()">Reset</button><div class="sc">Score: <strong id="s3">0</strong> / 6</div></div>
+</div>
+
+<div class="gbanner" id="gbanner">&#127942;&nbsp; Outstanding &#8212; you&#39;ve mastered casting across all three exercises!</div>
+<div class="bb"><span>Check Your Understanding</span><span class="pg">Year 8 Python</span></div>
+
+<script>
+// ── util ─────────────────────────────────────────────────────────────────────
+function shk(el){el.classList.remove('wrong');void el.offsetWidth;el.classList.add('wrong');setTimeout(()=>el.classList.remove('wrong'),500)}
+function ss(s){return s.trim().toLowerCase().replace(/"[^"]*"/g,'""').replace(/'[^']*'/g,'""').replace(/\s+/g,'')}
+
+function goTab(n){
+  [1,2,3].forEach(i=>{
+    document.getElementById('tab'+i).classList.toggle('active',i===n);
+    document.getElementById('tbtn'+i).classList.toggle('active',i===n);
+  });
+  updateBg();
+}
+
+// ════════════════════════════════════════════
+// TAB 1 — gold when all correct
+// ════════════════════════════════════════════
+const T1={
+  1:{d:'score = int(input("Score: "))',  m:s=>/^score=int\(input\(.*\)\)$/.test(ss(s))},
+  2:{d:'year = int(input("Birth year: "))', m:s=>/^year=int\(input\(.*\)\)$/.test(ss(s))},
+  3:{d:'print("You are " + str(age) + " years old")', m:s=>/str\(age\)/.test(ss(s))||/print\(.*,age[,)]/.test(ss(s))},
+  4:{d:'print("Your score: " + str(points))', m:s=>/str\(points\)/.test(ss(s))||/print\(.*,points[,)]/.test(ss(s))},
+  5:{d:'num = int(input("Enter a number: "))', m:s=>/^num=int\(input\(.*\)\)$/.test(ss(s))},
+  6:{d:'print("Final total: " + str(total))', m:s=>/str\(total\)/.test(ss(s))||/print\(.*,total[,)]/.test(ss(s))},
+};
+const d1={1:0,2:0,3:0,4:0,5:0,6:0};
+function t1Row(r){
+  if(d1[r])return;
+  const inp=document.getElementById('ci'+r),cell=document.getElementById('c'+r),rv=document.getElementById('cr'+r),hn=document.getElementById('h'+r);
+  if(!inp.value.trim()){hn.classList.add('show');return}
+  if(T1[r].m(inp.value)){
+    d1[r]=1;inp.style.display='none';cell.querySelector('.ph').style.display='none';rv.textContent=T1[r].d;rv.style.display='block';cell.classList.add('ok');hn.classList.remove('show');t1Upd();
+  }else{shk(cell);hn.classList.add('show')}
+}
+function t1Upd(){
+  const n=Object.values(d1).reduce((a,v)=>a+v,0);document.getElementById('s1').textContent=n;
+  const fb=document.getElementById('fb1'),btn=document.getElementById('tbtn1');
+  if(n===6){fb.className='fb ok-gold';fb.innerHTML='&#127942; All correct &#8212; gold!';btn.classList.add('tab-gold');updateBg();chkAll();}
+  else{fb.className='fb';btn.classList.remove('tab-gold','tab-green');updateBg();}
+}
+function t1All(){[1,2,3,4,5,6].forEach(t1Row);t1Upd()}
+function t1Rst(){
+  [1,2,3,4,5,6].forEach(r=>{d1[r]=0;const inp=document.getElementById('ci'+r),cell=document.getElementById('c'+r),rv=document.getElementById('cr'+r),hn=document.getElementById('h'+r);cell.classList.remove('ok','wrong');inp.style.display='';inp.value='';rv.style.display='none';rv.textContent='';cell.querySelector('.ph').style.display='';hn.classList.remove('show');});
+  document.getElementById('s1').textContent='0';document.getElementById('fb1').className='fb';document.getElementById('tbtn1').classList.remove('tab-gold','tab-green');resetGold();
+}
+document.querySelectorAll('#tab1 input[type="text"]').forEach(inp=>{inp.addEventListener('keydown',e=>{if(e.key==='Enter')t1Row(+inp.id.replace('ci',''))})});
+
+// ════════════════════════════════════════════
+// TAB 2 — green = all correct, gold = all correct + no wrong
+// ════════════════════════════════════════════
+const T2A={1:{a:'none',d:'&#10003; No cast needed &#8212; str&#160;+&#160;str is fine'},2:{a:'int',d:"&#10003; Cast to int() &#8212; can't multiply a string"},3:{a:'str',d:"&#10003; Cast to str() &#8212; can't join int with +"},4:{a:'none',d:'&#10003; No cast needed &#8212; int&#160;+&#160;int is fine'},5:{a:'int',d:"&#10003; Cast to int() &#8212; can't add int to a string"},6:{a:'str',d:"&#10003; Cast to str() &#8212; can't join int with +"}};
+const t2sel={1:null,2:null,3:null,4:null,5:null,6:null},d2={1:0,2:0,3:0,4:0,5:0,6:0};
+let t2bad=false;
+function t2s(r,v,btn){if(d2[r])return;t2sel[r]=v;document.getElementById('t2c'+r).querySelectorAll('.cb').forEach(b=>b.classList.remove('sn','si','ss'));btn.classList.add('s'+v[0])}
+function t2Row(r){
+  if(d2[r])return;
+  const cell=document.getElementById('t2c'+r),hn=document.getElementById('t2h'+r),rv=document.getElementById('t2v'+r);
+  if(!t2sel[r]){hn.classList.add('show');return}
+  if(t2sel[r]===T2A[r].a){d2[r]=1;rv.innerHTML=T2A[r].d;cell.classList.add('ok');hn.classList.remove('show');t2Upd();}
+  else{t2bad=true;shk(cell);hn.classList.add('show')}
+}
+function t2Upd(){
+  const n=Object.values(d2).reduce((a,v)=>a+v,0);document.getElementById('s2').textContent=n;
+  const fb=document.getElementById('fb2'),btn=document.getElementById('tbtn2');
+  if(n===6){
+    if(!t2bad){fb.className='fb ok-gold';fb.innerHTML='&#127942; All correct, first time &#8212; gold!';btn.classList.remove('tab-green');btn.classList.add('tab-gold');}
+    else{fb.className='fb ok-green';fb.innerHTML='&#9989; All correct &#8212; green!';btn.classList.remove('tab-gold');btn.classList.add('tab-green');}
+    updateBg();chkAll();
+  }else{fb.className='fb';btn.classList.remove('tab-gold','tab-green');updateBg();}
+}
+function t2All(){[1,2,3,4,5,6].forEach(t2Row);t2Upd()}
+function t2Rst(){
+  [1,2,3,4,5,6].forEach(r=>{d2[r]=0;t2sel[r]=null;const cell=document.getElementById('t2c'+r),hn=document.getElementById('t2h'+r),rv=document.getElementById('t2v'+r);cell.classList.remove('ok','wrong');cell.querySelectorAll('.cb').forEach(b=>b.classList.remove('sn','si','ss'));hn.classList.remove('show');rv.textContent='';});
+  t2bad=false;document.getElementById('s2').textContent='0';document.getElementById('fb2').className='fb';document.getElementById('tbtn2').classList.remove('tab-gold','tab-green');resetGold();
+}
+
+// ════════════════════════════════════════════
+// TAB 3 — whole-program paste, gold when all correct
+// ════════════════════════════════════════════
+
+// Each matcher: must_have (all regexes must match), must_not_have (none must match)
+const T3M={
+  '1':{h:['name\\s*=\\s*input\\s*\\(','age\\s*=\\s*input\\s*\\('],n:['name\\s*=\\s*int\\s*\\(','age\\s*=\\s*int\\s*\\(']},
+  '2':{h:['score\\s*=\\s*int\\s*\\(\\s*input\\s*\\(','bonus\\s*=\\s*int\\s*\\(\\s*input\\s*\\(','str\\s*\\('],n:[]},
+  '3':{h:['birth_year\\s*=\\s*int\\s*\\(\\s*input\\s*\\(','name\\s*=\\s*input\\s*\\('],n:['name\\s*=\\s*int\\s*\\(']},
+  '4':{h:['num\\s*=\\s*input\\s*\\(','result\\s*=\\s*int\\s*\\(\\s*num\\s*\\)','str\\s*\\(\\s*result\\s*\\)'],n:['num\\s*=\\s*int\\s*\\(']},
+  '5':{h:['first\\s*=\\s*int\\s*\\(\\s*input\\s*\\(','second\\s*=\\s*int\\s*\\(\\s*input\\s*\\(','label\\s*=\\s*input\\s*\\('],n:['label\\s*=\\s*int\\s*\\(']},
+  '6':{h:['qty\\s*=\\s*int\\s*\\(\\s*input\\s*\\(','item\\s*=\\s*input\\s*\\(','price\\s*=\\s*int\\s*\\(\\s*input\\s*\\('],n:['item\\s*=\\s*int\\s*\\(']},
+};
+const d3={1:0,2:0,3:0,4:0,5:0,6:0};
+function t3Check(q,code){
+  const m=T3M[String(q)];
+  for(const pat of m.h){if(!new RegExp(pat).test(code))return false;}
+  for(const pat of m.n){if(new RegExp(pat).test(code))return false;}
+  return true;
+}
+function t3Row(q){
+  if(d3[q])return;
+  const ta=document.getElementById('ta3-'+q),card=document.getElementById('q3-'+q),hn=document.getElementById('t3h'+q);
+  const code=ta.value;
+  if(!code.trim()){hn.classList.add('show');return}
+  if(t3Check(q,code)){
+    d3[q]=1;card.classList.add('ok');hn.classList.remove('show');t3Upd();
+  }else{shk(ta);hn.classList.add('show')}
+}
+function t3Upd(){
+  const n=Object.values(d3).reduce((a,v)=>a+v,0);document.getElementById('s3').textContent=n;
+  const fb=document.getElementById('fb3'),btn=document.getElementById('tbtn3');
+  if(n===6){fb.className='fb ok-gold';fb.innerHTML='&#127942; All correct &#8212; gold!';btn.classList.add('tab-gold');updateBg();chkAll();}
+  else{fb.className='fb';btn.classList.remove('tab-gold','tab-green');updateBg();}
+}
+function t3All(){[1,2,3,4,5,6].forEach(t3Row);t3Upd()}
+function t3Rst(){
+  [1,2,3,4,5,6].forEach(q=>{d3[q]=0;const card=document.getElementById('q3-'+q),ta=document.getElementById('ta3-'+q),hn=document.getElementById('t3h'+q);card.classList.remove('ok','wrong');if(ta)ta.value='';hn.classList.remove('show');});
+  document.getElementById('s3').textContent='0';document.getElementById('fb3').className='fb';document.getElementById('tbtn3').classList.remove('tab-gold','tab-green');resetGold();
+}
+
+// ════════════════════════════════════════════
+// Background & gold
+// ════════════════════════════════════════════
+function isGold(t){return document.getElementById('tbtn'+t).classList.contains('tab-gold')}
+function isGreen(t){return document.getElementById('tbtn'+t).classList.contains('tab-green')}
+function allGold(){return[1,2,3].every(isGold)}
+function updateBg(){
+  if(allGold()){document.body.className='bg-gold';return}
+  const active=[1,2,3].find(i=>document.getElementById('tab'+i).classList.contains('active'));
+  document.body.className=isGold(active)?'bg-gold':isGreen(active)?'bg-green':'';
+}
+function chkAll(){if(allGold()){document.getElementById('gbanner').classList.add('show');startFW();}}
+function resetGold(){document.getElementById('gbanner').classList.remove('show');stopFW();updateBg();}
+document.querySelectorAll('.tab-btn').forEach(b=>b.addEventListener('click',()=>setTimeout(updateBg,30)));
+
+// ════════════════════════════════════════════
+// Fireworks
+// ════════════════════════════════════════════
+const cvs=document.getElementById('fwc'),ctx=cvs.getContext('2d');
+let fwOn=false,fwP=[],fwId=null;
+const FWC=['#F5C300','#22c55e','#00B4D8','#E07B2A','#ff6b9d','#a78bfa','#fff'];
+function startFW(){cvs.classList.add('show');cvs.width=innerWidth;cvs.height=innerHeight;fwOn=true;fwP=[];fwLoop();setTimeout(stopFW,7000)}
+function stopFW(){fwOn=false;if(fwId)cancelAnimationFrame(fwId);ctx.clearRect(0,0,cvs.width,cvs.height);cvs.classList.remove('show')}
+function fwLoop(){if(!fwOn)return;fwId=requestAnimationFrame(fwLoop);ctx.fillStyle='rgba(255,250,200,0.15)';ctx.fillRect(0,0,cvs.width,cvs.height);if(Math.random()<.07)fwBurst();fwP=fwP.filter(p=>p.l>0);fwP.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.055;p.vx*=.98;p.vy*=.98;p.l--;ctx.globalAlpha=p.l/p.ml;ctx.fillStyle=p.c;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill()});ctx.globalAlpha=1;}
+function fwBurst(){const x=Math.random()*cvs.width,y=Math.random()*cvs.height*.65,c=FWC[Math.floor(Math.random()*FWC.length)],n=55+Math.floor(Math.random()*40);for(let i=0;i<n;i++){const a=Math.random()*Math.PI*2,sp=1.5+Math.random()*4;fwP.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-1,r:1.5+Math.random()*2.5,c,l:65+Math.floor(Math.random()*35),ml:100})}}
+addEventListener('resize',()=>{if(fwOn){cvs.width=innerWidth;cvs.height=innerHeight}});
+</script>
+</body>
+</html>

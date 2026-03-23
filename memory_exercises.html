@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Primary & Secondary Memory — Interactive Exercises</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;700&display=swap');
+
+  :root {
+    --bg:       #0B1929;
+    --surface:  #0D2137;
+    --surface2: #112844;
+    --purple:   #7C3AED;
+    --purple-l: #A78BFA;
+    --teal:     #0891B2;
+    --teal-l:   #38BDF8;
+    --teal-ll:  #BAE6FD;
+    --amber:    #D97706;
+    --amber-l:  #FCD34D;
+    --green:    #059669;
+    --green-l:  #34D399;
+    --gold:     #B45309;
+    --gold-l:   #F59E0B;
+    --gold-ll:  #FDE68A;
+    --red:      #DC2626;
+    --red-l:    #FCA5A5;
+    --white:    #F1F5F9;
+    --grey:     #64748B;
+    --grey-l:   #94A3B8;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  @keyframes pulse-green {
+    0%,100% { background-color: #065f46; }
+    50%      { background-color: #059669; }
+  }
+  @keyframes pulse-gold {
+    0%,100% { background-color: #92400e; }
+    50%      { background-color: #d97706; }
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--white);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    padding: 32px 20px 60px;
+    transition: background 1.4s ease;
+  }
+  body.complete-green {
+    animation: pulse-green 2.5s ease-in-out infinite;
+  }
+  body.complete-gold {
+    animation: pulse-gold 2.5s ease-in-out infinite;
+  }
+
+  /* ── Fireworks canvas ── */
+  #fwCanvas {
+    position: fixed; top:0; left:0; width:100%; height:100%;
+    pointer-events: none; z-index: 999;
+  }
+
+  /* ── Completion banner ── */
+  .completion-banner {
+    position: fixed; top:0; left:0; right:0; padding: 22px 20px;
+    text-align: center; font-family: 'Space Mono', monospace;
+    font-size: 20px; letter-spacing: 2px; font-weight: 700;
+    transform: translateY(-110%);
+    transition: transform 0.55s cubic-bezier(0.34,1.56,0.64,1);
+    z-index: 1000; display: none;
+  }
+  .completion-banner.show { transform: translateY(0); display: block; }
+  .completion-banner.green-banner {
+    background: #047857; border-bottom: 4px solid #6ee7b7; color: #ffffff;
+  }
+  .completion-banner.gold-banner {
+    background: #b45309; border-bottom: 4px solid #fde68a; color: #ffffff;
+  }
+
+  h1 {
+    font-family: 'Space Mono', monospace;
+    font-size: 13px; letter-spacing: 3px; text-transform: uppercase;
+    color: var(--teal-l); text-align: center; margin-bottom: 6px;
+  }
+  h2 { font-size: 26px; font-weight: 700; text-align: center; color: var(--white); margin-bottom: 40px; }
+
+  /* ── Tab Nav ── */
+  .tabs { display: flex; justify-content: center; gap: 12px; margin-bottom: 36px; }
+  .tab-btn {
+    font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 600;
+    padding: 10px 28px; border-radius: 8px; border: 2px solid var(--surface2);
+    background: var(--surface); color: var(--grey-l); cursor: pointer; transition: all 0.2s;
+    position: relative;
+  }
+  .tab-btn:hover { border-color: var(--teal); color: var(--white); }
+  .tab-btn.active { background: var(--teal); border-color: var(--teal); color: #fff; }
+  .tab-btn.done-green { background: var(--green); border-color: var(--green); color: #fff; }
+  .tab-btn.done-gold  { background: var(--gold-l); border-color: var(--gold-l); color: #000; }
+  .tab-btn.done-green:hover { background: var(--green-l); border-color: var(--green-l); color: #000; }
+  .tab-btn.done-gold:hover  { background: var(--gold-ll); border-color: var(--gold-ll); color: #000; }
+  .tab-tick {
+    display: none; position: absolute; top: -8px; right: -8px;
+    width: 20px; height: 20px; border-radius: 50%;
+    font-size: 11px; font-weight: 700; border: 2px solid var(--bg);
+    align-items: center; justify-content: center;
+  }
+  .tab-tick.show { display: flex; }
+  .tab-tick.tick-green { background: var(--green);  color: #fff; }
+  .tab-tick.tick-gold  { background: var(--gold-l); color: #000; }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ── Shared card ── */
+  .card {
+    background: var(--surface); border: 1.5px solid var(--surface2);
+    border-radius: 14px; padding: 28px 32px; max-width: 820px; margin: 0 auto 24px;
+  }
+  .card h3 { font-size: 17px; font-weight: 700; margin-bottom: 18px; color: var(--teal-l); }
+
+  /* ── FITB drag & drop ── */
+  .fitb-how-to {
+    font-size: 13px; color: var(--grey-l); margin-bottom: 18px; line-height: 1.6;
+    padding: 10px 14px; background: var(--surface2); border-radius: 8px;
+  }
+  .fitb-how-to strong { color: var(--white); }
+
+  .word-bank {
+    display: flex; flex-wrap: wrap; gap: 10px;
+    margin-bottom: 24px; padding: 14px;
+    border: 1.5px dashed var(--grey); border-radius: 10px; min-height: 52px;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .word-bank.drag-over { border-color: var(--teal-l); background: rgba(56,189,248,0.05); }
+  .word-bank-label {
+    font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 2px;
+    text-transform: uppercase; color: var(--grey); margin-bottom: 10px;
+  }
+  .word-chip {
+    font-family: 'Space Mono', monospace; font-size: 13px;
+    padding: 7px 16px; border-radius: 6px;
+    background: var(--surface2); border: 1.5px solid var(--teal);
+    color: var(--teal-ll); cursor: grab; transition: all 0.15s; user-select: none;
+    white-space: nowrap;
+  }
+  .word-chip:hover { border-color: var(--teal-l); color: var(--white); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
+  .word-chip:active { cursor: grabbing; }
+  .word-chip.chip-dragging { opacity: 0.3; }
+  .word-chip.chip-used { opacity: 0.25; pointer-events: none; text-decoration: line-through; color: var(--grey); border-color: var(--grey); }
+
+  .passage { font-size: 17px; line-height: 2.8; color: var(--white); }
+
+  .blank-target {
+    display: inline-block; min-width: 130px; padding: 4px 12px;
+    border-bottom: 2.5px solid var(--teal);
+    background: transparent; color: var(--white);
+    font-family: 'Space Mono', monospace; font-size: 14px; font-weight: 600;
+    text-align: center; vertical-align: middle; margin: 0 4px;
+    border-radius: 4px 4px 0 0;
+    cursor: default; transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+  }
+  .blank-target.empty { color: var(--grey); font-style: italic; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 400; }
+  .blank-target.drag-over-blank {
+    border-bottom-color: var(--teal-l);
+    background: rgba(56,189,248,0.12);
+    box-shadow: inset 0 -3px 0 var(--teal-l);
+  }
+  .blank-target.correct { border-bottom-color: var(--green); color: var(--green-l); background: rgba(5,150,105,0.1); }
+  .blank-target.wrong   { border-bottom-color: var(--red);   color: var(--red-l);   background: rgba(220,38,38,0.1); animation: shake-blank 0.35s ease; }
+  @keyframes shake-blank { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-5px)} 60%{transform:translateX(5px)} }
+
+  .btn {
+    font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 600;
+    padding: 11px 28px; border-radius: 8px; border: none; cursor: pointer; transition: all 0.2s;
+  }
+  .btn-check { background: var(--teal); color: #fff; margin-right: 10px; }
+  .btn-check:hover { background: var(--teal-l); color: var(--bg); }
+  .btn-reset { background: transparent; color: var(--grey-l); border: 1.5px solid var(--grey); }
+  .btn-reset:hover { border-color: var(--white); color: var(--white); }
+
+  .score-badge {
+    display: none; font-family: 'Space Mono', monospace; font-size: 14px;
+    padding: 8px 18px; border-radius: 8px; margin-top: 16px;
+    background: var(--surface2); color: var(--teal-l);
+  }
+  .feedback-row { margin-top: 16px; font-size: 14px; color: var(--grey-l); line-height: 1.7; display: none; }
+
+  /* ── Diagram ── */
+  .diagram-instructions { font-size: 14px; color: var(--grey-l); margin-bottom: 24px; line-height: 1.6; }
+  .diagram-instructions strong { color: var(--white); }
+  .parts-bank {
+    display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 28px;
+    padding: 16px; border: 1.5px dashed var(--grey); border-radius: 10px; min-height: 56px;
+  }
+  .parts-bank-label {
+    font-family: 'Space Mono', monospace; font-size: 11px; letter-spacing: 2px;
+    color: var(--grey); text-transform: uppercase; margin-bottom: 10px;
+  }
+  .part {
+    padding: 9px 16px; border-radius: 8px; font-size: 14px; font-weight: 600;
+    cursor: grab; transition: transform 0.15s, box-shadow 0.15s;
+    user-select: none; white-space: nowrap;
+  }
+  .part:active { cursor: grabbing; transform: scale(1.05); }
+  .part.dragging { opacity: 0.4; }
+  .part.cpu-part    { background: #2d1060; color: var(--purple-l); border: 1.5px solid var(--purple); }
+  .part.ram-part    { background: #0a2d3d; color: var(--teal-l);   border: 1.5px solid var(--teal);   }
+  .part.hdd-part    { background: #2a1800; color: var(--amber-l);  border: 1.5px solid var(--amber);  }
+  .part.arrow-part  { background: #0a2a18; color: var(--green-l);  border: 1.5px solid var(--green);  }
+  .part.arrow2-part { background: #2a1f00; color: var(--amber-l);  border: 1.5px solid var(--amber);  }
+
+  .diagram-canvas {
+    display: flex; align-items: center; justify-content: center;
+    gap: 0; flex-wrap: nowrap; overflow-x: auto; padding: 20px 0 10px;
+  }
+  .drop-zone {
+    border: 2px dashed var(--grey); border-radius: 10px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    transition: border-color 0.2s, background 0.2s; position: relative;
+  }
+  .drop-zone.over { border-color: var(--teal-l); background: rgba(56,189,248,0.06); }
+  .drop-zone.correct-zone { border-color: var(--green); border-style: solid; }
+  .drop-zone.wrong-zone   { border-color: var(--red);   border-style: solid; }
+  .box-zone { width: 160px; min-height: 180px; padding: 12px; gap: 10px; }
+  .box-zone .zone-label {
+    font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 1.5px;
+    color: var(--grey); text-transform: uppercase; margin-bottom: 6px;
+  }
+  .arrow-zone { width: 110px; height: 70px; flex-shrink: 0; }
+  .placed-part { cursor: grab; animation: pop 0.2s ease; }
+  @keyframes pop { 0%{transform:scale(0.85)} 60%{transform:scale(1.08)} 100%{transform:scale(1)} }
+  .diagram-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 20px; }
+  .diag-score {
+    font-family: 'Space Mono', monospace; font-size: 13px; color: var(--teal-l);
+    display: none; padding: 8px 16px; background: var(--surface2); border-radius: 8px;
+  }
+  .zone-hint { font-size: 11px; color: var(--grey); text-align: center; pointer-events: none; }
+  .tick { position: absolute; top: 6px; right: 8px; font-size: 14px; display: none; }
+  .correct-zone .tick { display: block; color: var(--green-l); }
+  .wrong-zone   .tick { display: block; color: var(--red-l); }
+</style>
+</head>
+<body>
+
+<canvas id="fwCanvas"></canvas>
+<div class="completion-banner" id="completionBanner"></div>
+
+<h1>Year 9 Computing</h1>
+<h2>Primary &amp; Secondary Memory</h2>
+
+<div class="tabs">
+  <button class="tab-btn active" onclick="showTab('fitb',event)">
+    📝 Exercise 1 — Fill in the Blanks
+    <span class="tab-tick" id="tick-fitb"></span>
+  </button>
+  <button class="tab-btn" onclick="showTab('diag',event)">
+    🧩 Exercise 2 — Build the Diagram
+    <span class="tab-tick" id="tick-diag"></span>
+  </button>
+</div>
+
+<!-- Exercise 1 -->
+<div id="fitb" class="tab-panel active">
+  <div class="card">
+    <h3>Drag the words into the correct gaps</h3>
+    <p class="fitb-how-to"><strong>Drag</strong> a word from the bank below and drop it onto a blank in the sentence. Drag a placed word back to the bank to swap it.</p>
+    <div class="word-bank-label">Word bank</div>
+    <div class="word-bank" id="wordBank"></div>
+    <div class="passage" id="passage"></div>
+    <div class="diagram-actions" style="margin-top:28px;">
+      <button class="btn btn-check" onclick="checkFITB()">Check answers</button>
+      <button class="btn btn-reset" onclick="resetFITB()">Reset</button>
+    </div>
+    <div class="score-badge" id="fitbScore"></div>
+    <div class="feedback-row" id="fitbFeedback"></div>
+  </div>
+</div>
+
+<!-- Exercise 2 -->
+<div id="diag" class="tab-panel">
+  <div class="card">
+    <h3>Build the diagram</h3>
+    <p class="diagram-instructions">
+      Drag each label or component into the correct slot in the diagram below.<br>
+      <strong>Tip:</strong> Think about which component the CPU can read directly, and which one data must be copied from first.
+    </p>
+    <div class="parts-bank-label">Parts to place</div>
+    <div class="parts-bank" id="partBank"></div>
+    <div class="diagram-canvas" id="diagramCanvas">
+      <div class="drop-zone box-zone" id="zone-cpu" data-accepts="cpu-label,cpu-desc">
+        <div class="zone-label">Component A</div>
+        <div class="zone-hint">Drop name &amp; description here</div>
+        <span class="tick">✓</span>
+      </div>
+      <div class="drop-zone arrow-zone" id="zone-arrow1" data-accepts="arrow-direct">
+        <div class="zone-hint">Arrow type?</div>
+        <span class="tick">✓</span>
+      </div>
+      <div class="drop-zone box-zone" id="zone-ram" data-accepts="ram-label,ram-desc">
+        <div class="zone-label">Component B</div>
+        <div class="zone-hint">Drop name &amp; description here</div>
+        <span class="tick">✓</span>
+      </div>
+      <div class="drop-zone arrow-zone" id="zone-arrow2" data-accepts="arrow-copy">
+        <div class="zone-hint">Arrow type?</div>
+        <span class="tick">✓</span>
+      </div>
+      <div class="drop-zone box-zone" id="zone-hdd" data-accepts="hdd-label,hdd-desc">
+        <div class="zone-label">Component C</div>
+        <div class="zone-hint">Drop name &amp; description here</div>
+        <span class="tick">✓</span>
+      </div>
+    </div>
+    <div class="diagram-actions">
+      <button class="btn btn-check" onclick="checkDiagram()">Check diagram</button>
+      <button class="btn btn-reset" onclick="resetDiagram()">Reset</button>
+      <div class="diag-score" id="diagScore"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────
+// FIREWORKS ENGINE (shared)
+// ─────────────────────────────────────────
+const fwCanvas = document.getElementById('fwCanvas');
+const fwCtx = fwCanvas.getContext('2d');
+let fwParticles = [], fwRunning = false, fwStart = 0;
+const FW_DURATION = 8000;
+
+function resizeFW() { fwCanvas.width = window.innerWidth; fwCanvas.height = window.innerHeight; }
+window.addEventListener('resize', resizeFW); resizeFW();
+
+function rndFWColour(gold) {
+  if (gold) {
+    const h = [35,42,48,55][Math.floor(Math.random()*4)];
+    return `hsl(${h},100%,${55+Math.random()*15}%)`;
+  }
+  const hues = [0,30,55,120,180,200,260,300,330];
+  return `hsl(${hues[Math.floor(Math.random()*hues.length)]},100%,65%)`;
+}
+
+let fwGold = false;
+function launchFW() {
+  const x = 0.15*fwCanvas.width + Math.random()*0.7*fwCanvas.width;
+  const ty = fwCanvas.height*(0.08+Math.random()*0.45);
+  const col = rndFWColour(fwGold);
+  const n = 70+Math.floor(Math.random()*70);
+  for (let i=0;i<n;i++){
+    const angle=(Math.PI*2/n)*i+(Math.random()-0.5)*0.4;
+    const speed=1.5+Math.random()*5.5;
+    fwParticles.push({x,y:ty,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,
+      alpha:1,col,r:1.5+Math.random()*2.5,decay:0.011+Math.random()*0.009,trail:[]});
+  }
+}
+function fwFrame(ts) {
+  if (!fwRunning) return;
+  const elapsed = ts - fwStart;
+  fwCtx.fillStyle = 'rgba(0,0,0,0.16)';
+  fwCtx.fillRect(0,0,fwCanvas.width,fwCanvas.height);
+  if (elapsed < FW_DURATION && Math.random() < 0.045) launchFW();
+  fwParticles = fwParticles.filter(p=>p.alpha>0.02);
+  fwParticles.forEach(p=>{
+    p.trail.push({x:p.x,y:p.y,a:p.alpha});
+    if(p.trail.length>7) p.trail.shift();
+    p.x+=p.vx; p.y+=p.vy; p.vy+=0.07; p.vx*=0.98; p.vy*=0.98; p.alpha-=p.decay;
+    p.trail.forEach((t,i)=>{
+      const a=t.a*(i/p.trail.length)*0.35;
+      fwCtx.beginPath(); fwCtx.arc(t.x,t.y,p.r*(i/p.trail.length)*0.6,0,Math.PI*2);
+      fwCtx.fillStyle=p.col.replace('hsl','hsla').replace(')',','+a+')'); fwCtx.fill();
+    });
+    fwCtx.beginPath(); fwCtx.arc(p.x,p.y,p.r,0,Math.PI*2);
+    fwCtx.fillStyle=p.col.replace('hsl','hsla').replace(')',','+p.alpha+')'); fwCtx.fill();
+  });
+  if (elapsed<FW_DURATION||fwParticles.length>0) requestAnimationFrame(fwFrame);
+  else { fwRunning=false; fwCtx.clearRect(0,0,fwCanvas.width,fwCanvas.height); }
+}
+function startFW(gold) {
+  fwGold = gold;
+  if (fwRunning) return;
+  fwRunning=true; fwParticles=[]; fwStart=performance.now();
+  for(let i=0;i<6;i++) setTimeout(launchFW,i*150);
+  requestAnimationFrame(fwFrame);
+}
+
+// ─────────────────────────────────────────
+// COMPLETION STATE
+// ─────────────────────────────────────────
+let fitbDone = false, fitbPerfect = false;
+let diagDone = false, diagPerfect = false;
+
+function checkAllComplete() {
+  if (!fitbDone || !diagDone) return;
+  const perfect = fitbPerfect && diagPerfect;
+  setTimeout(() => triggerCompletion(perfect), 400);
+}
+
+function triggerCompletion(perfect) {
+  const body   = document.body;
+  const banner = document.getElementById('completionBanner');
+  body.classList.remove('complete-green','complete-gold');
+  banner.classList.remove('green-banner','gold-banner');
+  if (perfect) {
+    body.classList.add('complete-gold');
+    banner.classList.add('gold-banner');
+    banner.textContent = '🌟  Superstar! Perfect score on both exercises — first time!  🌟';
+    startFW(true);
+  } else {
+    body.classList.add('complete-green');
+    banner.classList.add('green-banner');
+    banner.textContent = '🎉  Well done — both exercises complete!  🎉';
+  }
+  banner.classList.add('show');
+}
+
+function cancelCompletion() {
+  document.body.classList.remove('complete-green','complete-gold');
+  const banner = document.getElementById('completionBanner');
+  banner.classList.remove('show');
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('done-green','done-gold'));
+  fitbDone = false; fitbPerfect = false;
+  diagDone = false; diagPerfect = false;
+}
+
+// ─────────────────────────────────────────
+// TAB SWITCHING
+// ─────────────────────────────────────────
+function showTab(id, e) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if (e) e.currentTarget.classList.add('active');
+}
+
+function setTabTick(id, perfect) {
+  const tick = document.getElementById('tick-'+id);
+  tick.classList.remove('tick-green','tick-gold');
+  tick.classList.add(perfect ? 'tick-gold' : 'tick-green');
+  tick.textContent = perfect ? '★' : '✓';
+  tick.classList.add('show');
+  // Colour the tab button itself
+  const btn = [...document.querySelectorAll('.tab-btn')].find(b => b.querySelector('#tick-'+id));
+  if (btn) {
+    btn.classList.remove('done-green','done-gold');
+    btn.classList.add(perfect ? 'done-gold' : 'done-green');
+  }
+}
+
+// ─────────────────────────────────────────
+// EXERCISE 1 — FILL IN THE BLANKS (drag & drop)
+// ─────────────────────────────────────────
+const sentences = [
+  { before:"A computer has two main ways to store data: ", blank:"primary memory", after:" and secondary storage." },
+  { before:"The CPU can ", blank:"directly", after:" access primary memory (RAM)." },
+  { before:"This means the CPU can read and use data from RAM ", blank:"without copying it first", after:"." },
+  { before:"The CPU ", blank:"cannot", after:" directly access secondary storage, such as a hard drive or SSD." },
+  { before:"Before a program can run, it must first be ", blank:"copied", after:" from secondary storage into RAM." },
+  { before:"RAM is ", blank:"temporary", after:" — its contents are lost when the computer is switched off." },
+  { before:"Secondary storage is ", blank:"permanent", after:" — data is kept even when the power is off." },
+];
+const allWords = sentences.map(s => s.blank);
+const shuffledWords = [...allWords].sort(() => Math.random() - 0.5);
+let fitbEverWrong = false;
+let chipDragging = null; // word currently being dragged
+
+function buildFITB() {
+  // ── Word bank ──
+  const bank = document.getElementById('wordBank');
+  bank.innerHTML = '';
+  shuffledWords.forEach(w => {
+    const chip = document.createElement('span');
+    chip.className = 'word-chip';
+    chip.textContent = w;
+    chip.dataset.word = w;
+    chip.draggable = true;
+    chip.addEventListener('dragstart', e => {
+      chipDragging = chip;
+      e.dataTransfer.setData('text/plain', w);
+      e.dataTransfer.effectAllowed = 'move';
+      setTimeout(() => chip.classList.add('chip-dragging'), 0);
+    });
+    chip.addEventListener('dragend', () => chip.classList.remove('chip-dragging'));
+    bank.appendChild(chip);
+  });
+
+  // Bank as a return drop zone
+  bank.addEventListener('dragover', e => { e.preventDefault(); bank.classList.add('drag-over'); });
+  bank.addEventListener('dragleave', e => { if (!bank.contains(e.relatedTarget)) bank.classList.remove('drag-over'); });
+  bank.addEventListener('drop', e => {
+    e.preventDefault(); bank.classList.remove('drag-over');
+    if (!chipDragging) return;
+    // If dragging a chip that was placed in a blank, clear that blank
+    const srcBlankId = chipDragging.dataset.inBlank;
+    if (srcBlankId) {
+      const srcBlank = document.getElementById(srcBlankId);
+      if (srcBlank && !srcBlank.dataset.locked) {
+        srcBlank.textContent = 'drop here';
+        srcBlank.classList.add('empty');
+        srcBlank.classList.remove('correct','wrong');
+        srcBlank.dataset.word = '';
+        delete chipDragging.dataset.inBlank;
+      }
+    }
+    chipDragging.classList.remove('chip-used');
+    chipDragging.draggable = true;
+  });
+
+  // ── Passage with drop targets ──
+  const passage = document.getElementById('passage');
+  passage.innerHTML = '';
+  sentences.forEach((s, i) => {
+    const line = document.createElement('div');
+    line.style.cssText = 'margin-bottom: 8px;';
+
+    // before text
+    const before = document.createTextNode(s.before);
+    line.appendChild(before);
+
+    // blank drop target
+    const blank = document.createElement('span');
+    blank.className = 'blank-target empty';
+    blank.id = 'blank-' + i;
+    blank.dataset.answer = s.blank;
+    blank.dataset.word = '';
+    blank.dataset.locked = '';
+    blank.textContent = 'drop here';
+    blank.draggable = false; // becomes true when filled
+
+    // Allow dropping word chips onto blank
+    blank.addEventListener('dragover', e => {
+      if (blank.dataset.locked) return;
+      e.preventDefault();
+      blank.classList.add('drag-over-blank');
+    });
+    blank.addEventListener('dragleave', e => {
+      if (!blank.contains(e.relatedTarget)) blank.classList.remove('drag-over-blank');
+    });
+    blank.addEventListener('drop', e => {
+      e.preventDefault();
+      blank.classList.remove('drag-over-blank');
+      if (blank.dataset.locked) return;
+      const word = e.dataTransfer.getData('text/plain');
+      if (!word) return;
+
+      // If this blank already has a word, return it to the bank
+      if (blank.dataset.word) {
+        returnWordToBank(blank.dataset.word, blank.id);
+      }
+
+      // If the dragged chip came from another blank, clear that blank
+      if (chipDragging && chipDragging.dataset.inBlank && chipDragging.dataset.inBlank !== blank.id) {
+        const srcBlank = document.getElementById(chipDragging.dataset.inBlank);
+        if (srcBlank && !srcBlank.dataset.locked) {
+          srcBlank.textContent = 'drop here';
+          srcBlank.classList.add('empty');
+          srcBlank.classList.remove('correct','wrong');
+          srcBlank.dataset.word = '';
+          srcBlank.draggable = false;
+        }
+      }
+
+      // Place word in blank
+      blank.textContent = word;
+      blank.classList.remove('empty','correct','wrong');
+      blank.dataset.word = word;
+      blank.draggable = true; // filled blanks can be dragged to move word to another blank
+
+      // Mark chip as used and link it to this blank
+      if (chipDragging) {
+        chipDragging.classList.add('chip-used');
+        chipDragging.draggable = false;
+        chipDragging.dataset.inBlank = blank.id;
+      }
+      chipDragging = null;
+    });
+
+    // Allow dragging placed words back out of a blank
+    blank.addEventListener('dragstart', e => {
+      if (blank.dataset.locked || !blank.dataset.word) { e.preventDefault(); return; }
+      // Find the chip and re-drag it
+      const w = blank.dataset.word;
+      const chip = [...document.querySelectorAll('.word-chip')].find(c => c.dataset.word === w);
+      if (chip) {
+        chip.classList.remove('chip-used'); chip.draggable = true;
+        chipDragging = chip; chip.dataset.inBlank = blank.id;
+        e.dataTransfer.setData('text/plain', w); e.dataTransfer.effectAllowed = 'move';
+      }
+    });
+
+    line.appendChild(blank);
+    const after = document.createTextNode(s.after);
+    line.appendChild(after);
+    passage.appendChild(line);
+  });
+}
+
+function returnWordToBank(word, sourceBlankId) {
+  const chip = [...document.querySelectorAll('.word-chip')].find(c => c.dataset.word === word);
+  if (chip) {
+    chip.classList.remove('chip-used');
+    chip.draggable = true;
+    delete chip.dataset.inBlank;
+  }
+}
+
+function checkFITB() {
+  let correct = 0, anyWrongThisCheck = false;
+  sentences.forEach((s, i) => {
+    const blank = document.getElementById('blank-' + i);
+    const val = (blank.dataset.word || '').trim().toLowerCase();
+    if (val === s.blank.toLowerCase()) {
+      blank.classList.add('correct'); blank.classList.remove('wrong','empty');
+      blank.dataset.locked = 'true';
+      // Lock the chip too
+      const chip = [...document.querySelectorAll('.word-chip')].find(c => c.dataset.word === s.blank);
+      if (chip) { chip.classList.add('chip-used'); chip.draggable = false; }
+      correct++;
+    } else {
+      anyWrongThisCheck = true;
+      blank.classList.add('wrong'); blank.classList.remove('correct');
+      // Animate wrong then clear after shake
+      setTimeout(() => {
+        if (blank.dataset.locked) return;
+        // Return word to bank
+        if (blank.dataset.word) returnWordToBank(blank.dataset.word, blank.id);
+        blank.textContent = 'drop here';
+        blank.classList.add('empty'); blank.classList.remove('wrong');
+        blank.dataset.word = '';
+        blank.draggable = false;
+      }, 500);
+    }
+  });
+
+  if (anyWrongThisCheck) fitbEverWrong = true;
+
+  const score = document.getElementById('fitbScore');
+  score.style.display = 'inline-block';
+  score.textContent = `Score: ${correct} / ${sentences.length}`;
+  const fb = document.getElementById('fitbFeedback');
+  fb.style.display = 'block';
+
+  if (correct === sentences.length) {
+    const perfect = !fitbEverWrong;
+    fb.textContent = perfect ? '🌟 Perfect first time — outstanding!' : '✅ All correct — well done!';
+    fb.style.color = perfect ? 'var(--gold-l)' : 'var(--green-l)';
+    fitbDone = true; fitbPerfect = perfect;
+    setTabTick('fitb', perfect);
+    checkAllComplete();
+  } else {
+    fb.style.color = 'var(--amber-l)';
+    fb.textContent = `${sentences.length - correct} answer${sentences.length-correct>1?'s need':' needs'} correcting — those words returned to the bank.`;
+  }
+}
+
+function resetFITB() {
+  cancelCompletion();
+  fitbEverWrong = false; fitbDone = false; fitbPerfect = false;
+  chipDragging = null;
+  buildFITB();
+  document.getElementById('fitbScore').style.display = 'none';
+  document.getElementById('fitbFeedback').style.display = 'none';
+  document.getElementById('tick-fitb').classList.remove('show');
+}
+
+buildFITB();
+
+// ─────────────────────────────────────────
+// EXERCISE 2 — DIAGRAM ASSEMBLY
+// ─────────────────────────────────────────
+const parts = [
+  { id:'cpu-label',    text:'CPU',                        cls:'cpu-part',    zone:'zone-cpu'    },
+  { id:'cpu-desc',     text:'Runs programs',              cls:'cpu-part',    zone:'zone-cpu'    },
+  { id:'ram-label',    text:'Primary Memory (RAM)',       cls:'ram-part',    zone:'zone-ram'    },
+  { id:'ram-desc',     text:'Temporary (volatile) — fast access',   cls:'ram-part',    zone:'zone-ram'    },
+  { id:'hdd-label',    text:'Secondary Storage',          cls:'hdd-part',    zone:'zone-hdd'    },
+  { id:'hdd-desc',     text:'Permanent (non-volatile) — large capacity', cls:'hdd-part',   zone:'zone-hdd'    },
+  { id:'arrow-direct', text:'⟷  Direct access',          cls:'arrow-part',  zone:'zone-arrow1' },
+  { id:'arrow-copy',   text:'⟵  Must be copied first',   cls:'arrow2-part', zone:'zone-arrow2' },
+];
+
+let draggedPart = null, dragSource = null;
+let diagEverWrong = false;
+
+function buildDiagram() {
+  document.querySelectorAll('.drop-zone').forEach(z => {
+    z.querySelectorAll('.part').forEach(p => p.remove());
+    z.classList.remove('correct-zone','wrong-zone','over');
+    z.querySelector('.tick').style.display = 'none';
+    const hint = z.querySelector('.zone-hint');
+    if (hint) hint.style.display = '';
+    z.dataset.locked = '';
+  });
+  const bank = document.getElementById('partBank');
+  bank.innerHTML = '';
+  [...parts].sort(()=>Math.random()-0.5).forEach(p => createPartEl(p, bank));
+  document.getElementById('diagScore').style.display = 'none';
+}
+
+function createPartEl(p, container) {
+  const el = document.createElement('div');
+  el.className = `part ${p.cls}`; el.textContent = p.text; el.dataset.partId = p.id; el.draggable = true;
+  el.addEventListener('dragstart', e => {
+    draggedPart = el; dragSource = el.parentElement.id || 'partBank';
+    setTimeout(()=>el.classList.add('dragging'),0); e.dataTransfer.effectAllowed='move';
+  });
+  el.addEventListener('dragend', ()=>{ el.classList.remove('dragging'); draggedPart=null; dragSource=null; });
+  container.appendChild(el);
+  return el;
+}
+
+function setupZones() {
+  document.querySelectorAll('.drop-zone').forEach(zone => {
+    zone.addEventListener('dragover', e=>{ e.preventDefault(); zone.classList.add('over'); });
+    zone.addEventListener('dragleave', ()=>zone.classList.remove('over'));
+    zone.addEventListener('drop', e=>{
+      e.preventDefault(); zone.classList.remove('over');
+      if (!draggedPart) return;
+      if (zone.dataset.locked==='true') return;
+      const bank = document.getElementById('partBank');
+      if (dragSource!=='partBank' && dragSource!==zone.id) {
+        const oldZone = document.getElementById(dragSource);
+        if (oldZone) {
+          const existing = oldZone.querySelector('.part[data-part-id="'+draggedPart.dataset.partId+'"]');
+          if (existing) bank.appendChild(existing);
+        }
+      }
+      const hint = zone.querySelector('.zone-hint');
+      if (hint) hint.style.display = 'none';
+      zone.appendChild(draggedPart);
+      draggedPart.classList.remove('dragging'); draggedPart.classList.add('placed-part');
+    });
+  });
+  const bank = document.getElementById('partBank');
+  bank.addEventListener('dragover', e=>{ e.preventDefault(); bank.style.borderColor='var(--teal)'; });
+  bank.addEventListener('dragleave', ()=>bank.style.borderColor='');
+  bank.addEventListener('drop', e=>{
+    e.preventDefault(); bank.style.borderColor='';
+    if (!draggedPart) return;
+    const hint = document.getElementById(dragSource)?.querySelector('.zone-hint');
+    if (hint && !document.getElementById(dragSource)?.querySelector('.part')) hint.style.display='';
+    bank.appendChild(draggedPart); draggedPart.classList.remove('placed-part');
+  });
+}
+
+function checkDiagram() {
+  let correct = 0;
+  const total = 5;
+  let anyWrongThisCheck = false;
+
+  document.querySelectorAll('.drop-zone').forEach(zone => {
+    const accepts = zone.dataset.accepts.split(',');
+    const placedEls = [...zone.querySelectorAll('.part')];
+    const placed = placedEls.map(p=>p.dataset.partId);
+    const zoneCorrect = accepts.every(a=>placed.includes(a)) && placed.every(p=>accepts.includes(p)) && placed.length===accepts.length;
+
+    zone.classList.remove('correct-zone','wrong-zone');
+    const tick = zone.querySelector('.tick');
+    if (placed.length===0) { tick.style.display='none'; return; }
+
+    if (zoneCorrect) {
+      zone.classList.add('correct-zone'); tick.style.display='block'; tick.textContent='✓'; tick.style.color='var(--green-l)';
+      placedEls.forEach(el=>{ el.draggable=false; el.style.cursor='default'; });
+      zone.dataset.locked='true'; correct++;
+    } else {
+      anyWrongThisCheck = true;
+      zone.classList.add('wrong-zone'); tick.style.display='block'; tick.textContent='✗'; tick.style.color='var(--red-l)';
+      const bank = document.getElementById('partBank');
+      placedEls.forEach(el=>{ el.draggable=true; el.style.cursor=''; bank.appendChild(el); el.classList.remove('placed-part'); });
+      zone.dataset.locked='';
+      const hint = zone.querySelector('.zone-hint');
+      if (hint) hint.style.display='';
+      tick.style.display='none'; zone.classList.remove('wrong-zone');
+    }
+  });
+
+  if (anyWrongThisCheck) diagEverWrong = true;
+
+  const score = document.getElementById('diagScore');
+  score.style.display='inline-block';
+  if (correct===total) {
+    const perfect = !diagEverWrong;
+    score.textContent = perfect ? `🌟 Perfect — ${correct}/${total}!` : `✅ All correct — ${correct}/${total}!`;
+    score.style.color = perfect ? 'var(--gold-l)' : 'var(--green-l)';
+    diagDone = true; diagPerfect = perfect;
+    setTabTick('diag', perfect);
+    checkAllComplete();
+  } else {
+    score.textContent = `${correct}/${total} correct — wrong parts returned, try again!`;
+    score.style.color = 'var(--amber-l)';
+  }
+}
+
+function resetDiagram() {
+  cancelCompletion();
+  diagEverWrong = false; diagDone = false; diagPerfect = false;
+  buildDiagram();
+  document.getElementById('tick-diag').classList.remove('show');
+}
+
+buildDiagram();
+setupZones();
+</script>
+</body>
+</html>
