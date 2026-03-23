@@ -147,12 +147,42 @@ jobs:
             json.dump(activities, fh, indent=2)
 
           print(f"\nWrote activities.json with {len(activities)} entries.")
+
+          # ── Write meta.json ──────────────────────────────────────
+          # This is fetched by index.html to show the build version
+          # in the footer. All values come from environment variables
+          # set by GitHub Actions.
+          import datetime
+
+          run_number = os.environ.get('GITHUB_RUN_NUMBER', '0')
+          sha        = os.environ.get('GITHUB_SHA', 'unknown')
+          short_sha  = sha[:7]
+          # GitHub sets GITHUB_RUN_STARTED_AT in UTC ISO format
+          # Fall back to now() if not available
+          started_at = os.environ.get('GITHUB_RUN_STARTED_AT', '')
+          if started_at:
+            dt = datetime.datetime.fromisoformat(started_at.replace('Z', '+00:00'))
+          else:
+            dt = datetime.datetime.now(datetime.timezone.utc)
+
+          meta = {
+            'version':    f"v{run_number}",
+            'build':      run_number,
+            'sha':        short_sha,
+            'deployed':   dt.strftime('%d %b %Y, %H:%M UTC'),
+            'activities': len(activities),
+          }
+
+          with open('meta.json', 'w', encoding='utf-8') as fh:
+            json.dump(meta, fh, indent=2)
+
+          print(f"Wrote meta.json: {meta}")
           EOF
 
-      - name: Commit updated activities.json
+      - name: Commit updated files
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add activities.json
-          git diff --staged --quiet || git commit -m "chore: rebuild activities.json [skip ci]"
+          git add activities.json meta.json
+          git diff --staged --quiet || git commit -m "chore: rebuild manifest [skip ci]"
           git push
