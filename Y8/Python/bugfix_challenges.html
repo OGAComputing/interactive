@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- ACTIVITY
+title:  Bug-Fix Challenges
+lesson: Lesson 1
+type:   Practice
+stars:  4
+desc:   5 escalating bug-fix tasks — spot and fix Python errors
+color:  teal
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bug-Fix Challenges — Year 8 Python</title>
+<style>
+  :root {
+    --navy:       #1A2E4A;
+    --navy-mid:   #1E3A5F;
+    --navy-light: #243B55;
+    --teal:       #00B4D8;
+    --teal-dark:  #006D8F;
+    --teal-light: #90E0EF;
+    --teal-bg:    #D0EEF7;
+    --amber:      #F4A261;
+    --amber-dark: #E07B2A;
+    --amber-bg:   #FEF0E4;
+    --green:      #57CC99;
+    --green-dark: #1E7E5E;
+    --green-bg:   #E6F5EF;
+    --red:        #E63946;
+    --red-bg:     #FDECEA;
+    --gold:       #FFD166;
+    --gold-bg:    #FFFBEA;
+    --code-bg:    #1E2D40;
+    --code-text:  #A8DADC;
+    --code-err:   #F4A261;
+    --code-ok:    #57CC99;
+    --bg:         #EEF5FB;
+    --mid:        #6B8CAE;
+    --muted:      #94A8C0;
+    --white:      #FFFFFF;
+    --purple:     #7B2D8B;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Calibri', 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--navy);
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  .header {
+    background: var(--navy);
+    padding: 18px 28px 14px;
+    border-bottom: 4px solid var(--teal);
+  }
+  .header-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--white);
+    font-family: 'Trebuchet MS', sans-serif;
+    letter-spacing: -0.3px;
+  }
+  .header-sub {
+    font-size: 0.82rem;
+    color: var(--teal-light);
+    margin-top: 2px;
+  }
+
+  /* ── Tab bar ── */
+  .tab-bar {
+    display: flex;
+    background: var(--navy-mid);
+    padding: 0 20px;
+    gap: 4px;
+    overflow-x: auto;
+    border-bottom: 1px solid #2a4060;
+  }
+  .tab {
+    padding: 10px 16px 9px;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    font-family: 'Calibri', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: color 0.15s, border-color 0.15s;
+    white-space: nowrap;
+    user-select: none;
+  }
+  .tab:hover { color: var(--teal-light); }
+  .tab.active {
+    color: var(--white);
+    border-bottom-color: var(--teal);
+  }
+  .tab.done {
+    color: var(--gold);
+    border-bottom-color: var(--gold);
+  }
+  .tab.done.active {
+    color: var(--gold);
+    border-bottom-color: var(--gold);
+  }
+  .tab .star { font-size: 0.7rem; margin-left: 4px; }
+
+  /* ── Content panels ── */
+  .panel { display: none; padding: 24px 28px 32px; max-width: 920px; margin: 0 auto; }
+  .panel.active { display: block; }
+
+  /* ── Task header ── */
+  .task-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 16px;
+  }
+  .task-badge {
+    width: 42px; height: 42px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem; font-weight: 700; color: var(--white);
+    flex-shrink: 0;
+    font-family: 'Trebuchet MS', sans-serif;
+  }
+  .task-title-group { flex: 1; }
+  .task-title {
+    font-size: 1.25rem; font-weight: 700;
+    font-family: 'Trebuchet MS', sans-serif;
+  }
+  .task-meta {
+    display: flex; gap: 10px; align-items: center; margin-top: 3px;
+  }
+  .task-stars { font-size: 0.8rem; color: var(--amber); }
+  .errors-badge {
+    font-size: 0.72rem; font-weight: 700;
+    padding: 2px 8px; border-radius: 10px;
+    color: var(--white);
+  }
+
+  /* ── Goal line ── */
+  .goal {
+    display: flex; align-items: flex-start; gap: 8px;
+    background: var(--white);
+    border-left: 4px solid var(--teal);
+    padding: 10px 14px;
+    border-radius: 0 6px 6px 0;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--navy);
+    margin-bottom: 16px;
+  }
+  .goal-icon { flex-shrink: 0; font-size: 1rem; }
+
+  /* ── Two-column layout ── */
+  .columns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+  @media (max-width: 680px) { .columns { grid-template-columns: 1fr; } }
+
+  /* ── Code panel (broken) ── */
+  .code-panel {
+    border-radius: 6px;
+    overflow: hidden;
+    border: 2px solid var(--red);
+  }
+  .code-panel-header {
+    background: var(--red);
+    padding: 7px 14px;
+    font-size: 0.8rem; font-weight: 700;
+    color: var(--white);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .code-body {
+    background: var(--code-bg);
+    padding: 14px 16px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    overflow-x: auto;
+  }
+  .code-line { white-space: pre; display: block; }
+  .code-line.err { color: var(--code-err); font-weight: 700; }
+  .code-line.ok  { color: var(--code-text); }
+  .code-errors-strip {
+    background: #162030;
+    padding: 5px 14px;
+    font-size: 0.72rem;
+    color: var(--muted);
+    font-style: italic;
+    border-top: 1px solid #2a3d52;
+  }
+
+  /* ── Fix panel ── */
+  .fix-panel {
+    border-radius: 6px;
+    overflow: hidden;
+    border: 2px solid var(--teal);
+    display: flex; flex-direction: column;
+  }
+  .fix-panel-header {
+    background: var(--teal-dark);
+    padding: 7px 14px;
+    font-size: 0.8rem; font-weight: 700;
+    color: var(--white);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .fix-textarea {
+    flex: 1;
+    background: var(--code-bg);
+    border: none;
+    resize: vertical;
+    padding: 14px 16px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    color: var(--code-text);
+    min-height: 140px;
+    outline: none;
+    tab-size: 4;
+    width: 100%;
+  }
+  .fix-textarea:focus { outline: 2px solid var(--teal); outline-offset: -2px; }
+  .fix-textarea.correct { outline: 2px solid var(--green); color: var(--green); }
+
+  /* ── Hint toggle ── */
+  .hint-section { margin-bottom: 14px; }
+  .hint-toggle {
+    background: none; border: none; cursor: pointer;
+    color: var(--amber-dark);
+    font-size: 0.82rem; font-weight: 700;
+    display: flex; align-items: center; gap: 5px;
+    padding: 0;
+  }
+  .hint-toggle:hover { color: var(--amber); }
+  .hint-box {
+    display: none;
+    margin-top: 8px;
+    background: var(--amber-bg);
+    border-left: 3px solid var(--amber);
+    padding: 10px 14px;
+    border-radius: 0 6px 6px 0;
+    font-size: 0.84rem;
+    color: var(--navy);
+  }
+  .hint-box.open { display: block; }
+
+  /* ── Check button + feedback ── */
+  .check-row {
+    display: flex; align-items: center; gap: 12px;
+    flex-wrap: wrap;
+  }
+  .btn-check {
+    background: var(--teal);
+    color: var(--navy);
+    border: none;
+    padding: 10px 24px;
+    border-radius: 6px;
+    font-size: 0.9rem; font-weight: 700;
+    cursor: pointer;
+    font-family: 'Calibri', sans-serif;
+    transition: background 0.15s;
+  }
+  .btn-check:hover { background: var(--teal-light); }
+  .btn-check:active { background: var(--teal-dark); color: var(--white); }
+
+  .feedback {
+    flex: 1;
+    min-width: 160px;
+    padding: 9px 14px;
+    border-radius: 6px;
+    font-size: 0.84rem;
+    font-weight: 700;
+    display: none;
+  }
+  .feedback.wrong {
+    display: block;
+    background: var(--red-bg);
+    border: 1px solid var(--red);
+    color: var(--red);
+  }
+  .feedback.correct {
+    display: block;
+    background: var(--green-bg);
+    border: 1px solid var(--green);
+    color: var(--green-dark);
+  }
+
+  /* ── Colour key ── */
+  .colour-key {
+    display: flex; gap: 16px;
+    font-size: 0.77rem; color: var(--mid);
+    margin-top: 10px;
+    align-items: center;
+  }
+  .key-swatch {
+    display: inline-block;
+    width: 10px; height: 10px;
+    border-radius: 2px;
+    margin-right: 4px;
+    vertical-align: middle;
+  }
+
+  /* ── Tips bar ── */
+  .tip-bar {
+    background: var(--gold-bg);
+    border: 1px solid var(--gold);
+    border-radius: 6px;
+    padding: 10px 14px;
+    font-size: 0.84rem;
+    font-weight: 700;
+    color: var(--amber-dark);
+    margin-top: 14px;
+    display: flex; gap: 8px; align-items: flex-start;
+  }
+
+  /* ── Task 5 extension note ── */
+  .extension-note {
+    background: var(--amber-bg);
+    border: 1px solid var(--amber);
+    border-radius: 6px;
+    padding: 10px 14px;
+    font-size: 0.84rem;
+    color: var(--navy);
+    margin-top: 14px;
+    display: flex; gap: 8px; align-items: flex-start;
+  }
+
+  /* ── Completion banner ── */
+  .completion-banner {
+    display: none;
+    text-align: center;
+    padding: 20px 24px;
+    background: linear-gradient(135deg, #1A2E4A 0%, #1E3A5F 100%);
+    border: 2px solid var(--gold);
+    border-radius: 10px;
+    margin: 0 28px 24px;
+    max-width: 920px;
+    margin-left: auto; margin-right: auto;
+  }
+  .completion-banner.visible { display: block; }
+  .completion-banner h2 {
+    color: var(--gold);
+    font-family: 'Trebuchet MS', sans-serif;
+    font-size: 1.4rem;
+    margin-bottom: 6px;
+  }
+  .completion-banner p { color: var(--teal-light); font-size: 0.9rem; }
+
+  /* ── Fireworks canvas ── */
+  #fireworks-canvas {
+    position: fixed; top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  /* ── Progress dots in header ── */
+  .progress-row {
+    display: flex; gap: 6px; margin-top: 6px; align-items: center;
+  }
+  .progress-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--navy-light);
+    transition: background 0.3s;
+  }
+  .progress-dot.done { background: var(--gold); }
+
+  /* ── Tab 5 amber theme ── */
+  .tab[data-idx="4"] { }
+  .tab[data-idx="4"].active { border-bottom-color: var(--amber); color: var(--white); }
+</style>
+</head>
+<body>
+
+<canvas id="fireworks-canvas"></canvas>
+
+<header class="header">
+  <div class="header-title">Bug-Fix Challenges</div>
+  <div class="header-sub">Python Programming · Year 8 · Spot the error, fix the code</div>
+  <div class="progress-row">
+    <span id="dot-0" class="progress-dot"></span>
+    <span id="dot-1" class="progress-dot"></span>
+    <span id="dot-2" class="progress-dot"></span>
+    <span id="dot-3" class="progress-dot"></span>
+    <span id="dot-4" class="progress-dot"></span>
+    <span style="font-size:0.72rem; color:var(--muted); margin-left:6px;" id="progress-label">0 / 5 complete</span>
+  </div>
+</header>
+
+<nav class="tab-bar" id="tab-bar">
+  <button class="tab active" data-idx="0">1 — Greeting <span class="star">★</span></button>
+  <button class="tab" data-idx="1">2 — Age Checker <span class="star">★★</span></button>
+  <button class="tab" data-idx="2">3 — Double a Number <span class="star">★★</span></button>
+  <button class="tab" data-idx="3">4 — Username Greeter <span class="star">★★★</span></button>
+  <button class="tab" data-idx="4">5 — Score Grader <span class="star">★★★★</span></button>
+</nav>
+
+<div id="completion-banner" class="completion-banner">
+  <h2>🎉 All 5 challenges complete!</h2>
+  <p>Excellent work — you've found and fixed every bug. You're ready to write Python that actually runs!</p>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ TASK 1 -->
+<div class="panel active" id="panel-0">
+  <div class="task-header">
+    <div class="task-badge" style="background:var(--teal);">1</div>
+    <div class="task-title-group">
+      <div class="task-title">Greeting Program</div>
+      <div class="task-meta">
+        <span class="task-stars">★</span>
+        <span class="errors-badge" style="background:var(--teal-dark);">2 errors to fix</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="goal"><span class="goal-icon">🎯</span>Fix it so it prints: <code style="font-family:monospace;margin-left:6px;">Hello, Alice!</code></div>
+
+  <div class="columns">
+    <div class="code-panel">
+      <div class="code-panel-header">✗ Broken code — copy into Thonny</div>
+      <div class="code-body">
+        <span class="code-line err">name = "Alice</span>
+        <span class="code-line err">print(Hello, + name)</span>
+      </div>
+      <div class="code-errors-strip">Errors: SyntaxError (quote) · SyntaxError (print)</div>
+    </div>
+
+    <div class="fix-panel">
+      <div class="fix-panel-header">✓ Type your fixed code here</div>
+      <textarea class="fix-textarea" id="ta-0" placeholder="Type the corrected version of the program here..." spellcheck="false"></textarea>
+    </div>
+  </div>
+
+  <div class="colour-key">
+    <span><span class="key-swatch" style="background:var(--code-err);"></span>contains an error</span>
+    <span><span class="key-swatch" style="background:var(--code-text);"></span>correct</span>
+  </div>
+
+  <div class="hint-section" style="margin-top:14px;">
+    <button class="hint-toggle" onclick="toggleHint(0)">💡 Show hint</button>
+    <div class="hint-box" id="hint-0">
+      Line 1: every opening <code>"</code> needs a closing <code>"</code> — count them.<br>
+      Line 2: to print a string joined with a variable, use <code>print("Hello, " + name)</code>
+    </div>
+  </div>
+
+  <div class="check-row" style="margin-top:12px;">
+    <button class="btn-check" onclick="checkTask(0)">Check my answer</button>
+    <div class="feedback" id="fb-0"></div>
+  </div>
+
+  <div class="tip-bar">💡 Count your quote marks — every <code>"</code> needs a matching closing <code>"</code></div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ TASK 2 -->
+<div class="panel" id="panel-1">
+  <div class="task-header">
+    <div class="task-badge" style="background:var(--teal);">2</div>
+    <div class="task-title-group">
+      <div class="task-title">Age Checker</div>
+      <div class="task-meta">
+        <span class="task-stars">★★</span>
+        <span class="errors-badge" style="background:var(--teal-dark);">2 errors to fix</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="goal"><span class="goal-icon">🎯</span>Fix it so it asks for age and prints the correct message</div>
+
+  <div class="columns">
+    <div class="code-panel">
+      <div class="code-panel-header">✗ Broken code — copy into Thonny</div>
+      <div class="code-body">
+        <span class="code-line err">age = input("How old are you? ")</span>
+        <span class="code-line err">if age > 12</span>
+        <span class="code-line ok">    print("You are a teenager")</span>
+        <span class="code-line ok">else:</span>
+        <span class="code-line ok">    print("Not yet a teenager")</span>
+      </div>
+      <div class="code-errors-strip">Errors: TypeError (input) · SyntaxError (colon)</div>
+    </div>
+
+    <div class="fix-panel">
+      <div class="fix-panel-header">✓ Type your fixed code here</div>
+      <textarea class="fix-textarea" id="ta-1" placeholder="Type the corrected version of the program here..." spellcheck="false"></textarea>
+    </div>
+  </div>
+
+  <div class="colour-key">
+    <span><span class="key-swatch" style="background:var(--code-err);"></span>contains an error</span>
+    <span><span class="key-swatch" style="background:var(--code-text);"></span>correct</span>
+  </div>
+
+  <div class="hint-section" style="margin-top:14px;">
+    <button class="hint-toggle" onclick="toggleHint(1)">💡 Show hint</button>
+    <div class="hint-box" id="hint-1">
+      Line 1: <code>input()</code> always returns text. To compare with a number, wrap it: <code>int(input(...))</code><br>
+      Line 2: <code>if</code> lines must end with a colon <code>:</code>
+    </div>
+  </div>
+
+  <div class="check-row" style="margin-top:12px;">
+    <button class="btn-check" onclick="checkTask(1)">Check my answer</button>
+    <div class="feedback" id="fb-1"></div>
+  </div>
+
+  <div class="tip-bar">💡 <code>input()</code> always gives text — wrap in <code>int()</code> when you need a number</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ TASK 3 -->
+<div class="panel" id="panel-2">
+  <div class="task-header">
+    <div class="task-badge" style="background:var(--teal);">3</div>
+    <div class="task-title-group">
+      <div class="task-title">Double a Number</div>
+      <div class="task-meta">
+        <span class="task-stars">★★</span>
+        <span class="errors-badge" style="background:var(--teal-dark);">2 errors to fix</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="goal"><span class="goal-icon">🎯</span>Fix it so it doubles the number entered and prints the result</div>
+
+  <div class="columns">
+    <div class="code-panel">
+      <div class="code-panel-header">✗ Broken code — copy into Thonny</div>
+      <div class="code-body">
+        <span class="code-line err">number = input("Enter a number: ")</span>
+        <span class="code-line ok">doubled = number * 2</span>
+        <span class="code-line err">print("Double: " + doubled)</span>
+      </div>
+      <div class="code-errors-strip">Errors: TypeError (input) · TypeError (concatenation)</div>
+    </div>
+
+    <div class="fix-panel">
+      <div class="fix-panel-header">✓ Type your fixed code here</div>
+      <textarea class="fix-textarea" id="ta-2" placeholder="Type the corrected version of the program here..." spellcheck="false"></textarea>
+    </div>
+  </div>
+
+  <div class="colour-key">
+    <span><span class="key-swatch" style="background:var(--code-err);"></span>contains an error</span>
+    <span><span class="key-swatch" style="background:var(--code-text);"></span>correct</span>
+  </div>
+
+  <div class="hint-section" style="margin-top:14px;">
+    <button class="hint-toggle" onclick="toggleHint(2)">💡 Show hint</button>
+    <div class="hint-box" id="hint-2">
+      Line 1: <code>input()</code> returns text — wrap in <code>int()</code> to get a number.<br>
+      Line 3: you can't join a string and an integer with <code>+</code>. Convert <code>doubled</code> to text first: <code>str(doubled)</code>
+    </div>
+  </div>
+
+  <div class="check-row" style="margin-top:12px;">
+    <button class="btn-check" onclick="checkTask(2)">Check my answer</button>
+    <div class="feedback" id="fb-2"></div>
+  </div>
+
+  <div class="tip-bar">💡 You can't join a string and an integer — use <code>str()</code> to convert numbers to text first</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ TASK 4 -->
+<div class="panel" id="panel-3">
+  <div class="task-header">
+    <div class="task-badge" style="background:var(--amber-dark);">4</div>
+    <div class="task-title-group">
+      <div class="task-title">Username Greeter</div>
+      <div class="task-meta">
+        <span class="task-stars">★★★</span>
+        <span class="errors-badge" style="background:var(--amber-dark);">3 errors to fix</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="goal"><span class="goal-icon">🎯</span>Fix all 3 errors so it greets the user correctly</div>
+
+  <div class="columns">
+    <div class="code-panel" style="border-color:var(--amber);">
+      <div class="code-panel-header" style="background:var(--amber-dark);">✗ Broken code — copy into Thonny</div>
+      <div class="code-body">
+        <span class="code-line err">username = input("What is your name? "</span>
+        <span class="code-line ok">if username == "admin":</span>
+        <span class="code-line err">print("Welcome, admin!")</span>
+        <span class="code-line ok">else:</span>
+        <span class="code-line err">    print("Hello, " + username)</span>
+      </div>
+      <div class="code-errors-strip">Errors: SyntaxError (bracket) · IndentationError · IndentationError</div>
+    </div>
+
+    <div class="fix-panel" style="border-color:var(--amber);">
+      <div class="fix-panel-header" style="background:var(--amber-dark);">✓ Type your fixed code here</div>
+      <textarea class="fix-textarea" id="ta-3" placeholder="Type the corrected version of the program here..." spellcheck="false"></textarea>
+    </div>
+  </div>
+
+  <div class="colour-key">
+    <span><span class="key-swatch" style="background:var(--code-err);"></span>contains an error</span>
+    <span><span class="key-swatch" style="background:var(--code-text);"></span>correct</span>
+  </div>
+
+  <div class="hint-section" style="margin-top:14px;">
+    <button class="hint-toggle" onclick="toggleHint(3)">💡 Show hint</button>
+    <div class="hint-box" id="hint-3">
+      Line 1: the closing bracket <code>)</code> is missing at the end of <code>input(...)</code>.<br>
+      Line 3: <code>print("Welcome, admin!")</code> needs to be indented (4 spaces or Tab) — it's inside the <code>if</code>.<br>
+      Line 5: check the indentation of the <code>else</code> branch matches line 3.
+    </div>
+  </div>
+
+  <div class="check-row" style="margin-top:12px;">
+    <button class="btn-check" style="background:var(--amber); color:var(--navy);" onclick="checkTask(3)">Check my answer</button>
+    <div class="feedback" id="fb-3"></div>
+  </div>
+
+  <div class="tip-bar">💡 After a colon <code>:</code>, press Tab to indent the next line — Python uses indentation to group code</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ TASK 5 -->
+<div class="panel" id="panel-4">
+  <div class="task-header">
+    <div class="task-badge" style="background:var(--amber-dark);">5</div>
+    <div class="task-title-group">
+      <div class="task-title">Score Grader ⭐ Extension</div>
+      <div class="task-meta">
+        <span class="task-stars">★★★★</span>
+        <span class="errors-badge" style="background:var(--amber-dark);">4 errors to fix</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="goal"><span class="goal-icon">🎯</span>Fix all 4 errors in the score grader</div>
+
+  <div class="columns">
+    <div class="code-panel" style="border-color:var(--amber);">
+      <div class="code-panel-header" style="background:var(--amber-dark);">✗ Broken code — copy into Thonny</div>
+      <div class="code-body">
+        <span class="code-line err">score = input("Enter your score: ")</span>
+        <span class="code-line err">if score >= 80</span>
+        <span class="code-line err">    print("Excellent! " + score)</span>
+        <span class="code-line ok">elif score >= 50:</span>
+        <span class="code-line ok">    print("Good effort. " + score)</span>
+        <span class="code-line err">else</span>
+        <span class="code-line ok">    print("Keep trying! " + score)</span>
+      </div>
+      <div class="code-errors-strip">Errors: TypeError · SyntaxError (colon) · TypeError · SyntaxError (colon)</div>
+    </div>
+
+    <div class="fix-panel" style="border-color:var(--amber);">
+      <div class="fix-panel-header" style="background:var(--amber-dark);">✓ Type your fixed code here</div>
+      <textarea class="fix-textarea" id="ta-4" placeholder="Type the corrected version of the program here..." spellcheck="false" style="min-height:200px;"></textarea>
+    </div>
+  </div>
+
+  <div class="colour-key">
+    <span><span class="key-swatch" style="background:var(--code-err);"></span>contains an error</span>
+    <span><span class="key-swatch" style="background:var(--code-text);"></span>correct</span>
+  </div>
+
+  <div class="hint-section" style="margin-top:14px;">
+    <button class="hint-toggle" onclick="toggleHint(4)">💡 Show hint</button>
+    <div class="hint-box" id="hint-4">
+      Line 1: <code>input()</code> returns text — use <code>int(input(...))</code> to get a number.<br>
+      Line 2: <code>if score >= 80</code> is missing a colon <code>:</code> at the end.<br>
+      Lines 3, 5, 7: <code>score</code> is now an integer — you can't join it with a string using <code>+</code>. Use <code>str(score)</code>.<br>
+      Line 6: <code>else</code> is missing a colon <code>:</code> at the end.
+    </div>
+  </div>
+
+  <div class="check-row" style="margin-top:12px;">
+    <button class="btn-check" style="background:var(--amber); color:var(--navy);" onclick="checkTask(4)">Check my answer</button>
+    <div class="feedback" id="fb-4"></div>
+  </div>
+
+  <div class="extension-note">
+    <span>⭐</span>
+    <span><strong>Extension:</strong> Once it works, add another <code>elif</code> branch for scores between 60 and 79 with your own message.</span>
+  </div>
+</div>
+
+<script>
+// ── Task check logic ─────────────────────────────────────────────────
+// Each task has an array of "checks" — functions that return true if the
+// student's answer contains the required fix. All checks must pass.
+// Strategy: normalise whitespace, lowercase for structural checks only.
+// String literal CONTENTS are not checked (to allow any prompt text).
+
+const tasks = [
+  // Task 1: close quote on Alice, fix print syntax
+  {
+    checks: [
+      (v) => /name\s*=\s*"Alice"/.test(v),       // closed quote
+      (v) => /print\(\s*"Hello,\s*"\s*\+\s*name\s*\)/.test(v),  // correct print
+    ],
+    hints: [
+      'Line 1 still has an unclosed quote — try: name = "Alice"',
+      'Line 2 needs to be: print("Hello, " + name)',
+    ]
+  },
+  // Task 2: int(input), colon after if
+  {
+    checks: [
+      (v) => /int\s*\(\s*input\s*\(/.test(v),   // int() wrapping
+      (v) => /if\s+age\s*>\s*12\s*:/.test(v),   // colon present
+    ],
+    hints: [
+      'The input() still needs to be wrapped in int() — try: age = int(input(...))',
+      'The if line is still missing its colon — try: if age > 12:',
+    ]
+  },
+  // Task 3: int(input) for number, str(doubled) for concatenation
+  {
+    checks: [
+      (v) => /int\s*\(\s*input\s*\(/.test(v),             // int wrap
+      (v) => /str\s*\(\s*doubled\s*\)/.test(v),           // str() conversion
+    ],
+    hints: [
+      'number = input(...) still returns text — wrap it: number = int(input(...))',
+      'You cannot join a string and an integer — convert doubled to text: str(doubled)',
+    ]
+  },
+  // Task 4: closing bracket on input, indent print("Welcome"), indent else print
+  {
+    checks: [
+      (v) => /input\s*\([^)]+\)\s*\)/.test(v) || /input\("[^"]*"\s*\)/.test(v),  // closing ) on input
+      (v) => /[ \t]+print\s*\(\s*"Welcome/.test(v),  // indented Welcome print
+      (v) => /[ \t]+print\s*\(\s*"Hello/.test(v),    // indented Hello print
+    ],
+    hints: [
+      'Line 1 is still missing the closing ) — try: username = input("What is your name? ")',
+      'The print("Welcome...") line needs to be indented (press Tab) — it\'s inside the if block',
+      'The print("Hello...") line also needs to be indented inside the else block',
+    ]
+  },
+  // Task 5: int(input), colon after if score >= 80, str(score), colon after else
+  {
+    checks: [
+      (v) => /int\s*\(\s*input\s*\(/.test(v),            // int wrap
+      (v) => /if\s+score\s*>=\s*80\s*:/.test(v),         // colon after if
+      (v) => /str\s*\(\s*score\s*\)/.test(v),            // str(score)
+      (v) => /else\s*:/.test(v),                         // colon after else
+    ],
+    hints: [
+      'score = input(...) still returns text — wrap it: score = int(input(...))',
+      'The if line is missing its colon — try: if score >= 80:',
+      'You cannot join a string and an integer — convert score to text: str(score)',
+      'The else line is missing its colon — try: else:',
+    ]
+  }
+];
+
+const completed = new Array(5).fill(false);
+
+function normalise(str) {
+  return str.replace(/\r\n/g, '\n').trim();
+}
+
+function checkTask(idx) {
+  const ta = document.getElementById('ta-' + idx);
+  const fb = document.getElementById('fb-' + idx);
+  const val = normalise(ta.value);
+
+  if (!val) {
+    fb.className = 'feedback wrong';
+    fb.textContent = 'Type your fixed code in the box first.';
+    return;
+  }
+
+  const task = tasks[idx];
+  const failedChecks = [];
+  task.checks.forEach((check, i) => {
+    if (!check(val)) failedChecks.push(task.hints[i]);
+  });
+
+  if (failedChecks.length === 0) {
+    // All checks passed
+    fb.className = 'feedback correct';
+    fb.textContent = '✓ Correct! All errors fixed.';
+    ta.classList.add('correct');
+    markComplete(idx);
+  } else {
+    fb.className = 'feedback wrong';
+    fb.innerHTML = '✗ Not quite yet:<br><span style="font-weight:400;">' +
+      failedChecks.map(h => '• ' + h).join('<br>') + '</span>';
+    ta.classList.remove('correct');
+  }
+}
+
+function markComplete(idx) {
+  if (completed[idx]) return;
+  completed[idx] = true;
+
+  // Update tab
+  const tab = document.querySelector('.tab[data-idx="' + idx + '"]');
+  tab.classList.add('done');
+
+  // Update dot
+  document.getElementById('dot-' + idx).classList.add('done');
+
+  // Update progress label
+  const count = completed.filter(Boolean).length;
+  document.getElementById('progress-label').textContent = count + ' / 5 complete';
+
+  // Save progress
+  try {
+    localStorage.setItem('bugfix_progress', JSON.stringify(completed));
+  } catch(e) {}
+
+  // Check if all done
+  if (completed.every(Boolean)) {
+    document.getElementById('completion-banner').classList.add('visible');
+    launchFireworks();
+    // Re-launch fireworks on scroll to top
+    setTimeout(launchFireworks, 800);
+  }
+}
+
+// ── Tab switching ────────────────────────────────────────────────────
+document.getElementById('tab-bar').addEventListener('click', e => {
+  const btn = e.target.closest('.tab');
+  if (!btn) return;
+  const idx = parseInt(btn.dataset.idx);
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('panel-' + idx).classList.add('active');
+});
+
+// ── Hint toggle ──────────────────────────────────────────────────────
+function toggleHint(idx) {
+  const box = document.getElementById('hint-' + idx);
+  const btn = box.previousElementSibling;
+  const open = box.classList.toggle('open');
+  btn.textContent = open ? '💡 Hide hint' : '💡 Show hint';
+}
+
+// ── Tab key in textareas → insert 4 spaces ───────────────────────────
+document.querySelectorAll('.fix-textarea').forEach(ta => {
+  ta.addEventListener('keydown', e => {
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      const start = ta.selectionStart, end = ta.selectionEnd;
+      ta.value = ta.value.substring(0, start) + '    ' + ta.value.substring(end);
+      ta.selectionStart = ta.selectionEnd = start + 4;
+    }
+  });
+});
+
+// ── Restore progress from localStorage ──────────────────────────────
+try {
+  const saved = JSON.parse(localStorage.getItem('bugfix_progress') || '[]');
+  saved.forEach((done, i) => {
+    if (done) markComplete(i);
+  });
+} catch(e) {}
+
+// ── Fireworks ────────────────────────────────────────────────────────
+const canvas = document.getElementById('fireworks-canvas');
+const ctx = canvas.getContext('2d');
+let particles = [];
+let animating = false;
+
+function resize() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resize);
+resize();
+
+const COLOURS = ['#00B4D8','#57CC99','#FFD166','#F4A261','#90E0EF','#FFFFFF'];
+
+function launchFireworks() {
+  for (let b = 0; b < 8; b++) {
+    const x = Math.random() * canvas.width;
+    const y = Math.random() * canvas.height * 0.5;
+    const col = COLOURS[Math.floor(Math.random() * COLOURS.length)];
+    for (let i = 0; i < 60; i++) {
+      const angle = (Math.PI * 2 * i) / 60;
+      const speed = 2 + Math.random() * 5;
+      particles.push({
+        x, y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        life: 1,
+        decay: 0.012 + Math.random() * 0.012,
+        r: 2 + Math.random() * 3,
+        col
+      });
+    }
+  }
+  if (!animating) { animating = true; requestAnimationFrame(animateFireworks); }
+}
+
+function animateFireworks() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  particles = particles.filter(p => p.life > 0);
+  particles.forEach(p => {
+    ctx.globalAlpha = p.life;
+    ctx.fillStyle = p.col;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+    ctx.fill();
+    p.x += p.vx;
+    p.y += p.vy + 0.08;
+    p.vx *= 0.97;
+    p.vy *= 0.97;
+    p.life -= p.decay;
+  });
+  ctx.globalAlpha = 1;
+  if (particles.length > 0) requestAnimationFrame(animateFireworks);
+  else animating = false;
+}
+</script>
+</body>
+</html>
