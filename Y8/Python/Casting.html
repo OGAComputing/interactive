@@ -187,12 +187,12 @@ body.bg-green{background:#c8f5d8}
   <div class="cast-ref">
     <div class="cast-box">
       <div class="cast-box-label">To convert to a number &#8212; wrap in <span class="cx-int">int( )</span></div>
-      <div class="cast-example"><span class="cx-neutral">age = </span><span class="cx-int">int(</span><span class="cx-neutral">input("How old are you? ")</span><span class="cx-int">)</span></div>
+      <div class="cast-example"><span class="cx-neutral">year = </span><span class="cx-int">int(</span><span class="cx-neutral">input("What year? ")</span><span class="cx-int">)</span></div>
       <div class="cast-box-note">Use when you need to do maths with the value</div>
     </div>
     <div class="cast-box">
       <div class="cast-box-label">To convert to text &#8212; wrap in <span class="cx-str">str( )</span></div>
-      <div class="cast-example"><span class="cx-neutral">print("You are " + </span><span class="cx-str">str(</span><span class="cx-neutral">age</span><span class="cx-str">)</span><span class="cx-neutral"> + " years old")</span></div>
+      <div class="cast-example"><span class="cx-neutral">print("Score: " + </span><span class="cx-str">str(</span><span class="cx-neutral">points</span><span class="cx-str">)</span><span class="cx-neutral">)</span></div>
       <div class="cast-box-note">Use when joining a number to a string with +</div>
     </div>
   </div>
@@ -547,7 +547,7 @@ document.querySelectorAll('#tab1 input[type="text"]').forEach(inp=>{
 const T2A={1:{a:'none',d:'&#10003; No cast needed &#8212; str&#160;+&#160;str is fine'},2:{a:'int',d:"&#10003; Cast to int() &#8212; can't multiply a string"},3:{a:'str',d:"&#10003; Cast to str() &#8212; can't join int with +"},4:{a:'none',d:'&#10003; No cast needed &#8212; int&#160;+&#160;int is fine'},5:{a:'int',d:"&#10003; Cast to int() &#8212; can't add int to a string"},6:{a:'str',d:"&#10003; Cast to str() &#8212; can't join int with +"}};
 const t2sel={1:null,2:null,3:null,4:null,5:null,6:null},d2={1:0,2:0,3:0,4:0,5:0,6:0};
 let t2bad=false;
-function t2s(r,v,btn){if(d2[r])return;t2sel[r]=v;document.getElementById('t2c'+r).querySelectorAll('.cb').forEach(b=>b.classList.remove('sn','si','ss'));btn.classList.add('s'+v[0])}
+function t2s(r,v,btn){if(d2[r])return;t2sel[r]=v;document.getElementById('t2c'+r).querySelectorAll('.cb').forEach(b=>b.classList.remove('sn','si','ss'));btn.classList.add('s'+v[0]);saveState();}
 function t2Row(r){
   if(d2[r])return;
   const cell=document.getElementById('t2c'+r),hn=document.getElementById('t2h'+r),rv=document.getElementById('t2v'+r);
@@ -579,7 +579,7 @@ const T3M={
   '1':{h:['name\\s*=\\s*input\\s*\\(','age\\s*=\\s*input\\s*\\('],n:['name\\s*=\\s*int\\s*\\(','age\\s*=\\s*int\\s*\\(']},
   '2':{h:['score\\s*=\\s*int\\s*\\(\\s*input\\s*\\(','bonus\\s*=\\s*int\\s*\\(\\s*input\\s*\\('],n:[]},
   '3':{h:['birth_year\\s*=\\s*int\\s*\\(\\s*input\\s*\\(','name\\s*=\\s*input\\s*\\('],n:['name\\s*=\\s*int\\s*\\(']},
-  '4':{h:['num\\s*=\\s*input\\s*\\(','result\\s*=\\s*int\\s*\\(\\s*num\\s*\\)','str\\s*\\(\\s*result\\s*\\)'],n:['num\\s*=\\s*int\\s*\\(']},
+  '4':{h:['num\\s*=.*input\\s*\\(','result\\s*=.*\\*\\s*2','str\\s*\\(\\s*result\\s*\\)'],n:[],custom:true},
   '5':{h:['first\\s*=\\s*int\\s*\\(\\s*input\\s*\\(','second\\s*=\\s*int\\s*\\(\\s*input\\s*\\(','label\\s*=\\s*input\\s*\\('],n:['label\\s*=\\s*int\\s*\\(']},
   '6':{h:['qty\\s*=\\s*int\\s*\\(\\s*input\\s*\\(','item\\s*=\\s*input\\s*\\(','price\\s*=\\s*int\\s*\\(\\s*input\\s*\\('],n:['item\\s*=\\s*int\\s*\\(']},
 };
@@ -588,6 +588,13 @@ function t3Check(q,code){
   const m=T3M[String(q)];
   for(const pat of m.h){if(!new RegExp(pat).test(code))return false;}
   for(const pat of m.n){if(new RegExp(pat).test(code))return false;}
+  // Q4 custom: int() must appear on either the num= line or the result= line
+  if(m.custom && String(q)==='4'){
+    const lines=code.split('\n');
+    const numLine=lines.find(l=>/^\s*num\s*=/.test(l))||'';
+    const resLine=lines.find(l=>/^\s*result\s*=/.test(l))||'';
+    if(!/int\s*\(/.test(numLine)&&!/int\s*\(/.test(resLine))return false;
+  }
   return true;
 }
 function t3Row(q){
