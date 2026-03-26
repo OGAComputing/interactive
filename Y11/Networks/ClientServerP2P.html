@@ -1,0 +1,1385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- ACTIVITY
+title:  Client-Server & Peer-to-Peer Networks
+lesson: Network Types and Topologies
+type:   Practice
+stars:  3
+desc:   Multi-tab interactive activity covering client-server, peer-to-peer, star and mesh topologies with escalating difficulty
+color:  orange
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Client-Server & Peer-to-Peer Networks</title>
+<style>
+  :root {
+    --navy:#1a2340;--teal:#2a9d8f;--amber:#e9c46a;--orange:#f4a261;
+    --orange-dark:#e76f51;--border:#dee2e6;--text:#212529;--muted:#6c757d;
+    --white:#ffffff;--tab-done:#2d6a4f;--code-bg:#1e2d3d;
+    --gold-bg:#fff3b0;--gold-border:#e9c46a;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Trebuchet MS',Calibri,sans-serif;background:var(--navy);color:var(--text);min-height:100vh;transition:background .8s ease;}
+  body.all-correct{background:#1a4a2e;}
+  body.all-gold{background:#7a6000;}
+
+  /* HEADER */
+  .page-header{background:linear-gradient(135deg,#1a2340,#2a4a6b);padding:20px 30px 0;border-bottom:3px solid var(--orange);}
+  .page-header h1{color:#fff;font-size:1.6rem;}
+  .page-header .subtitle{color:var(--amber);font-size:.9rem;margin:4px 0 14px;}
+  .stars{color:var(--orange);}
+
+  /* PROGRESS */
+  .progress-row{display:flex;align-items:center;gap:12px;padding:8px 30px;background:#111827;}
+  .progress-label,.progress-count{color:#adb5bd;font-size:.82rem;white-space:nowrap;}
+  .progress-bar-wrap{flex:1;background:#374151;border-radius:6px;height:10px;overflow:hidden;}
+  .progress-bar-fill{height:100%;background:linear-gradient(90deg,var(--teal),var(--orange));border-radius:6px;transition:width .5s;width:0%;}
+
+  /* TABS */
+  .tab-bar{display:flex;gap:4px;padding:0 30px;background:#111827;overflow-x:auto;}
+  .tab-btn{padding:10px 14px;border:none;border-radius:8px 8px 0 0;cursor:pointer;font-family:'Trebuchet MS',Calibri,sans-serif;font-size:.82rem;font-weight:700;background:#374151;color:#9ca3af;transition:all .2s;white-space:nowrap;}
+  .tab-btn:hover{background:#4b5563;color:#fff;}
+  .tab-btn.active{background:var(--orange);color:var(--navy);}
+  .tab-btn.done{background:var(--tab-done);color:#fff;}
+  .tab-btn.done.active{background:#3a8a5c;color:#fff;}
+  .tab-stars{font-size:.62rem;display:block;margin-top:2px;opacity:.8;}
+
+  /* MAIN */
+  .main{padding:28px 30px;max-width:920px;margin:0 auto;}
+  .tab-panel{display:none;} .tab-panel.active{display:block;}
+
+  /* CARDS */
+  .card{background:#fff;border-radius:10px;padding:22px 26px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,.15);border-left:4px solid var(--orange);}
+  .card.correct{border-left-color:var(--teal);background:#f0fdf4;}
+  .card.incorrect{border-left-color:#e74c3c;background:#fef2f2;}
+  .card h3{font-size:1rem;color:var(--navy);margin-bottom:12px;line-height:1.4;}
+  .card .q-marks{font-size:.78rem;color:var(--muted);float:right;font-style:italic;}
+
+  /* SCENARIO */
+  .scenario{background:#eef7ff;border:1px solid #bee3f8;border-radius:8px;padding:14px 18px;margin-bottom:16px;font-size:.92rem;color:#1a365d;}
+  .scenario strong{color:#2b6cb0;}
+
+  /* MULTIPLE CHOICE */
+  .mc-options{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
+  .mc-option{display:flex;align-items:flex-start;gap:10px;padding:10px 14px;border:2px solid var(--border);border-radius:8px;cursor:pointer;transition:all .2s;font-size:.93rem;background:#fff;}
+  .mc-option:hover{border-color:var(--orange);background:#fff8f0;}
+  .mc-option input[type=radio]{margin-top:2px;flex-shrink:0;accent-color:var(--orange);}
+  .mc-option.correct-ans{border-color:var(--teal)!important;background:#ecfdf5!important;color:#065f46;font-weight:600;}
+  .mc-option.wrong-ans{border-color:#e74c3c!important;background:#fef2f2!important;color:#991b1b;}
+
+  /* TEXT */
+  .text-input{width:100%;padding:9px 13px;border:2px solid var(--border);border-radius:7px;font-family:'Trebuchet MS',Calibri,sans-serif;font-size:.93rem;transition:border-color .2s;margin-top:6px;}
+  .text-input:focus{outline:none;border-color:var(--orange);}
+  .text-input.correct-input{border-color:var(--teal);background:#ecfdf5;}
+  .text-input.wrong-input{border-color:#e74c3c;background:#fef2f2;}
+  textarea.text-input{min-height:90px;resize:vertical;}
+
+  /* DRAG AND DROP — 2-zone (tab 2) */
+  .drag-area{display:flex;flex-wrap:wrap;gap:8px;padding:12px;background:#f1f5f9;border-radius:8px;min-height:52px;margin-bottom:12px;border:2px dashed var(--border);}
+  .drag-area.target-zone{background:#fff;border:2px dashed var(--orange);min-height:48px;}
+  .drag-area.target-zone.correct-zone{border-color:var(--teal);background:#ecfdf5;}
+  .drag-area.target-zone.wrong-zone{border-color:#e74c3c;background:#fef2f2;}
+  .drag-item{padding:6px 14px;background:var(--navy);color:#fff;border-radius:20px;cursor:grab;font-size:.85rem;user-select:none;transition:opacity .2s,transform .15s;}
+  .drag-item:hover{transform:scale(1.04);}
+  .drag-item:active{cursor:grabbing;opacity:.7;}
+  .drag-label{font-weight:700;font-size:.85rem;color:var(--navy);margin:10px 0 4px;}
+
+  /* CLASSIFY (4-zone) */
+  .stmt-bank{display:flex;flex-wrap:wrap;gap:8px;padding:14px;background:#1e2d3d;border-radius:10px;margin-bottom:14px;min-height:64px;border:2px dashed #3d5166;}
+  .stmt-bank-label{font-size:.75rem;text-transform:uppercase;letter-spacing:1px;color:#64748b;margin-bottom:8px;display:block;}
+  .classify-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;}
+  .classify-col{border-radius:10px;overflow:hidden;border:2px solid var(--border);transition:border-color .3s;}
+  .classify-col-header{padding:10px 14px;font-weight:700;font-size:.87rem;display:flex;align-items:center;gap:6px;}
+  .classify-col-header.cs-hdr{background:#dbeafe;color:#1e40af;}
+  .classify-col-header.p2p-hdr{background:#d1fae5;color:#065f46;}
+  .classify-col-header.star-hdr{background:#fef3c7;color:#92400e;}
+  .classify-col-header.mesh-hdr{background:#ede9fe;color:#4c1d95;}
+  .classify-drop{min-height:100px;padding:10px;display:flex;flex-wrap:wrap;gap:6px;align-content:flex-start;background:#fafafa;transition:background .2s;}
+  .classify-drop.drag-over{background:#f0f9ff;}
+  .classify-col.correct-zone{border-color:var(--teal);}
+  .classify-col.correct-zone .classify-drop{background:#ecfdf5;}
+  .classify-col.wrong-zone{border-color:#e74c3c;}
+  .classify-col.wrong-zone .classify-drop{background:#fef2f2;}
+  .stmt-pill{display:inline-flex;align-items:center;padding:6px 12px;border-radius:16px;font-size:.8rem;font-weight:600;cursor:grab;user-select:none;background:var(--navy);color:#fff;line-height:1.3;transition:transform .15s,opacity .2s,box-shadow .15s;box-shadow:0 1px 4px rgba(0,0,0,.25);}
+  .stmt-pill:hover{transform:scale(1.04);box-shadow:0 3px 8px rgba(0,0,0,.3);}
+  .stmt-pill:active{opacity:.7;cursor:grabbing;}
+
+  /* MATCHING */
+  .match-table{width:100%;border-collapse:collapse;margin-top:8px;}
+  .match-table td{padding:8px 12px;vertical-align:middle;font-size:.9rem;}
+  .match-table tr:nth-child(odd) td{background:#f8f9fa;}
+  .match-table .term{font-weight:600;color:var(--navy);width:60%;border-right:2px solid var(--border);}
+  .match-select{width:100%;padding:7px 10px;border:2px solid var(--border);border-radius:6px;font-family:'Trebuchet MS',Calibri,sans-serif;font-size:.88rem;}
+  .match-select.correct-sel{border-color:var(--teal);background:#ecfdf5;}
+  .match-select.wrong-sel{border-color:#e74c3c;background:#fef2f2;}
+
+  /* BUTTONS */
+  .btn{padding:10px 22px;border:none;border-radius:8px;cursor:pointer;font-family:'Trebuchet MS',Calibri,sans-serif;font-size:.92rem;font-weight:700;transition:all .2s;margin-top:14px;}
+  .btn-check{background:var(--orange);color:#fff;}
+  .btn-check:hover{background:var(--orange-dark);}
+  .btn-reset{background:#e2e8f0;color:var(--navy);margin-left:8px;}
+  .btn-reset:hover{background:#cbd5e1;}
+  .btn-next{background:var(--teal);color:#fff;margin-left:8px;}
+  .btn-next:hover{background:#238276;}
+
+  /* FEEDBACK */
+  .feedback{margin-top:12px;padding:12px 16px;border-radius:8px;font-size:.9rem;display:none;line-height:1.5;}
+  .feedback.show{display:block;}
+  .feedback.correct{background:#d1fae5;border:1px solid #6ee7b7;color:#065f46;}
+  .feedback.incorrect{background:#fee2e2;border:1px solid #fca5a5;color:#7f1d1d;}
+  .feedback strong{display:block;margin-bottom:4px;}
+  .feedback ul{margin-top:6px;padding-left:18px;}
+  .feedback ul li{margin-bottom:3px;}
+
+  /* COMPLETION BANNERS */
+  .completion-banner{display:none;padding:18px 24px;border-radius:10px;margin-bottom:24px;text-align:center;font-size:1.05rem;font-weight:700;}
+  .completion-banner.green-banner{background:#d1fae5;border:2px solid var(--teal);color:#065f46;display:block;}
+  .completion-banner.gold-banner{background:var(--gold-bg);border:2px solid var(--gold-border);color:#7a5c00;display:block;}
+
+  /* FILL-IN-THE-BLANKS */
+  .fitb-bank {
+    display: flex; flex-wrap: wrap; gap: 7px; padding: 12px 14px;
+    background: #1e2d3d; border-radius: 8px; margin-bottom: 14px;
+    min-height: 48px; border: 2px dashed #3d5166;
+  }
+  .fitb-word {
+    padding: 5px 13px; background: var(--navy); color: #fff;
+    border-radius: 16px; cursor: grab; font-size: .83rem; font-weight: 600;
+    user-select: none; transition: transform .15s, opacity .2s, box-shadow .15s;
+    box-shadow: 0 1px 4px rgba(0,0,0,.3); white-space: nowrap;
+  }
+  .fitb-word:hover { transform: scale(1.06); box-shadow: 0 3px 8px rgba(0,0,0,.35); }
+  .fitb-word:active { opacity: .6; cursor: grabbing; }
+  .fitb-para {
+    background: #f8fafc; border: 1px solid var(--border); border-radius: 8px;
+    padding: 16px 20px; line-height: 2.4; font-size: .93rem; color: var(--navy);
+  }
+  .fitb-slot {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 90px; height: 30px; border-bottom: 2px solid var(--orange);
+    border-radius: 4px; padding: 0 6px; vertical-align: middle;
+    background: #fff8f0; transition: background .2s, border-color .2s;
+    font-size: .83rem; font-weight: 700; color: var(--navy);
+    cursor: default; position: relative;
+  }
+  .fitb-slot.drag-over-slot {
+    background: #fff3e0; border-color: var(--orange-dark); border-bottom-width: 3px;
+  }
+  .fitb-slot.slot-correct { background: #ecfdf5; border-color: var(--teal); color: #065f46; }
+  .fitb-slot.slot-wrong   { background: #fef2f2; border-color: #e74c3c; color: #991b1b; }
+  .fitb-slot:empty::before { content: '…'; color: #aaa; font-weight: 400; }
+  .tf-table{width:100%;border-collapse:collapse;margin-top:10px;font-size:.9rem;}
+  .tf-table thead th{text-align:left;padding:8px 12px;background:#f1f5f9;border-bottom:2px solid var(--border);}
+  .tf-table thead th:not(:first-child){text-align:center;width:70px;}
+  .tf-table tbody td{padding:10px 12px;border-bottom:1px solid var(--border);}
+  .tf-table tbody td:not(:first-child){text-align:center;}
+  .tf-row.row-ok{background:#ecfdf5!important;}
+  .tf-row.row-err{background:#fef2f2!important;}
+
+  /* TOPOLOGY DIAGRAMS */
+  .topology-diagram{background:var(--code-bg);border-radius:10px;padding:16px;margin:12px 0;text-align:center;}
+  .topology-diagram svg{max-width:100%;}
+
+  .section-label{font-size:.75rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin:4px 0 6px;display:block;}
+
+  /* CONFETTI */
+  #confetti-canvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999;display:none;}
+
+  footer{text-align:center;color:#4b5563;font-size:.72rem;padding:16px;margin-top:30px;border-top:1px solid #374151;}
+
+  @media(max-width:640px){
+    .main{padding:16px;}.page-header{padding:14px 16px 0;}.tab-bar{padding:0 6px;}
+    .classify-grid{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+
+<canvas id="confetti-canvas"></canvas>
+
+<div class="page-header">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;">
+    <div>
+      <h1>🌐 Client-Server &amp; Peer-to-Peer Networks</h1>
+      <div class="subtitle">Networks &nbsp;|&nbsp; Year 11 GCSE Computer Science</div>
+    </div>
+    <div style="color:var(--amber);font-size:.85rem;text-align:right;padding-top:4px;">
+      <span class="stars">★★★☆</span>&nbsp; Practice Activity
+    </div>
+  </div>
+</div>
+
+<div class="progress-row">
+  <span class="progress-label">Overall progress</span>
+  <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progress-bar"></div></div>
+  <span class="progress-count" id="progress-count">0 / 0 correct</span>
+</div>
+
+<div class="tab-bar" role="tablist">
+  <button class="tab-btn active" onclick="switchTab(0)" id="tb0">★☆☆☆ Recall<span class="tab-stars">Key Terms</span></button>
+  <button class="tab-btn" onclick="switchTab(1)" id="tb1">★★☆☆ Identify<span class="tab-stars">Client &amp; Server</span></button>
+  <button class="tab-btn" onclick="switchTab(2)" id="tb2">★★☆☆ Compare<span class="tab-stars">CS vs P2P</span></button>
+  <button class="tab-btn" onclick="switchTab(3)" id="tb3">★★★☆ Classify<span class="tab-stars">All 4 Types</span></button>
+  <button class="tab-btn" onclick="switchTab(4)" id="tb4">★★★☆ Topologies<span class="tab-stars">Star &amp; Mesh</span></button>
+  <button class="tab-btn" onclick="switchTab(5)" id="tb5">★★★★ Apply<span class="tab-stars">Extended</span></button>
+</div>
+
+<div class="main">
+
+<!-- ═══ TAB 0 — RECALL ═══ -->
+<div id="tp0" class="tab-panel active">
+  <div id="cb0" class="completion-banner"></div>
+
+  <div class="card" id="cq0_1">
+    <span class="q-marks">[1 mark]</span>
+    <h3>Q1. In a client-server network, what is the main role of the <strong>server</strong>?</h3>
+    <div class="mc-options">
+      <label class="mc-option"><input type="radio" name="q0_1" value="a"> Requests services or resources from other computers</label>
+      <label class="mc-option"><input type="radio" name="q0_1" value="b"> Provides services, data, or resources to clients</label>
+      <label class="mc-option"><input type="radio" name="q0_1" value="c"> Connects equally with all other computers on the network</label>
+      <label class="mc-option"><input type="radio" name="q0_1" value="d"> Acts as both requester and provider simultaneously</label>
+    </div>
+    <div class="feedback" id="fb0_1"></div>
+  </div>
+
+  <div class="card" id="cq0_2">
+    <span class="q-marks">[1 mark]</span>
+    <h3>Q2. Which of the following best describes a <strong>peer-to-peer</strong> network?</h3>
+    <div class="mc-options">
+      <label class="mc-option"><input type="radio" name="q0_2" value="a"> All computers connect to a central dedicated server</label>
+      <label class="mc-option"><input type="radio" name="q0_2" value="b"> One powerful computer manages all security and file storage</label>
+      <label class="mc-option"><input type="radio" name="q0_2" value="c"> All computers are equal and can share resources directly with each other</label>
+      <label class="mc-option"><input type="radio" name="q0_2" value="d"> Computers must request permission from an administrator before sharing</label>
+    </div>
+    <div class="feedback" id="fb0_2"></div>
+  </div>
+
+  <div class="card" id="cq0_3">
+    <span class="q-marks">[4 marks]</span>
+    <h3>Q3. Match each term to its correct definition.</h3>
+    <table class="match-table">
+      <tr><td class="term">Client</td><td>
+        <select class="match-select" id="m0_1">
+          <option value="">— select —</option>
+          <option value="a">A dedicated computer that stores files and manages security centrally</option>
+          <option value="b">A computer that requests services or resources from another computer</option>
+          <option value="c">A layout where all devices connect to one central switch or hub</option>
+          <option value="d">A network with no central point where all computers are equal</option>
+        </select></td></tr>
+      <tr><td class="term">Server</td><td>
+        <select class="match-select" id="m0_2">
+          <option value="">— select —</option>
+          <option value="a">A dedicated computer that stores files and manages security centrally</option>
+          <option value="b">A computer that requests services or resources from another computer</option>
+          <option value="c">A layout where all devices connect to one central switch or hub</option>
+          <option value="d">A network with no central point where all computers are equal</option>
+        </select></td></tr>
+      <tr><td class="term">Peer-to-peer network</td><td>
+        <select class="match-select" id="m0_3">
+          <option value="">— select —</option>
+          <option value="a">A dedicated computer that stores files and manages security centrally</option>
+          <option value="b">A computer that requests services or resources from another computer</option>
+          <option value="c">A layout where all devices connect to one central switch or hub</option>
+          <option value="d">A network with no central point where all computers are equal</option>
+        </select></td></tr>
+      <tr><td class="term">Star topology</td><td>
+        <select class="match-select" id="m0_4">
+          <option value="">— select —</option>
+          <option value="a">A dedicated computer that stores files and manages security centrally</option>
+          <option value="b">A computer that requests services or resources from another computer</option>
+          <option value="c">A layout where all devices connect to one central switch or hub</option>
+          <option value="d">A network with no central point where all computers are equal</option>
+        </select></td></tr>
+    </table>
+    <div class="feedback" id="fb0_3"></div>
+  </div>
+
+  <div class="card" id="cq0_4">
+    <span class="q-marks">[1 mark]</span>
+    <h3>Q4. True or false: In a peer-to-peer network, if one computer fails, the rest of the network can continue to operate.</h3>
+    <div class="mc-options">
+      <label class="mc-option"><input type="radio" name="q0_4" value="true"> True</label>
+      <label class="mc-option"><input type="radio" name="q0_4" value="false"> False</label>
+    </div>
+    <div class="feedback" id="fb0_4"></div>
+  </div>
+
+  <button class="btn btn-check" onclick="checkTab(0)">Check Answers</button>
+  <button class="btn btn-reset" onclick="resetTab(0)">Reset</button>
+  <button class="btn btn-next" onclick="switchTab(1)">Next Tab →</button>
+</div>
+
+<!-- ═══ TAB 1 — IDENTIFY ═══ -->
+<div id="tp1" class="tab-panel">
+  <div id="cb1" class="completion-banner"></div>
+
+  <div class="scenario">
+    <strong>Scenario:</strong> Marcus wants to play a new game. He opens a gaming platform on his laptop and purchases the game. The platform's computer stores all the game files, manages his account, and sends the game data to his laptop when he clicks download. This is a client-server relationship.
+  </div>
+
+  <div class="card" id="cq1_1">
+    <span class="q-marks">[1 mark]</span>
+    <h3>Q1. Which computer is acting as the <strong>client</strong> in this scenario?</h3>
+    <div class="mc-options">
+      <label class="mc-option"><input type="radio" name="q1_1" value="a"> The gaming platform's computer</label>
+      <label class="mc-option"><input type="radio" name="q1_1" value="b"> Marcus's laptop</label>
+      <label class="mc-option"><input type="radio" name="q1_1" value="c"> The internet router at Marcus's home</label>
+      <label class="mc-option"><input type="radio" name="q1_1" value="d"> Any computer that runs the same game</label>
+    </div>
+    <div class="feedback" id="fb1_1"></div>
+  </div>
+
+  <div class="card" id="cq1_2">
+    <span class="q-marks">[2 marks]</span>
+    <h3>Q2. Justify your answer to Q1. Give <strong>two</strong> reasons why that computer is the client.</h3>
+    <textarea class="text-input" id="t1_2" placeholder="Reason 1:&#10;Reason 2:"></textarea>
+    <div class="feedback" id="fb1_2"></div>
+  </div>
+
+  <div class="card" id="cq1_3">
+    <span class="q-marks">[1 mark]</span>
+    <h3>Q3. Which computer is acting as the <strong>server</strong> in this scenario?</h3>
+    <div class="mc-options">
+      <label class="mc-option"><input type="radio" name="q1_3" value="a"> Marcus's laptop</label>
+      <label class="mc-option"><input type="radio" name="q1_3" value="b"> The internet router</label>
+      <label class="mc-option"><input type="radio" name="q1_3" value="c"> Any computer connected to the same Wi-Fi</label>
+      <label class="mc-option"><input type="radio" name="q1_3" value="d"> The gaming platform's computer</label>
+    </div>
+    <div class="feedback" id="fb1_3"></div>
+  </div>
+
+  <div class="card" id="cq1_4">
+    <span class="q-marks">[2 marks]</span>
+    <h3>Q4. Justify your answer to Q3. Give <strong>two</strong> reasons why that computer is the server.</h3>
+    <textarea class="text-input" id="t1_4" placeholder="Reason 1:&#10;Reason 2:"></textarea>
+    <div class="feedback" id="fb1_4"></div>
+  </div>
+
+  <div class="card" id="cq1_5">
+    <span class="q-marks">[1 mark]</span>
+    <h3>Q5. Marcus's friend Priya also uses the same gaming platform to buy a different game. Which role is Priya's laptop playing?</h3>
+    <div class="mc-options">
+      <label class="mc-option"><input type="radio" name="q1_5" value="a"> Server — it stores the game files for others to download</label>
+      <label class="mc-option"><input type="radio" name="q1_5" value="b"> Client — it sends a request to the platform's computer asking for the game</label>
+      <label class="mc-option"><input type="radio" name="q1_5" value="c"> Neither — it is only downloading, not communicating</label>
+      <label class="mc-option"><input type="radio" name="q1_5" value="d"> Both client and server simultaneously</label>
+    </div>
+    <div class="feedback" id="fb1_5"></div>
+  </div>
+
+  <button class="btn btn-check" onclick="checkTab(1)">Check Answers</button>
+  <button class="btn btn-reset" onclick="resetTab(1)">Reset</button>
+  <button class="btn btn-next" onclick="switchTab(2)">Next Tab →</button>
+</div>
+
+<!-- ═══ TAB 2 — COMPARE ═══ -->
+<div id="tp2" class="tab-panel">
+  <div id="cb2" class="completion-banner"></div>
+
+  <div class="card" id="cq2_1">
+    <span class="q-marks">[6 marks]</span>
+    <h3>Q1. Drag each feature into the correct network type.</h3>
+    <span class="section-label" style="margin-top:8px;">Features to sort:</span>
+    <div class="drag-area" id="drag-src">
+      <div class="drag-item" draggable="true" data-value="centralfiles">Central file storage</div>
+      <div class="drag-item" draggable="true" data-value="ownsecurity">Each device manages its own security</div>
+      <div class="drag-item" draggable="true" data-value="centralbackup">Central backups</div>
+      <div class="drag-item" draggable="true" data-value="nocentral">No dedicated server needed</div>
+      <div class="drag-item" draggable="true" data-value="centralupdate">Software updated centrally</div>
+      <div class="drag-item" draggable="true" data-value="ownupdate">Software installed on each device individually</div>
+    </div>
+    <div class="drag-label">🖥️ Client-Server:</div>
+    <div class="drag-area target-zone" id="drop-cs">Drop here…</div>
+    <div class="drag-label">🔗 Peer-to-Peer:</div>
+    <div class="drag-area target-zone" id="drop-p2p">Drop here…</div>
+    <div class="feedback" id="fb2_1"></div>
+  </div>
+
+  <div class="card" id="cq2_2">
+    <span class="q-marks">[1 mark]</span>
+    <h3>Q2. A supermarket has 200 computers across 40 stores. Which is the <strong>main benefit</strong> of using client-server rather than peer-to-peer?</h3>
+    <div class="mc-options">
+      <label class="mc-option"><input type="radio" name="q2_2" value="a"> It is cheaper to set up initially</label>
+      <label class="mc-option"><input type="radio" name="q2_2" value="b"> No specialist IT staff are needed</label>
+      <label class="mc-option"><input type="radio" name="q2_2" value="c"> Software and security can be managed centrally across all computers</label>
+      <label class="mc-option"><input type="radio" name="q2_2" value="d"> Each computer keeps its own files independently</label>
+    </div>
+    <div class="feedback" id="fb2_2"></div>
+  </div>
+
+  <div class="card" id="cq2_3">
+    <span class="q-marks">[1 mark]</span>
+    <h3>Q3. Hope has a small home network with 3 computers and no dedicated server. Which model does Hope's network use?</h3>
+    <div class="mc-options">
+      <label class="mc-option"><input type="radio" name="q2_3" value="a"> Client-server, because she has multiple computers</label>
+      <label class="mc-option"><input type="radio" name="q2_3" value="b"> Peer-to-peer, because there is no dedicated server and computers are equal</label>
+      <label class="mc-option"><input type="radio" name="q2_3" value="c"> Client-server, because all computers connect to the internet</label>
+      <label class="mc-option"><input type="radio" name="q2_3" value="d"> Neither — you need at least 5 computers for a network</label>
+    </div>
+    <div class="feedback" id="fb2_3"></div>
+  </div>
+
+  <div class="card" id="cq2_4">
+    <span class="q-marks">[4 marks]</span>
+    <h3>Q4. Describe <strong>two benefits</strong> to OCR Supermarkets of using <strong>client-server</strong> instead of peer-to-peer. Give a reason for each. <em>(2 marks each)</em></h3>
+    <span class="section-label">Benefit 1</span>
+    <input type="text" class="text-input" id="t2_4a" placeholder="State the benefit...">
+    <span class="section-label" style="margin-top:8px;">Reason for Benefit 1</span>
+    <input type="text" class="text-input" id="t2_4b" placeholder="Explain why this is an advantage...">
+    <span class="section-label" style="margin-top:10px;">Benefit 2</span>
+    <input type="text" class="text-input" id="t2_4c" placeholder="State the benefit...">
+    <span class="section-label" style="margin-top:8px;">Reason for Benefit 2</span>
+    <input type="text" class="text-input" id="t2_4d" placeholder="Explain why this is an advantage...">
+    <div class="feedback" id="fb2_4"></div>
+  </div>
+
+  <button class="btn btn-check" onclick="checkTab(2)">Check Answers</button>
+  <button class="btn btn-reset" onclick="resetTab(2)">Reset</button>
+  <button class="btn btn-next" onclick="switchTab(3)">Next Tab →</button>
+</div>
+
+<!-- ═══ TAB 3 — CLASSIFY (4-WAY) ═══ -->
+<div id="tp3" class="tab-panel">
+  <div id="cb3" class="completion-banner"></div>
+
+  <div class="scenario">
+    <strong>This tab practises the most common exam mistake.</strong> The statements below describe features of <em>four</em> different things: the <strong>client-server model</strong>, the <strong>peer-to-peer model</strong>, <strong>star topology</strong>, and <strong>mesh topology</strong>. Topology = physical layout of cables. Network model = how resources are shared. These are completely separate ideas!
+  </div>
+
+  <!-- Q3.1 — the big classify drag -->
+  <div class="card" id="cq3_1">
+    <span class="q-marks">[12 marks]</span>
+    <h3>Q1. Classify each statement by dragging it into the correct box below.</h3>
+    <span class="stmt-bank-label">📋 Drag each statement into the correct category:</span>
+    <div class="stmt-bank" id="stmt-bank">
+      <div class="stmt-pill" draggable="true" data-cat="cs"   id="sp1">A dedicated server manages all user accounts and files</div>
+      <div class="stmt-pill" draggable="true" data-cat="p2p"  id="sp2">Each computer stores its own files and manages its own security</div>
+      <div class="stmt-pill" draggable="true" data-cat="star" id="sp3">All devices connect to a central switch or hub</div>
+      <div class="stmt-pill" draggable="true" data-cat="mesh" id="sp4">Every device is directly connected to every other device</div>
+      <div class="stmt-pill" draggable="true" data-cat="cs"   id="sp5">Software updates are deployed from one central location</div>
+      <div class="stmt-pill" draggable="true" data-cat="p2p"  id="sp6">No specialist IT technician is required to set up the network</div>
+      <div class="stmt-pill" draggable="true" data-cat="star" id="sp7">If one device's cable fails, only that device loses connection</div>
+      <div class="stmt-pill" draggable="true" data-cat="mesh" id="sp8">Requires the most cabling of any topology</div>
+      <div class="stmt-pill" draggable="true" data-cat="cs"   id="sp9">Central security (e.g. antivirus/firewall) protects all clients</div>
+      <div class="stmt-pill" draggable="true" data-cat="p2p"  id="sp10">If one computer fails, the rest continue to work independently</div>
+      <div class="stmt-pill" draggable="true" data-cat="star" id="sp11">Adding a new device only requires one cable to the central point</div>
+      <div class="stmt-pill" draggable="true" data-cat="mesh" id="sp12">If one connection fails, data can be rerouted via another path</div>
+    </div>
+
+    <div class="classify-grid">
+      <div class="classify-col" id="col-cs">
+        <div class="classify-col-header cs-hdr">🖥️ Client-Server Model</div>
+        <div class="classify-drop" id="dz-cs" data-cat="cs"></div>
+      </div>
+      <div class="classify-col" id="col-p2p">
+        <div class="classify-col-header p2p-hdr">🔗 Peer-to-Peer Model</div>
+        <div class="classify-drop" id="dz-p2p" data-cat="p2p"></div>
+      </div>
+      <div class="classify-col" id="col-star">
+        <div class="classify-col-header star-hdr">⭐ Star Topology</div>
+        <div class="classify-drop" id="dz-star" data-cat="star"></div>
+      </div>
+      <div class="classify-col" id="col-mesh">
+        <div class="classify-col-header mesh-hdr">🕸️ Mesh Topology</div>
+        <div class="classify-drop" id="dz-mesh" data-cat="mesh"></div>
+      </div>
+    </div>
+    <div class="feedback" id="fb3_1"></div>
+  </div>
+
+  <!-- Q3.2 — true/false quick-fire -->
+  <div class="card" id="cq3_2">
+    <span class="q-marks">[5 marks]</span>
+    <h3>Q2. For each statement, select <strong>True</strong> or <strong>False</strong>.</h3>
+    <table class="tf-table">
+      <thead><tr><th>Statement</th><th>True</th><th>False</th></tr></thead>
+      <tbody>
+        <tr class="tf-row" id="tfr1" data-ans="false">
+          <td>A star topology always means the network uses a client-server model.</td>
+          <td><input type="radio" name="tf1" value="true" style="accent-color:var(--orange);transform:scale(1.3);"></td>
+          <td><input type="radio" name="tf1" value="false" style="accent-color:var(--orange);transform:scale(1.3);"></td>
+        </tr>
+        <tr class="tf-row" id="tfr2" data-ans="true">
+          <td>In a mesh topology, data can reach its destination even if one link fails.</td>
+          <td><input type="radio" name="tf2" value="true" style="accent-color:var(--orange);transform:scale(1.3);"></td>
+          <td><input type="radio" name="tf2" value="false" style="accent-color:var(--orange);transform:scale(1.3);"></td>
+        </tr>
+        <tr class="tf-row" id="tfr3" data-ans="false">
+          <td>A peer-to-peer network and a mesh topology are the same thing.</td>
+          <td><input type="radio" name="tf3" value="true" style="accent-color:var(--orange);transform:scale(1.3);"></td>
+          <td><input type="radio" name="tf3" value="false" style="accent-color:var(--orange);transform:scale(1.3);"></td>
+        </tr>
+        <tr class="tf-row" id="tfr4" data-ans="true">
+          <td>In a client-server network, the server is responsible for central backups.</td>
+          <td><input type="radio" name="tf4" value="true" style="accent-color:var(--orange);transform:scale(1.3);"></td>
+          <td><input type="radio" name="tf4" value="false" style="accent-color:var(--orange);transform:scale(1.3);"></td>
+        </tr>
+        <tr class="tf-row" id="tfr5" data-ans="false">
+          <td>In a star topology, if the central switch fails, devices can still communicate with each other directly.</td>
+          <td><input type="radio" name="tf5" value="true" style="accent-color:var(--orange);transform:scale(1.3);"></td>
+          <td><input type="radio" name="tf5" value="false" style="accent-color:var(--orange);transform:scale(1.3);"></td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="feedback" id="fb3_2"></div>
+  </div>
+
+  <!-- Q3.3 — scenario-based 4-way select -->
+  <div class="card" id="cq3_3">
+    <span class="q-marks">[4 marks]</span>
+    <h3>Q3. Read each scenario and select whether it describes a <strong>network model</strong> (CS/P2P) or a <strong>topology</strong> (Star/Mesh).</h3>
+    <table class="match-table">
+      <tr>
+        <td class="term">"The school's file server stores all student work and manages login accounts for every pupil."</td>
+        <td><select class="match-select" id="sc1">
+          <option value="">— select —</option>
+          <option value="cs">Client-server model</option>
+          <option value="p2p">Peer-to-peer model</option>
+          <option value="star">Star topology</option>
+          <option value="mesh">Mesh topology</option>
+        </select></td>
+      </tr>
+      <tr>
+        <td class="term">"Every classroom computer plugs into a central network switch in the server room."</td>
+        <td><select class="match-select" id="sc2">
+          <option value="">— select —</option>
+          <option value="cs">Client-server model</option>
+          <option value="p2p">Peer-to-peer model</option>
+          <option value="star">Star topology</option>
+          <option value="mesh">Mesh topology</option>
+        </select></td>
+      </tr>
+      <tr>
+        <td class="term">"Three friends share music files directly between their laptops with no central server."</td>
+        <td><select class="match-select" id="sc3">
+          <option value="">— select —</option>
+          <option value="cs">Client-server model</option>
+          <option value="p2p">Peer-to-peer model</option>
+          <option value="star">Star topology</option>
+          <option value="mesh">Mesh topology</option>
+        </select></td>
+      </tr>
+      <tr>
+        <td class="term">"A military system connects every base directly to every other base so messages can always get through."</td>
+        <td><select class="match-select" id="sc4">
+          <option value="">— select —</option>
+          <option value="cs">Client-server model</option>
+          <option value="p2p">Peer-to-peer model</option>
+          <option value="star">Star topology</option>
+          <option value="mesh">Mesh topology</option>
+        </select></td>
+      </tr>
+    </table>
+    <div class="feedback" id="fb3_3"></div>
+  </div>
+
+  <button class="btn btn-check" onclick="checkTab(3)">Check Answers</button>
+  <button class="btn btn-reset" onclick="resetTab(3)">Reset</button>
+  <button class="btn btn-next" onclick="switchTab(4)">Next Tab →</button>
+</div>
+
+<!-- ═══ TAB 4 — TOPOLOGIES ═══ -->
+<div id="tp4" class="tab-panel">
+  <div id="cb4" class="completion-banner"></div>
+
+  <div class="scenario"><strong>⚠️ Common confusion alert!</strong> Topology = physical layout of cables and connections. Network model (CS/P2P) = how devices share resources. A peer-to-peer network can use a star topology — and vice versa!</div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px;">
+    <div class="topology-diagram">
+      <svg viewBox="0 0 200 180" xmlns="http://www.w3.org/2000/svg">
+        <text x="100" y="18" fill="#f4a261" font-size="12" font-weight="bold" text-anchor="middle" font-family="Trebuchet MS">Star Topology</text>
+        <rect x="80" y="75" width="40" height="28" rx="4" fill="#2a9d8f"/>
+        <text x="100" y="93" fill="white" font-size="9" text-anchor="middle" font-family="Trebuchet MS">Switch</text>
+        <line x1="100" y1="75" x2="100" y2="38" stroke="#adb5bd" stroke-width="1.5"/>
+        <line x1="80" y1="85" x2="40" y2="65" stroke="#adb5bd" stroke-width="1.5"/>
+        <line x1="80" y1="95" x2="35" y2="115" stroke="#adb5bd" stroke-width="1.5"/>
+        <line x1="120" y1="85" x2="160" y2="65" stroke="#adb5bd" stroke-width="1.5"/>
+        <line x1="120" y1="95" x2="165" y2="115" stroke="#adb5bd" stroke-width="1.5"/>
+        <line x1="100" y1="103" x2="100" y2="148" stroke="#adb5bd" stroke-width="1.5"/>
+        <rect x="84" y="22" width="32" height="16" rx="3" fill="#1a2340"/><text x="100" y="33" fill="#adb5bd" font-size="7" text-anchor="middle" font-family="Trebuchet MS">PC</text>
+        <rect x="18" y="55" width="22" height="14" rx="3" fill="#1a2340"/><text x="29" y="65" fill="#adb5bd" font-size="7" text-anchor="middle" font-family="Trebuchet MS">PC</text>
+        <rect x="13" y="107" width="22" height="14" rx="3" fill="#1a2340"/><text x="24" y="117" fill="#adb5bd" font-size="7" text-anchor="middle" font-family="Trebuchet MS">PC</text>
+        <rect x="148" y="55" width="22" height="14" rx="3" fill="#1a2340"/><text x="159" y="65" fill="#adb5bd" font-size="7" text-anchor="middle" font-family="Trebuchet MS">PC</text>
+        <rect x="153" y="107" width="22" height="14" rx="3" fill="#1a2340"/><text x="164" y="117" fill="#adb5bd" font-size="7" text-anchor="middle" font-family="Trebuchet MS">PC</text>
+        <rect x="84" y="148" width="32" height="16" rx="3" fill="#1a2340"/><text x="100" y="159" fill="#adb5bd" font-size="7" text-anchor="middle" font-family="Trebuchet MS">PC</text>
+      </svg>
+    </div>
+    <div class="topology-diagram">
+      <svg viewBox="0 0 200 180" xmlns="http://www.w3.org/2000/svg">
+        <text x="100" y="18" fill="#f4a261" font-size="12" font-weight="bold" text-anchor="middle" font-family="Trebuchet MS">Mesh Topology</text>
+        <rect x="72" y="28" width="32" height="18" rx="3" fill="#1a2340"/><text x="88" y="40" fill="#adb5bd" font-size="7.5" text-anchor="middle" font-family="Trebuchet MS">PC A</text>
+        <rect x="140" y="78" width="32" height="18" rx="3" fill="#1a2340"/><text x="156" y="90" fill="#adb5bd" font-size="7.5" text-anchor="middle" font-family="Trebuchet MS">PC B</text>
+        <rect x="72" y="128" width="32" height="18" rx="3" fill="#1a2340"/><text x="88" y="140" fill="#adb5bd" font-size="7.5" text-anchor="middle" font-family="Trebuchet MS">PC C</text>
+        <rect x="18" y="78" width="32" height="18" rx="3" fill="#1a2340"/><text x="34" y="90" fill="#adb5bd" font-size="7.5" text-anchor="middle" font-family="Trebuchet MS">PC D</text>
+        <line x1="88" y1="46" x2="156" y2="78" stroke="#adb5bd" stroke-width="1.3"/>
+        <line x1="88" y1="46" x2="88" y2="128" stroke="#adb5bd" stroke-width="1.3"/>
+        <line x1="88" y1="46" x2="34" y2="78" stroke="#adb5bd" stroke-width="1.3"/>
+        <line x1="156" y1="78" x2="88" y2="128" stroke="#adb5bd" stroke-width="1.3"/>
+        <line x1="156" y1="96" x2="34" y2="96" stroke="#adb5bd" stroke-width="1.3"/>
+        <line x1="34" y1="78" x2="88" y2="128" stroke="#adb5bd" stroke-width="1.3"/>
+        <line x1="88" y1="146" x2="34" y2="96" stroke="#adb5bd" stroke-width="1.3"/>
+        <line x1="88" y1="146" x2="156" y2="96" stroke="#adb5bd" stroke-width="1.3"/>
+      </svg>
+    </div>
+  </div>
+
+  <div class="card" id="cq4_1">
+    <span class="q-marks">[1 mark]</span>
+    <h3>Q1. In a <strong>star topology</strong>, what is the central connecting device usually called?</h3>
+    <div class="mc-options">
+      <label class="mc-option"><input type="radio" name="q4_1" value="a"> Server</label>
+      <label class="mc-option"><input type="radio" name="q4_1" value="b"> Switch or hub</label>
+      <label class="mc-option"><input type="radio" name="q4_1" value="c"> Router</label>
+      <label class="mc-option"><input type="radio" name="q4_1" value="d"> Peer node</label>
+    </div>
+    <div class="feedback" id="fb4_1"></div>
+  </div>
+
+  <div class="card" id="cq4_2">
+    <span class="q-marks">[1 mark]</span>
+    <h3>Q2. ⚠️ A school uses a <strong>star topology</strong> where all computers connect to a central switch. The school also has a powerful dedicated file server. What <em>network model</em> does the school use?</h3>
+    <div class="mc-options">
+      <label class="mc-option"><input type="radio" name="q4_2" value="a"> Peer-to-peer — because all computers connect to the same point</label>
+      <label class="mc-option"><input type="radio" name="q4_2" value="b"> Client-server — because there is a dedicated server managing resources</label>
+      <label class="mc-option"><input type="radio" name="q4_2" value="c"> Mesh — because there are many connections</label>
+      <label class="mc-option"><input type="radio" name="q4_2" value="d"> Client-server and peer-to-peer are the same as star and mesh</label>
+    </div>
+    <div class="feedback" id="fb4_2"></div>
+  </div>
+
+  <div class="card" id="cq4_3">
+    <span class="q-marks">[1 mark]</span>
+    <h3>Q3. What is a key advantage of a <strong>star topology</strong> compared to mesh?</h3>
+    <div class="mc-options">
+      <label class="mc-option"><input type="radio" name="q4_3" value="a"> If the central switch fails, the network continues to work</label>
+      <label class="mc-option"><input type="radio" name="q4_3" value="b"> It is cheaper and uses less cabling, and faults are easy to isolate</label>
+      <label class="mc-option"><input type="radio" name="q4_3" value="c"> Every device has multiple paths to every other device</label>
+      <label class="mc-option"><input type="radio" name="q4_3" value="d"> It does not need a central device</label>
+    </div>
+    <div class="feedback" id="fb4_3"></div>
+  </div>
+
+  <div class="card" id="cq4_4">
+    <span class="q-marks">[1 mark]</span>
+    <h3>Q4. What is a key advantage of a <strong>mesh topology</strong> compared to star?</h3>
+    <div class="mc-options">
+      <label class="mc-option"><input type="radio" name="q4_4" value="a"> It uses less cabling than a star network</label>
+      <label class="mc-option"><input type="radio" name="q4_4" value="b"> It requires a single central device which is easy to manage</label>
+      <label class="mc-option"><input type="radio" name="q4_4" value="c"> If one cable or device fails, data can still reach its destination via another route</label>
+      <label class="mc-option"><input type="radio" name="q4_4" value="d"> It is the cheapest topology to install</label>
+    </div>
+    <div class="feedback" id="fb4_4"></div>
+  </div>
+
+  <div class="card" id="cq4_5">
+    <span class="q-marks">[1 mark]</span>
+    <h3>Q5. ⚠️ Three friends share files directly between their laptops with no switch or server. Each laptop can communicate directly with the others. What <strong>topology</strong> and <strong>network model</strong> does this describe?</h3>
+    <div class="mc-options">
+      <label class="mc-option"><input type="radio" name="q4_5" value="a"> Star topology, client-server model</label>
+      <label class="mc-option"><input type="radio" name="q4_5" value="b"> Mesh topology, peer-to-peer model</label>
+      <label class="mc-option"><input type="radio" name="q4_5" value="c"> Star topology, peer-to-peer model</label>
+      <label class="mc-option"><input type="radio" name="q4_5" value="d"> Mesh topology, client-server model</label>
+    </div>
+    <div class="feedback" id="fb4_5"></div>
+  </div>
+
+  <div class="card" id="cq4_6">
+    <span class="q-marks">[4 marks]</span>
+    <h3>Q6. Match each statement to the correct topology.</h3>
+    <table class="match-table">
+      <tr><td class="term">Single point of failure can bring down the whole network</td>
+        <td><select class="match-select" id="mt1"><option value="">— select —</option><option value="star">Star topology</option><option value="mesh">Mesh topology</option></select></td></tr>
+      <tr><td class="term">Every device is directly connected to every other device</td>
+        <td><select class="match-select" id="mt2"><option value="">— select —</option><option value="star">Star topology</option><option value="mesh">Mesh topology</option></select></td></tr>
+      <tr><td class="term">Adding a new device only requires one new cable to the central point</td>
+        <td><select class="match-select" id="mt3"><option value="">— select —</option><option value="star">Star topology</option><option value="mesh">Mesh topology</option></select></td></tr>
+      <tr><td class="term">Requires the most cabling but is the most fault-tolerant</td>
+        <td><select class="match-select" id="mt4"><option value="">— select —</option><option value="star">Star topology</option><option value="mesh">Mesh topology</option></select></td></tr>
+    </table>
+    <div class="feedback" id="fb4_6"></div>
+  </div>
+
+  <button class="btn btn-check" onclick="checkTab(4)">Check Answers</button>
+  <button class="btn btn-reset" onclick="resetTab(4)">Reset</button>
+  <button class="btn btn-next" onclick="switchTab(5)">Next Tab →</button>
+</div>
+
+<!-- ═══ TAB 5 — APPLY ═══ -->
+<div id="tp5" class="tab-panel">
+  <div id="cb5" class="completion-banner"></div>
+
+  <div class="card" id="cq5_1">
+    <span class="q-marks">[1 mark]</span>
+    <h3>Q1. ⚠️ Which of the following statements is <strong>correct</strong>?</h3>
+    <div class="mc-options">
+      <label class="mc-option"><input type="radio" name="q5_1" value="a"> A star topology always means a client-server network</label>
+      <label class="mc-option"><input type="radio" name="q5_1" value="b"> A mesh topology always means a peer-to-peer network</label>
+      <label class="mc-option"><input type="radio" name="q5_1" value="c"> Topology describes physical layout; network model describes how resources are shared — they are independent concepts</label>
+      <label class="mc-option"><input type="radio" name="q5_1" value="d"> Peer-to-peer and mesh are the same thing</label>
+    </div>
+    <div class="feedback" id="fb5_1"></div>
+  </div>
+
+  <div class="card" id="cq5_2">
+    <span class="q-marks">[4 marks]</span>
+    <h3>Q2. Complete the paragraph about Hope's network by dragging the correct words into the gaps.</h3>
+    <p style="font-size:.82rem;color:var(--muted);margin-bottom:10px;">Word bank — drag each word into a gap (some words are distractors and will not be used):</p>
+    <div class="fitb-bank" id="fitb2-bank"></div>
+    <div class="fitb-para" id="fitb2-para">
+      Hope's network is <span class="fitb-slot" data-ans="peer-to-peer" id="fs2_1"></span> because there is no
+      <span class="fitb-slot" data-ans="dedicated" id="fs2_2"></span> server. Each computer is
+      <span class="fitb-slot" data-ans="equal" id="fs2_3"></span> and
+      <span class="fitb-slot" data-ans="independent" id="fs2_4"></span>, managing its own
+      <span class="fitb-slot" data-ans="security" id="fs2_5"></span> and storing its own
+      <span class="fitb-slot" data-ans="files" id="fs2_6"></span>. If one computer fails, the
+      <span class="fitb-slot" data-ans="rest" id="fs2_7"></span> of the network can continue to work. This is different from a client-server network, which requires a
+      <span class="fitb-slot" data-ans="specialist" id="fs2_8"></span> to set up and has a
+      <span class="fitb-slot" data-ans="single" id="fs2_9"></span> point of failure.
+    </div>
+    <div class="feedback" id="fb5_2"></div>
+  </div>
+
+  <div class="card" id="cq5_3">
+    <span class="q-marks">[1 mark]</span>
+    <h3>Q3. A hospital with 500 computers needs centralised patient records, central security updates, and central backups. Which network type is most appropriate?</h3>
+    <div class="mc-options">
+      <label class="mc-option"><input type="radio" name="q5_3" value="a"> Peer-to-peer — easier to set up</label>
+      <label class="mc-option"><input type="radio" name="q5_3" value="b"> Client-server — enables central management of records, security, and backups</label>
+      <label class="mc-option"><input type="radio" name="q5_3" value="c"> Peer-to-peer — no need for a specialist IT technician</label>
+      <label class="mc-option"><input type="radio" name="q5_3" value="d"> Mesh topology — because hospitals need fault tolerance</label>
+    </div>
+    <div class="feedback" id="fb5_3"></div>
+  </div>
+
+  <div class="card" id="cq5_4">
+    <span class="q-marks">[2 marks]</span>
+    <h3>Q4. Complete the two sentences about disadvantages of a client-server network compared to peer-to-peer.</h3>
+    <p style="font-size:.82rem;color:var(--muted);margin-bottom:10px;">Word bank — drag the correct word into each gap:</p>
+    <div class="fitb-bank" id="fitb4-bank"></div>
+    <div class="fitb-para" id="fitb4-para">
+      <strong>Disadvantage 1:</strong> A client-server network is more
+      <span class="fitb-slot" data-ans="expensive" id="fs4_1"></span>
+      to set up because it requires a dedicated
+      <span class="fitb-slot" data-ans="server" id="fs4_2"></span>
+      and a trained IT
+      <span class="fitb-slot" data-ans="specialist" id="fs4_3"></span>.<br><br>
+      <strong>Disadvantage 2:</strong> If the
+      <span class="fitb-slot" data-ans="server" id="fs4_4"></span>
+      fails, all
+      <span class="fitb-slot" data-ans="clients" id="fs4_5"></span>
+      lose access to the network — it is a
+      <span class="fitb-slot" data-ans="single" id="fs4_6"></span>
+      point of failure.
+    </div>
+    <div class="feedback" id="fb5_4"></div>
+  </div>
+
+  <div class="card" id="cq5_5">
+    <span class="q-marks">[1 mark]</span>
+    <h3>Q5. ⚠️ A company uses a <strong>mesh topology</strong> with a dedicated server managing all files. If the company switches from mesh to star topology, what happens to the network <em>model</em>?</h3>
+    <div class="mc-options">
+      <label class="mc-option"><input type="radio" name="q5_5" value="a"> It changes from peer-to-peer to client-server</label>
+      <label class="mc-option"><input type="radio" name="q5_5" value="b"> It changes from client-server to peer-to-peer</label>
+      <label class="mc-option"><input type="radio" name="q5_5" value="c"> Nothing — the network model stays client-server; only the physical layout changes</label>
+      <label class="mc-option"><input type="radio" name="q5_5" value="d"> It becomes a hybrid mesh-star model</label>
+    </div>
+    <div class="feedback" id="fb5_5"></div>
+  </div>
+
+  <div class="card" id="cq5_6">
+    <span class="q-marks">[6 marks]</span>
+    <h3>Q6. Complete the evaluation paragraph about a small graphic design studio (6 employees) choosing a network type.</h3>
+    <p style="font-size:.82rem;color:var(--muted);margin-bottom:10px;">Word bank — drag the correct word into each gap (some are distractors):</p>
+    <div class="fitb-bank" id="fitb6-bank"></div>
+    <div class="fitb-para" id="fitb6-para">
+      A <strong>peer-to-peer</strong> network would be
+      <span class="fitb-slot" data-ans="cheaper" id="fs6_1"></span>
+      to set up as no dedicated
+      <span class="fitb-slot" data-ans="server" id="fs6_2"></span>
+      is required and no IT
+      <span class="fitb-slot" data-ans="specialist" id="fs6_3"></span>
+      is needed. Each computer manages its own
+      <span class="fitb-slot" data-ans="security" id="fs6_4"></span>,
+      which could be a risk for a professional studio.<br><br>
+      A <strong>client-server</strong> network would allow
+      <span class="fitb-slot" data-ans="central" id="fs6_5"></span>
+      file storage so all designers can access project files from any computer. Security and software updates could also be managed
+      <span class="fitb-slot" data-ans="centrally" id="fs6_6"></span>,
+      but the setup
+      <span class="fitb-slot" data-ans="cost" id="fs6_7"></span>
+      is higher.<br><br>
+      For a studio with only
+      <span class="fitb-slot" data-ans="6" id="fs6_8"></span>
+      employees, peer-to-peer may be sufficient, but if sharing large design files is important, client-server would be more
+      <span class="fitb-slot" data-ans="suitable" id="fs6_9"></span>.
+    </div>
+    <div class="feedback" id="fb5_6"></div>
+  </div>
+
+  <button class="btn btn-check" onclick="checkTab(5)">Check Answers</button>
+  <button class="btn btn-reset" onclick="resetTab(5)">Reset</button>
+</div>
+
+<div id="global-cb" class="completion-banner" style="margin-top:20px;"></div>
+
+<footer>Client-Server &amp; Peer-to-Peer Networks &nbsp;|&nbsp; Year 11 GCSE Computer Science &nbsp;|&nbsp; Networks Unit &nbsp;|&nbsp; v2.0 &nbsp;|&nbsp; March 2026</footer>
+</div><!-- .main -->
+
+<script>
+// ═══════════════════ STATE ═══════════════════
+const N = 6;
+const state = {
+  scores: new Array(N).fill(0),
+  totals: new Array(N).fill(0),
+  done:   new Array(N).fill(false),
+  gold:   new Array(N).fill(true),
+};
+
+// ═══════════════════ FILL-IN-THE-BLANKS DATA ═══════════════════
+// For each FITB question: correct words + plausible distractors
+const FITB_DATA = {
+  fitb2: {
+    correct:    ['peer-to-peer','dedicated','equal','independent','security','files','rest','specialist','single'],
+    distractors:['client-server','shared','central','connected','passwords','folders','all','manager','multiple','server']
+  },
+  fitb4: {
+    correct:    ['expensive','server','specialist','server','clients','single'],
+    distractors:['cheaper','router','manager','switch','users','double','technician']
+  },
+  fitb6: {
+    correct:    ['cheaper','server','specialist','security','central','centrally','cost','6','suitable'],
+    distractors:['slower','client','manager','privacy','local','manually','price','10','recommended','faster']
+  }
+};
+
+// ═══════════════════ SHUFFLE ═══════════════════
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+// ═══════════════════ BUILD FITB BANKS ═══════════════════
+function buildFITB(bankId, dataKey) {
+  const bank = document.getElementById(bankId);
+  if (!bank) return;
+  const data = FITB_DATA[dataKey];
+  // Pool: all correct answers (deduped) + distractors, shuffled
+  const pool = shuffle([...new Set([...data.correct, ...data.distractors])]);
+  pool.forEach((word, i) => {
+    const el = document.createElement('div');
+    el.className = 'fitb-word';
+    el.draggable = true;
+    el.textContent = word;
+    el.dataset.word = word;
+    el.id = `fw_${bankId}_${i}`;
+    bank.appendChild(el);
+  });
+}
+
+// ═══════════════════ FITB DRAG SETUP ═══════════════════
+function setupFITBDrag() {
+  // Re-attach to all fitb-word elements (called after building banks)
+  document.querySelectorAll('.fitb-word').forEach(el => {
+    el.addEventListener('dragstart', e => {
+      dragging = el;
+      e.dataTransfer.effectAllowed = 'move';
+      setTimeout(() => { el.style.opacity = '.4'; }, 0);
+    });
+    el.addEventListener('dragend', () => {
+      if (dragging) dragging.style.opacity = '1';
+      dragging = null;
+    });
+  });
+
+  document.querySelectorAll('.fitb-slot').forEach(slot => {
+    slot.addEventListener('dragover', e => { e.preventDefault(); slot.classList.add('drag-over-slot'); });
+    slot.addEventListener('dragleave', () => slot.classList.remove('drag-over-slot'));
+    slot.addEventListener('drop', e => {
+      e.preventDefault();
+      slot.classList.remove('drag-over-slot');
+      if (!dragging || !dragging.classList.contains('fitb-word')) return;
+      // If slot already has a word, send it back to the bank
+      if (slot.dataset.current) {
+        const oldWord = slot.dataset.current;
+        returnWordToBank(oldWord, slot.closest('.card'));
+      }
+      // Remove word from wherever it currently is
+      const word = dragging.dataset.word;
+      dragging.remove();
+      // Place word text into slot
+      slot.textContent = word;
+      slot.dataset.current = word;
+      slot.classList.remove('slot-correct','slot-wrong');
+    });
+    // Allow dropping back to bank by clicking the slot
+    slot.addEventListener('click', () => {
+      if (slot.dataset.current) {
+        returnWordToBank(slot.dataset.current, slot.closest('.card'));
+        slot.textContent = '';
+        delete slot.dataset.current;
+        slot.classList.remove('slot-correct','slot-wrong');
+      }
+    });
+  });
+}
+
+function returnWordToBank(word, card) {
+  const bank = card.querySelector('.fitb-bank');
+  if (!bank) return;
+  const el = document.createElement('div');
+  el.className = 'fitb-word';
+  el.draggable = true;
+  el.textContent = word;
+  el.dataset.word = word;
+  bank.appendChild(el);
+  // Re-attach drag events to the new element
+  el.addEventListener('dragstart', e => {
+    dragging = el;
+    e.dataTransfer.effectAllowed = 'move';
+    setTimeout(() => { el.style.opacity = '.4'; }, 0);
+  });
+  el.addEventListener('dragend', () => {
+    if (dragging) dragging.style.opacity = '1';
+    dragging = null;
+  });
+}
+
+// ═══════════════════ RANDOMISE MCQ OPTIONS ═══════════════════
+function shuffleMCOptions() {
+  document.querySelectorAll('.mc-options').forEach(container => {
+    const labels = Array.from(container.querySelectorAll('label.mc-option'));
+    shuffle(labels);
+    labels.forEach(l => container.appendChild(l));
+  });
+}
+
+// ═══════════════════ RANDOMISE T/F ROWS ═══════════════════
+function shuffleTFRows() {
+  const tbody = document.querySelector('#tp3 .tf-table tbody');
+  if (!tbody) return;
+  const rows = Array.from(tbody.querySelectorAll('tr.tf-row'));
+  shuffle(rows);
+  rows.forEach(r => tbody.appendChild(r));
+}
+
+// ═══════════════════ DRAG & DROP (general) ═══════════════════
+let dragging = null;
+
+function setupDrag() {
+  document.querySelectorAll('.drag-item, .stmt-pill').forEach(el => {
+    el.addEventListener('dragstart', e => {
+      dragging = el;
+      e.dataTransfer.effectAllowed = 'move';
+      setTimeout(() => { el.style.opacity = '.4'; }, 0);
+    });
+    el.addEventListener('dragend', () => {
+      if (dragging) dragging.style.opacity = '1';
+      dragging = null;
+    });
+  });
+  document.querySelectorAll('.drag-area, .classify-drop').forEach(zone => {
+    zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+    zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+    zone.addEventListener('drop', e => {
+      e.preventDefault();
+      zone.classList.remove('drag-over');
+      if (dragging && !dragging.classList.contains('fitb-word')) {
+        zone.appendChild(dragging);
+        dragging.style.opacity = '1';
+      }
+    });
+  });
+}
+
+// ═══════════════════ TABS ═══════════════════
+function switchTab(i) {
+  document.querySelectorAll('.tab-panel').forEach((p,j) => p.classList.toggle('active', j===i));
+  document.querySelectorAll('.tab-btn').forEach((b,j) => b.classList.toggle('active', j===i));
+}
+
+// ═══════════════════ HELPERS ═══════════════════
+const $  = id => document.getElementById(id);
+const R  = name => { const el = document.querySelector(`input[name="${name}"]:checked`); return el ? el.value : null; };
+
+function setCard(id, ok) { $(id).classList.remove('correct','incorrect'); $(id).classList.add(ok?'correct':'incorrect'); }
+function FB(id, ok, msg) { const el=$(id); el.className='feedback show '+(ok?'correct':'incorrect'); el.innerHTML=msg; }
+function markMC(name, ans) {
+  document.querySelectorAll(`input[name="${name}"]`).forEach(r => {
+    const o = r.closest('.mc-option');
+    o.classList.remove('correct-ans','wrong-ans');
+    if (r.value===ans) o.classList.add('correct-ans');
+    else if (r.checked) o.classList.add('wrong-ans');
+  });
+}
+function markSel(id, ok) { const e=$(id); if(!e) return; e.classList.remove('correct-sel','wrong-sel'); e.classList.add(ok?'correct-sel':'wrong-sel'); }
+function markIn(id, ok)  { const e=$(id); if(!e) return; e.classList.remove('correct-input','wrong-input'); e.classList.add(ok?'correct-input':'wrong-input'); }
+function kw(id, words) { const v=($(id)?.value||'').toLowerCase().trim(); return v && words.some(w=>v.includes(w)); }
+function dragVals(zoneId) { return Array.from($(zoneId).querySelectorAll('.drag-item')).map(e=>e.dataset.value); }
+function arrMatch(a,b){ return a.length===b.length && a.every(v=>b.includes(v)) && b.every(v=>a.includes(v)); }
+
+// Check a FITB card — returns {score, total, allCorrect}
+function checkFITB(slotIds) {
+  let score = 0, total = slotIds.length, allCorrect = true;
+  slotIds.forEach(id => {
+    const slot = $(id);
+    if (!slot) return;
+    const got = (slot.dataset.current || '').toLowerCase().trim();
+    const expected = slot.dataset.ans.toLowerCase().trim();
+    const ok = got === expected;
+    slot.classList.remove('slot-correct','slot-wrong');
+    slot.classList.add(ok ? 'slot-correct' : 'slot-wrong');
+    if (ok) score++; else allCorrect = false;
+  });
+  return { score, total, allCorrect };
+}
+
+// ═══════════════════ PROGRESS ═══════════════════
+function updateProgress() {
+  const tot = state.totals.reduce((a,b)=>a+b,0);
+  const cor = state.scores.reduce((a,b)=>a+b,0);
+  $('progress-bar').style.width = tot ? (cor/tot*100)+'%' : '0%';
+  $('progress-count').textContent = `${cor} / ${tot} correct`;
+  if (state.done.every(Boolean)) triggerCompletion(state.gold.every(Boolean));
+}
+
+function triggerCompletion(goldAll) {
+  const banner = $('global-cb');
+  document.body.classList.remove('all-correct','all-gold');
+  if (goldAll) {
+    document.body.classList.add('all-gold');
+    banner.className='completion-banner gold-banner';
+    banner.innerHTML='🏆 Outstanding! Every question correct on the first attempt across all tabs!';
+    launchConfetti(true);
+  } else {
+    document.body.classList.add('all-correct');
+    banner.className='completion-banner green-banner';
+    banner.innerHTML='✅ Well done — all questions correct across every tab!';
+    launchConfetti(false);
+  }
+}
+
+function finishTab(ti, score, total, allOk) {
+  state.scores[ti] = score;
+  state.totals[ti] = total;
+  const done = score === total && total > 0;
+  if (!allOk) state.gold[ti] = false;
+  state.done[ti] = done;
+  $(`tb${ti}`).classList.toggle('done', done);
+  const banner = $(`cb${ti}`);
+  if (done) {
+    banner.className = 'completion-banner '+(state.gold[ti]?'gold-banner':'green-banner');
+    banner.innerHTML  = state.gold[ti] ? '🌟 Perfect score on first attempt!' : '✅ All correct! Well done.';
+  } else {
+    banner.className = 'completion-banner'; banner.innerHTML = '';
+  }
+  updateProgress();
+}
+
+// ═══════════════════ CONFETTI ═══════════════════
+function launchConfetti(gold) {
+  const cv=$('confetti-canvas'); cv.style.display='block';
+  const ctx=cv.getContext('2d'); cv.width=innerWidth; cv.height=innerHeight;
+  const cols=gold?['#ffd700','#ffb700','#ffe066','#e9c46a','#f4a261']:['#2a9d8f','#38b2ac','#68d391','#48bb78','#f6e05e'];
+  const pp=Array.from({length:130},()=>({x:Math.random()*cv.width,y:Math.random()*-200,r:Math.random()*8+4,d:Math.random()*60+20,color:cols[Math.random()*cols.length|0],ta:0,ti:Math.random()*.07+.05}));
+  let f=0;
+  (function draw(){
+    ctx.clearRect(0,0,cv.width,cv.height);
+    pp.forEach(p=>{p.ta+=p.ti;p.y+=Math.cos(p.d)+2;p.x+=Math.sin(f/30);ctx.beginPath();ctx.fillStyle=p.color;ctx.ellipse(p.x+Math.sin(p.ta)*12,p.y,p.r/2,p.r,p.ta,0,2*Math.PI);ctx.fill();});
+    f++; if(f<200) requestAnimationFrame(draw); else{ctx.clearRect(0,0,cv.width,cv.height);cv.style.display='none';}
+  })();
+}
+
+// ═══════════════════ CHECK TABS ═══════════════════
+function checkTab(ti) {
+  let score=0, total=0, allOk=true;
+  function q(ok){ total++; if(ok) score++; else allOk=false; return ok; }
+  function qN(n, ok){ total+=n; if(ok) score+=n; else allOk=false; return ok; }
+
+  if (ti===0) {
+    const c1=q(R('q0_1')==='b'); markMC('q0_1','b'); setCard('cq0_1',c1);
+    FB('fb0_1',c1, c1?'<strong>✓ Correct!</strong> The server provides services, data or resources to clients.':'<strong>✗</strong> The <em>server</em> provides resources; the <em>client</em> requests them.');
+    const c2=q(R('q0_2')==='c'); markMC('q0_2','c'); setCard('cq0_2',c2);
+    FB('fb0_2',c2, c2?'<strong>✓ Correct!</strong> In P2P, all computers are equal peers — no dedicated server.':'<strong>✗</strong> In peer-to-peer, all computers are equal with no dedicated server.');
+    const ma=$('m0_1').value==='b', mb=$('m0_2').value==='a', mc=$('m0_3').value==='d', md=$('m0_4').value==='c';
+    [['m0_1',ma],['m0_2',mb],['m0_3',mc],['m0_4',md]].forEach(([id,ok])=>markSel(id,ok));
+    const c3=q(ma&&mb&&mc&&md); setCard('cq0_3',c3);
+    FB('fb0_3',c3, c3?'<strong>✓ Correct!</strong> Client = requests (b); Server = dedicated/stores (a); P2P = no central, all equal (d); Star topology = all connect to one central switch (c).':'<strong>✗</strong> Client <em>requests</em> resources (b). Server is a <em>dedicated computer</em> that stores/manages (a). Peer-to-peer = no central point, all equal (d). Star topology = all devices connect to one central switch/hub (c).');
+    const c4=q(R('q0_4')==='true'); markMC('q0_4','true'); setCard('cq0_4',c4);
+    FB('fb0_4',c4, c4?'<strong>✓ Correct!</strong> P2P has no single point of failure — one device failing doesn\'t bring down the rest.':'<strong>✗</strong> True. In P2P each computer is independent, so one failing doesn\'t affect the others.');
+
+  } else if (ti===1) {
+    const c1=q(R('q1_1')==='b'); markMC('q1_1','b'); setCard('cq1_1',c1);
+    FB('fb1_1',c1,
+      c1?'<strong>✓ Correct!</strong> Marcus\'s laptop is the client — it sends a request to the gaming platform\'s computer asking to download the game.':
+         '<strong>✗</strong> The <em>client</em> is the device that makes a request. Marcus\'s laptop requests the game from the platform — the platform\'s computer is the server.');
+
+    // Q2: needs TWO distinct reasons. Define separate reason groups; count how many groups match.
+    const clientReasonGroups = [
+      ['request','ask','initiat'],           // sends/initiates a request
+      ['download','receive','receiv'],        // receives/downloads the data
+      ['does not store','no files','not store','doesn\'t store','not provid'], // doesn't store for others
+      ['marcus','laptop','it','computer'],    // referring to the device as actor (only valid alongside another group)
+    ];
+    const t1_2val = ($('t1_2')?.value||'').toLowerCase();
+    // Count how many distinct groups are evidenced — but group 3 (just "it"/"computer") doesn't count alone
+    const c2groups = clientReasonGroups.slice(0,3).filter(g => g.some(kw => t1_2val.includes(kw)));
+    const c2 = q(c2groups.length >= 2);
+    markIn('t1_2', c2); setCard('cq1_2', c2);
+    FB('fb1_2', c2,
+      c2 ? '<strong>✓ Good!</strong> Two distinct reasons identified.' :
+           `<strong>✗</strong> Only ${c2groups.length} distinct reason(s) found — two are needed. Justifications for the client include: it <em>sends a request</em> to the platform; it <em>initiates the download</em>; it does <em>not store</em> game files for others to access. Each must be a separate, distinct point.`);
+
+    const c3=q(R('q1_3')==='d'); markMC('q1_3','d'); setCard('cq1_3',c3);
+    FB('fb1_3',c3,
+      c3?'<strong>✓ Correct!</strong> The gaming platform\'s computer is the server — it stores the game files and responds to download requests.':
+         '<strong>✗</strong> The <em>server</em> is the computer that provides a service. The gaming platform\'s computer stores the game files and sends them when requested.');
+
+    // Q4: needs TWO distinct reasons about the server
+    const serverReasonGroups = [
+      ['store','host','contain','hold'],        // stores/hosts the files
+      ['respond','response','execut','process'], // responds to/processes requests
+      ['send','provid','transmit','deliver'],    // sends the data to client
+      ['receiv','accept','get'],                 // receives the request
+      ['manag','account','user'],               // manages accounts
+    ];
+    const t1_4val = ($('t1_4')?.value||'').toLowerCase();
+    const c4groups = serverReasonGroups.filter(g => g.some(kw => t1_4val.includes(kw)));
+    const c4 = q(c4groups.length >= 2);
+    markIn('t1_4', c4); setCard('cq1_4', c4);
+    FB('fb1_4', c4,
+      c4 ? '<strong>✓ Good!</strong> Two distinct reasons identified.' :
+           `<strong>✗</strong> Only ${c4groups.length} distinct reason(s) found — two are needed. Justifications for the server include: it <em>stores/hosts</em> the game files; it <em>receives and responds</em> to the download request; it <em>sends</em> the game data to the client. Each must be a separate, distinct point.`);
+
+    const c5=q(R('q1_5')==='b'); markMC('q1_5','b'); setCard('cq1_5',c5);
+    FB('fb1_5',c5,
+      c5?'<strong>✓ Correct!</strong> Priya\'s laptop is also a client — it sends a request to the same platform\'s computer asking to download her game.':
+         '<strong>✗</strong> Priya\'s laptop is also a <em>client</em> — it sends its own request to the server. The platform\'s computer is still the server for both of them.');
+
+  } else if (ti===2) {
+    const csZ=dragVals('drop-cs'), p2pZ=dragVals('drop-p2p');
+    const csOk=arrMatch(csZ,['centralfiles','centralbackup','centralupdate']);
+    const p2pOk=arrMatch(p2pZ,['ownsecurity','nocentral','ownupdate']);
+    $('drop-cs').classList.toggle('correct-zone',csOk); $('drop-cs').classList.toggle('wrong-zone',!csOk);
+    $('drop-p2p').classList.toggle('correct-zone',p2pOk); $('drop-p2p').classList.toggle('wrong-zone',!p2pOk);
+    const c1=q(csOk&&p2pOk); setCard('cq2_1',c1);
+    FB('fb2_1',c1, c1?'<strong>✓ Correct!</strong> CS: central files, backups, software updates. P2P: own security, no server needed, individual software installs.':'<strong>✗</strong> CS features: <em>central</em> file storage, backups, software updates. P2P features: own security/files/software; no dedicated server.');
+    const c2=q(R('q2_2')==='c'); markMC('q2_2','c'); setCard('cq2_2',c2);
+    FB('fb2_2',c2, c2?'<strong>✓ Correct!</strong> Central management of software and security is the key advantage at scale.':'<strong>✗</strong> With 200 computers, the major benefit is <em>central management</em> — updates and security deployed from one place.');
+    const c3=q(R('q2_3')==='b'); markMC('q2_3','b'); setCard('cq2_3',c3);
+    FB('fb2_3',c3, c3?'<strong>✓ Correct!</strong> No server + equal computers = peer-to-peer.':'<strong>✗</strong> With no dedicated server and computers sharing directly, this is <em>peer-to-peer</em>.');
+
+    // Q4: benefit+reason pairs must be thematically linked.
+    // Define topic clusters — each cluster has benefit keywords AND reason keywords.
+    // A pair passes only if benefit AND reason both hit the SAME cluster (or an adjacent one).
+    const clusters = [
+      { b: ['file','storage','store'],          r: ['access','any computer','any machine','from any','anywhere','different computer'] },
+      { b: ['backup','back up','back-up'],       r: ['automatically','all data','protect','loss','recover','one place'] },
+      { b: ['software','update','install'],      r: ['central','once','all computer','individual','each machine','without visiting'] },
+      { b: ['security','antivirus','firewall','virus'], r: ['all','protect','every','central','install','each computer','device'] },
+      { b: ['monitor','monitor client','performance'], r: ['working','check','status','perform'] },
+    ];
+
+    function pairOk(benefitField, reasonField) {
+      const bv = ($( benefitField)?.value||'').toLowerCase();
+      const rv = ($(reasonField)?.value||'').toLowerCase();
+      if (!bv.trim() || !rv.trim()) return false;
+      // Passes if there exists ANY cluster whose benefit keywords appear in bv AND reason keywords appear in rv
+      return clusters.some(cl =>
+        cl.b.some(kw => bv.includes(kw)) &&
+        cl.r.some(kw => rv.includes(kw))
+      );
+    }
+
+    const pair1ok = pairOk('t2_4a','t2_4b');
+    const pair2ok = pairOk('t2_4c','t2_4d');
+
+    // Also check the pairs aren't identical topics (both files, both security etc)
+    const pair1topic = clusters.findIndex(cl => cl.b.some(kw=>($('t2_4a')?.value||'').toLowerCase().includes(kw)));
+    const pair2topic = clusters.findIndex(cl => cl.b.some(kw=>($('t2_4c')?.value||'').toLowerCase().includes(kw)));
+    const differentTopics = pair1topic === -1 || pair2topic === -1 || pair1topic !== pair2topic;
+
+    markIn('t2_4a', pair1ok); markIn('t2_4b', pair1ok);
+    markIn('t2_4c', pair2ok); markIn('t2_4d', pair2ok);
+
+    const allPairsOk = pair1ok && pair2ok && differentTopics;
+    q(pair1ok); q(pair2ok);
+    setCard('cq2_4', allPairsOk);
+    const pairFB = allPairsOk
+      ? '<strong>✓ Good!</strong> Both benefit+reason pairs are correctly linked.'
+      : '<strong>✗</strong> Each benefit must be paired with a matching reason <em>in the same box pair</em>. '
+        + (!pair1ok ? 'Benefit 1 and Reason 1 don\'t match up. ' : '')
+        + (!pair2ok ? 'Benefit 2 and Reason 2 don\'t match up. ' : '')
+        + (!differentTopics ? 'Both benefits are about the same topic — choose two different benefits. ' : '')
+        + 'Examples: <em>Central file storage</em> → workers can access files from any computer. <em>Central backups</em> → all data is backed up automatically. <em>Central security</em> → antivirus only needs installing once.';
+    FB('fb2_4', allPairsOk, pairFB);
+
+  } else if (ti===3) {
+    // Q3.1 — classify drag
+    const cats=['cs','p2p','star','mesh'];
+    let classOk=true;
+    cats.forEach(cat=>{
+      const drop=$(`dz-${cat}`);
+      const col=$(`col-${cat}`);
+      const pills=Array.from(drop.querySelectorAll('.stmt-pill'));
+      const correct=document.querySelectorAll(`.stmt-pill[data-cat="${cat}"]`).length;
+      const placed=pills.filter(p=>p.dataset.cat===cat).length;
+      const ok=(placed===correct && pills.length===correct);
+      col.classList.remove('correct-zone','wrong-zone');
+      col.classList.add(ok?'correct-zone':'wrong-zone');
+      if(!ok) classOk=false;
+    });
+    const c1=q(classOk); setCard('cq3_1',c1);
+    FB('fb3_1',c1, c1?'<strong>✓ Perfect!</strong> All 12 statements correctly classified.':'<strong>✗</strong> Some statements are in the wrong category:<ul><li><strong>Client-server:</strong> dedicated server, central updates, central security</li><li><strong>Peer-to-peer:</strong> own security/files, no server needed, independent failure</li><li><strong>Star topology:</strong> central switch, one cable per device, isolated faults</li><li><strong>Mesh topology:</strong> all devices connected, most cabling, alternative routes on failure</li></ul>');
+    // Q3.2 — T/F (answers stored on each row as data-ans; order is randomised)
+    const tfRows = Array.from(document.querySelectorAll('#tp3 .tf-row'));
+    let tfAll=true;
+    tfRows.forEach(row => {
+      const name = row.querySelector('input[type=radio]').name;
+      const got = R(name);
+      const ok = got === row.dataset.ans;
+      row.classList.remove('row-ok','row-err');
+      row.classList.add(ok?'row-ok':'row-err');
+      if(!ok) tfAll=false;
+    });
+    const c2=q(tfAll); setCard('cq3_2',c2);
+    FB('fb3_2',c2, c2?'<strong>✓ Correct!</strong> All true/false answers correct.':'<strong>✗</strong> Review: (1) False — star topology ≠ CS model; (2) True — mesh has alternative routes; (3) False — P2P and mesh are separate concepts; (4) True — CS server handles central backups; (5) False — if the switch fails in a star, all lose connection.');
+    // Q3.3 — scenario classify
+    const sa=$('sc1').value==='cs', sb=$('sc2').value==='star', sc=$('sc3').value==='p2p', sd=$('sc4').value==='mesh';
+    markSel('sc1',sa); markSel('sc2',sb); markSel('sc3',sc); markSel('sc4',sd);
+    const c3=q(sa&&sb&&sc&&sd); setCard('cq3_3',c3);
+    FB('fb3_3',c3, c3?'<strong>✓ Correct!</strong> School file server = CS model; connecting to a switch = star topology; sharing without a server = P2P model; every base connected to every other = mesh topology.':'<strong>✗</strong> Answers: (1) <em>Client-server</em> — dedicated server manages accounts/files; (2) <em>Star topology</em> — connecting to a central switch describes physical layout; (3) <em>Peer-to-peer</em> — no server, direct sharing; (4) <em>Mesh topology</em> — every node connected to every other.');
+
+  } else if (ti===4) {
+    const c1=q(R('q4_1')==='b'); markMC('q4_1','b'); setCard('cq4_1',c1);
+    FB('fb4_1',c1, c1?'<strong>✓ Correct!</strong> A switch (or hub) is the central device in a star topology.':'<strong>✗</strong> The central point is a <em>switch</em> (or hub). Don\'t confuse this with a server — the switch manages traffic, not files!');
+    const c2=q(R('q4_2')==='b'); markMC('q4_2','b'); setCard('cq4_2',c2);
+    FB('fb4_2',c2, c2?'<strong>✓ Correct!</strong> Star topology = physical layout. Dedicated server = client-server model. These are independent.':'<strong>✗ Key concept!</strong> Topology and network model are <em>different things</em>. Having a dedicated server means it\'s client-server regardless of the topology shape.');
+    const c3=q(R('q4_3')==='b'); markMC('q4_3','b'); setCard('cq4_3',c3);
+    FB('fb4_3',c3, c3?'<strong>✓ Correct!</strong> Star is cheaper (less cabling) and faults are easy to isolate.':'<strong>✗</strong> Star uses less cabling than mesh, and if a single cable fails only that device is affected — faults are easy to isolate.');
+    const c4=q(R('q4_4')==='c'); markMC('q4_4','c'); setCard('cq4_4',c4);
+    FB('fb4_4',c4, c4?'<strong>✓ Correct!</strong> Mesh provides multiple routes — if one cable fails, data takes an alternative path.':'<strong>✗</strong> The key advantage of mesh is <em>fault tolerance</em>: multiple paths so the network keeps working even if a connection fails.');
+    const c5=q(R('q4_5')==='b'); markMC('q4_5','b'); setCard('cq4_5',c5);
+    FB('fb4_5',c5, c5?'<strong>✓ Correct!</strong> Each laptop connects directly to the others (mesh topology) and all are equal with no server (peer-to-peer model).':'<strong>✗</strong><ul><li><strong>Mesh topology</strong> — each device connects directly to every other (no central switch)</li><li><strong>Peer-to-peer model</strong> — all computers are equal, no dedicated server</li></ul>');
+    const m1=$('mt1').value==='star', m2=$('mt2').value==='mesh', m3=$('mt3').value==='star', m4=$('mt4').value==='mesh';
+    markSel('mt1',m1); markSel('mt2',m2); markSel('mt3',m3); markSel('mt4',m4);
+    const c6=q(m1&&m2&&m3&&m4); setCard('cq4_6',c6);
+    FB('fb4_6',c6, c6?'<strong>✓ Correct!</strong> Star: single point of failure; easy to add devices. Mesh: all connected to all; most cabling; most fault-tolerant.':'<strong>✗</strong><ul><li>Single point of failure = <strong>Star</strong> (switch fails → all fail)</li><li>Every device to every other = <strong>Mesh</strong></li><li>One cable to add a device = <strong>Star</strong></li><li>Most cabling, most fault-tolerant = <strong>Mesh</strong></li></ul>');
+
+  } else if (ti===5) {
+    const c1=q(R('q5_1')==='c'); markMC('q5_1','c'); setCard('cq5_1',c1);
+    FB('fb5_1',c1, c1?'<strong>✓ Correct!</strong> Topology (star/mesh) = physical layout. Network model (CS/P2P) = how resources are shared. Completely independent concepts.':'<strong>✗ Key distinction!</strong> Topology and network model are <em>completely separate</em>. A star topology does not mean client-server. A mesh topology does not mean peer-to-peer.');
+
+    // Q5.2 FITB — 9 slots
+    const fitb2slots = ['fs2_1','fs2_2','fs2_3','fs2_4','fs2_5','fs2_6','fs2_7','fs2_8','fs2_9'];
+    const f2 = checkFITB(fitb2slots);
+    // Count correct slots as individual marks, max 4 (we map 9 slots → 4 marks; award mark per 2+ correct)
+    const f2marks = Math.min(4, Math.floor(f2.score / 2) + (f2.score >= 9 ? 1 : 0));
+    total += 4; score += f2marks; if (f2.score < 9) allOk = false;
+    setCard('cq5_2', f2.allCorrect);
+    FB('fb5_2', f2.allCorrect,
+      f2.allCorrect ? '<strong>✓ Perfect!</strong> All gaps filled correctly. Hope\'s network is peer-to-peer: no dedicated server, equal/independent computers, own security and files, rest continues on failure, needs no specialist.' :
+      `<strong>✗</strong> ${9 - f2.score} gap(s) incorrect. Correct answers: peer-to-peer | dedicated | equal | independent | security | files | rest | specialist | single`);
+
+    const c3=q(R('q5_3')==='b'); markMC('q5_3','b'); setCard('cq5_3',c3);
+    FB('fb5_3',c3, c3?'<strong>✓ Correct!</strong> A hospital with centralised requirements needs client-server.':'<strong>✗</strong> A hospital with 500 computers and central records/security/backups needs <em>client-server</em>. Note — topology is a separate question!');
+
+    // Q5.4 FITB — 6 slots
+    const fitb4slots = ['fs4_1','fs4_2','fs4_3','fs4_4','fs4_5','fs4_6'];
+    const f4 = checkFITB(fitb4slots);
+    total += 2; score += (f4.score >= 6 ? 2 : f4.score >= 3 ? 1 : 0);
+    if (f4.score < 6) allOk = false;
+    setCard('cq5_4', f4.allCorrect);
+    FB('fb5_4', f4.allCorrect,
+      f4.allCorrect ? '<strong>✓ Correct!</strong> Both disadvantages correctly completed: higher cost (dedicated server + specialist), and single point of failure if server goes down.' :
+      `<strong>✗</strong> ${6 - f4.score} gap(s) incorrect. Correct answers: expensive | server | specialist | server | clients | single`);
+
+    const c5=q(R('q5_5')==='c'); markMC('q5_5','c'); setCard('cq5_5',c5);
+    FB('fb5_5',c5, c5?'<strong>✓ Excellent!</strong> Changing topology has no effect on the network model — client-server stays client-server.':'<strong>✗ Critical point!</strong> Switching from mesh to star only changes the <em>physical layout</em>. The model is determined by whether there\'s a dedicated server — not by cable arrangement.');
+
+    // Q5.6 FITB — 9 slots
+    const fitb6slots = ['fs6_1','fs6_2','fs6_3','fs6_4','fs6_5','fs6_6','fs6_7','fs6_8','fs6_9'];
+    const f6 = checkFITB(fitb6slots);
+    total += 6; score += Math.min(6, Math.floor(f6.score * 6 / 9));
+    if (f6.score < 9) allOk = false;
+    setCard('cq5_6', f6.allCorrect);
+    FB('fb5_6', f6.allCorrect,
+      f6.allCorrect ? '<strong>✓ Perfect evaluation!</strong> All gaps correct. You correctly identified P2P advantages (cheaper, no server, no specialist), CS advantages (central files, central security, centrally managed), and made a justified recommendation.' :
+      `<strong>✗</strong> ${9 - f6.score} gap(s) incorrect. Correct answers: cheaper | server | specialist | security | central | centrally | cost | 6 | suitable`);
+  }
+
+  finishTab(ti, score, total, allOk);
+}
+
+// ═══════════════════ RESET ═══════════════════
+function resetTab(ti) {
+  state.scores[ti] = 0;
+  state.done[ti]   = false;
+  state.gold[ti]   = true;
+
+  const panel = $(`tp${ti}`);
+  panel.querySelectorAll('input[type=radio]').forEach(r=>r.checked=false);
+  panel.querySelectorAll('input[type=text],textarea').forEach(i=>i.value='');
+  panel.querySelectorAll('select').forEach(s=>s.value='');
+  panel.querySelectorAll('.card').forEach(c=>c.classList.remove('correct','incorrect'));
+  panel.querySelectorAll('.feedback').forEach(f=>{f.className='feedback';f.innerHTML='';});
+  panel.querySelectorAll('.text-input').forEach(i=>i.classList.remove('correct-input','wrong-input'));
+  panel.querySelectorAll('.mc-option').forEach(o=>o.classList.remove('correct-ans','wrong-ans'));
+  panel.querySelectorAll('.match-select').forEach(s=>s.classList.remove('correct-sel','wrong-sel'));
+  panel.querySelectorAll('.tf-row').forEach(r=>r.classList.remove('row-ok','row-err'));
+
+  // Reset FITB slots — return words to bank, clear slot text
+  panel.querySelectorAll('.fitb-slot').forEach(slot => {
+    if (slot.dataset.current) {
+      returnWordToBank(slot.dataset.current, slot.closest('.card'));
+      slot.textContent = '';
+      delete slot.dataset.current;
+      slot.classList.remove('slot-correct','slot-wrong');
+    }
+  });
+
+  if (ti===2) {
+    const src=$('drag-src');
+    ['drop-cs','drop-p2p'].forEach(id=>{
+      const z=$(id); z.querySelectorAll('.drag-item').forEach(el=>src.appendChild(el));
+      z.classList.remove('correct-zone','wrong-zone');
+    });
+  }
+  if (ti===3) {
+    const bank=$('stmt-bank');
+    ['dz-cs','dz-p2p','dz-star','dz-mesh'].forEach(id=>{
+      $(id).querySelectorAll('.stmt-pill').forEach(p=>bank.appendChild(p));
+    });
+    ['col-cs','col-p2p','col-star','col-mesh'].forEach(id=>{
+      $(id).classList.remove('correct-zone','wrong-zone');
+    });
+  }
+
+  $(`tb${ti}`).classList.remove('done');
+  $(`cb${ti}`).className='completion-banner'; $(`cb${ti}`).innerHTML='';
+  $('global-cb').className='completion-banner'; $('global-cb').innerHTML='';
+  document.body.classList.remove('all-correct','all-gold');
+  updateProgress();
+}
+
+// ═══════════════════ INIT ═══════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  // Build FITB word banks
+  buildFITB('fitb2-bank', 'fitb2');
+  buildFITB('fitb4-bank', 'fitb4');
+  buildFITB('fitb6-bank', 'fitb6');
+  // Set up all drag interactions
+  setupDrag();
+  setupFITBDrag();
+  // Randomise MCQ option order on every page load
+  shuffleMCOptions();
+  // Randomise T/F row order
+  shuffleTFRows();
+  updateProgress();
+});
+</script>
+</body>
+</html>

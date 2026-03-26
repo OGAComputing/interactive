@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<!-- ACTIVITY
+title:  Spot the Error
+lesson: Lesson 1
+type:   Practice
+stars:  2
+desc:   Part A: identify error types from broken code. Part B: introduce a named error into a working line.
+color:  teal
+-->
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spot the Error · Lesson 1 · Year 8 Python</title>
+<style>
+  :root {
+    --navy:       #1A2E4A;
+    --navy-mid:   #1E3A5F;
+    --navy-light: #243B55;
+    --teal:       #00B4D8;
+    --teal-dark:  #006D8F;
+    --teal-light: #90E0EF;
+    --teal-bg:    #D0EEF7;
+    --amber:      #F4A261;
+    --amber-dark: #E07B2A;
+    --amber-bg:   #FEF0E4;
+    --green:      #57CC99;
+    --green-dark: #1E7E5E;
+    --green-bg:   #E6F5EF;
+    --red:        #E63946;
+    --red-bg:     #FDECEA;
+    --gold:       #FFD166;
+    --gold-bg:    #FFFBEA;
+    --code-bg:    #1E2D40;
+    --code-text:  #A8DADC;
+    --code-err:   #F4A261;
+    --code-ok:    #57CC99;
+    --bg:         #EEF5FB;
+    --mid:        #6B8CAE;
+    --muted:      #94A8C0;
+    --white:      #FFFFFF;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Calibri', 'Segoe UI', sans-serif; background: var(--bg); color: var(--navy); min-height: 100vh; }
+  .header { background: var(--navy); padding: 18px 28px 14px; border-bottom: 4px solid var(--teal); }
+  .header-title { font-size: 1.5rem; font-weight: 700; color: var(--white); font-family: 'Trebuchet MS', sans-serif; letter-spacing: -0.3px; }
+  .header-sub { font-size: 0.82rem; color: var(--teal-light); margin-top: 2px; }
+  .progress-row { display: flex; align-items: center; gap: 5px; margin-top: 10px; flex-wrap: wrap; }
+  .progress-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--navy-light); border: 2px solid #3a5a7a; transition: background 0.3s, border-color 0.3s; display: inline-block; }
+  .progress-dot.correct { background: var(--green); border-color: var(--green); }
+  .progress-dot.wrong   { background: var(--red);   border-color: var(--red);   }
+  .tab-bar { display: flex; background: var(--navy-mid); padding: 0 20px; gap: 4px; overflow-x: auto; border-bottom: 1px solid #2a4060; }
+  .tab { padding: 10px 20px 9px; border: none; background: transparent; color: var(--muted); font-family: 'Calibri', sans-serif; font-size: 0.92rem; font-weight: 600; cursor: pointer; border-bottom: 3px solid transparent; transition: color 0.15s, border-color 0.15s; white-space: nowrap; user-select: none; }
+  .tab:hover { color: var(--teal-light); }
+  .tab.active { color: var(--white); border-bottom-color: var(--teal); }
+  .tab.done   { color: var(--gold);  border-bottom-color: var(--gold); }
+  .tab.done.active { color: var(--gold); border-bottom-color: var(--gold); }
+  .panel { display: none; padding: 24px 28px 80px; max-width: 960px; margin: 0 auto; }
+  .panel.active { display: block; }
+  .panel-intro { background: var(--white); border-left: 4px solid var(--teal); padding: 12px 16px; border-radius: 0 6px 6px 0; font-size: 0.88rem; color: var(--navy); margin-bottom: 22px; line-height: 1.6; }
+  .panel-intro strong { color: var(--teal-dark); }
+  .done-banner { display: none; margin-bottom: 20px; padding: 14px 18px; background: var(--gold-bg); border: 2px solid var(--gold); border-radius: 8px; text-align: center; }
+  .done-banner.show { display: block; }
+  .done-banner h3 { color: var(--amber-dark); font-family: 'Trebuchet MS', sans-serif; font-size: 1.05rem; margin-bottom: 3px; }
+  .done-banner p  { color: var(--mid); font-size: 0.84rem; }
+  .questions-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 18px; }
+  .qcard { background: var(--white); border: 2px solid #d4e4f0; border-radius: 8px; overflow: hidden; transition: border-color 0.3s; }
+  .qcard.answered-correct { border-color: var(--green); }
+  .qcard.answered-wrong   { border-color: var(--red);   }
+  .qcard-header { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: var(--navy); color: var(--white); }
+  .qnum { width: 26px; height: 26px; border-radius: 50%; background: var(--teal); color: var(--navy); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.8rem; flex-shrink: 0; }
+  .qtitle { font-size: 0.9rem; font-weight: 700; flex: 1; }
+  .qstars { color: var(--gold); font-size: 0.78rem; }
+  .qcard-body { padding: 14px; }
+  .code-wrap { background: var(--code-bg); border-radius: 6px; font-family: 'Courier New', monospace; font-size: 0.83rem; line-height: 1.7; overflow: hidden; margin-bottom: 14px; border: 1px solid #2a3d52; }
+  .code-line { display: flex; align-items: stretch; }
+  .ln { min-width: 30px; padding: 0 7px; background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.22); text-align: right; border-right: 1px solid rgba(255,255,255,0.07); user-select: none; font-size: 0.75rem; display: flex; align-items: center; justify-content: flex-end; }
+  .lc { padding: 1px 12px; color: var(--code-text); flex: 1; white-space: pre; }
+  .code-line.broken .ln { background: rgba(244,162,97,0.18); color: var(--amber); }
+  .code-line.broken .lc { color: var(--code-err); font-weight: 600; }
+  .code-line.broken      { background: rgba(244,162,97,0.06); }
+  .q-prompt { font-size: 0.85rem; font-weight: 600; color: var(--navy); margin-bottom: 8px; }
+  .pills { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 12px; }
+  .pill-btn { padding: 6px 15px; border-radius: 20px; border: 2px solid #c8dcea; background: var(--bg); color: var(--navy); font-family: inherit; font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: border-color 0.15s, background 0.15s, color 0.15s; }
+  .pill-btn:hover:not(:disabled) { border-color: var(--teal); color: var(--teal-dark); background: var(--teal-bg); }
+  .pill-btn.selected  { border-color: var(--teal);  background: var(--teal-bg);  color: var(--teal-dark); }
+  .pill-btn.correct   { border-color: var(--green); background: var(--green-bg); color: var(--green-dark); }
+  .pill-btn.incorrect { border-color: var(--red);   background: var(--red-bg);   color: var(--red); }
+  .pill-btn:disabled  { cursor: default; }
+  .check-btn { padding: 7px 20px; border-radius: 6px; background: var(--teal); border: none; color: var(--white); font-family: inherit; font-size: 0.85rem; font-weight: 700; cursor: pointer; transition: background 0.15s; }
+  .check-btn:hover { background: var(--teal-dark); }
+  .check-btn:disabled { background: #b0c8da; cursor: default; }
+  .feedback { display: none; margin-top: 10px; padding: 9px 13px; border-radius: 6px; font-size: 0.83rem; line-height: 1.55; }
+  .feedback.show { display: block; }
+  .feedback.ok  { background: var(--green-bg); border-left: 3px solid var(--green); color: var(--green-dark); }
+  .feedback.bad { background: var(--red-bg);   border-left: 3px solid var(--red);   color: #9b1c1c; }
+  .intro-task { background: var(--white); border: 2px solid #d4e4f0; border-radius: 8px; overflow: hidden; margin-bottom: 20px; transition: border-color 0.3s; }
+  .intro-task.correct { border-color: var(--green); }
+  .intro-task-header { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: var(--navy); color: var(--white); }
+  .intro-num { width: 26px; height: 26px; border-radius: 50%; background: var(--amber); color: var(--navy); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.8rem; flex-shrink: 0; }
+  .err-type-tag { padding: 2px 10px; border-radius: 10px; font-size: 0.7rem; font-weight: 700; background: rgba(244,162,97,0.2); color: var(--amber-dark); border: 1px solid rgba(244,162,97,0.4); margin-left: auto; }
+  .intro-body { padding: 14px; }
+  .intro-body p { font-size: 0.85rem; color: var(--navy); margin-bottom: 12px; line-height: 1.55; }
+  .sub-label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; display: flex; align-items: center; gap: 5px; }
+  .sub-label.green { color: var(--green-dark); }
+  .sub-label.amber { color: var(--amber-dark); margin-top: 12px; }
+  .intro-textarea { width: 100%; background: var(--code-bg); border: 2px solid #2a3d52; border-radius: 6px; padding: 10px 14px; font-family: 'Courier New', monospace; font-size: 0.83rem; line-height: 1.7; color: var(--code-text); resize: none; outline: none; transition: border-color 0.2s; tab-size: 4; }
+  .intro-textarea:focus   { border-color: var(--teal); }
+  .intro-textarea.correct { border-color: var(--green); color: var(--green-dark); background: #f0faf5; }
+  .intro-controls { display: flex; align-items: center; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .hint-btn { margin-left: auto; padding: 7px 16px; border-radius: 6px; border: 2px solid var(--amber); background: none; color: var(--amber-dark); font-family: inherit; font-size: 0.82rem; font-weight: 700; cursor: pointer; transition: background 0.15s; }
+  .hint-btn:hover { background: var(--amber-bg); }
+  .hint-box { display: none; margin-top: 8px; padding: 9px 13px; background: var(--amber-bg); border-left: 3px solid var(--amber); border-radius: 0 6px 6px 0; font-size: 0.82rem; color: var(--navy); line-height: 1.5; }
+  .hint-box.show { display: block; }
+  .pill-msg { font-family: 'Courier New', monospace; font-size: 0.77rem; padding: 6px 12px; border-radius: 6px; }
+  .pill-msg.selected  { border-color: var(--teal);  background: var(--teal-bg);  color: var(--teal-dark); }
+  .pill-msg.correct   { border-color: var(--green); background: var(--green-bg); color: var(--green-dark); }
+  .pill-msg.incorrect { border-color: var(--red);   background: var(--red-bg);   color: var(--red); }
+  .score-bar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(30,58,95,0.97); border-top: 1px solid #2a4060; padding: 9px 28px; display: flex; align-items: center; gap: 14px; z-index: 100; backdrop-filter: blur(4px); }
+  .score-label { font-size: 0.78rem; color: var(--muted); white-space: nowrap; }
+  .score-track { flex: 1; height: 6px; background: var(--navy-light); border-radius: 3px; overflow: hidden; }
+  .score-fill  { height: 100%; background: linear-gradient(90deg, var(--teal), var(--green)); border-radius: 3px; transition: width 0.5s; width: 0; }
+  .score-pct   { font-size: 0.8rem; font-weight: 700; color: var(--teal); min-width: 40px; text-align: right; }
+  #fw { position: fixed; inset: 0; pointer-events: none; z-index: 9999; }
+  @media (max-width: 620px) {
+    .panel { padding: 16px 12px 80px; }
+    .questions-grid { grid-template-columns: 1fr; }
+    .header { padding: 14px 16px 12px; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="fw"></canvas>
+
+<header class="header">
+  <div class="header-title">&#x1F50D; Spot the Error</div>
+  <div class="header-sub">Python Programming &middot; Year 8 &middot; Lesson 1</div>
+  <div class="progress-row" id="dots-row"></div>
+</header>
+
+<nav class="tab-bar">
+  <button class="tab active" id="tab-a" onclick="showPanel('a',this)">Part A &mdash; Name the Error</button>
+  <button class="tab"        id="tab-b" onclick="showPanel('b',this)">Part B &mdash; Cause the Error &#x2605;&#x2605;&#x2605;</button>
+</nav>
+
+<div class="panel active" id="panel-a">
+  <div class="panel-intro">
+    Each program has <strong>one broken line shown in orange</strong>. Choose the correct error type from the three buttons. The error types from the lesson are: <strong>SyntaxError</strong>, <strong>NameError</strong>, <strong>IndentationError</strong>.
+  </div>
+  <div class="done-banner" id="done-a">
+    <h3>&#x2713; Part A complete!</h3>
+    <p>Move on to Part B when you&rsquo;re ready &mdash; it&rsquo;s harder.</p>
+  </div>
+  <div class="questions-grid" id="grid-a"></div>
+</div>
+
+<div class="panel" id="panel-b">
+  <div class="panel-intro">
+    Each question gives you a <strong>working line of code</strong>. Your job is to <strong>rewrite it with a specific error introduced</strong> &mdash; type your broken version in the box. You need to understand the error well enough to create it, not just recognise it.
+  </div>
+  <div class="done-banner" id="done-b">
+    <h3>&#x1F389; Part B complete &mdash; excellent work!</h3>
+    <p>You can now identify <em>and</em> deliberately create Python errors. That&rsquo;s proper programmer thinking.</p>
+  </div>
+  <div id="b-tasks"></div>
+</div>
+
+<div class="score-bar">
+  <span class="score-label" id="score-label">Part A: 0 / 8</span>
+  <div class="score-track"><div class="score-fill" id="score-fill"></div></div>
+  <span class="score-pct" id="score-pct">0%</span>
+</div>
+
+<script>
+const OPTS = ['SyntaxError', 'NameError', 'IndentationError'];
+// Distractor pools for the "what message?" questions
+const MSG_COLON  = ["SyntaxError: expected ':'", "SyntaxError: '(' was never closed", "SyntaxError: unterminated string literal", "IndentationError: expected an indented block"];
+const MSG_QUOTE  = ["SyntaxError: unterminated string literal", "SyntaxError: expected ':'", "SyntaxError: '(' was never closed", "NameError: name is not defined"];
+const MSG_BRACKET= ["SyntaxError: '(' was never closed", "SyntaxError: unterminated string literal", "SyntaxError: expected ':'", "IndentationError: expected an indented block"];
+
+const PART_A = [
+  { id:'a1', title:'Greeting', stars:'&#x2605;',
+    lines:[{t:'name = "Alice"'},{t:'print("Hello, " + nmae)',broken:true}],
+    tasks:[{prompt:'What type of error is this?',correct:'NameError',opts:OPTS,
+      explain:'<strong>NameError</strong> &mdash; <code>nmae</code> is a typo. Python looks for a variable called <code>nmae</code>, can\'t find one, and reports it is not defined.'}]},
+
+  { id:'a2', title:'Score Check', stars:'&#x2605;',
+    lines:[{t:'score = 85'},{t:'if score > 50',broken:true},{t:'    print("Pass!")'}],
+    tasks:[
+      {prompt:'What type of error is this?',correct:'SyntaxError',opts:OPTS,
+        explain:'<strong>SyntaxError</strong> &mdash; the <code>if</code> line is missing a colon. Every <code>if</code>, <code>elif</code>, <code>else</code>, <code>for</code> and <code>while</code> must end with <code>:</code>.'},
+      {prompt:'Which message would Python give?',correct:"SyntaxError: expected ':'",opts:MSG_COLON,isMsg:true,
+        explain:'Python reports <code>SyntaxError: expected \':\'</code> when a colon is missing at the end of an <code>if</code> / <code>for</code> / <code>while</code> line.'},
+    ]},
+
+  { id:'a3', title:'Print Message', stars:'&#x2605;',
+    lines:[{t:'print("Welcome to Python!)',broken:true}],
+    tasks:[
+      {prompt:'What type of error is this?',correct:'SyntaxError',opts:OPTS,
+        explain:'<strong>SyntaxError</strong> &mdash; the closing <code>"</code> is missing before the <code>)</code>.'},
+      {prompt:'Which message would Python give?',correct:'SyntaxError: unterminated string literal',opts:MSG_QUOTE,isMsg:true,
+        explain:'Python reports <code>SyntaxError: unterminated string literal</code> when a string is opened with <code>"</code> but never closed.'},
+    ]},
+
+  { id:'a4', title:'Indentation', stars:'&#x2605;&#x2605;',
+    lines:[{t:'lives = 3'},{t:'if lives > 0:'},{t:'print("Still in the game!")',broken:true}],
+    tasks:[{prompt:'What type of error is this?',correct:'IndentationError',opts:OPTS,
+      explain:'<strong>IndentationError</strong> &mdash; line 3 must be indented with a Tab because it follows <code>if:</code>. Python uses indentation to show which code belongs inside a block.'}]},
+
+  { id:'a5', title:'Missing Bracket', stars:'&#x2605;&#x2605;',
+    lines:[{t:'city = "Leeds"'},{t:'print("City: " + city',broken:true}],
+    tasks:[
+      {prompt:'What type of error is this?',correct:'SyntaxError',opts:OPTS,
+        explain:'<strong>SyntaxError</strong> &mdash; the closing <code>)</code> is missing.'},
+      {prompt:'Which message would Python give?',correct:"SyntaxError: '(' was never closed",opts:MSG_BRACKET,isMsg:true,
+        explain:'Python reports <code>SyntaxError: \'(\' was never closed</code> when an opening bracket has no matching closing bracket.'},
+    ]},
+
+  { id:'a6', title:'Wrong Variable', stars:'&#x2605;&#x2605;',
+    lines:[{t:'colour = "red"'},{t:'print(color)',broken:true}],
+    tasks:[{prompt:'What type of error is this?',correct:'NameError',opts:OPTS,
+      explain:'<strong>NameError</strong> &mdash; created as <code>colour</code> but used as <code>color</code>. Python treats these as completely different names.'}]},
+
+  { id:'a7', title:'Two Errors', stars:'&#x2605;&#x2605;&#x2605;',
+    lines:[{t:'team = "Panthers"'},{t:'if len(team) > 5:'},{t:'print("Long name!")',broken:true},{t:'else',broken:true},{t:'    print("Short name!")'}],
+    tasks:[
+      {prompt:'What error type is on line 3?',correct:'IndentationError',opts:OPTS,
+        explain:'Line 3 follows an <code>if</code> so it must be indented &mdash; <strong>IndentationError</strong>.'},
+      {prompt:'What error type is on line 4?',correct:'SyntaxError',opts:OPTS,
+        explain:'<code>else</code> must be written as <code>else:</code> with a colon &mdash; <strong>SyntaxError</strong>.'},
+      {prompt:'Which message would Python give for the missing colon on line 4?',correct:"SyntaxError: expected ':'",opts:MSG_COLON,isMsg:true,
+        explain:'Python reports <code>SyntaxError: expected \':\'</code> &mdash; it expects a colon after <code>else</code>, just as it does after <code>if</code>.'},
+    ]},
+];
+
+const PART_B = [
+  { id:'b1', title:'Create a SyntaxError (missing colon)', errorType:'SyntaxError',
+    intro:'Rewrite this line so it causes a <strong>SyntaxError</strong> by removing the colon.',
+    working:'if score > 50:', rows:1,
+    placeholder:'Type your broken version here\u2026',
+    validate: v => /^\s*if\s+score\s*>\s*50\s*$/.test(v.trim()),
+    success:'&#x2713; Correct &mdash; <code>if score > 50</code> without a colon causes <strong>SyntaxError: expected \':\'</strong>.',
+    hint:'Just remove the <code>:</code> at the end.' },
+  { id:'b2', title:'Create a SyntaxError (missing closing quote)', errorType:'SyntaxError',
+    intro:'Rewrite this line so it causes a <strong>SyntaxError</strong> by removing the closing quote mark.',
+    working:'print("Hello, world!")', rows:1,
+    placeholder:'Type your broken version here\u2026',
+    validate: v => { const t=v.trim(); return /^print\(["']/.test(t) && !/^print\(".*"\)$/.test(t) && !/^print\('.*'\)$/.test(t); },
+    success:'&#x2713; Correct &mdash; without the closing <code>"</code>, Python raises <strong>SyntaxError: unterminated string literal</strong>.',
+    hint:'Remove the <code>"</code> just before the <code>)</code>.' },
+  { id:'b3', title:'Create a SyntaxError (missing closing bracket)', errorType:'SyntaxError',
+    intro:'Rewrite this line so it causes a <strong>SyntaxError</strong> by removing the closing bracket.',
+    working:'print("Game over!")', rows:1,
+    placeholder:'Type your broken version here\u2026',
+    validate: v => { const t=v.trim(); return /^print\(/.test(t) && !t.endsWith(')'); },
+    success:'&#x2713; Correct &mdash; without the closing <code>)</code>, Python raises <strong>SyntaxError: \'(\' was never closed</strong>.',
+    hint:'Remove the final <code>)</code>.' },
+  { id:'b4', title:'Create a NameError', errorType:'NameError',
+    intro:'Type both lines, but change <strong>line 2 only</strong> so it causes a <strong>NameError</strong> by using a misspelled variable name.',
+    working:'username = "Alice"\nprint(username)', rows:2,
+    placeholder:'Type both lines here &mdash; only change the variable name in line 2\u2026',
+    validate: v => { const ls=v.trim().split('\n'); return ls.length>=2 && /^username\s*=\s*["']/.test(ls[0].trim()) && /^print\(/.test(ls[1].trim()) && !ls[1].includes('username'); },
+    success:'&#x2713; Correct &mdash; using a name that doesn\'t exist causes <strong>NameError: name \'&hellip;\' is not defined</strong>.',
+    hint:'Change <code>print(username)</code> to use a misspelling like <code>print(usernmae)</code>.' },
+  { id:'b5', title:'Create an IndentationError', errorType:'IndentationError',
+    intro:'Type both lines, but change <strong>line 2 only</strong> so it causes an <strong>IndentationError</strong> by removing the indentation.',
+    working:'if True:\n    print("Yes!")', rows:2,
+    placeholder:'Type both lines here &mdash; remove the indent from line 2\u2026',
+    validate: v => { const ls=v.trim().split('\n'); return ls.length>=2 && /^if\s+True\s*:/.test(ls[0].trim()) && /^print/.test(ls[1].trim()) && !/^\s+/.test(ls[1]); },
+    success:'&#x2713; Correct &mdash; a line after a colon with no indentation causes <strong>IndentationError: expected an indented block</strong>.',
+    hint:'Remove the four spaces (or Tab) from the beginning of <code>&nbsp;&nbsp;&nbsp;&nbsp;print("Yes!")</code>.' },
+];
+
+const stA={}, stB={};
+let scoreA=0, totalA=0, scoreB=0, totalB=PART_B.length, currentPanel='a';
+
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function buildCode(lines){
+  return lines.map((l,i)=>{
+    const cls=l.broken?'code-line broken':'code-line';
+    const m=l.t.match(/^(\s*)/), indent=m?m[1].replace(/ /g,'&nbsp;'):'';
+    return '<div class="'+cls+'"><div class="ln">'+(i+1)+'</div><div class="lc">'+indent+esc(l.t.trimStart())+'</div></div>';
+  }).join('');
+}
+
+function renderA(q){
+  totalA+=q.tasks.length;
+  stA[q.id]={answers:{},checked:false,tasks:q.tasks};
+  const tasksHtml=q.tasks.map((t,i)=>{
+    const pillCls=t.isMsg?'pill-btn pill-msg':'pill-btn';
+    const divider=i>0?'margin-top:10px;padding-top:10px;border-top:1px solid #e0ecf5':'';
+    const pills=t.opts.map(o=>'<button class="'+pillCls+'" data-q="'+q.id+'" data-t="'+i+'" data-val="'+o+'" onclick="pickA(this)">'+o+'</button>').join('');
+    return '<div id="'+q.id+'-t'+i+'" style="'+divider+'"><div class="q-prompt">'+t.prompt+'</div><div class="pills">'+pills+'</div></div>';
+  }).join('');
+  const card=document.createElement('div');
+  card.className='qcard'; card.id='card-'+q.id;
+  card.innerHTML='<div class="qcard-header"><div class="qnum">'+q.id.replace('a','')+'</div><div class="qtitle">'+q.title+'</div><div class="qstars">'+q.stars+'</div></div><div class="qcard-body"><div class="code-wrap">'+buildCode(q.lines)+'</div>'+tasksHtml+'<button class="check-btn" id="check-'+q.id+'" onclick="checkA(\''+q.id+'\')" disabled>&#x2713; Check</button><div class="feedback" id="fb-'+q.id+'"></div></div>';
+  document.getElementById('grid-a').appendChild(card);
+}
+
+function pickA(btn){
+  const qid=btn.dataset.q, tidx=parseInt(btn.dataset.t);
+  if(stA[qid].checked) return;
+  btn.closest('.pills').querySelectorAll('.pill-btn').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');
+  stA[qid].answers[tidx]=btn.dataset.val;
+  document.getElementById('check-'+qid).disabled=Object.keys(stA[qid].answers).length<stA[qid].tasks.length;
+}
+
+function checkA(qid){
+  const s=stA[qid]; if(s.checked) return; s.checked=true;
+  let allOk=true; const feedbacks=[];
+  s.tasks.forEach((t,i)=>{
+    const val=s.answers[i], ok=val===t.correct;
+    if(!ok) allOk=false;
+    document.querySelectorAll('#'+qid+'-t'+i+' .pill-btn').forEach(b=>{
+      b.disabled=true; b.classList.remove('selected');
+      if(b.dataset.val===val) b.classList.add(ok?'correct':'incorrect');
+      if(!ok&&b.dataset.val===t.correct) b.classList.add('correct');
+    });
+    feedbacks.push(t.explain);
+  });
+  document.getElementById('card-'+qid).classList.add(allOk?'answered-correct':'answered-wrong');
+  const cb=document.getElementById('check-'+qid);
+  cb.disabled=true; cb.textContent=allOk?'✓ Correct':'✗ Review';
+  const fb=document.getElementById('fb-'+qid);
+  fb.className='feedback show '+(allOk?'ok':'bad');
+  fb.innerHTML=feedbacks.map(f=>'<div style="margin-bottom:3px">'+f+'</div>').join('');
+  scoreA+=s.tasks.filter((t,i)=>s.answers[i]===t.correct).length;
+  updateDot(parseInt(qid.replace('a',''))-1, allOk?'correct':'wrong');
+  updateScore();
+  if(Object.values(stA).every(s=>s.checked)){
+    document.getElementById('done-a').classList.add('show');
+    document.getElementById('tab-a').classList.add('done');
+  }
+}
+
+function renderB(t){
+  stB[t.id]={correct:false};
+  const num=t.id.replace('b','');
+  const workingHtml=t.working.split('\n').map((l,i)=>'<div class="code-line"><div class="ln">'+(i+1)+'</div><div class="lc">'+esc(l)+'</div></div>').join('');
+  const wrap=document.createElement('div');
+  wrap.className='intro-task'; wrap.id='btask-'+t.id;
+  wrap.innerHTML='<div class="intro-task-header"><div class="intro-num">'+num+'</div><div class="qtitle">'+t.title+'</div><div class="err-type-tag">'+t.errorType+'</div></div><div class="intro-body"><p>'+t.intro+'</p><div class="sub-label green">&#x2713; Working code</div><div class="code-wrap">'+workingHtml+'</div><div class="sub-label amber">&#x2717; Your broken version</div><textarea class="intro-textarea" id="ta-'+t.id+'" rows="'+t.rows+'" placeholder="'+t.placeholder+'" spellcheck="false" onkeydown="taKey(event)" oninput="taInput(\''+t.id+'\')"></textarea><div class="intro-controls"><button class="check-btn" id="bchk-'+t.id+'" onclick="checkB(\''+t.id+'\')" disabled>&#x2713; Check</button><button class="hint-btn" onclick="toggleHint(\''+t.id+'\')">&#x1F4A1; Hint</button></div><div class="hint-box" id="hbox-'+t.id+'">&#x1F4A1; '+t.hint+'</div><div class="feedback" id="bfb-'+t.id+'"></div></div>';
+  document.getElementById('b-tasks').appendChild(wrap);
+}
+
+function taKey(e){ if(e.key!=='Tab') return; e.preventDefault(); const ta=e.target,s=ta.selectionStart; ta.value=ta.value.slice(0,s)+'    '+ta.value.slice(ta.selectionEnd); ta.selectionStart=ta.selectionEnd=s+4; }
+function taInput(id){ document.getElementById('bchk-'+id).disabled=document.getElementById('ta-'+id).value.trim()===''; }
+function toggleHint(id){ document.getElementById('hbox-'+id).classList.toggle('show'); }
+
+function checkB(id){
+  const t=PART_B.find(x=>x.id===id);
+  const ta=document.getElementById('ta-'+id);
+  const ok=t.validate(ta.value);
+  const fb=document.getElementById('bfb-'+id);
+  if(!ok){
+    fb.className='feedback show bad';
+    fb.innerHTML='&#x2717; Not quite &mdash; check the hint and try again.';
+    return;
+  }
+  stB[id].correct=true; scoreB++;
+  ta.classList.add('correct'); ta.disabled=true;
+  document.getElementById('bchk-'+id).disabled=true;
+  document.getElementById('bchk-'+id).textContent='✓ Correct';
+  document.getElementById('hbox-'+id).classList.remove('show');
+  document.getElementById('btask-'+id).classList.add('correct');
+  fb.className='feedback show ok'; fb.innerHTML=t.success;
+  updateDot(7+parseInt(id.replace('b',''))-1,'correct');
+  updateScore();
+  if(Object.values(stB).every(s=>s.correct)){
+    document.getElementById('done-b').classList.add('show');
+    document.getElementById('tab-b').classList.add('done');
+    fireFireworks();
+  }
+}
+
+function updateDot(idx,state){ const d=document.getElementById('dot-'+idx); if(d){d.className='progress-dot '+state;} }
+
+function updateScore(){
+  const lbl=document.getElementById('score-label'),fill=document.getElementById('score-fill'),pct=document.getElementById('score-pct');
+  if(currentPanel==='a'){
+    lbl.textContent='Part A: '+scoreA+' / '+totalA;
+    const p=totalA>0?Math.round(scoreA/totalA*100):0;
+    fill.style.width=p+'%'; pct.textContent=p+'%';
+  } else {
+    const done=Object.values(stB).filter(s=>s.correct).length;
+    lbl.textContent='Part B: '+done+' / '+totalB;
+    const p=Math.round(done/totalB*100);
+    fill.style.width=p+'%'; pct.textContent=p+'%';
+  }
+}
+
+function showPanel(id,btn){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+  if(Object.values(stA).every(s=>s.checked)) document.getElementById('tab-a').classList.add('done');
+  if(Object.values(stB).every(s=>s.correct)) document.getElementById('tab-b').classList.add('done');
+  document.getElementById('panel-'+id).classList.add('active');
+  btn.classList.add('active'); currentPanel=id; updateScore();
+}
+
+const fw=document.getElementById('fw'), ctx=fw.getContext('2d');
+let pts=[],animId=null;
+const COLS=['#00B4D8','#57CC99','#FFD166','#F4A261','#90E0EF','#fff'];
+function resize(){fw.width=innerWidth;fw.height=innerHeight;} addEventListener('resize',resize); resize();
+function fireFireworks(){for(let b=0;b<6;b++) setTimeout(()=>burst(),b*380);}
+function burst(){
+  const x=Math.random()*fw.width,y=Math.random()*fw.height*0.6,col=COLS[Math.floor(Math.random()*COLS.length)];
+  for(let i=0;i<70;i++){const a=(Math.PI*2*i)/70,sp=2.5+Math.random()*6; pts.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:1,decay:0.013+Math.random()*0.012,r:2+Math.random()*3,col});}
+  if(!animId) draw();
+}
+function draw(){
+  ctx.clearRect(0,0,fw.width,fw.height); pts=pts.filter(p=>p.life>0);
+  pts.forEach(p=>{ctx.globalAlpha=p.life;ctx.fillStyle=p.col;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill();p.x+=p.vx;p.y+=p.vy+0.1;p.life-=p.decay;});
+  ctx.globalAlpha=1; animId=pts.length?requestAnimationFrame(draw):null;
+}
+
+const dotsRow=document.getElementById('dots-row');
+for(let i=0;i<7+PART_B.length;i++){
+  if(i===7){const sep=document.createElement('span');sep.style.cssText='width:1px;height:10px;background:rgba(255,255,255,0.2);margin:0 4px;display:inline-block';dotsRow.appendChild(sep);}
+  const d=document.createElement('div'); d.className='progress-dot'; d.id='dot-'+i; dotsRow.appendChild(d);
+}
+PART_A.forEach(q=>renderA(q));
+PART_B.forEach(t=>renderB(t));
+updateScore();
+</script>
+</body>
+</html>
