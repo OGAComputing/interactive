@@ -4,31 +4,36 @@
  * Usage in any activity HTML file (all are 2 levels deep: Y*/Topic/file.html):
  *   <script src="../../classroom.js"></script>
  *
- * When the page URL contains ?courseId=X&courseWorkId=Y (set by index.html when
- * a teacher assigns the activity), this script:
+ * When the page URL contains ?courseId=X (set by index.html when a teacher
+ * assigns the activity), this script:
  *   1. Injects a sticky login banner at the top of the page
  *   2. Loads the Google Sign-In library and initialises the OAuth token client
- *   3. Exposes window.Classroom.verifyAuth() — call at the start of Check Answer
+ *   3. After sign-in, automatically looks up the courseWorkId by scanning the
+ *      course's published assignments for one whose link URL matches this page
+ *   4. Exposes window.Classroom.verifyAuth() — call at the start of Check Answer
  *      handlers to block unauthenticated students when in a Classroom context
- *   4. Exposes window.Classroom.submitGrade(percent, activityName) — call when
- *      an activity is complete to post the draft grade and a private comment
+ *   5. Exposes window.Classroom.submitGrade(percent, activityName) — call when
+ *      an activity is complete to post the draft grade
  *
- * If no Classroom URL params are present, nothing is injected and all API calls
+ * If no courseId URL param is present, nothing is injected and all API calls
  * are no-ops, so activities work identically for students not using Classroom.
  */
 (function () {
   'use strict';
 
   const CLIENT_ID = '379663437881-iukh6qnkq8jmqtqko3qog0n6ohuhemmq.apps.googleusercontent.com';
-  const SCOPE = 'https://www.googleapis.com/auth/classroom.coursework.students';
+  // classroom.coursework.me lets students list course assignments and patch
+  // their own draft grade — both needed for grade submission
+  const SCOPE = 'https://www.googleapis.com/auth/classroom.coursework.me';
 
   const urlParams = new URLSearchParams(window.location.search);
   const courseId = urlParams.get('courseId');
-  const courseWorkId = urlParams.get('courseWorkId');
-  const isClassroomContext = !!(courseId && courseWorkId);
+  // isClassroomContext only requires courseId — courseWorkId is resolved after sign-in
+  const isClassroomContext = !!courseId;
 
   let tokenClient = null;
   let accessToken = null;
+  let courseWorkId = null; // resolved after sign-in via lookupCourseWorkId()
 
   // ── Login banner ────────────────────────────────────────────────────────────
 
@@ -89,26 +94,24 @@
       <button id="classroom-signin-btn" onclick="window._classroomSignIn()">Sign in with Google</button>
     `;
 
-    // Insert as first child of body so it appears above all content
     if (document.body.firstChild) {
       document.body.insertBefore(banner, document.body.firstChild);
     } else {
       document.body.appendChild(banner);
     }
 
-    // Toast element (hidden until needed)
     const toast = document.createElement('div');
     toast.id = 'classroom-toast';
     document.body.appendChild(toast);
   }
 
   function setBannerConnected() {
-    const dot = document.getElementById('classroom-dot');
+    const dot  = document.getElementById('classroom-dot');
     const text = document.getElementById('classroom-text');
-    const btn = document.getElementById('classroom-signin-btn');
-    if (dot) dot.classList.add('online');
+    const btn  = document.getElementById('classroom-signin-btn');
+    if (dot)  dot.classList.add('online');
     if (text) text.textContent = '✅ Connected to Google Classroom — your results will be recorded automatically.';
-    if (btn) btn.classList.add('hidden');
+    if (btn)  btn.classList.add('hidden');
   }
 
   function showClassroomToast(msg) {
@@ -119,19 +122,58 @@
     setTimeout(() => toast.classList.remove('show'), 2800);
   }
 
+  // ── courseWorkId lookup ──────────────────────────────────────────────────────
+  // After sign-in we scan the course's published assignments for one whose
+  // material link URL matches the current page path. This avoids needing the
+  // courseWorkId embedded in the URL (which the Classroom API won't let us
+  // patch into the assignment after creation).
+
+  async function lookupCourseWorkId(token) {
+    const pageBase = window.location.origin + window.location.pathname;
+    try {
+      const res = await fetch(
+        `https://classroom.googleapis.com/v1/courses/${courseId}/courseWork` +
+        `?courseWorkStates=PUBLISHED&pageSize=50`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (!res.ok) return null;
+      const data = await res.json();
+      if (!data.courseWork) return null;
+      for (const cw of data.courseWork) {
+        if (!cw.materials) continue;
+        for (const m of cw.materials) {
+          if (m.link && m.link.url) {
+            // Strip any query params from the stored URL before comparing
+            const linkBase = m.link.url.split('?')[0];
+            if (linkBase === pageBase) return cw.id;
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Classroom: courseWork lookup failed', e);
+    }
+    return null;
+  }
+
   // ── OAuth ───────────────────────────────────────────────────────────────────
 
   function initTokenClient() {
     tokenClient = google.accounts.oauth2.initTokenClient({
       client_id: CLIENT_ID,
       scope: SCOPE,
-      callback: (tokenResponse) => {
+      callback: async (tokenResponse) => {
         if (tokenResponse.error !== undefined) {
           console.error('Classroom OAuth error:', tokenResponse);
           return;
         }
         accessToken = tokenResponse.access_token;
         setBannerConnected();
+
+        // Resolve courseWorkId now that we have a token
+        courseWorkId = await lookupCourseWorkId(accessToken);
+        if (!courseWorkId) {
+          console.warn('Classroom: no matching assignment found for this page in course', courseId);
+        }
       },
     });
   }
@@ -149,7 +191,7 @@
   // ── Public API ──────────────────────────────────────────────────────────────
 
   window.Classroom = {
-    /** True when the page URL contains courseId + courseWorkId params. */
+    /** True when the page URL contains a courseId param. */
     get isClassroomContext() { return isClassroomContext; },
 
     /** True once the student has authenticated with Google. */
@@ -159,7 +201,6 @@
      * Call at the start of every Check Answer handler.
      * If the activity was opened from Classroom but the student hasn't signed in,
      * alerts them and returns false so the handler can abort.
-     * Returns true in all other cases (not a Classroom context, or already signed in).
      */
     verifyAuth() {
       if (isClassroomContext && !accessToken) {
@@ -170,7 +211,7 @@
     },
 
     /**
-     * Submit a draft grade and private comment to Classroom.
+     * Submit a draft grade to Classroom.
      * Safe to call unconditionally — silently does nothing when not in a
      * Classroom context or when the student hasn't authenticated.
      *
@@ -178,11 +219,13 @@
      * @param {string} activityName  Used in the private comment text
      */
     async submitGrade(gradePercent, activityName) {
-      if (!accessToken || !isClassroomContext) return;
+      if (!accessToken || !courseWorkId) return;
       try {
-        const base = `https://classroom.googleapis.com/v1/courses/${courseId}/courseWork/${courseWorkId}/studentSubmissions`;
+        const base = `https://classroom.googleapis.com/v1/courses/${courseId}` +
+                     `/courseWork/${courseWorkId}/studentSubmissions`;
+
         const listRes = await fetch(`${base}?userId=me`, {
-          headers: { 'Authorization': `Bearer ${accessToken}` }
+          headers: { Authorization: `Bearer ${accessToken}` }
         });
         const data = await listRes.json();
         if (!data.studentSubmissions || data.studentSubmissions.length === 0) return;
@@ -190,13 +233,13 @@
 
         await fetch(`${base}/${submissionId}?updateMask=draftGrade`, {
           method: 'PATCH',
-          headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+          headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
           body: JSON.stringify({ draftGrade: gradePercent })
         });
 
         await fetch(`${base}/${submissionId}/comments`, {
           method: 'POST',
-          headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+          headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
           body: JSON.stringify({ text: `${activityName} completed with ${gradePercent}% accuracy.` })
         });
 
@@ -215,7 +258,6 @@
 
     injectBanner();
 
-    // Dynamically load the Google Sign-In library
     const script = document.createElement('script');
     script.src = 'https://accounts.google.com/gsi/client';
     script.onload = () => window.initClassroomTokenClient();

@@ -285,9 +285,12 @@
     if (!courseId) return alert("Select a class first!");
 
     const baseUrl = window.location.origin + window.location.pathname.replace('index.html', '') + activityPath;
+    // Embed courseId so classroom.js can look up the courseWorkId after the student signs in.
+    // The Classroom API doesn't allow patching materials after creation, so this single-step
+    // approach is the correct way to pass context to the activity page.
+    const activityUrl = `${baseUrl}?courseId=${courseId}`;
 
-    // Step 1: Create the assignment (URL without params — we don't have courseWorkId yet)
-    const createRes = await fetch(`https://classroom.googleapis.com/v1/courses/${courseId}/courseWork`, {
+    const res = await fetch(`https://classroom.googleapis.com/v1/courses/${courseId}/courseWork`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${accessToken}`,
@@ -296,42 +299,18 @@
       body: JSON.stringify({
         title: title,
         description: "Complete this interactive activity. Your grade will be automatically recorded.",
-        materials: [{ link: { url: baseUrl } }],
+        materials: [{ link: { url: activityUrl } }],
         workType: "ASSIGNMENT",
         state: "PUBLISHED",
         maxPoints: 100
       })
     });
 
-    if (!createRes.ok) {
-      console.error("Assignment creation failed:", await createRes.text());
-      return alert("Error creating assignment. Check console.");
-    }
-
-    const courseWork = await createRes.json();
-    const courseWorkId = courseWork.id;
-    const fullUrl = `${baseUrl}?courseId=${courseId}&courseWorkId=${courseWorkId}`;
-
-    // Step 2: Patch the assignment to update the materials URL with courseId + courseWorkId
-    // so students' browsers can submit grades back automatically
-    const patchRes = await fetch(
-      `https://classroom.googleapis.com/v1/courses/${courseId}/courseWork/${courseWorkId}?updateMask=materials`,
-      {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ materials: [{ link: { url: fullUrl } }] })
-      }
-    );
-
-    if (patchRes.ok) {
+    if (res.ok) {
       alert(`"${title}" assigned to your class with automatic grade sync enabled.`);
     } else {
-      // Assignment was created but URL patch failed — still usable, grades just won't auto-sync
-      console.warn("URL patch failed:", await patchRes.text());
-      alert(`"${title}" assigned, but grade sync setup failed. Students can still complete the activity.`);
+      console.error("Assignment creation failed:", await res.text());
+      alert("Error creating assignment. Check console.");
     }
   }
 
