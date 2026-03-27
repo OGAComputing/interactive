@@ -667,8 +667,9 @@ function checkAnswers(){
   if(correct===statements.length){const perfect=!t1EverWrong;msg.textContent=perfect?'🌟 Perfect first time!':'✅ All correct — well done!';msg.classList.add(perfect?'all-gold':'all-correct');task1Done=true;task1Perfect=perfect;setTabTick(1,perfect);checkAllComplete();}
   else if(checked===0){msg.textContent='Place some cards first, then check.';msg.style.color='var(--grey-l)';}
   else{msg.textContent=correct+' correct · '+(checked-correct)+' wrong — those cards returned, try again.';msg.classList.add('partial');}
+  saveState();
 }
-function resetAll(){cancelCompletion();initState();buildCards();document.getElementById('tick-1').classList.remove('show');}
+function resetAll(){cancelCompletion();initState();buildCards();document.getElementById('tick-1').classList.remove('show');saveState();}
 
 // ════════════════════════════════════════
 // TASK 2 — Part A: Primary vs Secondary
@@ -834,8 +835,9 @@ function checkPartA(){
   if(correct===devices.length){const perfect=!partAEverWrong;res.textContent=perfect?'🌟 Part A perfect!':'✅ Part A complete!';res.classList.add(perfect?'all-gold':'all-correct');partADone=true;checkTask2Complete();}
   else if(checked===0){res.textContent='Sort some devices first.';res.style.color='var(--grey-l)';}
   else{res.textContent=correct+' correct · '+(checked-correct)+' wrong — returned, keep going!';res.classList.add('partial');}
+  saveState();
 }
-function resetPartA(){partAEverWrong=false;partADone=false;initDevState();buildDevices();document.getElementById('partAResult').classList.remove('show','all-correct','all-gold','partial');checkTask2Complete();}
+function resetPartA(){partAEverWrong=false;partADone=false;initDevState();buildDevices();document.getElementById('partAResult').classList.remove('show','all-correct','all-gold','partial');checkTask2Complete();saveState();}
 
 // ════════════════════════════════════════
 // TASK 2 — Part B: RAM / ROM facts
@@ -888,8 +890,9 @@ function checkPartB(){
   if(correct===facts.length){const perfect=!partBEverWrong;res.textContent=perfect?'🌟 Part B perfect!':'✅ Part B complete!';res.classList.add(perfect?'gold':'ok');partBDone=true;checkTask2Complete();}
   else if(checked===0){res.textContent='Assign some facts first.';res.style.color='var(--grey-l)';}
   else{res.textContent=correct+' correct · '+(checked-correct)+' wrong — returned, keep going!';res.classList.add('part');}
+  saveState();
 }
-function resetPartB(){partBEverWrong=false;partBDone=false;initFactState();buildFacts();document.getElementById('t3Result').classList.remove('show','ok','gold','part');checkTask2Complete();}
+function resetPartB(){partBEverWrong=false;partBDone=false;initFactState();buildFacts();document.getElementById('t3Result').classList.remove('show','ok','gold','part');checkTask2Complete();saveState();}
 
 function checkTask2Complete(){
   if(partADone&&partBDone){
@@ -1113,6 +1116,7 @@ function checkTask3(){
     res.textContent = correct + ' correct · ' + wrong + ' wrong — correct answers shown above.';
     res.classList.add('part');
   }
+  saveState();
 }
 
 function resetTask3(){
@@ -1120,46 +1124,55 @@ function resetTask3(){
   initWhyState();
   buildTask3();
   document.getElementById('tick-3').classList.remove('show');
+  saveState();
 }
 
 
 // ════════════════════════════════════════
-// SAVE / LOAD PROGRESS (localStorage)
+// SAVE / LOAD STATE (localStorage)
 // ════════════════════════════════════════
-const SAVE_KEY = 'ramrom_progress_v1';
+const SAVE_KEY = 'ram_rom_exercise_y9_v1';
 
-function saveProgress(){
+function saveState(){
   try {
     const data = {
       // Task 1
-      cardState: Object.fromEntries(Object.entries(cardState).map(([k,v])=>[k,{placed:v.placed,locked:v.locked}])),
+      cardState:    JSON.parse(JSON.stringify(cardState)),
       t1EverWrong, task1Done, task1Perfect,
       // Task 2A
-      devState: Object.fromEntries(Object.entries(devState).map(([k,v])=>[k,{placed:v.placed,locked:v.locked}])),
-      partADone, partAEverWrong,
+      devState:     JSON.parse(JSON.stringify(devState)),
+      partAEverWrong, partADone,
       // Task 2B
-      factState: Object.fromEntries(Object.entries(factState).map(([k,v])=>[k,{placed:v.placed,locked:v.locked}])),
-      partBDone, partBEverWrong,
-      // Task 2 overall
+      factState:    JSON.parse(JSON.stringify(factState)),
+      partBEverWrong, partBDone,
+      // Task 2 combined
       task2Done, task2Perfect,
       // Task 3
-      stmState: Object.fromEntries(Object.entries(stmState).map(([k,v])=>[k,{selected:v.selected,locked:v.locked}])),
+      stmState:     JSON.parse(JSON.stringify(stmState)),
       t3EverWrong, task3Done, task3Perfect,
+      // Tab / tick UI classes
+      tabBtn1: document.getElementById('tab-btn-1').className,
+      tabBtn2: document.getElementById('tab-btn-2').className,
+      tabBtn3: document.getElementById('tab-btn-3').className,
+      tick1:   document.getElementById('tick-1').className,
+      tick2:   document.getElementById('tick-2').className,
+      tick3:   document.getElementById('tick-3').className,
     };
     localStorage.setItem(SAVE_KEY, JSON.stringify(data));
   } catch(e) { /* storage unavailable */ }
 }
 
-function loadProgress(){
+function loadState(){
   try {
     const raw = localStorage.getItem(SAVE_KEY);
-    if(!raw) return false;
+    if(!raw) return;
     const d = JSON.parse(raw);
 
+    // ── Restore state variables ──
     // Task 1
     if(d.cardState){
       Object.entries(d.cardState).forEach(([k,v])=>{
-        if(cardState[k]) { cardState[k].placed=v.placed; cardState[k].locked=v.locked; }
+        if(cardState[k]){ cardState[k].placed=v.placed; cardState[k].locked=v.locked; }
       });
     }
     t1EverWrong  = d.t1EverWrong  || false;
@@ -1169,172 +1182,180 @@ function loadProgress(){
     // Task 2A
     if(d.devState){
       Object.entries(d.devState).forEach(([k,v])=>{
-        if(devState[k]) { devState[k].placed=v.placed; devState[k].locked=v.locked; }
+        if(devState[k]){ devState[k].placed=v.placed; devState[k].locked=v.locked; }
       });
     }
-    partADone      = d.partADone      || false;
     partAEverWrong = d.partAEverWrong || false;
+    partADone      = d.partADone      || false;
 
     // Task 2B
     if(d.factState){
       Object.entries(d.factState).forEach(([k,v])=>{
-        if(factState[k]) { factState[k].placed=v.placed; factState[k].locked=v.locked; }
+        if(factState[k]){ factState[k].placed=v.placed; factState[k].locked=v.locked; }
       });
     }
-    partBDone      = d.partBDone      || false;
     partBEverWrong = d.partBEverWrong || false;
+    partBDone      = d.partBDone      || false;
 
+    // Task 2 combined
     task2Done    = d.task2Done    || false;
     task2Perfect = d.task2Perfect || false;
 
     // Task 3
     if(d.stmState){
       Object.entries(d.stmState).forEach(([k,v])=>{
-        if(stmState[k]) { stmState[k].selected=v.selected; stmState[k].locked=v.locked; }
+        if(stmState[k]){ stmState[k].selected=v.selected; stmState[k].locked=v.locked; }
       });
     }
     t3EverWrong  = d.t3EverWrong  || false;
     task3Done    = d.task3Done    || false;
     task3Perfect = d.task3Perfect || false;
 
-    return true;
-  } catch(e) { return false; }
-}
-
-// Rebuild UI to reflect restored state (placed/locked cards, ticks, completion)
-function restoreUI(){
-  // ── Task 1 ──
-  const pool    = document.getElementById('cardPool');
-  const colRam  = document.getElementById('col-ram');
-  const colRom  = document.getElementById('col-rom');
-
-  statements.forEach(s => {
-    const st  = cardState[s.id];
-    const el  = document.getElementById('card-'+s.id);
-    if(!el) return;
-    if(st.locked){
-      // Move to correct column, style as locked correct
-      el.classList.remove('placed-ram','placed-rom');
-      el.classList.add('correct-card');
-      el.draggable = false;
-      el.querySelector('.card-badge').textContent = '✓';
-      const col = document.getElementById('col-'+s.answer);
-      col.querySelector('.col-empty-hint')?.remove();
-      col.appendChild(el);
-    } else if(st.placed){
-      el.classList.add(st.placed==='ram'?'placed-ram':'placed-rom');
-      const col = document.getElementById('col-'+st.placed);
-      col.querySelector('.col-empty-hint')?.remove();
-      col.appendChild(el);
-    }
-    // else stays in pool — already there from buildCards
-  });
-
-  // Remove empty hints from columns that have cards
-  [colRam,colRom].forEach(col=>{
-    if(col.querySelector('.stmt-card')) col.querySelector('.col-empty-hint')?.remove();
-  });
-
-  updateProgress();
-  if(task1Done) setTabTick(1, task1Perfect);
-
-  // ── Task 2A ──
-  devices.forEach(d => {
-    const st = devState[d.id];
-    const el = document.getElementById('dev-'+d.id);
-    if(!el) return;
-    if(st.locked){
-      el.classList.remove('dev-primary','dev-secondary');
-      el.classList.add('dev-correct');
-      el.querySelector('.device-badge').textContent='✓';
-    } else if(st.placed){
-      el.classList.add(st.placed==='primary'?'dev-primary':'dev-secondary');
-    }
-  });
-  if(partADone){
-    const res=document.getElementById('partAResult');
-    res.classList.add('show', !partAEverWrong?'all-gold':'all-correct');
-    res.textContent = !partAEverWrong?'🌟 Part A perfect!':'✅ Part A complete!';
-  }
-
-  // ── Task 2B ──
-  facts.forEach(f => {
-    const st = factState[f.id];
-    const el = document.getElementById('fact-'+f.id);
-    if(!el) return;
-    if(st.locked){
-      el.classList.remove('fact-ram','fact-rom');
-      el.classList.add('fact-correct');
-      el.querySelector('.fact-badge').textContent='✓';
-      const drop = document.getElementById('drop-'+f.answer);
-      drop.querySelector('.col-empty-hint')?.remove();
-      drop.appendChild(el);
-    } else if(st.placed){
-      el.classList.add('fact-'+st.placed);
-      const drop = document.getElementById('drop-'+st.placed);
-      drop.querySelector('.col-empty-hint')?.remove();
-      drop.appendChild(el);
-    }
-  });
-  // Re-add empty hints to empty drops
-  ['ram','rom'].forEach(t=>{
-    const drop=document.getElementById('drop-'+t);
-    if(!drop.querySelector('.fact-card')){
-      const h=document.createElement('span');h.className='col-empty-hint';
-      h.style.cssText='margin:auto;display:block;padding:8px 0;';
-      h.textContent=t.toUpperCase()+' facts here';
-      drop.appendChild(h);
-    }
-  });
-  if(partBDone){
-    const res=document.getElementById('t3Result');
-    res.classList.add('show', !partBEverWrong?'gold':'ok');
-    res.textContent=!partBEverWrong?'🌟 Part B perfect!':'✅ Part B complete!';
-  }
-
-  if(task2Done) setTabTick(2, task2Perfect);
-
-  // ── Task 3 ──
-  stmItems.forEach(q => {
-    const st   = stmState[q.id];
-    const card = document.getElementById('stm-'+q.id);
-    if(!card) return;
-    const opts = card.querySelectorAll('.stm-opt');
-    if(st.locked){
-      const badge    = document.getElementById('badge-'+q.id);
-      const errSpan  = document.getElementById('err-'+q.id);
-      // Was it correct or wrong?
-      const wasCorrect = st.selected === q.correct;
-      if(wasCorrect){
-        card.classList.add('stm-correct');
-        badge.textContent='✓'; badge.style.display='inline';
-        errSpan.textContent=q.correct;
-        errSpan.style.color='var(--green-l)';
-        errSpan.style.borderBottomColor='var(--green)';
+    // ── Task 1: restore card DOM positions ──
+    statements.forEach(s => {
+      const st = cardState[s.id];
+      const el = document.getElementById('card-'+s.id);
+      if(!el || st.placed === null) return;
+      if(st.locked){
+        el.classList.remove('placed-ram','placed-rom');
+        el.classList.add('correct-card');
+        el.draggable = false;
+        el.querySelector('.card-badge').textContent = '✓';
+        const col = document.getElementById('col-'+s.answer);
+        col.querySelector('.col-empty-hint')?.remove();
+        col.appendChild(el);
       } else {
-        badge.textContent='✗'; badge.style.display='inline';
+        const col = document.getElementById('col-'+st.placed);
+        col.querySelector('.col-empty-hint')?.remove();
+        col.appendChild(el);
+        el.classList.add('placed-'+st.placed);
       }
-      opts.forEach(b=>{
-        b.classList.add('stm-opt-disabled');
-        if(b.dataset.value===q.correct)   b.classList.add('stm-opt-correct');
-        if(!wasCorrect && b.dataset.value===st.selected) b.classList.add('stm-opt-wrong');
-      });
-    } else if(st.selected){
-      opts.forEach(b=>{ if(b.dataset.value===st.selected) b.classList.add('stm-selected'); });
+    });
+    updateProgress();
+    if(task1Done){
+      const msg = document.getElementById('resultMsg');
+      msg.classList.add('show', task1Perfect ? 'all-gold' : 'all-correct');
+      msg.textContent = task1Perfect ? '🌟 Perfect first time!' : '✅ All correct — well done!';
+      setTabTick(1, task1Perfect);
     }
-  });
-  if(task3Done) setTabTick(3, task3Perfect);
 
-  // ── Overall completion ──
-  if(task1Done && task2Done && task3Done){
-    const perfect = task1Perfect && task2Perfect && task3Perfect;
-    triggerCompletion(perfect);
-    if(perfect) document.getElementById('tab-btn-4').classList.add('unlocked');
-  }
+    // ── Task 2A: restore device DOM state ──
+    devices.forEach(d => {
+      const st = devState[d.id];
+      const el = document.getElementById('dev-'+d.id);
+      if(!el || st.placed === null) return;
+      if(st.locked){
+        el.classList.remove('dev-primary','dev-secondary');
+        el.classList.add('dev-correct');
+        el.querySelector('.device-badge').textContent = '✓';
+      } else {
+        el.classList.add(st.placed === 'primary' ? 'dev-primary' : 'dev-secondary');
+      }
+    });
+    if(partADone){
+      const res = document.getElementById('partAResult');
+      res.classList.add('show', partAEverWrong ? 'all-correct' : 'all-gold');
+      res.textContent = partAEverWrong ? '✅ Part A complete!' : '🌟 Part A perfect!';
+    }
+
+    // ── Task 2B: restore fact DOM positions ──
+    facts.forEach(f => {
+      const st = factState[f.id];
+      const el = document.getElementById('fact-'+f.id);
+      if(!el || st.placed === null) return;
+      if(st.locked){
+        el.classList.remove('fact-ram','fact-rom');
+        el.classList.add('fact-correct');
+        el.querySelector('.fact-badge').textContent = '✓';
+        const drop = document.getElementById('drop-'+f.answer);
+        drop.querySelector('.col-empty-hint')?.remove();
+        drop.appendChild(el);
+      } else {
+        el.classList.add('fact-'+st.placed);
+        const drop = document.getElementById('drop-'+st.placed);
+        drop.querySelector('.col-empty-hint')?.remove();
+        drop.appendChild(el);
+      }
+    });
+    // Re-add empty hints for drops that have no fact cards
+    ['ram','rom'].forEach(t => {
+      const drop = document.getElementById('drop-'+t);
+      if(!drop.querySelector('.fact-card')){
+        const h = document.createElement('span');
+        h.className = 'col-empty-hint';
+        h.style.cssText = 'margin:auto;display:block;padding:8px 0;';
+        h.textContent = t.toUpperCase()+' facts here';
+        drop.appendChild(h);
+      }
+    });
+    if(partBDone){
+      const res = document.getElementById('t3Result');
+      res.classList.add('show', partBEverWrong ? 'ok' : 'gold');
+      res.textContent = partBEverWrong ? '✅ Part B complete!' : '🌟 Part B perfect!';
+    }
+
+    if(task2Done) setTabTick(2, task2Perfect);
+
+    // ── Task 3: restore option button states ──
+    stmItems.forEach(q => {
+      const st   = stmState[q.id];
+      const card = document.getElementById('stm-'+q.id);
+      if(!card) return;
+      const opts = card.querySelectorAll('.stm-opt');
+      if(st.locked){
+        const badge   = document.getElementById('badge-'+q.id);
+        const errSpan = document.getElementById('err-'+q.id);
+        const wasCorrect = st.selected === q.correct;
+        if(wasCorrect){
+          card.classList.add('stm-correct');
+          badge.textContent = '✓'; badge.style.display = 'inline';
+          errSpan.textContent = q.correct;
+          errSpan.style.color = 'var(--green-l)';
+          errSpan.style.borderBottomColor = 'var(--green)';
+        } else {
+          badge.textContent = '✗'; badge.style.display = 'inline';
+        }
+        opts.forEach(b => {
+          b.classList.add('stm-opt-disabled');
+          if(b.dataset.value === q.correct) b.classList.add('stm-opt-correct');
+          if(!wasCorrect && b.dataset.value === st.selected) b.classList.add('stm-opt-wrong');
+        });
+      } else if(st.selected){
+        opts.forEach(b => { if(b.dataset.value === st.selected) b.classList.add('stm-selected'); });
+      }
+    });
+    if(task3Done){
+      const res = document.getElementById('t4Result');
+      const allCorrect = stmItems.every(q => stmState[q.id].selected === q.correct);
+      res.classList.add('show', task3Perfect ? 'gold' : (allCorrect ? 'ok' : 'part'));
+      res.textContent = task3Perfect ? '🌟 Perfect — all mistakes found first time!'
+                      : allCorrect   ? '✅ All correct — well done!'
+                      : stmItems.filter(q=>stmState[q.id].selected===q.correct).length+' / '+stmItems.length+' correct — see the correct answers highlighted above.';
+      setTabTick(3, task3Perfect);
+    }
+
+    // ── Restore tab button and tick classes ──
+    if(d.tabBtn1) document.getElementById('tab-btn-1').className = d.tabBtn1;
+    if(d.tabBtn2) document.getElementById('tab-btn-2').className = d.tabBtn2;
+    if(d.tabBtn3) document.getElementById('tab-btn-3').className = d.tabBtn3;
+    if(d.tick1)   document.getElementById('tick-1').className    = d.tick1;
+    if(d.tick2)   document.getElementById('tick-2').className    = d.tick2;
+    if(d.tick3)   document.getElementById('tick-3').className    = d.tick3;
+
+    // ── Restore tick text content ──
+    [1,2,3].forEach(n => {
+      const tick = document.getElementById('tick-'+n);
+      if(tick.classList.contains('tick-gold'))  tick.textContent = '★';
+      else if(tick.classList.contains('tick-green')) tick.textContent = '✓';
+    });
+
+    // ── Restore completion banner if all tasks done ──
+    if(task1Done && task2Done && task3Done){
+      const perfect = task1Perfect && task2Perfect && task3Perfect;
+      triggerCompletion(perfect);
+    }
+  } catch(e) { /* storage unavailable or corrupt */ }
 }
-
-// Wrap all state-changing functions to auto-save after each action
-function wrapWithSave(...fns){ fns.forEach(name => { const orig=window[name]; window[name]=function(){ const r=orig.apply(this,arguments); saveProgress(); return r; }; }); }
 
 // Init — deferred until full DOM is parsed
 document.addEventListener('DOMContentLoaded', function(){
@@ -1343,28 +1364,8 @@ document.addEventListener('DOMContentLoaded', function(){
   initFactState();buildFacts();
   initWhyState(); buildTask3();
   initStretch();  buildStretch();
-
-  // Restore saved progress (or start fresh)
-  const hadSaved = loadProgress();
-  if(hadSaved) restoreUI();
+  loadState();
 });
-
-// Auto-save on every placement/check/reset
-// Patch key functions to call saveProgress after running
-(function(){
-  const toWrap = [
-    'placeCard','returnToPool','checkAnswers','resetAll',
-    'assignDevice','checkPartA','resetPartA',
-    'assignFact','returnFactToPool','checkPartB','resetPartB',
-    'checkTask3','resetTask3','selectOption'
-  ];
-  toWrap.forEach(name => {
-    const orig = window[name];
-    if(typeof orig === 'function'){
-      window[name] = function(){ const r=orig.apply(this,arguments); saveProgress(); return r; };
-    }
-  });
-})();
 
 // ════════════════════════════════════════
 // TASK 4 — Stretch: Scenario Analysis
@@ -1559,7 +1560,7 @@ function checkScenario(scId){
 
   updateStretchProgress();
   checkStretchComplete();
-  saveProgress();
+  saveState();
 }
 
 function updateStretchProgress(){

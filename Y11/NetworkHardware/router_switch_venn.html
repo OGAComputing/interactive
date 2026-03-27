@@ -42,6 +42,9 @@ color:  red
     overflow-x: hidden;
   }
 
+  body.bg-gold { background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); }
+  body.bg-green { background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); }
+
   /* Subtle grid background */
   body::before {
     content: '';
@@ -363,6 +366,10 @@ const CARDS = [
 
 /* ── State ──────────────────────────────────────────────── */
 let draggedCard = null;
+let everWrong = false;
+
+/* ── localStorage key ───────────────────────────────────── */
+const LS_KEY = 'router_switch_venn_y11_v1';
 
 /* ── Helpers ────────────────────────────────────────────── */
 function shuffle(arr) {
@@ -433,6 +440,9 @@ function setupBank() {
 
 /* ── Init ───────────────────────────────────────────────── */
 function init() {
+  // Reset everWrong
+  everWrong = false;
+
   // Clear feedback / fireworks
   document.getElementById('feedback').className = '';
   document.getElementById('feedback').innerHTML = '';
@@ -440,6 +450,20 @@ function init() {
   document.getElementById('success-msg').classList.remove('show');
   document.getElementById('venn-zones').classList.remove('all-correct');
   stopConfetti();
+
+  // Clear result banner
+  const banner = document.getElementById('result-banner');
+  if (banner) banner.style.display = 'none';
+
+  // Clear fireworks canvas
+  const fwCanvas = document.getElementById('fw-canvas');
+  if (fwCanvas) {
+    const fwCtx = fwCanvas.getContext('2d');
+    fwCtx.clearRect(0, 0, fwCanvas.width, fwCanvas.height);
+  }
+
+  // Remove body background classes
+  document.body.classList.remove('bg-gold', 'bg-green');
 
   // Clear zones
   ['zone-router','zone-both','zone-switch'].forEach(id => {
@@ -455,6 +479,8 @@ function init() {
   ['zone-router','zone-both','zone-switch'].forEach(id =>
     setupDropZone(document.getElementById(id))
   );
+
+  saveState();
 }
 
 /* ── Check answers ──────────────────────────────────────── */
@@ -496,8 +522,10 @@ function checkAnswers() {
     fb.className = 'show';
     fb.innerHTML = `<p class="fb-score">🎯 Score: ${correct}/${CARDS.length}</p><p class="fb-perfect">✨ Outstanding! Every card is in the right place!</p>`;
     document.getElementById('venn-zones').classList.add('all-correct');
-    showFireworks();
+    if (!everWrong) showGoldCelebration();
+    else showGreenResult();
   } else {
+    everWrong = true;
     fb.className = 'show';
     let html = `<p class="fb-score">Score: ${correct}/${CARDS.length} (${pct}%)</p>`;
     html += `<p style="color:var(--muted);margin-bottom:6px;">Corrections needed:</p>`;
@@ -506,6 +534,8 @@ function checkAnswers() {
     });
     fb.innerHTML = html;
   }
+
+  saveState();
 }
 
 /* ── Reveal answers ─────────────────────────────────────── */
@@ -524,6 +554,202 @@ function revealAnswers() {
   const fb = document.getElementById('feedback');
   fb.className = 'show';
   fb.innerHTML = `<p style="color:var(--gold)">💡 Answers revealed. Study the placements, then hit Reset to try again!</p>`;
+}
+
+/* ── Gold celebration ───────────────────────────────────── */
+function showGoldCelebration() {
+  document.body.classList.remove('bg-green');
+  document.body.classList.add('bg-gold');
+
+  let banner = document.getElementById('result-banner');
+  if (!banner) {
+    banner = document.createElement('div');
+    banner.id = 'result-banner';
+    banner.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);padding:16px 32px;border-radius:12px;font-size:1.3rem;font-weight:700;z-index:10000;box-shadow:0 4px 20px rgba(0,0,0,0.3);';
+    document.body.appendChild(banner);
+  }
+  banner.style.background = '#f59e0b';
+  banner.style.color = '#000';
+  banner.textContent = '🏆 Perfect first time! Outstanding!';
+  banner.style.display = 'block';
+
+  // Also run existing confetti celebration
+  showFireworks();
+
+  // Canvas fireworks
+  let canvas = document.getElementById('fw-canvas');
+  if (!canvas) {
+    canvas = document.createElement('canvas');
+    canvas.id = 'fw-canvas';
+    canvas.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999;';
+    document.body.appendChild(canvas);
+  }
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  const ctx = canvas.getContext('2d');
+  const particles = [];
+  const colours = ['#f59e0b','#ef4444','#3b82f6','#22c55e','#a855f7','#ec4899'];
+  for (let i = 0; i < 120; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 2 + Math.random() * 5;
+    particles.push({
+      x: Math.random() * canvas.width, y: Math.random() * canvas.height * 0.6,
+      vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed,
+      alpha: 1, colour: colours[Math.floor(Math.random() * colours.length)],
+      size: 3 + Math.random() * 3
+    });
+  }
+  let fwStart = null;
+  function fwFrame(ts) {
+    if (!fwStart) fwStart = ts;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    particles.forEach(p => {
+      p.x += p.vx; p.y += p.vy; p.vy += 0.08; p.alpha -= 0.012;
+      if (p.alpha <= 0) return;
+      ctx.globalAlpha = p.alpha;
+      ctx.fillStyle = p.colour;
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+    if (ts - fwStart < 5000) requestAnimationFrame(fwFrame);
+    else ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+  requestAnimationFrame(fwFrame);
+}
+
+/* ── Green result ───────────────────────────────────────── */
+function showGreenResult() {
+  document.body.classList.remove('bg-gold');
+  document.body.classList.add('bg-green');
+
+  let banner = document.getElementById('result-banner');
+  if (!banner) {
+    banner = document.createElement('div');
+    banner.id = 'result-banner';
+    banner.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);padding:16px 32px;border-radius:12px;font-size:1.3rem;font-weight:700;z-index:10000;box-shadow:0 4px 20px rgba(0,0,0,0.3);';
+    document.body.appendChild(banner);
+  }
+  banner.style.background = '#22c55e';
+  banner.style.color = '#fff';
+  banner.textContent = '✓ All correct! Well done!';
+  banner.style.display = 'block';
+}
+
+/* ── Save state ─────────────────────────────────────────── */
+function saveState() {
+  const cardZones = {};
+  const cardClasses = {};
+  CARDS.forEach(c => {
+    const el = document.getElementById(c.id);
+    if (!el) return;
+    const parent = el.parentElement;
+    // Determine which zone/pool the card is in
+    if (parent && parent.dataset.zone) {
+      cardZones[c.id] = parent.dataset.zone;
+    } else {
+      cardZones[c.id] = 'bank';
+    }
+    // Save correct/incorrect class state
+    cardClasses[c.id] = {
+      correct: el.classList.contains('correct'),
+      incorrect: el.classList.contains('incorrect'),
+    };
+  });
+
+  const isComplete = document.getElementById('venn-zones').classList.contains('all-correct');
+
+  const banner = document.getElementById('result-banner');
+  const bannerVisible = banner && banner.style.display !== 'none';
+  const bannerContent = banner ? banner.textContent : '';
+  const bannerBg = banner ? banner.style.background : '';
+  const bannerColor = banner ? banner.style.color : '';
+
+  const state = {
+    everWrong,
+    cardZones,
+    cardClasses,
+    isComplete,
+    bodyBgGold: document.body.classList.contains('bg-gold'),
+    bodyBgGreen: document.body.classList.contains('bg-green'),
+    bannerVisible: bannerVisible || false,
+    bannerContent,
+    bannerBg,
+    bannerColor,
+  };
+
+  try {
+    localStorage.setItem(LS_KEY, JSON.stringify(state));
+  } catch (e) {
+    // Storage unavailable — silently ignore
+  }
+}
+
+/* ── Load state ─────────────────────────────────────────── */
+function loadState() {
+  let state;
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) return false;
+    state = JSON.parse(raw);
+  } catch (e) {
+    return false;
+  }
+
+  if (!state || !state.cardZones) return false;
+
+  // Restore everWrong
+  everWrong = !!state.everWrong;
+
+  // Collect zone elements
+  const zoneEls = {
+    router: document.getElementById('zone-router'),
+    both:   document.getElementById('zone-both'),
+    switch: document.getElementById('zone-switch'),
+    bank:   document.getElementById('bank-cards'),
+  };
+
+  // Move each card to its saved zone
+  CARDS.forEach(c => {
+    const el = document.getElementById(c.id);
+    if (!el) return;
+    const dest = state.cardZones[c.id] || 'bank';
+    const target = zoneEls[dest] || zoneEls.bank;
+    target.appendChild(el);
+
+    // Restore correct/incorrect classes
+    const cls = state.cardClasses && state.cardClasses[c.id];
+    if (cls) {
+      el.classList.toggle('correct',   !!cls.correct);
+      el.classList.toggle('incorrect', !!cls.incorrect);
+    }
+  });
+
+  // Restore all-correct locked state on venn zones
+  if (state.isComplete) {
+    document.getElementById('venn-zones').classList.add('all-correct');
+  }
+
+  // Restore body background
+  document.body.classList.remove('bg-gold', 'bg-green');
+  if (state.bodyBgGold)  document.body.classList.add('bg-gold');
+  if (state.bodyBgGreen) document.body.classList.add('bg-green');
+
+  // Restore banner
+  if (state.bannerVisible && state.bannerContent) {
+    let banner = document.getElementById('result-banner');
+    if (!banner) {
+      banner = document.createElement('div');
+      banner.id = 'result-banner';
+      banner.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);padding:16px 32px;border-radius:12px;font-size:1.3rem;font-weight:700;z-index:10000;box-shadow:0 4px 20px rgba(0,0,0,0.3);';
+      document.body.appendChild(banner);
+    }
+    banner.style.background = state.bannerBg || '';
+    banner.style.color = state.bannerColor || '';
+    banner.textContent = state.bannerContent;
+    banner.style.display = 'block';
+  }
+
+  return true;
 }
 
 /* ── Button listeners ───────────────────────────────────── */
@@ -660,6 +886,15 @@ function touchEnd(e) {
 
 /* ── Go ─────────────────────────────────────────────────── */
 init();
+// Attempt to restore saved state; if none exists, init() already set fresh state
+const restored = loadState();
+// Re-wire drop zones after potential card moves from loadState
+if (restored) {
+  setupBank();
+  ['zone-router','zone-both','zone-switch'].forEach(id =>
+    setupDropZone(document.getElementById(id))
+  );
+}
 </script>
 </body>
 </html>

@@ -37,6 +37,8 @@ color:  orange
   }
   .tab-btn.active { background: #0ea5e9; border-color: #0ea5e9; color: white; }
   .tab-btn:hover:not(.active) { border-color: #38bdf8; color: #e2e8f0; }
+  .tab-btn.done-gold { background: #f59e0b !important; color: #000 !important; }
+  .tab-btn.done-green { background: #22c55e !important; color: #fff !important; }
   .tab-panel { display: none; }
   .tab-panel.active { display: block; }
 
@@ -154,9 +156,9 @@ color:  orange
 <p class="subtitle">OCR GCSE Computer Science &nbsp;·&nbsp; Year 11</p>
 
 <div class="tabs">
-  <button class="tab-btn active" onclick="switchTab('ex1')">Exercise 1 — Key Terms</button>
-  <button class="tab-btn" onclick="switchTab('ex2')">Exercise 2 — DPA Responsibilities</button>
-  <button class="tab-btn" onclick="switchTab('ex3')">Exercise 3 — Scenarios</button>
+  <button class="tab-btn active" data-tab="ex1" onclick="switchTab('ex1')">Exercise 1 — Key Terms</button>
+  <button class="tab-btn" data-tab="ex2" onclick="switchTab('ex2')">Exercise 2 — DPA Responsibilities</button>
+  <button class="tab-btn" data-tab="ex3" onclick="switchTab('ex3')">Exercise 3 — Scenarios</button>
 </div>
 
 <!-- ═══════════════════════════════════════════════════
@@ -322,6 +324,12 @@ color:  orange
 
 <!-- ═══════════ SCRIPT ═══════════ -->
 <script>
+// ── localStorage key ──
+const LS_KEY = 'legislation_fillinblanks_y11_v1';
+
+// ── Per-exercise everWrong tracking ──
+let ex1EverWrong = false, ex2EverWrong = false, ex3EverWrong = false;
+
 // ── Tab switching ──
 function switchTab(id) {
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
@@ -415,6 +423,20 @@ function liveCheck(zone) {
   if (cur === ans) zone.classList.add('correct');
 }
 
+// ── Mark tab done-gold or done-green ──
+function markTab(n, everWrong) {
+  const btn = document.querySelector(`.tab-btn[data-tab="${n}"]`);
+  if (!btn) return;
+  btn.classList.remove('done', 'done-gold', 'done-green');
+  btn.classList.add(everWrong ? 'done-green' : 'done-gold');
+}
+
+// ── Check if all exercises are done-gold (trigger celebration) ──
+function checkAllGold() {
+  const allDoneGold = document.querySelectorAll('.tab-btn.done-gold').length === 3;
+  if (allDoneGold) showCelebration();
+}
+
 // ── Check / Reveal / Reset for Ex1 & Ex2 ──
 function checkEx(exId) {
   const panel = document.getElementById(exId);
@@ -427,12 +449,27 @@ function checkEx(exId) {
     if (!cur) return;
     attempted++;
     if (cur === ans) { z.classList.add('correct'); correct++; }
-    else z.classList.add('incorrect');
+    else {
+      z.classList.add('incorrect');
+      if (exId === 'ex1') ex1EverWrong = true;
+      if (exId === 'ex2') ex2EverWrong = true;
+    }
   });
   const scoreEl = document.getElementById('score-' + exId);
-  scoreEl.textContent = attempted === 0
-    ? 'Drag some words onto the blanks first!'
-    : 'Score: ' + correct + ' / ' + zones.length + ' correct';
+  if (attempted === 0) {
+    scoreEl.textContent = 'Drag some words onto the blanks first!';
+  } else {
+    scoreEl.textContent = 'Score: ' + correct + ' / ' + zones.length + ' correct';
+    // Check if all blanks are correct
+    const allCorrect = correct === zones.length;
+    if (allCorrect) {
+      const exNum = exId.replace('ex', '');
+      const everWrong = exId === 'ex1' ? ex1EverWrong : ex2EverWrong;
+      markTab(exId, everWrong);
+      checkAllGold();
+    }
+  }
+  saveState();
 }
 
 function revealEx(exId) {
@@ -465,6 +502,12 @@ function resetEx(exId) {
   buildBank(bankId === '1' ? words1 : words2, bankId, 'tiles' + bankId);
   initDropZones('#' + exId + ' .drop-zone');
   document.getElementById('score-' + exId).textContent = '';
+  // Reset everWrong and tab state for this exercise
+  if (exId === 'ex1') ex1EverWrong = false;
+  if (exId === 'ex2') ex2EverWrong = false;
+  const btn = document.querySelector(`.tab-btn[data-tab="${exId}"]`);
+  if (btn) btn.classList.remove('done', 'done-gold', 'done-green');
+  saveState();
 }
 
 // ── Exercise 3 — Act matching ──
@@ -547,7 +590,9 @@ function checkAllCorrectEx3() {
     section.style.background = '#052e16';
     section.style.borderLeftColor = '#4ade80';
     document.getElementById('score-ex3').textContent = '🎉 All correct! Well done!';
-    launchFireworks();
+    markTab('ex3', ex3EverWrong);
+    checkAllGold();
+    saveState();
   } else {
     section.style.background = '';
     section.style.borderLeftColor = '';
@@ -567,7 +612,10 @@ function checkEx3() {
     if (!cur) return;
     attempted++;
     if (cur === ans) { z.classList.add('correct'); correct++; }
-    else z.classList.add('incorrect');
+    else {
+      z.classList.add('incorrect');
+      ex3EverWrong = true;
+    }
   });
   const scoreEl = document.getElementById('score-ex3');
   if (attempted === 0) {
@@ -576,6 +624,7 @@ function checkEx3() {
     scoreEl.textContent = 'Score: ' + correct + ' / ' + zones.length + ' correct';
     checkAllCorrectEx3();
   }
+  saveState();
 }
 
 function revealEx3() {
@@ -600,11 +649,15 @@ function resetEx3() {
     z.classList.remove('filled','correct','incorrect');
   });
   document.getElementById('score-ex3').textContent = '';
+  ex3EverWrong = false;
+  const btn = document.querySelector('.tab-btn[data-tab="ex3"]');
+  if (btn) btn.classList.remove('done', 'done-gold', 'done-green');
   stopFireworks();
+  saveState();
 }
 
 // ══════════════════════════════
-// FIREWORKS
+// FIREWORKS (original — used internally by showCelebration)
 // ══════════════════════════════
 let fwCanvas, fwCtx, fwParticles, fwAnimId, fwActive = false;
 
@@ -683,13 +736,178 @@ function stopFireworks() {
   fwCanvas = null;
 }
 
+// ══════════════════════════════
+// CELEBRATION — gold banner + fireworks (all exercises mastered)
+// ══════════════════════════════
+function showCelebration() {
+  // Gold banner
+  let banner = document.getElementById('gold-banner');
+  if (!banner) {
+    banner = document.createElement('div');
+    banner.id = 'gold-banner';
+    banner.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#f59e0b;color:#000;padding:16px 32px;border-radius:12px;font-size:1.3rem;font-weight:700;z-index:10000;box-shadow:0 4px 20px rgba(0,0,0,0.3);';
+    banner.textContent = '🏆 Excellent! All exercises mastered!';
+    document.body.appendChild(banner);
+  }
+  banner.style.display = 'block';
+
+  // Use the existing rich fireworks implementation
+  launchFireworks();
+}
+
+// ══════════════════════════════
+// SAVE / LOAD STATE
+// ══════════════════════════════
+function saveState() {
+  const state = {
+    ex1EverWrong,
+    ex2EverWrong,
+    ex3EverWrong,
+    // Tab classes
+    tabs: {},
+    // Ex1 blanks: array of { answer, current } in document order
+    ex1Blanks: [],
+    // Ex2 blanks
+    ex2Blanks: [],
+    // Ex3 act-drops
+    ex3Drops: []
+  };
+
+  // Tab button classes
+  document.querySelectorAll('.tab-btn[data-tab]').forEach(btn => {
+    const tab = btn.dataset.tab;
+    state.tabs[tab] = {
+      doneGold: btn.classList.contains('done-gold'),
+      doneGreen: btn.classList.contains('done-green')
+    };
+  });
+
+  // Ex1 blanks
+  document.querySelectorAll('#ex1 .drop-zone').forEach(z => {
+    state.ex1Blanks.push({
+      answer: z.dataset.answer,
+      current: z.dataset.current || ''
+    });
+  });
+
+  // Ex2 blanks
+  document.querySelectorAll('#ex2 .drop-zone').forEach(z => {
+    state.ex2Blanks.push({
+      answer: z.dataset.answer,
+      current: z.dataset.current || ''
+    });
+  });
+
+  // Ex3 drops
+  document.querySelectorAll('.act-drop').forEach(z => {
+    state.ex3Drops.push({
+      answer: z.dataset.answer,
+      current: z.dataset.current || ''
+    });
+  });
+
+  try {
+    localStorage.setItem(LS_KEY, JSON.stringify(state));
+  } catch (e) {
+    // localStorage unavailable — silently skip
+  }
+}
+
+function loadState() {
+  let state;
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) return;
+    state = JSON.parse(raw);
+  } catch (e) {
+    return;
+  }
+
+  // Restore everWrong flags
+  if (typeof state.ex1EverWrong === 'boolean') ex1EverWrong = state.ex1EverWrong;
+  if (typeof state.ex2EverWrong === 'boolean') ex2EverWrong = state.ex2EverWrong;
+  if (typeof state.ex3EverWrong === 'boolean') ex3EverWrong = state.ex3EverWrong;
+
+  // Restore Ex1 blanks
+  if (Array.isArray(state.ex1Blanks)) {
+    const zones = [...document.querySelectorAll('#ex1 .drop-zone')];
+    state.ex1Blanks.forEach((saved, i) => {
+      const z = zones[i];
+      if (!z || !saved.current) return;
+      z.textContent = saved.current;
+      z.dataset.current = saved.current;
+      z.classList.add('filled');
+      // Mark corresponding tile as used
+      document.querySelectorAll('#tiles1 .tile').forEach(t => {
+        if (t.dataset.word === saved.current) t.classList.add('used');
+      });
+      // Restore correct/incorrect visual
+      const cur = saved.current.trim().toLowerCase();
+      const ans = (z.dataset.answer || '').trim().toLowerCase();
+      if (cur === ans) z.classList.add('correct');
+    });
+  }
+
+  // Restore Ex2 blanks
+  if (Array.isArray(state.ex2Blanks)) {
+    const zones = [...document.querySelectorAll('#ex2 .drop-zone')];
+    state.ex2Blanks.forEach((saved, i) => {
+      const z = zones[i];
+      if (!z || !saved.current) return;
+      z.textContent = saved.current;
+      z.dataset.current = saved.current;
+      z.classList.add('filled');
+      document.querySelectorAll('#tiles2 .tile').forEach(t => {
+        if (t.dataset.word === saved.current) t.classList.add('used');
+      });
+      const cur = saved.current.trim().toLowerCase();
+      const ans = (z.dataset.answer || '').trim().toLowerCase();
+      if (cur === ans) z.classList.add('correct');
+    });
+  }
+
+  // Restore Ex3 drops
+  if (Array.isArray(state.ex3Drops)) {
+    const zones = [...document.querySelectorAll('.act-drop')];
+    state.ex3Drops.forEach((saved, i) => {
+      const z = zones[i];
+      if (!z || !saved.current) return;
+      z.textContent = saved.current;
+      z.dataset.current = saved.current;
+      z.classList.add('filled');
+      const cur = saved.current.trim().toLowerCase();
+      const ans = (z.dataset.answer || '').trim().toLowerCase();
+      if (cur === ans) z.classList.add('correct');
+    });
+  }
+
+  // Restore tab button classes
+  if (state.tabs) {
+    document.querySelectorAll('.tab-btn[data-tab]').forEach(btn => {
+      const tab = btn.dataset.tab;
+      const tabState = state.tabs[tab];
+      if (!tabState) return;
+      btn.classList.remove('done', 'done-gold', 'done-green');
+      if (tabState.doneGold) btn.classList.add('done-gold');
+      else if (tabState.doneGreen) btn.classList.add('done-green');
+    });
+  }
+
+  // If all tabs are done-gold, show celebration
+  const allDoneGold = document.querySelectorAll('.tab-btn.done-gold').length === 3;
+  if (allDoneGold) showCelebration();
+}
+
 // ── Initialise ──
-buildBank(words1, '1', 'tiles1');
-buildBank(words2, '2', 'tiles2');
-initDropZones('#ex1 .drop-zone');
-initDropZones('#ex2 .drop-zone');
-buildActTiles();
-initActDrops();
+document.addEventListener('DOMContentLoaded', function() {
+  buildBank(words1, '1', 'tiles1');
+  buildBank(words2, '2', 'tiles2');
+  initDropZones('#ex1 .drop-zone');
+  initDropZones('#ex2 .drop-zone');
+  buildActTiles();
+  initActDrops();
+  loadState();
+});
 </script>
 
 </body>

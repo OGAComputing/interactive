@@ -725,6 +725,7 @@ function checkMCQPanel(panelIdx, prefix) {
     fb.textContent=`✓ ${correct}/${total} correct — check the highlighted answers.`;
     completePanelGreen(panelIdx);
   }
+  saveState();
 }
 
 function resetMCQPanel(panelIdx, prefix) {
@@ -734,6 +735,7 @@ function resetMCQPanel(panelIdx, prefix) {
   const banner = document.getElementById(`banner${panelIdx}`);
   banner.style.display='none'; banner.className='banner';
   resetTabBtn(panelIdx);
+  saveState();
 }
 
 // ═══════════════════════════════════════════════
@@ -880,6 +882,7 @@ function checkPanel1() {
     fb.textContent=`✓ Done — Gaps: ${gapScore}/6, MCQ: ${mcqCorrect}/4. Check any highlighted answers.`;
     completePanelGreen(1);
   }
+  saveState();
 }
 
 function resetPanel1() {
@@ -892,6 +895,7 @@ function resetPanel1() {
   document.getElementById('feedback-p1').className='feedback';
   document.getElementById('banner1').style.display='none'; document.getElementById('banner1').className='banner';
   resetTabBtn(1);
+  saveState();
 }
 
 // ═══════════════════════════════════════════════
@@ -928,6 +932,9 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
   });
+
+  randomizeAll();
+  loadState();
 });
 
 function checkPanel2() {
@@ -960,6 +967,7 @@ function checkPanel2() {
     fb.textContent=`✓ Devices: 8/8, Questions: ${mcqCorrect}/3. Check highlighted answers.`;
     completePanelGreen(2);
   }
+  saveState();
 }
 
 function resetPanel2() {
@@ -974,6 +982,7 @@ function resetPanel2() {
   document.getElementById('feedback-p2').className='feedback';
   document.getElementById('banner2').style.display='none'; document.getElementById('banner2').className='banner';
   resetTabBtn(2);
+  saveState();
 }
 
 // ═══════════════════════════════════════════════
@@ -1039,6 +1048,173 @@ function showGoldOverlay() {
 
 function closeOverlay() {
   document.getElementById('goldOverlay').classList.remove('show');
+}
+
+// ═══════════════════════════════════════════════
+//  RANDOMISE
+// ═══════════════════════════════════════════════
+function shuffleChildren(parent) {
+  const kids = [...parent.children];
+  kids.sort(() => Math.random() - 0.5);
+  kids.forEach(k => parent.appendChild(k));
+}
+
+function randomizeAll() {
+  // Shuffle chip pool (only element with static HTML children not already shuffled by a render fn)
+  shuffleChildren(document.getElementById('chipPool'));
+  // MCQ options are shuffled inside renderQuestions()
+  // Match right col is shuffled inside renderMatchRight()
+  // Gap bank is shuffled inside renderGapBank()
+}
+
+// ═══════════════════════════════════════════════
+//  SAVE / LOAD  (key: storage_chars_y9_v1)
+// ═══════════════════════════════════════════════
+const LS_KEY = 'storage_chars_y9_v1';
+
+function saveState() {
+  // MCQ state per question id
+  const mcq = JSON.parse(JSON.stringify(mcqState));
+
+  // Match item classes (all six items have stable IDs)
+  const matchItemClasses = {};
+  ['m1_d1','m1_d2','m1_d3','m1_t_magnetic','m1_t_optical','m1_t_solid'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) matchItemClasses[id] = el.className;
+  });
+  const matchErrors = matchState['m1'] ? matchState['m1'].errors : 0;
+
+  // Gap fill: slot id => filled word (or null)
+  const gapSlots = {};
+  ['slot-mag1','slot-mag2','slot-opt1','slot-opt2','slot-ss1','slot-ss2'].forEach(id => {
+    const slot = document.getElementById(id);
+    gapSlots[id] = slot ? (slot._filledWord || null) : null;
+  });
+
+  // Chip positions: device => { zone id, locked }
+  const chips = {};
+  document.querySelectorAll('.chip').forEach(c => {
+    chips[c.dataset.device] = { zone: c.parentElement.id, locked: c.classList.contains('locked-correct') };
+  });
+
+  // Tab button classes
+  const tabBtns = [0,1,2].map(i => document.getElementById('tabBtn'+i).className);
+
+  // Banner states
+  const banners = [0,1,2].map(i => {
+    const b = document.getElementById('banner'+i);
+    return { display: b.style.display, className: b.className, text: b.textContent };
+  });
+
+  // Feedback states
+  const feedbacks = {};
+  ['p0','p1','p2'].forEach(p => {
+    const el = document.getElementById('feedback-'+p);
+    feedbacks[p] = { className: el.className, text: el.textContent };
+  });
+
+  const state = { mcq, matchItemClasses, matchErrors, gapSlots, chips, tabBtns, banners, feedbacks, currentTab, tabStatus };
+  try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch(e) {}
+}
+
+function loadState() {
+  let saved;
+  try { saved = JSON.parse(localStorage.getItem(LS_KEY)); } catch(e) {}
+  if (!saved) return;
+
+  // 1. Restore tabStatus
+  Object.assign(tabStatus, saved.tabStatus || {});
+
+  // 2. Restore MCQ state and visuals for all panels
+  Object.assign(mcqState, saved.mcq || {});
+  ['p0','p1','p2'].forEach(prefix => {
+    (QUESTIONS[prefix] || []).forEach(q => {
+      const s = mcqState[q.id];
+      if (!s || !s.answered) return;
+      const block = document.getElementById(q.id);
+      if (!block) return;
+      block.querySelectorAll('.opt-btn').forEach(b => {
+        b.disabled = true;
+        if (s.correct && b.dataset.correct === '1') b.classList.add('correct');
+        else if (!s.correct && b.dataset.correct === '1') b.classList.add('correct-late');
+      });
+    });
+  });
+
+  // 3. Restore match item classes (right col items have stable IDs from renderMatchRight)
+  if (saved.matchItemClasses) {
+    Object.entries(saved.matchItemClasses).forEach(([id, cls]) => {
+      const el = document.getElementById(id);
+      if (el) el.className = cls;
+    });
+  }
+  if (saved.matchErrors !== undefined) {
+    matchState['m1'] = { selected: null, errors: saved.matchErrors };
+  }
+
+  // 4. Restore gap fill slots
+  if (saved.gapSlots) {
+    Object.entries(saved.gapSlots).forEach(([id, word]) => {
+      if (!word) return;
+      const slot = document.getElementById(id);
+      if (!slot) return;
+      slot._filledWord = word;
+      const textEl = document.getElementById('slottext-' + id.replace('slot-',''));
+      if (textEl) textEl.textContent = word;
+      const isCorrect = word === slot.dataset.answer;
+      slot.className = 'gap-slot ' + (isCorrect ? 'filled-gold' : 'filled-wrong');
+      if (isCorrect) {
+        document.querySelectorAll('.word-chip').forEach(c => {
+          if (c.dataset.word === word) { c.classList.add('used-correct'); c.draggable = false; }
+        });
+      }
+    });
+  }
+
+  // 5. Restore chip positions (panel 2)
+  if (saved.chips) {
+    Object.entries(saved.chips).forEach(([device, data]) => {
+      const chip = document.querySelector('.chip[data-device="' + device + '"]');
+      if (!chip) return;
+      const target = document.getElementById(data.zone);
+      if (target) target.appendChild(chip);
+      if (data.locked) chip.classList.add('locked-correct');
+    });
+  }
+
+  // 6. Restore tab button classes
+  if (saved.tabBtns) {
+    [0,1,2].forEach(i => {
+      const btn = document.getElementById('tabBtn'+i);
+      if (btn && saved.tabBtns[i] !== undefined) btn.className = saved.tabBtns[i];
+    });
+  }
+
+  // 7. Restore banners
+  if (saved.banners) {
+    [0,1,2].forEach(i => {
+      const b = document.getElementById('banner'+i);
+      const bd = saved.banners[i];
+      if (b && bd) { b.className = bd.className; b.textContent = bd.text; b.style.display = bd.display; }
+    });
+  }
+
+  // 8. Restore feedback text and class
+  if (saved.feedbacks) {
+    ['p0','p1','p2'].forEach(p => {
+      const el = document.getElementById('feedback-'+p);
+      const fd = saved.feedbacks[p];
+      if (el && fd) { el.className = fd.className; el.textContent = fd.text; }
+    });
+  }
+
+  // 9. Switch to saved tab
+  switchTab(saved.currentTab || 0);
+
+  // 10. Restore gold background if all tabs were gold
+  if (Object.values(tabStatus).every(v => v === 'gold')) {
+    document.body.classList.add('all-gold');
+  }
 }
 </script>
 </body>
