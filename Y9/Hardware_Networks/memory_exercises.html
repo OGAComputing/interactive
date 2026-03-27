@@ -375,14 +375,29 @@ function initTokenClient() {
       if (tokenResponse.error !== undefined) throw (tokenResponse);
       accessToken = tokenResponse.access_token;
       document.getElementById('googleDot').classList.add('online');
-      document.getElementById('googleText').textContent = 'Connected to Classroom';
+      document.getElementById('googleText').textContent = 'Connected to Classroom - Progress will sync.';
       document.getElementById('btnLogin').style.display = 'none';
+      document.getElementById('btnLogin').classList.remove('glow-gold');
     },
   });
+
+  // Alert user if assigned via Classroom but not logged in
+  if (CLASSROOM_CONFIG.courseId && CLASSROOM_CONFIG.courseWorkId && !accessToken) {
+    document.getElementById('googleText').innerHTML = '<strong style="color:var(--amber-l)">Login required to submit results for this assignment.</strong>';
+    document.getElementById('btnLogin').classList.add('glow-gold');
+  }
 }
 
 function requestPermission() {
   tokenClient.requestAccessToken();
+}
+
+function verifyClassroomAuth() {
+  if (CLASSROOM_CONFIG.courseId && CLASSROOM_CONFIG.courseWorkId && !accessToken) {
+    alert("This activity has been assigned via Google Classroom. Please 'Sign in to Google' at the top of the page to record your results.");
+    return false;
+  }
+  return true;
 }
 
 async function submitGradeToClassroom(gradePercent) {
@@ -410,10 +425,18 @@ async function submitGradeToClassroom(gradePercent) {
       body: JSON.stringify({ "draftGrade": gradePercent })
     });
 
+    // 3. Post a private comment as feedback
+    const commentUrl = `https://classroom.googleapis.com/v1/courses/${CLASSROOM_CONFIG.courseId}/courseWork/${CLASSROOM_CONFIG.courseWorkId}/studentSubmissions/${submissionId}/comments`;
+    await fetch(commentUrl, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ "text": `Exercise Completed. Score: ${gradePercent}% accuracy.` })
+    });
+
     if (response.ok) {
       console.log("Grade synced to Classroom dashboard.");
       const banner = document.getElementById('completionBanner');
-      banner.textContent += " (Grade synced!)";
+      banner.innerHTML += " <span style='font-size:0.6em; opacity:0.8;'>(Classroom Updated! ✅)</span>";
     }
   } catch (err) {
     console.error("Classroom sync failed:", err);
@@ -708,6 +731,8 @@ function returnWordToBank(word, sourceBlankId) {
 }
 
 function checkFITB() {
+  if (!verifyClassroomAuth()) return;
+
   let correct = 0, anyWrongThisCheck = false;
   sentences.forEach((s, i) => {
     const blank = document.getElementById('blank-' + i);
@@ -849,6 +874,8 @@ function setupZones() {
 }
 
 function checkDiagram() {
+  if (!verifyClassroomAuth()) return;
+
   let correct = 0;
   const total = 5;
   let anyWrongThisCheck = false;
