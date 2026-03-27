@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- ACTIVITY
+title:  Operating Systems – Mind Map Builder
+lesson: Operating Systems
+type:   Practice
+stars:  3
+desc:   Drag-and-drop mind map that graduates to typed recall as answers are mastered
+color:  purple
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Operating Systems – Mind Map Builder</title>
+<style>
+  :root {
+    --navy: #0f1b2d;
+    --purple: #6b21a8;
+    --purple-light: #a855f7;
+    --purple-pale: #f3e8ff;
+    --orange: #f97316;
+    --gold: #fbbf24;
+    --green: #16a34a;
+    --green-pale: #dcfce7;
+    --correct: #15803d;
+    --incorrect: #b91c1c;
+    --bg: #f8f7fc;
+    --card: #ffffff;
+    --text: #1e1b2e;
+    --muted: #6b7280;
+    --border: #e5e7eb;
+    --font-head: 'Trebuchet MS', sans-serif;
+    --font-body: 'Calibri', 'Segoe UI', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--font-body);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    transition: background 0.8s ease;
+  }
+
+  body.all-correct { background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); }
+  body.perfect { background: linear-gradient(135deg, #fef9c3 0%, #fde68a 100%); }
+
+  /* ── HEADER ── */
+  header {
+    background: var(--navy);
+    color: white;
+    padding: 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+  }
+  .header-inner {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 24px;
+  }
+  .topic-badge {
+    background: var(--purple);
+    color: white;
+    font-family: var(--font-head);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 20px;
+  }
+  header h1 {
+    font-family: var(--font-head);
+    font-size: 1.2rem;
+    font-weight: 700;
+    flex: 1;
+  }
+  .stars { color: var(--gold); font-size: 1rem; letter-spacing: 2px; }
+  .progress-wrap { padding: 0 24px 10px; }
+  .progress-bar-bg {
+    background: rgba(255,255,255,0.15);
+    border-radius: 999px;
+    height: 6px;
+    overflow: hidden;
+  }
+  .progress-bar-fill {
+    background: linear-gradient(90deg, var(--purple-light), var(--orange));
+    height: 100%;
+    border-radius: 999px;
+    width: 0%;
+    transition: width 0.5s ease;
+  }
+  .progress-label {
+    color: rgba(255,255,255,0.6);
+    font-size: 0.75rem;
+    margin-bottom: 4px;
+  }
+
+  /* ── STAGE INDICATOR ── */
+  .stage-banner {
+    background: var(--purple-pale);
+    border-left: 4px solid var(--purple);
+    padding: 10px 24px;
+    font-size: 0.9rem;
+    color: var(--purple);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .stage-banner .stage-icon { font-size: 1.1rem; }
+
+  /* ── WORD BANK ── */
+  .word-bank-section {
+    padding: 16px 24px 0;
+  }
+  .word-bank-label {
+    font-family: var(--font-head);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+  .word-bank {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    min-height: 48px;
+    background: white;
+    border: 2px dashed var(--border);
+    border-radius: 12px;
+    padding: 10px 12px;
+    transition: border-color 0.2s;
+  }
+  .word-bank.drag-over { border-color: var(--purple-light); background: var(--purple-pale); }
+
+  .tile {
+    background: var(--navy);
+    color: white;
+    font-family: var(--font-head);
+    font-size: 0.82rem;
+    font-weight: 600;
+    padding: 6px 14px;
+    border-radius: 20px;
+    cursor: grab;
+    user-select: none;
+    transition: transform 0.15s, box-shadow 0.15s, opacity 0.2s;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    white-space: nowrap;
+  }
+  .tile:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+  .tile.dragging { opacity: 0.4; cursor: grabbing; }
+  .tile.used { display: none; }
+
+  /* ── MAIN LAYOUT ── */
+  main { padding: 20px 24px 40px; }
+
+  /* ── MIND MAP SVG AREA ── */
+  .mindmap-container {
+    background: white;
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+    padding: 24px;
+    overflow-x: auto;
+    position: relative;
+  }
+
+  .mindmap-svg-wrap {
+    position: relative;
+    width: 100%;
+    min-width: 900px;
+  }
+
+  /* background SVG lines */
+  .mm-svg {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+
+  /* ── DROP ZONES ── */
+  .drop-zone {
+    position: absolute;
+    border: 2px solid #374151;
+    border-radius: 8px;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: 0.78rem;
+    font-family: var(--font-head);
+    font-weight: 600;
+    color: transparent;
+    cursor: default;
+    transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+    overflow: hidden;
+    padding: 4px 8px;
+  }
+  .drop-zone.awaiting {
+    border: 2px dashed #9ca3af;
+    background: #f9fafb;
+    cursor: pointer;
+  }
+  .drop-zone.awaiting:hover,
+  .drop-zone.drag-over {
+    border-color: var(--purple-light);
+    background: var(--purple-pale);
+    box-shadow: 0 0 0 3px rgba(168,85,247,0.2);
+  }
+  .drop-zone.filled {
+    border-color: var(--navy);
+    background: var(--navy);
+    color: white;
+    cursor: default;
+  }
+  .drop-zone.correct-dd {
+    border-color: var(--correct);
+    background: var(--green-pale);
+    color: var(--correct);
+    animation: pop 0.3s ease;
+  }
+  .drop-zone.wrong-dd {
+    border-color: var(--incorrect);
+    background: #fee2e2;
+    animation: shake 0.4s ease;
+  }
+  .drop-zone.mastered {
+    /* graduated to text input – hide the box styling */
+    border: none;
+    background: transparent;
+  }
+
+  /* ── TEXT INPUTS (graduated mode) ── */
+  .fill-input {
+    position: absolute;
+    border: 2px solid #9ca3af;
+    border-radius: 8px;
+    background: white;
+    font-family: var(--font-head);
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text);
+    text-align: center;
+    padding: 4px 8px;
+    outline: none;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .fill-input:focus { border-color: var(--purple); box-shadow: 0 0 0 3px rgba(168,85,247,0.2); }
+  .fill-input.correct-fi { border-color: var(--correct); background: var(--green-pale); color: var(--correct); }
+  .fill-input.wrong-fi { border-color: var(--incorrect); background: #fee2e2; animation: shake 0.4s ease; }
+
+  /* ── ICON HINTS ── */
+  .hint-icon {
+    position: absolute;
+    font-size: 1.4rem;
+    line-height: 1;
+    pointer-events: none;
+    opacity: 0.85;
+  }
+
+  /* ── CENTRAL NODE ── */
+  .central-node {
+    position: absolute;
+    background: #111827;
+    color: white;
+    font-family: var(--font-head);
+    font-size: 1rem;
+    font-weight: 900;
+    text-align: center;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 12px;
+    line-height: 1.2;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  /* ── CONNECTOR TEXT ── */
+  .conn-label {
+    position: absolute;
+    font-size: 0.68rem;
+    color: #6b7280;
+    font-style: italic;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+
+  /* ── ACTIONS ── */
+  .actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 16px;
+    flex-wrap: wrap;
+  }
+  button.btn {
+    font-family: var(--font-head);
+    font-size: 0.85rem;
+    font-weight: 700;
+    padding: 10px 22px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+  button.btn:hover { transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
+  button.btn-primary { background: var(--purple); color: white; }
+  button.btn-secondary { background: white; color: var(--purple); border: 2px solid var(--purple); }
+  button.btn-orange { background: var(--orange); color: white; }
+  button.btn-small {
+    font-size: 0.75rem;
+    padding: 6px 14px;
+  }
+
+  /* ── FEEDBACK TOAST ── */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--navy);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-family: var(--font-head);
+    font-size: 0.9rem;
+    font-weight: 600;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.3s, transform 0.3s;
+    pointer-events: none;
+    z-index: 999;
+    max-width: 320px;
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
+  .toast.success { border-left: 4px solid var(--green); }
+  .toast.error { border-left: 4px solid #ef4444; }
+  .toast.info { border-left: 4px solid var(--gold); }
+
+  /* ── CELEBRATION ── */
+  #confetti-canvas {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  /* ── ANIMATIONS ── */
+  @keyframes pop {
+    0% { transform: scale(0.9); }
+    60% { transform: scale(1.08); }
+    100% { transform: scale(1); }
+  }
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    20% { transform: translateX(-5px); }
+    40% { transform: translateX(5px); }
+    60% { transform: translateX(-4px); }
+    80% { transform: translateX(4px); }
+  }
+
+  /* ── HINT BUTTON ── */
+  .hint-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #fef9c3;
+    border: 1px solid var(--gold);
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #92400e;
+    cursor: pointer;
+    margin-top: 14px;
+    width: fit-content;
+  }
+  .hint-toggle input[type=checkbox] { cursor: pointer; }
+
+  /* ── SCORE BADGE ── */
+  .score-badge {
+    background: white;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 18px;
+    display: flex;
+    gap: 24px;
+    margin-top: 14px;
+    font-size: 0.82rem;
+    flex-wrap: wrap;
+  }
+  .score-item { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .score-num { font-family: var(--font-head); font-size: 1.4rem; font-weight: 900; color: var(--navy); }
+  .score-label { color: var(--muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; }
+  .score-item.green .score-num { color: var(--correct); }
+  .score-item.purple .score-num { color: var(--purple); }
+
+  /* ── MINDMAP LAYOUT ── */
+  .mm-root { position: relative; width: 960px; height: 580px; margin: 0 auto; }
+</style>
+</head>
+<body>
+
+<canvas id="confetti-canvas"></canvas>
+
+<header>
+  <div class="header-inner">
+    <span class="topic-badge">Systems Architecture</span>
+    <h1>Operating Systems — Mind Map Builder</h1>
+    <span class="stars">★★★☆</span>
+  </div>
+  <div class="progress-wrap">
+    <div class="progress-label" id="progress-label">0 / 16 correct</div>
+    <div class="progress-bar-bg"><div class="progress-bar-fill" id="progress-bar"></div></div>
+  </div>
+</header>
+
+<div class="stage-banner" id="stage-banner">
+  <span class="stage-icon">🧩</span>
+  <span id="stage-text">Stage 1 — Drag the labels from the word bank into the correct boxes on the mind map.</span>
+</div>
+
+<!-- WORD BANK -->
+<div class="word-bank-section">
+  <div class="word-bank-label">Word Bank</div>
+  <div class="word-bank" id="word-bank" ondragover="bankDragOver(event)" ondragleave="bankDragLeave(event)" ondrop="bankDrop(event)">
+    <!-- tiles injected by JS -->
+  </div>
+</div>
+
+<!-- HINT TOGGLE -->
+<div style="padding: 0 24px;">
+  <label class="hint-toggle">
+    <input type="checkbox" id="hint-toggle" onchange="toggleHints(this.checked)">
+    💡 Show icon hints (dual coding)
+  </label>
+</div>
+
+<!-- SCORE -->
+<div style="padding: 0 24px;">
+  <div class="score-badge">
+    <div class="score-item green"><span class="score-num" id="sc-correct">0</span><span class="score-label">Correct</span></div>
+    <div class="score-item"><span class="score-num" id="sc-total">16</span><span class="score-label">Total</span></div>
+    <div class="score-item purple"><span class="score-num" id="sc-mastered">0</span><span class="score-label">Mastered (typed)</span></div>
+    <div class="score-item"><span class="score-num" id="sc-streak">0</span><span class="score-label">Current streak</span></div>
+  </div>
+</div>
+
+<main>
+  <div class="mindmap-container">
+    <div class="mindmap-svg-wrap">
+
+      <!-- SVG connector lines -->
+      <svg class="mm-svg" id="mm-svg" viewBox="0 0 960 580" xmlns="http://www.w3.org/2000/svg">
+        <!-- Lines drawn by JS -->
+      </svg>
+
+      <div class="mm-root" id="mm-root">
+        <!-- Central node -->
+        <div class="central-node" style="left:370px;top:225px;width:130px;height:72px;">OPERATING<br>SYSTEMS</div>
+
+        <!-- Drop zones injected by JS -->
+      </div>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button class="btn btn-primary" onclick="checkAll()">✓ Check All</button>
+    <button class="btn btn-secondary" onclick="resetActivity()">↺ Reset</button>
+    <button class="btn btn-orange btn-small" onclick="revealAll()">👁 Reveal Answers</button>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════
+//  DATA — mind map structure
+// ═══════════════════════════════════════════════
+
+const NODES = [
+  // Main OS components (the 5 branches)
+  { id: 'fm',   answer: 'File Management',      x: 180, y: 165, w: 155, h: 44, icon: '📄', iconX: 348, iconY: 155, group: 'main' },
+  { id: 'pm',   answer: 'Peripheral Management', x: 490, y: 165, w: 185, h: 44, icon: '🖱️', iconX: 680, iconY: 155, group: 'main' },
+  { id: 'um',   answer: 'User Management',       x: 735, y: 165, w: 155, h: 44, icon: '👤', iconX: 895, iconY: 155, group: 'main' },
+  { id: 'ui',   answer: 'User Interfaces',       x: 180, y: 280, w: 155, h: 44, icon: '🖥️', iconX: 348, iconY: 280, group: 'main' },
+  { id: 'mm',   answer: 'Memory Management',     x: 490, y: 280, w: 185, h: 44, icon: '💾', iconX: 680, iconY: 280, group: 'main' },
+
+  // User Interfaces sub-branches
+  { id: 'ui-purpose', answer: 'Allow users to interact with the hardware', x: 30, y: 370, w: 170, h: 52, icon: null, group: 'ui-sub', connFrom: 'ui' },
+  { id: 'gui',    answer: 'GUI',              x: 220, y: 360, w: 100, h: 36, icon: '🖼️', iconX: 325, iconY: 360, group: 'ui-types', connFrom: 'ui' },
+  { id: 'nl',     answer: 'Natural Language', x: 220, y: 407, w: 130, h: 36, icon: '🗣️', iconX: 355, iconY: 407, group: 'ui-types', connFrom: 'ui' },
+  { id: 'cli',    answer: 'Command Line',     x: 220, y: 453, w: 120, h: 36, icon: '⌨️', iconX: 345, iconY: 453, group: 'ui-types', connFrom: 'ui' },
+
+  // Memory Management sub-branches
+  { id: 'vm',     answer: 'Manage virtual memory',           x: 450, y: 378, w: 165, h: 44, icon: null, group: 'mm-sub', connFrom: 'mm' },
+  { id: 'multi',  answer: 'Multitasking',                    x: 680, y: 430, w: 130, h: 36, icon: '⚙️', iconX: 815, iconY: 430, group: 'mm-sub', connFrom: 'mm' },
+  { id: 'multi-purpose', answer: 'Allow multiple programs to run at once', x: 450, y: 440, w: 165, h: 52, icon: null, group: 'mm-sub', connFrom: 'mm' },
+
+  // User Management sub-branches
+  { id: 'um-purpose', answer: 'Keep files and accounts secure', x: 755, y: 255, w: 165, h: 44, icon: null, group: 'um-sub', connFrom: 'um' },
+  { id: 'upw',    answer: 'User & Password Management', x: 755, y: 345, w: 175, h: 44, icon: null, group: 'um-sub', connFrom: 'um' },
+  { id: 'far',    answer: 'File access rights',         x: 755, y: 410, w: 155, h: 36, icon: null, group: 'um-sub', connFrom: 'um' },
+];
+
+// Connector lines: [fromNodeId_or_coord, toNodeId, label]
+const CONNECTORS = [
+  // OS → main branches
+  ['os', 'fm', 'provide'],
+  ['os', 'ui', 'provide'],
+  ['os', 'pm', ''],
+  ['os', 'um', ''],
+  ['os', 'mm', ''],
+  // UI branch
+  ['ui', 'ui-purpose', 'to'],
+  ['ui', 'gui', 'using a'],
+  ['ui', 'nl', ''],
+  ['ui', 'cli', ''],
+  // MM branch
+  ['mm', 'vm', 'to'],
+  ['mm', 'multi-purpose', ''],
+  ['multi-purpose', 'multi', 'called'],
+  // UM branch
+  ['um', 'um-purpose', 'to'],
+  ['um-purpose', 'upw', 'using'],
+  ['um-purpose', 'far', ''],
+];
+
+// Track state per node
+const state = {}; // nodeId → { correct: bool, attempts: int, mastered: bool, value: string }
+let streak = 0;
+let firstAttemptAllCorrect = true; // track if any mistake was made
+let totalCorrect = 0;
+let totalMastered = 0;
+
+// ═══════════════════════════════════════════════
+//  BUILD THE MIND MAP
+// ═══════════════════════════════════════════════
+
+const TOTAL = NODES.length; // 16
+
+function buildMindMap() {
+  const root = document.getElementById('mm-root');
+  const svg = document.getElementById('mm-svg');
+
+  // Clear
+  root.querySelectorAll('.drop-zone,.fill-input,.hint-icon,.conn-label').forEach(e => e.remove());
+  svg.innerHTML = '';
+
+  // Draw connector lines
+  CONNECTORS.forEach(([fromId, toId, label]) => {
+    const from = fromId === 'os'
+      ? { cx: 435, cy: 261 } // central node centre
+      : nodeCenter(NODES.find(n => n.id === fromId));
+    const to   = nodeCenter(NODES.find(n => n.id === toId));
+
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('x1', from.cx);
+    line.setAttribute('y1', from.cy);
+    line.setAttribute('x2', to.cx);
+    line.setAttribute('y2', to.cy);
+    line.setAttribute('stroke', '#9ca3af');
+    line.setAttribute('stroke-width', '1.5');
+    line.setAttribute('stroke-dasharray', '5,3');
+    svg.appendChild(line);
+
+    if (label) {
+      const mx = (from.cx + to.cx) / 2;
+      const my = (from.cy + to.cy) / 2;
+      const lbl = document.createElement('div');
+      lbl.className = 'conn-label';
+      lbl.textContent = label;
+      lbl.style.left = (mx - 20) + 'px';
+      lbl.style.top  = (my - 8) + 'px';
+      root.appendChild(lbl);
+    }
+  });
+
+  // Build nodes
+  NODES.forEach(node => {
+    if (!state[node.id]) {
+      state[node.id] = { correct: false, attempts: 0, mastered: false, value: '' };
+    }
+    createNodeElement(node);
+    if (node.icon) createIconHint(node);
+  });
+}
+
+function nodeCenter(node) {
+  return { cx: node.x + node.w / 2, cy: node.y + node.h / 2 };
+}
+
+function createNodeElement(node) {
+  const root = document.getElementById('mm-root');
+  const s = state[node.id];
+
+  if (s.mastered) {
+    // Typed input
+    const inp = document.createElement('input');
+    inp.type = 'text';
+    inp.className = 'fill-input';
+    inp.id = 'inp-' + node.id;
+    inp.placeholder = '…';
+    inp.style.cssText = `left:${node.x}px;top:${node.y}px;width:${node.w}px;height:${node.h}px;`;
+    inp.value = s.value || '';
+    if (s.correct) inp.classList.add('correct-fi');
+    inp.addEventListener('keydown', e => { if (e.key === 'Enter') checkInput(node.id); });
+    inp.addEventListener('blur', () => checkInput(node.id));
+    root.appendChild(inp);
+  } else {
+    // Drop zone
+    const dz = document.createElement('div');
+    dz.className = 'drop-zone awaiting';
+    dz.id = 'dz-' + node.id;
+    dz.style.cssText = `left:${node.x}px;top:${node.y}px;width:${node.w}px;height:${node.h}px;`;
+    dz.setAttribute('data-node', node.id);
+    if (s.correct) {
+      dz.textContent = node.answer;
+      dz.classList.remove('awaiting');
+      dz.classList.add('correct-dd');
+    }
+    // Drag events
+    dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); });
+    dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
+    dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('drag-over'); handleDrop(e, node.id); });
+    root.appendChild(dz);
+  }
+}
+
+function createIconHint(node) {
+  const root = document.getElementById('mm-root');
+  const el = document.createElement('div');
+  el.className = 'hint-icon';
+  el.id = 'icon-' + node.id;
+  el.textContent = node.icon;
+  el.style.left = (node.iconX || node.x + node.w + 4) + 'px';
+  el.style.top  = (node.iconY || node.y + node.h / 2 - 10) + 'px';
+  el.style.display = document.getElementById('hint-toggle').checked ? 'block' : 'none';
+  root.appendChild(el);
+}
+
+// ═══════════════════════════════════════════════
+//  WORD BANK
+// ═══════════════════════════════════════════════
+
+function buildWordBank() {
+  const bank = document.getElementById('word-bank');
+  bank.innerHTML = '';
+  // Shuffle answers
+  const answers = [...NODES.map(n => n.answer)];
+  shuffle(answers);
+  answers.forEach(ans => {
+    // Only show tiles that aren't yet correct
+    const node = NODES.find(n => n.answer === ans);
+    if (node && state[node.id] && state[node.id].correct) return;
+    if (node && state[node.id] && state[node.id].mastered) return;
+    createTile(ans, bank);
+  });
+}
+
+function createTile(text, parent) {
+  const tile = document.createElement('div');
+  tile.className = 'tile';
+  tile.textContent = text;
+  tile.draggable = true;
+  tile.dataset.value = text;
+  tile.addEventListener('dragstart', e => {
+    e.dataTransfer.setData('text/plain', text);
+    tile.classList.add('dragging');
+  });
+  tile.addEventListener('dragend', () => tile.classList.remove('dragging'));
+  parent.appendChild(tile);
+  return tile;
+}
+
+function bankDragOver(e) { e.preventDefault(); document.getElementById('word-bank').classList.add('drag-over'); }
+function bankDragLeave() { document.getElementById('word-bank').classList.remove('drag-over'); }
+function bankDrop(e) {
+  e.preventDefault();
+  document.getElementById('word-bank').classList.remove('drag-over');
+  const val = e.dataTransfer.getData('text/plain');
+  // If dragged back from a drop zone, clear that zone
+  const node = NODES.find(n => state[n.id] && state[n.id].value === val && !state[n.id].correct);
+  if (node) {
+    state[node.id].value = '';
+    const dz = document.getElementById('dz-' + node.id);
+    if (dz) { dz.textContent = ''; dz.classList.add('awaiting'); }
+  }
+  createTile(val, document.getElementById('word-bank'));
+}
+
+// ═══════════════════════════════════════════════
+//  DROP HANDLING
+// ═══════════════════════════════════════════════
+
+function handleDrop(e, nodeId) {
+  const val = e.dataTransfer.getData('text/plain');
+  const node = NODES.find(n => n.id === nodeId);
+  const s = state[nodeId];
+  if (s.correct) return; // already done
+
+  // Remove tile from bank
+  removeTileFromBank(val);
+
+  // If something was already placed here, return it
+  if (s.value && !s.correct) {
+    createTile(s.value, document.getElementById('word-bank'));
+  }
+
+  s.value = val;
+  s.attempts++;
+
+  const dz = document.getElementById('dz-' + nodeId);
+  dz.textContent = val;
+
+  const isCorrect = normalise(val) === normalise(node.answer);
+  if (isCorrect) {
+    markCorrect(nodeId, 'dd');
+  } else {
+    firstAttemptAllCorrect = false;
+    streak = 0;
+    s.attempts++;
+    dz.classList.remove('awaiting');
+    dz.classList.add('wrong-dd');
+    setTimeout(() => {
+      dz.classList.remove('wrong-dd');
+      dz.classList.add('awaiting');
+      dz.textContent = '';
+      // return tile
+      createTile(val, document.getElementById('word-bank'));
+      s.value = '';
+    }, 800);
+    showToast('Not quite — try again!', 'error');
+    updateScoreboard();
+  }
+}
+
+function removeTileFromBank(val) {
+  const tiles = document.querySelectorAll('#word-bank .tile');
+  for (const t of tiles) {
+    if (t.dataset.value === val) { t.remove(); return; }
+  }
+}
+
+// ═══════════════════════════════════════════════
+//  INPUT CHECKING (fill-in-the-blank mode)
+// ═══════════════════════════════════════════════
+
+function checkInput(nodeId) {
+  const node = NODES.find(n => n.id === nodeId);
+  const s = state[nodeId];
+  const inp = document.getElementById('inp-' + nodeId);
+  if (!inp || s.correct) return;
+  const val = inp.value.trim();
+  if (!val) return;
+  s.attempts++;
+  s.value = val;
+  const isCorrect = normalise(val) === normalise(node.answer);
+  if (isCorrect) {
+    markCorrect(nodeId, 'fi');
+  } else {
+    firstAttemptAllCorrect = false;
+    streak = 0;
+    inp.classList.add('wrong-fi');
+    setTimeout(() => inp.classList.remove('wrong-fi'), 600);
+    showToast('Not quite — check your spelling!', 'error');
+    updateScoreboard();
+  }
+}
+
+// ═══════════════════════════════════════════════
+//  MARKING CORRECT
+// ═══════════════════════════════════════════════
+
+function markCorrect(nodeId, mode) {
+  const node = NODES.find(n => n.id === nodeId);
+  const s = state[node.id];
+  s.correct = true;
+  s.value = node.answer;
+  streak++;
+  totalCorrect = NODES.filter(n => state[n.id].correct).length;
+
+  if (mode === 'dd') {
+    const dz = document.getElementById('dz-' + nodeId);
+    dz.classList.remove('awaiting','wrong-dd');
+    dz.classList.add('correct-dd');
+    dz.textContent = node.answer;
+  } else {
+    const inp = document.getElementById('inp-' + nodeId);
+    if (inp) { inp.classList.add('correct-fi'); inp.disabled = true; }
+  }
+
+  // After 2 correct answers, graduate some nodes to text mode
+  // Graduate this node for future resets (mastered after 1 correct in type mode, or 2nd time correct in dd)
+  checkGraduation();
+  updateScoreboard();
+  updateProgress();
+  saveState();
+
+  if (totalCorrect === TOTAL) {
+    setTimeout(() => celebrate(), 400);
+  } else {
+    const msgs = ['✓ Correct!','✓ Nice one!','✓ That\'s right!','✓ Well done!'];
+    showToast(msgs[Math.floor(Math.random()*msgs.length)], 'success');
+  }
+}
+
+function checkGraduation() {
+  // A node graduates to text-input mode after being correct twice total
+  // We store a separate 'timesCorrect' counter
+  NODES.forEach(node => {
+    const s = state[node.id];
+    if (!s.timesCorrect) s.timesCorrect = 0;
+    if (s.correct && !s._counted) {
+      s.timesCorrect++;
+      s._counted = true;
+    }
+    // Graduate after 2 correct total (across resets)
+    if (s.timesCorrect >= 2 && !s.mastered) {
+      s.mastered = true;
+      totalMastered++;
+      updateStageText();
+    }
+  });
+  totalMastered = NODES.filter(n => state[n.id].mastered).length;
+}
+
+// ═══════════════════════════════════════════════
+//  STAGE TEXT
+// ═══════════════════════════════════════════════
+
+function updateStageText() {
+  const mastered = NODES.filter(n => state[n.id].mastered).length;
+  const stageText = document.getElementById('stage-text');
+  const stageBanner = document.getElementById('stage-banner');
+  if (mastered === 0) {
+    stageText.textContent = 'Stage 1 — Drag the labels from the word bank into the correct boxes on the mind map.';
+    stageBanner.querySelector('.stage-icon').textContent = '🧩';
+  } else if (mastered < TOTAL) {
+    stageText.textContent = `Stage 2 — Some boxes are now typed recall (no word bank help). You've mastered ${mastered} / ${TOTAL}.`;
+    stageBanner.querySelector('.stage-icon').textContent = '✍️';
+  } else {
+    stageText.textContent = 'Stage 3 — Full typed recall! Complete the entire mind map from memory.';
+    stageBanner.querySelector('.stage-icon').textContent = '🧠';
+  }
+}
+
+// ═══════════════════════════════════════════════
+//  CHECK ALL
+// ═══════════════════════════════════════════════
+
+function checkAll() {
+  // For typed inputs, trigger check on all
+  NODES.forEach(node => {
+    const s = state[node.id];
+    if (s.mastered && !s.correct) {
+      checkInput(node.id);
+    }
+  });
+  // For drop zones with filled-but-unverified (shouldn't happen, drops auto-check)
+  const remaining = NODES.filter(n => !state[n.id].correct).length;
+  if (remaining === 0) {
+    showToast('🎉 All correct!', 'success');
+  } else {
+    showToast(`${TOTAL - remaining} / ${TOTAL} correct so far. Keep going!`, 'info');
+  }
+}
+
+// ═══════════════════════════════════════════════
+//  RESET
+// ═══════════════════════════════════════════════
+
+function resetActivity() {
+  // Save mastery counts before reset
+  NODES.forEach(node => {
+    if (state[node.id]) {
+      state[node.id].correct = false;
+      state[node.id]._counted = false;
+      state[node.id].value = '';
+    }
+  });
+  streak = 0;
+  totalCorrect = 0;
+  document.body.classList.remove('all-correct','perfect');
+  buildMindMap();
+  buildWordBank();
+  updateScoreboard();
+  updateProgress();
+  updateStageText();
+  saveState();
+}
+
+// ═══════════════════════════════════════════════
+//  REVEAL
+// ═══════════════════════════════════════════════
+
+function revealAll() {
+  NODES.forEach(node => {
+    if (!state[node.id].correct) {
+      firstAttemptAllCorrect = false;
+      state[node.id].correct = true;
+      state[node.id].value = node.answer;
+      const dz = document.getElementById('dz-' + node.id);
+      if (dz) { dz.textContent = node.answer; dz.classList.remove('awaiting'); dz.classList.add('filled'); }
+      const inp = document.getElementById('inp-' + node.id);
+      if (inp) { inp.value = node.answer; inp.classList.add('correct-fi'); inp.disabled = true; }
+    }
+  });
+  // Remove all tiles from bank
+  document.getElementById('word-bank').innerHTML = '';
+  totalCorrect = TOTAL;
+  updateScoreboard();
+  updateProgress();
+  showToast('Answers revealed. Study the mind map carefully!', 'info');
+}
+
+// ═══════════════════════════════════════════════
+//  HINTS TOGGLE
+// ═══════════════════════════════════════════════
+
+function toggleHints(show) {
+  document.querySelectorAll('.hint-icon').forEach(el => {
+    el.style.display = show ? 'block' : 'none';
+  });
+}
+
+// ═══════════════════════════════════════════════
+//  PROGRESS & SCOREBOARD
+// ═══════════════════════════════════════════════
+
+function updateProgress() {
+  const pct = Math.round((totalCorrect / TOTAL) * 100);
+  document.getElementById('progress-bar').style.width = pct + '%';
+  document.getElementById('progress-label').textContent = `${totalCorrect} / ${TOTAL} correct`;
+}
+
+function updateScoreboard() {
+  document.getElementById('sc-correct').textContent = totalCorrect;
+  document.getElementById('sc-mastered').textContent = NODES.filter(n => state[n.id] && state[n.id].mastered).length;
+  document.getElementById('sc-streak').textContent = streak;
+}
+
+// ═══════════════════════════════════════════════
+//  CELEBRATION
+// ═══════════════════════════════════════════════
+
+function celebrate() {
+  if (firstAttemptAllCorrect) {
+    document.body.classList.add('perfect');
+    showToast('🏆 Perfect — all correct first time!', 'success');
+    launchConfetti();
+  } else {
+    document.body.classList.add('all-correct');
+    showToast('✅ All correct! Great work.', 'success');
+    launchConfetti(false);
+  }
+}
+
+function launchConfetti(gold = true) {
+  const canvas = document.getElementById('confetti-canvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  const colors = gold
+    ? ['#fbbf24','#f97316','#fef08a','#ffffff','#a855f7']
+    : ['#16a34a','#4ade80','#86efac','#ffffff','#0f1b2d'];
+
+  const particles = Array.from({length: 120}, () => ({
+    x: Math.random() * canvas.width,
+    y: -20,
+    vx: (Math.random() - 0.5) * 4,
+    vy: Math.random() * 4 + 2,
+    size: Math.random() * 8 + 4,
+    color: colors[Math.floor(Math.random() * colors.length)],
+    rot: Math.random() * 360,
+    rotV: (Math.random() - 0.5) * 8,
+  }));
+
+  let frame = 0;
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    particles.forEach(p => {
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot * Math.PI / 180);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.size/2, -p.size/2, p.size, p.size * 0.5);
+      ctx.restore();
+      p.x += p.vx; p.y += p.vy;
+      p.rot += p.rotV; p.vy += 0.05;
+    });
+    frame++;
+    if (frame < 180) requestAnimationFrame(draw);
+    else ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+  draw();
+}
+
+// ═══════════════════════════════════════════════
+//  TOAST
+// ═══════════════════════════════════════════════
+
+let toastTimer;
+function showToast(msg, type = 'info') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ═══════════════════════════════════════════════
+//  PERSISTENCE
+// ═══════════════════════════════════════════════
+
+function saveState() {
+  try {
+    localStorage.setItem('os-mindmap-state', JSON.stringify(state));
+  } catch(e) {}
+}
+
+function loadState() {
+  try {
+    const saved = localStorage.getItem('os-mindmap-state');
+    if (saved) {
+      const s = JSON.parse(saved);
+      Object.assign(state, s);
+    }
+  } catch(e) {}
+}
+
+// ═══════════════════════════════════════════════
+//  UTILS
+// ═══════════════════════════════════════════════
+
+function normalise(str) {
+  return str.trim().toLowerCase().replace(/\s+/g,' ').replace(/['']/g,"'");
+}
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+// ═══════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════
+
+loadState();
+totalCorrect = NODES.filter(n => state[n.id] && state[n.id].correct).length;
+totalMastered = NODES.filter(n => state[n.id] && state[n.id].mastered).length;
+buildMindMap();
+buildWordBank();
+updateScoreboard();
+updateProgress();
+updateStageText();
+</script>
+</body>
+</html>
