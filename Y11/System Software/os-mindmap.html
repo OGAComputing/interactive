@@ -830,6 +830,7 @@ function markCorrect(nodeId, mode) {
   saveState();
 
   if (totalCorrect === TOTAL) {
+    calcAndSubmitGrade();
     setTimeout(() => celebrate(), 400);
   } else {
     const msgs = ['✓ Correct!','✓ Nice one!','✓ That\'s right!','✓ Well done!'];
@@ -907,6 +908,19 @@ function updateStageText() {
 //  CHECK ALL
 // ═══════════════════════════════════════════════
 
+function calcAndSubmitGrade() {
+  const correct  = NODES.filter(n => state[n.id].correct).length;
+  const mastered = NODES.filter(n => state[n.id].mastered).length;
+  const score    = correct + mastered;   // mastered nodes count double
+  const maxScore = TOTAL * 2;
+  const pct      = Math.round((score / maxScore) * 100);
+  Classroom.submitGrade(
+    pct,
+    `OS Mind Map — ${correct}/${TOTAL} correct, ${mastered} mastered (score ${score}/${maxScore})`
+  );
+  return { correct, mastered, score, maxScore };
+}
+
 function checkAll() {
   if (!Classroom.verifyAuth()) return;
 
@@ -917,12 +931,14 @@ function checkAll() {
       checkInput(node.id);
     }
   });
-  // For drop zones with filled-but-unverified (shouldn't happen, drops auto-check)
+
+  const { correct, mastered, score, maxScore } = calcAndSubmitGrade();
+
   const remaining = NODES.filter(n => !state[n.id].correct).length;
   if (remaining === 0) {
-    showToast('🎉 All correct!', 'success');
+    celebrate();
   } else {
-    showToast(`${TOTAL - remaining} / ${TOTAL} correct so far. Keep going!`, 'info');
+    showToast(`${correct} / ${TOTAL} correct · ${mastered} mastered · Score: ${score} / ${maxScore}`, 'info');
   }
 }
 
@@ -1008,12 +1024,10 @@ function celebrate() {
   if (firstAttemptAllCorrect) {
     document.body.classList.add('perfect');
     showToast('🏆 Perfect — all correct first time!', 'success');
-    Classroom.submitGrade(100, 'OS Mind Map');
     launchConfetti();
   } else {
     document.body.classList.add('all-correct');
     showToast('✅ All correct! Great work.', 'success');
-    Classroom.submitGrade(80, 'OS Mind Map');
     launchConfetti(false);
   }
 }
