@@ -1,7 +1,7 @@
 /**
  * classroom.js — Shared Google Classroom integration for all activity pages.
  *
- * Usage in any activity HTML file (all are 2 levels deep: Y*/Topic/file.html):
+ * Usage in any activity HTML file (all are 2 levels deep: Y<n>/Topic/file.html):
  *   <script src="../../classroom.js"></script>
  *
  * When the page URL contains ?courseId=X (set by index.html when a teacher
