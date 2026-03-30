@@ -257,9 +257,15 @@
       callback: (tokenResponse) => {
         accessToken = tokenResponse.access_token;
         document.getElementById('btnLogin').style.display = 'none';
-        document.getElementById('course-select').style.display = 'inline-block';
-        document.querySelectorAll('.btn-assign').forEach(btn => btn.style.display = 'block');
-        fetchCourses();
+        const storedProxy = localStorage.getItem('oga_proxy_url');
+        if (storedProxy) {
+          document.getElementById('course-select').style.display = 'inline-block';
+          document.querySelectorAll('.btn-assign').forEach(btn => btn.style.display = 'block');
+          fetchCourses();
+        } else {
+          document.getElementById('teacher-status').innerHTML =
+            '⚠️ No proxy URL found — <a href="_teacher/setup.html" style="color:#00b4b4">run proxy setup first</a> before assigning activities.';
+        }
       },
     });
   }
@@ -289,10 +295,8 @@
     if (!courseId) return alert("Select a class first!");
 
     const baseUrl = window.location.origin + window.location.pathname.replace('index.html', '') + activityPath;
-    // Embed courseId so classroom.js can look up the courseWorkId after the student signs in.
-    // The Classroom API doesn't allow patching materials after creation, so this single-step
-    // approach is the correct way to pass context to the activity page.
-    const activityUrl = `${baseUrl}?courseId=${courseId}`;
+    const proxyUrl = localStorage.getItem('oga_proxy_url') || '';
+    const activityUrl = `${baseUrl}?courseId=${courseId}${proxyUrl ? '&proxyUrl=' + encodeURIComponent(proxyUrl) : ''}`;
 
     const res = await fetch(`https://classroom.googleapis.com/v1/courses/${courseId}/courseWork`, {
       method: 'POST',
