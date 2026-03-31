@@ -30,8 +30,9 @@
 
   const CLIENT_ID = '379663437881-iukh6qnkq8jmqtqko3qog0n6ohuhemmq.apps.googleusercontent.com';
   // classroom.coursework.me — read/turn-in student's own submissions.
+  // classroom.courses.readonly — list courses to detect teacher vs student role.
   // openid + email — fetch the student's Google user ID for the proxy call.
-  const SCOPE = 'https://www.googleapis.com/auth/classroom.coursework.me openid email';
+  const SCOPE = 'https://www.googleapis.com/auth/classroom.coursework.me https://www.googleapis.com/auth/classroom.courses.readonly openid email';
 
   // urlParams must be declared before proxyUrl so the reference is valid
   const urlParams   = new URLSearchParams(window.location.search);
@@ -212,8 +213,9 @@
     const toast = document.getElementById('classroom-toast');
     if (!toast) return;
     toast.textContent = msg;
+    toast.style.background = msg.startsWith('⚠️') ? '#b45309' : '#10b981';
     toast.classList.add('show');
-    setTimeout(() => toast.classList.remove('show'), 2800);
+    setTimeout(() => toast.classList.remove('show'), 3500);
   }
 
   // ── Teacher modal ─────────────────────────────────────────────────────────────
@@ -355,7 +357,17 @@
      * @param {string} activityName  Logged to console for debugging
      */
     async submitGrade(gradePercent, activityName) {
-      if (!accessToken || !courseWorkId || !proxyUrl) return;
+      if (!accessToken) return;
+      if (!proxyUrl) {
+        console.error('Classroom: grade not submitted — no proxy URL configured.');
+        showClassroomToast('⚠️ Grade not saved — proxy not configured.');
+        return;
+      }
+      if (!courseWorkId) {
+        console.error('Classroom: grade not submitted — could not find matching assignment (courseWorkId is null). Check the activity URL matches the link stored in the Classroom assignment.');
+        showClassroomToast('⚠️ Grade not saved — assignment not found.');
+        return;
+      }
       try {
         // Send the student's own OAuth token rather than a self-reported userId.
         // The proxy calls the userinfo endpoint to verify identity server-side,
@@ -376,6 +388,7 @@
         console.log(`Classroom grade submitted via proxy: ${gradePercent}% for "${activityName}"`);
       } catch (err) {
         console.error('Classroom sync failed:', err);
+        showClassroomToast('⚠️ Grade sync failed — see console.');
       }
     }
   };
