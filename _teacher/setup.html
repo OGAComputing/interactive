@@ -387,18 +387,33 @@ function out(msg) {
       const text = await res.text();
       if (text === 'ok') return true;
 
-      // Extract the Cloud project number from the SERVICE_DISABLED error body
-      let projectNum = null;
+      // Extract the Cloud Console URL from the SERVICE_DISABLED error body
+      let consoleUrl = null;
       try {
         const data    = JSON.parse(text);
         const details = (data.error && data.error.details) || [];
-        const info    = details.find(d => d['@type'] && d['@type'].includes('ErrorInfo'));
-        if (info && info.metadata && info.metadata.containerInfo) {
-          projectNum = info.metadata.containerInfo;
+        // Prefer the direct URL from the Help entry
+        const help    = details.find(d => d['@type'] && d['@type'].includes('Help'));
+        if (help && help.links && help.links[0] && help.links[0].url) {
+          consoleUrl = help.links[0].url;
+        }
+        // Fall back to building from the consumer project number
+        if (!consoleUrl) {
+          const info = details.find(d => d['@type'] && d['@type'].includes('ErrorInfo'));
+          const consumer = info && info.metadata && info.metadata.consumer; // e.g. "projects/123456"
+          if (consumer) {
+            const projectNum = consumer.replace(/^projects\//, '');
+            consoleUrl = 'https://console.developers.google.com/apis/api/classroom.googleapis.com/overview?project=' + projectNum;
+          }
         }
       } catch (_) {}
 
-      showApiEnableBox(projectNum);
+      // Generic fallback if we couldn't extract a project-specific URL
+      if (!consoleUrl) {
+        consoleUrl = 'https://console.developers.google.com/apis/api/classroom.googleapis.com';
+      }
+
+      showApiEnableBox(consoleUrl);
       return false;
     } catch (e) {
       // Network/CORS failure — can't test; proceed and let activation reveal any issue
@@ -407,14 +422,12 @@ function out(msg) {
     }
   }
 
-  function showApiEnableBox(projectNum) {
+  function showApiEnableBox(consoleUrl) {
     markStep(3, 'error');
     setStepDesc(3, 'Classroom API needs enabling — follow the instructions below.');
-    if (projectNum) {
-      document.getElementById('api-enable-link').href =
-        'https://console.developers.google.com/apis/api/classroom.googleapis.com/overview?project=' + projectNum;
-    }
+    document.getElementById('api-enable-link').href = consoleUrl;
     document.getElementById('api-enable-box').classList.add('visible');
+    document.getElementById('main-btn').disabled = true;
   }
 
   window.handleApiEnabled = async function () {
@@ -438,13 +451,14 @@ function out(msg) {
     markStep(2, 'done');
     markStep(3, 'active');
     showUrl(proxyUrl);
-    setBtn('done');
+    setBtn('activate');
     phase = 'done';
   }
 
   function completeActivation() {
     markStep(3, 'done');
     setStepDesc(3, 'Proxy activated and Classroom API confirmed — you\'re all set!');
+    setBtn('done');
   }
 
   // ── UI helpers ───────────────────────────────────────────────────────────────
@@ -463,10 +477,11 @@ function out(msg) {
     const labels = {
       signin:    'Sign in with Google',
       deploying: '<span class="spinner"></span>Setting up…',
+      activate:  'Waiting for activation…',
       done:      'Setup complete ✓'
     };
     btn.innerHTML = labels[state];
-    btn.disabled  = (state === 'deploying' || state === 'done');
+    btn.disabled  = (state === 'deploying' || state === 'activate' || state === 'done');
     btn.className = state === 'done' ? 'btn-success' : 'btn-primary';
   }
 
