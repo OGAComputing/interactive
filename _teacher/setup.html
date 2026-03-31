@@ -74,8 +74,6 @@
     }
     .url-actions { display: flex; gap: 8px; }
     .url-actions button { width: auto; flex: 1; padding: 8px 14px; font-size: 0.82rem; }
-    .btn-copy { background: #334155; color: #e2e8f0; }
-    .btn-copy:hover { background: #475569; }
     .btn-activate { background: #f59e0b; color: #111827; }
     .btn-activate:hover { background: #d97706; }
 
@@ -171,13 +169,12 @@
     <div class="url-label">Your proxy URL</div>
     <div class="url-text" id="url-display"></div>
     <div class="url-actions">
-      <button class="btn-copy" onclick="copyUrl()">Copy URL</button>
       <button class="btn-activate" onclick="activateProxy()">Activate →</button>
     </div>
   </div>
 
   <div class="activate-note" id="activate-note">
-    <strong>After clicking Activate:</strong> Google will ask you to grant the proxy permission to access your Classroom. Click "Allow". You can then close that tab and copy the URL above to use in your assignment links.
+    <strong>After clicking Activate:</strong> Google will ask you to grant the proxy permission to access your Classroom. Click "Allow", then close that tab — you're done! Your proxy URL has been saved to this browser automatically.
   </div>
 
   <div class="error-msg" id="error-msg"></div>
@@ -199,8 +196,8 @@
   <div class="divider"></div>
   <p class="note">
     The proxy script is saved to your Google Drive under <em>My Drive</em> → <em>Apps Scripts</em>.
-    You only need to do this once per Google account. Each teacher in the department runs this page with their own account to get their own personal proxy URL.<br><br>
-    When creating a Classroom assignment, append <code style="color:#a7f3d0">?courseId=YOUR_COURSE_ID&amp;proxyUrl=YOUR_PROXY_URL</code> to the activity link.
+    You only need to do this once per Google account — each teacher in the department runs this page with their own account to get their own personal proxy.
+    Your proxy URL is saved automatically to this browser and used whenever you assign activities from the hub.
   </p>
 </div>
 
@@ -317,7 +314,6 @@ function out(msg) {
   function handleMainBtn() {
     if (phase === 'signin')  { tokenClient && tokenClient.requestAccessToken(); return; }
     if (phase === 'deploy')  return; // in progress
-    if (phase === 'done')    { copyUrl(); }
   }
 
   async function runDeploy() {
@@ -460,10 +456,10 @@ function out(msg) {
     const labels = {
       signin:    'Sign in with Google',
       deploying: '<span class="spinner"></span>Setting up…',
-      done:      'Copy URL'
+      done:      'Setup complete ✓'
     };
     btn.innerHTML = labels[state];
-    btn.disabled  = (state === 'deploying');
+    btn.disabled  = (state === 'deploying' || state === 'done');
     btn.className = state === 'done' ? 'btn-success' : 'btn-primary';
   }
 
