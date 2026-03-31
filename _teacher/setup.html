@@ -174,9 +174,8 @@
   const PROXY_JS = `// OGA Classroom Grade Proxy
 // Security model:
 //   1. Student identity is verified via their OAuth token (not a self-reported userId).
-//   2. The target assignment must link to ogacomputing.github.io (prevents use on
-//      arbitrary non-OGA assignments even if a student discovers the proxy URL).
-//   3. Grade is clamped to 0-100.
+//   2. Grade is clamped to 0-100.
+//   3. Student can only update their own submission (userId resolved from verified token).
 // Uses direct REST calls via UrlFetchApp so no Advanced Service (and no Cloud project
 // API enablement) is required — only the OAuth scope in the manifest is needed.
 function doGet() {
@@ -203,19 +202,7 @@ function doPost(e) {
     var teacherToken = ScriptApp.getOAuthToken();
     var authHeaders  = { Authorization: 'Bearer ' + teacherToken };
 
-    // 2. Verify the assignment belongs to an OGA activity
-    var cwResp = UrlFetchApp.fetch(
-      'https://classroom.googleapis.com/v1/courses/' + courseId + '/courseWork/' + courseWorkId,
-      { headers: authHeaders, muteHttpExceptions: true }
-    );
-    if (cwResp.getResponseCode() !== 200) return out('could not fetch assignment: ' + cwResp.getResponseCode());
-    var cw = JSON.parse(cwResp.getContentText());
-    var isOGA = (cw.materials || []).some(function(m) {
-      return m.link && m.link.url && m.link.url.indexOf('ogacomputing.github.io') !== -1;
-    });
-    if (!isOGA) return out('not an OGA assignment');
-
-    // 3. Look up the verified student's submission
+    // 2. Look up the verified student's submission
     var subsResp = UrlFetchApp.fetch(
       'https://classroom.googleapis.com/v1/courses/' + courseId +
         '/courseWork/' + courseWorkId + '/studentSubmissions?userId=' + userId,
