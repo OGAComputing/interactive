@@ -95,6 +95,30 @@
     }
     .error-msg.visible { display: block; }
 
+    .api-enable-box {
+      display: none; margin-top: 16px;
+      background: #1c1a00; border: 1px solid #f59e0b;
+      border-radius: 8px; padding: 14px 16px;
+    }
+    .api-enable-box.visible { display: block; }
+    .api-enable-label {
+      font-size: 0.75rem; color: #f59e0b; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px;
+    }
+    .api-enable-text {
+      font-size: 0.8rem; color: #94a3b8; line-height: 1.6; margin-bottom: 12px;
+    }
+    .api-enable-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .api-enable-actions a, .api-enable-actions button {
+      flex: 1; min-width: 140px; padding: 8px 14px; font-size: 0.82rem;
+      font-weight: 700; border-radius: 6px; border: none; cursor: pointer;
+      text-align: center; text-decoration: none; display: inline-block;
+    }
+    .btn-open-console { background: #f59e0b; color: #111827; }
+    .btn-open-console:hover { background: #d97706; }
+    .btn-api-done { background: #334155; color: #e2e8f0; }
+    .btn-api-done:hover { background: #475569; }
+
     .spinner {
       display: inline-block; width: 14px; height: 14px;
       border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff;
@@ -158,6 +182,20 @@
 
   <div class="error-msg" id="error-msg"></div>
 
+  <div class="api-enable-box" id="api-enable-box">
+    <div class="api-enable-label">⚠️ One extra step required</div>
+    <p class="api-enable-text">
+      Your proxy was deployed, but the <strong>Google Classroom API</strong> needs to be
+      enabled in its Cloud project before it can post grades. Click the button below —
+      it opens the correct page in Google Cloud Console. Just click <strong>Enable</strong>,
+      then come back here and click <strong>Done</strong>.
+    </p>
+    <div class="api-enable-actions">
+      <a id="api-enable-link" href="#" target="_blank" class="btn-open-console">Open Cloud Console →</a>
+      <button class="btn-api-done" onclick="handleApiEnabled()">Done, continue →</button>
+    </div>
+  </div>
+
   <div class="divider"></div>
   <p class="note">
     The proxy script is saved to your Google Drive under <em>My Drive</em> → <em>Apps Scripts</em>.
@@ -176,9 +214,28 @@
 //   1. Student identity is verified via their OAuth token (not a self-reported userId).
 //   2. Grade is clamped to 0-100.
 //   3. Student can only update their own submission (userId resolved from verified token).
-// Uses direct REST calls via UrlFetchApp so no Advanced Service (and no Cloud project
-// API enablement) is required — only the OAuth scope in the manifest is needed.
-function doGet() {
+// Uses direct REST calls via UrlFetchApp. The Google Classroom API must be enabled
+// in the Cloud project associated with this Apps Script (done once during setup).
+function doGet(e) {
+  // ?action=test — called by the setup page to check if the Classroom API is enabled.
+  // Returns 'ok' on success or the raw API error body so setup.html can extract the
+  // Cloud project number and show the teacher a direct enablement link.
+  if (e && e.parameter && e.parameter.action === 'test') {
+    try {
+      var token = ScriptApp.getOAuthToken();
+      var res = UrlFetchApp.fetch(
+        'https://classroom.googleapis.com/v1/courses?pageSize=1',
+        { headers: { Authorization: 'Bearer ' + token }, muteHttpExceptions: true }
+      );
+      if (res.getResponseCode() === 200) {
+        return ContentService.createTextOutput('ok').setMimeType(ContentService.MimeType.TEXT);
+      }
+      return ContentService.createTextOutput(res.getContentText()).setMimeType(ContentService.MimeType.TEXT);
+    } catch(err) {
+      return ContentService.createTextOutput('{"error":{"message":"' + err.message + '"}}')
+        .setMimeType(ContentService.MimeType.TEXT);
+    }
+  }
   return ContentService.createTextOutput('OGA Classroom Grade Proxy is active.')
     .setMimeType(ContentService.MimeType.TEXT);
 }
@@ -298,14 +355,12 @@ function out(msg) {
       proxyUrl = entry && entry.webApp && entry.webApp.url;
       if (!proxyUrl) throw new Error('Deployment succeeded but no web app URL in response.');
 
-      // Save to localStorage so the activity pages on this browser auto-detect it
-      try { localStorage.setItem('oga_proxy_url', proxyUrl); } catch (_) {}
+      // 5. Test whether the Classroom API is enabled in the new Cloud project
+      setStepDesc(2, 'Testing Classroom API access…');
+      const apiOk = await testClassroomApi(proxyUrl);
+      if (!apiOk) return; // paused — handleApiEnabled() will complete setup
 
-      markStep(2, 'done');
-      markStep(3, 'active');
-      showUrl(proxyUrl);
-      setBtn('done');
-      phase = 'done';
+      completeSetup();
 
     } catch (err) {
       markStep(2, 'error');
@@ -330,6 +385,63 @@ function out(msg) {
       throw new Error(msg);
     }
     return data;
+  }
+
+  // ── Classroom API test ───────────────────────────────────────────────────────
+
+  async function testClassroomApi(url) {
+    try {
+      const res  = await fetch(url + '?action=test');
+      const text = await res.text();
+      if (text === 'ok') return true;
+
+      // Extract the Cloud project number from the SERVICE_DISABLED error body
+      let projectNum = null;
+      try {
+        const data    = JSON.parse(text);
+        const details = (data.error && data.error.details) || [];
+        const info    = details.find(d => d['@type'] && d['@type'].includes('ErrorInfo'));
+        if (info && info.metadata && info.metadata.containerInfo) {
+          projectNum = info.metadata.containerInfo;
+        }
+      } catch (_) {}
+
+      showApiEnableBox(projectNum);
+      return false;
+    } catch (e) {
+      // Network/CORS failure — can't test; proceed and let activation reveal any issue
+      console.warn('Classroom API test skipped (network error):', e);
+      return true;
+    }
+  }
+
+  function showApiEnableBox(projectNum) {
+    markStep(2, 'error');
+    setStepDesc(2, 'Classroom API needs enabling — follow the instructions below.');
+    if (projectNum) {
+      document.getElementById('api-enable-link').href =
+        'https://console.developers.google.com/apis/api/classroom.googleapis.com/overview?project=' + projectNum;
+    }
+    document.getElementById('api-enable-box').classList.add('visible');
+    document.getElementById('main-btn').disabled = true;
+  }
+
+  window.handleApiEnabled = async function () {
+    document.getElementById('api-enable-box').classList.remove('visible');
+    markStep(2, 'active');
+    setStepDesc(2, 'Re-testing Classroom API access…');
+    document.getElementById('main-btn').disabled = true;
+    const ok = await testClassroomApi(proxyUrl);
+    if (ok) completeSetup();
+  };
+
+  function completeSetup() {
+    try { localStorage.setItem('oga_proxy_url', proxyUrl); } catch (_) {}
+    markStep(2, 'done');
+    markStep(3, 'active');
+    showUrl(proxyUrl);
+    setBtn('done');
+    phase = 'done';
   }
 
   // ── UI helpers ───────────────────────────────────────────────────────────────
