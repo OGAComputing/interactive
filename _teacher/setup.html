@@ -186,8 +186,11 @@ function doPost(e) {
   try {
     var courseId     = e.parameter.courseId;
     var courseWorkId = e.parameter.courseWorkId;
+    var submissionId = e.parameter.submissionId;
     var studentToken = e.parameter.studentToken;
     var grade        = Math.min(100, Math.max(0, Number(e.parameter.grade)));
+
+    if (!submissionId) return out('missing submissionId');
 
     // 1. Verify student identity — call Google userinfo with their own token
     var userInfoResp = UrlFetchApp.fetch(
@@ -202,20 +205,8 @@ function doPost(e) {
     var teacherToken = ScriptApp.getOAuthToken();
     var authHeaders  = { Authorization: 'Bearer ' + teacherToken };
 
-    // 2. Look up the verified student's submission
-    var subsResp = UrlFetchApp.fetch(
-      'https://classroom.googleapis.com/v1/courses/' + courseId +
-        '/courseWork/' + courseWorkId + '/studentSubmissions?userId=' + userId,
-      { headers: authHeaders, muteHttpExceptions: true }
-    );
-    if (subsResp.getResponseCode() !== 200) return out('could not fetch submissions: ' + subsResp.getResponseCode());
-    var subs = JSON.parse(subsResp.getContentText());
-    if (!subs.studentSubmissions || subs.studentSubmissions.length === 0) {
-      return out('no submission found');
-    }
-
-    // 4. Patch the draft grade
-    var submissionId = subs.studentSubmissions[0].id;
+    // 2. Patch the draft grade directly using the submissionId resolved by the client
+    //    (looked up by the student using their own token, so no teacher-level list needed)
     var patchResp = UrlFetchApp.fetch(
       'https://classroom.googleapis.com/v1/courses/' + courseId +
         '/courseWork/' + courseWorkId + '/studentSubmissions/' + submissionId +
@@ -227,7 +218,7 @@ function doPost(e) {
         muteHttpExceptions: true
       }
     );
-    if (patchResp.getResponseCode() !== 200) return out('patch failed: ' + patchResp.getContentText());
+    if (patchResp.getResponseCode() !== 200) return out('patch failed (' + patchResp.getResponseCode() + '): ' + patchResp.getContentText());
     return out('ok');
   } catch (err) {
     return out('error: ' + err.message);

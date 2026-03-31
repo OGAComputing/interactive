@@ -46,7 +46,8 @@
 
   let tokenClient  = null;
   let accessToken  = null;
-  let courseWorkId = null; // resolved after sign-in
+  let courseWorkId   = null; // resolved after sign-in
+  let submissionId   = null; // resolved after sign-in
 
   // ── Login banner ─────────────────────────────────────────────────────────────
 
@@ -285,6 +286,30 @@
     return null;
   }
 
+  // ── Submission ID lookup ─────────────────────────────────────────────────────
+  // Uses the student's own token (classroom.coursework.me) to find their submission
+  // for the resolved courseWorkId. The proxy uses this ID to patch the grade directly
+  // without needing a teacher-level studentSubmissions.list call.
+
+  async function lookupSubmissionId(token, cwId) {
+    if (!cwId) return null;
+    try {
+      const res = await fetch(
+        `https://classroom.googleapis.com/v1/courses/${courseId}/courseWork/${cwId}/studentSubmissions?userId=me`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (!res.ok) {
+        console.warn('Classroom: submission lookup failed', res.status);
+        return null;
+      }
+      const data = await res.json();
+      return data.studentSubmissions?.[0]?.id || null;
+    } catch (e) {
+      console.warn('Classroom: submission lookup error', e);
+      return null;
+    }
+  }
+
   // ── Teacher detection ─────────────────────────────────────────────────────────
   // courses.list?teacherId=me returns only courses the user teaches, which works
   // with the classroom.coursework.me scope and needs no additional permissions.
@@ -316,6 +341,7 @@
         }
         accessToken = tokenResponse.access_token;
         courseWorkId = await lookupCourseWorkId(accessToken);
+        submissionId = await lookupSubmissionId(accessToken, courseWorkId);
 
         const isTeacher = await detectTeacher(accessToken);
         if (isTeacher) {
@@ -363,21 +389,24 @@
         showClassroomToast('⚠️ Grade not saved — proxy not configured.');
         return;
       }
-      if (!courseWorkId) {
-        console.error('Classroom: grade not submitted — could not find matching assignment (courseWorkId is null). Check the activity URL matches the link stored in the Classroom assignment.');
+      if (!courseWorkId || !submissionId) {
+        console.error('Classroom: grade not submitted — could not find matching assignment or submission.',
+          { courseWorkId, submissionId });
         showClassroomToast('⚠️ Grade not saved — assignment not found.');
         return;
       }
       try {
         // Send the student's own OAuth token rather than a self-reported userId.
-        // The proxy calls the userinfo endpoint to verify identity server-side,
-        // so a student cannot impersonate another user by supplying a different userId.
+        // The proxy calls the userinfo endpoint to verify identity server-side.
+        // submissionId is looked up client-side using the student's own token so
+        // the proxy does not need a teacher-level studentSubmissions.list call.
         const res = await fetch(proxyUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
           body: new URLSearchParams({
             courseId,
             courseWorkId,
+            submissionId,
             studentToken: accessToken,
             grade: gradePercent
           }).toString()
