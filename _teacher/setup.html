@@ -177,6 +177,8 @@
 //   2. The target assignment must link to ogacomputing.github.io (prevents use on
 //      arbitrary non-OGA assignments even if a student discovers the proxy URL).
 //   3. Grade is clamped to 0-100.
+// Uses direct REST calls via UrlFetchApp so no Advanced Service (and no Cloud project
+// API enablement) is required — only the OAuth scope in the manifest is needed.
 function doGet() {
   return ContentService.createTextOutput('OGA Classroom Grade Proxy is active.')
     .setMimeType(ContentService.MimeType.TEXT);
@@ -197,25 +199,48 @@ function doPost(e) {
     var userId = JSON.parse(userInfoResp.getContentText()).sub;
     if (!userId) return out('could not verify identity');
 
+    // Teacher token — the script runs as the deploying user (the teacher)
+    var teacherToken = ScriptApp.getOAuthToken();
+    var authHeaders  = { Authorization: 'Bearer ' + teacherToken };
+
     // 2. Verify the assignment belongs to an OGA activity
-    var cw = Classroom.Courses.CourseWork.get(courseId, courseWorkId);
+    var cwResp = UrlFetchApp.fetch(
+      'https://classroom.googleapis.com/v1/courses/' + courseId + '/courseWork/' + courseWorkId,
+      { headers: authHeaders, muteHttpExceptions: true }
+    );
+    if (cwResp.getResponseCode() !== 200) return out('could not fetch assignment: ' + cwResp.getResponseCode());
+    var cw = JSON.parse(cwResp.getContentText());
     var isOGA = (cw.materials || []).some(function(m) {
       return m.link && m.link.url && m.link.url.indexOf('ogacomputing.github.io') !== -1;
     });
     if (!isOGA) return out('not an OGA assignment');
 
-    // 3. Look up and update the verified student's own submission
-    var subs = Classroom.Courses.CourseWork.StudentSubmissions.list(
-      courseId, courseWorkId, { userId: userId }
+    // 3. Look up the verified student's submission
+    var subsResp = UrlFetchApp.fetch(
+      'https://classroom.googleapis.com/v1/courses/' + courseId +
+        '/courseWork/' + courseWorkId + '/studentSubmissions?userId=' + userId,
+      { headers: authHeaders, muteHttpExceptions: true }
     );
+    if (subsResp.getResponseCode() !== 200) return out('could not fetch submissions: ' + subsResp.getResponseCode());
+    var subs = JSON.parse(subsResp.getContentText());
     if (!subs.studentSubmissions || subs.studentSubmissions.length === 0) {
       return out('no submission found');
     }
-    Classroom.Courses.CourseWork.StudentSubmissions.patch(
-      { draftGrade: grade },
-      courseId, courseWorkId, subs.studentSubmissions[0].id,
-      { updateMask: 'draftGrade' }
+
+    // 4. Patch the draft grade
+    var submissionId = subs.studentSubmissions[0].id;
+    var patchResp = UrlFetchApp.fetch(
+      'https://classroom.googleapis.com/v1/courses/' + courseId +
+        '/courseWork/' + courseWorkId + '/studentSubmissions/' + submissionId +
+        '?updateMask=draftGrade',
+      {
+        method: 'patch',
+        headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders),
+        payload: JSON.stringify({ draftGrade: grade }),
+        muteHttpExceptions: true
+      }
     );
+    if (patchResp.getResponseCode() !== 200) return out('patch failed: ' + patchResp.getContentText());
     return out('ok');
   } catch (err) {
     return out('error: ' + err.message);
@@ -227,13 +252,9 @@ function out(msg) {
 
   const PROXY_MANIFEST = JSON.stringify({
     timeZone: 'Europe/London',
-    dependencies: {
-      enabledAdvancedServices: [{
-        userSymbol: 'Classroom',
-        serviceId: 'classroom',
-        version: 'v1'
-      }]
-    },
+    oauthScopes: [
+      'https://www.googleapis.com/auth/classroom.coursework.students'
+    ],
     webapp: { access: 'ANYONE_ANONYMOUS', executeAs: 'USER_DEPLOYING' },
     exceptionLogging: 'STACKDRIVER',
     runtimeVersion: 'V8'
