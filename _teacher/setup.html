@@ -58,6 +58,44 @@
     .btn-success { background: #10b981; color: #fff; }
     .btn-success:not(:disabled):hover { background: #059669; }
 
+    /* Link-project box — shown after deploy, before activate */
+    .link-box {
+      display: none; margin-top: 20px;
+      background: #0f172a; border: 1px solid #3b82f6;
+      border-radius: 8px; padding: 14px 16px;
+    }
+    .link-box.visible { display: block; }
+    .link-label {
+      font-size: 0.75rem; color: #3b82f6; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px;
+    }
+    .link-steps {
+      font-size: 0.82rem; color: #94a3b8; line-height: 1.9;
+      padding-left: 18px; margin-bottom: 12px;
+    }
+    .link-steps a { color: #60a5fa; }
+    .link-steps strong { color: #e2e8f0; }
+    .project-num-box {
+      display: flex; align-items: center; gap: 8px; margin-bottom: 14px;
+    }
+    .project-num {
+      font-family: 'Cascadia Code', 'Consolas', monospace;
+      font-size: 0.95rem; color: #fbbf24; font-weight: 700;
+      background: #0a1628; padding: 7px 10px; border-radius: 4px;
+      border: 1px solid #1e3a5f; flex: 1; letter-spacing: 0.05em;
+    }
+    .btn-copy-num {
+      width: auto; padding: 7px 14px; font-size: 0.78rem; font-weight: 600;
+      background: #334155; color: #e2e8f0; border-radius: 4px; flex-shrink: 0;
+    }
+    .btn-copy-num:hover { background: #475569; }
+    .btn-linked {
+      width: 100%; padding: 10px 16px; font-size: 0.88rem; font-weight: 700;
+      background: #3b82f6; color: #fff; border-radius: 6px;
+    }
+    .btn-linked:hover { background: #2563eb; }
+
+    /* Proxy URL box — shown after link step */
     .url-box {
       display: none; margin-top: 20px;
       background: #0f172a; border: 1px solid #10b981;
@@ -149,15 +187,15 @@
       <div class="step-num">2</div>
       <div class="step-body">
         <div class="step-title">Create &amp; deploy the proxy</div>
-        <div class="step-desc">Automatically creates an Apps Script project in your Google Drive and deploys it as a web app.</div>
+        <div class="step-desc">Creates an Apps Script project and a dedicated Cloud project in your Google Drive, then deploys the proxy.</div>
       </div>
       <div class="step-icon" id="step2-icon">⚙️</div>
     </div>
     <div class="step" id="step3">
       <div class="step-num">3</div>
       <div class="step-body">
-        <div class="step-title">Activate (one click)</div>
-        <div class="step-desc">Open the proxy URL once so Google can authorise it to access your Classroom.</div>
+        <div class="step-title">Link &amp; activate</div>
+        <div class="step-desc">Associate the new Cloud project with the proxy script, then authorise it.</div>
       </div>
       <div class="step-icon" id="step3-icon">✅</div>
     </div>
@@ -165,6 +203,23 @@
 
   <button class="btn-primary" id="main-btn" onclick="handleMainBtn()">Sign in with Google</button>
 
+  <!-- Step 3a: link Cloud project to Apps Script -->
+  <div class="link-box" id="link-box">
+    <div class="link-label">One step — link the Cloud project</div>
+    <ol class="link-steps">
+      <li><a id="script-editor-link" href="#" target="_blank">Open the Apps Script editor →</a></li>
+      <li>Click the ⚙️ gear icon → <strong>Project Settings</strong></li>
+      <li>Under <strong>Google Cloud Platform (GCP) Project</strong>, click <strong>Change project</strong></li>
+      <li>Paste this number and click <strong>Set project</strong>:</li>
+    </ol>
+    <div class="project-num-box">
+      <div class="project-num" id="project-num-display">—</div>
+      <button class="btn-copy-num" onclick="copyProjectNum()">Copy</button>
+    </div>
+    <button class="btn-linked" onclick="handleLinked()">Done, I've linked it →</button>
+  </div>
+
+  <!-- Step 3b: activate proxy (shown after linking) -->
   <div class="url-box" id="url-box">
     <div class="url-label">Your proxy URL</div>
     <div class="url-text" id="url-display"></div>
@@ -175,18 +230,17 @@
   </div>
 
   <div class="activate-note" id="activate-note">
-    <strong>After clicking Activate:</strong> Google will ask you to grant the proxy permission to access your Classroom. Click "Allow", then close that tab — you're done! Your proxy URL has been saved to this browser automatically.
+    <strong>After clicking Activate:</strong> Google will ask you to grant the proxy permission to access your Classroom. Click "Allow", then close that tab and click the button above.
   </div>
 
   <div class="error-msg" id="error-msg"></div>
 
+  <!-- Fallback: shown only if auto-enable fails -->
   <div class="api-enable-box" id="api-enable-box">
     <div class="api-enable-label">⚠️ One extra step required</div>
     <p class="api-enable-text">
-      Your proxy was deployed, but the <strong>Google Classroom API</strong> needs to be
-      enabled in its Cloud project before it can post grades. Click the button below —
-      it opens the correct page in Google Cloud Console. Just click <strong>Enable</strong>,
-      then come back here and click <strong>Done</strong>.
+      The Classroom API couldn't be enabled automatically. Click the button below to open
+      Google Cloud Console, click <strong>Enable</strong>, then come back and click <strong>Done</strong>.
     </p>
     <div class="api-enable-actions">
       <a id="api-enable-link" href="#" target="_blank" class="btn-open-console">Open Cloud Console →</a>
@@ -196,8 +250,8 @@
 
   <div class="divider"></div>
   <p class="note">
-    The proxy script is saved to your Google Drive under <em>My Drive</em> → <em>Apps Scripts</em>.
-    You only need to do this once per Google account — each teacher in the department runs this page with their own account to get their own personal proxy.
+    The proxy script and its Cloud project are saved to your Google account.
+    You only need to do this once — each teacher in the department runs this page with their own account.
     Your proxy URL is saved automatically to this browser and used whenever you assign activities from the hub.
   </p>
 </div>
@@ -283,16 +337,18 @@ function out(msg) {
       'https://www.googleapis.com/auth/classroom.coursework.students',
       'https://www.googleapis.com/auth/classroom.courses.readonly',
       'https://www.googleapis.com/auth/script.external_request'
-
     ],
     webapp: { access: 'ANYONE_ANONYMOUS', executeAs: 'USER_DEPLOYING' },
     exceptionLogging: 'STACKDRIVER',
     runtimeVersion: 'V8'
   });
 
-  let tokenClient = null;
-  let accessToken = null;
-  let proxyUrl    = null;
+  let tokenClient    = null;
+  let accessToken    = null;
+  let proxyUrl       = null;
+  let scriptId       = null;
+  let gcpProjectId   = null; // string ID, e.g. "oga-proxy-abc123"
+  let gcpProjectNum  = null; // numeric string, e.g. "123456789"
   let phase = 'signin'; // signin | deploy | done
 
   window.initSetupTokenClient = function () {
@@ -309,8 +365,7 @@ function out(msg) {
   };
 
   function handleMainBtn() {
-    if (phase === 'signin')  { tokenClient && tokenClient.requestAccessToken(); return; }
-    if (phase === 'deploy')  return; // in progress
+    if (phase === 'signin') { tokenClient && tokenClient.requestAccessToken(); return; }
   }
 
   async function runDeploy() {
@@ -319,34 +374,76 @@ function out(msg) {
     markStep(2, 'active');
 
     try {
-      // 1. Create project
+      // 1. Create Apps Script project
       setStepDesc(2, 'Creating Apps Script project…');
       const project = await apiFetch('POST', '/projects', { title: 'OGA Classroom Grade Proxy' });
+      scriptId = project.scriptId;
 
       // 2. Upload code
       setStepDesc(2, 'Uploading proxy code…');
-      await apiFetch('PUT', `/projects/${project.scriptId}/content`, {
+      await apiFetch('PUT', `/projects/${scriptId}/content`, {
         files: [
-          { name: 'Code',        type: 'SERVER_JS', source: PROXY_JS       },
-          { name: 'appsscript',  type: 'JSON',      source: PROXY_MANIFEST }
+          { name: 'Code',       type: 'SERVER_JS', source: PROXY_JS       },
+          { name: 'appsscript', type: 'JSON',      source: PROXY_MANIFEST }
         ]
       });
 
       // 3. Create version
       setStepDesc(2, 'Creating version…');
-      const version = await apiFetch('POST', `/projects/${project.scriptId}/versions`, { description: 'v1' });
+      const version = await apiFetch('POST', `/projects/${scriptId}/versions`, { description: 'v1' });
 
       // 4. Deploy web app
       setStepDesc(2, 'Deploying web app…');
-      const deployment = await apiFetch('POST', `/projects/${project.scriptId}/deployments`, {
+      const deployment = await apiFetch('POST', `/projects/${scriptId}/deployments`, {
         versionNumber: version.versionNumber,
         manifestFileName: 'appsscript',
         description: 'Grade proxy'
       });
-
       const entry = (deployment.entryPoints || []).find(ep => ep.entryPointType === 'WEB_APP');
       proxyUrl = entry && entry.webApp && entry.webApp.url;
       if (!proxyUrl) throw new Error('Deployment succeeded but no web app URL in response.');
+
+      // 5. Create a teacher-owned GCP project
+      setStepDesc(2, 'Creating Cloud project…');
+      gcpProjectId = 'oga-proxy-' + Date.now().toString(36);
+      const crmRes = await fetch('https://cloudresourcemanager.googleapis.com/v3/projects', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ projectId: gcpProjectId, displayName: 'OGA Grade Proxy' })
+      });
+      if (!crmRes.ok) {
+        const e = await crmRes.json().catch(() => ({}));
+        throw new Error('Failed to create Cloud project: ' + (e.error?.message || crmRes.status));
+      }
+      const crmOp = await crmRes.json();
+
+      setStepDesc(2, 'Waiting for Cloud project…');
+      await pollUntilDone(`https://cloudresourcemanager.googleapis.com/v3/${crmOp.name}`);
+
+      // Fetch project to get its numeric project number
+      const projRes = await fetch(`https://cloudresourcemanager.googleapis.com/v3/projects/${gcpProjectId}`, {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      if (projRes.ok) {
+        const projData = await projRes.json();
+        // projData.name is "projects/123456789"
+        gcpProjectNum = projData.name ? projData.name.replace('projects/', '') : null;
+      }
+
+      // 6. Enable the Classroom API in the new project
+      setStepDesc(2, 'Enabling Classroom API…');
+      const enableRes = await fetch(
+        `https://serviceusage.googleapis.com/v1/projects/${gcpProjectId}/services/classroom.googleapis.com:enable`,
+        { method: 'POST', headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' }, body: '{}' }
+      );
+      if (!enableRes.ok) {
+        const e = await enableRes.json().catch(() => ({}));
+        throw new Error('Failed to enable Classroom API: ' + (e.error?.message || enableRes.status));
+      }
+      const enableOp = await enableRes.json();
+      if (enableOp.name) {
+        await pollUntilDone(`https://serviceusage.googleapis.com/v1/${enableOp.name}`);
+      }
 
       completeSetup();
 
@@ -358,13 +455,30 @@ function out(msg) {
     }
   }
 
+  // Polls a long-running operation URL until done. Silently stops on timeout.
+  async function pollUntilDone(operationUrl, maxMs = 60000) {
+    const deadline = Date.now() + maxMs;
+    while (Date.now() < deadline) {
+      await new Promise(r => setTimeout(r, 2000));
+      try {
+        const res = await fetch(operationUrl, { headers: { Authorization: `Bearer ${accessToken}` } });
+        if (!res.ok) return;
+        const op = await res.json();
+        if (op.done) {
+          if (op.error) throw new Error(op.error.message || 'Operation failed');
+          return op.response || op;
+        }
+      } catch (e) {
+        throw e;
+      }
+    }
+    // Timed out — continue anyway; the resource may still be ready
+  }
+
   async function apiFetch(method, path, body) {
     const res = await fetch(SCRIPT_API + path, {
       method,
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'application/json'
-      },
+      headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
       body: body ? JSON.stringify(body) : undefined
     });
     const data = await res.json();
@@ -376,6 +490,8 @@ function out(msg) {
   }
 
   // ── Classroom API test ───────────────────────────────────────────────────────
+  // By this point the API should already be enabled in the teacher's own project.
+  // This is a safety check; auto-enable is attempted if it somehow isn't.
 
   async function testClassroomApi(url) {
     try {
@@ -383,28 +499,32 @@ function out(msg) {
       const text = await res.text();
       if (text === 'ok') return true;
 
-      // Extract the project number from the SERVICE_DISABLED error body
-      let projectNum = null;
+      // Extract the project number from the error body (may differ from gcpProjectNum
+      // if the script isn't linked to our project yet)
+      let errorProjectNum = null;
       try {
         const data    = JSON.parse(text);
         const details = (data.error && data.error.details) || [];
         const info    = details.find(d => d['@type'] && d['@type'].includes('ErrorInfo'));
-        const consumer = info && info.metadata && info.metadata.consumer; // e.g. "projects/123456"
-        if (consumer) projectNum = consumer.replace(/^projects\//, '');
+        const consumer = info && info.metadata && info.metadata.consumer;
+        if (consumer) errorProjectNum = consumer.replace(/^projects\//, '');
       } catch (_) {}
 
-      if (projectNum) {
-        // Auto-enable the Classroom API via the Service Usage API
-        setStepDesc(3, 'Enabling Classroom API automatically…');
+      // Try to auto-enable using whichever project we can
+      const targetId = gcpProjectId || (errorProjectNum ? null : null);
+      const targetNum = errorProjectNum || gcpProjectNum;
+      if (targetId || targetNum) {
+        setStepDesc(3, 'Enabling Classroom API…');
         try {
+          const target = targetId || targetNum;
           const enableRes = await fetch(
-            `https://serviceusage.googleapis.com/v1/projects/${projectNum}/services/classroom.googleapis.com:enable`,
-            { method: 'POST', headers: { Authorization: `Bearer ${accessToken}` } }
+            `https://serviceusage.googleapis.com/v1/projects/${target}/services/classroom.googleapis.com:enable`,
+            { method: 'POST', headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' }, body: '{}' }
           );
           if (enableRes.ok) {
-            // Wait for propagation then retest
-            setStepDesc(3, 'Waiting for API to activate…');
-            await new Promise(r => setTimeout(r, 4000));
+            const op = await enableRes.json();
+            if (op.name) await pollUntilDone(`https://serviceusage.googleapis.com/v1/${op.name}`);
+            setStepDesc(3, 'Testing Classroom API access…');
             const retry = await fetch(url + '?action=test');
             if ((await retry.text()) === 'ok') return true;
           }
@@ -412,13 +532,12 @@ function out(msg) {
       }
 
       // Fallback: show manual enable box
-      const consoleUrl = projectNum
-        ? 'https://console.developers.google.com/apis/api/classroom.googleapis.com/overview?project=' + projectNum
+      const consoleUrl = (errorProjectNum || gcpProjectNum)
+        ? 'https://console.developers.google.com/apis/api/classroom.googleapis.com/overview?project=' + (errorProjectNum || gcpProjectNum)
         : 'https://console.developers.google.com/apis/api/classroom.googleapis.com';
       showApiEnableBox(consoleUrl);
       return false;
     } catch (e) {
-      // Network/CORS failure — can't test; proceed and let activation reveal any issue
       console.warn('Classroom API test skipped (network error):', e);
       return true;
     }
@@ -445,17 +564,39 @@ function out(msg) {
     setStepDesc(3, 'Testing Classroom API access…');
     const ok = await testClassroomApi(proxyUrl);
     if (ok) completeActivation();
-    // if not ok, showApiEnableBox is called inside testClassroomApi
   };
 
   function completeSetup() {
     try { localStorage.setItem('oga_proxy_url', proxyUrl); } catch (_) {}
     markStep(2, 'done');
     markStep(3, 'active');
-    showUrl(proxyUrl);
     setBtn('activate');
     phase = 'done';
+
+    // Show project number and link to script editor
+    if (gcpProjectNum) document.getElementById('project-num-display').textContent = gcpProjectNum;
+    if (scriptId) document.getElementById('script-editor-link').href =
+      `https://script.google.com/home/projects/${scriptId}/edit`;
+    document.getElementById('link-box').classList.add('visible');
   }
+
+  window.handleLinked = function () {
+    document.getElementById('link-box').classList.remove('visible');
+    document.getElementById('url-display').textContent = proxyUrl;
+    document.getElementById('url-box').classList.add('visible');
+    document.getElementById('activate-note').classList.add('visible');
+    setStepDesc(3, 'Open the proxy URL and click Allow to authorise it.');
+  };
+
+  window.copyProjectNum = function () {
+    const num = document.getElementById('project-num-display').textContent;
+    navigator.clipboard.writeText(num).then(() => {
+      const btn = document.querySelector('.btn-copy-num');
+      const orig = btn.textContent;
+      btn.textContent = 'Copied!';
+      setTimeout(() => btn.textContent = orig, 2000);
+    });
+  };
 
   function completeActivation() {
     markStep(3, 'done');
@@ -466,8 +607,7 @@ function out(msg) {
   // ── UI helpers ───────────────────────────────────────────────────────────────
 
   function markStep(n, state) {
-    const el = document.getElementById('step' + n);
-    el.className = 'step ' + state;
+    document.getElementById('step' + n).className = 'step ' + state;
   }
 
   function setStepDesc(n, text) {
@@ -487,26 +627,11 @@ function out(msg) {
     btn.className = state === 'done' ? 'btn-success' : 'btn-primary';
   }
 
-  function showUrl(url) {
-    document.getElementById('url-display').textContent = url;
-    document.getElementById('url-box').classList.add('visible');
-    document.getElementById('activate-note').classList.add('visible');
-  }
-
-  function copyUrl() {
-    if (!proxyUrl) return;
-    navigator.clipboard.writeText(proxyUrl).then(() => {
-      const btn = document.querySelector('.btn-copy');
-      btn.textContent = 'Copied!';
-      setTimeout(() => btn.textContent = 'Copy URL', 2000);
-    });
-  }
-
   function activateProxy() {
     if (proxyUrl) window.open(proxyUrl, '_blank');
     document.getElementById('activate-btn').style.display = 'none';
     document.getElementById('activated-confirm-btn').style.display = '';
-    setStepDesc(3, 'Click Allow in the new tab, then click the button below.');
+    setStepDesc(3, 'Click Allow in the new tab, then click the button above.');
   }
 
   function showError(msg) {
