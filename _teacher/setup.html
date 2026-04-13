@@ -459,7 +459,7 @@ function out(msg) {
       const consoleUrl = num
         ? 'https://console.developers.google.com/apis/api/classroom.googleapis.com/overview?project=' + num
         : 'https://console.developers.google.com/apis/api/classroom.googleapis.com';
-      showApiEnableBox(consoleUrl);
+      showApiEnableBox(consoleUrl, text, errorProjectNum);
       return false;
     } catch (e) {
       console.warn('Classroom API test skipped (network error):', e);
@@ -467,34 +467,42 @@ function out(msg) {
     }
   }
 
-  function showApiEnableBox(consoleUrl) {
+  function showApiEnableBox(consoleUrl, rawError, errorProjectNum) {
     markStep(3, 'error');
 
-    if (gcpProjectNum) {
-      // Project number is known — API should already be enabled.
-      // Most likely cause is that the script wasn't linked before activation.
-      setStepDesc(3, 'Classroom API access failed — check the project is linked correctly.');
-      document.getElementById('api-enable-box-title').textContent = '⚠️ Classroom API access failed';
+    const scriptProject = errorProjectNum || '(unknown)';
+    const expectedProject = gcpProjectNum || '(not configured)';
+    const linked = gcpProjectNum && errorProjectNum && gcpProjectNum === errorProjectNum;
+
+    if (linked) {
+      // Script IS on the right project but API still not enabled there
+      setStepDesc(3, 'Classroom API not enabled in the linked project.');
+      document.getElementById('api-enable-box-title').textContent = '⚠️ Classroom API not enabled';
       document.getElementById('api-enable-box-text').innerHTML =
-        'The proxy script couldn\'t access the Classroom API. The most likely cause is that ' +
-        'the Apps Script project wasn\'t linked to the Cloud project <strong>before</strong> ' +
-        'you clicked Activate. To fix this: re-open the Apps Script editor, confirm the project ' +
-        'number is set to <strong>' + gcpProjectNum + '</strong>, then click Retry below.';
-      document.getElementById('api-enable-link').href = consoleUrl;
-      document.getElementById('api-enable-link').textContent = 'Open Cloud Console →';
+        'The script is linked to project <strong>' + scriptProject + '</strong> (correct), ' +
+        'but the Classroom API is not enabled there. Open Cloud Console and enable it, then click Retry.';
+      document.getElementById('api-enable-confirm-btn').textContent = 'Retry →';
+    } else if (gcpProjectNum && errorProjectNum && gcpProjectNum !== errorProjectNum) {
+      // Script is linked to the WRONG project
+      setStepDesc(3, 'Script is linked to the wrong Cloud project.');
+      document.getElementById('api-enable-box-title').textContent = '⚠️ Wrong project linked';
+      document.getElementById('api-enable-box-text').innerHTML =
+        'The script is running under project <strong>' + scriptProject + '</strong> but should be ' +
+        'linked to <strong>' + expectedProject + '</strong>. Re-open the Apps Script editor, ' +
+        'go to ⚙️ Project Settings → Change project, paste <strong>' + expectedProject + '</strong>, ' +
+        'then click Activate again and Retry.';
       document.getElementById('api-enable-confirm-btn').textContent = 'Retry →';
     } else {
-      setStepDesc(3, 'Classroom API needs enabling — follow the instructions below.');
-      document.getElementById('api-enable-box-title').textContent = '⚠️ One extra step required';
+      // Project number unknown — generic guidance
+      setStepDesc(3, 'Classroom API access failed.');
+      document.getElementById('api-enable-box-title').textContent = '⚠️ Classroom API access failed';
       document.getElementById('api-enable-box-text').innerHTML =
-        'The <strong>Google Classroom API</strong> needs to be enabled in the linked Cloud project. ' +
-        'Click the button below to open Google Cloud Console, click <strong>Enable</strong>, ' +
-        'then come back and click <strong>Done</strong>.';
-      document.getElementById('api-enable-link').href = consoleUrl;
-      document.getElementById('api-enable-link').textContent = 'Open Cloud Console →';
-      document.getElementById('api-enable-confirm-btn').textContent = 'Done, continue →';
+        'The proxy returned an error. Script is running under project <strong>' + scriptProject + '</strong>. ' +
+        'Make sure the Classroom API is enabled for that project and the script is linked to it, then click Retry.';
+      document.getElementById('api-enable-confirm-btn').textContent = 'Retry →';
     }
 
+    document.getElementById('api-enable-link').href = consoleUrl;
     document.getElementById('api-enable-box').classList.add('visible');
     document.getElementById('main-btn').disabled = true;
   }
