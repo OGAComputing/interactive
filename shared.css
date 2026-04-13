@@ -1,0 +1,347 @@
+/**
+ * shared.css — Shared reset, year-group themes, topic accent overrides,
+ * and utility component classes for all activity pages.
+ *
+ * Reference from any activity (all 2 levels deep: Y<n>/Topic/file.html):
+ *   <link rel="stylesheet" href="../../shared.css">
+ *
+ * Usage:
+ *   1. Add data-year="8|9|11" to <body> → applies the year-group colour palette
+ *   2. Add data-topic="Python|Networks|…" to <body> → overrides --accent tokens
+ *   3. Use ac-* utility classes for common components (see sections below)
+ *   4. Add your own inline <style> for activity-specific layout — it wins via
+ *      normal cascade; shared.css only sets defaults and custom properties.
+ *
+ * Existing activities are NOT required to adopt this file — they remain
+ * self-contained. This file is for new activities built from _templates/.
+ */
+
+/* ═══════════════════════════════════════════════════════════
+   RESET
+   ═══════════════════════════════════════════════════════════ */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ═══════════════════════════════════════════════════════════
+   BASE BODY  (resolved via year-group tokens below)
+   ═══════════════════════════════════════════════════════════ */
+
+body {
+  font-family:    var(--font-body, 'Segoe UI', system-ui, sans-serif);
+  background:     var(--bg,   #ffffff);
+  color:          var(--text, #1a1a1a);
+  min-height:     100vh;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   YEAR-GROUP THEMES
+   Applied via <body data-year="8|9|11">
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Year 8 · Light navy/teal · system fonts ─────────── */
+[data-year="8"] {
+  /* Page background & surfaces */
+  --bg:            #EEF5FB;
+  --surface:       #1A2E4A;   /* dark navy — used for header, code panels   */
+  --surface-mid:   #1E3A5F;
+  --surface-dim:   #243B55;
+
+  /* Accent (teal by default; topic overrides below) */
+  --accent:        #00B4D8;
+  --accent-dark:   #006D8F;
+  --accent-light:  #90E0EF;
+
+  /* Typography */
+  --text:          #1A2E4A;   /* body text on light background              */
+  --text-inv:      #FFFFFF;   /* text on dark surfaces                      */
+  --muted:         #6B8CAE;
+
+  /* Semantic colours */
+  --gold:          #FFD166;
+  --gold-bg:       #FFFBEA;
+  --green:         #57CC99;
+  --green-dark:    #1E7E5E;
+  --green-bg:      #E6F5EF;
+  --red:           #E63946;
+  --red-bg:        #FDECEA;
+  --amber:         #F4A261;
+  --amber-dark:    #E07B2A;
+  --amber-bg:      #FEF0E4;
+
+  /* Code panels */
+  --code-bg:       #1E2D40;
+  --code-text:     #A8DADC;
+
+  /* Fonts */
+  --font-body:     'Calibri', 'Segoe UI', sans-serif;
+  --font-head:     'Trebuchet MS', sans-serif;
+  --font-mono:     'Courier New', monospace;
+}
+
+/* ── Year 9 · Dark space · DM Sans + Space Mono ──────── */
+[data-year="9"] {
+  --bg:            #0B1929;
+  --surface:       #0D2137;
+  --surface-mid:   #112844;
+  --surface-dim:   #1A3352;
+
+  --accent:        #38BDF8;
+  --accent-dark:   #0891B2;
+  --accent-light:  #BAE6FD;
+
+  --text:          #F1F5F9;
+  --text-inv:      #0B1929;
+  --muted:         #64748B;
+
+  --gold:          #F59E0B;
+  --gold-bg:       #1A1200;
+  --green:         #34D399;
+  --green-dark:    #059669;
+  --green-bg:      #002010;
+  --red:           #F87171;
+  --red-bg:        #200000;
+  --amber:         #FCD34D;
+  --amber-dark:    #D97706;
+  --amber-bg:      #1A1100;
+
+  --code-bg:       #061220;
+  --code-text:     #38BDF8;
+
+  /* Google Fonts loaded via <link> in the template head */
+  --font-body:     'DM Sans', 'Segoe UI', sans-serif;
+  --font-head:     'Space Mono', monospace;
+  --font-mono:     'Space Mono', 'Courier New', monospace;
+}
+
+/* ── Year 11 · Dark navy · system fonts ──────────────── */
+[data-year="11"] {
+  --bg:            #0F1B2D;
+  --surface:       #1E2F45;
+  --surface-mid:   #243B55;
+  --surface-dim:   #2D4A6B;
+
+  --accent:        #38BDF8;
+  --accent-dark:   #0369A1;
+  --accent-light:  #7DD3FC;
+
+  --text:          #E2E8F0;
+  --text-inv:      #0F1B2D;
+  --muted:         #64748B;
+
+  --gold:          #F59E0B;
+  --gold-bg:       #1A1200;
+  --green:         #22C55E;
+  --green-dark:    #15803D;
+  --green-bg:      #002010;
+  --red:           #F87171;
+  --red-bg:        #200000;
+  --amber:         #FB923C;
+  --amber-dark:    #C2410C;
+  --amber-bg:      #1A0A00;
+
+  --code-bg:       #0D1A2D;
+  --code-text:     #7DD3FC;
+
+  --font-body:     'Segoe UI', system-ui, sans-serif;
+  --font-head:     'Trebuchet MS', sans-serif;
+  --font-mono:     'Courier New', monospace;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TOPIC ACCENT OVERRIDES
+   Applied via <body data-year="…" data-topic="…">
+   Only --accent, --accent-dark, --accent-light are changed;
+   the rest of the palette is inherited from the year theme.
+   ═══════════════════════════════════════════════════════════ */
+
+/* Year 8 */
+[data-year="8"][data-topic="Python"] {
+  --accent: #00B4D8; --accent-dark: #006D8F; --accent-light: #90E0EF; }
+
+/* Year 9 */
+[data-year="9"][data-topic="Hardware_Networks"] {
+  --accent: #38BDF8; --accent-dark: #0891B2; --accent-light: #BAE6FD; }
+[data-year="9"][data-topic="Algorithms"] {
+  --accent: #A78BFA; --accent-dark: #7C3AED; --accent-light: #DDD6FE; }
+[data-year="9"][data-topic="Cybersecurity"] {
+  --accent: #34D399; --accent-dark: #059669; --accent-light: #A7F3D0; }
+[data-year="9"][data-topic="Databases"] {
+  --accent: #F59E0B; --accent-dark: #D97706; --accent-light: #FDE68A; }
+
+/* Year 11 */
+[data-year="11"][data-topic="Networks"] {
+  --accent: #00D4FF; --accent-dark: #0099BB; --accent-light: #80EAFF; }
+[data-year="11"][data-topic="NetworkHardware"] {
+  --accent: #22D3EE; --accent-dark: #0891B2; --accent-light: #A5F3FC; }
+[data-year="11"][data-topic="Legislation"] {
+  --accent: #FB923C; --accent-dark: #C2410C; --accent-light: #FED7AA; }
+[data-year="11"][data-topic="System_Software"] {
+  --accent: #A855F7; --accent-dark: #7E22CE; --accent-light: #E9D5FF; }
+[data-year="11"][data-topic="Algorithms"] {
+  --accent: #34D399; --accent-dark: #059669; --accent-light: #A7F3D0; }
+[data-year="11"][data-topic="Security"] {
+  --accent: #F87171; --accent-dark: #B91C1C; --accent-light: #FECACA; }
+
+/* ═══════════════════════════════════════════════════════════
+   ANIMATIONS  (prefixed ac- to avoid conflicts)
+   ═══════════════════════════════════════════════════════════ */
+
+@keyframes ac-shake {
+  0%,100% { transform: translateX(0); }
+  20%     { transform: translateX(-6px); }
+  40%     { transform: translateX(6px); }
+  60%     { transform: translateX(-4px); }
+  80%     { transform: translateX(4px); }
+}
+
+@keyframes ac-fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes ac-slide-down {
+  from { transform: translateY(-110%); }
+  to   { transform: translateY(0); }
+}
+
+@keyframes ac-pulse-accent {
+  0%,100% { box-shadow: 0 0 0 0 rgba(var(--accent-rgb, 56,189,248), 0); }
+  50%     { box-shadow: 0 0 0 6px rgba(var(--accent-rgb, 56,189,248), 0.35); }
+}
+
+@keyframes ac-pulse-gold {
+  0%,100% { box-shadow: 0 0 0 0 rgba(245,158,11,0); }
+  50%     { box-shadow: 0 0 0 6px rgba(245,158,11,0.35); }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   UTILITY COMPONENTS  (all prefixed ac-)
+   Use these in new activities to avoid re-implementing them.
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Progress bar ──────────────────────────────────────── */
+
+.ac-progress-bar {
+  height: 6px;
+  background: var(--surface-mid, #334155);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.ac-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--green, #22c55e));
+  border-radius: 3px;
+  transition: width 0.4s ease;
+  width: 0%;
+}
+
+/* ── Check / submit button ─────────────────────────────── */
+
+.ac-btn {
+  display: inline-block;
+  padding: 10px 26px;
+  background: var(--accent);
+  color: var(--text-inv, #fff);
+  border: none;
+  border-radius: 8px;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s;
+  user-select: none;
+}
+.ac-btn:hover  { opacity: 0.85; }
+.ac-btn:active { transform: scale(0.97); }
+
+.ac-btn-secondary {
+  background: transparent;
+  border: 2px solid var(--muted, #64748b);
+  color: var(--muted, #64748b);
+}
+.ac-btn-secondary:hover { border-color: var(--accent); color: var(--accent); opacity: 1; }
+
+/* ── Completion banner (fixed top, slides in) ──────────── */
+
+.ac-banner {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  padding: 14px 20px;
+  text-align: center;
+  font-family: var(--font-head, 'Trebuchet MS', sans-serif);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  z-index: 9000;
+  display: none;
+  transform: translateY(-110%);
+  transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.ac-banner.show {
+  display: block;
+  transform: translateY(0);
+}
+.ac-banner.gold {
+  background: var(--gold, #f59e0b);
+  color: #111;
+  border-bottom: 3px solid #d97706;
+}
+.ac-banner.green {
+  background: var(--green-dark, #15803d);
+  color: #fff;
+  border-bottom: 3px solid var(--green, #22c55e);
+}
+
+/* ── Toast notification (fixed bottom-right) ───────────── */
+
+.ac-toast {
+  position: fixed;
+  bottom: 24px; right: 24px;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  font-weight: 600;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+  transform: translateY(80px);
+  opacity: 0;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+  pointer-events: none;
+  z-index: 8000;
+  background: var(--green-dark, #15803d);
+  color: #fff;
+}
+.ac-toast.show { transform: translateY(0); opacity: 1; }
+.ac-toast.warn { background: var(--amber-dark, #b45309); }
+.ac-toast.error { background: var(--red, #ef4444); }
+
+/* ── Inline code / code block ──────────────────────────── */
+
+.ac-code {
+  background: var(--code-bg, #1e2d40);
+  color: var(--code-text, #a8dadc);
+  font-family: var(--font-mono, 'Courier New', monospace);
+  font-size: 0.88rem;
+  line-height: 1.65;
+  padding: 14px 16px;
+  border-radius: 6px;
+  overflow-x: auto;
+  white-space: pre;
+}
+
+code {
+  font-family: var(--font-mono, 'Courier New', monospace);
+  background: rgba(255,255,255,0.08);
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-size: 0.9em;
+}
+
+/* ── Accessibility utility ─────────────────────────────── */
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px;
+  padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+}
