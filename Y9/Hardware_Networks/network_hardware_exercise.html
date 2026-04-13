@@ -1,0 +1,2313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- ACTIVITY
+title:  Network Hardware
+lesson: Lesson 3
+type:   Practice
+stars:  4
+desc:   LAN/WAN sorting, hardware matching, true/false with error correction, and extension tasks
+color:  #6C3FC5
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Network Hardware – Interactive Exercises</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f0f1a;
+    --surface: #1a1a2e;
+    --surface2: #22223a;
+    --border: #2e2e4a;
+    --accent: #6C3FC5;
+    --accent-light: #8B5CF6;
+    --gold: #f5c842;
+    --green: #22c55e;
+    --red: #ef4444;
+    --text: #e2e2f0;
+    --muted: #8888aa;
+    --font-mono: 'Space Mono', monospace;
+    --font-sans: 'DM Sans', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    min-height: 100vh;
+    padding-bottom: 60px;
+  }
+
+  /* ── Header ── */
+  header {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16162a 100%);
+    border-bottom: 2px solid var(--accent);
+    padding: 20px 32px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  header .icon {
+    width: 44px; height: 44px;
+    background: var(--accent);
+    border-radius: 10px;
+    display: grid; place-items: center;
+    font-size: 22px;
+  }
+  header h1 {
+    font-family: var(--font-mono);
+    font-size: 1.25rem;
+    color: var(--text);
+    letter-spacing: -0.5px;
+  }
+  header p {
+    font-size: 0.82rem;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  /* ── Tab bar ── */
+  .tab-bar {
+    display: flex;
+    gap: 4px;
+    padding: 16px 32px 0;
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+  }
+  .tab-btn {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    padding: 9px 16px;
+    border: 1px solid var(--border);
+    border-bottom: none;
+    background: var(--surface);
+    color: var(--muted);
+    cursor: pointer;
+    border-radius: 8px 8px 0 0;
+    transition: all 0.2s;
+    white-space: nowrap;
+    position: relative;
+  }
+  .tab-btn:hover { color: var(--text); background: var(--surface2); }
+  .tab-btn.active {
+    background: var(--surface2);
+    color: var(--text);
+    border-color: var(--accent);
+    border-bottom-color: var(--surface2);
+  }
+  .tab-btn.done-gold {
+    background: var(--gold);
+    color: #111;
+    border-color: var(--gold);
+  }
+  .tab-btn.done-green {
+    background: var(--green);
+    color: #fff;
+    border-color: var(--green);
+  }
+  .tab-indicator { margin-left: 6px; font-size: 0.85rem; }
+
+  /* ── Main content ── */
+  .content { padding: 28px 32px; max-width: 900px; margin: 0 auto; }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ── Cards / surfaces ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+  }
+  .card-title {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    color: var(--accent-light);
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  /* ── Section intro ── */
+  .section-intro {
+    font-size: 0.95rem;
+    color: var(--muted);
+    margin-bottom: 20px;
+    line-height: 1.6;
+  }
+  .section-intro strong { color: var(--text); }
+
+  /* ── Task heading ── */
+  .task-heading {
+    font-family: var(--font-mono);
+    font-size: 1rem;
+    margin-bottom: 8px;
+    color: var(--text);
+  }
+
+  /* ─────────────────────────────────────────
+     TAB 1 – LAN / WAN Sort
+  ───────────────────────────────────────── */
+  .statement-pool {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    min-height: 60px;
+    padding: 14px;
+    background: var(--bg);
+    border: 1.5px dashed var(--border);
+    border-radius: 10px;
+    margin-bottom: 20px;
+  }
+  .statement-chip {
+    background: var(--surface2);
+    border: 1.5px solid var(--accent);
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 0.85rem;
+    cursor: grab;
+    user-select: none;
+    transition: transform 0.15s, box-shadow 0.15s;
+    line-height: 1.4;
+    max-width: 380px;
+  }
+  .statement-chip:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(108,63,197,0.3); }
+  .statement-chip.dragging { opacity: 0.4; }
+  .statement-chip.locked-correct {
+    border-color: var(--green);
+    background: rgba(34,197,94,0.12);
+    cursor: default;
+  }
+  .statement-chip.locked-wrong {
+    border-color: var(--red);
+    background: rgba(239,68,68,0.12);
+    cursor: default;
+  }
+
+  .sort-columns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .sort-zone {
+    background: var(--bg);
+    border: 2px dashed var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    min-height: 120px;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .sort-zone.drag-over {
+    border-color: var(--accent-light);
+    background: rgba(108,63,197,0.1);
+  }
+  .sort-zone-label {
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+    text-align: center;
+    padding: 6px;
+    border-radius: 6px;
+  }
+  .sort-zone-label.lan { background: rgba(99,179,237,0.15); color: #63b3ed; }
+  .sort-zone-label.wan { background: rgba(252,129,74,0.15); color: #fc814a; }
+  .sort-zone .statement-chip { max-width: 100%; }
+
+  .check-btn, .reset-btn, .check-section-btn {
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    padding: 9px 20px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 8px;
+  }
+  .check-btn {
+    background: var(--accent);
+    color: #fff;
+    margin-right: 8px;
+  }
+  .check-btn:hover { background: var(--accent-light); }
+  .reset-btn {
+    background: var(--surface2);
+    color: var(--muted);
+    border: 1px solid var(--border);
+  }
+  .reset-btn:hover { color: var(--text); }
+
+  .feedback-msg {
+    font-size: 0.88rem;
+    margin-top: 10px;
+    padding: 8px 14px;
+    border-radius: 8px;
+    display: none;
+  }
+  .feedback-msg.show { display: block; }
+  .feedback-msg.correct { background: rgba(34,197,94,0.15); color: var(--green); border: 1px solid rgba(34,197,94,0.3); }
+  .feedback-msg.incorrect { background: rgba(239,68,68,0.12); color: var(--red); border: 1px solid rgba(239,68,68,0.25); }
+
+  /* ─────────────────────────────────────────
+     TAB 2 – Hardware Matching
+  ───────────────────────────────────────── */
+  .match-grid {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 12px 0;
+    align-items: start;
+  }
+  .match-term {
+    background: var(--surface2);
+    border: 1.5px solid var(--accent);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    text-align: center;
+    cursor: grab;
+    user-select: none;
+    transition: transform 0.15s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    min-width: 110px;
+  }
+  .match-term:hover { transform: scale(1.04); box-shadow: 0 4px 16px rgba(108,63,197,0.3); }
+  .match-term.locked-correct { border-color: var(--green); background: rgba(34,197,94,0.12); cursor:default; }
+  .match-term.dragging { opacity:0.3; }
+
+  .hw-chip-icon svg { color: var(--accent-light); display: block; }
+  .hw-chip-icon { line-height: 0; }
+
+  /* Definition row icon — smaller, muted */
+  .def-icon { flex-shrink: 0; opacity: 0.35; }
+  .def-icon svg { width: 38px; height: 38px; color: var(--text); }
+
+  .match-line { display: flex; align-items: center; justify-content: center; font-size: 1.2rem; color: var(--border); padding: 0 8px; }
+
+  .match-drop {
+    border: 1.5px dashed var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    min-height: 44px;
+    font-size: 0.83rem;
+    color: var(--muted);
+    transition: border-color 0.2s, background 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .match-drop.drag-over { border-color: var(--accent-light); background: rgba(108,63,197,0.1); }
+  .match-drop.correct { border-color: var(--green); background: rgba(34,197,94,0.1); }
+  .match-drop.wrong { border-color: var(--red); background: rgba(239,68,68,0.1); }
+
+  .match-def {
+    font-size: 0.85rem;
+    line-height: 1.45;
+    color: var(--text);
+    padding: 10px 0;
+    grid-column: 3;
+  }
+
+  /* Alternative click-to-select matching */
+  .match-pool {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 24px;
+    min-height: 110px;
+    padding: 14px;
+    background: var(--bg);
+    border: 1.5px dashed var(--border);
+    border-radius: 10px;
+    align-items: flex-start;
+  }
+
+  .match-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .match-table td {
+    padding: 10px 12px;
+    vertical-align: middle;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.88rem;
+  }
+  .match-table td:first-child {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--accent-light);
+    width: 140px;
+    white-space: nowrap;
+  }
+  .match-table td:last-child {
+    display: table-cell; /* keep as table cell but inner div is flex */
+  }
+  .match-table td.drop-cell {
+    min-width: 130px;
+  }
+
+  /* ─────────────────────────────────────────
+     TAB 3 – True / False + Error Correction
+  ───────────────────────────────────────── */
+  .tf-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin-bottom: 14px;
+    transition: border-color 0.3s;
+  }
+  .tf-item.correct { border-color: var(--green); }
+  .tf-item.wrong { border-color: var(--red); }
+
+  .tf-statement {
+    font-size: 0.9rem;
+    margin-bottom: 12px;
+    line-height: 1.5;
+  }
+
+  .tf-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .tf-btn {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    padding: 7px 18px;
+    border-radius: 7px;
+    border: 1.5px solid var(--border);
+    background: var(--surface2);
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .tf-btn:hover { border-color: var(--accent-light); }
+  .tf-btn.selected-true { border-color: #63b3ed; background: rgba(99,179,237,0.15); color: #63b3ed; }
+  .tf-btn.selected-false { border-color: #fc814a; background: rgba(252,129,74,0.12); color: #fc814a; }
+  .tf-btn.confirmed-correct { border-color: var(--green); background: rgba(34,197,94,0.15); color: var(--green); pointer-events:none; }
+  .tf-btn.confirmed-wrong { border-color: var(--red); background: rgba(239,68,68,0.12); color: var(--red); pointer-events:none; }
+  .tf-btn:disabled { pointer-events:none; opacity:0.5; }
+
+  .tf-feedback {
+    font-size: 0.82rem;
+    margin-top: 8px;
+    color: var(--muted);
+    display: none;
+  }
+  .tf-feedback.show { display: block; }
+
+  /* Error correction */
+  .error-correction {
+    margin-top: 12px;
+    padding: 12px 14px;
+    background: var(--bg);
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    display: none;
+  }
+  .error-correction.show { display: block; }
+  .error-correction label {
+    font-size: 0.82rem;
+    color: var(--accent-light);
+    font-family: var(--font-mono);
+    display: block;
+    margin-bottom: 8px;
+  }
+  .error-correction .error-stmt {
+    font-size: 0.88rem;
+    margin-bottom: 10px;
+    line-height: 1.5;
+    color: var(--text);
+  }
+  .error-correction .wrong-word {
+    color: var(--red);
+    font-weight: 700;
+    text-decoration: underline dotted;
+  }
+  .error-input {
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    border-radius: 7px;
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-size: 0.88rem;
+    padding: 7px 12px;
+    width: 200px;
+    outline: none;
+    transition: border-color 0.2s;
+    margin-right: 8px;
+  }
+  .error-input:focus { border-color: var(--accent-light); }
+  .error-input.correct-ans { border-color: var(--green); background: rgba(34,197,94,0.1); }
+  .error-input.wrong-ans { border-color: var(--red); background: rgba(239,68,68,0.08); }
+  .check-section-btn {
+    background: var(--accent);
+    color: #fff;
+    padding: 7px 16px;
+    font-size: 0.8rem;
+  }
+  .check-section-btn:hover { background: var(--accent-light); }
+
+  /* ─────────────────────────────────────────
+     TAB 4 – Extension
+  ───────────────────────────────────────── */
+  .ext-question {
+    margin-bottom: 24px;
+  }
+  .ext-marks {
+    display: inline-block;
+    background: var(--accent);
+    color: #fff;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    padding: 2px 10px;
+    border-radius: 20px;
+    margin-left: 10px;
+    vertical-align: middle;
+  }
+  .ext-textarea {
+    width: 100%;
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-size: 0.9rem;
+    padding: 12px 14px;
+    resize: vertical;
+    outline: none;
+    line-height: 1.6;
+    margin-top: 10px;
+    transition: border-color 0.2s;
+  }
+  .ext-textarea:focus { border-color: var(--accent-light); }
+
+  .hint-toggle {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--muted);
+    background: none;
+    border: 1px dashed var(--border);
+    border-radius: 6px;
+    padding: 4px 12px;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: color 0.2s;
+  }
+  .hint-toggle:hover { color: var(--accent-light); }
+  .hint-box {
+    background: rgba(108,63,197,0.1);
+    border: 1px solid rgba(108,63,197,0.3);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 0.83rem;
+    color: var(--accent-light);
+    margin-top: 8px;
+    display: none;
+    line-height: 1.6;
+  }
+  .hint-box.show { display: block; }
+  .hint-box ul { padding-left: 18px; }
+  .hint-box li { margin-bottom: 4px; }
+
+  .model-answer-btn {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--gold);
+    background: none;
+    border: 1px dashed rgba(245,200,66,0.3);
+    border-radius: 6px;
+    padding: 4px 12px;
+    cursor: pointer;
+    margin-top: 8px;
+    margin-left: 8px;
+    transition: border-color 0.2s;
+  }
+  .model-answer-btn:hover { border-color: var(--gold); }
+  .model-answer {
+    background: rgba(245,200,66,0.08);
+    border: 1px solid rgba(245,200,66,0.25);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 0.85rem;
+    color: #e0c966;
+    margin-top: 8px;
+    display: none;
+    line-height: 1.6;
+  }
+  .model-answer.show { display: block; }
+
+  /* ─────────────────────────────────────────
+     Extension – Q1 Which is better
+  ───────────────────────────────────────── */
+  .ext-compare-grid {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  .ext-device-card {
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 12px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s, transform 0.15s;
+    background: var(--bg);
+  }
+  .ext-device-card:hover { border-color: var(--accent-light); background: rgba(108,63,197,0.08); transform: translateY(-2px); }
+  .ext-device-card.selected { border-color: var(--accent); background: rgba(108,63,197,0.15); }
+  .ext-device-card.selected-wrong { border-color: var(--red); background: rgba(239,68,68,0.1); pointer-events:none; }
+  .ext-device-card.selected-correct { border-color: var(--green); background: rgba(34,197,94,0.12); pointer-events:none; }
+  .ext-device-card.locked { pointer-events: none; }
+  .ext-device-name { font-family: var(--font-mono); font-size: 0.88rem; margin-top: 8px; }
+  .ext-device-pick-label { font-size: 0.75rem; color: var(--muted); margin-top: 4px; }
+  .ext-vs { font-family: var(--font-mono); font-size: 1.1rem; font-weight: 700; color: var(--muted); text-align: center; }
+
+  .ext-reason-section { margin-top: 4px; }
+  .ext-reason-option {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    background: var(--bg);
+    border: 1.5px solid var(--border);
+    border-radius: 9px;
+    padding: 11px 14px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    font-size: 0.88rem;
+    line-height: 1.5;
+  }
+  .ext-reason-option:hover { border-color: var(--accent-light); background: rgba(108,63,197,0.07); }
+  .ext-reason-option.selected { border-color: var(--accent); background: rgba(108,63,197,0.12); }
+  .ext-reason-option.correct { border-color: var(--green); background: rgba(34,197,94,0.1); pointer-events:none; }
+  .ext-reason-option.wrong { border-color: var(--red); background: rgba(239,68,68,0.08); pointer-events:none; }
+  .ext-reason-option.locked { pointer-events: none; opacity: 0.6; }
+  .ext-reason-option.locked.correct { opacity: 1; }
+  .ext-reason-checkbox {
+    width: 18px; height: 18px; flex-shrink: 0;
+    border: 2px solid var(--border); border-radius: 4px;
+    margin-top: 1px;
+    display: grid; place-items: center;
+    font-size: 0.75rem;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .ext-reason-option.selected .ext-reason-checkbox { border-color: var(--accent); background: var(--accent); color: #fff; }
+  .ext-reason-option.correct .ext-reason-checkbox { border-color: var(--green); background: var(--green); color: #fff; }
+  .ext-reason-option.wrong .ext-reason-checkbox { border-color: var(--red); background: rgba(239,68,68,0.3); }
+
+  .ext-explanation {
+    margin-top: 12px;
+    padding: 12px 16px;
+    background: rgba(108,63,197,0.1);
+    border: 1px solid rgba(108,63,197,0.3);
+    border-radius: 8px;
+    font-size: 0.86rem;
+    color: var(--accent-light);
+    line-height: 1.6;
+  }
+
+  /* ─────────────────────────────────────────
+     Extension – Q2 Odd One Out
+  ───────────────────────────────────────── */
+  .ooo-round {
+    margin-bottom: 28px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+  }
+  .ooo-round:last-child { border-bottom: none; }
+  .ooo-round-label {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .ooo-devices {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+  }
+  .ooo-device-btn {
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    cursor: pointer;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    transition: border-color 0.2s, background 0.2s, transform 0.15s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    min-width: 90px;
+  }
+  .ooo-device-btn:hover { border-color: var(--accent-light); transform: translateY(-2px); }
+  .ooo-device-btn.selected { border-color: var(--accent); background: rgba(108,63,197,0.12); }
+  .ooo-device-btn.correct { border-color: var(--green); background: rgba(34,197,94,0.1); pointer-events:none; }
+  .ooo-device-btn.wrong { border-color: var(--red); background: rgba(239,68,68,0.08); pointer-events:none; }
+  .ooo-device-btn.locked { pointer-events: none; opacity: 0.5; }
+  .ooo-device-btn.locked.correct { opacity: 1; }
+  .ooo-device-icon { opacity: 0.8; }
+
+  .ooo-reasons { margin-top: 4px; display: none; }
+  .ooo-reasons.show { display: block; }
+  .ooo-reason-btn {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: var(--bg);
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-size: 0.86rem;
+    padding: 10px 14px;
+    margin-bottom: 7px;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    line-height: 1.5;
+  }
+  .ooo-reason-btn:hover { border-color: var(--accent-light); background: rgba(108,63,197,0.07); }
+  .ooo-reason-btn.selected { border-color: var(--accent); background: rgba(108,63,197,0.12); }
+  .ooo-reason-btn.correct { border-color: var(--green); background: rgba(34,197,94,0.1); pointer-events:none; }
+  .ooo-reason-btn.wrong { border-color: var(--red); background: rgba(239,68,68,0.08); pointer-events:none; }
+  .ooo-reason-btn.locked { pointer-events: none; opacity: 0.55; }
+  .ooo-reason-btn.locked.correct { opacity: 1; }
+
+  .ooo-check-btn {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    padding: 8px 18px;
+    border-radius: 8px;
+    border: none;
+    background: var(--accent);
+    color: #fff;
+    cursor: pointer;
+    margin-top: 6px;
+    transition: background 0.2s;
+  }
+  .ooo-check-btn:hover { background: var(--accent-light); }
+  .ooo-feedback {
+    font-size: 0.84rem;
+    margin-top: 8px;
+    padding: 7px 12px;
+    border-radius: 7px;
+    display: none;
+  }
+  .ooo-feedback.show { display: block; }
+  .ooo-feedback.correct { background: rgba(34,197,94,0.12); color: var(--green); }
+  .ooo-feedback.wrong { background: rgba(239,68,68,0.1); color: var(--red); }
+
+  /* ─────────────────────────────────────────
+     Completion banner
+  ───────────────────────────────────────── */
+  .completion-banner {
+    display: none;
+    margin-top: 20px;
+    padding: 18px 24px;
+    border-radius: 12px;
+    font-family: var(--font-mono);
+    font-size: 20px;
+    font-weight: 700;
+    text-align: center;
+    animation: pulse-banner 1.5s ease-in-out infinite;
+  }
+  .completion-banner.gold-banner {
+    background: rgba(245,200,66,0.2);
+    border: 2px solid var(--gold);
+    color: var(--gold);
+  }
+  .completion-banner.green-banner {
+    background: rgba(34,197,94,0.15);
+    border: 2px solid var(--green);
+    color: var(--green);
+  }
+  @keyframes pulse-banner {
+    0%,100% { box-shadow: 0 0 0 0 rgba(108,63,197,0); }
+    50% { box-shadow: 0 0 20px 4px rgba(245,200,66,0.25); }
+  }
+
+  /* saved indicator */
+  #save-indicator {
+    position: fixed;
+    bottom: 16px;
+    right: 20px;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--green);
+    background: var(--surface);
+    border: 1px solid rgba(34,197,94,0.3);
+    border-radius: 8px;
+    padding: 6px 14px;
+    opacity: 0;
+    transition: opacity 0.4s;
+    pointer-events: none;
+    z-index: 999;
+  }
+  #save-indicator.show { opacity: 1; }
+
+  /* fireworks */
+  .firework-container {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 9999;
+  }
+  .firework {
+    position: absolute;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    animation: firework-anim 1s ease-out forwards;
+  }
+  @keyframes firework-anim {
+    0% { transform: translate(0,0) scale(1); opacity:1; }
+    100% { transform: translate(var(--dx), var(--dy)) scale(0); opacity:0; }
+  }
+
+  /* Responsive */
+  @media(max-width:640px) {
+    .sort-columns { grid-template-columns: 1fr; }
+    .content { padding: 16px; }
+    header { padding: 14px 16px; }
+    .tab-bar { padding: 12px 16px 0; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="icon">🌐</div>
+  <div>
+    <h1>Network Hardware</h1>
+    <p>Component 1 &nbsp;·&nbsp; Networks, Connections &amp; Protocols</p>
+  </div>
+</header>
+
+<nav class="tab-bar" id="tab-bar">
+  <button class="tab-btn active" data-tab="0" onclick="switchTab(0)">① LAN &amp; WAN <span class="tab-indicator" id="ti-0"></span></button>
+  <button class="tab-btn" data-tab="1" onclick="switchTab(1)">② Hardware Match <span class="tab-indicator" id="ti-1"></span></button>
+  <button class="tab-btn" data-tab="2" onclick="switchTab(2)">③ True or False <span class="tab-indicator" id="ti-2"></span></button>
+  <button class="tab-btn" data-tab="3" onclick="switchTab(3)">④ Extension <span class="tab-indicator" id="ti-3"></span></button>
+</nav>
+
+<div class="content">
+
+  <!-- ════════════════════════════════════════════
+       TAB 0 – LAN / WAN Sort
+  ════════════════════════════════════════════ -->
+  <div class="tab-panel active" id="tab-0">
+    <div class="card">
+      <div class="card-title">Task 1 – Sort the Statements</div>
+      <p class="section-intro">Drag each statement into the correct category — <strong>LAN</strong> or <strong>WAN</strong>. All statements should be placed.</p>
+    </div>
+
+    <div class="card">
+      <p style="font-size:0.83rem;color:var(--muted);margin-bottom:10px;">Statements to sort:</p>
+      <div class="statement-pool" id="lan-wan-pool"></div>
+
+      <div class="sort-columns">
+        <div>
+          <div class="sort-zone-label lan">🏫 LAN – Local Area Network</div>
+          <div class="sort-zone" id="zone-lan" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event,'lan')"></div>
+        </div>
+        <div>
+          <div class="sort-zone-label wan">🌍 WAN – Wide Area Network</div>
+          <div class="sort-zone" id="zone-wan" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event,'wan')"></div>
+        </div>
+      </div>
+
+      <div style="margin-top:16px;">
+        <button class="check-btn" onclick="checkLanWan()">Check Answers</button>
+        <button class="reset-btn" onclick="resetLanWan()">Reset</button>
+      </div>
+      <div class="feedback-msg" id="fb-lanwan"></div>
+      <div class="completion-banner" id="banner-0"></div>
+    </div>
+
+    <!-- Definition mini-fill -->
+    <div class="card">
+      <div class="card-title">Task 1b – Complete the Definitions</div>
+      <p class="section-intro">Fill in the missing words to complete each definition.</p>
+
+      <p style="font-size:0.9rem;margin-bottom:14px;line-height:1.7;">
+        A <strong>LAN</strong> connects devices over a <input class="error-input" id="def-lan-1" placeholder="???"> geographical area, such as a
+        <input class="error-input" id="def-lan-2" placeholder="???"> or school.
+        A LAN does <em>not</em> automatically give you
+        <input class="error-input" id="def-lan-3" placeholder="???"> access.
+      </p>
+      <p style="font-size:0.9rem;margin-bottom:14px;line-height:1.7;">
+        A <strong>WAN</strong> connects multiple LANs over a
+        <input class="error-input" id="def-wan-1" placeholder="???"> geographical area, such as a city or
+        <input class="error-input" id="def-wan-2" placeholder="???">.
+        The <input class="error-input" id="def-wan-3" placeholder="???"> is an example of a WAN.
+      </p>
+      <button class="check-btn" onclick="checkDefs()">Check</button>
+      <button class="reset-btn" onclick="resetDefs()">Reset</button>
+      <div class="feedback-msg" id="fb-defs"></div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════
+       TAB 1 – Hardware Matching
+  ════════════════════════════════════════════ -->
+  <div class="tab-panel" id="tab-1">
+    <div class="card">
+      <div class="card-title">Task 2 – Match Hardware to Definitions</div>
+      <p class="section-intro">Drag each hardware item from the pool and drop it next to the correct definition.</p>
+    </div>
+
+    <div class="card">
+      <p style="font-size:0.83rem;color:var(--muted);margin-bottom:10px;">Hardware items:</p>
+      <div class="match-pool" id="hw-pool"></div>
+
+      <table class="match-table" id="hw-table">
+        <tbody id="hw-tbody"></tbody>
+      </table>
+
+      <div style="margin-top:16px;">
+        <button class="check-btn" onclick="checkHW()">Check Answers</button>
+        <button class="reset-btn" onclick="resetHW()">Reset</button>
+      </div>
+      <div class="feedback-msg" id="fb-hw"></div>
+      <div class="completion-banner" id="banner-1"></div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════
+       TAB 2 – True / False + Error Correction
+  ════════════════════════════════════════════ -->
+  <div class="tab-panel" id="tab-2">
+    <div class="card">
+      <div class="card-title">Task 3 – True or False?</div>
+      <p class="section-intro">For each statement, decide if it is <strong>TRUE</strong> or <strong>FALSE</strong>. If the statement is false, correct the <span style="color:var(--red);font-weight:700">highlighted word</span> to make it true.</p>
+    </div>
+
+    <div id="tf-container"></div>
+
+    <div style="margin-top:4px;">
+      <button class="check-btn" onclick="checkAllTF()">Check All</button>
+      <button class="reset-btn" onclick="resetTF()">Reset</button>
+    </div>
+    <div class="feedback-msg" id="fb-tf"></div>
+    <div class="completion-banner" id="banner-2"></div>
+  </div>
+
+  <!-- ════════════════════════════════════════════
+       TAB 3 – Extension
+  ════════════════════════════════════════════ -->
+  <div class="tab-panel" id="tab-3">
+    <div class="card">
+      <div class="card-title">⭐ Extension Tasks</div>
+      <p class="section-intro">Two challenges below — pick your choices and justify them. Both must be completed to finish this tab.</p>
+    </div>
+
+    <!-- ── Q1: Which is better and why ── -->
+    <div class="card ext-question" id="ext-q1-card">
+      <div class="card-title">Q1 – Which is better… and why?</div>
+      <p style="font-size:0.9rem;line-height:1.6;margin-bottom:16px;">
+        A school is setting up a new computer room with 30 desktop PCs that all need internet access.
+        They need to choose between two devices to connect the PCs to the network.
+      </p>
+
+      <!-- Device comparison -->
+      <div class="ext-compare-grid">
+        <div class="ext-device-card" id="ext-pick-hub" onclick="extPickDevice('hub')">
+          <div class="ext-device-icon" style="color:var(--accent-light);">
+            <svg viewBox="0 0 64 64" width="56" height="56" fill="none"><rect x="8" y="24" width="48" height="18" rx="3" fill="currentColor" opacity="0.18" stroke="currentColor" stroke-width="1.8"/><rect x="13" y="29" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.4" fill="none"/><rect x="21" y="29" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.4" fill="none"/><rect x="29" y="29" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.4" fill="none"/><rect x="37" y="29" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.4" fill="none"/><rect x="45" y="29" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.4" fill="none"/><line x1="8" y1="33" x2="3" y2="33" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><polyline points="5,31 3,33 5,35" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="56" y1="33" x2="61" y2="33" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><polyline points="59,31 61,33 59,35" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="32" y1="24" x2="32" y2="18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><polyline points="30,20 32,18 34,20" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="32" y1="42" x2="32" y2="48" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><polyline points="30,46 32,48 34,46" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <div class="ext-device-name">Hub</div>
+          <div class="ext-device-pick-label">Tap to pick</div>
+        </div>
+        <div class="ext-vs">VS</div>
+        <div class="ext-device-card" id="ext-pick-switch" onclick="extPickDevice('switch')">
+          <div class="ext-device-icon" style="color:var(--accent-light);">
+            <svg viewBox="0 0 64 64" width="56" height="56" fill="none"><rect x="8" y="24" width="48" height="18" rx="3" fill="currentColor" opacity="0.18" stroke="currentColor" stroke-width="1.8"/><rect x="11" y="29" width="4" height="5" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/><rect x="17" y="29" width="4" height="5" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/><rect x="23" y="29" width="4" height="5" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/><rect x="29" y="29" width="4" height="5" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/><rect x="35" y="29" width="4" height="5" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/><rect x="41" y="29" width="4" height="5" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/><rect x="47" y="29" width="4" height="5" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/><circle cx="13" cy="37" r="1.5" fill="#22c55e" opacity="0.9"/><circle cx="19" cy="37" r="1.5" fill="currentColor" opacity="0.25"/><circle cx="25" cy="37" r="1.5" fill="#22c55e" opacity="0.7"/><circle cx="31" cy="37" r="1.5" fill="currentColor" opacity="0.25"/><circle cx="37" cy="37" r="1.5" fill="#22c55e" opacity="0.5"/><circle cx="43" cy="37" r="1.5" fill="currentColor" opacity="0.25"/><circle cx="49" cy="37" r="1.5" fill="#22c55e" opacity="0.8"/><line x1="32" y1="24" x2="32" y2="16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><polyline points="29,18 32,16 35,18" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <div class="ext-device-name">Switch</div>
+          <div class="ext-device-pick-label">Tap to pick</div>
+        </div>
+      </div>
+
+      <!-- Reason selection — revealed after device pick -->
+      <div class="ext-reason-section" id="ext-reason-section" style="display:none;">
+        <p style="font-size:0.88rem;color:var(--muted);margin-bottom:12px;">Now pick <strong style="color:var(--text);">all the reasons</strong> that support your choice:</p>
+        <div id="ext-reason-options"></div>
+        <button class="check-btn" style="margin-top:14px;" onclick="checkExtQ1()">Check my answer</button>
+      </div>
+
+      <div class="feedback-msg" id="fb-ext-q1"></div>
+      <div class="ext-explanation" id="ext-q1-explain" style="display:none;"></div>
+    </div>
+
+    <!-- ── Q2: Odd one out ── -->
+    <div class="card ext-question" id="ext-q2-card">
+      <div class="card-title">Q2 – Odd One Out</div>
+      <p style="font-size:0.9rem;line-height:1.6;margin-bottom:16px;">
+        Look at the four devices below. One of them is the <strong>odd one out</strong> — it doesn't belong with the others for a specific reason.
+        Pick the odd one out, then select the reason that best explains your choice.
+      </p>
+
+      <div id="ooo-rounds"></div>
+
+      <div class="feedback-msg" id="fb-ext-q2"></div>
+      <div class="completion-banner" id="banner-3"></div>
+    </div>
+  </div>
+</div><!-- /content -->
+
+<div id="save-indicator">✓ progress saved</div>
+<div class="firework-container" id="firework-container"></div>
+
+<script>
+// ════════════════════════════════════════════
+// DATA
+// ════════════════════════════════════════════
+
+const LAN_WAN_STATEMENTS = [
+  { id:'s1', text:'Connects devices over a small geographical area', answer:'lan' },
+  { id:'s2', text:'An example is a school or office building network', answer:'lan' },
+  { id:'s3', text:'Does not automatically give you internet access', answer:'lan' },
+  { id:'s4', text:'Connects multiple LANs over a large geographical area', answer:'wan' },
+  { id:'s5', text:'The Internet is an example of this type of network', answer:'wan' },
+  { id:'s6', text:'Can span an entire country or continent', answer:'wan' },
+  { id:'s7', text:'Devices are connected within a single building or site', answer:'lan' },
+  { id:'s8', text:'Links cities, countries, or even continents together', answer:'wan' },
+];
+
+const DEF_ANSWERS = {
+  'def-lan-1': ['small'],
+  'def-lan-2': ['building', 'office building', 'hospital', 'school', 'office'],
+  'def-lan-3': ['internet'],
+  'def-wan-1': ['large'],
+  'def-wan-2': ['country'],
+  'def-wan-3': ['internet'],
+};
+
+const HW_ITEMS = [
+  { id:'hw1', name:'Router',                   def:'Connects different networks together using the internet. It finds the fastest route to send data between networks and your local devices.' },
+  { id:'hw2', name:'Network Interface Card (NIC)', def:'Every device needs one of these to connect to a network. It can be wired or wireless.' },
+  { id:'hw3', name:'Wireless Access Point (WAP)', def:'Allows devices to connect to a network without wires, to share data and resources.' },
+  { id:'hw4', name:'Hub',                      def:'Connects devices using wires. When it receives data from one device it sends it to every other device on the network.' },
+  { id:'hw5', name:'Switch',                   def:'Connects devices using wires and stores the address of each device so it can direct data only to the correct device.' },
+  { id:'hw6', name:'Modem',                    def:'Sends data over a telephone network by converting signals from analogue to digital and back again.' },
+];
+
+// SVG icons for each hardware item (64×64 viewBox, uses currentColor)
+const HW_ICONS = {
+  hw1: `<svg viewBox="0 0 64 64" width="52" height="52" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- Router: flat box with antennas and ports -->
+    <!-- Body -->
+    <rect x="8" y="28" width="48" height="18" rx="4" fill="currentColor" opacity="0.18" stroke="currentColor" stroke-width="1.8"/>
+    <!-- Status light strip -->
+    <rect x="13" y="33" width="5" height="5" rx="1.5" fill="#22c55e" opacity="0.9"/>
+    <rect x="21" y="33" width="5" height="5" rx="1.5" fill="#22c55e" opacity="0.7"/>
+    <rect x="29" y="33" width="5" height="5" rx="1.5" fill="currentColor" opacity="0.4"/>
+    <!-- Ethernet ports -->
+    <rect x="38" y="33" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.4" fill="none"/>
+    <rect x="45" y="33" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.4" fill="none"/>
+    <!-- Antennas -->
+    <line x1="18" y1="28" x2="14" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    <circle cx="14" cy="11" r="2" fill="currentColor" opacity="0.7"/>
+    <line x1="32" y1="28" x2="32" y2="10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    <circle cx="32" cy="9" r="2" fill="currentColor" opacity="0.7"/>
+    <line x1="46" y1="28" x2="50" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    <circle cx="50" cy="11" r="2" fill="currentColor" opacity="0.7"/>
+    <!-- Wireless arcs -->
+    <path d="M24 22 Q32 16 40 22" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round" opacity="0.5"/>
+    <path d="M27 25 Q32 21 37 25" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round" opacity="0.7"/>
+  </svg>`,
+
+  hw2: `<svg viewBox="0 0 64 64" width="52" height="52" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- NIC: PCB card with gold edge connector and chips -->
+    <!-- PCB body -->
+    <rect x="10" y="14" width="38" height="28" rx="2" fill="currentColor" opacity="0.15" stroke="currentColor" stroke-width="1.8"/>
+    <!-- Gold edge connector (bracket at bottom) -->
+    <rect x="10" y="38" width="38" height="8" rx="1" fill="currentColor" opacity="0.35"/>
+    <!-- Connector teeth -->
+    <rect x="13" y="39" width="3" height="6" rx="0.5" fill="#f5c842" opacity="0.9"/>
+    <rect x="18" y="39" width="3" height="6" rx="0.5" fill="#f5c842" opacity="0.9"/>
+    <rect x="23" y="39" width="3" height="6" rx="0.5" fill="#f5c842" opacity="0.9"/>
+    <rect x="28" y="39" width="3" height="6" rx="0.5" fill="#f5c842" opacity="0.9"/>
+    <rect x="33" y="39" width="3" height="6" rx="0.5" fill="#f5c842" opacity="0.9"/>
+    <rect x="38" y="39" width="3" height="6" rx="0.5" fill="#f5c842" opacity="0.9"/>
+    <!-- Main chip -->
+    <rect x="20" y="20" width="14" height="12" rx="2" fill="currentColor" opacity="0.6"/>
+    <rect x="22" y="22" width="10" height="8" rx="1" fill="currentColor" opacity="0.9"/>
+    <!-- Chip pins -->
+    <line x1="20" y1="23" x2="16" y2="23" stroke="currentColor" stroke-width="1.2"/>
+    <line x1="20" y1="26" x2="16" y2="26" stroke="currentColor" stroke-width="1.2"/>
+    <line x1="20" y1="29" x2="16" y2="29" stroke="currentColor" stroke-width="1.2"/>
+    <line x1="34" y1="23" x2="38" y2="23" stroke="currentColor" stroke-width="1.2"/>
+    <line x1="34" y1="26" x2="38" y2="26" stroke="currentColor" stroke-width="1.2"/>
+    <line x1="34" y1="29" x2="38" y2="29" stroke="currentColor" stroke-width="1.2"/>
+    <!-- Small component -->
+    <rect x="14" y="18" width="4" height="4" rx="0.5" fill="currentColor" opacity="0.5"/>
+    <!-- Ethernet port on side -->
+    <rect x="48" y="22" width="6" height="10" rx="1" stroke="currentColor" stroke-width="1.5" fill="currentColor" opacity="0.2"/>
+    <line x1="49" y1="25" x2="53" y2="25" stroke="currentColor" stroke-width="1"/>
+    <line x1="49" y1="28" x2="53" y2="28" stroke="currentColor" stroke-width="1"/>
+    <line x1="48" y1="22" x2="54" y2="22" stroke="currentColor" stroke-width="1.5"/>
+  </svg>`,
+
+  hw3: `<svg viewBox="0 0 64 64" width="52" height="52" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- WAP: dome-shaped device with wireless waves radiating up -->
+    <!-- Base/mount -->
+    <rect x="22" y="50" width="20" height="4" rx="2" fill="currentColor" opacity="0.4"/>
+    <!-- Body dome -->
+    <ellipse cx="32" cy="44" rx="14" ry="6" fill="currentColor" opacity="0.18" stroke="currentColor" stroke-width="1.8"/>
+    <ellipse cx="32" cy="42" rx="14" ry="7" fill="currentColor" opacity="0.12" stroke="currentColor" stroke-width="1.8"/>
+    <!-- Status light -->
+    <circle cx="32" cy="42" r="2.5" fill="#22c55e" opacity="0.9"/>
+    <circle cx="39" cy="43" r="1.5" fill="currentColor" opacity="0.4"/>
+    <!-- Wireless arcs radiating upward -->
+    <path d="M20 35 Q32 26 44 35" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" opacity="0.4"/>
+    <path d="M23 28 Q32 20 41 28" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" opacity="0.55"/>
+    <path d="M26 21 Q32 14 38 21" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" opacity="0.7"/>
+    <path d="M29 14 Q32 9 35 14" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" opacity="0.9"/>
+    <!-- Centre dot -->
+    <circle cx="32" cy="10" r="2" fill="currentColor" opacity="0.9"/>
+  </svg>`,
+
+  hw4: `<svg viewBox="0 0 64 64" width="52" height="52" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- Hub: rectangular box, ports, broadcast arrows to ALL -->
+    <!-- Body -->
+    <rect x="8" y="24" width="48" height="18" rx="3" fill="currentColor" opacity="0.18" stroke="currentColor" stroke-width="1.8"/>
+    <!-- Ports (all same, no intelligence) -->
+    <rect x="13" y="29" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.4" fill="none"/>
+    <rect x="21" y="29" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.4" fill="none"/>
+    <rect x="29" y="29" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.4" fill="none"/>
+    <rect x="37" y="29" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.4" fill="none"/>
+    <rect x="45" y="29" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.4" fill="none"/>
+    <!-- Broadcast: arrows fanning outward from device -->
+    <!-- Arrow left -->
+    <line x1="8" y1="33" x2="3" y2="33" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    <polyline points="5,31 3,33 5,35" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- Arrow right -->
+    <line x1="56" y1="33" x2="61" y2="33" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    <polyline points="59,31 61,33 59,35" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- Arrow up -->
+    <line x1="32" y1="24" x2="32" y2="18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    <polyline points="30,20 32,18 34,20" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- Arrow down -->
+    <line x1="32" y1="42" x2="32" y2="48" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    <polyline points="30,46 32,48 34,46" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- Power LED -->
+    <circle cx="9" cy="37" r="2" fill="currentColor" opacity="0.5"/>
+    <!-- Label hint -->
+    <text x="32" y="21" text-anchor="middle" font-size="5" fill="currentColor" opacity="0.5" font-family="monospace">broadcast</text>
+  </svg>`,
+
+  hw5: `<svg viewBox="0 0 64 64" width="52" height="52" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- Switch: similar box but with targeted single arrow -->
+    <!-- Body -->
+    <rect x="8" y="24" width="48" height="18" rx="3" fill="currentColor" opacity="0.18" stroke="currentColor" stroke-width="1.8"/>
+    <!-- More ports than hub (8) -->
+    <rect x="11" y="29" width="4" height="5" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/>
+    <rect x="17" y="29" width="4" height="5" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/>
+    <rect x="23" y="29" width="4" height="5" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/>
+    <rect x="29" y="29" width="4" height="5" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/>
+    <rect x="35" y="29" width="4" height="5" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/>
+    <rect x="41" y="29" width="4" height="5" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/>
+    <rect x="47" y="29" width="4" height="5" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/>
+    <!-- Status LEDs - some lit, targeted -->
+    <circle cx="13" cy="37" r="1.5" fill="#22c55e" opacity="0.9"/>
+    <circle cx="19" cy="37" r="1.5" fill="currentColor" opacity="0.25"/>
+    <circle cx="25" cy="37" r="1.5" fill="#22c55e" opacity="0.7"/>
+    <circle cx="31" cy="37" r="1.5" fill="currentColor" opacity="0.25"/>
+    <circle cx="37" cy="37" r="1.5" fill="#22c55e" opacity="0.5"/>
+    <circle cx="43" cy="37" r="1.5" fill="currentColor" opacity="0.25"/>
+    <circle cx="49" cy="37" r="1.5" fill="#22c55e" opacity="0.8"/>
+    <!-- Single targeted arrow (only one direction) -->
+    <line x1="32" y1="24" x2="32" y2="16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    <polyline points="29,18 32,16 35,18" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- MAC address label -->
+    <text x="32" y="21" text-anchor="middle" font-size="4.5" fill="currentColor" opacity="0.5" font-family="monospace">MAC</text>
+  </svg>`,
+
+  hw6: `<svg viewBox="0 0 64 64" width="52" height="52" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- Modem: box with signal conversion (analogue wave → digital) -->
+    <!-- Body -->
+    <rect x="10" y="22" width="44" height="22" rx="3" fill="currentColor" opacity="0.18" stroke="currentColor" stroke-width="1.8"/>
+    <!-- Phone line port left -->
+    <rect x="6" y="30" width="4" height="6" rx="1" fill="currentColor" opacity="0.4"/>
+    <!-- Ethernet port right -->
+    <rect x="54" y="30" width="4" height="6" rx="1" fill="currentColor" opacity="0.4"/>
+    <!-- Analogue wave (left side, inside) -->
+    <path d="M14 33 Q17 28 20 33 Q23 38 26 33" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" opacity="0.7"/>
+    <!-- Arrow in middle (conversion) -->
+    <line x1="28" y1="33" x2="36" y2="33" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+    <polyline points="34,30.5 36,33 34,35.5" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- Digital signal (right side, inside) -->
+    <polyline points="38,36 38,30 41,30 41,36 44,36 44,30 47,30 47,36 50,36" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.85"/>
+    <!-- Status lights -->
+    <circle cx="14" cy="39" r="2" fill="#22c55e" opacity="0.8"/>
+    <circle cx="20" cy="39" r="2" fill="#22c55e" opacity="0.5"/>
+    <circle cx="26" cy="39" r="2" fill="currentColor" opacity="0.3"/>
+  </svg>`,
+};
+
+// True/False data: statement, answer, wrong-word (null if none), correct word
+const TF_DATA = [
+  {
+    id:'tf1',
+    statement:'Network interface cards can only have wired connections.',
+    answer: false,
+    wrongWord: 'wired',
+    correction: 'wireless',
+    explanation: 'NICs can be wired (Ethernet) or wireless (Wi-Fi) — the statement should say "wired or wireless".'
+  },
+  {
+    id:'tf2',
+    statement:'When a hub receives data from one device it sends the data to every other device on the network.',
+    answer: true,
+    wrongWord: null,
+    correction: null,
+    explanation: 'Correct — hubs broadcast to all connected devices, unlike switches which direct data to the intended recipient.'
+  },
+  {
+    id:'tf3',
+    statement:'A MAC address changes each time you connect to a network.',
+    answer: false,
+    wrongWord: 'changes',
+    correction: 'permanent',
+    explanation: 'A MAC address is a permanent, fixed hardware address assigned by the manufacturer. It does not change. (IP addresses can change.)'
+  },
+  {
+    id:'tf4',
+    statement:'Switches are similar to hubs except they send data only to the intended device, reducing unnecessary traffic.',
+    answer: true,
+    wrongWord: null,
+    correction: null,
+    explanation: 'Correct — switches use MAC addresses to send data only to the intended device.'
+  },
+  {
+    id:'tf5',
+    statement:'When connecting to a wireless network you identify it using the SSID.',
+    answer: true,
+    wrongWord: null,
+    correction: null,
+    explanation: 'Correct — the SSID (Service Set Identifier) is the name of the wireless network you see when connecting.'
+  },
+  {
+    id:'tf6',
+    statement:'A modem converts data from digital to analogue because computers can only understand analogue signals.',
+    answer: false,
+    wrongWord: 'analogue',
+    correction: 'digital',
+    explanation: 'Computers understand digital signals. The modem converts digital data to analogue for the telephone line, and converts analogue signals back to digital for the computer.'
+  },
+  {
+    id:'tf7',
+    statement:'A router is used to connect LANs together and to the internet (a WAN).',
+    answer: true,
+    wrongWord: null,
+    correction: null,
+    explanation: 'Correct — routers connect networks (LANs to WANs or LANs to LANs) and route data using the fastest path.'
+  },
+];
+
+const SAVE_KEY = 'net_hw_exercise_v2';
+
+// ════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════
+let state = {
+  activeTab: 0,
+  lanWanPlacements: {}, // id -> 'lan'|'wan'
+  lanWanChecked: false,
+  lanWanGold: false,
+  lanWanGreen: false,
+  defs: {}, // field -> value
+  defsCorrect: false,
+  hwPlacements: {},   // defId -> hwId
+  hwChecked: false,
+  hwGold: false,
+  hwGreen: false,
+  tfAnswers: {},      // id -> 'true'|'false'
+  tfCorrections: {},  // id -> string
+  tfChecked: false,
+  tfGold: false,
+  tfGreen: false,
+  extQ1: null,
+  extOOO: null,
+  tabDone: [false, false, false, false],
+  tabGold: [false, false, false, false],
+};
+
+let dragItem = null;
+let dragSource = null; // 'pool' | 'lan' | 'wan'
+
+// ════════════════════════════════════════════
+// SAVE / LOAD
+// ════════════════════════════════════════════
+function saveState() {
+  localStorage.setItem(SAVE_KEY, JSON.stringify(state));
+  flashSaved();
+}
+
+function loadState() {
+  const raw = localStorage.getItem(SAVE_KEY);
+  if (!raw) return;
+  try {
+    const saved = JSON.parse(raw);
+    state = Object.assign(state, saved);
+  } catch(e) {}
+}
+
+function flashSaved() {
+  const el = document.getElementById('save-indicator');
+  el.classList.add('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove('show'), 2000);
+}
+
+// ════════════════════════════════════════════
+// TAB SWITCHING
+// ════════════════════════════════════════════
+function switchTab(n) {
+  document.querySelectorAll('.tab-panel').forEach((p,i) => p.classList.toggle('active', i===n));
+  document.querySelectorAll('.tab-btn').forEach((b,i) => b.classList.toggle('active', i===n));
+  state.activeTab = n;
+  saveState();
+}
+
+function updateTabIndicators() {
+  for (let i=0;i<4;i++) {
+    const ind = document.getElementById('ti-'+i);
+    const btn = document.querySelector('.tab-btn[data-tab="'+i+'"]');
+    if (state.tabGold[i]) {
+      ind.textContent = '★';
+      btn.className = btn.className.replace('done-green','').replace('done-gold','').trim() + ' done-gold';
+    } else if (state.tabDone[i]) {
+      ind.textContent = '✓';
+      btn.className = btn.className.replace('done-gold','').replace('done-green','').trim() + ' done-green';
+    } else {
+      ind.textContent = '';
+      btn.className = btn.className.replace('done-gold','').replace('done-green','').trim();
+    }
+  }
+}
+
+// ════════════════════════════════════════════
+// FIREWORKS
+// ════════════════════════════════════════════
+function launchFireworks() {
+  const c = document.getElementById('firework-container');
+  c.innerHTML = '';
+  const colours = ['#f5c842','#6C3FC5','#22c55e','#fc814a','#63b3ed','#fff'];
+  for (let i=0;i<60;i++) {
+    const el = document.createElement('div');
+    el.className = 'firework';
+    el.style.left = (20 + Math.random()*60) + '%';
+    el.style.top  = (10 + Math.random()*50) + '%';
+    el.style.background = colours[Math.floor(Math.random()*colours.length)];
+    el.style.setProperty('--dx', (Math.random()-0.5)*200 + 'px');
+    el.style.setProperty('--dy', (Math.random()-0.5)*200 + 'px');
+    el.style.animationDelay = Math.random()*0.4 + 's';
+    c.appendChild(el);
+  }
+  setTimeout(() => c.innerHTML = '', 2000);
+}
+
+// ════════════════════════════════════════════
+// DRAG HELPERS
+// ════════════════════════════════════════════
+function onDragOver(e) { e.preventDefault(); e.currentTarget.classList.add('drag-over'); }
+function onDragLeave(e) { e.currentTarget.classList.remove('drag-over'); }
+
+// ════════════════════════════════════════════
+// TAB 0 – LAN/WAN
+// ════════════════════════════════════════════
+function buildLanWan() {
+  const pool = document.getElementById('lan-wan-pool');
+  pool.innerHTML = '';
+  const lan = document.getElementById('zone-lan');
+  const wan = document.getElementById('zone-wan');
+  lan.innerHTML = ''; wan.innerHTML = '';
+
+  LAN_WAN_STATEMENTS.forEach(s => {
+    const placed = state.lanWanPlacements[s.id];
+    const chip = makeChip(s);
+    if (placed === 'lan') lan.appendChild(chip);
+    else if (placed === 'wan') wan.appendChild(chip);
+    else pool.appendChild(chip);
+
+    if (state.lanWanChecked) {
+      const correct = placed === s.answer;
+      chip.classList.add(correct ? 'locked-correct' : 'locked-wrong');
+      chip.draggable = false;
+    }
+  });
+
+  if (state.lanWanChecked) showLanWanResult();
+}
+
+function makeChip(s) {
+  const d = document.createElement('div');
+  d.className = 'statement-chip';
+  d.textContent = s.text;
+  d.dataset.id = s.id;
+  d.draggable = !state.lanWanChecked;
+  d.addEventListener('dragstart', e => {
+    dragItem = s.id;
+    d.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+  });
+  d.addEventListener('dragend', () => d.classList.remove('dragging'));
+  return d;
+}
+
+document.getElementById('lan-wan-pool').addEventListener('dragover', onDragOver);
+document.getElementById('lan-wan-pool').addEventListener('dragleave', onDragLeave);
+document.getElementById('lan-wan-pool').addEventListener('drop', e => {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  if (!dragItem) return;
+  delete state.lanWanPlacements[dragItem];
+  buildLanWan();
+  saveState();
+});
+
+function onDrop(e, zone) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  if (!dragItem) return;
+  state.lanWanPlacements[dragItem] = zone;
+  buildLanWan();
+  saveState();
+}
+
+function checkLanWan() {
+  const all = LAN_WAN_STATEMENTS.every(s => state.lanWanPlacements[s.id]);
+  if (!all) {
+    showFeedback('fb-lanwan','Please place all statements before checking.','incorrect');
+    return;
+  }
+  state.lanWanChecked = true;
+  const correct = LAN_WAN_STATEMENTS.every(s => state.lanWanPlacements[s.id] === s.answer);
+  const gold = correct;
+  state.lanWanGold = gold;
+  state.lanWanGreen = !gold && correct;
+  showLanWanResult();
+  buildLanWan();
+
+  // tab done check (after defs too)
+  updateTabDone();
+  saveState();
+}
+
+function showLanWanResult() {
+  const correct = LAN_WAN_STATEMENTS.every(s => state.lanWanPlacements[s.id] === s.answer);
+  if (correct) {
+    showFeedback('fb-lanwan','✓ All sorted correctly!','correct');
+  } else {
+    const wrong = LAN_WAN_STATEMENTS.filter(s => state.lanWanPlacements[s.id] && state.lanWanPlacements[s.id] !== s.answer).length;
+    showFeedback('fb-lanwan',`${wrong} statement(s) in the wrong category — highlighted in red. Reset to try again.`,'incorrect');
+  }
+}
+
+function resetLanWan() {
+  state.lanWanPlacements = {};
+  state.lanWanChecked = false;
+  state.lanWanGold = false;
+  state.lanWanGreen = false;
+  document.getElementById('fb-lanwan').classList.remove('show');
+  document.getElementById('banner-0').style.display = 'none';
+  buildLanWan();
+  saveState();
+}
+
+// Definitions fill
+function buildDefs() {
+  Object.entries(DEF_ANSWERS).forEach(([id]) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (state.defs[id]) el.value = state.defs[id];
+    el.addEventListener('input', () => {
+      state.defs[id] = el.value;
+      saveState();
+    });
+  });
+  if (state.defsCorrect) {
+    Object.keys(DEF_ANSWERS).forEach(id => {
+      const el = document.getElementById(id);
+      if (el) { el.classList.add('correct-ans'); el.disabled = true; }
+    });
+  }
+}
+
+function checkDefs() {
+  let allCorrect = true;
+  Object.entries(DEF_ANSWERS).forEach(([id, accepted]) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const val = (el.value || '').trim().toLowerCase();
+    const ok = accepted.some(a => val === a.toLowerCase());
+    el.classList.toggle('correct-ans', ok);
+    el.classList.toggle('wrong-ans', !ok);
+    if (!ok) allCorrect = false;
+  });
+  if (allCorrect) {
+    state.defsCorrect = true;
+    showFeedback('fb-defs','✓ All definitions correct!','correct');
+    Object.keys(DEF_ANSWERS).forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.disabled = true;
+    });
+    updateTabDone();
+  } else {
+    showFeedback('fb-defs','Some answers are incorrect — check the highlighted boxes.','incorrect');
+  }
+  saveState();
+}
+
+function resetDefs() {
+  state.defs = {};
+  state.defsCorrect = false;
+  Object.keys(DEF_ANSWERS).forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.value = ''; el.className = 'error-input'; el.disabled = false; }
+  });
+  document.getElementById('fb-defs').classList.remove('show');
+  saveState();
+}
+
+function updateTabDone() {
+  // Tab 0: lanwan checked + correct AND defs correct
+  const t0 = state.lanWanChecked && LAN_WAN_STATEMENTS.every(s => state.lanWanPlacements[s.id] === s.answer) && state.defsCorrect;
+  state.tabDone[0] = t0;
+  state.tabGold[0] = state.lanWanGold && state.defsCorrect;
+
+  const banner0 = document.getElementById('banner-0');
+  if (t0) {
+    banner0.style.display = 'block';
+    if (state.tabGold[0]) {
+      banner0.className = 'completion-banner gold-banner';
+      banner0.textContent = '★ Perfect! Gold star earned!';
+      launchFireworks();
+    } else {
+      banner0.className = 'completion-banner green-banner';
+      banner0.textContent = '✓ Task complete!';
+    }
+  }
+  updateTabIndicators();
+}
+
+// ════════════════════════════════════════════
+// TAB 1 – Hardware Matching
+// ════════════════════════════════════════════
+function buildHW() {
+  const pool = document.getElementById('hw-pool');
+  const tbody = document.getElementById('hw-tbody');
+  pool.innerHTML = '';
+  tbody.innerHTML = '';
+
+  // Items not yet placed
+  const placed = new Set(Object.values(state.hwPlacements));
+  HW_ITEMS.forEach(item => {
+    if (!placed.has(item.id)) {
+      pool.appendChild(makeHWChip(item));
+    }
+  });
+
+  HW_ITEMS.forEach(item => {
+    const tr = document.createElement('tr');
+    const dropCell = document.createElement('td');
+    dropCell.className = 'drop-cell';
+    dropCell.dataset.defid = item.id;
+    dropCell.setAttribute('ondragover', 'onDragOver(event)');
+    dropCell.setAttribute('ondragleave', 'onDragLeave(event)');
+    dropCell.addEventListener('dragover', onDragOver);
+    dropCell.addEventListener('dragleave', onDragLeave);
+    dropCell.addEventListener('drop', e => {
+      e.preventDefault();
+      dropCell.classList.remove('drag-over');
+      if (!dragItem) return;
+      // Remove from any previous slot
+      Object.entries(state.hwPlacements).forEach(([defId, hwId]) => {
+        if (hwId === dragItem) delete state.hwPlacements[defId];
+      });
+      state.hwPlacements[item.id] = dragItem;
+      buildHW();
+      saveState();
+    });
+    dropCell.style.minWidth = '130px';
+    dropCell.style.verticalAlign = 'middle';
+
+    const placed = state.hwPlacements[item.id];
+    if (placed) {
+      const hwItem = HW_ITEMS.find(h => h.id === placed);
+      if (hwItem) {
+        const chip = makeHWChip(hwItem, true);
+        if (state.hwChecked) {
+          const correct = placed === item.id;
+          chip.classList.toggle('locked-correct', correct);
+          dropCell.classList.toggle('correct', correct);
+          dropCell.classList.toggle('wrong', !correct);
+        }
+        dropCell.appendChild(chip);
+      }
+    } else {
+      dropCell.style.color = 'var(--muted)';
+      dropCell.style.fontSize = '0.8rem';
+      dropCell.textContent = 'Drop here…';
+    }
+
+    const defCell = document.createElement('td');
+    const defInner = document.createElement('div');
+    defInner.style.display = 'flex';
+    defInner.style.alignItems = 'center';
+    defInner.style.gap = '12px';
+
+    // Show ? until this row is correctly answered, then reveal real icon
+    const defIcon = document.createElement('div');
+    defIcon.className = 'def-icon';
+    const placedCorrectly = state.hwChecked && state.hwPlacements[item.id] === item.id;
+    if (placedCorrectly) {
+      defIcon.innerHTML = HW_ICONS[item.id] || '';
+    } else {
+      defIcon.innerHTML = `<svg viewBox="0 0 52 52" width="38" height="38" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="4" y="4" width="44" height="44" rx="10" fill="currentColor" opacity="0.1" stroke="currentColor" stroke-width="1.5" opacity="0.3"/>
+        <text x="26" y="36" text-anchor="middle" font-size="26" font-family="monospace" font-weight="700" fill="currentColor" opacity="0.35">?</text>
+      </svg>`;
+    }
+    defInner.appendChild(defIcon);
+
+    const defText = document.createElement('span');
+    defText.style.fontSize = '0.88rem';
+    defText.style.lineHeight = '1.5';
+    defText.textContent = item.def;
+    defInner.appendChild(defText);
+    defCell.appendChild(defInner);
+
+    tr.appendChild(dropCell);
+    tr.appendChild(defCell);
+    tbody.appendChild(tr);
+  });
+}
+
+function makeHWChip(item, inSlot = false) {
+  const d = document.createElement('div');
+  d.className = 'match-term';
+  d.dataset.id = item.id;
+  // Icon
+  const iconWrap = document.createElement('div');
+  iconWrap.className = 'hw-chip-icon';
+  iconWrap.innerHTML = HW_ICONS[item.id] || '';
+  const label = document.createElement('span');
+  label.textContent = item.name;
+  d.appendChild(iconWrap);
+  d.appendChild(label);
+  d.draggable = !state.hwChecked;
+  d.addEventListener('dragstart', e => {
+    dragItem = item.id;
+    d.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+  });
+  d.addEventListener('dragend', () => d.classList.remove('dragging'));
+  if (inSlot && !state.hwChecked) {
+    d.addEventListener('dblclick', () => {
+      // Return to pool on double click
+      Object.entries(state.hwPlacements).forEach(([defId, hwId]) => {
+        if (hwId === item.id) delete state.hwPlacements[defId];
+      });
+      buildHW();
+      saveState();
+    });
+    d.title = 'Double-click to return to pool';
+  }
+  return d;
+}
+
+// Return chip to pool on drop
+document.getElementById('hw-pool').addEventListener('dragover', onDragOver);
+document.getElementById('hw-pool').addEventListener('dragleave', onDragLeave);
+document.getElementById('hw-pool').addEventListener('drop', e => {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  if (!dragItem) return;
+  Object.entries(state.hwPlacements).forEach(([defId, hwId]) => {
+    if (hwId === dragItem) delete state.hwPlacements[defId];
+  });
+  buildHW();
+  saveState();
+});
+
+function checkHW() {
+  const allPlaced = HW_ITEMS.every(item => state.hwPlacements[item.id]);
+  if (!allPlaced) {
+    showFeedback('fb-hw','Please match all hardware items before checking.','incorrect');
+    return;
+  }
+  state.hwChecked = true;
+  const score = HW_ITEMS.filter(item => state.hwPlacements[item.id] === item.id).length;
+  const gold = score === HW_ITEMS.length;
+  state.hwGold = gold;
+  state.hwGreen = !gold;
+  state.tabDone[1] = true;
+  state.tabGold[1] = gold;
+  buildHW();
+  if (gold) {
+    showFeedback('fb-hw','★ Perfect — all matched correctly!','correct');
+    const b = document.getElementById('banner-1');
+    b.style.display='block';
+    b.className='completion-banner gold-banner';
+    b.textContent='★ Perfect! Gold star earned!';
+    launchFireworks();
+  } else {
+    showFeedback('fb-hw',`${score}/${HW_ITEMS.length} correct. Incorrect ones are highlighted.`,'incorrect');
+    const b = document.getElementById('banner-1');
+    b.style.display='block';
+    b.className='completion-banner green-banner';
+    b.textContent=`✓ ${score}/${HW_ITEMS.length} correct — well done!`;
+  }
+  updateTabIndicators();
+  saveState();
+}
+
+function resetHW() {
+  state.hwPlacements = {};
+  state.hwChecked = false;
+  state.hwGold = false;
+  state.hwGreen = false;
+  state.tabDone[1] = false;
+  state.tabGold[1] = false;
+  document.getElementById('fb-hw').classList.remove('show');
+  document.getElementById('banner-1').style.display='none';
+  buildHW();
+  updateTabIndicators();
+  saveState();
+}
+
+// ════════════════════════════════════════════
+// TAB 2 – True / False
+// ════════════════════════════════════════════
+function buildTF() {
+  const container = document.getElementById('tf-container');
+  container.innerHTML = '';
+
+  TF_DATA.forEach(item => {
+    const div = document.createElement('div');
+    div.className = 'tf-item';
+    div.id = 'tfitem-'+item.id;
+
+    const stmt = document.createElement('div');
+    stmt.className = 'tf-statement';
+    stmt.textContent = item.statement;
+    div.appendChild(stmt);
+
+    const btns = document.createElement('div');
+    btns.className = 'tf-buttons';
+
+    ['true','false'].forEach(v => {
+      const b = document.createElement('button');
+      b.className = 'tf-btn';
+      b.textContent = v === 'true' ? '✓ True' : '✗ False';
+      b.dataset.val = v;
+      b.disabled = state.tfChecked;
+      const sel = state.tfAnswers[item.id];
+      if (sel === v) b.classList.add('selected-'+v);
+      b.addEventListener('click', () => {
+        if (state.tfChecked) return;
+        state.tfAnswers[item.id] = v;
+        btns.querySelectorAll('.tf-btn').forEach(x => x.classList.remove('selected-true','selected-false'));
+        b.classList.add('selected-'+v);
+        // Show error correction if false selected for a false statement
+        const ec = div.querySelector('.error-correction');
+        if (ec) ec.classList.toggle('show', v === 'false' && !item.answer);
+        saveState();
+      });
+      btns.appendChild(b);
+    });
+
+    div.appendChild(btns);
+
+    // Feedback line
+    const fb = document.createElement('div');
+    fb.className = 'tf-feedback';
+    fb.id = 'tf-fb-'+item.id;
+    div.appendChild(fb);
+
+    // Error correction (only for false statements)
+    if (!item.answer && item.wrongWord) {
+      const ec = document.createElement('div');
+      ec.className = 'error-correction';
+      ec.id = 'ec-'+item.id;
+      const lbl = document.createElement('label');
+      lbl.textContent = '✎ Error correction: replace the incorrect word to make the statement true.';
+      ec.appendChild(lbl);
+
+      const errStmt = document.createElement('div');
+      errStmt.className = 'error-stmt';
+      errStmt.innerHTML = item.statement.replace(
+        item.wrongWord,
+        `<span class="wrong-word">${item.wrongWord}</span>`
+      );
+      ec.appendChild(errStmt);
+
+      const inp = document.createElement('input');
+      inp.type = 'text';
+      inp.className = 'error-input';
+      inp.placeholder = 'Correct word…';
+      inp.value = state.tfCorrections[item.id] || '';
+      inp.addEventListener('input', () => {
+        state.tfCorrections[item.id] = inp.value;
+        saveState();
+      });
+      inp.disabled = state.tfChecked;
+      ec.appendChild(inp);
+
+      if (state.tfChecked || (state.tfAnswers[item.id] === 'false')) {
+        ec.classList.add('show');
+      }
+      div.appendChild(ec);
+    }
+
+    container.appendChild(div);
+  });
+
+  if (state.tfChecked) applyTFResults();
+}
+
+function checkAllTF() {
+  const answered = TF_DATA.every(item => state.tfAnswers[item.id]);
+  if (!answered) {
+    showFeedback('fb-tf','Please answer all statements before checking.','incorrect');
+    return;
+  }
+  state.tfChecked = true;
+  applyTFResults();
+
+  const correct = TF_DATA.filter(item => {
+    const ans = state.tfAnswers[item.id] === 'true';
+    return ans === item.answer;
+  }).length;
+
+  const correctionScore = TF_DATA.filter(item => {
+    if (item.answer || !item.wrongWord) return true; // not a false statement or no correction needed
+    const correction = (state.tfCorrections[item.id]||'').trim().toLowerCase();
+    return (state.tfCorrections[item.id]||'').trim().toLowerCase() === item.correction.toLowerCase();
+  }).length;
+
+  const gold = correct === TF_DATA.length && correctionScore === TF_DATA.length;
+  state.tabDone[2] = true;
+  state.tabGold[2] = gold;
+
+  const banner = document.getElementById('banner-2');
+  banner.style.display = 'block';
+  if (gold) {
+    banner.className = 'completion-banner gold-banner';
+    banner.textContent = '★ Perfect! Gold star earned!';
+    launchFireworks();
+    showFeedback('fb-tf',`★ Perfect score — ${correct}/${TF_DATA.length} correct!`,'correct');
+  } else {
+    banner.className = 'completion-banner green-banner';
+    banner.textContent = `✓ ${correct}/${TF_DATA.length} correct`;
+    showFeedback('fb-tf',`${correct}/${TF_DATA.length} statements correct. Review the explanations below each statement.`,'incorrect');
+  }
+
+  updateTabIndicators();
+  saveState();
+}
+
+function applyTFResults() {
+  TF_DATA.forEach(item => {
+    const div = document.getElementById('tfitem-'+item.id);
+    if (!div) return;
+    const ans = state.tfAnswers[item.id];
+    const correct = (ans === 'true') === item.answer;
+
+    div.classList.toggle('correct', correct);
+    div.classList.toggle('wrong', !correct);
+
+    div.querySelectorAll('.tf-btn').forEach(b => {
+      b.disabled = true;
+      const v = b.dataset.val;
+      if (v === ans) {
+        b.classList.add(correct ? 'confirmed-correct' : 'confirmed-wrong');
+      }
+    });
+
+    const fb = document.getElementById('tf-fb-'+item.id);
+    if (fb) {
+      fb.textContent = (correct ? '✓ ' : '✗ ') + item.explanation;
+      fb.classList.add('show');
+      fb.style.color = correct ? 'var(--green)' : 'var(--red)';
+    }
+
+    // Error correction result
+    if (!item.answer && item.wrongWord) {
+      const ec = document.getElementById('ec-'+item.id);
+      if (ec) {
+        ec.classList.add('show');
+        const inp = ec.querySelector('input');
+        if (inp) {
+          inp.disabled = true;
+          const correction = (state.tfCorrections[item.id]||'').trim().toLowerCase();
+          const ok = correction === item.correction.toLowerCase();
+          inp.classList.toggle('correct-ans', ok);
+          inp.classList.toggle('wrong-ans', !ok);
+          if (!ok) {
+            // Show correct answer
+            const hint = document.createElement('span');
+            hint.style.fontSize = '0.8rem';
+            hint.style.color = 'var(--green)';
+            hint.style.marginLeft = '8px';
+            hint.textContent = '→ ' + item.correction;
+            if (!ec.querySelector('.correction-reveal')) {
+              hint.className = 'correction-reveal';
+              ec.appendChild(hint);
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+function resetTF() {
+  state.tfAnswers = {};
+  state.tfCorrections = {};
+  state.tfChecked = false;
+  state.tabDone[2] = false;
+  state.tabGold[2] = false;
+  document.getElementById('fb-tf').classList.remove('show');
+  document.getElementById('banner-2').style.display='none';
+  buildTF();
+  updateTabIndicators();
+  saveState();
+}
+
+// ════════════════════════════════════════════
+// TAB 3 – Extension
+// ════════════════════════════════════════════
+// ════════════════════════════════════════════
+// TAB 3 – Extension interactive questions
+// ════════════════════════════════════════════
+
+// ── Q1 data ──
+const EXT_Q1 = {
+  correctDevice: 'switch',
+  reasons: [
+    { id:'r1', text:'A switch sends data to all devices, so it is faster for busy networks.', correct: false },
+    { id:'r2', text:'A switch only sends data to the device it is intended for, reducing unnecessary traffic.', correct: true },
+    { id:'r3', text:'A hub stores the MAC address of each device and directs data to the correct port.', correct: false },
+    { id:'r4', text:'A switch is more secure because other devices cannot intercept data not meant for them.', correct: true },
+    { id:'r5', text:'A hub is cheaper so it is always the better choice for schools.', correct: false },
+    { id:'r6', text:'With 30 PCs, a hub would flood every computer with every other computer\'s data, slowing the network.', correct: true },
+  ],
+  explanation: `<strong>A Switch is the better choice.</strong><br><br>
+    A hub sends every piece of data to <em>all</em> connected devices — with 30 PCs this creates enormous unnecessary network traffic and slows everything down. 
+    A switch stores each device's MAC address and sends data <em>only</em> to the intended PC. 
+    This makes the network faster, reduces congestion, and is more secure as students cannot intercept each other's data.`
+};
+
+// ── Q2 data: odd one out rounds ──
+const OOO_ROUNDS = [
+  {
+    id: 'ooo1',
+    devices: ['Router', 'Switch', 'Hub', 'WAP'],
+    oddOne: 'Router',
+    reasons: [
+      { id:'a', text:'It is the only device that connects different networks together (e.g. LAN to WAN).', correct: true },
+      { id:'b', text:'It is the only device that needs a power supply.', correct: false },
+      { id:'c', text:'It is the only device that uses wireless signals.', correct: false },
+      { id:'d', text:'It is the only device that cannot connect to other devices.', correct: false },
+    ],
+    explanation: 'A <strong>Router</strong> is the odd one out — it is the only device that connects <em>different networks</em> together (e.g. your home LAN to the internet). The others (Switch, Hub, WAP) all connect devices <em>within</em> the same network.'
+  },
+  {
+    id: 'ooo2',
+    devices: ['Hub', 'Switch', 'WAP', 'NIC'],
+    oddOne: 'NIC',
+    reasons: [
+      { id:'a', text:'It is the only device installed inside a computer rather than being a standalone device.', correct: true },
+      { id:'b', text:'It is the only device that uses wired connections.', correct: false },
+      { id:'c', text:'It is the only device that cannot send data.', correct: false },
+      { id:'d', text:'It is the only device that connects to a router directly.', correct: false },
+    ],
+    explanation: 'The <strong>NIC</strong> (Network Interface Card) is the odd one out — it is the only component that is installed <em>inside</em> a device (e.g. a PC or laptop). Hub, Switch, and WAP are all standalone pieces of network infrastructure.'
+  },
+  {
+    id: 'ooo3',
+    devices: ['Router', 'Modem', 'WAP', 'NIC'],
+    oddOne: 'NIC',
+    reasons: [
+      { id:'a', text:'It is the only device that does not directly help connect a device to the internet.', correct: false },
+      { id:'b', text:'It is the only device that works with wireless signals only.', correct: false },
+      { id:'c', text:'It is the only device that connects devices within a network rather than connecting networks or signals.', correct: true },
+      { id:'d', text:'It is the only device made by a single manufacturer.', correct: false },
+    ],
+    explanation: 'The <strong>NIC</strong> is the odd one out again — here, Router, Modem, and WAP all play a role in connecting a device <em>to the internet</em> (routing, signal conversion, wireless access). A NIC simply gives a device the <em>ability</em> to connect to a network at all — it doesn\'t route or convert signals itself.'
+  },
+];
+
+// ── State for extension ──
+// state.extQ1 = { devicePicked, reasonsSelected:[], checked, correct }
+// state.extOOO = { ooo1: { devicePicked, reasonPicked, checked }, ... }
+
+function buildExtension() {
+  if (!state.extQ1) state.extQ1 = { devicePicked: null, reasonsSelected: [], checked: false };
+  if (!state.extOOO) state.extOOO = {};
+  OOO_ROUNDS.forEach(r => { if (!state.extOOO[r.id]) state.extOOO[r.id] = { devicePicked: null, reasonPicked: null, checked: false }; });
+
+  buildExtQ1();
+  buildExtQ2();
+  restoreExtTab();
+}
+
+function buildExtQ1() {
+  // Device cards
+  ['hub','switch'].forEach(d => {
+    const card = document.getElementById('ext-pick-'+d);
+    if (!card) return;
+    card.classList.remove('selected','selected-wrong','selected-correct','locked');
+    const s = state.extQ1;
+    if (s.checked) {
+      card.classList.add('locked');
+      if (s.devicePicked === d) card.classList.add(d === EXT_Q1.correctDevice ? 'selected-correct' : 'selected-wrong');
+    } else if (s.devicePicked === d) {
+      card.classList.add('selected');
+    }
+  });
+
+  // Reason section
+  const rs = document.getElementById('ext-reason-section');
+  const ro = document.getElementById('ext-reason-options');
+  if (!rs || !ro) return;
+  rs.style.display = state.extQ1.devicePicked ? 'block' : 'none';
+  ro.innerHTML = '';
+
+  // Only show reasons relevant to the picked device — all are framed as positives for that device
+  EXT_Q1.reasons.forEach(r => {
+    const div = document.createElement('div');
+    div.className = 'ext-reason-option';
+    const cb = document.createElement('div');
+    cb.className = 'ext-reason-checkbox';
+    const sel = state.extQ1.reasonsSelected.includes(r.id);
+    if (sel) cb.textContent = '✓';
+    div.appendChild(cb);
+    const txt = document.createElement('span');
+    txt.textContent = r.text;
+    div.appendChild(txt);
+
+    if (state.extQ1.checked) {
+      div.classList.add('locked');
+      if (r.correct) div.classList.add('correct');
+      else if (sel) div.classList.add('wrong');
+      if (r.correct) { cb.textContent = '✓'; }
+      else if (sel) { cb.textContent = '✗'; }
+    } else {
+      if (sel) div.classList.add('selected');
+      div.addEventListener('click', () => {
+        const idx = state.extQ1.reasonsSelected.indexOf(r.id);
+        if (idx === -1) state.extQ1.reasonsSelected.push(r.id);
+        else state.extQ1.reasonsSelected.splice(idx,1);
+        saveState();
+        buildExtQ1();
+      });
+    }
+    ro.appendChild(div);
+  });
+
+  // Check button visibility
+  const checkBtn = rs.querySelector('.check-btn');
+  if (checkBtn) checkBtn.style.display = state.extQ1.checked ? 'none' : 'inline-block';
+
+  // Explanation
+  const expl = document.getElementById('ext-q1-explain');
+  if (expl) {
+    if (state.extQ1.checked) {
+      expl.innerHTML = EXT_Q1.explanation;
+      expl.style.display = 'block';
+    } else {
+      expl.style.display = 'none';
+    }
+  }
+}
+
+function extPickDevice(d) {
+  if (state.extQ1.checked) return;
+  state.extQ1.devicePicked = d;
+  state.extQ1.reasonsSelected = [];
+  saveState();
+  buildExtQ1();
+}
+
+function checkExtQ1() {
+  if (!state.extQ1.devicePicked) {
+    showFeedback('fb-ext-q1','Please pick a device first.','incorrect'); return;
+  }
+  if (state.extQ1.reasonsSelected.length === 0) {
+    showFeedback('fb-ext-q1','Please select at least one reason.','incorrect'); return;
+  }
+  state.extQ1.checked = true;
+  const deviceOk = state.extQ1.devicePicked === EXT_Q1.correctDevice;
+  const correctReasons = EXT_Q1.reasons.filter(r => r.correct).map(r => r.id);
+  const pickedCorrect = state.extQ1.reasonsSelected.filter(id => correctReasons.includes(id)).length;
+  const pickedWrong = state.extQ1.reasonsSelected.filter(id => !correctReasons.includes(id)).length;
+
+  if (deviceOk && pickedWrong === 0 && pickedCorrect === correctReasons.length) {
+    showFeedback('fb-ext-q1','★ Perfect — correct device and all correct reasons selected!','correct');
+    state.extQ1.gold = true;
+  } else if (deviceOk && pickedCorrect > 0 && pickedWrong === 0) {
+    showFeedback('fb-ext-q1','✓ Correct device! You found some valid reasons — check the highlighted ones for the full answer.','correct');
+  } else if (deviceOk) {
+    showFeedback('fb-ext-q1','✓ Correct device, but some reasons were wrong or missing. See the explanation below.','incorrect');
+  } else {
+    showFeedback('fb-ext-q1','✗ Not quite — a hub would flood all 30 PCs with every packet. See the explanation below.','incorrect');
+  }
+  checkExtTabDone();
+  saveState();
+  buildExtQ1();
+}
+
+// ── Q2 Odd One Out ──
+function buildExtQ2() {
+  const container = document.getElementById('ooo-rounds');
+  if (!container) return;
+  container.innerHTML = '';
+
+  OOO_ROUNDS.forEach((round, ri) => {
+    const rs = state.extOOO[round.id];
+    const wrap = document.createElement('div');
+    wrap.className = 'ooo-round';
+
+    const lbl = document.createElement('div');
+    lbl.className = 'ooo-round-label';
+    lbl.textContent = `Round ${ri+1} of ${OOO_ROUNDS.length}`;
+    wrap.appendChild(lbl);
+
+    const question = document.createElement('p');
+    question.style.cssText = 'font-size:0.88rem;color:var(--muted);margin-bottom:12px;';
+    question.innerHTML = `Which of these is the <strong style="color:var(--text);">odd one out</strong>?`;
+    wrap.appendChild(question);
+
+    // Device buttons
+    const deviceRow = document.createElement('div');
+    deviceRow.className = 'ooo-devices';
+    round.devices.forEach(dev => {
+      const hwItem = HW_ITEMS.find(h => h.name === dev || h.name.startsWith(dev));
+      const btn = document.createElement('button');
+      btn.className = 'ooo-device-btn';
+
+      // Small icon
+      const iconDiv = document.createElement('div');
+      iconDiv.className = 'ooo-device-icon';
+      if (hwItem) iconDiv.innerHTML = (HW_ICONS[hwItem.id]||'').replace('width="52" height="52"','width="36" height="36"');
+      btn.appendChild(iconDiv);
+
+      const nameSpan = document.createElement('span');
+      nameSpan.textContent = dev;
+      btn.appendChild(nameSpan);
+
+      if (rs.checked) {
+        btn.classList.add('locked');
+        if (dev === round.oddOne) btn.classList.add('correct');
+        else if (dev === rs.devicePicked) btn.classList.add('wrong');
+      } else {
+        if (dev === rs.devicePicked) btn.classList.add('selected');
+        btn.addEventListener('click', () => {
+          rs.devicePicked = dev;
+          rs.reasonPicked = null;
+          saveState();
+          buildExtQ2();
+        });
+      }
+      deviceRow.appendChild(btn);
+    });
+    wrap.appendChild(deviceRow);
+
+    // Reasons (shown after device pick)
+    const reasonsDiv = document.createElement('div');
+    reasonsDiv.className = 'ooo-reasons';
+    if (rs.devicePicked) reasonsDiv.classList.add('show');
+
+    const reasonLbl = document.createElement('p');
+    reasonLbl.style.cssText = 'font-size:0.82rem;color:var(--muted);margin-bottom:8px;';
+    reasonLbl.innerHTML = 'Now pick the <strong style="color:var(--text);">best reason</strong> why it is the odd one out:';
+    reasonsDiv.appendChild(reasonLbl);
+
+    round.reasons.forEach(r => {
+      const btn = document.createElement('button');
+      btn.className = 'ooo-reason-btn';
+      btn.textContent = r.text;
+      if (rs.checked) {
+        btn.classList.add('locked');
+        if (r.correct) btn.classList.add('correct');
+        else if (r.id === rs.reasonPicked) btn.classList.add('wrong');
+      } else {
+        if (r.id === rs.reasonPicked) btn.classList.add('selected');
+        btn.addEventListener('click', () => {
+          rs.reasonPicked = r.id;
+          saveState();
+          buildExtQ2();
+        });
+      }
+      reasonsDiv.appendChild(btn);
+    });
+
+    if (!rs.checked) {
+      const checkBtn = document.createElement('button');
+      checkBtn.className = 'ooo-check-btn';
+      checkBtn.textContent = 'Check';
+      checkBtn.addEventListener('click', () => checkOOORound(round, rs));
+      reasonsDiv.appendChild(checkBtn);
+    }
+
+    const fb = document.createElement('div');
+    fb.className = 'ooo-feedback';
+    fb.id = 'fb-ooo-'+round.id;
+    if (rs.checked) {
+      const deviceOk = rs.devicePicked === round.oddOne;
+      const reasonOk = round.reasons.find(r => r.id === rs.reasonPicked)?.correct;
+      if (deviceOk && reasonOk) {
+        fb.classList.add('show','correct');
+        fb.textContent = '★ Correct — well reasoned!';
+      } else {
+        fb.classList.add('show','wrong');
+        fb.textContent = deviceOk ? '✓ Right device — but the reason wasn\'t quite right. See the highlighted answer.' : '✗ Not quite — check the highlighted correct answer.';
+      }
+      // Explanation
+      const explDiv = document.createElement('div');
+      explDiv.className = 'ext-explanation';
+      explDiv.style.marginTop = '10px';
+      explDiv.innerHTML = round.explanation;
+      reasonsDiv.appendChild(explDiv);
+    }
+    reasonsDiv.appendChild(fb);
+    wrap.appendChild(reasonsDiv);
+    container.appendChild(wrap);
+  });
+}
+
+function checkOOORound(round, rs) {
+  if (!rs.devicePicked) return;
+  if (!rs.reasonPicked) { alert('Please pick a reason.'); return; }
+  rs.checked = true;
+  checkExtTabDone();
+  saveState();
+  buildExtQ2();
+}
+
+function checkExtTabDone() {
+  const q1done = state.extQ1 && state.extQ1.checked;
+  const q2done = OOO_ROUNDS.every(r => state.extOOO[r.id] && state.extOOO[r.id].checked);
+  if (q1done && q2done) {
+    const q1gold = state.extQ1.gold;
+    const q2gold = OOO_ROUNDS.every(r => {
+      const rs = state.extOOO[r.id];
+      return rs.devicePicked === r.oddOne && r.reasons.find(x => x.id === rs.reasonPicked)?.correct;
+    });
+    state.tabDone[3] = true;
+    state.tabGold[3] = q1gold && q2gold;
+    const b = document.getElementById('banner-3');
+    if (b) {
+      b.style.display = 'block';
+      if (state.tabGold[3]) {
+        b.className = 'completion-banner gold-banner';
+        b.textContent = '★ Perfect! Gold star earned!';
+        launchFireworks();
+      } else {
+        b.className = 'completion-banner green-banner';
+        b.textContent = '✓ Extension complete!';
+      }
+    }
+    updateTabIndicators();
+  }
+}
+
+function restoreExtTab() {
+  // Restore banner
+  if (state.tabDone[3]) {
+    const b = document.getElementById('banner-3');
+    if (b) {
+      b.style.display = 'block';
+      b.className = state.tabGold[3] ? 'completion-banner gold-banner' : 'completion-banner green-banner';
+      b.textContent = state.tabGold[3] ? '★ Perfect! Gold star earned!' : '✓ Extension complete!';
+    }
+  }
+  if (state.extQ1 && state.extQ1.checked) {
+    const deviceOk = state.extQ1.devicePicked === EXT_Q1.correctDevice;
+    const correctReasons = EXT_Q1.reasons.filter(r=>r.correct).map(r=>r.id);
+    const pickedCorrect = (state.extQ1.reasonsSelected||[]).filter(id=>correctReasons.includes(id)).length;
+    const pickedWrong = (state.extQ1.reasonsSelected||[]).filter(id=>!correctReasons.includes(id)).length;
+    if (deviceOk && pickedWrong===0 && pickedCorrect===correctReasons.length) showFeedback('fb-ext-q1','★ Perfect — correct device and all correct reasons selected!','correct');
+    else if (deviceOk) showFeedback('fb-ext-q1','✓ Correct device — see explanation for full reasoning.','correct');
+    else showFeedback('fb-ext-q1','✗ Not quite — see the explanation below.','incorrect');
+  }
+}
+
+// ════════════════════════════════════════════
+// GENERIC FEEDBACK
+// ════════════════════════════════════════════
+function showFeedback(id, msg, type) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = msg;
+  el.className = 'feedback-msg show ' + type;
+}
+
+// ════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  loadState();
+  buildLanWan();
+  buildDefs();
+  buildHW();
+  buildTF();
+  buildExtension();
+  switchTab(state.activeTab);
+  updateTabIndicators();
+
+  if (state.lanWanChecked) showLanWanResult();
+  if (state.hwChecked) {
+    const score = HW_ITEMS.filter(item => state.hwPlacements[item.id] === item.id).length;
+    if (score === HW_ITEMS.length) {
+      showFeedback('fb-hw','★ Perfect — all matched correctly!','correct');
+      if (state.hwGold) {
+        const b = document.getElementById('banner-1');
+        b.style.display='block'; b.className='completion-banner gold-banner'; b.textContent='★ Perfect! Gold star earned!';
+      }
+    } else {
+      showFeedback('fb-hw',`${score}/${HW_ITEMS.length} correct.`,'incorrect');
+      const b = document.getElementById('banner-1');
+      b.style.display='block'; b.className='completion-banner green-banner'; b.textContent=`✓ ${score}/${HW_ITEMS.length} correct`;
+    }
+  }
+  if (state.tfChecked) {
+    const correct = TF_DATA.filter(item => (state.tfAnswers[item.id]==='true') === item.answer).length;
+    showFeedback('fb-tf',`${correct}/${TF_DATA.length} statements correct.`, correct===TF_DATA.length?'correct':'incorrect');
+    const b = document.getElementById('banner-2');
+    b.style.display='block';
+    if (state.tabGold[2]) { b.className='completion-banner gold-banner'; b.textContent='★ Perfect! Gold star earned!'; }
+    else { b.className='completion-banner green-banner'; b.textContent=`✓ ${correct}/${TF_DATA.length} correct`; }
+  }
+  if (state.tabDone[0] && document.getElementById('banner-0').style.display!=='block') {
+    const b = document.getElementById('banner-0');
+    b.style.display='block';
+    if (state.tabGold[0]) { b.className='completion-banner gold-banner'; b.textContent='★ Perfect! Gold star earned!'; }
+    else { b.className='completion-banner green-banner'; b.textContent='✓ Task complete!'; }
+  }
+});
+</script>
+</body>
+</html>

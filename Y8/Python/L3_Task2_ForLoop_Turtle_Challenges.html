@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- ACTIVITY
+title:  For Loop Turtle Challenges
+lesson: Lesson 3
+type:   Practice
+stars:  4
+desc:   4 escalating for loop turtle tasks — square, triangle, coloured pentagon, spiral extension
+color:  green
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>L3 – For Loop Turtle Challenges</title>
+<style>
+  :root {
+    --navy:   #152238;
+    --teal:   #00B4D8;
+    --orange: #E87722;
+    --amber:  #F4A621;
+    --green:  #2ECC71;
+    --green-d:#1A4D2E;
+    --red:    #E74C3C;
+    --code-bg:#1A2A3A;
+    --mid:    #8899AA;
+    --white:  #FFFFFF;
+    --light:  #EAF4FB;
+    --gold:   #FFD700;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Trebuchet MS', sans-serif;
+    background: var(--navy);
+    color: var(--white);
+    min-height: 100vh;
+  }
+
+  header {
+    background: var(--navy);
+    border-top: 6px solid var(--green);
+    border-bottom: 3px solid #1e3a55;
+    padding: 1.1rem 2rem 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .icon { font-size: 2.4rem; }
+
+  header h1 { font-size: 1.7rem; font-weight: 700; }
+  header p { font-size: 0.85rem; color: var(--teal); margin-top: 0.1rem; }
+
+  .badge {
+    margin-left: auto;
+    background: var(--green);
+    color: var(--navy);
+    padding: 0.3rem 0.9rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: bold;
+  }
+
+  /* Progress bar */
+  .progress-bar {
+    background: #1e3a55;
+    padding: 0.6rem 2rem;
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  .prog-dot {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: #2a4060;
+    border: 2px solid #3a5070;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.75rem; font-weight: bold;
+    color: var(--mid);
+    transition: all 0.3s;
+    cursor: pointer;
+  }
+
+  .prog-dot.done { background: var(--green); border-color: var(--green); color: var(--navy); }
+  .prog-dot.active { border-color: var(--teal); color: var(--teal); }
+
+  .prog-line {
+    flex: 1; height: 2px; background: #2a4060;
+    transition: background 0.3s;
+  }
+
+  .prog-line.done { background: var(--green); }
+
+  .prog-label {
+    font-size: 0.75rem;
+    color: var(--mid);
+    margin-left: auto;
+  }
+
+  /* Tabs */
+  .tab-bar {
+    display: flex;
+    border-bottom: 2px solid #1e3a55;
+    background: #0d1f33;
+    overflow-x: auto;
+  }
+
+  .tab {
+    padding: 0.7rem 1.4rem;
+    cursor: pointer;
+    font-size: 0.88rem;
+    font-weight: bold;
+    color: var(--mid);
+    border-bottom: 3px solid transparent;
+    white-space: nowrap;
+    transition: all 0.2s;
+    display: flex; align-items: center; gap: 0.4rem;
+    position: relative;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+  }
+
+  .tab:hover { color: var(--white); }
+  .tab.active { color: var(--white); border-bottom-color: var(--green); }
+  .tab.complete { color: var(--green); }
+  .tab.complete.active { border-bottom-color: var(--green); }
+  .tab .tick { font-size: 0.9rem; }
+
+  /* Main content */
+  main {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 1.5rem 1.5rem 3rem;
+  }
+
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* Task header */
+  .task-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.2rem;
+  }
+
+  .task-num {
+    width: 50px; height: 50px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem; font-weight: bold;
+    flex-shrink: 0;
+  }
+
+  .task-title { font-size: 1.4rem; font-weight: bold; }
+  .task-stars { font-size: 1.1rem; color: var(--amber); margin-top: 0.1rem; }
+
+  /* Info box */
+  .info-box {
+    background: #1A2E42;
+    border: 1px solid var(--teal);
+    border-left: 5px solid var(--teal);
+    border-radius: 6px;
+    padding: 0.9rem 1.1rem;
+    margin-bottom: 1.2rem;
+    font-size: 0.88rem;
+    color: #cde8f5;
+    line-height: 1.65;
+  }
+
+  .target-box {
+    background: #1C3A28;
+    border: 1px solid var(--green);
+    border-radius: 6px;
+    padding: 0.9rem 1.1rem;
+    margin-bottom: 1.2rem;
+    font-size: 0.88rem;
+    color: #a8e6bf;
+    line-height: 1.65;
+  }
+
+  .target-box strong { color: var(--green); }
+
+  /* Hint box */
+  .hint-box {
+    background: #2A2010;
+    border: 1px solid var(--amber);
+    border-radius: 6px;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1rem;
+    font-size: 0.82rem;
+    color: #f5daa0;
+    cursor: pointer;
+  }
+
+  .hint-box summary { cursor: pointer; color: var(--amber); font-weight: bold; list-style: none; }
+  .hint-box summary::-webkit-details-marker { display: none; }
+  .hint-box summary::before { content: "💡 "; }
+  .hint-box .hint-content { margin-top: 0.5rem; }
+
+  /* Code reference */
+  .code-ref {
+    background: var(--code-bg);
+    border-radius: 6px;
+    padding: 0.9rem 1.1rem;
+    margin-bottom: 1.2rem;
+    font-family: 'Courier New', monospace;
+    font-size: 0.88rem;
+    color: var(--amber);
+    line-height: 1.7;
+    white-space: pre;
+    overflow-x: auto;
+  }
+
+  .code-ref .comment { color: var(--mid); }
+  .code-ref .keyword { color: var(--orange); }
+  .code-ref .fn { color: var(--teal); }
+
+  /* Textarea */
+  label.paste-label {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--mid);
+    margin-bottom: 0.4rem;
+  }
+
+  textarea {
+    width: 100%;
+    min-height: 200px;
+    background: var(--code-bg);
+    color: var(--amber);
+    font-family: 'Courier New', monospace;
+    font-size: 0.92rem;
+    border: 2px solid #2a4060;
+    border-radius: 6px;
+    padding: 1rem;
+    resize: vertical;
+    outline: none;
+    line-height: 1.6;
+    transition: border-color 0.2s;
+  }
+
+  textarea:focus { border-color: var(--green); }
+
+  .btn-row {
+    display: flex;
+    gap: 0.8rem;
+    margin-top: 0.9rem;
+  }
+
+  button {
+    padding: 0.65rem 1.4rem;
+    border: none;
+    border-radius: 6px;
+    font-family: 'Trebuchet MS', sans-serif;
+    font-size: 0.92rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+  }
+
+  button:active { transform: scale(0.97); }
+
+  .btn-check {
+    background: var(--green);
+    color: var(--navy);
+    flex: 1;
+  }
+
+  .btn-clear {
+    background: #2a4060;
+    color: var(--mid);
+  }
+
+  /* Results */
+  .results { margin-top: 1.4rem; display: none; }
+
+  .result-header {
+    display: flex; align-items: center; gap: 0.7rem;
+    padding: 0.85rem 1.2rem;
+    border-radius: 6px 6px 0 0;
+    font-size: 1.05rem; font-weight: bold;
+  }
+
+  .result-header.pass { background: #1C3A28; border: 2px solid var(--green); border-bottom: none; }
+  .result-header.fail { background: #3A1C1C; border: 2px solid var(--red); border-bottom: none; }
+  .result-header.partial { background: #3A2E10; border: 2px solid var(--amber); border-bottom: none; }
+
+  .checks-list { border: 2px solid; border-top: none; border-radius: 0 0 6px 6px; overflow: hidden; }
+
+  .check-item {
+    display: flex; align-items: flex-start; gap: 0.8rem;
+    padding: 0.7rem 1.1rem;
+    border-bottom: 1px solid #1e3a55;
+    font-size: 0.87rem; line-height: 1.5;
+  }
+
+  .check-item:last-child { border-bottom: none; }
+  .check-item.pass { background: #0f2a1a; }
+  .check-item.fail { background: #2a0f0f; }
+  .check-item.info { background: #1A2E42; }
+
+  .check-icon { font-size: 1rem; flex-shrink: 0; margin-top: 0.1rem; }
+  .check-text strong { color: var(--white); display: block; }
+  .check-text span { color: var(--mid); font-size: 0.82rem; }
+
+  code {
+    background: #0d1f33;
+    color: var(--amber);
+    padding: 0 0.3em;
+    border-radius: 3px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9em;
+  }
+
+  .fireworks {
+    text-align: center;
+    padding: 1rem;
+    font-size: 2rem;
+    letter-spacing: 0.5rem;
+    animation: pop 0.4s ease;
+  }
+
+  @keyframes pop {
+    0% { transform: scale(0.8); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  .all-done-banner {
+    background: linear-gradient(135deg, #1C3A28, #0d1f33);
+    border: 2px solid var(--gold);
+    border-radius: 8px;
+    padding: 1.5rem;
+    text-align: center;
+    margin-top: 1.5rem;
+    display: none;
+  }
+
+  .all-done-banner h2 { color: var(--gold); font-size: 1.5rem; margin-bottom: 0.5rem; }
+  .all-done-banner p { color: var(--white); font-size: 0.95rem; }
+
+  footer {
+    text-align: center;
+    padding: 1rem;
+    font-size: 0.75rem;
+    color: #3a5570;
+    border-top: 1px solid #1e3a55;
+    margin-top: 2rem;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <span class="icon">🔁</span>
+  <div>
+    <h1>For Loop Turtle Challenges</h1>
+    <p>Lesson 3  ·  Python Programming  ·  Year 8</p>
+  </div>
+  <span class="badge">★★★★  Task 2</span>
+</header>
+
+<div class="progress-bar">
+  <div class="prog-dot active" id="dot0" onclick="showTab(0)">1</div>
+  <div class="prog-line" id="line0"></div>
+  <div class="prog-dot" id="dot1" onclick="showTab(1)">2</div>
+  <div class="prog-line" id="line1"></div>
+  <div class="prog-dot" id="dot2" onclick="showTab(2)">3</div>
+  <div class="prog-line" id="line2"></div>
+  <div class="prog-dot" id="dot3" onclick="showTab(3)">4</div>
+  <span class="prog-label" id="progLabel">0 / 4 tasks complete</span>
+</div>
+
+<div class="tab-bar">
+  <div class="tab active" id="tab0" onclick="showTab(0)">
+    <span id="tick0"></span>1 — Square ★
+  </div>
+  <div class="tab" id="tab1" onclick="showTab(1)">
+    <span id="tick1"></span>2 — Triangle ★★
+  </div>
+  <div class="tab" id="tab2" onclick="showTab(2)">
+    <span id="tick2"></span>3 — Pentagon ★★★
+  </div>
+  <div class="tab" id="tab3" onclick="showTab(3)">
+    <span id="tick3"></span>4 — Spiral ★★★★
+  </div>
+</div>
+
+<main>
+
+  <!-- ── TASK 1: Square ─────────────────────────────────────────────────────── -->
+  <div class="panel active" id="panel0">
+    <div class="task-header">
+      <div class="task-num" style="background:#00B4D8;color:#152238">1</div>
+      <div>
+        <div class="task-title">Draw a Square</div>
+        <div class="task-stars">★</div>
+      </div>
+    </div>
+
+    <div class="target-box">
+      <strong>🎯  Your goal:</strong> Use a <strong>for loop</strong> to draw a square — 4 sides of equal length.<br>
+      The turtle should move forward, turn 90°, and repeat 4 times.
+    </div>
+
+    <div class="info-box">
+      <strong style="color:var(--teal)">📐  Remember:</strong>
+      A square has 4 sides and 4 corners. At each corner the turtle turns <strong>90°</strong>. 
+      That's 4 × 90° = 360° — a full turn!<br>
+      Your loop needs <code>range(4)</code> and the turn must be <code>90</code> degrees.
+    </div>
+
+    <details class="hint-box">
+      <summary>Show me a hint</summary>
+      <div class="hint-content">
+        <pre style="color:var(--amber);font-family:'Courier New',monospace;font-size:0.88rem">import turtle
+t = turtle.Turtle()
+
+for i in range(4):
+    t.forward(100)   # change 100 if you like
+    t.left(90)
+
+turtle.done()</pre>
+      </div>
+    </details>
+
+    <label class="paste-label">📥  Paste your square code here:</label>
+    <textarea id="code0" placeholder="Paste your Thonny code here..." spellcheck="false"></textarea>
+
+    <div class="btn-row">
+      <button class="btn-check" onclick="checkTask(0)">✅  Check My Square Code</button>
+      <button class="btn-clear" onclick="clearTask(0)">🗑</button>
+    </div>
+
+    <div class="results" id="results0"></div>
+  </div>
+
+  <!-- ── TASK 2: Triangle ──────────────────────────────────────────────────── -->
+  <div class="panel" id="panel1">
+    <div class="task-header">
+      <div class="task-num" style="background:#00B4D8;color:#152238">2</div>
+      <div>
+        <div class="task-title">Draw a Triangle</div>
+        <div class="task-stars">★★</div>
+      </div>
+    </div>
+
+    <div class="target-box">
+      <strong>🎯  Your goal:</strong> Use a <strong>for loop</strong> to draw an equilateral triangle — 3 equal sides.<br>
+      Hint: angle = 360 ÷ 3 = <strong>120°</strong>. Your loop needs <code>range(3)</code>.
+    </div>
+
+    <div class="info-box">
+      <strong style="color:var(--teal)">📐  The maths:</strong>
+      For any regular shape: <strong>angle = 360 ÷ number of sides</strong>.<br>
+      Triangle: 360 ÷ 3 = 120°. So each time the turtle completes a side, it turns 120°.
+    </div>
+
+    <details class="hint-box">
+      <summary>Show me a hint</summary>
+      <div class="hint-content">
+        Start with the same template as the square but change two numbers: <code>range(3)</code> (3 sides) and <code>120</code> degrees (360 ÷ 3 = 120).
+        <pre style="color:var(--amber);font-family:'Courier New',monospace;font-size:0.88rem;margin-top:0.5rem">for i in range(3):
+    t.forward(100)
+    t.left(120)</pre>
+      </div>
+    </details>
+
+    <label class="paste-label">📥  Paste your triangle code here:</label>
+    <textarea id="code1" placeholder="Paste your Thonny code here..." spellcheck="false"></textarea>
+
+    <div class="btn-row">
+      <button class="btn-check" onclick="checkTask(1)">✅  Check My Triangle Code</button>
+      <button class="btn-clear" onclick="clearTask(1)">🗑</button>
+    </div>
+
+    <div class="results" id="results1"></div>
+  </div>
+
+  <!-- ── TASK 3: Coloured Pentagon ─────────────────────────────────────────── -->
+  <div class="panel" id="panel2">
+    <div class="task-header">
+      <div class="task-num" style="background:#E87722;color:#fff">3</div>
+      <div>
+        <div class="task-title">Coloured Pentagon</div>
+        <div class="task-stars">★★★</div>
+      </div>
+    </div>
+
+    <div class="target-box">
+      <strong>🎯  Your goal:</strong> Draw a <strong>pentagon</strong> (5 sides) AND change the pen colour with <code>pencolor()</code>.<br>
+      angle = 360 ÷ 5 = <strong>72°</strong>. Your loop needs <code>range(5)</code>.
+    </div>
+
+    <div class="info-box">
+      <strong style="color:var(--teal)">🖌  Adding colour:</strong>
+      Add <code>t.pencolor("red")</code> (or any colour name) <em>before</em> your loop starts.<br>
+      Try: "blue", "green", "purple", "orange", "yellow", "cyan", "pink"
+    </div>
+
+    <details class="hint-box">
+      <summary>Show me a hint</summary>
+      <div class="hint-content">
+        <pre style="color:var(--amber);font-family:'Courier New',monospace;font-size:0.88rem">import turtle
+t = turtle.Turtle()
+t.pencolor("blue")   # add colour!
+t.pensize(3)
+
+for i in range(5):
+    t.forward(100)
+    t.left(72)       # 360 ÷ 5
+
+turtle.done()</pre>
+      </div>
+    </details>
+
+    <label class="paste-label">📥  Paste your pentagon code here:</label>
+    <textarea id="code2" placeholder="Paste your Thonny code here..." spellcheck="false"></textarea>
+
+    <div class="btn-row">
+      <button class="btn-check" onclick="checkTask(2)">✅  Check My Pentagon Code</button>
+      <button class="btn-clear" onclick="clearTask(2)">🗑</button>
+    </div>
+
+    <div class="results" id="results2"></div>
+  </div>
+
+  <!-- ── TASK 4: Spiral (Extension) ───────────────────────────────────────── -->
+  <div class="panel" id="panel3">
+    <div class="task-header">
+      <div class="task-num" style="background:#2ECC71;color:#152238">4</div>
+      <div>
+        <div class="task-title">Spiral Pattern ⭐ Extension</div>
+        <div class="task-stars">★★★★</div>
+      </div>
+    </div>
+
+    <div class="target-box">
+      <strong>🎯  Your goal:</strong> Make the turtle draw a <strong>spiral</strong> by increasing the forward distance each loop using <code>i</code>.<br>
+      Use <code>t.forward(i * 10)</code> and a slightly-off angle like <code>91</code> to create the spiral effect.
+    </div>
+
+    <div class="info-box">
+      <strong style="color:var(--teal)">🔑  The key idea:</strong>
+      Each time the loop runs, <code>i</code> gets bigger (0, 1, 2, 3...).
+      If you use <code>i * 10</code> as the forward distance, the steps get longer each time — creating a spiral!<br>
+      <code>t.speed(0)</code> makes it draw instantly.
+    </div>
+
+    <details class="hint-box">
+      <summary>Show me a hint</summary>
+      <div class="hint-content">
+        <pre style="color:var(--amber);font-family:'Courier New',monospace;font-size:0.88rem">import turtle
+t = turtle.Turtle()
+t.speed(0)
+
+for i in range(36):
+    t.forward(i * 10)
+    t.left(91)
+
+turtle.done()</pre>
+        Try changing: the range, the multiplier (10), or the angle (91). What happens?
+      </div>
+    </details>
+
+    <label class="paste-label">📥  Paste your spiral code here:</label>
+    <textarea id="code3" placeholder="Paste your Thonny code here..." spellcheck="false"></textarea>
+
+    <div class="btn-row">
+      <button class="btn-check" onclick="checkTask(3)">✅  Check My Spiral Code</button>
+      <button class="btn-clear" onclick="clearTask(3)">🗑</button>
+    </div>
+
+    <div class="results" id="results3"></div>
+  </div>
+
+  <div class="all-done-banner" id="allDoneBanner">
+    <div style="font-size:2.5rem;margin-bottom:0.5rem">🎉 🐢 🎉 🐢 🎉</div>
+    <h2>All 4 tasks complete!</h2>
+    <p>Brilliant work — you've used for loops and turtle graphics to draw shapes and patterns with code!</p>
+  </div>
+
+</main>
+
+<footer>
+  L3 – For Loop Turtle Challenges  ·  Year 8 Python  ·  Built <!-- BUILD_DATE -->
+</footer>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────────────
+const taskPassed = [false, false, false, false];
+let currentTab = 0;
+
+// ── Checks per task ────────────────────────────────────────────────────────────
+const TASK_CHECKS = [
+  // Task 0 — Square
+  [
+    {
+      label: "Loads turtle library",
+      pass: "import turtle found",
+      fail: "Missing import turtle at the top",
+      hint: "Add <code>import turtle</code> at the very top",
+      test: c => /^\s*import\s+turtle\s*$/m.test(c)
+    },
+    {
+      label: "Creates a Turtle object",
+      pass: "Turtle object created correctly",
+      fail: "No turtle.Turtle() found",
+      hint: "Add something like <code>t = turtle.Turtle()</code>",
+      test: c => /\w+\s*=\s*turtle\.Turtle\s*\(\s*\)/m.test(c)
+    },
+    {
+      label: "Uses a for loop with range(4)",
+      pass: "for loop with range(4) found — 4 sides!",
+      fail: "No for loop with range(4) found — a square needs exactly 4 repetitions",
+      hint: "Use <code>for i in range(4):</code>",
+      test: c => /for\s+\w+\s+in\s+range\s*\(\s*4\s*\)/m.test(c)
+    },
+    {
+      label: "Moves forward inside the loop",
+      pass: "forward() found inside the loop structure",
+      fail: "No forward() command found — the turtle needs to move!",
+      hint: "Inside the loop add <code>t.forward(100)</code>",
+      test: c => /\w+\.forward\s*\(\s*\d+\s*\)/m.test(c)
+    },
+    {
+      label: "Turns 90° each time",
+      pass: "90° turn found — perfect for a square!",
+      fail: "No 90° turn found — a square needs to turn 90° at each corner",
+      hint: "Inside the loop add <code>t.left(90)</code> or <code>t.right(90)</code>",
+      test: c => /\w+\.(left|right)\s*\(\s*90\s*\)/m.test(c)
+    },
+    {
+      label: "Keeps window open",
+      pass: "turtle.done() found",
+      fail: "Missing turtle.done() — add it at the end to keep the window open",
+      hint: "Add <code>turtle.done()</code> at the very end",
+      test: c => /turtle\.(done|exitonclick|mainloop)\s*\(\s*\)/m.test(c)
+    },
+  ],
+
+  // Task 1 — Triangle
+  [
+    {
+      label: "Loads turtle library",
+      pass: "import turtle found",
+      fail: "Missing import turtle",
+      hint: "Add <code>import turtle</code> at the top",
+      test: c => /^\s*import\s+turtle\s*$/m.test(c)
+    },
+    {
+      label: "Creates a Turtle object",
+      pass: "Turtle object created",
+      fail: "No turtle.Turtle() found",
+      hint: "Add <code>t = turtle.Turtle()</code>",
+      test: c => /\w+\s*=\s*turtle\.Turtle\s*\(\s*\)/m.test(c)
+    },
+    {
+      label: "Uses a for loop with range(3)",
+      pass: "for loop with range(3) found — 3 sides for a triangle!",
+      fail: "No for loop with range(3) found — a triangle needs exactly 3 repetitions",
+      hint: "Use <code>for i in range(3):</code>",
+      test: c => /for\s+\w+\s+in\s+range\s*\(\s*3\s*\)/m.test(c)
+    },
+    {
+      label: "Moves forward inside the loop",
+      pass: "forward() found",
+      fail: "No forward() command found",
+      hint: "Add <code>t.forward(100)</code> inside the loop",
+      test: c => /\w+\.forward\s*\(\s*\d+\s*\)/m.test(c)
+    },
+    {
+      label: "Turns 120° each time",
+      pass: "120° turn found — correct for a triangle (360÷3=120)!",
+      fail: "No 120° turn found — a triangle needs 120° turns (360÷3=120)",
+      hint: "Add <code>t.left(120)</code> or <code>t.right(120)</code> inside the loop",
+      test: c => /\w+\.(left|right)\s*\(\s*120\s*\)/m.test(c)
+    },
+    {
+      label: "Keeps window open",
+      pass: "turtle.done() found",
+      fail: "Missing turtle.done()",
+      hint: "Add <code>turtle.done()</code> at the end",
+      test: c => /turtle\.(done|exitonclick|mainloop)\s*\(\s*\)/m.test(c)
+    },
+  ],
+
+  // Task 2 — Pentagon with colour
+  [
+    {
+      label: "Loads turtle library",
+      pass: "import turtle found",
+      fail: "Missing import turtle",
+      hint: "Add <code>import turtle</code> at the top",
+      test: c => /^\s*import\s+turtle\s*$/m.test(c)
+    },
+    {
+      label: "Creates a Turtle object",
+      pass: "Turtle object created",
+      fail: "No turtle.Turtle() found",
+      hint: "Add <code>t = turtle.Turtle()</code>",
+      test: c => /\w+\s*=\s*turtle\.Turtle\s*\(\s*\)/m.test(c)
+    },
+    {
+      label: "Uses a for loop with range(5)",
+      pass: "for loop with range(5) found — 5 sides for a pentagon!",
+      fail: "No for loop with range(5) found — a pentagon needs exactly 5 repetitions",
+      hint: "Use <code>for i in range(5):</code>",
+      test: c => /for\s+\w+\s+in\s+range\s*\(\s*5\s*\)/m.test(c)
+    },
+    {
+      label: "Turns 72° each time",
+      pass: "72° turn found — correct for a pentagon (360÷5=72)!",
+      fail: "No 72° turn found — pentagon needs 72° turns (360÷5=72)",
+      hint: "Add <code>t.left(72)</code> or <code>t.right(72)</code> inside the loop",
+      test: c => /\w+\.(left|right)\s*\(\s*72\s*\)/m.test(c)
+    },
+    {
+      label: "Uses pencolor() to add colour",
+      pass: "pencolor() found — great, your pentagon has a colour!",
+      fail: "No pencolor() found — this task requires adding a colour with pencolor()",
+      hint: 'Add <code>t.pencolor("red")</code> (or any colour) before the loop',
+      test: c => /\w+\.pencolor\s*\(/m.test(c)
+    },
+    {
+      label: "Keeps window open",
+      pass: "turtle.done() found",
+      fail: "Missing turtle.done()",
+      hint: "Add <code>turtle.done()</code> at the end",
+      test: c => /turtle\.(done|exitonclick|mainloop)\s*\(\s*\)/m.test(c)
+    },
+  ],
+
+  // Task 3 — Spiral (extension)
+  [
+    {
+      label: "Loads turtle library",
+      pass: "import turtle found",
+      fail: "Missing import turtle",
+      hint: "Add <code>import turtle</code> at the top",
+      test: c => /^\s*import\s+turtle\s*$/m.test(c)
+    },
+    {
+      label: "Creates a Turtle object",
+      pass: "Turtle object created",
+      fail: "No turtle.Turtle() found",
+      hint: "Add <code>t = turtle.Turtle()</code>",
+      test: c => /\w+\s*=\s*turtle\.Turtle\s*\(\s*\)/m.test(c)
+    },
+    {
+      label: "Uses a for loop",
+      pass: "for loop found",
+      fail: "No for loop found — a spiral needs a loop!",
+      hint: "Use <code>for i in range(...):</code>",
+      test: c => /for\s+\w+\s+in\s+range\s*\(/m.test(c)
+    },
+    {
+      label: "Uses the loop variable i in forward()",
+      pass: "Loop variable used in forward() — distance grows each iteration!",
+      fail: "forward() doesn't use the loop variable — try t.forward(i * 10) to grow the distance",
+      hint: "Use <code>t.forward(i * 10)</code> so the distance increases each time the loop runs",
+      test: c => /\w+\.forward\s*\(\s*\w+\s*[\*\+]\s*\d+\s*\)/m.test(c) || /\w+\.forward\s*\(\s*\d+\s*[\*\+]\s*\w+\s*\)/m.test(c)
+    },
+    {
+      label: "Uses a turn command",
+      pass: "Turning command found — the spiral will wind outward!",
+      fail: "No turn command found — add left() or right() to make the path spiral",
+      hint: "Add <code>t.left(91)</code> — the slightly-off angle creates the spiral",
+      test: c => /\w+\.(left|right)\s*\(\s*\d+\s*\)/m.test(c)
+    },
+    {
+      label: "Keeps window open",
+      pass: "turtle.done() found",
+      fail: "Missing turtle.done()",
+      hint: "Add <code>turtle.done()</code> at the end",
+      test: c => /turtle\.(done|exitonclick|mainloop)\s*\(\s*\)/m.test(c)
+    },
+  ],
+];
+
+// ── Tab switching ──────────────────────────────────────────────────────────────
+function showTab(n) {
+  currentTab = n;
+  document.querySelectorAll(".panel").forEach((p, i) => p.classList.toggle("active", i === n));
+  document.querySelectorAll(".tab").forEach((t, i) => t.classList.toggle("active", i === n));
+  document.querySelectorAll(".prog-dot").forEach((d, i) => {
+    d.classList.toggle("active", i === n && !taskPassed[i]);
+  });
+}
+
+// ── Check a task ───────────────────────────────────────────────────────────────
+function checkTask(n) {
+  const code = document.getElementById("code" + n).value.trim();
+  if (!code) { alert("Please paste your code first!"); return; }
+
+  const checks = TASK_CHECKS[n];
+  let passCount = 0;
+  let items = "";
+
+  checks.forEach(check => {
+    const ok = check.test(code);
+    if (ok) passCount++;
+    items += `
+      <div class="check-item ${ok ? "pass" : "fail"}">
+        <span class="check-icon">${ok ? "✅" : "❌"}</span>
+        <div class="check-text">
+          <strong>${check.label}</strong>
+          <span>${ok ? check.pass : check.fail}</span>
+          ${!ok ? `<span style="display:block;margin-top:4px;color:var(--amber)">💡 ${check.hint}</span>` : ""}
+        </div>
+      </div>`;
+  });
+
+  const total = checks.length;
+  const allPass = passCount === total;
+  const headerClass = allPass ? "pass" : passCount >= Math.ceil(total / 2) ? "partial" : "fail";
+  const headerIcon = allPass ? "🎉" : passCount >= Math.ceil(total / 2) ? "🔧" : "❌";
+  const headerText = allPass ? "All checks passed — task complete!" : `${passCount} / ${total} checks passed`;
+  let borderColor = allPass ? "var(--green)" : passCount >= Math.ceil(total / 2) ? "var(--amber)" : "var(--red)";
+
+  const resultsEl = document.getElementById("results" + n);
+  resultsEl.style.display = "block";
+  resultsEl.innerHTML = `
+    <div class="result-header ${headerClass}">
+      <span style="font-size:1.3rem">${headerIcon}</span>
+      ${headerText}
+    </div>
+    <div class="checks-list" style="border-color:${borderColor}">
+      ${items}
+    </div>
+    ${allPass ? '<div class="fireworks">🎉 🐢 🎉</div>' : ""}
+  `;
+
+  if (allPass && !taskPassed[n]) {
+    taskPassed[n] = true;
+    updateProgress();
+    saveState();
+  }
+}
+
+function clearTask(n) {
+  document.getElementById("code" + n).value = "";
+  const r = document.getElementById("results" + n);
+  r.style.display = "none";
+}
+
+function updateProgress() {
+  const count = taskPassed.filter(Boolean).length;
+  document.getElementById("progLabel").textContent = count + " / 4 tasks complete";
+
+  taskPassed.forEach((done, i) => {
+    const dot = document.getElementById("dot" + i);
+    const tick = document.getElementById("tick" + i);
+    const tab = document.getElementById("tab" + i);
+    if (done) {
+      dot.classList.add("done");
+      dot.classList.remove("active");
+      dot.textContent = "✓";
+      tick.textContent = "✓ ";
+      tab.classList.add("complete");
+      if (i < 3) document.getElementById("line" + i).classList.add("done");
+    }
+  });
+
+  if (count === 4) {
+    document.getElementById("allDoneBanner").style.display = "block";
+  }
+}
+
+// ── Persistence ────────────────────────────────────────────────────────────────
+function saveState() {
+  try {
+    for (let i = 0; i < 4; i++) {
+      const code = document.getElementById("code" + i).value;
+      if (code) localStorage.setItem("L3_t2_code" + i, code);
+      localStorage.setItem("L3_t2_pass" + i, taskPassed[i] ? "1" : "0");
+    }
+  } catch(e) {}
+}
+
+window.addEventListener("DOMContentLoaded", () => {
+  try {
+    for (let i = 0; i < 4; i++) {
+      const code = localStorage.getItem("L3_t2_code" + i);
+      if (code) document.getElementById("code" + i).value = code;
+      if (localStorage.getItem("L3_t2_pass" + i) === "1") taskPassed[i] = true;
+    }
+    updateProgress();
+  } catch(e) {}
+});
+</script>
+</body>
+</html>
