@@ -225,18 +225,17 @@
     <button class="btn-linked" onclick="handleLinked()">Done, I've linked it →</button>
   </div>
 
-  <!-- Step 3b: activate proxy (shown after linking) -->
+  <!-- Step 3b: authorise proxy (shown after linking) -->
   <div class="url-box" id="url-box">
-    <div class="url-label">Your proxy URL</div>
-    <div class="url-text" id="url-display"></div>
-    <div class="url-actions">
-      <button class="btn-activate" id="activate-btn" onclick="activateProxy()">Activate →</button>
-      <button class="btn-api-done" id="activated-confirm-btn" style="display:none" onclick="handleActivated()">I've activated it →</button>
+    <div class="url-label">Authorise the proxy</div>
+    <div class="url-actions" style="margin-top:4px;">
+      <button class="btn-activate" id="activate-btn" onclick="activateProxy()">Open script editor to authorise →</button>
+      <button class="btn-api-done" id="activated-confirm-btn" style="display:none" onclick="handleActivated()">I've authorised it →</button>
     </div>
   </div>
 
   <div class="activate-note" id="activate-note">
-    <strong>After clicking Activate:</strong> Google will ask you to grant the proxy permission to access your Classroom. Click "Allow", then close that tab and click the button above.
+    <strong>In the script editor:</strong> click the <strong>Run ▶</strong> button (or select any function and press Run). Google will ask you to grant the proxy access to your Classroom — click <strong>Allow</strong>. You may need to click <em>Advanced → Go to OGA Classroom Grade Proxy (unsafe)</em> to proceed past the unverified app warning. Once done, close the editor tab and click <strong>I've authorised it →</strong> above.
   </div>
 
   <div class="error-msg" id="error-msg"></div>
@@ -447,19 +446,21 @@ function out(msg) {
 
       // Extract project number from error body for the Cloud Console fallback link
       let errorProjectNum = null;
+      let errorMessage    = null;
       try {
         const data    = JSON.parse(text);
         const details = (data.error && data.error.details) || [];
         const info    = details.find(d => d['@type'] && d['@type'].includes('ErrorInfo'));
         const consumer = info && info.metadata && info.metadata.consumer;
         if (consumer) errorProjectNum = consumer.replace(/^projects\//, '');
+        if (data.error && data.error.message) errorMessage = data.error.message;
       } catch (_) {}
 
       const num = errorProjectNum || gcpProjectNum;
       const consoleUrl = num
         ? 'https://console.developers.google.com/apis/api/classroom.googleapis.com/overview?project=' + num
         : 'https://console.developers.google.com/apis/api/classroom.googleapis.com';
-      showApiEnableBox(consoleUrl, text, errorProjectNum);
+      showApiEnableBox(consoleUrl, errorMessage || text, errorProjectNum);
       return false;
     } catch (e) {
       console.warn('Classroom API test skipped (network error):', e);
@@ -467,42 +468,51 @@ function out(msg) {
     }
   }
 
-  function showApiEnableBox(consoleUrl, rawError, errorProjectNum) {
+  function showApiEnableBox(consoleUrl, errorMessage, errorProjectNum) {
     markStep(3, 'error');
 
-    const scriptProject = errorProjectNum || '(unknown)';
-    const expectedProject = gcpProjectNum || '(not configured)';
-    const linked = gcpProjectNum && errorProjectNum && gcpProjectNum === errorProjectNum;
+    const scriptProject  = errorProjectNum || null;
+    const expectedProject = gcpProjectNum  || null;
 
-    if (linked) {
-      // Script IS on the right project but API still not enabled there
+    const isAuthError = errorMessage && /authoriz|not been granted|UNAUTHENTICATED/i.test(errorMessage);
+    const isWrongProject = expectedProject && scriptProject && expectedProject !== scriptProject;
+    const isRightProject = expectedProject && scriptProject && expectedProject === scriptProject;
+
+    let title, body;
+
+    if (isAuthError) {
+      title = '⚠️ Script not authorised yet';
+      body  = 'The proxy script hasn\'t been granted access to your Classroom data. ' +
+              'During activation you may have seen an "unverified app" warning and not clicked through, ' +
+              'or the authorisation tab didn\'t prompt you. ' +
+              '<br><br>To fix: ' +
+              (scriptId ? '<a href="https://script.google.com/home/projects/' + scriptId + '/edit" target="_blank">open the Apps Script editor →</a>, ' : '') +
+              'click <strong>Run</strong> on any function, and complete the Google authorisation dialog. Then click Retry.';
+      setStepDesc(3, 'Script authorisation needed — click Run in the editor.');
+    } else if (isWrongProject) {
+      title = '⚠️ Wrong project linked';
+      body  = 'The script is running under project <strong>' + scriptProject + '</strong> ' +
+              'but should be linked to <strong>' + expectedProject + '</strong>. ' +
+              (scriptId ? '<a href="https://script.google.com/home/projects/' + scriptId + '/edit" target="_blank">Open the editor →</a>, ' : '') +
+              'go to ⚙️ <strong>Project Settings → Change project</strong>, paste <strong>' + expectedProject + '</strong>, then click Activate again and Retry.';
+      setStepDesc(3, 'Wrong project linked — relink and re-activate.');
+    } else if (isRightProject) {
+      title = '⚠️ Classroom API not enabled';
+      body  = 'The script is linked to project <strong>' + scriptProject + '</strong> (correct) ' +
+              'but the Classroom API is not enabled there. Open Cloud Console and enable it, then click Retry.';
       setStepDesc(3, 'Classroom API not enabled in the linked project.');
-      document.getElementById('api-enable-box-title').textContent = '⚠️ Classroom API not enabled';
-      document.getElementById('api-enable-box-text').innerHTML =
-        'The script is linked to project <strong>' + scriptProject + '</strong> (correct), ' +
-        'but the Classroom API is not enabled there. Open Cloud Console and enable it, then click Retry.';
-      document.getElementById('api-enable-confirm-btn').textContent = 'Retry →';
-    } else if (gcpProjectNum && errorProjectNum && gcpProjectNum !== errorProjectNum) {
-      // Script is linked to the WRONG project
-      setStepDesc(3, 'Script is linked to the wrong Cloud project.');
-      document.getElementById('api-enable-box-title').textContent = '⚠️ Wrong project linked';
-      document.getElementById('api-enable-box-text').innerHTML =
-        'The script is running under project <strong>' + scriptProject + '</strong> but should be ' +
-        'linked to <strong>' + expectedProject + '</strong>. Re-open the Apps Script editor, ' +
-        'go to ⚙️ Project Settings → Change project, paste <strong>' + expectedProject + '</strong>, ' +
-        'then click Activate again and Retry.';
-      document.getElementById('api-enable-confirm-btn').textContent = 'Retry →';
     } else {
-      // Project number unknown — generic guidance
-      setStepDesc(3, 'Classroom API access failed.');
-      document.getElementById('api-enable-box-title').textContent = '⚠️ Classroom API access failed';
-      document.getElementById('api-enable-box-text').innerHTML =
-        'The proxy returned an error. Script is running under project <strong>' + scriptProject + '</strong>. ' +
-        'Make sure the Classroom API is enabled for that project and the script is linked to it, then click Retry.';
-      document.getElementById('api-enable-confirm-btn').textContent = 'Retry →';
+      title = '⚠️ Classroom API access failed';
+      body  = 'The proxy returned: <code style="font-size:0.78rem;word-break:break-all">' +
+              (errorMessage || '(no message)').replace(/</g, '&lt;') + '</code>' +
+              '<br><br>Make sure the project is linked correctly and the Classroom API is enabled, then click Retry.';
+      setStepDesc(3, 'Classroom API access failed — see details below.');
     }
 
+    document.getElementById('api-enable-box-title').textContent = title;
+    document.getElementById('api-enable-box-text').innerHTML = body;
     document.getElementById('api-enable-link').href = consoleUrl;
+    document.getElementById('api-enable-confirm-btn').textContent = 'Retry →';
     document.getElementById('api-enable-box').classList.add('visible');
     document.getElementById('main-btn').disabled = true;
   }
@@ -550,10 +560,9 @@ function out(msg) {
       gcpProjectNum = input && input.value.trim() || null;
     }
     document.getElementById('link-box').classList.remove('visible');
-    document.getElementById('url-display').textContent = proxyUrl;
     document.getElementById('url-box').classList.add('visible');
     document.getElementById('activate-note').classList.add('visible');
-    setStepDesc(3, 'Open the proxy URL and click Allow to authorise it.');
+    setStepDesc(3, 'Open the script editor, click Run, and grant Classroom access.');
   };
 
   window.copyProjectNum = function () {
@@ -596,10 +605,13 @@ function out(msg) {
   }
 
   function activateProxy() {
-    if (proxyUrl) window.open(proxyUrl, '_blank');
+    const editorUrl = scriptId
+      ? `https://script.google.com/home/projects/${scriptId}/edit`
+      : 'https://script.google.com';
+    window.open(editorUrl, '_blank');
     document.getElementById('activate-btn').style.display = 'none';
     document.getElementById('activated-confirm-btn').style.display = '';
-    setStepDesc(3, 'Click Allow in the new tab, then click the button above.');
+    setStepDesc(3, 'Click Run in the editor, grant access, then click the button above.');
   }
 
   function showError(msg) {
