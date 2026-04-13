@@ -882,7 +882,7 @@ const LAN_WAN_STATEMENTS = [
 
 const DEF_ANSWERS = {
   'def-lan-1': ['small'],
-  'def-lan-2': ['building'],
+  'def-lan-2': ['building', 'office building', 'hospital', 'school', 'office'],
   'def-lan-3': ['internet'],
   'def-wan-1': ['large'],
   'def-wan-2': ['country'],
@@ -1059,8 +1059,8 @@ const TF_DATA = [
     statement:'Network interface cards can only have wired connections.',
     answer: false,
     wrongWord: 'wired',
-    correction: 'wired or wireless',
-    explanation: 'NICs can be wired (Ethernet) or wireless (Wi-Fi).'
+    correction: 'wireless',
+    explanation: 'NICs can be wired (Ethernet) or wireless (Wi-Fi) — the statement should say "wired or wireless".'
   },
   {
     id:'tf2',
@@ -1685,7 +1685,7 @@ function checkAllTF() {
   const correctionScore = TF_DATA.filter(item => {
     if (item.answer || !item.wrongWord) return true; // not a false statement or no correction needed
     const correction = (state.tfCorrections[item.id]||'').trim().toLowerCase();
-    return item.correction.toLowerCase().split(' or ').some(a => correction === a);
+    return (state.tfCorrections[item.id]||'').trim().toLowerCase() === item.correction.toLowerCase();
   }).length;
 
   const gold = correct === TF_DATA.length && correctionScore === TF_DATA.length;
@@ -1743,7 +1743,7 @@ function applyTFResults() {
         if (inp) {
           inp.disabled = true;
           const correction = (state.tfCorrections[item.id]||'').trim().toLowerCase();
-          const ok = item.correction.toLowerCase().split(' or ').some(a => correction === a);
+          const ok = correction === item.correction.toLowerCase();
           inp.classList.toggle('correct-ans', ok);
           inp.classList.toggle('wrong-ans', !ok);
           if (!ok) {
