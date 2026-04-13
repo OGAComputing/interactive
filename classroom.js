@@ -292,6 +292,7 @@
           const url =
             `https://classroom.googleapis.com/v1/courses/${courseId}/courseWork` +
             `?courseWorkStates=${state}&pageSize=50` +
+            `?courseWorkStates=${state}&pageSize=100` +
             (pageToken ? `&pageToken=${encodeURIComponent(pageToken)}` : '');
           const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
           if (!res.ok) break;
