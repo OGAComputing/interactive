@@ -6,11 +6,15 @@
 #
 # EXPECTED DIRECTORY STRUCTURE:
 #   YearGroup/Topic/filename.html
+#   YearGroup/Topic/L<n>_LessonName/filename.html  (optional lesson subfolder)
 #   e.g.  Y8/Python/L1_BugFix.html
+#         Y8/Python/L1_Variables/1_Spot_the_Error.html
 #         Y11/Legislation/FillInBlanks1.html
 #
 # The year group and topic are read directly from the folder path,
 # so you don't need to put them in the metadata comment.
+# If a lesson subfolder is present (matching L<number>_Name), the
+# lesson number and name are extracted and included in the manifest.
 #
 # ADD THIS COMMENT NEAR THE TOP OF EACH ACTIVITY HTML FILE:
 #
@@ -55,6 +59,7 @@ jobs:
 
           ACTIVITY_PATTERN = re.compile(r'<!--\s*ACTIVITY\s*(.*?)-->', re.DOTALL)
           FIELD_PATTERN    = re.compile(r'^\s*(\w+)\s*:\s*(.+?)\s*$', re.MULTILINE)
+          LESSON_PATTERN   = re.compile(r'^[Ll](\d+)(?:[_-](.+))?$')
 
           # Year group folder names → display labels
           # Add entries here if your folder names differ from display names.
@@ -105,10 +110,19 @@ jobs:
 
               year_folder  = parts[0]
               topic_folder = parts[1]
-              # Everything between topic and filename is ignored (allows deeper nesting)
 
               year_label  = YEAR_LABELS.get(year_folder, year_folder.replace('_', ' ').title())
               topic_label = topic_folder.replace('_', ' ').replace('-', ' ').title()
+
+              # Optional lesson subfolder: L<n>_Name between topic and filename
+              lesson_num  = None
+              lesson_name = None
+              if len(parts) >= 4:
+                  lm = LESSON_PATTERN.match(parts[2])
+                  if lm:
+                      lesson_num  = int(lm.group(1))
+                      raw         = lm.group(2)
+                      lesson_name = raw.replace('_', ' ').replace('-', ' ').title() if raw else None
 
               with open(filepath, encoding='utf-8') as fh:
                 content = fh.read()
@@ -118,30 +132,35 @@ jobs:
               if meta_match:
                 fields = dict(FIELD_PATTERN.findall(meta_match.group(1)))
                 activity = {
-                  'path':  rel_path,
-                  'title': fields.get('title', filename.replace('.html', '').replace('_', ' ')),
-                  'year':  year_label,
-                  'topic': topic_label,
-                  'type':  fields.get('type',  'Activity'),
-                  'stars': int(fields.get('stars', 0)),
-                  'desc':  fields.get('desc',  ''),
-                  'color': fields.get('color', 'teal'),
+                  'path':       rel_path,
+                  'title':      fields.get('title', filename.replace('.html', '').replace('_', ' ')),
+                  'year':       year_label,
+                  'topic':      topic_label,
+                  'lesson_num': lesson_num,
+                  'lesson':     lesson_name,
+                  'type':       fields.get('type',  'Activity'),
+                  'stars':      int(fields.get('stars', 0)),
+                  'desc':       fields.get('desc',  ''),
+                  'color':      fields.get('color', 'teal'),
                 }
               else:
                 # No metadata comment — include with auto-filled values
                 activity = {
-                  'path':  rel_path,
-                  'title': filename.replace('.html', '').replace('_', ' '),
-                  'year':  year_label,
-                  'topic': topic_label,
-                  'type':  'Activity',
-                  'stars': 0,
-                  'desc':  '',
-                  'color': 'teal',
+                  'path':       rel_path,
+                  'title':      filename.replace('.html', '').replace('_', ' '),
+                  'year':       year_label,
+                  'topic':      topic_label,
+                  'lesson_num': lesson_num,
+                  'lesson':     lesson_name,
+                  'type':       'Activity',
+                  'stars':      0,
+                  'desc':       '',
+                  'color':      'teal',
                 }
 
               activities.append(activity)
-              print(f"  Found: {rel_path} → {year_label} / {topic_label} / {activity['title']}")
+              lesson_info = f" / L{lesson_num} {lesson_name}" if lesson_num is not None else ""
+              print(f"  Found: {rel_path} → {year_label} / {topic_label}{lesson_info} / {activity['title']}")
 
           with open('activities.json', 'w', encoding='utf-8') as fh:
             json.dump(activities, fh, indent=2)

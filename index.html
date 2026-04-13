@@ -123,6 +123,22 @@
       padding-bottom: 0.5rem;
       margin-bottom: 1rem;
     }
+
+    /* ── Lesson groups (within a topic) ── */
+    .lesson-group { margin-bottom: 1.5rem; }
+    .lesson-heading {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #3d6080;
+      margin-bottom: 0.65rem;
+    }
+    .lesson-heading span {
+      color: #00b4b4;
+      margin-right: 0.5em;
+    }
+
     .card-row {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
@@ -344,17 +360,36 @@
     return str.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
   }
 
+  function renderCard(a) {
+    const c = COLOR[a.color] || COLOR.teal;
+    return `
+      <a class="card" href="${a.path}" style="border-top:4px solid ${c.border}">
+        <div class="card-top">
+          <span class="badge" style="background:${c.badge}">${a.type}</span>
+          ${stars(a.stars)}
+        </div>
+        <div class="card-title">${a.title}</div>
+        <div class="card-desc">${a.desc}</div>
+        <button class="btn-assign" onclick="event.preventDefault(); assignToClassroom('${a.path}', '${a.title}')">➕ Assign to Class</button>
+        <div class="card-arrow">Open →</div>
+      </a>`;
+  }
+
   function buildUI(activities) {
-    // ── Group: year → topic → [activities] ──────────────────
+    // ── Group: year → topic → lesson_num ('__none__' if unset) → {name, activities} ──
     const tree = {};
     activities.forEach(a => {
       if (!tree[a.year])          tree[a.year] = {};
-      if (!tree[a.year][a.topic]) tree[a.year][a.topic] = [];
-      tree[a.year][a.topic].push(a);
+      if (!tree[a.year][a.topic]) tree[a.year][a.topic] = {};
+      const lKey = a.lesson_num != null ? String(a.lesson_num) : '__none__';
+      if (!tree[a.year][a.topic][lKey]) {
+        tree[a.year][a.topic][lKey] = { name: a.lesson || null, activities: [] };
+      }
+      tree[a.year][a.topic][lKey].activities.push(a);
     });
 
     const years = Object.keys(tree).sort();
-    const tabsEl   = document.getElementById('year-tabs');
+    const tabsEl    = document.getElementById('year-tabs');
     const contentEl = document.getElementById('content');
 
     years.forEach((year, i) => {
@@ -372,25 +407,38 @@
       panel.id = 'panel-' + slugify(year);
 
       Object.keys(tree[year]).sort().forEach(topic => {
-        const cards = tree[year][topic].map(a => {
-          const c = COLOR[a.color] || COLOR.teal;
-          return `
-            <a class="card" href="${a.path}" style="border-top:4px solid ${c.border}">
-              <div class="card-top">
-                <span class="badge" style="background:${c.badge}">${a.type}</span>
-                ${stars(a.stars)}
-              </div>
-              <div class="card-title">${a.title}</div>
-              <div class="card-desc">${a.desc}</div>
-              <button class="btn-assign" onclick="event.preventDefault(); assignToClassroom('${a.path}', '${a.title}')">➕ Assign to Class</button>
-              <div class="card-arrow">Open →</div>
-            </a>`;
-        }).join('');
+        const lessonBuckets = tree[year][topic];
+
+        // Sort lesson keys: ungrouped first, then numerically
+        const lessonKeys = Object.keys(lessonBuckets).sort((a, b) => {
+          if (a === '__none__') return -1;
+          if (b === '__none__') return  1;
+          return Number(a) - Number(b);
+        });
+
+        const hasLessons = lessonKeys.some(k => k !== '__none__');
+        let topicContent = '';
+
+        lessonKeys.forEach(lKey => {
+          const { name, activities: acts } = lessonBuckets[lKey];
+          const cards = acts.map(renderCard).join('');
+          if (lKey === '__none__') {
+            // No lesson — render cards directly (no subheading)
+            topicContent += `<div class="card-row">${cards}</div>`;
+          } else {
+            const lessonLabel = name ? `<span>Lesson ${lKey}</span>${name}` : `Lesson ${lKey}`;
+            topicContent += `
+              <div class="lesson-group">
+                <h3 class="lesson-heading">${lessonLabel}</h3>
+                <div class="card-row">${cards}</div>
+              </div>`;
+          }
+        });
 
         panel.innerHTML += `
           <div class="topic-group">
             <h2 class="topic-heading">${topic}</h2>
-            <div class="card-row">${cards}</div>
+            ${topicContent}
           </div>`;
       });
 
