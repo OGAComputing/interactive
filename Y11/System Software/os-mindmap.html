@@ -347,6 +347,26 @@ color:  purple
   .toast.error { border-left: 4px solid #ef4444; }
   .toast.info { border-left: 4px solid var(--gold); }
 
+  /* ── DEMOTE BUTTON ── */
+  .demote-btn {
+    position: absolute;
+    background: #4b5563;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    width: 22px;
+    height: 22px;
+    font-size: 0.82rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: background 0.15s;
+    z-index: 10;
+  }
+  .demote-btn:hover { background: var(--purple); }
+
   /* ── CELEBRATION ── */
   #confetti-canvas {
     position: fixed;
@@ -370,23 +390,29 @@ color:  purple
     80% { transform: translateX(4px); }
   }
 
-  /* ── HINT BUTTON ── */
-  .hint-toggle {
+  /* ── LEVEL SELECTOR ── */
+  .level-selector {
     display: flex;
-    align-items: center;
     gap: 8px;
-    background: #fef9c3;
-    border: 1px solid var(--gold);
-    border-radius: 8px;
-    padding: 8px 14px;
+    flex-wrap: wrap;
+    margin-top: 6px;
+    margin-bottom: 4px;
+  }
+  .level-btn {
+    font-family: var(--font-head);
     font-size: 0.82rem;
     font-weight: 600;
-    color: #92400e;
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: 2px solid var(--border);
+    background: white;
+    color: var(--muted);
     cursor: pointer;
-    margin-top: 14px;
-    width: fit-content;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
   }
-  .hint-toggle input[type=checkbox] { cursor: pointer; }
+  .level-btn:hover:not(:disabled) { border-color: var(--purple-light); color: var(--purple); }
+  .level-btn.active { background: var(--purple); border-color: var(--purple); color: white; }
+  .level-btn:disabled { opacity: 0.38; cursor: not-allowed; pointer-events: none; }
 
   /* ── SCORE BADGE ── */
   .score-badge {
@@ -413,7 +439,7 @@ color:  purple
   .score-item.purple .score-num { color: var(--purple); }
 
   /* ── MINDMAP LAYOUT ── */
-  .mm-root { position: relative; width: 980px; height: 520px; margin: 0 auto; }
+  .mm-root { position: relative; width: 980px; height: 740px; margin: 0 auto; }
 
   /* ══ Dark theme — Y11 System Software palette ══
      These rules override the light defaults above using shared.css variables
@@ -453,8 +479,10 @@ color:  purple
   .fill-input.correct-fi { background: #0a2a1a; border-color: #15803d; color: #6ee7b7; }
   .fill-input.wrong-fi   { background: #2a0a0a; border-color: #b91c1c; }
 
-  /* Hint toggle */
-  .hint-toggle { background: #1a1200; border-color: var(--gold); color: #fde68a; }
+  /* Level selector */
+  .level-btn { background: #1e2f45; border-color: #374151; color: #94a3b8; }
+  .level-btn:hover:not(:disabled) { border-color: var(--purple-light); color: var(--purple-light); }
+  .level-btn.active { background: var(--purple); border-color: var(--purple); color: white; }
 
   /* Score badge */
   .score-badge { background: #1e2f45; border-color: #243b55; }
@@ -485,7 +513,7 @@ color:  purple
     <span class="stars">★★★☆</span>
   </div>
   <div class="progress-wrap">
-    <div class="progress-label" id="progress-label">0 / 16 correct</div>
+    <div class="progress-label" id="progress-label">0 / 21 correct</div>
     <div class="progress-bar-bg"><div class="progress-bar-fill" id="progress-bar"></div></div>
   </div>
 </header>
@@ -503,21 +531,23 @@ color:  purple
   </div>
 </div>
 
-<!-- HINT TOGGLE -->
+<!-- LEVEL SELECTOR -->
 <div style="padding: 0 24px;">
-  <label class="hint-toggle">
-    <input type="checkbox" id="hint-toggle" onchange="toggleHints(this.checked)">
-    💡 Show icon hints (dual coding)
-  </label>
+  <div class="word-bank-label" style="margin-top:10px;">Difficulty Level</div>
+  <div class="level-selector">
+    <button class="level-btn active" id="lvl-1" onclick="setLevel(1)" title="Icons shown to help you remember">🖼️ Level 1 — Icons visible</button>
+    <button class="level-btn" id="lvl-2" onclick="setLevel(2)" title="No icons — recall from the layout only">🧩 Level 2 — Icons hidden</button>
+    <button class="level-btn" id="lvl-3" onclick="setLevel(3)" title="Type all answers from memory">🧠 Level 3 — Typed recall</button>
+  </div>
 </div>
 
 <!-- SCORE -->
 <div style="padding: 0 24px;">
   <div class="score-badge">
     <div class="score-item green"><span class="score-num" id="sc-correct">0</span><span class="score-label">Correct</span></div>
-    <div class="score-item"><span class="score-num" id="sc-total">16</span><span class="score-label">Total</span></div>
-    <div class="score-item purple"><span class="score-num" id="sc-mastered">0</span><span class="score-label">Mastered (typed)</span></div>
-    <div class="score-item"><span class="score-num" id="sc-streak">0</span><span class="score-label">Current streak</span></div>
+    <div class="score-item"><span class="score-num" id="sc-total">21</span><span class="score-label">Total</span></div>
+    <div class="score-item"><span class="score-num" id="sc-streak">0</span><span class="score-label">Streak</span></div>
+    <div class="score-item purple"><span class="score-num" id="sc-score">0</span><span class="score-label">Score / 100</span></div>
   </div>
 </div>
 
@@ -526,13 +556,13 @@ color:  purple
     <div class="mindmap-svg-wrap">
 
       <!-- SVG connector lines -->
-      <svg class="mm-svg" id="mm-svg" viewBox="0 0 980 520" xmlns="http://www.w3.org/2000/svg">
+      <svg class="mm-svg" id="mm-svg" viewBox="0 0 980 740" xmlns="http://www.w3.org/2000/svg">
         <!-- Lines drawn by JS -->
       </svg>
 
       <div class="mm-root" id="mm-root">
         <!-- Central node -->
-        <div class="central-node" style="left:395px;top:175px;width:150px;height:72px;">OPERATING<br>SYSTEMS</div>
+        <div class="central-node" style="left:415px;top:290px;width:150px;height:72px;">OPERATING<br>SYSTEMS</div>
 
         <!-- Drop zones injected by JS -->
       </div>
@@ -555,28 +585,37 @@ color:  purple
 // ═══════════════════════════════════════════════
 
 const NODES = [
-  // Main OS components (the 5 branches)
-  { id: 'fm',   answer: 'File Management',       aliases: ['file management','file mgmt'], x: 120, y: 130, w: 165, h: 44, icon: '📄', iconX: 292, iconY: 130, group: 'main' },
-  { id: 'pm',   answer: 'Peripheral Management', aliases: ['peripheral management','peripherals management','peripheral mgmt'], x: 430, y: 80,  w: 195, h: 44, icon: '🖱️', iconX: 632, iconY: 80,  group: 'main' },
-  { id: 'um',   answer: 'User Management',       aliases: ['user management','user mgmt'], x: 760, y: 130, w: 165, h: 44, icon: '👤', iconX: 932, iconY: 130, group: 'main' },
-  { id: 'ui',   answer: 'User Interfaces',       aliases: ['user interfaces','user interface'], x: 120, y: 260, w: 165, h: 44, icon: '🖥️', iconX: 292, iconY: 260, group: 'main' },
-  { id: 'mm',   answer: 'Memory Management',     aliases: ['memory management','memory mgmt'], x: 430, y: 230, w: 185, h: 44, icon: '💾', iconX: 622, iconY: 230, group: 'main' },
+  // ── Main OS components (5 branches) ──────────────────────────────────
+  { id: 'fm',   answer: 'File Management',       aliases: ['file management','file mgmt'], x: 120, y: 230, w: 165, h: 44, icon: '📄', iconX: 292, iconY: 233, group: 'main' },
+  { id: 'pm',   answer: 'Peripheral Management', aliases: ['peripheral management','peripherals management','peripheral mgmt'], x: 430, y: 180, w: 195, h: 44, icon: '🖱️', iconX: 632, iconY: 183, group: 'main' },
+  { id: 'um',   answer: 'User Management',       aliases: ['user management','user mgmt'], x: 760, y: 230, w: 165, h: 44, icon: '👤', iconX: 932, iconY: 233, group: 'main' },
+  { id: 'ui',   answer: 'User Interfaces',       aliases: ['user interfaces','user interface'], x: 120, y: 360, w: 165, h: 44, icon: '🖥️', iconX: 292, iconY: 363, group: 'main' },
+  { id: 'mm',   answer: 'Memory Management',     aliases: ['memory management','memory mgmt'], x: 430, y: 420, w: 185, h: 44, icon: '💾', iconX: 619, iconY: 423, group: 'main' },
 
-  // User Interfaces sub-branches
-  { id: 'ui-purpose', answer: 'Allow users to interact with the hardware', aliases: ['allow users to interact with the hardware','allow users to interact with hardware','interact with hardware','allows users to interact with hardware','lets users interact with the hardware','interact with the hardware','allows users to interact'], x: 14, y: 380, w: 178, h: 56, icon: null, group: 'ui-sub' },
-  { id: 'gui',    answer: 'GUI',              aliases: ['gui','graphical user interface','graphical'], x: 210, y: 355, w: 100, h: 38, icon: '🖼️', iconX: 316, iconY: 358, group: 'ui-types' },
-  { id: 'nl',     answer: 'Natural Language', aliases: ['natural language','natural language interface','nli'], x: 210, y: 405, w: 140, h: 38, icon: '🗣️', iconX: 356, iconY: 408, group: 'ui-types' },
-  { id: 'cli',    answer: 'Command Line',     aliases: ['command line','command line interface','cli','cmd line','command-line'], x: 210, y: 455, w: 130, h: 38, icon: '⌨️', iconX: 347, iconY: 458, group: 'ui-types' },
+  // ── File Management sub-branches ──────────────────────────────────────
+  { id: 'fm-action', answer: 'Create, move and delete', aliases: ['create move and delete','create, move and delete','create move delete','create, move, and delete'], x: 14, y: 140, w: 170, h: 44, icon: null, group: 'fm-sub' },
+  { id: 'files',     answer: 'Files',       aliases: ['files','file'], x: 210, y: 110, w: 100, h: 36, icon: '🗂️', iconX: 316, iconY: 113, group: 'fm-sub' },
+  { id: 'dirs',      answer: 'Directories', aliases: ['directories','directory','folders'], x: 210, y: 158, w: 120, h: 36, icon: '📁', iconX: 336, iconY: 161, group: 'fm-sub' },
 
-  // Memory Management sub-branches
-  { id: 'vm',            answer: 'Manage virtual memory',                   aliases: ['manage virtual memory','virtual memory','manages virtual memory','managing virtual memory'], x: 390, y: 370, w: 185, h: 44, icon: null, group: 'mm-sub' },
-  { id: 'multi-purpose', answer: 'Allow multiple programs to run at once',  aliases: ['allow multiple programs to run at once','multiple programs run at once','allow multiple programs to run','allows multiple programs to run at once','run multiple programs at once','multiple programs to run at once'], x: 390, y: 430, w: 185, h: 56, icon: null, group: 'mm-sub' },
-  { id: 'multi',         answer: 'Multitasking',                            aliases: ['multitasking','multi-tasking'], x: 610, y: 430, w: 140, h: 38, icon: '⚙️', iconX: 757, iconY: 433, group: 'mm-sub' },
+  // ── Peripheral Management sub-branches ───────────────────────────────
+  { id: 'pm-action',  answer: 'Communicate with devices', aliases: ['communicate with devices','communicates with devices','communication with devices'], x: 390, y: 60, w: 185, h: 44, icon: null, group: 'pm-sub' },
+  { id: 'dd',         answer: 'Device Drivers',           aliases: ['device drivers','device driver'], x: 660, y: 60, w: 140, h: 44, icon: '🔌', iconX: 806, iconY: 63, group: 'pm-sub' },
 
-  // User Management sub-branches
-  { id: 'um-purpose', answer: 'Keep files and accounts secure', aliases: ['keep files and accounts secure','keep accounts secure','keep files secure','keeps files and accounts secure','keep files and account secure','secure files and accounts'], x: 760, y: 240, w: 180, h: 48, icon: null, group: 'um-sub' },
-  { id: 'upw',    answer: 'User & Password Management', aliases: ['user & password management','user and password management','username and password','user password management'], x: 760, y: 360, w: 185, h: 44, icon: null, group: 'um-sub' },
-  { id: 'far',    answer: 'File access rights',         aliases: ['file access rights','file access right','access rights'], x: 760, y: 418, w: 165, h: 38, icon: null, group: 'um-sub' },
+  // ── User Interfaces sub-branches ──────────────────────────────────────
+  { id: 'ui-purpose', answer: 'Allow users to interact with the hardware', aliases: ['allow users to interact with the hardware','allow users to interact with hardware','interact with hardware','allows users to interact with hardware','lets users interact with the hardware','interact with the hardware','allows users to interact'], x: 14, y: 480, w: 178, h: 56, icon: null, group: 'ui-sub' },
+  { id: 'gui',    answer: 'GUI',              aliases: ['gui','graphical user interface','graphical'], x: 210, y: 455, w: 100, h: 38, icon: '🖼️', iconX: 316, iconY: 458, group: 'ui-types' },
+  { id: 'nl',     answer: 'Natural Language', aliases: ['natural language','natural language interface','nli'], x: 210, y: 505, w: 140, h: 38, icon: '🗣️', iconX: 356, iconY: 508, group: 'ui-types' },
+  { id: 'cli',    answer: 'Command Line',     aliases: ['command line','command line interface','cli','cmd line','command-line'], x: 210, y: 555, w: 130, h: 38, icon: '⌨️', iconX: 347, iconY: 558, group: 'ui-types' },
+
+  // ── Memory Management sub-branches ───────────────────────────────────
+  { id: 'vm',            answer: 'Manage virtual memory',                  aliases: ['manage virtual memory','virtual memory','manages virtual memory','managing virtual memory'], x: 390, y: 492, w: 185, h: 44, icon: null, group: 'mm-sub' },
+  { id: 'multi-purpose', answer: 'Allow multiple programs to run at once', aliases: ['allow multiple programs to run at once','multiple programs run at once','allow multiple programs to run','allows multiple programs to run at once','run multiple programs at once','multiple programs to run at once'], x: 390, y: 556, w: 185, h: 56, icon: null, group: 'mm-sub' },
+  { id: 'multi',         answer: 'Multitasking',                           aliases: ['multitasking','multi-tasking'], x: 610, y: 556, w: 140, h: 38, icon: '⚙️', iconX: 757, iconY: 559, group: 'mm-sub' },
+
+  // ── User Management sub-branches ─────────────────────────────────────
+  { id: 'um-purpose', answer: 'Keep files and accounts secure', aliases: ['keep files and accounts secure','keep accounts secure','keep files secure','keeps files and accounts secure','keep files and account secure','secure files and accounts'], x: 760, y: 340, w: 180, h: 48, icon: null, group: 'um-sub' },
+  { id: 'upw',    answer: 'User & Password Management', aliases: ['user & password management','user and password management','username and password','user password management'], x: 760, y: 460, w: 185, h: 44, icon: null, group: 'um-sub' },
+  { id: 'far',    answer: 'File access rights',         aliases: ['file access rights','file access right','access rights'], x: 760, y: 518, w: 165, h: 38, icon: null, group: 'um-sub' },
 ];
 
 // Connector lines: [fromNodeId_or_coord, toNodeId, label]
@@ -587,6 +626,13 @@ const CONNECTORS = [
   ['os', 'pm', ''],
   ['os', 'um', ''],
   ['os', 'mm', ''],
+  // FM branch
+  ['fm', 'fm-action', 'to'],
+  ['fm-action', 'files', ''],
+  ['fm-action', 'dirs', ''],
+  // PM branch
+  ['pm', 'pm-action', 'to'],
+  ['pm-action', 'dd', 'using'],
   // UI branch
   ['ui', 'ui-purpose', 'to'],
   ['ui', 'gui', 'using a'],
@@ -608,12 +654,14 @@ let streak = 0;
 let firstAttemptAllCorrect = true; // track if any mistake was made
 let totalCorrect = 0;
 let totalMastered = 0;
+let levelsUnlocked = 1; // which levels are accessible (1, 2, or 3)
+let level3Score = 0;    // count of nodes correctly typed in level 3
 
 // ═══════════════════════════════════════════════
 //  BUILD THE MIND MAP
 // ═══════════════════════════════════════════════
 
-const TOTAL = NODES.length; // 16
+const TOTAL = NODES.length; // 21
 
 function buildMindMap() {
   const root = document.getElementById('mm-root');
@@ -626,7 +674,7 @@ function buildMindMap() {
   // Draw connector lines
   CONNECTORS.forEach(([fromId, toId, label]) => {
     const from = fromId === 'os'
-      ? { cx: 470, cy: 211 } // central node centre (left:395 + w:150/2, top:175 + h:72/2)
+      ? { cx: 490, cy: 326 } // central node centre (left:415 + w:150/2, top:290 + h:72/2)
       : nodeCenter(NODES.find(n => n.id === fromId));
     const to   = nodeCenter(NODES.find(n => n.id === toId));
 
@@ -690,7 +738,7 @@ function createNodeElement(node) {
       btn.className = 'demote-btn';
       btn.title = 'Struggling? Switch back to drag-and-drop for this word';
       btn.textContent = '↩';
-      btn.style.cssText = `left:${node.x + node.w + 3}px;top:${node.y + node.h/2 - 9}px;`;
+      btn.style.cssText = `position:absolute;left:${node.x + node.w + 4}px;top:${node.y + node.h/2 - 11}px;`;
       btn.addEventListener('click', () => demoteNode(node.id));
       root.appendChild(btn);
     }
@@ -722,7 +770,7 @@ function createIconHint(node) {
   el.textContent = node.icon;
   el.style.left = (node.iconX || node.x + node.w + 4) + 'px';
   el.style.top  = (node.iconY || node.y + node.h / 2 - 10) + 'px';
-  el.style.display = document.getElementById('hint-toggle').checked ? 'block' : 'none';
+  el.style.display = (currentLevel === 1) ? 'block' : 'none';
   root.appendChild(el);
 }
 
@@ -877,18 +925,32 @@ function markCorrect(nodeId, mode) {
   } else {
     const inp = document.getElementById('inp-' + nodeId);
     if (inp) { inp.classList.add('correct-fi'); inp.disabled = true; }
+    // Count toward level 3 score only if we're in level 3 typed mode
+    if (currentLevel === 3) level3Score++;
   }
 
-  // After 2 correct answers, graduate some nodes to text mode
-  // Graduate this node for future resets (mastered after 1 correct in type mode, or 2nd time correct in dd)
   checkGraduation();
   updateScoreboard();
   updateProgress();
   saveState();
 
   if (totalCorrect === TOTAL) {
-    calcAndSubmitGrade();
-    setTimeout(() => celebrate(), 400);
+    // Unlock the next level if appropriate
+    if (currentLevel === 1 && levelsUnlocked < 2) {
+      levelsUnlocked = 2;
+      updateLevelButtons();
+      showToast('🎉 Level 1 complete! Level 2 unlocked — no icons now.', 'success');
+    } else if (currentLevel === 2 && levelsUnlocked < 3) {
+      levelsUnlocked = 3;
+      updateLevelButtons();
+      showToast('🎉 Level 2 complete! Level 3 unlocked — type from memory.', 'success');
+    }
+    if (currentLevel === 3) {
+      calcAndSubmitGrade();
+      setTimeout(() => celebrate(), 400);
+    } else {
+      setTimeout(() => celebrate(), 400);
+    }
   } else {
     const msgs = ['✓ Correct!','✓ Nice one!','✓ That\'s right!','✓ Well done!'];
     showToast(msgs[Math.floor(Math.random()*msgs.length)], 'success');
@@ -896,8 +958,9 @@ function markCorrect(nodeId, mode) {
 }
 
 function checkGraduation() {
-  // A node graduates to text-input mode after being correct twice total
-  // We store a separate 'timesCorrect' counter
+  // Graduation (auto-promotion to typed mode) only applies within level 3 flow;
+  // at levels 1/2 the level selector controls mode exclusively.
+  if (currentLevel < 3) return;
   NODES.forEach(node => {
     const s = state[node.id];
     if (!s.timesCorrect) s.timesCorrect = 0;
@@ -905,7 +968,6 @@ function checkGraduation() {
       s.timesCorrect++;
       s._counted = true;
     }
-    // Graduate after 2 correct total (across resets)
     if (s.timesCorrect >= 2 && !s.mastered) {
       s.mastered = true;
       totalMastered++;
@@ -1004,18 +1066,23 @@ function checkAll() {
 // ═══════════════════════════════════════════════
 
 function resetActivity() {
-  // Save mastery counts before reset
   NODES.forEach(node => {
     if (state[node.id]) {
       state[node.id].correct = false;
       state[node.id]._counted = false;
       state[node.id].value = '';
+      state[node.id].mastered = (currentLevel === 3);
     }
   });
   streak = 0;
   totalCorrect = 0;
+  firstAttemptAllCorrect = true;
+  if (currentLevel === 3) level3Score = 0;
   document.body.classList.remove('all-correct','perfect');
   buildMindMap();
+  document.querySelectorAll('.hint-icon').forEach(el => {
+    el.style.display = (currentLevel === 1) ? 'block' : 'none';
+  });
   buildWordBank();
   updateScoreboard();
   updateProgress();
@@ -1048,13 +1115,55 @@ function revealAll() {
 }
 
 // ═══════════════════════════════════════════════
-//  HINTS TOGGLE
+//  LEVEL SYSTEM (1=icons shown, 2=icons hidden, 3=typed recall)
 // ═══════════════════════════════════════════════
 
-function toggleHints(show) {
-  document.querySelectorAll('.hint-icon').forEach(el => {
-    el.style.display = show ? 'block' : 'none';
+let currentLevel = 1;
+
+function updateLevelButtons() {
+  document.getElementById('lvl-2').disabled = (levelsUnlocked < 2);
+  document.getElementById('lvl-3').disabled = (levelsUnlocked < 3);
+}
+
+function setLevel(level) {
+  if (level > levelsUnlocked) {
+    const needed = level - 1;
+    showToast(`Complete Level ${needed} first to unlock Level ${level}!`, 'error');
+    return;
+  }
+  currentLevel = level;
+
+  // Clear all answers for a fresh start at the new level
+  NODES.forEach(node => {
+    const s = state[node.id];
+    s.correct = false;
+    s._counted = false;
+    s.value = '';
+    s.mastered = (level === 3); // all mastered (typed) at level 3 only
   });
+  streak = 0;
+  totalCorrect = 0;
+  firstAttemptAllCorrect = true;
+  if (level === 3) level3Score = 0;
+
+  // Update button active states
+  [1,2,3].forEach(l => {
+    document.getElementById('lvl-' + l).classList.toggle('active', l === level);
+  });
+
+  buildMindMap();
+  // Icons: visible only at level 1
+  document.querySelectorAll('.hint-icon').forEach(el => {
+    el.style.display = (level === 1) ? 'block' : 'none';
+  });
+  buildWordBank();
+  updateScoreboard();
+  updateProgress();
+  updateStageText();
+  saveState();
+
+  const msgs = { 1: '🖼️ Level 1 — icons visible to help you.', 2: '🧩 Level 2 — icons hidden, recall from layout!', 3: '🧠 Level 3 — type all answers from memory!' };
+  showToast(msgs[level], 'info');
 }
 
 // ═══════════════════════════════════════════════
@@ -1069,8 +1178,8 @@ function updateProgress() {
 
 function updateScoreboard() {
   document.getElementById('sc-correct').textContent = totalCorrect;
-  document.getElementById('sc-mastered').textContent = NODES.filter(n => state[n.id] && state[n.id].mastered).length;
   document.getElementById('sc-streak').textContent = streak;
+  document.getElementById('sc-score').textContent = Math.round((level3Score / TOTAL) * 100);
 }
 
 // ═══════════════════════════════════════════════
@@ -1149,17 +1258,20 @@ function showToast(msg, type = 'info') {
 
 function saveState() {
   try {
-    localStorage.setItem('os-mindmap-state', JSON.stringify(state));
+    localStorage.setItem('os-mindmap-state-v2', JSON.stringify(state));
+    localStorage.setItem('os-mindmap-levels-v1', levelsUnlocked.toString());
   } catch(e) {}
 }
 
 function loadState() {
   try {
-    const saved = localStorage.getItem('os-mindmap-state');
+    const saved = localStorage.getItem('os-mindmap-state-v2');
     if (saved) {
       const s = JSON.parse(saved);
       Object.assign(state, s);
     }
+    const savedLevel = localStorage.getItem('os-mindmap-levels-v1');
+    if (savedLevel) levelsUnlocked = Math.max(1, parseInt(savedLevel) || 1);
   } catch(e) {}
 }
 
@@ -1200,6 +1312,27 @@ buildWordBank();
 updateScoreboard();
 updateProgress();
 updateStageText();
+updateLevelButtons();
+
+// ═══════════════════════════════════════════════
+//  AUTO-SCROLL DURING DRAG
+//  Native HTML5 drag API doesn't scroll the page —
+//  detect cursor near viewport edges and nudge manually.
+// ═══════════════════════════════════════════════
+(function setupDragScroll() {
+  const EDGE = 80;   // px from viewport edge to begin scrolling
+  const SPEED = 12;  // px per tick
+  let scrollInterval = null;
+  function stopScroll() { if (scrollInterval) { clearInterval(scrollInterval); scrollInterval = null; } }
+  document.addEventListener('dragover', e => {
+    const y = e.clientY, h = window.innerHeight;
+    stopScroll();
+    if (y < EDGE)       scrollInterval = setInterval(() => window.scrollBy(0, -SPEED), 16);
+    else if (y > h - EDGE) scrollInterval = setInterval(() => window.scrollBy(0,  SPEED), 16);
+  });
+  document.addEventListener('dragend', stopScroll);
+  document.addEventListener('drop',    stopScroll);
+})();
 </script>
 <script src="../../classroom.js"></script>
 </body>
