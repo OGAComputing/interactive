@@ -40,7 +40,8 @@
 
   // urlParams must be declared before proxyUrl so the reference is valid
   const urlParams   = new URLSearchParams(window.location.search);
-  const courseId    = urlParams.get('courseId');
+  // let (not const) so the fallback course scan can correct a stale courseId from a re-used post
+  let courseId      = urlParams.get('courseId');
   const isClassroomContext = !!courseId;
 
   // Proxy URL resolution: URL param wins, then localStorage (saved by setup page)
@@ -290,7 +291,7 @@
 
   // ── courseWorkId lookup ───────────────────────────────────────────────────────
 
-  async function lookupCourseWorkId(token) {
+  async function lookupCourseWorkId(token, cId) {
     const pageBase = decodeURIComponent(window.location.origin + window.location.pathname);
     const pagePath = decodeURIComponent(window.location.pathname);
     try {
@@ -298,7 +299,7 @@
         let pageToken = '';
         do {
           const url =
-            `https://classroom.googleapis.com/v1/courses/${courseId}/courseWork` +
+            `https://classroom.googleapis.com/v1/courses/${cId}/courseWork` +
             `?courseWorkStates=${state}&pageSize=100` +
             (pageToken ? `&pageToken=${encodeURIComponent(pageToken)}` : '');
           const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
@@ -320,9 +321,41 @@
     } catch (e) {
       console.warn('Classroom: courseWork lookup failed', e);
     }
-    console.warn('Classroom: no matching assignment found for this page in course', courseId,
-      '— expected URL containing:', pagePath);
     return null;
+  }
+
+  // ── Fallback course scan ──────────────────────────────────────────────────────
+  // Called when lookupCourseWorkId finds nothing in the URL's courseId.
+  // This happens when a teacher uses "Re-use post" in Classroom: the copied post
+  // retains the original classroom's courseId in the link. We scan all courses the
+  // signed-in user can see and find one with an assignment matching this page's URL.
+
+  async function findCorrectCourse(token) {
+    const pagePath = decodeURIComponent(window.location.pathname);
+    console.log('Classroom: assignment not found in URL courseId — scanning all accessible courses (re-used post?)');
+    try {
+      let pageToken = '';
+      do {
+        const url = 'https://classroom.googleapis.com/v1/courses?pageSize=50' +
+          (pageToken ? `&pageToken=${encodeURIComponent(pageToken)}` : '');
+        const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+        if (!res.ok) break;
+        const data = await res.json();
+        pageToken = data.nextPageToken || '';
+        for (const course of (data.courses || [])) {
+          if (course.id === courseId) continue; // already checked
+          const cwId = await lookupCourseWorkId(token, course.id);
+          if (cwId) {
+            console.log(`Classroom: matched assignment in course "${course.name}" (${course.id}) — updating courseId`);
+            return { courseId: course.id, courseWorkId: cwId };
+          }
+        }
+      } while (pageToken);
+    } catch (e) {
+      console.warn('Classroom: fallback course scan failed', e);
+    }
+    console.warn('Classroom: no matching assignment found in any accessible course — expected URL containing:', pagePath);
+    return { courseId: null, courseWorkId: null };
   }
 
   // ── Submission ID lookup ─────────────────────────────────────────────────────
@@ -415,7 +448,16 @@
           return;
         }
         accessToken = tokenResponse.access_token;
-        courseWorkId = await lookupCourseWorkId(accessToken);
+        courseWorkId = await lookupCourseWorkId(accessToken, courseId);
+        if (!courseWorkId) {
+          // Assignment not found in the URL's courseId — likely a "Re-use post" link
+          // from a different classroom. Scan all accessible courses for a match.
+          const found = await findCorrectCourse(accessToken);
+          if (found.courseId) {
+            courseId    = found.courseId;    // update module-level so submitGrade etc. use correct course
+            courseWorkId = found.courseWorkId;
+          }
+        }
         submissionId = await lookupSubmissionId(accessToken, courseWorkId);
 
         const isTeacher = await detectTeacher(accessToken);
