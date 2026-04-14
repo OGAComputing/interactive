@@ -113,10 +113,7 @@ color:  purple
   }
   .stage-banner .stage-icon { font-size: 1.1rem; }
 
-  /* ── WORD BANK ── */
-  .word-bank-section {
-    padding: 16px 24px 0;
-  }
+  /* ── WORD BANK (side panel) ── */
   .word-bank-label {
     font-family: var(--font-head);
     font-size: 0.78rem;
@@ -128,16 +125,35 @@ color:  purple
   }
   .word-bank {
     display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    min-height: 48px;
+    flex-direction: column;
+    gap: 6px;
+    min-height: 60px;
     background: white;
     border: 2px dashed var(--border);
     border-radius: 12px;
-    padding: 10px 12px;
+    padding: 10px 10px;
     transition: border-color 0.2s;
   }
   .word-bank.drag-over { border-color: var(--purple-light); background: var(--purple-pale); }
+
+  /* ── SIDE-BY-SIDE LAYOUT ── */
+  .mindmap-layout {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+  }
+  .word-bank-panel {
+    flex: 0 0 200px;
+    position: sticky;
+    top: 90px;
+    max-height: calc(100vh - 110px);
+    overflow-y: auto;
+    padding-bottom: 8px;
+  }
+  .mindmap-area {
+    flex: 1;
+    min-width: 0;
+  }
 
   .tile {
     background: var(--navy);
@@ -151,7 +167,9 @@ color:  purple
     user-select: none;
     transition: transform 0.15s, box-shadow 0.15s, opacity 0.2s;
     box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-    white-space: nowrap;
+    white-space: normal;
+    line-height: 1.3;
+    text-align: center;
   }
   .tile:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
   .tile.dragging { opacity: 0.4; cursor: grabbing; }
@@ -453,9 +471,10 @@ color:  purple
   /* Stage banner */
   .stage-banner { background: #1a0f2e; border-left-color: var(--purple-light); color: var(--purple-light); }
 
-  /* Word bank */
+  /* Word bank panel */
   .word-bank { background: #0d1a2d; border-color: #243b55; }
   .word-bank.drag-over { background: #1a0f2e; border-color: var(--purple-light); }
+  .word-bank-panel { background: transparent; }
 
   /* Mind map container */
   .mindmap-container {
@@ -523,14 +542,6 @@ color:  purple
   <span id="stage-text">Stage 1 — Drag the labels from the word bank into the correct boxes on the mind map.</span>
 </div>
 
-<!-- WORD BANK -->
-<div class="word-bank-section">
-  <div class="word-bank-label">Word Bank</div>
-  <div class="word-bank" id="word-bank" ondragover="bankDragOver(event)" ondragleave="bankDragLeave(event)" ondrop="bankDrop(event)">
-    <!-- tiles injected by JS -->
-  </div>
-</div>
-
 <!-- LEVEL SELECTOR -->
 <div style="padding: 0 24px;">
   <div class="word-bank-label" style="margin-top:10px;">Difficulty Level</div>
@@ -552,27 +563,42 @@ color:  purple
 </div>
 
 <main>
-  <div class="mindmap-container">
-    <div class="mindmap-svg-wrap">
+  <div class="mindmap-layout">
 
-      <!-- SVG connector lines -->
-      <svg class="mm-svg" id="mm-svg" viewBox="0 0 980 740" xmlns="http://www.w3.org/2000/svg">
-        <!-- Lines drawn by JS -->
-      </svg>
+    <!-- Word bank — sticky side panel -->
+    <aside class="word-bank-panel">
+      <div class="word-bank-label">Word Bank</div>
+      <div class="word-bank" id="word-bank" ondragover="bankDragOver(event)" ondragleave="bankDragLeave(event)" ondrop="bankDrop(event)">
+        <!-- tiles injected by JS -->
+      </div>
+    </aside>
 
-      <div class="mm-root" id="mm-root">
-        <!-- Central node -->
-        <div class="central-node" style="left:415px;top:290px;width:150px;height:72px;">OPERATING<br>SYSTEMS</div>
+    <!-- Mindmap + actions -->
+    <div class="mindmap-area">
+      <div class="mindmap-container">
+        <div class="mindmap-svg-wrap">
 
-        <!-- Drop zones injected by JS -->
+          <!-- SVG connector lines -->
+          <svg class="mm-svg" id="mm-svg" viewBox="0 0 980 740" xmlns="http://www.w3.org/2000/svg">
+            <!-- Lines drawn by JS -->
+          </svg>
+
+          <div class="mm-root" id="mm-root">
+            <!-- Central node -->
+            <div class="central-node" style="left:415px;top:290px;width:150px;height:72px;">OPERATING<br>SYSTEMS</div>
+
+            <!-- Drop zones injected by JS -->
+          </div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn btn-primary" onclick="checkAll()">✓ Check All</button>
+        <button class="btn btn-secondary" onclick="resetActivity()">↺ Reset</button>
+        <button class="btn btn-orange btn-small" onclick="revealAll()">👁 Reveal Answers</button>
       </div>
     </div>
-  </div>
 
-  <div class="actions">
-    <button class="btn btn-primary" onclick="checkAll()">✓ Check All</button>
-    <button class="btn btn-secondary" onclick="resetActivity()">↺ Reset</button>
-    <button class="btn btn-orange btn-small" onclick="revealAll()">👁 Reveal Answers</button>
   </div>
 </main>
 
