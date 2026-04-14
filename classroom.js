@@ -34,6 +34,10 @@
   // openid + email — fetch the student's Google user ID for the proxy call.
   const SCOPE = 'https://www.googleapis.com/auth/classroom.coursework.me https://www.googleapis.com/auth/classroom.courses.readonly openid email';
 
+  // Minimum proxy version that this classroom.js is compatible with.
+  // Bump this (and PROXY_VERSION in setup.html's PROXY_JS) when making breaking changes.
+  const PROXY_MIN_VERSION = 1;
+
   // urlParams must be declared before proxyUrl so the reference is valid
   const urlParams   = new URLSearchParams(window.location.search);
   const courseId    = urlParams.get('courseId');
@@ -48,6 +52,9 @@
   let accessToken  = null;
   let courseWorkId   = null; // resolved after sign-in
   let submissionId   = null; // resolved after sign-in
+
+  let proxyVersionChecked = false;
+  let proxyVersionOk      = true; // set to false only when version endpoint confirms it is below minimum
 
   // ── Login banner ─────────────────────────────────────────────────────────────
 
@@ -269,6 +276,7 @@
     window._classroomModalSkip();
     setBannerTeacher(true);
     showClassroomToast('Proxy URL saved ✅');
+    checkProxyVersion();
   };
 
   window._classroomCopyLink = function () {
@@ -341,6 +349,42 @@
     }
   }
 
+  // ── Proxy version check ───────────────────────────────────────────────────────
+  // Fetches ?action=version from the proxy and warns the teacher if it is outdated.
+  // Old proxies (before the version endpoint was added) return non-numeric text, which
+  // is treated as "unknown version" — a warning is shown but grade sync is not blocked,
+  // since the old proxy still speaks the same protocol.
+  // If the version endpoint returns a number below PROXY_MIN_VERSION, grade sync is
+  // blocked because a breaking change has been made.
+
+  function showProxyOutdatedWarning() {
+    const text = document.getElementById('classroom-text');
+    if (text) text.textContent = '⚠️ Proxy script is outdated — please redeploy from the setup page.';
+    const dot = document.getElementById('classroom-dot');
+    if (dot) { dot.style.background = '#ef4444'; dot.style.boxShadow = '0 0 8px #ef4444'; }
+    showClassroomToast('⚠️ Proxy outdated — please redeploy.');
+  }
+
+  async function checkProxyVersion() {
+    if (!proxyUrl || proxyVersionChecked) return;
+    proxyVersionChecked = true;
+    try {
+      const res  = await fetch(proxyUrl + '?action=version');
+      const text = res.ok ? (await res.text()).trim() : '';
+      const ver  = parseInt(text, 10);
+      if (isNaN(ver)) {
+        // Old proxy with no version endpoint — warn but don't block grade sync
+        showProxyOutdatedWarning();
+      } else if (ver < PROXY_MIN_VERSION) {
+        // Version explicitly below minimum — warn and block grade sync
+        proxyVersionOk = false;
+        showProxyOutdatedWarning();
+      }
+    } catch (_) {
+      // Network error — don't warn or block
+    }
+  }
+
   // ── Teacher detection ─────────────────────────────────────────────────────────
   // courses.list?teacherId=me returns only courses the user teaches, which works
   // with the classroom.coursework.me scope and needs no additional permissions.
@@ -381,6 +425,8 @@
             // Show modal so teacher can enter their proxy URL
             const modal = document.getElementById('cr-modal-backdrop');
             if (modal) modal.classList.add('open');
+          } else {
+            await checkProxyVersion();
           }
         } else {
           setBannerStudent();
@@ -418,6 +464,12 @@
       if (!proxyUrl) {
         console.error('Classroom: grade not submitted — no proxy URL configured.');
         showClassroomToast('⚠️ Grade not saved — proxy not configured.');
+        return;
+      }
+      await checkProxyVersion();
+      if (!proxyVersionOk) {
+        console.error('Classroom: grade not submitted — proxy version is below minimum required (need v' + PROXY_MIN_VERSION + ').');
+        showClassroomToast('⚠️ Grade not saved — proxy is outdated, please redeploy.');
         return;
       }
       if (!courseWorkId || !submissionId) {

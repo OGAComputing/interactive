@@ -273,27 +273,40 @@
 //   1. Student identity is verified via their OAuth token (not a self-reported userId).
 //   2. Grade is clamped to 0-100.
 //   3. Student can only update their own submission (userId resolved from verified token).
+
+// Bump this when making breaking changes to the proxy API.
+// classroom.js checks this via ?action=version and warns the teacher if it is too low.
+var PROXY_VERSION = 1;
+
 function doGet(e) {
-  // ?action=test — called by the setup page to confirm the Classroom API is accessible.
-  // Returns 'ok' on success or the raw API error body (so setup.html can extract the
-  // project number and auto-enable the API via the Service Usage API).
-  if (e && e.parameter && e.parameter.action === 'test') {
-    try {
-      var token = ScriptApp.getOAuthToken();
-      var res = UrlFetchApp.fetch(
-        'https://classroom.googleapis.com/v1/courses?pageSize=1',
-        { headers: { Authorization: 'Bearer ' + token }, muteHttpExceptions: true }
-      );
-      if (res.getResponseCode() === 200) {
-        return ContentService.createTextOutput('ok').setMimeType(ContentService.MimeType.TEXT);
-      }
-      return ContentService.createTextOutput(res.getContentText()).setMimeType(ContentService.MimeType.TEXT);
-    } catch(err) {
-      return ContentService.createTextOutput('{"error":{"message":"' + err.message + '"}}')
+  if (e && e.parameter) {
+    // ?action=version — checked by classroom.js after teacher sign-in.
+    // Returns the proxy version number as plain text.
+    if (e.parameter.action === 'version') {
+      return ContentService.createTextOutput(String(PROXY_VERSION))
         .setMimeType(ContentService.MimeType.TEXT);
     }
+    // ?action=test — called by the setup page to confirm the Classroom API is accessible.
+    // Returns 'ok' on success or the raw API error body (so setup.html can extract the
+    // project number and auto-enable the API via the Service Usage API).
+    if (e.parameter.action === 'test') {
+      try {
+        var token = ScriptApp.getOAuthToken();
+        var res = UrlFetchApp.fetch(
+          'https://classroom.googleapis.com/v1/courses?pageSize=1',
+          { headers: { Authorization: 'Bearer ' + token }, muteHttpExceptions: true }
+        );
+        if (res.getResponseCode() === 200) {
+          return ContentService.createTextOutput('ok').setMimeType(ContentService.MimeType.TEXT);
+        }
+        return ContentService.createTextOutput(res.getContentText()).setMimeType(ContentService.MimeType.TEXT);
+      } catch(err) {
+        return ContentService.createTextOutput('{"error":{"message":"' + err.message + '"}}')
+          .setMimeType(ContentService.MimeType.TEXT);
+      }
+    }
   }
-  return ContentService.createTextOutput('OGA Classroom Grade Proxy is active.')
+  return ContentService.createTextOutput('OGA Classroom Grade Proxy v' + PROXY_VERSION + ' is active.')
     .setMimeType(ContentService.MimeType.TEXT);
 }
 function doPost(e) {
