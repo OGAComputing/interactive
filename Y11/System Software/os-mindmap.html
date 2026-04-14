@@ -547,7 +547,7 @@ color:  purple
     <div class="score-item green"><span class="score-num" id="sc-correct">0</span><span class="score-label">Correct</span></div>
     <div class="score-item"><span class="score-num" id="sc-total">21</span><span class="score-label">Total</span></div>
     <div class="score-item"><span class="score-num" id="sc-streak">0</span><span class="score-label">Streak</span></div>
-    <div class="score-item purple"><span class="score-num" id="sc-score">0</span><span class="score-label">Score / 100</span></div>
+    <div class="score-item purple" title="L1 = up to 20pts · L2 = up to 30pts · L3 = up to 50pts"><span class="score-num" id="sc-score">0</span><span class="score-label">Score / 100</span></div>
   </div>
 </div>
 
@@ -655,7 +655,10 @@ let firstAttemptAllCorrect = true; // track if any mistake was made
 let totalCorrect = 0;
 let totalMastered = 0;
 let levelsUnlocked = 1; // which levels are accessible (1, 2, or 3)
-let level3Score = 0;    // count of nodes correctly typed in level 3
+// Weighted score: L1=20pts, L2=30pts, L3=50pts (max 100 total)
+let bankedL1 = 0;    // best correct count achieved in level 1 (persists across switches)
+let bankedL2 = 0;    // best correct count achieved in level 2
+let level3Score = 0; // correct count in current level 3 session
 
 // ═══════════════════════════════════════════════
 //  BUILD THE MIND MAP
@@ -925,7 +928,7 @@ function markCorrect(nodeId, mode) {
   } else {
     const inp = document.getElementById('inp-' + nodeId);
     if (inp) { inp.classList.add('correct-fi'); inp.disabled = true; }
-    // Count toward level 3 score only if we're in level 3 typed mode
+    // Level 3 typed answers count toward the level 3 score tier
     if (currentLevel === 3) level3Score++;
   }
 
@@ -1028,16 +1031,13 @@ function updateStageText() {
 // ═══════════════════════════════════════════════
 
 function calcAndSubmitGrade() {
-  const correct  = NODES.filter(n => state[n.id].correct).length;
-  const mastered = NODES.filter(n => state[n.id].mastered).length;
-  const score    = correct + mastered;   // mastered nodes count double
-  const maxScore = TOTAL * 2;
-  const pct      = Math.round((score / maxScore) * 100);
+  const pct = calcScore();
+  const l3  = level3Score;
   Classroom.submitGrade(
     pct,
-    `OS Mind Map — ${correct}/${TOTAL} correct, ${mastered} mastered (score ${score}/${maxScore})`
+    `OS Mind Map — L1: ${bankedL1}/${TOTAL}, L2: ${bankedL2}/${TOTAL}, L3: ${l3}/${TOTAL} — Score: ${pct}/100`
   );
-  return { correct, mastered, score, maxScore };
+  return pct;
 }
 
 function checkAll() {
@@ -1051,13 +1051,13 @@ function checkAll() {
     }
   });
 
-  const { correct, mastered, score, maxScore } = calcAndSubmitGrade();
+  const pct = calcAndSubmitGrade();
 
   const remaining = NODES.filter(n => !state[n.id].correct).length;
   if (remaining === 0) {
     celebrate();
   } else {
-    showToast(`${correct} / ${TOTAL} correct · ${mastered} mastered · Score: ${score} / ${maxScore}`, 'info');
+    showToast(`${totalCorrect} / ${TOTAL} correct · Score so far: ${pct}/100`, 'info');
   }
 }
 
@@ -1131,6 +1131,10 @@ function setLevel(level) {
     showToast(`Complete Level ${needed} first to unlock Level ${level}!`, 'error');
     return;
   }
+  // Bank the current level's score before clearing
+  if (currentLevel === 1) bankedL1 = Math.max(bankedL1, totalCorrect);
+  if (currentLevel === 2) bankedL2 = Math.max(bankedL2, totalCorrect);
+
   currentLevel = level;
 
   // Clear all answers for a fresh start at the new level
@@ -1176,10 +1180,19 @@ function updateProgress() {
   document.getElementById('progress-label').textContent = `${totalCorrect} / ${TOTAL} correct`;
 }
 
+function calcScore() {
+  // Level contributions: L1 = up to 20pts, L2 = up to 30pts, L3 = up to 50pts
+  const l1 = (currentLevel === 1) ? totalCorrect : bankedL1;
+  const l2 = (currentLevel === 2) ? totalCorrect : bankedL2;
+  const l3 = level3Score;
+  return Math.round(l1 / TOTAL * 20 + l2 / TOTAL * 30 + l3 / TOTAL * 50);
+}
+
 function updateScoreboard() {
   document.getElementById('sc-correct').textContent = totalCorrect;
   document.getElementById('sc-streak').textContent = streak;
-  document.getElementById('sc-score').textContent = Math.round((level3Score / TOTAL) * 100);
+  const scoreEl = document.getElementById('sc-score');
+  scoreEl.textContent = calcScore();
 }
 
 // ═══════════════════════════════════════════════
@@ -1260,18 +1273,18 @@ function saveState() {
   try {
     localStorage.setItem('os-mindmap-state-v2', JSON.stringify(state));
     localStorage.setItem('os-mindmap-levels-v1', levelsUnlocked.toString());
+    localStorage.setItem('os-mindmap-banked-v1', JSON.stringify({ bankedL1, bankedL2 }));
   } catch(e) {}
 }
 
 function loadState() {
   try {
     const saved = localStorage.getItem('os-mindmap-state-v2');
-    if (saved) {
-      const s = JSON.parse(saved);
-      Object.assign(state, s);
-    }
+    if (saved) Object.assign(state, JSON.parse(saved));
     const savedLevel = localStorage.getItem('os-mindmap-levels-v1');
     if (savedLevel) levelsUnlocked = Math.max(1, parseInt(savedLevel) || 1);
+    const savedBanked = localStorage.getItem('os-mindmap-banked-v1');
+    if (savedBanked) { const b = JSON.parse(savedBanked); bankedL1 = b.bankedL1 || 0; bankedL2 = b.bankedL2 || 0; }
   } catch(e) {}
 }
 
