@@ -1,0 +1,1623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- ACTIVITY
+title:  Cybersecurity – Threats & Prevention
+lesson: Cybersecurity
+type:   Practice
+stars:  3
+desc:   Seven-exercise activity covering threats (malware, phishing, brute force, DoS, SQL injection) and prevention methods
+color:  red
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cybersecurity – Threats &amp; Prevention</title>
+
+<!-- Shared reset, year-group palette, and ac-* utilities -->
+<link rel="stylesheet" href="../../shared.css">
+
+<style>
+:root {
+  /* Activity-specific vars not provided by shared.css */
+  --blue:      #1d4ed8;
+  --blue-pale: #eff6ff;
+  --radius:    10px;
+}
+
+body { font-size: 16px; line-height: 1.5; }
+
+/* ── HEADER ── */
+header {
+  background: var(--bg);
+  color: #fff;
+  padding: 0;
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  box-shadow: 0 2px 12px rgba(0,0,0,.4);
+}
+.header-inner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 24px;
+}
+.header-icon {
+  width: 44px; height: 44px;
+  background: var(--accent);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; flex-shrink: 0;
+}
+header h1 {
+  font-family: var(--font-head);
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+header p {
+  font-size: .82rem;
+  opacity: .7;
+  margin-top: 2px;
+}
+.header-score {
+  margin-left: auto;
+  text-align: right;
+  flex-shrink: 0;
+}
+.score-label { font-size: .75rem; opacity: .6; }
+.score-val { font-size: 1.4rem; font-weight: 700; color: #fbbf24; font-family: var(--font-head); }
+
+/* ── PROGRESS BAR: uses .ac-progress-bar / .ac-progress-fill from shared.css ── */
+
+/* ── TABS ── */
+.tab-bar {
+  background: var(--surface);
+  border-bottom: 2px solid var(--surface-mid);
+  overflow-x: auto;
+  white-space: nowrap;
+  scrollbar-width: none;
+  position: sticky;
+  top: 72px;
+  z-index: 150;
+}
+.tab-bar::-webkit-scrollbar { display: none; }
+.tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 18px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: .88rem;
+  color: var(--muted);
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  transition: color .2s, border-color .2s;
+  white-space: nowrap;
+}
+.tab-btn:hover { color: var(--accent); }
+.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+.tab-btn .dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--surface-mid);
+  flex-shrink: 0;
+}
+.tab-btn.done .dot { background: var(--green); }
+.tab-btn.gold-done .dot { background: var(--gold); }
+
+/* ── MAIN ── */
+main { max-width: 860px; margin: 0 auto; padding: 28px 20px 80px; }
+
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ── SECTION HEADER ── */
+.section-head {
+  margin-bottom: 20px;
+}
+.section-head h2 {
+  font-family: var(--font-head);
+  font-size: 1.3rem;
+  color: var(--bg);
+  display: flex; align-items: center; gap: 10px;
+}
+.section-head h2 .tag {
+  font-size: .7rem;
+  background: var(--accent);
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-weight: 600;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+.section-head p { color: var(--muted); font-size: .9rem; margin-top: 6px; }
+
+/* ── CARD ── */
+.card {
+  background: var(--surface);
+  border: 1.5px solid var(--surface-mid);
+  border-radius: var(--radius);
+  padding: 22px 24px;
+  margin-bottom: 18px;
+  transition: border-color .2s;
+}
+.card.correct { border-color: #86efac; background: var(--green-bg); }
+.card.incorrect { border-color: #fca5a5; background: var(--red-bg); }
+.card.partial { border-color: #fde68a; background: var(--gold-bg); }
+
+/* ── BUTTONS: uses .ac-btn / .ac-btn-secondary from shared.css ── */
+
+/* ── FEEDBACK ── */
+.feedback {
+  margin-top: 12px;
+  padding: 10px 14px;
+  border-radius: 7px;
+  font-size: .9rem;
+  font-weight: 500;
+  display: none;
+}
+.feedback.show { display: block; }
+.feedback.ok { background: var(--green-bg); color: var(--green); border-left: 3px solid var(--green); }
+.feedback.err { background: var(--red-bg); color: var(--accent); border-left: 3px solid var(--accent); }
+.feedback.warn { background: var(--gold-bg); color: var(--gold); border-left: 3px solid var(--gold); }
+
+/* ── COMPLETION BANNER: uses .ac-banner from shared.css ── */
+
+/* ── EX 1: MATCH DRAG ── */
+.match-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+@media (max-width: 600px) { .match-grid { grid-template-columns: 1fr; } }
+.match-col-head {
+  font-weight: 700;
+  font-size: .8rem;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  color: var(--muted);
+  padding-bottom: 8px;
+  border-bottom: 1.5px solid var(--surface-mid);
+  margin-bottom: 6px;
+}
+.term-item {
+  background: var(--red-bg);
+  border: 2px solid var(--accent-light);
+  border-radius: 7px;
+  padding: 10px 12px;
+  font-size: .9rem;
+  font-weight: 600;
+  cursor: grab;
+  margin-bottom: 8px;
+  transition: box-shadow .15s, opacity .15s;
+  user-select: none;
+}
+.term-item:active { cursor: grabbing; opacity: .7; }
+.term-item.dragging { opacity: .35; }
+.drop-zone {
+  min-height: 48px;
+  border: 2px dashed var(--surface-mid);
+  border-radius: 7px;
+  padding: 8px 10px;
+  margin-bottom: 8px;
+  font-size: .85rem;
+  color: var(--muted);
+  display: flex; align-items: center;
+  transition: border-color .2s, background .2s;
+  position: relative;
+}
+.drop-zone .scenario-label {
+  font-size: .82rem;
+  color: var(--text);
+  font-style: italic;
+  flex: 1;
+  margin-right: 8px;
+}
+.drop-zone.over { border-color: var(--accent); background: var(--red-bg); }
+.drop-zone.filled { border-style: solid; border-color: var(--blue); }
+.drop-zone.matched-ok { border-color: var(--green); background: var(--green-bg); }
+.drop-zone.matched-err { border-color: var(--accent); background: var(--red-bg); }
+.drop-chip {
+  background: var(--bg);
+  color: #fff;
+  border-radius: 5px;
+  padding: 4px 9px;
+  font-size: .8rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+/* ── EX 2: TICK MULTI ── */
+.tick-table { width: 100%; border-collapse: collapse; font-size: .88rem; }
+.tick-table th, .tick-table td {
+  border: 1.5px solid var(--surface-mid);
+  padding: 9px 12px;
+  text-align: center;
+}
+.tick-table th { background: var(--bg); color: #fff; font-family: var(--font-head); font-size: .8rem; }
+.tick-table td:first-child { text-align: left; font-weight: 600; }
+.tick-table tr.row-correct td { background: var(--green-bg); }
+.tick-table tr.row-wrong td { background: var(--red-bg); }
+.tick-table input[type=checkbox] { width: 18px; height: 18px; cursor: pointer; accent-color: var(--accent); }
+
+/* ── EX 3: TRUE/FALSE REPLACE ── */
+.tf-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--surface-mid);
+}
+.tf-row:last-child { border-bottom: none; }
+.tf-btns { display: flex; gap: 6px; flex-shrink: 0; }
+.tf-btn {
+  width: 56px;
+  padding: 6px 0;
+  border-radius: 6px;
+  border: 1.5px solid var(--surface-mid);
+  font-size: .8rem;
+  font-weight: 700;
+  cursor: pointer;
+  background: var(--surface-mid);
+  color: var(--text);
+  transition: background .15s;
+}
+.tf-btn:hover { background: var(--surface-dim); }
+.tf-btn.selected-true { background: #1e3a5f; border-color: var(--blue); color: #93c5fd; }
+.tf-btn.selected-false { background: var(--red-bg); border-color: var(--accent); color: var(--accent); }
+.tf-statement { flex: 1; font-size: .9rem; line-height: 1.5; }
+.tf-statement .bold-word {
+  font-weight: 700;
+  color: var(--accent);
+  text-decoration: underline dotted;
+}
+.replace-input-wrap { margin-top: 8px; display: none; }
+.replace-input-wrap.show { display: flex; gap: 8px; align-items: center; }
+.replace-input {
+  border: 1.5px solid var(--surface-mid);
+  border-radius: 6px;
+  padding: 5px 10px;
+  font-family: var(--font-body);
+  font-size: .88rem;
+  background: var(--surface-mid);
+  color: var(--text);
+  width: 160px;
+}
+.replace-input:focus { outline: none; border-color: var(--accent); }
+.tf-verdict { font-size: .8rem; margin-top: 6px; font-weight: 600; display: none; }
+.tf-verdict.show { display: block; }
+.tf-verdict.ok { color: var(--green); }
+.tf-verdict.err { color: var(--accent); }
+
+/* ── EX 4: GAP FILL ── */
+.gap-para {
+  font-size: .95rem;
+  line-height: 2.2;
+  padding: 16px;
+  background: var(--blue-pale);
+  color: #1e293b;
+  border-radius: 8px;
+  border-left: 4px solid var(--blue);
+  margin-bottom: 14px;
+}
+.gap-input {
+  display: inline-block;
+  border: none;
+  border-bottom: 2px solid var(--accent);
+  background: transparent;
+  font-family: var(--font-body);
+  font-size: .93rem;
+  color: var(--bg);
+  width: 130px;
+  padding: 2px 4px;
+  text-align: center;
+  transition: border-color .2s;
+}
+.gap-input:focus { outline: none; border-bottom-color: var(--blue); }
+.gap-input.ok { border-bottom-color: var(--green); background: var(--green-bg); border-radius: 4px; color: var(--green); font-weight: 700; }
+.gap-input.err { border-bottom-color: var(--accent); background: var(--red-bg); border-radius: 4px; color: var(--accent); }
+.word-bank {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  margin-bottom: 14px;
+}
+.word-chip {
+  background: var(--bg);
+  color: #fff;
+  border-radius: 20px;
+  padding: 4px 14px;
+  font-size: .82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity .15s;
+  user-select: none;
+}
+.word-chip.used { opacity: .3; pointer-events: none; text-decoration: line-through; }
+
+/* ── EX 5: SCENARIO CLASSIFIER ── */
+.classifier-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+@media (max-width: 600px) { .classifier-grid { grid-template-columns: 1fr; } }
+.classify-box {
+  border: 2px dashed var(--surface-mid);
+  border-radius: 8px;
+  padding: 12px;
+  min-height: 90px;
+}
+.classify-box h4 {
+  font-family: var(--font-head);
+  font-size: .78rem;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  margin-bottom: 8px;
+  color: var(--muted);
+}
+.classify-box.over { border-color: var(--accent); background: var(--red-bg); }
+.scenario-card-pool { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.scenario-chip {
+  background: var(--surface-mid);
+  border: 2px solid var(--surface-dim);
+  border-radius: 7px;
+  padding: 7px 12px;
+  font-size: .82rem;
+  cursor: grab;
+  max-width: 200px;
+  line-height: 1.4;
+  transition: box-shadow .15s;
+  user-select: none;
+}
+.scenario-chip:hover { box-shadow: 0 2px 8px rgba(0,0,0,.12); }
+.scenario-chip.dragging { opacity: .3; }
+.placed-chip {
+  background: var(--bg);
+  color: #fff;
+  border-radius: 5px;
+  padding: 4px 8px;
+  font-size: .78rem;
+  display: inline-block;
+  margin: 3px;
+  cursor: pointer;
+}
+
+/* ── EX 6: EXAM QUESTION BUILDER ── */
+.eq-question {
+  background: var(--surface-mid);
+  border-left: 4px solid var(--accent);
+  padding: 14px 16px;
+  border-radius: 0 8px 8px 0;
+  margin-bottom: 14px;
+  font-style: italic;
+  font-size: .95rem;
+}
+.eq-mark-note { font-size: .78rem; color: var(--muted); margin-bottom: 10px; }
+.eq-textarea {
+  width: 100%;
+  min-height: 110px;
+  border: 1.5px solid var(--surface-mid);
+  border-radius: 7px;
+  padding: 10px 12px;
+  font-family: var(--font-body);
+  font-size: .9rem;
+  background: var(--surface-mid);
+  color: var(--text);
+  resize: vertical;
+  transition: border-color .2s;
+}
+.eq-textarea:focus { outline: none; border-color: var(--accent); }
+.mark-scheme {
+  margin-top: 12px;
+  display: none;
+}
+.mark-scheme.show { display: block; }
+.ms-item {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: .85rem;
+  margin-bottom: 4px;
+  background: var(--surface-mid);
+}
+.ms-bullet {
+  background: var(--green);
+  color: #fff;
+  border-radius: 50%;
+  width: 20px; height: 20px;
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .7rem; font-weight: 700;
+}
+.self-assess-btns { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+.sa-btn {
+  padding: 6px 16px;
+  border-radius: 6px;
+  border: 1.5px solid;
+  font-size: .82rem;
+  font-weight: 700;
+  cursor: pointer;
+  background: var(--surface);
+  transition: background .15s;
+}
+.sa-btn.green-btn { border-color: var(--green); color: var(--green); }
+.sa-btn.green-btn:hover, .sa-btn.green-btn.selected { background: var(--green-bg); }
+.sa-btn.amber-btn { border-color: var(--gold); color: var(--gold); }
+.sa-btn.amber-btn:hover, .sa-btn.amber-btn.selected { background: var(--gold-bg); }
+.sa-btn.red-btn { border-color: var(--accent); color: var(--accent); }
+.sa-btn.red-btn:hover, .sa-btn.red-btn.selected { background: var(--red-bg); }
+
+/* ── EX 7: NAME IT ── */
+.name-it-section { margin-bottom: 28px; }
+.name-it-section h3 {
+  font-family: var(--font-head);
+  font-size: 1rem;
+  color: var(--bg);
+  margin-bottom: 4px;
+  display: flex; align-items: center; gap: 8px;
+}
+.name-it-section h3 .badge {
+  font-size: .7rem;
+  background: var(--bg);
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-weight: 600;
+}
+.name-it-section > p { color: var(--muted); font-size: .85rem; margin-bottom: 14px; }
+.ni-card {
+  background: var(--surface);
+  border: 1.5px solid var(--surface-mid);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  margin-bottom: 12px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  align-items: start;
+}
+.ni-card.correct { border-color: #86efac; background: var(--green-bg); }
+.ni-card.incorrect { border-color: #fca5a5; background: var(--red-bg); }
+.ni-prompt { font-size: .9rem; line-height: 1.5; }
+.ni-prompt .context-tag {
+  display: inline-block;
+  font-size: .72rem;
+  background: var(--red-bg);
+  color: var(--accent);
+  border: 1px solid var(--accent-light);
+  border-radius: 12px;
+  padding: 1px 8px;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+.ni-answer-wrap { display: flex; flex-direction: column; gap: 4px; min-width: 180px; }
+.ni-input {
+  border: 1.5px solid var(--surface-mid);
+  border-radius: 6px;
+  padding: 7px 10px;
+  font-family: var(--font-body);
+  font-size: .88rem;
+  background: var(--surface-mid);
+  color: var(--text);
+  width: 100%;
+  transition: border-color .2s;
+}
+.ni-input:focus { outline: none; border-color: var(--accent); }
+.ni-input.ok { border-color: var(--green); background: var(--green-bg); color: var(--green); font-weight: 600; }
+.ni-input.err { border-color: var(--accent); background: var(--red-bg); color: var(--accent); }
+.ni-reveal { font-size: .78rem; color: var(--muted); display: none; margin-top: 2px; }
+.ni-reveal.show { display: block; }
+.ni-reveal.correct-ans { color: var(--green); font-weight: 600; }
+.ni-reveal.wrong-ans { color: var(--accent); }
+@media (max-width: 580px) {
+  .ni-card { grid-template-columns: 1fr; }
+  .ni-answer-wrap { min-width: unset; }
+}
+/* ── CONFETTI ── */
+@keyframes confFall {
+  0%  { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+  100%{ transform: translateY(110vh) rotate(720deg); opacity: 0; }
+}
+.conf { position: fixed; top: 0; width: 10px; height: 14px; border-radius: 2px; z-index: 1000; pointer-events: none; }
+
+/* ── SUMMARY ── */
+.summary-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 20px; }
+@media (max-width: 500px) { .summary-grid { grid-template-columns: 1fr 1fr; } }
+.sum-card {
+  background: var(--surface);
+  border: 1.5px solid var(--surface-mid);
+  border-radius: 8px;
+  padding: 14px;
+  text-align: center;
+}
+.sum-card .num { font-size: 2rem; font-weight: 700; color: var(--accent); font-family: var(--font-head); }
+.sum-card .lbl { font-size: .78rem; color: var(--muted); }
+.sum-card.green-card { border-color: #86efac; background: var(--green-bg); }
+.sum-card.green-card .num { color: var(--green); }
+</style>
+</head>
+<body data-year="11" data-topic="Security">
+
+<header>
+  <div class="header-inner">
+    <div class="header-icon">🛡️</div>
+    <div>
+      <h1>Cybersecurity — Threats &amp; Prevention</h1>
+      <p>OCR GCSE Computer Science · 1.4.1 &amp; 1.4.2</p>
+    </div>
+    <div class="header-score">
+      <div class="score-label">Score</div>
+      <div class="score-val" id="totalScore">0 / 0</div>
+    </div>
+  </div>
+  <div class="ac-progress-bar"><div class="ac-progress-fill" id="progressFill"></div></div>
+</header>
+
+<nav class="tab-bar" id="tabBar">
+  <button class="tab-btn active" data-tab="0" onclick="switchTab(0)"><span class="dot"></span> Match Threats</button>
+  <button class="tab-btn" data-tab="1" onclick="switchTab(1)"><span class="dot"></span> Prevention Methods</button>
+  <button class="tab-btn" data-tab="2" onclick="switchTab(2)"><span class="dot"></span> True or False?</button>
+  <button class="tab-btn" data-tab="3" onclick="switchTab(3)"><span class="dot"></span> Name It!</button>
+  <button class="tab-btn" data-tab="4" onclick="switchTab(4)"><span class="dot"></span> Gap Fill</button>
+  <button class="tab-btn" data-tab="5" onclick="switchTab(5)"><span class="dot"></span> Classify Scenarios</button>
+  <button class="tab-btn" data-tab="6" onclick="switchTab(6)"><span class="dot"></span> Exam Practice</button>
+</nav>
+
+<main>
+
+<!-- ═══════════════════════════════════ TAB 0 — MATCH ═══════════════════════ -->
+<section class="tab-panel active" id="tab0">
+  <div class="section-head">
+    <h2>Match the Threat <span class="tag">Drag &amp; Drop</span></h2>
+    <p>Drag each threat name onto the scenario that best describes it. You'll get instant feedback as you place each one.</p>
+  </div>
+
+  <div class="match-grid">
+    <div>
+      <div class="match-col-head">🏷️ Threat Types — drag these</div>
+      <div id="termPool"></div>
+    </div>
+    <div>
+      <div class="match-col-head">📋 Scenarios — drop here</div>
+      <div id="dropZones"></div>
+    </div>
+  </div>
+
+  <div style="margin-top:16px; display:flex; gap:10px; flex-wrap:wrap;">
+    <button class="ac-btn-secondary" onclick="resetMatch()">↺ Reset</button>
+  </div>
+  <div class="feedback" id="matchFeedback"></div>
+</section>
+
+<!-- ═══════════════════════════════════ TAB 1 — TICK MULTI ═══════════════════ -->
+<section class="tab-panel" id="tab1">
+  <div class="section-head">
+    <h2>Prevention Methods <span class="tag">Tick one or more</span></h2>
+    <p>Tick <strong>all</strong> prevention methods that would help against each threat. Some rows have more than one correct answer.</p>
+  </div>
+
+  <div class="card" style="overflow-x:auto;">
+    <table class="tick-table" id="tickTable">
+      <thead>
+        <tr>
+          <th>Threat</th>
+          <th>Anti‑malware</th>
+          <th>Firewall</th>
+          <th>Encryption</th>
+          <th>Strong Passwords</th>
+          <th>Penetration Testing</th>
+        </tr>
+      </thead>
+      <tbody id="tickBody"></tbody>
+    </table>
+  </div>
+  <div style="margin-top:4px; font-size:.8rem; color:var(--muted); margin-bottom:14px;">⚠️ A method marked (✓) is also acceptable — it provides some benefit but is not the primary defence.</div>
+  <button class="ac-btn" onclick="checkTick()">✔ Check Answers</button>
+  <button class="ac-btn-secondary" onclick="resetTick()" style="margin-left:8px;">↺ Reset</button>
+  <div class="feedback" id="tickFeedback"></div>
+</section>
+
+<!-- ═══════════════════════════════════ TAB 2 — TRUE/FALSE ════════════════════ -->
+<section class="tab-panel" id="tab2">
+  <div class="section-head">
+    <h2>True or False? <span class="tag">Spot the Error</span></h2>
+    <p>Decide if each statement is <strong>True</strong> or <strong>False</strong>. If false, type the <em>correct word</em> to replace the highlighted one and press Enter. Feedback appears immediately.</p>
+  </div>
+
+  <div class="card" id="tfContainer"></div>
+
+  <div style="margin-top:16px; display:flex; gap:10px; flex-wrap:wrap;">
+    <button class="ac-btn-secondary" onclick="resetTF()">↺ Reset</button>
+  </div>
+  <div class="feedback" id="tfFeedback"></div>
+</section>
+
+<!-- ═══════════════════════════════════ TAB 3 — NAME IT ══════════════════════ -->
+<section class="tab-panel" id="tab3">
+  <div class="section-head">
+    <h2>Name It! <span class="tag">Typed Recall</span></h2>
+    <p>Read each description carefully. Write the name of the threat or prevention method being described. Each answer is checked when you press Enter or move to the next field.</p>
+  </div>
+
+  <div id="niPartA"></div>
+
+  <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:4px;">
+    <button class="ac-btn-secondary" onclick="resetNameIt()">↺ Reset</button>
+  </div>
+  <div class="feedback" id="nameItFeedback"></div>
+</section>
+
+<!-- ═══════════════════════════════════ TAB 4 — GAP FILL ════════════════════ -->
+<section class="tab-panel" id="tab4">
+  <div class="section-head">
+    <h2>Gap Fill <span class="tag">Complete the Passage</span></h2>
+    <p>Click a word from the bank, then click the blank to fill it — or type directly and press <kbd>Enter</kbd>. Each blank is checked instantly.</p>
+  </div>
+
+  <div class="word-bank" id="wordBank"></div>
+
+  <div class="card">
+    <div class="gap-para" id="gapPara"></div>
+  </div>
+
+  <div style="margin-top:14px; display:flex; gap:10px; flex-wrap:wrap;">
+    <button class="ac-btn-secondary" onclick="resetGap()">↺ Reset</button>
+  </div>
+  <div class="feedback" id="gapFeedback"></div>
+</section>
+
+<!-- ═══════════════════════════════════ TAB 5 — CLASSIFY ════════════════════ -->
+<section class="tab-panel" id="tab5">
+  <div class="section-head">
+    <h2>Classify the Scenarios <span class="tag">Drag &amp; Drop</span></h2>
+    <p>Drag each scenario card into the correct threat category box. Each card is checked as soon as it lands.</p>
+  </div>
+
+  <div class="scenario-card-pool" id="scenarioPool"></div>
+  <div class="classifier-grid" id="classifyGrid"></div>
+
+  <div style="margin-top:8px; display:flex; gap:10px; flex-wrap:wrap;">
+    <button class="ac-btn-secondary" onclick="resetClassify()">↺ Reset</button>
+  </div>
+  <div class="feedback" id="classifyFeedback"></div>
+</section>
+
+<!-- ═══════════════════════════════════ TAB 6 — EXAM PRACTICE ═══════════════ -->
+<section class="tab-panel" id="tab6">
+  <div class="section-head">
+    <h2>Exam Practice <span class="tag">Written Response</span></h2>
+    <p>Write your answer as you would in an exam, then reveal the mark scheme to self-assess.</p>
+  </div>
+
+  <div id="eqContainer"></div>
+</section>
+
+</main>
+
+<div class="ac-banner gold" id="completionBanner">🎉 Activity Complete!</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════════
+const state = {
+  tabScores: [null, null, null, null, null, null, null],
+  tabMax:    [5,    5,    7,    10,   7,    6,    3],
+  // tabs: 0=Match, 1=Prevention, 2=TF, 3=NameIt, 4=GapFill, 5=Classify, 6=ExamPractice
+};
+let totalMax = 0;
+state.tabMax.forEach(m => totalMax += m);
+
+// ═══════════════════════════════════════════════════════════════
+// TAB SWITCHING
+// ═══════════════════════════════════════════════════════════════
+function switchTab(i) {
+  document.querySelectorAll('.tab-panel').forEach((p,j) => p.classList.toggle('active', j===i));
+  document.querySelectorAll('.tab-btn').forEach((b,j) => b.classList.toggle('active', j===i));
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SCORE UPDATE
+// ═══════════════════════════════════════════════════════════════
+function updateScore() {
+  let total = 0;
+  let answered = 0;
+  state.tabScores.forEach((s, i) => {
+    if (s !== null) { total += s; answered++; }
+  });
+  document.getElementById('totalScore').textContent = total + ' / ' + totalMax;
+  document.getElementById('progressFill').style.width = (total / totalMax * 100) + '%';
+  // update dots
+  document.querySelectorAll('.tab-btn').forEach((b, i) => {
+    if (state.tabScores[i] !== null) {
+      const perfect = state.tabScores[i] === state.tabMax[i];
+      b.classList.toggle('gold-done', perfect);
+      b.classList.toggle('done', !perfect);
+    }
+  });
+  if (answered === 7) {
+    const banner = document.getElementById('completionBanner');
+    banner.classList.add('show');
+    if (total === totalMax) {
+      banner.textContent = '🥇 Perfect Score! Outstanding work!';
+      fireConfetti();
+      window.Classroom?.submitGrade(100, 'Cybersecurity — Threats & Prevention');
+    } else {
+      banner.textContent = '🎉 Activity Complete! Score: ' + total + '/' + totalMax;
+      window.Classroom?.submitGrade(Math.round(total / totalMax * 100), 'Cybersecurity — Threats & Prevention');
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CONFETTI
+// ═══════════════════════════════════════════════════════════════
+function fireConfetti() {
+  const colours = ['#b91c1c','#d97706','#15803d','#1d4ed8','#7c3aed','#ec4899'];
+  for (let i = 0; i < 80; i++) {
+    const el = document.createElement('div');
+    el.className = 'conf';
+    el.style.cssText = `left:${Math.random()*100}vw;background:${colours[Math.random()*colours.length|0]};animation:confFall ${1.5+Math.random()*2}s ${Math.random()*0.8}s linear forwards;`;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 4000);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ═══ EX 1: MATCH THREATS ═══════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+const matchData = [
+  { term:'Malware',        scenario:'Software automatically installs itself on a school laptop and starts recording every key pressed by the student.' },
+  { term:'Phishing',       scenario:'A student receives an email claiming to be from their bank, asking them to click a link and enter their login details.' },
+  { term:'Brute Force',    scenario:'An automated program tries thousands of password combinations per second attempting to access an online gaming account.' },
+  { term:'Denial of Service', scenario:'A hospital\'s booking website is flooded with millions of fake requests until it crashes and patients can no longer book appointments.' },
+  { term:'SQL Injection',  scenario:'An attacker types a specially crafted command into a shopping website\'s search box, causing the database to reveal all customer records.' },
+];
+
+let dragTerm = null;
+let matchPlaced = {}; // dropIndex -> term
+
+function buildMatch() {
+  const pool = document.getElementById('termPool');
+  const zones = document.getElementById('dropZones');
+  pool.innerHTML = ''; zones.innerHTML = '';
+  const shuffled = [...matchData].sort(() => Math.random()-.5);
+  shuffled.forEach(d => {
+    const el = document.createElement('div');
+    el.className = 'term-item';
+    el.textContent = d.term;
+    el.draggable = true;
+    el.dataset.term = d.term;
+    el.addEventListener('dragstart', e => { dragTerm = d.term; el.classList.add('dragging'); });
+    el.addEventListener('dragend', () => el.classList.remove('dragging'));
+    el.addEventListener('touchstart', touchStart, {passive:false});
+    pool.appendChild(el);
+  });
+  matchData.forEach((d, i) => {
+    const z = document.createElement('div');
+    z.className = 'drop-zone';
+    z.dataset.idx = i;
+    z.innerHTML = `<span class="scenario-label">${d.scenario}</span>`;
+    z.addEventListener('dragover', e => { e.preventDefault(); z.classList.add('over'); });
+    z.addEventListener('dragleave', () => z.classList.remove('over'));
+    z.addEventListener('drop', e => { e.preventDefault(); z.classList.remove('over'); dropOntoZone(i, dragTerm, z); });
+    zones.appendChild(z);
+  });
+}
+
+function dropOntoZone(idx, term, z) {
+  if (!term) return;
+  // remove from any previous zone
+  Object.keys(matchPlaced).forEach(k => { if (matchPlaced[k] === term) delete matchPlaced[k]; });
+  // remove chip from existing zone
+  document.querySelectorAll('.drop-zone').forEach(dz => {
+    const chip = dz.querySelector('.drop-chip');
+    if (chip && chip.textContent === term) { chip.remove(); dz.classList.remove('filled','matched-ok','matched-err'); }
+  });
+  matchPlaced[idx] = term;
+  // add chip
+  const chip = document.createElement('span');
+  chip.className = 'drop-chip';
+  chip.textContent = term;
+  chip.title = 'Click to remove';
+  chip.onclick = () => {
+    delete matchPlaced[idx];
+    chip.remove();
+    z.classList.remove('filled','matched-ok','matched-err');
+    recalcMatchScore();
+  };
+  z.appendChild(chip);
+  // immediately check this zone
+  const correct = matchData[idx].term;
+  z.classList.remove('filled','matched-ok','matched-err');
+  if (term === correct) {
+    z.classList.add('matched-ok');
+  } else {
+    z.classList.add('matched-err');
+  }
+  dragTerm = null;
+  recalcMatchScore();
+}
+
+function recalcMatchScore() {
+  let score = 0;
+  document.querySelectorAll('#dropZones .drop-zone').forEach((z, i) => {
+    if (matchPlaced[i] === matchData[i].term) score++;
+  });
+  state.tabScores[0] = Object.keys(matchPlaced).length > 0 ? score : null;
+  updateScore();
+  const fb = document.getElementById('matchFeedback');
+  const placed = Object.keys(matchPlaced).length;
+  if (placed === matchData.length) {
+    fb.className = 'feedback show ' + (score === matchData.length ? 'ok' : 'err');
+    fb.textContent = score === matchData.length
+      ? '✅ Perfect! All 5 threats correctly matched.'
+      : `${score}/5 correct — the red zones show mismatches. Click a chip to remove it and try again.`;
+  } else if (placed > 0) {
+    fb.className = 'feedback show ' + (score === placed ? 'ok' : 'warn');
+    fb.textContent = score === placed
+      ? `${score}/${matchData.length} placed so far — all correct! Keep going.`
+      : `${score}/${placed} correct so far. A red zone means that answer is wrong — remove it and try another.`;
+  } else {
+    fb.className = 'feedback';
+  }
+}
+
+function checkMatch() {} // kept for safety — no longer called
+
+function resetMatch() {
+  matchPlaced = {};
+  document.getElementById('matchFeedback').className = 'feedback';
+  buildMatch();
+}
+
+// Touch drag simulation for match
+let touchDragEl = null, touchClone = null;
+function touchStart(e) {
+  e.preventDefault();
+  const el = e.currentTarget;
+  dragTerm = el.dataset.term;
+  touchDragEl = el;
+  touchClone = el.cloneNode(true);
+  touchClone.style.cssText = `position:fixed;opacity:.7;pointer-events:none;z-index:9999;width:${el.offsetWidth}px;`;
+  document.body.appendChild(touchClone);
+  moveTouchClone(e.touches[0]);
+  document.addEventListener('touchmove', touchMove, {passive:false});
+  document.addEventListener('touchend', touchEnd);
+}
+function moveTouchClone(t) {
+  touchClone.style.left = (t.clientX - touchClone.offsetWidth/2) + 'px';
+  touchClone.style.top  = (t.clientY - 20) + 'px';
+}
+function touchMove(e) { e.preventDefault(); moveTouchClone(e.touches[0]); }
+function touchEnd(e) {
+  document.removeEventListener('touchmove', touchMove);
+  document.removeEventListener('touchend', touchEnd);
+  if (touchClone) { touchClone.remove(); touchClone = null; }
+  const t = e.changedTouches[0];
+  const el = document.elementFromPoint(t.clientX, t.clientY);
+  if (!el) return;
+  const zone = el.closest('.drop-zone');
+  if (zone) dropOntoZone(+zone.dataset.idx, dragTerm, zone);
+  dragTerm = null;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ═══ EX 2: TICK MULTI ══════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+// columns: Anti-malware | Firewall | Encryption | Strong Passwords | Penetration Testing
+// correct = required; optional = also acceptable
+const tickData = [
+  { threat:'Ransomware',         correct:[0],    optional:[4]   },
+  { threat:'Brute Force Attack', correct:[3],    optional:[4]   },
+  { threat:'Data Interception',  correct:[2],    optional:[]    },
+  { threat:'SQL Injection',      correct:[4],    optional:[1]   },
+  { threat:'Phishing / Social Engineering', correct:[3], optional:[4] },
+];
+const tickCols = ['Anti‑malware','Firewall','Encryption','Strong Passwords','Penetration Testing'];
+
+function buildTick() {
+  const tbody = document.getElementById('tickBody');
+  tbody.innerHTML = '';
+  tickData.forEach((row, ri) => {
+    const tr = document.createElement('tr');
+    tr.dataset.ri = ri;
+    let html = `<td>${row.threat}</td>`;
+    tickCols.forEach((_, ci) => {
+      html += `<td><input type="checkbox" data-ri="${ri}" data-ci="${ci}"></td>`;
+    });
+    tr.innerHTML = html;
+    tbody.appendChild(tr);
+  });
+}
+
+function checkTick() {
+  let score = 0;
+  tickData.forEach((row, ri) => {
+    const tr = document.querySelector(`#tickBody tr[data-ri="${ri}"]`);
+    const checked = [];
+    document.querySelectorAll(`input[data-ri="${ri}"]`).forEach((cb, ci) => { if (cb.checked) checked.push(ci); });
+    const hasAllRequired = row.correct.every(c => checked.includes(c));
+    const hasNoWrong = checked.every(c => row.correct.includes(c) || row.optional.includes(c));
+    tr.classList.remove('row-correct','row-wrong');
+    if (hasAllRequired && hasNoWrong) { tr.classList.add('row-correct'); score++; }
+    else tr.classList.add('row-wrong');
+  });
+  state.tabScores[1] = score;
+  updateScore();
+  const fb = document.getElementById('tickFeedback');
+  fb.className = 'feedback show ' + (score === 5 ? 'ok' : score >= 3 ? 'warn' : 'err');
+  fb.textContent = score === 5
+    ? '✅ All rows correct! Remember: encryption stops data being *understood* even if intercepted, but doesn\'t stop the interception itself.'
+    : `${score}/5 rows correct. Remember to tick ALL methods that apply — not just one per row.`;
+}
+
+function resetTick() {
+  document.querySelectorAll('#tickBody input[type=checkbox]').forEach(cb => cb.checked = false);
+  document.querySelectorAll('#tickBody tr').forEach(tr => tr.classList.remove('row-correct','row-wrong'));
+  document.getElementById('tickFeedback').className = 'feedback';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ═══ EX 3: TRUE / FALSE ════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+const tfData = [
+  { stmt: 'A firewall works by <b>blocking</b> data packets that do not meet its rules.',             boldWord:'blocking',     isTrue:true,  correct:'' },
+  { stmt: 'Encryption <b>prevents</b> data from being intercepted when transmitted across a network.', boldWord:'prevents',    isTrue:false, correct:'scrambles' , alts:['encodes','disguises','protects'] },
+  { stmt: 'A brute force attack works by guessing <b>passwords</b> repeatedly until one works.',       boldWord:'passwords',   isTrue:true,  correct:'' },
+  { stmt: 'Penetration testing is carried out by <b>criminals</b> to identify weaknesses in a system.',boldWord:'criminals',   isTrue:false, correct:'ethical hackers', alts:['authorised testers','security professionals','white-hat hackers'] },
+  { stmt: 'In a DoS attack, a server is overwhelmed with <b>legitimate</b> requests until it crashes.', boldWord:'legitimate', isTrue:false, correct:'fake', alts:['bogus','malicious','false','illegitimate'] },
+  { stmt: 'SQL injection targets the <b>database</b> of a web application.',                           boldWord:'database',   isTrue:true,  correct:'' },
+  { stmt: 'Anti-malware software works by comparing files to a database of known <b>viruses</b>.',     boldWord:'viruses',    isTrue:true,  correct:'' },
+];
+let tfOrdering = [];
+
+function buildTF() {
+  tfOrdering = [...Array(tfData.length).keys()].sort(() => Math.random()-.5);
+  const con = document.getElementById('tfContainer');
+  con.innerHTML = '';
+  tfOrdering.forEach((idx, pos) => {
+    const d = tfData[idx];
+    const row = document.createElement('div');
+    row.className = 'tf-row';
+    row.dataset.idx = idx;
+    row.innerHTML = `
+      <div class="tf-btns">
+        <button class="tf-btn" data-pos="${pos}" data-val="true" onclick="tfSelect(${pos},'true')">True</button>
+        <button class="tf-btn" data-pos="${pos}" data-val="false" onclick="tfSelect(${pos},'false')">False</button>
+      </div>
+      <div class="tf-statement">
+        ${d.stmt}
+        <div class="replace-input-wrap" id="riw${pos}">
+          <span style="font-size:.82rem;color:var(--muted);">Replace '<em>${d.boldWord}</em>' with:</span>
+          <input class="replace-input" id="ri${pos}" placeholder="correct word…" autocomplete="off"
+            onblur="checkTFRow(${pos})"
+            onkeydown="if(event.key==='Enter'){this.blur();}">
+        </div>
+        <div class="tf-verdict" id="tv${pos}"></div>
+      </div>`;
+    con.appendChild(row);
+  });
+}
+
+function tfSelect(pos, val) {
+  document.querySelectorAll(`.tf-btn[data-pos="${pos}"]`).forEach(b => {
+    b.classList.remove('selected-true','selected-false');
+    if (b.dataset.val === val) b.classList.add(val==='true'?'selected-true':'selected-false');
+  });
+  const idx = tfOrdering[pos];
+  const d = tfData[idx];
+  const riw = document.getElementById(`riw${pos}`);
+  riw.classList.toggle('show', val === 'false');
+  if (val === 'true') {
+    // check immediately — no replacement needed
+    checkTFRow(pos);
+  }
+  // if false, wait for replacement input (checked on blur/Enter)
+}
+
+function checkTFRow(pos) {
+  const idx = tfOrdering[pos];
+  const d = tfData[idx];
+  const selected = document.querySelector(`.tf-btn.selected-true[data-pos="${pos}"]`) ? 'true'
+    : document.querySelector(`.tf-btn.selected-false[data-pos="${pos}"]`) ? 'false' : null;
+  if (selected === null) return;
+  const verdict = document.getElementById(`tv${pos}`);
+  verdict.className = 'tf-verdict show';
+  const answerCorrect = (selected === 'true') === d.isTrue;
+  if (d.isTrue && answerCorrect) {
+    verdict.textContent = '✅ Correct — this statement is true.';
+    verdict.classList.add('ok');
+  } else if (!d.isTrue && answerCorrect) {
+    const inp = document.getElementById(`ri${pos}`);
+    const typed = (inp ? inp.value : '').trim().toLowerCase();
+    const allOk = [d.correct, ...(d.alts||[])].map(s=>s.toLowerCase());
+    if (typed.length === 0) {
+      // typed nothing yet — give partial encouragement, don't score yet
+      verdict.textContent = `✅ Correct — it is false! Now type the correct replacement word above.`;
+      verdict.classList.add('warn');
+      recalcTFScore();
+      return;
+    }
+    if (allOk.some(a => typed.includes(a) || a.includes(typed) && typed.length>2)) {
+      verdict.textContent = `✅ Correct! The word should be "${d.correct}".`;
+      verdict.classList.add('ok');
+    } else {
+      verdict.textContent = `❌ It is false, but the correct replacement is "${d.correct}", not "${typed}".`;
+      verdict.classList.add('err');
+    }
+  } else {
+    if (d.isTrue) verdict.textContent = `❌ This statement is actually true.`;
+    else verdict.textContent = `❌ This statement is false — the highlighted word should be "${d.correct}".`;
+    verdict.classList.add('err');
+  }
+  recalcTFScore();
+}
+
+function recalcTFScore() {
+  let score = 0;
+  tfOrdering.forEach((idx, pos) => {
+    const v = document.getElementById(`tv${pos}`);
+    if (v && v.classList.contains('ok')) score++;
+  });
+  // only record score once all rows have a non-warn verdict showing
+  const allAnswered = tfOrdering.every((idx, pos) => {
+    const v = document.getElementById(`tv${pos}`);
+    return v && v.classList.contains('show') && !v.classList.contains('warn');
+  });
+  // always update score with what's correct so far
+  state.tabScores[2] = score;
+  updateScore();
+  const fb = document.getElementById('tfFeedback');
+  if (score === tfData.length) {
+    fb.className = 'feedback show ok';
+    fb.textContent = '✅ All correct! Great understanding of key terms.';
+  } else {
+    fb.className = 'feedback';
+  }
+}
+
+function checkTF() {} // kept for safety — no longer called
+
+function resetTF() {
+  document.getElementById('tfFeedback').className = 'feedback';
+  buildTF();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ═══ EX 4: GAP FILL ════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+// Passage: 7 blanks — scrambling, cannot, intercepted, meaningless, key, user access levels, read-only
+const gapPassage = [
+  'When data is transmitted across a network, encryption is used to protect it. Encryption works by ',
+  ' unencrypted information (called plaintext) into something that ',
+  ' be understood (ciphertext). Even if the data is ',
+  ' by an attacker, it will be ',
+  ' to them. The recipient uses a decryption ',
+  ' to convert the data back into plaintext.\n\nOrganisations can also protect data using ',
+  '. These determine what each user is allowed to do — for example, an employee may be given ',
+  ' access to sensitive documents, meaning they can view but not change them.',
+];
+const gapCorrect = ['scrambling','cannot','intercepted','meaningless','key','user access levels','read-only'];
+// Alternative accepted answers per blank
+const gapAlts = [
+  ['scrambles','scrambled'],   // scrambling
+  ['can not'],                  // cannot
+  [],                           // intercepted
+  [],                           // meaningless
+  [],                           // key
+  ['access levels','user access','access control'], // user access levels
+  ['read only'],                // read-only
+];
+// Word bank (includes distractors)
+const gapBank = ['scrambling','cannot','intercepted','meaningless','key','user access levels','read-only','encrypted','firewall','password','blocked','algorithm'];
+
+let selectedBankWord = null;
+let gapUserAnswers = new Array(7).fill('');
+
+function buildGap() {
+  gapUserAnswers = new Array(7).fill('');
+  selectedBankWord = null;
+  // word bank
+  const wb = document.getElementById('wordBank');
+  wb.innerHTML = '';
+  [...gapBank].sort(() => Math.random()-.5).forEach(w => {
+    const chip = document.createElement('span');
+    chip.className = 'word-chip';
+    chip.textContent = w;
+    chip.dataset.word = w;
+    chip.onclick = () => {
+      document.querySelectorAll('.word-chip').forEach(c=>c.style.outline='');
+      selectedBankWord = w;
+      chip.style.outline = '3px solid var(--gold)';
+    };
+    wb.appendChild(chip);
+  });
+  // gap para
+  const para = document.getElementById('gapPara');
+  para.innerHTML = '';
+  let blankIdx = 0;
+  gapPassage.forEach((seg, si) => {
+    // Split on newlines so paragraph breaks render correctly wherever they appear
+    const parts = seg.split('\n');
+    parts.forEach((part, pi) => {
+      if (pi > 0) para.appendChild(document.createElement('br'));
+      if (part.length > 0) para.appendChild(document.createTextNode(part));
+    });
+    if (si < gapPassage.length - 1) {
+      const inp = document.createElement('input');
+      inp.className = 'gap-input';
+      inp.dataset.idx = blankIdx;
+      inp.id = 'gap'+blankIdx;
+      inp.style.width = blankIdx === 5 ? '170px' : (blankIdx === 4 || blankIdx === 1) ? '90px' : '130px';
+      inp.setAttribute('autocomplete','off');
+      inp.addEventListener('focus', () => {
+        if (selectedBankWord) {
+          inp.value = selectedBankWord;
+          gapUserAnswers[blankIdx] = selectedBankWord;
+          markBankUsed(selectedBankWord);
+          selectedBankWord = null;
+          document.querySelectorAll('.word-chip').forEach(c=>c.style.outline='');
+          checkOneGap(blankIdx);
+        }
+      });
+      inp.addEventListener('input', () => { gapUserAnswers[+inp.dataset.idx] = inp.value; });
+      inp.addEventListener('blur', () => { checkOneGap(+inp.dataset.idx); });
+      inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); inp.blur(); } });
+      para.appendChild(inp);
+      blankIdx++;
+    }
+  });
+}
+
+function markBankUsed(w) {
+  document.querySelectorAll('.word-chip').forEach(c => { if (c.dataset.word === w) c.classList.add('used'); });
+}
+
+function checkOneGap(i) {
+  const inp = document.getElementById('gap'+i);
+  if (!inp) return;
+  const typed = (inp.value||'').trim().toLowerCase();
+  if (typed.length === 0) { inp.classList.remove('ok','err'); inp.title=''; recalcGapScore(); return; }
+  const correct = gapCorrect[i].toLowerCase();
+  const alts = (gapAlts[i] || []).map(a => a.toLowerCase());
+  inp.classList.remove('ok','err');
+  const ok = typed === correct || alts.some(a => typed === a);
+  if (ok) { inp.classList.add('ok'); inp.title=''; }
+  else { inp.classList.add('err'); inp.title = 'Expected: ' + gapCorrect[i]; }
+  recalcGapScore();
+}
+
+function recalcGapScore() {
+  let score = 0;
+  let filled = 0;
+  for (let i = 0; i < gapCorrect.length; i++) {
+    const inp = document.getElementById('gap'+i);
+    if (!inp) continue;
+    if ((inp.value||'').trim().length > 0) filled++;
+    if (inp.classList.contains('ok')) score++;
+  }
+  state.tabScores[4] = score > 0 ? score : null;
+  updateScore();
+  const fb = document.getElementById('gapFeedback');
+  if (score === gapCorrect.length) {
+    fb.className = 'feedback show ok';
+    fb.textContent = '✅ All 7 blanks correct! Excellent understanding of encryption and access controls.';
+  } else if (filled === gapCorrect.length && score < gapCorrect.length) {
+    fb.className = 'feedback show warn';
+    fb.textContent = `${score}/${gapCorrect.length} correct. Hover over red blanks to see the expected word.`;
+  } else {
+    fb.className = 'feedback';
+  }
+}
+
+function checkGap() {} // kept for safety — no longer called
+
+function resetGap() {
+  document.getElementById('gapFeedback').className = 'feedback';
+  buildGap();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ═══ EX 5: CLASSIFY SCENARIOS ══════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+const classifyCategories = ['Malware','Phishing / Social Engineering','Brute Force','DoS Attack','SQL Injection','Social Engineering (Insider Threats)'];
+const classifyScenarios = [
+  { text:'A virus hidden in a free game download corrupts files after installation.',     cat:'Malware' },
+  { text:'Staff receive a text claiming to be from HR, asking them to confirm their password via a link.', cat:'Phishing / Social Engineering' },
+  { text:'A script automatically tests 10,000 PIN combinations against an online banking login.', cat:'Brute Force' },
+  { text:'Thousands of IoT devices simultaneously ping a game server, making it unreachable to players.', cat:'DoS Attack' },
+  { text:`A comment box on a forum accepts ' OR 1=1 -- causing the site to dump its user table.`, cat:'SQL Injection' },
+  { text:'A disgruntled employee copies confidential client data to a USB drive before leaving.', cat:'Social Engineering (Insider Threats)' },
+];
+let classifyPlaced = {}; // scenarioIdx -> catName
+let classifyDragIdx = null;
+
+function buildClassify() {
+  classifyPlaced = {};
+  classifyDragIdx = null;
+  const pool = document.getElementById('scenarioPool');
+  pool.innerHTML = '';
+  [...classifyScenarios].sort(()=>Math.random()-.5).forEach((s, origIdx) => {
+    const actualIdx = classifyScenarios.indexOf(s);
+    const chip = document.createElement('div');
+    chip.className = 'scenario-chip';
+    chip.textContent = s.text;
+    chip.dataset.idx = actualIdx;
+    chip.draggable = true;
+    chip.addEventListener('dragstart', () => { classifyDragIdx = actualIdx; chip.classList.add('dragging'); });
+    chip.addEventListener('dragend', () => chip.classList.remove('dragging'));
+    chip.addEventListener('touchstart', classifyTouchStart, {passive:false});
+    pool.appendChild(chip);
+  });
+  const grid = document.getElementById('classifyGrid');
+  grid.innerHTML = '';
+  classifyCategories.forEach(cat => {
+    const box = document.createElement('div');
+    box.className = 'classify-box';
+    box.dataset.cat = cat;
+    box.innerHTML = `<h4>${cat}</h4>`;
+    box.addEventListener('dragover', e => { e.preventDefault(); box.classList.add('over'); });
+    box.addEventListener('dragleave', () => box.classList.remove('over'));
+    box.addEventListener('drop', e => { e.preventDefault(); box.classList.remove('over'); dropScenario(cat, box); });
+    grid.appendChild(box);
+  });
+}
+
+function dropScenario(cat, box) {
+  if (classifyDragIdx === null) return;
+  const idx = classifyDragIdx;
+  // remove from old box if re-dragging from a box
+  if (classifyPlaced[idx]) {
+    document.querySelectorAll('.classify-box').forEach(b => {
+      b.querySelectorAll('.placed-chip').forEach(ch => { if (+ch.dataset.idx === idx) ch.remove(); });
+    });
+  }
+  classifyPlaced[idx] = cat;
+  // remove from pool
+  document.querySelectorAll('#scenarioPool .scenario-chip').forEach(c => { if (+c.dataset.idx === idx) c.remove(); });
+
+  const correctCat = classifyScenarios[idx].cat;
+  const isCorrect = cat === correctCat;
+
+  const chip = document.createElement('span');
+  chip.className = 'placed-chip';
+  chip.dataset.idx = idx;
+  chip.textContent = classifyScenarios[idx].text;
+  chip.style.background = isCorrect ? 'var(--green)' : 'var(--accent)';
+  chip.title = isCorrect ? 'Correct! Click to remove.' : `Incorrect — should be: ${correctCat}. Click to try again.`;
+
+  chip.onclick = () => {
+    delete classifyPlaced[idx];
+    chip.remove();
+    const sc = classifyScenarios[idx];
+    const newChip = document.createElement('div');
+    newChip.className = 'scenario-chip';
+    newChip.textContent = sc.text;
+    newChip.dataset.idx = idx;
+    newChip.draggable = true;
+    newChip.addEventListener('dragstart', () => { classifyDragIdx = idx; newChip.classList.add('dragging'); });
+    newChip.addEventListener('dragend', () => newChip.classList.remove('dragging'));
+    newChip.addEventListener('touchstart', classifyTouchStart, {passive:false});
+    document.getElementById('scenarioPool').appendChild(newChip);
+    recalcClassifyScore();
+  };
+  box.appendChild(chip);
+  classifyDragIdx = null;
+  recalcClassifyScore();
+}
+
+function recalcClassifyScore() {
+  const placed = Object.keys(classifyPlaced).length;
+  let score = 0;
+  document.querySelectorAll('.placed-chip').forEach(chip => {
+    const idx = +chip.dataset.idx;
+    if (classifyPlaced[idx] === classifyScenarios[idx].cat) score++;
+  });
+  state.tabScores[5] = placed > 0 ? score : null;
+  updateScore();
+  const fb = document.getElementById('classifyFeedback');
+  if (placed === classifyScenarios.length) {
+    fb.className = 'feedback show ' + (score === classifyScenarios.length ? 'ok' : 'err');
+    fb.textContent = score === classifyScenarios.length
+      ? '✅ All 6 scenarios correctly classified!'
+      : `${score}/6 correct. Red chips are wrong — click them to return to the pool and try again.`;
+  } else if (placed > 0) {
+    fb.className = 'feedback show ' + (score === placed ? 'ok' : 'warn');
+    fb.textContent = score === placed
+      ? `${score}/${classifyScenarios.length} placed — all correct so far!`
+      : `${score}/${placed} correct so far. Red chips are wrong — click to remove and try a different category.`;
+  } else {
+    fb.className = 'feedback';
+  }
+}
+
+function checkClassify() {} // kept for safety — no longer called
+
+let classifyTouchClone = null;
+function classifyTouchStart(e) {
+  e.preventDefault();
+  const el = e.currentTarget;
+  classifyDragIdx = +el.dataset.idx;
+  classifyTouchClone = el.cloneNode(true);
+  classifyTouchClone.style.cssText=`position:fixed;opacity:.7;pointer-events:none;z-index:9999;width:${el.offsetWidth}px;max-width:200px;background:#fff;border:2px solid var(--surface-mid);border-radius:7px;padding:7px 12px;font-size:.82px;`;
+  document.body.appendChild(classifyTouchClone);
+  const mv = te => { te.preventDefault(); const t=te.touches[0]; classifyTouchClone.style.left=(t.clientX-50)+'px'; classifyTouchClone.style.top=(t.clientY-20)+'px'; };
+  const en = te => {
+    document.removeEventListener('touchmove',mv); document.removeEventListener('touchend',en);
+    classifyTouchClone.remove(); classifyTouchClone=null;
+    const t=te.changedTouches[0];
+    const target = document.elementFromPoint(t.clientX,t.clientY);
+    if (!target) return;
+    const box = target.closest('.classify-box');
+    if (box) dropScenario(box.dataset.cat, box);
+  };
+  document.addEventListener('touchmove',mv,{passive:false});
+  document.addEventListener('touchend',en);
+}
+
+function resetClassify() {
+  document.getElementById('classifyFeedback').className = 'feedback';
+  buildClassify();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ═══ EX 6: EXAM PRACTICE ═══════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+const eqData = [
+  {
+    question: 'A company stores its customers\' financial data on a server. Identify and describe two software-based methods the company could use to protect this data from unauthorised access. [6]',
+    marks: 6,
+    markScheme: [
+      '1 mark for naming a valid method (e.g. Encryption, Firewall, Anti-malware, User Access Levels, Passwords/Authentication)',
+      '1–2 marks for description: e.g. Encryption — data is scrambled using an algorithm; a decryption key is required to read it, so if intercepted it cannot be understood.',
+      '1 mark for naming a second distinct method.',
+      '1–2 marks for description of second method: e.g. Firewall — monitors all incoming and outgoing network traffic; blocks packets that do not meet predefined rules.',
+      'Allow: Anti-malware (scans for known threats, quarantines them), User Access Levels (limits what each user can read/edit), Strong passwords/2FA.',
+      'NE: physical methods (CCTV, locks), vague answers like "it stops hackers".',
+    ],
+    maxSA: 3,
+  },
+  {
+    question: 'A secondary school network was taken offline for several hours after an attack. Describe what a Denial of Service (DoS) attack is and explain one way the school could prevent future attacks. [3]',
+    marks: 3,
+    markScheme: [
+      '1 mark: A DoS attack involves flooding a server/network with (fake/excessive) requests.',
+      '1 mark: This uses up bandwidth/processing power so the server cannot respond to legitimate users / crashes.',
+      '1 mark for prevention: e.g. Firewall configured to detect and block unusual traffic volumes; penetration testing to identify weaknesses; rate-limiting requests from single IP addresses.',
+    ],
+    maxSA: 3,
+  },
+  {
+    question: 'A student receives an email asking them to click a link and enter their school login details. The email appears to come from the headteacher. Name the type of attack and give two reasons why the student should not click the link. [3]',
+    marks: 3,
+    markScheme: [
+      '1 mark for naming: Phishing (accept Social Engineering).',
+      '1 mark: The email may not genuinely be from the headteacher — attackers can spoof the sender address.',
+      '1 mark: Clicking the link could lead to malware being installed on the device, or the student\'s credentials being stolen and used for unauthorised access.',
+    ],
+    maxSA: 3,
+  },
+];
+
+let eqSelfScores = new Array(3).fill(null);
+
+function buildEQ() {
+  const con = document.getElementById('eqContainer');
+  con.innerHTML = '';
+  eqData.forEach((q, qi) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'card';
+    wrap.style.marginBottom = '22px';
+    wrap.innerHTML = `
+      <div class="eq-question">Q${qi+1}: ${q.question}</div>
+      <div class="eq-mark-note">${q.marks} marks available — aim for ${q.marks} separate points.</div>
+      <textarea class="eq-textarea" id="eqta${qi}" placeholder="Write your answer here…"></textarea>
+      <div style="margin-top:10px;">
+        <button class="ac-btn-secondary" onclick="revealMS(${qi})">📋 Reveal Mark Scheme</button>
+      </div>
+      <div class="mark-scheme" id="ms${qi}">
+        <div style="font-size:.82rem;font-weight:700;color:var(--muted);margin-bottom:8px;margin-top:10px;">MARK SCHEME</div>
+        ${q.markScheme.map(pt=>`<div class="ms-item"><div class="ms-bullet">✓</div><div>${pt}</div></div>`).join('')}
+        <div style="margin-top:12px;font-size:.85rem;font-weight:600;">How did you do?</div>
+        <div class="self-assess-btns">
+          <button class="sa-btn green-btn" onclick="selfAssess(${qi}, ${q.maxSA})">✅ Got all points (${q.maxSA}/${q.maxSA})</button>
+          <button class="sa-btn amber-btn" onclick="selfAssess(${qi}, ${Math.ceil(q.maxSA/2)})">⚠️ Got some points (${Math.ceil(q.maxSA/2)}/${q.maxSA})</button>
+          <button class="sa-btn red-btn" onclick="selfAssess(${qi}, 0)">❌ Missed most points (0/${q.maxSA})</button>
+        </div>
+        <div class="feedback" id="eqfb${qi}"></div>
+      </div>`;
+    con.appendChild(wrap);
+  });
+}
+
+function revealMS(qi) {
+  const ms = document.getElementById('ms'+qi);
+  ms.classList.add('show');
+}
+
+function selfAssess(qi, pts) {
+  eqSelfScores[qi] = pts;
+  document.querySelectorAll(`#ms${qi} .sa-btn`).forEach(b => b.classList.remove('selected'));
+  event.currentTarget.classList.add('selected');
+  const fb = document.getElementById('eqfb'+qi);
+  const maxPt = eqData[qi].maxSA;
+  fb.className = 'feedback show ' + (pts===maxPt?'ok':pts>0?'warn':'err');
+  if (pts===maxPt) fb.textContent='✅ Excellent — full marks on this question!';
+  else if (pts>0) fb.textContent='⚠️ Partially correct. Re-read the mark scheme points you missed and try to understand why they earn marks.';
+  else fb.textContent='❌ Review the mark scheme carefully. Focus on naming the method first, then describing what it does and why it helps.';
+  // recalculate tab score
+  const total = eqSelfScores.reduce((a,b)=>a+(b||0),0);
+  state.tabScores[6] = total;
+  updateScore();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ═══ EX 7: NAME IT ═════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+
+// Part A: description given → student names the method (10 items)
+const niPartAData = [
+  {
+    context: 'Threat',
+    prompt: 'An automated script tries millions of username and password combinations against a login page until one succeeds.',
+    correct: 'Brute Force',
+    alts: ['brute force attack','bruteforce'],
+  },
+  {
+    context: 'Threat',
+    prompt: 'A user\'s files are encrypted by malicious software and the attacker demands payment before providing the decryption key.',
+    correct: 'Ransomware',
+    alts: ['ransom','ransomware attack'],
+  },
+  {
+    context: 'Prevention',
+    prompt: 'A security professional is legally employed by an organisation to actively try to break into its own systems, in order to find vulnerabilities before attackers do.',
+    correct: 'Penetration Testing',
+    alts: ['pen testing','pen test','penetration test','ethical hacking'],
+  },
+  {
+    context: 'Prevention',
+    prompt: 'Each member of staff is given a different level of permission — for example, junior staff can only read certain files, while managers can also edit and delete them.',
+    correct: 'User Access Levels',
+    alts: ['access levels','user access','access control','access rights'],
+  },
+  {
+    context: 'Threat',
+    prompt: 'An attacker enters carefully crafted input into a website\'s search field that causes the backend database to return data it should not — including private user records.',
+    correct: 'SQL Injection',
+    alts: ['sql','sqli','structured query language injection'],
+  },
+  {
+    context: 'Prevention',
+    prompt: 'Software monitors all data entering and leaving a network, checking each packet against a set of rules, and drops any traffic that does not meet those rules.',
+    correct: 'Firewall',
+    alts: ['fire wall','network firewall'],
+  },
+  {
+    context: 'Prevention',
+    prompt: 'A rule-based system sits between a school\'s internal network and the internet. It inspects every packet passing in or out and silently discards any that match a blocked pattern.',
+    correct: 'Firewall',
+    alts: ['fire wall','network firewall'],
+  },
+  {
+    context: 'Prevention',
+    prompt: 'Customer payment details are converted into an unreadable format before being stored in a database. Even if an attacker gains access, the data appears as meaningless characters without the correct key.',
+    correct: 'Encryption',
+    alts: ['encrypting','encrypt','data encryption'],
+  },
+  {
+    context: 'Threat',
+    prompt: 'A program systematically generates and tests every possible four-digit PIN — from 0000 to 9999 — against a phone\'s lock screen until the correct one is found.',
+    correct: 'Brute Force',
+    alts: ['brute force attack','bruteforce'],
+  },
+  {
+    context: 'Prevention',
+    prompt: 'A hospital ensures that receptionists can only view appointment dates, nurses can view and update treatment records, and only doctors can access full medical histories.',
+    correct: 'User Access Levels',
+    alts: ['access levels','user access','access control','access rights'],
+  },
+];
+
+function buildNameIt() {
+  const containerA = document.getElementById('niPartA');
+  containerA.innerHTML = '';
+  niPartAData.forEach((item, i) => {
+    const card = document.createElement('div');
+    card.className = 'ni-card';
+    card.dataset.idx = i;
+    card.innerHTML = `
+      <div class="ni-prompt">
+        <span class="context-tag">${item.context}</span><br>
+        ${item.prompt}
+      </div>
+      <div class="ni-answer-wrap">
+        <input class="ni-input" id="niA${i}" placeholder="Name the method…" autocomplete="off" spellcheck="false">
+        <div class="ni-reveal" id="niArev${i}"></div>
+      </div>`;
+    containerA.appendChild(card);
+    const inp = card.querySelector(`#niA${i}`);
+    inp.addEventListener('blur', () => checkNiA(i));
+    inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); inp.blur(); } });
+  });
+}
+
+function checkNiA(i) {
+  const inp = document.getElementById('niA'+i);
+  const card = inp.closest('.ni-card');
+  const rev = document.getElementById('niArev'+i);
+  const typed = (inp.value||'').trim().toLowerCase();
+  if (typed.length === 0) {
+    inp.classList.remove('ok','err');
+    card.classList.remove('correct','incorrect');
+    rev.className = 'ni-reveal';
+    recalcNameItScore();
+    return;
+  }
+  const item = niPartAData[i];
+  const allOk = [item.correct, ...item.alts].map(s => s.toLowerCase());
+  const ok = allOk.some(a => {
+    if (typed === a) return true;
+    const words = a.split(' ').filter(w => w.length > 3);
+    return words.length > 0 && words.every(w => typed.includes(w));
+  });
+  inp.classList.toggle('ok', ok);
+  inp.classList.toggle('err', !ok);
+  card.classList.toggle('correct', ok);
+  card.classList.toggle('incorrect', !ok);
+  rev.className = 'ni-reveal show ' + (ok ? 'correct-ans' : 'wrong-ans');
+  rev.textContent = ok ? '✅ Correct!' : `✗ Expected: ${item.correct}`;
+  recalcNameItScore();
+}
+
+function recalcNameItScore() {
+  let score = 0;
+  niPartAData.forEach((_, i) => {
+    const inp = document.getElementById('niA'+i);
+    if (inp && inp.classList.contains('ok')) score++;
+  });
+  state.tabScores[3] = score > 0 ? score : null;
+  updateScore();
+  const total = niPartAData.length;
+  const fb = document.getElementById('nameItFeedback');
+  if (score === total) {
+    fb.className = 'feedback show ok';
+    fb.textContent = `✅ Full marks — ${score}/${total}! Excellent recall in both directions.`;
+  } else {
+    fb.className = 'feedback';
+  }
+}
+
+function checkNameIt() {} // kept for safety — no longer called
+
+function resetNameIt() {
+  document.getElementById('nameItFeedback').className = 'feedback';
+  buildNameIt();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════
+buildMatch();
+buildTick();
+buildTF();
+buildGap();
+buildClassify();
+buildEQ();
+buildNameIt();
+updateScore();
+</script>
+
+<!-- Google Classroom integration (no-op when no ?courseId= param) -->
+<script src="../../classroom.js"></script>
+</body>
+</html>
