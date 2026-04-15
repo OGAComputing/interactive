@@ -212,8 +212,8 @@ color:  purple
     background: white;
     display: flex;
     align-items: center;
-    justify-content: center;
-    text-align: center;
+    justify-content: flex-start;
+    gap: 6px;
     font-size: 0.78rem;
     font-family: var(--font-head);
     font-weight: 600;
@@ -222,6 +222,16 @@ color:  purple
     transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
     overflow: hidden;
     padding: 4px 8px;
+  }
+  .dz-icon {
+    font-size: 1.05rem;
+    line-height: 1;
+    flex-shrink: 0;
+    color: initial;
+  }
+  .dz-text {
+    flex: 1;
+    text-align: center;
   }
   .drop-zone.awaiting {
     border: 2px dashed #9ca3af;
@@ -276,15 +286,6 @@ color:  purple
   .fill-input.correct-fi { border-color: var(--correct); background: var(--green-pale); color: var(--correct); }
   .fill-input.wrong-fi { border-color: var(--incorrect); background: #fee2e2; animation: shake 0.4s ease; }
 
-  /* ── ICON HINTS ── */
-  .hint-icon {
-    position: absolute;
-    font-size: 1.4rem;
-    line-height: 1;
-    pointer-events: none;
-    opacity: 0.85;
-  }
-
   /* ── CENTRAL NODE ── */
   .central-node {
     position: absolute;
@@ -312,6 +313,8 @@ color:  purple
     font-style: italic;
     pointer-events: none;
     white-space: nowrap;
+    text-align: center;
+    z-index: 2;
   }
 
   /* ── ACTIONS ── */
@@ -457,7 +460,7 @@ color:  purple
   .score-item.purple .score-num { color: var(--purple); }
 
   /* ── MINDMAP LAYOUT ── */
-  .mm-root { position: relative; width: 980px; height: 740px; margin: 0 auto; }
+  .mm-root { position: relative; width: 980px; height: 600px; margin: 0 auto; }
 
   /* ══ Dark theme — Y11 System Software palette ══
      These rules override the light defaults above using shared.css variables
@@ -558,7 +561,7 @@ color:  purple
     <div class="score-item green"><span class="score-num" id="sc-correct">0</span><span class="score-label">Correct</span></div>
     <div class="score-item"><span class="score-num" id="sc-total">21</span><span class="score-label">Total</span></div>
     <div class="score-item"><span class="score-num" id="sc-streak">0</span><span class="score-label">Streak</span></div>
-    <div class="score-item purple" title="L1 = up to 20pts · L2 = up to 30pts · L3 = up to 50pts"><span class="score-num" id="sc-score">0</span><span class="score-label">Score / 100</span></div>
+    <div class="score-item purple" title="L1 = up to 20pts · L2 = up to 30pts · L3 = up to 50pts (40 if demote used)"><span class="score-num" id="sc-score">0</span><span class="score-label">Score / 100</span></div>
   </div>
 </div>
 
@@ -579,13 +582,16 @@ color:  purple
         <div class="mindmap-svg-wrap">
 
           <!-- SVG connector lines -->
-          <svg class="mm-svg" id="mm-svg" viewBox="0 0 980 740" xmlns="http://www.w3.org/2000/svg">
+          <svg class="mm-svg" id="mm-svg" viewBox="0 0 980 600" xmlns="http://www.w3.org/2000/svg">
             <!-- Lines drawn by JS -->
           </svg>
 
           <div class="mm-root" id="mm-root">
             <!-- Central node -->
-            <div class="central-node" style="left:415px;top:290px;width:150px;height:72px;">OPERATING<br>SYSTEMS</div>
+            <div class="central-node" style="left:415px;top:210px;width:150px;height:72px;flex-direction:column;gap:3px;">
+              <span>OPERATING<br>SYSTEMS</span>
+              <span style="font-size:0.68rem;color:#6b7280;font-style:italic;font-weight:400;letter-spacing:0;text-transform:none;">provide...</span>
+            </div>
 
             <!-- Drop zones injected by JS -->
           </div>
@@ -611,67 +617,98 @@ color:  purple
 // ═══════════════════════════════════════════════
 
 const NODES = [
-  // ── Main OS components (5 branches) ──────────────────────────────────
-  { id: 'fm',   answer: 'File Management',       aliases: ['file management','file mgmt'], x: 120, y: 230, w: 165, h: 44, icon: '📄', iconX: 292, iconY: 233, group: 'main' },
-  { id: 'pm',   answer: 'Peripheral Management', aliases: ['peripheral management','peripherals management','peripheral mgmt'], x: 430, y: 180, w: 195, h: 44, icon: '🖱️', iconX: 632, iconY: 183, group: 'main' },
-  { id: 'um',   answer: 'User Management',       aliases: ['user management','user mgmt'], x: 760, y: 230, w: 165, h: 44, icon: '👤', iconX: 932, iconY: 233, group: 'main' },
-  { id: 'ui',   answer: 'User Interfaces',       aliases: ['user interfaces','user interface'], x: 120, y: 360, w: 165, h: 44, icon: '🖥️', iconX: 292, iconY: 363, group: 'main' },
-  { id: 'mm',   answer: 'Memory Management',     aliases: ['memory management','memory mgmt'], x: 430, y: 420, w: 185, h: 44, icon: '💾', iconX: 619, iconY: 423, group: 'main' },
+  // ── Main OS components ────────────────────────────────────────────────
+  // Three boxes across the top row (left, centre, right), two below (left, centre)
+  // matching the PDF grid.  OS node sits at centre x=490, between the rows.
+  { id: 'fm', answer: 'File Management',       aliases: ['file management','file mgmt'],                                    x:  200, y: 170, w: 185, h: 56, icon: '🗂️', group: 'main' },
+  { id: 'pm', answer: 'Peripheral Management', aliases: ['peripheral management','peripherals management','peripheral mgmt'], x: 400, y: 120, w: 185, h: 56, icon: '🖱️', group: 'main' },
+  { id: 'um', answer: 'User Management',       aliases: ['user management','user mgmt'],                                    x: 650, y: 218, w: 185, h: 56, icon: '👤', group: 'main' },
+  { id: 'ui', answer: 'User Interfaces',       aliases: ['user interfaces','user interface'],                                x: 200, y: 270, w: 185, h: 56, icon: '🖥️', group: 'main' },
+  { id: 'mm', answer: 'Memory Management',     aliases: ['memory management','memory mgmt'],                                x: 400, y: 320, w: 185, h: 56, icon: '💾', group: 'main' },
 
-  // ── File Management sub-branches ──────────────────────────────────────
-  { id: 'fm-action', answer: 'Create, move and delete', aliases: ['create move and delete','create, move and delete','create move delete','create, move, and delete'], x: 14, y: 140, w: 170, h: 44, icon: null, group: 'fm-sub' },
-  { id: 'files',     answer: 'Files',       aliases: ['files','file'], x: 210, y: 110, w: 100, h: 36, icon: '🗂️', iconX: 316, iconY: 113, group: 'fm-sub' },
-  { id: 'dirs',      answer: 'Directories', aliases: ['directories','directory','folders'], x: 210, y: 158, w: 120, h: 36, icon: '📁', iconX: 336, iconY: 161, group: 'fm-sub' },
+  // ── File Management sub-branches ─────────────────────────────────────
+  // fm-action is directly ABOVE fm (shared x-centre = 183.5).
+  // Files and Directories fan to the right from fm-action, on the same row as pm-action.
+  { id: 'fm-action', answer: 'Create, move and delete', aliases: ['create move and delete','create, move and delete','create move delete','create, move, and delete'],
+    x:  -20, y: 170, w: 185, h: 56, icon: '✂️', group: 'fm-sub' },
+  { id: 'files',     answer: 'Files',       aliases: ['files','file'],
+    x: -20, y: 100, w: 185, h: 56, icon: '📄', group: 'fm-sub', swapGroup: 'fm-items' },
+  { id: 'dirs',      answer: 'Directories', aliases: ['directories','directory','folders'],
+    x: -20, y:  30, w: 185, h: 56, icon: '📁', group: 'fm-sub', swapGroup: 'fm-items' },
 
   // ── Peripheral Management sub-branches ───────────────────────────────
-  { id: 'pm-action',  answer: 'Communicate with devices', aliases: ['communicate with devices','communicates with devices','communication with devices'], x: 390, y: 60, w: 185, h: 44, icon: null, group: 'pm-sub' },
-  { id: 'dd',         answer: 'Device Drivers',           aliases: ['device drivers','device driver'], x: 660, y: 60, w: 140, h: 44, icon: '🔌', iconX: 806, iconY: 63, group: 'pm-sub' },
+  // pm-action is above PM.  dd is on the SAME ROW to its right, with a 45 px gap
+  // so the "using" label sits cleanly between the two boxes.
+  { id: 'pm-action', answer: 'Communicate with devices', aliases: ['communicate with devices','communicates with devices','communication with devices'],
+    x: 400, y:  30, w: 185, h: 56, icon: '📡', group: 'pm-sub' },
+  { id: 'dd',        answer: 'Device Drivers',           aliases: ['device drivers','device driver'],
+    x: 650, y:  30, w: 185, h: 56, icon: '🔌', group: 'pm-sub' },
 
-  // ── User Interfaces sub-branches ──────────────────────────────────────
-  { id: 'ui-purpose', answer: 'Allow users to interact with the hardware', aliases: ['allow users to interact with the hardware','allow users to interact with hardware','interact with hardware','allows users to interact with hardware','lets users interact with the hardware','interact with the hardware','allows users to interact'], x: 14, y: 480, w: 178, h: 56, icon: null, group: 'ui-sub' },
-  { id: 'gui',    answer: 'GUI',              aliases: ['gui','graphical user interface','graphical'], x: 210, y: 455, w: 100, h: 38, icon: '🖼️', iconX: 316, iconY: 458, group: 'ui-types' },
-  { id: 'nl',     answer: 'Natural Language', aliases: ['natural language','natural language interface','nli'], x: 210, y: 505, w: 140, h: 38, icon: '🗣️', iconX: 356, iconY: 508, group: 'ui-types' },
-  { id: 'cli',    answer: 'Command Line',     aliases: ['command line','command line interface','cli','cmd line','command-line'], x: 210, y: 555, w: 130, h: 38, icon: '⌨️', iconX: 347, iconY: 558, group: 'ui-types' },
+  // ── User Interfaces sub-branches ─────────────────────────────────────
+  // ui-purpose is on the SAME ROW as ui, to its LEFT (connected "to").
+  // GUI / Natural Language / Command Line stack BELOW ui.
+  { id: 'ui-purpose', answer: 'Allow users to interact with the hardware',
+    aliases: ['allow users to interact with the hardware','allow users to interact with hardware','interact with hardware','allows users to interact with hardware','lets users interact with the hardware','interact with the hardware','allows users to interact'],
+    x:   -20, y: 270, w: 185, h: 56, icon: '👆', group: 'ui-sub' },
+  { id: 'gui', answer: 'GUI',              aliases: ['gui','graphical user interface','graphical'],
+    x: 50, y: 360, w: 185, h: 56, icon: '🖼️', group: 'ui-types', swapGroup: 'ui-types' },
+  { id: 'nl',  answer: 'Natural Language', aliases: ['natural language','natural language interface','nli'],
+    x: 50, y: 440, w: 185, h: 56, icon: '🗣️', group: 'ui-types', swapGroup: 'ui-types' },
+  { id: 'cli', answer: 'Command Line',     aliases: ['command line','command line interface','cli','cmd line','command-line'],
+    x: 50, y: 520, w: 185, h: 56, icon: '⌨️', group: 'ui-types', swapGroup: 'ui-types' },
 
   // ── Memory Management sub-branches ───────────────────────────────────
-  { id: 'vm',            answer: 'Manage virtual memory',                  aliases: ['manage virtual memory','virtual memory','manages virtual memory','managing virtual memory'], x: 390, y: 492, w: 185, h: 44, icon: null, group: 'mm-sub' },
-  { id: 'multi-purpose', answer: 'Allow multiple programs to run at once', aliases: ['allow multiple programs to run at once','multiple programs run at once','allow multiple programs to run','allows multiple programs to run at once','run multiple programs at once','multiple programs to run at once'], x: 390, y: 556, w: 185, h: 56, icon: null, group: 'mm-sub' },
-  { id: 'multi',         answer: 'Multitasking',                           aliases: ['multitasking','multi-tasking'], x: 610, y: 556, w: 140, h: 38, icon: '⚙️', iconX: 757, iconY: 559, group: 'mm-sub' },
+  // vm and multi-purpose stack directly below mm; multitasking is to the right of multi-purpose.
+  { id: 'vm',            answer: 'Manage virtual memory',
+    aliases: ['manage virtual memory','virtual memory','manages virtual memory','managing virtual memory'],
+    x: 400, y: 420, w: 185, h: 56, icon: '💽', group: 'mm-sub' },
+  { id: 'multi-purpose', answer: 'Allow multiple programs to run at once',
+    aliases: ['allow multiple programs to run at once','multiple programs run at once','allow multiple programs to run','allows multiple programs to run at once','run multiple programs at once','multiple programs to run at once'],
+    x: 400, y: 520, w: 185, h: 56, icon: '🔀', group: 'mm-sub' },
+  { id: 'multi',         answer: 'Multitasking', aliases: ['multitasking','multi-tasking'],
+    x: 650, y: 520, w: 185, h: 56, icon: '⚙️', group: 'mm-sub' },
 
   // ── User Management sub-branches ─────────────────────────────────────
-  { id: 'um-purpose', answer: 'Keep files and accounts secure', aliases: ['keep files and accounts secure','keep accounts secure','keep files secure','keeps files and accounts secure','keep files and account secure','secure files and accounts'], x: 760, y: 340, w: 180, h: 48, icon: null, group: 'um-sub' },
-  { id: 'upw',    answer: 'User & Password Management', aliases: ['user & password management','user and password management','username and password','user password management'], x: 760, y: 460, w: 185, h: 44, icon: null, group: 'um-sub' },
-  { id: 'far',    answer: 'File access rights',         aliases: ['file access rights','file access right','access rights'], x: 760, y: 518, w: 165, h: 38, icon: null, group: 'um-sub' },
+  // um-purpose, upw and far form a straight vertical column below um.
+  { id: 'um-purpose', answer: 'Keep files and accounts secure',
+    aliases: ['keep files and accounts secure','keep accounts secure','keep files secure','keeps files and accounts secure','keep files and account secure','secure files and accounts'],
+    x: 650, y: 300, w: 185, h: 56, icon: '🔒', group: 'um-sub' },
+  { id: 'upw', answer: 'User & Password Management',
+    aliases: ['user & password management','user and password management','username and password','user password management'],
+    x: 700, y: 380, w: 185, h: 56, icon: '🔑', group: 'um-sub', swapGroup: 'um-items' },
+  { id: 'far', answer: 'File access rights',
+    aliases: ['file access rights','file access right','access rights'],
+    x: 700, y: 450, w: 185, h: 56, icon: '🛡️', group: 'um-sub', swapGroup: 'um-items' },
 ];
 
 // Connector lines: [fromNodeId_or_coord, toNodeId, label]
 const CONNECTORS = [
   // OS → main branches
-  ['os', 'fm', 'provide'],
-  ['os', 'ui', 'provide'],
+  ['os', 'fm', ''],
+  ['os', 'ui', ''],
   ['os', 'pm', ''],
   ['os', 'um', ''],
   ['os', 'mm', ''],
   // FM branch
   ['fm', 'fm-action', 'to'],
-  ['fm-action', 'files', ''],
-  ['fm-action', 'dirs', ''],
+  ['fm-action', 'files', 'either'],
+  ['fm-action', 'dirs', 'or'],
   // PM branch
   ['pm', 'pm-action', 'to'],
   ['pm-action', 'dd', 'using'],
   // UI branch
   ['ui', 'ui-purpose', 'to'],
-  ['ui', 'gui', 'using a'],
-  ['ui', 'nl', ''],
-  ['ui', 'cli', ''],
+  ['ui-purpose', 'gui', 'using a'],
+  ['ui-purpose', 'nl', 'or a'],
+  ['ui-purpose', 'cli', 'or a'],
   // MM branch
   ['mm', 'vm', 'to'],
-  ['mm', 'multi-purpose', ''],
+  ['mm', 'multi-purpose', 'and'],
   ['multi-purpose', 'multi', 'called'],
   // UM branch
   ['um', 'um-purpose', 'to'],
   ['um-purpose', 'upw', 'using'],
-  ['um-purpose', 'far', ''],
+  ['um-purpose', 'far', 'and'],
 ];
 
 // Track state per node
@@ -685,6 +722,7 @@ let levelsUnlocked = 1; // which levels are accessible (1, 2, or 3)
 let bankedL1 = 0;    // best correct count achieved in level 1 (persists across switches)
 let bankedL2 = 0;    // best correct count achieved in level 2
 let level3Score = 0; // correct count in current level 3 session
+let l3DemoteUsed = false; // true if any demote was used during a level 3 session
 
 // ═══════════════════════════════════════════════
 //  BUILD THE MIND MAP
@@ -697,34 +735,52 @@ function buildMindMap() {
   const svg = document.getElementById('mm-svg');
 
   // Clear
-  root.querySelectorAll('.drop-zone,.fill-input,.hint-icon,.conn-label').forEach(e => e.remove());
+  root.querySelectorAll('.drop-zone,.fill-input,.conn-label').forEach(e => e.remove());
   svg.innerHTML = '';
 
-  // Draw connector lines
+  // Draw connector lines (elbow / orthogonal style)
   CONNECTORS.forEach(([fromId, toId, label]) => {
+    const fromNode = fromId === 'os' ? null : NODES.find(n => n.id === fromId);
+    const toNode   = NODES.find(n => n.id === toId);
     const from = fromId === 'os'
-      ? { cx: 490, cy: 326 } // central node centre (left:415 + w:150/2, top:290 + h:72/2)
-      : nodeCenter(NODES.find(n => n.id === fromId));
-    const to   = nodeCenter(NODES.find(n => n.id === toId));
+      ? { cx: 490, cy: 246 } // central node centre (left:415 + w:150/2, top:210 + h:72/2)
+      : nodeCenter(fromNode);
+    const to   = nodeCenter(toNode);
 
-    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-    line.setAttribute('x1', from.cx);
-    line.setAttribute('y1', from.cy);
-    line.setAttribute('x2', to.cx);
-    line.setAttribute('y2', to.cy);
-    line.setAttribute('stroke', '#9ca3af');
-    line.setAttribute('stroke-width', '1.5');
-    line.setAttribute('stroke-dasharray', '5,3');
-    svg.appendChild(line);
+    // Elbow path: go horizontally to midX, then vertically, then horizontally to target
+    const midX = (from.cx + to.cx) / 2;
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', `M ${from.cx} ${from.cy} H ${midX} V ${to.cy} H ${to.cx}`);
+    path.setAttribute('fill', 'none');
+    path.setAttribute('stroke', '#9ca3af');
+    path.setAttribute('stroke-width', '1.5');
+    path.setAttribute('stroke-dasharray', '5,3');
+    svg.appendChild(path);
 
     if (label) {
-      const mx = (from.cx + to.cx) / 2;
-      const my = (from.cy + to.cy) / 2;
       const lbl = document.createElement('div');
       lbl.className = 'conn-label';
       lbl.textContent = label;
-      lbl.style.left = (mx - 20) + 'px';
-      lbl.style.top  = (my - 8) + 'px';
+      const dx = Math.abs(to.cx - from.cx);
+      if (dx < 100) {
+        // Mostly vertical — place label just outside the destination node's edge
+        // so it falls in the gap between boxes rather than at the midpoint
+        // (which can land inside an intermediate node when the path spans multiple rows).
+        const toIsBelow  = to.cy > from.cy;
+        const labelY     = toIsBelow
+          ? (toNode ? toNode.y - 12          : to.cy - 40)   // just above target top
+          : (toNode ? toNode.y + toNode.h + 4 : to.cy + 40); // just below target bottom
+        const avgCx      = (from.cx + to.cx) / 2;
+        const sideOffset = avgCx > 490 ? -6 : 6;
+        lbl.style.left = (midX + sideOffset) + 'px';
+        lbl.style.top  = labelY - 5 + 'px';
+        if (sideOffset < 0) lbl.style.transform = 'translateX(-100%)';
+      } else {
+        // Mostly horizontal — place label above the elbow's first bend
+        lbl.style.left      = midX + 'px';
+        lbl.style.top       = (from.cy - 14) + 'px';
+        lbl.style.transform = 'translateX(-50%)';
+      }
       root.appendChild(lbl);
     }
   });
@@ -735,7 +791,6 @@ function buildMindMap() {
       state[node.id] = { correct: false, attempts: 0, mastered: false, value: '' };
     }
     createNodeElement(node);
-    if (node.icon) createIconHint(node);
   });
 }
 
@@ -778,11 +833,28 @@ function createNodeElement(node) {
     dz.id = 'dz-' + node.id;
     dz.style.cssText = `left:${node.x}px;top:${node.y}px;width:${node.w}px;height:${node.h}px;`;
     dz.setAttribute('data-node', node.id);
+
+    // Icon inside the box on the left — hidden on level 2/3, removed on correct
+    if (node.icon && !s.correct) {
+      const iconEl = document.createElement('span');
+      iconEl.className = 'dz-icon';
+      iconEl.id = 'icon-' + node.id;
+      iconEl.textContent = node.icon;
+      iconEl.style.display = (currentLevel === 1) ? '' : 'none';
+      dz.appendChild(iconEl);
+    }
+
+    // Text span for the answer label
+    const textEl = document.createElement('span');
+    textEl.className = 'dz-text';
+    dz.appendChild(textEl);
+
     if (s.correct) {
-      dz.textContent = node.answer;
+      textEl.textContent = node.answer;
       dz.classList.remove('awaiting');
       dz.classList.add('correct-dd');
     }
+
     // Drag events
     dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); });
     dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
@@ -791,17 +863,6 @@ function createNodeElement(node) {
   }
 }
 
-function createIconHint(node) {
-  const root = document.getElementById('mm-root');
-  const el = document.createElement('div');
-  el.className = 'hint-icon';
-  el.id = 'icon-' + node.id;
-  el.textContent = node.icon;
-  el.style.left = (node.iconX || node.x + node.w + 4) + 'px';
-  el.style.top  = (node.iconY || node.y + node.h / 2 - 10) + 'px';
-  el.style.display = (currentLevel === 1) ? 'block' : 'none';
-  root.appendChild(el);
-}
 
 // ═══════════════════════════════════════════════
 //  WORD BANK
@@ -849,7 +910,7 @@ function bankDrop(e) {
     // Came from a drop zone — clear that zone and return tile to bank
     state[node.id].value = '';
     const dz = document.getElementById('dz-' + node.id);
-    if (dz) { dz.textContent = ''; dz.classList.add('awaiting'); }
+    if (dz) { const t = dz.querySelector('.dz-text'); if (t) t.textContent = ''; dz.classList.add('awaiting'); }
     createTile(val, document.getElementById('word-bank'));
   }
   // If tile came from the bank itself, do nothing — dragend handles visual cleanup
@@ -858,6 +919,15 @@ function bankDrop(e) {
 // ═══════════════════════════════════════════════
 //  DROP HANDLING
 // ═══════════════════════════════════════════════
+
+// Returns the node that directly owns val (by answer or alias), ignoring swapGroup.
+function findMatchingNode(val) {
+  const n = normalise(val);
+  return NODES.find(node =>
+    n === normalise(node.answer) ||
+    (node.aliases && node.aliases.some(a => n === normalise(a)))
+  );
+}
 
 function handleDrop(e, nodeId) {
   const val = e.dataTransfer.getData('text/plain');
@@ -868,21 +938,45 @@ function handleDrop(e, nodeId) {
   // Remove tile from bank
   removeTileFromBank(val);
 
-  // If something was already placed here, return it
+  // If something was already placed in the target zone, return it to bank
   if (s.value && !s.correct) {
     createTile(s.value, document.getElementById('word-bank'));
   }
 
-  s.value = val;
-  s.attempts++;
-
-  const dz = document.getElementById('dz-' + nodeId);
-  dz.textContent = val;
-
   const isCorrect = isAnswerAccepted(val, node);
   if (isCorrect) {
-    markCorrect(nodeId, 'dd');
+    // Route the correct mark to the node that actually owns this answer.
+    // For swapGroup hits the dragged tile may belong to a different box than
+    // the one it was dropped onto — that box should light up, not the target.
+    const matchNode = findMatchingNode(val) || node;
+    const ms = state[matchNode.id];
+    ms.value = val;
+    ms.attempts++;
+
+    const matchDz = document.getElementById('dz-' + matchNode.id);
+
+    // In level 3, re-promote to typed input instead of marking correct immediately
+    if (currentLevel === 3) {
+      if (matchDz) { const t = matchDz.querySelector('.dz-text'); if (t) t.textContent = val; matchDz.classList.remove('awaiting'); matchDz.classList.add('correct-dd'); }
+      showToast('✓ That\'s right! Now type it from memory.', 'info');
+      setTimeout(() => {
+        ms.mastered = true;
+        ms.value = '';
+        buildMindMap();
+        totalMastered = NODES.filter(n => state[n.id] && state[n.id].mastered).length;
+        updateStageText();
+        saveState();
+      }, 1000);
+    } else {
+      markCorrect(matchNode.id, 'dd');
+    }
   } else {
+    s.value = val;
+    s.attempts++;
+
+    const dz = document.getElementById('dz-' + nodeId);
+    const dzText = dz.querySelector('.dz-text');
+    if (dzText) dzText.textContent = val;
     firstAttemptAllCorrect = false;
     streak = 0;
     s.attempts++;
@@ -891,7 +985,7 @@ function handleDrop(e, nodeId) {
     setTimeout(() => {
       dz.classList.remove('wrong-dd');
       dz.classList.add('awaiting');
-      dz.textContent = '';
+      if (dzText) dzText.textContent = '';
       // return tile
       createTile(val, document.getElementById('word-bank'));
       s.value = '';
@@ -950,7 +1044,11 @@ function markCorrect(nodeId, mode) {
     const dz = document.getElementById('dz-' + nodeId);
     dz.classList.remove('awaiting','wrong-dd');
     dz.classList.add('correct-dd');
-    dz.textContent = node.answer;
+    // Remove the icon — no longer needed once answer is known
+    const icon = dz.querySelector('.dz-icon');
+    if (icon) icon.remove();
+    const dzText = dz.querySelector('.dz-text');
+    if (dzText) dzText.textContent = node.answer;
   } else {
     const inp = document.getElementById('inp-' + nodeId);
     if (inp) { inp.classList.add('correct-fi'); inp.disabled = true; }
@@ -1013,6 +1111,7 @@ function checkGraduation() {
 function demoteNode(nodeId) {
   const s = state[nodeId];
   if (s.correct) return; // can't demote already-correct
+  if (currentLevel === 3) l3DemoteUsed = true;
   s.mastered = false;
   s.value = '';
   // Rebuild just this node's element
@@ -1061,7 +1160,7 @@ function calcAndSubmitGrade() {
   const l3  = level3Score;
   Classroom.submitGrade(
     pct,
-    `OS Mind Map — L1: ${bankedL1}/${TOTAL}, L2: ${bankedL2}/${TOTAL}, L3: ${l3}/${TOTAL} — Score: ${pct}/100`
+    `OS Mind Map — L1: ${bankedL1}/${TOTAL}, L2: ${bankedL2}/${TOTAL}, L3: ${l3}/${TOTAL}${l3DemoteUsed ? ' (demote used)' : ' (no demote)'} — Score: ${pct}/100`
   );
   return pct;
 }
@@ -1106,8 +1205,8 @@ function resetActivity() {
   if (currentLevel === 3) level3Score = 0;
   document.body.classList.remove('all-correct','perfect');
   buildMindMap();
-  document.querySelectorAll('.hint-icon').forEach(el => {
-    el.style.display = (currentLevel === 1) ? 'block' : 'none';
+  document.querySelectorAll('.dz-icon').forEach(el => {
+    el.style.display = (currentLevel === 1) ? '' : 'none';
   });
   buildWordBank();
   updateScoreboard();
@@ -1127,7 +1226,11 @@ function revealAll() {
       state[node.id].correct = true;
       state[node.id].value = node.answer;
       const dz = document.getElementById('dz-' + node.id);
-      if (dz) { dz.textContent = node.answer; dz.classList.remove('awaiting'); dz.classList.add('filled'); }
+      if (dz) {
+        const icon = dz.querySelector('.dz-icon'); if (icon) icon.remove();
+        const t = dz.querySelector('.dz-text'); if (t) t.textContent = node.answer;
+        dz.classList.remove('awaiting'); dz.classList.add('filled');
+      }
       const inp = document.getElementById('inp-' + node.id);
       if (inp) { inp.value = node.answer; inp.classList.add('correct-fi'); inp.disabled = true; }
     }
@@ -1174,7 +1277,7 @@ function setLevel(level) {
   streak = 0;
   totalCorrect = 0;
   firstAttemptAllCorrect = true;
-  if (level === 3) level3Score = 0;
+  if (level === 3) { level3Score = 0; l3DemoteUsed = false; }
 
   // Update button active states
   [1,2,3].forEach(l => {
@@ -1183,8 +1286,8 @@ function setLevel(level) {
 
   buildMindMap();
   // Icons: visible only at level 1
-  document.querySelectorAll('.hint-icon').forEach(el => {
-    el.style.display = (level === 1) ? 'block' : 'none';
+  document.querySelectorAll('.dz-icon').forEach(el => {
+    el.style.display = (level === 1) ? '' : 'none';
   });
   buildWordBank();
   updateScoreboard();
@@ -1207,11 +1310,12 @@ function updateProgress() {
 }
 
 function calcScore() {
-  // Level contributions: L1 = up to 20pts, L2 = up to 30pts, L3 = up to 50pts
+  // Level contributions: L1 = up to 20pts, L2 = up to 30pts, L3 = up to 50pts (40 if demote used)
   const l1 = (currentLevel === 1) ? totalCorrect : bankedL1;
   const l2 = (currentLevel === 2) ? totalCorrect : bankedL2;
   const l3 = level3Score;
-  return Math.round(l1 / TOTAL * 20 + l2 / TOTAL * 30 + l3 / TOTAL * 50);
+  const l3Max = l3DemoteUsed ? 40 : 50;
+  return Math.round(l1 / TOTAL * 20 + l2 / TOTAL * 30 + l3 / TOTAL * l3Max);
 }
 
 function updateScoreboard() {
@@ -1226,10 +1330,14 @@ function updateScoreboard() {
 // ═══════════════════════════════════════════════
 
 function celebrate() {
-  if (firstAttemptAllCorrect) {
+  if (firstAttemptAllCorrect && !l3DemoteUsed) {
     document.body.classList.add('perfect');
-    showToast('🏆 Perfect — all correct first time!', 'success');
+    showToast('🏆 Perfect — all correct, no hints needed!', 'success');
     launchConfetti();
+  } else if (l3DemoteUsed) {
+    document.body.classList.add('all-correct');
+    showToast('✅ All correct! Try without the ↩ button next time for full marks.', 'success');
+    launchConfetti(false);
   } else {
     document.body.classList.add('all-correct');
     showToast('✅ All correct! Great work.', 'success');
@@ -1324,9 +1432,16 @@ function normalise(str) {
 
 function isAnswerAccepted(val, node) {
   const n = normalise(val);
+  // Check this node's own answer and aliases
   if (n === normalise(node.answer)) return true;
-  if (node.aliases) {
-    return node.aliases.some(a => n === normalise(a));
+  if (node.aliases && node.aliases.some(a => n === normalise(a))) return true;
+  // Check other nodes in the same swapGroup (interchangeable answers)
+  if (node.swapGroup) {
+    return NODES.some(other =>
+      other.id !== node.id &&
+      other.swapGroup === node.swapGroup &&
+      (n === normalise(other.answer) || (other.aliases && other.aliases.some(a => n === normalise(a))))
+    );
   }
   return false;
 }
