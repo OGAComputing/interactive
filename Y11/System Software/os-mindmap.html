@@ -522,6 +522,33 @@ color:  purple
 
   /* Connector labels */
   .conn-label { color: #94a3b8; }
+
+  /* ── LEVEL 3 TIMER ── */
+  .l3-timer-badge {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+  #timer-display {
+    font-family: var(--font-head);
+    font-size: 2rem;
+    font-weight: 900;
+    color: var(--orange);
+    letter-spacing: 0.05em;
+    transition: color 0.4s;
+    font-variant-numeric: tabular-nums;
+  }
+  #timer-display.running { animation: timerPulse 1s ease-in-out infinite; }
+  #timer-display.done-best { color: var(--correct); animation: none; }
+  #timer-display.done-ok   { color: var(--purple-light); animation: none; }
+  #timer-best { font-size: 1.2rem; }
+  .timer-msg { flex: 1; color: var(--muted); font-size: 0.82rem; font-style: italic; min-width: 140px; }
+  @keyframes timerPulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.6; }
+  }
+  .score-badge { background: #1e2f45; border-color: #243b55; }
 </style>
 </head>
 <body data-year="11" data-topic="System_Software">
@@ -562,6 +589,24 @@ color:  purple
     <div class="score-item"><span class="score-num" id="sc-total">21</span><span class="score-label">Total</span></div>
     <div class="score-item"><span class="score-num" id="sc-streak">0</span><span class="score-label">Streak</span></div>
     <div class="score-item purple" title="L1 = up to 20pts · L2 = up to 30pts · L3 = up to 50pts (40 if demote used)"><span class="score-num" id="sc-score">0</span><span class="score-label">Score / 100</span></div>
+  </div>
+</div>
+
+<!-- Level 3 Timer (hidden on L1/L2) -->
+<div id="l3-timer-wrap" style="display:none; padding: 0 24px; margin-bottom: 6px;">
+  <div class="score-badge l3-timer-badge">
+    <div class="score-item" style="flex-direction:row;gap:10px;align-items:center;">
+      <span style="font-size:1.3rem;line-height:1;">⏱️</span>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
+        <span id="timer-display" class="running">0:00</span>
+        <span class="score-label">current time</span>
+      </div>
+    </div>
+    <div class="score-item">
+      <span class="score-num timer-best-num" id="timer-best">—</span>
+      <span class="score-label">🏅 best time</span>
+    </div>
+    <div class="timer-msg" id="timer-msg">How fast can you complete the whole mind map from memory?</div>
   </div>
 </div>
 
@@ -1062,21 +1107,34 @@ function markCorrect(nodeId, mode) {
   saveState();
 
   if (totalCorrect === TOTAL) {
-    // Unlock the next level if appropriate
+    calcAndSubmitGrade();
     if (currentLevel === 1 && levelsUnlocked < 2) {
       levelsUnlocked = 2;
       updateLevelButtons();
-      showToast('🎉 Level 1 complete! Level 2 unlocked — no icons now.', 'success');
+      saveState();
+      setTimeout(() => celebrate(), 400);
+      setTimeout(() => setLevel(2), 3200);
     } else if (currentLevel === 2 && levelsUnlocked < 3) {
       levelsUnlocked = 3;
       updateLevelButtons();
-      showToast('🎉 Level 2 complete! Level 3 unlocked — type from memory.', 'success');
-    }
-    if (currentLevel === 3) {
-      calcAndSubmitGrade();
+      saveState();
       setTimeout(() => celebrate(), 400);
+      setTimeout(() => setLevel(3), 3200);
     } else {
-      setTimeout(() => celebrate(), 400);
+      if (currentLevel === 3 && timerInterval !== null) {
+        const { elapsed, isNewBest } = stopL3Timer();
+        setTimeout(() => celebrate(), 400);
+        setTimeout(() => {
+          showToast(
+            isNewBest
+              ? `🏅 New best: ${fmtTime(elapsed)}! Hit Reset and try to beat it!`
+              : `⏱️ ${fmtTime(elapsed)} — best is ${fmtTime(l3BestTime)}. Can you beat it?`,
+            isNewBest ? 'success' : 'info'
+          );
+        }, 2800);
+      } else {
+        setTimeout(() => celebrate(), 400);
+      }
     }
   } else {
     const msgs = ['✓ Correct!','✓ Nice one!','✓ That\'s right!','✓ Well done!'];
@@ -1111,7 +1169,7 @@ function checkGraduation() {
 function demoteNode(nodeId) {
   const s = state[nodeId];
   if (s.correct) return; // can't demote already-correct
-  if (currentLevel === 3) l3DemoteUsed = true;
+  if (currentLevel === 3) { l3DemoteUsed = true; applyDemotePenalty(); }
   s.mastered = false;
   s.value = '';
   // Rebuild just this node's element
@@ -1202,7 +1260,7 @@ function resetActivity() {
   streak = 0;
   totalCorrect = 0;
   firstAttemptAllCorrect = true;
-  if (currentLevel === 3) level3Score = 0;
+  if (currentLevel === 3) { level3Score = 0; startL3Timer(); }
   document.body.classList.remove('all-correct','perfect');
   buildMindMap();
   document.querySelectorAll('.dz-icon').forEach(el => {
@@ -1294,6 +1352,8 @@ function setLevel(level) {
   updateProgress();
   updateStageText();
   saveState();
+
+  if (level === 3) { showL3Timer(); startL3Timer(); } else { hideL3Timer(); }
 
   const msgs = { 1: '🖼️ Level 1 — icons visible to help you.', 2: '🧩 Level 2 — icons hidden, recall from layout!', 3: '🧠 Level 3 — type all answers from memory!' };
   showToast(msgs[level], 'info');
@@ -1419,6 +1479,8 @@ function loadState() {
     if (savedLevel) levelsUnlocked = Math.max(1, parseInt(savedLevel) || 1);
     const savedBanked = localStorage.getItem('os-mindmap-banked-v1');
     if (savedBanked) { const b = JSON.parse(savedBanked); bankedL1 = b.bankedL1 || 0; bankedL2 = b.bankedL2 || 0; }
+    const savedBest = localStorage.getItem('os-mindmap-l3-best');
+    if (savedBest) l3BestTime = parseInt(savedBest) || null;
   } catch(e) {}
 }
 
@@ -1452,6 +1514,82 @@ function shuffle(arr) {
     [arr[i], arr[j]] = [arr[j], arr[i]];
   }
   return arr;
+}
+
+// ═══════════════════════════════════════════════
+//  LEVEL 3 TIMER
+// ═══════════════════════════════════════════════
+
+let timerInterval = null;
+let timerSeconds  = 0;
+let l3BestTime    = null; // seconds, null = never completed
+
+function fmtTime(s) {
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+}
+
+const DEMOTE_PENALTY = 30; // seconds added per demote
+
+function applyDemotePenalty() {
+  if (timerInterval === null) return; // timer not running (L3 not active)
+  timerSeconds += DEMOTE_PENALTY;
+  const el = document.getElementById('timer-display');
+  if (el) {
+    el.textContent = fmtTime(timerSeconds);
+    el.style.transition = 'color 0.1s';
+    el.style.color = '#ef4444';
+    setTimeout(() => { el.style.color = ''; el.style.transition = ''; }, 800);
+  }
+  showToast(`⏱️ +${DEMOTE_PENALTY}s penalty for using a hint!`, 'error');
+}
+
+function startL3Timer() {
+  clearInterval(timerInterval);
+  timerSeconds = 0;
+  const el = document.getElementById('timer-display');
+  el.textContent = '0:00';
+  el.className = 'running';
+  timerInterval = setInterval(() => {
+    timerSeconds++;
+    document.getElementById('timer-display').textContent = fmtTime(timerSeconds);
+  }, 1000);
+}
+
+function stopL3Timer() {
+  clearInterval(timerInterval);
+  timerInterval = null;
+  const isNewBest = l3BestTime === null || timerSeconds < l3BestTime;
+  if (isNewBest) {
+    l3BestTime = timerSeconds;
+    try { localStorage.setItem('os-mindmap-l3-best', l3BestTime); } catch(e) {}
+    updateTimerBestDisplay();
+  }
+  const el = document.getElementById('timer-display');
+  el.className = isNewBest ? 'done-best' : 'done-ok';
+  updateTimerBestDisplay();
+  return { elapsed: timerSeconds, isNewBest };
+}
+
+function updateTimerBestDisplay() {
+  const bestEl = document.getElementById('timer-best');
+  const msgEl  = document.getElementById('timer-msg');
+  if (bestEl) bestEl.textContent = l3BestTime !== null ? fmtTime(l3BestTime) : '—';
+  if (msgEl) {
+    msgEl.textContent = l3BestTime !== null
+      ? `Reset and see if you can beat your best time!`
+      : `How fast can you complete the whole mind map from memory?`;
+  }
+}
+
+function showL3Timer() {
+  document.getElementById('l3-timer-wrap').style.display = '';
+  updateTimerBestDisplay();
+}
+
+function hideL3Timer() {
+  document.getElementById('l3-timer-wrap').style.display = 'none';
+  clearInterval(timerInterval);
+  timerInterval = null;
 }
 
 // ═══════════════════════════════════════════════
