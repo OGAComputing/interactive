@@ -279,9 +279,12 @@ color:  purple
     <div class="line"><span class="line-num">8</span><span>turtle.<span class="fn">done</span>()</span></div>
   </div>
 
-  <div class="q-card">
-    <label><span class="q-num">1</span> Describe what appeared on screen. What did the turtle draw?</label>
-    <textarea id="r1" placeholder="Describe the shape or drawing…" oninput="saveState()"></textarea>
+  <div class="q-card" id="qcard_r1">
+    <label><span class="q-num">1</span> What shape did the turtle draw?</label>
+    <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;margin-top:0.5rem">
+      <span style="color:var(--text);font-size:0.9rem">The turtle drew a</span>
+      <input type="text" id="r1" placeholder="shape name…" style="width:160px" oninput="saveState()">
+    </div>
   </div>
 
   <div class="q-card">
@@ -332,8 +335,11 @@ color:  purple
     <label><span class="q-num" style="background:var(--stage-i)">2</span> Change to <code style="background:#ede0ff;padding:0 3px;border-radius:3px">range(3)</code> and <code style="background:#ede0ff;padding:0 3px;border-radius:3px">90</code> to <code style="background:#ede0ff;padding:0 3px;border-radius:3px">120</code></label>
     <div style="font-size:0.78rem;color:var(--muted);margin-bottom:0.3rem">What did you expect?</div>
     <textarea id="i2a" placeholder="I expected…" rows="2" oninput="saveState()"></textarea>
-    <div style="font-size:0.78rem;color:var(--muted);margin:0.5rem 0 0.3rem">What actually happened?</div>
-    <textarea id="i2b" placeholder="What actually happened…" rows="2" oninput="saveState()"></textarea>
+    <div style="font-size:0.78rem;color:var(--muted);margin:0.5rem 0 0.3rem">What shape did it draw?</div>
+    <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap">
+      <span style="color:var(--text);font-size:0.9rem">It drew a</span>
+      <input type="text" id="i2b" placeholder="shape name…" style="width:160px" oninput="saveState()">
+    </div>
   </div>
 
   <div class="q-card" style="border-left-color:var(--stage-i)">
@@ -711,20 +717,37 @@ function clearError(cardId) {
 // ═══════════════════════════════════════════════════════
 //  RUN GATING
 // ═══════════════════════════════════════════════════════
+function simpleValidate(v) {
+  if (v.length < 5) return 'Please describe what happened.';
+  if (isObviousNonsense(v)) return 'This doesn\'t look like a real answer — try again.';
+  return null;
+}
+
 function tryCompleteRun() {
-  const fieldIds = ['r1', 'r3'];
+  const fields = [
+    { id:'r1', validate(v) {
+      if (v.length < 2) return 'Write the name of the shape you saw.';
+      const lower = v.toLowerCase();
+      if (/square|4[\s-]?sid|four[\s-]?sid/.test(lower)) return null;
+      if (/triangle/.test(lower)) return 'Not quite — this loop runs 4 times with 90° turns. How many sides does that make?';
+      if (/circle|oval/.test(lower)) return 'Turtle draws straight lines, not curves — count the straight sides: range(4) means 4 lines, each turning 90°.';
+      if (isObviousNonsense(v)) return 'That doesn\'t look like a shape name — try again.';
+      return 'Think about the shape name — 4 equal sides and 4 right-angle corners. What is that shape called?';
+    }},
+    { id:'r3', validate(v) {
+      if (v.length < 3) return 'Write the values of i and how many times the loop ran.';
+      if (isObviousNonsense(v)) return 'Include the numbers that i counted through.';
+      if (!/\d/.test(v)) return 'Include the actual numbers — i starts at 0. Write something like: i = 0, 1, 2, 3';
+      return null;
+    }},
+  ];
   let allOk = true;
-  fieldIds.forEach(id => {
-    const el   = document.getElementById(id);
+  fields.forEach(f => {
+    const el   = document.getElementById(f.id);
     const val  = (el?.value || '').trim();
     const card = el?.closest('.q-card');
     if (!card) return;
-    let msg = null;
-    if (val.length < 5) {
-      msg = 'Please describe what you observed.';
-    } else if (isObviousNonsense(val)) {
-      msg = 'This doesn\'t look like a real answer — try again.';
-    }
+    const msg = f.validate(val);
     if (msg) {
       card.classList.add('error');
       fieldHint(card, msg);
@@ -746,19 +769,44 @@ function tryCompleteRun() {
 //  INVESTIGATE GATING
 // ═══════════════════════════════════════════════════════
 function tryCompleteInvestigate() {
-  const fieldIds = ['i1a','i1b','i2a','i2b','i3','i4'];
+  const fields = [
+    { id:'i1a', validate: simpleValidate },
+    { id:'i1b', validate(v) {
+      const base = simpleValidate(v); if (base) return base;
+      const lower = v.toLowerCase();
+      if (/more|bigger|8|eight|longer|octagon|extra|sides|times|repeat/.test(lower)) return null;
+      return 'Think about what changed — range(8) runs the loop more times than range(4). What did that do to the number of sides?';
+    }},
+    { id:'i2a', validate: simpleValidate },
+    { id:'i2b', validate(v) {
+      if (v.length < 2) return 'Write the name of the shape.';
+      const lower = v.toLowerCase();
+      if (/triangle|3[\s-]?sid|three[\s-]?sid/.test(lower)) return null;
+      if (/square|hexagon|pentagon|octagon/.test(lower)) return 'Not quite — range(3) means 3 sides. A shape with 3 sides is called a…?';
+      if (/circle|oval/.test(lower)) return 'Turtle draws straight lines. Range(3) means 3 straight sides — what shape has exactly 3 sides?';
+      if (isObviousNonsense(v)) return 'That doesn\'t look like a shape name — try again.';
+      return 'Range(3) means the loop runs 3 times, making 3 sides. What shape has exactly 3 sides?';
+    }},
+    { id:'i3', validate(v) {
+      const base = simpleValidate(v); if (base) return base;
+      const lower = v.toLowerCase();
+      if (/grow|bigger|longer|spiral|larger|increas|different|uneven|each|chang|not equal/.test(lower)) return null;
+      return 'Think about what i * 20 means — i changes each loop (0, 1, 2, 3…). Does the line length stay the same or get longer each time?';
+    }},
+    { id:'i4', validate(v) {
+      const base = simpleValidate(v); if (base) return base;
+      const lower = v.toLowerCase();
+      if (/red|colour|color/.test(lower)) return null;
+      return 'Describe what you saw — what colour was the line that the turtle drew?';
+    }},
+  ];
   let allOk = true;
-  fieldIds.forEach(id => {
-    const el   = document.getElementById(id);
+  fields.forEach(f => {
+    const el   = document.getElementById(f.id);
     const val  = (el?.value || '').trim();
     const card = el?.closest('.q-card');
     if (!card) return;
-    let msg = null;
-    if (val.length < 5) {
-      msg = 'Please describe what happened when you ran the code.';
-    } else if (isObviousNonsense(val)) {
-      msg = 'This doesn\'t look like a real answer — try again.';
-    }
+    const msg = f.validate(val);
     if (msg) {
       card.classList.add('error');
       fieldHint(card, msg);
