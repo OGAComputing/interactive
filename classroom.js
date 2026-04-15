@@ -152,6 +152,15 @@
       #cr-modal-save:hover { background: #2563eb; }
       #cr-modal-skip   { background: #374151; color: #d1d5db; }
       #cr-modal-skip:hover { background: #4b5563; }
+      #cr-drive-search-btn {
+        display: block; width: 100%;
+        padding: 8px 14px; border: 1px solid #334155; border-radius: 6px;
+        background: #0f172a; color: #94a3b8; font-size: 0.82rem;
+        cursor: pointer; margin-bottom: 10px; text-align: left;
+        transition: background 0.15s, color 0.15s;
+      }
+      #cr-drive-search-btn:hover { background: #1e293b; color: #e2e8f0; }
+      #cr-drive-search-btn:disabled { opacity: 0.5; cursor: not-allowed; }
     `;
     document.head.appendChild(style);
 
@@ -209,7 +218,8 @@
           <a href="../../_teacher/setup.html" target="_blank">Open setup page →</a>
           &nbsp;(opens in a new tab — refresh this page when done)
         </p>
-        <p>Already set up? Paste your proxy URL below:</p>
+        <p>Already set up on another device? Search your Drive or paste the URL below:</p>
+        <button id="cr-drive-search-btn" onclick="window._classroomSearchDriveForProxy()">🔍 Search my Drive for proxy script</button>
         <input id="cr-proxy-input" type="url" placeholder="https://script.google.com/macros/s/…/exec">
         <div id="cr-modal-actions">
           <button id="cr-modal-skip" onclick="window._classroomModalSkip()">Skip for now</button>
@@ -278,6 +288,57 @@
     setBannerTeacher(true);
     showClassroomToast('Proxy URL saved ✅');
     checkProxyVersion();
+  };
+
+  window._classroomSearchDriveForProxy = function () {
+    const btn = document.getElementById('cr-drive-search-btn');
+    if (btn) { btn.textContent = '🔍 Searching…'; btn.disabled = true; }
+
+    const driveClient = google.accounts.oauth2.initTokenClient({
+      client_id: CLIENT_ID,
+      scope: 'https://www.googleapis.com/auth/drive.metadata.readonly https://www.googleapis.com/auth/script.deployments',
+      callback: async (resp) => {
+        if (btn) { btn.textContent = '🔍 Search my Drive for proxy script'; btn.disabled = false; }
+        if (resp.error) { showClassroomToast('⚠️ Drive search cancelled.'); return; }
+        try {
+          const searchRes = await fetch(
+            'https://www.googleapis.com/drive/v3/files?' + new URLSearchParams({
+              q: "mimeType='application/vnd.google-apps.script' and name='OGA Classroom Grade Proxy' and trashed=false",
+              fields: 'files(id,name)',
+              pageSize: 5
+            }),
+            { headers: { Authorization: `Bearer ${resp.access_token}` } }
+          );
+          const { files } = await searchRes.json();
+          if (!files || files.length === 0) {
+            showClassroomToast('⚠️ No proxy script found in Drive.');
+            return;
+          }
+          const depRes = await fetch(
+            `https://script.googleapis.com/v1/projects/${files[0].id}/deployments`,
+            { headers: { Authorization: `Bearer ${resp.access_token}` } }
+          );
+          const depData = await depRes.json();
+          const webAppDep = (depData.deployments || []).find(d =>
+            (d.entryPoints || []).some(ep => ep.entryPointType === 'WEB_APP')
+          );
+          const ep = webAppDep?.entryPoints?.find(ep => ep.entryPointType === 'WEB_APP');
+          const url = ep?.webApp?.url;
+          if (url) {
+            const input = document.getElementById('cr-proxy-input');
+            if (input) input.value = url;
+            if (btn) btn.textContent = '✅ Found — click Save & use';
+            showClassroomToast('Proxy URL found — click Save & use ✅');
+          } else {
+            showClassroomToast('⚠️ Proxy script found but not deployed.');
+          }
+        } catch (e) {
+          console.error('Classroom: Drive proxy search failed', e);
+          showClassroomToast('⚠️ Drive search failed — see console.');
+        }
+      }
+    });
+    driveClient.requestAccessToken();
   };
 
   window._classroomCopyLink = function () {
