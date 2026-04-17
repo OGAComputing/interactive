@@ -1394,6 +1394,7 @@ function onDrop(e, zone) {
 }
 
 function checkLanWan() {
+  if (!window.Classroom?.verifyAuth()) return;
   const all = LAN_WAN_STATEMENTS.every(s => state.lanWanPlacements[s.id]);
   if (!all) {
     showFeedback('fb-lanwan','Please place all statements before checking.','incorrect');
@@ -1453,6 +1454,7 @@ function buildDefs() {
 }
 
 function checkDefs() {
+  if (!window.Classroom?.verifyAuth()) return;
   let allCorrect = true;
   Object.entries(DEF_ANSWERS).forEach(([id, accepted]) => {
     const el = document.getElementById(id);
@@ -1507,6 +1509,7 @@ function updateTabDone() {
     }
   }
   updateTabIndicators();
+  if (t0) checkAllTabsDone();
 }
 
 // ════════════════════════════════════════════
@@ -1650,6 +1653,7 @@ document.getElementById('hw-pool').addEventListener('drop', e => {
 });
 
 function checkHW() {
+  if (!window.Classroom?.verifyAuth()) return;
   const allPlaced = HW_ITEMS.every(item => state.hwPlacements[item.id]);
   if (!allPlaced) {
     showFeedback('fb-hw','Please match all hardware items before checking.','incorrect');
@@ -1678,6 +1682,7 @@ function checkHW() {
     b.textContent=`✓ ${score}/${HW_ITEMS.length} correct — well done!`;
   }
   updateTabIndicators();
+  checkAllTabsDone();
   saveState();
 }
 
@@ -1786,6 +1791,7 @@ function buildTF() {
 }
 
 function checkAllTF() {
+  if (!window.Classroom?.verifyAuth()) return;
   const answered = TF_DATA.every(item => state.tfAnswers[item.id]);
   if (!answered) {
     showFeedback('fb-tf','Please answer all statements before checking.','incorrect');
@@ -1823,6 +1829,7 @@ function checkAllTF() {
   }
 
   updateTabIndicators();
+  checkAllTabsDone();
   saveState();
 }
 
@@ -2051,6 +2058,7 @@ function extPickDevice(d) {
 }
 
 function checkExtQ1() {
+  if (!window.Classroom?.verifyAuth()) return;
   if (!state.extQ1.devicePicked) {
     showFeedback('fb-ext-q1','Please pick a device first.','incorrect'); return;
   }
@@ -2230,6 +2238,7 @@ function checkExtTabDone() {
       }
     }
     updateTabIndicators();
+    checkAllTabsDone();
   }
 }
 
@@ -2307,6 +2316,12 @@ document.addEventListener('DOMContentLoaded', () => {
     else { b.className='completion-banner green-banner'; b.textContent='✓ Task complete!'; }
   }
 });
+function checkAllTabsDone() {
+  if (!state.tabDone.every(Boolean)) return;
+  const allGold = state.tabGold.every(Boolean);
+  window.Classroom?.submitGrade(allGold ? 100 : 80, 'Network Hardware');
+}
 </script>
+<script src="../../../classroom.js"></script>
 </body>
 </html>
