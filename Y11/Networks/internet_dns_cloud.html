@@ -421,8 +421,9 @@ function markDone(idx, type) {
   const btn = document.querySelector('.tab-btn[data-idx="' + idx + '"]');
   if (btn) { btn.classList.remove('done-green', 'done-gold'); btn.classList.add('done-' + type); }
   updateProgress();
-  const done = completed.filter(Boolean).length;
-  const pct  = Math.round(done / TASK_COUNT * 100);
+  const done     = completed.filter(Boolean).length;
+  const mastered = completed.filter((c, i) => c && firstAttempt[i]).length;
+  const pct      = Math.round((done / TASK_COUNT * 80) + (mastered / TASK_COUNT * 20));
   window.Classroom?.submitGrade(pct, 'The Internet, DNS & the Cloud');
   if (completed.every(Boolean)) allDone();
 }
@@ -929,7 +930,6 @@ function checkCloud() {
     if (firstAttempt[4]) firstAttempt[4] = false;
     fb.textContent = '❌ ' + got + ' / ' + total + ' correct — incorrect answers shown in red with explanations.';
     fb.className = 'feedback wrong';
-    markDone(4, 'green');
   }
 }
 
@@ -1022,7 +1022,6 @@ function checkBlanks() {
     if (firstAttempt[5]) firstAttempt[5] = false;
     fb.textContent = '❌ ' + blanksRight + '/' + selects.length + ' blanks correct, MCQ ' + (mcRight ? '✓' : '✗') + '. Incorrect selections are highlighted in red.';
     fb.className = 'feedback wrong';
-    markDone(5, 'green');
   }
 }
 
