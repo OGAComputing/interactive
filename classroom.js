@@ -169,7 +169,7 @@
     banner.innerHTML = `
       <div id="classroom-banner-msg">
         <span id="classroom-dot"></span>
-        <span id="classroom-text">⚠️ This activity is linked to Google Classroom — sign in to record your results.</span>
+        <span id="classroom-text">⚠️ This activity is linked to Google Classroom — sign in to record your results. <strong style="color:#fbbf24;">On the next screen, make sure all permission boxes are ticked.</strong></span>
       </div>
       <div id="classroom-banner-actions">
         <button id="classroom-copy-btn" onclick="window._classroomCopyLink()">Copy assignment link</button>
@@ -508,6 +508,24 @@
           console.error('Classroom OAuth error:', tokenResponse);
           return;
         }
+
+        // Verify all required scopes were actually granted.
+        // Users can uncheck permissions on the consent screen, so we must confirm
+        // the returned scope list contains everything we asked for.
+        const grantedScopes = (tokenResponse.scope || '').split(' ');
+        const missingScopes = SCOPE.split(' ').filter(s => s && !grantedScopes.includes(s));
+        if (missingScopes.length > 0) {
+          console.warn('Classroom: missing scopes after sign-in:', missingScopes);
+          const dot  = document.getElementById('classroom-dot');
+          const text = document.getElementById('classroom-text');
+          if (dot)  dot.style.cssText = 'background:#ef4444;box-shadow:0 0 8px #ef4444';
+          if (text) text.textContent = '⚠️ Some permissions were not granted — please sign in again and allow all access.';
+          showClassroomToast('⚠️ Please grant all permissions and sign in again.');
+          // Re-prompt with consent screen so the user can tick all checkboxes.
+          setTimeout(() => tokenClient.requestAccessToken({ prompt: 'consent' }), 1500);
+          return;
+        }
+
         accessToken = tokenResponse.access_token;
         courseWorkId = await lookupCourseWorkId(accessToken, courseId);
         if (!courseWorkId) {

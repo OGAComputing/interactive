@@ -5,7 +5,7 @@
 title:  The Internet, DNS & the Cloud
 type:   Practice
 stars:  3
-desc:   Six tasks covering the Internet as a network of networks, DNS lookup, web servers, client-server model, and cloud computing — including a peer-marking challenge.
+desc:   Seven tasks covering the Internet as a network of networks, DNS lookup, web servers, client-server model, cloud computing, and cloud storage advantages/disadvantages — including a peer-marking challenge.
 color:  blue
 -->
 <meta charset="UTF-8">
@@ -107,9 +107,13 @@ color:  blue
   .zone-file  .zone-header { background: rgba(134,239,172,.12); color: #86efac; }
   .zone-mail  .zone-header { background: rgba(216,180,254,.12); color: #d8b4fe; }
   .zone-cloud .zone-header { background: rgba(253,230,138,.12); color: #fde68a; }
+  .zone-adv   .zone-header { background: rgba(134,239,172,.12); color: #86efac; }
+  .zone-dis   .zone-header { background: rgba(252,165,165,.12); color: #fca5a5; }
   .zone-drop  { min-height: 80px; padding: 8px; display: flex; flex-wrap: wrap; gap: 6px; align-content: flex-start; }
   .chip-placed { padding: 5px 11px; border-radius: 14px; font-size: .78rem; font-weight: 600; background: var(--surface-mid); color: var(--text); cursor: pointer; transition: opacity .15s; }
   .chip-placed:hover { opacity: .7; }
+  .chip-placed.chip-wrong   { background: rgba(239,68,68,.18); border: 1.5px solid var(--red);   color: #fca5a5; }
+  .chip-placed.chip-correct { background: rgba(16,185,129,.10); border: 1.5px solid var(--green); color: #6ee7b7; }
 
   /* Fill in blanks */
   .blank-para { font-size: .92rem; color: var(--text); line-height: 2.4; }
@@ -146,7 +150,7 @@ color:  blue
 </head>
 <body data-year="11" data-topic="Networks">
 
-<div id="done-banner" class="ac-banner">🏆 All 6 tasks complete — excellent work!</div>
+<div id="done-banner" class="ac-banner">🏆 All 7 tasks complete — excellent work!</div>
 
 <header>
   <div>
@@ -163,7 +167,7 @@ color:  blue
   <div class="score-row">
     <span class="score-label">Progress</span>
     <div class="ac-progress-bar" style="flex:1;"><div class="ac-progress-fill" id="progress-fill"></div></div>
-    <span class="score-pct" id="progress-pct">0 / 6</span>
+    <span class="score-pct" id="progress-pct">0 / 7</span>
   </div>
 
   <div class="tabs" id="tab-bar">
@@ -173,6 +177,7 @@ color:  blue
     <button class="tab-btn"        data-idx="3">4 · The Cloud</button>
     <button class="tab-btn"        data-idx="4">5 · Client-Server</button>
     <button class="tab-btn"        data-idx="5">6 · Peer Marking ★</button>
+    <button class="tab-btn"        data-idx="6">7 · Cloud Storage</button>
   </div>
 
   <!-- ═══ PANEL 0 — Foundations (3 MCQs) ═══ -->
@@ -215,6 +220,7 @@ color:  blue
 
     <div class="row">
       <button class="ac-btn" onclick="checkP0()">Check answers</button>
+      <button class="ac-btn-secondary" onclick="resetP0()">Shuffle &amp; reset</button>
     </div>
     <div class="feedback" id="feedback-0"></div>
   </div>
@@ -297,6 +303,7 @@ color:  blue
 
     <div class="row">
       <button class="ac-btn" onclick="checkCloud()">Check answers</button>
+      <button class="ac-btn-secondary" onclick="resetCloud()">Shuffle &amp; reset</button>
     </div>
     <div class="feedback" id="feedback-3"></div>
   </div>
@@ -325,6 +332,7 @@ color:  blue
 
     <div class="row">
       <button class="ac-btn" onclick="checkBlanks()">Check answers</button>
+      <button class="ac-btn-secondary" onclick="resetBlanks()">Shuffle &amp; reset</button>
     </div>
     <div class="feedback" id="feedback-4"></div>
   </div>
@@ -351,13 +359,41 @@ color:  blue
     <div class="feedback" id="feedback-5"></div>
   </div>
 
+  <!-- ═══ PANEL 6 — Cloud Storage Advantages &amp; Disadvantages ═══ -->
+  <div class="panel" id="panel-6">
+    <div class="goal">🎯 Classify each statement as an advantage or a disadvantage of storing data in the cloud.</div>
+    <div class="scenario"><strong>Context:</strong> Westbrook School is deciding whether to move student work and staff files from local servers to a cloud storage service.</div>
+
+    <div class="card">
+      <h2>Advantages vs Disadvantages — Cloud Storage</h2>
+      <p style="font-size:.82rem;color:var(--muted);margin-bottom:12px;">Drag each statement into the correct column. Click a placed card to return it to the bank.</p>
+      <div class="item-bank" id="cad-bank"></div>
+      <div class="classify-grid">
+        <div class="classify-zone zone-adv" id="cad-zone-adv">
+          <div class="zone-header">✅ Advantage</div>
+          <div class="zone-drop" id="cad-drop-adv"></div>
+        </div>
+        <div class="classify-zone zone-dis" id="cad-zone-dis">
+          <div class="zone-header">❌ Disadvantage</div>
+          <div class="zone-drop" id="cad-drop-dis"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <button class="ac-btn" onclick="checkCloudAD()">Check classification</button>
+      <button class="ac-btn-secondary" onclick="resetCloudAD()">Reset</button>
+    </div>
+    <div class="feedback" id="feedback-6"></div>
+  </div>
+
 </div><!-- /.page-wrap -->
 
 <div class="ac-toast" id="toast"></div>
 
 <script>
 // ── State ─────────────────────────────────────────────────────────────────────
-const TASK_COUNT   = 6;
+const TASK_COUNT   = 7;
 const completed    = new Array(TASK_COUNT).fill(false);
 const firstAttempt = new Array(TASK_COUNT).fill(true);
 
@@ -385,13 +421,15 @@ function markDone(idx, type) {
   const btn = document.querySelector('.tab-btn[data-idx="' + idx + '"]');
   if (btn) { btn.classList.remove('done-green', 'done-gold'); btn.classList.add('done-' + type); }
   updateProgress();
+  const done = completed.filter(Boolean).length;
+  const pct  = Math.round(done / TASK_COUNT * 100);
+  window.Classroom?.submitGrade(pct, 'The Internet, DNS & the Cloud');
   if (completed.every(Boolean)) allDone();
 }
 
 function allDone() {
   const banner = document.getElementById('done-banner');
   banner.classList.add('show', 'gold');
-  window.Classroom?.submitGrade(100, 'The Internet, DNS & the Cloud');
 }
 
 function showToast(msg, type) {
@@ -421,10 +459,11 @@ function checkP0() {
     if (!sel) { allSel = false; break; }
     const val = +sel.value;
     const opts = document.querySelectorAll('#opts-0-' + q + ' .opt');
-    opts.forEach((o, i) => {
+    opts.forEach(o => {
+      const optVal = +o.querySelector('input').value;
       o.classList.add('locked');
-      if (i === P0_ANS[q]) o.classList.add('correct-ans');
-      else if (i === val)  o.classList.add('wrong-ans');
+      if (optVal === P0_ANS[q]) o.classList.add('correct-ans');
+      else if (optVal === val)  o.classList.add('wrong-ans');
     });
     if (val !== P0_ANS[q]) allRight = false;
   }
@@ -650,13 +689,22 @@ function checkClassify() {
     return;
   }
   let correct = 0;
+  // Mark individual chips right/wrong
+  Object.entries(clPlaced).forEach(([cid, zone]) => {
+    const item = CL_ITEMS.find(i => i.id === cid);
+    const chipEl = document.querySelector('[data-placed="' + cid + '"]');
+    if (chipEl) {
+      chipEl.classList.remove('chip-correct', 'chip-wrong');
+      if (item.zone === zone) { chipEl.classList.add('chip-correct'); correct++; }
+      else chipEl.classList.add('chip-wrong');
+    }
+  });
+  // Mark zone borders for overall feedback
   ['web','file','mail','cloud'].forEach(zone => {
-    const zoneItems = CL_ITEMS.filter(i => i.zone === zone);
-    const allRight  = zoneItems.every(i => clPlaced[i.id] === zone);
-    const zoneEl    = document.getElementById('zone-' + zone);
+    const allRight = CL_ITEMS.filter(i => i.zone === zone).every(i => clPlaced[i.id] === zone);
+    const zoneEl   = document.getElementById('zone-' + zone);
     zoneEl.classList.remove('correct-zone', 'wrong-zone');
     zoneEl.classList.add(allRight ? 'correct-zone' : 'wrong-zone');
-    if (allRight) correct += zoneItems.length;
   });
   const fb = document.getElementById('feedback-2');
   if (correct === CL_ITEMS.length) {
@@ -665,7 +713,7 @@ function checkClassify() {
     markDone(2, firstAttempt[2] ? 'gold' : 'green');
   } else {
     if (firstAttempt[2]) firstAttempt[2] = false;
-    fb.textContent = '❌ ' + correct + ' / 8 correct — zones with errors are outlined in red. Click placed items to return them to the bank and try again.';
+    fb.textContent = '❌ ' + correct + ' / 8 correct — incorrect items are highlighted in red. Click them to return to the bank and try again.';
     fb.className = 'feedback wrong';
   }
 }
@@ -735,10 +783,11 @@ function checkCloud() {
   });
 
   const mcVal = +mcSel.value;
-  document.querySelectorAll('#opts-3mc .opt').forEach((o, i) => {
+  document.querySelectorAll('#opts-3mc .opt').forEach(o => {
+    const optVal = +o.querySelector('input').value;
     o.classList.add('locked');
-    if (i === 2)  o.classList.add('correct-ans');
-    else if (i === mcVal) o.classList.add('wrong-ans');
+    if (optVal === 2)      o.classList.add('correct-ans');
+    else if (optVal === mcVal) o.classList.add('wrong-ans');
   });
   const mcRight = mcVal === 2;
 
@@ -828,10 +877,11 @@ function checkBlanks() {
 
   const mcVal   = +mcSel.value;
   const mcRight = mcVal === 1;
-  document.querySelectorAll('#opts-4mc .opt').forEach((o, i) => {
+  document.querySelectorAll('#opts-4mc .opt').forEach(o => {
+    const optVal = +o.querySelector('input').value;
     o.classList.add('locked');
-    if (i === 1)  o.classList.add('correct-ans');
-    else if (i === mcVal) o.classList.add('wrong-ans');
+    if (optVal === 1)          o.classList.add('correct-ans');
+    else if (optVal === mcVal) o.classList.add('wrong-ans');
   });
 
   const total = selects.length + 1;
@@ -958,6 +1008,184 @@ function resetPM() {
   document.getElementById('feedback-5').className = 'feedback';
 }
 
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+function shuffleOpts(containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  const opts = [...container.querySelectorAll('.opt')];
+  for (let i = opts.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [opts[i], opts[j]] = [opts[j], opts[i]];
+  }
+  opts.forEach(o => {
+    o.classList.remove('locked', 'correct-ans', 'wrong-ans');
+    o.querySelector('input').checked = false;
+    container.appendChild(o);
+  });
+}
+
+// ─── Panel 0 reset ───────────────────────────────────────────────────────────
+function resetP0() {
+  if (completed[0]) return;
+  shuffleOpts('opts-0-0');
+  shuffleOpts('opts-0-1');
+  shuffleOpts('opts-0-2');
+  document.getElementById('feedback-0').textContent = '';
+  document.getElementById('feedback-0').className = 'feedback';
+}
+
+// ─── Panel 3 reset ───────────────────────────────────────────────────────────
+function resetCloud() {
+  if (completed[3]) return;
+  buildTF();
+  // Shuffle TF items in display order
+  const list = document.getElementById('tf-list');
+  const items = [...list.children];
+  for (let i = items.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [items[i], items[j]] = [items[j], items[i]];
+  }
+  items.forEach(el => list.appendChild(el));
+  shuffleOpts('opts-3mc');
+  document.getElementById('feedback-3').textContent = '';
+  document.getElementById('feedback-3').className = 'feedback';
+}
+
+// ─── Panel 4 reset ───────────────────────────────────────────────────────────
+function resetBlanks() {
+  if (completed[4]) return;
+  buildBlanks();
+  shuffleOpts('opts-4mc');
+  document.getElementById('feedback-4').textContent = '';
+  document.getElementById('feedback-4').className = 'feedback';
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+// PANEL 6 — Cloud Storage Advantages & Disadvantages
+// ═════════════════════════════════════════════════════════════════════════════
+const CAD_ITEMS = [
+  { id: 'ca1', text: 'Files can be accessed from any device with an Internet connection', zone: 'adv' },
+  { id: 'ca2', text: 'Data is automatically backed up by the provider, reducing the risk of local data loss', zone: 'adv' },
+  { id: 'ca3', text: 'No need to buy or maintain physical storage hardware — the provider owns it', zone: 'adv' },
+  { id: 'ca4', text: 'Storage capacity can be scaled up or down on demand without buying new equipment', zone: 'adv' },
+  { id: 'ca5', text: 'Multiple users can collaborate on the same files in real time from different locations', zone: 'adv' },
+  { id: 'cd1', text: 'Requires a reliable Internet connection — files cannot be accessed if offline', zone: 'dis' },
+  { id: 'cd2', text: 'Data is held on third-party servers, raising privacy and security concerns', zone: 'dis' },
+  { id: 'cd3', text: 'Ongoing subscription fees can cost more than buying physical storage outright over time', zone: 'dis' },
+  { id: 'cd4', text: 'Data may be stored on servers in other countries, creating legal and data-sovereignty issues', zone: 'dis' },
+  { id: 'cd5', text: 'If the provider suffers an outage, users lose access to their files', zone: 'dis' },
+];
+
+let cadPlaced = {};
+let cadDragId  = null;
+
+function resetCloudAD() {
+  cadPlaced = {};
+  document.querySelectorAll('#panel-6 .classify-zone').forEach(z => z.classList.remove('correct-zone', 'wrong-zone'));
+  document.getElementById('feedback-6').textContent = '';
+  document.getElementById('feedback-6').className = 'feedback';
+  buildCloudAD();
+}
+
+function buildCloudAD() {
+  const bank = document.getElementById('cad-bank');
+  bank.innerHTML = '';
+  document.getElementById('cad-drop-adv').innerHTML = '';
+  document.getElementById('cad-drop-dis').innerHTML = '';
+  cadPlaced = {};
+
+  const shuffled = [...CAD_ITEMS].sort(() => Math.random() - .5);
+  shuffled.forEach(item => {
+    const chip = document.createElement('div');
+    chip.className = 'drag-chip';
+    chip.id = 'cadchip-' + item.id;
+    chip.textContent = item.text;
+    chip.draggable = true;
+    chip.style.whiteSpace = 'normal';
+    chip.dataset.cid = item.id;
+    chip.addEventListener('dragstart', e => { cadDragId = e.currentTarget.dataset.cid; e.dataTransfer.effectAllowed = 'move'; });
+    bank.appendChild(chip);
+  });
+
+  ['adv', 'dis'].forEach(zone => {
+    const drop   = document.getElementById('cad-drop-' + zone);
+    const zoneEl = document.getElementById('cad-zone-' + zone);
+    [drop, zoneEl.querySelector('.zone-header')].forEach(el => {
+      el.addEventListener('dragover',  e => { e.preventDefault(); zoneEl.classList.add('drag-over'); });
+      el.addEventListener('dragleave', () => zoneEl.classList.remove('drag-over'));
+      el.addEventListener('drop',      e => cadDrop(e, zone, zoneEl, drop));
+    });
+  });
+}
+
+function cadDrop(e, zone, zoneEl, drop) {
+  e.preventDefault();
+  zoneEl.classList.remove('drag-over');
+  if (!cadDragId) return;
+
+  const prev = cadPlaced[cadDragId];
+  if (prev) {
+    const el = document.querySelector('[data-cadplaced="' + cadDragId + '"]');
+    if (el) el.remove();
+  }
+
+  cadPlaced[cadDragId] = zone;
+  document.getElementById('cadchip-' + cadDragId).classList.add('placed');
+
+  const placed = document.createElement('div');
+  placed.className = 'chip-placed';
+  placed.dataset.cadplaced = cadDragId;
+  placed.textContent = CAD_ITEMS.find(i => i.id === cadDragId).text;
+  placed.addEventListener('click', () => {
+    const cid = placed.dataset.cadplaced;
+    delete cadPlaced[cid];
+    document.getElementById('cadchip-' + cid).classList.remove('placed');
+    placed.remove();
+  });
+  drop.appendChild(placed);
+  cadDragId = null;
+}
+
+function checkCloudAD() {
+  if (!window.Classroom?.verifyAuth()) return;
+  if (completed[6]) return;
+
+  if (Object.keys(cadPlaced).length < CAD_ITEMS.length) {
+    const fb = document.getElementById('feedback-6');
+    fb.textContent = '⚠ Please classify all ' + CAD_ITEMS.length + ' statements first (' + Object.keys(cadPlaced).length + ' placed so far).';
+    fb.className = 'feedback wrong';
+    return;
+  }
+
+  let correct = 0;
+  ['adv', 'dis'].forEach(zone => {
+    const zoneItems = CAD_ITEMS.filter(i => i.zone === zone);
+    const allRight  = zoneItems.every(i => cadPlaced[i.id] === zone);
+    const zoneEl    = document.getElementById('cad-zone-' + zone);
+    zoneEl.classList.remove('correct-zone', 'wrong-zone');
+    zoneEl.classList.add(allRight ? 'correct-zone' : 'wrong-zone');
+    if (allRight) correct += zoneItems.length;
+
+    // colour individual chips to show which are wrong
+    document.getElementById('cad-drop-' + zone).querySelectorAll('.chip-placed').forEach(chip => {
+      const item = CAD_ITEMS.find(i => i.id === chip.dataset.cadplaced);
+      chip.classList.remove('chip-correct', 'chip-wrong');
+      chip.classList.add(item && item.zone === zone ? 'chip-correct' : 'chip-wrong');
+    });
+  });
+
+  const fb = document.getElementById('feedback-6');
+  if (correct === CAD_ITEMS.length) {
+    fb.textContent = '✅ All 10 correctly classified! Advantages: anywhere access, automatic backups, no hardware costs, scalability, and collaboration. Disadvantages: needs an Internet connection, security/privacy risks, ongoing subscription costs, data-sovereignty concerns, and vulnerability to provider outages.';
+    fb.className = 'feedback correct';
+    markDone(6, firstAttempt[6] ? 'gold' : 'green');
+  } else {
+    if (firstAttempt[6]) firstAttempt[6] = false;
+    fb.textContent = '❌ ' + correct + ' / ' + CAD_ITEMS.length + ' correct — incorrectly placed items are highlighted in red. Click a card to return it to the bank and try again.';
+    fb.className = 'feedback wrong';
+  }
+}
+
 // ═════════════════════════════════════════════════════════════════════════════
 // Init
 // ═════════════════════════════════════════════════════════════════════════════
@@ -966,6 +1194,7 @@ buildClassify();
 buildTF();
 buildBlanks();
 buildPM();
+buildCloudAD();
 </script>
 <script src="../../classroom.js"></script>
 </body>
