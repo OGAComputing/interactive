@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- ACTIVITY
+title:  The Internet, DNS & the Cloud
+type:   Practice
+stars:  3
+desc:   Six tasks covering the Internet as a network of networks, DNS lookup, web servers, client-server model, and cloud computing — including a peer-marking challenge.
+color:  blue
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Internet, DNS &amp; the Cloud — Year 11</title>
+<link rel="stylesheet" href="../../shared.css">
+<style>
+  header {
+    background: var(--surface); border-bottom: 2px solid var(--surface-mid);
+    padding: 12px 20px; position: sticky; top: 0; z-index: 100;
+    display: flex; align-items: center; gap: 14px;
+    box-shadow: 0 2px 12px rgba(0,0,0,.4);
+  }
+  header h1 { font-family: var(--font-head); font-size: 1rem; font-weight: 700; color: var(--accent); letter-spacing: .04em; }
+  .header-sub { font-size: .72rem; color: var(--muted); margin-top: 1px; }
+  .header-badge { margin-left: auto; background: var(--surface-mid); border: 1px solid var(--accent); color: var(--accent); font-size: .65rem; font-weight: 700; padding: 3px 10px; border-radius: 20px; letter-spacing: .08em; text-transform: uppercase; }
+
+  .page-wrap { padding: 28px 16px 60px; }
+  .page-title { font-size: 1.35rem; font-weight: 700; text-align: center; color: var(--accent-light); margin-bottom: 4px; }
+  .page-subtitle { text-align: center; font-size: .82rem; color: var(--muted); margin-bottom: 26px; }
+
+  .score-row { display: flex; align-items: center; gap: 12px; margin-bottom: 22px; }
+  .score-label { font-size: .72rem; font-family: var(--font-head, monospace); color: var(--muted); text-transform: uppercase; letter-spacing: .1em; white-space: nowrap; }
+  .score-pct { font-family: var(--font-head, monospace); font-size: .8rem; color: var(--accent); white-space: nowrap; }
+
+  .tabs { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-bottom: 26px; }
+  .tab-btn { padding: 8px 16px; border: 2px solid var(--surface-mid); border-radius: 20px; background: var(--surface); color: var(--muted); font-family: var(--font-body); font-size: .82rem; font-weight: 600; cursor: pointer; transition: all .2s; user-select: none; }
+  .tab-btn:hover:not(.active) { border-color: var(--accent); color: var(--text); }
+  .tab-btn.active    { background: var(--accent); border-color: var(--accent); color: var(--text-inv); }
+  .tab-btn.done-green { background: var(--green); border-color: var(--green); color: #fff; }
+  .tab-btn.done-gold  { background: var(--gold);  border-color: var(--gold);  color: #111; }
+
+  .panel { display: none; max-width: 860px; margin: 0 auto; animation: ac-fade-in .2s ease; }
+  .panel.active { display: block; }
+
+  .card { background: var(--surface); border-left: 4px solid var(--accent); border-radius: 8px; padding: 18px 22px; margin-bottom: 20px; }
+  .card h2 { font-size: .8rem; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: .8px; margin-bottom: 12px; }
+  .goal { background: var(--surface); border-left: 4px solid var(--accent); border-radius: 0 8px 8px 0; padding: 10px 16px; font-size: .9rem; font-weight: 600; color: var(--text); margin-bottom: 18px; }
+  .feedback { min-height: 1.4em; font-size: .88rem; font-weight: 600; margin-top: 12px; line-height: 1.5; }
+  .feedback.correct { color: var(--green); }
+  .feedback.wrong   { color: var(--red); animation: ac-shake .35s ease; }
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 14px; }
+
+  .scenario { background: var(--surface-mid); border-radius: 8px; padding: 12px 16px; margin-bottom: 16px; font-size: .88rem; color: var(--text); line-height: 1.6; border-left: 3px solid var(--accent); }
+  .scenario strong { color: var(--accent-light); }
+
+  /* MCQ */
+  .question { margin-bottom: 20px; }
+  .question p { font-size: .92rem; color: var(--text); line-height: 1.55; margin-bottom: 10px; font-weight: 600; }
+  .options { display: flex; flex-direction: column; gap: 7px; }
+  .opt { display: flex; align-items: flex-start; gap: 10px; padding: 9px 13px; border: 2px solid var(--surface-mid); border-radius: 8px; cursor: pointer; transition: all .2s; font-size: .88rem; color: var(--text); background: var(--surface); }
+  .opt:hover:not(.locked) { border-color: var(--accent); background: var(--surface-mid); }
+  .opt input[type=radio] { margin-top: 2px; flex-shrink: 0; accent-color: var(--accent); }
+  .opt.correct-ans { border-color: var(--green) !important; background: rgba(16,185,129,.08) !important; color: #6ee7b7; }
+  .opt.wrong-ans   { border-color: var(--red)   !important; background: rgba(239,68,68,.08)  !important; color: #fca5a5; }
+  .opt.locked { pointer-events: none; }
+
+  /* True/False */
+  .tf-item { display: flex; align-items: flex-start; gap: 10px; padding: 11px 14px; border: 2px solid var(--surface-mid); border-radius: 8px; margin-bottom: 8px; background: var(--surface); transition: all .2s; }
+  .tf-body { flex: 1; }
+  .tf-stmt { font-size: .89rem; color: var(--text); line-height: 1.5; }
+  .tf-explain { font-size: .78rem; color: var(--muted); line-height: 1.4; margin-top: 6px; display: none; }
+  .tf-btns { display: flex; gap: 6px; flex-shrink: 0; padding-top: 2px; }
+  .tf-btn { padding: 5px 12px; border: 2px solid var(--surface-mid); border-radius: 6px; cursor: pointer; font-size: .78rem; font-weight: 700; background: var(--surface); color: var(--muted); transition: all .15s; }
+  .tf-btn:hover:not(.locked) { border-color: var(--accent); color: var(--text); }
+  .tf-btn.sel-true  { border-color: var(--accent); color: var(--accent); background: var(--surface-mid); }
+  .tf-btn.sel-false { border-color: #f59e0b; color: #f59e0b; background: rgba(245,158,11,.08); }
+  .tf-btn.locked { pointer-events: none; }
+  .tf-item.correct-item { border-color: var(--green); background: rgba(16,185,129,.06); }
+  .tf-item.correct-item .tf-explain { display: block; color: #6ee7b7; }
+  .tf-item.wrong-item   { border-color: var(--red);   background: rgba(239,68,68,.06); }
+  .tf-item.wrong-item   .tf-explain { display: block; color: #fca5a5; }
+
+  /* Sequence sort */
+  .seq-list { list-style: none; padding: 0; margin: 0; }
+  .seq-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 14px; border: 2px solid var(--surface-mid); border-radius: 8px; margin-bottom: 6px; background: var(--surface); cursor: grab; user-select: none; transition: border-color .15s; font-size: .88rem; color: var(--text); line-height: 1.5; }
+  .seq-item:active { cursor: grabbing; opacity: .8; }
+  .seq-item.dragging { opacity: .3; border-style: dashed; border-color: var(--accent); }
+  .seq-item.drag-over-top    { border-top: 3px solid var(--accent); }
+  .seq-item.drag-over-bottom { border-bottom: 3px solid var(--accent); }
+  .seq-item.correct-seq { border-color: var(--green); background: rgba(16,185,129,.06); }
+  .seq-item.wrong-seq   { border-color: var(--red);   background: rgba(239,68,68,.06); }
+  .seq-handle { color: var(--muted); font-size: 1.1rem; flex-shrink: 0; line-height: 1.4; }
+  .seq-num { font-family: var(--font-head, monospace); font-size: .72rem; font-weight: 700; color: var(--accent); background: var(--surface-mid); min-width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+
+  /* Classify */
+  .item-bank { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px; background: var(--surface-mid); border-radius: 8px; min-height: 56px; margin-bottom: 16px; }
+  .drag-chip { padding: 6px 14px; background: var(--accent); color: var(--text-inv); border-radius: 20px; cursor: grab; font-size: .8rem; font-weight: 600; user-select: none; transition: transform .1s, opacity .2s; white-space: nowrap; }
+  .drag-chip:hover { transform: scale(1.04); }
+  .drag-chip:active { cursor: grabbing; opacity: .7; }
+  .drag-chip.placed { opacity: .35; cursor: default; pointer-events: none; }
+  .classify-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .classify-zone { border: 2px dashed var(--surface-mid); border-radius: 10px; overflow: hidden; transition: border-color .2s; }
+  .classify-zone.drag-over { border-color: var(--accent); }
+  .classify-zone.correct-zone { border-color: var(--green); border-style: solid; }
+  .classify-zone.wrong-zone   { border-color: var(--red);   border-style: solid; }
+  .zone-header { padding: 8px 14px; font-weight: 700; font-size: .83rem; }
+  .zone-web   .zone-header { background: rgba(125,211,252,.12); color: #7dd3fc; }
+  .zone-file  .zone-header { background: rgba(134,239,172,.12); color: #86efac; }
+  .zone-mail  .zone-header { background: rgba(216,180,254,.12); color: #d8b4fe; }
+  .zone-cloud .zone-header { background: rgba(253,230,138,.12); color: #fde68a; }
+  .zone-drop  { min-height: 80px; padding: 8px; display: flex; flex-wrap: wrap; gap: 6px; align-content: flex-start; }
+  .chip-placed { padding: 5px 11px; border-radius: 14px; font-size: .78rem; font-weight: 600; background: var(--surface-mid); color: var(--text); cursor: pointer; transition: opacity .15s; }
+  .chip-placed:hover { opacity: .7; }
+
+  /* Fill in blanks */
+  .blank-para { font-size: .92rem; color: var(--text); line-height: 2.4; }
+  .blank-sel { border: 2px solid var(--accent); border-radius: 6px; padding: 2px 6px; background: var(--surface-mid); color: var(--text); font-family: var(--font-body); font-size: .86rem; cursor: pointer; vertical-align: middle; }
+  .blank-sel:focus { outline: none; }
+  .blank-sel.correct-blank { border-color: var(--green); background: rgba(16,185,129,.1); color: #6ee7b7; }
+  .blank-sel.wrong-blank   { border-color: var(--red);   background: rgba(239,68,68,.1);  color: #fca5a5; }
+
+  /* Peer marking */
+  .peer-intro { font-size: .88rem; color: var(--text); line-height: 1.6; margin-bottom: 16px; }
+  .peer-name { font-weight: 700; color: var(--accent-light); }
+  .pm-item { display: flex; flex-direction: column; gap: 0; padding: 12px 14px; border: 2px solid var(--surface-mid); border-radius: 8px; margin-bottom: 8px; background: var(--surface); transition: all .2s; }
+  .pm-row { display: flex; align-items: flex-start; gap: 10px; }
+  .pm-num { font-family: var(--font-head, monospace); font-size: .7rem; font-weight: 700; color: var(--accent); background: var(--surface-mid); min-width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px; }
+  .pm-stmt { flex: 1; font-size: .89rem; color: var(--text); line-height: 1.55; font-style: italic; }
+  .pm-btns { display: flex; gap: 6px; flex-shrink: 0; }
+  .pm-btn { padding: 5px 11px; border: 2px solid var(--surface-mid); border-radius: 6px; cursor: pointer; font-size: .76rem; font-weight: 700; background: var(--surface); color: var(--muted); transition: all .15s; white-space: nowrap; }
+  .pm-btn:hover:not(.locked) { border-color: var(--accent); color: var(--text); }
+  .pm-btn.sel-ok  { border-color: var(--green); color: var(--green); background: rgba(16,185,129,.08); }
+  .pm-btn.sel-err { border-color: var(--red);   color: var(--red);   background: rgba(239,68,68,.08); }
+  .pm-btn.locked { pointer-events: none; }
+  .pm-feedback { font-size: .8rem; line-height: 1.45; margin-top: 8px; padding: 7px 10px; background: var(--surface-mid); border-radius: 6px; display: none; }
+  .pm-item.checked-right { border-color: var(--green); background: rgba(16,185,129,.05); }
+  .pm-item.checked-right .pm-feedback { display: block; color: #6ee7b7; }
+  .pm-item.checked-wrong  { border-color: var(--red);   background: rgba(239,68,68,.05); }
+  .pm-item.checked-wrong  .pm-feedback { display: block; color: #fca5a5; }
+
+  @media (max-width: 600px) {
+    .classify-grid { grid-template-columns: 1fr; }
+    .pm-row { flex-wrap: wrap; }
+    .pm-btns { width: 100%; justify-content: flex-end; }
+  }
+</style>
+</head>
+<body data-year="11" data-topic="Networks">
+
+<div id="done-banner" class="ac-banner">🏆 All 6 tasks complete — excellent work!</div>
+
+<header>
+  <div>
+    <h1>The Internet, DNS &amp; the Cloud</h1>
+    <div class="header-sub">GCSE Computer Science — Networks</div>
+  </div>
+  <div class="header-badge">Year 11</div>
+</header>
+
+<div class="page-wrap">
+  <h2 class="page-title">The Internet, DNS &amp; the Cloud</h2>
+  <p class="page-subtitle">Network of Networks · DNS · Web Servers · Clients · Cloud Computing</p>
+
+  <div class="score-row">
+    <span class="score-label">Progress</span>
+    <div class="ac-progress-bar" style="flex:1;"><div class="ac-progress-fill" id="progress-fill"></div></div>
+    <span class="score-pct" id="progress-pct">0 / 6</span>
+  </div>
+
+  <div class="tabs" id="tab-bar">
+    <button class="tab-btn active" data-idx="0">1 · Foundations</button>
+    <button class="tab-btn"        data-idx="1">2 · DNS Journey</button>
+    <button class="tab-btn"        data-idx="2">3 · Servers &amp; Services</button>
+    <button class="tab-btn"        data-idx="3">4 · The Cloud</button>
+    <button class="tab-btn"        data-idx="4">5 · Client-Server</button>
+    <button class="tab-btn"        data-idx="5">6 · Peer Marking ★</button>
+  </div>
+
+  <!-- ═══ PANEL 0 — Foundations (3 MCQs) ═══ -->
+  <div class="panel active" id="panel-0">
+    <div class="goal">🎯 Answer three questions about the Internet as a network of networks and the role of web servers.</div>
+    <div class="scenario"><strong>Context:</strong> StreamZone is a video-streaming company. Its service links millions of viewers' home and mobile networks to its own data-centre network — all via the Internet.</div>
+
+    <div class="card question">
+      <h2>Question 1</h2>
+      <p>Which statement best explains why the Internet is described as a "network of networks"?</p>
+      <div class="options" id="opts-0-0">
+        <label class="opt"><input type="radio" name="q00" value="0"> All computers on the Internet connect to one central global server.</label>
+        <label class="opt"><input type="radio" name="q00" value="1"> The Internet is formed by interconnecting many individual networks — home routers, school LANs, company intranets — with each other.</label>
+        <label class="opt"><input type="radio" name="q00" value="2"> The Internet only links computers that are physically close to one another.</label>
+        <label class="opt"><input type="radio" name="q00" value="3"> Networks can only join the Internet if they use exactly the same hardware.</label>
+      </div>
+    </div>
+
+    <div class="card question">
+      <h2>Question 2</h2>
+      <p>StreamZone's offices in Lagos, Seoul, and Oslo each have their own LAN. Viewers' home routers connect through ISPs to reach StreamZone's servers. Which statement best describes this?</p>
+      <div class="options" id="opts-0-1">
+        <label class="opt"><input type="radio" name="q01" value="0"> Multiple separate networks are communicating as part of the Internet — a network of networks.</label>
+        <label class="opt"><input type="radio" name="q01" value="1"> All devices are on a single large LAN managed by StreamZone.</label>
+        <label class="opt"><input type="radio" name="q01" value="2"> Each viewer's device connects to the nearest StreamZone office via a dedicated cable.</label>
+        <label class="opt"><input type="radio" name="q01" value="3"> StreamZone's servers contact each viewer's device first — not the other way around.</label>
+      </div>
+    </div>
+
+    <div class="card question">
+      <h2>Question 3</h2>
+      <p>A viewer's laptop sends an HTTP request to StreamZone. What is the role of StreamZone's <strong>web server</strong> in this transaction?</p>
+      <div class="options" id="opts-0-2">
+        <label class="opt"><input type="radio" name="q02" value="0"> It converts the domain name streamzone.tv into an IP address.</label>
+        <label class="opt"><input type="radio" name="q02" value="1"> It stores the website's pages and sends the requested page back to the viewer's browser.</label>
+        <label class="opt"><input type="radio" name="q02" value="2"> It provides remote backup storage for the viewer's local files.</label>
+        <label class="opt"><input type="radio" name="q02" value="3"> It manages peer-to-peer sharing between viewers on the same ISP.</label>
+      </div>
+    </div>
+
+    <div class="row">
+      <button class="ac-btn" onclick="checkP0()">Check answers</button>
+    </div>
+    <div class="feedback" id="feedback-0"></div>
+  </div>
+
+  <!-- ═══ PANEL 1 — DNS Sequence Sort ═══ -->
+  <div class="panel" id="panel-1">
+    <div class="goal">🎯 Drag the steps into the correct order to show what happens during a DNS lookup.</div>
+    <div class="scenario"><strong>Context:</strong> A student at Fernside Academy types <code style="background:var(--surface-mid);padding:2px 6px;border-radius:4px;">www.fernsidelibrary.ac.uk</code> into their browser for the first time — no IP address is cached yet.</div>
+
+    <div class="card">
+      <h2>DNS Lookup — Sequence Sort</h2>
+      <p style="font-size:.82rem;color:var(--muted);margin-bottom:14px;">Drag the steps ↕ into the correct order, then click <strong>Check order</strong>. You can try as many times as you need.</p>
+      <ul class="seq-list" id="seq-list"></ul>
+    </div>
+
+    <div class="row">
+      <button class="ac-btn" onclick="checkSeq()">Check order</button>
+      <button class="ac-btn-secondary" onclick="resetSeq()">Shuffle again</button>
+    </div>
+    <div class="feedback" id="feedback-1"></div>
+  </div>
+
+  <!-- ═══ PANEL 2 — Classify Servers ═══ -->
+  <div class="panel" id="panel-2">
+    <div class="goal">🎯 Drag each description into the correct server category.</div>
+    <div class="scenario"><strong>Context:</strong> Hartfield Hospital uses a variety of servers to support its staff, patients, and public website.</div>
+
+    <div class="card">
+      <h2>Classify the descriptions</h2>
+      <p style="font-size:.82rem;color:var(--muted);margin-bottom:12px;">Drag cards from the bank below into the correct server type. Click a placed card to return it to the bank.</p>
+      <div class="item-bank" id="item-bank"></div>
+      <div class="classify-grid">
+        <div class="classify-zone zone-web"  id="zone-web" >
+          <div class="zone-header">🌐 Web Server</div>
+          <div class="zone-drop" id="drop-web"></div>
+        </div>
+        <div class="classify-zone zone-file" id="zone-file">
+          <div class="zone-header">📁 File Server</div>
+          <div class="zone-drop" id="drop-file"></div>
+        </div>
+        <div class="classify-zone zone-mail" id="zone-mail">
+          <div class="zone-header">✉ Mail Server</div>
+          <div class="zone-drop" id="drop-mail"></div>
+        </div>
+        <div class="classify-zone zone-cloud" id="zone-cloud">
+          <div class="zone-header">☁ Cloud Service</div>
+          <div class="zone-drop" id="drop-cloud"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <button class="ac-btn" onclick="checkClassify()">Check classification</button>
+      <button class="ac-btn-secondary" onclick="resetClassify()">Reset</button>
+    </div>
+    <div class="feedback" id="feedback-2"></div>
+  </div>
+
+  <!-- ═══ PANEL 3 — The Cloud ═══ -->
+  <div class="panel" id="panel-3">
+    <div class="goal">🎯 Mark each statement True or False, then answer a scenario question about types of cloud service.</div>
+    <div class="scenario"><strong>Context:</strong> BeatForge is a music production company that has migrated most of its IT to the cloud.</div>
+
+    <div class="card">
+      <h2>True or False?</h2>
+      <p style="font-size:.82rem;color:var(--muted);margin-bottom:14px;">Click <strong>True</strong> or <strong>False</strong> for each statement, then click <strong>Check answers</strong>.</p>
+      <div id="tf-list"></div>
+    </div>
+
+    <div class="card question">
+      <h2>Scenario question</h2>
+      <p>BeatForge's producers access their digital audio workstation <strong>directly in a web browser</strong> — the software runs on BeatForge's remote servers, with no local installation required. Which type of cloud service is this?</p>
+      <div class="options" id="opts-3mc">
+        <label class="opt"><input type="radio" name="q3mc" value="0"> Cloud storage — because the project files are saved remotely.</label>
+        <label class="opt"><input type="radio" name="q3mc" value="1"> Cloud processing — because the remote server handles all computations.</label>
+        <label class="opt"><input type="radio" name="q3mc" value="2"> Cloud software — because the application itself is delivered over the Internet and requires no local installation.</label>
+        <label class="opt"><input type="radio" name="q3mc" value="3"> Cloud networking — because the connection uses the Internet.</label>
+      </div>
+    </div>
+
+    <div class="row">
+      <button class="ac-btn" onclick="checkCloud()">Check answers</button>
+    </div>
+    <div class="feedback" id="feedback-3"></div>
+  </div>
+
+  <!-- ═══ PANEL 4 — Client-Server fill blanks ═══ -->
+  <div class="panel" id="panel-4">
+    <div class="goal">🎯 Complete the paragraph using the drop-downs, then answer a multiple-choice question.</div>
+    <div class="scenario"><strong>Context:</strong> Maya uses her phone to log in to her bank's website.</div>
+
+    <div class="card">
+      <h2>Fill in the blanks</h2>
+      <p style="font-size:.82rem;color:var(--muted);margin-bottom:14px;">Choose the correct word or phrase from each drop-down to complete the description.</p>
+      <p class="blank-para" id="blank-para"></p>
+    </div>
+
+    <div class="card question">
+      <h2>Client-server question</h2>
+      <p>A school's central computer stores all student work and lets teachers control who can read or edit each folder. Students' computers connect to it to save and retrieve files. What is the BEST description of the central computer's role?</p>
+      <div class="options" id="opts-4mc">
+        <label class="opt"><input type="radio" name="q4mc" value="0"> A client, because it connects to the students' devices.</label>
+        <label class="opt"><input type="radio" name="q4mc" value="1"> A file server, because it stores shared files and manages access for client devices.</label>
+        <label class="opt"><input type="radio" name="q4mc" value="2"> A cloud service, because students access it over a network.</label>
+        <label class="opt"><input type="radio" name="q4mc" value="3"> A peer, because it is equal in status to the students' devices.</label>
+      </div>
+    </div>
+
+    <div class="row">
+      <button class="ac-btn" onclick="checkBlanks()">Check answers</button>
+    </div>
+    <div class="feedback" id="feedback-4"></div>
+  </div>
+
+  <!-- ═══ PANEL 5 — Peer Marking ═══ -->
+  <div class="panel" id="panel-5">
+    <div class="goal">🎯 Read a student's exam answer and mark each statement as correct or an error.</div>
+
+    <div class="card">
+      <h2>Peer Marking — Spot the Errors</h2>
+      <p class="peer-intro">
+        <span class="peer-name">Aiko</span> wrote the following in a GCSE exam about DNS and web hosting.
+        Some statements are <strong>correct</strong>; others contain <strong>errors</strong>.
+        For each one, click <strong>✓ Correct</strong> or <strong>✗ Error</strong>, then click <strong>Submit marking</strong>.
+        You can try again if you don't get them all right first time.
+      </p>
+      <div id="pm-list"></div>
+    </div>
+
+    <div class="row">
+      <button class="ac-btn" onclick="checkPM()">Submit marking</button>
+      <button class="ac-btn-secondary" onclick="resetPM()">Reset</button>
+    </div>
+    <div class="feedback" id="feedback-5"></div>
+  </div>
+
+</div><!-- /.page-wrap -->
+
+<div class="ac-toast" id="toast"></div>
+
+<script>
+// ── State ─────────────────────────────────────────────────────────────────────
+const TASK_COUNT   = 6;
+const completed    = new Array(TASK_COUNT).fill(false);
+const firstAttempt = new Array(TASK_COUNT).fill(true);
+
+// ── Tabs ──────────────────────────────────────────────────────────────────────
+document.getElementById('tab-bar').addEventListener('click', e => {
+  const btn = e.target.closest('.tab-btn');
+  if (!btn) return;
+  const idx = +btn.dataset.idx;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('panel-' + idx).classList.add('active');
+});
+
+// ── Progress ──────────────────────────────────────────────────────────────────
+function updateProgress() {
+  const done = completed.filter(Boolean).length;
+  document.getElementById('progress-fill').style.width = (done / TASK_COUNT * 100) + '%';
+  document.getElementById('progress-pct').textContent = done + ' / ' + TASK_COUNT;
+}
+
+function markDone(idx, type) {
+  if (completed[idx]) return;
+  completed[idx] = true;
+  const btn = document.querySelector('.tab-btn[data-idx="' + idx + '"]');
+  if (btn) { btn.classList.remove('done-green', 'done-gold'); btn.classList.add('done-' + type); }
+  updateProgress();
+  if (completed.every(Boolean)) allDone();
+}
+
+function allDone() {
+  const banner = document.getElementById('done-banner');
+  banner.classList.add('show', 'gold');
+  window.Classroom?.submitGrade(100, 'The Internet, DNS & the Cloud');
+}
+
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'ac-toast show' + (type ? ' ' + type : '');
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+// PANEL 0 — Foundations (3 MCQs)
+// ═════════════════════════════════════════════════════════════════════════════
+const P0_ANS = [1, 0, 1]; // correct option index per question
+const P0_EXP = [
+  'The Internet links thousands of individual networks — ISP networks, home routers, business LANs — forming a "network of networks".',
+  'Each office LAN, the viewers\' ISP networks, and StreamZone\'s data-centre network are separate networks communicating via the Internet.',
+  'A web server stores the website\'s files and sends (serves) the requested pages to clients\' browsers via HTTP — it does not do DNS lookups or provide cloud storage.'
+];
+
+function checkP0() {
+  if (!window.Classroom?.verifyAuth()) return;
+  if (completed[0]) return;
+
+  let allSel = true, allRight = true;
+  for (let q = 0; q < 3; q++) {
+    const sel = document.querySelector('input[name="q0' + q + '"]:checked');
+    if (!sel) { allSel = false; break; }
+    const val = +sel.value;
+    const opts = document.querySelectorAll('#opts-0-' + q + ' .opt');
+    opts.forEach((o, i) => {
+      o.classList.add('locked');
+      if (i === P0_ANS[q]) o.classList.add('correct-ans');
+      else if (i === val)  o.classList.add('wrong-ans');
+    });
+    if (val !== P0_ANS[q]) allRight = false;
+  }
+
+  const fb = document.getElementById('feedback-0');
+  if (!allSel) {
+    fb.textContent = '⚠ Please select an answer for all three questions first.';
+    fb.className = 'feedback wrong';
+    // un-lock options that were locked
+    document.querySelectorAll('#panel-0 .opt').forEach(o => o.classList.remove('locked', 'correct-ans', 'wrong-ans'));
+    return;
+  }
+
+  if (allRight) {
+    fb.textContent = '✅ All three correct! ' + P0_EXP[2];
+    fb.className = 'feedback correct';
+    markDone(0, 'gold');
+  } else {
+    fb.textContent = '❌ One or more incorrect — correct options highlighted in green. ' + P0_EXP.join(' ');
+    fb.className = 'feedback wrong';
+    markDone(0, 'green');
+  }
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+// PANEL 1 — DNS Sequence Sort
+// ═════════════════════════════════════════════════════════════════════════════
+const SEQ_STEPS = [
+  'The student types www.fernsidelibrary.ac.uk into the browser.',
+  'The browser checks its local DNS cache — no IP address is stored yet.',
+  'The browser sends a DNS query to the DNS resolver provided by the school\'s ISP.',
+  'The DNS resolver queries authoritative Domain Name Servers across the DNS hierarchy to find the IP address.',
+  'The IP address is returned to the browser by the DNS resolver.',
+  'The browser uses the IP address to connect to the web server and request the page.'
+];
+
+let seqOrder  = [];
+let seqDragSrc = null;
+
+function resetSeq() {
+  seqOrder = SEQ_STEPS.map((_, i) => i);
+  // Fisher-Yates — ensure not already correct
+  do {
+    for (let i = seqOrder.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [seqOrder[i], seqOrder[j]] = [seqOrder[j], seqOrder[i]];
+    }
+  } while (seqOrder.every((v, i) => v === i));
+  renderSeq();
+  document.getElementById('feedback-1').className = 'feedback';
+  document.getElementById('feedback-1').textContent = '';
+}
+
+function renderSeq() {
+  const list = document.getElementById('seq-list');
+  list.innerHTML = '';
+  seqOrder.forEach((stepIdx, pos) => {
+    const li = document.createElement('li');
+    li.className = 'seq-item';
+    li.draggable = true;
+    li.dataset.pos = pos;
+    li.innerHTML =
+      '<span class="seq-handle">⠿</span>' +
+      '<span class="seq-num">' + (pos + 1) + '</span>' +
+      '<span style="flex:1;">' + SEQ_STEPS[stepIdx] + '</span>';
+    li.addEventListener('dragstart', seqDragStart);
+    li.addEventListener('dragover',  seqDragOver);
+    li.addEventListener('dragleave', seqDragLeave);
+    li.addEventListener('drop',      seqDrop);
+    li.addEventListener('dragend',   seqDragEnd);
+    list.appendChild(li);
+  });
+}
+
+function seqDragStart(e) {
+  seqDragSrc = +e.currentTarget.dataset.pos;
+  setTimeout(() => e.currentTarget.classList.add('dragging'), 0);
+  e.dataTransfer.effectAllowed = 'move';
+}
+function seqDragOver(e) {
+  e.preventDefault();
+  const t = e.currentTarget;
+  t.classList.remove('drag-over-top', 'drag-over-bottom');
+  const mid = t.getBoundingClientRect().top + t.getBoundingClientRect().height / 2;
+  t.classList.add(e.clientY < mid ? 'drag-over-top' : 'drag-over-bottom');
+}
+function seqDragLeave(e) {
+  e.currentTarget.classList.remove('drag-over-top', 'drag-over-bottom');
+}
+function seqDrop(e) {
+  e.preventDefault();
+  const t = e.currentTarget;
+  const targetPos = +t.dataset.pos;
+  const insertBefore = t.classList.contains('drag-over-top');
+  t.classList.remove('drag-over-top', 'drag-over-bottom');
+  if (seqDragSrc === null || seqDragSrc === targetPos) return;
+  const moved = seqOrder.splice(seqDragSrc, 1)[0];
+  let at = targetPos > seqDragSrc ? targetPos - 1 : targetPos;
+  if (!insertBefore) at++;
+  seqOrder.splice(at, 0, moved);
+  renderSeq();
+}
+function seqDragEnd(e) {
+  e.currentTarget.classList.remove('dragging');
+  seqDragSrc = null;
+}
+
+function checkSeq() {
+  if (!window.Classroom?.verifyAuth()) return;
+  if (completed[1]) return;
+  const items = document.querySelectorAll('#seq-list .seq-item');
+  let allRight = true;
+  seqOrder.forEach((stepIdx, pos) => {
+    items[pos].classList.remove('correct-seq', 'wrong-seq');
+    if (stepIdx === pos) items[pos].classList.add('correct-seq');
+    else { items[pos].classList.add('wrong-seq'); allRight = false; }
+  });
+  const fb = document.getElementById('feedback-1');
+  if (allRight) {
+    fb.textContent = '✅ Correct order! The lookup starts with the local cache, escalates to the ISP\'s DNS resolver, which queries the DNS hierarchy, gets the IP, and finally the browser connects to the web server.';
+    fb.className = 'feedback correct';
+    markDone(1, firstAttempt[1] ? 'gold' : 'green');
+    items.forEach(li => li.draggable = false);
+  } else {
+    if (firstAttempt[1]) firstAttempt[1] = false;
+    fb.textContent = '❌ Some steps are out of order — highlighted in red. Study the sequence and try again.';
+    fb.className = 'feedback wrong';
+    setTimeout(() => {
+      items.forEach(li => { li.classList.remove('correct-seq', 'wrong-seq'); });
+    }, 2500);
+  }
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+// PANEL 2 — Classify Servers
+// ═════════════════════════════════════════════════════════════════════════════
+const CL_ITEMS = [
+  { id: 'ci1', text: 'Responds to HTTP requests from browsers by sending HTML pages', zone: 'web' },
+  { id: 'ci2', text: 'Hosts the hospital\'s public website files, making them accessible to anyone on the Internet', zone: 'web' },
+  { id: 'ci3', text: 'Stores and manages shared patient-record documents for staff on the hospital LAN', zone: 'file' },
+  { id: 'ci4', text: 'Controls which staff accounts have read or write access to shared folders', zone: 'file' },
+  { id: 'ci5', text: 'Routes emails between consultants and wards within the hospital', zone: 'mail' },
+  { id: 'ci6', text: 'Handles incoming and outgoing SMTP/IMAP messages for staff email accounts', zone: 'mail' },
+  { id: 'ci7', text: 'Provides MRI-analysis software accessible through a browser — no local installation needed', zone: 'cloud' },
+  { id: 'ci8', text: 'Runs data-intensive diagnostic processing on remote servers owned by a third-party provider', zone: 'cloud' },
+];
+
+let clPlaced = {}; // itemId → zone
+let clDragId  = null;
+
+function resetClassify() {
+  clPlaced = {};
+  document.querySelectorAll('.classify-zone').forEach(z => z.classList.remove('correct-zone', 'wrong-zone'));
+  document.getElementById('feedback-2').textContent = '';
+  document.getElementById('feedback-2').className = 'feedback';
+  buildClassify();
+}
+
+function buildClassify() {
+  const bank = document.getElementById('item-bank');
+  bank.innerHTML = '';
+  ['web','file','mail','cloud'].forEach(z => { document.getElementById('drop-' + z).innerHTML = ''; });
+
+  const shuffled = [...CL_ITEMS].sort(() => Math.random() - .5);
+  shuffled.forEach(item => {
+    const chip = document.createElement('div');
+    chip.className = 'drag-chip';
+    chip.id = 'chip-' + item.id;
+    chip.textContent = item.text;
+    chip.draggable = true;
+    chip.dataset.cid = item.id;
+    chip.addEventListener('dragstart', e => { clDragId = e.currentTarget.dataset.cid; e.dataTransfer.effectAllowed = 'move'; });
+    bank.appendChild(chip);
+  });
+
+  ['web','file','mail','cloud'].forEach(zone => {
+    const drop = document.getElementById('drop-' + zone);
+    const zoneEl = document.getElementById('zone-' + zone);
+    [drop, zoneEl.querySelector('.zone-header')].forEach(el => {
+      el.addEventListener('dragover',  e => { e.preventDefault(); zoneEl.classList.add('drag-over'); });
+      el.addEventListener('dragleave', () => zoneEl.classList.remove('drag-over'));
+      el.addEventListener('drop',      e => clDrop(e, zone, zoneEl, drop));
+    });
+  });
+}
+
+function clDrop(e, zone, zoneEl, drop) {
+  e.preventDefault();
+  zoneEl.classList.remove('drag-over');
+  if (!clDragId) return;
+
+  // Remove from previous zone
+  const prev = clPlaced[clDragId];
+  if (prev) {
+    const el = document.querySelector('[data-placed="' + clDragId + '"]');
+    if (el) el.remove();
+  }
+
+  clPlaced[clDragId] = zone;
+  document.getElementById('chip-' + clDragId).classList.add('placed');
+
+  const placed = document.createElement('div');
+  placed.className = 'chip-placed';
+  placed.dataset.placed = clDragId;
+  placed.textContent = CL_ITEMS.find(i => i.id === clDragId).text;
+  placed.addEventListener('click', () => {
+    const cid = placed.dataset.placed;
+    delete clPlaced[cid];
+    document.getElementById('chip-' + cid).classList.remove('placed');
+    placed.remove();
+  });
+  drop.appendChild(placed);
+  clDragId = null;
+}
+
+function checkClassify() {
+  if (!window.Classroom?.verifyAuth()) return;
+  if (completed[2]) return;
+  if (Object.keys(clPlaced).length < CL_ITEMS.length) {
+    const fb = document.getElementById('feedback-2');
+    fb.textContent = '⚠ Please classify all ' + CL_ITEMS.length + ' items first (' + Object.keys(clPlaced).length + ' placed so far).';
+    fb.className = 'feedback wrong';
+    return;
+  }
+  let correct = 0;
+  ['web','file','mail','cloud'].forEach(zone => {
+    const zoneItems = CL_ITEMS.filter(i => i.zone === zone);
+    const allRight  = zoneItems.every(i => clPlaced[i.id] === zone);
+    const zoneEl    = document.getElementById('zone-' + zone);
+    zoneEl.classList.remove('correct-zone', 'wrong-zone');
+    zoneEl.classList.add(allRight ? 'correct-zone' : 'wrong-zone');
+    if (allRight) correct += zoneItems.length;
+  });
+  const fb = document.getElementById('feedback-2');
+  if (correct === CL_ITEMS.length) {
+    fb.textContent = '✅ All 8 correctly classified! Web servers deliver pages via HTTP; file servers manage shared storage; mail servers handle email; cloud services provide remote software, storage, or processing.';
+    fb.className = 'feedback correct';
+    markDone(2, firstAttempt[2] ? 'gold' : 'green');
+  } else {
+    if (firstAttempt[2]) firstAttempt[2] = false;
+    fb.textContent = '❌ ' + correct + ' / 8 correct — zones with errors are outlined in red. Click placed items to return them to the bank and try again.';
+    fb.className = 'feedback wrong';
+  }
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+// PANEL 3 — The Cloud (True/False + MCQ)
+// ═════════════════════════════════════════════════════════════════════════════
+const TF_DATA = [
+  { s: 'Cloud services store and process data on remote servers in data centres — not on the user\'s own device.', a: true,  e: 'Correct — the "cloud" is a network of remote servers; your data and processing happen off-site in data centres.' },
+  { s: 'To use cloud computing, a company must purchase and maintain its own physical server hardware.', a: false, e: 'False — the service provider owns the hardware. The company pays for access, avoiding capital expenditure.' },
+  { s: 'Cloud software (e.g. Google Docs) is usually accessed via a web browser with no local installation required.', a: true,  e: 'Correct — this is "Software as a Service": the application runs on remote servers and is delivered through the browser.' },
+  { s: 'A disadvantage of cloud storage is that files can only be accessed from a single device.', a: false, e: 'False — the opposite is an advantage: cloud-stored files can be accessed from any Internet-connected device.' },
+  { s: 'Cloud processing allows computationally intensive tasks to be offloaded to powerful remote servers.', a: true,  e: 'Correct — organisations can rent processing power for tasks such as AI training or video rendering without buying the hardware.' },
+  { s: 'When using cloud services, your data is always stored in the same country as you are.', a: false, e: 'False — cloud data may be stored in data centres worldwide, which can raise concerns about data sovereignty and privacy law.' },
+];
+
+let tfSel = {};
+
+function buildTF() {
+  tfSel = {};
+  const list = document.getElementById('tf-list');
+  list.innerHTML = '';
+  TF_DATA.forEach((item, i) => {
+    tfSel[i] = null;
+    list.innerHTML +=
+      '<div class="tf-item" id="tfi-' + i + '">' +
+        '<div class="tf-body">' +
+          '<div class="tf-stmt">' + item.s + '</div>' +
+          '<div class="tf-explain" id="tfe-' + i + '">' + item.e + '</div>' +
+        '</div>' +
+        '<div class="tf-btns">' +
+          '<button class="tf-btn" id="tfT-' + i + '" onclick="setTF(' + i + ',true)">True</button>' +
+          '<button class="tf-btn" id="tfF-' + i + '" onclick="setTF(' + i + ',false)">False</button>' +
+        '</div>' +
+      '</div>';
+  });
+}
+
+function setTF(i, val) {
+  if (completed[3]) return;
+  tfSel[i] = val;
+  document.getElementById('tfT-' + i).className = 'tf-btn' + (val === true  ? ' sel-true'  : '');
+  document.getElementById('tfF-' + i).className = 'tf-btn' + (val === false ? ' sel-false' : '');
+}
+
+function checkCloud() {
+  if (!window.Classroom?.verifyAuth()) return;
+  if (completed[3]) return;
+
+  const unanswered = TF_DATA.some((_, i) => tfSel[i] === null);
+  const mcSel = document.querySelector('input[name="q3mc"]:checked');
+  if (unanswered || !mcSel) {
+    const fb = document.getElementById('feedback-3');
+    fb.textContent = '⚠ Please answer all true/false statements and the scenario question first.';
+    fb.className = 'feedback wrong';
+    return;
+  }
+
+  let tfRight = 0;
+  TF_DATA.forEach((item, i) => {
+    const row = document.getElementById('tfi-' + i);
+    row.classList.remove('correct-item', 'wrong-item');
+    document.getElementById('tfT-' + i).classList.add('locked');
+    document.getElementById('tfF-' + i).classList.add('locked');
+    if (tfSel[i] === item.a) { row.classList.add('correct-item'); tfRight++; }
+    else row.classList.add('wrong-item');
+  });
+
+  const mcVal = +mcSel.value;
+  document.querySelectorAll('#opts-3mc .opt').forEach((o, i) => {
+    o.classList.add('locked');
+    if (i === 2)  o.classList.add('correct-ans');
+    else if (i === mcVal) o.classList.add('wrong-ans');
+  });
+  const mcRight = mcVal === 2;
+
+  const total = TF_DATA.length + 1;
+  const got   = tfRight + (mcRight ? 1 : 0);
+  const fb    = document.getElementById('feedback-3');
+
+  if (got === total) {
+    fb.textContent = '✅ All ' + total + ' correct! Cloud computing delivers storage, software, and processing remotely — no local hardware required.';
+    fb.className = 'feedback correct';
+    markDone(3, firstAttempt[3] ? 'gold' : 'green');
+  } else {
+    if (firstAttempt[3]) firstAttempt[3] = false;
+    fb.textContent = '❌ ' + got + ' / ' + total + ' correct — incorrect answers shown in red with explanations.';
+    fb.className = 'feedback wrong';
+    markDone(3, 'green');
+  }
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+// PANEL 4 — Fill in the blanks + MCQ
+// ═════════════════════════════════════════════════════════════════════════════
+const BLANK_SEGS = [
+  { t: "When Maya's phone loads her bank's website, the phone is acting as the " },
+  { b: 'client',        d: ['server', 'DNS resolver', 'peer'] },
+  { t: '. It sends an HTTP ' },
+  { b: 'request',       d: ['broadcast', 'query', 'upload'] },
+  { t: " to the bank's " },
+  { b: 'web server',    d: ['file server', 'mail server', 'DNS resolver'] },
+  { t: ', which stores the website files. The web server ' },
+  { b: 'responds',      d: ['ignores', 'queries', 'broadcasts'] },
+  { t: " by sending the requested HTML page back to Maya's browser. When Maya checks her balance, the web server also acts as a client to the bank's " },
+  { b: 'database',      d: ['DNS', 'cloud', 'file server'] },
+  { t: ' server, sending ' },
+  { b: 'queries',       d: ['pings', 'uploads', 'requests'] },
+  { t: ' to retrieve her account data. This arrangement — one device requests services, another provides them — is the ' },
+  { b: 'client-server', d: ['peer-to-peer', 'cloud', 'mesh'] },
+  { t: ' model.' },
+];
+
+function buildBlanks() {
+  const para = document.getElementById('blank-para');
+  para.innerHTML = '';
+  BLANK_SEGS.forEach(seg => {
+    if (seg.t !== undefined) {
+      para.appendChild(document.createTextNode(seg.t));
+    } else {
+      const sel = document.createElement('select');
+      sel.className = 'blank-sel';
+      sel.dataset.correct = seg.b;
+      const opts = [seg.b, ...seg.d].sort(() => Math.random() - .5);
+      const ph = document.createElement('option');
+      ph.value = ''; ph.textContent = '— choose —';
+      sel.appendChild(ph);
+      opts.forEach(o => {
+        const op = document.createElement('option');
+        op.value = o; op.textContent = o;
+        sel.appendChild(op);
+      });
+      para.appendChild(sel);
+    }
+  });
+}
+
+function checkBlanks() {
+  if (!window.Classroom?.verifyAuth()) return;
+  if (completed[4]) return;
+
+  const selects = document.querySelectorAll('#blank-para .blank-sel');
+  const mcSel   = document.querySelector('input[name="q4mc"]:checked');
+
+  const anyEmpty = [...selects].some(s => !s.value);
+  if (anyEmpty || !mcSel) {
+    const fb = document.getElementById('feedback-4');
+    fb.textContent = '⚠ Please fill all blanks and answer the multiple-choice question.';
+    fb.className = 'feedback wrong';
+    return;
+  }
+
+  let blanksRight = 0;
+  selects.forEach(sel => {
+    sel.disabled = true;
+    sel.classList.remove('correct-blank', 'wrong-blank');
+    if (sel.value === sel.dataset.correct) { sel.classList.add('correct-blank'); blanksRight++; }
+    else sel.classList.add('wrong-blank');
+  });
+
+  const mcVal   = +mcSel.value;
+  const mcRight = mcVal === 1;
+  document.querySelectorAll('#opts-4mc .opt').forEach((o, i) => {
+    o.classList.add('locked');
+    if (i === 1)  o.classList.add('correct-ans');
+    else if (i === mcVal) o.classList.add('wrong-ans');
+  });
+
+  const total = selects.length + 1;
+  const got   = blanksRight + (mcRight ? 1 : 0);
+  const fb    = document.getElementById('feedback-4');
+
+  if (got === total) {
+    fb.textContent = '✅ All answers correct! Maya\'s phone is the client; the web server is the provider; the database server handles data queries behind the scenes.';
+    fb.className = 'feedback correct';
+    markDone(4, firstAttempt[4] ? 'gold' : 'green');
+  } else {
+    if (firstAttempt[4]) firstAttempt[4] = false;
+    fb.textContent = '❌ ' + blanksRight + '/' + selects.length + ' blanks correct, MCQ ' + (mcRight ? '✓' : '✗') + '. Incorrect selections are highlighted in red.';
+    fb.className = 'feedback wrong';
+    markDone(4, 'green');
+  }
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+// PANEL 5 — Peer Marking
+// ═════════════════════════════════════════════════════════════════════════════
+const PM_DATA = [
+  {
+    text: '"DNS converts IP addresses into human-readable domain names so that web servers know where to send web pages."',
+    isError: true,
+    fb: '✗ Error: DNS does the opposite — it converts human-readable domain names (URLs) into numerical IP addresses that computers use to locate the correct server.'
+  },
+  {
+    text: '"The Domain Name System is a distributed network of multiple Domain Name Servers working together in a hierarchy."',
+    isError: false,
+    fb: '✓ Correct — DNS is spread across millions of servers worldwide (root servers, TLD servers, authoritative nameservers), not stored on a single machine.'
+  },
+  {
+    text: '"When you type a URL, your device first checks its local DNS cache to see if the IP address is already stored from a previous visit."',
+    isError: false,
+    fb: '✓ Correct — checking the local cache avoids an unnecessary network lookup and makes browsing faster.'
+  },
+  {
+    text: '"If the IP address is not in the cache, your browser contacts the single global DNS server, which stores every domain name in the world."',
+    isError: true,
+    fb: '✗ Error: There is no single global DNS server. The DNS is a distributed hierarchy; root servers, TLD servers, and authoritative nameservers share the load across the entire Internet.'
+  },
+  {
+    text: '"Web hosting means storing a website\'s files on a web server that is permanently connected to the Internet, ready to serve pages to any client that sends an HTTP request."',
+    isError: false,
+    fb: '✓ Correct — hosting a site means placing its files on a publicly accessible server that responds to HTTP requests at all times.'
+  },
+  {
+    text: '"Once the IP address has been found, the browser contacts the web server. The web server then sends a DNS query back to confirm the address is valid before serving the page."',
+    isError: true,
+    fb: '✗ Error: The web server does not send a DNS query. DNS has already finished at this point. The web server simply responds to the browser\'s HTTP request by sending the requested page (HTML, images, etc.).'
+  },
+];
+
+let pmSel = {};
+
+function buildPM() {
+  pmSel = {};
+  const list = document.getElementById('pm-list');
+  list.innerHTML = '';
+  PM_DATA.forEach((item, i) => {
+    pmSel[i] = null;
+    const div = document.createElement('div');
+    div.className = 'pm-item';
+    div.id = 'pmi-' + i;
+    div.innerHTML =
+      '<div class="pm-row">' +
+        '<div class="pm-num">' + (i + 1) + '</div>' +
+        '<div class="pm-stmt">' + item.text + '</div>' +
+        '<div class="pm-btns">' +
+          '<button class="pm-btn" id="pmOk-' + i + '" onclick="setPM(' + i + ',false)">✓ Correct</button>' +
+          '<button class="pm-btn" id="pmEr-' + i + '" onclick="setPM(' + i + ',true)">✗ Error</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="pm-feedback" id="pmfb-' + i + '">' + item.fb + '</div>';
+    list.appendChild(div);
+  });
+}
+
+function setPM(i, isError) {
+  if (document.getElementById('pmOk-' + i).classList.contains('locked')) return;
+  pmSel[i] = isError;
+  document.getElementById('pmOk-' + i).className = 'pm-btn' + (!isError ? ' sel-ok'  : '');
+  document.getElementById('pmEr-' + i).className = 'pm-btn' + (isError  ? ' sel-err' : '');
+}
+
+function checkPM() {
+  if (!window.Classroom?.verifyAuth()) return;
+  if (completed[5]) return;
+
+  if (PM_DATA.some((_, i) => pmSel[i] === null)) {
+    const fb = document.getElementById('feedback-5');
+    fb.textContent = '⚠ Please mark all ' + PM_DATA.length + ' statements first.';
+    fb.className = 'feedback wrong';
+    return;
+  }
+
+  let correct = 0;
+  PM_DATA.forEach((item, i) => {
+    const row = document.getElementById('pmi-' + i);
+    row.classList.remove('checked-right', 'checked-wrong');
+    document.getElementById('pmOk-' + i).classList.add('locked');
+    document.getElementById('pmEr-' + i).classList.add('locked');
+    if (pmSel[i] === item.isError) { row.classList.add('checked-right'); correct++; }
+    else row.classList.add('checked-wrong');
+  });
+
+  const fb = document.getElementById('feedback-5');
+  if (correct === PM_DATA.length) {
+    fb.textContent = '✅ Perfect peer marking — all 6 statements correctly judged! Key points: DNS converts domain names TO IP addresses (not the reverse), it is a distributed hierarchy (not a single server), and web servers respond with pages — they never send DNS queries.';
+    fb.className = 'feedback correct';
+    markDone(5, firstAttempt[5] ? 'gold' : 'green');
+  } else {
+    if (firstAttempt[5]) firstAttempt[5] = false;
+    fb.textContent = '❌ ' + correct + ' / ' + PM_DATA.length + ' correctly marked. Items in red show where your marking differs from the answer — click Reset to try again.';
+    fb.className = 'feedback wrong';
+  }
+}
+
+function resetPM() {
+  if (completed[5]) return;
+  buildPM();
+  document.getElementById('feedback-5').textContent = '';
+  document.getElementById('feedback-5').className = 'feedback';
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+// Init
+// ═════════════════════════════════════════════════════════════════════════════
+resetSeq();
+buildClassify();
+buildTF();
+buildBlanks();
+buildPM();
+</script>
+<script src="../../classroom.js"></script>
+</body>
+</html>
