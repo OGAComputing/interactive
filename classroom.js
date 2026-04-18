@@ -895,15 +895,20 @@
         // is never overwritten; localStorage is treated as a cache only.
         if (!urlParams.get('proxyUrl')) {
           const discovered = await searchDriveForProxy(accessToken);
-          if (discovered && discovered !== proxyUrl) {
-            proxyUrl = discovered;
-            try { localStorage.setItem('oga_proxy_url', discovered); } catch (_) {}
-            console.log('Classroom: proxy URL updated from Drive');
+          if (discovered) {
+            if (discovered !== proxyUrl) {
+              proxyUrl = discovered;
+              try { localStorage.setItem('oga_proxy_url', discovered); } catch (_) {}
+              console.log('Classroom: proxy URL updated from Drive');
+            }
+          } else if (proxyUrl) {
+            // Drive search found no proxy script — the file was likely deleted.
+            // Clear the cached URL so the teacher is prompted to redeploy a new
+            // one rather than silently failing against a stale endpoint.
+            proxyUrl = null;
+            try { localStorage.removeItem('oga_proxy_url'); } catch (_) {}
+            console.log('Classroom: proxy script not found in Drive — cached URL cleared, teacher will be prompted to redeploy');
           }
-          // If discovered is null the Drive search failed or the script is gone —
-          // keep any existing cached URL as a fallback so we don't lose it on a
-          // transient network error. Grade submission will surface the failure if
-          // the cached URL is also broken.
         }
 
         courseWorkId = await lookupCourseWorkId(accessToken, courseId);
