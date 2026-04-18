@@ -32,7 +32,8 @@
   // classroom.coursework.me — read/turn-in student's own submissions.
   // classroom.courses.readonly — list courses to detect teacher vs student role.
   // openid + email — fetch the student's Google user ID for the proxy call.
-  const SCOPE = 'https://www.googleapis.com/auth/classroom.coursework.me https://www.googleapis.com/auth/classroom.courses.readonly openid email';
+  // drive.file — create and update evidence files the app itself creates.
+  const SCOPE = 'https://www.googleapis.com/auth/classroom.coursework.me https://www.googleapis.com/auth/classroom.courses.readonly openid email https://www.googleapis.com/auth/drive.file';
 
   // Minimum proxy version that this classroom.js is compatible with.
   // Bump this (and PROXY_VERSION in setup.html's PROXY_JS) when making breaking changes.
@@ -56,6 +57,10 @@
 
   let proxyVersionChecked = false;
   let proxyVersionOk      = true; // set to false only when version endpoint confirms it is below minimum
+
+  let userInfo             = null; // { email, name } fetched from Google userinfo after sign-in
+  let isTeacherMode        = false; // true once detectTeacher confirms the signed-in user is a teacher
+  let pendingEvidenceTimer = null; // debounce handle — evidence upload fires 2 s after last submitGrade
 
   // ── Login banner ─────────────────────────────────────────────────────────────
 
@@ -235,7 +240,7 @@
     const text = document.getElementById('classroom-text');
     const btn  = document.getElementById('classroom-signin-btn');
     if (dot)  dot.classList.add('online');
-    if (text) text.textContent = '✅ Connected to Google Classroom — your results will be recorded automatically.';
+    if (text) text.textContent = '✅ Connected to Google Classroom — your results and work evidence are saved automatically.';
     if (btn)  btn.classList.add('hidden');
   }
 
@@ -497,6 +502,345 @@
     }
   }
 
+  // ── Work evidence ─────────────────────────────────────────────────────────────
+  // When a student completes a task, capture all visible answers and upload a
+  // clean HTML evidence report to their Google Drive, then attach it to their
+  // Classroom submission.  Subsequent completions PATCH the same Drive file so
+  // there is always exactly one attachment — no duplicates accumulate.
+
+  async function fetchUserInfo(token) {
+    try {
+      const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo',
+        { headers: { Authorization: `Bearer ${token}` } });
+      if (!res.ok) return null;
+      const d = await res.json();
+      return { email: d.email || '', name: d.name || d.given_name || '' };
+    } catch (_) { return null; }
+  }
+
+  // ── DOM scraper ───────────────────────────────────────────────────────────────
+  // Walks the live page and collects { label, value, type, feedback } for every
+  // answered question.  Handles the three main activity patterns:
+  //   • .q-card  (PRIMM, template-based activities)
+  //   • .qcard / .card  (older spot-the-error / multiple-choice layouts)
+  //   • .code-checker  (code paste areas)
+
+  function scrapeWorkAnswers() {
+    const results        = [];
+    const seenInputs     = new Set();
+    const seenRadioNames = new Set();
+
+    // Exclude the Classroom banner and modal overlays from scraping.
+    const SKIP_SELECTOR = '#classroom-banner,#cr-modal-backdrop,#cr-api-modal-backdrop';
+
+    function isHidden(el) {
+      // Skip elements inside modals / banners, or with display:none
+      if (el.closest(SKIP_SELECTOR)) return true;
+      return false;
+    }
+
+    // Find the most descriptive label for a form element by walking up to a
+    // known container, then looking for a heading/label element inside it.
+    function findLabel(el) {
+      const container = el.closest('.q-card,.qcard,.card,.code-checker,fieldset');
+      if (container) {
+        const lbl = container.querySelector('.q-label,.qtitle,h3,.ch-label,legend');
+        if (lbl) {
+          let t = (lbl.innerText || lbl.textContent || '').trim();
+          // Strip leading question number e.g. "1 What is…" → "What is…"
+          t = t.replace(/^\s*\d+[\s.)]*/, '').trim();
+          if (t) return t;
+        }
+      }
+      if (el.id) {
+        const lbl = document.querySelector(`label[for="${CSS.escape(el.id)}"]`);
+        if (lbl) return (lbl.innerText || lbl.textContent || '').trim();
+      }
+      return el.placeholder || el.getAttribute('name') || null;
+    }
+
+    // Find pass/fail feedback element near a form element.
+    function findFeedback(el) {
+      const container = el.closest('.q-card,.qcard,.card,.code-checker,.checker-footer');
+      if (!container) return null;
+      // Explicit feedback elements
+      const fb = container.querySelector(
+        '.mcq-fb.pass,.mcq-fb.fail,.feedback.pass,.feedback.fail'
+      );
+      if (fb) {
+        return {
+          passed : fb.classList.contains('pass'),
+          text   : (fb.innerText || fb.textContent || '').trim()
+        };
+      }
+      // Container-level class (correct/wrong card border changes)
+      if (container.classList.contains('correct') ||
+          container.classList.contains('answered-correct')) return { passed: true,  text: '' };
+      if (container.classList.contains('incorrect') ||
+          container.classList.contains('answered-wrong'))  return { passed: false, text: '' };
+      return null;
+    }
+
+    // 1. Text inputs and textareas that have content
+    document.querySelectorAll('input[type="text"],textarea').forEach(el => {
+      if (seenInputs.has(el) || isHidden(el)) return;
+      if (!el.value.trim()) return;
+      seenInputs.add(el);
+      const isCode = !!el.closest('.code-checker') ||
+                     el.classList.contains('checker-textarea');
+      results.push({
+        label    : findLabel(el) || (isCode ? 'Code submission' : 'Response'),
+        value    : el.value,
+        type     : isCode ? 'code' : 'text',
+        feedback : findFeedback(el)
+      });
+    });
+
+    // 2. Radio buttons — one entry per named group (the selected option)
+    document.querySelectorAll('input[type="radio"]:checked').forEach(el => {
+      if (seenRadioNames.has(el.name) || isHidden(el)) return;
+      seenRadioNames.add(el.name);
+      const optEl = el.closest('label,.radio-opt,.mc-option');
+      let value = optEl
+        ? (optEl.innerText || optEl.textContent || '').trim()
+        : el.value;
+      // Strip stray radio-button characters that appear in innerText
+      value = value.replace(/^[\s●○◉◎·•]+/, '').trim();
+      results.push({
+        label    : findLabel(el) || el.name,
+        value,
+        type     : 'choice',
+        feedback : findFeedback(el)
+      });
+    });
+
+    return results;
+  }
+
+  // ── HTML report builder ───────────────────────────────────────────────────────
+  function buildEvidenceHtml(activityTitle, score) {
+    function esc(s) {
+      return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    const now = new Date().toLocaleString('en-GB', {
+      dateStyle: 'full', timeStyle: 'short'
+    });
+    const studentLabel = userInfo
+      ? esc(userInfo.name || '') + (userInfo.email ? ' &lt;' + esc(userInfo.email) + '&gt;' : '')
+      : 'Student';
+    const scoreHtml = score !== null && score !== undefined
+      ? `<div class="ev-score"><div class="score-num">${Number(score)}%</div><div class="score-label">Score</div></div>`
+      : '';
+
+    const answers = scrapeWorkAnswers();
+    const sectionsHtml = answers.length === 0
+      ? '<p class="ev-empty">No answers recorded yet — the student has not completed any tasks.</p>'
+      : answers.map((a, i) => {
+          const typeIcon  = { text: '📝', code: '💻', choice: '🔘' }[a.type] || '📝';
+          const typeLabel = { text: 'Written answer', code: 'Code', choice: 'Multiple choice' }[a.type] || 'Response';
+          const answerHtml = a.value.trim()
+            ? (a.type === 'code'
+                ? `<pre class="ev-answer code">${esc(a.value)}</pre>`
+                : `<div class="ev-answer">${esc(a.value)}</div>`)
+            : `<div class="ev-answer empty">(no answer entered)</div>`;
+          const fbHtml = a.feedback
+            ? `<div class="ev-feedback ${a.feedback.passed ? 'pass' : 'fail'}">${esc(a.feedback.text || (a.feedback.passed ? '✅ Correct' : '❌ Incorrect'))}</div>`
+            : '';
+          return `
+    <div class="ev-section">
+      <div class="ev-label">${typeIcon} ${esc(typeLabel)} · Q${i + 1}</div>
+      <div class="ev-question">${esc(a.label)}</div>
+      ${answerHtml}${fbHtml}
+    </div>`;
+        }).join('');
+
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${esc(activityTitle)} — Work Evidence</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',system-ui,sans-serif;background:#f1f5f9;color:#1e293b;padding:20px;min-height:100vh}
+  .ev-wrap{max-width:820px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.12)}
+  .ev-head{background:linear-gradient(135deg,#1e3a5f 0%,#0f2040 100%);color:#fff;padding:24px 28px;border-bottom:3px solid #3b82f6;overflow:hidden}
+  .ev-score{float:right;background:rgba(59,130,246,.25);border:1px solid rgba(59,130,246,.5);border-radius:10px;padding:10px 18px;text-align:center;margin:0 0 8px 16px}
+  .ev-score .score-num{font-size:2rem;font-weight:800;line-height:1;color:#fff}
+  .ev-score .score-label{font-size:.7rem;color:#93c5fd;margin-top:2px}
+  .ev-title{font-size:1.35rem;font-weight:700;margin-bottom:3px}
+  .ev-subtitle{font-size:.92rem;color:#93c5fd;margin-bottom:10px}
+  .ev-meta{font-size:.78rem;color:#bfdbfe;display:flex;flex-wrap:wrap;gap:4px 16px}
+  .ev-body{padding:24px 28px}
+  .ev-section{margin-bottom:22px;padding-bottom:20px;border-bottom:1px solid #f1f5f9}
+  .ev-section:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+  .ev-label{font-size:.7rem;font-weight:700;text-transform:uppercase;color:#64748b;letter-spacing:.06em;margin-bottom:5px}
+  .ev-question{font-size:.93rem;font-weight:600;color:#334155;margin-bottom:9px;line-height:1.5}
+  .ev-answer{background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:8px;padding:11px 14px;font-size:.91rem;color:#1e293b;white-space:pre-wrap;word-break:break-word;line-height:1.6}
+  .ev-answer.code{font-family:'Cascadia Code','Consolas','Courier New',monospace;font-size:.82rem;background:#0f172a;color:#e2e8f0;border-color:#1e293b;overflow-x:auto}
+  .ev-answer.empty{color:#94a3b8;font-style:italic}
+  .ev-feedback{margin-top:8px;font-size:.82rem;font-weight:600;padding:6px 10px;border-radius:6px}
+  .ev-feedback.pass{background:#dcfce7;color:#166534;border:1px solid #86efac}
+  .ev-feedback.fail{background:#fee2e2;color:#991b1b;border:1px solid #fca5a5}
+  .ev-empty{color:#94a3b8;font-style:italic;font-size:.9rem}
+  .ev-footer{text-align:center;font-size:.72rem;color:#94a3b8;padding:14px 28px;border-top:1px solid #f1f5f9;background:#fafafa}
+  @media print{body{background:#fff;padding:0}.ev-wrap{box-shadow:none;border-radius:0}}
+</style>
+</head>
+<body>
+<div class="ev-wrap">
+  <div class="ev-head">
+    ${scoreHtml}
+    <div class="ev-title">📋 Work Evidence</div>
+    <div class="ev-subtitle">${esc(activityTitle)}</div>
+    <div class="ev-meta">
+      <span>👤 ${studentLabel}</span>
+      <span>🕐 ${esc(now)}</span>
+      <span>🔗 ${esc(window.location.pathname)}</span>
+    </div>
+  </div>
+  <div class="ev-body">${sectionsHtml}
+  </div>
+  <div class="ev-footer">OGA Computing Interactive · Work Evidence · ${esc(now)}</div>
+</div>
+</body>
+</html>`;
+  }
+
+  // ── Drive API helpers ─────────────────────────────────────────────────────────
+
+  async function driveCreateFile(filename, html) {
+    const boundary = 'ev' + Date.now().toString(36);
+    const meta     = JSON.stringify({ name: filename, mimeType: 'text/html' });
+    const body     =
+      `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${meta}\r\n` +
+      `--${boundary}\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n${html}\r\n` +
+      `--${boundary}--`;
+    const res = await fetch(
+      'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id',
+      {
+        method  : 'POST',
+        headers : {
+          Authorization  : `Bearer ${accessToken}`,
+          'Content-Type' : `multipart/related; boundary=${boundary}`
+        },
+        body
+      }
+    );
+    if (!res.ok) throw new Error(`Drive create ${res.status}: ${await res.text().catch(() => '')}`);
+    return (await res.json()).id;
+  }
+
+  async function driveUpdateFile(fileId, html) {
+    const res = await fetch(
+      `https://www.googleapis.com/upload/drive/v3/files/${encodeURIComponent(fileId)}?uploadType=media`,
+      {
+        method  : 'PATCH',
+        headers : {
+          Authorization  : `Bearer ${accessToken}`,
+          'Content-Type' : 'text/html; charset=UTF-8'
+        },
+        body : html
+      }
+    );
+    if (!res.ok) {
+      const err = Object.assign(new Error(`Drive update ${res.status}`), { status: res.status });
+      throw err;
+    }
+    return fileId;
+  }
+
+  async function classroomAddAttachment(fileId) {
+    if (!courseId || !courseWorkId || !submissionId) return;
+    const res = await fetch(
+      `https://classroom.googleapis.com/v1/courses/${courseId}/courseWork/${courseWorkId}` +
+      `/studentSubmissions/${submissionId}:modifyAttachments`,
+      {
+        method  : 'POST',
+        headers : {
+          Authorization  : `Bearer ${accessToken}`,
+          'Content-Type' : 'application/json'
+        },
+        body : JSON.stringify({ addAttachments: [{ driveFile: { id: fileId } }] })
+      }
+    );
+    if (!res.ok) {
+      throw new Error(`modifyAttachments ${res.status}: ${await res.text().catch(() => '')}`);
+    }
+  }
+
+  // ── Upload orchestrator ───────────────────────────────────────────────────────
+
+  async function doUploadWorkEvidence(activityName, score) {
+    if (!accessToken || !isClassroomContext || isTeacherMode) return;
+    if (!courseWorkId || !submissionId) return;
+
+    const storageKey = `oga_ev_${courseId}_${courseWorkId}`;
+    let saved = null;
+    try { saved = JSON.parse(localStorage.getItem(storageKey) || 'null'); } catch (_) {}
+
+    const safeName = (activityName || 'Activity').replace(/[^a-z0-9 \-]/gi, '_').trim();
+    const filename  = `${safeName} — Work Evidence.html`;
+
+    let html;
+    try { html = buildEvidenceHtml(activityName, score); } catch (e) {
+      console.error('Classroom: evidence HTML build failed', e); return;
+    }
+
+    // Upload: update existing file, or create a new one if missing/deleted.
+    let fileId = saved?.fileId || null;
+    let newFile = false;
+    try {
+      if (fileId) {
+        try {
+          await driveUpdateFile(fileId, html);
+        } catch (e) {
+          if (e.status === 404) { fileId = null; }  // file was deleted — fall through to create
+          else throw e;
+        }
+      }
+      if (!fileId) {
+        fileId = await driveCreateFile(filename, html);
+        newFile = true;
+      }
+    } catch (e) {
+      console.error('Classroom: Drive evidence upload failed', e);
+      return;
+    }
+
+    // Add to submission once (the attachment link stays valid as the file is updated in place).
+    const alreadyAttached = saved?.attachmentAdded && !newFile;
+    if (!alreadyAttached) {
+      try {
+        await classroomAddAttachment(fileId);
+        try { localStorage.setItem(storageKey, JSON.stringify({ fileId, attachmentAdded: true })); } catch (_) {}
+        showClassroomToast('📎 Work evidence attached ✅');
+      } catch (e) {
+        console.warn('Classroom: could not attach evidence to submission', e);
+        try { localStorage.setItem(storageKey, JSON.stringify({ fileId, attachmentAdded: false })); } catch (_) {}
+        showClassroomToast('📎 Work evidence saved to Drive ✅');
+      }
+    } else {
+      try { localStorage.setItem(storageKey, JSON.stringify({ fileId, attachmentAdded: true })); } catch (_) {}
+      // File updated silently — grade toast already shown, no second toast needed.
+      console.log(`Classroom: evidence updated for "${activityName}" (fileId: ${fileId})`);
+    }
+  }
+
+  // Debounce: when submitGrade is called several times in quick succession
+  // (e.g. each code check fires a score update), wait for things to settle
+  // before taking a DOM snapshot and uploading.
+  function scheduleEvidenceUpload(activityName, score) {
+    if (pendingEvidenceTimer) clearTimeout(pendingEvidenceTimer);
+    pendingEvidenceTimer = setTimeout(() => {
+      pendingEvidenceTimer = null;
+      doUploadWorkEvidence(activityName, score);
+    }, 2000);
+  }
+
   // ── OAuth ─────────────────────────────────────────────────────────────────────
 
   function initTokenClient() {
@@ -527,6 +871,8 @@
         }
 
         accessToken = tokenResponse.access_token;
+        userInfo    = await fetchUserInfo(accessToken);
+
         courseWorkId = await lookupCourseWorkId(accessToken, courseId);
         if (!courseWorkId) {
           // Assignment not found in the URL's courseId — likely a "Re-use post" link
@@ -540,6 +886,7 @@
         submissionId = await lookupSubmissionId(accessToken, courseWorkId);
 
         const isTeacher = await detectTeacher(accessToken);
+        isTeacherMode = isTeacher;
         if (isTeacher) {
           setBannerTeacher(!!proxyUrl);
           if (!proxyUrl) {
@@ -582,6 +929,11 @@
      */
     async submitGrade(gradePercent, activityName) {
       if (!accessToken) return;
+
+      // Always schedule a work evidence upload when a student completes a task,
+      // regardless of whether the grade proxy is configured.
+      scheduleEvidenceUpload(activityName, gradePercent);
+
       if (!proxyUrl) {
         console.error('Classroom: grade not submitted — no proxy URL configured.');
         showClassroomToast('⚠️ Grade not saved — proxy not configured.');
