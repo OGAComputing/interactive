@@ -459,6 +459,14 @@
     showClassroomToast('⚠️ Proxy outdated — please redeploy.');
   }
 
+  function showProxyCorsWarning() {
+    const text = document.getElementById('classroom-text');
+    if (text) text.textContent = '⚠️ Proxy not accessible — redeploy the Apps Script with "Anyone" access (not "Anyone with Google account").';
+    const dot = document.getElementById('classroom-dot');
+    if (dot) { dot.style.background = '#ef4444'; dot.style.boxShadow = '0 0 8px #ef4444'; }
+    showClassroomToast('⚠️ Proxy blocked — teacher must redeploy with "Anyone" access.');
+  }
+
   async function checkProxyVersion() {
     if (!proxyUrl || proxyVersionChecked) return;
     proxyVersionChecked = true;
@@ -475,7 +483,21 @@
         showProxyOutdatedWarning();
       }
     } catch (_) {
-      // Network error — don't warn or block
+      // fetch threw — could be a true network error or a CORS block (e.g. proxy deployed with
+      // "Anyone with Google account" access, causing Google to redirect to Sign-In which has
+      // no CORS headers).  A no-cors probe distinguishes the two: if it succeeds with an
+      // opaque response, the URL is reachable but CORS-blocked → deployment issue.
+      try {
+        const probe = await fetch(proxyUrl + '?action=version', { mode: 'no-cors' });
+        if (probe.type === 'opaque') {
+          // URL is reachable but cross-origin access is blocked — proxy needs redeployment
+          proxyVersionOk = false;
+          showProxyCorsWarning();
+          console.error('Classroom: proxy URL is CORS-blocked. The Apps Script must be deployed with "Who has access: Anyone" (not "Anyone with Google account"). Redeploy from the Apps Script editor.');
+        }
+      } catch (_2) {
+        // True network error (offline, bad URL, etc.) — don't warn or block
+      }
     }
   }
 

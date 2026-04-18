@@ -236,6 +236,8 @@
 
   <div class="activate-note" id="activate-note">
     <strong>In the script editor:</strong> click the <strong>Run ▶</strong> button (or select any function and press Run). Google will ask you to grant the proxy access to your Classroom — click <strong>Allow</strong>. You may need to click <em>Advanced → Go to OGA Classroom Grade Proxy (unsafe)</em> to proceed past the unverified app warning. Once done, close the editor tab and click <strong>I've authorised it →</strong> above.
+    <br><br>
+    <strong>⚠️ If you ever need to redeploy the proxy script manually</strong> (e.g. after editing the code in the Apps Script editor), make sure to set <strong>Who has access → Anyone</strong> — <em>not</em> "Anyone with Google account". The wrong setting will silently block all grade submissions with a CORS error. To avoid this, re-run this setup page instead of deploying manually.
   </div>
 
   <div class="error-msg" id="error-msg"></div>
@@ -476,6 +478,23 @@ function out(msg) {
       showApiEnableBox(consoleUrl, errorMessage || text, errorProjectNum);
       return false;
     } catch (e) {
+      // fetch threw — could be a true network error or a CORS block (proxy deployed with
+      // "Anyone with Google account" instead of "Anyone").  A no-cors probe distinguishes
+      // the two: opaque response = URL reachable but CORS-blocked = wrong access setting.
+      try {
+        const probe = await fetch(url + '?action=test', { mode: 'no-cors' });
+        if (probe.type === 'opaque') {
+          markStep(3, 'error');
+          setStepDesc(3, 'Proxy is CORS-blocked — wrong access setting on deployment.');
+          showError(
+            'The proxy deployed successfully but is not accessible cross-origin. ' +
+            'This usually means the Apps Script was deployed with "Anyone with Google account" ' +
+            'instead of "Anyone". Re-run this setup page to create a fresh deployment with the correct settings.'
+          );
+          return false;
+        }
+      } catch (_) {}
+      // True network error (offline, DNS failure, etc.) — skip the test rather than blocking setup
       console.warn('Classroom API test skipped (network error):', e);
       return true;
     }
