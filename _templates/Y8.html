@@ -263,6 +263,11 @@ color:  teal
     const tab = document.querySelector('.tab[data-idx="' + idx + '"]');
     if (tab) tab.classList.add('done');
 
+    // Submit grade (and trigger work evidence upload) after every task, not
+    // just at the end — so evidence is always current as the student progresses.
+    const pct = Math.round(completed.filter(Boolean).length / TASK_COUNT * 100);
+    window.Classroom?.submitGrade(pct, 'Activity Title');
+
     if (completed.every(Boolean)) {
       allComplete();
     }
@@ -271,7 +276,7 @@ color:  teal
   // ── All tasks complete ─────────────────────────────────
   function allComplete() {
     document.getElementById('done-banner').classList.add('show');
-    window.Classroom?.submitGrade(100, 'Activity Title');
+    // Grade (100%) already submitted via markDone — no extra call needed.
   }
 
   // ── Toast helper ───────────────────────────────────────

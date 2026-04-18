@@ -112,3 +112,32 @@ Animations available: `ac-shake`, `ac-fade-in`, `ac-slide-down`, `ac-pulse-accen
 - **Files/folders starting with `_`** are excluded from the manifest (use `_drafts/` for WIP, `_templates/` for starters)
 - **Folder structure determines metadata**: `Y8/` → "Year 8", topic folder names become topic labels, `L<n>_Name` folders become lesson subheadings
 - **Color themes**: The `color:` field in the `<!-- ACTIVITY -->` block controls card styling in the hub; `data-topic` on `<body>` controls the activity's own accent colour
+
+## Mandatory: Grade submission and work evidence
+
+Every activity **must** call `window.Classroom?.submitGrade(percent, activityName)` whenever a student completes a task — not just at the very end. This single call does two things automatically:
+
+1. **Submits the draft grade** to Classroom via the teacher's proxy (if configured)
+2. **Uploads a work evidence snapshot** — an HTML report of all the student's answers, code, and choices — to the student's Google Drive and attaches it to their submission. The file is updated in place on each call, so there is always exactly one attachment.
+
+### Rules for calling `submitGrade`
+
+- Call it inside `markDone()` (or equivalent) with the **current percentage**, not only in `allComplete()`:
+  ```js
+  const pct = Math.round(completed.filter(Boolean).length / TASK_COUNT * 100);
+  window.Classroom?.submitGrade(pct, 'Exact Activity Title');
+  ```
+- The `activityName` string becomes the evidence file name — use the same string throughout the activity.
+- `submitGrade` is a no-op when no `?courseId=` param is present, so it is safe to call unconditionally.
+- Activities with custom scoring (e.g. weighted tasks) should pass the real calculated percentage rather than a simple task-count ratio.
+- Do **not** call `submitGrade` from inside `allComplete()` — `markDone` already fires it for the last task. Calling it twice wastes a Drive upload.
+
+### The evidence report
+
+`classroom.js` automatically scrapes the live DOM for student answers when the debounced upload fires (2 seconds after the last `submitGrade` call). It captures:
+- All `input[type="text"]` and `textarea` values, with their nearest label
+- All selected radio-button choices
+- All `.code-checker` textarea contents
+- Pass / fail feedback where visible
+
+No special markup is required — the report works with the standard `.q-card`, `.code-checker`, and `.card`/`.mc-option` patterns used throughout the codebase. For custom question layouts, ensure each answer element is inside a container that has a visible heading or label element so the scraper can associate a question title with the answer.
