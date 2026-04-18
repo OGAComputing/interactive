@@ -33,7 +33,8 @@
   // classroom.courses.readonly — list courses to detect teacher vs student role.
   // openid + email — fetch the student's Google user ID for the proxy call.
   // drive.file — create and update evidence files the app itself creates.
-  const SCOPE = 'https://www.googleapis.com/auth/classroom.coursework.me https://www.googleapis.com/auth/classroom.courses.readonly openid email https://www.googleapis.com/auth/drive.file';
+  // drive.metadata.readonly + script.deployments — auto-discover the proxy URL from Drive after sign-in.
+  const SCOPE = 'https://www.googleapis.com/auth/classroom.coursework.me https://www.googleapis.com/auth/classroom.courses.readonly openid email https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.metadata.readonly https://www.googleapis.com/auth/script.deployments';
 
   // Minimum proxy version that this classroom.js is compatible with.
   // Bump this (and PROXY_VERSION in setup.html's PROXY_JS) when making breaking changes.
@@ -295,55 +296,49 @@
     checkProxyVersion();
   };
 
-  window._classroomSearchDriveForProxy = function () {
+  // Search the signed-in user's Drive for the OGA proxy script and return its web app URL,
+  // or null if not found. Requires drive.metadata.readonly + script.deployments scopes.
+  async function searchDriveForProxy(token) {
+    try {
+      const searchRes = await fetch(
+        'https://www.googleapis.com/drive/v3/files?' + new URLSearchParams({
+          q: "mimeType='application/vnd.google-apps.script' and name='OGA Classroom Grade Proxy' and trashed=false",
+          fields: 'files(id,name)',
+          pageSize: 5
+        }),
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      const { files } = await searchRes.json();
+      if (!files || files.length === 0) return null;
+      const depRes = await fetch(
+        `https://script.googleapis.com/v1/projects/${files[0].id}/deployments`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      const depData = await depRes.json();
+      const webAppDep = (depData.deployments || []).find(d =>
+        (d.entryPoints || []).some(ep => ep.entryPointType === 'WEB_APP')
+      );
+      const ep = webAppDep?.entryPoints?.find(ep => ep.entryPointType === 'WEB_APP');
+      return ep?.webApp?.url || null;
+    } catch (e) {
+      console.warn('Classroom: Drive proxy search failed', e);
+      return null;
+    }
+  }
+
+  window._classroomSearchDriveForProxy = async function () {
     const btn = document.getElementById('cr-drive-search-btn');
     if (btn) { btn.textContent = '🔍 Searching…'; btn.disabled = true; }
-
-    const driveClient = google.accounts.oauth2.initTokenClient({
-      client_id: CLIENT_ID,
-      scope: 'https://www.googleapis.com/auth/drive.metadata.readonly https://www.googleapis.com/auth/script.deployments',
-      callback: async (resp) => {
-        if (btn) { btn.textContent = '🔍 Search my Drive for proxy script'; btn.disabled = false; }
-        if (resp.error) { showClassroomToast('⚠️ Drive search cancelled.'); return; }
-        try {
-          const searchRes = await fetch(
-            'https://www.googleapis.com/drive/v3/files?' + new URLSearchParams({
-              q: "mimeType='application/vnd.google-apps.script' and name='OGA Classroom Grade Proxy' and trashed=false",
-              fields: 'files(id,name)',
-              pageSize: 5
-            }),
-            { headers: { Authorization: `Bearer ${resp.access_token}` } }
-          );
-          const { files } = await searchRes.json();
-          if (!files || files.length === 0) {
-            showClassroomToast('⚠️ No proxy script found in Drive.');
-            return;
-          }
-          const depRes = await fetch(
-            `https://script.googleapis.com/v1/projects/${files[0].id}/deployments`,
-            { headers: { Authorization: `Bearer ${resp.access_token}` } }
-          );
-          const depData = await depRes.json();
-          const webAppDep = (depData.deployments || []).find(d =>
-            (d.entryPoints || []).some(ep => ep.entryPointType === 'WEB_APP')
-          );
-          const ep = webAppDep?.entryPoints?.find(ep => ep.entryPointType === 'WEB_APP');
-          const url = ep?.webApp?.url;
-          if (url) {
-            const input = document.getElementById('cr-proxy-input');
-            if (input) input.value = url;
-            if (btn) btn.textContent = '✅ Found — click Save & use';
-            showClassroomToast('Proxy URL found — click Save & use ✅');
-          } else {
-            showClassroomToast('⚠️ Proxy script found but not deployed.');
-          }
-        } catch (e) {
-          console.error('Classroom: Drive proxy search failed', e);
-          showClassroomToast('⚠️ Drive search failed — see console.');
-        }
-      }
-    });
-    driveClient.requestAccessToken();
+    const url = await searchDriveForProxy(accessToken);
+    if (btn) { btn.textContent = '🔍 Search my Drive for proxy script'; btn.disabled = false; }
+    if (url) {
+      const input = document.getElementById('cr-proxy-input');
+      if (input) input.value = url;
+      if (btn) btn.textContent = '✅ Found — click Save & use';
+      showClassroomToast('Proxy URL found — click Save & use ✅');
+    } else {
+      showClassroomToast('⚠️ No proxy script found in Drive.');
+    }
   };
 
   window._classroomCopyLink = function () {
@@ -872,6 +867,22 @@
 
         accessToken = tokenResponse.access_token;
         userInfo    = await fetchUserInfo(accessToken);
+
+        // Always search Drive for the proxy URL so teachers automatically pick up
+        // redeployments (new URL) from any computer. The ?proxyUrl= param wins and
+        // is never overwritten; localStorage is treated as a cache only.
+        if (!urlParams.get('proxyUrl')) {
+          const discovered = await searchDriveForProxy(accessToken);
+          if (discovered && discovered !== proxyUrl) {
+            proxyUrl = discovered;
+            try { localStorage.setItem('oga_proxy_url', discovered); } catch (_) {}
+            console.log('Classroom: proxy URL updated from Drive');
+          }
+          // If discovered is null the Drive search failed or the script is gone —
+          // keep any existing cached URL as a fallback so we don't lose it on a
+          // transient network error. Grade submission will surface the failure if
+          // the cached URL is also broken.
+        }
 
         courseWorkId = await lookupCourseWorkId(accessToken, courseId);
         if (!courseWorkId) {
