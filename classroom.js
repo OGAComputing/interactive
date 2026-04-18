@@ -948,7 +948,7 @@
   function signInViaRedirect(opts) {
     const params = new URLSearchParams({
       client_id    : CLIENT_ID,
-      redirect_uri : window.location.origin + '/oauth-callback.html',
+      redirect_uri : window.location.origin + '/interactive/oauth-callback.html',
       response_type: 'token',
       scope        : SCOPE,
       prompt       : (opts && opts.prompt) || 'select_account',
