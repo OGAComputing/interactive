@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <script src="https://accounts.google.com/gsi/client" onload="initTokenClient()" async defer></script>
   <title>CS Activities</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -292,47 +291,82 @@
 <script>
   // ── Google Classroom Config ──────────────────────────────
   const GOOGLE_CONFIG = {
-    clientId: '379663437881-iukh6qnkq8jmqtqko3qog0n6ohuhemmq.apps.googleusercontent.com', // Replace with your actual ID
-    scopes: 'https://www.googleapis.com/auth/classroom.courses.readonly https://www.googleapis.com/auth/classroom.coursework.me https://www.googleapis.com/auth/classroom.coursework.students'
+    clientId: '379663437881-iukh6qnkq8jmqtqko3qog0n6ohuhemmq.apps.googleusercontent.com',
+    // Drive + Script scopes combined so the teacher signs in once and "Search my Drive"
+    // can reuse the same token without triggering a second popup/redirect.
+    scopes: 'https://www.googleapis.com/auth/classroom.courses.readonly https://www.googleapis.com/auth/classroom.coursework.me https://www.googleapis.com/auth/classroom.coursework.students https://www.googleapis.com/auth/drive.metadata.readonly https://www.googleapis.com/auth/script.deployments'
   };
 
-  let tokenClient;
   let accessToken = null;
 
-  function initTokenClient() {
-    tokenClient = google.accounts.oauth2.initTokenClient({
-      client_id: GOOGLE_CONFIG.clientId,
-      scope: GOOGLE_CONFIG.scopes,
-      callback: (tokenResponse) => {
-        if (tokenResponse.error) {
-          // Silent re-auth failed — restore sign-in button
-          const btn = document.getElementById('btnLogin');
-          if (btn) { btn.textContent = 'Sign in to Assign to Classroom'; btn.disabled = false; }
-          return;
-        }
-        accessToken = tokenResponse.access_token;
-        localStorage.setItem('oga_hub_autosignin', '1');
-        document.getElementById('btnLogin').style.display = 'none';
-        const storedProxy = localStorage.getItem('oga_proxy_url');
-        if (storedProxy) {
-          document.getElementById('course-select').style.display = 'inline-block';
-          document.querySelectorAll('.btn-assign').forEach(btn => btn.style.display = 'block');
-          fetchCourses();
-        } else {
-          showNoProxyOptions();
-        }
-      },
+  // ── Redirect-based sign-in (no popup) ───────────────────
+  // Navigates the whole page to Google's consent screen.
+  // After sign-in Google redirects to /oauth-callback.html, which stores the
+  // token in sessionStorage and bounces back here.
+
+  function signInViaRedirect() {
+    const params = new URLSearchParams({
+      client_id    : GOOGLE_CONFIG.clientId,
+      redirect_uri : window.location.origin + '/oauth-callback.html',
+      response_type: 'token',
+      scope        : GOOGLE_CONFIG.scopes,
+      prompt       : 'select_account',
     });
-    // Silently re-authenticate if previously signed in on this browser
-    if (localStorage.getItem('oga_hub_autosignin')) {
-      const btn = document.getElementById('btnLogin');
-      if (btn) { btn.textContent = 'Signing in…'; btn.disabled = true; }
-      tokenClient.requestAccessToken({prompt: ''});
+    try { sessionStorage.setItem('oga_return_url', window.location.href); } catch (_) {}
+    window.location.href = 'https://accounts.google.com/o/oauth2/v2/auth?' + params;
+  }
+
+  function requestPermission() { signInViaRedirect(); }
+
+  // Called after successful sign-in (from redirect or session restore).
+  function onSignInSuccess(data) {
+    accessToken = data.access_token;
+    // Persist token for the rest of this browser session (survives page reloads).
+    try { sessionStorage.setItem('oga_hub_token', JSON.stringify(data)); } catch (_) {}
+    localStorage.setItem('oga_hub_autosignin', '1');
+    document.getElementById('btnLogin').style.display = 'none';
+    document.getElementById('teacher-status').textContent = '';
+    const storedProxy = localStorage.getItem('oga_proxy_url');
+    if (storedProxy) {
+      document.getElementById('course-select').style.display = 'inline-block';
+      document.querySelectorAll('.btn-assign').forEach(btn => btn.style.display = 'block');
+      fetchCourses();
+    } else {
+      showNoProxyOptions();
     }
   }
 
-  function requestPermission() {
-    tokenClient.requestAccessToken();
+  // On page load: restore session if returning from redirect or if tab was reloaded.
+  function checkPendingHubToken() {
+    // 1. Returning from Google redirect — token left by oauth-callback.html
+    let json = null;
+    try { json = sessionStorage.getItem('oga_oauth_token'); } catch (_) {}
+    if (json) {
+      try { sessionStorage.removeItem('oga_oauth_token'); } catch (_) {}
+      let data;
+      try { data = JSON.parse(json); } catch (_) {}
+      if (data && data.access_token && (!data.expires_at || data.expires_at > Date.now() + 30000)) {
+        onSignInSuccess(data);
+        return;
+      }
+    }
+    // 2. Same browser session — token stored after previous sign-in this session
+    let sessionJson = null;
+    try { sessionJson = sessionStorage.getItem('oga_hub_token'); } catch (_) {}
+    if (sessionJson) {
+      let data;
+      try { data = JSON.parse(sessionJson); } catch (_) {}
+      if (data && data.access_token && data.expires_at > Date.now() + 30000) {
+        onSignInSuccess(data);
+        return;
+      }
+      try { sessionStorage.removeItem('oga_hub_token'); } catch (_) {}
+    }
+    // 3. Previously signed in on this device (different session) — hint the button
+    if (localStorage.getItem('oga_hub_autosignin')) {
+      const btn = document.getElementById('btnLogin');
+      if (btn) btn.textContent = 'Sign in again to Classroom';
+    }
   }
 
   async function fetchCourses() {
@@ -524,67 +558,56 @@
       ' &nbsp;·&nbsp; <a href="_teacher/setup.html" style="color:#7a9ab5;font-size:0.78rem;">new setup →</a>';
   }
 
-  let driveSearchClient = null;
-
-  function findProxyInDrive() {
-    const btn = document.getElementById('btn-find-proxy');
+  async function findProxyInDrive() {
+    // accessToken already has drive.metadata.readonly + script.deployments granted
+    // at sign-in time, so no second OAuth flow is needed here.
+    const btn      = document.getElementById('btn-find-proxy');
+    const statusEl = document.getElementById('teacher-status');
     if (btn) { btn.textContent = '🔍 Searching…'; btn.disabled = true; }
-
-    if (!driveSearchClient) {
-      driveSearchClient = google.accounts.oauth2.initTokenClient({
-        client_id: GOOGLE_CONFIG.clientId,
-        scope: 'https://www.googleapis.com/auth/drive.metadata.readonly https://www.googleapis.com/auth/script.deployments',
-        callback: async (resp) => {
-          if (resp.error) { showNoProxyOptions(); return; }
-          const statusEl = document.getElementById('teacher-status');
-          try {
-            // Search Drive for the Apps Script file by name
-            const searchRes = await fetch(
-              'https://www.googleapis.com/drive/v3/files?' + new URLSearchParams({
-                q: "mimeType='application/vnd.google-apps.script' and name='OGA Classroom Grade Proxy' and trashed=false",
-                fields: 'files(id,name)',
-                pageSize: 5
-              }),
-              { headers: { Authorization: `Bearer ${resp.access_token}` } }
-            );
-            const { files } = await searchRes.json();
-            if (!files || files.length === 0) {
-              statusEl.innerHTML =
-                '⚠️ No proxy found in Drive — ' +
-                '<button class="btn-inline-ghost" onclick="document.getElementById(\'hub-proxy-row\').classList.add(\'visible\')">Paste URL</button>' +
-                ' &nbsp;·&nbsp; <a href="_teacher/setup.html" style="color:#7a9ab5;font-size:0.78rem;">new setup →</a>';
-              return;
-            }
-            // Get the web app deployment URL from the Script API
-            const depRes = await fetch(
-              `https://script.googleapis.com/v1/projects/${files[0].id}/deployments`,
-              { headers: { Authorization: `Bearer ${resp.access_token}` } }
-            );
-            const depData = await depRes.json();
-            const webAppDep = (depData.deployments || []).find(d =>
-              (d.entryPoints || []).some(ep => ep.entryPointType === 'WEB_APP')
-            );
-            const ep = webAppDep?.entryPoints?.find(ep => ep.entryPointType === 'WEB_APP');
-            const url = ep?.webApp?.url;
-            if (url) {
-              try { localStorage.setItem('oga_proxy_url', url); } catch (_) {}
-              document.getElementById('course-select').style.display = 'inline-block';
-              document.querySelectorAll('.btn-assign').forEach(b => b.style.display = 'block');
-              fetchCourses();
-              statusEl.textContent = '✅ Proxy URL found and saved.';
-            } else {
-              statusEl.innerHTML =
-                '⚠️ Proxy script found but not yet deployed — ' +
-                '<a href="_teacher/setup.html" style="color:#00b4b4;font-size:0.78rem;">re-run setup →</a>';
-            }
-          } catch (e) {
-            console.error('Drive proxy search failed:', e);
-            showNoProxyOptions();
-          }
-        }
-      });
+    try {
+      const searchRes = await fetch(
+        'https://www.googleapis.com/drive/v3/files?' + new URLSearchParams({
+          q: "mimeType='application/vnd.google-apps.script' and name='OGA Classroom Grade Proxy' and trashed=false",
+          fields: 'files(id,name)',
+          pageSize: 5
+        }),
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+      const { files } = await searchRes.json();
+      if (!files || files.length === 0) {
+        statusEl.innerHTML =
+          '⚠️ No proxy found in Drive — ' +
+          '<button class="btn-inline-ghost" onclick="document.getElementById(\'hub-proxy-row\').classList.add(\'visible\')">Paste URL</button>' +
+          ' &nbsp;·&nbsp; <a href="_teacher/setup.html" style="color:#7a9ab5;font-size:0.78rem;">new setup →</a>';
+        return;
+      }
+      const depRes = await fetch(
+        `https://script.googleapis.com/v1/projects/${files[0].id}/deployments`,
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+      const depData = await depRes.json();
+      const webAppDep = (depData.deployments || []).find(d =>
+        (d.entryPoints || []).some(ep => ep.entryPointType === 'WEB_APP')
+      );
+      const ep  = webAppDep?.entryPoints?.find(ep => ep.entryPointType === 'WEB_APP');
+      const url = ep?.webApp?.url;
+      if (url) {
+        try { localStorage.setItem('oga_proxy_url', url); } catch (_) {}
+        document.getElementById('course-select').style.display = 'inline-block';
+        document.querySelectorAll('.btn-assign').forEach(b => b.style.display = 'block');
+        fetchCourses();
+        statusEl.textContent = '✅ Proxy URL found and saved.';
+      } else {
+        statusEl.innerHTML =
+          '⚠️ Proxy script found but not yet deployed — ' +
+          '<a href="_teacher/setup.html" style="color:#00b4b4;font-size:0.78rem;">re-run setup →</a>';
+      }
+    } catch (e) {
+      console.error('Drive proxy search failed:', e);
+      showNoProxyOptions();
+    } finally {
+      if (btn) { btn.textContent = '🔍 Search my Drive'; btn.disabled = false; }
     }
-    driveSearchClient.requestAccessToken();
   }
 
   function saveHubProxyUrl() {
@@ -611,6 +634,9 @@
         `${meta.version} · ${meta.deployed} · ${meta.activities} activities · ${meta.sha}`;
     })
     .catch(() => {}); // Fail silently — meta.json may not exist on first deploy
+
+  // Restore sign-in state on every page load (handles redirect return and tab reloads).
+  checkPendingHubToken();
 </script>
 
 </body>

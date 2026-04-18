@@ -51,7 +51,7 @@
     try { return localStorage.getItem('oga_proxy_url'); } catch (_) { return null; }
   })() || null;
 
-  let tokenClient  = null;
+  // tokenClient removed — sign-in uses a full-page redirect (no popup)
   let accessToken  = null;
   let courseWorkId   = null; // resolved after sign-in
   let submissionId   = null; // resolved after sign-in
@@ -883,10 +883,7 @@
       if (text) text.textContent = '⚠️ Some permissions were not granted — please sign in again and allow all access.';
       showClassroomToast('⚠️ Please grant all permissions and sign in again.');
       // Re-prompt with consent screen so the user can tick all checkboxes.
-      setTimeout(() => {
-        try { sessionStorage.setItem('oga_return_url', window.location.href); } catch (_) {}
-        tokenClient.requestAccessToken({ prompt: 'consent' });
-      }, 1500);
+      setTimeout(() => signInViaRedirect({ prompt: 'consent' }), 1500);
       return;
     }
 
@@ -942,11 +939,26 @@
     }
   }
 
-  // ── Redirect-mode OAuth token recovery ───────────────────────────────────────
-  // After Google redirects back from the consent screen, oauth-callback.html
-  // stores the token in sessionStorage and navigates back here. This function
-  // picks it up and drives the same handleTokenResponse flow.
+  // ── Redirect-based sign-in ────────────────────────────────────────────────────
+  // Constructs a standard OAuth 2.0 implicit-grant URL and navigates the whole
+  // page to Google. No popup is opened, so school popup-blockers cannot interfere.
+  // After sign-in Google redirects to oauth-callback.html, which stores the token
+  // in sessionStorage and bounces the user back to the originating activity page.
 
+  function signInViaRedirect(opts) {
+    const params = new URLSearchParams({
+      client_id    : CLIENT_ID,
+      redirect_uri : window.location.origin + '/oauth-callback.html',
+      response_type: 'token',
+      scope        : SCOPE,
+      prompt       : (opts && opts.prompt) || 'select_account',
+    });
+    try { sessionStorage.setItem('oga_return_url', window.location.href); } catch (_) {}
+    window.location.href = 'https://accounts.google.com/o/oauth2/v2/auth?' + params;
+  }
+
+  // Called on page load to pick up a token left by oauth-callback.html after
+  // returning from Google's sign-in page.
   function checkPendingOAuthToken() {
     let json = null;
     try { json = sessionStorage.getItem('oga_oauth_token'); } catch (_) {}
@@ -954,8 +966,8 @@
     try { sessionStorage.removeItem('oga_oauth_token'); } catch (_) {}
     let data;
     try { data = JSON.parse(json); } catch (_) { return; }
-    // Discard tokens that have already expired (clock-skew margin: 30 s).
     if (!data.access_token) return;
+    // Discard if already expired (30 s margin for clock skew).
     if (data.expires_at && data.expires_at < Date.now() + 30000) {
       console.warn('Classroom: discarding expired token from redirect');
       return;
@@ -963,25 +975,7 @@
     handleTokenResponse({ access_token: data.access_token, scope: data.scope || '' });
   }
 
-  function initTokenClient() {
-    tokenClient = google.accounts.oauth2.initTokenClient({
-      client_id: CLIENT_ID,
-      scope: SCOPE,
-      // Use full-page redirect instead of a popup so school popup-blockers
-      // cannot interfere. Google redirects back to oauth-callback.html which
-      // stores the token in sessionStorage and navigates back to this page.
-      ux_mode: 'redirect',
-      redirect_uri: window.location.origin + '/oauth-callback.html',
-    });
-  }
-
-  window.initClassroomTokenClient = function () { initTokenClient(); };
-  window._classroomSignIn = function () {
-    if (!tokenClient) return;
-    // Save current URL so oauth-callback.html can navigate back after sign-in.
-    try { sessionStorage.setItem('oga_return_url', window.location.href); } catch (_) {}
-    tokenClient.requestAccessToken();
-  };
+  window._classroomSignIn = function () { signInViaRedirect(); };
 
   // ── Public API ────────────────────────────────────────────────────────────────
 
@@ -1089,11 +1083,7 @@
   function bootstrap() {
     if (!isClassroomContext) return;
     injectBanner();
-    const script = document.createElement('script');
-    script.src   = 'https://accounts.google.com/gsi/client';
-    script.onload = () => { window.initClassroomTokenClient(); checkPendingOAuthToken(); };
-    script.async = script.defer = true;
-    document.head.appendChild(script);
+    checkPendingOAuthToken(); // pick up token if returning from Google redirect
   }
 
   if (document.readyState === 'loading') {

@@ -22,37 +22,35 @@
 </div>
 <script>
 (function () {
-  // Google redirects here with the OAuth response in the URL fragment.
-  // Read the token, store it for the originating activity page, then navigate back.
-  const params   = new URLSearchParams(location.hash.slice(1));
-  const token    = params.get('access_token');
+  // Google redirects here with the OAuth response in the URL fragment after sign-in.
+  // Parse the token, store it for the originating page to pick up, then navigate back.
+  const params    = new URLSearchParams(location.hash.slice(1));
+  const token     = params.get('access_token');
   const expiresIn = parseInt(params.get('expires_in') || '3600', 10);
-  const scope    = params.get('scope') || '';
-  const error    = params.get('error');
+  const scope     = params.get('scope') || '';
+  const error     = params.get('error');
 
   let returnUrl = null;
   try { returnUrl = sessionStorage.getItem('oga_return_url'); } catch (_) {}
 
-  function bail(msg) {
-    document.getElementById('status').textContent = msg;
-  }
-
   if (error) {
-    bail('Sign-in failed: ' + error + '. Please close this page and try again.');
+    document.getElementById('status').textContent =
+      'Sign-in failed: ' + error + '. Please close this tab and try again.';
     return;
   }
 
   if (!token) {
-    bail('No token received. Please go back and try again.');
+    document.getElementById('status').textContent =
+      'No token received. Please go back and try again.';
     return;
   }
 
   if (!returnUrl) {
-    bail('Could not determine which page to return to. Please go back manually.');
+    document.getElementById('status').textContent =
+      'Could not determine which page to return to. Please go back manually.';
     return;
   }
 
-  // Store token for classroom.js to pick up on the return page.
   try {
     sessionStorage.setItem('oga_oauth_token', JSON.stringify({
       access_token : token,
