@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Signing in…</title>
+<style>
+  body { margin: 0; display: flex; align-items: center; justify-content: center;
+         min-height: 100vh; font-family: 'Segoe UI', system-ui, sans-serif;
+         background: #0f172a; color: #94a3b8; font-size: 1rem; }
+  .msg { text-align: center; }
+  .spinner { width: 36px; height: 36px; border: 3px solid #334155;
+             border-top-color: #3b82f6; border-radius: 50%;
+             animation: spin 0.7s linear infinite; margin: 0 auto 16px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<div class="msg">
+  <div class="spinner"></div>
+  <p id="status">Completing sign-in…</p>
+</div>
+<script>
+(function () {
+  // Google redirects here with the OAuth response in the URL fragment.
+  // Read the token, store it for the originating activity page, then navigate back.
+  const params   = new URLSearchParams(location.hash.slice(1));
+  const token    = params.get('access_token');
+  const expiresIn = parseInt(params.get('expires_in') || '3600', 10);
+  const scope    = params.get('scope') || '';
+  const error    = params.get('error');
+
+  let returnUrl = null;
+  try { returnUrl = sessionStorage.getItem('oga_return_url'); } catch (_) {}
+
+  function bail(msg) {
+    document.getElementById('status').textContent = msg;
+  }
+
+  if (error) {
+    bail('Sign-in failed: ' + error + '. Please close this page and try again.');
+    return;
+  }
+
+  if (!token) {
+    bail('No token received. Please go back and try again.');
+    return;
+  }
+
+  if (!returnUrl) {
+    bail('Could not determine which page to return to. Please go back manually.');
+    return;
+  }
+
+  // Store token for classroom.js to pick up on the return page.
+  try {
+    sessionStorage.setItem('oga_oauth_token', JSON.stringify({
+      access_token : token,
+      scope        : scope,
+      expires_at   : Date.now() + expiresIn * 1000
+    }));
+    sessionStorage.removeItem('oga_return_url');
+  } catch (_) {}
+
+  location.replace(returnUrl);
+}());
+</script>
+</body>
+</html>

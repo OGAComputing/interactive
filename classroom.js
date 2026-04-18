@@ -860,89 +860,128 @@
 
   // ── OAuth ─────────────────────────────────────────────────────────────────────
 
+  // ── Token response handler ────────────────────────────────────────────────────
+  // Shared between the redirect-return path (sessionStorage) and any future
+  // popup fallback. Extracted so the bootstrap and re-prompt paths both use it.
+
+  async function handleTokenResponse(tokenResponse) {
+    if (tokenResponse.error !== undefined) {
+      console.error('Classroom OAuth error:', tokenResponse);
+      return;
+    }
+
+    // Verify all required scopes were actually granted.
+    // Users can uncheck permissions on the consent screen, so we must confirm
+    // the returned scope list contains everything we asked for.
+    const grantedScopes = (tokenResponse.scope || '').split(' ');
+    const missingScopes = SCOPE.split(' ').filter(s => s && !grantedScopes.includes(s));
+    if (missingScopes.length > 0) {
+      console.warn('Classroom: missing scopes after sign-in:', missingScopes);
+      const dot  = document.getElementById('classroom-dot');
+      const text = document.getElementById('classroom-text');
+      if (dot)  dot.style.cssText = 'background:#ef4444;box-shadow:0 0 8px #ef4444';
+      if (text) text.textContent = '⚠️ Some permissions were not granted — please sign in again and allow all access.';
+      showClassroomToast('⚠️ Please grant all permissions and sign in again.');
+      // Re-prompt with consent screen so the user can tick all checkboxes.
+      setTimeout(() => {
+        try { sessionStorage.setItem('oga_return_url', window.location.href); } catch (_) {}
+        tokenClient.requestAccessToken({ prompt: 'consent' });
+      }, 1500);
+      return;
+    }
+
+    accessToken = tokenResponse.access_token;
+    userInfo    = await fetchUserInfo(accessToken);
+
+    // Always search Drive for the proxy URL so teachers automatically pick up
+    // redeployments (new URL) from any computer. The ?proxyUrl= param wins and
+    // is never overwritten; localStorage is treated as a cache only.
+    if (!urlParams.get('proxyUrl')) {
+      const discovered = await searchDriveForProxy(accessToken);
+      if (discovered) {
+        if (discovered !== proxyUrl) {
+          proxyUrl = discovered;
+          try { localStorage.setItem('oga_proxy_url', discovered); } catch (_) {}
+          console.log('Classroom: proxy URL updated from Drive');
+        }
+      } else if (proxyUrl) {
+        // Drive search found no proxy script — the file was likely deleted.
+        // Clear the cached URL so the teacher is prompted to redeploy a new
+        // one rather than silently failing against a stale endpoint.
+        proxyUrl = null;
+        try { localStorage.removeItem('oga_proxy_url'); } catch (_) {}
+        console.log('Classroom: proxy script not found in Drive — cached URL cleared, teacher will be prompted to redeploy');
+      }
+    }
+
+    courseWorkId = await lookupCourseWorkId(accessToken, courseId);
+    if (!courseWorkId) {
+      // Assignment not found in the URL's courseId — likely a "Re-use post" link
+      // from a different classroom. Scan all accessible courses for a match.
+      const found = await findCorrectCourse(accessToken);
+      if (found.courseId) {
+        courseId    = found.courseId;    // update module-level so submitGrade etc. use correct course
+        courseWorkId = found.courseWorkId;
+      }
+    }
+    submissionId = await lookupSubmissionId(accessToken, courseWorkId);
+
+    const isTeacher = await detectTeacher(accessToken);
+    isTeacherMode = isTeacher;
+    if (isTeacher) {
+      setBannerTeacher(!!proxyUrl);
+      if (!proxyUrl) {
+        // Show modal so teacher can enter their proxy URL
+        const modal = document.getElementById('cr-modal-backdrop');
+        if (modal) modal.classList.add('open');
+      } else {
+        await checkProxyVersion();
+      }
+    } else {
+      setBannerStudent();
+    }
+  }
+
+  // ── Redirect-mode OAuth token recovery ───────────────────────────────────────
+  // After Google redirects back from the consent screen, oauth-callback.html
+  // stores the token in sessionStorage and navigates back here. This function
+  // picks it up and drives the same handleTokenResponse flow.
+
+  function checkPendingOAuthToken() {
+    let json = null;
+    try { json = sessionStorage.getItem('oga_oauth_token'); } catch (_) {}
+    if (!json) return;
+    try { sessionStorage.removeItem('oga_oauth_token'); } catch (_) {}
+    let data;
+    try { data = JSON.parse(json); } catch (_) { return; }
+    // Discard tokens that have already expired (clock-skew margin: 30 s).
+    if (!data.access_token) return;
+    if (data.expires_at && data.expires_at < Date.now() + 30000) {
+      console.warn('Classroom: discarding expired token from redirect');
+      return;
+    }
+    handleTokenResponse({ access_token: data.access_token, scope: data.scope || '' });
+  }
+
   function initTokenClient() {
     tokenClient = google.accounts.oauth2.initTokenClient({
       client_id: CLIENT_ID,
       scope: SCOPE,
-      callback: async (tokenResponse) => {
-        if (tokenResponse.error !== undefined) {
-          console.error('Classroom OAuth error:', tokenResponse);
-          return;
-        }
-
-        // Verify all required scopes were actually granted.
-        // Users can uncheck permissions on the consent screen, so we must confirm
-        // the returned scope list contains everything we asked for.
-        const grantedScopes = (tokenResponse.scope || '').split(' ');
-        const missingScopes = SCOPE.split(' ').filter(s => s && !grantedScopes.includes(s));
-        if (missingScopes.length > 0) {
-          console.warn('Classroom: missing scopes after sign-in:', missingScopes);
-          const dot  = document.getElementById('classroom-dot');
-          const text = document.getElementById('classroom-text');
-          if (dot)  dot.style.cssText = 'background:#ef4444;box-shadow:0 0 8px #ef4444';
-          if (text) text.textContent = '⚠️ Some permissions were not granted — please sign in again and allow all access.';
-          showClassroomToast('⚠️ Please grant all permissions and sign in again.');
-          // Re-prompt with consent screen so the user can tick all checkboxes.
-          setTimeout(() => tokenClient.requestAccessToken({ prompt: 'consent' }), 1500);
-          return;
-        }
-
-        accessToken = tokenResponse.access_token;
-        userInfo    = await fetchUserInfo(accessToken);
-
-        // Always search Drive for the proxy URL so teachers automatically pick up
-        // redeployments (new URL) from any computer. The ?proxyUrl= param wins and
-        // is never overwritten; localStorage is treated as a cache only.
-        if (!urlParams.get('proxyUrl')) {
-          const discovered = await searchDriveForProxy(accessToken);
-          if (discovered) {
-            if (discovered !== proxyUrl) {
-              proxyUrl = discovered;
-              try { localStorage.setItem('oga_proxy_url', discovered); } catch (_) {}
-              console.log('Classroom: proxy URL updated from Drive');
-            }
-          } else if (proxyUrl) {
-            // Drive search found no proxy script — the file was likely deleted.
-            // Clear the cached URL so the teacher is prompted to redeploy a new
-            // one rather than silently failing against a stale endpoint.
-            proxyUrl = null;
-            try { localStorage.removeItem('oga_proxy_url'); } catch (_) {}
-            console.log('Classroom: proxy script not found in Drive — cached URL cleared, teacher will be prompted to redeploy');
-          }
-        }
-
-        courseWorkId = await lookupCourseWorkId(accessToken, courseId);
-        if (!courseWorkId) {
-          // Assignment not found in the URL's courseId — likely a "Re-use post" link
-          // from a different classroom. Scan all accessible courses for a match.
-          const found = await findCorrectCourse(accessToken);
-          if (found.courseId) {
-            courseId    = found.courseId;    // update module-level so submitGrade etc. use correct course
-            courseWorkId = found.courseWorkId;
-          }
-        }
-        submissionId = await lookupSubmissionId(accessToken, courseWorkId);
-
-        const isTeacher = await detectTeacher(accessToken);
-        isTeacherMode = isTeacher;
-        if (isTeacher) {
-          setBannerTeacher(!!proxyUrl);
-          if (!proxyUrl) {
-            // Show modal so teacher can enter their proxy URL
-            const modal = document.getElementById('cr-modal-backdrop');
-            if (modal) modal.classList.add('open');
-          } else {
-            await checkProxyVersion();
-          }
-        } else {
-          setBannerStudent();
-        }
-      },
+      // Use full-page redirect instead of a popup so school popup-blockers
+      // cannot interfere. Google redirects back to oauth-callback.html which
+      // stores the token in sessionStorage and navigates back to this page.
+      ux_mode: 'redirect',
+      redirect_uri: window.location.origin + '/oauth-callback.html',
     });
   }
 
   window.initClassroomTokenClient = function () { initTokenClient(); };
-  window._classroomSignIn = function () { if (tokenClient) tokenClient.requestAccessToken(); };
+  window._classroomSignIn = function () {
+    if (!tokenClient) return;
+    // Save current URL so oauth-callback.html can navigate back after sign-in.
+    try { sessionStorage.setItem('oga_return_url', window.location.href); } catch (_) {}
+    tokenClient.requestAccessToken();
+  };
 
   // ── Public API ────────────────────────────────────────────────────────────────
 
@@ -1052,7 +1091,7 @@
     injectBanner();
     const script = document.createElement('script');
     script.src   = 'https://accounts.google.com/gsi/client';
-    script.onload = () => window.initClassroomTokenClient();
+    script.onload = () => { window.initClassroomTokenClient(); checkPendingOAuthToken(); };
     script.async = script.defer = true;
     document.head.appendChild(script);
   }
