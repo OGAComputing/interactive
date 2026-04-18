@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- ACTIVITY
+title:  Year 8 Python Assessment
+type:   Assessment
+stars:  4
+desc:   45-minute end-of-unit assessment covering errors, casting, loops and functions.
+color:  teal
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Year 8 Python Assessment</title>
+<link rel="stylesheet" href="../../../shared.css">
+<style>
+  /* ── Header ───────────────────────────────────────────── */
+  .header { background:var(--surface); padding:16px 28px 14px; border-bottom:4px solid var(--accent); }
+  .header-title { font-family:var(--font-head); font-size:1.45rem; font-weight:700; color:var(--text-inv); }
+  .header-sub   { font-size:0.82rem; color:var(--accent-light); margin-top:3px; }
+  .score-row    { display:flex; align-items:center; gap:14px; margin-top:10px; flex-wrap:wrap; }
+  .score-pill   { background:var(--surface-dim); border:2px solid var(--accent); border-radius:20px;
+                  padding:4px 16px; font-size:0.85rem; font-weight:700; color:var(--text-inv); }
+  .score-bar-wrap { flex:1; min-width:120px; max-width:260px; height:8px;
+                    background:var(--surface-dim); border-radius:4px; overflow:hidden; }
+  .score-bar    { height:100%; background:var(--accent); border-radius:4px; width:0%;
+                  transition:width 0.5s ease; }
+
+  /* ── Tab bar ──────────────────────────────────────────── */
+  .tab-bar { display:flex; background:var(--surface-mid); padding:0 16px; gap:2px;
+             overflow-x:auto; border-bottom:1px solid #2a4060; }
+  .tab     { padding:9px 13px 8px; border:none; background:transparent; color:var(--muted);
+             font-family:var(--font-body); font-size:0.8rem; font-weight:600; cursor:pointer;
+             border-bottom:3px solid transparent; white-space:nowrap; user-select:none;
+             transition:color 0.15s, border-color 0.15s; }
+  .tab:hover  { color:var(--accent-light); }
+  .tab.active { color:var(--text-inv); border-bottom-color:var(--accent); }
+  .tab.done   { color:var(--gold); border-bottom-color:var(--gold); }
+
+  /* ── Panels ───────────────────────────────────────────── */
+  .panel        { display:none; padding:24px 28px 60px; max-width:860px; margin:0 auto; }
+  .panel.active { display:block; }
+
+  /* ── Section header ───────────────────────────────────── */
+  .sec-header { display:flex; align-items:center; gap:12px; margin-bottom:6px; }
+  .sec-badge  { width:38px; height:38px; border-radius:50%; background:var(--accent);
+                display:flex; align-items:center; justify-content:center;
+                font-family:var(--font-head); font-size:1rem; font-weight:700; color:var(--text-inv);
+                flex-shrink:0; }
+  .sec-title  { font-family:var(--font-head); font-size:1.2rem; font-weight:700; color:var(--surface); }
+  .sec-pts    { font-size:0.78rem; color:var(--muted); margin-left:auto; white-space:nowrap; }
+
+  /* ── Goal ─────────────────────────────────────────────── */
+  .goal { background:#fff; border-left:4px solid var(--accent); padding:9px 14px;
+          border-radius:0 6px 6px 0; font-size:0.88rem; font-weight:600;
+          color:var(--surface); margin:12px 0 20px; line-height:1.5; }
+
+  /* ── Question block ───────────────────────────────────── */
+  .q-block       { background:#fff; border-radius:8px; padding:16px 18px; margin-bottom:16px;
+                   border:2px solid #d1e0f0; transition:border-color 0.25s; }
+  .q-block.correct { border-color:#22c55e; }
+  .q-block.partial { border-color:#f59e0b; }
+  .q-block.wrong   { border-color:#ef4444; }
+  .q-num  { font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em;
+            color:var(--muted); margin-bottom:8px; }
+  .pts-tag { display:inline-block; font-size:0.7rem; font-weight:700;
+             background:#e2e8f0; color:#64748b; border-radius:4px;
+             padding:2px 6px; margin-left:6px; vertical-align:middle; }
+
+  /* ── Error / code display ─────────────────────────────── */
+  .q-err  { background:#1e1e2e; color:#f87171; font-family:'Cascadia Code',Consolas,monospace;
+            font-size:0.82rem; padding:8px 12px; border-radius:6px; margin:8px 0;
+            border-left:3px solid #ef4444; white-space:pre-wrap; word-break:break-all; }
+  .q-code { background:#1e1e2e; color:#cdd6f4; font-family:'Cascadia Code',Consolas,monospace;
+            font-size:0.84rem; padding:10px 14px; border-radius:6px; margin:8px 0;
+            white-space:pre; overflow-x:auto; line-height:1.65; }
+  .q-text { font-size:0.9rem; color:#1e293b; font-weight:600; margin:10px 0 4px; }
+  .q-hint { font-size:0.83rem; color:#64748b; margin:4px 0 8px; }
+
+  /* ── MCQ options ──────────────────────────────────────── */
+  .q-opts { display:flex; flex-direction:column; gap:6px; margin:10px 0 12px; }
+  .q-opt  { display:flex; align-items:flex-start; gap:9px; padding:9px 12px;
+            border-radius:6px; border:2px solid #e2e8f0; cursor:pointer;
+            font-size:0.87rem; color:#1e293b; background:#f8fafc;
+            transition:border-color 0.15s, background 0.15s; user-select:none; }
+  .q-opt:hover:not(.locked) { border-color:var(--accent); background:#eff6ff; }
+  .q-opt input  { margin-top:2px; flex-shrink:0; accent-color:var(--accent); }
+  .q-opt.locked { cursor:default; }
+  .q-opt.opt-correct { border-color:#22c55e !important; background:#dcfce7 !important; }
+  .q-opt.opt-wrong   { border-color:#ef4444 !important; background:#fee2e2 !important; }
+
+  /* ── Textarea ─────────────────────────────────────────── */
+  .q-ta       { width:100%; font-family:'Cascadia Code',Consolas,monospace; font-size:0.84rem;
+                background:#1e1e2e; color:#cdd6f4; border:2px solid #334155; border-radius:6px;
+                padding:10px 12px; resize:vertical; margin:8px 0;
+                transition:border-color 0.15s; }
+  .q-ta:focus { outline:none; border-color:var(--accent); }
+
+  /* ── Thonny instruction box ───────────────────────────── */
+  .thonny-box  { background:#0f2040; border:1px solid #2a4a7a; border-radius:8px;
+                 padding:11px 15px; margin:10px 0; font-size:0.84rem; color:#93c5fd; }
+  .thonny-box strong { color:#e2e8f0; }
+  .thonny-box ol { margin:6px 0 0 18px; color:#94a3b8; line-height:1.9; }
+
+  /* ── Feedback ─────────────────────────────────────────── */
+  .q-fb         { font-size:0.86rem; font-weight:600; min-height:1.3em; margin-top:8px; line-height:1.5; }
+  .q-fb.pass    { color:#15803d; }
+  .q-fb.partial { color:#92400e; }
+  .q-fb.fail    { color:#dc2626; }
+
+  /* ── Body backgrounds ─────────────────────────────────── */
+  body.bg-gold  { background:#fffacd !important; }
+  body.bg-green { background:#d1fae5 !important; }
+
+  /* ── Gold banner ──────────────────────────────────────── */
+  .gbanner { display:none; margin:8px 28px; padding:14px 20px; border-radius:8px;
+             font-size:1rem; font-weight:700; text-align:center;
+             background:#fef9c3; border:2px solid #f59e0b; color:#78350f; }
+  .gbanner.show { display:block; }
+
+  /* ── Fireworks canvas ─────────────────────────────────── */
+  #fwc { position:fixed; top:0; left:0; width:100%; height:100%;
+         pointer-events:none; z-index:9999; display:none; }
+  #fwc.show { display:block; }
+
+  code { font-family:'Cascadia Code',Consolas,monospace; font-size:0.9em;
+         background:#f1f5f9; padding:1px 5px; border-radius:3px; color:#1e293b; }
+</style>
+</head>
+
+<body data-year="8" data-topic="Python">
+<canvas id="fwc"></canvas>
+
+<div class="gbanner" id="gbanner">🏆 Full marks — outstanding work on the Year 8 Python Assessment!</div>
+
+<!-- ── Header ───────────────────────────────────────────────────── -->
+<div class="header">
+  <div class="header-title">Year 8 Python Assessment</div>
+  <div class="header-sub">Errors &nbsp;·&nbsp; Casting &nbsp;·&nbsp; Loops &nbsp;·&nbsp; Functions</div>
+  <div class="score-row">
+    <div class="score-pill" id="score-pill">Score: 0 / 36 &nbsp;(0%)</div>
+    <div class="score-bar-wrap"><div class="score-bar" id="score-bar"></div></div>
+  </div>
+</div>
+
+<!-- ── Tab bar ──────────────────────────────────────────────────── -->
+<div class="tab-bar" id="tab-bar">
+  <button class="tab active" data-idx="0">1. Errors</button>
+  <button class="tab"        data-idx="1">2. Casting</button>
+  <button class="tab"        data-idx="2">3. Loops</button>
+  <button class="tab"        data-idx="3">4. Functions</button>
+  <button class="tab"        data-idx="4">5. Coding: Basics</button>
+  <button class="tab"        data-idx="5">6. Coding: Loops</button>
+  <button class="tab"        data-idx="6">7. Coding: Functions</button>
+  <button class="tab"        data-idx="7">8. Extension ★</button>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════════
+     PANEL 0 — ERRORS & DEBUGGING  (6 pts: 4 MCQ + 2 write-fix)
+     ══════════════════════════════════════════════════════════════ -->
+<div class="panel active" id="panel-0">
+  <div class="sec-header">
+    <div class="sec-badge">1</div>
+    <div class="sec-title">Errors &amp; Debugging</div>
+    <div class="sec-pts">6 points available</div>
+  </div>
+  <div class="goal">🎯 Read each error message (shown exactly as Python / Thonny would display it) and choose — or write — the correct fix.</div>
+
+  <!-- E1 -->
+  <div class="q-block" id="qE1">
+    <div class="q-num">Question 1 <span class="pts-tag">1 pt</span></div>
+    <pre class="q-code">print("Welcome to my program"</pre>
+    <div class="q-err">SyntaxError: '(' was never closed</div>
+    <p class="q-text">Which fix is correct?</p>
+    <div class="q-opts">
+      <label class="q-opt"><input type="radio" name="qE1" value="A"> Add a colon at the end of the line</label>
+      <label class="q-opt"><input type="radio" name="qE1" value="B"> Add the missing closing bracket: <code>print("Welcome to my program")</code></label>
+      <label class="q-opt"><input type="radio" name="qE1" value="C"> Remove the quotation marks</label>
+      <label class="q-opt"><input type="radio" name="qE1" value="D"> Rename the function to <code>Print</code></label>
+    </div>
+    <button class="ac-btn" id="qE1-btn" onclick="checkMCQ('qE1','B',1)">Check</button>
+    <div class="q-fb" id="qE1-fb"></div>
+  </div>
+
+  <!-- E2 -->
+  <div class="q-block" id="qE2">
+    <div class="q-num">Question 2 <span class="pts-tag">1 pt</span></div>
+    <pre class="q-code">username = "alice"
+print(usernmae)</pre>
+    <div class="q-err">NameError: name 'usernmae' is not defined</div>
+    <p class="q-text">Which fix is correct?</p>
+    <div class="q-opts">
+      <label class="q-opt"><input type="radio" name="qE2" value="A"> Put quotation marks around <code>usernmae</code> in the print</label>
+      <label class="q-opt"><input type="radio" name="qE2" value="B"> Delete line 1 completely</label>
+      <label class="q-opt"><input type="radio" name="qE2" value="C"> Change <code>usernmae</code> to <code>username</code> on line 2</label>
+      <label class="q-opt"><input type="radio" name="qE2" value="D"> Change <code>"alice"</code> to <code>alice</code> on line 1</label>
+    </div>
+    <button class="ac-btn" id="qE2-btn" onclick="checkMCQ('qE2','C',1)">Check</button>
+    <div class="q-fb" id="qE2-fb"></div>
+  </div>
+
+  <!-- E3 -->
+  <div class="q-block" id="qE3">
+    <div class="q-num">Question 3 <span class="pts-tag">1 pt</span></div>
+    <pre class="q-code">score = 50
+  print("Your score:", score)</pre>
+    <div class="q-err">IndentationError: unexpected indent</div>
+    <p class="q-text">Which fix is correct?</p>
+    <div class="q-opts">
+      <label class="q-opt"><input type="radio" name="qE3" value="A"> Add a colon after <code>score = 50</code></label>
+      <label class="q-opt"><input type="radio" name="qE3" value="B"> Remove the extra spaces before <code>print</code></label>
+      <label class="q-opt"><input type="radio" name="qE3" value="C"> Put <code>score</code> in quotation marks</label>
+      <label class="q-opt"><input type="radio" name="qE3" value="D"> Add <code>if</code> before the print statement</label>
+    </div>
+    <button class="ac-btn" id="qE3-btn" onclick="checkMCQ('qE3','B',1)">Check</button>
+    <div class="q-fb" id="qE3-fb"></div>
+  </div>
+
+  <!-- E4 -->
+  <div class="q-block" id="qE4">
+    <div class="q-num">Question 4 <span class="pts-tag">1 pt</span></div>
+    <pre class="q-code">for i in range(5)
+    print(i)</pre>
+    <div class="q-err">SyntaxError: expected ':'</div>
+    <p class="q-text">Which fix is correct?</p>
+    <div class="q-opts">
+      <label class="q-opt"><input type="radio" name="qE4" value="A"> Change <code>range(5)</code> to <code>range(1, 5)</code></label>
+      <label class="q-opt"><input type="radio" name="qE4" value="B"> Remove the indentation before <code>print</code></label>
+      <label class="q-opt"><input type="radio" name="qE4" value="C"> Add a colon at the end of line 1: <code>for i in range(5):</code></label>
+      <label class="q-opt"><input type="radio" name="qE4" value="D"> Change <code>print(i)</code> to <code>print("i")</code></label>
+    </div>
+    <button class="ac-btn" id="qE4-btn" onclick="checkMCQ('qE4','C',1)">Check</button>
+    <div class="q-fb" id="qE4-fb"></div>
+  </div>
+
+  <!-- E5 — write the fix -->
+  <div class="q-block" id="qE5">
+    <div class="q-num">Question 5 — Write the Fix <span class="pts-tag">1 pt</span></div>
+    <pre class="q-code">total_score = 100
+print("Your score is:", totalscore)</pre>
+    <div class="q-err">NameError: name 'totalscore' is not defined</div>
+    <p class="q-hint">The error is on line 2. Write the corrected line below (or paste the corrected program):</p>
+    <textarea class="q-ta" id="qE5-ta" rows="3" placeholder="Type or paste your corrected code here..."></textarea>
+    <button class="ac-btn" id="qE5-btn" onclick="checkFix('qE5', detectE5, 1)">Check</button>
+    <div class="q-fb" id="qE5-fb"></div>
+  </div>
+
+  <!-- E6 — write the fix -->
+  <div class="q-block" id="qE6">
+    <div class="q-num">Question 6 — Write the Fix <span class="pts-tag">1 pt</span></div>
+    <pre class="q-code">if score > 50:
+print("Well done!")</pre>
+    <div class="q-err">IndentationError: expected an indented block after 'if' statement on line 1</div>
+    <p class="q-hint">The error is on line 2. Write the corrected line below (or paste the corrected program):</p>
+    <textarea class="q-ta" id="qE6-ta" rows="3" placeholder="Type or paste your corrected code here..."></textarea>
+    <button class="ac-btn" id="qE6-btn" onclick="checkFix('qE6', detectE6, 1)">Check</button>
+    <div class="q-fb" id="qE6-fb"></div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════════
+     PANEL 1 — CASTING  (6 pts: 4 MCQ + 2 code-fix)
+     ══════════════════════════════════════════════════════════════ -->
+<div class="panel" id="panel-1">
+  <div class="sec-header">
+    <div class="sec-badge">2</div>
+    <div class="sec-title">Casting</div>
+    <div class="sec-pts">6 points available</div>
+  </div>
+  <div class="goal">🎯 Answer questions about type casting — why it is needed and how to apply it correctly.</div>
+
+  <!-- C1 -->
+  <div class="q-block" id="qC1">
+    <div class="q-num">Question 1 <span class="pts-tag">1 pt</span></div>
+    <pre class="q-code">age = input("How old are you? ")
+next_year = age + 1
+print(next_year)</pre>
+    <div class="q-err">TypeError: can only concatenate str (not "int") to str</div>
+    <p class="q-text">Why does this code give a TypeError?</p>
+    <div class="q-opts">
+      <label class="q-opt"><input type="radio" name="qC1" value="A"> <code>input()</code> doesn't work inside a program</label>
+      <label class="q-opt"><input type="radio" name="qC1" value="B"> <code>age</code> is stored as a string, so you can't add 1 to it</label>
+      <label class="q-opt"><input type="radio" name="qC1" value="C"> <code>print</code> is missing from the last line</label>
+      <label class="q-opt"><input type="radio" name="qC1" value="D"> <code>next_year</code> hasn't been defined yet</label>
+    </div>
+    <button class="ac-btn" id="qC1-btn" onclick="checkMCQ('qC1','B',1)">Check</button>
+    <div class="q-fb" id="qC1-fb"></div>
+  </div>
+
+  <!-- C2 -->
+  <div class="q-block" id="qC2">
+    <div class="q-num">Question 2 <span class="pts-tag">1 pt</span></div>
+    <p class="q-text">Which line correctly fixes the TypeError from Question 1?</p>
+    <div class="q-opts">
+      <label class="q-opt"><input type="radio" name="qC2" value="A"> <code>age = str(input("How old are you? "))</code></label>
+      <label class="q-opt"><input type="radio" name="qC2" value="B"> <code>age = int(input("How old are you? "))</code></label>
+      <label class="q-opt"><input type="radio" name="qC2" value="C"> <code>age = input(int("How old are you? "))</code></label>
+      <label class="q-opt"><input type="radio" name="qC2" value="D"> <code>int age = input("How old are you? ")</code></label>
+    </div>
+    <button class="ac-btn" id="qC2-btn" onclick="checkMCQ('qC2','B',1)">Check</button>
+    <div class="q-fb" id="qC2-fb"></div>
+  </div>
+
+  <!-- C3 -->
+  <div class="q-block" id="qC3">
+    <div class="q-num">Question 3 <span class="pts-tag">1 pt</span></div>
+    <pre class="q-code">apples = 3
+baskets = "4"
+total = apples + int(baskets)
+print(total)</pre>
+    <p class="q-text">What is the output of this code?</p>
+    <div class="q-opts">
+      <label class="q-opt"><input type="radio" name="qC3" value="A"> <code>"34"</code></label>
+      <label class="q-opt"><input type="radio" name="qC3" value="B"> <code>34</code></label>
+      <label class="q-opt"><input type="radio" name="qC3" value="C"> <code>7</code></label>
+      <label class="q-opt"><input type="radio" name="qC3" value="D"> TypeError</label>
+    </div>
+    <button class="ac-btn" id="qC3-btn" onclick="checkMCQ('qC3','C',1)">Check</button>
+    <div class="q-fb" id="qC3-fb"></div>
+  </div>
+
+  <!-- C4 -->
+  <div class="q-block" id="qC4">
+    <div class="q-num">Question 4 <span class="pts-tag">1 pt</span></div>
+    <pre class="q-code">birth_year = input("What year were you born? ")
+age = 2025 - birth_year
+print("You are approximately", age, "years old")</pre>
+    <div class="q-err">TypeError: unsupported operand type(s) for -: 'int' and 'str'</div>
+    <p class="q-text">Which line correctly fixes this error?</p>
+    <div class="q-opts">
+      <label class="q-opt"><input type="radio" name="qC4" value="A"> <code>age = 2025 - int(birth_year)</code></label>
+      <label class="q-opt"><input type="radio" name="qC4" value="B"> <code>age = str(2025) - birth_year</code></label>
+      <label class="q-opt"><input type="radio" name="qC4" value="C"> <code>age = 2025 - str(birth_year)</code></label>
+      <label class="q-opt"><input type="radio" name="qC4" value="D"> <code>birth_year = str(input("What year were you born? "))</code></label>
+    </div>
+    <button class="ac-btn" id="qC4-btn" onclick="checkMCQ('qC4','A',1)">Check</button>
+    <div class="q-fb" id="qC4-fb"></div>
+  </div>
+
+  <!-- C5 — code fix -->
+  <div class="q-block" id="qC5">
+    <div class="q-num">Question 5 — Fix the Code <span class="pts-tag">1 pt</span></div>
+    <pre class="q-code">steps = input("How many steps today? ")
+goal = 10000
+difference = goal - steps
+print("You need " + str(difference) + " more steps!")</pre>
+    <div class="q-err">TypeError: unsupported operand type(s) for -: 'int' and 'str'</div>
+    <p class="q-hint">Fix the code so it runs correctly. Write the corrected line(s) or paste the full corrected program:</p>
+    <textarea class="q-ta" id="qC5-ta" rows="5" placeholder="Type or paste your corrected code here..."></textarea>
+    <button class="ac-btn" id="qC5-btn" onclick="checkFix('qC5', detectC5, 1)">Check</button>
+    <div class="q-fb" id="qC5-fb"></div>
+  </div>
+
+  <!-- C6 — code fix -->
+  <div class="q-block" id="qC6">
+    <div class="q-num">Question 6 — Fix the Code <span class="pts-tag">1 pt</span></div>
+    <pre class="q-code">score = 95
+message = "Your score is: " + score
+print(message)</pre>
+    <div class="q-err">TypeError: can only concatenate str (not "int") to str</div>
+    <p class="q-hint">Fix the code so it runs correctly. Write the corrected line or paste the full corrected program:</p>
+    <textarea class="q-ta" id="qC6-ta" rows="4" placeholder="Type or paste your corrected code here..."></textarea>
+    <button class="ac-btn" id="qC6-btn" onclick="checkFix('qC6', detectC6, 1)">Check</button>
+    <div class="q-fb" id="qC6-fb"></div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════════
+     PANEL 2 — LOOP COMPREHENSION  (4 pts: 4 MCQ)
+     ══════════════════════════════════════════════════════════════ -->
+<div class="panel" id="panel-2">
+  <div class="sec-header">
+    <div class="sec-badge">3</div>
+    <div class="sec-title">Loops: Understanding</div>
+    <div class="sec-pts">4 points available</div>
+  </div>
+  <div class="goal">🎯 Answer questions about how <code>for</code> loops and <code>range()</code> work in Python.</div>
+
+  <!-- L1 -->
+  <div class="q-block" id="qL1">
+    <div class="q-num">Question 1 <span class="pts-tag">1 pt</span></div>
+    <pre class="q-code">for i in range(6):
+    print("Jump!")</pre>
+    <p class="q-text">How many times is <code>"Jump!"</code> printed?</p>
+    <div class="q-opts">
+      <label class="q-opt"><input type="radio" name="qL1" value="A"> 5</label>
+      <label class="q-opt"><input type="radio" name="qL1" value="B"> 6</label>
+      <label class="q-opt"><input type="radio" name="qL1" value="C"> 7</label>
+      <label class="q-opt"><input type="radio" name="qL1" value="D"> 0</label>
+    </div>
+    <button class="ac-btn" id="qL1-btn" onclick="checkMCQ('qL1','B',1)">Check</button>
+    <div class="q-fb" id="qL1-fb"></div>
+  </div>
+
+  <!-- L2 -->
+  <div class="q-block" id="qL2">
+    <div class="q-num">Question 2 <span class="pts-tag">1 pt</span></div>
+    <pre class="q-code">for i in range(2, 6):
+    print(i)</pre>
+    <p class="q-text">What numbers are printed? (each on its own line)</p>
+    <div class="q-opts">
+      <label class="q-opt"><input type="radio" name="qL2" value="A"> 2, 3, 4, 5, 6</label>
+      <label class="q-opt"><input type="radio" name="qL2" value="B"> 2, 3, 4, 5</label>
+      <label class="q-opt"><input type="radio" name="qL2" value="C"> 1, 2, 3, 4, 5, 6</label>
+      <label class="q-opt"><input type="radio" name="qL2" value="D"> 0, 1, 2, 3, 4, 5</label>
+    </div>
+    <button class="ac-btn" id="qL2-btn" onclick="checkMCQ('qL2','B',1)">Check</button>
+    <div class="q-fb" id="qL2-fb"></div>
+  </div>
+
+  <!-- L3 -->
+  <div class="q-block" id="qL3">
+    <div class="q-num">Question 3 <span class="pts-tag">1 pt</span></div>
+    <pre class="q-code">for i in range(0, 10, 2):
+    print(i)</pre>
+    <p class="q-text">What numbers does <code>range(0, 10, 2)</code> produce?</p>
+    <div class="q-opts">
+      <label class="q-opt"><input type="radio" name="qL3" value="A"> 0, 1, 2, 3, 4, 5, 6, 7, 8, 9</label>
+      <label class="q-opt"><input type="radio" name="qL3" value="B"> 0, 2, 4, 6, 8, 10</label>
+      <label class="q-opt"><input type="radio" name="qL3" value="C"> 0, 2, 4, 6, 8</label>
+      <label class="q-opt"><input type="radio" name="qL3" value="D"> 2, 4, 6, 8, 10</label>
+    </div>
+    <button class="ac-btn" id="qL3-btn" onclick="checkMCQ('qL3','C',1)">Check</button>
+    <div class="q-fb" id="qL3-fb"></div>
+  </div>
+
+  <!-- L4 -->
+  <div class="q-block" id="qL4">
+    <div class="q-num">Question 4 <span class="pts-tag">1 pt</span></div>
+    <p class="q-text">Which code correctly draws a square using turtle?</p>
+    <div class="q-opts">
+      <label class="q-opt"><input type="radio" name="qL4" value="A">
+        <span><code>for i in range(4):</code> &nbsp;→&nbsp; <code>turtle.forward(100)</code> &nbsp;→&nbsp; <code>turtle.left(90)</code></span>
+      </label>
+      <label class="q-opt"><input type="radio" name="qL4" value="B">
+        <span><code>for i in range(90):</code> &nbsp;→&nbsp; <code>turtle.forward(4)</code> &nbsp;→&nbsp; <code>turtle.left(90)</code></span>
+      </label>
+      <label class="q-opt"><input type="radio" name="qL4" value="C">
+        <span><code>for i in range(4):</code> &nbsp;→&nbsp; <code>turtle.forward(100)</code> &nbsp;→&nbsp; <code>turtle.left(4)</code></span>
+      </label>
+      <label class="q-opt"><input type="radio" name="qL4" value="D">
+        <span><code>for i in range(4):</code> &nbsp;→&nbsp; <code>turtle.forward(100)</code> &nbsp;→&nbsp; <code>turtle.left(45)</code></span>
+      </label>
+    </div>
+    <button class="ac-btn" id="qL4-btn" onclick="checkMCQ('qL4','A',1)">Check</button>
+    <div class="q-fb" id="qL4-fb"></div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════════
+     PANEL 3 — FUNCTION COMPREHENSION  (4 pts: 4 MCQ)
+     ══════════════════════════════════════════════════════════════ -->
+<div class="panel" id="panel-3">
+  <div class="sec-header">
+    <div class="sec-badge">4</div>
+    <div class="sec-title">Functions: Understanding</div>
+    <div class="sec-pts">4 points available</div>
+  </div>
+  <div class="goal">🎯 Answer questions about how Python functions work — defining them, calling them, and reading code that uses them.</div>
+
+  <!-- F1 -->
+  <div class="q-block" id="qF1">
+    <div class="q-num">Question 1 <span class="pts-tag">1 pt</span></div>
+    <pre class="q-code">def say_hello():
+    print("Hello!")
+
+say_hello()
+say_hello()
+say_hello()</pre>
+    <p class="q-text">How many times is <code>"Hello!"</code> printed?</p>
+    <div class="q-opts">
+      <label class="q-opt"><input type="radio" name="qF1" value="A"> 1</label>
+      <label class="q-opt"><input type="radio" name="qF1" value="B"> 2</label>
+      <label class="q-opt"><input type="radio" name="qF1" value="C"> 3</label>
+      <label class="q-opt"><input type="radio" name="qF1" value="D"> 0 — the <code>def</code> block runs it automatically</label>
+    </div>
+    <button class="ac-btn" id="qF1-btn" onclick="checkMCQ('qF1','C',1)">Check</button>
+    <div class="q-fb" id="qF1-fb"></div>
+  </div>
+
+  <!-- F2 -->
+  <div class="q-block" id="qF2">
+    <div class="q-num">Question 2 <span class="pts-tag">1 pt</span></div>
+    <pre class="q-code">def show_name():
+    print("Alice")
+
+def show_score():
+    print("100")
+
+show_score()
+show_name()</pre>
+    <p class="q-text">What is the output? (each value on its own line)</p>
+    <div class="q-opts">
+      <label class="q-opt"><input type="radio" name="qF2" value="A"> Alice, then 100</label>
+      <label class="q-opt"><input type="radio" name="qF2" value="B"> 100, then Alice</label>
+      <label class="q-opt"><input type="radio" name="qF2" value="C"> Alice only</label>
+      <label class="q-opt"><input type="radio" name="qF2" value="D"> 100 only</label>
+    </div>
+    <button class="ac-btn" id="qF2-btn" onclick="checkMCQ('qF2','B',1)">Check</button>
+    <div class="q-fb" id="qF2-fb"></div>
+  </div>
+
+  <!-- F3 -->
+  <div class="q-block" id="qF3">
+    <div class="q-num">Question 3 <span class="pts-tag">1 pt</span></div>
+    <pre class="q-code">def greet():
+    print("Hello!")
+
+greet</pre>
+    <p class="q-text">What is wrong with this code?</p>
+    <div class="q-opts">
+      <label class="q-opt"><input type="radio" name="qF3" value="A"> <code>greet</code> needs brackets to call the function: <code>greet()</code></label>
+      <label class="q-opt"><input type="radio" name="qF3" value="B"> The <code>def</code> line is missing a colon</label>
+      <label class="q-opt"><input type="radio" name="qF3" value="C"> <code>print</code> is indented incorrectly</label>
+      <label class="q-opt"><input type="radio" name="qF3" value="D"> There is no bug — this code works fine</label>
+    </div>
+    <button class="ac-btn" id="qF3-btn" onclick="checkMCQ('qF3','A',1)">Check</button>
+    <div class="q-fb" id="qF3-fb"></div>
+  </div>
+
+  <!-- F4 -->
+  <div class="q-block" id="qF4">
+    <div class="q-num">Question 4 <span class="pts-tag">1 pt</span></div>
+    <p class="q-text">What does <code>def</code> do in Python?</p>
+    <div class="q-opts">
+      <label class="q-opt"><input type="radio" name="qF4" value="A"> Runs a function immediately</label>
+      <label class="q-opt"><input type="radio" name="qF4" value="B"> Defines (creates) a new function that can be called later</label>
+      <label class="q-opt"><input type="radio" name="qF4" value="C"> Deletes a function from memory</label>
+      <label class="q-opt"><input type="radio" name="qF4" value="D"> Imports a function from a library</label>
+    </div>
+    <button class="ac-btn" id="qF4-btn" onclick="checkMCQ('qF4','B',1)">Check</button>
+    <div class="q-fb" id="qF4-fb"></div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════════
+     PANEL 4 — CODING: BASICS  (4 pts: 2 tasks × 2 pts)
+     ══════════════════════════════════════════════════════════════ -->
+<div class="panel" id="panel-4">
+  <div class="sec-header">
+    <div class="sec-badge">5</div>
+    <div class="sec-title">Coding: Basics</div>
+    <div class="sec-pts">4 points available</div>
+  </div>
+  <div class="goal">🎯 Write short Python programs in Thonny, test them, then paste your code into the boxes below.</div>
+
+  <!-- B1 — print -->
+  <div class="q-block" id="qB1">
+    <div class="q-num">Task 1 — Print statement <span class="pts-tag">2 pts</span></div>
+    <p class="q-text">Write a Python program that prints the message: <code>Hello, Year 8!</code></p>
+    <div class="thonny-box">
+      <strong>Instructions:</strong>
+      <ol>
+        <li>Open Thonny and write your code in the editor</li>
+        <li>Press <strong>F5</strong> to run it — you should see <code>Hello, Year 8!</code> in the Shell</li>
+        <li>Copy your code and paste it into the box below</li>
+      </ol>
+    </div>
+    <textarea class="q-ta" id="qB1-ta" rows="4" placeholder="Paste your Python code here..."></textarea>
+    <button class="ac-btn" id="qB1-btn" onclick="checkCode('qB1', detectB1, 2)">Check</button>
+    <div class="q-fb" id="qB1-fb"></div>
+  </div>
+
+  <!-- B2 — input/output -->
+  <div class="q-block" id="qB2">
+    <div class="q-num">Task 2 — Input &amp; output <span class="pts-tag">2 pts</span></div>
+    <p class="q-text">Write a Python program that:</p>
+    <ul style="margin:6px 0 10px 20px; font-size:0.9rem; color:#1e293b; line-height:1.8;">
+      <li>Asks the user for their name using <code>input()</code></li>
+      <li>Stores the answer in a variable</li>
+      <li>Prints a personalised greeting — e.g. <code>Hello, Alice!</code></li>
+    </ul>
+    <div class="thonny-box">
+      <strong>Instructions:</strong> Write and test in Thonny, then paste below.
+    </div>
+    <textarea class="q-ta" id="qB2-ta" rows="5" placeholder="Paste your Python code here..."></textarea>
+    <button class="ac-btn" id="qB2-btn" onclick="checkCode('qB2', detectB2, 2)">Check</button>
+    <div class="q-fb" id="qB2-fb"></div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════════
+     PANEL 5 — CODING: LOOPS  (4 pts: 2 tasks × 2 pts)
+     ══════════════════════════════════════════════════════════════ -->
+<div class="panel" id="panel-5">
+  <div class="sec-header">
+    <div class="sec-badge">6</div>
+    <div class="sec-title">Coding: Loops</div>
+    <div class="sec-pts">4 points available</div>
+  </div>
+  <div class="goal">🎯 Write Python programs using <code>for</code> loops. Write and test in Thonny, then paste here.</div>
+
+  <!-- LC1 — count 1-5 -->
+  <div class="q-block" id="qLC1">
+    <div class="q-num">Task 1 — Counting loop <span class="pts-tag">2 pts</span></div>
+    <p class="q-text">Write a <code>for</code> loop that counts from <strong>1 to 5</strong>, printing each number on a separate line.</p>
+    <p class="q-hint">Expected output: &nbsp;<code>1</code>&nbsp; <code>2</code>&nbsp; <code>3</code>&nbsp; <code>4</code>&nbsp; <code>5</code>&nbsp; (each on its own line)</p>
+    <div class="thonny-box">
+      <strong>Instructions:</strong> Write and test in Thonny, then paste below.
+    </div>
+    <textarea class="q-ta" id="qLC1-ta" rows="5" placeholder="Paste your Python code here..."></textarea>
+    <button class="ac-btn" id="qLC1-btn" onclick="checkCode('qLC1', detectLC1, 2)">Check</button>
+    <div class="q-fb" id="qLC1-fb"></div>
+  </div>
+
+  <!-- LC2 — turtle hexagon -->
+  <div class="q-block" id="qLC2">
+    <div class="q-num">Task 2 — Turtle hexagon <span class="pts-tag">2 pts</span></div>
+    <p class="q-text">Write a turtle program that uses a <code>for</code> loop to draw a regular <strong>hexagon</strong> (6 sides).</p>
+    <p class="q-hint">💡 The turning angle for any regular shape is: <strong>360 ÷ number of sides</strong></p>
+    <div class="thonny-box">
+      <strong>Instructions:</strong> Write and test in Thonny — you should see a hexagon appear. Then paste below.
+    </div>
+    <textarea class="q-ta" id="qLC2-ta" rows="8" placeholder="Paste your Python code here..."></textarea>
+    <button class="ac-btn" id="qLC2-btn" onclick="checkCode('qLC2', detectLC2, 2)">Check</button>
+    <div class="q-fb" id="qLC2-fb"></div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════════
+     PANEL 6 — CODING: FUNCTIONS  (4 pts: 2 tasks × 2 pts)
+     ══════════════════════════════════════════════════════════════ -->
+<div class="panel" id="panel-6">
+  <div class="sec-header">
+    <div class="sec-badge">7</div>
+    <div class="sec-title">Coding: Functions</div>
+    <div class="sec-pts">4 points available</div>
+  </div>
+  <div class="goal">🎯 Write Python programs using functions. Remember: <code>def</code> to define, indent the body, brackets <code>()</code> to call.</div>
+
+  <!-- FC1 — greet -->
+  <div class="q-block" id="qFC1">
+    <div class="q-num">Task 1 — Define and call a function <span class="pts-tag">2 pts</span></div>
+    <p class="q-text">Define a function called <code>greet</code> that prints a greeting message. Then call it.</p>
+    <p class="q-hint">💡 Structure: <code>def greet():</code> → indented <code>print(...)</code> → then <code>greet()</code> to call it</p>
+    <div class="thonny-box">
+      <strong>Instructions:</strong> Write and test in Thonny, then paste below.
+    </div>
+    <textarea class="q-ta" id="qFC1-ta" rows="6" placeholder="Paste your Python code here..."></textarea>
+    <button class="ac-btn" id="qFC1-btn" onclick="checkCode('qFC1', detectFC1, 2)">Check</button>
+    <div class="q-fb" id="qFC1-fb"></div>
+  </div>
+
+  <!-- FC2 — draw_shape with loop, called twice -->
+  <div class="q-block" id="qFC2">
+    <div class="q-num">Task 2 — Function with a loop <span class="pts-tag">2 pts</span></div>
+    <p class="q-text">Define a function called <code>draw_shape</code> that uses a <code>for</code> loop to draw a shape with turtle. Call the function <strong>twice</strong> to draw two shapes.</p>
+    <p class="q-hint">💡 You can choose any shape — square, triangle, hexagon. The function just needs a loop and turtle commands inside it.</p>
+    <div class="thonny-box">
+      <strong>Instructions:</strong> Write and test in Thonny (you should see two shapes drawn), then paste below.
+    </div>
+    <textarea class="q-ta" id="qFC2-ta" rows="12" placeholder="Paste your Python code here..."></textarea>
+    <button class="ac-btn" id="qFC2-btn" onclick="checkCode('qFC2', detectFC2, 2)">Check</button>
+    <div class="q-fb" id="qFC2-fb"></div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════════
+     PANEL 7 — EXTENSION  (4 pts)
+     ══════════════════════════════════════════════════════════════ -->
+<div class="panel" id="panel-7">
+  <div class="sec-header">
+    <div class="sec-badge">★</div>
+    <div class="sec-title">Extension Challenge</div>
+    <div class="sec-pts">Up to 4 bonus points</div>
+  </div>
+  <div class="goal">🎯 This is an open-ended challenge — there is no single right answer. Show everything you have learned this year!</div>
+
+  <div class="q-block" id="qEX">
+    <div class="q-num">Extension Task <span class="pts-tag">up to 4 pts</span></div>
+    <p class="q-text">Create a <strong>turtle art program</strong> that draws a pattern. Your program must include <em>all</em> of the following:</p>
+    <ul style="margin:8px 0 10px 20px; font-size:0.9rem; color:#1e293b; line-height:2;">
+      <li>At least <strong>2 functions</strong> (defined with <code>def</code>)</li>
+      <li>At least <strong>one <code>for</code> loop</strong></li>
+      <li>At least <strong>one user input</strong> to customise the art (e.g. number of shapes, a colour, number of sides)</li>
+      <li><strong>Casting</strong> of the input to the correct type (<code>int()</code>, <code>float()</code>, etc.)</li>
+    </ul>
+    <p class="q-hint">💡 Ideas: a colour burst, a row of shapes, a growing spiral, a flag, a starfield — anything you like.</p>
+    <div class="thonny-box">
+      <strong>Instructions:</strong> Write and test your program in Thonny, then paste it below. There are no wrong answers — be creative!
+    </div>
+    <textarea class="q-ta" id="qEX-ta" rows="16" placeholder="Paste your Python program here..."></textarea>
+    <button class="ac-btn" id="qEX-btn" onclick="checkCode('qEX', detectEX, 4)">Check</button>
+    <div class="q-fb" id="qEX-fb"></div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="ac-toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+// SCORING
+// ══════════════════════════════════════════════════════════════
+const MAX_SCORE = 36;
+const qPoints   = {};   // questionId → best points earned so far
+
+function totalScore() {
+  return Object.values(qPoints).reduce((s, v) => s + v, 0);
+}
+
+function awardPoints(qId, pts) {
+  const prev = qPoints[qId] || 0;
+  if (pts > prev) {
+    qPoints[qId] = pts;
+    refreshScore();
+    checkCompletion();
+    saveState();
+  }
+}
+
+function refreshScore() {
+  const total = totalScore();
+  const pct   = Math.round(total / MAX_SCORE * 100);
+  document.getElementById('score-pill').textContent = `Score: ${total} / ${MAX_SCORE}\u00a0\u00a0(${pct}%)`;
+  document.getElementById('score-bar').style.width  = pct + '%';
+  window.Classroom?.submitGrade(pct, 'Year 8 Python Assessment');
+}
+
+function checkCompletion() {
+  const total = totalScore();
+  const banner = document.getElementById('gbanner');
+  if (total >= MAX_SCORE) {
+    if (!banner.classList.contains('show')) {
+      banner.classList.add('show');
+      document.body.classList.remove('bg-green');
+      document.body.classList.add('bg-gold');
+      startFW();
+    }
+  } else if (total >= Math.round(MAX_SCORE * 0.8)) {
+    if (!banner.classList.contains('show')) {
+      document.body.classList.remove('bg-gold');
+      document.body.classList.add('bg-green');
+    }
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+// MCQ CHECKING  — answered once, then locked
+// ══════════════════════════════════════════════════════════════
+const PASS_MSGS = ['✅ Correct!', '✅ That\'s right!', '✅ Well done!', '✅ Exactly right!'];
+
+function checkMCQ(qId, correct, pts) {
+  const btn      = document.getElementById(qId + '-btn');
+  const fb       = document.getElementById(qId + '-fb');
+  const block    = document.getElementById(qId);
+  const selected = document.querySelector(`input[name="${qId}"]:checked`);
+
+  if (!selected) {
+    fb.textContent = '⚠️ Please select an answer first.';
+    fb.className   = 'q-fb fail';
+    return;
+  }
+
+  // Lock — can only answer MCQ once
+  btn.disabled = true;
+  document.querySelectorAll(`input[name="${qId}"]`).forEach(r => {
+    r.disabled = true;
+    r.closest('.q-opt').classList.add('locked');
+  });
+
+  const isCorrect = selected.value === correct;
+
+  // Highlight correct + (if wrong) wrong choice
+  document.querySelectorAll(`input[name="${qId}"]`).forEach(r => {
+    const opt = r.closest('.q-opt');
+    if (r.value === correct)                         opt.classList.add('opt-correct');
+    else if (r.value === selected.value && !isCorrect) opt.classList.add('opt-wrong');
+  });
+
+  if (isCorrect) {
+    block.classList.add('correct');
+    fb.textContent = PASS_MSGS[Math.floor(Math.random() * PASS_MSGS.length)];
+    fb.className   = 'q-fb pass';
+    awardPoints(qId, pts);
+  } else {
+    block.classList.add('wrong');
+    fb.textContent = '❌ Not quite — the correct answer is highlighted in green above.';
+    fb.className   = 'q-fb fail';
+    awardPoints(qId, 0);
+  }
+  markTabProgress();
+}
+
+// ══════════════════════════════════════════════════════════════
+// WRITE-THE-FIX / CODE-FIX (re-attempts allowed, score only goes up)
+// ══════════════════════════════════════════════════════════════
+function checkFix(qId, detectFn, pts) {
+  const ta    = document.getElementById(qId + '-ta');
+  const fb    = document.getElementById(qId + '-fb');
+  const block = document.getElementById(qId);
+  const code  = ta.value.trim();
+
+  if (!code) { fb.textContent = '⚠️ Please enter something first.'; fb.className = 'q-fb fail'; return; }
+
+  if (detectFn(code)) {
+    block.classList.remove('wrong'); block.classList.add('correct');
+    fb.textContent = '✅ Correct fix!'; fb.className = 'q-fb pass';
+    awardPoints(qId, pts);
+  } else {
+    block.classList.remove('correct'); block.classList.add('wrong');
+    fb.textContent = '❌ Not quite — check your fix and try again.'; fb.className = 'q-fb fail';
+    saveState();
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+// TIERED CODE CHECKING (re-attempts allowed, score only goes up)
+// ══════════════════════════════════════════════════════════════
+function checkCode(qId, detectFn, maxPts) {
+  const ta    = document.getElementById(qId + '-ta');
+  const fb    = document.getElementById(qId + '-fb');
+  const block = document.getElementById(qId);
+  const code  = ta.value.trim();
+
+  if (!code) { fb.textContent = '⚠️ Please paste your code first.'; fb.className = 'q-fb fail'; return; }
+
+  const { pts, msg } = detectFn(code, maxPts);
+  block.classList.remove('correct', 'partial', 'wrong');
+  if      (pts === maxPts) block.classList.add('correct');
+  else if (pts > 0)        block.classList.add('partial');
+  else                     block.classList.add('wrong');
+
+  fb.textContent = msg;
+  fb.className   = pts === maxPts ? 'q-fb pass' : pts > 0 ? 'q-fb partial' : 'q-fb fail';
+  awardPoints(qId, pts);
+}
+
+// ══════════════════════════════════════════════════════════════
+// DETECTION — write-the-fix (return true/false)
+// ══════════════════════════════════════════════════════════════
+function detectE5(code) {
+  // total_score (with underscore) must be present; student typed totalscore as the bug
+  return /total_score/.test(code);
+}
+
+function detectE6(code) {
+  // indented print("Well done!") — 4 spaces or a tab before print
+  return /^([ ]{4}|\t)print\s*\(\s*["']Well done!["']/m.test(code);
+}
+
+function detectC5(code) {
+  // steps must be cast with int(input(
+  return /int\s*\(\s*input\s*\(/.test(code);
+}
+
+function detectC6(code) {
+  // score must be wrapped in str()
+  return /str\s*\(\s*score\s*\)|str\s*\(\s*95\s*\)|[+]\s*str\s*\(/.test(code);
+}
+
+// ══════════════════════════════════════════════════════════════
+// DETECTION — tiered code tasks (return { pts, msg })
+// ══════════════════════════════════════════════════════════════
+function detectB1(code) {
+  if (/print\s*\(\s*["'][^"']{2,}["']/.test(code))
+    return { pts: 2, msg: '✅ Great — your print statement is working!' };
+  if (/print\s*\(/.test(code))
+    return { pts: 1, msg: '🟡 print() found — make sure it has a string message inside, e.g. print("Hello, Year 8!")' };
+  return { pts: 0, msg: '❌ No print() found — use print("Hello, Year 8!") to display the message.' };
+}
+
+function detectB2(code) {
+  if (!/input\s*\(/.test(code))
+    return { pts: 0, msg: '❌ No input() found — use name = input("What is your name? ") to ask the user.' };
+  const varMatch = code.match(/(\w+)\s*=\s*input\s*\(/);
+  if (!varMatch)
+    return { pts: 1, msg: '🟡 input() found — store the result in a variable: name = input(...)' };
+  const v = varMatch[1];
+  const usedInPrint = new RegExp('print\\s*\\([^)]*' + v + '|print\\s*\\(f["\'][^"\']*{' + v).test(code);
+  if (usedInPrint)
+    return { pts: 2, msg: '✅ Well done — input stored and used in the greeting!' };
+  return { pts: 1, msg: '🟡 Input stored in a variable — now use that variable inside print() to print the greeting.' };
+}
+
+function detectLC1(code) {
+  const hasFor   = /for\s+\w+\s+in\s+range\s*\(/.test(code);
+  const hasPrint = /print\s*\(/.test(code);
+  if (!hasFor)
+    return { pts: 0, msg: '❌ No for loop found — use: for i in range(...)' };
+  if (hasFor && hasPrint && /range\s*\(\s*1\s*,\s*6\s*\)/.test(code))
+    return { pts: 2, msg: '✅ Correct — your loop counts from 1 to 5!' };
+  if (hasFor && hasPrint)
+    return { pts: 1, msg: '🟡 Loop and print found — check your range. To count 1–5 use range(1, 6), not range(5).' };
+  return { pts: 0, msg: '❌ Loop found but no print() — add print(i) inside the loop.' };
+}
+
+function detectLC2(code) {
+  const hasFor    = /for\s+\w+\s+in\s+range\s*\(/.test(code);
+  const hasTurtle = /turtle\.|import\s+turtle|\.forward\s*\(|\.fd\s*\(/.test(code);
+  const hasRange6 = /range\s*\(\s*6\s*\)/.test(code);
+  const has60     = /left\s*\(\s*60\s*\)|right\s*\(\s*60\s*\)/.test(code);
+  if (!hasFor || !hasTurtle)
+    return { pts: 0, msg: '❌ Make sure you have a for loop and import/use turtle commands.' };
+  if (hasRange6 && has60)
+    return { pts: 2, msg: '✅ Excellent — hexagon drawn with the right number of sides (6) and angle (60°)!' };
+  return { pts: 1, msg: '🟡 Loop and turtle found — for a hexagon use range(6) and turn left(60) each time.' };
+}
+
+function detectFC1(code) {
+  const hasDef  = /def\s+greet\s*\(\s*\)\s*:/.test(code);
+  const hasPrint = /print\s*\(/.test(code);
+  const callCount = (code.match(/greet\s*\(\s*\)/g) || []).length; // def greet(): + greet() = ≥2
+  if (!hasDef)
+    return { pts: 0, msg: '❌ No greet function found — define it with: def greet():' };
+  if (hasDef && hasPrint && callCount >= 2)
+    return { pts: 2, msg: '✅ Well done — function defined with a print statement and called correctly!' };
+  if (hasDef && hasPrint)
+    return { pts: 1, msg: '🟡 Function defined with a print — don\'t forget to call it: greet()' };
+  return { pts: 1, msg: '🟡 Function defined — add a print() inside the body (indented), then call it with greet()' };
+}
+
+function detectFC2(code) {
+  const hasDef    = /def\s+draw_shape\s*\(\s*\)\s*:/.test(code);
+  const hasFor    = /for\s+\w+\s+in\s+range\s*\(/.test(code);
+  const hasTurtle = /turtle\.|import\s+turtle|\.forward\s*\(|\.fd\s*\(/.test(code);
+  // def draw_shape(): counts as one occurrence; two calls = total ≥ 3
+  const callCount = (code.match(/draw_shape\s*\(\s*\)/g) || []).length;
+  if (!hasDef)
+    return { pts: 0, msg: '❌ No draw_shape function found — define it with: def draw_shape():' };
+  if (!hasFor)
+    return { pts: 0, msg: '❌ No for loop inside the function — add a loop to draw the shape.' };
+  if (hasDef && hasFor && hasTurtle && callCount >= 3)
+    return { pts: 2, msg: '✅ Excellent — function with loop defined and called twice! Two shapes drawn!' };
+  if (hasDef && hasFor && hasTurtle)
+    return { pts: 1, msg: '🟡 Good — function and loop found with turtle. Call draw_shape() twice to draw two shapes.' };
+  return { pts: 1, msg: '🟡 Function and loop found — add turtle commands inside the loop (turtle.forward, turtle.left).' };
+}
+
+function detectEX(code) {
+  const defCount  = (code.match(/def\s+\w+\s*\(\s*\)\s*:/g) || []).length;
+  const hasFor    = /for\s+\w+\s+in\s+range\s*\(/.test(code);
+  const hasInput  = /input\s*\(/.test(code);
+  const hasCast   = /int\s*\(\s*input|float\s*\(\s*input|int\s*\(|float\s*\(/.test(code);
+  const hasTurtle = /turtle\.|import\s+turtle/.test(code);
+
+  // Build friendly feedback
+  const checks = [
+    { ok: defCount >= 2, need: '2+ functions (def)', got: defCount >= 2 ? `${defCount} function${defCount>1?'s':''} found` : `only ${defCount} function found` },
+    { ok: hasFor,    need: 'for loop',        got: 'for loop found' },
+    { ok: hasInput,  need: 'user input()',    got: 'input() found' },
+    { ok: hasCast,   need: 'cast input (int/float)', got: 'casting found' },
+    { ok: hasTurtle, need: 'turtle graphics', got: 'turtle found' },
+  ];
+  const metCount = checks.filter(c => c.ok).length;
+  const missing  = checks.filter(c => !c.ok).map(c => c.need);
+  const met      = checks.filter(c => c.ok).map(c => c.got);
+
+  if (metCount === 5)
+    return { pts: 4, msg: '🌟 Outstanding — all extension criteria met! ' + met.join(', ') + '.' };
+  if (metCount >= 3 && hasTurtle && hasFor)
+    return { pts: 2, msg: `🟡 Good progress! Met: ${met.join(', ')}. Still needed: ${missing.join(', ')}.` };
+  if (metCount >= 1)
+    return { pts: 1, msg: `🟡 Attempt recognised. Met: ${met.join(', ')}. Still needed: ${missing.join(', ')}.` };
+  return { pts: 0, msg: '❌ No code detected — write and test in Thonny first, then paste here.' };
+}
+
+// ══════════════════════════════════════════════════════════════
+// TAB SWITCHING + progress indicator
+// ══════════════════════════════════════════════════════════════
+document.getElementById('tab-bar').addEventListener('click', e => {
+  const tab = e.target.closest('.tab');
+  if (!tab) return;
+  const idx = +tab.dataset.idx;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  tab.classList.add('active');
+  document.getElementById('panel-' + idx).classList.add('active');
+});
+
+// Mark a tab "done" (gold) when its questions all have at least some points
+function markTabProgress() {
+  const tabMaxPts = [6, 6, 4, 4, 4, 4, 4, 4];
+  const tabQIds   = [
+    ['qE1','qE2','qE3','qE4','qE5','qE6'],
+    ['qC1','qC2','qC3','qC4','qC5','qC6'],
+    ['qL1','qL2','qL3','qL4'],
+    ['qF1','qF2','qF3','qF4'],
+    ['qB1','qB2'],
+    ['qLC1','qLC2'],
+    ['qFC1','qFC2'],
+    ['qEX']
+  ];
+  tabQIds.forEach((ids, ti) => {
+    const earned = ids.reduce((s, id) => s + (qPoints[id] || 0), 0);
+    const tab    = document.querySelector(`.tab[data-idx="${ti}"]`);
+    if (tab && earned === tabMaxPts[ti]) tab.classList.add('done');
+  });
+}
+
+// ══════════════════════════════════════════════════════════════
+// STATE PERSISTENCE
+// ══════════════════════════════════════════════════════════════
+const SAVE_KEY = 'oga_y8py_assess_v1';
+
+function saveState() {
+  try {
+    const taVals = {}, radioVals = {};
+    document.querySelectorAll('.q-ta').forEach(el => { if (el.value) taVals[el.id] = el.value; });
+    document.querySelectorAll('.q-opts input:checked').forEach(r => { radioVals[r.name] = r.value; });
+    localStorage.setItem(SAVE_KEY, JSON.stringify({ qPoints, taVals, radioVals }));
+  } catch(_) {}
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return;
+    const s = JSON.parse(raw);
+
+    // Restore textareas
+    if (s.taVals) Object.entries(s.taVals).forEach(([id, v]) => {
+      const el = document.getElementById(id); if (el) el.value = v;
+    });
+
+    // Restore radio selections
+    if (s.radioVals) Object.entries(s.radioVals).forEach(([name, val]) => {
+      const r = document.querySelector(`input[name="${name}"][value="${val}"]`); if (r) r.checked = true;
+    });
+
+    // Restore points + re-style blocks
+    if (s.qPoints) {
+      // MCQ block max = 1; fix blocks max = 1; code blocks max = 2 or 4
+      const maxMap = { qE1:1,qE2:1,qE3:1,qE4:1,qE5:1,qE6:1,
+                       qC1:1,qC2:1,qC3:1,qC4:1,qC5:1,qC6:1,
+                       qL1:1,qL2:1,qL3:1,qL4:1,
+                       qF1:1,qF2:1,qF3:1,qF4:1,
+                       qB1:2,qB2:2,qLC1:2,qLC2:2,qFC1:2,qFC2:2,qEX:4 };
+      Object.entries(s.qPoints).forEach(([qId, pts]) => {
+        if (pts > 0) {
+          qPoints[qId] = pts;
+          const block = document.getElementById(qId);
+          if (block) {
+            if (pts === (maxMap[qId] || 1)) block.classList.add('correct');
+            else block.classList.add('partial');
+          }
+          // Re-lock MCQ
+          if (maxMap[qId] === 1 && document.querySelector(`input[name="${qId}"]`)) {
+            const btn = document.getElementById(qId + '-btn'); if (btn) btn.disabled = true;
+            document.querySelectorAll(`input[name="${qId}"]`).forEach(r => {
+              r.disabled = true; r.closest('.q-opt').classList.add('locked');
+            });
+            // Re-highlight correct answer
+            const correct = { qE1:'B',qE2:'C',qE3:'B',qE4:'C',
+                               qC1:'B',qC2:'B',qC3:'C',qC4:'A',
+                               qL1:'B',qL2:'B',qL3:'C',qL4:'A',
+                               qF1:'C',qF2:'B',qF3:'A',qF4:'B' };
+            if (correct[qId]) {
+              const correctOpt = document.querySelector(`input[name="${qId}"][value="${correct[qId]}"]`);
+              if (correctOpt) correctOpt.closest('.q-opt').classList.add('opt-correct');
+              const selected = document.querySelector(`input[name="${qId}"]:checked`);
+              if (selected && selected.value !== correct[qId])
+                selected.closest('.q-opt').classList.add('opt-wrong');
+            }
+          }
+        }
+      });
+      refreshScore();
+      markTabProgress();
+      checkCompletion();
+    }
+  } catch(_) {}
+}
+
+// ══════════════════════════════════════════════════════════════
+// FIREWORKS
+// ══════════════════════════════════════════════════════════════
+const cvs = document.getElementById('fwc'), ctx = cvs.getContext('2d');
+let fwOn = false, fwP = [], fwId = null;
+const FWC = ['#F5C300','#22c55e','#00B4D8','#E07B2A','#ff6b9d','#a78bfa','#fff'];
+function startFW(){cvs.classList.add('show');cvs.width=innerWidth;cvs.height=innerHeight;fwOn=true;fwP=[];fwLoop();setTimeout(stopFW,7000)}
+function stopFW(){fwOn=false;if(fwId)cancelAnimationFrame(fwId);ctx.clearRect(0,0,cvs.width,cvs.height);cvs.classList.remove('show')}
+function fwLoop(){if(!fwOn)return;fwId=requestAnimationFrame(fwLoop);ctx.fillStyle='rgba(255,250,200,0.15)';ctx.fillRect(0,0,cvs.width,cvs.height);if(Math.random()<.07)fwBurst();fwP=fwP.filter(p=>p.l>0);fwP.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.055;p.vx*=.98;p.vy*=.98;p.l--;ctx.globalAlpha=p.l/p.ml;ctx.fillStyle=p.c;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill()});ctx.globalAlpha=1}
+function fwBurst(){const x=Math.random()*cvs.width,y=Math.random()*cvs.height*.65,c=FWC[Math.floor(Math.random()*FWC.length)],n=55+Math.floor(Math.random()*40);for(let i=0;i<n;i++){const a=Math.random()*Math.PI*2,sp=1.5+Math.random()*4;fwP.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-1,r:1.5+Math.random()*2.5,c,l:65+Math.floor(Math.random()*35),ml:100})}}
+addEventListener('resize',()=>{if(fwOn){cvs.width=innerWidth;cvs.height=innerHeight}});
+
+// ── Boot ───────────────────────────────────────────────────────
+loadState();
+</script>
+
+<script src="../../../classroom.js"></script>
+</body>
+</html>
