@@ -885,6 +885,7 @@
     const missingScopes = SCOPE.split(' ').filter(s => s && !grantedScopes.includes(s));
     if (missingScopes.length > 0) {
       console.warn('Classroom: missing scopes after sign-in:', missingScopes);
+      try { localStorage.removeItem(AUTH_STORAGE_KEY); } catch (_) {}
       const dot  = document.getElementById('classroom-dot');
       const text = document.getElementById('classroom-text');
       if (dot)  dot.style.cssText = 'background:#ef4444;box-shadow:0 0 8px #ef4444';
@@ -967,20 +968,45 @@
 
   // Called on page load to pick up a token left by oauth-callback.html after
   // returning from Google's sign-in page.
+  const AUTH_STORAGE_KEY = 'oga_auth';
+
   function checkPendingOAuthToken() {
     let json = null;
     try { json = sessionStorage.getItem('oga_oauth_token'); } catch (_) {}
-    if (!json) return;
+    if (!json) return false;
     try { sessionStorage.removeItem('oga_oauth_token'); } catch (_) {}
     let data;
-    try { data = JSON.parse(json); } catch (_) { return; }
-    if (!data.access_token) return;
+    try { data = JSON.parse(json); } catch (_) { return false; }
+    if (!data.access_token) return false;
     // Discard if already expired (30 s margin for clock skew).
     if (data.expires_at && data.expires_at < Date.now() + 30000) {
       console.warn('Classroom: discarding expired token from redirect');
-      return;
+      return false;
+    }
+    // Persist for cross-activity reuse within the ~1-hour token lifetime.
+    try {
+      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify({
+        access_token : data.access_token,
+        scope        : data.scope || '',
+        expires_at   : data.expires_at
+      }));
+    } catch (_) {}
+    handleTokenResponse({ access_token: data.access_token, scope: data.scope || '' });
+    return true;
+  }
+
+  // Restore a previously saved token (e.g. page refresh or a different activity).
+  // Calls handleTokenResponse if a non-expired token is found.
+  function checkStoredToken() {
+    let data = null;
+    try { data = JSON.parse(localStorage.getItem(AUTH_STORAGE_KEY) || 'null'); } catch (_) {}
+    if (!data || !data.access_token) return false;
+    if (data.expires_at && data.expires_at < Date.now() + 30000) {
+      try { localStorage.removeItem(AUTH_STORAGE_KEY); } catch (_) {}
+      return false;
     }
     handleTokenResponse({ access_token: data.access_token, scope: data.scope || '' });
+    return true;
   }
 
   window._classroomSignIn = function () { signInViaRedirect(); };
@@ -1091,7 +1117,10 @@
   function bootstrap() {
     if (!isClassroomContext) return;
     injectBanner();
-    checkPendingOAuthToken(); // pick up token if returning from Google redirect
+    // Pick up token from redirect, or restore a persisted one (refresh / different activity).
+    if (!checkPendingOAuthToken()) {
+      checkStoredToken();
+    }
   }
 
   if (document.readyState === 'loading') {
