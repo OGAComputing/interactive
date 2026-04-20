@@ -731,7 +731,7 @@
 
   async function driveCreateFile(filename, html) {
     const boundary = 'ev' + Date.now().toString(36);
-    const meta     = JSON.stringify({ name: filename, mimeType: 'text/html' });
+    const meta     = JSON.stringify({ name: filename, mimeType: 'application/vnd.google-apps.document' });
     const body     =
       `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${meta}\r\n` +
       `--${boundary}\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n${html}\r\n` +
@@ -751,16 +751,22 @@
     return (await res.json()).id;
   }
 
-  async function driveUpdateFile(fileId, html) {
+  async function driveUpdateFile(fileId, filename, html) {
+    const boundary = 'ev' + Date.now().toString(36);
+    const meta     = JSON.stringify({ name: filename, mimeType: 'application/vnd.google-apps.document' });
+    const body     =
+      `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${meta}\r\n` +
+      `--${boundary}\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n${html}\r\n` +
+      `--${boundary}--`;
     const res = await fetch(
-      `https://www.googleapis.com/upload/drive/v3/files/${encodeURIComponent(fileId)}?uploadType=media`,
+      `https://www.googleapis.com/upload/drive/v3/files/${encodeURIComponent(fileId)}?uploadType=multipart`,
       {
         method  : 'PATCH',
         headers : {
           Authorization  : `Bearer ${accessToken}`,
-          'Content-Type' : 'text/html; charset=UTF-8'
+          'Content-Type' : `multipart/related; boundary=${boundary}`
         },
-        body : html
+        body
       }
     );
     if (!res.ok) {
@@ -800,20 +806,22 @@
     try { saved = JSON.parse(localStorage.getItem(storageKey) || 'null'); } catch (_) {}
 
     const safeName = (activityName || 'Activity').replace(/[^a-z0-9 \-]/gi, '_').trim();
-    const filename  = `${safeName} — Work Evidence.html`;
+    const filename  = `${safeName} — Work Evidence`;
 
     let html;
     try { html = buildEvidenceHtml(activityName, score); } catch (e) {
       console.error('Classroom: evidence HTML build failed', e); return;
     }
 
-    // Upload: update existing file, or create a new one if missing/deleted.
-    let fileId = saved?.fileId || null;
+    // Upload: update existing Google Doc, or create a new one.
+    // Legacy entries without isGoogleDoc are HTML files that cannot be converted
+    // in-place — skip them so a proper Google Doc is created instead.
+    let fileId = (saved?.fileId && saved?.isGoogleDoc) ? saved.fileId : null;
     let newFile = false;
     try {
       if (fileId) {
         try {
-          await driveUpdateFile(fileId, html);
+          await driveUpdateFile(fileId, filename, html);
         } catch (e) {
           if (e.status === 404) { fileId = null; }  // file was deleted — fall through to create
           else throw e;
@@ -829,19 +837,19 @@
     }
 
     // Add to submission once (the attachment link stays valid as the file is updated in place).
-    const alreadyAttached = saved?.attachmentAdded && !newFile;
+    const alreadyAttached = saved?.attachmentAdded && saved?.isGoogleDoc && !newFile;
     if (!alreadyAttached) {
       try {
         await classroomAddAttachment(fileId);
-        try { localStorage.setItem(storageKey, JSON.stringify({ fileId, attachmentAdded: true })); } catch (_) {}
+        try { localStorage.setItem(storageKey, JSON.stringify({ fileId, attachmentAdded: true, isGoogleDoc: true })); } catch (_) {}
         showClassroomToast('📎 Work evidence attached ✅');
       } catch (e) {
         console.warn('Classroom: could not attach evidence to submission', e);
-        try { localStorage.setItem(storageKey, JSON.stringify({ fileId, attachmentAdded: false })); } catch (_) {}
+        try { localStorage.setItem(storageKey, JSON.stringify({ fileId, attachmentAdded: false, isGoogleDoc: true })); } catch (_) {}
         showClassroomToast('📎 Work evidence saved to Drive ✅');
       }
     } else {
-      try { localStorage.setItem(storageKey, JSON.stringify({ fileId, attachmentAdded: true })); } catch (_) {}
+      try { localStorage.setItem(storageKey, JSON.stringify({ fileId, attachmentAdded: true, isGoogleDoc: true })); } catch (_) {}
       // File updated silently — grade toast already shown, no second toast needed.
       console.log(`Classroom: evidence updated for "${activityName}" (fileId: ${fileId})`);
     }
