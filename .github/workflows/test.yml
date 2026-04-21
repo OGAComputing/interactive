@@ -1,0 +1,39 @@
+name: Test
+
+on:
+  push:
+    branches: [main]
+    # Skip the auto-commits from build-manifest (they use [skip ci] but
+    # this double-guards against triggering tests on manifest-only commits)
+    paths-ignore:
+      - 'activities.json'
+      - 'meta.json'
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run tests
+        run: npx playwright test
+
+      - name: Upload test report
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
