@@ -610,7 +610,9 @@ color:  purple
 <!-- Google Classroom integration -->
 <script src="../../../classroom.js"></script>
 
-<script>
+<script type="module">
+import { normalise, has, MOD_CHECKS, validateMake, validateExt } from './checkers.js';
+
 // ═══════════════════════════════════════════════════════
 //  STATE
 // ═══════════════════════════════════════════════════════
@@ -924,63 +926,8 @@ function tryCompleteInvestigate() {
 }
 
 // ═══════════════════════════════════════════════════════
-//  CODE NORMALISER
-// ═══════════════════════════════════════════════════════
-function normalise(code) {
-  let s = code.replace(/#[^\n]*/g, '');
-  s = s.replace(/"""[\s\S]*?"""/g, '""');
-  s = s.replace(/"[^"\n]*"/g, '"…"');
-  s = s.replace(/'[^'\n]*'/g, '"…"');
-  return s.toLowerCase().replace(/\s+/g, ' ');
-}
-function has(code, pattern) {
-  return pattern instanceof RegExp ? pattern.test(code) : code.includes(pattern);
-}
-
-// ═══════════════════════════════════════════════════════
 //  MODIFY CHECKS
 // ═══════════════════════════════════════════════════════
-const MOD_CHECKS = {
-  mod1(raw) {
-    const c = normalise(raw);
-    if (!has(c, 'def say_hello'))
-      return { pass:false, msg:'❌ Rename greet to say_hello — use def say_hello():' };
-    if (has(c, 'def greet'))
-      return { pass:false, msg:'❌ Remove the old name — replace def greet with def say_hello.' };
-    if (!has(c, 'say_hello()'))
-      return { pass:false, msg:'❌ Update the call at the bottom to say_hello() too.' };
-    if (!has(c, 'def farewell'))
-      return { pass:false, msg:'❌ Keep your farewell() function from Investigate — don\'t remove it.' };
-    return { pass:true, msg:'✅ Renamed correctly — say_hello() defined and called, farewell() kept.' };
-  },
-  mod2(raw) {
-    const c = normalise(raw);
-    const hasFn = has(c, 'def say_hello') || has(c, 'def greet');
-    if (!hasFn)
-      return { pass:false, msg:'❌ Make sure your function is still defined with def.' };
-    if (!has(c, 'print('))
-      return { pass:false, msg:'❌ Your function should still have print statements inside.' };
-    return { pass:true, msg:'✅ Custom messages in place — nice personalised greeting!' };
-  },
-  mod3(raw) {
-    const c = normalise(raw);
-    if (!has(c, 'def say_goodbye'))
-      return { pass:false, msg:'❌ Rename farewell to say_goodbye — use def say_goodbye():' };
-    if (has(c, 'def farewell'))
-      return { pass:false, msg:'❌ Remove the old name — replace def farewell with def say_goodbye.' };
-    if (!has(c, 'say_goodbye()'))
-      return { pass:false, msg:'❌ Update the call at the bottom to say_goodbye() too.' };
-    return { pass:true, msg:'✅ Renamed to say_goodbye() — definition and call both updated.' };
-  },
-  mod4(raw) {
-    const c = normalise(raw);
-    if (!has(c, 'def print_line'))
-      return { pass:false, msg:'❌ Define a new function: def print_line():' };
-    if (!has(c, 'print_line()'))
-      return { pass:false, msg:'❌ Call print_line() inside say_hello() at the start and end.' };
-    return { pass:true, msg:'✅ print_line() defined and called from inside say_hello() — function calling a function!' };
-  },
-};
 
 function checkMod(fieldId, checkKey) {
   const raw  = document.getElementById(fieldId)?.value || '';
@@ -1005,57 +952,28 @@ function checkMake() {
   const raw  = document.getElementById('m2_make')?.value || '';
   const fbEl = document.getElementById('fb_m2_make');
   fbEl.classList.remove('hidden');
-  if (raw.trim().length < 10) {
-    fbEl.className = 'feedback fail'; fbEl.textContent = '⚠️ Paste your program first.'; return;
+  const result = validateMake(raw);
+  fbEl.className = result.pass ? 'feedback pass' : 'feedback fail';
+  fbEl.textContent = result.msg;
+  if (result.pass) {
+    passedChecks['m2_make'] = true;
+    saveState(); submitScore();
+    if (!completedStages.includes('M2')) { completedStages.push('M2'); updateNav(); saveState(); }
+    showCompletion();
   }
-  const c = normalise(raw);
-  const defCount = (c.match(/\bdef\s+\w+\s*\(\s*\)/g) || []).length;
-  const hasShowMenu    = has(c, 'def show_menu');
-  const hasShowGoodbye = has(c, 'def show_goodbye');
-  const hasInput       = has(c, 'input(');
-  const hasIf          = has(c, /\bif\b/);
-  const hasElif        = has(c, /\belif\b/);
-  const hasElse        = has(c, /\belse\b/);
-  const missing = [];
-  if (!hasShowMenu)              missing.push('a show_menu() function');
-  if (!hasShowGoodbye)           missing.push('a show_goodbye() function');
-  if (defCount < 5)              missing.push(`at least 5 functions in total (you have ${defCount})`);
-  if (!hasInput)                 missing.push('input()');
-  if (!hasIf || !hasElif)       missing.push('if / elif');
-  if (!hasElse)                  missing.push('an else branch for invalid choices');
-  if (missing.length) {
-    fbEl.className = 'feedback fail';
-    fbEl.textContent = '❌ Still needed: ' + missing.join(', ') + '.';
-    return;
-  }
-  fbEl.className = 'feedback pass';
-  fbEl.textContent = '✅ All six criteria met — great Animal Fact Finder! Show your teacher.';
-  passedChecks['m2_make'] = true;
-  saveState(); submitScore();
-  if (!completedStages.includes('M2')) { completedStages.push('M2'); updateNav(); saveState(); }
-  showCompletion();
 }
 
 function checkExt() {
   const raw  = document.getElementById('m2_ext')?.value || '';
   const fbEl = document.getElementById('fb_m2_ext');
   fbEl.classList.remove('hidden');
-  if (raw.trim().length < 20) {
-    fbEl.className = 'feedback fail'; fbEl.textContent = '⚠️ Paste your extended program above first.'; return;
+  const result = validateExt(raw);
+  fbEl.className = result.pass ? 'feedback pass' : 'feedback fail';
+  fbEl.textContent = result.msg;
+  if (result.pass) {
+    passedChecks['m2_ext'] = true;
+    saveState(); submitScore();
   }
-  const c = normalise(raw);
-  const missing = [];
-  if (!has(c, /\bwhile\b/))  missing.push('a while loop');
-  if (!has(c, /\bbreak\b/))  missing.push('break to exit the loop');
-  if (missing.length) {
-    fbEl.className = 'feedback fail';
-    fbEl.textContent = '❌ Still needed: ' + missing.join(', ') + '.';
-    return;
-  }
-  fbEl.className = 'feedback pass';
-  fbEl.textContent = '✅ Extension complete — repeating menu with while and break. Excellent!';
-  passedChecks['m2_ext'] = true;
-  saveState(); submitScore();
 }
 
 function showCompletion() {
@@ -1064,6 +982,18 @@ function showCompletion() {
   banner.scrollIntoView({ behavior: 'smooth', block: 'center' });
   submitScore();
 }
+
+// ═══════════════════════════════════════════════════════
+//  EXPOSE GLOBALS (required because this is a module script)
+// ═══════════════════════════════════════════════════════
+Object.assign(window, {
+  showStage, saveState,
+  clearPredictError, tryCompletePredict,
+  clearRunError, tryCompleteRun,
+  tryCompleteInvestigate,
+  checkMod, completeStage,
+  checkMake, checkExt,
+});
 
 // ═══════════════════════════════════════════════════════
 //  INIT
