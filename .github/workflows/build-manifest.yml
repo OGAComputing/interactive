@@ -52,6 +52,31 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
+      - name: Download Pyodide core (first-run only)
+        run: |
+          PYODIDE_VERSION="0.27.3"
+          MARKER="pyodide/pyodide.asm.wasm"
+          if [ -f "$MARKER" ]; then
+            echo "Pyodide already present — skipping download."
+          else
+            echo "Downloading Pyodide v${PYODIDE_VERSION}…"
+            curl -fsSL \
+              "https://github.com/pyodide/pyodide/releases/download/${PYODIDE_VERSION}/pyodide-${PYODIDE_VERSION}.tar.bz2" \
+              -o /tmp/pyodide.tar.bz2
+            mkdir -p /tmp/pyodide-extract
+            tar xf /tmp/pyodide.tar.bz2 -C /tmp/pyodide-extract
+            DIST=/tmp/pyodide-extract/pyodide
+            mkdir -p pyodide
+            for f in pyodide.js pyodide.mjs pyodide.asm.wasm pyodide-lock.json; do
+              cp "$DIST/$f" pyodide/
+            done
+            # stdlib filename varies by version
+            for f in python_stdlib.zip pyodide_py.tar; do
+              [ -f "$DIST/$f" ] && cp "$DIST/$f" pyodide/ && echo "Copied $f"
+            done
+            echo "Pyodide core ready in pyodide/"
+          fi
+
       - name: Generate activities.json
         run: |
           python3 << 'EOF'
@@ -203,5 +228,7 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add activities.json meta.json
+          # Include pyodide/ only if it was just downloaded (large binary, one-time commit)
+          git add pyodide/ 2>/dev/null || true
           git diff --staged --quiet || git commit -m "chore: rebuild manifest [skip ci]"
           git push

@@ -190,7 +190,10 @@ color:  purple
   .feedback { padding: 0.6rem 0.9rem; border-radius: 6px; font-size: 0.82rem; font-weight: 600; flex: 1; min-width: 0; }
   .feedback.pass   { background: var(--green-bg); color: #166534; border: 1px solid #86efac; }
   .feedback.fail   { background: var(--red-bg);   color: #991b1b; border: 1px solid #fca5a5; }
-  .feedback.hidden { display: none; }
+  .feedback.hidden  { display: none; }
+  .feedback.loading { background: #1a1040; color: #b4a0e0; border: 1px solid #3d2d5e; }
+  .py-output { background: #070f1c; border: 1px solid #0d9488; border-radius: 8px; padding: 0.8rem 1rem; font-family: 'Courier New',monospace; font-size: 0.88rem; color: #5eead4; margin-top: 0.8rem; white-space: pre-wrap; }
+  .py-status { font-size: 0.7rem; letter-spacing: 0.07em; padding: 0.2rem 1.5rem; background: #070710; color: #3d3560; text-align: right; }
 
   /* ── INFO / HINT ── */
   .info-box { background: #1a1040; border: 1px solid #3d2d5e; border-radius: 8px; padding: 0.8rem 1rem; margin-bottom: 1rem; font-size: 0.85rem; color: #b4a0e0; display: flex; gap: 0.5rem; }
@@ -238,6 +241,7 @@ color:  purple
 </header>
 
 <div class="progress-strip"><div class="progress-fill" id="progressFill" style="width:20%"></div></div>
+<div class="py-status" id="pyStatus" style="display:none">Python runtime: <span id="pyStatusText">loading…</span></div>
 
 <nav class="primm-nav">
   <button data-stage="P"  class="active" onclick="showStage('P')"><span class="stage-letter">P</span><span class="stage-name">Predict</span></button>
@@ -337,7 +341,7 @@ color:  purple
 
   <div class="info-box">
     <span class="icon">🖥️</span>
-    <span>Open Thonny, type the program below, press <strong>F5</strong>, and compare the output with your predictions.</span>
+    <span>Open Thonny, type the program below and press <strong>F5</strong> — or use the <strong>Run in browser</strong> button to see it run straight here. Compare the output with your predictions.</span>
   </div>
 
   <div class="code-block">
@@ -346,6 +350,14 @@ color:  purple
     <div class="ln"><span class="line-num">3</span><span>&nbsp;&nbsp;&nbsp;&nbsp;print(<span class="st">"Have a great day."</span>)</span></div>
     <div class="ln"><span class="line-num">4</span><span>&nbsp;</span></div>
     <div class="ln"><span class="line-num">5</span><span><span class="fn">greet</span>()</span></div>
+  </div>
+
+  <div style="margin-bottom:1.2rem">
+    <button class="btn" id="runBtn" onclick="runInBrowser()" style="background:#059669;color:white">▶ Run in browser</button>
+    <div id="browserOutput" style="display:none">
+      <div class="output-label" style="margin-top:0.8rem;font-size:0.7rem;color:#0d9488;letter-spacing:0.1em;text-transform:uppercase">▶ Output</div>
+      <div class="py-output" id="browserOutputText"></div>
+    </div>
   </div>
 
   <div class="output-block">
@@ -614,6 +626,7 @@ color:  purple
 
 <script type="module">
 import { normalise, has, MOD_CHECKS, validateMake, validateExt } from './checkers.js';
+import { runPython, preload } from '../../../pyodide-runner.js';
 
 // ═══════════════════════════════════════════════════════
 //  STATE
@@ -723,6 +736,56 @@ function completeStage(s) {
   }
   saveState();
   submitScore();
+}
+
+// ═══════════════════════════════════════════════════════
+//  PYODIDE STATUS + BROWSER RUN
+// ═══════════════════════════════════════════════════════
+function setPyStatus(state) {
+  const bar  = document.getElementById('pyStatus');
+  const text = document.getElementById('pyStatusText');
+  if (!bar || !text) return;
+  if (state === 'loading') {
+    bar.style.display = 'block';
+    text.textContent = 'loading…';
+    text.style.color = '#f9e2af';
+  } else if (state === 'ready') {
+    text.textContent = 'ready ✓';
+    text.style.color = '#a6e3a1';
+    setTimeout(() => { bar.style.display = 'none'; }, 3000);
+  } else {
+    text.textContent = 'unavailable';
+    text.style.color = '#f38ba8';
+  }
+}
+
+const GREET_CODE = `def greet():
+    print("Hello!")
+    print("Have a great day.")
+
+greet()`;
+
+async function runInBrowser() {
+  const btn    = document.getElementById('runBtn');
+  const panel  = document.getElementById('browserOutput');
+  const output = document.getElementById('browserOutputText');
+
+  btn.disabled = true;
+  btn.textContent = '⏳ Running…';
+  panel.style.display = 'block';
+  output.style.color = '#5eead4';
+  output.textContent = '';
+
+  const result = await runPython(GREET_CODE);
+
+  btn.disabled = false;
+  btn.textContent = '▶ Run in browser';
+  if (result.ok) {
+    output.textContent = result.output;
+  } else {
+    output.style.color = '#f38ba8';
+    output.textContent = result.output;
+  }
 }
 
 // ═══════════════════════════════════════════════════════
@@ -931,7 +994,7 @@ function tryCompleteInvestigate() {
 //  MODIFY CHECKS
 // ═══════════════════════════════════════════════════════
 
-function checkMod(fieldId, checkKey) {
+async function checkMod(fieldId, checkKey) {
   if (window.Classroom?.verifyAuth() === false) return;
 
   const raw  = document.getElementById(fieldId)?.value || '';
@@ -943,45 +1006,105 @@ function checkMod(fieldId, checkKey) {
     fbEl.textContent = '⚠️ Paste your code from Thonny first.';
     return;
   }
-  const result = MOD_CHECKS[checkKey](raw);
-  fbEl.className = result.pass ? 'feedback pass' : 'feedback fail';
-  fbEl.textContent = result.msg;
-  if (result.pass) { passedChecks[fieldId] = true; saveState(); submitScore(); }
+
+  // Structural check (fast, no runtime needed)
+  const structural = MOD_CHECKS[checkKey](raw);
+  if (!structural.pass) {
+    fbEl.className = 'feedback fail';
+    fbEl.textContent = structural.msg;
+    return;
+  }
+
+  // Execution check — run the code and verify it produces no errors
+  fbEl.className = 'feedback loading';
+  fbEl.textContent = '⏳ Running your code…';
+
+  const run = await runPython(raw);
+  if (!run.ok) {
+    fbEl.className = 'feedback fail';
+    fbEl.textContent = '❌ Your code has an error: ' + run.output;
+    return;
+  }
+
+  fbEl.className = 'feedback pass';
+  fbEl.textContent = structural.msg;
+  passedChecks[fieldId] = true;
+  saveState();
+  submitScore();
 }
 
 // ═══════════════════════════════════════════════════════
 //  MAKE
 // ═══════════════════════════════════════════════════════
-function checkMake() {
+async function checkMake() {
   if (window.Classroom?.verifyAuth() === false) return;
 
   const raw  = document.getElementById('m2_make')?.value || '';
   const fbEl = document.getElementById('fb_m2_make');
   fbEl.classList.remove('hidden');
-  const result = validateMake(raw);
-  fbEl.className = result.pass ? 'feedback pass' : 'feedback fail';
-  fbEl.textContent = result.msg;
-  if (result.pass) {
-    passedChecks['m2_make'] = true;
-    saveState(); submitScore();
-    if (!completedStages.includes('M2')) { completedStages.push('M2'); updateNav(); saveState(); }
-    showCompletion();
+
+  // Structural check first
+  const structural = validateMake(raw);
+  if (!structural.pass) {
+    fbEl.className = 'feedback fail';
+    fbEl.textContent = structural.msg;
+    return;
   }
+
+  // Execution check — mock input: pick animal 1, then quit (handles both looping and non-looping programs)
+  fbEl.className = 'feedback loading';
+  fbEl.textContent = '⏳ Running your program with test input…';
+
+  const run = await runPython(raw, { inputs: ['1', '4'] });
+  if (!run.ok) {
+    fbEl.className = 'feedback fail';
+    fbEl.textContent = '❌ Your program has an error: ' + run.output;
+    return;
+  }
+  if (run.output.trim().length < 5) {
+    fbEl.className = 'feedback fail';
+    fbEl.textContent = '❌ Your program ran but produced no output — check your function calls.';
+    return;
+  }
+
+  fbEl.className = 'feedback pass';
+  fbEl.textContent = structural.msg;
+  passedChecks['m2_make'] = true;
+  saveState(); submitScore();
+  if (!completedStages.includes('M2')) { completedStages.push('M2'); updateNav(); saveState(); }
+  showCompletion();
 }
 
-function checkExt() {
+async function checkExt() {
   if (window.Classroom?.verifyAuth() === false) return;
 
   const raw  = document.getElementById('m2_ext')?.value || '';
   const fbEl = document.getElementById('fb_m2_ext');
   fbEl.classList.remove('hidden');
-  const result = validateExt(raw);
-  fbEl.className = result.pass ? 'feedback pass' : 'feedback fail';
-  fbEl.textContent = result.msg;
-  if (result.pass) {
-    passedChecks['m2_ext'] = true;
-    saveState(); submitScore();
+
+  // Structural check first
+  const structural = validateExt(raw);
+  if (!structural.pass) {
+    fbEl.className = 'feedback fail';
+    fbEl.textContent = structural.msg;
+    return;
   }
+
+  // Execution check — mock input '4' (quit) to verify the while+break terminates cleanly
+  fbEl.className = 'feedback loading';
+  fbEl.textContent = '⏳ Running your extended program…';
+
+  const run = await runPython(raw, { inputs: ['4'] });
+  if (!run.ok) {
+    fbEl.className = 'feedback fail';
+    fbEl.textContent = '❌ Your program has an error: ' + run.output;
+    return;
+  }
+
+  fbEl.className = 'feedback pass';
+  fbEl.textContent = structural.msg;
+  passedChecks['m2_ext'] = true;
+  saveState(); submitScore();
 }
 
 function showCompletion() {
@@ -1000,6 +1123,7 @@ Object.assign(window, {
   tryCompleteInvestigate,
   checkMod, completeStage,
   checkMake, checkExt,
+  runInBrowser,
 });
 
 // ═══════════════════════════════════════════════════════
@@ -1010,6 +1134,12 @@ window.addEventListener('DOMContentLoaded', () => {
   showStage(currentStage, false);
   updateNav();
   updateProgress();
+
+  // Start loading Pyodide in the background immediately
+  setPyStatus('loading');
+  preload()
+    .then(() => setPyStatus('ready'))
+    .catch(() => setPyStatus('error'));
 
   if (completedStages.includes('P')) {
     ['p2','p4','p5'].forEach(name => applyMCQFeedback(name, P_CORRECT[name]));
