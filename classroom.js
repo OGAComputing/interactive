@@ -903,10 +903,17 @@
     accessToken = tokenResponse.access_token;
     userInfo    = await fetchUserInfo(accessToken);
 
-    // Always search Drive for the proxy URL so teachers automatically pick up
-    // redeployments (new URL) from any computer. The ?proxyUrl= param wins and
-    // is never overwritten; localStorage is treated as a cache only.
-    if (!urlParams.get('proxyUrl')) {
+    // Detect teacher role first so we can make a smarter proxy URL decision below.
+    const isTeacher = await detectTeacher(accessToken);
+    isTeacherMode = isTeacher;
+
+    // Proxy URL resolution strategy:
+    //   Teachers — always search Drive, even when ?proxyUrl= is in the URL.
+    //              A ?proxyUrl= from an old assignment link may point at a stale
+    //              deployment; Drive is authoritative for the teacher's own proxy.
+    //   Students — skip Drive search when ?proxyUrl= was provided by the teacher
+    //              in the assignment link (students have no proxy of their own).
+    if (isTeacher || !urlParams.get('proxyUrl')) {
       const discovered = await searchDriveForProxy(accessToken);
       if (discovered) {
         if (discovered !== proxyUrl) {
@@ -914,13 +921,18 @@
           try { localStorage.setItem('oga_proxy_url', discovered); } catch (_) {}
           console.log('Classroom: proxy URL updated from Drive');
         }
+      } else if (isTeacher) {
+        // Teacher's proxy not found in Drive — clear any stale URL so the setup modal shows.
+        if (proxyUrl) {
+          proxyUrl = null;
+          try { localStorage.removeItem('oga_proxy_url'); } catch (_) {}
+          console.log('Classroom: proxy script not found in Drive — teacher will be prompted to redeploy');
+        }
       } else if (proxyUrl) {
-        // Drive search found no proxy script — the file was likely deleted.
-        // Clear the cached URL so the teacher is prompted to redeploy a new
-        // one rather than silently failing against a stale endpoint.
+        // Student, no proxy in Drive, had a cached URL — clear it.
         proxyUrl = null;
         try { localStorage.removeItem('oga_proxy_url'); } catch (_) {}
-        console.log('Classroom: proxy script not found in Drive — cached URL cleared, teacher will be prompted to redeploy');
+        console.log('Classroom: proxy script not found in Drive — cached URL cleared');
       }
     }
 
@@ -936,8 +948,6 @@
     }
     submissionId = await lookupSubmissionId(accessToken, courseWorkId);
 
-    const isTeacher = await detectTeacher(accessToken);
-    isTeacherMode = isTeacher;
     if (isTeacher) {
       setBannerTeacher(!!proxyUrl);
       if (!proxyUrl) {
