@@ -15,19 +15,19 @@ export function has(code, pattern) {
 export const MOD_CHECKS = {
   mod1(raw) {
     const c = normalise(raw);
-    if (!has(c, 'def say_hello'))
-      return { pass: false, msg: '❌ Rename greet to say_hello — use def say_hello():' };
+    if (!has(c, 'def hello'))
+      return { pass: false, msg: '❌ Rename greet to hello — use def hello():' };
     if (has(c, 'def greet'))
-      return { pass: false, msg: '❌ Remove the old name — replace def greet with def say_hello.' };
-    if (!has(c, /say_hello\(\)(?!:)/))
-      return { pass: false, msg: '❌ Update the call at the bottom to say_hello() too.' };
+      return { pass: false, msg: '❌ Remove the old name — replace def greet with def hello.' };
+    if (!has(c, /hello\(\)(?!:)/))
+      return { pass: false, msg: '❌ Update the call at the bottom to hello() too.' };
     if (!has(c, 'def farewell'))
       return { pass: false, msg: "❌ Keep your farewell() function from Investigate — don't remove it." };
-    return { pass: true, msg: '✅ Renamed correctly — say_hello() defined and called, farewell() kept.' };
+    return { pass: true, msg: '✅ Renamed correctly — hello() defined and called, farewell() kept.' };
   },
   mod2(raw) {
     const c = normalise(raw);
-    if (!has(c, 'def say_hello') && !has(c, 'def greet'))
+    if (!has(c, 'def hello') && !has(c, 'def greet'))
       return { pass: false, msg: '❌ Make sure your function is still defined with def.' };
     if (!has(c, 'print('))
       return { pass: false, msg: '❌ Your function should still have print statements inside.' };
@@ -48,8 +48,8 @@ export const MOD_CHECKS = {
     if (!has(c, 'def print_line'))
       return { pass: false, msg: '❌ Define a new function: def print_line():' };
     if (!has(c, /print_line\(\)(?!:)/))
-      return { pass: false, msg: '❌ Call print_line() inside say_hello() at the start and end.' };
-    return { pass: true, msg: '✅ print_line() defined and called from inside say_hello() — function calling a function!' };
+      return { pass: false, msg: '❌ Call print_line() inside hello() at the start and end.' };
+    return { pass: true, msg: '✅ print_line() defined and called from inside hello() — function calling a function!' };
   },
 };
 

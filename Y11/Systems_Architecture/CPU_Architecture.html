@@ -1,0 +1,1500 @@
+<!DOCTYPE html>
+<!-- ACTIVITY
+title:  CPU Architecture & Embedded Systems
+type:   Practice
+stars:  4
+desc:   Fetch-execute cycle, CPU components, performance factors, and embedded systems — six exercises for J277 1.1.1–1.1.3
+color:  purple
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CPU Architecture &amp; Embedded Systems</title>
+<link rel="stylesheet" href="../../shared.css">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;700&display=swap');
+
+:root {
+  --bg:#0B1929; --surf:#0D2137; --surf2:#112844;
+  --purple:#7C3AED; --purp-l:#A78BFA;
+  --teal:#0891B2; --teal-l:#38BDF8;
+  --amber:#D97706; --amber-l:#FCD34D;
+  --green:#059669; --green-l:#34D399;
+  --gold:#B45309; --gold-l:#F59E0B; --gold-ll:#FDE68A;
+  --red:#DC2626; --red-l:#FCA5A5;
+  --white:#F1F5F9; --grey:#64748B; --grey-l:#94A3B8;
+}
+@keyframes pulse-green { 0%,100%{background:#065f46} 50%{background:#059669} }
+@keyframes pulse-gold  { 0%,100%{background:#92400e} 50%{background:#d97706} }
+@keyframes shake       { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-5px)} 60%{transform:translateX(5px)} }
+
+body {
+  background:var(--bg); color:var(--white); font-family:'DM Sans',sans-serif;
+  min-height:100vh; padding:32px 20px 60px; transition:background 1.4s ease;
+}
+body.complete-green { animation:pulse-green 2.5s ease-in-out infinite; }
+body.complete-gold  { animation:pulse-gold  2.5s ease-in-out infinite; }
+
+#fwCanvas { position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:999; }
+
+.completion-banner {
+  position:fixed; top:0; left:0; right:0; padding:22px 20px; text-align:center;
+  font-family:'Space Mono',monospace; font-size:20px; letter-spacing:2px; font-weight:700;
+  transform:translateY(-110%); transition:transform .55s cubic-bezier(.34,1.56,.64,1);
+  z-index:1000; display:none;
+}
+.completion-banner.show        { transform:translateY(0); display:block; }
+.completion-banner.green-banner{ background:#047857; border-bottom:4px solid #6ee7b7; color:#fff; }
+.completion-banner.gold-banner { background:#b45309; border-bottom:4px solid #fde68a; color:#fff; }
+
+h1 {
+  font-family:'Space Mono',monospace; font-size:13px; letter-spacing:3px;
+  text-transform:uppercase; color:var(--purp-l); text-align:center; margin-bottom:6px;
+}
+h2 { font-size:26px; font-weight:700; text-align:center; color:var(--white); margin-bottom:40px; }
+
+/* ── Tabs ── */
+.tabs { display:flex; justify-content:center; gap:10px; margin-bottom:36px; flex-wrap:wrap; }
+.tab-btn {
+  font-family:'DM Sans',sans-serif; font-size:14px; font-weight:600;
+  padding:9px 20px; border-radius:8px; border:2px solid var(--surf2);
+  background:var(--surf); color:var(--grey-l); cursor:pointer; transition:all .2s;
+  position:relative; white-space:nowrap;
+}
+.tab-btn:hover { border-color:var(--purp-l); color:var(--white); }
+.tab-btn.active     { background:var(--purple); border-color:var(--purple); color:#fff; }
+.tab-btn.done-green { background:var(--green);  border-color:var(--green);  color:#fff; }
+.tab-btn.done-gold  { background:var(--gold-l); border-color:var(--gold-l); color:#000; }
+.tab-tick {
+  display:none; position:absolute; top:-8px; right:-8px;
+  width:20px; height:20px; border-radius:50%; font-size:11px; font-weight:700;
+  border:2px solid var(--bg); align-items:center; justify-content:center;
+}
+.tab-tick.show       { display:flex; }
+.tab-tick.tick-green { background:var(--green); color:#fff; }
+.tab-tick.tick-gold  { background:var(--gold-l); color:#000; }
+.tab-panel  { display:none; }
+.tab-panel.active { display:block; }
+
+/* ── Card ── */
+.card {
+  background:var(--surf); border:1.5px solid var(--surf2);
+  border-radius:14px; padding:28px 32px; max-width:860px; margin:0 auto 20px;
+}
+.card h3 { font-size:17px; font-weight:700; margin-bottom:16px; color:var(--purp-l); }
+
+/* ── Buttons ── */
+.btn {
+  font-family:'DM Sans',sans-serif; font-size:15px; font-weight:600;
+  padding:11px 28px; border-radius:8px; border:none; cursor:pointer; transition:all .2s;
+}
+.btn-check { background:var(--purple); color:#fff; margin-right:10px; }
+.btn-check:hover { background:var(--purp-l); color:var(--bg); }
+.btn-reset { background:transparent; color:var(--grey-l); border:1.5px solid var(--grey); }
+.btn-reset:hover { border-color:var(--white); color:var(--white); }
+.action-row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:20px; }
+.score-badge {
+  display:none; font-family:'Space Mono',monospace; font-size:14px;
+  padding:8px 18px; border-radius:8px; margin-top:16px; background:var(--surf2); color:var(--teal-l);
+}
+.feedback-row { margin-top:14px; font-size:14px; color:var(--grey-l); line-height:1.7; display:none; }
+
+/* ── How-to ── */
+.how-to {
+  font-size:13px; color:var(--grey-l); margin-bottom:18px; line-height:1.6;
+  padding:10px 14px; background:var(--surf2); border-radius:8px;
+}
+.how-to strong { color:var(--white); }
+
+/* ── FITB ── */
+.wb-lbl { font-family:'Space Mono',monospace; font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--grey); margin-bottom:8px; }
+.word-bank {
+  display:flex; flex-wrap:wrap; gap:10px; margin-bottom:22px; padding:12px;
+  border:1.5px dashed var(--grey); border-radius:10px; min-height:52px;
+  transition:border-color .15s, background .15s;
+}
+.word-bank.drag-over { border-color:var(--purp-l); background:rgba(167,139,250,.05); }
+.chip {
+  font-family:'Space Mono',monospace; font-size:13px; padding:6px 15px; border-radius:6px;
+  background:var(--surf2); border:1.5px solid var(--purple); color:var(--purp-l);
+  cursor:grab; transition:all .15s; user-select:none; white-space:nowrap;
+}
+.chip:hover { border-color:var(--purp-l); color:var(--white); transform:translateY(-2px); box-shadow:0 4px 12px rgba(0,0,0,.4); }
+.chip.dragging { opacity:.3; }
+.chip.used { opacity:.22; pointer-events:none; text-decoration:line-through; color:var(--grey); border-color:var(--grey); }
+.passage { font-size:16px; line-height:3.2; color:var(--white); }
+.blank {
+  display:inline-block; min-width:140px; padding:4px 12px;
+  border-bottom:2.5px solid var(--purple); background:transparent; color:var(--white);
+  font-family:'Space Mono',monospace; font-size:13px; font-weight:600;
+  text-align:center; vertical-align:middle; margin:0 4px;
+  border-radius:4px 4px 0 0; cursor:default; transition:border-color .2s, background .2s;
+}
+.blank.empty          { color:var(--grey); font-style:italic; font-family:'DM Sans',sans-serif; font-size:13px; font-weight:400; }
+.blank.drag-over-blank{ border-bottom-color:var(--purp-l); background:rgba(167,139,250,.12); }
+.blank.correct        { border-bottom-color:var(--green); color:var(--green-l); background:rgba(5,150,105,.1); }
+.blank.wrong          { border-bottom-color:var(--red); color:var(--red-l); background:rgba(220,38,38,.1); animation:shake .35s ease; }
+
+/* ── Match Up ── */
+.match-table { width:100%; border-collapse:collapse; margin-top:8px; }
+.match-table td { padding:10px 12px; vertical-align:middle; font-size:.9rem; }
+.match-table tr:nth-child(odd) td { background:var(--surf2); }
+.match-table .term {
+  font-family:'Space Mono',monospace; font-size:12px; font-weight:700; color:var(--purp-l);
+  width:28%; padding-right:12px; border-right:2px solid var(--surf2);
+}
+.match-sel {
+  width:100%; padding:8px 10px; border:2px solid var(--surf2); border-radius:7px;
+  background:var(--bg); color:var(--white); font-family:'DM Sans',sans-serif;
+  font-size:.88rem; cursor:pointer; transition:border-color .2s;
+}
+.match-sel:focus { outline:none; border-color:var(--purple); }
+.match-sel.correct { border-color:var(--green); background:rgba(5,150,105,.1); color:var(--green-l); }
+.match-sel.wrong   { border-color:var(--red);   background:rgba(220,38,38,.1);  color:var(--red-l); }
+.type-cell { width:18%; padding-right:12px; border-right:2px solid var(--surf2); }
+
+/* ── Tick-Box ── */
+.tb-table { width:100%; border-collapse:collapse; margin-top:8px; }
+.tb-table th {
+  padding:10px 14px; background:var(--surf2); border-bottom:2px solid var(--purple);
+  color:var(--purp-l); font-family:'Space Mono',monospace; font-size:.72rem;
+  letter-spacing:1px; text-align:center;
+}
+.tb-table th:first-child { text-align:left; }
+.tb-table td { padding:11px 14px; vertical-align:middle; font-size:.92rem; border-bottom:1px solid var(--surf2); }
+.tb-table tr:last-child td { border-bottom:none; }
+.tb-table td:not(:first-child) { text-align:center; }
+.tb-table tr.tb-ok  td { background:rgba(5,150,105,.1); }
+.tb-table tr.tb-err td { background:rgba(220,38,38,.08); }
+.tb-cb { width:18px; height:18px; accent-color:var(--purple); cursor:pointer; }
+
+/* ── MC ── */
+.mc-block { margin-bottom:18px; padding-bottom:18px; border-bottom:1.5px solid var(--surf2); }
+.mc-block:last-child { margin-bottom:0; padding-bottom:0; border-bottom:none; }
+.mc-options { display:flex; flex-direction:column; gap:9px; margin-top:10px; }
+.mc-opt {
+  display:flex; align-items:flex-start; gap:10px; padding:11px 15px;
+  border:2px solid var(--surf2); border-radius:8px; cursor:pointer;
+  transition:all .2s; font-size:.92rem; background:var(--surf);
+}
+.mc-opt:hover { border-color:var(--purple); }
+.mc-opt input[type=radio] { margin-top:2px; flex-shrink:0; accent-color:var(--purple); }
+.mc-opt.correct-ans { border-color:var(--green)!important; background:rgba(5,150,105,.12)!important; color:var(--green-l); font-weight:600; }
+.mc-opt.wrong-ans   { border-color:var(--red)!important;   background:rgba(220,38,38,.1)!important;  color:var(--red-l); }
+
+/* ── T/F Cards ── */
+.tf-card {
+  background:var(--surf); border:1.5px solid var(--surf2);
+  border-radius:10px; padding:16px 20px; margin-bottom:12px; transition:border-color .2s, background .2s;
+}
+.tf-card.tf-ok  { border-color:var(--green); background:rgba(5,150,105,.1); }
+.tf-card.tf-err { border-color:var(--red);   background:rgba(220,38,38,.08); }
+.tf-stmt { font-size:.95rem; margin-bottom:12px; line-height:1.6; }
+.tf-tf-row { display:flex; gap:10px; }
+.tf-opt {
+  display:flex; align-items:center; gap:8px; padding:8px 20px;
+  border:1.5px solid var(--surf2); border-radius:7px;
+  cursor:pointer; font-size:.9rem; font-weight:600; transition:all .2s; background:var(--surf2);
+}
+.tf-opt:hover { border-color:var(--purple); color:var(--white); }
+.tf-opt input { accent-color:var(--purple); cursor:pointer; }
+.tf-why {
+  display:none; margin-top:14px; padding:14px 16px;
+  background:rgba(124,58,237,.08); border-left:3px solid var(--purple); border-radius:0 8px 8px 0;
+}
+.tf-why-lbl {
+  display:block; font-family:'Space Mono',monospace; font-size:.72rem;
+  letter-spacing:2px; text-transform:uppercase; color:var(--purp-l); margin-bottom:10px;
+}
+.tf-why-opt {
+  display:flex; align-items:flex-start; gap:9px; padding:9px 13px;
+  border:1.5px solid var(--surf2); border-radius:7px; cursor:pointer;
+  font-size:.88rem; transition:all .15s; background:var(--surf); margin-bottom:7px;
+}
+.tf-why-opt:last-child { margin-bottom:0; }
+.tf-why-opt:hover { border-color:var(--purple); }
+.tf-why-opt input { accent-color:var(--purple); margin-top:2px; flex-shrink:0; }
+.tf-why-opt.why-ok  { border-color:var(--green); background:rgba(5,150,105,.1); color:var(--green-l); }
+.tf-why-opt.why-err { border-color:var(--red);   background:rgba(220,38,38,.08); color:var(--red-l);  }
+
+/* ── Mark Scheme ── */
+.ms-q-box {
+  background:var(--surf2); border-left:4px solid var(--purp-l);
+  border-radius:8px; padding:16px 20px; margin-bottom:16px; font-size:.95rem; line-height:1.7;
+}
+.ms-q-box .qhead {
+  display:block; font-family:'Space Mono',monospace; font-size:.72rem;
+  letter-spacing:1px; text-transform:uppercase; color:var(--purp-l); margin-bottom:8px;
+}
+.ms-student {
+  background:#0a2a18; border:1.5px solid var(--green); border-radius:8px;
+  padding:16px 20px; margin-bottom:16px; font-size:.93rem; line-height:1.75; color:var(--green-l);
+}
+.ms-student::before {
+  content:'STUDENT RESPONSE'; display:block; font-family:'Space Mono',monospace;
+  font-size:.72rem; letter-spacing:2px; color:var(--green); margin-bottom:8px; opacity:.8;
+}
+.ms-pts-lbl {
+  display:block; font-family:'Space Mono',monospace; font-size:.72rem;
+  letter-spacing:2px; text-transform:uppercase; color:var(--grey-l); margin-bottom:12px;
+}
+.ms-point {
+  display:flex; align-items:flex-start; gap:12px; padding:12px 16px; margin-bottom:8px;
+  border-radius:8px; border:1.5px solid var(--surf2); background:var(--surf);
+  cursor:pointer; transition:border-color .2s, background .2s;
+}
+.ms-point:hover { border-color:var(--purple); }
+.ms-point input[type=checkbox] { margin-top:3px; flex-shrink:0; accent-color:var(--purple); width:17px; height:17px; cursor:pointer; }
+.ms-point .pcode { font-family:'Space Mono',monospace; font-size:.75rem; color:var(--purp-l); flex-shrink:0; padding-top:2px; min-width:38px; }
+.ms-point .ptext { font-size:.92rem; color:var(--white); line-height:1.5; }
+.ms-point.ms-ok  { border-color:var(--green); background:rgba(5,150,105,.1); }
+.ms-point.ms-err { border-color:var(--red);   background:rgba(220,38,38,.08); }
+.ms-fb { margin-top:14px; padding:14px 18px; border-radius:8px; font-size:.9rem; line-height:1.7; display:none; }
+.ms-fb.show   { display:block; }
+.ms-fb.fb-ok  { background:rgba(5,150,105,.1);  border:1px solid var(--green);  color:var(--green-l); }
+.ms-fb.fb-err { background:rgba(220,38,38,.06); border:1px solid var(--red-l);  color:var(--red-l); }
+.ms-q-wrapper { border:1.5px solid var(--surf2); border-radius:12px; padding:22px 24px; margin-bottom:28px; }
+.ms-q-wrapper:last-child { margin-bottom:0; }
+.ms-q-num { font-family:'Space Mono',monospace; font-size:.72rem; letter-spacing:2px; text-transform:uppercase; color:var(--purp-l); margin-bottom:14px; display:block; }
+
+/* ── Embedded Classify ── */
+.eg-bank-lbl { font-family:'Space Mono',monospace; font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--grey); margin-bottom:8px; }
+.eg-bank {
+  display:flex; flex-wrap:wrap; gap:9px; padding:14px;
+  border:1.5px dashed var(--grey); border-radius:10px; min-height:54px; margin-bottom:18px;
+  transition:border-color .15s;
+}
+.eg-bank.drag-over { border-color:var(--purp-l); }
+.eg-pill {
+  padding:8px 16px; border-radius:20px; font-size:.82rem; font-weight:600;
+  cursor:grab; user-select:none; transition:transform .15s, box-shadow .15s;
+  background:var(--surf2); border:1.5px solid var(--purple); color:var(--purp-l);
+  box-shadow:0 1px 4px rgba(0,0,0,.3); white-space:nowrap;
+}
+.eg-pill:hover { transform:scale(1.04); box-shadow:0 3px 8px rgba(0,0,0,.35); }
+.eg-pill.dragging { opacity:.3; }
+.classify-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px; }
+.classify-col { border:2px dashed var(--grey); border-radius:12px; overflow:hidden; transition:border-color .2s; }
+.classify-col.drag-over   { border-color:var(--purp-l); background:rgba(167,139,250,.04); }
+.classify-col.col-correct { border-color:var(--green)!important; border-style:solid!important; }
+.classify-col.col-wrong   { border-color:var(--red)!important;   border-style:solid!important; }
+.classify-hdr { padding:11px 16px; font-weight:700; font-size:.88rem; display:flex; align-items:center; gap:7px; border-bottom:2px solid rgba(255,255,255,.07); }
+.emb-hdr { background:rgba(8,145,178,.2); color:var(--teal-l); }
+.gen-hdr { background:rgba(124,58,237,.2); color:var(--purp-l); }
+.classify-drop { min-height:100px; padding:12px; display:flex; flex-wrap:wrap; gap:8px; align-content:flex-start; transition:background .2s; }
+.classify-drop.drag-over { background:rgba(167,139,250,.06); }
+
+/* ── Embedded T/F fix-word row ── */
+.fix-row { display:none; }
+.fix-row.show { display:table-row; }
+.fix-row td {
+  padding:10px 14px 14px 28px; background:rgba(124,58,237,.07);
+  border-bottom:1px solid var(--surf2);
+}
+.fix-prompt { font-size:.85rem; color:var(--purp-l); margin-bottom:10px; }
+.fix-prompt strong { background:rgba(220,38,38,.18); color:var(--red-l); padding:1px 7px; border-radius:4px; font-family:'Space Mono',monospace; }
+.fix-opts { display:flex; flex-wrap:wrap; gap:8px; }
+.fix-opt {
+  display:flex; align-items:center; gap:7px; padding:7px 16px;
+  border:1.5px solid var(--surf2); border-radius:7px; cursor:pointer;
+  font-size:.88rem; font-weight:600; background:var(--surf); transition:all .15s;
+  font-family:'Space Mono',monospace;
+}
+.fix-opt:hover { border-color:var(--purple); color:var(--white); }
+.fix-opt input { accent-color:var(--purple); cursor:pointer; }
+.fix-opt.fix-ok  { border-color:var(--green); background:rgba(5,150,105,.1); color:var(--green-l); }
+.fix-opt.fix-err { border-color:var(--red);   background:rgba(220,38,38,.08); color:var(--red-l); }
+
+.section-lbl {
+  display:block; font-family:'Space Mono',monospace; font-size:.78rem; letter-spacing:2px;
+  text-transform:uppercase; color:var(--grey-l); margin:20px auto 12px; max-width:860px; padding:0 4px;
+}
+
+@media(max-width:640px) {
+  .classify-grid { grid-template-columns:1fr; }
+  .tabs { gap:7px; } .tab-btn { font-size:12px; padding:8px 12px; }
+  .card { padding:18px 16px; } .match-table .term { font-size:11px; }
+  .passage { font-size:15px; }
+}
+</style>
+</head>
+<body data-year="11" data-topic="Systems_Architecture">
+
+<canvas id="fwCanvas"></canvas>
+<div class="completion-banner" id="completionBanner"></div>
+
+<h1>Year 11 Computing — J277</h1>
+<h2>CPU Architecture &amp; Embedded Systems</h2>
+
+<div class="tabs">
+  <button class="tab-btn active" onclick="showTab('fitb',this)">📝 1 — Gap Fill<span class="tab-tick" id="tick-0"></span></button>
+  <button class="tab-btn" onclick="showTab('match',this)">🔗 2 — Match Up<span class="tab-tick" id="tick-1"></span></button>
+  <button class="tab-btn" onclick="showTab('tickbox',this)">☑️ 3 — Tick-Box<span class="tab-tick" id="tick-2"></span></button>
+  <button class="tab-btn" onclick="showTab('perf',this)">⚡ 4 — Performance<span class="tab-tick" id="tick-3"></span></button>
+  <button class="tab-btn" onclick="showTab('marks',this)">📋 5 — Mark Scheme<span class="tab-tick" id="tick-4"></span></button>
+  <button class="tab-btn" onclick="showTab('embedded',this)">💡 6 — Embedded<span class="tab-tick" id="tick-5"></span></button>
+</div>
+
+<!-- ═══════════════════════ TAB 1 — GAP FILL ═══════════════════════ -->
+<div id="fitb" class="tab-panel active">
+  <div class="card">
+    <h3>Part A — The Fetch-Execute Cycle</h3>
+    <p class="how-to">
+      <strong>Drag</strong> a word or phrase from the bank onto each blank.
+      <strong>Not all words will be used</strong> — some are distractors.
+      Drag a placed word back to the bank to swap it.
+    </p>
+    <p class="wb-lbl">Word Bank</p>
+    <div class="word-bank" id="wordBankA"></div>
+    <div class="passage" id="passageA"></div>
+    <div class="action-row">
+      <button class="btn btn-check" onclick="checkFITB('A')">Check Answers</button>
+      <button class="btn btn-reset" onclick="resetFITB('A')">Reset</button>
+    </div>
+    <div class="score-badge" id="fitbScoreA"></div>
+    <div class="feedback-row" id="fitbFeedbackA"></div>
+  </div>
+  <div class="card">
+    <h3>Part B — CPU Components &amp; Performance</h3>
+    <p class="how-to">
+      <strong>Drag</strong> a word or phrase from the bank onto each blank.
+      <strong>Not all words will be used</strong> — some are distractors.
+    </p>
+    <p class="wb-lbl">Word Bank</p>
+    <div class="word-bank" id="wordBankB"></div>
+    <div class="passage" id="passageB"></div>
+    <div class="action-row">
+      <button class="btn btn-check" onclick="checkFITB('B')">Check Answers</button>
+      <button class="btn btn-reset" onclick="resetFITB('B')">Reset</button>
+    </div>
+    <div class="score-badge" id="fitbScoreB"></div>
+    <div class="feedback-row" id="fitbFeedbackB"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ TAB 2 — MATCH UP ═══════════════════════ -->
+<div id="match" class="tab-panel">
+  <div class="card">
+    <h3>Match Each CPU Component — Type &amp; Description</h3>
+    <p style="font-size:.9rem;color:var(--grey-l);margin-bottom:18px;">
+      For each component, select whether it is a <strong style="color:var(--purp-l)">Register</strong> or a
+      <strong style="color:var(--teal-l)">Component</strong>, then choose the correct description.
+      Both columns must be correct to earn the mark.
+    </p>
+    <table class="match-table" id="matchTable"></table>
+    <div class="action-row">
+      <button class="btn btn-check" onclick="checkMatch()">Check Answers</button>
+      <button class="btn btn-reset" onclick="resetMatch()">Reset</button>
+    </div>
+    <div class="score-badge" id="matchScore"></div>
+    <div class="feedback-row" id="matchFeedback"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ TAB 3 — TICK-BOX ═══════════════════════ -->
+<div id="tickbox" class="tab-panel">
+  <div class="card">
+    <h3>Tick-Box — CPU Performance Factors</h3>
+    <p class="how-to">
+      For each statement below, tick <strong>all</strong> of the performance factors it describes.
+      Some rows have more than one correct answer — you must get every tick right in a row to earn that mark.
+    </p>
+    <table class="tb-table">
+      <thead><tr>
+        <th style="text-align:left;width:52%;">Statement</th>
+        <th>Clock Speed</th>
+        <th>Cache Size</th>
+        <th>No. of Cores</th>
+      </tr></thead>
+      <tbody id="tbBody"></tbody>
+    </table>
+    <div class="action-row">
+      <button class="btn btn-check" onclick="checkTickBox()">Check Answers</button>
+      <button class="btn btn-reset" onclick="resetTickBox()">Reset</button>
+    </div>
+    <div class="score-badge" id="tbScore"></div>
+    <div class="feedback-row" id="tbFeedback"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ TAB 4 — PERFORMANCE ═══════════════════════ -->
+<div id="perf" class="tab-panel">
+  <div class="card">
+    <h3>Multiple Choice — CPU Performance</h3>
+    <div id="mcContainer"></div>
+    <div style="border-top:1.5px solid var(--surf2);margin-top:24px;padding-top:22px;">
+      <h3 style="margin-bottom:6px;">True or False</h3>
+      <p style="font-size:.88rem;color:var(--grey-l);margin-bottom:16px;">
+        For statements you mark as <strong style="color:var(--red-l)">False</strong>, you must also
+        select the reason why — this earns the mark.
+      </p>
+      <div id="tfContainer"></div>
+    </div>
+    <div class="action-row">
+      <button class="btn btn-check" onclick="checkPerf()">Check All Answers</button>
+      <button class="btn btn-reset" onclick="resetPerf()">Reset</button>
+    </div>
+    <div class="score-badge" id="perfScore"></div>
+    <div class="feedback-row" id="perfFeedback"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ TAB 5 — MARK SCHEME ═══════════════════════ -->
+<div id="marks" class="tab-panel">
+  <div class="card">
+    <h3>Apply the Mark Scheme</h3>
+    <p style="font-size:.93rem;color:var(--grey-l);margin-bottom:24px;line-height:1.65;">
+      Read each student response carefully. Decide which mark scheme points the response has
+      earned and tick those boxes. Think critically — some responses contain
+      <strong style="color:var(--red-l)">incorrect information</strong>, and some simply
+      <strong style="color:var(--amber-l)">miss key points</strong> without being wrong.
+      Submit each question independently.
+    </p>
+    <div id="msContainer"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ TAB 6 — EMBEDDED ═══════════════════════ -->
+<div id="embedded" class="tab-panel">
+  <div class="card">
+    <h3>Classify — Embedded System or General-Purpose Computer?</h3>
+    <p class="how-to">
+      <strong>Drag</strong> each example into the correct column. An embedded system is built into
+      a larger device and designed to perform one specific, dedicated task.
+    </p>
+    <p class="eg-bank-lbl">Examples to classify</p>
+    <div class="eg-bank" id="egBank"></div>
+    <div class="classify-grid">
+      <div class="classify-col" id="col-emb">
+        <div class="classify-hdr emb-hdr">🔧 Embedded System</div>
+        <div class="classify-drop" id="drop-emb"></div>
+      </div>
+      <div class="classify-col" id="col-gen">
+        <div class="classify-hdr gen-hdr">🖥️ General-Purpose Computer</div>
+        <div class="classify-drop" id="drop-gen"></div>
+      </div>
+    </div>
+    <div class="action-row">
+      <button class="btn btn-check" onclick="checkClassify()">Check Classification</button>
+      <button class="btn btn-reset" onclick="resetClassify()">Reset</button>
+    </div>
+    <div class="score-badge" id="classifyScore"></div>
+    <div class="feedback-row" id="classifyFeedback"></div>
+  </div>
+  <span class="section-lbl">Characteristics of Embedded Systems</span>
+  <div class="card">
+    <h3>True or False — Embedded System Characteristics</h3>
+    <p style="font-size:.88rem;color:var(--grey-l);margin-bottom:14px;">
+      For statements you mark as <strong style="color:var(--red-l)">False</strong>, you must also
+      identify and correct the wrong word to earn the mark.
+    </p>
+    <table style="width:100%;border-collapse:collapse;font-size:.9rem;">
+      <thead><tr>
+        <th style="text-align:left;padding:9px 14px;background:var(--surf2);border-bottom:2px solid var(--purple);color:var(--purp-l);font-family:'Space Mono',monospace;font-size:.75rem;letter-spacing:1px;">Statement</th>
+        <th style="text-align:center;width:80px;padding:9px 14px;background:var(--surf2);border-bottom:2px solid var(--purple);color:var(--purp-l);font-family:'Space Mono',monospace;font-size:.75rem;letter-spacing:1px;">True</th>
+        <th style="text-align:center;width:80px;padding:9px 14px;background:var(--surf2);border-bottom:2px solid var(--purple);color:var(--purp-l);font-family:'Space Mono',monospace;font-size:.75rem;letter-spacing:1px;">False</th>
+      </tr></thead>
+      <tbody id="embTfBody"></tbody>
+    </table>
+    <div class="action-row">
+      <button class="btn btn-check" onclick="checkEmbTF()">Check Answers</button>
+      <button class="btn btn-reset" onclick="resetEmbTF()">Reset</button>
+    </div>
+    <div class="score-badge" id="embTfScore"></div>
+    <div class="feedback-row" id="embTfFeedback"></div>
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────────────────────
+// FIREWORKS
+// ─────────────────────────────────────────────────────────────
+const fwCanvas = document.getElementById('fwCanvas');
+const fwCtx    = fwCanvas.getContext('2d');
+let fwParticles = [], fwRunning = false, fwStart = 0;
+const FW_DUR = 8000;
+function resizeFW() { fwCanvas.width = innerWidth; fwCanvas.height = innerHeight; }
+addEventListener('resize', resizeFW); resizeFW();
+function rndFWCol(gold) {
+  if (gold) { const h=[35,42,48,55][Math.floor(Math.random()*4)]; return `hsl(${h},100%,${55+Math.random()*15}%)`; }
+  const h=[0,30,55,120,180,200,260,300,330]; return `hsl(${h[Math.floor(Math.random()*h.length)]},100%,65%)`;
+}
+let fwGold = false;
+function launchFW() {
+  const x=.15*fwCanvas.width+Math.random()*.7*fwCanvas.width, ty=fwCanvas.height*(.08+Math.random()*.45);
+  const col=rndFWCol(fwGold), n=70+Math.floor(Math.random()*70);
+  for (let i=0;i<n;i++) {
+    const angle=(Math.PI*2/n)*i+(Math.random()-.5)*.4, speed=1.5+Math.random()*5.5;
+    fwParticles.push({x,y:ty,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,alpha:1,col,r:1.5+Math.random()*2.5,decay:.011+Math.random()*.009,trail:[]});
+  }
+}
+function fwFrame(ts) {
+  if (!fwRunning) return;
+  const elapsed = ts - fwStart;
+  fwCtx.fillStyle='rgba(0,0,0,0.16)'; fwCtx.fillRect(0,0,fwCanvas.width,fwCanvas.height);
+  if (elapsed < FW_DUR && Math.random() < .045) launchFW();
+  fwParticles = fwParticles.filter(p => p.alpha > .02);
+  fwParticles.forEach(p => {
+    p.trail.push({x:p.x,y:p.y,a:p.alpha}); if (p.trail.length>7) p.trail.shift();
+    p.x+=p.vx; p.y+=p.vy; p.vy+=.07; p.vx*=.98; p.vy*=.98; p.alpha-=p.decay;
+    p.trail.forEach((t,i) => {
+      const a=t.a*(i/p.trail.length)*.35;
+      fwCtx.beginPath(); fwCtx.arc(t.x,t.y,p.r*(i/p.trail.length)*.6,0,Math.PI*2);
+      fwCtx.fillStyle=p.col.replace('hsl','hsla').replace(')',','+a+')'); fwCtx.fill();
+    });
+    fwCtx.beginPath(); fwCtx.arc(p.x,p.y,p.r,0,Math.PI*2);
+    fwCtx.fillStyle=p.col.replace('hsl','hsla').replace(')',','+p.alpha+')'); fwCtx.fill();
+  });
+  if (elapsed<FW_DUR||fwParticles.length>0) requestAnimationFrame(fwFrame);
+  else { fwRunning=false; fwCtx.clearRect(0,0,fwCanvas.width,fwCanvas.height); }
+}
+function startFW(gold) {
+  fwGold=gold; if (fwRunning) return;
+  fwRunning=true; fwParticles=[]; fwStart=performance.now();
+  for (let i=0;i<6;i++) setTimeout(launchFW, i*150);
+  requestAnimationFrame(fwFrame);
+}
+
+// ─────────────────────────────────────────────────────────────
+// COMPLETION — mastery-aware 0-80 / 80-100 scoring
+// ─────────────────────────────────────────────────────────────
+const TASK_COUNT = 6;
+const tabDone    = new Array(6).fill(false);
+const tabPerf    = new Array(6).fill(false);
+
+function markDone(idx, isPerfect) {
+  tabDone[idx] = true; tabPerf[idx] = isPerfect;
+  const doneCount  = tabDone.filter(Boolean).length;
+  const allDone    = doneCount === TASK_COUNT;
+  const allPerfect = allDone && tabPerf.every(Boolean);
+  const pct        = allDone ? (allPerfect ? 100 : 80) : Math.round(doneCount / TASK_COUNT * 80);
+  window.Classroom?.submitGrade(pct, 'CPU Architecture & Embedded Systems');
+  setTabTick(idx, isPerfect);
+  if (allDone) setTimeout(() => triggerCompletion(allPerfect), 400);
+}
+
+function triggerCompletion(perfect) {
+  const body = document.body, banner = document.getElementById('completionBanner');
+  body.classList.remove('complete-green','complete-gold');
+  banner.classList.remove('green-banner','gold-banner');
+  if (perfect) {
+    body.classList.add('complete-gold'); banner.classList.add('gold-banner');
+    banner.textContent = '🌟  Superstar — perfect on all six exercises!  🌟';
+    startFW(true);
+  } else {
+    body.classList.add('complete-green'); banner.classList.add('green-banner');
+    banner.textContent = '🎉  All six exercises complete — great work!  🎉';
+    startFW(false);
+  }
+  banner.style.display = 'block'; banner.classList.add('show');
+}
+
+function cancelCompletion() {
+  document.body.classList.remove('complete-green','complete-gold');
+  document.getElementById('completionBanner').classList.remove('show');
+}
+
+function clearTabState(idx) {
+  cancelCompletion();
+  tabDone[idx] = false; tabPerf[idx] = false;
+  document.getElementById('tick-'+idx).classList.remove('show');
+  const btn = document.querySelectorAll('.tab-btn')[idx];
+  btn.classList.remove('done-green','done-gold');
+}
+
+// ─────────────────────────────────────────────────────────────
+// TAB SWITCHING
+// ─────────────────────────────────────────────────────────────
+function showTab(id, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => { if (b!==btn) b.classList.remove('active'); });
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+}
+function setTabTick(idx, perfect) {
+  const tick = document.getElementById('tick-'+idx);
+  tick.classList.remove('tick-green','tick-gold');
+  tick.classList.add(perfect ? 'tick-gold' : 'tick-green');
+  tick.textContent = perfect ? '★' : '✓'; tick.classList.add('show');
+  const btn = document.querySelectorAll('.tab-btn')[idx];
+  btn.classList.remove('done-green','done-gold');
+  btn.classList.add(perfect ? 'done-gold' : 'done-green');
+}
+
+// ─────────────────────────────────────────────────────────────
+// EXERCISE 1 — GAP FILL  (Part A: FEC  |  Part B: Components & Performance)
+// ─────────────────────────────────────────────────────────────
+const fitbParts = {
+  A: {
+    sentences: [
+      { before:'The three stages of the fetch-execute cycle are fetch, ',           blank:'decode instructions', after:', and execute.' },
+      { before:'During the fetch stage, the ',                                      blank:'Program Counter',     after:' holds the address of the next instruction to be retrieved.' },
+      { before:'This address is copied into the ',                                  blank:'MAR',                 after:', telling the CPU where in memory to look.' },
+      { before:'The instruction at that location is retrieved and placed into the ', blank:'MDR',                after:'.' },
+      { before:'The Program Counter is then ',                                      blank:'incremented',         after:' so it points to the following instruction.' },
+      { before:'In the decode stage, the ',                                         blank:'Control Unit',        after:' interprets the instruction and determines what action is needed.' },
+    ],
+    distractors: ['decode', 'ROM', 'CPU bus', 'registers'],
+  },
+  B: {
+    sentences: [
+      { before:'Arithmetic and logical operations are carried out by the ', blank:'ALU',         after:' during the execute stage.' },
+      { before:'The result of a calculation is temporarily held in the ',  blank:'Accumulator',  after:' for use by the CPU.' },
+      { before:'The ',                                                     blank:'clock speed',  after:' of a CPU, measured in GHz, determines how many instructions can be processed each second.' },
+      { before:'A larger ',                                                blank:'cache',        after:' reduces the number of times the CPU needs to fetch data from slower main memory.' },
+      { before:'A CPU with more ',                                         blank:'cores',        after:' can handle multiple tasks or programs simultaneously.' },
+    ],
+    distractors: ['firmware', 'RAM', 'processor'],
+  },
+};
+
+const fitbState = {
+  A: { chips: null, dragging: null, everWrong: false, done: false, perfect: false },
+  B: { chips: null, dragging: null, everWrong: false, done: false, perfect: false },
+};
+
+function buildFITB(part) {
+  const cfg   = fitbParts[part];
+  const st    = fitbState[part];
+  st.chips    = [...cfg.sentences.map(s => s.blank), ...cfg.distractors].sort(() => Math.random() - .5);
+  st.dragging = null;
+
+  const bank    = document.getElementById('wordBank' + part);
+  const passage = document.getElementById('passage'  + part);
+  bank.innerHTML = ''; passage.innerHTML = '';
+
+  st.chips.forEach(w => {
+    const c = document.createElement('span');
+    c.className = 'chip'; c.textContent = w; c.dataset.word = w; c.dataset.part = part; c.draggable = true;
+    c.addEventListener('dragstart', e => {
+      st.dragging = c; e.dataTransfer.setData('text/plain', w); e.dataTransfer.effectAllowed = 'move';
+      setTimeout(() => c.classList.add('dragging'), 0);
+    });
+    c.addEventListener('dragend', () => c.classList.remove('dragging'));
+    bank.appendChild(c);
+  });
+
+  bank.addEventListener('dragover', e => { e.preventDefault(); bank.classList.add('drag-over'); });
+  bank.addEventListener('dragleave', e => { if (!bank.contains(e.relatedTarget)) bank.classList.remove('drag-over'); });
+  bank.addEventListener('drop', e => {
+    e.preventDefault(); bank.classList.remove('drag-over');
+    if (!st.dragging) return;
+    const srcId = st.dragging.dataset.inBlank;
+    if (srcId) { const src = document.getElementById(srcId); if (src && !src.dataset.locked) clearBlank(src, part); }
+    st.dragging.classList.remove('used'); st.dragging.draggable = true;
+    delete st.dragging.dataset.inBlank; st.dragging = null;
+  });
+
+  cfg.sentences.forEach((s, i) => {
+    const line  = document.createElement('div'); line.style.cssText = 'margin-bottom:4px;';
+    line.appendChild(document.createTextNode(s.before));
+    const blank = document.createElement('span');
+    blank.className = 'blank empty'; blank.id = 'blank-' + part + '-' + i;
+    blank.dataset.answer = s.blank; blank.dataset.word = ''; blank.dataset.locked = '';
+    blank.textContent = 'drop here'; blank.draggable = false;
+    blank.style.minWidth = s.blank.includes(' ') ? '170px' : '140px';
+
+    blank.addEventListener('dragover', e => { if (blank.dataset.locked) return; e.preventDefault(); blank.classList.add('drag-over-blank'); });
+    blank.addEventListener('dragleave', () => blank.classList.remove('drag-over-blank'));
+    blank.addEventListener('drop', e => {
+      e.preventDefault(); blank.classList.remove('drag-over-blank');
+      if (blank.dataset.locked) return;
+      const word = e.dataTransfer.getData('text/plain'); if (!word) return;
+      if (blank.dataset.word) returnChipToBank(blank.dataset.word, blank.id, part);
+      if (st.dragging && st.dragging.dataset.inBlank && st.dragging.dataset.inBlank !== blank.id) {
+        const prev = document.getElementById(st.dragging.dataset.inBlank);
+        if (prev && !prev.dataset.locked) clearBlank(prev, part);
+      }
+      blank.textContent = word; blank.classList.remove('empty','correct','wrong');
+      blank.dataset.word = word; blank.draggable = true;
+      if (st.dragging) { st.dragging.classList.add('used'); st.dragging.draggable = false; st.dragging.dataset.inBlank = blank.id; }
+      st.dragging = null;
+    });
+    blank.addEventListener('dragstart', e => {
+      if (blank.dataset.locked || !blank.dataset.word) { e.preventDefault(); return; }
+      const w    = blank.dataset.word;
+      const chip = [...document.querySelectorAll('.chip')].find(c => c.dataset.word === w && c.dataset.inBlank === blank.id);
+      if (chip) { chip.classList.remove('used'); chip.draggable = true; st.dragging = chip; chip.dataset.inBlank = blank.id; e.dataTransfer.setData('text/plain', w); e.dataTransfer.effectAllowed = 'move'; }
+    });
+    line.appendChild(blank); line.appendChild(document.createTextNode(s.after));
+    passage.appendChild(line);
+  });
+}
+
+function clearBlank(blank, part) {
+  blank.textContent = 'drop here'; blank.classList.add('empty');
+  blank.classList.remove('correct','wrong'); blank.dataset.word = ''; blank.draggable = false;
+}
+function returnChipToBank(word, blankId, part) {
+  const chip = [...document.querySelectorAll('.chip')].find(c => c.dataset.word === word && c.dataset.inBlank === blankId);
+  if (chip) { chip.classList.remove('used'); chip.draggable = true; delete chip.dataset.inBlank; }
+}
+
+function checkFITB(part) {
+  if (!window.Classroom?.verifyAuth()) return;
+  const cfg = fitbParts[part]; const st = fitbState[part];
+  let correct = 0, anyWrong = false;
+  cfg.sentences.forEach((s, i) => {
+    const blank = document.getElementById('blank-' + part + '-' + i);
+    if ((blank.dataset.word || '').trim().toLowerCase() === s.blank.toLowerCase()) {
+      blank.classList.add('correct'); blank.classList.remove('wrong','empty'); blank.dataset.locked = 'true';
+      const chip = [...document.querySelectorAll('.chip')].find(c => c.dataset.word === s.blank && c.dataset.inBlank === blank.id);
+      if (chip) { chip.classList.add('used'); chip.draggable = false; }
+      correct++;
+    } else {
+      anyWrong = true; blank.classList.add('wrong'); blank.classList.remove('correct');
+      setTimeout(() => {
+        if (blank.dataset.locked) return;
+        if (blank.dataset.word) returnChipToBank(blank.dataset.word, blank.id, part);
+        clearBlank(blank, part); blank.classList.remove('wrong');
+      }, 500);
+    }
+  });
+  if (anyWrong) st.everWrong = true;
+  const score = document.getElementById('fitbScore' + part);
+  score.style.display = 'inline-block'; score.textContent = `Score: ${correct} / ${cfg.sentences.length}`;
+  const fb = document.getElementById('fitbFeedback' + part); fb.style.display = 'block';
+  if (correct === cfg.sentences.length) {
+    const perfect = !st.everWrong;
+    fb.textContent = perfect ? '🌟 Perfect first time — outstanding!' : '✅ All correct — well done!';
+    fb.style.color  = perfect ? 'var(--gold-l)' : 'var(--green-l)';
+    st.done = true; st.perfect = perfect; checkFITBComplete();
+  } else {
+    fb.style.color = 'var(--amber-l)';
+    fb.textContent = `${cfg.sentences.length - correct} answer${cfg.sentences.length - correct > 1 ? 's need' : ' needs'} correcting — those words have been returned to the bank.`;
+  }
+}
+
+function checkFITBComplete() {
+  if (fitbState.A.done && fitbState.B.done) markDone(0, fitbState.A.perfect && fitbState.B.perfect);
+}
+
+function resetFITB(part) {
+  const st = fitbState[part];
+  st.everWrong = false; st.done = false; st.perfect = false;
+  buildFITB(part);
+  document.getElementById('fitbScore'    + part).style.display = 'none';
+  document.getElementById('fitbFeedback' + part).style.display = 'none';
+  if (!(fitbState.A.done && fitbState.B.done)) clearTabState(0);
+}
+
+buildFITB('A'); buildFITB('B');
+
+// ─────────────────────────────────────────────────────────────
+// EXERCISE 2 — MATCH UP
+// ─────────────────────────────────────────────────────────────
+const matchItems = [
+  { term:'ALU (Arithmetic Logic Unit)',    type:'Component', desc:'Performs arithmetic (e.g. addition) and logical operations (e.g. comparisons) on data' },
+  { term:'CU (Control Unit)',              type:'Component', desc:'Manages and coordinates the activities of the CPU; directs the fetch, decode, and execute stages' },
+  { term:'Cache',                          type:'Component', desc:'Small, fast memory close to the CPU that stores recently used data and instructions to reduce slower RAM accesses' },
+  { term:'MAR (Memory Address Register)', type:'Register',  desc:'Holds the memory address of the data or instruction currently being accessed' },
+  { term:'MDR (Memory Data Register)',    type:'Register',  desc:'Temporarily stores the data or instruction fetched from, or about to be written to, memory' },
+  { term:'Program Counter (PC)',          type:'Register',  desc:'Stores the address of the next instruction to be fetched and executed' },
+  { term:'Accumulator',                   type:'Register',  desc:'Stores the result of the most recent calculation performed by the ALU' },
+];
+const allDescs = matchItems.map(m => m.desc);
+let matchShuffled = [], matchDescsShuffled = [], matchEverWrong = false;
+
+function buildMatch() {
+  matchShuffled      = [...matchItems].sort(() => Math.random() - .5);
+  matchDescsShuffled = [...allDescs].sort(() => Math.random() - .5);
+  const tbl = document.getElementById('matchTable'); tbl.innerHTML = '';
+  const hdr = document.createElement('tr');
+  hdr.innerHTML = `<th style="text-align:left;padding:8px 12px;background:var(--surf2);border-bottom:2px solid var(--purple);color:var(--purp-l);font-family:'Space Mono',monospace;font-size:.72rem;letter-spacing:1px;width:28%;">Component</th>
+    <th style="text-align:left;padding:8px 12px;background:var(--surf2);border-bottom:2px solid var(--purple);color:var(--purp-l);font-family:'Space Mono',monospace;font-size:.72rem;letter-spacing:1px;width:18%;">Type</th>
+    <th style="text-align:left;padding:8px 12px;background:var(--surf2);border-bottom:2px solid var(--purple);color:var(--purp-l);font-family:'Space Mono',monospace;font-size:.72rem;letter-spacing:1px;">Description</th>`;
+  tbl.appendChild(hdr);
+  matchShuffled.forEach((item, i) => {
+    const tr = document.createElement('tr');
+    const td1 = document.createElement('td'); td1.className = 'term'; td1.textContent = item.term;
+    const td2 = document.createElement('td'); td2.className = 'type-cell';
+    const selT = document.createElement('select'); selT.className = 'match-sel'; selT.id = 'mtype-' + i;
+    selT.innerHTML = `<option value="">— Type? —</option><option value="Register">Register</option><option value="Component">Component</option>`;
+    td2.appendChild(selT);
+    const td3  = document.createElement('td');
+    const selD = document.createElement('select'); selD.className = 'match-sel'; selD.id = 'mdesc-' + i;
+    const def  = document.createElement('option'); def.value = ''; def.textContent = '— Select description —';
+    selD.appendChild(def);
+    matchDescsShuffled.forEach(d => { const opt = document.createElement('option'); opt.value = d; opt.textContent = d; selD.appendChild(opt); });
+    td3.appendChild(selD);
+    tr.appendChild(td1); tr.appendChild(td2); tr.appendChild(td3); tbl.appendChild(tr);
+  });
+}
+function checkMatch() {
+  if (!window.Classroom?.verifyAuth()) return;
+  let correct = 0, total = matchShuffled.length * 2, anyWrong = false;
+  matchShuffled.forEach((item, i) => {
+    const selT = document.getElementById('mtype-' + i);
+    const selD = document.getElementById('mdesc-' + i);
+    selT.classList.remove('correct','wrong');
+    if (selT.value === item.type) { selT.classList.add('correct'); correct++; selT.disabled = true; }
+    else { selT.classList.add('wrong'); anyWrong = true; setTimeout(() => { selT.classList.remove('wrong'); selT.value = ''; }, 600); }
+    selD.classList.remove('correct','wrong');
+    if (selD.value === item.desc) { selD.classList.add('correct'); correct++; selD.disabled = true; }
+    else { selD.classList.add('wrong'); anyWrong = true; setTimeout(() => { selD.classList.remove('wrong'); selD.value = ''; }, 600); }
+  });
+  if (anyWrong) matchEverWrong = true;
+  const score = document.getElementById('matchScore');
+  score.style.display = 'inline-block'; score.textContent = `Score: ${correct} / ${total}`;
+  const fb = document.getElementById('matchFeedback'); fb.style.display = 'block';
+  if (correct === total) {
+    const perfect = !matchEverWrong;
+    fb.textContent = perfect ? '🌟 Perfect — all types and descriptions correct first time!' : '✅ All matched correctly — well done!';
+    fb.style.color  = perfect ? 'var(--gold-l)' : 'var(--green-l)';
+    markDone(1, perfect);
+  } else {
+    fb.style.color = 'var(--amber-l)';
+    fb.textContent = `${total - correct} selection${total - correct > 1 ? 's are' : ' is'} still incorrect — wrong answers cleared. Try again.`;
+  }
+}
+function resetMatch() {
+  clearTabState(1); matchEverWrong = false; buildMatch();
+  document.getElementById('matchScore').style.display    = 'none';
+  document.getElementById('matchFeedback').style.display = 'none';
+}
+buildMatch();
+
+// ─────────────────────────────────────────────────────────────
+// EXERCISE 3 — TICK-BOX  (CPU Performance Factors)
+// ─────────────────────────────────────────────────────────────
+// correct: array of column indices that should be ticked  (0=Clock Speed, 1=Cache Size, 2=Cores)
+const tbRows = [
+  { stmt:'Determines how many instructions the CPU can process each second.',                                correct:[0] },
+  { stmt:'Stores frequently used data and instructions very close to the processor.',                        correct:[1] },
+  { stmt:'Allows multiple programs to run at the same time.',                                                correct:[2] },
+  { stmt:'Measured in GHz.',                                                                                 correct:[0] },
+  { stmt:'Increasing this reduces how often the CPU has to fetch data from slower main memory.',             correct:[1] },
+  { stmt:'Each one can independently fetch and execute instructions from a different program.',              correct:[2] },
+  { stmt:'All three of these are factors that can affect how fast a CPU runs overall.',                      correct:[0,1,2] },
+];
+let tbEverWrong = false;
+
+function buildTickBox() {
+  const tbody = document.getElementById('tbBody'); tbody.innerHTML = '';
+  tbRows.forEach((row, ri) => {
+    const tr = document.createElement('tr'); tr.id = 'tb-' + ri;
+    const tdS = document.createElement('td'); tdS.textContent = row.stmt;
+    tr.appendChild(tdS);
+    [0,1,2].forEach(ci => {
+      const td = document.createElement('td');
+      const cb = document.createElement('input');
+      cb.type = 'checkbox'; cb.className = 'tb-cb'; cb.id = `tb-${ri}-${ci}`;
+      td.appendChild(cb); tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  });
+}
+function checkTickBox() {
+  if (!window.Classroom?.verifyAuth()) return;
+  let correct = 0, anyWrong = false;
+  tbRows.forEach((row, ri) => {
+    const tr = document.getElementById('tb-' + ri);
+    tr.classList.remove('tb-ok','tb-err');
+    let rowOk = true;
+    [0,1,2].forEach(ci => {
+      const cb = document.getElementById(`tb-${ri}-${ci}`);
+      const shouldBeTicked = row.correct.includes(ci);
+      if (cb.checked !== shouldBeTicked) rowOk = false;
+      cb.disabled = true;
+    });
+    if (rowOk) { correct++; tr.classList.add('tb-ok'); }
+    else { anyWrong = true; tr.classList.add('tb-err'); }
+  });
+  if (anyWrong) tbEverWrong = true;
+  const score = document.getElementById('tbScore');
+  score.style.display = 'inline-block'; score.textContent = `Score: ${correct} / ${tbRows.length}`;
+  const fb = document.getElementById('tbFeedback'); fb.style.display = 'block';
+  if (correct === tbRows.length) {
+    const perfect = !tbEverWrong;
+    fb.textContent = perfect ? '🌟 Full marks first time — excellent!' : '✅ All correct — well done!';
+    fb.style.color  = perfect ? 'var(--gold-l)' : 'var(--green-l)';
+    markDone(2, perfect);
+  } else {
+    fb.style.color = 'var(--amber-l)';
+    fb.textContent = `${tbRows.length - correct} row${tbRows.length - correct > 1 ? 's have' : ' has'} incorrect ticks — highlighted above. Remember some rows have more than one answer.`;
+  }
+}
+function resetTickBox() {
+  clearTabState(2); tbEverWrong = false; buildTickBox();
+  document.getElementById('tbScore').style.display    = 'none';
+  document.getElementById('tbFeedback').style.display = 'none';
+}
+buildTickBox();
+
+// ─────────────────────────────────────────────────────────────
+// EXERCISE 4 — CPU PERFORMANCE  (MC + T/F)
+// ─────────────────────────────────────────────────────────────
+const allMCQ = [
+  {
+    q:   'A computer has a processor running at 2 GHz. An upgraded processor running at 4 GHz is installed. What is the most likely effect?',
+    opts:['The computer can run twice as many programs simultaneously',
+          'The CPU executes roughly twice as many instructions per second',
+          'The cache size doubles automatically alongside the clock speed',
+          'The processor requires half as much RAM to function'],
+    ans: 1,
+  },
+  {
+    q:   'Which best explains why increasing cache size can improve CPU performance?',
+    opts:['It automatically increases the processor\'s clock speed',
+          'It allows the CPU to run twice as many programs simultaneously',
+          'More recently used data and instructions are stored close to the CPU, reducing slower RAM accesses',
+          'It removes the need for secondary storage such as an SSD'],
+    ans: 2,
+  },
+  {
+    q:   'In which situation would upgrading from a dual-core to a quad-core processor give the greatest benefit?',
+    opts:['Running a program that can only use one core at a time',
+          'Saving large files to a mechanical hard drive',
+          'Displaying a static web page in a browser',
+          'Running several programs simultaneously so each core handles a separate task'],
+    ans: 3,
+  },
+  {
+    q:   'Which register stores the address of the next instruction to be fetched from memory?',
+    opts:['MDR (Memory Data Register)',
+          'Accumulator',
+          'Program Counter (PC)',
+          'ALU (Arithmetic Logic Unit)'],
+    ans: 2,
+  },
+  {
+    q:   'A student claims a CPU with a very high clock speed will always outperform one with a lower clock speed. Which statement best explains why this is not necessarily true?',
+    opts:['A higher clock speed means the CPU can store more data in the Accumulator',
+          'Performance also depends on cache size, number of cores, and other factors — clock speed alone does not determine overall performance',
+          'A higher clock speed always reduces the number of instructions executed per second',
+          'Clock speed only affects how quickly data is written to secondary storage'],
+    ans: 1,
+  },
+  {
+    q:   'What does the ALU (Arithmetic Logic Unit) do?',
+    opts:['Stores the address of the next instruction to be fetched',
+          'Manages and coordinates the activities of the CPU',
+          'Temporarily stores data or instructions fetched from main memory',
+          'Performs arithmetic operations such as addition, and logical operations such as comparisons'],
+    ans: 3,
+  },
+];
+
+const allTF = [
+  {
+    text:'Doubling the clock speed will always double the overall performance of a computer.',
+    ans: false,
+    whyOpts:[
+      'Clock speed has no measurable effect on how fast the processor executes instructions.',
+      'Doubling the clock speed doubles the amount of RAM the processor uses.',
+      'Performance is also limited by other factors such as cache size, number of cores, and RAM speed — doubling clock speed alone cannot guarantee doubled performance.',
+      'A higher clock speed makes the processor generate more heat, which automatically halves performance.',
+    ],
+    whyCorrect: 2,
+  },
+  {
+    text:'A processor with more cores will outperform one with fewer cores for every type of task.',
+    ans: false,
+    whyOpts:[
+      'More cores always reduce the processor\'s clock speed.',
+      'Some programs can only use one core at a time and cannot be spread across multiple cores, so extra cores provide no benefit for those tasks.',
+      'Processors with more cores cannot access cache memory.',
+      'More cores always require significantly more RAM, which slows the computer down.',
+    ],
+    whyCorrect: 1,
+  },
+  { text:'Cache memory is faster to access than RAM.',                                                      ans: true },
+  { text:'Adding more cores gives the greatest performance benefit when running multiple programs simultaneously.', ans: true },
+  { text:'A higher clock speed means the processor can fetch and execute more instructions per second.',    ans: true },
+  {
+    text:'The MDR (Memory Data Register) stores the memory address of the next instruction to be fetched.',
+    ans: false,
+    whyOpts:[
+      'The MDR is not actually used in the fetch-execute cycle.',
+      'Memory addresses are only used during the execute stage of the cycle.',
+      'It is the MAR (Memory Address Register) that holds memory addresses; the MDR stores the actual data or instruction that has been fetched.',
+      'The MDR stores the result of the most recent ALU calculation.',
+    ],
+    whyCorrect: 2,
+  },
+  {
+    text:'Cache memory is larger in total capacity than RAM.',
+    ans: false,
+    whyOpts:[
+      'Cache and RAM always have identical capacities.',
+      'RAM is smaller than cache but is faster to access.',
+      'Cache is actually much smaller in capacity than RAM, though it is significantly faster to access.',
+      'Cache capacity is not measured in bytes — it uses GHz like the clock speed.',
+    ],
+    whyCorrect: 2,
+  },
+];
+
+let mcBuild = [], tfBuild = [], perfEverWrong = false;
+
+function buildPerf() {
+  mcBuild = [...allMCQ].sort(() => Math.random() - .5).map(q => {
+    const perm = [...Array(q.opts.length).keys()].sort(() => Math.random() - .5);
+    return { q:q.q, displayOpts:perm.map(i => q.opts[i]), displayAns:perm.indexOf(q.ans) };
+  });
+  tfBuild = [...allTF].sort(() => Math.random() - .5).map(item => {
+    if (item.ans) return { text:item.text, ans:true, displayWhyOpts:null, displayWhyCorrect:null };
+    const perm = [...Array(item.whyOpts.length).keys()].sort(() => Math.random() - .5);
+    return { text:item.text, ans:false, displayWhyOpts:perm.map(i => item.whyOpts[i]), displayWhyCorrect:perm.indexOf(item.whyCorrect) };
+  });
+
+  const container = document.getElementById('mcContainer'); container.innerHTML = '';
+  mcBuild.forEach((q, qi) => {
+    const div = document.createElement('div'); div.className = 'mc-block';
+    div.innerHTML = `<p style="font-size:.95rem;font-weight:600;color:var(--white);margin-bottom:8px;">Q${qi+1}. ${q.q}</p><div class="mc-options" id="mc-${qi}"></div>`;
+    container.appendChild(div);
+    const opts = document.getElementById('mc-' + qi);
+    q.displayOpts.forEach((opt, oi) => {
+      const lbl = document.createElement('label'); lbl.className = 'mc-opt';
+      lbl.innerHTML = `<input type="radio" name="mc${qi}" value="${oi}"> ${opt}`;
+      opts.appendChild(lbl);
+    });
+  });
+
+  const tfCont = document.getElementById('tfContainer'); tfCont.innerHTML = '';
+  tfBuild.forEach((item, ti) => {
+    const card = document.createElement('div'); card.className = 'tf-card'; card.id = 'tfcard-' + ti;
+    let html = `<p class="tf-stmt">${item.text}</p>
+      <div class="tf-tf-row">
+        <label class="tf-opt"><input type="radio" name="tf${ti}" value="true"  onchange="onTfChange(${ti},this.value)"> True</label>
+        <label class="tf-opt"><input type="radio" name="tf${ti}" value="false" onchange="onTfChange(${ti},this.value)"> False</label>
+      </div>`;
+    if (!item.ans && item.displayWhyOpts) {
+      html += `<div class="tf-why" id="tfwhy-${ti}">
+        <span class="tf-why-lbl">Why is this statement false? Select the correct explanation:</span>`;
+      item.displayWhyOpts.forEach((opt, wi) => {
+        html += `<label class="tf-why-opt" id="tfwhy-${ti}-${wi}"><input type="radio" name="tfwhy${ti}" value="${wi}"> ${opt}</label>`;
+      });
+      html += `</div>`;
+    }
+    card.innerHTML = html; tfCont.appendChild(card);
+  });
+}
+
+function onTfChange(ti, val) {
+  const why = document.getElementById('tfwhy-' + ti);
+  if (why) why.style.display = val === 'false' ? 'block' : 'none';
+}
+
+function checkPerf() {
+  if (!window.Classroom?.verifyAuth()) return;
+  let correct = 0, anyWrong = false;
+  mcBuild.forEach((q, qi) => {
+    const sel  = document.querySelector(`input[name="mc${qi}"]:checked`);
+    const opts = document.querySelectorAll(`#mc-${qi} .mc-opt`);
+    opts.forEach(o => o.classList.remove('correct-ans','wrong-ans'));
+    opts[q.displayAns].classList.add('correct-ans');
+    if (sel && parseInt(sel.value) === q.displayAns) correct++;
+    else { anyWrong = true; if (sel) opts[parseInt(sel.value)].classList.add('wrong-ans'); }
+    document.querySelectorAll(`input[name="mc${qi}"]`).forEach(r => r.disabled = true);
+  });
+  tfBuild.forEach((item, ti) => {
+    const card  = document.getElementById('tfcard-' + ti);
+    const tfSel = document.querySelector(`input[name="tf${ti}"]:checked`);
+    const tfOk  = tfSel && tfSel.value === (item.ans ? 'true' : 'false');
+    card.classList.remove('tf-ok','tf-err');
+    if (item.ans) {
+      if (tfOk) { correct++; card.classList.add('tf-ok'); }
+      else { anyWrong = true; card.classList.add('tf-err'); }
+    } else {
+      const whyDiv = document.getElementById('tfwhy-' + ti);
+      if (whyDiv) whyDiv.style.display = 'block';
+      const whySel = document.querySelector(`input[name="tfwhy${ti}"]:checked`);
+      const whyVal = whySel ? parseInt(whySel.value) : -1;
+      const whyOk  = whyVal === item.displayWhyCorrect;
+      if (tfOk && whyOk) { correct++; card.classList.add('tf-ok'); }
+      else {
+        anyWrong = true; card.classList.add('tf-err');
+        const correctLbl = document.getElementById(`tfwhy-${ti}-${item.displayWhyCorrect}`);
+        if (correctLbl) correctLbl.classList.add('why-ok');
+        if (whySel && !whyOk) {
+          const wrongLbl = document.getElementById(`tfwhy-${ti}-${whyVal}`);
+          if (wrongLbl) wrongLbl.classList.add('why-err');
+        }
+      }
+      document.querySelectorAll(`input[name="tfwhy${ti}"]`).forEach(r => r.disabled = true);
+    }
+    document.querySelectorAll(`input[name="tf${ti}"]`).forEach(r => r.disabled = true);
+  });
+  if (anyWrong) perfEverWrong = true;
+  const total = mcBuild.length + tfBuild.length;
+  const score = document.getElementById('perfScore');
+  score.style.display = 'inline-block'; score.textContent = `Score: ${correct} / ${total}`;
+  const fb = document.getElementById('perfFeedback'); fb.style.display = 'block';
+  if (correct === total) {
+    const perfect = !perfEverWrong;
+    fb.textContent = perfect ? '🌟 Full marks first time — brilliant!' : '✅ All correct — well done!';
+    fb.style.color  = perfect ? 'var(--gold-l)' : 'var(--green-l)';
+    markDone(3, perfect);
+  } else {
+    fb.style.color  = 'var(--amber-l)';
+    fb.textContent  = `${total - correct} answer${total - correct > 1 ? 's' : ''} incorrect — correct answers and reasons are highlighted.`;
+  }
+}
+function resetPerf() {
+  clearTabState(3); perfEverWrong = false; buildPerf();
+  document.getElementById('perfScore').style.display    = 'none';
+  document.getElementById('perfFeedback').style.display = 'none';
+}
+buildPerf();
+
+// ─────────────────────────────────────────────────────────────
+// EXERCISE 5 — MARK SCHEME  (6 questions, dynamic + randomised)
+// ─────────────────────────────────────────────────────────────
+const allMSData = [
+  {
+    title:'ALU & CU', marks:2,
+    examQ:'Describe what the ALU and the Control Unit (CU) each do inside a CPU. [2 marks]',
+    student:'The ALU is where results of calculations get kept until the CPU needs them. The Control Unit goes and gets instructions from RAM and puts them into the cache so the CPU can use them.',
+    points:[
+      { code:'ME1', text:'ALU — performs arithmetic (e.g. addition) and logical (e.g. comparison) operations on data [1]', correct:false,
+        explain:'<strong>ME1 — NOT awarded.</strong> The student says the ALU "keeps results of calculations." This is incorrect — that is the job of the <em>Accumulator</em>. The ALU <em>performs</em> arithmetic and logical operations; it does not store results. This is a factual error.' },
+      { code:'ME2', text:'CU (Control Unit) — manages and coordinates the CPU\'s activities; directs the fetch, decode, and execute stages [1]', correct:false,
+        explain:'<strong>ME2 — NOT awarded.</strong> The student says the CU "gets instructions from RAM and puts them into the cache." Neither part is accurate: the CU <em>coordinates</em> the fetch-decode-execute cycle; it does not directly fetch from RAM, and it does not move things into cache. This is a factual error.' },
+    ],
+  },
+  {
+    title:'Cache', marks:2,
+    examQ:'Describe what cache memory is and explain one way it improves CPU performance. [2 marks]',
+    student:'Cache is fast memory that saves data the CPU has recently used so it can get to it quickly. If you make the cache bigger the computer will always run a lot faster because it can fit the whole operating system in it.',
+    points:[
+      { code:'MF1', text:'Cache is small, fast memory (located close to the CPU) that stores frequently used data and instructions [1]', correct:true,
+        explain:'<strong>MF1 — Awarded.</strong> "Fast memory that saves data the CPU has recently used so it can get to it quickly" correctly captures what cache is. The key ideas — fast, stores frequently used data — are all present.' },
+      { code:'MF2', text:'A larger cache reduces the number of times the CPU needs to access slower RAM, improving performance [1]', correct:false,
+        explain:'<strong>MF2 — NOT awarded.</strong> The student adds two factual errors: (1) "will <em>always</em> run a lot faster" is too absolute; (2) "can fit the whole operating system in it" is incorrect — cache is far too small for the OS, and that is not why it helps. Incorrect information invalidates this mark.' },
+    ],
+  },
+  {
+    title:'Registers', marks:4,
+    examQ:'Describe the purpose of each of the following registers: the Program Counter (PC), the MAR, the MDR, and the Accumulator. [4 marks]',
+    student:'The Program Counter stores the next instruction that the CPU needs to run. The MAR holds the address in memory that the CPU wants to access. The MDR stores the information retrieved from that memory location. The Accumulator keeps the result of the last calculation performed.',
+    points:[
+      { code:'MA1', text:'PC — stores the <em>address</em> of the next instruction to be fetched [1]', correct:false,
+        explain:'<strong>MA1 — NOT awarded.</strong> The student writes that the PC "stores the next instruction that the CPU needs to run." This is a very common misconception: the PC stores the <em>address</em> of the next instruction, not the instruction itself. Because the critical word "address" is missing and replaced with "instruction," the mark cannot be awarded.' },
+      { code:'MA2', text:'MAR — holds the memory address of the data or instruction currently being accessed [1]', correct:true,
+        explain:'<strong>MA2 — Awarded.</strong> "Holds the address in memory that the CPU wants to access" directly matches the mark scheme point for the MAR.' },
+      { code:'MA3', text:'MDR — stores the data or instruction fetched from (or to be written to) memory [1]', correct:true,
+        explain:'<strong>MA3 — Awarded.</strong> "Stores the information retrieved from that memory location" is an acceptable description of the MDR holding the fetched data or instruction.' },
+      { code:'MA4', text:'Accumulator — stores the result of the most recent calculation performed by the ALU [1]', correct:true,
+        explain:'<strong>MA4 — Awarded.</strong> "Keeps the result of the last calculation performed" correctly describes the Accumulator storing the output of ALU operations.' },
+    ],
+  },
+  {
+    title:'CPU Cores', marks:3,
+    examQ:'Explain how upgrading a processor to one with more cores could improve a computer\'s performance. [3 marks]',
+    student:'More cores means the computer can do more than one thing at the same time. For example, you could be streaming music and writing a document at the same time without the computer slowing down. This is because each core handles a different task independently, like having extra workers on a job.',
+    points:[
+      { code:'MB1', text:'Each core can execute instructions / handle tasks independently of the other cores [1]', correct:true,
+        explain:'<strong>MB1 — Awarded.</strong> "Each core handles a different task independently" directly matches the point about independent execution per core.' },
+      { code:'MB2', text:'Multiple programs or tasks can run simultaneously / at the same time [1]', correct:true,
+        explain:'<strong>MB2 — Awarded.</strong> "Do more than one thing at the same time" combined with the streaming/writing example clearly earns the simultaneous execution mark.' },
+      { code:'MB3', text:'This reduces the time programs spend waiting / prevents the processor becoming a bottleneck [1]', correct:false,
+        explain:'<strong>MB3 — NOT awarded.</strong> The student says the computer won\'t "slow down," but does not explain the mechanism: that programs no longer have to <em>wait</em> for the processor, or that the single processor is no longer a bottleneck. The response describes a symptom rather than explaining the reason.' },
+    ],
+  },
+  {
+    title:'The Fetch Stage', marks:3,
+    examQ:'Describe what happens during the fetch stage of the fetch-execute cycle. [3 marks]',
+    student:'The address of the next instruction is stored in the Program Counter. This address is copied across to the MAR, which tells the CPU where in memory to look. The instruction at that location is then brought back and loaded into the MDR.',
+    points:[
+      { code:'MG1', text:'The address in the PC is copied to / placed into the MAR [1]', correct:true,
+        explain:'<strong>MG1 — Awarded.</strong> "This address is copied across to the MAR, which tells the CPU where in memory to look" directly and correctly describes the PC-to-MAR transfer.' },
+      { code:'MG2', text:'The instruction is retrieved from memory (RAM) and placed into the MDR [1]', correct:true,
+        explain:'<strong>MG2 — Awarded.</strong> "The instruction at that location is then brought back and loaded into the MDR" correctly describes the memory fetch into the MDR.' },
+      { code:'MG3', text:'The PC is incremented to hold the address of the next instruction [1]', correct:false,
+        explain:'<strong>MG3 — NOT awarded.</strong> The student does not mention the PC being incremented at all. This is a complete omission — the response is not factually wrong, it simply does not cover this mark point. This is the difference between an incomplete answer and an incorrect one.' },
+    ],
+  },
+  {
+    title:'Embedded Systems', marks:2,
+    examQ:'Give two features of an embedded system. [2 marks]',
+    student:'An embedded system is a computer that is built into a larger device. They are designed to be very reliable and to keep running for a long time without being switched off.',
+    points:[
+      { code:'MH1', text:'Designed to perform one specific / dedicated task or function [1]', correct:false,
+        explain:'<strong>MH1 — NOT awarded.</strong> The student says embedded systems are "built into a larger device." While true, this is not a mark scheme point here — the question asks for <em>features</em>, and the key feature being tested is that they perform one <em>dedicated</em> task. The student simply does not mention this, so the mark cannot be awarded.' },
+      { code:'MH2', text:'Often designed to run continuously / without human supervision [1]', correct:true,
+        explain:'<strong>MH2 — Awarded.</strong> "Designed to be very reliable and to keep running for a long time without being switched off" correctly describes the continuous, unsupervised operation of embedded systems.' },
+    ],
+  },
+];
+
+let msBuild = [], msDone = [], msPerf = [], msEvrWrng = [];
+
+function buildMS() {
+  msBuild   = [...allMSData].sort(() => Math.random() - .5);
+  msDone    = new Array(msBuild.length).fill(false);
+  msPerf    = new Array(msBuild.length).fill(false);
+  msEvrWrng = new Array(msBuild.length).fill(false);
+
+  const container = document.getElementById('msContainer'); container.innerHTML = '';
+  msBuild.forEach((q, qi) => {
+    const wrap = document.createElement('div'); wrap.className = 'ms-q-wrapper';
+    let html = `<span class="ms-q-num">Question ${qi+1} — ${q.title} &nbsp;[${q.marks} mark${q.marks>1?'s':''}]</span>
+      <div class="ms-q-box"><span class="qhead">Exam Question</span>${q.examQ}</div>
+      <div class="ms-student">${q.student}</div>
+      <span class="ms-pts-lbl">Mark scheme — tick each point you think this response earns</span>`;
+    q.points.forEach((pt, pi) => {
+      html += `<div class="ms-point" onclick="toggleMS(this)">
+        <input type="checkbox" id="ms-${qi}-${pi}" onclick="event.stopPropagation()">
+        <span class="pcode">${pt.code}</span>
+        <span class="ptext">${pt.text}</span>
+      </div>`;
+    });
+    html += `<div class="action-row">
+        <button class="btn btn-check" onclick="checkMSQ(${qi})">Submit My Marking</button>
+        <button class="btn btn-reset" onclick="resetMSQ(${qi})">Reset</button>
+      </div>
+      <div class="ms-fb" id="msFb-${qi}"></div>`;
+    wrap.innerHTML = html; container.appendChild(wrap);
+  });
+}
+
+function toggleMS(el) {
+  const cb = el.querySelector('input[type=checkbox]');
+  if (cb.disabled) return; cb.checked = !cb.checked;
+}
+
+function checkMSQ(qi) {
+  if (!window.Classroom?.verifyAuth()) return;
+  const q = msBuild[qi];
+  let correct = 0, anyWrong = false;
+  q.points.forEach((pt, pi) => {
+    const cb    = document.getElementById(`ms-${qi}-${pi}`);
+    const point = cb.closest('.ms-point');
+    point.classList.remove('ms-ok','ms-err');
+    if (cb.checked === pt.correct) { correct++; point.classList.add('ms-ok'); }
+    else { anyWrong = true; point.classList.add('ms-err'); }
+    cb.disabled = true;
+  });
+  if (anyWrong) msEvrWrng[qi] = true;
+  const total = q.points.length;
+  const fbEl  = document.getElementById('msFb-' + qi);
+  fbEl.classList.remove('fb-ok','fb-err');
+  let html = correct === total
+    ? `<strong>✅ All ${total} marking decisions correct!</strong>`
+    : `<strong>⚠ You got ${correct}/${total} marking decisions correct.</strong>`;
+  html += '<div style="margin-top:12px;display:flex;flex-direction:column;gap:10px;">';
+  q.points.forEach((pt, pi) => {
+    const ok = document.getElementById(`ms-${qi}-${pi}`).checked === pt.correct;
+    html += `<div style="padding:10px 14px;border-radius:8px;background:${ok?'rgba(5,150,105,.08)':'rgba(220,38,38,.06)'};border:1px solid ${ok?'var(--green)':'var(--red-l)'};">
+      <span style="font-size:.87rem;color:${ok?'var(--green-l)':'var(--red-l)'};">${pt.explain}</span></div>`;
+  });
+  html += '</div>';
+  fbEl.innerHTML = html; fbEl.classList.add(correct === total ? 'fb-ok' : 'fb-err', 'show');
+  msDone[qi] = true; msPerf[qi] = correct === total && !msEvrWrng[qi];
+  if (msDone.every(Boolean)) markDone(4, msPerf.every(Boolean));
+}
+
+function resetMSQ(qi) {
+  const q = msBuild[qi];
+  q.points.forEach((pt, pi) => {
+    const cb = document.getElementById(`ms-${qi}-${pi}`); cb.checked = false; cb.disabled = false;
+    cb.closest('.ms-point').classList.remove('ms-ok','ms-err');
+  });
+  const fb = document.getElementById('msFb-' + qi);
+  fb.classList.remove('show','fb-ok','fb-err'); fb.innerHTML = '';
+  msDone[qi] = false; msPerf[qi] = false; msEvrWrng[qi] = false;
+  if (!msDone.every(Boolean)) clearTabState(4);
+}
+
+buildMS();
+
+// ─────────────────────────────────────────────────────────────
+// EXERCISE 6 — EMBEDDED SYSTEMS
+// ─────────────────────────────────────────────────────────────
+const examples = [
+  {text:'Washing machine controller', type:'embedded'},
+  {text:'Car engine management unit', type:'embedded'},
+  {text:'Microwave oven',             type:'embedded'},
+  {text:'Pacemaker',                  type:'embedded'},
+  {text:'Smart thermostat',           type:'embedded'},
+  {text:'Traffic light controller',   type:'embedded'},
+  {text:'Digital camera processor',   type:'embedded'},
+  {text:'Desktop PC',                 type:'general'},
+  {text:'Gaming laptop',              type:'general'},
+  {text:'Office server',              type:'general'},
+];
+
+// False statements have wrongWord + fixOpts (shuffled on build) + fixCorrect index into fixOpts
+const embTfStatements = [
+  { text:'An embedded system is typically designed to perform one specific, dedicated function.', ans:true },
+  { text:'Embedded systems are general-purpose computers that can run software chosen by the user.',
+    ans:false, wrongWord:'general-purpose',
+    fixOpts:['general-purpose','dedicated','high-performance','open-source'], fixCorrect:1 },
+  { text:'The firmware of an embedded system is usually stored in ROM or flash memory.', ans:true },
+  { text:'Embedded systems generally have greater processing power than a modern desktop computer.',
+    ans:false, wrongWord:'greater',
+    fixOpts:['greater','less','equal','variable'], fixCorrect:1 },
+  { text:'Embedded systems are often designed to run continuously without requiring human supervision.', ans:true },
+];
+
+let egDragging = null;
+let classifyDone=false, classifyPerfect=false, classifyEverWrong=false;
+let embTfDone=false,    embTfPerfect=false,    embTfEverWrong=false;
+
+function buildClassify() {
+  const bank = document.getElementById('egBank'); bank.innerHTML = '';
+  document.getElementById('drop-emb').innerHTML = '';
+  document.getElementById('drop-gen').innerHTML = '';
+  ['col-emb','col-gen'].forEach(id => document.getElementById(id).classList.remove('col-correct','col-wrong'));
+  [...examples].sort(() => Math.random() - .5).forEach(ex => {
+    const p = document.createElement('span');
+    p.className = 'eg-pill'; p.textContent = ex.text; p.dataset.type = ex.type; p.draggable = true;
+    p.addEventListener('dragstart', e => {
+      egDragging = p; e.dataTransfer.setData('text/plain', ex.type);
+      e.dataTransfer.effectAllowed = 'move'; setTimeout(() => p.classList.add('dragging'), 0);
+    });
+    p.addEventListener('dragend', () => p.classList.remove('dragging'));
+    bank.appendChild(p);
+  });
+  bank.addEventListener('dragover', e => { e.preventDefault(); bank.classList.add('drag-over'); });
+  bank.addEventListener('dragleave', () => bank.classList.remove('drag-over'));
+  bank.addEventListener('drop', e => { e.preventDefault(); bank.classList.remove('drag-over'); if (egDragging) { bank.appendChild(egDragging); egDragging = null; } });
+  ['emb','gen'].forEach(col => {
+    const drop  = document.getElementById('drop-' + col);
+    const colEl = document.getElementById('col-'  + col);
+    drop.addEventListener('dragover',  e => { e.preventDefault(); drop.classList.add('drag-over'); colEl.classList.add('drag-over'); });
+    drop.addEventListener('dragleave', () => { drop.classList.remove('drag-over'); colEl.classList.remove('drag-over'); });
+    drop.addEventListener('drop', e => { e.preventDefault(); drop.classList.remove('drag-over'); colEl.classList.remove('drag-over'); if (egDragging) { drop.appendChild(egDragging); egDragging = null; } });
+  });
+}
+
+function buildEmbTF() {
+  const tbody = document.getElementById('embTfBody'); tbody.innerHTML = '';
+  embTfStatements.forEach((st, si) => {
+    // Main answer row
+    const tr = document.createElement('tr'); tr.id = 'etf-' + si;
+    tr.style.cssText = 'border-bottom:1px solid var(--surf2);';
+    const changeHandler = st.ans ? '' : `onchange="onEmbTfChange(${si},this.value)"`;
+    tr.innerHTML = `<td style="padding:11px 14px;">${st.text}</td>
+      <td style="text-align:center;padding:11px 14px;"><input type="radio" style="accent-color:var(--purple);width:16px;height:16px;cursor:pointer;" name="etf${si}" value="true"  ${changeHandler}></td>
+      <td style="text-align:center;padding:11px 14px;"><input type="radio" style="accent-color:var(--purple);width:16px;height:16px;cursor:pointer;" name="etf${si}" value="false" ${changeHandler}></td>`;
+    tbody.appendChild(tr);
+
+    // Word-fix row (only for false statements)
+    if (!st.ans) {
+      const fixTr = document.createElement('tr'); fixTr.id = 'etf-fix-' + si; fixTr.className = 'fix-row';
+      // Shuffle fix options on build
+      const perm = [...Array(st.fixOpts.length).keys()].sort(() => Math.random() - .5);
+      const shuffledOpts     = perm.map(i => st.fixOpts[i]);
+      const shuffledCorrect  = perm.indexOf(st.fixCorrect);
+      fixTr.dataset.correct  = shuffledCorrect;
+      const td = document.createElement('td'); td.colSpan = 3;
+      let fixHtml = `<div class="fix-prompt">The word <strong>${st.wrongWord}</strong> is incorrect. What should it be replaced with?</div>
+        <div class="fix-opts">`;
+      shuffledOpts.forEach((opt, oi) => {
+        fixHtml += `<label class="fix-opt" id="fix-opt-${si}-${oi}"><input type="radio" name="etffix${si}" value="${oi}"> ${opt}</label>`;
+      });
+      fixHtml += '</div>';
+      td.innerHTML = fixHtml; fixTr.appendChild(td); tbody.appendChild(fixTr);
+    }
+  });
+}
+
+function onEmbTfChange(si, val) {
+  const fixRow = document.getElementById('etf-fix-' + si);
+  if (fixRow) fixRow.classList.toggle('show', val === 'false');
+}
+
+function checkClassify() {
+  if (!window.Classroom?.verifyAuth()) return;
+  let correct = 0, anyWrong = false;
+  const placed = [...document.getElementById('drop-emb').querySelectorAll('.eg-pill'),
+                  ...document.getElementById('drop-gen').querySelectorAll('.eg-pill')];
+  const inBank = [...document.getElementById('egBank').querySelectorAll('.eg-pill')];
+  placed.forEach(p => {
+    const ok = p.parentElement.id === (p.dataset.type === 'embedded' ? 'drop-emb' : 'drop-gen');
+    if (ok) { correct++; p.style.borderColor='var(--green)'; p.style.color='var(--green-l)'; }
+    else { anyWrong=true; p.style.borderColor='var(--red)'; p.style.color='var(--red-l)'; }
+    p.draggable = false; p.style.cursor = 'default';
+  });
+  inBank.forEach(p => { anyWrong=true; p.style.borderColor='var(--red)'; p.style.color='var(--red-l)'; p.draggable=false; p.style.cursor='default'; });
+  if (anyWrong) classifyEverWrong = true;
+  const total = examples.length;
+  document.getElementById('classifyScore').style.display = 'inline-block';
+  document.getElementById('classifyScore').textContent   = `Score: ${correct} / ${total}`;
+  const fb = document.getElementById('classifyFeedback'); fb.style.display = 'block';
+  if (correct === total && inBank.length === 0) {
+    const perfect = !classifyEverWrong;
+    fb.textContent = perfect ? '🌟 Perfect first time!' : '✅ All correctly classified!';
+    fb.style.color  = perfect ? 'var(--gold-l)' : 'var(--green-l)';
+    classifyDone = true; classifyPerfect = perfect; checkEmbComplete();
+  } else {
+    fb.style.color = 'var(--amber-l)';
+    fb.textContent = `${total - correct} incorrectly placed or left in the bank — highlighted above.`;
+  }
+}
+
+function checkEmbTF() {
+  if (!window.Classroom?.verifyAuth()) return;
+  let correct = 0, anyWrong = false;
+  embTfStatements.forEach((st, si) => {
+    const sel = document.querySelector(`input[name="etf${si}"]:checked`);
+    const row = document.getElementById('etf-' + si);
+    row.style.background = '';
+    document.querySelectorAll(`input[name="etf${si}"]`).forEach(r => r.disabled = true);
+
+    if (st.ans) {
+      // True statement — just needs correct T/F tick
+      if (sel && sel.value === 'true') { correct++; row.style.background = 'rgba(5,150,105,.1)'; }
+      else { anyWrong = true; row.style.background = 'rgba(220,38,38,.08)'; }
+    } else {
+      // False statement — needs correct T/F AND correct word fix
+      const fixRow      = document.getElementById('etf-fix-' + si);
+      if (fixRow) { fixRow.classList.add('show'); }
+      const fixSel      = document.querySelector(`input[name="etffix${si}"]:checked`);
+      const fixVal      = fixSel ? parseInt(fixSel.value) : -1;
+      const fixCorrect  = parseInt(fixRow.dataset.correct);
+      const tfOk        = sel && sel.value === 'false';
+      const fixOk       = fixVal === fixCorrect;
+      document.querySelectorAll(`input[name="etffix${si}"]`).forEach(r => r.disabled = true);
+      if (tfOk && fixOk) {
+        correct++; row.style.background = 'rgba(5,150,105,.1)';
+        document.getElementById(`fix-opt-${si}-${fixCorrect}`).classList.add('fix-ok');
+      } else {
+        anyWrong = true; row.style.background = 'rgba(220,38,38,.08)';
+        document.getElementById(`fix-opt-${si}-${fixCorrect}`).classList.add('fix-ok');
+        if (fixSel && !fixOk) document.getElementById(`fix-opt-${si}-${fixVal}`).classList.add('fix-err');
+      }
+    }
+  });
+  if (anyWrong) embTfEverWrong = true;
+  const total = embTfStatements.length;
+  document.getElementById('embTfScore').style.display = 'inline-block';
+  document.getElementById('embTfScore').textContent   = `Score: ${correct} / ${total}`;
+  const fb = document.getElementById('embTfFeedback'); fb.style.display = 'block';
+  if (correct === total) {
+    const perfect = !embTfEverWrong;
+    fb.textContent = perfect ? '🌟 All correct first time!' : '✅ All correct — well done!';
+    fb.style.color  = perfect ? 'var(--gold-l)' : 'var(--green-l)';
+    embTfDone = true; embTfPerfect = perfect; checkEmbComplete();
+  } else {
+    fb.style.color = 'var(--amber-l)';
+    fb.textContent = `${total - correct} answer${total - correct > 1 ? 's' : ''} incorrect — correct answers highlighted.`;
+  }
+}
+
+function checkEmbComplete() {
+  if (classifyDone && embTfDone) markDone(5, classifyPerfect && embTfPerfect);
+}
+
+function resetClassify() {
+  classifyDone=false; classifyPerfect=false; classifyEverWrong=false;
+  buildClassify();
+  document.getElementById('classifyScore').style.display    = 'none';
+  document.getElementById('classifyFeedback').style.display = 'none';
+  if (!(classifyDone && embTfDone)) clearTabState(5);
+}
+function resetEmbTF() {
+  embTfDone=false; embTfPerfect=false; embTfEverWrong=false;
+  buildEmbTF();
+  document.getElementById('embTfScore').style.display    = 'none';
+  document.getElementById('embTfFeedback').style.display = 'none';
+  if (!(classifyDone && embTfDone)) clearTabState(5);
+}
+buildClassify(); buildEmbTF();
+</script>
+<script src="../../classroom.js"></script>
+</body>
+</html>

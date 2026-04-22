@@ -25,11 +25,11 @@ describe('MOD_CHECKS.mod1', () => {
 
   test('passes when correctly renamed with farewell kept', () => {
     const r = MOD_CHECKS.mod1(code([
-      'def say_hello():',
+      'def hello():',
       '    print("Hello!")',
       'def farewell():',
       '    print("Goodbye!")',
-      'say_hello()',
+      'hello()',
       'farewell()',
     ]));
     expect(r.pass).toBe(true);
@@ -45,12 +45,12 @@ describe('MOD_CHECKS.mod1', () => {
       'farewell()',
     ]));
     expect(r.pass).toBe(false);
-    expect(r.msg).toContain('say_hello');
+    expect(r.msg).toContain('hello');
   });
 
-  test('fails when say_hello call is missing', () => {
+  test('fails when hello call is missing', () => {
     const r = MOD_CHECKS.mod1(code([
-      'def say_hello():',
+      'def hello():',
       '    print("Hello!")',
       'def farewell():',
       '    print("Goodbye!")',
@@ -62,9 +62,9 @@ describe('MOD_CHECKS.mod1', () => {
 
   test('fails when farewell is removed', () => {
     const r = MOD_CHECKS.mod1(code([
-      'def say_hello():',
+      'def hello():',
       '    print("Hello!")',
-      'say_hello()',
+      'hello()',
     ]));
     expect(r.pass).toBe(false);
     expect(r.msg).toContain('farewell');
@@ -74,8 +74,8 @@ describe('MOD_CHECKS.mod1', () => {
 // ─── MOD_CHECKS.mod2 ─────────────────────────────────────────────────────────
 
 describe('MOD_CHECKS.mod2', () => {
-  test('passes with say_hello and a print', () => {
-    const r = MOD_CHECKS.mod2('def say_hello():\n    print("Custom message")\nsay_hello()');
+  test('passes with hello and a print', () => {
+    const r = MOD_CHECKS.mod2('def hello():\n    print("Custom message")\nhello()');
     expect(r.pass).toBe(true);
   });
 
@@ -90,7 +90,7 @@ describe('MOD_CHECKS.mod2', () => {
   });
 
   test('fails when print is missing', () => {
-    const r = MOD_CHECKS.mod2('def say_hello():\n    pass\nsay_hello()');
+    const r = MOD_CHECKS.mod2('def hello():\n    pass\nhello()');
     expect(r.pass).toBe(false);
   });
 });
@@ -100,14 +100,14 @@ describe('MOD_CHECKS.mod2', () => {
 describe('MOD_CHECKS.mod3', () => {
   test('passes when farewell renamed to say_goodbye', () => {
     const r = MOD_CHECKS.mod3(
-      'def say_hello():\n    print("Hi")\ndef say_goodbye():\n    print("Bye")\nsay_hello()\nsay_goodbye()'
+      'def hello():\n    print("Hi")\ndef say_goodbye():\n    print("Bye")\nhello()\nsay_goodbye()'
     );
     expect(r.pass).toBe(true);
   });
 
   test('fails when farewell not renamed', () => {
     const r = MOD_CHECKS.mod3(
-      'def say_hello():\n    print("Hi")\ndef farewell():\n    print("Bye")\nsay_hello()\nfarewell()'
+      'def hello():\n    print("Hi")\ndef farewell():\n    print("Bye")\nhello()\nfarewell()'
     );
     expect(r.pass).toBe(false);
     expect(r.msg).toContain('say_goodbye');
@@ -115,7 +115,7 @@ describe('MOD_CHECKS.mod3', () => {
 
   test('fails when say_goodbye call is missing', () => {
     const r = MOD_CHECKS.mod3(
-      'def say_hello():\n    print("Hi")\ndef say_goodbye():\n    print("Bye")\nsay_hello()'
+      'def hello():\n    print("Hi")\ndef say_goodbye():\n    print("Bye")\nhello()'
     );
     expect(r.pass).toBe(false);
   });
@@ -128,27 +128,27 @@ describe('MOD_CHECKS.mod4', () => {
     const r = MOD_CHECKS.mod4([
       'def print_line():',
       '    print("----------")',
-      'def say_hello():',
+      'def hello():',
       '    print_line()',
       '    print("Hello!")',
       '    print_line()',
       'def say_goodbye():',
       '    print("Goodbye!")',
-      'say_hello()',
+      'hello()',
       'say_goodbye()',
     ].join('\n'));
     expect(r.pass).toBe(true);
   });
 
   test('fails when print_line not defined', () => {
-    const r = MOD_CHECKS.mod4('def say_hello():\n    print("Hi")\nsay_hello()');
+    const r = MOD_CHECKS.mod4('def hello():\n    print("Hi")\nhello()');
     expect(r.pass).toBe(false);
     expect(r.msg).toContain('print_line');
   });
 
   test('fails when print_line defined but never called', () => {
     const r = MOD_CHECKS.mod4(
-      'def print_line():\n    print("---")\ndef say_hello():\n    print("Hi")\nsay_hello()'
+      'def print_line():\n    print("---")\ndef hello():\n    print("Hi")\nhello()'
     );
     expect(r.pass).toBe(false);
   });
