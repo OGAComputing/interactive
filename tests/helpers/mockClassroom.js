@@ -28,7 +28,12 @@ async function interceptOAuth(page) {
 }
 
 // No token seeded — banner visible, not authenticated.
+// Also seeds oga_silent_failed so bootstrap() skips the silent-auth redirect
+// (which would otherwise navigate the page away before tests can inspect the DOM).
 export async function mockSignedOut(page) {
+  await page.addInitScript(`(function(){
+    try { sessionStorage.setItem('oga_silent_failed', 'true'); } catch(e) {}
+  })()`);
   await interceptOAuth(page);
 }
 
