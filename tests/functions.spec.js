@@ -17,7 +17,6 @@ async function fillPredict(page) {
 
 async function fillRun(page) {
   await page.locator('#r1').fill('I saw Hello! and Have a great day. in the output panel.');
-  await page.locator('#r2').fill('def tells Python to create and store the function without running it.');
 }
 
 async function fillInvestigate(page) {
@@ -201,13 +200,11 @@ test.describe('Run stage', () => {
   test('rejects empty textareas', async ({ page }) => {
     await page.locator('button:has-text("go to Investigate")').click();
     await expect(page.locator('#qcard_r1')).toHaveClass(/error/);
-    await expect(page.locator('#qcard_r2')).toHaveClass(/error/);
     await expectActiveStage(page, 'R');
   });
 
   test('rejects nonsense keyboard-mashing', async ({ page }) => {
     await page.locator('#r1').fill('asdfasdfasdf');
-    await page.locator('#r2').fill('qwerqwerqwer');
     await page.locator('button:has-text("go to Investigate")').click();
     await expect(page.locator('#qcard_r1')).toHaveClass(/error/);
   });
@@ -275,14 +272,14 @@ test.describe('Modify stage', () => {
 
   test('valid mod1 code shows pass feedback', async ({ page }) => {
     const code = [
-      'def say_hello():',
+      'def hello():',
       '    print("Hello!")',
       '    print("Have a great day.")',
       '',
       'def farewell():',
       '    print("Goodbye!")',
       '',
-      'say_hello()',
+      'hello()',
       'farewell()',
     ].join('\n');
     await page.locator('#m1_code1').fill(code);
