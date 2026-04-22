@@ -114,3 +114,55 @@ export async function runPython(code, { inputs = [] } = {}) {
     return { ok: false, output: msg };
   }
 }
+
+export async function analyzeCode(code) {
+  if (!_loading) _loading = _init();
+  const py = await _loading;
+
+  if (!py.globals.get('_py_analyze')) {
+    py.runPython(`
+import tokenize, io, html, keyword, json, ast
+def _py_analyze(code):
+    result = {"ok": True, "line": None, "msg": "", "html": ""}
+    # 1. Syntax Check
+    try:
+        ast.parse(code)
+    except SyntaxError as e:
+        result.update({"ok": False, "line": e.lineno, "msg": str(e.msg)})
+    except Exception as e:
+        result.update({"ok": False, "line": None, "msg": str(e)})
+
+    # 2. Highlighting
+    tokens_html = []
+    lines = code.splitlines(keepends=True)
+    last_ln, last_col = 1, 0
+    try:
+        tokens = tokenize.generate_tokens(io.StringIO(code).readline)
+        for tok in tokens:
+            if tok.type == tokenize.ENCODING or tok.type == tokenize.ENDMARKER: continue
+            s_ln, s_col = tok.start
+            if (s_ln, s_col) > (last_ln, last_col):
+                if s_ln == last_ln: tokens_html.append(html.escape(lines[s_ln-1][last_col:s_col]))
+                else:
+                    tokens_html.append(html.escape(lines[last_ln-1][last_col:]))
+                    for i in range(last_ln, s_ln - 1): tokens_html.append(html.escape(lines[i]))
+                    tokens_html.append(html.escape(lines[s_ln-1][:s_col]))
+            val = html.escape(tok.string)
+            cls = "tok-default"
+            if tok.type == tokenize.NAME:
+                if keyword.iskeyword(tok.string): cls = "tok-kw"
+                elif tok.string in ['print', 'input', 'len', 'range', 'int', 'str', 'list']: cls = "tok-builtin"
+            elif tok.type in (tokenize.STRING, tokenize.NUMBER, tokenize.COMMENT, tokenize.OP):
+                cls = "tok-" + tokenize.tok_name[tok.type].lower()[:3]
+            if cls == "tok-default": tokens_html.append(val)
+            else: tokens_html.append(f'<span class="{cls}">{val}</span>')
+            last_ln, last_col = tok.end
+    except Exception:
+        tokens_html.append(html.escape(code[sum(len(l) for l in lines[:last_ln-1]) + last_col:]))
+    
+    result["html"] = "".join(tokens_html)
+    return json.dumps(result)
+`);
+  }
+  return JSON.parse(py.globals.get('_py_analyze')(code));
+}

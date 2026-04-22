@@ -17,7 +17,7 @@
 // The Tab key inserts 4 spaces; Shift-Tab removes up to 4 leading spaces.
 // window.saveState() is called after Tab/Shift-Tab if the activity exposes it.
 
-import { checkSyntax } from './pyodide-runner.js';
+import { analyzeCode } from './pyodide-runner.js';
 
 // ── Styles injected once per page ─────────────────────────────────────────────
 // :where() gives these zero specificity so any local .checker-textarea rule
@@ -45,11 +45,22 @@ function _injectStyles() {
       overflow: hidden;
       flex-shrink: 0;
     }
-    :where(.checker-textarea) {
+    :where(.editor-container) {
+      position: relative;
       flex: 1;
-      background: #0d0d1a;
-      color: #cdd6f4;
-      font-family: 'Courier New', monospace;
+      display: block;
+    }
+    /* Higher specificity to ensure text remains hidden even if themes set colors */
+    .editor-container .checker-textarea {
+      color: transparent !important;
+      background: transparent !important;
+    }
+    .checker-textarea {
+      width: 100%;
+      caret-color: #cdd6f4;
+      position: relative;
+      z-index: 2;
+      font-family: 'Courier New', 'Consolas', monospace;
       font-size: .88rem;
       line-height: 1.7;
       padding: .8rem 1rem;
@@ -58,7 +69,29 @@ function _injectStyles() {
       resize: none;
       overflow: hidden;
       min-height: 200px;
+      white-space: pre;
     }
+    :where(.highlight-layer) {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      padding: .8rem 1rem;
+      font-family: 'Courier New', 'Consolas', monospace;
+      font-size: .88rem;
+      line-height: 1.7;
+      white-space: pre;
+      color: #cdd6f4;
+      pointer-events: none;
+      z-index: 1;
+      overflow: hidden;
+    }
+    /* Token Colors */
+    .tok-kw { color: #c678dd; font-weight: bold; }
+    .tok-str { color: #98c379; }
+    .tok-num { color: #d19a66; }
+    .tok-comment { color: #5c6370; font-style: italic; }
+    .tok-builtin { color: #61afef; }
+    .tok-op { color: #56b6c2; }
+
     :where(.syntax-hint) {
       display: none;
       padding: .45rem 1rem .45rem 1.2rem;
@@ -107,10 +140,19 @@ function _injectStyles() {
 // ── Module-level state ────────────────────────────────────────────────────────
 const _hintMap = new Map(); // textarea → .syntax-hint element
 const _outputMap = new Map(); // textarea → .output-panel element
-const _timers  = new Map(); // textarea → debounce timer id
+const _hlMap = new Map(); // textarea → .highlight-layer element
+const _numsMap = new Map(); // textarea → .line-nums element
+const _lastVal = new Map(); // textarea → last processed string
+const _pyTimers = new Map(); // textarea → debounce for heavy pyodide tasks
+const _hintTimers = new Map(); // textarea → debounce for syntax hint visibility
+const _uiTimers = new Map(); // textarea → debounce for fast UI tasks
 
 // ── Private helpers ───────────────────────────────────────────────────────────
-function _autoResize(ta) {
+const _lastLineCount = new Map();
+function _autoResize(ta, force = false) {
+  const lines = ta.value.split('\n').length;
+  if (!force && lines === _lastLineCount.get(ta)) return;
+  _lastLineCount.set(ta, lines);
   ta.style.height = 'auto';
   ta.style.height = ta.scrollHeight + 'px';
 }
@@ -121,23 +163,42 @@ function _updateNums(ta, nums) {
 }
 
 function _debouncedCheck(ta) {
-  clearTimeout(_timers.get(ta));
-  _timers.set(ta, setTimeout(() => _doCheck(ta), 700));
+  // Fast UI updates (line numbers and resizing)
+  clearTimeout(_uiTimers.get(ta));
+  _uiTimers.set(ta, setTimeout(() => {
+    _updateNums(ta, _numsMap.get(ta));
+    _autoResize(ta);
+  }, 20));
+
+  // Heavy Pyodide tasks (highlighting and syntax)
+  clearTimeout(_pyTimers.get(ta));
+  _pyTimers.set(ta, setTimeout(() => {
+    if (ta.value === _lastVal.get(ta)) return;
+    _lastVal.set(ta, ta.value);
+    _runHeavyTasks(ta);
+  }, 50));
 }
 
-async function _doCheck(ta) {
-  const hint = _hintMap.get(ta);
-  if (!hint) return;
-  const code = ta.value;
-  if (code.trim().length < 5) { hint.classList.remove('visible'); return; }
-  const result = await checkSyntax(code);
-  if (result.ok) {
-    hint.classList.remove('visible');
-  } else {
-    const lineStr = result.line ? ` — line ${result.line}` : '';
-    hint.textContent = '⚠ ' + result.msg + lineStr;
-    hint.classList.add('visible');
-  }
+async function _runHeavyTasks(ta) {
+  const result = await analyzeCode(ta.value);
+  
+  // Update Highlighting
+  const hl = _hlMap.get(ta);
+  if (hl) hl.innerHTML = result.html + (ta.value.endsWith('\n') ? ' ' : '');
+
+  // Update Syntax Hint (Debounced separately to 800ms to avoid flicker)
+  clearTimeout(_hintTimers.get(ta));
+  _hintTimers.set(ta, setTimeout(() => {
+    const hint = _hintMap.get(ta);
+    if (!hint) return;
+    
+    if (result.ok || ta.value.trim().length < 5) {
+      hint.classList.remove('visible');
+    } else {
+      hint.textContent = '⚠ ' + result.msg + (result.line ? ` — line ${result.line}` : '');
+      hint.classList.add('visible');
+    }
+  }, 800));
 }
 
 // ── Public API ────────────────────────────────────────────────────────────────
@@ -180,12 +241,24 @@ export function setupEditors(selector = '.checker-textarea') {
     const wrap = document.createElement('div');
     wrap.className = 'editor-wrap';
     ta.parentNode.insertBefore(wrap, ta);
-    wrap.appendChild(ta);
+
+    const container = document.createElement('div');
+    container.className = 'editor-container';
+    wrap.appendChild(container);
+
+    const hl = document.createElement('div');
+    hl.className = 'highlight-layer';
+    hl.setAttribute('aria-hidden', 'true');
+    container.appendChild(hl);
+    _hlMap.set(ta, hl);
+
+    container.appendChild(ta);
 
     const nums = document.createElement('div');
     nums.className = 'line-nums';
     nums.setAttribute('aria-hidden', 'true');
-    wrap.insertBefore(nums, ta);
+    wrap.insertBefore(nums, container);
+    _numsMap.set(ta, nums);
 
     // Output panel sits on the right
     const output = document.createElement('div');
@@ -202,9 +275,7 @@ export function setupEditors(selector = '.checker-textarea') {
 
     // ── Events ────────────────────────────────────────────────────────────
     ta.addEventListener('input', () => {
-      _updateNums(ta, nums);
-      _autoResize(ta);
-      _debouncedCheck(ta);
+      _debouncedCheck(ta); 
     });
 
     ta.addEventListener('keydown', e => {
@@ -226,8 +297,6 @@ export function setupEditors(selector = '.checker-textarea') {
         ta.value = ta.value.slice(0, start) + '    ' + ta.value.slice(end);
         ta.selectionStart = ta.selectionEnd = start + 4;
       }
-      _updateNums(ta, nums);
-      _autoResize(ta);
       _debouncedCheck(ta);
       window.saveState?.(); // activities expose saveState as a global
     });
@@ -235,5 +304,6 @@ export function setupEditors(selector = '.checker-textarea') {
     // ── Initial render (value already restored by the activity) ───────────
     _updateNums(ta, nums);
     _autoResize(ta);
+    _runHeavyTasks(ta);
   });
 }
