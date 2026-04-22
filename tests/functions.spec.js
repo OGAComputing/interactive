@@ -21,9 +21,13 @@ async function fillRun(page) {
 
 async function fillInvestigate(page) {
   await page.locator('#i1').fill('A third line appeared: Nice to meet you!');
+  await page.locator('#qcard_i1 button:has-text("Next Investigation")').click();
   await page.locator('#i2').fill('The greeting printed twice because greet() was called twice.');
+  await page.locator('#qcard_i2 button:has-text("Next Investigation")').click();
   await page.locator('#i3').fill('The first line changed to show my own name instead of Hello.');
+  await page.locator('#qcard_i3 button:has-text("Next Investigation")').click();
   await page.locator('#i4').fill('Nothing happened because without brackets Python does not call the function, it just references the object.');
+  await page.locator('#qcard_i4 button:has-text("Next Investigation")').click();
   await page.locator('#i5').fill('Hello and Have a great day printed, then Goodbye on the next line.');
 }
 
@@ -100,10 +104,12 @@ while True:
 async function advanceToModify(page) {
   await fillPredict(page);
   await page.locator('button:has-text("Check predictions")').click();
+  await page.locator('button:has-text("go to Run stage")').click();
   await fillRun(page);
+  await page.locator('button:has-text("Check response")').click();
   await page.locator('button:has-text("go to Investigate")').click();
   await fillInvestigate(page);
-  await page.locator('button:has-text("go to Modify")').click();
+  await page.locator('button:has-text("Finish Investigation")').click();
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -174,6 +180,7 @@ test.describe('Predict stage', () => {
   test('correct answers advance to Run and mark P done', async ({ page }) => {
     await fillPredict(page);
     await page.locator('button:has-text("Check predictions")').click();
+    await page.locator('button:has-text("go to Run stage")').click();
     await expectActiveStage(page, 'R');
     await expectDoneStage(page, 'P');
   });
@@ -181,6 +188,7 @@ test.describe('Predict stage', () => {
   test('progress bar advances after completing P', async ({ page }) => {
     await fillPredict(page);
     await page.locator('button:has-text("Check predictions")').click();
+    await page.locator('button:has-text("go to Run stage")').click();
     const width = await page.locator('#progressFill').evaluate(el => parseInt(el.style.width));
     expect(width).toBeGreaterThan(20);
   });
@@ -198,19 +206,20 @@ test.describe('Run stage', () => {
   });
 
   test('rejects empty textareas', async ({ page }) => {
-    await page.locator('button:has-text("go to Investigate")').click();
+    await page.locator('button:has-text("Check response")').click();
     await expect(page.locator('#qcard_r1')).toHaveClass(/error/);
     await expectActiveStage(page, 'R');
   });
 
   test('rejects nonsense keyboard-mashing', async ({ page }) => {
     await page.locator('#r1').fill('asdfasdfasdf');
-    await page.locator('button:has-text("go to Investigate")').click();
+    await page.locator('button:has-text("Check response")').click();
     await expect(page.locator('#qcard_r1')).toHaveClass(/error/);
   });
 
   test('valid answers advance to Investigate', async ({ page }) => {
     await fillRun(page);
+    await page.locator('button:has-text("Check response")').click();
     await page.locator('button:has-text("go to Investigate")').click();
     await expectActiveStage(page, 'I');
   });
@@ -230,23 +239,25 @@ test.describe('Investigate stage', () => {
   });
 
   test('rejects empty fields', async ({ page }) => {
-    await page.locator('button:has-text("go to Modify")').click();
+    await page.locator('#qcard_i1 button:has-text("Next Investigation")').click();
     await expect(page.locator('#qcard_i1')).toHaveClass(/error/);
   });
 
   test('I4 rejects answer missing bracket/call keywords', async ({ page }) => {
-    await page.locator('#i1').fill('Something happened to the output.');
-    await page.locator('#i2').fill('The output repeated because it was called twice.');
-    await page.locator('#i3').fill('The name changed in the output.');
-    await page.locator('#i4').fill('It just did something different on screen.');
-    await page.locator('#i5').fill('Both functions printed their lines.');
-    await page.locator('button:has-text("go to Modify")').click();
+    await page.locator('#i1').fill('Something happened.');
+    await page.locator('#qcard_i1 button:has-text("Next Investigation")').click();
+    await page.locator('#i2').fill('Repeat.');
+    await page.locator('#qcard_i2 button:has-text("Next Investigation")').click();
+    await page.locator('#i3').fill('Name.');
+    await page.locator('#qcard_i3 button:has-text("Next Investigation")').click();
+    await page.locator('#i4').fill('Nonsense answer.');
+    await page.locator('#qcard_i4 button:has-text("Next Investigation")').click();
     await expect(page.locator('#qcard_i4')).toHaveClass(/error/);
   });
 
   test('valid answers advance to Modify', async ({ page }) => {
     await fillInvestigate(page);
-    await page.locator('button:has-text("go to Modify")').click();
+    await page.locator('button:has-text("Finish Investigation")').click();
     await expectActiveStage(page, 'M1');
   });
 });
@@ -254,11 +265,6 @@ test.describe('Investigate stage', () => {
 // ═══════════════════════════════════════════════════════════════════════════════
 //  MODIFY stage — DOM wiring (checker logic tested in checkers.test.js)
 // ═══════════════════════════════════════════════════════════════════════════════
-
-function checkBtn(page, textareaId) {
-  return page.locator(`#${textareaId} ~ .checker-footer .btn-check`);
-}
-
 test.describe('Modify stage', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto(ACTIVITY);
@@ -266,8 +272,8 @@ test.describe('Modify stage', () => {
   });
 
   test('checker warns when textarea is empty', async ({ page }) => {
-    await checkBtn(page, 'm1_code1').click();
-    await expect(page.locator('#fb_m1_code1')).toContainText('Paste your code');
+    await page.locator('#btn_check_m1').click();
+    await expect(page.locator('#fb_m1')).toContainText('Write some code first');
   });
 
   test('valid mod1 code shows pass feedback', async ({ page }) => {
@@ -282,9 +288,9 @@ test.describe('Modify stage', () => {
       'hello()',
       'farewell()',
     ].join('\n');
-    await page.locator('#m1_code1').fill(code);
-    await checkBtn(page, 'm1_code1').click();
-    await expect(page.locator('#fb_m1_code1')).toHaveClass(/pass/);
+    await page.locator('#m1_editor').fill(code);
+    await page.locator('#btn_check_m1').click();
+    await expect(page.locator('#fb_m1')).toHaveClass(/pass/);
   });
 });
 
@@ -299,14 +305,14 @@ test.describe('Make stage', () => {
   });
 
   test('warns on empty submission', async ({ page }) => {
-    await page.locator('button:has-text("Check my program")').click();
-    await expect(page.locator('#fb_m2_make')).toContainText('Paste your program');
+    await page.locator('#btn_check_m2').click();
+    await expect(page.locator('#fb_m2')).toContainText('Paste your program');
   });
 
   test('valid program shows pass feedback and completion banner', async ({ page }) => {
-    await page.locator('#m2_make').fill(VALID_MAKE_PROGRAM);
-    await page.locator('button:has-text("Check my program")').click();
-    await expect(page.locator('#fb_m2_make')).toHaveClass(/pass/);
+    await page.locator('#m2_editor').fill(VALID_MAKE_PROGRAM);
+    await page.locator('#btn_check_m2').click();
+    await expect(page.locator('#fb_m2')).toHaveClass(/pass/);
     await expectCompletionBanner(page, 'PRIMM Complete');
   });
 });
@@ -322,8 +328,13 @@ test.describe('Extension', () => {
   });
 
   test('valid extension code shows pass feedback', async ({ page }) => {
-    await page.locator('#m2_ext').fill(VALID_EXT_PROGRAM);
-    await page.locator('button:has-text("Mark extension complete")').click();
-    await expect(page.locator('#fb_m2_ext')).toHaveClass(/pass/);
+    // Must complete Make task first to reveal Extension
+    await page.locator('#m2_editor').fill(VALID_MAKE_PROGRAM);
+    await page.locator('#btn_check_m2').click();
+
+    // Now check extension
+    await page.locator('#m2_editor').fill(VALID_EXT_PROGRAM);
+    await page.locator('#btn_check_m2').click(); // Button now triggers checkExt
+    await expect(page.locator('#fb_m2')).toHaveClass(/pass/);
   });
 });

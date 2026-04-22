@@ -221,6 +221,8 @@ color:  purple
   .progress-strip { height: 3px; background: #1a1040; position: sticky; top: 0; z-index: 10; }
   .progress-fill  { height: 100%; background: linear-gradient(90deg,var(--purple),var(--teal)); transition: width 0.5s ease; }
 
+  .step-hidden { display: none !important; }
+
   @media (max-width: 600px) {
     .site-header { flex-wrap: wrap; } .header-code { display: none; } .stage-panel { padding: 1rem; }
   }
@@ -345,37 +347,27 @@ color:  purple
     <span>Open Thonny, type the program below and press <strong>F5</strong> — or use the <strong>Run in browser</strong> button to see it run straight here. Compare the output with your predictions.</span>
   </div>
 
-  <div class="code-block">
-    <div class="ln"><span class="line-num">1</span><span><span class="kw">def</span> <span class="fn">greet</span>():</span></div>
-    <div class="ln"><span class="line-num">2</span><span>&nbsp;&nbsp;&nbsp;&nbsp;print(<span class="st">"Hello!"</span>)</span></div>
-    <div class="ln"><span class="line-num">3</span><span>&nbsp;&nbsp;&nbsp;&nbsp;print(<span class="st">"Have a great day."</span>)</span></div>
-    <div class="ln"><span class="line-num">4</span><span>&nbsp;</span></div>
-    <div class="ln"><span class="line-num">5</span><span><span class="fn">greet</span>()</span></div>
-  </div>
-
-  <div style="margin-bottom:1.2rem">
-    <button class="btn" id="runBtn" onclick="runInBrowser()" style="background:#059669;color:white">▶ Run in browser</button>
-    <div id="browserOutput" style="display:none">
-      <div class="output-label" style="margin-top:0.8rem;font-size:0.7rem;color:#0d9488;letter-spacing:0.1em;text-transform:uppercase">▶ Output</div>
-      <div class="py-output" id="browserOutputText"></div>
+  <div class="code-checker">
+    <div class="checker-header"><span class="mac-dot dot-r"></span><span class="mac-dot dot-y"></span><span class="mac-dot dot-g"></span><span class="ch-label">Python Editor</span></div>
+    <textarea class="checker-textarea" id="r_editor"></textarea>
+    <div class="checker-footer">
+      <button class="btn btn-check" onclick="runCodeInEditor('r_editor', 'r_fb_run')">▶ Run code</button>
+      <div class="feedback loading hidden" id="r_fb_run"></div>
     </div>
   </div>
 
-  <div class="output-block">
-    <div class="output-label">▶ Expected output</div>
-    Hello!<br>
-    Have a great day.
-  </div>
-
-  <div class="hint-box">💡 If your output doesn't match, check your indentation — every line inside a function must be indented by 4 spaces or one Tab.</div>
+  <div class="hint-box">💡 Indentation matters! Every line inside your function must be indented by 4 spaces or one Tab.</div>
 
   <div class="q-card" id="qcard_r1">
     <label class="q-label"><span class="q-num">1</span> Describe what output you saw when you ran the program. Did anything surprise you compared with your predictions?</label>
     <textarea id="r1" placeholder="Write what appeared in the output panel…" oninput="saveState(); clearRunError('qcard_r1')"></textarea>
   </div>
 
-  <button class="btn btn-next" onclick="tryCompleteRun()" style="margin-top:1rem">
-    ✓ I've run the code — go to Investigate →
+  <button class="btn btn-check" id="btn_check_run" onclick="tryCompleteRun()" style="margin-top:1rem">
+    ⚡ Check response
+  </button>
+  <button class="btn btn-next step-hidden" id="btn_goto_i" onclick="completeStage('R')" style="margin-top:1rem">
+    ✓ go to Investigate →
   </button>
 </section>
 
@@ -387,72 +379,50 @@ color:  purple
     <div class="stage-badge badge-I">I</div>
     <div class="stage-header-text">
       <h2>Investigate</h2>
-      <p>Make each change in Thonny, run it, and record what happens. Each task builds on the last.</p>
+      <p>Make each change in the editor below and record what happens. Each task builds on the last.</p>
     </div>
   </div>
 
-  <div class="info-box">
-    <span class="icon">🔬</span>
-    <span>Each investigation <strong>builds on the previous one</strong> — keep your changes in Thonny and carry them forward. Where an investigation needs a specific starting point, the code is shown for you to copy in.</span>
-  </div>
-
-  <div class="q-card" id="qcard_i1" style="border-left-color:var(--stage-i)">
-    <label class="q-label"><span class="q-num" style="background:var(--stage-i)">1</span> Change your code so it looks exactly like this — adding a third <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print</code> line inside <code style="background:#ede0ff;padding:0 3px;border-radius:3px">greet()</code>:</label>
-    <div style="background:#1e1e2e;border-radius:8px;padding:0.8rem 1rem;font-family:'Courier New',monospace;font-size:0.85rem;line-height:1.9;color:#cdd6f4;margin:0.6rem 0 0.8rem">
-      <div><span style="color:#cba6f7">def</span> <span style="color:#89b4fa">greet</span>():</div>
-      <div>&nbsp;&nbsp;&nbsp;&nbsp;print(<span style="color:#a6e3a1">"Hello!"</span>)</div>
-      <div>&nbsp;&nbsp;&nbsp;&nbsp;print(<span style="color:#a6e3a1">"Have a great day."</span>)</div>
-      <div>&nbsp;&nbsp;&nbsp;&nbsp;print(<span style="color:#a6e3a1">"Nice to meet you!"</span>)</div>
-      <div>&nbsp;</div>
-      <div><span style="color:#89b4fa">greet</span>()</div>
+  <div class="code-checker">
+    <div class="checker-header"><span class="mac-dot dot-r"></span><span class="mac-dot dot-y"></span><span class="mac-dot dot-g"></span><span class="ch-label">Python Editor</span></div>
+    <textarea class="checker-textarea" id="i_editor"></textarea>
+    <div class="checker-footer">
+      <button class="btn btn-check" onclick="runCodeInEditor('i_editor', 'i_fb_run')">▶ Run code</button>
+      <div class="feedback loading hidden" id="i_fb_run"></div>
     </div>
-    <label style="display:block;font-size:0.88rem;font-weight:600;color:var(--navy);margin-bottom:0.4rem">Run it. How does the output change?</label>
-    <textarea id="i1" placeholder="Describe what changed…" oninput="saveState()"></textarea>
   </div>
 
-  <div class="q-card" id="qcard_i2" style="border-left-color:var(--stage-i)">
-    <label class="q-label"><span class="q-num" style="background:var(--stage-i)">2</span> Your code still has the extra <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print</code> line from Investigation 1. Now add a <strong>second</strong> <code style="background:#ede0ff;padding:0 3px;border-radius:3px">greet()</code> call at the very bottom — so there are two calls on separate lines. Run it. What do you see? Why does the output repeat?</label>
-    <textarea id="i2" placeholder="Describe what the output looks like and why it repeats…" oninput="saveState()"></textarea>
-  </div>
-
-  <div class="q-card" id="qcard_i3" style="border-left-color:var(--stage-i)">
-    <label class="q-label"><span class="q-num" style="background:var(--stage-i)">3</span> Keeping your two <code style="background:#ede0ff;padding:0 3px;border-radius:3px">greet()</code> calls from Investigation 2, change <code style="background:#ede0ff;padding:0 3px;border-radius:3px">"Hello!"</code> to your own name. Run it. What changes?</label>
-    <textarea id="i3" placeholder="Describe what changed…" oninput="saveState()"></textarea>
-  </div>
-
-  <div class="q-card" id="qcard_i4" style="border-left-color:var(--stage-i)">
-    <label class="q-label"><span class="q-num" style="background:var(--stage-i)">4</span> For this experiment, copy the code below back into Thonny exactly as shown, then change the call at the bottom to just <code style="background:#ede0ff;padding:0 3px;border-radius:3px">greet</code> (remove the brackets). Run it — what happens? Why?</label>
-    <div style="background:#1e1e2e;border-radius:8px;padding:0.8rem 1rem;font-family:'Courier New',monospace;font-size:0.85rem;line-height:1.9;color:#cdd6f4;margin:0.6rem 0 0.8rem">
-      <div><span style="color:#cba6f7">def</span> <span style="color:#89b4fa">greet</span>():</div>
-      <div>&nbsp;&nbsp;&nbsp;&nbsp;print(<span style="color:#a6e3a1">"Hello!"</span>)</div>
-      <div>&nbsp;&nbsp;&nbsp;&nbsp;print(<span style="color:#a6e3a1">"Have a great day."</span>)</div>
-      <div>&nbsp;</div>
-      <div><span style="color:#89b4fa">greet</span>()</div>
+  <div id="i_steps">
+    <div class="q-card" id="qcard_i1" style="border-left-color:var(--stage-i)">
+      <label class="q-label"><span class="q-num" style="background:var(--stage-i)">1</span> Add a third <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print</code> line inside <code style="background:#ede0ff;padding:0 3px;border-radius:3px">greet()</code>. Run it. How does the output change?</label>
+      <textarea id="i1" placeholder="Describe what changed…" oninput="saveState()"></textarea>
+      <button class="btn btn-next" style="margin-top:10px" onclick="nextStep('I', 1)">Next Investigation →</button>
     </div>
-    <textarea id="i4" placeholder="What happened and why…" oninput="saveState()"></textarea>
-  </div>
 
-  <div class="q-card" id="qcard_i5" style="border-left-color:var(--stage-i)">
-    <label class="q-label"><span class="q-num" style="background:var(--stage-i)">5</span> Copy the code below into Thonny. Add a second function called <code style="background:#ede0ff;padding:0 3px;border-radius:3px">farewell()</code> and call it after <code style="background:#ede0ff;padding:0 3px;border-radius:3px">greet()</code>. Your finished code should look like this:</label>
-    <div style="background:#1e1e2e;border-radius:8px;padding:0.8rem 1rem;font-family:'Courier New',monospace;font-size:0.85rem;line-height:1.9;color:#cdd6f4;margin:0.6rem 0 0.8rem">
-      <div><span style="color:#cba6f7">def</span> <span style="color:#89b4fa">greet</span>():</div>
-      <div>&nbsp;&nbsp;&nbsp;&nbsp;print(<span style="color:#a6e3a1">"Hello!"</span>)</div>
-      <div>&nbsp;&nbsp;&nbsp;&nbsp;print(<span style="color:#a6e3a1">"Have a great day."</span>)</div>
-      <div>&nbsp;</div>
-      <div><span style="color:#cba6f7">def</span> <span style="color:#89b4fa">farewell</span>():</div>
-      <div>&nbsp;&nbsp;&nbsp;&nbsp;print(<span style="color:#a6e3a1">"Goodbye!"</span>)</div>
-      <div>&nbsp;</div>
-      <div><span style="color:#89b4fa">greet</span>()</div>
-      <div><span style="color:#89b4fa">farewell</span>()</div>
+    <div class="q-card step-hidden" id="qcard_i2" style="border-left-color:var(--stage-i)">
+      <label class="q-label"><span class="q-num" style="background:var(--stage-i)">2</span> Add a <strong>second</strong> <code style="background:#ede0ff;padding:0 3px;border-radius:3px">greet()</code> call at the very bottom. Run it. Why does the output repeat? <strong>(Important: Remove this extra line before moving to the next task.)</strong></label>
+      <textarea id="i2" placeholder="Describe why it repeats…" oninput="saveState()"></textarea>
+      <button class="btn btn-next" style="margin-top:10px" onclick="nextStep('I', 2)">Next Investigation →</button>
     </div>
-    <label style="display:block;font-size:0.88rem;font-weight:600;color:var(--navy);margin-bottom:0.4rem">Run it. What do you see?</label>
-    <textarea id="i5" placeholder="Describe the full output…" oninput="saveState()"></textarea>
-    <div class="hint-box" style="margin-top:0.6rem">Keep this code in Thonny — the Modify stage starts from here.</div>
-  </div>
 
-  <button class="btn btn-next" onclick="tryCompleteInvestigate()" style="margin-top:1rem">
-    ✓ Investigations done — go to Modify →
-  </button>
+    <div class="q-card step-hidden" id="qcard_i3" style="border-left-color:var(--stage-i)">
+      <label class="q-label"><span class="q-num" style="background:var(--stage-i)">3</span> Change <code style="background:#ede0ff;padding:0 3px;border-radius:3px">"Hello!"</code> to your own name. Run it. What changes?</label>
+      <textarea id="i3" placeholder="Describe what changed…" oninput="saveState()"></textarea>
+      <button class="btn btn-next" style="margin-top:10px" onclick="nextStep('I', 3)">Next Investigation →</button>
+    </div>
+
+    <div class="q-card step-hidden" id="qcard_i4" style="border-left-color:var(--stage-i)">
+      <label class="q-label"><span class="q-num" style="background:var(--stage-i)">4</span> Remove the brackets from the call at the bottom (so it's just <code style="background:#ede0ff;padding:0 3px;border-radius:3px">greet</code>). Run it — what happens? Why?</label>
+      <textarea id="i4" placeholder="What happened and why…" oninput="saveState()"></textarea>
+      <button class="btn btn-next" style="margin-top:10px" onclick="nextStep('I', 4)">Next Investigation →</button>
+    </div>
+
+    <div class="q-card step-hidden" id="qcard_i5" style="border-left-color:var(--stage-i)">
+      <label class="q-label"><span class="q-num" style="background:var(--stage-i)">5</span> Add a second function called <code style="background:#ede0ff;padding:0 3px;border-radius:3px">farewell()</code> that prints "Goodbye!" and call it after <code style="background:#ede0ff;padding:0 3px;border-radius:3px">greet()</code>. Run it. What do you see?</label>
+      <textarea id="i5" placeholder="Describe the full output…" oninput="saveState()"></textarea>
+      <button class="btn btn-next" style="margin-top:10px" onclick="tryCompleteInvestigate()">Finish Investigation →</button>
+    </div>
+  </div>
 </section>
 
 <!-- ════════════════════════════════════════════════
@@ -467,85 +437,54 @@ color:  purple
     </div>
   </div>
 
-  <div class="original-code-ref">
-    <div class="ref-label">📋 Your code from Investigate Q5 — continue from here</div>
-    <pre><span class="kw">def</span> <span class="fn">greet</span>():
-    print(<span class="st">"Hello!"</span>)
-    print(<span class="st">"Have a great day."</span>)
-
-<span class="kw">def</span> <span class="fn">farewell</span>():
-    print(<span class="st">"Goodbye!"</span>)
-
-<span class="fn">greet</span>()
-<span class="fn">farewell</span>()</pre>
-  </div>
-
-  <!-- Mod 1 -->
-  <div class="section-label">★ Modification 1 — Rename</div>
-  <div class="modify-task">
-    <span class="stars">★</span>
-    <div class="task-text">Rename <strong>greet</strong> to <strong>hello</strong> — update the definition and the call at the bottom. Leave <strong>farewell()</strong> exactly as it is. The output should stay the same.</div>
-  </div>
   <div class="code-checker">
-    <div class="checker-header"><span class="mac-dot dot-r"></span><span class="mac-dot dot-y"></span><span class="mac-dot dot-g"></span><span class="ch-label">Paste your renamed code here</span></div>
-    <textarea class="checker-textarea" id="m1_code1" placeholder="# Paste your renamed code here…" oninput="saveState()"></textarea>
+    <div class="checker-header"><span class="mac-dot dot-r"></span><span class="mac-dot dot-y"></span><span class="mac-dot dot-g"></span><span class="ch-label">Python Editor</span></div>
+    <textarea class="checker-textarea" id="m1_editor" placeholder="# Your code from Investigate will appear here..." oninput="saveState()"></textarea>
     <div class="checker-footer">
-      <button class="btn btn-check" onclick="checkMod('m1_code1','mod1')">⚡ Check code</button>
-      <div class="feedback hidden" id="fb_m1_code1"></div>
+      <button class="btn btn-check" id="btn_check_m1" onclick="checkMod()">⚡ Check modification</button>
+      <div class="feedback hidden" id="fb_m1"></div>
     </div>
   </div>
 
-  <!-- Mod 2 -->
-  <div class="section-label">★★ Modification 2 — Change the messages</div>
-  <div class="modify-task">
-    <span class="stars">★★</span>
-    <div class="task-text">Change <strong>both</strong> messages inside <code>hello()</code> to your own custom greeting — make it personal! Keep using your renamed function from Modification 1.</div>
-  </div>
-  <div class="code-checker">
-    <div class="checker-header"><span class="mac-dot dot-r"></span><span class="mac-dot dot-y"></span><span class="mac-dot dot-g"></span><span class="ch-label">Paste your modified code here</span></div>
-    <textarea class="checker-textarea" id="m1_code2" placeholder="# Paste your modified code here…" oninput="saveState()"></textarea>
-    <div class="checker-footer">
-      <button class="btn btn-check" onclick="checkMod('m1_code2','mod2')">⚡ Check code</button>
-      <div class="feedback hidden" id="fb_m1_code2"></div>
+  <div id="m1_steps">
+    <div id="m1_step_1">
+      <div class="section-label">★ Modification 1 — Rename</div>
+      <div class="modify-task">
+        <span class="stars">★</span>
+        <div class="task-text">Rename <strong>greet</strong> to <strong>hello</strong> — update the definition and the call at the bottom. Leave <strong>farewell()</strong> exactly as it is.</div>
+      </div>
+    </div>
+
+    <div id="m1_step_2" class="step-hidden">
+      <div class="section-label">★★ Modification 2 — Change the messages</div>
+      <div class="modify-task">
+        <span class="stars">★★</span>
+        <div class="task-text">Change <strong>both</strong> messages inside <code>hello()</code> to your own custom greeting — make it personal!</div>
+      </div>
+    </div>
+
+    <div id="m1_step_3" class="step-hidden">
+      <div class="section-label">★★ Modification 3 — Rename again</div>
+      <div class="modify-task">
+        <span class="stars">★★</span>
+        <div class="task-text">Rename <strong>farewell</strong> to <strong>say_goodbye</strong> — update the definition and the call.</div>
+      </div>
+    </div>
+
+    <div id="m1_step_4" class="step-hidden">
+      <div class="section-label">★★★ Modification 4 — Nested Calls</div>
+      <div class="modify-task">
+        <span class="stars">★★★</span>
+        <div class="task-text">
+          Create a <strong>print_line()</strong> function that prints 10 dashes.<br>
+          Call <code>print_line()</code> inside <code>hello()</code> at the start and end.
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- Mod 3 -->
-  <div class="section-label">★★ Modification 3 — Rename again</div>
-  <div class="modify-task">
-    <span class="stars">★★</span>
-    <div class="task-text">Rename <strong>farewell</strong> to <strong>say_goodbye</strong> — update the definition and the call. The output should stay the same.</div>
-  </div>
-  <div class="code-checker">
-    <div class="checker-header"><span class="mac-dot dot-r"></span><span class="mac-dot dot-y"></span><span class="mac-dot dot-g"></span><span class="ch-label">Paste your renamed code here</span></div>
-    <textarea class="checker-textarea" id="m1_code3" placeholder="# Paste your code here…" oninput="saveState()"></textarea>
-    <div class="checker-footer">
-      <button class="btn btn-check" onclick="checkMod('m1_code3','mod3')">⚡ Check code</button>
-      <div class="feedback hidden" id="fb_m1_code3"></div>
-    </div>
-  </div>
-
-  <!-- Mod 4 -->
-  <div class="section-label">★★★ Modification 4 — A function that calls another function</div>
-  <div class="modify-task">
-    <span class="stars">★★★</span>
-    <div class="task-text">
-      Create a new function called <strong>print_line()</strong> that prints <strong>"----------"</strong> (10 dashes).<br>
-      Then, inside <code>hello()</code>, add a call to <code>print_line()</code> at the very <strong>start</strong> and at the very <strong>end</strong> — so the greeting is surrounded by dashes.<br>
-      <em>This is a function calling another function!</em>
-    </div>
-  </div>
-  <div class="code-checker">
-    <div class="checker-header"><span class="mac-dot dot-r"></span><span class="mac-dot dot-y"></span><span class="mac-dot dot-g"></span><span class="ch-label">Paste your code with print_line() here</span></div>
-    <textarea class="checker-textarea" id="m1_code4" placeholder="# Paste your code here…" oninput="saveState()"></textarea>
-    <div class="checker-footer">
-      <button class="btn btn-check" onclick="checkMod('m1_code4','mod4')">⚡ Check code</button>
-      <div class="feedback hidden" id="fb_m1_code4"></div>
-    </div>
-  </div>
-
-  <button class="btn btn-next" onclick="completeStage('M1')" style="margin-top:1rem">
-    ✓ Modifications done — go to Make →
+  <button class="btn btn-next step-hidden" id="btn_goto_m2" onclick="completeStage('M1')" style="margin-top:1rem">
+    ✓ All modifications done — go to Make →
   </button>
 </section>
 
@@ -581,34 +520,22 @@ color:  purple
     <li><span>6</span> Your program must define and call at least <strong>5 functions in total</strong> (show_menu, 3 animal functions, show_goodbye)</li>
   </ul>
 
-  <div class="section-label">Make — paste your complete program</div>
   <div class="code-checker">
-    <div class="checker-header"><span class="mac-dot dot-r"></span><span class="mac-dot dot-y"></span><span class="mac-dot dot-g"></span><span class="ch-label">Paste your Animal Fact Finder here</span></div>
-    <textarea class="checker-textarea" id="m2_make" style="min-height:320px" placeholder="# Paste your Animal Fact Finder here…" oninput="saveState()"></textarea>
+    <div class="checker-header"><span class="mac-dot dot-r"></span><span class="mac-dot dot-y"></span><span class="mac-dot dot-g"></span><span class="ch-label">Animal Fact Finder</span></div>
+    <textarea class="checker-textarea" id="m2_editor" style="min-height:320px" oninput="saveState()"></textarea>
     <div class="checker-footer">
-      <button class="btn btn-check" onclick="checkMake()">⚡ Check my program</button>
-      <div class="feedback hidden" id="fb_m2_make"></div>
+      <button class="btn btn-check" id="btn_check_m2" onclick="checkMake()">⚡ Check program</button>
+      <div class="feedback hidden" id="fb_m2"></div>
     </div>
   </div>
 
-  <!-- Extension -->
-  <div class="section-label" style="margin-top:2rem">★ Extension</div>
-
-  <div class="modify-task ext">
-    <span class="stars">★</span>
-    <div class="task-text">
-      <strong>Repeating menu</strong> — wrap your program in a <code>while True</code> loop so the menu keeps appearing after each animal is shown.
-      Add an option <strong>4. Quit</strong> to your menu. When the user picks 4, print <code>"Goodbye!"</code> and use <code>break</code> to exit the loop.
-      Your invalid-choice message should still appear for anything that isn't 1, 2, 3 or 4.
-    </div>
-  </div>
-
-  <div class="code-checker" style="margin-top:0.8rem">
-    <div class="checker-header"><span class="mac-dot dot-r"></span><span class="mac-dot dot-y"></span><span class="mac-dot dot-g"></span><span class="ch-label">Paste your extended program here</span></div>
-    <textarea class="checker-textarea" id="m2_ext" style="min-height:360px" placeholder="# Paste your extended program here…" oninput="saveState()"></textarea>
-    <div class="checker-footer">
-      <button class="btn btn-check" onclick="checkExt()">⚡ Mark extension complete</button>
-      <div class="feedback hidden" id="fb_m2_ext"></div>
+  <div id="m2_ext_task" class="step-hidden" style="margin-top:2rem">
+    <div class="section-label">★ Extension — Repeating Menu</div>
+    <div class="modify-task ext">
+      <span class="stars">★</span>
+      <div class="task-text">
+        Wrap your program in a <code>while True</code> loop. Add a <strong>4. Quit</strong> option that uses <code>break</code> to exit.
+      </div>
     </div>
   </div>
 
@@ -635,9 +562,8 @@ import { setupEditors, clearSyntaxHint, setEditorOutput } from '../../../code-ed
 // ═══════════════════════════════════════════════════════
 const STORAGE_KEY = 'primm_l4_functions';
 
-const TEXT_FIELDS  = ['p3','r1','i1','i2','i3','i4','i5',
-                      'm1_code1','m1_code2','m1_code3','m1_code4',
-                      'm2_make','m2_ext'];
+const TEXT_FIELDS  = ['p3','r_editor','r1','i_editor','i1','i2','i3','i4','i5',
+                      'm1_editor','m2_editor'];
 const RADIO_GROUPS = ['p2','p4','p5'];
 
 let state = {};
@@ -646,6 +572,9 @@ try { state = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch(e) 
 let currentStage    = state.currentStage    || 'P';
 let completedStages = state.completedStages || [];
 let passedChecks    = state.passedChecks    || {};
+let stepI = state.stepI || 1;
+let stepM1 = state.stepM1 || 1;
+let stepM2 = state.stepM2 || 1;
 
 const STAGES = ['P','R','I','M1','M2'];
 
@@ -664,6 +593,9 @@ function saveState() {
   state.currentStage    = currentStage;
   state.completedStages = completedStages;
   state.passedChecks    = passedChecks;
+  state.stepI = stepI;
+  state.stepM1 = stepM1;
+  state.stepM2 = stepM2;
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
 }
 
@@ -680,6 +612,25 @@ function restoreInputs() {
       if (r) r.checked = true;
     }
   });
+}
+
+function updateStepVisibility() {
+  for(let i=1; i<=5; i++) {
+    document.getElementById('qcard_i'+i)?.classList.toggle('step-hidden', i !== stepI);
+  }
+  for(let i=1; i<=4; i++) {
+    document.getElementById('m1_step_'+i)?.classList.toggle('step-hidden', i !== stepM1);
+  }
+  const m1Btn = document.getElementById('btn_check_m1');
+  if (m1Btn) m1Btn.textContent = stepM1 === 4 ? '⚡ Check final modification' : '⚡ Check modification ' + stepM1;
+
+  document.getElementById('btn_goto_m2')?.classList.toggle('step-hidden', !passedChecks['m1_code4']);
+  document.getElementById('m2_ext_task')?.classList.toggle('step-hidden', !passedChecks['m2_make']);
+  const m2Btn = document.getElementById('btn_check_m2');
+  if (m2Btn) {
+    m2Btn.textContent = passedChecks['m2_make'] ? '⚡ Mark extension complete' : '⚡ Check program';
+    m2Btn.onclick = passedChecks['m2_make'] ? checkExt : checkMake;
+  }
 }
 
 // ═══════════════════════════════════════════════════════
@@ -710,6 +661,17 @@ function showStage(s, persist = true) {
   document.getElementById('stage-' + s).classList.add('active');
   document.querySelector(`[data-stage="${s}"]`).classList.add('active');
   currentStage = s;
+
+  if (s === 'R' && !document.getElementById('r_editor').value) {
+    document.getElementById('r_editor').value = GREET_CODE;
+  }
+  if (s === 'I' && !document.getElementById('i_editor').value) {
+    document.getElementById('i_editor').value = GREET_CODE;
+  }
+  if (s === 'M1' && !document.getElementById('m1_editor').value) {
+    document.getElementById('m1_editor').value = document.getElementById('i_editor').value || GREET_CODE;
+  }
+  updateStepVisibility();
   if (persist) saveState();
 }
 
@@ -766,27 +728,39 @@ const GREET_CODE = `def greet():
     print("Have a great day.")
 
 greet()`;
+async function runCodeInEditor(editorId, statusElId) {
+  if (window.Classroom?.verifyAuth() === false) return;
 
-async function runInBrowser() {
-  const btn    = document.getElementById('runBtn');
-  const panel  = document.getElementById('browserOutput');
-  const output = document.getElementById('browserOutputText');
+  const editorEl = document.getElementById(editorId);
+  const statusEl = document.getElementById(statusElId);
 
-  btn.disabled = true;
-  btn.textContent = '⏳ Running…';
-  panel.style.display = 'block';
-  output.style.color = '#5eead4';
-  output.textContent = '';
+  if (!editorEl) {
+    console.error(`Editor element with ID ${editorId} not found.`);
+    return;
+  }
 
-  const result = await runPython(GREET_CODE);
+  const code = editorEl.value || '';
 
-  btn.disabled = false;
-  btn.textContent = '▶ Run in browser';
-  if (result.ok) {
-    output.textContent = result.output;
-  } else {
-    output.style.color = '#f38ba8';
-    output.textContent = result.output;
+  if (statusEl) {
+    statusEl.classList.remove('hidden', 'fail', 'pass');
+    statusEl.classList.add('loading');
+    statusEl.textContent = '⏳ Running code…';
+  }
+
+  const result = await runPython(code);
+
+  setEditorOutput(editorEl, result.output, !result.ok);
+  clearSyntaxHint(editorEl);
+
+  if (statusEl) {
+    statusEl.classList.remove('loading');
+    if (result.ok) {
+      statusEl.classList.add('pass');
+      statusEl.textContent = '✅ Code ran successfully.';
+    } else {
+      statusEl.classList.add('fail');
+      statusEl.textContent = '❌ Error: ' + result.output.split('\n').pop(); // Show last line of error
+    }
   }
 }
 
@@ -933,9 +907,46 @@ function tryCompleteRun() {
   }
 
   if (allOk) {
-    completeStage('R');
+    document.getElementById('btn_check_run').classList.add('step-hidden');
+    document.getElementById('btn_goto_i').classList.remove('step-hidden');
+    clearSyntaxHint(document.getElementById('r_editor'));
+    submitScore();
   } else {
     firstError?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+}
+
+function nextStep(stage, n) {
+  if (stage === 'I') {
+    const fieldId = 'i' + n;
+    const val = (document.getElementById(fieldId)?.value || '').trim();
+    const card = document.getElementById('qcard_i' + n);
+    const msg = val.length < 4 ? 'Describe what happened.' : isNonsense(val) ? "That doesn't look like an answer." : null;
+    if (msg) {
+      card.classList.add('error'); fieldHint(card, msg); 
+      return;
+    }
+
+    // Cleanup logic for Step 4: Ensure only one greet() call exists
+    if (n === 3) {
+      let code = document.getElementById('i_editor').value;
+      const lines = code.split('\n');
+      let greetCalls = 0;
+      const cleanedLines = lines.filter(line => {
+        if (line.trim() === 'greet()') {
+          greetCalls++;
+          return greetCalls === 1; // Only keep the first one
+        }
+        return true;
+      });
+      document.getElementById('i_editor').value = cleanedLines.join('\n');
+    }
+
+    card.classList.remove('error'); fieldHint(card, '');
+    stepI = n + 1;
+    updateStepVisibility();
+    saveState(); 
+    window.scrollTo({ top: card.offsetTop + 100, behavior: 'smooth' });
   }
 }
 
@@ -996,16 +1007,19 @@ function tryCompleteInvestigate() {
 //  MODIFY CHECKS
 // ═══════════════════════════════════════════════════════
 
-async function checkMod(fieldId, checkKey) {
+async function checkMod() {
   if (window.Classroom?.verifyAuth() === false) return;
 
-  const raw  = document.getElementById(fieldId)?.value || '';
-  const fbEl = document.getElementById('fb_' + fieldId);
+  const raw  = document.getElementById('m1_editor')?.value || '';
+  const fbEl = document.getElementById('fb_m1');
+  const checkKey = 'mod' + stepM1;
+  const checkId = 'm1_code' + stepM1;
+
   if (!fbEl) return;
   fbEl.classList.remove('hidden');
   if (raw.trim().length < 10) {
     fbEl.className = 'feedback fail';
-    fbEl.textContent = '⚠️ Paste your code from Thonny first.';
+    fbEl.textContent = '⚠️ Write some code first.';
     return;
   }
 
@@ -1019,20 +1033,29 @@ async function checkMod(fieldId, checkKey) {
 
   // Execution check — run the code and verify it produces no errors
   fbEl.className = 'feedback loading';
-  fbEl.textContent = '⏳ Running your code…';
+  fbEl.textContent = '⏳ Checking...';
 
   const run = await runPython(raw);
   if (!run.ok) {
     fbEl.className = 'feedback fail';
-    fbEl.textContent = '❌ Your code has an error: ' + run.output;
+    fbEl.textContent = '❌ Error: ' + run.output;
     return;
   }
 
   fbEl.className = 'feedback pass';
   fbEl.textContent = structural.msg;
-  setEditorOutput(document.getElementById(fieldId), run.output, !run.ok);
-  clearSyntaxHint(document.getElementById(fieldId));
-  passedChecks[fieldId] = true;
+  setEditorOutput(document.getElementById('m1_editor'), run.output, !run.ok);
+  clearSyntaxHint(document.getElementById('m1_editor'));
+  passedChecks[checkId] = true;
+
+  if (stepM1 < 4) {
+    setTimeout(() => {
+      stepM1++;
+      fbEl.classList.add('hidden');
+      updateStepVisibility();
+      saveState();
+    }, 1500);
+  }
   saveState();
   submitScore();
 }
@@ -1043,8 +1066,8 @@ async function checkMod(fieldId, checkKey) {
 async function checkMake() {
   if (window.Classroom?.verifyAuth() === false) return;
 
-  const raw  = document.getElementById('m2_make')?.value || '';
-  const fbEl = document.getElementById('fb_m2_make');
+  const raw  = document.getElementById('m2_editor')?.value || '';
+  const fbEl = document.getElementById('fb_m2');
   fbEl.classList.remove('hidden');
 
   // Structural check first
@@ -1057,7 +1080,7 @@ async function checkMake() {
 
   // Execution check — mock input: pick animal 1, then quit (handles both looping and non-looping programs)
   fbEl.className = 'feedback loading';
-  fbEl.textContent = '⏳ Running your program with test input…';
+  fbEl.textContent = '⏳ Checking...';
 
   const run = await runPython(raw, { inputs: ['1', '4'] });
   if (!run.ok) {
@@ -1073,8 +1096,9 @@ async function checkMake() {
 
   fbEl.className = 'feedback pass';
   fbEl.textContent = structural.msg;
-  setEditorOutput(document.getElementById('m2_make'), run.output, !run.ok);
+  setEditorOutput(document.getElementById('m2_editor'), run.output, !run.ok);
   passedChecks['m2_make'] = true;
+  updateStepVisibility();
   saveState(); submitScore();
   if (!completedStages.includes('M2')) { completedStages.push('M2'); updateNav(); saveState(); }
   showCompletion();
@@ -1083,8 +1107,8 @@ async function checkMake() {
 async function checkExt() {
   if (window.Classroom?.verifyAuth() === false) return;
 
-  const raw  = document.getElementById('m2_ext')?.value || '';
-  const fbEl = document.getElementById('fb_m2_ext');
+  const raw  = document.getElementById('m2_editor')?.value || '';
+  const fbEl = document.getElementById('fb_m2');
   fbEl.classList.remove('hidden');
 
   // Structural check first
@@ -1097,7 +1121,7 @@ async function checkExt() {
 
   // Execution check — mock input '4' (quit) to verify the while+break terminates cleanly
   fbEl.className = 'feedback loading';
-  fbEl.textContent = '⏳ Running your extended program…';
+  fbEl.textContent = '⏳ Checking...';
 
   const run = await runPython(raw, { inputs: ['4'] });
   if (!run.ok) {
@@ -1108,7 +1132,7 @@ async function checkExt() {
 
   fbEl.className = 'feedback pass';
   fbEl.textContent = structural.msg;
-  setEditorOutput(document.getElementById('m2_ext'), run.output, !run.ok);
+  setEditorOutput(document.getElementById('m2_editor'), run.output, !run.ok);
   passedChecks['m2_ext'] = true;
   saveState(); submitScore();
 }
@@ -1126,10 +1150,10 @@ Object.assign(window, {
   showStage, saveState,
   clearPredictError, tryCompletePredict,
   clearRunError, tryCompleteRun,
-  tryCompleteInvestigate,
+  tryCompleteInvestigate, nextStep,
   checkMod, completeStage,
   checkMake, checkExt,
-  runInBrowser,
+  runCodeInEditor, // Expose the new function for editor-based code execution
 });
 
 // ═══════════════════════════════════════════════════════
@@ -1164,15 +1188,15 @@ window.addEventListener('DOMContentLoaded', () => {
 
   ['m1_code1','m1_code2','m1_code3','m1_code4'].forEach(id => {
     if (passedChecks[id]) {
-      const fb = document.getElementById('fb_' + id);
-      if (fb) { fb.classList.remove('hidden'); fb.className = 'feedback pass'; fb.textContent = '✅ Passed.'; }
+      // modification logic now handles step increment automatically
     }
   });
   if (passedChecks['m2_make']) {
-    const fb = document.getElementById('fb_m2_make');
-    if (fb) { fb.classList.remove('hidden'); fb.className = 'feedback pass'; fb.textContent = '✅ Your program has 5+ functions, uses input() and if/elif. Show your teacher!'; }
+    const fb = document.getElementById('fb_m2');
+    if (fb) { fb.classList.remove('hidden'); fb.className = 'feedback pass'; fb.textContent = '✅ Main task complete.'; }
   }
   if (completedStages.includes('M2')) showCompletion();
+  updateStepVisibility();
 });
 </script>
 </body>
