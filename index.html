@@ -58,23 +58,24 @@
       background: #fff; color: #000; padding: 6px 12px; border-radius: 4px;
       font-size: 0.8rem; font-weight: 700; border: none; cursor: pointer;
     }
-    #course-combobox {
+    #course-combobox, #topic-combobox {
       position: relative;
       display: none;
       flex-shrink: 0;
     }
-    #course-search {
+    #course-search, #topic-search {
       background: #0a1520; color: #e8edf2; border: 1px solid #1e3048;
       padding: 5px 26px 5px 8px; border-radius: 4px; font-size: 0.8rem;
       width: 200px; font-family: inherit;
     }
-    #course-search:focus { outline: none; border-color: #00b4b4; }
-    #course-search::placeholder { color: #3a6080; }
-    #course-chevron {
+    #topic-search { width: 220px; }
+    #course-search:focus, #topic-search:focus { outline: none; border-color: #00b4b4; }
+    #course-search::placeholder, #topic-search::placeholder { color: #3a6080; }
+    #course-chevron, #topic-chevron {
       position: absolute; right: 7px; top: 50%; transform: translateY(-50%);
       pointer-events: none; color: #3a6080; font-size: 0.6rem;
     }
-    #course-dropdown {
+    #course-dropdown, #topic-dropdown {
       display: none;
       position: absolute;
       top: calc(100% + 4px);
@@ -88,7 +89,7 @@
       z-index: 100;
       box-shadow: 0 8px 24px rgba(0,0,0,0.5);
     }
-    #course-dropdown.open { display: block; }
+    #course-dropdown.open, #topic-dropdown.open { display: block; }
     .course-option {
       padding: 7px 10px;
       font-size: 0.8rem;
@@ -301,6 +302,11 @@
         <span id="course-chevron">▼</span>
         <div id="course-dropdown"></div>
       </div>
+      <div id="topic-combobox">
+        <input id="topic-search" type="text" placeholder="Select a topic (optional)…" autocomplete="off">
+        <span id="topic-chevron">▼</span>
+        <div id="topic-dropdown"></div>
+      </div>
       <span id="teacher-status" style="font-size: 0.8rem; color: #7a9ab5;"></span>
       <a href="getting-started.html" style="font-size:0.75rem; color:#7a9ab5; text-decoration:none; margin-left:auto;" title="Teacher setup guide">New? Getting Started →</a>
       <div id="hub-proxy-row">
@@ -412,6 +418,10 @@
   let selectedCourseId = '';
   let focusedIndex = -1;
 
+  let allTopics = [];
+  let selectedTopicId = '';
+  let topicFocusedIndex = -1;
+
   async function fetchCourses() {
     const response = await fetch('https://classroom.googleapis.com/v1/courses?courseStates=ACTIVE', {
       headers: { 'Authorization': `Bearer ${accessToken}` }
@@ -419,6 +429,103 @@
     const data = await response.json();
     allCourses = data.courses || [];
     initCombobox();
+    initTopicCombobox();
+  }
+
+  async function fetchTopics(courseId) {
+    const topicCombobox = document.getElementById('topic-combobox');
+    const topicSearch   = document.getElementById('topic-search');
+    topicSearch.value = '';
+    selectedTopicId   = '';
+    allTopics         = [];
+    topicCombobox.style.display = 'none';
+    try {
+      const res  = await fetch(`https://classroom.googleapis.com/v1/courses/${courseId}/topics`, {
+        headers: { 'Authorization': `Bearer ${accessToken}` }
+      });
+      const data = await res.json();
+      allTopics  = (data.topic || []).sort((a, b) => a.name.localeCompare(b.name));
+      if (allTopics.length > 0) {
+        topicCombobox.style.display = 'inline-block';
+        const lastTopicId = localStorage.getItem(`oga_last_topic_${courseId}`);
+        if (lastTopicId) {
+          const lastTopic = allTopics.find(t => t.topicId === lastTopicId);
+          if (lastTopic) {
+            selectedTopicId = lastTopic.topicId;
+            topicSearch.value = lastTopic.name;
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Failed to fetch topics:', e);
+    }
+  }
+
+  function initTopicCombobox() {
+    const searchEl = document.getElementById('topic-search');
+    const dropdown = document.getElementById('topic-dropdown');
+
+    searchEl.addEventListener('focus', () => {
+      renderTopicDropdown(searchEl.value);
+      dropdown.classList.add('open');
+      topicFocusedIndex = -1;
+    });
+    searchEl.addEventListener('input', () => {
+      selectedTopicId = '';
+      renderTopicDropdown(searchEl.value);
+      dropdown.classList.add('open');
+      topicFocusedIndex = -1;
+    });
+    searchEl.addEventListener('keydown', e => {
+      const items = dropdown.querySelectorAll('.course-option');
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        topicFocusedIndex = Math.min(topicFocusedIndex + 1, items.length - 1);
+        updateTopicFocus(items);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        topicFocusedIndex = Math.max(topicFocusedIndex - 1, 0);
+        updateTopicFocus(items);
+      } else if (e.key === 'Enter') {
+        if (topicFocusedIndex >= 0 && items[topicFocusedIndex]) items[topicFocusedIndex].click();
+      } else if (e.key === 'Escape') {
+        dropdown.classList.remove('open');
+      }
+    });
+    document.addEventListener('click', e => {
+      if (!document.getElementById('topic-combobox').contains(e.target)) {
+        dropdown.classList.remove('open');
+        if (!selectedTopicId) searchEl.value = '';
+      }
+    });
+  }
+
+  function renderTopicDropdown(query) {
+    const dropdown = document.getElementById('topic-dropdown');
+    const q = query.trim().toLowerCase();
+    const filtered = q ? allTopics.filter(t => t.name.toLowerCase().includes(q)) : allTopics;
+    if (filtered.length === 0) {
+      dropdown.innerHTML = '<div class="course-no-match">No topics match</div>';
+      return;
+    }
+    dropdown.innerHTML = filtered.map(t => {
+      const sel = t.topicId === selectedTopicId ? ' selected' : '';
+      return `<div class="course-option${sel}" data-id="${t.topicId}" data-name="${t.name.replace(/"/g,'&quot;')}">${t.name}</div>`;
+    }).join('');
+    dropdown.querySelectorAll('.course-option').forEach(el => {
+      el.addEventListener('click', () => {
+        selectedTopicId = el.dataset.id;
+        document.getElementById('topic-search').value = el.dataset.name;
+        dropdown.classList.remove('open');
+        topicFocusedIndex = -1;
+        try { localStorage.setItem(`oga_last_topic_${selectedCourseId}`, selectedTopicId); } catch (_) {}
+      });
+    });
+  }
+
+  function updateTopicFocus(items) {
+    items.forEach((el, i) => el.classList.toggle('focused', i === topicFocusedIndex));
+    if (items[topicFocusedIndex]) items[topicFocusedIndex].scrollIntoView({ block: 'nearest' });
   }
 
   function initCombobox() {
@@ -484,6 +591,7 @@
         document.getElementById('course-search').value = el.dataset.name;
         dropdown.classList.remove('open');
         focusedIndex = -1;
+        fetchTopics(selectedCourseId);
       });
     });
   }
@@ -513,7 +621,8 @@
         materials: [{ link: { url: activityUrl } }],
         workType: "ASSIGNMENT",
         state: "PUBLISHED",
-        maxPoints: 100
+        maxPoints: 100,
+        ...(selectedTopicId ? { topicId: selectedTopicId } : {})
       })
     });
 
