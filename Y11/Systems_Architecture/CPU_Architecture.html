@@ -871,10 +871,12 @@ const tbRows = [
   { stmt:'All three of these are factors that can affect how fast a CPU runs overall.',                      correct:[0,1,2] },
 ];
 let tbEverWrong = false;
+let tbDisplayRows = [];
 
 function buildTickBox() {
+  tbDisplayRows = [...tbRows].sort(() => Math.random() - .5);
   const tbody = document.getElementById('tbBody'); tbody.innerHTML = '';
-  tbRows.forEach((row, ri) => {
+  tbDisplayRows.forEach((row, ri) => {
     const tr = document.createElement('tr'); tr.id = 'tb-' + ri;
     const tdS = document.createElement('td'); tdS.textContent = row.stmt;
     tr.appendChild(tdS);
@@ -890,7 +892,7 @@ function buildTickBox() {
 function checkTickBox() {
   if (!window.Classroom?.verifyAuth()) return;
   let correct = 0, anyWrong = false;
-  tbRows.forEach((row, ri) => {
+  tbDisplayRows.forEach((row, ri) => {
     const tr = document.getElementById('tb-' + ri);
     tr.classList.remove('tb-ok','tb-err');
     let rowOk = true;
@@ -1296,7 +1298,7 @@ function resetMSQ(qi) {
   });
   const fb = document.getElementById('msFb-' + qi);
   fb.classList.remove('show','fb-ok','fb-err'); fb.innerHTML = '';
-  msDone[qi] = false; msPerf[qi] = false; msEvrWrng[qi] = false;
+  msDone[qi] = false; msPerf[qi] = false;
   if (!msDone.every(Boolean)) clearTabState(5);
 }
 
@@ -1482,14 +1484,14 @@ function checkEmbComplete() {
 }
 
 function resetClassify() {
-  classifyDone=false; classifyPerfect=false; classifyEverWrong=false;
+  classifyDone=false; classifyPerfect=false;
   buildClassify();
   document.getElementById('classifyScore').style.display    = 'none';
   document.getElementById('classifyFeedback').style.display = 'none';
   if (!(classifyDone && embTfDone)) clearTabState(4);
 }
 function resetEmbTF() {
-  embTfDone=false; embTfPerfect=false; embTfEverWrong=false;
+  embTfDone=false; embTfPerfect=false;
   buildEmbTF();
   document.getElementById('embTfScore').style.display    = 'none';
   document.getElementById('embTfFeedback').style.display = 'none';
