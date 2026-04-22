@@ -315,7 +315,11 @@
         { headers: { Authorization: `Bearer ${token}` } }
       );
       const depData = await depRes.json();
-      const webAppDep = (depData.deployments || []).find(d =>
+      // Sort by updateTime descending to ensure we get the latest deployment
+      const deployments = (depData.deployments || []).sort((a, b) => 
+        new Date(b.updateTime) - new Date(a.updateTime)
+      );
+      const webAppDep = deployments.find(d =>
         (d.entryPoints || []).some(ep => ep.entryPointType === 'WEB_APP')
       );
       const ep = webAppDep?.entryPoints?.find(ep => ep.entryPointType === 'WEB_APP');
