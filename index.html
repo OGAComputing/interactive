@@ -803,15 +803,19 @@
         { headers: { Authorization: `Bearer ${accessToken}` } }
       );
       const depData = await depRes.json();
-      // Sort by updateTime descending to ensure we get the latest deployment
-      const deployments = (depData.deployments || []).sort((a, b) => 
+      // Sort by updateTime descending so the most recently published version wins.
+      // Skip HEAD deployment — its URL ends in /dev and requires editor-level auth.
+      // NOTE: classroom.js has a duplicate of this logic in searchDriveForProxy() — keep in sync.
+      const deployments = (depData.deployments || []).sort((a, b) =>
         new Date(b.updateTime) - new Date(a.updateTime)
       );
-      const webAppDep = deployments.find(d =>
-        (d.entryPoints || []).some(ep => ep.entryPointType === 'WEB_APP')
-      );
-      const ep  = webAppDep?.entryPoints?.find(ep => ep.entryPointType === 'WEB_APP');
-      const url = ep?.webApp?.url;
+      let url = null;
+      for (const dep of deployments) {
+        const ep = (dep.entryPoints || []).find(ep =>
+          ep.entryPointType === 'WEB_APP' && ep.webApp?.url?.endsWith('/exec')
+        );
+        if (ep) { url = ep.webApp.url; break; }
+      }
       if (url) {
         try { localStorage.setItem('oga_proxy_url', url); } catch (_) {}
         document.getElementById('course-combobox').style.display = 'inline-block';

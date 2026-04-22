@@ -315,15 +315,20 @@
         { headers: { Authorization: `Bearer ${token}` } }
       );
       const depData = await depRes.json();
-      // Sort by updateTime descending to ensure we get the latest deployment
-      const deployments = (depData.deployments || []).sort((a, b) => 
+      // Sort by updateTime descending so the most recently deployed version wins.
+      // Skip the HEAD deployment — its URL ends in /dev and requires editor-level
+      // Google auth.  Students can only call published /exec deployments.
+      // NOTE: index.html has a duplicate of this logic in findProxyInDrive() — keep in sync.
+      const deployments = (depData.deployments || []).sort((a, b) =>
         new Date(b.updateTime) - new Date(a.updateTime)
       );
-      const webAppDep = deployments.find(d =>
-        (d.entryPoints || []).some(ep => ep.entryPointType === 'WEB_APP')
-      );
-      const ep = webAppDep?.entryPoints?.find(ep => ep.entryPointType === 'WEB_APP');
-      return ep?.webApp?.url || null;
+      for (const dep of deployments) {
+        const ep = (dep.entryPoints || []).find(ep =>
+          ep.entryPointType === 'WEB_APP' && ep.webApp?.url?.endsWith('/exec')
+        );
+        if (ep) return ep.webApp.url;
+      }
+      return null;
     } catch (e) {
       console.warn('Classroom: Drive proxy search failed', e);
       return null;
