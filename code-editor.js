@@ -74,12 +74,39 @@ function _injectStyles() {
     :where(.syntax-hint.visible) {
       display: block;
     }
+    :where(.output-panel) {
+      flex: 1;
+      background: #070710;
+      color: #5eead4;
+      font-family: 'Courier New', monospace;
+      font-size: .82rem;
+      padding: .8rem;
+      border-left: 1px solid #2d1060;
+      display: flex;
+      flex-direction: column;
+    }
+    :where(.output-panel.error) {
+      color: #f38ba8;
+    }
+    :where(.output-header) {
+      font-size: 0.65rem;
+      color: #585b70;
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+      user-select: none;
+      letter-spacing: 0.05em;
+    }
+    :where(.output-content) {
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
   `;
   document.head.appendChild(s);
 }
 
 // ── Module-level state ────────────────────────────────────────────────────────
 const _hintMap = new Map(); // textarea → .syntax-hint element
+const _outputMap = new Map(); // textarea → .output-panel element
 const _timers  = new Map(); // textarea → debounce timer id
 
 // ── Private helpers ───────────────────────────────────────────────────────────
@@ -124,6 +151,20 @@ export function clearSyntaxHint(ta) {
 }
 
 /**
+ * Update the output panel for a specific textarea.
+ * @param {HTMLTextAreaElement} ta - The source textarea
+ * @param {string} text - The text to display
+ * @param {boolean} isError - Whether to style as an error
+ */
+export function setEditorOutput(ta, text, isError = false) {
+  const panel = _outputMap.get(ta);
+  if (!panel) return;
+  panel.classList.toggle('error', isError);
+  const content = panel.querySelector('.output-content');
+  if (content) content.textContent = text || '';
+}
+
+/**
  * Upgrade every textarea matching `selector` into a code editor:
  *   - wraps it in a flex row with a line-number gutter
  *   - injects a syntax-hint strip below the gutter
@@ -145,6 +186,13 @@ export function setupEditors(selector = '.checker-textarea') {
     nums.className = 'line-nums';
     nums.setAttribute('aria-hidden', 'true');
     wrap.insertBefore(nums, ta);
+
+    // Output panel sits on the right
+    const output = document.createElement('div');
+    output.className = 'output-panel';
+    output.innerHTML = '<div class="output-header">Console Output</div><div class="output-content"></div>';
+    wrap.appendChild(output);
+    _outputMap.set(ta, output);
 
     // Hint sits after the wrap so it spans the full editor width
     const hint = document.createElement('div');
