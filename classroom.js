@@ -1122,8 +1122,21 @@
     if (!isClassroomContext) return;
     injectBanner();
     // Pick up token from redirect, or restore a persisted one (refresh / different activity).
-    if (!checkPendingOAuthToken()) {
-      checkStoredToken();
+    if (!checkPendingOAuthToken() && !checkStoredToken()) {
+      // No token available. Check if a previous silent-auth attempt already failed
+      // (set by oauth-callback.html when prompt=none returns an error).
+      let silentFailed = false;
+      try { silentFailed = !!sessionStorage.getItem('oga_silent_failed'); } catch (_) {}
+      if (silentFailed) {
+        // Silent auth failed — clear flag and leave the sign-in button visible.
+        try { sessionStorage.removeItem('oga_silent_failed'); } catch (_) {}
+      } else {
+        // Try silent sign-in using the browser's existing Google session.
+        // Works automatically if the student is already signed into Chrome and has
+        // previously granted the required scopes (common in a managed school environment).
+        // If it fails, oauth-callback.html sets oga_silent_failed and bounces back here.
+        signInViaRedirect({ prompt: 'none' });
+      }
     }
   }
 

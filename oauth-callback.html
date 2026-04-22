@@ -34,8 +34,16 @@
   try { returnUrl = sessionStorage.getItem('oga_return_url'); } catch (_) {}
 
   if (error) {
-    document.getElementById('status').textContent =
-      'Sign-in failed: ' + error + '. Please close this tab and try again.';
+    // If we have a return URL, this was a silent-auth attempt (prompt=none).
+    // Navigate back silently so the activity page can show the sign-in button.
+    if (returnUrl) {
+      try { sessionStorage.setItem('oga_silent_failed', '1'); } catch (_) {}
+      try { sessionStorage.removeItem('oga_return_url'); } catch (_) {}
+      location.replace(returnUrl);
+    } else {
+      document.getElementById('status').textContent =
+        'Sign-in failed: ' + error + '. Please close this tab and try again.';
+    }
     return;
   }
 
