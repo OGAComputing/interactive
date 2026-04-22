@@ -31,6 +31,10 @@ export const MOD_CHECKS = {
       return { pass: false, msg: '❌ Make sure your function is still defined with def.' };
     if (!has(c, 'print('))
       return { pass: false, msg: '❌ Your function should still have print statements inside.' };
+    if (/["']Hello!["']/.test(raw))
+      return { pass: false, msg: '❌ Change the first message — "Hello!" is still the original. Make it personal!' };
+    if (/["']Have a great day\.["']/.test(raw))
+      return { pass: false, msg: '❌ Change the second message — "Have a great day." is still the original. Make it personal!' };
     return { pass: true, msg: '✅ Custom messages in place — nice personalised greeting!' };
   },
   mod3(raw) {

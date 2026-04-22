@@ -178,7 +178,8 @@ color:  purple
   .checker-header .mac-dot { width: 10px; height: 10px; border-radius: 50%; }
   .dot-r { background: #f38ba8; } .dot-y { background: #f9e2af; } .dot-g { background: #a6e3a1; }
   .checker-header .ch-label { margin-left: auto; font-weight: 700; color: #cba6f7; }
-  .checker-textarea { width: 100%; background: #0d0d1a; color: #cdd6f4; font-family: 'Courier New',monospace; font-size: 0.88rem; line-height: 1.7; padding: 0.8rem 1rem; border: none; outline: none; resize: vertical; min-height: 130px; }
+  /* .editor-wrap / .line-nums / .syntax-hint injected by code-editor.js */
+  .checker-textarea { background: #0d0d1a; color: #cdd6f4; font-family: 'Courier New',monospace; font-size: 0.88rem; line-height: 1.7; padding: 0.8rem 1rem; border: none; outline: none; min-height: 200px; }
   .checker-footer { padding: 0.6rem 1rem; display: flex; align-items: center; gap: 0.8rem; background: #0d0d1a; border-top: 1px solid #2d1060; flex-wrap: wrap; }
 
   /* ── BUTTONS ── */
@@ -583,7 +584,7 @@ color:  purple
   <div class="section-label">Make — paste your complete program</div>
   <div class="code-checker">
     <div class="checker-header"><span class="mac-dot dot-r"></span><span class="mac-dot dot-y"></span><span class="mac-dot dot-g"></span><span class="ch-label">Paste your Animal Fact Finder here</span></div>
-    <textarea class="checker-textarea" id="m2_make" rows="14" placeholder="# Paste your Animal Fact Finder here…" oninput="saveState()"></textarea>
+    <textarea class="checker-textarea" id="m2_make" style="min-height:320px" placeholder="# Paste your Animal Fact Finder here…" oninput="saveState()"></textarea>
     <div class="checker-footer">
       <button class="btn btn-check" onclick="checkMake()">⚡ Check my program</button>
       <div class="feedback hidden" id="fb_m2_make"></div>
@@ -604,7 +605,7 @@ color:  purple
 
   <div class="code-checker" style="margin-top:0.8rem">
     <div class="checker-header"><span class="mac-dot dot-r"></span><span class="mac-dot dot-y"></span><span class="mac-dot dot-g"></span><span class="ch-label">Paste your extended program here</span></div>
-    <textarea class="checker-textarea" id="m2_ext" rows="16" placeholder="# Paste your extended program here…" oninput="saveState()"></textarea>
+    <textarea class="checker-textarea" id="m2_ext" style="min-height:360px" placeholder="# Paste your extended program here…" oninput="saveState()"></textarea>
     <div class="checker-footer">
       <button class="btn btn-check" onclick="checkExt()">⚡ Mark extension complete</button>
       <div class="feedback hidden" id="fb_m2_ext"></div>
@@ -627,6 +628,7 @@ color:  purple
 <script type="module">
 import { normalise, has, MOD_CHECKS, validateMake, validateExt } from './checkers.js';
 import { runPython, preload } from '../../../pyodide-runner.js';
+import { setupEditors, clearSyntaxHint } from '../../../code-editor.js';
 
 // ═══════════════════════════════════════════════════════
 //  STATE
@@ -1028,6 +1030,7 @@ async function checkMod(fieldId, checkKey) {
 
   fbEl.className = 'feedback pass';
   fbEl.textContent = structural.msg;
+  clearSyntaxHint(document.getElementById(fieldId));
   passedChecks[fieldId] = true;
   saveState();
   submitScore();
@@ -1134,6 +1137,8 @@ window.addEventListener('DOMContentLoaded', () => {
   showStage(currentStage, false);
   updateNav();
   updateProgress();
+
+  setupEditors(); // line numbers, auto-resize, Tab key, live syntax hints
 
   // Start loading Pyodide in the background immediately
   setPyStatus('loading');
