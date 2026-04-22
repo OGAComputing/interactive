@@ -229,11 +229,13 @@ h2 { font-size:26px; font-weight:700; text-align:center; color:var(--white); mar
 }
 .ms-student {
   background:#0a2a18; border:1.5px solid var(--green); border-radius:8px;
-  padding:16px 20px; margin-bottom:16px; font-size:.93rem; line-height:1.75; color:var(--green-l);
+  padding:16px 20px; margin-bottom:16px; font-size:.97rem; line-height:1.85; color:var(--green-l);
+  font-family:Georgia,'Times New Roman',serif; font-style:italic;
 }
 .ms-student::before {
   content:'STUDENT RESPONSE'; display:block; font-family:'Space Mono',monospace;
   font-size:.72rem; letter-spacing:2px; color:var(--green); margin-bottom:8px; opacity:.8;
+  font-style:normal;
 }
 .ms-pts-lbl {
   display:block; font-family:'Space Mono',monospace; font-size:.72rem;
@@ -332,8 +334,8 @@ h2 { font-size:26px; font-weight:700; text-align:center; color:var(--white); mar
   <button class="tab-btn" onclick="showTab('match',this)">🔗 2 — Match Up<span class="tab-tick" id="tick-1"></span></button>
   <button class="tab-btn" onclick="showTab('tickbox',this)">☑️ 3 — Tick-Box<span class="tab-tick" id="tick-2"></span></button>
   <button class="tab-btn" onclick="showTab('perf',this)">⚡ 4 — Performance<span class="tab-tick" id="tick-3"></span></button>
-  <button class="tab-btn" onclick="showTab('marks',this)">📋 5 — Mark Scheme<span class="tab-tick" id="tick-4"></span></button>
-  <button class="tab-btn" onclick="showTab('embedded',this)">💡 6 — Embedded<span class="tab-tick" id="tick-5"></span></button>
+  <button class="tab-btn" onclick="showTab('embedded',this)">💡 5 — Embedded<span class="tab-tick" id="tick-4"></span></button>
+  <button class="tab-btn" onclick="showTab('marks',this)">📋 6 — Mark Scheme<span class="tab-tick" id="tick-5"></span></button>
 </div>
 
 <!-- ═══════════════════════ TAB 1 — GAP FILL ═══════════════════════ -->
@@ -440,22 +442,7 @@ h2 { font-size:26px; font-weight:700; text-align:center; color:var(--white); mar
   </div>
 </div>
 
-<!-- ═══════════════════════ TAB 5 — MARK SCHEME ═══════════════════════ -->
-<div id="marks" class="tab-panel">
-  <div class="card">
-    <h3>Apply the Mark Scheme</h3>
-    <p style="font-size:.93rem;color:var(--grey-l);margin-bottom:24px;line-height:1.65;">
-      Read each student response carefully. Decide which mark scheme points the response has
-      earned and tick those boxes. Think critically — some responses contain
-      <strong style="color:var(--red-l)">incorrect information</strong>, and some simply
-      <strong style="color:var(--amber-l)">miss key points</strong> without being wrong.
-      Submit each question independently.
-    </p>
-    <div id="msContainer"></div>
-  </div>
-</div>
-
-<!-- ═══════════════════════ TAB 6 — EMBEDDED ═══════════════════════ -->
+<!-- ═══════════════════════ TAB 5 — EMBEDDED ═══════════════════════ -->
 <div id="embedded" class="tab-panel">
   <div class="card">
     <h3>Classify — Embedded System or General-Purpose Computer?</h3>
@@ -503,6 +490,21 @@ h2 { font-size:26px; font-weight:700; text-align:center; color:var(--white); mar
     </div>
     <div class="score-badge" id="embTfScore"></div>
     <div class="feedback-row" id="embTfFeedback"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ TAB 6 — MARK SCHEME ═══════════════════════ -->
+<div id="marks" class="tab-panel">
+  <div class="card">
+    <h3>Apply the Mark Scheme</h3>
+    <p style="font-size:.93rem;color:var(--grey-l);margin-bottom:24px;line-height:1.65;">
+      Read each student response carefully. Decide which mark scheme points the response has
+      earned and tick those boxes. Think critically — some responses contain
+      <strong style="color:var(--red-l)">incorrect information</strong>, and some simply
+      <strong style="color:var(--amber-l)">miss key points</strong> without being wrong.
+      Submit each question independently.
+    </p>
+    <div id="msContainer"></div>
   </div>
 </div>
 
@@ -1212,9 +1214,9 @@ const allMSData = [
     student:'An embedded system is a computer that is built into a larger device. They are designed to be very reliable and to keep running for a long time without being switched off.',
     points:[
       { code:'MH1', text:'Designed to perform one specific / dedicated task or function [1]', correct:false,
-        explain:'<strong>MH1 — NOT awarded.</strong> The student says embedded systems are "built into a larger device." While true, this is not a mark scheme point here — the question asks for <em>features</em>, and the key feature being tested is that they perform one <em>dedicated</em> task. The student simply does not mention this, so the mark cannot be awarded.' },
-      { code:'MH2', text:'Often designed to run continuously / without human supervision [1]', correct:true,
-        explain:'<strong>MH2 — Awarded.</strong> "Designed to be very reliable and to keep running for a long time without being switched off" correctly describes the continuous, unsupervised operation of embedded systems.' },
+        explain:'<strong>MH1 — NOT awarded.</strong> The student never mentions that an embedded system performs a <em>specific, dedicated function</em>. This is a core OCR mark scheme point. Saying it "keeps running for a long time" is not a mark scheme feature — continuous operation is not part of the OCR J277 definition of an embedded system.' },
+      { code:'MH2', text:'Built into a larger device / product [1]', correct:true,
+        explain:'<strong>MH2 — Awarded.</strong> "Built into a larger device" directly matches this mark scheme point. The OCR definition of an embedded system is (1) built into a larger device and (2) designed to perform one dedicated function. The student earns this point but misses MH1 by not mentioning the dedicated function.' },
     ],
   },
 ];
@@ -1283,7 +1285,7 @@ function checkMSQ(qi) {
   html += '</div>';
   fbEl.innerHTML = html; fbEl.classList.add(correct === total ? 'fb-ok' : 'fb-err', 'show');
   msDone[qi] = true; msPerf[qi] = correct === total && !msEvrWrng[qi];
-  if (msDone.every(Boolean)) markDone(4, msPerf.every(Boolean));
+  if (msDone.every(Boolean)) markDone(5, msPerf.every(Boolean));
 }
 
 function resetMSQ(qi) {
@@ -1295,7 +1297,7 @@ function resetMSQ(qi) {
   const fb = document.getElementById('msFb-' + qi);
   fb.classList.remove('show','fb-ok','fb-err'); fb.innerHTML = '';
   msDone[qi] = false; msPerf[qi] = false; msEvrWrng[qi] = false;
-  if (!msDone.every(Boolean)) clearTabState(4);
+  if (!msDone.every(Boolean)) clearTabState(5);
 }
 
 buildMS();
@@ -1326,7 +1328,7 @@ const embTfStatements = [
   { text:'Embedded systems generally have greater processing power than a modern desktop computer.',
     ans:false, wrongWord:'greater',
     fixOpts:['greater','less','equal','variable'], fixCorrect:1 },
-  { text:'Embedded systems are often designed to run continuously without requiring human supervision.', ans:true },
+  { text:'An embedded system is built into a larger device or product.',                              ans:true },
 ];
 
 let egDragging = null;
@@ -1476,7 +1478,7 @@ function checkEmbTF() {
 }
 
 function checkEmbComplete() {
-  if (classifyDone && embTfDone) markDone(5, classifyPerfect && embTfPerfect);
+  if (classifyDone && embTfDone) markDone(4, classifyPerfect && embTfPerfect);
 }
 
 function resetClassify() {
@@ -1484,14 +1486,14 @@ function resetClassify() {
   buildClassify();
   document.getElementById('classifyScore').style.display    = 'none';
   document.getElementById('classifyFeedback').style.display = 'none';
-  if (!(classifyDone && embTfDone)) clearTabState(5);
+  if (!(classifyDone && embTfDone)) clearTabState(4);
 }
 function resetEmbTF() {
   embTfDone=false; embTfPerfect=false; embTfEverWrong=false;
   buildEmbTF();
   document.getElementById('embTfScore').style.display    = 'none';
   document.getElementById('embTfFeedback').style.display = 'none';
-  if (!(classifyDone && embTfDone)) clearTabState(5);
+  if (!(classifyDone && embTfDone)) clearTabState(4);
 }
 buildClassify(); buildEmbTF();
 </script>
