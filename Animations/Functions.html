@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- ACTIVITY
+title:  Functions — Step by Step
+lesson: Functions
+type:   Explanation
+stars:  0
+desc:   Animated walkthrough of how functions are defined and called in Python
+color:  blue
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Functions — Step by Step</title>
+<style>
+  :root {
+    --navy:    #1a1f3a;
+    --panel:   #12192e;
+    --code-bg: #0d1117;
+    --amber:   #f59e0b;
+    --blue:    #60a5fa;
+    --purple:  #c084fc;
+    --green:   #4ade80;
+    --text:    #e2e8f0;
+    --muted:   #94a3b8;
+    --border:  rgba(255,255,255,0.08);
+    --def-col: #c084fc;
+    --body-col:#60a5fa;
+    --out-col: #4ade80;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--navy);
+    color: var(--text);
+    font-family: 'Trebuchet MS', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 16px 48px;
+    gap: 14px;
+  }
+
+  header { text-align: center; max-width: 940px; width: 100%; }
+  .label {
+    font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--def-col); font-weight: 700; margin-bottom: 5px;
+  }
+  h1 { font-size: 1.5rem; font-weight: 700; color: #fff; }
+  .subtitle { color: var(--muted); font-size: 0.83rem; margin-top: 3px; }
+
+  /* ── Legend ── */
+  .legend {
+    display: flex; gap: 16px; flex-wrap: wrap;
+    max-width: 940px; width: 100%;
+  }
+  .leg { display: flex; align-items: center; gap: 6px; font-size: 0.76rem; color: var(--muted); }
+  .swatch { width: 11px; height: 11px; border-radius: 3px; flex-shrink: 0; }
+
+  /* ── Main layout ── */
+  .stage {
+    display: grid;
+    grid-template-columns: 1fr 180px;
+    gap: 14px;
+    max-width: 940px;
+    width: 100%;
+    align-items: start;
+  }
+
+  /* ── Code panel ── */
+  .code-panel {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .panel-title {
+    padding: 7px 14px;
+    font-size: 0.69rem; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+    background: rgba(255,255,255,0.03);
+  }
+  .code-body { padding: 10px 6px; }
+
+  /* ── Lines ── */
+  .line {
+    display: flex;
+    align-items: center;
+    border-radius: 6px;
+    padding: 0 4px;
+    border: 2px solid transparent;
+    transition: background 0.25s, border-color 0.25s;
+    min-height: 34px;
+  }
+  .line-gap { height: 7px; }
+
+  .arrow-col {
+    width: 18px; flex-shrink: 0;
+    color: var(--amber); font-size: 0.85rem;
+    opacity: 0; transition: opacity 0.2s;
+    text-align: center; margin-right: 2px;
+  }
+  .arrow-col.on { opacity: 1; }
+
+  .line-num {
+    color: #4a5568; font-size: 0.74rem;
+    min-width: 16px; text-align: right;
+    font-family: 'Courier New', monospace;
+    margin-right: 10px; flex-shrink: 0;
+  }
+
+  .line-code {
+    font-family: 'Courier New', monospace;
+    font-size: 0.91rem;
+    white-space: pre;
+    flex-shrink: 0;
+  }
+
+  /* Inline annotation */
+  .ann {
+    font-family: 'Trebuchet MS', sans-serif;
+    font-size: 0.74rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 20px;
+    margin-left: 10px;
+    white-space: nowrap;
+    opacity: 0;
+    transform: translateX(-5px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    flex-shrink: 0;
+  }
+  .ann.on { opacity: 1; transform: translateX(0); }
+
+  /* Highlight states */
+  .line.hl-def  { background: rgba(192,132,252,0.12); border-color: rgba(192,132,252,0.38); }
+  .line.hl-body { background: rgba(96,165,250,0.12);  border-color: rgba(96,165,250,0.35);  }
+  .line.hl-call { background: rgba(245,158,11,0.13);  border-color: rgba(245,158,11,0.42);  }
+  .line.hl-skip { background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.07); }
+  .line.hl-done { background: rgba(74,222,128,0.07);  border-color: rgba(74,222,128,0.2);   }
+
+  /* Annotation pill colour per highlight */
+  .line.hl-def  .ann { background: rgba(192,132,252,0.22); color: var(--def-col);  }
+  .line.hl-body .ann { background: rgba(96,165,250,0.2);   color: var(--body-col); }
+  .line.hl-call .ann { background: rgba(245,158,11,0.22);  color: var(--amber);    }
+  .line.hl-skip .ann { background: rgba(255,255,255,0.08); color: var(--muted);    }
+  .line.hl-done .ann { background: rgba(74,222,128,0.18);  color: var(--out-col);  }
+
+  /* ── Output panel ── */
+  .output-panel {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+  }
+  .output-body {
+    padding: 10px 14px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+    line-height: 1.75;
+    color: var(--out-col);
+    min-height: 130px;
+  }
+  .out-line {
+    opacity: 0; transform: translateX(-5px);
+    transition: opacity 0.3s, transform 0.3s;
+  }
+  .out-line.on { opacity: 1; transform: translateX(0); }
+  .cursor {
+    display: inline-block; width: 8px; height: 1em;
+    background: var(--out-col); opacity: 0.7;
+    animation: blink 1s step-end infinite;
+    vertical-align: text-bottom; margin-left: 1px;
+  }
+  @keyframes blink { 0%,100%{opacity:.7} 50%{opacity:0} }
+
+  /* ── Controls ── */
+  .controls {
+    display: flex; gap: 10px; align-items: center;
+    max-width: 940px; width: 100%;
+  }
+  .btn {
+    padding: 10px 22px; border-radius: 8px; border: none;
+    font-family: 'Trebuchet MS', sans-serif; font-size: 0.88rem;
+    font-weight: 700; cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn:disabled { opacity: 0.3; cursor: not-allowed; }
+  .btn-next  { background: var(--amber); color: #1a1203; }
+  .btn-prev  { background: rgba(255,255,255,0.09); color: var(--text); border: 1px solid var(--border); }
+  .btn-reset { background: rgba(255,255,255,0.06); color: var(--muted); border: 1px solid var(--border); margin-left: auto; }
+
+  /* ── Progress ── */
+  .progress-wrap {
+    max-width: 940px; width: 100%;
+    height: 4px; background: rgba(255,255,255,0.07); border-radius: 2px; overflow: hidden;
+  }
+  .progress-fill { height: 100%; background: var(--amber); border-radius: 2px; transition: width 0.35s ease; }
+  .step-label { font-size: 0.75rem; color: var(--muted); max-width: 940px; width: 100%; text-align: right; margin-top: -2px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="label">Python · Functions</div>
+  <h1>How Functions Work — Step by Step</h1>
+  <p class="subtitle">Press <strong style="color:var(--amber)">Next Step</strong> to follow Python through the program</p>
+</header>
+
+<div class="legend">
+  <div class="leg"><div class="swatch" style="background:rgba(192,132,252,0.45);border:1px solid var(--def-col)"></div>Definition — stored, not run yet</div>
+  <div class="leg"><div class="swatch" style="background:rgba(96,165,250,0.4);border:1px solid var(--blue)"></div>Body — runs when called</div>
+  <div class="leg"><div class="swatch" style="background:rgba(245,158,11,0.4);border:1px solid var(--amber)"></div>Call</div>
+  <div class="leg"><div class="swatch" style="background:rgba(74,222,128,0.25);border:1px solid var(--out-col)"></div>Complete</div>
+</div>
+
+<div class="stage">
+
+  <div class="code-panel">
+    <div class="panel-title">program.py</div>
+    <div class="code-body">
+
+      <div class="line" id="L1">
+        <span class="arrow-col" id="A1">▶</span>
+        <span class="line-num">1</span>
+        <span class="line-code"><span style="color:var(--def-col);font-weight:bold">def</span> <span style="color:var(--blue)">say_hello</span>():</span>
+        <span class="ann" id="AN1"></span>
+      </div>
+      <div class="line" id="L2">
+        <span class="arrow-col" id="A2">▶</span>
+        <span class="line-num">2</span>
+        <span class="line-code">    <span style="color:var(--purple)">print</span>(<span style="color:#86efac">"Hello!"</span>)</span>
+        <span class="ann" id="AN2"></span>
+      </div>
+      <div class="line" id="L3">
+        <span class="arrow-col" id="A3">▶</span>
+        <span class="line-num">3</span>
+        <span class="line-code">    <span style="color:var(--purple)">print</span>(<span style="color:#86efac">"Nice to meet you!"</span>)</span>
+        <span class="ann" id="AN3"></span>
+      </div>
+
+      <div class="line-gap"></div>
+
+      <div class="line" id="L4">
+        <span class="arrow-col" id="A4">▶</span>
+        <span class="line-num">4</span>
+        <span class="line-code"><span style="color:var(--def-col);font-weight:bold">def</span> <span style="color:var(--blue)">say_goodbye</span>():</span>
+        <span class="ann" id="AN4"></span>
+      </div>
+      <div class="line" id="L5">
+        <span class="arrow-col" id="A5">▶</span>
+        <span class="line-num">5</span>
+        <span class="line-code">    <span style="color:var(--purple)">print</span>(<span style="color:#86efac">"Goodbye!"</span>)</span>
+        <span class="ann" id="AN5"></span>
+      </div>
+
+      <div class="line-gap"></div>
+
+      <div class="line" id="L6">
+        <span class="arrow-col" id="A6">▶</span>
+        <span class="line-num">6</span>
+        <span class="line-code"><span style="color:var(--blue)">say_hello</span>()</span>
+        <span class="ann" id="AN6"></span>
+      </div>
+      <div class="line" id="L7">
+        <span class="arrow-col" id="A7">▶</span>
+        <span class="line-num">7</span>
+        <span class="line-code"><span style="color:var(--blue)">say_hello</span>()</span>
+        <span class="ann" id="AN7"></span>
+      </div>
+      <div class="line" id="L8">
+        <span class="arrow-col" id="A8">▶</span>
+        <span class="line-num">8</span>
+        <span class="line-code"><span style="color:var(--blue)">say_goodbye</span>()</span>
+        <span class="ann" id="AN8"></span>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Output panel -->
+  <div class="output-panel">
+    <div class="panel-title">Output</div>
+    <div class="output-body">
+      <div class="out-line" id="O1">Hello!</div>
+      <div class="out-line" id="O2">Nice to meet you!</div>
+      <div class="out-line" id="O3">Hello!</div>
+      <div class="out-line" id="O4">Nice to meet you!</div>
+      <div class="out-line" id="O5">Goodbye!</div>
+      <span class="cursor" id="cursor" style="display:none"></span>
+    </div>
+  </div>
+
+</div>
+
+<div class="progress-wrap">
+  <div class="progress-fill" id="progressFill" style="width:0%"></div>
+</div>
+<div class="step-label" id="stepLabel">Step 0 of 12</div>
+
+<div class="controls">
+  <button class="btn btn-prev" id="btnPrev" onclick="prev()" disabled>◀ Back</button>
+  <button class="btn btn-next" id="btnNext" onclick="next()">Next Step ▶</button>
+  <button class="btn btn-reset" onclick="reset()">↺ Reset</button>
+</div>
+
+<script>
+/*
+  Each step: full state to render.
+  lines: [ { id, cls, arrow?, ann? } ]
+    cls: 'hl-def' | 'hl-body' | 'hl-call' | 'hl-skip' | 'hl-done'
+  outputs: ids to add this step (cumulative)
+*/
+const STEPS = [
+  // 1 — Python reads def say_hello(): — stored
+  { lines: [
+      { id:'L1', cls:'hl-def', arrow:true, ann:'stored — not run yet' },
+  ]},
+  // 2 — body skipped
+  { lines: [
+      { id:'L1', cls:'hl-def', ann:'stored — not run yet' },
+      { id:'L2', cls:'hl-skip', ann:'skipped for now' },
+      { id:'L3', cls:'hl-skip', ann:'skipped for now' },
+  ]},
+  // 3 — def say_goodbye(): stored (body skipped)
+  { lines: [
+      { id:'L4', cls:'hl-def', arrow:true, ann:'stored — not run yet' },
+      { id:'L5', cls:'hl-skip', ann:'skipped for now' },
+  ]},
+  // 4 — say_hello() call #1
+  { lines: [
+      { id:'L6', cls:'hl-call', arrow:true, ann:'call #1 → jumps to say_hello' },
+  ]},
+  // 5 — runs line 2
+  { lines: [
+      { id:'L1', cls:'hl-def',  ann:'say_hello ↓' },
+      { id:'L2', cls:'hl-body', arrow:true, ann:'→ Hello!' },
+      { id:'L6', cls:'hl-call', ann:'called from here' },
+  ], outputs:['O1'] },
+  // 6 — runs line 3
+  { lines: [
+      { id:'L1', cls:'hl-def',  ann:'say_hello ↓' },
+      { id:'L3', cls:'hl-body', arrow:true, ann:'→ Nice to meet you!' },
+      { id:'L6', cls:'hl-call', ann:'called from here' },
+  ], outputs:['O2'] },
+  // 7 — returned; call #2
+  { lines: [
+      { id:'L6', cls:'hl-done', ann:'✓ done' },
+      { id:'L7', cls:'hl-call', arrow:true, ann:'call #2 → jumps to say_hello again' },
+  ]},
+  // 8 — runs line 2 again
+  { lines: [
+      { id:'L1', cls:'hl-def',  ann:'say_hello ↓' },
+      { id:'L2', cls:'hl-body', arrow:true, ann:'→ Hello! (again)' },
+      { id:'L7', cls:'hl-call', ann:'called from here' },
+  ], outputs:['O3'] },
+  // 9 — runs line 3 again
+  { lines: [
+      { id:'L1', cls:'hl-def',  ann:'say_hello ↓' },
+      { id:'L3', cls:'hl-body', arrow:true, ann:'→ Nice to meet you! (again)' },
+      { id:'L7', cls:'hl-call', ann:'called from here' },
+  ], outputs:['O4'] },
+  // 10 — returned; say_goodbye call
+  { lines: [
+      { id:'L6', cls:'hl-done', ann:'✓ done' },
+      { id:'L7', cls:'hl-done', ann:'✓ done' },
+      { id:'L8', cls:'hl-call', arrow:true, ann:'call → jumps to say_goodbye' },
+  ]},
+  // 11 — runs line 5
+  { lines: [
+      { id:'L4', cls:'hl-def',  ann:'say_goodbye ↓' },
+      { id:'L5', cls:'hl-body', arrow:true, ann:'→ Goodbye!' },
+      { id:'L8', cls:'hl-call', ann:'called from here' },
+  ], outputs:['O5'] },
+  // 12 — finished
+  { lines: [
+      { id:'L6', cls:'hl-done', ann:'ran twice' },
+      { id:'L7', cls:'hl-done', ann:'ran twice' },
+      { id:'L8', cls:'hl-done', ann:'ran once' },
+  ]},
+];
+
+const TOTAL = STEPS.length;
+let current = 0;
+let shownOutputs = new Set();
+
+const lineToAnn   = {L1:'AN1',L2:'AN2',L3:'AN3',L4:'AN4',L5:'AN5',L6:'AN6',L7:'AN7',L8:'AN8'};
+const lineToArrow = {L1:'A1', L2:'A2', L3:'A3', L4:'A4', L5:'A5', L6:'A6', L7:'A7', L8:'A8'};
+
+function clearAll() {
+  Object.keys(lineToAnn).forEach(id => {
+    document.getElementById(id).className = 'line';
+  });
+  Object.values(lineToArrow).forEach(id => document.getElementById(id).classList.remove('on'));
+  Object.values(lineToAnn).forEach(id => {
+    const el = document.getElementById(id);
+    el.classList.remove('on');
+    el.textContent = '';
+  });
+}
+
+function applyStep(n) {
+  clearAll();
+
+  if (n === 0) { updateUI(0); return; }
+
+  const step = STEPS[n - 1];
+
+  step.lines.forEach(({ id, cls, arrow, ann }) => {
+    const lineEl = document.getElementById(id);
+    if (cls) lineEl.classList.add(cls);
+
+    if (arrow) document.getElementById(lineToArrow[id]).classList.add('on');
+
+    if (ann != null) {
+      const annEl = document.getElementById(lineToAnn[id]);
+      annEl.textContent = ann;
+      requestAnimationFrame(() => annEl.classList.add('on'));
+    }
+  });
+
+  if (step.outputs) step.outputs.forEach(id => shownOutputs.add(id));
+  ['O1','O2','O3','O4','O5'].forEach(id => {
+    document.getElementById(id).classList.toggle('on', shownOutputs.has(id));
+  });
+  document.getElementById('cursor').style.display = shownOutputs.size > 0 ? 'inline-block' : 'none';
+
+  updateUI(n);
+}
+
+function updateUI(n) {
+  document.getElementById('progressFill').style.width = (n / TOTAL * 100) + '%';
+  document.getElementById('stepLabel').textContent = `Step ${n} of ${TOTAL}`;
+  document.getElementById('btnPrev').disabled = n <= 0;
+  document.getElementById('btnNext').disabled = n >= TOTAL;
+}
+
+function next() { if (current < TOTAL) { current++; applyStep(current); } }
+
+function prev() {
+  if (current > 0) {
+    current--;
+    shownOutputs = new Set();
+    for (let i = 1; i <= current; i++) {
+      const s = STEPS[i-1];
+      if (s.outputs) s.outputs.forEach(id => shownOutputs.add(id));
+    }
+    applyStep(current);
+  }
+}
+
+function reset() {
+  current = 0; shownOutputs = new Set();
+  ['O1','O2','O3','O4','O5'].forEach(id => document.getElementById(id).classList.remove('on'));
+  document.getElementById('cursor').style.display = 'none';
+  applyStep(0);
+}
+
+applyStep(0);
+</script>
+</body>
+</html>

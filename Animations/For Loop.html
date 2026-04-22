@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- ACTIVITY
+title:  For Loop — Step by Step
+lesson: For Loops
+type:   Explanation
+stars:  0
+desc:   Animated for loop walkthrough with turtle diagram, post-loop line, and inline condition checks
+color:  purple
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>For Loop — Step by Step</title>
+<style>
+  :root {
+    --navy:   #1a1f3a;
+    --panel:  #12192e;
+    --teal:   #2dd4c0;
+    --amber:  #f59e0b;
+    --red:    #ef4444;
+    --green:  #22c55e;
+    --purple: #a855f7;
+    --text:   #e2e8f0;
+    --muted:  #94a3b8;
+    --code-bg:#0d1117;
+    --border: rgba(255,255,255,0.08);
+    --postloop: #fb923c;   /* orange — distinct from teal loop lines */
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--navy);
+    color: var(--text);
+    font-family: 'Trebuchet MS', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px 16px 40px;
+    gap: 16px;
+  }
+
+  header { text-align: center; max-width: 900px; width: 100%; }
+  header .label {
+    font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--purple); font-weight: 700; margin-bottom: 5px;
+  }
+  header h1 { font-size: 1.5rem; font-weight: 700; color: #fff; }
+  header p  { color: var(--muted); font-size: 0.82rem; margin-top: 3px; }
+
+  /* ── Top two-column area ── */
+  .top-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    max-width: 900px;
+    width: 100%;
+    align-items: start;
+  }
+
+  /* ── Code panel ── */
+  .code-panel {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .panel-title {
+    background: rgba(255,255,255,0.04);
+    padding: 7px 14px;
+    font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+  }
+  .code-body { padding: 8px 0 12px; }
+
+  .code-line {
+    display: flex;
+    align-items: center;
+    min-height: 40px;
+    transition: background 0.25s;
+    position: relative;
+  }
+  .code-line.active-line   { background: rgba(245,158,11,0.09); border-left: 3px solid var(--amber); }
+  .code-line.stop-line     { background: rgba(239,68,68,0.09);  border-left: 3px solid var(--red); }
+  .code-line.postloop-line { background: rgba(251,146,60,0.10); border-left: 3px solid var(--postloop); }
+
+  .arrow-col {
+    width: 26px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .exec-arrow {
+    font-size: 0.95rem; color: var(--amber);
+    opacity: 0; transform: translateX(-5px);
+    transition: opacity 0.18s, transform 0.18s;
+  }
+  .exec-arrow.visible { opacity: 1; transform: translateX(0); }
+  /* post-loop arrow is orange */
+  .exec-arrow.postloop { color: var(--postloop); }
+
+  .line-num {
+    width: 18px; flex-shrink: 0;
+    font-family: 'Courier New', monospace; font-size: 0.7rem;
+    color: #3d4f66; user-select: none;
+  }
+
+  /* indentation scope bracket for loop body lines */
+  .indent-bracket {
+    width: 10px; flex-shrink: 0;
+    align-self: stretch;
+    position: relative;
+  }
+  .indent-bracket::before {
+    content: '';
+    position: absolute;
+    left: 4px; top: 4px; bottom: 4px;
+    width: 2px;
+    background: rgba(168,85,247,0.35);
+    border-radius: 2px;
+  }
+
+  .code-text {
+    font-family: 'Courier New', monospace; font-size: 0.9rem;
+    color: #cdd5e0; white-space: pre;
+    padding: 0 8px 0 4px; flex-shrink: 0;
+  }
+  .kw  { color: #ff79c6; }
+  .fn  { color: #50fa7b; }
+  .fn-post { color: #fdba74; }   /* orange tint for post-loop fn */
+  .num { color: #bd93f9; }
+  .str { color: #f1fa8c; }
+  .cm  { color: #4a5568; font-style: italic; }
+  .var { color: var(--teal); }
+
+  /* divider between loop body and post-loop line */
+  .loop-divider {
+    height: 1px;
+    background: rgba(255,255,255,0.07);
+    margin: 4px 0;
+  }
+
+  /* inline annotation */
+  .annotation {
+    display: flex; align-items: center; gap: 6px;
+    flex-wrap: nowrap; padding: 0 10px;
+    opacity: 0; transform: translateX(-8px);
+    transition: opacity 0.25s, transform 0.25s;
+    white-space: nowrap;
+  }
+  .annotation.show { opacity: 1; transform: translateX(0); }
+
+  .chip {
+    font-family: 'Courier New', monospace; font-size: 0.82rem;
+    font-weight: 700; padding: 2px 8px; border-radius: 5px;
+  }
+  .chip-i    { background: rgba(45,212,192,0.18); color: var(--teal); }
+  .chip-rng  { background: rgba(168,85,247,0.18); color: var(--purple); }
+  .chip-op   { color: var(--muted); font-size: 0.78rem; font-family: 'Trebuchet MS', sans-serif; }
+  .badge-true  { background: rgba(34,197,94,0.2);  color: var(--green);    font-family: 'Trebuchet MS', sans-serif; font-size: 0.75rem; font-weight: 700; padding: 2px 9px; border-radius: 20px; }
+  .badge-false { background: rgba(239,68,68,0.2);  color: var(--red);      font-family: 'Trebuchet MS', sans-serif; font-size: 0.75rem; font-weight: 700; padding: 2px 9px; border-radius: 20px; }
+  .badge-post  { background: rgba(251,146,60,0.18); color: var(--postloop); font-family: 'Trebuchet MS', sans-serif; font-size: 0.75rem; font-weight: 700; padding: 2px 9px; border-radius: 20px; }
+  .ann-body {
+    font-size: 0.76rem; color: var(--muted);
+    font-style: italic; font-family: 'Trebuchet MS', sans-serif;
+  }
+
+  /* ── Turtle canvas panel ── */
+  .turtle-panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .turtle-panel .panel-title {
+    background: rgba(255,255,255,0.04);
+    padding: 7px 14px;
+    font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+  }
+  #turtleCanvas {
+    width: 100%;
+    aspect-ratio: 1;
+    display: block;
+  }
+
+  .tick { color: var(--green); }
+  .dash { color: var(--red); }
+
+  /* ── Controls ── */
+  .controls {
+    display: flex; gap: 10px; flex-wrap: wrap;
+    justify-content: center; max-width: 900px; width: 100%; align-items: center;
+  }
+  .btn {
+    padding: 9px 20px; border-radius: 8px; border: none;
+    font-family: 'Trebuchet MS', sans-serif; font-size: 0.86rem; font-weight: 700;
+    cursor: pointer; letter-spacing: 0.04em;
+    transition: background 0.15s, transform 0.1s, opacity 0.2s;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-next  { background: var(--teal);   color: #0d1117; }
+  .btn-next:hover  { background: #26bfac; }
+  .btn-reset { background: rgba(255,255,255,0.08); color: var(--text); }
+  .btn-reset:hover { background: rgba(255,255,255,0.13); }
+  .btn-auto  { background: var(--purple); color: #fff; }
+  .btn-auto:hover  { background: #9333ea; }
+  .btn:disabled { opacity: 0.3; cursor: not-allowed; }
+  .step-counter { font-size: 0.74rem; color: var(--muted); font-style: italic; }
+  .speed-row { display: flex; align-items: center; gap: 10px; font-size: 0.74rem; color: var(--muted); }
+  input[type=range] { accent-color: var(--purple); cursor: pointer; width: 90px; }
+
+  @media (max-width: 580px) {
+    .top-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="label">New Information · For Loops · Year 8</div>
+  <h1>What Python Does — Step by Step</h1>
+  <p>The arrow shows which line Python is running. The diagram shows what the turtle is doing at that exact moment.</p>
+</header>
+
+<div class="top-grid">
+
+  <!-- ── Code panel ── -->
+  <div class="code-panel">
+    <div class="panel-title">📋 Python Code</div>
+    <div class="code-body">
+
+      <!-- Line 1: for -->
+      <div class="code-line" id="line1">
+        <span class="arrow-col"><span class="exec-arrow" id="arr0">▶</span></span>
+        <span class="line-num">1</span>
+        <span class="indent-bracket" style="visibility:hidden"></span>
+        <span class="code-text"><span class="kw">for</span> <span class="var">i</span> <span class="kw">in</span> <span class="fn">range</span>(<span class="num">4</span>):</span>
+        <span class="annotation" id="ann-for"></span>
+      </div>
+
+      <!-- Line 2: t.forward — loop body (has bracket) -->
+      <div class="code-line" id="line2">
+        <span class="arrow-col"><span class="exec-arrow" id="arr1">▶</span></span>
+        <span class="line-num">2</span>
+        <span class="indent-bracket"></span>
+        <span class="code-text">    t.<span class="fn">forward</span>(<span class="num">100</span>)</span>
+        <span class="annotation" id="ann-fwd"></span>
+      </div>
+
+      <!-- Line 3: t.left — loop body (has bracket) -->
+      <div class="code-line" id="line3">
+        <span class="arrow-col"><span class="exec-arrow" id="arr2">▶</span></span>
+        <span class="line-num">3</span>
+        <span class="indent-bracket"></span>
+        <span class="code-text">    t.<span class="fn">left</span>(<span class="num">90</span>)</span>
+        <span class="annotation" id="ann-left"></span>
+      </div>
+
+      <!-- STOP comment -->
+      <div class="code-line" id="lineStop">
+        <span class="arrow-col"><span class="exec-arrow" id="arr3">▶</span></span>
+        <span class="line-num"></span>
+        <span class="indent-bracket" style="visibility:hidden"></span>
+        <span class="code-text"><span class="cm"># i = 4 — loop ends</span></span>
+        <span class="annotation" id="ann-stop"></span>
+      </div>
+
+      <!-- Visual gap between loop and post-loop -->
+      <div class="loop-divider"></div>
+
+      <!-- Line 4: print("Done!") — post-loop, NO indent -->
+      <div class="code-line" id="line4">
+        <span class="arrow-col"><span class="exec-arrow postloop" id="arr4">▶</span></span>
+        <span class="line-num">4</span>
+        <span class="indent-bracket" style="visibility:hidden"></span>
+        <span class="code-text"><span class="fn-post">print</span>(<span class="str">"Done!"</span>)</span>
+        <span class="annotation" id="ann-post"></span>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── Turtle canvas ── -->
+  <div class="turtle-panel">
+    <div class="panel-title">🐢 Turtle diagram</div>
+    <svg id="turtleCanvas" viewBox="0 0 220 220" xmlns="http://www.w3.org/2000/svg">
+      <!-- background -->
+      <rect width="220" height="220" fill="#0a0f1e"/>
+      <!-- Grid dots for scale reference -->
+      <g id="gridDots" opacity="0.07">
+        <circle cx="50" cy="50"  r="1.5" fill="#94a3b8"/>
+        <circle cx="50" cy="170" r="1.5" fill="#94a3b8"/>
+        <circle cx="170" cy="50" r="1.5" fill="#94a3b8"/>
+        <circle cx="170" cy="170" r="1.5" fill="#94a3b8"/>
+        <circle cx="110" cy="110" r="1.5" fill="#94a3b8"/>
+      </g>
+
+      <!-- Square sides — drawn one at a time (teal lines) -->
+      <!-- Side 0: right  (50,170)→(170,170) -->
+      <line id="side0" x1="50" y1="170" x2="170" y2="170"
+            stroke="#2dd4c0" stroke-width="2.5" stroke-linecap="round" opacity="0"/>
+      <!-- Side 1: up     (170,170)→(170,50) -->
+      <line id="side1" x1="170" y1="170" x2="170" y2="50"
+            stroke="#2dd4c0" stroke-width="2.5" stroke-linecap="round" opacity="0"/>
+      <!-- Side 2: left   (170,50)→(50,50) -->
+      <line id="side2" x1="170" y1="50" x2="50" y2="50"
+            stroke="#2dd4c0" stroke-width="2.5" stroke-linecap="round" opacity="0"/>
+      <!-- Side 3: down   (50,50)→(50,170) -->
+      <line id="side3" x1="50" y1="50" x2="50" y2="170"
+            stroke="#2dd4c0" stroke-width="2.5" stroke-linecap="round" opacity="0"/>
+
+      <!-- Turtle (small triangle) -->
+      <!-- Points: tip up, centred at origin, rotated via transform -->
+      <g id="turtleGroup" transform="translate(50,170) rotate(0)">
+        <polygon id="turtleShape"
+          points="0,-9  7,6  -7,6"
+          fill="#2dd4c0" opacity="0.9"/>
+        <polygon points="0,-9  7,6  -7,6"
+          fill="none" stroke="#0d1117" stroke-width="1"/>
+      </g>
+
+      <!-- "Done!" label — appears only when post-loop line runs -->
+      <text id="doneLabel" x="110" y="108" text-anchor="middle"
+            font-family="Trebuchet MS, sans-serif" font-size="15"
+            font-weight="700" fill="#fb923c" opacity="0">Done!</text>
+
+      <!-- i label in top-left corner -->
+      <text id="iLabel" x="12" y="18"
+            font-family="Courier New, monospace" font-size="12"
+            fill="#2dd4c0" opacity="0"></text>
+    </svg>
+  </div>
+
+</div>
+
+
+
+<!-- Controls -->
+<div class="controls">
+  <button class="btn btn-reset" onclick="reset()">↩ Reset</button>
+  <button class="btn btn-next" id="btnNext" onclick="nextStep()">Next Step ▶</button>
+  <button class="btn btn-auto" id="btnAuto" onclick="toggleAuto()">⏵ Auto Play</button>
+  <span class="step-counter" id="stepCounter"></span>
+</div>
+<div class="speed-row">
+  <span>Speed:</span>
+  <input type="range" id="speedSlider" min="400" max="2000" value="1100" step="100" oninput="updateSpeed()">
+  <span id="speedLabel">Medium</span>
+</div>
+
+<script>
+// ── Turtle geometry ──────────────────────────────────────────────────────────
+// The square starts at (50,170), goes right → up → left → down
+// heading: 0=right, 1=up, 2=left, 3=down  (after each left(90))
+const TURTLE_POSITIONS = [
+  { x: 50,  y: 170 },  // start (before side 0)
+  { x: 170, y: 170 },  // after forward 0
+  { x: 170, y: 170 },  // after left 0 (same pos, different heading)
+  { x: 170, y: 50  },  // after forward 1
+  { x: 170, y: 50  },  // after left 1
+  { x: 50,  y: 50  },  // after forward 2
+  { x: 50,  y: 50  },  // after left 2
+  { x: 50,  y: 170 },  // after forward 3
+  { x: 50,  y: 170 },  // after left 3
+];
+// heading in degrees for SVG rotate (0=pointing right → triangle tip = right)
+// our triangle points UP (0,-9) so heading=right means rotate(90), etc.
+const TURTLE_HEADINGS = [90, 90, 0, 0, 270, 270, 180, 180, 90];
+
+// ── Step builder ─────────────────────────────────────────────────────────────
+const RANGE = 4;
+
+function condHTML(i, passes) {
+  const badge = passes
+    ? `<span class="badge-true">✓ True — run loop body</span>`
+    : `<span class="badge-false">✗ False — stop</span>`;
+  return `<span class="chip chip-i">i = ${i}</span>`
+       + `<span class="chip-op">&lt;</span>`
+       + `<span class="chip chip-rng">4</span>`
+       + badge;
+}
+
+// turtleState: { posIdx, sidesVisible, showDone, iVal }
+function buildSteps() {
+  const steps = [];
+
+  // ── Initial for check: i=0
+  steps.push({
+    arrowIdx: 0, lineId: 'line1', lineClass: 'active-line',
+    annId: 'ann-for', annHTML: condHTML(0, true),
+    traceRow: 0, traceState: 'active', traceFwd: false, traceLeft: false,
+    turtle: { posIdx: 0, sidesVisible: 0, showDone: false, iVal: 0 },
+  });
+
+  for (let i = 0; i < RANGE; i++) {
+    const posBase = i * 2; // index into TURTLE_POSITIONS after loop starts at i
+
+    // t.forward
+    steps.push({
+      arrowIdx: 1, lineId: 'line2', lineClass: 'active-line',
+      annId: 'ann-fwd', annHTML: `<span class="ann-body">i = ${i} — turtle moves forward 100</span>`,
+      traceRow: i, traceState: 'active', traceFwd: true, traceLeft: false,
+      turtle: { posIdx: posBase + 1, sidesVisible: i + 1, showDone: false, iVal: i },
+    });
+    // t.left
+    steps.push({
+      arrowIdx: 2, lineId: 'line3', lineClass: 'active-line',
+      annId: 'ann-left', annHTML: `<span class="ann-body">i = ${i} — turtle turns left 90°</span>`,
+      traceRow: i, traceState: 'active', traceFwd: true, traceLeft: true,
+      turtle: { posIdx: posBase + 2, sidesVisible: i + 1, showDone: false, iVal: i },
+    });
+    // Back to for — check
+    const nextI = i + 1;
+    const passes = nextI < RANGE;
+    steps.push({
+      arrowIdx: passes ? 0 : 3,
+      lineId: passes ? 'line1' : 'lineStop',
+      lineClass: passes ? 'active-line' : 'stop-line',
+      annId: passes ? 'ann-for' : 'ann-stop',
+      annHTML: condHTML(nextI, passes),
+      traceRow: i, traceState: 'done', traceFwd: true, traceLeft: true,
+      stopAll: !passes,
+      turtle: { posIdx: posBase + 2, sidesVisible: i + 1, showDone: false, iVal: nextI },
+    });
+  }
+
+  // ── Post-loop line: print("Done!")
+  steps.push({
+    arrowIdx: 4, lineId: 'line4', lineClass: 'postloop-line',
+    annId: 'ann-post', annHTML: `<span class="badge-post">runs once — after loop finishes</span>`,
+    traceRow: null,
+    turtle: { posIdx: 8, sidesVisible: 4, showDone: true, iVal: 4 },
+  });
+
+  return steps;
+}
+
+const steps = buildSteps();
+let current = -1;
+let autoTimer = null;
+let autoSpeed = 1100;
+
+const allAnnIds   = ['ann-for','ann-fwd','ann-left','ann-stop','ann-post'];
+const allLineIds  = ['line1','line2','line3','lineStop','line4'];
+const allArrowIds = ['arr0','arr1','arr2','arr3','arr4'];
+
+// ── Turtle rendering ─────────────────────────────────────────────────────────
+function renderTurtle(ts) {
+  // Show/hide sides
+  for (let s = 0; s < 4; s++) {
+    document.getElementById(`side${s}`).setAttribute('opacity', s < ts.sidesVisible ? '1' : '0');
+  }
+  // Position and heading
+  const pos = TURTLE_POSITIONS[ts.posIdx];
+  const heading = TURTLE_HEADINGS[ts.posIdx];
+  document.getElementById('turtleGroup')
+    .setAttribute('transform', `translate(${pos.x},${pos.y}) rotate(${heading})`);
+
+  // i label
+  const iLbl = document.getElementById('iLabel');
+  if (ts.iVal <= 3) {
+    iLbl.textContent = `i = ${ts.iVal}`;
+    iLbl.setAttribute('opacity', '0.9');
+  } else {
+    iLbl.textContent = `i = ${ts.iVal}`;
+    iLbl.setAttribute('fill', '#ef4444');
+    iLbl.setAttribute('opacity', '0.9');
+  }
+
+  // Done label
+  document.getElementById('doneLabel').setAttribute('opacity', ts.showDone ? '1' : '0');
+}
+
+// ── Apply a step ──────────────────────────────────────────────────────────────
+function reset() {
+  stopAuto();
+  current = -1;
+
+  allArrowIds.forEach(id => document.getElementById(id).classList.remove('visible'));
+  allLineIds.forEach(id => {
+    const el = document.getElementById(id);
+    el.classList.remove('active-line','stop-line','postloop-line');
+  });
+  allAnnIds.forEach(id => {
+    const el = document.getElementById(id);
+    el.classList.remove('show');
+    el.innerHTML = '';
+  });
+  // Reset turtle
+  renderTurtle({ posIdx: 0, sidesVisible: 0, showDone: false, iVal: 0 });
+  document.getElementById('iLabel').setAttribute('opacity', '0');
+  document.getElementById('iLabel').setAttribute('fill', '#2dd4c0');
+
+  document.getElementById('btnNext').disabled = false;
+  document.getElementById('stepCounter').textContent = '';
+}
+
+function applyStep(s) {
+  // Arrows
+  allArrowIds.forEach(id => document.getElementById(id).classList.remove('visible'));
+  document.getElementById(allArrowIds[s.arrowIdx]).classList.add('visible');
+
+  // Line highlights
+  allLineIds.forEach(id => {
+    document.getElementById(id).classList.remove('active-line','stop-line','postloop-line');
+  });
+  document.getElementById(s.lineId).classList.add(s.lineClass);
+
+  // Annotations
+  allAnnIds.forEach(id => {
+    const el = document.getElementById(id);
+    el.classList.remove('show');
+    el.innerHTML = '';
+  });
+  const annEl = document.getElementById(s.annId);
+  annEl.innerHTML = s.annHTML;
+  requestAnimationFrame(() => annEl.classList.add('show'));
+
+  // Turtle
+  renderTurtle(s.turtle);
+
+  document.getElementById('stepCounter').textContent = `Step ${current + 1} of ${steps.length}`;
+  document.getElementById('btnNext').disabled = (current >= steps.length - 1);
+}
+
+function nextStep() {
+  if (current >= steps.length - 1) return;
+  current++;
+  applyStep(steps[current]);
+}
+
+function toggleAuto() {
+  if (autoTimer) { stopAuto(); return; }
+  document.getElementById('btnAuto').textContent = '⏸ Pause';
+  autoTimer = setInterval(() => {
+    if (current >= steps.length - 1) { stopAuto(); return; }
+    nextStep();
+  }, autoSpeed);
+}
+
+function stopAuto() {
+  clearInterval(autoTimer);
+  autoTimer = null;
+  document.getElementById('btnAuto').textContent = '⏵ Auto Play';
+}
+
+function updateSpeed() {
+  const raw = parseInt(document.getElementById('speedSlider').value);
+  autoSpeed = 2400 - raw;
+  const labels = [[400,'Very fast'],[700,'Fast'],[1100,'Medium'],[1500,'Slow'],[2000,'Very slow']];
+  let label = 'Medium';
+  for (const [thresh, lbl] of labels) { if (raw <= thresh) { label = lbl; break; } }
+  document.getElementById('speedLabel').textContent = label;
+  if (autoTimer) { stopAuto(); toggleAuto(); }
+}
+
+reset();
+</script>
+</body>
+</html>
