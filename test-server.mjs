@@ -46,6 +46,6 @@ createServer(async (req, res) => {
     res.writeHead(404);
     res.end('Not found');
   }
-}).listen(PORT, '127.0.0.1', () =>
+}).listen(PORT, () =>
   process.stdout.write(`Test server running at http://localhost:${PORT}\n`)
 );

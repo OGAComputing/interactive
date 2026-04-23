@@ -63,8 +63,20 @@ export async function mockAsStudent(page, courseId = 'test-course-123') {
       // detectTeacher: this user teaches no courses → student path
       await route.fulfill({ json: { courses: [] } });
     } else if (url.includes('/courseWork')) {
-      // lookupCourseWorkId: no matching assignment found
-      await route.fulfill({ json: {} });
+      // Return a mock assignment that matches the host page
+      await route.fulfill({ json: {
+        courseWork: [{
+          id: 'mock-cw-123',
+          materials: [{
+            link: { url: 'http://localhost:3001/Y8/Python/L4_Functions/1_Functions.html' }
+          }]
+        }]
+      }});
+    } else if (url.includes('/studentSubmissions')) {
+      // lookupSubmissionId: return a mock submission
+      await route.fulfill({ json: {
+        studentSubmissions: [{ id: 'mock-submission-123' }]
+      }});
     } else {
       // findCorrectCourse fallback scan: no other courses
       await route.fulfill({ json: { courses: [] } });
