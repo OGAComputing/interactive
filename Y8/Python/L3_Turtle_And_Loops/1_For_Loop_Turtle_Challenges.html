@@ -319,6 +319,10 @@ color:  purple
     </div>
   </div>
 
+  <div class="ac-progress-bar" style="height: 4px; margin-bottom: 10px;">
+    <div class="ac-progress-fill" id="progress-fill-I" style="width: 0%; background: var(--stage-i);"></div>
+  </div>
+
   <div class="info-box">
     <span class="icon">🔬</span>
     <span>Make <strong>one change at a time</strong>. Restore the original between each investigation unless told otherwise.</span>
@@ -368,6 +372,10 @@ color:  purple
       <h2>Modify</h2>
       <p>Each task builds on the one before — keep your Thonny code and add to it. Paste your updated code below after each change.</p>
     </div>
+  </div>
+
+  <div class="ac-progress-bar" style="height: 4px; margin-bottom: 10px;">
+    <div class="ac-progress-fill" id="progress-fill-M1" style="width: 0%; background: var(--stage-m1);"></div>
   </div>
 
   <!-- Original always visible -->
@@ -462,6 +470,10 @@ turtle.<span style="color:#89b4fa">done</span>()</pre>
     </div>
   </div>
 
+  <div class="ac-progress-bar" style="height: 4px; margin-bottom: 10px;">
+    <div class="ac-progress-fill" id="progress-fill-M2" style="width: 0%; background: var(--stage-m2);"></div>
+  </div>
+
   <div class="must-use-bar">
     <strong>Every program MUST use:</strong>
     &nbsp;<code>for</code> loop &nbsp;·&nbsp; <code>range()</code> &nbsp;·&nbsp; <code>t.forward()</code> &nbsp;·&nbsp; <code>t.left()</code> or <code>t.right()</code>
@@ -541,6 +553,7 @@ window.addEventListener('DOMContentLoaded', () => {
   showStage(currentStage, false);
   updateNav();
   updateProgress();
+  updateGranularProgress();
   // Restore make feedback for already-passed challenges
   ['burst','shape','spiral'].forEach(c => {
     if (passedMake[c]) {
@@ -562,6 +575,26 @@ function restoreInputs() {
   }
 }
 
+function updateGranularProgress() {
+  // Investigate
+  const iFields = ['i1a','i1b','i2a','i2b','i3','i4'];
+  const iDone = iFields.filter(id => (document.getElementById(id)?.value || '').trim().length > 3).length;
+  const iFill = document.getElementById('progress-fill-I');
+  if (iFill) iFill.style.width = Math.round((iDone / iFields.length) * 100) + '%';
+
+  // Modify
+  const m1Fields = ['m1_code1','m1_code2','m1_code3','m1_code4','m1_code5'];
+  const m1Done = m1Fields.filter(id => passedChecks[id]).length;
+  const m1Fill = document.getElementById('progress-fill-M1');
+  if (m1Fill) m1Fill.style.width = Math.round((m1Done / m1Fields.length) * 100) + '%';
+
+  // Make
+  const m2Challenges = ['burst','shape','spiral'];
+  const m2Done = m2Challenges.filter(c => passedMake[c]).length;
+  const m2Fill = document.getElementById('progress-fill-M2');
+  if (m2Fill) m2Fill.style.width = Math.round((m2Done / m2Challenges.length) * 100) + '%';
+}
+
 function saveState() {
   ALL_FIELDS.forEach(id => {
     const el = document.getElementById(id);
@@ -574,6 +607,7 @@ function saveState() {
   state.passedChecks    = passedChecks;
   state.passedMake      = passedMake;
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
+  updateGranularProgress();
 }
 
 // ═══════════════════════════════════════════════════════

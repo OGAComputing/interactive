@@ -180,15 +180,28 @@ function _debouncedCheck(ta) {
 }
 
 async function _runHeavyTasks(ta) {
-  const result = await analyzeCode(ta.value);
+  let val = ta.value;
+  const result = await analyzeCode(val);
+  
+  // If the value changed while we were awaiting (e.g. programmatic change),
+  // we must re-run to ensure the highlighting isn't stale.
+  if (ta.value !== val) {
+    _runHeavyTasks(ta);
+    return;
+  }
+
+  _lastVal.set(ta, val);
   
   // Update Highlighting
   const hl = _hlMap.get(ta);
-  if (hl) hl.innerHTML = result.html + (ta.value.endsWith('\n') ? ' ' : '');
+  if (hl) hl.innerHTML = result.html + (val.endsWith('\n') ? ' ' : '');
 
   // Update Syntax Hint (Debounced separately to 800ms to avoid flicker)
   clearTimeout(_hintTimers.get(ta));
   _hintTimers.set(ta, setTimeout(() => {
+    // Re-check value to ensure hint is for the latest text
+    if (ta.value !== val) return;
+
     const hint = _hintMap.get(ta);
     if (!hint) return;
     
@@ -202,6 +215,17 @@ async function _runHeavyTasks(ta) {
 }
 
 // ── Public API ────────────────────────────────────────────────────────────────
+
+/**
+ * Manually trigger a refresh of the editor's highlighting, line numbers,
+ * and height. Useful after programmatic value changes.
+ */
+export function refreshEditor(ta) {
+  if (!ta) return;
+  _updateNums(ta, _numsMap.get(ta));
+  _autoResize(ta, true);
+  _runHeavyTasks(ta);
+}
 
 /**
  * Hide the syntax hint for a textarea — call this after a successful code
@@ -276,6 +300,12 @@ export function setupEditors(selector = '.checker-textarea') {
     // ── Events ────────────────────────────────────────────────────────────
     ta.addEventListener('input', () => {
       _debouncedCheck(ta); 
+    });
+
+    ta.addEventListener('focus', () => {
+      // Refresh on focus in case the value changed programmatically 
+      // or the editor was hidden during its initial render.
+      _debouncedCheck(ta);
     });
 
     ta.addEventListener('keydown', e => {

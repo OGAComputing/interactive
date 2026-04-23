@@ -383,6 +383,10 @@ color:  purple
     </div>
   </div>
 
+  <div class="ac-progress-bar" style="height: 4px; margin-bottom: 10px;">
+    <div class="ac-progress-fill" id="progress-fill-I" style="width: 0%; background: var(--stage-i);"></div>
+  </div>
+
   <div class="code-checker">
     <div class="checker-header"><span class="mac-dot dot-r"></span><span class="mac-dot dot-y"></span><span class="mac-dot dot-g"></span><span class="ch-label">Python Editor</span></div>
     <textarea class="checker-textarea" id="i_editor"></textarea>
@@ -435,6 +439,10 @@ color:  purple
       <h2>Modify</h2>
       <p>Each modification builds on the last — keep your Thonny code and keep adding to it. Paste your updated code below after each change.</p>
     </div>
+  </div>
+
+  <div class="ac-progress-bar" style="height: 4px; margin-bottom: 10px;">
+    <div class="ac-progress-fill" id="progress-fill-M1" style="width: 0%; background: var(--stage-m1);"></div>
   </div>
 
   <div class="code-checker">
@@ -500,6 +508,10 @@ color:  purple
     </div>
   </div>
 
+  <div class="ac-progress-bar" style="height: 4px; margin-bottom: 10px;">
+    <div class="ac-progress-fill" id="progress-fill-M2" style="width: 0%; background: var(--stage-m2);"></div>
+  </div>
+
   <div class="info-box">
     <span class="icon">🔨</span>
     <span>Write a program that shows a menu of three animals and prints two facts about whichever one the user picks. <strong>All six success criteria below must be met</strong> before you paste your code.</span>
@@ -555,7 +567,7 @@ color:  purple
 <script type="module">
 import { normalise, has, MOD_CHECKS, validateMake, validateExt } from './checkers.js';
 import { runPython, preload } from '../../../pyodide-runner.js';
-import { setupEditors, clearSyntaxHint, setEditorOutput } from '../../../code-editor.js';
+import { setupEditors, clearSyntaxHint, setEditorOutput, refreshEditor } from '../../../code-editor.js';
 
 // ═══════════════════════════════════════════════════════
 //  STATE
@@ -614,6 +626,22 @@ function restoreInputs() {
   });
 }
 
+function updateGranularProgress() {
+  const iFill = document.getElementById('progress-fill-I');
+  if (iFill) iFill.style.width = Math.round(((stepI - 1) / 5) * 100) + '%';
+
+  const m1Fill = document.getElementById('progress-fill-M1');
+  if (m1Fill) m1Fill.style.width = Math.round(((stepM1 - 1) / 4) * 100) + '%';
+
+  const m2Fill = document.getElementById('progress-fill-M2');
+  if (m2Fill) {
+    let pct = 0;
+    if (passedChecks['m2_make']) pct += 50;
+    if (passedChecks['m2_ext']) pct += 50;
+    m2Fill.style.width = pct + '%';
+  }
+}
+
 function updateStepVisibility() {
   for(let i=1; i<=5; i++) {
     document.getElementById('qcard_i'+i)?.classList.toggle('step-hidden', i !== stepI);
@@ -631,6 +659,7 @@ function updateStepVisibility() {
     m2Btn.textContent = passedChecks['m2_make'] ? '⚡ Mark extension complete' : '⚡ Check program';
     m2Btn.onclick = passedChecks['m2_make'] ? checkExt : checkMake;
   }
+  updateGranularProgress();
 }
 
 // ═══════════════════════════════════════════════════════
@@ -662,14 +691,23 @@ function showStage(s, persist = true) {
   document.querySelector(`[data-stage="${s}"]`).classList.add('active');
   currentStage = s;
 
-  if (s === 'R' && !document.getElementById('r_editor').value) {
-    document.getElementById('r_editor').value = GREET_CODE;
+  if (s === 'R') {
+    const ta = document.getElementById('r_editor');
+    if (!ta.value) ta.value = GREET_CODE;
+    refreshEditor(ta);
   }
-  if (s === 'I' && !document.getElementById('i_editor').value) {
-    document.getElementById('i_editor').value = GREET_CODE;
+  if (s === 'I') {
+    const ta = document.getElementById('i_editor');
+    if (!ta.value) ta.value = GREET_CODE;
+    refreshEditor(ta);
   }
-  if (s === 'M1' && !document.getElementById('m1_editor').value) {
-    document.getElementById('m1_editor').value = document.getElementById('i_editor').value || GREET_CODE;
+  if (s === 'M1') {
+    const ta = document.getElementById('m1_editor');
+    if (!ta.value) ta.value = document.getElementById('i_editor').value || GREET_CODE;
+    refreshEditor(ta);
+  }
+  if (s === 'M2') {
+    refreshEditor(document.getElementById('m2_editor'));
   }
   updateStepVisibility();
   if (persist) saveState();
@@ -1143,6 +1181,7 @@ async function checkExt() {
   fbEl.textContent = structural.msg;
   setEditorOutput(document.getElementById('m2_editor'), run.output, !run.ok);
   passedChecks['m2_ext'] = true;
+  updateStepVisibility();
   saveState(); submitScore();
 }
 
@@ -1170,11 +1209,12 @@ Object.assign(window, {
 // ═══════════════════════════════════════════════════════
 window.addEventListener('DOMContentLoaded', () => {
   restoreInputs();
+  
+  setupEditors(); // line numbers, auto-resize, Tab key, live syntax hints
+  
   showStage(currentStage, false);
   updateNav();
   updateProgress();
-
-  setupEditors(); // line numbers, auto-resize, Tab key, live syntax hints
 
   // Start loading Pyodide in the background immediately
   setPyStatus('loading');
