@@ -205,21 +205,26 @@ function _debouncedCheck(ta) {
 
 async function _runHeavyTasks(ta) {
   let val = ta.value;
-  const result = await analyzeCode(val);
+  let result;
   
-  // If the value changed while we were awaiting (e.g. programmatic change),
-  // we must re-run to ensure the highlighting isn't stale.
-  if (ta.value !== val) {
-    _runHeavyTasks(ta);
+  try {
+    result = await analyzeCode(val);
+  } catch (err) {
+    console.warn("Analysis failed for editor:", err);
+    _containerMap.get(ta)?.classList.remove('loading');
     return;
   }
+  
+  // If the value changed while we were awaiting (e.g. user typed), 
+  // a newer _runHeavyTasks call is either already running or about to run.
+  // We still clear the loading state so the initial skeleton disappears.
+  const container = _containerMap.get(ta);
+  if (container) container.classList.remove('loading');
+
+  if (ta.value !== val) return;
 
   _lastVal.set(ta, val);
 
-  // Remove loading state on first successful run
-  const container = _containerMap.get(ta);
-  if (container) container.classList.remove('loading');
-  
   // Update Highlighting
   const hl = _hlMap.get(ta);
   if (hl) hl.innerHTML = result.html + (val.endsWith('\n') ? ' ' : '');
@@ -289,6 +294,9 @@ export function setupEditors(selector = '.checker-textarea') {
   _injectStyles();
 
   document.querySelectorAll(selector).forEach(ta => {
+    if (ta.dataset.editorInitialized) return;
+    ta.dataset.editorInitialized = "true";
+
     // ── Build DOM structure ────────────────────────────────────────────────
     const wrap = document.createElement('div');
     wrap.className = 'editor-wrap';
