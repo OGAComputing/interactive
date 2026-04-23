@@ -1,17 +1,18 @@
-// Minimal static file server for Playwright tests.
-// Unlike `serve`, this does not rewrite URLs or strip query strings.
 import { createServer } from 'node:http';
-import { readFile } from 'node:fs/promises';
-import { extname, join } from 'node:path';
+import { readFile, stat } from 'node:fs/promises';
+import { extname, join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const PORT = 3000;
-const ROOT = join(fileURLToPath(import.meta.url), '..');
+const ROOT = dirname(fileURLToPath(import.meta.url));
 const TYPES = {
   '.html': 'text/html; charset=utf-8',
   '.css':  'text/css',
   '.js':   'application/javascript',
+  '.mjs':  'application/javascript',
   '.json': 'application/json',
+  '.wasm': 'application/wasm',
+  '.zip':  'application/zip',
   '.png':  'image/png',
   '.ico':  'image/x-icon',
   '.svg':  'image/svg+xml',
@@ -20,12 +21,28 @@ const TYPES = {
 createServer(async (req, res) => {
   const url = new URL(req.url, `http://localhost:${PORT}`);
   const filePath = join(ROOT, url.pathname);
+  
   try {
-    const data = await readFile(filePath);
-    const mime = TYPES[extname(filePath)] ?? 'application/octet-stream';
-    res.writeHead(200, { 'Content-Type': mime });
-    res.end(data);
-  } catch {
+    const s = await stat(filePath);
+    if (s.isDirectory()) {
+      res.writeHead(404);
+      return res.end('Not found');
+    }
+    const ext = extname(filePath).toLowerCase();
+    const mime = TYPES[ext] || 'application/octet-stream';
+    
+    res.writeHead(200, { 
+      'Content-Type': mime,
+      'Content-Length': s.size,
+      'Access-Control-Allow-Origin': '*'
+    });
+    
+    if (req.method === 'HEAD') {
+      res.end();
+    } else {
+      res.end(await readFile(filePath));
+    }
+  } catch (err) {
     res.writeHead(404);
     res.end('Not found');
   }

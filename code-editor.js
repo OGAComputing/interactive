@@ -263,7 +263,7 @@ export function setupEditors(selector = '.checker-textarea') {
     // Output panel sits on the right
     const output = document.createElement('div');
     output.className = 'output-panel';
-    output.innerHTML = '<div class="output-header">Console Output</div><div class="output-content"></div>';
+    output.innerHTML = '<div class="output-header">Python Shell Output</div><div class="output-content"></div>';
     wrap.appendChild(output);
     _outputMap.set(ta, output);
 

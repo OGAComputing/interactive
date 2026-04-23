@@ -6,6 +6,7 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? 'github' : 'html',
+  timeout: 60_000,
   use: {
     baseURL: 'http://localhost:3000',
     trace: 'on-first-retry',
@@ -16,7 +17,7 @@ export default defineConfig({
   webServer: {
     command: 'node test-server.mjs',
     url: 'http://localhost:3000',
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: false,
     timeout: 30_000,
   },
 });

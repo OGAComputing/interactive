@@ -104,7 +104,6 @@ while True:
 async function advanceToModify(page) {
   await fillPredict(page);
   await page.locator('button:has-text("Check predictions")').click();
-  await page.locator('button:has-text("go to Run stage")').click();
   await fillRun(page);
   await page.locator('button:has-text("Check response")').click();
   await page.locator('button:has-text("go to Investigate")').click();
@@ -180,7 +179,6 @@ test.describe('Predict stage', () => {
   test('correct answers advance to Run and mark P done', async ({ page }) => {
     await fillPredict(page);
     await page.locator('button:has-text("Check predictions")').click();
-    await page.locator('button:has-text("go to Run stage")').click();
     await expectActiveStage(page, 'R');
     await expectDoneStage(page, 'P');
   });
@@ -188,7 +186,6 @@ test.describe('Predict stage', () => {
   test('progress bar advances after completing P', async ({ page }) => {
     await fillPredict(page);
     await page.locator('button:has-text("Check predictions")').click();
-    await page.locator('button:has-text("go to Run stage")').click();
     const width = await page.locator('#progressFill').evaluate(el => parseInt(el.style.width));
     expect(width).toBeGreaterThan(20);
   });
@@ -235,6 +232,7 @@ test.describe('Investigate stage', () => {
     await fillPredict(page);
     await page.locator('button:has-text("Check predictions")').click();
     await fillRun(page);
+    await page.locator('button:has-text("Check response")').click();
     await page.locator('button:has-text("go to Investigate")').click();
   });
 
@@ -272,6 +270,7 @@ test.describe('Modify stage', () => {
   });
 
   test('checker warns when textarea is empty', async ({ page }) => {
+    await page.locator('#m1_editor').fill('');
     await page.locator('#btn_check_m1').click();
     await expect(page.locator('#fb_m1')).toContainText('Write some code first');
   });
@@ -290,7 +289,7 @@ test.describe('Modify stage', () => {
     ].join('\n');
     await page.locator('#m1_editor').fill(code);
     await page.locator('#btn_check_m1').click();
-    await expect(page.locator('#fb_m1')).toHaveClass(/pass/);
+    await expect(page.locator('#fb_m1')).toHaveClass(/pass/, { timeout: 60000 });
   });
 });
 
@@ -312,7 +311,7 @@ test.describe('Make stage', () => {
   test('valid program shows pass feedback and completion banner', async ({ page }) => {
     await page.locator('#m2_editor').fill(VALID_MAKE_PROGRAM);
     await page.locator('#btn_check_m2').click();
-    await expect(page.locator('#fb_m2')).toHaveClass(/pass/);
+    await expect(page.locator('#fb_m2')).toHaveClass(/pass/, { timeout: 60000 });
     await expectCompletionBanner(page, 'PRIMM Complete');
   });
 });
@@ -335,6 +334,6 @@ test.describe('Extension', () => {
     // Now check extension
     await page.locator('#m2_editor').fill(VALID_EXT_PROGRAM);
     await page.locator('#btn_check_m2').click(); // Button now triggers checkExt
-    await expect(page.locator('#fb_m2')).toHaveClass(/pass/);
+    await expect(page.locator('#fb_m2')).toHaveClass(/pass/, { timeout: 60000 });
   });
 });

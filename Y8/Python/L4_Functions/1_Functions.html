@@ -921,7 +921,16 @@ function nextStep(stage, n) {
     const fieldId = 'i' + n;
     const val = (document.getElementById(fieldId)?.value || '').trim();
     const card = document.getElementById('qcard_i' + n);
-    const msg = val.length < 4 ? 'Describe what happened.' : isNonsense(val) ? "That doesn't look like an answer." : null;
+    let msg = val.length < 4 ? 'Describe what happened.' : isNonsense(val) ? "That doesn't look like an answer." : null;
+    
+    // Keyword check for step 4
+    if (!msg && n === 4) {
+      const lower = val.toLowerCase();
+      if (!/bracket|call|parenthes|nothing|run|refer|object/.test(lower)) {
+        msg = 'Think about why brackets matter — does greet without () actually run the function?';
+      }
+    }
+
     if (msg) {
       card.classList.add('error'); fieldHint(card, msg); 
       return;
