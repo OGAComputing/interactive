@@ -8,7 +8,7 @@ export default defineConfig({
   reporter: process.env.CI ? 'github' : 'html',
   timeout: 60_000,
   use: {
-    baseURL: 'http://localhost:3000',
+    baseURL: 'http://localhost:3001',
     trace: 'on-first-retry',
   },
   projects: [
@@ -16,8 +16,9 @@ export default defineConfig({
   ],
   webServer: {
     command: 'node test-server.mjs',
-    url: 'http://localhost:3000',
-    reuseExistingServer: false,
+    env: { PORT: '3001' },
+    url: 'http://localhost:3001',
+    reuseExistingServer: true,
     timeout: 30_000,
   },
 });

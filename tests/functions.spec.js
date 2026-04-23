@@ -20,15 +20,28 @@ async function fillRun(page) {
 }
 
 async function fillInvestigate(page) {
+  // Wait for editor loading to finish
+  const container = page.locator('#stage-I .editor-container');
+  await expect(container).not.toHaveClass(/loading/, { timeout: 30000 });
+
   await page.locator('#i_editor').fill('def greet():\n    print("Hello!")\n    print("Have a great day.")\n    print("Nice to meet you!")\n\ngreet()');
+  
+  // Must run the code because nextStep checks for indentation in step 1
+  await page.locator('#stage-I .checker-footer button:has-text("Run code")').click();
+  await expect(page.locator('#i_fb_run')).toHaveClass(/pass/, { timeout: 30000 });
+
   await page.locator('#i1').fill('A third line appeared: Nice to meet you!');
-  await page.locator('#qcard_i1 button:has-text("Next Investigation")').click();
+  await page.locator('#qcard_i1 .btn-next:has-text("Next Investigation")').click();
+  await page.locator('#i2').waitFor({ state: 'visible' });
   await page.locator('#i2').fill('The greeting printed twice because greet() was called twice.');
-  await page.locator('#qcard_i2 button:has-text("Next Investigation")').click();
+  await page.locator('#qcard_i2 .btn-next:has-text("Next Investigation")').click();
+  await page.locator('#i3').waitFor({ state: 'visible' });
   await page.locator('#i3').fill('The first line changed to show my own name instead of Hello.');
-  await page.locator('#qcard_i3 button:has-text("Next Investigation")').click();
+  await page.locator('#qcard_i3 .btn-next:has-text("Next Investigation")').click();
+  await page.locator('#i4').waitFor({ state: 'visible' });
   await page.locator('#i4').fill('Nothing happened because without brackets Python does not call the function, it just references the object.');
-  await page.locator('#qcard_i4 button:has-text("Next Investigation")').click();
+  await page.locator('#qcard_i4 .btn-next:has-text("Next Investigation")').click();
+  await page.locator('#i5').waitFor({ state: 'visible' });
   await page.locator('#i5').fill('Hello and Have a great day printed, then Goodbye on the next line.');
 }
 
@@ -243,14 +256,28 @@ test.describe('Investigate stage', () => {
   });
 
   test('I4 rejects answer missing bracket/call keywords', async ({ page }) => {
+    // Wait for the editor to NOT be in loading state
+    const container = page.locator('#stage-I .editor-container');
+    await expect(container).not.toHaveClass(/loading/, { timeout: 30000 });
+
+    // Initial code is already in i_editor from showStage('I')
+    // But we need to run it so result is available (though nextStep doesn't strictly require it for n=1 except for indentation check)
+    // We also need to add the 3rd line as required by step 1
+    await page.locator('#i_editor').fill('def greet():\n    print("Hello!")\n    print("Have a great day.")\n    print("Nice to meet you!")\n\ngreet()');
+    await page.locator('#stage-I .checker-footer button:has-text("Run code")').click();
+    await expect(page.locator('#i_fb_run')).toHaveClass(/pass/, { timeout: 30000 });
+
     await page.locator('#i1').fill('Something happened.');
-    await page.locator('#qcard_i1 button:has-text("Next Investigation")').click();
+    await page.locator('#qcard_i1 .btn-next:has-text("Next Investigation")').click();
+    await page.locator('#i2').waitFor({ state: 'visible' });
     await page.locator('#i2').fill('Repeat.');
-    await page.locator('#qcard_i2 button:has-text("Next Investigation")').click();
+    await page.locator('#qcard_i2 .btn-next:has-text("Next Investigation")').click();
+    await page.locator('#i3').waitFor({ state: 'visible' });
     await page.locator('#i3').fill('Name.');
-    await page.locator('#qcard_i3 button:has-text("Next Investigation")').click();
+    await page.locator('#qcard_i3 .btn-next:has-text("Next Investigation")').click();
+    await page.locator('#i4').waitFor({ state: 'visible' });
     await page.locator('#i4').fill('Nonsense answer.');
-    await page.locator('#qcard_i4 button:has-text("Next Investigation")').click();
+    await page.locator('#qcard_i4 .btn-next:has-text("Next Investigation")').click();
     await expect(page.locator('#qcard_i4')).toHaveClass(/error/);
   });
 

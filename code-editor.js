@@ -133,6 +133,29 @@ function _injectStyles() {
       white-space: pre-wrap;
       word-break: break-all;
     }
+
+    @keyframes ac-skeleton-pulse {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 0.6; }
+    }
+    .editor-container.loading::after {
+      content: "";
+      position: absolute;
+      top: 0.8rem; left: 1rem; right: 1rem; bottom: 0.8rem;
+      background-image: linear-gradient(
+        #585b70 0.7rem, 
+        transparent 0.7rem, 
+        transparent 1.7rem
+      );
+      background-size: 100% 1.7rem;
+      animation: ac-skeleton-pulse 1.5s infinite;
+      z-index: 3;
+      pointer-events: none;
+    }
+    .editor-container.loading .checker-textarea,
+    .editor-container.loading .highlight-layer {
+      visibility: hidden;
+    }
   `;
   document.head.appendChild(s);
 }
@@ -142,6 +165,7 @@ const _hintMap = new Map(); // textarea → .syntax-hint element
 const _outputMap = new Map(); // textarea → .output-panel element
 const _hlMap = new Map(); // textarea → .highlight-layer element
 const _numsMap = new Map(); // textarea → .line-nums element
+const _containerMap = new Map(); // textarea → .editor-container element
 const _lastVal = new Map(); // textarea → last processed string
 const _pyTimers = new Map(); // textarea → debounce for heavy pyodide tasks
 const _hintTimers = new Map(); // textarea → debounce for syntax hint visibility
@@ -191,6 +215,10 @@ async function _runHeavyTasks(ta) {
   }
 
   _lastVal.set(ta, val);
+
+  // Remove loading state on first successful run
+  const container = _containerMap.get(ta);
+  if (container) container.classList.remove('loading');
   
   // Update Highlighting
   const hl = _hlMap.get(ta);
@@ -267,8 +295,9 @@ export function setupEditors(selector = '.checker-textarea') {
     ta.parentNode.insertBefore(wrap, ta);
 
     const container = document.createElement('div');
-    container.className = 'editor-container';
+    container.className = 'editor-container loading';
     wrap.appendChild(container);
+    _containerMap.set(ta, container);
 
     const hl = document.createElement('div');
     hl.className = 'highlight-layer';
