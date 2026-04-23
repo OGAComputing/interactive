@@ -961,6 +961,28 @@ function nextStep(stage, n) {
     const card = document.getElementById('qcard_i' + n);
     let msg = val.length < 4 ? 'Describe what happened.' : isNonsense(val) ? "That doesn't look like an answer." : null;
     
+    // Indentation check for step 1
+    if (!msg && n === 1) {
+      const code = document.getElementById('i_editor').value;
+      const lines = code.split('\n');
+      let insidePrints = 0;
+      let inGreet = false;
+      for (let line of lines) {
+        const trimmed = line.trim();
+        if (/^def\s+greet\s*\(\s*\)\s*:/.test(trimmed)) { inGreet = true; continue; }
+        if (inGreet) {
+          if (line.startsWith('    ') || line.startsWith('\t')) {
+            if (/^print\s*\(/.test(trimmed)) insidePrints++;
+          } else if (trimmed !== '' && !trimmed.startsWith('#')) {
+            inGreet = false;
+          }
+        }
+      }
+      if (insidePrints < 3) {
+        msg = 'Make sure your third print statement is indented so it is INSIDE the greet() function.';
+      }
+    }
+
     // Keyword check for step 4
     if (!msg && n === 4) {
       const lower = val.toLowerCase();

@@ -20,6 +20,7 @@ async function fillRun(page) {
 }
 
 async function fillInvestigate(page) {
+  await page.locator('#i_editor').fill('def greet():\n    print("Hello!")\n    print("Have a great day.")\n    print("Nice to meet you!")\n\ngreet()');
   await page.locator('#i1').fill('A third line appeared: Nice to meet you!');
   await page.locator('#qcard_i1 button:has-text("Next Investigation")').click();
   await page.locator('#i2').fill('The greeting printed twice because greet() was called twice.');
