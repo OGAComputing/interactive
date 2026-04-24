@@ -38,7 +38,9 @@ export async function mockSignedOut(page) {
 }
 
 // Token seeded + all downstream APIs mocked as a student (not a teacher).
-export async function mockAsStudent(page, courseId = 'test-course-123') {
+// activityUrl: full URL that the mock courseWork material should point at — must
+// match what page.goto() will navigate to so classroom.js can find the assignment.
+export async function mockAsStudent(page, courseId = 'test-course-123', activityUrl = 'http://127.0.0.1:3001/Y8/Python/L4_Functions/1_Functions.html') {
   await page.addInitScript(seedTokenScript());
   await interceptOAuth(page);
 
@@ -68,7 +70,7 @@ export async function mockAsStudent(page, courseId = 'test-course-123') {
         courseWork: [{
           id: 'mock-cw-123',
           materials: [{
-            link: { url: 'http://localhost:3001/Y8/Python/L4_Functions/1_Functions.html' }
+            link: { url: activityUrl }
           }]
         }]
       }});

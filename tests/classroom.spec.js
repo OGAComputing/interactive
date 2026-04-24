@@ -4,6 +4,7 @@ import { mockSignedOut, mockAsStudent, mockAsTeacher } from './helpers/mockClass
 // Any activity that loads classroom.js works as a host page; Functions is used here.
 const HOST = '/Y8/Python/L4_Functions/1_Functions.html';
 const COURSE_ID = 'test-course-123';
+const ACTIVITY_URL = `http://127.0.0.1:3001${HOST}`;
 
 // Minimal predict fill — just enough to satisfy the activity's form validation
 // so auth-gating is what determines whether we advance.
@@ -66,7 +67,7 @@ test.describe('Signed out', () => {
 
 test.describe('Signed in as student', () => {
   test.beforeEach(async ({ page }) => {
-    await mockAsStudent(page, COURSE_ID);
+    await mockAsStudent(page, COURSE_ID, ACTIVITY_URL);
     await page.goto(`${HOST}?courseId=${COURSE_ID}`);
   });
 

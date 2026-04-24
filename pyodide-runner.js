@@ -151,9 +151,12 @@ def _py_analyze(code):
             cls = "tok-default"
             if tok.type == tokenize.NAME:
                 if keyword.iskeyword(tok.string): cls = "tok-kw"
-                elif tok.string in ['print', 'input', 'len', 'range', 'int', 'str', 'list']: cls = "tok-builtin"
-            elif tok.type in (tokenize.STRING, tokenize.NUMBER, tokenize.COMMENT, tokenize.OP):
-                cls = "tok-" + tokenize.tok_name[tok.type].lower()[:3]
+                elif tok.string in ['print', 'input', 'len', 'range', 'int', 'str', 'float',
+                                    'bool', 'list', 'dict', 'set', 'tuple', 'type',
+                                    'abs', 'round', 'max', 'min', 'sorted', 'enumerate', 'zip']: cls = "tok-builtin"
+            else:
+                cls = {tokenize.STRING: "tok-str", tokenize.NUMBER: "tok-num",
+                       tokenize.COMMENT: "tok-comment", tokenize.OP: "tok-op"}.get(tok.type, "tok-default")
             if cls == "tok-default": tokens_html.append(val)
             else: tokens_html.append(f'<span class="{cls}">{val}</span>')
             last_ln, last_col = tok.end
