@@ -568,30 +568,52 @@
     // Find the most descriptive label for a form element by walking up to a
     // known container, then looking for a heading/label element inside it.
     function findLabel(el) {
-      const container = el.closest('.q-card,.qcard,.card,.code-checker,fieldset');
+      // 1. Data attribute directly on element (best for code editors)
+      if (el.dataset.title) return el.dataset.title.trim();
+
+      // 2. Container search
+      const container = el.closest('.q-card,.qcard,.card,.code-checker,.q-block,fieldset');
       if (container) {
-        const lbl = container.querySelector('.q-label,.qtitle,h3,.ch-label,legend');
+        // Look for common label classes; .checker-header for code-editor.js
+        const lbl = container.querySelector('.q-label,.qtitle,.q-text,.q-num,h3,.ch-label,.checker-header,legend');
         if (lbl) {
+          if (lbl.classList.contains('checker-header')) {
+            // Title is in the last span element
+            const titleSpan = lbl.querySelector('span:last-child');
+            if (titleSpan) return titleSpan.innerText.trim();
+          }
           let t = (lbl.innerText || lbl.textContent || '').trim();
           // Strip leading question number e.g. "1 What is…" → "What is…"
           t = t.replace(/^\s*\d+[\s.)]*/, '').trim();
           if (t) return t;
         }
       }
+
+      // 3. Label element with 'for' attribute
       if (el.id) {
         const lbl = document.querySelector(`label[for="${CSS.escape(el.id)}"]`);
         if (lbl) return (lbl.innerText || lbl.textContent || '').trim();
       }
-      return el.placeholder || el.getAttribute('name') || null;
+
+      // 4. Placeholder/Name fallback (but ignore generic code comments)
+      const ph = el.placeholder || el.getAttribute('name');
+      if (ph && !ph.includes('Write your Python code') && !ph.includes('paste your code')) {
+        return ph.trim();
+      }
+
+      // 5. Generic fallback
+      return el.classList.contains('checker-textarea') || !!el.closest('.code-checker')
+        ? 'Code submission'
+        : 'Response';
     }
 
     // Find pass/fail feedback element near a form element.
     function findFeedback(el) {
-      const container = el.closest('.q-card,.qcard,.card,.code-checker,.checker-footer');
+      const container = el.closest('.q-card,.qcard,.card,.code-checker,.q-block,.checker-footer');
       if (!container) return null;
       // Explicit feedback elements
       const fb = container.querySelector(
-        '.mcq-fb.pass,.mcq-fb.fail,.feedback.pass,.feedback.fail'
+        '.mcq-fb.pass,.mcq-fb.fail,.feedback.pass,.feedback.fail,.q-fb.pass,.q-fb.fail,.q-fb.partial'
       );
       if (fb) {
         return {
@@ -603,7 +625,8 @@
       if (container.classList.contains('correct') ||
           container.classList.contains('answered-correct')) return { passed: true,  text: '' };
       if (container.classList.contains('incorrect') ||
-          container.classList.contains('answered-wrong'))  return { passed: false, text: '' };
+          container.classList.contains('answered-wrong') ||
+          container.classList.contains('wrong')) return { passed: false, text: '' };
       return null;
     }
 
@@ -677,8 +700,9 @@
             : '';
           return `
     <div class="ev-section">
-      <div class="ev-label">${typeIcon} ${esc(typeLabel)} · Q${i + 1}</div>
+      <div class="ev-label">${typeIcon} ${typeLabel.toUpperCase()} · QUESTION ${i + 1}</div>
       <div class="ev-question">${esc(a.label)}</div>
+      <div class="ev-response-head">Response:</div>
       ${answerHtml}${fbHtml}
     </div>`;
         }).join('');
@@ -694,26 +718,31 @@
   body{font-family:'Segoe UI',system-ui,sans-serif;background:#f1f5f9;color:#1e293b;padding:20px;min-height:100vh}
   .ev-wrap{max-width:820px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.12)}
   .ev-head{background:linear-gradient(135deg,#1e3a5f 0%,#0f2040 100%);color:#fff;padding:24px 28px;border-bottom:3px solid #3b82f6;overflow:hidden}
-  .ev-score{float:right;background:rgba(59,130,246,.25);border:1px solid rgba(59,130,246,.5);border-radius:10px;padding:10px 18px;text-align:center;margin:0 0 8px 16px}
+  .ev-score{float:right;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:10px;padding:10px 18px;text-align:center;margin:0 0 8px 16px}
   .ev-score .score-num{font-size:2rem;font-weight:800;line-height:1;color:#fff}
-  .ev-score .score-label{font-size:.7rem;color:#93c5fd;margin-top:2px}
+  .ev-score .score-label{font-size:.7rem;color:#bfdbfe;margin-top:2px}
   .ev-title{font-size:1.35rem;font-weight:700;margin-bottom:3px}
   .ev-subtitle{font-size:.92rem;color:#93c5fd;margin-bottom:10px}
   .ev-meta{font-size:.78rem;color:#bfdbfe;display:flex;flex-wrap:wrap;gap:4px 16px}
   .ev-body{padding:24px 28px}
-  .ev-section{margin-bottom:22px;padding-bottom:20px;border-bottom:1px solid #f1f5f9}
+  .ev-section{margin-bottom:32px;padding-bottom:24px;border-bottom:1px solid #f1f5f9}
   .ev-section:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
-  .ev-label{font-size:.7rem;font-weight:700;text-transform:uppercase;color:#64748b;letter-spacing:.06em;margin-bottom:5px}
-  .ev-question{font-size:.93rem;font-weight:600;color:#334155;margin-bottom:9px;line-height:1.5}
-  .ev-answer{background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:8px;padding:11px 14px;font-size:.91rem;color:#1e293b;white-space:pre-wrap;word-break:break-word;line-height:1.6}
-  .ev-answer.code{font-family:'Cascadia Code','Consolas','Courier New',monospace;font-size:.82rem;background:#0f172a;color:#e2e8f0;border-color:#1e293b;overflow-x:auto}
+  .ev-label{font-size:.65rem;font-weight:700;text-transform:uppercase;color:#94a3b8;letter-spacing:.06em;margin-bottom:8px}
+  .ev-question{font-size:1.1rem;font-weight:700;color:#0f172a;margin-bottom:12px;line-height:1.4}
+  .ev-response-head{font-size:.75rem;font-weight:700;color:#64748b;margin-bottom:6px;text-transform:uppercase}
+  .ev-answer{background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:14px;font-size:.95rem;color:#1e293b;white-space:pre-wrap;word-break:break-word;line-height:1.6}
+  .ev-answer.code{font-family:'Cascadia Code','Consolas','Courier New',monospace;font-size:.85rem;background:#0f172a;color:#f1f5f9;border-color:#1e293b;overflow-x:auto}
   .ev-answer.empty{color:#94a3b8;font-style:italic}
-  .ev-feedback{margin-top:8px;font-size:.82rem;font-weight:600;padding:6px 10px;border-radius:6px}
-  .ev-feedback.pass{background:#dcfce7;color:#166534;border:1px solid #86efac}
-  .ev-feedback.fail{background:#fee2e2;color:#991b1b;border:1px solid #fca5a5}
+  .ev-feedback{margin-top:10px;font-size:.85rem;font-weight:600;padding:8px 12px;border-radius:6px;display:inline-block}
+  .ev-feedback.pass{background:#f0fdf4;color:#166534;border:1px solid #bbf7d0}
+  .ev-feedback.fail{background:#fef2f2;color:#991b1b;border:1px solid #fecaca}
   .ev-empty{color:#94a3b8;font-style:italic;font-size:.9rem}
   .ev-footer{text-align:center;font-size:.72rem;color:#94a3b8;padding:14px 28px;border-top:1px solid #f1f5f9;background:#fafafa}
-  @media print{body{background:#fff;padding:0}.ev-wrap{box-shadow:none;border-radius:0}}
+  @media print{
+    body{background:#fff;padding:0}
+    .ev-wrap{box-shadow:none;border-radius:0;max-width:100%}
+    .ev-section{break-inside:avoid}
+  }
 </style>
 </head>
 <body>
