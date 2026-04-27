@@ -110,6 +110,32 @@
     }
     body.teacher-mode .btn-assign { display: block; }
     .btn-assign:hover { background: #00ffff; }
+    .btn-assign:disabled { opacity: 0.65; cursor: not-allowed; background: #00b4b4; }
+
+    /* ── Assign modal ── */
+    #assign-modal-backdrop {
+      display: none; position: fixed; inset: 0; z-index: 99999;
+      background: rgba(0,0,0,0.65); align-items: center; justify-content: center;
+    }
+    #assign-modal-backdrop.open { display: flex; }
+    #assign-modal {
+      background: #1e293b; border: 1px solid #334155; border-radius: 12px;
+      padding: 28px 32px; max-width: 520px; width: calc(100% - 48px);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+    }
+    #assign-modal h2 { font-size: 1.1rem; color: #f1f5f9; margin-bottom: 12px; }
+    #assign-modal p  { font-size: 0.85rem; color: #94a3b8; line-height: 1.7; margin-bottom: 20px; }
+    #assign-modal a  { color: #60a5fa; }
+    #assign-modal-actions { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+    #assign-modal-actions button {
+      padding: 7px 18px; border: none; border-radius: 6px;
+      font-size: 0.82rem; font-weight: 700; cursor: pointer;
+    }
+    .assign-btn-primary   { background: #3b82f6; color: #fff; }
+    .assign-btn-primary:hover { background: #2563eb; }
+    .assign-btn-secondary { background: #374151; color: #d1d5db; }
+    .assign-btn-secondary:hover { background: #4b5563; }
 
     /* ── Year tabs ── */
     #year-tabs {
@@ -601,23 +627,59 @@
     if (items[focusedIndex]) items[focusedIndex].scrollIntoView({ block: 'nearest' });
   }
 
-  async function assignToClassroom(activityPath, title) {
+  // ── Assign modal helpers ─────────────────────────────────
+  let _assignModalResolve = null;
+
+  function showAssignModal(title, bodyHtml, actions) {
+    document.getElementById('assign-modal-title').textContent = title;
+    document.getElementById('assign-modal-body').innerHTML = bodyHtml;
+    const actionsEl = document.getElementById('assign-modal-actions');
+    actionsEl.innerHTML = '';
+    (actions || [{ label: 'OK', primary: true, value: null }]).forEach(a => {
+      const btn = document.createElement('button');
+      btn.textContent = a.label;
+      btn.className = a.primary ? 'assign-btn-primary' : 'assign-btn-secondary';
+      btn.onclick = () => {
+        document.getElementById('assign-modal-backdrop').classList.remove('open');
+        if (_assignModalResolve) { _assignModalResolve(a.value); _assignModalResolve = null; }
+      };
+      actionsEl.appendChild(btn);
+    });
+    document.getElementById('assign-modal-backdrop').classList.add('open');
+  }
+
+  function assignModalConfirm(title, bodyHtml, actions) {
+    return new Promise(resolve => {
+      _assignModalResolve = resolve;
+      showAssignModal(title, bodyHtml, actions);
+    });
+  }
+
+  async function assignToClassroom(activityPath, title, btn) {
     const courseId = selectedCourseId;
-    if (!courseId) return alert("Select a class first!");
+    if (!courseId) {
+      showAssignModal('⚠️ No class selected', 'Please select a class from the dropdown before assigning.');
+      return;
+    }
+
+    if (btn) { btn.textContent = '⏳ Assigning…'; btn.disabled = true; }
+    const restoreBtn = () => { if (btn) { btn.textContent = '➕ Assign to Class'; btn.disabled = false; } };
 
     let proxyUrl = localStorage.getItem('oga_proxy_url') || '';
 
     // ── Pre-flight proxy check ────────────────────────────────────────────────
-    // Validate the proxy before baking its URL into the assignment link.
-    // A bad URL here is the #1 cause of silent grade-sync failures for students.
     if (!proxyUrl) {
-      const proceed = confirm(
-        'No proxy URL is configured.\n\n' +
-        'Students will not have their grades recorded in Google Classroom.\n\n' +
-        'Run the proxy setup first:\n  _teacher/setup.html\n\n' +
-        'Assign without grade sync anyway?'
+      const proceed = await assignModalConfirm(
+        '⚠️ Grade sync not configured',
+        `Students' scores won't be recorded in Classroom without a grade proxy.<br><br>
+        Run the one-time setup first: <a href="_teacher/setup.html" target="_blank">Proxy setup page →</a><br><br>
+        Assign without grade sync anyway?`,
+        [
+          { label: 'Cancel',       primary: false, value: false },
+          { label: 'Assign anyway', primary: true,  value: true  }
+        ]
       );
-      if (!proceed) return;
+      if (!proceed) { restoreBtn(); return; }
     } else {
       let health = await checkProxyHealth(proxyUrl);
 
@@ -639,32 +701,35 @@
       }
 
       if (health === 'cors-blocked') {
-        alert(
-          'Cannot assign — proxy is blocked by CORS.\n\n' +
-          'Your proxy script was deployed with "Who has access: Anyone with Google account" ' +
-          'instead of "Anyone". Students will get a grade-sync error on every submission.\n\n' +
-          'Fix: re-run the proxy setup (_teacher/setup.html) to deploy a fresh copy ' +
-          'with the correct access setting, then assign again.'
+        showAssignModal(
+          '❌ Proxy blocked — assignment cancelled',
+          `Your proxy script was deployed with <strong>"Who has access: Anyone with Google account"</strong>
+          instead of <strong>"Anyone"</strong>. Students would get a grade-sync error on every submission.<br><br>
+          Fix: re-run the proxy setup to deploy a fresh copy with the correct access setting, then assign again.<br><br>
+          <a href="_teacher/setup.html" target="_blank">Proxy setup page →</a>&emsp;
+          <a href="getting-started.html" target="_blank">Getting Started guide →</a>`
         );
-        return;
+        restoreBtn(); return;
       }
       if (health === 'unreachable') {
-        alert(
-          'Cannot assign — proxy URL is not working.\n\n' +
-          'The saved proxy URL returned a 404 or could not be reached. ' +
-          'It may have been deleted or is from an old deployment.\n\n' +
-          'Fix: re-run the proxy setup (_teacher/setup.html) to create a fresh proxy, ' +
-          'then assign again.'
+        showAssignModal(
+          '❌ Proxy not reachable — assignment cancelled',
+          `The saved proxy URL returned a 404 or could not be reached.
+          It may have been deleted or is from an old deployment.<br><br>
+          Fix: re-run the proxy setup to create a fresh proxy, then assign again.<br><br>
+          <a href="_teacher/setup.html" target="_blank">Proxy setup page →</a>&emsp;
+          <a href="getting-started.html" target="_blank">Getting Started guide →</a>`
         );
-        return;
+        restoreBtn(); return;
       }
       if (health === 'version-mismatch') {
-        alert(
-          'Cannot assign — proxy script is outdated.\n\n' +
-          'The proxy needs to be updated before it will work with the current version of classroom.js.\n\n' +
-          'Fix: re-run the proxy setup (_teacher/setup.html) to update it, then assign again.'
+        showAssignModal(
+          '❌ Proxy script outdated — assignment cancelled',
+          `The proxy needs to be updated before it will work with the current version of the activities.<br><br>
+          Fix: re-run the proxy setup to update it, then assign again.<br><br>
+          <a href="_teacher/setup.html" target="_blank">Proxy setup page →</a>`
         );
-        return;
+        restoreBtn(); return;
       }
     }
     // ── End proxy check ───────────────────────────────────────────────────────
@@ -690,11 +755,15 @@
     });
 
     if (res.ok) {
-      alert(`"${title}" assigned to your class with automatic grade sync enabled.`);
+      showAssignModal(
+        '✅ Assigned!',
+        `"${title}" has been published to your class${proxyUrl ? ' with automatic grade sync enabled' : ' (no grade sync — proxy not configured)'}.`
+      );
     } else {
-      console.error("Assignment creation failed:", await res.text());
-      alert("Error creating assignment. Check console.");
+      console.error('Assignment creation failed:', await res.text());
+      showAssignModal('❌ Assignment failed', 'Could not create the assignment. Check the browser console for details.');
     }
+    restoreBtn();
   }
 
   const COLOR = {
@@ -729,7 +798,7 @@
         </div>
         <div class="card-title">${a.title}</div>
         <div class="card-desc">${a.desc}</div>
-        <button class="btn-assign" onclick="event.preventDefault(); assignToClassroom('${a.path}', '${a.title}')">➕ Assign to Class</button>
+        <button class="btn-assign" onclick="event.preventDefault(); assignToClassroom('${a.path}', '${a.title}', this)">➕ Assign to Class</button>
         <div class="card-arrow">Open →</div>
       </a>`;
   }
@@ -980,6 +1049,14 @@
   // Restore sign-in state on every page load (handles redirect return and tab reloads).
   checkPendingHubToken();
 </script>
+
+<div id="assign-modal-backdrop">
+  <div id="assign-modal">
+    <h2 id="assign-modal-title"></h2>
+    <p id="assign-modal-body"></p>
+    <div id="assign-modal-actions"></div>
+  </div>
+</div>
 
 </body>
 </html>
