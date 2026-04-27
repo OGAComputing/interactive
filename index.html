@@ -605,8 +605,53 @@
     const courseId = selectedCourseId;
     if (!courseId) return alert("Select a class first!");
 
-    const baseUrl = window.location.origin + window.location.pathname.replace('index.html', '') + activityPath;
     const proxyUrl = localStorage.getItem('oga_proxy_url') || '';
+
+    // ── Pre-flight proxy check ────────────────────────────────────────────────
+    // Validate the proxy before baking its URL into the assignment link.
+    // A bad URL here is the #1 cause of silent grade-sync failures for students.
+    if (!proxyUrl) {
+      const proceed = confirm(
+        'No proxy URL is configured.\n\n' +
+        'Students will not have their grades recorded in Google Classroom.\n\n' +
+        'Run the proxy setup first:\n  _teacher/setup.html\n\n' +
+        'Assign without grade sync anyway?'
+      );
+      if (!proceed) return;
+    } else {
+      const health = await checkProxyHealth(proxyUrl);
+      if (health === 'cors-blocked') {
+        alert(
+          'Cannot assign — proxy is blocked by CORS.\n\n' +
+          'Your proxy script was deployed with "Who has access: Anyone with Google account" ' +
+          'instead of "Anyone". Students will get a grade-sync error on every submission.\n\n' +
+          'Fix: re-run the proxy setup (_teacher/setup.html) to deploy a fresh copy ' +
+          'with the correct access setting, then assign again.'
+        );
+        return;
+      }
+      if (health === 'unreachable') {
+        alert(
+          'Cannot assign — proxy URL is not working.\n\n' +
+          'The saved proxy URL returned a 404 or could not be reached. ' +
+          'It may have been deleted or is from an old deployment.\n\n' +
+          'Fix: re-run the proxy setup (_teacher/setup.html) to create a fresh proxy, ' +
+          'then assign again.'
+        );
+        return;
+      }
+      if (health === 'version-mismatch') {
+        alert(
+          'Cannot assign — proxy script is outdated.\n\n' +
+          'The proxy needs to be updated before it will work with the current version of classroom.js.\n\n' +
+          'Fix: re-run the proxy setup (_teacher/setup.html) to update it, then assign again.'
+        );
+        return;
+      }
+    }
+    // ── End proxy check ───────────────────────────────────────────────────────
+
+    const baseUrl = window.location.origin + window.location.pathname.replace('index.html', '') + activityPath;
     const activityUrl = `${baseUrl}?courseId=${courseId}${proxyUrl ? '&proxyUrl=' + encodeURIComponent(proxyUrl) : ''}`;
 
     const res = await fetch(`https://classroom.googleapis.com/v1/courses/${courseId}/courseWork`, {
@@ -766,6 +811,26 @@
     });
 
   // ── Proxy helpers ────────────────────────────────────────
+
+  // Checks the proxy is reachable and returns the correct version.
+  // Returns 'ok' | 'cors-blocked' | 'unreachable' | 'version-mismatch'.
+  async function checkProxyHealth(url) {
+    const PROXY_MIN_VERSION = 1;
+    try {
+      const res  = await fetch(url + '?action=version');
+      const text = res.ok ? (await res.text()).trim() : '';
+      const ver  = parseInt(text, 10);
+      return (!isNaN(ver) && ver >= PROXY_MIN_VERSION) ? 'ok' : 'version-mismatch';
+    } catch (_) {
+      // fetch threw — could be CORS block or true network error.
+      // A no-cors probe distinguishes: opaque response = reachable but CORS-blocked.
+      try {
+        const probe = await fetch(url + '?action=version', { mode: 'no-cors' });
+        if (probe.type === 'opaque') return 'cors-blocked';
+      } catch (_2) {}
+      return 'unreachable';
+    }
+  }
 
   function showNoProxyOptions() {
     document.getElementById('teacher-status').innerHTML =

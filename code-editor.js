@@ -30,6 +30,35 @@ function _injectStyles() {
     :where(.editor-wrap) {
       display: flex;
       background: #0d0d1a;
+      border-radius: 0 0 12px 12px;
+      overflow: hidden;
+    }
+    :where(.checker-header) {
+      background: #1a1040;
+      padding: 0.6rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8rem;
+      color: #b4a0e0;
+      font-family: 'Trebuchet MS', 'Calibri', sans-serif;
+      border-radius: 12px 12px 0 0;
+      border: 2px solid #3d2d5e;
+      border-bottom: none;
+    }
+    :where(.checker-dot) {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    :where(.dot-r) { background: #f38ba8; }
+    :where(.dot-y) { background: #f9e2af; }
+    :where(.dot-g) { background: #a6e3a1; }
+    :where(.checker-header span:last-child) {
+      margin-left: auto;
+      font-weight: 700;
+      color: #cba6f7;
     }
     :where(.line-nums) {
       padding: .8rem .5rem .8rem .7rem;
@@ -132,6 +161,18 @@ function _injectStyles() {
     :where(.output-content) {
       white-space: pre-wrap;
       word-break: break-all;
+    }
+
+    @media (max-width: 768px) {
+      :where(.editor-wrap) {
+        flex-direction: column;
+      }
+      :where(.output-panel) {
+        border-left: none;
+        border-top: 1px solid #2d1060;
+        min-height: 120px;
+        flex: none;
+      }
     }
 
     @keyframes ac-skeleton-pulse {
@@ -301,6 +342,17 @@ export function setupEditors(selector = '.checker-textarea') {
     const wrap = document.createElement('div');
     wrap.className = 'editor-wrap';
     ta.parentNode.insertBefore(wrap, ta);
+
+    // Optional header if data-title is present and no header exists
+    if (ta.dataset.title) {
+      const existingHeader = ta.closest('.code-checker')?.querySelector('.checker-header');
+      if (!existingHeader) {
+        const header = document.createElement('div');
+        header.className = 'checker-header';
+        header.innerHTML = '<span class="checker-dot dot-r"></span><span class="checker-dot dot-y"></span><span class="checker-dot dot-g"></span><span>' + ta.dataset.title + '</span>';
+        wrap.parentNode.insertBefore(header, wrap);
+      }
+    }
 
     const container = document.createElement('div');
     container.className = 'editor-container loading';
