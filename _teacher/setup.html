@@ -262,7 +262,9 @@
 
 <script>
   const CLIENT_ID = '379663437881-iukh6qnkq8jmqtqko3qog0n6ohuhemmq.apps.googleusercontent.com';
-  const SCOPE = 'https://www.googleapis.com/auth/script.projects https://www.googleapis.com/auth/script.deployments https://www.googleapis.com/auth/drive.scripts https://www.googleapis.com/auth/drive.file';
+  // drive.file only covers files created in the current session; drive is needed to trash
+  // old proxy scripts from previous runs (which this app didn't create in this session).
+  const SCOPE = 'https://www.googleapis.com/auth/script.projects https://www.googleapis.com/auth/script.deployments https://www.googleapis.com/auth/drive.scripts https://www.googleapis.com/auth/drive';
   const SCRIPT_API = 'https://script.googleapis.com/v1';
 
   // Project number of the shared GCP project created by your IT admin.
@@ -309,7 +311,7 @@ function out(msg) {
   };
 
   function handleMainBtn() {
-    if (phase === 'signin') { tokenClient && tokenClient.requestAccessToken(); return; }
+    if (phase === 'signin') { tokenClient && tokenClient.requestAccessToken({ prompt: 'consent' }); return; }
   }
 
   async function cleanupOldProxies() {
