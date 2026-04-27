@@ -302,7 +302,7 @@
     try {
       const searchRes = await fetch(
         'https://www.googleapis.com/drive/v3/files?' + new URLSearchParams({
-          q: "mimeType='application/vnd.google-apps.script' and name='OGA Classroom Grade Proxy' and trashed=false",
+          q: "mimeType='application/vnd.google-apps.script' and name='OGA Classroom Grade Proxy' and trashed=false and 'me' in owners",
           fields: 'files(id,name)',
           pageSize: 5
         }),

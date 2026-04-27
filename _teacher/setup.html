@@ -317,7 +317,7 @@ function out(msg) {
       setStepDesc(2, 'Searching for old proxies…');
       const searchRes = await fetch(
         'https://www.googleapis.com/drive/v3/files?' + new URLSearchParams({
-          q: "mimeType='application/vnd.google-apps.script' and name='OGA Classroom Grade Proxy' and trashed=false",
+          q: "mimeType='application/vnd.google-apps.script' and name='OGA Classroom Grade Proxy' and trashed=false and 'me' in owners",
           fields: 'files(id,name)',
           pageSize: 20
         }),
@@ -327,11 +327,20 @@ function out(msg) {
       if (files && files.length > 0) {
         setStepDesc(2, `Cleaning up ${files.length} old proxy script${files.length > 1 ? 's' : ''}…`);
         for (const file of files) {
-          // Attempt to delete. Removal of the file automatically deactivates all web app deployments.
-          await fetch(`https://www.googleapis.com/drive/v3/files/${file.id}`, {
-            method: 'DELETE',
-            headers: { Authorization: `Bearer ${accessToken}` }
+          // Trash the file instead of permanent delete. This is more likely to succeed
+          // without a project API key and automatically deactivates deployments.
+          const res = await fetch(`https://www.googleapis.com/drive/v3/files/${file.id}`, {
+            method: 'PATCH',
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ trashed: true })
           });
+          if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            console.warn(`Cleanup: could not trash ${file.id}`, err.error || res.status);
+          }
         }
       }
     } catch (e) {
