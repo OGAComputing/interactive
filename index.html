@@ -605,7 +605,7 @@
     const courseId = selectedCourseId;
     if (!courseId) return alert("Select a class first!");
 
-    const proxyUrl = localStorage.getItem('oga_proxy_url') || '';
+    let proxyUrl = localStorage.getItem('oga_proxy_url') || '';
 
     // ── Pre-flight proxy check ────────────────────────────────────────────────
     // Validate the proxy before baking its URL into the assignment link.
@@ -619,7 +619,25 @@
       );
       if (!proceed) return;
     } else {
-      const health = await checkProxyHealth(proxyUrl);
+      let health = await checkProxyHealth(proxyUrl);
+
+      // For URL-level failures, auto-search Drive for a fresher deployment before giving up.
+      if ((health === 'cors-blocked' || health === 'unreachable') && accessToken) {
+        const statusEl = document.getElementById('teacher-status');
+        const prev = statusEl.textContent;
+        statusEl.textContent = '🔍 Checking Drive for an updated proxy URL…';
+        const freshUrl = await searchDriveForProxyUrl();
+        statusEl.textContent = prev;
+        if (freshUrl && freshUrl !== proxyUrl) {
+          const freshHealth = await checkProxyHealth(freshUrl);
+          if (freshHealth === 'ok') {
+            try { localStorage.setItem('oga_proxy_url', freshUrl); } catch (_) {}
+            proxyUrl = freshUrl;
+            health = 'ok';
+          }
+        }
+      }
+
       if (health === 'cors-blocked') {
         alert(
           'Cannot assign — proxy is blocked by CORS.\n\n' +
@@ -838,6 +856,41 @@
       '<button class="btn-inline" onclick="findProxyInDrive()" id="btn-find-proxy">Search my Drive</button>' +
       ' &nbsp;·&nbsp; <button class="btn-inline-ghost" onclick="document.getElementById(\'hub-proxy-row\').classList.add(\'visible\')">Paste URL</button>' +
       ' &nbsp;·&nbsp; <a href="_teacher/setup.html" style="color:#7a9ab5;font-size:0.78rem;">new setup →</a>';
+  }
+
+  // Returns the most recently published /exec URL for the teacher's proxy script, or null.
+  // NOTE: classroom.js has a duplicate of this logic in searchDriveForProxy() — keep in sync.
+  async function searchDriveForProxyUrl() {
+    try {
+      const searchRes = await fetch(
+        'https://www.googleapis.com/drive/v3/files?' + new URLSearchParams({
+          q: "mimeType='application/vnd.google-apps.script' and name='OGA Classroom Grade Proxy' and trashed=false and 'me' in owners",
+          fields: 'files(id,name)',
+          pageSize: 5
+        }),
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+      const { files } = await searchRes.json();
+      if (!files || files.length === 0) return null;
+      const depRes = await fetch(
+        `https://script.googleapis.com/v1/projects/${files[0].id}/deployments`,
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+      const depData = await depRes.json();
+      const deployments = (depData.deployments || []).sort((a, b) =>
+        new Date(b.updateTime) - new Date(a.updateTime)
+      );
+      for (const dep of deployments) {
+        const ep = (dep.entryPoints || []).find(ep =>
+          ep.entryPointType === 'WEB_APP' && ep.webApp?.url?.endsWith('/exec')
+        );
+        if (ep) return ep.webApp.url;
+      }
+      return null;
+    } catch (e) {
+      console.error('Drive proxy search failed:', e);
+      return null;
+    }
   }
 
   async function findProxyInDrive() {
