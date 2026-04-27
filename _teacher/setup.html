@@ -262,7 +262,7 @@
 
 <script>
   const CLIENT_ID = '379663437881-iukh6qnkq8jmqtqko3qog0n6ohuhemmq.apps.googleusercontent.com';
-  const SCOPE = 'https://www.googleapis.com/auth/script.projects https://www.googleapis.com/auth/script.deployments https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.metadata.readonly';
+  const SCOPE = 'https://www.googleapis.com/auth/script.projects https://www.googleapis.com/auth/script.deployments https://www.googleapis.com/auth/drive.scripts https://www.googleapis.com/auth/drive.metadata.readonly';
   const SCRIPT_API = 'https://script.googleapis.com/v1';
 
   // Project number of the shared GCP project created by your IT admin.
@@ -327,19 +327,22 @@ function out(msg) {
       if (files && files.length > 0) {
         setStepDesc(2, `Cleaning up ${files.length} old proxy script${files.length > 1 ? 's' : ''}…`);
         for (const file of files) {
-          // Trash the file instead of permanent delete. This is more likely to succeed
-          // without a project API key and automatically deactivates deployments.
-          const res = await fetch(`https://www.googleapis.com/drive/v3/files/${file.id}`, {
-            method: 'PATCH',
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ trashed: true })
-          });
-          if (!res.ok) {
-            const err = await res.json().catch(() => ({}));
-            console.warn(`Cleanup: could not trash ${file.id}`, err.error || res.status);
+          try {
+            // Trash the file instead of permanent delete. This automatically deactivates deployments.
+            const res = await fetch(`https://www.googleapis.com/drive/v3/files/${file.id}`, {
+              method: 'PATCH',
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ trashed: true })
+            });
+            if (!res.ok) {
+              const err = await res.json().catch(() => ({}));
+              console.warn(`Cleanup: could not trash ${file.id}`, err.error || res.status);
+            }
+          } catch (fileErr) {
+            console.warn(`Cleanup: fetch failed for ${file.id}`, fileErr);
           }
         }
       }
