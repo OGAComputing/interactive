@@ -244,8 +244,23 @@ color:  purple
     ⚠️ Please write something in every question above — even a guess is fine!
   </div>
 
-  <button class="btn btn-next" onclick="tryCompletePredict()" style="margin-top:1rem">
-    ✓ I've made my predictions — go to Run →
+  <div id="predict-review" class="step-hidden" style="margin-top:1rem">
+    <div class="info-box" style="flex-direction:column;gap:0.6rem">
+      <div style="font-weight:700;color:white;font-size:0.9rem">📖 Model Answers — compare with yours before running:</div>
+      <div style="display:grid;gap:0.5rem;font-size:0.85rem">
+        <div><strong style="color:#cba6f7">Q1:</strong> The loop runs <strong>4 times</strong> — <code style="color:#fab387">range(4)</code> generates values 0, 1, 2, 3.</div>
+        <div><strong style="color:#cba6f7">Q2:</strong> <strong>Lines 5 and 6</strong> are inside the loop — they are indented by 4 spaces beneath the <code style="color:#cba6f7">for</code> line.</div>
+        <div><strong style="color:#cba6f7">Q3:</strong> A <strong>square</strong> — 4 equal sides, each with a 90° left turn (4 × 90 = 360°).</div>
+        <div><strong style="color:#cba6f7">Q4:</strong> <code style="color:#fab387">i</code> takes the values <strong>0, 1, 2, 3</strong> — <code style="color:#fab387">range()</code> always starts at 0 and stops before the number given.</div>
+      </div>
+    </div>
+  </div>
+
+  <button class="btn btn-check" onclick="tryCompletePredict()" style="margin-top:1rem">
+    ✓ Check predictions
+  </button>
+  <button class="btn btn-next step-hidden" id="btn_goto_r" onclick="completeStage('P')" style="margin-top:1rem">
+    ✓ Reviewed — go to Run →
   </button>
 </section>
 
@@ -510,6 +525,11 @@ window.addEventListener('DOMContentLoaded', () => {
   updateStepVisibility();
 
   if (completedStages.includes('M2')) showCompletion();
+
+  if (completedStages.includes('P')) {
+    document.getElementById('predict-review')?.classList.remove('step-hidden');
+    document.getElementById('btn_goto_r')?.classList.remove('step-hidden');
+  }
 
   setPyStatus('loading');
   preload()
@@ -785,7 +805,10 @@ function tryCompletePredict() {
     if (firstError) firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
   } else {
     if (warning) warning.style.display = 'none';
-    completeStage('P');
+    document.getElementById('predict-review')?.classList.remove('step-hidden');
+    const gotoBtn = document.getElementById('btn_goto_r');
+    gotoBtn?.classList.remove('step-hidden');
+    gotoBtn?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 }
 

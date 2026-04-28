@@ -334,8 +334,11 @@ color:  purple
     ⚠️ Please answer every question above — even a guess is fine!
   </div>
 
-  <button class="btn btn-next" onclick="tryCompletePredict()" style="margin-top:1rem">
-    ✓ Check predictions &amp; go to Run →
+  <button class="btn btn-check" onclick="tryCompletePredict()" style="margin-top:1rem">
+    ✓ Check predictions
+  </button>
+  <button class="btn btn-next step-hidden" id="btn_goto_r" onclick="completeStage('P')" style="margin-top:1rem">
+    ✓ Reviewed — go to Run →
   </button>
 </section>
 
@@ -948,7 +951,9 @@ function tryCompletePredict() {
     firstError?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   } else {
     warning.style.display = 'none';
-    completeStage('P');
+    const gotoBtn = document.getElementById('btn_goto_r');
+    gotoBtn?.classList.remove('step-hidden');
+    gotoBtn?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 }
 
@@ -1240,6 +1245,7 @@ window.addEventListener('DOMContentLoaded', () => {
   // Restore MCQ feedback if predict was completed
   if (completedStages.includes('P')) {
     ['p1','p2','p4'].forEach(name => applyMCQFeedback(name, P_CORRECT[name]));
+    document.getElementById('btn_goto_r')?.classList.remove('step-hidden');
     const p3val = (document.getElementById('p3')?.value || '').trim().toLowerCase();
     if (p3val.length > 0) {
       const ok3 = p3val.includes('you were born around 2013');
