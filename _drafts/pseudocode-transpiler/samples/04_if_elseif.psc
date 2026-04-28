@@ -1,0 +1,8 @@
+entry=input("Pick a or b: ")
+if entry=="a" then
+    print("You selected A")
+elseif entry=="b" then
+    print("You selected B")
+else
+    print("Unrecognised selection")
+endif

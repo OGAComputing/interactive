@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>OCR Pseudocode Transpiler — Prototype</title>
+<style>
+  :root {
+    --bg: #0d0d1a;
+    --panel: #15152a;
+    --border: #2d1060;
+    --text: #cdd6f4;
+    --dim: #7a7a9a;
+    --accent: #cba6f7;
+    --ok: #a6e3a1;
+    --warn: #f9e2af;
+    --err: #f38ba8;
+    --code: 'Courier New', 'Consolas', monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: 'Trebuchet MS', sans-serif; height: 100%; }
+  header {
+    display: flex; align-items: center; gap: 1rem;
+    padding: .8rem 1.2rem;
+    border-bottom: 1px solid var(--border);
+    background: #1a1040;
+  }
+  header h1 { margin: 0; font-size: 1rem; font-weight: 700; color: var(--accent); }
+  header .pill { font-size: .7rem; color: var(--dim); border: 1px solid var(--border); padding: .15rem .5rem; border-radius: 999px; }
+  header .grow { flex: 1; }
+  header label { font-size: .8rem; color: var(--dim); }
+  header select, header button {
+    background: var(--panel); color: var(--text); border: 1px solid var(--border);
+    padding: .35rem .7rem; font-size: .8rem; border-radius: 6px; cursor: pointer;
+    font-family: inherit;
+  }
+  header button.primary { background: var(--accent); color: #1a1040; border-color: var(--accent); font-weight: 700; }
+  header button:disabled { opacity: .4; cursor: not-allowed; }
+
+  .panes { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); height: calc(100vh - 49px); }
+  .pane { background: var(--panel); display: flex; flex-direction: column; min-height: 0; }
+  .pane h2 { margin: 0; padding: .5rem .8rem; font-size: .7rem; color: var(--dim); text-transform: uppercase; letter-spacing: .05em; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: .5rem; }
+  .pane h2 .status { margin-left: auto; font-size: .65rem; padding: .1rem .5rem; border-radius: 4px; }
+  .status.ok  { color: var(--ok); border: 1px solid var(--ok); }
+  .status.err { color: var(--err); border: 1px solid var(--err); }
+  .status.muted { color: var(--dim); border: 1px solid var(--border); }
+
+  /* left: editor */
+  #src {
+    flex: 1; min-height: 0;
+    background: transparent; color: var(--text);
+    font-family: var(--code); font-size: .9rem; line-height: 1.55;
+    padding: .8rem 1rem; border: none; outline: none; resize: none;
+    white-space: pre; tab-size: 4;
+  }
+
+  /* right: python preview, scrollable, with source-map gutter */
+  #pyOut {
+    flex: 1; overflow: auto; padding: .5rem 0;
+    font-family: var(--code); font-size: .85rem; line-height: 1.55;
+  }
+  .pyrow { display: grid; grid-template-columns: 4.5rem 1fr; padding: 0 1rem; }
+  .pyrow .gutter { color: var(--dim); user-select: none; padding-right: .8rem; text-align: right; border-right: 1px dashed var(--border); margin-right: .8rem; }
+  .pyrow .gutter.injected { color: #4a3060; font-style: italic; }
+  .pyrow .code { white-space: pre; }
+  .pyrow.errline { background: #3a1018; }
+  .pyrow.errline .gutter { color: var(--err); font-weight: 700; }
+
+  /* output console (overlay along bottom of right pane) */
+  .console {
+    border-top: 1px solid var(--border);
+    background: #070710;
+    padding: .5rem .8rem;
+    font-family: var(--code); font-size: .8rem;
+    max-height: 35%; overflow: auto;
+    color: #5eead4;
+    white-space: pre-wrap;
+  }
+  .console.err { color: var(--err); }
+  .console:empty::before { content: 'Output will appear here after you press Run.'; color: var(--dim); font-style: italic; }
+
+  .errhint {
+    border-top: 1px solid #4a2e00;
+    background: #18100a;
+    color: var(--warn);
+    padding: .4rem .8rem;
+    font-family: var(--code); font-size: .78rem;
+    display: none;
+  }
+  .errhint.show { display: block; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>OCR Pseudocode → Python</h1>
+  <span class="pill">prototype</span>
+  <span class="grow"></span>
+  <label for="sampleSel">Load sample:</label>
+  <select id="sampleSel">
+    <option value="">— choose —</option>
+  </select>
+  <button id="clearBtn" type="button">Clear</button>
+  <button id="runBtn" class="primary" type="button" disabled>Loading Pyodide…</button>
+</header>
+
+<div class="panes">
+  <div class="pane">
+    <h2>Pseudocode <span id="srcStatus" class="status muted">—</span></h2>
+    <textarea id="src" spellcheck="false" autocomplete="off" autocapitalize="off">for i=0 to 4
+    print("Hello "+str(i))
+next i
+</textarea>
+    <div id="errHint" class="errhint"></div>
+  </div>
+  <div class="pane">
+    <h2>Transpiled Python <span id="pyStatus" class="status muted">—</span></h2>
+    <div id="pyOut"></div>
+    <div id="console" class="console"></div>
+  </div>
+</div>
+
+<script type="module">
+import { transpile, mapErrorLine } from './transpiler.js';
+import { preload, runPython } from '../../pyodide-runner.js';
+
+// ── Sample loader ────────────────────────────────────────────────────────────
+const SAMPLES = [
+  ['01_count_loop',          'count loop (for…to…next)'],
+  ['02_password_while',      'password (while…endwhile)'],
+  ['03_password_do_until',   'password (do…until)'],
+  ['04_if_elseif',           'if / elseif / else'],
+  ['05_switch',              'switch / case / default'],
+  ['06_function_procedure',  'function & procedure'],
+  ['07_strings',             'string handling (.length / .substring)'],
+  ['08_arrays',              'arrays (1D & 2D)'],
+  ['09_logical_ops',         'logical & arithmetic operators'],
+  ['10_error_in_body',       'deliberate syntax error (line-mapping demo)'],
+];
+const sampleSel = document.getElementById('sampleSel');
+for (const [file, label] of SAMPLES) {
+  const opt = document.createElement('option');
+  opt.value = file;
+  opt.textContent = label;
+  sampleSel.appendChild(opt);
+}
+sampleSel.addEventListener('change', async () => {
+  if (!sampleSel.value) return;
+  try {
+    const r = await fetch(`./samples/${sampleSel.value}.psc`);
+    if (r.ok) {
+      src.value = await r.text();
+      retranspile();
+    }
+  } catch (e) {
+    console.warn('sample load failed', e);
+  }
+  sampleSel.value = '';
+});
+
+// ── DOM refs ─────────────────────────────────────────────────────────────────
+const src = document.getElementById('src');
+const pyOut = document.getElementById('pyOut');
+const consoleEl = document.getElementById('console');
+const errHint = document.getElementById('errHint');
+const srcStatus = document.getElementById('srcStatus');
+const pyStatus = document.getElementById('pyStatus');
+const runBtn = document.getElementById('runBtn');
+const clearBtn = document.getElementById('clearBtn');
+
+// ── Tab key inserts 4 spaces (matching existing code-editor.js) ──────────────
+src.addEventListener('keydown', e => {
+  if (e.key !== 'Tab') return;
+  e.preventDefault();
+  const start = src.selectionStart, end = src.selectionEnd;
+  if (e.shiftKey) {
+    const lineStart = src.value.lastIndexOf('\n', start - 1) + 1;
+    const m = src.value.slice(lineStart).match(/^( {1,4})/);
+    if (m) {
+      const n = m[1].length;
+      src.value = src.value.slice(0, lineStart) + src.value.slice(lineStart + n);
+      src.selectionStart = src.selectionEnd = Math.max(lineStart, start - n);
+    }
+  } else {
+    src.value = src.value.slice(0, start) + '    ' + src.value.slice(end);
+    src.selectionStart = src.selectionEnd = start + 4;
+  }
+  retranspile();
+});
+
+// ── Transpile + render (debounced) ───────────────────────────────────────────
+let lastResult = null;
+let debounceId = null;
+function retranspile() {
+  clearTimeout(debounceId);
+  debounceId = setTimeout(() => {
+    const r = transpile(src.value);
+    lastResult = r;
+    renderPython(r);
+    if (r.errors.length) {
+      srcStatus.className = 'status err';
+      srcStatus.textContent = `${r.errors.length} transpiler error${r.errors.length > 1 ? 's' : ''}`;
+      errHint.textContent = r.errors.map(e => `line ${e.line}: ${e.msg}`).join('\n');
+      errHint.classList.add('show');
+    } else {
+      srcStatus.className = 'status ok';
+      srcStatus.textContent = `${src.value.split('\n').length} lines`;
+      errHint.classList.remove('show');
+    }
+  }, 80);
+}
+src.addEventListener('input', retranspile);
+
+function renderPython(r, errPyLine = null) {
+  pyOut.innerHTML = '';
+  const lines = r.python.split('\n');
+  lines.forEach((line, i) => {
+    const sl = r.map[i];
+    const row = document.createElement('div');
+    row.className = 'pyrow';
+    if (errPyLine === i + 1) row.classList.add('errline');
+    const g = document.createElement('span');
+    g.className = 'gutter' + (sl == null ? ' injected' : '');
+    g.textContent = sl == null ? '— ' : `src=${sl}`;
+    const c = document.createElement('span');
+    c.className = 'code';
+    c.textContent = line || ' ';
+    row.appendChild(g);
+    row.appendChild(c);
+    pyOut.appendChild(row);
+  });
+  pyStatus.className = 'status muted';
+  pyStatus.textContent = `${lines.length} python lines`;
+}
+retranspile();
+
+// ── Pyodide load + Run ───────────────────────────────────────────────────────
+preload().then(() => {
+  runBtn.disabled = false;
+  runBtn.textContent = 'Run ▶';
+}).catch(err => {
+  runBtn.textContent = 'Pyodide failed';
+  consoleEl.classList.add('err');
+  consoleEl.textContent = String(err);
+});
+
+runBtn.addEventListener('click', async () => {
+  if (!lastResult) return;
+  runBtn.disabled = true;
+  runBtn.textContent = 'Running…';
+  consoleEl.classList.remove('err');
+  consoleEl.textContent = '';
+  pyStatus.className = 'status muted'; pyStatus.textContent = 'running…';
+
+  // Naive interactive input: prompt() once per input() call. Good enough for
+  // the prototype; the real editor would use the existing pyodide-runner
+  // `inputs` array fed from a separate UI.
+  const promptedInputs = [];
+  const code = lastResult.python;
+  const inputCount = (code.match(/\binput\s*\(/g) || []).length;
+  for (let i = 0; i < inputCount; i++) {
+    const v = window.prompt(`Input ${i + 1} of ${inputCount}:`, '');
+    if (v === null) {
+      runBtn.disabled = false; runBtn.textContent = 'Run ▶';
+      pyStatus.className = 'status muted'; pyStatus.textContent = 'cancelled';
+      return;
+    }
+    promptedInputs.push(v);
+  }
+
+  try {
+    const r = await runPython(code, { inputs: promptedInputs });
+    if (r.ok) {
+      consoleEl.classList.remove('err');
+      consoleEl.textContent = r.output || '(no output)';
+      pyStatus.className = 'status ok';
+      pyStatus.textContent = 'ran ✓';
+      // Clear previous error highlight
+      renderPython(lastResult);
+    } else {
+      consoleEl.classList.add('err');
+      // Try to extract a line number from the error and remap to pseudocode.
+      const m = String(r.output).match(/line\s+(\d+)/);
+      const pyLine = m ? Number(m[1]) : null;
+      const srcLine = pyLine ? mapErrorLine(lastResult.map, pyLine) : null;
+      const tag = srcLine ? `\n→ pseudocode line ${srcLine}` : '';
+      consoleEl.textContent = r.output + tag;
+      pyStatus.className = 'status err';
+      pyStatus.textContent = 'runtime error';
+      renderPython(lastResult, pyLine);
+    }
+  } catch (err) {
+    consoleEl.classList.add('err');
+    consoleEl.textContent = String(err);
+    pyStatus.className = 'status err'; pyStatus.textContent = 'failed';
+  } finally {
+    runBtn.disabled = false;
+    runBtn.textContent = 'Run ▶';
+  }
+});
+
+clearBtn.addEventListener('click', () => {
+  src.value = '';
+  consoleEl.textContent = '';
+  consoleEl.classList.remove('err');
+  retranspile();
+  src.focus();
+});
+</script>
+
+</body>
+</html>

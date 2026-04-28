@@ -904,6 +904,152 @@
     }, 2000);
   }
 
+  // ── Per-activity results JSON ──────────────────────────────────────────────
+  // Saves a small machine-readable JSON file to Drive alongside the evidence
+  // HTML.  Lets a follow-up activity read which questions a student got wrong
+  // even when localStorage has been cleared or the student is on a new device.
+  // Independent of the grade proxy — works for any signed-in student.
+
+  let pendingResultsTimer   = null;
+  let pendingResultsPayload = null;
+
+  function safeActivityName(name) {
+    return (name || 'Activity').replace(/[^a-z0-9 \-]/gi, '_').trim();
+  }
+
+  async function driveSearchJsonByName(filename) {
+    if (!accessToken) return null;
+    try {
+      const q = `name='${filename.replace(/'/g, "\\'")}' and mimeType='application/json' and trashed=false`;
+      const res = await fetch(
+        'https://www.googleapis.com/drive/v3/files?' + new URLSearchParams({
+          q, fields: 'files(id,name)', pageSize: 5
+        }),
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+      if (!res.ok) return null;
+      const data = await res.json();
+      return (data.files && data.files[0]) ? data.files[0].id : null;
+    } catch (_) { return null; }
+  }
+
+  async function driveCreateJsonFile(filename, jsonStr) {
+    const boundary = 'res' + Date.now().toString(36);
+    const meta = JSON.stringify({ name: filename, mimeType: 'application/json' });
+    const body =
+      `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${meta}\r\n` +
+      `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${jsonStr}\r\n` +
+      `--${boundary}--`;
+    const res = await fetch(
+      'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id',
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': `multipart/related; boundary=${boundary}`
+        },
+        body
+      }
+    );
+    if (!res.ok) throw new Error(`Drive results create ${res.status}: ${await res.text().catch(() => '')}`);
+    return (await res.json()).id;
+  }
+
+  async function driveUpdateJsonFile(fileId, jsonStr) {
+    const res = await fetch(
+      `https://www.googleapis.com/upload/drive/v3/files/${encodeURIComponent(fileId)}?uploadType=media`,
+      {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: jsonStr
+      }
+    );
+    if (!res.ok) {
+      const e = Object.assign(new Error(`Drive results update ${res.status}`), { status: res.status });
+      throw e;
+    }
+  }
+
+  async function doUploadResults(activityName, resultsObj) {
+    if (!accessToken) return;
+    const safeName   = safeActivityName(activityName);
+    const filename   = `${safeName} — Results`;
+    const storageKey = `oga_res_${safeName}`;
+    const jsonStr    = JSON.stringify({
+      activityName, savedAt: Date.now(), results: resultsObj
+    });
+
+    let fileId = null;
+    try { fileId = localStorage.getItem(storageKey); } catch (_) {}
+
+    try {
+      if (fileId) {
+        try {
+          await driveUpdateJsonFile(fileId, jsonStr);
+          return;
+        } catch (e) {
+          if (e.status !== 404) throw e;
+          fileId = null;
+        }
+      }
+      // Cached fileId missing or 404 — try Drive search before creating a duplicate
+      fileId = await driveSearchJsonByName(filename);
+      if (fileId) {
+        try {
+          await driveUpdateJsonFile(fileId, jsonStr);
+          try { localStorage.setItem(storageKey, fileId); } catch (_) {}
+          return;
+        } catch (e) {
+          if (e.status !== 404) throw e;
+          fileId = null;
+        }
+      }
+      fileId = await driveCreateJsonFile(filename, jsonStr);
+      try { localStorage.setItem(storageKey, fileId); } catch (_) {}
+    } catch (e) {
+      console.warn('Classroom: results upload failed', e);
+    }
+  }
+
+  function scheduleResultsUpload(activityName, resultsObj) {
+    pendingResultsPayload = { activityName, resultsObj };
+    if (pendingResultsTimer) clearTimeout(pendingResultsTimer);
+    pendingResultsTimer = setTimeout(() => {
+      pendingResultsTimer = null;
+      const p = pendingResultsPayload;
+      pendingResultsPayload = null;
+      if (p) doUploadResults(p.activityName, p.resultsObj);
+    }, 2000);
+  }
+
+  async function fetchResultsFromDrive(activityName) {
+    if (!accessToken) return null;
+    const safeName   = safeActivityName(activityName);
+    const filename   = `${safeName} — Results`;
+    const storageKey = `oga_res_${safeName}`;
+
+    let fileId = null;
+    try { fileId = localStorage.getItem(storageKey); } catch (_) {}
+    if (!fileId) {
+      fileId = await driveSearchJsonByName(filename);
+      if (!fileId) return null;
+      try { localStorage.setItem(storageKey, fileId); } catch (_) {}
+    }
+    try {
+      const res = await fetch(
+        `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}?alt=media`,
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+      if (!res.ok) return null;
+      const data = await res.json();
+      // Return the inner results object (legacy fallback if the file was a bare results object)
+      return (data && data.results !== undefined) ? data.results : data;
+    } catch (_) { return null; }
+  }
+
   // ── OAuth ─────────────────────────────────────────────────────────────────────
 
   // ── Token response handler ────────────────────────────────────────────────────
@@ -1157,6 +1303,39 @@
         console.error('Classroom sync failed:', err);
         showClassroomToast('⚠️ Grade sync failed — see console.');
       }
+    },
+
+    /**
+     * Save a small per-activity results JSON to the student's Drive so a
+     * follow-up activity can read which questions were missed even when
+     * localStorage is unavailable (different device / cleared browser).
+     * Independent of the grade proxy.  Debounced 2 s the same way evidence is.
+     *
+     * @param {object} resultsObj  Plain JSON-serialisable object to store.
+     * @param {string} activityName  Used to derive the Drive filename.
+     */
+    submitResults(resultsObj, activityName) {
+      if (!accessToken) return;
+      scheduleResultsUpload(activityName, resultsObj);
+    },
+
+    /**
+     * Read back a previously-saved results JSON for a named activity.
+     * Polls for up to 30 s while sign-in completes; resolves to null when
+     * not authenticated, the file is missing, or read fails.
+     *
+     * @param {string} activityName  Same name passed to submitResults.
+     * @returns {Promise<object|null>}
+     */
+    async fetchResults(activityName) {
+      if (!isClassroomContext) return null;
+      // Wait for OAuth to settle (silent or button sign-in)
+      for (let i = 0; i < 60; i++) {
+        if (accessToken) break;
+        await new Promise(r => setTimeout(r, 500));
+      }
+      if (!accessToken) return null;
+      return fetchResultsFromDrive(activityName);
     }
   };
 
