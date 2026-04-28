@@ -118,6 +118,7 @@ while True:
 async function advanceToModify(page) {
   await fillPredict(page);
   await page.locator('button:has-text("Check predictions")').click();
+  await page.locator('button:has-text("go to Run")').click();
   await fillRun(page);
   await page.locator('button:has-text("Check response")').click();
   await page.locator('button:has-text("go to Investigate")').click();
@@ -186,6 +187,7 @@ test.describe('Predict stage', () => {
     await page.locator('input[name="p4"][value="1"]').check();
     await page.locator('input[name="p5"][value="error"]').check();
     await page.locator('button:has-text("Check predictions")').click();
+    await page.locator('button:has-text("go to Run")').click();
     await expectActiveStage(page, 'R');
     await expect(page.locator('#fb_p2')).toHaveClass(/fail/);
   });
@@ -193,6 +195,7 @@ test.describe('Predict stage', () => {
   test('correct answers advance to Run and mark P done', async ({ page }) => {
     await fillPredict(page);
     await page.locator('button:has-text("Check predictions")').click();
+    await page.locator('button:has-text("go to Run")').click();
     await expectActiveStage(page, 'R');
     await expectDoneStage(page, 'P');
   });
@@ -200,6 +203,7 @@ test.describe('Predict stage', () => {
   test('progress bar advances after completing P', async ({ page }) => {
     await fillPredict(page);
     await page.locator('button:has-text("Check predictions")').click();
+    await page.locator('button:has-text("go to Run")').click();
     const width = await page.locator('#progressFill').evaluate(el => parseInt(el.style.width));
     expect(width).toBeGreaterThan(20);
   });
@@ -214,6 +218,7 @@ test.describe('Run stage', () => {
     await page.goto(ACTIVITY);
     await fillPredict(page);
     await page.locator('button:has-text("Check predictions")').click();
+    await page.locator('button:has-text("go to Run")').click();
   });
 
   test('rejects empty textareas', async ({ page }) => {
@@ -245,6 +250,7 @@ test.describe('Investigate stage', () => {
     await page.goto(ACTIVITY);
     await fillPredict(page);
     await page.locator('button:has-text("Check predictions")').click();
+    await page.locator('button:has-text("go to Run")').click();
     await fillRun(page);
     await page.locator('button:has-text("Check response")').click();
     await page.locator('button:has-text("go to Investigate")').click();

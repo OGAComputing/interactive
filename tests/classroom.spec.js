@@ -87,6 +87,7 @@ test.describe('Signed in as student', () => {
     await expect(page.locator('#classroom-text')).toContainText('Connected', { timeout: 5000 });
     await fillPredict(page);
     await page.locator('button:has-text("Check predictions")').click();
+    await page.locator('button:has-text("go to Run")').click();
     await expect(page.locator('#stage-R')).toHaveClass(/active/);
   });
 });
