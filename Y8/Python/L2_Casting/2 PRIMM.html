@@ -1,0 +1,1265 @@
+<!-- ACTIVITY
+title:  Input & Casting PRIMM Practice
+type:   PRIMM
+lesson: Lesson 2
+stars:  5
+desc:   Predict, Run, Investigate, Modify and Make tasks for Python input and type casting
+color:  purple
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PRIMM Practice · Input &amp; Casting · Year 8</title>
+<link rel="stylesheet" href="../../../shared.css">
+<style>
+  :root {
+    --navy:         #0f1f3d;
+    --purple:       #5b2d8e;
+    --purple-light: #7c3fbf;
+    --purple-pale:  #ede0ff;
+    --teal:         #00b4a0;
+    --amber:        #f5a623;
+    --white:        #ffffff;
+    --off-white:    #f8f6ff;
+    --text:         #1a1a2e;
+    --muted:        #6b7280;
+    --code-bg:      #1e1e2e;
+    --code-text:    #cdd6f4;
+    --green:        #22c55e;
+    --green-bg:     #dcfce7;
+    --red:          #ef4444;
+    --red-bg:       #fee2e2;
+    --stage-p:      #7c3fbf;
+    --stage-r:      #0891b2;
+    --stage-i:      #059669;
+    --stage-m1:     #d97706;
+    --stage-m2:     #dc2626;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Trebuchet MS','Calibri',sans-serif; background: var(--navy); color: var(--text); min-height: 100vh; }
+
+  /* ── HEADER ── */
+  .site-header {
+    background: linear-gradient(135deg,#1a0a2e 0%,#2d1060 50%,#0f1f3d 100%);
+    padding: 1.5rem 2rem 1rem; border-bottom: 3px solid var(--purple-light);
+    display: flex; align-items: center; gap: 1.5rem;
+  }
+  .header-icon { font-family: 'Courier New',monospace; font-size: 1.9rem; font-weight: 900; color: var(--purple-pale); line-height: 1; letter-spacing: -0.03em; }
+  .header-text h1 { font-size: 1.5rem; color: var(--white); font-weight: 700; letter-spacing: -0.02em; }
+  .header-text p  { color: #b4a0e0; font-size: 0.85rem; margin-top: 0.2rem; }
+  .header-code {
+    background: var(--code-bg); border: 1px solid #3d2d5e; border-radius: 8px;
+    padding: 0.6rem 1rem; font-family: 'Courier New',monospace; font-size: 0.78rem;
+    color: var(--code-text); margin-left: auto; line-height: 1.9;
+  }
+  .kw  { color: #cba6f7; }
+  .fn  { color: #89b4fa; }
+  .st  { color: #a6e3a1; }
+  .num { color: #fab387; }
+  .bi  { color: #89dceb; }
+
+  /* ── NAV ── */
+  .primm-nav { display: flex; background: #0a0a1a; border-bottom: 2px solid #2d1060; overflow-x: auto; }
+  .primm-nav button {
+    flex: 1; min-width: 90px; padding: 0.85rem 0.5rem; border: none; background: transparent;
+    cursor: pointer; font-family: 'Trebuchet MS',sans-serif; font-size: 0.8rem; font-weight: 700;
+    color: #6b5a90; display: flex; flex-direction: column; align-items: center; gap: 0.3rem;
+    transition: all 0.2s; border-bottom: 3px solid transparent; position: relative;
+  }
+  .primm-nav button .stage-letter {
+    width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center;
+    justify-content: center; font-size: 1rem; font-weight: 900; background: #1a1040;
+    color: #5a4880; transition: all 0.2s; position: relative;
+  }
+  .primm-nav button .stage-name { font-size: 0.7rem; letter-spacing: 0.05em; text-transform: uppercase; }
+  .primm-nav button.active { color: var(--white); }
+  .primm-nav button[data-stage="P"].active  { border-bottom-color: var(--stage-p); }
+  .primm-nav button[data-stage="P"].active  .stage-letter { background: var(--stage-p); color: white; }
+  .primm-nav button[data-stage="R"].active  { border-bottom-color: var(--stage-r); }
+  .primm-nav button[data-stage="R"].active  .stage-letter { background: var(--stage-r); color: white; }
+  .primm-nav button[data-stage="I"].active  { border-bottom-color: var(--stage-i); }
+  .primm-nav button[data-stage="I"].active  .stage-letter { background: var(--stage-i); color: white; }
+  .primm-nav button[data-stage="M1"].active { border-bottom-color: var(--stage-m1); }
+  .primm-nav button[data-stage="M1"].active .stage-letter { background: var(--stage-m1); color: white; }
+  .primm-nav button[data-stage="M2"].active { border-bottom-color: var(--stage-m2); }
+  .primm-nav button[data-stage="M2"].active .stage-letter { background: var(--stage-m2); color: white; }
+  .primm-nav button.done .stage-letter::after {
+    content: '✓'; position: absolute; font-size: 0.55rem; top: -2px; right: -2px;
+    background: var(--green); color: white; width: 14px; height: 14px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  /* ── PANELS ── */
+  .stage-panel { display: none; padding: 1.5rem 2rem 3rem; max-width: 900px; margin: 0 auto; }
+  .stage-panel.active { display: block; }
+
+  /* ── STAGE HEADER ── */
+  .stage-header {
+    display: flex; align-items: center; gap: 1rem;
+    margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid #2d1060;
+  }
+  .stage-badge { width: 52px; height: 52px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; font-weight: 900; color: white; flex-shrink: 0; }
+  .badge-P  { background: var(--stage-p); }
+  .badge-R  { background: var(--stage-r); }
+  .badge-I  { background: var(--stage-i); }
+  .badge-M1 { background: var(--stage-m1); }
+  .badge-M2 { background: var(--stage-m2); }
+  .stage-header-text h2 { color: var(--white); font-size: 1.3rem; }
+  .stage-header-text p  { color: #b4a0e0; font-size: 0.85rem; margin-top: 0.2rem; }
+
+  /* ── CODE BLOCKS ── */
+  .annotated-code {
+    background: var(--code-bg); border: 1px solid #3d2d5e; border-radius: 10px;
+    padding: 1.2rem 1.5rem; font-family: 'Courier New',monospace;
+    font-size: 0.88rem; line-height: 2; color: var(--code-text); margin-bottom: 1.2rem;
+  }
+  .ann-row { display: grid; grid-template-columns: 1.6rem 1fr auto; align-items: center; gap: 0.5rem 1rem; }
+  .ann-label { font-family: 'Trebuchet MS',sans-serif; font-size: 0.72rem; color: #f38ba8; font-style: italic; text-align: right; white-space: nowrap; }
+  .line-num  { color: #585b70; text-align: right; user-select: none; font-size: 0.8rem; }
+
+  /* ── Q-CARDS ── */
+  .q-card {
+    background: var(--off-white); border-radius: 10px; padding: 1rem 1.2rem;
+    margin-bottom: 1rem; border-left: 4px solid var(--purple-light); transition: border-left-color 0.2s, background 0.2s;
+  }
+  .q-card.error { border-left-color: var(--red); background: #fff5f5; }
+  .q-label { display: block; font-weight: 700; color: var(--navy); margin-bottom: 0.6rem; font-size: 0.9rem; }
+  .q-num { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: var(--purple-light); color: white; font-size: 0.75rem; margin-right: 0.4rem; flex-shrink: 0; vertical-align: middle; }
+  .q-card input[type=text], .q-card textarea {
+    width: 100%; padding: 0.6rem 0.8rem; border: 1.5px solid #d1c4f0; border-radius: 6px;
+    font-family: 'Trebuchet MS',sans-serif; font-size: 0.88rem; resize: vertical;
+    background: white; color: var(--text); transition: border-color 0.2s;
+  }
+  .q-card input[type=text]:focus, .q-card textarea:focus { outline: none; border-color: var(--purple-light); }
+  .q-card textarea { min-height: 65px; }
+  .q-card.error input[type=text], .q-card.error textarea { border-color: var(--red); }
+
+  /* ── MCQ inside q-card ── */
+  .radio-opts { display: flex; flex-direction: column; gap: 0.4rem; }
+  .radio-opt {
+    display: flex; align-items: center; gap: 0.6rem; padding: 0.5rem 0.8rem;
+    border-radius: 6px; border: 1.5px solid #d1c4f0; background: white; cursor: pointer; transition: all 0.15s;
+  }
+  .radio-opt:hover { border-color: var(--purple-light); background: #f0e8ff; }
+  .radio-opt input[type=radio] { accent-color: var(--purple); width: 15px; height: 15px; flex-shrink: 0; }
+  .radio-opt span { font-size: 0.88rem; color: var(--text); }
+  .radio-opt.correct { border-color: #22c55e !important; background: #f0fdf4 !important; }
+  .radio-opt.wrong   { border-color: var(--red) !important; background: #fff5f5 !important; }
+  .mcq-fb { font-size: 0.82rem; font-weight: 600; margin-top: 0.5rem; padding: 0.4rem 0.7rem; border-radius: 5px; display: none; }
+  .mcq-fb.pass { display: block; color: #166534; background: var(--green-bg); border: 1px solid #86efac; }
+  .mcq-fb.fail { display: block; color: #991b1b; background: var(--red-bg);   border: 1px solid #fca5a5; }
+
+  /* ── PREDICT WARNING ── */
+  .predict-warning {
+    background: #fff3cd; border: 1.5px solid #ffc107; border-radius: 8px;
+    padding: 0.7rem 1rem; font-size: 0.85rem; color: #664d03; font-weight: 600;
+    margin-top: 0.8rem; display: none; align-items: center; gap: 0.5rem;
+  }
+
+  /* ── CODE CHECKER ── */
+  .code-checker { margin-bottom: 1.2rem; }
+  .checker-header {
+    background: #1a1040; padding: 0.6rem 1rem; display: flex; align-items: center;
+    gap: 0.5rem; font-size: 0.8rem; color: #b4a0e0; font-family: 'Trebuchet MS','Calibri',sans-serif;
+    border-radius: 12px 12px 0 0; border: 2px solid #3d2d5e; border-bottom: none;
+  }
+  .checker-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .dot-r { background: #f38ba8; }
+  .dot-y { background: #f9e2af; }
+  .dot-g { background: #a6e3a1; }
+  .checker-textarea { background: #0d0d1a; color: #cdd6f4; font-family: 'Courier New',monospace; font-size: 0.88rem; line-height: 1.7; padding: 0.8rem 1rem; border: none; outline: none; min-height: 160px; }
+  .checker-footer { padding: 0.6rem 1rem; display: flex; align-items: center; gap: 0.8rem; background: #0d0d1a; border-top: 1px solid #2d1060; flex-wrap: wrap; }
+
+  /* ── BUTTONS ── */
+  .btn { padding: 0.5rem 1.2rem; border-radius: 6px; border: none; cursor: pointer; font-family: 'Trebuchet MS',sans-serif; font-weight: 700; font-size: 0.82rem; transition: all 0.2s; display: inline-flex; align-items: center; gap: 0.4rem; }
+  .btn-check { background: var(--purple-light); color: white; } .btn-check:hover { background: var(--stage-p); }
+  .btn-next  { background: var(--teal); color: var(--navy); font-weight: 800; } .btn-next:hover { background: #009e8c; }
+  .btn-reset { background: #2d1060; color: #b4a0e0; font-size: 0.78rem; } .btn-reset:hover { background: #3d2070; }
+
+  /* ── FEEDBACK ── */
+  .feedback { padding: 0.6rem 0.9rem; border-radius: 6px; font-size: 0.82rem; font-weight: 600; flex: 1; min-width: 0; }
+  .feedback.pass   { background: var(--green-bg); color: #166534; border: 1px solid #86efac; }
+  .feedback.fail   { background: var(--red-bg);   color: #991b1b; border: 1px solid #fca5a5; }
+  .feedback.hidden  { display: none; }
+  .feedback.loading { background: #1a1040; color: #b4a0e0; border: 1px solid #3d2d5e; }
+  .py-status { font-size: 0.7rem; letter-spacing: 0.07em; padding: 0.2rem 1.5rem; background: #070710; color: #3d3560; text-align: right; }
+
+  /* ── INFO / HINT ── */
+  .info-box { background: #1a1040; border: 1px solid #3d2d5e; border-radius: 8px; padding: 0.8rem 1rem; margin-bottom: 1rem; font-size: 0.85rem; color: #b4a0e0; display: flex; gap: 0.5rem; }
+  .info-box .icon { font-size: 1.1rem; flex-shrink: 0; }
+  .hint-box { background: #1c0a3e; border-left: 3px solid var(--amber); border-radius: 0 6px 6px 0; padding: 0.6rem 0.9rem; font-size: 0.82rem; color: #f5d88a; margin-bottom: 0.8rem; font-style: italic; }
+
+  /* ── MODIFY TASKS ── */
+  .modify-task { background: var(--off-white); border-radius: 10px; padding: 0.9rem 1.2rem; margin-bottom: 0.5rem; border-left: 4px solid var(--stage-m1); display: flex; gap: 1rem; align-items: flex-start; }
+  .modify-task.ext { border-left-color: var(--stage-m2); }
+  .modify-task .stars { font-size: 1rem; flex-shrink: 0; min-width: 52px; }
+  .modify-task .task-text { font-size: 0.87rem; color: var(--text); line-height: 1.55; }
+  .modify-task .task-text strong { color: var(--purple); }
+
+  /* ── MAKE CHALLENGE CARDS ── */
+  .challenge-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.2rem; }
+  .challenge-card {
+    background: var(--off-white); border-radius: 10px; padding: 1rem 1.2rem;
+    border: 2px solid #d1c4f0;
+  }
+  .challenge-card h4 { font-size: 0.95rem; color: var(--navy); margin-bottom: 0.6rem; display: flex; align-items: center; gap: 0.4rem; }
+  .challenge-card ul { list-style: none; display: flex; flex-direction: column; gap: 0.3rem; }
+  .challenge-card li { font-size: 0.82rem; color: var(--text); display: flex; gap: 0.4rem; align-items: flex-start; line-height: 1.4; }
+  .challenge-card li::before { content: '▸'; color: var(--purple-light); flex-shrink: 0; }
+  .challenge-note { font-size: 0.78rem; color: var(--muted); margin-top: 0.6rem; font-style: italic; border-top: 1px solid #e0d4f8; padding-top: 0.5rem; }
+
+  /* ── REQUIREMENTS LIST ── */
+  .req-list { list-style: none; margin: 1rem 0; }
+  .req-list li { display: flex; align-items: flex-start; gap: 0.6rem; background: var(--off-white); border: 1.5px solid #d1c4f0; border-radius: 8px; padding: 0.7rem 1rem; margin-bottom: 0.5rem; font-size: 0.87rem; color: var(--text); line-height: 1.5; }
+
+  /* ── MISC ── */
+  .section-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); font-weight: 700; margin-bottom: 0.4rem; margin-top: 1.2rem; }
+  .completion-banner { background: linear-gradient(135deg,#1a4a2e,#0d2d1a); border: 2px solid var(--green); border-radius: 12px; padding: 1.5rem; text-align: center; color: var(--green); margin-top: 2rem; display: none; }
+  .completion-banner h3 { font-size: 1.3rem; margin-bottom: 0.5rem; }
+  .completion-banner p  { color: #86efac; font-size: 0.88rem; }
+  .progress-strip { height: 3px; background: #1a1040; position: sticky; top: 0; z-index: 10; }
+  .progress-fill  { height: 100%; background: linear-gradient(90deg,var(--purple),var(--teal)); transition: width 0.5s ease; }
+
+  .step-hidden { display: none !important; }
+
+  /* investigate-editor reset note */
+  .reset-note { font-size: 0.75rem; color: #7c6a9a; margin-left: auto; font-style: italic; }
+
+  @media (max-width: 600px) {
+    .site-header { flex-wrap: wrap; } .header-code { display: none; } .stage-panel { padding: 1rem; }
+    .challenge-grid { grid-template-columns: 1fr; }
+    .ann-row { grid-template-columns: 1.6rem 1fr; }
+    .ann-label { display: none; }
+  }
+</style>
+</head>
+<body data-year="8" data-topic="Python">
+
+<header class="site-header">
+  <div class="header-icon">input</div>
+  <div class="header-text">
+    <h1>PRIMM Practice</h1>
+    <p>Input &amp; Casting &nbsp;·&nbsp; Python Programming &nbsp;·&nbsp; Year 8</p>
+  </div>
+  <pre class="header-code"><span class="kw">name</span> = <span class="fn">input</span>(<span class="st">"What is your name? "</span>)
+<span class="kw">age</span>  = <span class="bi">int</span>(<span class="fn">input</span>(<span class="st">"How old are you? "</span>))
+<span class="kw">year</span> = <span class="num">2026</span> - age
+<span class="fn">print</span>(<span class="st">"Hello, "</span> + name + <span class="st">"!"</span>)
+<span class="fn">print</span>(<span class="st">"Born around "</span> + <span class="bi">str</span>(year))</pre>
+</header>
+
+<div class="progress-strip"><div class="progress-fill" id="progressFill" style="width:20%"></div></div>
+<div class="py-status" id="pyStatus" style="display:none">Python runtime: <span id="pyStatusText">loading…</span></div>
+
+<nav class="primm-nav">
+  <button data-stage="P"  class="active" onclick="showStage('P')"><span class="stage-letter">P</span><span class="stage-name">Predict</span></button>
+  <button data-stage="R"  onclick="showStage('R')"><span class="stage-letter">R</span><span class="stage-name">Run</span></button>
+  <button data-stage="I"  onclick="showStage('I')"><span class="stage-letter">I</span><span class="stage-name">Investigate</span></button>
+  <button data-stage="M1" onclick="showStage('M1')"><span class="stage-letter">M</span><span class="stage-name">Modify</span></button>
+  <button data-stage="M2" onclick="showStage('M2')"><span class="stage-letter">M</span><span class="stage-name">Make</span></button>
+</nav>
+
+<!-- ════════════════════════════════════════════════
+     P — PREDICT
+════════════════════════════════════════════════ -->
+<section class="stage-panel active" id="stage-P">
+  <div class="stage-header">
+    <div class="stage-badge badge-P">P</div>
+    <div class="stage-header-text">
+      <h2>Predict</h2>
+      <p>Study the code carefully. Answer every question before running it.</p>
+    </div>
+  </div>
+
+  <div class="info-box">
+    <span class="icon">💡</span>
+    <span>Read the code below <strong>but don't run it yet</strong>. Making predictions (even wrong ones) helps you learn more when you run it.</span>
+  </div>
+
+  <div class="annotated-code">
+    <div class="ann-row"><span class="line-num">1</span><span><span class="kw">name</span> = <span class="fn">input</span>(<span class="st">"What is your name? "</span>)</span><span class="ann-label">input() returns a string</span></div>
+    <div class="ann-row"><span class="line-num">2</span><span><span class="kw">age</span> = <span class="bi">int</span>(<span class="fn">input</span>(<span class="st">"How old are you? "</span>))</span><span class="ann-label">int() converts the string to a number</span></div>
+    <div class="ann-row"><span class="line-num">3</span><span><span class="kw">year</span> = <span class="num">2026</span> - age</span><span class="ann-label">arithmetic — age must be an int here</span></div>
+    <div class="ann-row"><span class="line-num">4</span><span><span class="fn">print</span>(<span class="st">"Hello, "</span> + name + <span class="st">"!"</span>)</span><span class="ann-label">joins strings — name is already a string</span></div>
+    <div class="ann-row"><span class="line-num">5</span><span><span class="fn">print</span>(<span class="st">"You were born around "</span> + <span class="bi">str</span>(year))</span><span class="ann-label">str() converts year back to a string for joining</span></div>
+  </div>
+
+  <!-- Q1 MCQ -->
+  <div class="q-card" id="qcard_p1">
+    <label class="q-label"><span class="q-num">1</span> What type does <code style="background:#ede0ff;padding:0 3px;border-radius:3px;font-size:0.85em">input()</code> <em>always</em> return, no matter what the user types?</label>
+    <div class="radio-opts" id="ropts_p1">
+      <label class="radio-opt"><input type="radio" name="p1" value="string"   onchange="saveState()"> <span>string — text</span></label>
+      <label class="radio-opt"><input type="radio" name="p1" value="integer"  onchange="saveState()"> <span>integer — a whole number</span></label>
+      <label class="radio-opt"><input type="radio" name="p1" value="number"   onchange="saveState()"> <span>number — int or float depending on input</span></label>
+      <label class="radio-opt"><input type="radio" name="p1" value="any type" onchange="saveState()"> <span>any type — Python figures it out automatically</span></label>
+    </div>
+    <div class="mcq-fb" id="fb_p1"></div>
+  </div>
+
+  <!-- Q2 MCQ -->
+  <div class="q-card" id="qcard_p2">
+    <label class="q-label"><span class="q-num">2</span> Why does line 2 wrap <code style="background:#ede0ff;padding:0 3px;border-radius:3px;font-size:0.85em">input()</code> in <code style="background:#ede0ff;padding:0 3px;border-radius:3px;font-size:0.85em">int()</code>?</label>
+    <div class="radio-opts" id="ropts_p2">
+      <label class="radio-opt"><input type="radio" name="p2" value="convert"  onchange="saveState()"> <span>To convert the text to a whole number so we can do maths with it</span></label>
+      <label class="radio-opt"><input type="radio" name="p2" value="display"  onchange="saveState()"> <span>To change how the number displays on screen</span></label>
+      <label class="radio-opt"><input type="radio" name="p2" value="required" onchange="saveState()"> <span>Because Python requires int() whenever you use input()</span></label>
+      <label class="radio-opt"><input type="radio" name="p2" value="check"    onchange="saveState()"> <span>To check that the user entered a valid number</span></label>
+    </div>
+    <div class="mcq-fb" id="fb_p2"></div>
+  </div>
+
+  <!-- Q3 text -->
+  <div class="q-card" id="qcard_p3">
+    <label class="q-label"><span class="q-num">3</span> If the user types <strong>Alice</strong> for name and <strong>13</strong> for age, what will the <em>second</em> line of output be?</label>
+    <input type="text" id="p3" placeholder="Type the exact text that will appear…" oninput="saveState(); clearPredictError('qcard_p3')">
+    <div class="hint-box" style="margin-top:0.6rem">Hint: year = 2026 − 13 = 2013. Line 5 prints "You were born around " followed by that number.</div>
+    <div class="mcq-fb" id="fb_p3"></div>
+  </div>
+
+  <!-- Q4 MCQ -->
+  <div class="q-card" id="qcard_p4">
+    <label class="q-label"><span class="q-num">4</span> What error would appear on line 5 if you deleted <code style="background:#ede0ff;padding:0 3px;border-radius:3px;font-size:0.85em">str(year)</code> and just wrote <code style="background:#ede0ff;padding:0 3px;border-radius:3px;font-size:0.85em">year</code>?</label>
+    <div class="radio-opts" id="ropts_p4">
+      <label class="radio-opt"><input type="radio" name="p4" value="TypeError"   onchange="saveState()"> <span>TypeError</span></label>
+      <label class="radio-opt"><input type="radio" name="p4" value="SyntaxError" onchange="saveState()"> <span>SyntaxError</span></label>
+      <label class="radio-opt"><input type="radio" name="p4" value="NameError"   onchange="saveState()"> <span>NameError</span></label>
+      <label class="radio-opt"><input type="radio" name="p4" value="ValueError"  onchange="saveState()"> <span>ValueError</span></label>
+    </div>
+    <div class="mcq-fb" id="fb_p4"></div>
+  </div>
+
+  <div class="predict-warning" id="predictWarning">
+    ⚠️ Please answer every question above — even a guess is fine!
+  </div>
+
+  <button class="btn btn-next" onclick="tryCompletePredict()" style="margin-top:1rem">
+    ✓ Check predictions &amp; go to Run →
+  </button>
+</section>
+
+<!-- ════════════════════════════════════════════════
+     R — RUN
+════════════════════════════════════════════════ -->
+<section class="stage-panel" id="stage-R">
+  <div class="stage-header">
+    <div class="stage-badge badge-R">R</div>
+    <div class="stage-header-text">
+      <h2>Run</h2>
+      <p>Run the code and record what actually happens.</p>
+    </div>
+  </div>
+
+  <div class="info-box">
+    <span class="icon">🖥️</span>
+    <span>Click <strong>Run code</strong> — the program will run with the test inputs <strong>Alice</strong> and <strong>13</strong>. Compare the output with your predictions.</span>
+  </div>
+
+  <div class="code-checker">
+    <div class="checker-header">
+      <span class="checker-dot dot-r"></span><span class="checker-dot dot-y"></span><span class="checker-dot dot-g"></span>
+      <span>Python Editor</span>
+    </div>
+    <textarea class="checker-textarea" id="r_editor" data-allow-paste="true"></textarea>
+    <div class="checker-footer">
+      <button class="btn btn-check" onclick="runEditorCode('r_editor', 'r_fb_run', ['Alice', '13'])">▶ Run code</button>
+      <div class="feedback hidden" id="r_fb_run"></div>
+    </div>
+  </div>
+
+  <div class="hint-box">💡 <code style="font-style:normal">input()</code> always returns a string — that's why <code style="font-style:normal">int()</code> is needed to do the maths on line 3, and <code style="font-style:normal">str()</code> is needed to join the result back into a sentence on line 5.</div>
+
+  <div class="q-card" id="qcard_r1">
+    <label class="q-label"><span class="q-num">1</span> What did the output show? Did anything surprise you compared with your predictions?</label>
+    <textarea id="r1" placeholder="Describe the output and compare with your predictions…" oninput="saveState(); clearRunError('qcard_r1')"></textarea>
+  </div>
+
+  <button class="btn btn-check" id="btn_check_run" onclick="tryCompleteRun()" style="margin-top:1rem">
+    ⚡ Check response
+  </button>
+  <button class="btn btn-next step-hidden" id="btn_goto_i" onclick="completeStage('R')" style="margin-top:1rem">
+    ✓ Go to Investigate →
+  </button>
+</section>
+
+<!-- ════════════════════════════════════════════════
+     I — INVESTIGATE
+════════════════════════════════════════════════ -->
+<section class="stage-panel" id="stage-I">
+  <div class="stage-header">
+    <div class="stage-badge badge-I">I</div>
+    <div class="stage-header-text">
+      <h2>Investigate</h2>
+      <p>Make each change in the editor, run it, and record what happens.</p>
+    </div>
+  </div>
+
+  <div class="ac-progress-bar" style="height: 4px; margin-bottom: 10px;">
+    <div class="ac-progress-fill" id="progress-fill-I" style="width: 0%; background: var(--stage-i);"></div>
+  </div>
+
+  <div id="i_steps">
+    <div class="q-card" id="qcard_i1" style="border-left-color:var(--stage-i)">
+      <label class="q-label"><span class="q-num" style="background:var(--stage-i)">1</span>
+        Remove <code style="background:#ede0ff;padding:0 3px;border-radius:3px">int()</code> from line 2 so it reads: <code style="background:#0d0d1a;color:#cdd6f4;padding:0 4px;border-radius:3px;font-size:0.82em">age = input("How old are you? ")</code> — then run. What happens and why?
+      </label>
+      <textarea id="i1" placeholder="What error appeared? What type of error is it?" oninput="saveState()"></textarea>
+      <button class="btn btn-next" style="margin-top:10px" onclick="nextStep('I', 1)">Next Investigation →</button>
+    </div>
+
+    <div class="q-card step-hidden" id="qcard_i2" style="border-left-color:var(--stage-i)">
+      <label class="q-label"><span class="q-num" style="background:var(--stage-i)">2</span>
+        Restore <code style="background:#ede0ff;padding:0 3px;border-radius:3px">int()</code>, then remove <code style="background:#ede0ff;padding:0 3px;border-radius:3px">str()</code> from line 5 so it reads: <code style="background:#0d0d1a;color:#cdd6f4;padding:0 4px;border-radius:3px;font-size:0.82em">print("You were born around " + year)</code> — run it. What error appears and why?
+      </label>
+      <textarea id="i2" placeholder="What error appeared this time? What does it tell you?" oninput="saveState()"></textarea>
+      <button class="btn btn-next" style="margin-top:10px" onclick="nextStep('I', 2)">Next Investigation →</button>
+    </div>
+
+    <div class="q-card step-hidden" id="qcard_i3" style="border-left-color:var(--stage-i)">
+      <label class="q-label"><span class="q-num" style="background:var(--stage-i)">3</span>
+        Restore <code style="background:#ede0ff;padding:0 3px;border-radius:3px">str(year)</code>, then change <code style="background:#ede0ff;padding:0 3px;border-radius:3px">2026</code> to <code style="background:#ede0ff;padding:0 3px;border-radius:3px">2027</code> on line 3. Run it. What changes in the output and why?
+      </label>
+      <textarea id="i3" placeholder="Describe what changed in the output…" oninput="saveState()"></textarea>
+      <button class="btn btn-next" style="margin-top:10px" onclick="nextStep('I', 3)">Next Investigation →</button>
+    </div>
+
+    <div class="q-card step-hidden" id="qcard_i4" style="border-left-color:var(--stage-i)">
+      <label class="q-label"><span class="q-num" style="background:var(--stage-i)">4</span>
+        Restore the code to the original, then click <strong>Run (with 13.5)</strong> below — this tests what happens when someone types a decimal like 13.5 for age. What error appears and why?
+      </label>
+      <textarea id="i4" placeholder="What error appeared? Why can't int() handle a decimal?" oninput="saveState()"></textarea>
+      <button class="btn btn-next" style="margin-top:10px" onclick="tryCompleteInvestigate()">Finish Investigation →</button>
+    </div>
+  </div>
+
+  <div class="code-checker" style="margin-top:1rem">
+    <div class="checker-header">
+      <span class="checker-dot dot-r"></span><span class="checker-dot dot-y"></span><span class="checker-dot dot-g"></span>
+      <span>Python Editor</span>
+      <span class="reset-note">Use Reset to restore the original code</span>
+    </div>
+    <textarea class="checker-textarea" id="i_editor" data-allow-paste="true"></textarea>
+    <div class="checker-footer">
+      <button class="btn btn-check" onclick="runInvestigateCode()">▶ Run code</button>
+      <button class="btn btn-reset" onclick="resetInvestigateEditor()">↺ Reset to original</button>
+      <div class="feedback hidden" id="i_fb_run"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════
+     M1 — MODIFY
+════════════════════════════════════════════════ -->
+<section class="stage-panel" id="stage-M1">
+  <div class="stage-header">
+    <div class="stage-badge badge-M1">M</div>
+    <div class="stage-header-text">
+      <h2>Modify</h2>
+      <p>Each modification builds on the last — keep adding to your code in the editor below.</p>
+    </div>
+  </div>
+
+  <div class="ac-progress-bar" style="height: 4px; margin-bottom: 10px;">
+    <div class="ac-progress-fill" id="progress-fill-M1" style="width: 0%; background: var(--stage-m1);"></div>
+  </div>
+
+  <div id="m1_steps">
+    <div id="m1_step_1">
+      <div class="section-label">★ Modification 1 — Change the greeting</div>
+      <div class="modify-task">
+        <span class="stars">★</span>
+        <div class="task-text">Change the greeting on line 4 to say <strong>"Nice to meet you, [name]!"</strong> instead of "Hello, [name]!". Keep everything else the same.</div>
+      </div>
+    </div>
+
+    <div id="m1_step_2" class="step-hidden">
+      <div class="section-label">★★ Modification 2 — Ask for birth year instead</div>
+      <div class="modify-task">
+        <span class="stars">★★</span>
+        <div class="task-text">Change line 2 to ask for the user's <strong>birth year</strong> instead of their age. Calculate their age using <code>age = 2026 - year</code>. Remember: birth year is still a number, so it still needs <strong>int()</strong>.</div>
+      </div>
+    </div>
+
+    <div id="m1_step_3" class="step-hidden">
+      <div class="section-label">★★ Modification 3 — Add a height input</div>
+      <div class="modify-task">
+        <span class="stars">★★</span>
+        <div class="task-text">Add a new input that asks for the user's <strong>height in cm</strong>. Convert it to metres by dividing by 100 and print it. Use <strong>float()</strong> because the height might be a decimal (e.g. 165.5 cm).</div>
+      </div>
+    </div>
+
+    <div id="m1_step_4" class="step-hidden">
+      <div class="section-label">★★★ Modification 4 — Print three things in one message</div>
+      <div class="modify-task">
+        <span class="stars">★★★</span>
+        <div class="task-text">
+          Ask for a <strong>favourite number</strong>. Then add a single <code>print()</code> that combines name, age and favourite number in one message — for example:<br>
+          <code style="background:#ede0ff;padding:0 4px;border-radius:3px;font-size:0.83rem">Alice is 13 and their favourite number is 7</code><br>
+          Use <strong>str()</strong> or commas in print() to join the values.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="code-checker">
+    <div class="checker-header">
+      <span class="checker-dot dot-r"></span><span class="checker-dot dot-y"></span><span class="checker-dot dot-g"></span>
+      <span>Python Editor</span>
+    </div>
+    <textarea class="checker-textarea" id="m1_editor" data-allow-paste="true" oninput="saveState()"></textarea>
+    <div class="checker-footer">
+      <button class="btn btn-check" id="btn_check_m1" onclick="checkMod()">⚡ Check modification 1</button>
+      <div class="feedback hidden" id="fb_m1"></div>
+    </div>
+  </div>
+
+  <button class="btn btn-next step-hidden" id="btn_goto_m2" onclick="completeStage('M1')" style="margin-top:1rem">
+    ✓ All modifications done — go to Make →
+  </button>
+</section>
+
+<!-- ════════════════════════════════════════════════
+     M2 — MAKE
+════════════════════════════════════════════════ -->
+<section class="stage-panel" id="stage-M2">
+  <div class="stage-header">
+    <div class="stage-badge badge-M2">M</div>
+    <div class="stage-header-text">
+      <h2>Make</h2>
+      <p>Build <strong>one</strong> of these programs from scratch.</p>
+    </div>
+  </div>
+
+  <div class="ac-progress-bar" style="height: 4px; margin-bottom: 10px;">
+    <div class="ac-progress-fill" id="progress-fill-M2" style="width: 0%; background: var(--stage-m2);"></div>
+  </div>
+
+  <div class="challenge-grid">
+    <div class="challenge-card">
+      <h4>🌡 Temperature Converter</h4>
+      <ul>
+        <li>Ask for a temperature in Celsius</li>
+        <li>Convert: <code>F = C × 9/5 + 32</code></li>
+        <li>Print the result with a message</li>
+      </ul>
+      <div class="challenge-note">Use float() — temperatures can be decimals</div>
+    </div>
+    <div class="challenge-card">
+      <h4>💰 Price Calculator</h4>
+      <ul>
+        <li>Ask for an item name (string)</li>
+        <li>Ask for price (float) and quantity (int)</li>
+        <li>Calculate and print the total cost</li>
+      </ul>
+      <div class="challenge-note">total = price * quantity</div>
+    </div>
+  </div>
+
+  <div class="info-box">
+    <span class="icon">✅</span>
+    <span>Your program <strong>must</strong> use: <code>input()</code> + <code>int()</code> or <code>float()</code> + a calculation + <code>print()</code></span>
+  </div>
+
+  <div class="code-checker">
+    <div class="checker-header">
+      <span class="checker-dot dot-r"></span><span class="checker-dot dot-y"></span><span class="checker-dot dot-g"></span>
+      <span>Python Editor</span>
+    </div>
+    <textarea class="checker-textarea" id="m2_editor" data-allow-paste="true" style="min-height:260px" oninput="saveState()"></textarea>
+    <div class="checker-footer">
+      <button class="btn btn-check" id="btn_check_m2" onclick="checkMake()">⚡ Check program</button>
+      <div class="feedback hidden" id="fb_m2"></div>
+    </div>
+  </div>
+
+  <div id="m2_ext_task" class="step-hidden" style="margin-top:2rem">
+    <div class="section-label">★★★★ Extension — Calculator with four operations</div>
+    <div class="modify-task ext">
+      <span class="stars">★★★★</span>
+      <div class="task-text">
+        Ask for <strong>two numbers</strong>. Print their <strong>sum, difference, product and division</strong> on separate lines. Use int() or float() for both inputs.
+      </div>
+    </div>
+  </div>
+
+  <div class="completion-banner" id="completionBanner">
+    <div style="font-size:2.5rem;margin-bottom:0.5rem">🏆</div>
+    <h3>PRIMM Complete!</h3>
+    <p>You've worked through all five stages for Input &amp; Casting. Excellent work — show your teacher!</p>
+  </div>
+</section>
+
+<!-- Toast -->
+<div class="ac-toast" id="toast"></div>
+
+<script src="../../../classroom.js"></script>
+
+<script type="module">
+import { normalise, has, MOD_CHECKS, MOD_INPUTS, validateMake, validateExt } from './checkers.js';
+import { runPython, preload } from '../../../pyodide-runner.js';
+import { setupEditors, clearSyntaxHint, setEditorOutput, refreshEditor } from '../../../code-editor.js';
+
+// ═══════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════
+const STORAGE_KEY = 'primm_l2_input_casting';
+
+const TEXT_FIELDS  = ['p3', 'r_editor', 'r1', 'i_editor', 'i1', 'i2', 'i3', 'i4',
+                      'm1_editor', 'm2_editor'];
+const RADIO_GROUPS = ['p1', 'p2', 'p4'];
+
+let state = {};
+try { state = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch(e) {}
+
+let currentStage    = state.currentStage    || 'P';
+let completedStages = state.completedStages || [];
+let passedChecks    = state.passedChecks    || {};
+let stepI  = state.stepI  || 1;
+let stepM1 = state.stepM1 || 1;
+
+const STAGES = ['P','R','I','M1','M2'];
+
+const INPUT_CODE = `name = input("What is your name? ")
+age = int(input("How old are you? "))
+year = 2026 - age
+print("Hello, " + name + "!")
+print("You were born around " + str(year))`;
+
+// ═══════════════════════════════════════════════════════
+//  SAVE / RESTORE
+// ═══════════════════════════════════════════════════════
+function saveState() {
+  TEXT_FIELDS.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) state[id] = el.value;
+  });
+  RADIO_GROUPS.forEach(name => {
+    const checked = document.querySelector(`input[name="${name}"]:checked`);
+    if (checked) state['radio_' + name] = checked.value;
+  });
+  state.currentStage    = currentStage;
+  state.completedStages = completedStages;
+  state.passedChecks    = passedChecks;
+  state.stepI  = stepI;
+  state.stepM1 = stepM1;
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
+}
+
+function restoreInputs() {
+  TEXT_FIELDS.forEach(id => {
+    const el = document.getElementById(id);
+    if (el && state[id] !== undefined) el.value = state[id];
+  });
+  RADIO_GROUPS.forEach(name => {
+    const val = state['radio_' + name];
+    if (val) {
+      const r = document.querySelector(`input[name="${name}"][value="${CSS.escape(val)}"]`)
+             || document.querySelector(`input[name="${name}"][value="${val}"]`);
+      if (r) r.checked = true;
+    }
+  });
+}
+
+function updateGranularProgress() {
+  const iFill = document.getElementById('progress-fill-I');
+  if (iFill) iFill.style.width = Math.round(((stepI - 1) / 4) * 100) + '%';
+
+  const m1Fill = document.getElementById('progress-fill-M1');
+  if (m1Fill) m1Fill.style.width = Math.round(((stepM1 - 1) / 4) * 100) + '%';
+
+  const m2Fill = document.getElementById('progress-fill-M2');
+  if (m2Fill) {
+    let pct = 0;
+    if (passedChecks['m2_make']) pct += 50;
+    if (passedChecks['m2_ext'])  pct += 50;
+    m2Fill.style.width = pct + '%';
+  }
+}
+
+function updateStepVisibility() {
+  for (let i = 1; i <= 4; i++) {
+    document.getElementById('qcard_i' + i)?.classList.toggle('step-hidden', i !== stepI);
+  }
+  for (let i = 1; i <= 4; i++) {
+    document.getElementById('m1_step_' + i)?.classList.toggle('step-hidden', i !== stepM1);
+  }
+  const m1Btn = document.getElementById('btn_check_m1');
+  if (m1Btn) m1Btn.textContent = stepM1 === 4 ? '⚡ Check final modification' : '⚡ Check modification ' + stepM1;
+
+  document.getElementById('btn_goto_m2')?.classList.toggle('step-hidden', !passedChecks['m1_code4']);
+  document.getElementById('m2_ext_task')?.classList.toggle('step-hidden', !passedChecks['m2_make']);
+  const m2Btn = document.getElementById('btn_check_m2');
+  if (m2Btn) {
+    m2Btn.textContent = passedChecks['m2_make'] ? '⚡ Mark extension complete' : '⚡ Check program';
+    m2Btn.onclick = passedChecks['m2_make'] ? checkExt : checkMake;
+  }
+  updateGranularProgress();
+}
+
+// ═══════════════════════════════════════════════════════
+//  SCORE  P=5, R=5, I=5, each mod=10 (×4=40), Make=25, Ext=20 → max 100
+// ═══════════════════════════════════════════════════════
+function calcScore() {
+  let s = 0;
+  if (completedStages.includes('P'))  s += 5;
+  if (completedStages.includes('R'))  s += 5;
+  if (completedStages.includes('I'))  s += 5;
+  ['m1_code1','m1_code2','m1_code3','m1_code4'].forEach(k => { if (passedChecks[k]) s += 10; });
+  if (passedChecks['m2_make']) s += 25;
+  if (passedChecks['m2_ext'])  s += 20;
+  return Math.min(100, s);
+}
+
+function submitScore() {
+  window.Classroom?.submitGrade(calcScore(), 'Input & Casting PRIMM Practice');
+}
+
+// ═══════════════════════════════════════════════════════
+//  NAV
+// ═══════════════════════════════════════════════════════
+function showStage(s, persist = true) {
+  document.querySelectorAll('.stage-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.primm-nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('stage-' + s).classList.add('active');
+  document.querySelector(`[data-stage="${s}"]`).classList.add('active');
+  currentStage = s;
+
+  if (s === 'R') {
+    const ta = document.getElementById('r_editor');
+    if (!ta.value) ta.value = INPUT_CODE;
+    refreshEditor(ta);
+  }
+  if (s === 'I') {
+    const ta = document.getElementById('i_editor');
+    if (!ta.value) ta.value = INPUT_CODE;
+    refreshEditor(ta);
+  }
+  if (s === 'M1') {
+    const ta = document.getElementById('m1_editor');
+    if (!ta.value) ta.value = INPUT_CODE;
+    refreshEditor(ta);
+  }
+  if (s === 'M2') {
+    refreshEditor(document.getElementById('m2_editor'));
+  }
+  updateStepVisibility();
+  if (persist) saveState();
+}
+
+function updateNav() {
+  completedStages.forEach(s => {
+    const btn = document.querySelector(`[data-stage="${s}"]`);
+    if (btn) btn.classList.add('done');
+  });
+}
+
+function updateProgress() {
+  const idx = STAGES.indexOf(currentStage);
+  const pct = Math.max(20, Math.round(((idx + 1) / STAGES.length) * 100));
+  document.getElementById('progressFill').style.width = pct + '%';
+}
+
+function completeStage(s) {
+  if (window.Classroom?.verifyAuth() === false) return;
+  if (!completedStages.includes(s)) completedStages.push(s);
+  updateNav();
+  const nextIdx = STAGES.indexOf(s) + 1;
+  if (nextIdx < STAGES.length) {
+    showStage(STAGES[nextIdx]);
+    updateProgress();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+  saveState();
+  submitScore();
+}
+
+// ═══════════════════════════════════════════════════════
+//  PYODIDE STATUS
+// ═══════════════════════════════════════════════════════
+function setPyStatus(st) {
+  const bar  = document.getElementById('pyStatus');
+  const text = document.getElementById('pyStatusText');
+  if (!bar || !text) return;
+  if (st === 'loading') {
+    bar.style.display = 'block';
+    text.textContent = 'loading…';
+    text.style.color = '#f9e2af';
+  } else if (st === 'ready') {
+    text.textContent = 'ready ✓';
+    text.style.color = '#a6e3a1';
+    setTimeout(() => { bar.style.display = 'none'; }, 3000);
+  } else {
+    text.textContent = 'unavailable';
+    text.style.color = '#f38ba8';
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+//  RUN HELPER
+// ═══════════════════════════════════════════════════════
+async function runEditorCode(editorId, statusElId, inputs = []) {
+  if (window.Classroom?.verifyAuth() === false) return;
+  const editorEl = document.getElementById(editorId);
+  const statusEl = document.getElementById(statusElId);
+  const code = editorEl?.value || '';
+
+  if (statusEl) {
+    statusEl.classList.remove('hidden', 'fail', 'pass');
+    statusEl.classList.add('loading');
+    statusEl.textContent = '⏳ Running…';
+  }
+
+  const result = await runPython(code, { inputs });
+  setEditorOutput(editorEl, result.output, !result.ok);
+  clearSyntaxHint(editorEl);
+
+  if (statusEl) {
+    statusEl.classList.remove('loading');
+    if (result.ok) {
+      statusEl.classList.add('pass');
+      statusEl.textContent = '✅ Code ran successfully.';
+    } else {
+      statusEl.classList.add('fail');
+      statusEl.textContent = '❌ ' + result.output.split('\n').pop();
+    }
+  }
+}
+
+function runInvestigateCode() {
+  // Step 4 tests with a decimal age to provoke the ValueError
+  const inputs = stepI === 4 ? ['Alice', '13.5'] : ['Alice', '13'];
+  runEditorCode('i_editor', 'i_fb_run', inputs);
+}
+
+function resetInvestigateEditor() {
+  const ta = document.getElementById('i_editor');
+  ta.value = INPUT_CODE;
+  refreshEditor(ta);
+  saveState();
+}
+
+// ═══════════════════════════════════════════════════════
+//  NONSENSE GUARD
+// ═══════════════════════════════════════════════════════
+function isNonsense(text) {
+  const t = text.trim().replace(/\s+/g, ' ');
+  if (t.length < 3) return true;
+  const counts = {};
+  for (const c of t) counts[c] = (counts[c] || 0) + 1;
+  if (Math.max(...Object.values(counts)) / t.length > 0.65) return true;
+  const lower = t.toLowerCase();
+  if (['asdf','qwer','zxcv','hjkl','1234'].some(r => lower.split(r).length > 2)) return true;
+  const LAZY = /^(i\s*d\s*k|i\s*don'?t\s*know|don'?t\s*know|dunno|dont\s*know|no\s*idea|not\s*sure|\?+|nope|nah|lol|yeah|yep|ok|okay|fine|hmm+|meh|same|nothing|none|n\/a|na|pass|skip|bruh|lmao|haha|hehe|wtf|idek|idk)$/i;
+  if (LAZY.test(lower)) return true;
+  const letters = lower.replace(/[^a-z]/g, '');
+  if (letters.length >= 4 && !/[aeiou]/.test(letters)) return true;
+  return false;
+}
+
+function fieldHint(card, msg) {
+  let el = card.querySelector('.field-hint');
+  if (!el) {
+    el = document.createElement('div');
+    el.className = 'field-hint';
+    el.style.cssText = 'font-size:0.8rem;color:#dc2626;margin-top:0.4rem;font-style:italic';
+    card.appendChild(el);
+  }
+  el.textContent = msg ? '⚠️ ' + msg : '';
+}
+
+// ═══════════════════════════════════════════════════════
+//  PREDICT
+// ═══════════════════════════════════════════════════════
+const P_CORRECT = { p1: 'string', p2: 'convert', p3: 'you were born around 2013', p4: 'TypeError' };
+
+const P_PASS_MSG = {
+  p1: 'Correct — input() always returns a string, even if the user types a number.',
+  p2: 'Correct — int() converts the text "13" into the integer 13 so Python can subtract it from 2026.',
+  p4: 'Correct — Python can\'t join an integer to a string with +, which raises a TypeError.',
+};
+const P_FAIL_MSG = {
+  p1: 'input() always returns a string — even if the user types 42, Python sees it as the text "42".',
+  p2: 'Without int(), age is a string. Python can\'t subtract a string from 2026 on line 3.',
+  p4: 'year is an integer. Joining an integer to a string with + always causes a TypeError.',
+};
+
+function applyMCQFeedback(name, correct) {
+  const chosen = document.querySelector(`input[name="${name}"]:checked`);
+  if (!chosen) return false;
+  const val = chosen.value;
+  const isCorrect = val === correct;
+  document.querySelectorAll(`input[name="${name}"]`).forEach(r => {
+    const opt = r.closest('.radio-opt');
+    opt.classList.remove('correct', 'wrong');
+    if (r.value === correct) opt.classList.add('correct');
+    else if (r.value === val && !isCorrect) opt.classList.add('wrong');
+  });
+  const fb = document.getElementById('fb_' + name);
+  if (fb) {
+    fb.className = 'mcq-fb ' + (isCorrect ? 'pass' : 'fail');
+    fb.textContent = (isCorrect ? '✔ ' : '✘ ') + (isCorrect ? P_PASS_MSG[name] : P_FAIL_MSG[name]);
+  }
+  return true;
+}
+
+function clearPredictError(cardId) {
+  document.getElementById(cardId)?.classList.remove('error');
+}
+
+function tryCompletePredict() {
+  if (window.Classroom?.verifyAuth() === false) return;
+  let allAttempted = true;
+  let firstError = null;
+
+  ['p1','p2','p4'].forEach(name => {
+    const attempted = applyMCQFeedback(name, P_CORRECT[name]);
+    if (!attempted) {
+      allAttempted = false;
+      const card = document.getElementById('qcard_' + name);
+      if (card) { card.classList.add('error'); if (!firstError) firstError = card; }
+    } else {
+      document.getElementById('qcard_' + name)?.classList.remove('error');
+    }
+  });
+
+  // Text question p3
+  const p3val = (document.getElementById('p3')?.value || '').trim().toLowerCase();
+  const p3card = document.getElementById('qcard_p3');
+  if (p3val.length < 1) {
+    allAttempted = false;
+    p3card?.classList.add('error');
+    if (!firstError) firstError = p3card;
+  } else {
+    p3card?.classList.remove('error');
+    const ok3 = p3val.includes('you were born around 2013') || p3val === 'you were born around 2013';
+    const fb3 = document.getElementById('fb_p3');
+    if (fb3) {
+      fb3.className = 'mcq-fb ' + (ok3 ? 'pass' : 'fail');
+      fb3.textContent = ok3
+        ? '✔ Correct — "You were born around 2013" (2026 − 13 = 2013).'
+        : '✘ Not quite — work out 2026 − 13, then read line 5 to see how it\'s printed.';
+    }
+  }
+
+  const warning = document.getElementById('predictWarning');
+  if (!allAttempted) {
+    warning.style.display = 'flex';
+    firstError?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  } else {
+    warning.style.display = 'none';
+    completeStage('P');
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+//  RUN
+// ═══════════════════════════════════════════════════════
+function clearRunError(cardId) {
+  document.getElementById(cardId)?.classList.remove('error');
+}
+
+function tryCompleteRun() {
+  if (window.Classroom?.verifyAuth() === false) return;
+  let allOk = true;
+  let firstError = null;
+
+  const r1val  = (document.getElementById('r1')?.value || '').trim();
+  const r1card = document.getElementById('qcard_r1');
+  let r1msg = null;
+  if (r1val.length < 5)       r1msg = 'Describe what you saw — even a few words is fine.';
+  else if (isNonsense(r1val)) r1msg = "That doesn't look like a real answer — give it another try.";
+  if (r1msg) {
+    allOk = false; r1card?.classList.add('error');
+    fieldHint(r1card, r1msg);
+    if (!firstError) firstError = r1card;
+  } else {
+    r1card?.classList.remove('error'); fieldHint(r1card, '');
+  }
+
+  if (allOk) {
+    document.getElementById('btn_check_run').classList.add('step-hidden');
+    document.getElementById('btn_goto_i').classList.remove('step-hidden');
+    clearSyntaxHint(document.getElementById('r_editor'));
+    submitScore();
+  } else {
+    firstError?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+//  INVESTIGATE — step-by-step
+// ═══════════════════════════════════════════════════════
+function nextStep(stage, n) {
+  if (stage !== 'I') return;
+  const fieldId = 'i' + n;
+  const val  = (document.getElementById(fieldId)?.value || '').trim();
+  const card = document.getElementById('qcard_i' + n);
+  let msg = val.length < 4 ? 'Describe what happened — even a few words is fine.'
+          : isNonsense(val) ? "That doesn't look like a real answer." : null;
+
+  if (!msg && n === 1) {
+    if (!/error|type|subtract|minus|maths|math|number|wrong|crash|can't|cannot/i.test(val))
+      msg = 'Mention what error appeared — look at the error message carefully. What kind of error was it?';
+  }
+  if (!msg && n === 2) {
+    if (!/error|type|concatenat|join|string|combine|wrong|crash|can't|cannot/i.test(val))
+      msg = 'What error appeared? Think about why Python can\'t join an integer to a string with +.';
+  }
+  if (!msg && n === 3) {
+    if (!/year|chang|differ|one|born|2027|higher|lower|increase|more|less|output/i.test(val))
+      msg = 'Describe how the output changed — what was different about the born year?';
+  }
+
+  if (msg) {
+    card.classList.add('error'); fieldHint(card, msg);
+    return;
+  }
+
+  card.classList.remove('error'); fieldHint(card, '');
+  stepI = n + 1;
+  updateStepVisibility();
+  saveState();
+  // Scroll to the editor so student is ready for the next investigation
+  document.getElementById('i_editor')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function tryCompleteInvestigate() {
+  if (window.Classroom?.verifyAuth() === false) return;
+
+  const fields = [
+    { id:'i1', cardId:'qcard_i1', validate: v => {
+      if (v.length < 4) return 'Describe what happened.';
+      if (isNonsense(v)) return "That doesn't look like a real answer.";
+      if (!/error|type|subtract|minus|maths|math|number|wrong|crash|can't|cannot/i.test(v))
+        return 'Mention the error type — what did the error message say?';
+      return null;
+    }},
+    { id:'i2', cardId:'qcard_i2', validate: v => {
+      if (v.length < 4) return 'Describe what happened.';
+      if (isNonsense(v)) return "That doesn't look like a real answer.";
+      if (!/error|type|concatenat|join|string|combine|wrong|crash|can't|cannot/i.test(v))
+        return 'What kind of error appeared? Think about joining a number to a string.';
+      return null;
+    }},
+    { id:'i3', cardId:'qcard_i3', validate: v => {
+      if (v.length < 4) return 'Describe what changed in the output.';
+      if (isNonsense(v)) return "That doesn't look like a real answer.";
+      return null;
+    }},
+    { id:'i4', cardId:'qcard_i4', validate: v => {
+      if (v.length < 5) return 'Describe what happened and why.';
+      if (isNonsense(v)) return "That doesn't look like a real answer.";
+      if (!/error|value|decimal|float|invalid|crash|point|whole|integer/i.test(v))
+        return 'What error appeared? Why can\'t int() handle a decimal like 13.5?';
+      return null;
+    }},
+  ];
+
+  let allOk = true; let firstError = null;
+  fields.forEach(f => {
+    const val  = (document.getElementById(f.id)?.value || '').trim();
+    const card = document.getElementById(f.cardId);
+    const msg  = f.validate(val);
+    if (msg) {
+      card?.classList.add('error'); fieldHint(card, msg);
+      allOk = false; if (!firstError) firstError = card;
+    } else {
+      card?.classList.remove('error'); fieldHint(card, '');
+    }
+  });
+
+  if (allOk) { completeStage('I'); }
+  else { firstError?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+}
+
+// ═══════════════════════════════════════════════════════
+//  MODIFY
+// ═══════════════════════════════════════════════════════
+async function checkMod() {
+  if (window.Classroom?.verifyAuth() === false) return;
+
+  const raw   = document.getElementById('m1_editor')?.value || '';
+  const fbEl  = document.getElementById('fb_m1');
+  const checkKey = 'mod' + stepM1;
+  const checkId  = 'm1_code' + stepM1;
+
+  if (!fbEl) return;
+  fbEl.classList.remove('hidden');
+  if (raw.trim().length < 10) {
+    fbEl.className = 'feedback fail';
+    fbEl.textContent = '⚠️ Write some code first.';
+    return;
+  }
+
+  const structural = MOD_CHECKS[checkKey](raw);
+  if (!structural.pass) {
+    fbEl.className = 'feedback fail';
+    fbEl.textContent = structural.msg;
+    return;
+  }
+
+  fbEl.className = 'feedback loading';
+  fbEl.textContent = '⏳ Checking…';
+
+  const inputs = MOD_INPUTS[checkKey] || [];
+  const run = await runPython(raw, { inputs });
+  if (!run.ok) {
+    fbEl.className = 'feedback fail';
+    fbEl.textContent = '❌ Error: ' + run.output;
+    return;
+  }
+
+  fbEl.className = 'feedback pass';
+  fbEl.textContent = structural.msg;
+  setEditorOutput(document.getElementById('m1_editor'), run.output, false);
+  clearSyntaxHint(document.getElementById('m1_editor'));
+  passedChecks[checkId] = true;
+
+  if (stepM1 < 4) {
+    setTimeout(() => {
+      stepM1++;
+      fbEl.classList.add('hidden');
+      updateStepVisibility();
+      saveState();
+    }, 1500);
+  }
+  saveState();
+  submitScore();
+}
+
+// ═══════════════════════════════════════════════════════
+//  MAKE
+// ═══════════════════════════════════════════════════════
+async function checkMake() {
+  if (window.Classroom?.verifyAuth() === false) return;
+
+  const raw  = document.getElementById('m2_editor')?.value || '';
+  const fbEl = document.getElementById('fb_m2');
+  fbEl.classList.remove('hidden');
+
+  const structural = validateMake(raw);
+  if (!structural.pass) {
+    fbEl.className = 'feedback fail';
+    fbEl.textContent = structural.msg;
+    return;
+  }
+
+  fbEl.className = 'feedback loading';
+  fbEl.textContent = '⏳ Checking…';
+
+  // Inputs cover both challenges: temp=25, price: item='25', price=25.0, qty=3
+  const run = await runPython(raw, { inputs: ['25', '25', '3'] });
+  if (!run.ok) {
+    fbEl.className = 'feedback fail';
+    fbEl.textContent = '❌ Your program has an error: ' + run.output;
+    return;
+  }
+  if (run.output.trim().length < 3) {
+    fbEl.className = 'feedback fail';
+    fbEl.textContent = '❌ Your program ran but produced no output — check your print() calls.';
+    return;
+  }
+
+  fbEl.className = 'feedback pass';
+  fbEl.textContent = structural.msg;
+  setEditorOutput(document.getElementById('m2_editor'), run.output, false);
+  passedChecks['m2_make'] = true;
+  updateStepVisibility();
+  saveState(); submitScore();
+  if (!completedStages.includes('M2')) { completedStages.push('M2'); updateNav(); saveState(); }
+  showCompletion();
+}
+
+async function checkExt() {
+  if (window.Classroom?.verifyAuth() === false) return;
+
+  const raw  = document.getElementById('m2_editor')?.value || '';
+  const fbEl = document.getElementById('fb_m2');
+  fbEl.classList.remove('hidden');
+
+  const structural = validateExt(raw);
+  if (!structural.pass) {
+    fbEl.className = 'feedback fail';
+    fbEl.textContent = structural.msg;
+    return;
+  }
+
+  fbEl.className = 'feedback loading';
+  fbEl.textContent = '⏳ Checking…';
+
+  const run = await runPython(raw, { inputs: ['10', '3'] });
+  if (!run.ok) {
+    fbEl.className = 'feedback fail';
+    fbEl.textContent = '❌ Your program has an error: ' + run.output;
+    return;
+  }
+
+  fbEl.className = 'feedback pass';
+  fbEl.textContent = structural.msg;
+  setEditorOutput(document.getElementById('m2_editor'), run.output, false);
+  passedChecks['m2_ext'] = true;
+  updateStepVisibility();
+  saveState(); submitScore();
+}
+
+function showCompletion() {
+  const banner = document.getElementById('completionBanner');
+  banner.style.display = 'block';
+  banner.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+// ═══════════════════════════════════════════════════════
+//  EXPOSE GLOBALS (required because this is a module script)
+// ═══════════════════════════════════════════════════════
+Object.assign(window, {
+  showStage, saveState,
+  clearPredictError, tryCompletePredict,
+  clearRunError, tryCompleteRun,
+  tryCompleteInvestigate, nextStep,
+  checkMod, completeStage,
+  checkMake, checkExt,
+  runEditorCode, runInvestigateCode, resetInvestigateEditor,
+});
+
+// ═══════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════
+window.addEventListener('DOMContentLoaded', () => {
+  restoreInputs();
+  setupEditors();
+  showStage(currentStage, false);
+  updateNav();
+  updateProgress();
+
+  setPyStatus('loading');
+  preload()
+    .then(() => setPyStatus('ready'))
+    .catch(() => setPyStatus('error'));
+
+  // Restore MCQ feedback if predict was completed
+  if (completedStages.includes('P')) {
+    ['p1','p2','p4'].forEach(name => applyMCQFeedback(name, P_CORRECT[name]));
+    const p3val = (document.getElementById('p3')?.value || '').trim().toLowerCase();
+    if (p3val.length > 0) {
+      const ok3 = p3val.includes('you were born around 2013');
+      const fb3 = document.getElementById('fb_p3');
+      if (fb3) {
+        fb3.className = 'mcq-fb ' + (ok3 ? 'pass' : 'fail');
+        fb3.textContent = ok3
+          ? '✔ Correct — "You were born around 2013" (2026 − 13 = 2013).'
+          : '✘ Not quite — work out 2026 − 13, then read line 5 to see how it\'s printed.';
+      }
+    }
+  }
+
+  if (passedChecks['m2_make']) {
+    const fb = document.getElementById('fb_m2');
+    if (fb) { fb.classList.remove('hidden'); fb.className = 'feedback pass'; fb.textContent = '✅ Main program complete.'; }
+  }
+  if (completedStages.includes('M2')) showCompletion();
+  updateStepVisibility();
+});
+</script>
+</body>
+</html>
