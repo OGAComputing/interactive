@@ -34,10 +34,12 @@ export const MOD_CHECKS = {
   mod2(raw) {
     const c = normalise(raw);
     if (!has(c, 'int(input'))
-      return { pass: false, msg: '❌ Ask for the birth year using int(input(...)) — you need int() to subtract it from 2026.' };
-    if (!has(c, /2026\s*-/) && !has(c, /2027\s*-/))
-      return { pass: false, msg: '❌ Calculate using: age = 2026 - year (subtract the birth year from 2026).' };
-    return { pass: true, msg: '✅ Birth year input with int() and age calculation in place — nice work!' };
+      return { pass: false, msg: '❌ Ask for the birth year using int(input(...)) — you still need int() to do the subtraction.' };
+    if (!has(c, /\d{4}\s*-/))
+      return { pass: false, msg: '❌ Calculate age with something like: age = 2026 - year (subtract the birth year from the current year).' };
+    if (!has(c, /print.*age/) && !has(c, /str\s*\(\s*age/))
+      return { pass: false, msg: '❌ Update the print statement to show the calculated age — for example: print("You are " + str(age) + " years old.")' };
+    return { pass: true, msg: '✅ Birth year input, age calculation, and age output — excellent!' };
   },
 
   mod3(raw) {
