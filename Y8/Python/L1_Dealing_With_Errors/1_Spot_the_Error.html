@@ -65,7 +65,7 @@ color:  teal
   .done-banner.show { display: block; }
   .done-banner h3 { color: var(--amber-dark); font-family: 'Trebuchet MS', sans-serif; font-size: 1.05rem; margin-bottom: 3px; }
   .done-banner p  { color: var(--mid); font-size: 0.84rem; }
-  .questions-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 18px; }
+  .questions-grid { display: grid; grid-template-columns: 1fr; gap: 18px; }
   .qcard { background: var(--white); border: 2px solid #d4e4f0; border-radius: 8px; overflow: hidden; transition: border-color 0.3s; }
   .qcard.answered-correct { border-color: var(--green); }
   .qcard.answered-wrong   { border-color: var(--red);   }
@@ -118,6 +118,24 @@ color:  teal
   .pill-msg.selected  { border-color: var(--teal);  background: var(--teal-bg);  color: var(--teal-dark); }
   .pill-msg.correct   { border-color: var(--green); background: var(--green-bg); color: var(--green-dark); }
   .pill-msg.incorrect { border-color: var(--red);   background: var(--red-bg);   color: var(--red); }
+  /* Reference card */
+  .ref-section { background: var(--navy); border-bottom: 2px solid #2a4060; }
+  .ref-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 28px; cursor: pointer; user-select: none; }
+  .ref-title { font-size: 0.88rem; font-weight: 700; color: var(--teal-light); font-family: 'Trebuchet MS', sans-serif; letter-spacing: 0.04em; text-transform: uppercase; }
+  .ref-toggle-btn { background: none; border: 1px solid #2a4060; border-radius: 4px; color: var(--muted); font-size: 0.72rem; font-family: inherit; padding: 3px 10px; cursor: pointer; transition: color 0.15s, border-color 0.15s; }
+  .ref-toggle-btn:hover { color: var(--teal-light); border-color: var(--teal); }
+  .ref-body { padding: 0 28px 14px; }
+  .ref-body.hidden { display: none; }
+  .ref-table { display: flex; flex-direction: column; gap: 5px; max-width: 900px; }
+  .ref-row { display: grid; grid-template-columns: 58px 240px 1fr; border-radius: 6px; overflow: hidden; }
+  .ref-sym { padding: 10px 8px; display: flex; align-items: center; justify-content: center; font-family: 'Courier New', monospace; font-size: 0.82rem; font-weight: 700; color: var(--navy); }
+  .ref-sym.sym-teal  { background: var(--teal); }
+  .ref-sym.sym-amber { background: var(--amber); }
+  .ref-sym.sym-gold  { background: var(--gold); }
+  .ref-sym.sym-red   { background: var(--red); color: #fff; }
+  .ref-msg { padding: 10px 14px; background: #162535; font-family: 'Courier New', monospace; font-size: 0.78rem; font-weight: 600; color: var(--teal-light); display: flex; align-items: center; border-left: 1px solid #1e3a5f; }
+  .ref-desc { padding: 10px 16px; background: #1a2e45; font-size: 0.82rem; color: #c8dcea; display: flex; align-items: center; line-height: 1.5; border-left: 1px solid #1e3a5f; }
+  .ref-desc code { background: rgba(255,255,255,0.1); padding: 1px 5px; border-radius: 3px; font-size: 0.8rem; color: var(--teal-light); font-family: 'Courier New', monospace; }
   .score-bar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(30,58,95,0.97); border-top: 1px solid #2a4060; padding: 9px 28px; display: flex; align-items: center; gap: 14px; z-index: 100; backdrop-filter: blur(4px); }
   .score-label { font-size: 0.78rem; color: var(--muted); white-space: nowrap; }
   .score-track { flex: 1; height: 6px; background: var(--navy-light); border-radius: 3px; overflow: hidden; }
@@ -145,6 +163,42 @@ color:  teal
   <button class="tab active" id="tab-a" onclick="showPanel('a',this)">Part A &mdash; Name the Error</button>
   <button class="tab"        id="tab-b" onclick="showPanel('b',this)">Part B &mdash; Cause the Error &#x2605;&#x2605;&#x2605;</button>
 </nav>
+
+<section class="ref-section" id="ref-section">
+  <div class="ref-header" onclick="toggleRef()">
+    <span class="ref-title">&#x1F4DA; Error Quick Reference</span>
+    <button class="ref-toggle-btn" id="ref-toggle-btn">&#x25B2; Hide</button>
+  </div>
+  <div class="ref-body" id="ref-body">
+    <div class="ref-table">
+      <div class="ref-row">
+        <div class="ref-sym sym-teal">" "</div>
+        <div class="ref-msg">unterminated string literal</div>
+        <div class="ref-desc">Missing <code>"</code> &mdash; close your string</div>
+      </div>
+      <div class="ref-row">
+        <div class="ref-sym sym-amber">:</div>
+        <div class="ref-msg">SyntaxError: expected ':'</div>
+        <div class="ref-desc">Missing <code>:</code> &mdash; every <code>if</code> / <code>else</code> / <code>for</code> / <code>while</code> line must <strong style="color:var(--teal-light)">end</strong> with one</div>
+      </div>
+      <div class="ref-row">
+        <div class="ref-sym sym-teal">( )</div>
+        <div class="ref-msg">SyntaxError: '(' was never closed</div>
+        <div class="ref-desc">Unclosed <code>(</code> &mdash; add the matching <code>)</code></div>
+      </div>
+      <div class="ref-row">
+        <div class="ref-sym sym-gold" style="font-size:1.1rem; letter-spacing:-2px;">&#x2192;&#x2192;</div>
+        <div class="ref-msg">IndentationError</div>
+        <div class="ref-desc">Missing indent &mdash; press Tab on the line after a colon</div>
+      </div>
+      <div class="ref-row">
+        <div class="ref-sym sym-red">abc</div>
+        <div class="ref-msg">NameError: name '&hellip;' is not defined</div>
+        <div class="ref-desc">Typo or variable not created yet</div>
+      </div>
+    </div>
+  </div>
+</section>
 
 <div class="panel active" id="panel-a">
   <div class="panel-intro">
@@ -175,6 +229,12 @@ color:  teal
 </div>
 
 <script>
+function toggleRef(){
+  const body=document.getElementById('ref-body'), btn=document.getElementById('ref-toggle-btn');
+  body.classList.toggle('hidden');
+  btn.textContent=body.classList.contains('hidden')?'▼ Show':'▲ Hide';
+}
+
 const OPTS = ['SyntaxError', 'NameError', 'IndentationError'];
 // Distractor pools for the "what message?" questions
 const MSG_COLON  = ["SyntaxError: expected ':'", "SyntaxError: '(' was never closed", "SyntaxError: unterminated string literal", "IndentationError: expected an indented block"];

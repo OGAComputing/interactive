@@ -128,6 +128,14 @@ color:  teal
   /* Continuation border so editor-wrap connects to checker-header inside a q-block */
   .q-block .editor-wrap { border: 2px solid #3d2d5e; border-top: none; }
 
+  /* ── Collapsed / locked code block ───────────────────────── */
+  .q-block.code-locked .editor-wrap,
+  .q-block.code-locked .checker-textarea { display: none; }
+  .code-lock-msg { display: none; background: #dcfce7; border: 1px solid #22c55e;
+                   color: #15803d; border-radius: 6px; padding: 8px 12px;
+                   font-size: 0.85rem; font-weight: 600; margin: 8px 0; }
+  .q-block.code-locked .code-lock-msg { display: block; }
+
   /* Turtle output modal */
   .turtle-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,10,0.88); z-index: 200; align-items: center; justify-content: center; }
   .turtle-modal.open { display: flex; }
@@ -858,7 +866,7 @@ function checkCode(qId, detectFn, maxPts) {
 
   fb.textContent = msg;
   fb.className   = pts === maxPts ? 'q-fb pass' : pts > 0 ? 'q-fb partial' : 'q-fb fail';
-  if (pts === maxPts) window._clearSyntaxHint?.(ta);
+  if (pts === maxPts) { window._clearSyntaxHint?.(ta); lockCodeBlock(qId); }
   awardPoints(qId, pts);
 }
 
@@ -1105,6 +1113,11 @@ function loadState() {
           }
         }
       });
+      // Re-lock coding blocks that were previously completed at full marks
+      const codingMaxMap = { qB1:2, qB2:2, qLC1:2, qLC2:2, qLC3:2, qFC1:2, qFC2:2, qEX:4 };
+      Object.entries(s.qPoints).forEach(([qId, pts]) => {
+        if (codingMaxMap[qId] !== undefined && pts >= codingMaxMap[qId]) lockCodeBlock(qId);
+      });
       refreshScore();
       markTabProgress();
       checkCompletion();
@@ -1135,7 +1148,42 @@ function checkCodeAndTurtle(qId, detectFn, maxPts) {
   window._openTurtlePreview?.(ta, _TURTLE_TITLES[qId] || 'Turtle Output');
 }
 
+// ══════════════════════════════════════════════════════════════
+// MCQ ANSWER SHUFFLE — randomise display order on each load
+// (values stay bound to their radio inputs so checking still works)
+// ══════════════════════════════════════════════════════════════
+function shuffleMCQs() {
+  document.querySelectorAll('.q-opts').forEach(opts => {
+    const labels = [...opts.querySelectorAll('.q-opt')];
+    for (let i = labels.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [labels[i], labels[j]] = [labels[j], labels[i]];
+    }
+    labels.forEach(l => opts.appendChild(l));
+  });
+}
+
+// ══════════════════════════════════════════════════════════════
+// CODE BLOCK LOCK — hide editor once a coding task is fully correct
+// ══════════════════════════════════════════════════════════════
+function lockCodeBlock(qId) {
+  const block = document.getElementById(qId);
+  if (!block || block.classList.contains('code-locked')) return;
+  block.classList.add('code-locked');
+  const btn = document.getElementById(qId + '-btn');
+  if (btn) { btn.disabled = true; btn.style.display = 'none'; }
+  if (!block.querySelector('.code-lock-msg')) {
+    const msg = document.createElement('div');
+    msg.className = 'code-lock-msg';
+    msg.textContent = '🔒 Code submitted — well done!';
+    const fb = document.getElementById(qId + '-fb');
+    if (fb) block.insertBefore(msg, fb);
+    else block.appendChild(msg);
+  }
+}
+
 // ── Boot ───────────────────────────────────────────────────────
+shuffleMCQs();
 loadState();
 </script>
 

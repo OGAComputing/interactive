@@ -387,8 +387,12 @@ export function setupEditors(selector = '.checker-textarea') {
     _hintMap.set(ta, hint);
 
     // ── Events ────────────────────────────────────────────────────────────
+    ta.addEventListener('paste', e => {
+      if (!ta.dataset.allowPaste) e.preventDefault();
+    });
+
     ta.addEventListener('input', () => {
-      _debouncedCheck(ta); 
+      _debouncedCheck(ta);
     });
 
     ta.addEventListener('focus', () => {
