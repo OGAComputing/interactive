@@ -124,6 +124,35 @@ color:  teal
   .tip-bar { background: var(--gold-bg); border: 1px solid var(--gold); border-radius: 6px; padding: 10px 14px; font-size: 0.84rem; font-weight: 700; color: var(--amber-dark); margin-top: 14px; }
   .ext-note { background: var(--amber-bg); border: 1px solid var(--amber); border-radius: 6px; padding: 10px 14px; font-size: 0.84rem; color: var(--navy); margin-top: 14px; }
 
+  /* ── Warning Modal ── */
+  .modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(26, 46, 74, 0.85); display: none;
+    align-items: center; justify-content: center; z-index: 10000;
+    backdrop-filter: blur(4px);
+  }
+  .modal-overlay.visible { display: flex; }
+  .modal-box {
+    background: var(--white); width: 90%; max-width: 450px;
+    border-radius: 12px; overflow: hidden;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+    animation: modalPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  @keyframes modalPop { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .modal-header {
+    background: var(--amber); padding: 20px; text-align: center;
+    color: var(--navy); border-bottom: 4px solid var(--amber-dark);
+  }
+  .modal-header h3 { margin: 0; font-size: 1.4rem; font-family: 'Trebuchet MS', sans-serif; }
+  .modal-body { padding: 24px; text-align: center; line-height: 1.6; color: var(--navy-mid); }
+  .modal-body strong { color: var(--amber-dark); }
+  .modal-btn {
+    display: block; width: 100%; padding: 14px; border: none;
+    background: var(--navy); color: var(--white); font-weight: 700;
+    font-size: 1rem; cursor: pointer; transition: background 0.2s;
+  }
+  .modal-btn:hover { background: var(--navy-mid); }
+
   .completion-banner { display: none; text-align: center; padding: 20px 24px; background: linear-gradient(135deg,#1A2E4A,#1E3A5F); border: 2px solid var(--gold); border-radius: 10px; margin: 0 28px 24px; max-width: 920px; margin-left: auto; margin-right: auto; }
   .completion-banner.visible { display: block; }
   .completion-banner h2 { color: var(--gold); font-family: 'Trebuchet MS', sans-serif; font-size: 1.4rem; margin-bottom: 6px; }
@@ -675,6 +704,18 @@ print("In Fahrenheit: " + str(fahrenheit))</div>
 
 </div>
 
+<div class="modal-overlay" id="warning-modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3>Focus on the Orange! 💡</h3>
+    </div>
+    <div class="modal-body">
+      You've changed a line that was already correct. In these challenges, you only need to fix the lines highlighted in <strong>orange</strong>.<br><br>The other lines are already perfect!
+    </div>
+    <button class="modal-btn" onclick="closeModal()">Got it!</button>
+  </div>
+</div>
+
 <script>
 const tasks = [
   // Task 1: close quote on Alice, add opening quote to Hello
@@ -782,18 +823,21 @@ function check(idx) {
 
   const fails = [];
   
-  // New: Check if they modified the "ok" lines
+  // New: Check if they modified the "ok" lines (with leniency)
   const panel = document.getElementById('panel-' + idx);
   const originalLines = Array.from(panel.querySelectorAll('.code-line'));
   const userLines = ta.value.split('\n');
   
+  // Leniency helper: ignore all spaces, quotes type, and case
+  const simplify = s => (s||"").replace(/\s+/g, '').replace(/['"]/g, '"').toLowerCase();
+
   let modifiedOk = false;
   for (let i = 0; i < originalLines.length; i++) {
     if (originalLines[i].classList.contains('ok')) {
-      const origText = originalLines[i].textContent.trim();
-      const userLine = (userLines[i] || "").trim();
-      // If the user line doesn't match the original correct line
-      if (origText !== userLine) {
+      const orig = simplify(originalLines[i].textContent);
+      const user = simplify(userLines[i]);
+      
+      if (orig !== user) {
         modifiedOk = true;
         break;
       }
@@ -801,6 +845,10 @@ function check(idx) {
   }
   
   if (modifiedOk) {
+    if (!localStorage.getItem('bugfix_warning_shown')) {
+      showModal();
+      localStorage.setItem('bugfix_warning_shown', 'true');
+    }
     fails.push("You've changed a line that was already correct! Focus on fixing ONLY the <strong style='color:var(--amber-dark)'>orange lines</strong>.");
   }
 
@@ -847,6 +895,13 @@ document.getElementById('tab-bar').addEventListener('click', e => {
     document.getElementById('panel-'+i).classList.add('active');
   }
 });
+
+function closeModal() {
+  document.getElementById('warning-modal').classList.remove('visible');
+}
+function showModal() {
+  document.getElementById('warning-modal').classList.add('visible');
+}
 
 function toggleHint(idx) {
   const box = document.getElementById('hint-'+idx);
