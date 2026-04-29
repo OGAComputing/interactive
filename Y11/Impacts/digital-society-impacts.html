@@ -1,0 +1,1397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- ACTIVITY
+title:  Impacts of Digital Technology on Society
+type:   Practice
+stars:  4
+desc:   Six activities covering ethical, legal, cultural, environmental and privacy issues, plus open source vs proprietary software licences
+color:  indigo
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Impacts of Digital Technology on Society — Year 11</title>
+<link rel="stylesheet" href="../../shared.css">
+<style>
+body { font-size: 16px; line-height: 1.5; }
+
+/* ── HEADER ── */
+header {
+  background: var(--bg);
+  padding: 0;
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  box-shadow: 0 2px 12px rgba(0,0,0,.45);
+}
+.header-inner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 24px;
+}
+.header-icon {
+  width: 44px; height: 44px;
+  background: var(--accent);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; flex-shrink: 0;
+}
+header h1 { font-family: var(--font-head); font-size: 1.2rem; font-weight: 700; line-height: 1.2; color: var(--text); }
+header p  { font-size: .8rem; color: var(--muted); margin-top: 2px; }
+.header-score { margin-left: auto; text-align: right; flex-shrink: 0; }
+.score-label  { font-size: .72rem; color: var(--muted); }
+.score-val    { font-size: 1.35rem; font-weight: 700; color: #fbbf24; font-family: var(--font-head); }
+
+/* ── TAB BAR ── */
+.tab-bar {
+  background: var(--surface);
+  border-bottom: 2px solid var(--surface-mid);
+  overflow-x: auto;
+  white-space: nowrap;
+  scrollbar-width: none;
+  position: sticky;
+  top: 70px;
+  z-index: 150;
+}
+.tab-bar::-webkit-scrollbar { display: none; }
+.tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 11px 16px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: .85rem;
+  color: var(--muted);
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  transition: color .2s, border-color .2s;
+  white-space: nowrap;
+}
+.tab-btn:hover { color: var(--accent); }
+.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+.tab-btn .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--surface-mid); flex-shrink: 0; }
+.tab-btn.done .dot      { background: var(--green); }
+.tab-btn.gold-done .dot { background: var(--gold); }
+
+/* ── MAIN ── */
+main { max-width: 880px; margin: 0 auto; padding: 26px 18px 80px; }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; animation: ac-fade-in .2s ease; }
+
+/* ── SECTION HEAD ── */
+.section-head { margin-bottom: 20px; }
+.section-head h2 {
+  font-family: var(--font-head);
+  font-size: 1.25rem;
+  color: var(--text);
+  display: flex; align-items: center; gap: 10px;
+}
+.section-head h2 .tag {
+  font-size: .68rem;
+  background: var(--accent);
+  color: var(--text-inv);
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-weight: 700;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+.section-head p { color: var(--muted); font-size: .88rem; margin-top: 6px; line-height: 1.55; }
+
+/* ── CARD ── */
+.card {
+  background: var(--surface);
+  border: 1.5px solid var(--surface-mid);
+  border-radius: 10px;
+  padding: 20px 22px;
+  margin-bottom: 18px;
+}
+
+/* ── FEEDBACK ── */
+.feedback { margin-top: 12px; padding: 10px 14px; border-radius: 7px; font-size: .88rem; font-weight: 500; display: none; }
+.feedback.show { display: block; }
+.feedback.ok   { background: var(--green-bg); color: var(--green); border-left: 3px solid var(--green); }
+.feedback.err  { background: var(--red-bg);   color: var(--red);   border-left: 3px solid var(--red); }
+.feedback.warn { background: var(--gold-bg);  color: var(--gold);  border-left: 3px solid var(--gold); }
+
+/* ── CONFETTI ── */
+@keyframes confFall {
+  0%   { transform: translateY(-20px) rotate(0deg);   opacity: 1; }
+  100% { transform: translateY(110vh)  rotate(720deg); opacity: 0; }
+}
+.conf { position: fixed; top: 0; width: 10px; height: 14px; border-radius: 2px; z-index: 9999; pointer-events: none; }
+
+/* ═══════════════════════════════════════════════════════
+   TAB 0 — ISSUE CLASSIFIER
+═══════════════════════════════════════════════════════ */
+.scenario-pool {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+  min-height: 46px;
+  padding: 6px;
+  background: var(--surface);
+  border: 1.5px dashed var(--surface-dim);
+  border-radius: 8px;
+}
+.scenario-chip {
+  background: var(--surface-mid);
+  border: 1.5px solid var(--surface-dim);
+  border-radius: 7px;
+  padding: 7px 11px;
+  font-size: .8rem;
+  cursor: grab;
+  line-height: 1.45;
+  transition: box-shadow .15s;
+  user-select: none;
+  max-width: 270px;
+}
+.scenario-chip:hover  { box-shadow: 0 2px 10px rgba(0,0,0,.25); }
+.scenario-chip.dragging { opacity: .3; }
+
+.issue-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+@media (max-width: 620px) { .issue-grid { grid-template-columns: 1fr; } }
+
+.issue-box {
+  border: 2px dashed;
+  border-radius: 10px;
+  padding: 11px 12px;
+  min-height: 90px;
+  transition: filter .15s;
+}
+.issue-box h4 {
+  font-size: .75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  margin-bottom: 8px;
+}
+.issue-box.over { filter: brightness(1.2); }
+
+.issue-ethical     { border-color: #a78bfa; } .issue-ethical h4     { color: #a78bfa; }
+.issue-legal       { border-color: #fb923c; } .issue-legal h4       { color: #fb923c; }
+.issue-cultural    { border-color: #22d3ee; } .issue-cultural h4    { color: #22d3ee; }
+.issue-enviro      { border-color: #4ade80; } .issue-enviro h4      { color: #4ade80; }
+.issue-privacy     { border-color: #f87171; } .issue-privacy h4     { color: #f87171; }
+
+.placed-chip {
+  background: var(--bg);
+  color: #fff;
+  border-radius: 5px;
+  padding: 4px 8px;
+  font-size: .76rem;
+  display: inline-block;
+  margin: 3px 3px 3px 0;
+  cursor: pointer;
+  line-height: 1.4;
+}
+
+/* ═══════════════════════════════════════════════════════
+   TAB 1 — FEATURE SORTER
+═══════════════════════════════════════════════════════ */
+.feature-pool {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 18px;
+  min-height: 46px;
+  padding: 6px;
+  background: var(--surface);
+  border: 1.5px dashed var(--surface-dim);
+  border-radius: 8px;
+}
+.feature-chip {
+  background: var(--surface-mid);
+  border: 1.5px solid var(--surface-dim);
+  border-radius: 7px;
+  padding: 7px 11px;
+  font-size: .8rem;
+  cursor: grab;
+  line-height: 1.4;
+  transition: box-shadow .15s;
+  user-select: none;
+}
+.feature-chip:hover   { box-shadow: 0 2px 8px rgba(0,0,0,.2); }
+.feature-chip.dragging { opacity: .3; }
+
+.licence-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+@media (max-width: 560px) { .licence-grid { grid-template-columns: 1fr; } }
+
+.licence-box {
+  border: 2px dashed var(--surface-mid);
+  border-radius: 10px;
+  padding: 14px;
+  min-height: 110px;
+  transition: background .15s;
+}
+.licence-box h4 {
+  font-size: .8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  margin-bottom: 10px;
+  padding-bottom: 7px;
+}
+.licence-box.over { background: rgba(255,255,255,.04); }
+.licence-open h4 { color: #4ade80; border-bottom: 2px solid #4ade80; }
+.licence-prop h4 { color: #38bdf8; border-bottom: 2px solid #38bdf8; }
+
+/* ═══════════════════════════════════════════════════════
+   TAB 2 — TRUE / FALSE
+═══════════════════════════════════════════════════════ */
+.tf-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--surface-mid);
+}
+.tf-row:last-child { border-bottom: none; }
+.tf-btns { display: flex; gap: 5px; flex-shrink: 0; }
+.tf-btn {
+  width: 58px;
+  padding: 7px 0;
+  border-radius: 6px;
+  border: 1.5px solid var(--surface-mid);
+  font-size: .8rem;
+  font-weight: 700;
+  cursor: pointer;
+  background: var(--surface-mid);
+  color: var(--text);
+  transition: background .15s;
+}
+.tf-btn:hover { background: var(--surface-dim); }
+.tf-btn.selected-true  { background: #1e3a5f; border-color: #38bdf8; color: #93c5fd; }
+.tf-btn.selected-false { background: var(--red-bg); border-color: var(--red); color: var(--red); }
+.tf-statement { flex: 1; font-size: .88rem; line-height: 1.6; }
+.tf-statement b { color: var(--accent-light); text-decoration: underline dotted; font-style: italic; }
+.replace-wrap { margin-top: 8px; display: none; align-items: center; gap: 8px; flex-wrap: wrap; }
+.replace-wrap.show { display: flex; }
+.replace-wrap span { font-size: .8rem; color: var(--muted); }
+.replace-input {
+  border: 1.5px solid var(--surface-mid);
+  border-radius: 6px;
+  padding: 5px 10px;
+  font-family: var(--font-body);
+  font-size: .86rem;
+  background: var(--surface-mid);
+  color: var(--text);
+  width: 150px;
+}
+.replace-input:focus { outline: none; border-color: var(--accent); }
+.tf-verdict { font-size: .8rem; margin-top: 6px; font-weight: 600; display: none; line-height: 1.5; }
+.tf-verdict.show { display: block; }
+.tf-verdict.ok  { color: var(--green); }
+.tf-verdict.err { color: var(--red); }
+.tf-verdict.warn { color: var(--gold); }
+
+/* ═══════════════════════════════════════════════════════
+   TAB 3 — LICENCE ADVISOR (MCQ)
+═══════════════════════════════════════════════════════ */
+.mc-card {
+  background: var(--surface);
+  border: 1.5px solid var(--surface-mid);
+  border-radius: 10px;
+  padding: 18px 20px;
+  margin-bottom: 16px;
+}
+.mc-scenario {
+  font-size: .9rem;
+  line-height: 1.65;
+  background: var(--surface-mid);
+  border-left: 4px solid var(--accent);
+  padding: 11px 14px;
+  border-radius: 0 7px 7px 0;
+  margin-bottom: 12px;
+  font-style: italic;
+  color: var(--text);
+}
+.mc-prompt { font-size: .78rem; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 9px; }
+.mc-options { display: flex; flex-direction: column; gap: 7px; }
+.mc-option {
+  background: var(--surface-mid);
+  border: 2px solid var(--surface-dim);
+  border-radius: 8px;
+  padding: 9px 13px;
+  font-size: .86rem;
+  line-height: 1.5;
+  cursor: pointer;
+  transition: border-color .15s, background .15s;
+  user-select: none;
+}
+.mc-option:hover { border-color: var(--accent); }
+.mc-option.selected  { border-color: var(--accent); background: rgba(129,140,248,.1); }
+.mc-option.correct   { border-color: var(--green);  background: var(--green-bg); color: var(--green); font-weight: 600; }
+.mc-option.wrong     { border-color: var(--red);    background: var(--red-bg);   color: var(--red); opacity: .75; }
+.mc-option.disabled  { pointer-events: none; }
+.mc-label { font-weight: 700; font-family: var(--font-head); margin-right: 8px; color: var(--accent); }
+.mc-option.correct .mc-label { color: var(--green); }
+.mc-option.wrong   .mc-label { color: var(--red); }
+.mc-qnum { font-size: .72rem; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 8px; }
+
+/* ═══════════════════════════════════════════════════════
+   TAB 4 — GAP FILL
+═══════════════════════════════════════════════════════ */
+.word-bank { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 14px; }
+.word-chip {
+  background: var(--bg);
+  color: #e2e8f0;
+  border-radius: 20px;
+  padding: 4px 13px;
+  font-size: .8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity .15s, outline .1s;
+  user-select: none;
+  border: 1.5px solid var(--surface-dim);
+}
+.word-chip:hover { border-color: var(--accent); }
+.word-chip.used          { opacity: .28; pointer-events: none; text-decoration: line-through; }
+.word-chip.selected-chip { outline: 2.5px solid var(--gold); outline-offset: 1px; }
+
+.gap-para {
+  font-size: .93rem;
+  line-height: 2.5;
+  padding: 16px 18px;
+  background: var(--surface);
+  color: var(--text);
+  border-radius: 8px;
+  border-left: 4px solid var(--accent);
+  margin-bottom: 12px;
+}
+.gap-input {
+  display: inline-block;
+  border: none;
+  border-bottom: 2px solid var(--accent);
+  background: transparent;
+  font-family: var(--font-body);
+  font-size: .9rem;
+  color: var(--text);
+  padding: 1px 4px;
+  text-align: center;
+  transition: border-color .2s;
+}
+.gap-input:focus { outline: none; border-bottom-color: var(--gold); }
+.gap-input.ok  { border-bottom-color: var(--green); background: var(--green-bg); border-radius: 4px; color: var(--green); font-weight: 700; }
+.gap-input.err { border-bottom-color: var(--red);   background: var(--red-bg);   border-radius: 4px; color: var(--red); }
+
+/* ═══════════════════════════════════════════════════════
+   TAB 5 — EXAM PRACTICE
+═══════════════════════════════════════════════════════ */
+.eq-question {
+  background: var(--surface-mid);
+  border-left: 4px solid var(--accent);
+  padding: 12px 16px;
+  border-radius: 0 8px 8px 0;
+  margin-bottom: 10px;
+  font-style: italic;
+  font-size: .93rem;
+  line-height: 1.65;
+  color: var(--text);
+}
+.eq-mark-note { font-size: .76rem; color: var(--muted); margin-bottom: 10px; }
+.eq-textarea {
+  width: 100%;
+  min-height: 105px;
+  border: 1.5px solid var(--surface-mid);
+  border-radius: 7px;
+  padding: 10px 12px;
+  font-family: var(--font-body);
+  font-size: .88rem;
+  background: var(--surface-mid);
+  color: var(--text);
+  resize: vertical;
+  transition: border-color .2s;
+}
+.eq-textarea:focus { outline: none; border-color: var(--accent); }
+.mark-scheme { margin-top: 12px; display: none; }
+.mark-scheme.show { display: block; }
+.ms-head { font-size: .76rem; font-weight: 700; color: var(--muted); margin-bottom: 8px; margin-top: 12px; text-transform: uppercase; letter-spacing: .06em; }
+.ms-item { display: flex; gap: 10px; align-items: flex-start; padding: 6px 10px; border-radius: 6px; font-size: .83rem; margin-bottom: 4px; background: var(--surface-mid); line-height: 1.5; }
+.ms-bullet { background: var(--green); color: #fff; border-radius: 50%; width: 20px; height: 20px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: .68rem; font-weight: 700; margin-top: 1px; }
+.self-assess-btns { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+.sa-btn { padding: 6px 14px; border-radius: 6px; border: 1.5px solid; font-size: .8rem; font-weight: 700; cursor: pointer; background: var(--surface); transition: background .15s; }
+.sa-btn.green-btn { border-color: var(--green); color: var(--green); }
+.sa-btn.green-btn:hover, .sa-btn.green-btn.selected { background: var(--green-bg); }
+.sa-btn.amber-btn { border-color: var(--gold);  color: var(--gold);  }
+.sa-btn.amber-btn:hover, .sa-btn.amber-btn.selected { background: var(--gold-bg); }
+.sa-btn.red-btn   { border-color: var(--red);   color: var(--red);   }
+.sa-btn.red-btn:hover,   .sa-btn.red-btn.selected   { background: var(--red-bg); }
+</style>
+</head>
+
+<body data-year="11" data-topic="Impacts">
+
+<header>
+  <div class="header-inner">
+    <div class="header-icon">🌐</div>
+    <div>
+      <h1>Impacts of Digital Technology on Society</h1>
+      <p>OCR GCSE Computer Science · 1.6</p>
+    </div>
+    <div class="header-score">
+      <div class="score-label">Score</div>
+      <div class="score-val" id="totalScore">0 / 54</div>
+    </div>
+  </div>
+  <div class="ac-progress-bar"><div class="ac-progress-fill" id="progressFill"></div></div>
+</header>
+
+<nav class="tab-bar">
+  <button class="tab-btn active" data-tab="0" onclick="switchTab(0)"><span class="dot"></span> Match the Issue</button>
+  <button class="tab-btn" data-tab="1" onclick="switchTab(1)"><span class="dot"></span> Licence Features</button>
+  <button class="tab-btn" data-tab="2" onclick="switchTab(2)"><span class="dot"></span> True or False?</button>
+  <button class="tab-btn" data-tab="3" onclick="switchTab(3)"><span class="dot"></span> Licence Advisor</button>
+  <button class="tab-btn" data-tab="4" onclick="switchTab(4)"><span class="dot"></span> Gap Fill</button>
+  <button class="tab-btn" data-tab="5" onclick="switchTab(5)"><span class="dot"></span> Exam Practice</button>
+</nav>
+
+<main>
+
+<!-- ══════════════════ TAB 0 — MATCH THE ISSUE ══════════════════ -->
+<section class="tab-panel active" id="tab0">
+  <div class="section-head">
+    <h2>Match the Issue <span class="tag">Drag &amp; Drop</span></h2>
+    <p>Drag each scenario card into the correct issue category. Cards turn green when correct or red when wrong. Click a placed card to return it to the pool and try again.</p>
+  </div>
+  <div class="scenario-pool" id="issuePool"></div>
+  <div class="issue-grid" id="issueGrid"></div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;">
+    <button class="ac-btn-secondary" onclick="resetIssues()">↺ Reset</button>
+  </div>
+  <div class="feedback" id="issueFeedback"></div>
+</section>
+
+<!-- ══════════════════ TAB 1 — LICENCE FEATURES ══════════════════ -->
+<section class="tab-panel" id="tab1">
+  <div class="section-head">
+    <h2>Licence Features <span class="tag">Drag &amp; Drop</span></h2>
+    <p>Sort each feature card into the correct software licence category. Instant feedback — green for correct, red for wrong. Click a placed card to return it.</p>
+  </div>
+  <div class="feature-pool" id="featurePool"></div>
+  <div class="licence-grid" id="licenceGrid"></div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;">
+    <button class="ac-btn-secondary" onclick="resetFeatures()">↺ Reset</button>
+  </div>
+  <div class="feedback" id="featureFeedback"></div>
+</section>
+
+<!-- ══════════════════ TAB 2 — TRUE OR FALSE ══════════════════ -->
+<section class="tab-panel" id="tab2">
+  <div class="section-head">
+    <h2>True or False? <span class="tag">Spot the Error</span></h2>
+    <p>Decide whether each statement is <strong>True</strong> or <strong>False</strong>. If false, type the correct word to replace the <em>highlighted</em> one and press Enter.</p>
+  </div>
+  <div class="card" id="tfContainer"></div>
+  <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;">
+    <button class="ac-btn-secondary" onclick="resetTF()">↺ Reset</button>
+  </div>
+  <div class="feedback" id="tfFeedback"></div>
+</section>
+
+<!-- ══════════════════ TAB 3 — LICENCE ADVISOR ══════════════════ -->
+<section class="tab-panel" id="tab3">
+  <div class="section-head">
+    <h2>Licence Advisor <span class="tag">Multiple Choice</span></h2>
+    <p>Read each scenario and click the best recommendation. Focus on <em>why</em> an answer is correct — examiners want the reason, not just the label.</p>
+  </div>
+  <div id="mcContainer"></div>
+  <div style="margin-top:4px;display:flex;gap:10px;flex-wrap:wrap;">
+    <button class="ac-btn-secondary" onclick="resetMC()">↺ Reset</button>
+  </div>
+  <div class="feedback" id="mcFeedback"></div>
+</section>
+
+<!-- ══════════════════ TAB 4 — GAP FILL ══════════════════ -->
+<section class="tab-panel" id="tab4">
+  <div class="section-head">
+    <h2>Gap Fill <span class="tag">Complete the Passage</span></h2>
+    <p>Click a word from the bank, then click a blank to place it — or type directly and press <kbd>Enter</kbd>. Each blank is checked as soon as it is filled.</p>
+  </div>
+  <div class="word-bank" id="wordBank"></div>
+  <div class="card">
+    <div class="gap-para" id="gapPara"></div>
+  </div>
+  <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;">
+    <button class="ac-btn-secondary" onclick="resetGap()">↺ Reset</button>
+  </div>
+  <div class="feedback" id="gapFeedback"></div>
+</section>
+
+<!-- ══════════════════ TAB 5 — EXAM PRACTICE ══════════════════ -->
+<section class="tab-panel" id="tab5">
+  <div class="section-head">
+    <h2>Exam Practice <span class="tag">Written Response</span></h2>
+    <p>Write your answer as you would in the exam, then reveal the mark scheme. Self-assess honestly — this is where the real learning happens.</p>
+  </div>
+  <div id="eqContainer"></div>
+</section>
+
+</main>
+
+<div class="ac-banner gold" id="completionBanner">🎉 Activity complete!</div>
+
+<script>
+// ════════════════════════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════════════════════════
+const state = {
+  tabScores: [null, null, null, null, null, null],
+  tabMax:    [10,   14,   8,    5,    8,    9],
+};
+const totalMax = state.tabMax.reduce((a, b) => a + b, 0);
+
+// ════════════════════════════════════════════════════════════════
+// TAB SWITCHING
+// ════════════════════════════════════════════════════════════════
+function switchTab(i) {
+  document.querySelectorAll('.tab-panel').forEach((p, j) => p.classList.toggle('active', j === i));
+  document.querySelectorAll('.tab-btn').forEach((b, j) => b.classList.toggle('active', j === i));
+}
+
+// ════════════════════════════════════════════════════════════════
+// SCORE UPDATE — submits grade after every task change
+// ════════════════════════════════════════════════════════════════
+function updateScore() {
+  let total = 0;
+  state.tabScores.forEach(s => { if (s !== null) total += s; });
+
+  document.getElementById('totalScore').textContent = total + ' / ' + totalMax;
+  document.getElementById('progressFill').style.width = (total / totalMax * 100) + '%';
+
+  document.querySelectorAll('.tab-btn').forEach((b, i) => {
+    b.classList.remove('done', 'gold-done');
+    if (state.tabScores[i] !== null) {
+      b.classList.add(state.tabScores[i] / state.tabMax[i] >= 0.8 ? 'gold-done' : 'done');
+    }
+  });
+
+  const answered = state.tabScores.filter(s => s !== null).length;
+  if (answered > 0) {
+    const pct = Math.round(total / totalMax * 100);
+    window.Classroom?.submitGrade(pct, 'Impacts of Digital Technology on Society');
+  }
+
+  if (answered === 6) {
+    const banner = document.getElementById('completionBanner');
+    const pct = Math.round(total / totalMax * 100);
+    if (total === totalMax) {
+      banner.textContent = '🥇 Perfect Score! Outstanding work!';
+      fireConfetti();
+    } else {
+      banner.textContent = `🎉 All tasks complete! Score: ${total}/${totalMax} (${pct}%)`;
+    }
+    banner.classList.add('show');
+  }
+}
+
+// ════════════════════════════════════════════════════════════════
+// CONFETTI
+// ════════════════════════════════════════════════════════════════
+function fireConfetti() {
+  const colours = ['#818cf8', '#fb923c', '#22d3ee', '#4ade80', '#f87171', '#fbbf24'];
+  for (let i = 0; i < 90; i++) {
+    const el = document.createElement('div');
+    el.className = 'conf';
+    el.style.cssText = `left:${Math.random() * 100}vw;background:${colours[Math.random() * colours.length | 0]};animation:confFall ${1.5 + Math.random() * 2}s ${Math.random() * 0.8}s linear forwards;`;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 4500);
+  }
+}
+
+// ════════════════════════════════════════════════════════════════
+// TAB 0 — ISSUE CLASSIFIER
+// ════════════════════════════════════════════════════════════════
+const issueCategories = [
+  { key: 'ethical',  label: 'Ethical',       cls: 'issue-ethical',  icon: '⚖️' },
+  { key: 'legal',    label: 'Legal',          cls: 'issue-legal',    icon: '📜' },
+  { key: 'cultural', label: 'Cultural',       cls: 'issue-cultural', icon: '🌍' },
+  { key: 'enviro',   label: 'Environmental',  cls: 'issue-enviro',   icon: '🌱' },
+  { key: 'privacy',  label: 'Privacy',        cls: 'issue-privacy',  icon: '🔒' },
+];
+
+const issueScenarios = [
+  { text: "A recruitment company's algorithm rejects 80% of applicants before any human reads their CV, including many well-qualified candidates.", cat: 'ethical' },
+  { text: "A logistics firm replaces all its warehouse workers with automated robots, making 3,000 people redundant with no retraining support.", cat: 'ethical' },
+  { text: "A graphic design studio uses background music in client videos without purchasing licences from the copyright holders.", cat: 'legal' },
+  { text: "A developer copies substantial sections of a rival's proprietary codebase and releases the result under their own brand name.", cat: 'legal' },
+  { text: "Researchers find that teenagers spending over four hours daily on social media report significantly fewer face-to-face friendships.", cat: 'cultural' },
+  { text: "In a rural village, the closure of the last bank branch means elderly residents without internet skills cannot manage their finances.", cat: 'cultural' },
+  { text: "Millions of discarded smartphones are shipped to informal sites in West Africa, where workers burn the devices to extract metals, releasing toxic fumes.", cat: 'enviro' },
+  { text: "Global data centres powering streaming, cloud storage, and social media now consume more electricity per year than some entire countries.", cat: 'enviro' },
+  { text: "A smart TV's user agreement reveals its microphone is always listening and that recordings are sold to third-party research firms.", cat: 'privacy' },
+  { text: "A free mobile game logs players' precise GPS location every 30 seconds and passes it to advertisers — a fact not mentioned during sign-up.", cat: 'privacy' },
+];
+
+let issueDragIdx = null;
+const issuePlaced = {};
+
+function buildIssues() {
+  Object.keys(issuePlaced).forEach(k => delete issuePlaced[k]);
+  issueDragIdx = null;
+
+  const pool = document.getElementById('issuePool');
+  pool.innerHTML = '';
+  [...issueScenarios].sort(() => Math.random() - .5).forEach(s => {
+    const idx = issueScenarios.indexOf(s);
+    const chip = makeIssueChip(idx);
+    pool.appendChild(chip);
+  });
+
+  const grid = document.getElementById('issueGrid');
+  grid.innerHTML = '';
+  issueCategories.forEach(cat => {
+    const box = document.createElement('div');
+    box.className = 'issue-box ' + cat.cls;
+    box.dataset.cat = cat.key;
+    box.innerHTML = `<h4>${cat.icon} ${cat.label}</h4>`;
+    box.addEventListener('dragover', e => { e.preventDefault(); box.classList.add('over'); });
+    box.addEventListener('dragleave', () => box.classList.remove('over'));
+    box.addEventListener('drop', e => { e.preventDefault(); box.classList.remove('over'); dropIssue(cat.key, box); });
+    grid.appendChild(box);
+  });
+}
+
+function makeIssueChip(idx) {
+  const chip = document.createElement('div');
+  chip.className = 'scenario-chip';
+  chip.textContent = issueScenarios[idx].text;
+  chip.dataset.idx = idx;
+  chip.draggable = true;
+  chip.addEventListener('dragstart', () => { issueDragIdx = idx; chip.classList.add('dragging'); });
+  chip.addEventListener('dragend', () => chip.classList.remove('dragging'));
+  chip.addEventListener('touchstart', e => touchDragStart(e, idx, 'issue'), { passive: false });
+  return chip;
+}
+
+function dropIssue(catKey, box) {
+  if (issueDragIdx === null) return;
+  const idx = issueDragIdx;
+
+  if (issuePlaced[idx] !== undefined) {
+    document.querySelectorAll('.issue-box .placed-chip').forEach(ch => { if (+ch.dataset.idx === idx) ch.remove(); });
+  }
+  issuePlaced[idx] = catKey;
+  document.querySelectorAll('#issuePool .scenario-chip').forEach(c => { if (+c.dataset.idx === idx) c.remove(); });
+
+  const isCorrect = issueScenarios[idx].cat === catKey;
+  const chip = makePlacedChip(idx, issueScenarios[idx].text, isCorrect, () => {
+    delete issuePlaced[idx];
+    document.getElementById('issuePool').appendChild(makeIssueChip(idx));
+    recalcIssues();
+  });
+  box.appendChild(chip);
+  issueDragIdx = null;
+  recalcIssues();
+}
+
+function makePlacedChip(idx, text, isCorrect, onRemove) {
+  const chip = document.createElement('span');
+  chip.className = 'placed-chip';
+  chip.dataset.idx = idx;
+  chip.textContent = text;
+  chip.style.background = isCorrect ? 'var(--green-dark)' : '#5b1c1c';
+  chip.style.border = isCorrect ? '1px solid var(--green)' : '1px solid var(--red)';
+  chip.style.color = isCorrect ? '#fff' : 'var(--red)';
+  chip.title = isCorrect ? 'Correct! Click to remove.' : 'Incorrect — click to return and try again.';
+  chip.onclick = onRemove;
+  return chip;
+}
+
+function recalcIssues() {
+  if (!window.Classroom?.verifyAuth()) return;
+  const placed = Object.keys(issuePlaced).length;
+  let score = 0;
+  Object.entries(issuePlaced).forEach(([idx, cat]) => { if (issueScenarios[+idx].cat === cat) score++; });
+  state.tabScores[0] = placed > 0 ? score : null;
+  updateScore();
+  const fb = document.getElementById('issueFeedback');
+  if (placed === issueScenarios.length) {
+    fb.className = 'feedback show ' + (score === issueScenarios.length ? 'ok' : 'err');
+    fb.textContent = score === issueScenarios.length
+      ? '✅ Excellent! All 10 scenarios correctly classified.'
+      : `${score}/10 correct. Red cards show mismatches — click them to return and retry.`;
+  } else if (placed > 0) {
+    fb.className = 'feedback show ' + (score === placed ? 'ok' : 'warn');
+    fb.textContent = score === placed
+      ? `${score}/${issueScenarios.length} placed — all correct so far!`
+      : `${score}/${placed} correct so far. Red cards are wrong — click to remove and try a different category.`;
+  } else {
+    fb.className = 'feedback';
+  }
+}
+
+function resetIssues() {
+  state.tabScores[0] = null;
+  document.getElementById('issueFeedback').className = 'feedback';
+  buildIssues();
+  updateScore();
+}
+
+// ════════════════════════════════════════════════════════════════
+// TAB 1 — LICENCE FEATURES SORTER
+// ════════════════════════════════════════════════════════════════
+const licenceCategories = [
+  { key: 'open',  label: '🟢 Open Source', cls: 'licence-open' },
+  { key: 'prop',  label: '🔵 Proprietary',  cls: 'licence-prop' },
+];
+
+const licenceFeatures = [
+  { text: 'Source code is freely available for anyone to view and download', cat: 'open' },
+  { text: 'Users can modify and redistribute the software as they wish', cat: 'open' },
+  { text: 'Often free to download and use with no purchase required', cat: 'open' },
+  { text: 'Developed and maintained by a community of volunteers worldwide', cat: 'open' },
+  { text: 'Can be customised and adapted to meet very specific requirements', cat: 'open' },
+  { text: 'No guaranteed technical support from a named company', cat: 'open' },
+  { text: 'Examples include Linux, LibreOffice, Firefox, and VLC', cat: 'open' },
+  { text: 'Source code is kept private — users cannot view or inspect it', cat: 'prop' },
+  { text: 'Users must purchase a licence to use the software legally', cat: 'prop' },
+  { text: 'Cannot be legally copied, modified, or redistributed by users', cat: 'prop' },
+  { text: 'Backed by a dedicated development and customer support team', cat: 'prop' },
+  { text: 'Regular, official security patches and updates are guaranteed', cat: 'prop' },
+  { text: 'Typically sold as an off-the-shelf product or annual subscription', cat: 'prop' },
+  { text: 'Examples include Microsoft Windows, Adobe Photoshop, and macOS', cat: 'prop' },
+];
+
+let featureDragIdx = null;
+const featurePlaced = {};
+
+function buildFeatures() {
+  Object.keys(featurePlaced).forEach(k => delete featurePlaced[k]);
+  featureDragIdx = null;
+
+  const pool = document.getElementById('featurePool');
+  pool.innerHTML = '';
+  [...licenceFeatures].sort(() => Math.random() - .5).forEach(f => {
+    const idx = licenceFeatures.indexOf(f);
+    pool.appendChild(makeFeatureChip(idx));
+  });
+
+  const grid = document.getElementById('licenceGrid');
+  grid.innerHTML = '';
+  licenceCategories.forEach(cat => {
+    const box = document.createElement('div');
+    box.className = 'licence-box ' + cat.cls;
+    box.dataset.cat = cat.key;
+    box.innerHTML = `<h4>${cat.label}</h4>`;
+    box.addEventListener('dragover', e => { e.preventDefault(); box.classList.add('over'); });
+    box.addEventListener('dragleave', () => box.classList.remove('over'));
+    box.addEventListener('drop', e => { e.preventDefault(); box.classList.remove('over'); dropFeature(cat.key, box); });
+    grid.appendChild(box);
+  });
+}
+
+function makeFeatureChip(idx) {
+  const chip = document.createElement('div');
+  chip.className = 'feature-chip';
+  chip.textContent = licenceFeatures[idx].text;
+  chip.dataset.idx = idx;
+  chip.draggable = true;
+  chip.addEventListener('dragstart', () => { featureDragIdx = idx; chip.classList.add('dragging'); });
+  chip.addEventListener('dragend', () => chip.classList.remove('dragging'));
+  chip.addEventListener('touchstart', e => touchDragStart(e, idx, 'feature'), { passive: false });
+  return chip;
+}
+
+function dropFeature(catKey, box) {
+  if (featureDragIdx === null) return;
+  const idx = featureDragIdx;
+
+  if (featurePlaced[idx] !== undefined) {
+    document.querySelectorAll('.licence-box .placed-chip').forEach(ch => { if (+ch.dataset.idx === idx) ch.remove(); });
+  }
+  featurePlaced[idx] = catKey;
+  document.querySelectorAll('#featurePool .feature-chip').forEach(c => { if (+c.dataset.idx === idx) c.remove(); });
+
+  const isCorrect = licenceFeatures[idx].cat === catKey;
+  const chip = makePlacedChip(idx, licenceFeatures[idx].text, isCorrect, () => {
+    delete featurePlaced[idx];
+    document.getElementById('featurePool').appendChild(makeFeatureChip(idx));
+    recalcFeatures();
+  });
+  box.appendChild(chip);
+  featureDragIdx = null;
+  recalcFeatures();
+}
+
+function recalcFeatures() {
+  if (!window.Classroom?.verifyAuth()) return;
+  const placed = Object.keys(featurePlaced).length;
+  let score = 0;
+  Object.entries(featurePlaced).forEach(([idx, cat]) => { if (licenceFeatures[+idx].cat === cat) score++; });
+  state.tabScores[1] = placed > 0 ? score : null;
+  updateScore();
+  const fb = document.getElementById('featureFeedback');
+  if (placed === licenceFeatures.length) {
+    fb.className = 'feedback show ' + (score === licenceFeatures.length ? 'ok' : 'err');
+    fb.textContent = score === licenceFeatures.length
+      ? '✅ All 14 features correctly sorted!'
+      : `${score}/14 correct. Red cards are in the wrong category — click to return and retry.`;
+  } else if (placed > 0) {
+    fb.className = 'feedback show ' + (score === placed ? 'ok' : 'warn');
+    fb.textContent = `${score}/${placed} placed correctly so far.`;
+  } else {
+    fb.className = 'feedback';
+  }
+}
+
+function resetFeatures() {
+  state.tabScores[1] = null;
+  document.getElementById('featureFeedback').className = 'feedback';
+  buildFeatures();
+  updateScore();
+}
+
+// ════════════════════════════════════════════════════════════════
+// SHARED TOUCH DRAG (for tab 0 and tab 1)
+// ════════════════════════════════════════════════════════════════
+let touchClone = null;
+
+function touchDragStart(e, idx, type) {
+  e.preventDefault();
+  const el = e.currentTarget;
+  if (type === 'issue')   issueDragIdx   = idx;
+  if (type === 'feature') featureDragIdx = idx;
+
+  touchClone = el.cloneNode(true);
+  touchClone.style.cssText = `position:fixed;opacity:.7;pointer-events:none;z-index:9999;width:${Math.min(el.offsetWidth, 280)}px;`;
+  document.body.appendChild(touchClone);
+
+  const mv = te => {
+    te.preventDefault();
+    const t = te.touches[0];
+    touchClone.style.left = (t.clientX - 60) + 'px';
+    touchClone.style.top  = (t.clientY - 20) + 'px';
+  };
+  const en = te => {
+    document.removeEventListener('touchmove', mv);
+    document.removeEventListener('touchend', en);
+    if (touchClone) { touchClone.remove(); touchClone = null; }
+    const t = te.changedTouches[0];
+    const el2 = document.elementFromPoint(t.clientX, t.clientY);
+    if (!el2) return;
+    if (type === 'issue') {
+      const box = el2.closest('.issue-box');
+      if (box) dropIssue(box.dataset.cat, box);
+    } else {
+      const box = el2.closest('.licence-box');
+      if (box) dropFeature(box.dataset.cat, box);
+    }
+  };
+  document.addEventListener('touchmove', mv, { passive: false });
+  document.addEventListener('touchend', en);
+}
+
+// ════════════════════════════════════════════════════════════════
+// TAB 2 — TRUE / FALSE
+// ════════════════════════════════════════════════════════════════
+const tfData = [
+  {
+    stmt: 'Open source software keeps its source code <b>secret</b> — only the developers can view or change it.',
+    boldWord: 'secret', isTrue: false, correct: 'public', alts: ['available', 'open', 'visible', 'accessible']
+  },
+  {
+    stmt: 'The source code for proprietary software is kept <b>private</b>, preventing users from legally viewing or modifying it.',
+    boldWord: 'private', isTrue: true, correct: ''
+  },
+  {
+    stmt: 'Old electronics burned in uncontrolled environments release <b>toxic</b> chemicals into the air and soil — a clear environmental impact of digital technology.',
+    boldWord: 'toxic', isTrue: true, correct: ''
+  },
+  {
+    stmt: 'An algorithm automatically rejecting job applications without any human review raises <b>cultural</b> concerns about fairness and accountability.',
+    boldWord: 'cultural', isTrue: false, correct: 'ethical', alts: ['ethical']
+  },
+  {
+    stmt: 'Open source software <b>cannot</b> be modified or improved by developers outside the original team.',
+    boldWord: 'cannot', isTrue: false, correct: 'can', alts: ['can be']
+  },
+  {
+    stmt: 'The digital divide describes the gap in <b>access</b> to digital technology between different groups in society.',
+    boldWord: 'access', isTrue: true, correct: ''
+  },
+  {
+    stmt: 'A fitness app selling users\' personal health and location data to advertisers without their knowledge is an example of a <b>privacy</b> issue.',
+    boldWord: 'privacy', isTrue: true, correct: ''
+  },
+  {
+    stmt: 'Automating factory jobs with robots is primarily a <b>legal</b> impact of digital technology on society.',
+    boldWord: 'legal', isTrue: false, correct: 'ethical', alts: ['ethical']
+  },
+];
+let tfOrdering = [];
+
+function buildTF() {
+  tfOrdering = [...Array(tfData.length).keys()].sort(() => Math.random() - .5);
+  const con = document.getElementById('tfContainer');
+  con.innerHTML = '';
+  tfOrdering.forEach((idx, pos) => {
+    const d = tfData[idx];
+    const row = document.createElement('div');
+    row.className = 'tf-row';
+    row.innerHTML = `
+      <div class="tf-btns">
+        <button class="tf-btn" data-pos="${pos}" data-val="true"  onclick="tfSelect(${pos},'true')">True</button>
+        <button class="tf-btn" data-pos="${pos}" data-val="false" onclick="tfSelect(${pos},'false')">False</button>
+      </div>
+      <div class="tf-statement">
+        ${d.stmt}
+        <div class="replace-wrap" id="rw${pos}">
+          <span>Replace '<em>${d.boldWord}</em>' with:</span>
+          <input class="replace-input" id="ri${pos}" placeholder="correct word…" autocomplete="off"
+            onblur="checkTFRow(${pos})"
+            onkeydown="if(event.key==='Enter'){this.blur();}">
+        </div>
+        <div class="tf-verdict" id="tv${pos}"></div>
+      </div>`;
+    con.appendChild(row);
+  });
+}
+
+function tfSelect(pos, val) {
+  if (!window.Classroom?.verifyAuth()) return;
+  document.querySelectorAll(`.tf-btn[data-pos="${pos}"]`).forEach(b => {
+    b.classList.remove('selected-true', 'selected-false');
+    if (b.dataset.val === val) b.classList.add(val === 'true' ? 'selected-true' : 'selected-false');
+  });
+  document.getElementById(`rw${pos}`).classList.toggle('show', val === 'false');
+  if (val === 'true') checkTFRow(pos);
+}
+
+function checkTFRow(pos) {
+  const idx = tfOrdering[pos];
+  const d = tfData[idx];
+  const selTrue  = !!document.querySelector(`.tf-btn.selected-true[data-pos="${pos}"]`);
+  const selFalse = !!document.querySelector(`.tf-btn.selected-false[data-pos="${pos}"]`);
+  if (!selTrue && !selFalse) return;
+  const verdict = document.getElementById(`tv${pos}`);
+  verdict.className = 'tf-verdict show';
+  const answerCorrect = selTrue === d.isTrue;
+  if (d.isTrue && answerCorrect) {
+    verdict.textContent = '✅ Correct — this statement is true.';
+    verdict.classList.add('ok');
+  } else if (!d.isTrue && answerCorrect) {
+    const inp = document.getElementById(`ri${pos}`);
+    const typed = (inp ? inp.value : '').trim().toLowerCase();
+    const allOk = [d.correct, ...(d.alts || [])].map(s => s.toLowerCase());
+    if (typed.length === 0) {
+      verdict.textContent = `✅ Correct — it is false! Now type the correct replacement word above.`;
+      verdict.classList.add('warn');
+      recalcTF(); return;
+    }
+    const ok = allOk.some(a => typed === a || (a.length > 2 && typed.includes(a)) || (typed.length > 2 && a.includes(typed)));
+    if (ok) { verdict.textContent = `✅ Correct! '${d.boldWord}' should be '${d.correct}'.`; verdict.classList.add('ok'); }
+    else    { verdict.textContent = `❌ It is false, but the correct word is '${d.correct}', not '${typed}'.`; verdict.classList.add('err'); }
+  } else {
+    verdict.textContent = d.isTrue
+      ? `❌ This statement is actually true.`
+      : `❌ This is false — '${d.boldWord}' should be '${d.correct}'.`;
+    verdict.classList.add('err');
+  }
+  recalcTF();
+}
+
+function recalcTF() {
+  let score = 0;
+  tfOrdering.forEach((_, pos) => {
+    const v = document.getElementById(`tv${pos}`);
+    if (v && v.classList.contains('ok')) score++;
+  });
+  state.tabScores[2] = score > 0 ? score : null;
+  updateScore();
+  const fb = document.getElementById('tfFeedback');
+  if (score === tfData.length) {
+    fb.className = 'feedback show ok';
+    fb.textContent = '✅ All 8 statements answered correctly!';
+  } else { fb.className = 'feedback'; }
+}
+
+function resetTF() {
+  state.tabScores[2] = null;
+  document.getElementById('tfFeedback').className = 'feedback';
+  buildTF();
+  updateScore();
+}
+
+// ════════════════════════════════════════════════════════════════
+// TAB 3 — LICENCE ADVISOR (MCQ)
+// ════════════════════════════════════════════════════════════════
+const mcData = [
+  {
+    scenario: "A small local charity needs software to write letters and produce fundraising leaflets. Their IT budget is almost nothing.",
+    options: [
+      { text: "Open source — because it is typically free to use, removing licence costs entirely", correct: true,
+        feedback: "✅ Correct! Open source software is usually free to download and use, which is the ideal solution when budgets are extremely limited." },
+      { text: "Open source — because it is always more secure than any proprietary alternative", correct: false,
+        feedback: "❌ Incorrect. Security depends on how well software is maintained, not on whether it is open source or proprietary." },
+      { text: "Proprietary — because all charities are legally required to use licensed software", correct: false,
+        feedback: "❌ Incorrect. There is no such legal requirement — open source software is perfectly legal for any organisation to use." },
+      { text: "Proprietary — because it is always more reliable and feature-rich than open source tools", correct: false,
+        feedback: "❌ Incorrect. Many open source tools are equally reliable. The key issue here is cost, not reliability." },
+    ]
+  },
+  {
+    scenario: "A private hospital needs specialist electronic patient records software. If the system goes down, patient safety could be at immediate risk.",
+    options: [
+      { text: "Open source — because it is free, saving the hospital money on IT costs", correct: false,
+        feedback: "❌ Incorrect. Cost saving is outweighed by the critical need for guaranteed uptime and professional accountability in a healthcare setting." },
+      { text: "Open source — because the hospital's IT team can read the code to check for errors", correct: false,
+        feedback: "❌ Partially valid, but not the strongest argument here. Guaranteed support and a contractual obligation to fix problems are more critical in this scenario." },
+      { text: "Proprietary — because it provides a guaranteed support contract and regular, tested security updates", correct: true,
+        feedback: "✅ Correct! In a high-stakes setting, proprietary software offers formal support contracts and accountable vendors — essential when system failure could endanger patients." },
+      { text: "Proprietary — because its source code being hidden makes it impossible for attackers to find vulnerabilities", correct: false,
+        feedback: "❌ Incorrect. Keeping source code private does not guarantee security — attackers have many other methods to find weaknesses." },
+    ]
+  },
+  {
+    scenario: "A group of sixth-form students want to build a custom timetabling tool for their school. They want to start from an existing foundation and add their own features.",
+    options: [
+      { text: "Open source — because the source code is available to view, modify, and build upon freely", correct: true,
+        feedback: "✅ Correct! Open source software grants access to the source code, making it ideal when developers need to understand and extend an existing system." },
+      { text: "Open source — because all open source software is written in Python, which the students already know", correct: false,
+        feedback: "❌ Incorrect. Open source projects are written in many different programming languages — not just Python." },
+      { text: "Proprietary — because it will produce a more polished finished product", correct: false,
+        feedback: "❌ Incorrect. The licence type does not determine the quality of the finished product — that depends on the developers." },
+      { text: "Proprietary — because companies are not permitted to release software for free", correct: false,
+        feedback: "❌ Incorrect. Companies legally can and do release free and open source software — this is a common and well-established practice." },
+    ]
+  },
+  {
+    scenario: "A secondary school wants to provide staff with presentation software. The IT manager needs a formal licensing agreement and a company contact if problems arise.",
+    options: [
+      { text: "Open source — because staff can improve their computing skills by reading the source code", correct: false,
+        feedback: "❌ Incorrect. While theoretically possible, this does not address the IT manager's requirement for a formal licence and a named support contact." },
+      { text: "Open source — because it will definitely be cheaper than any proprietary product", correct: false,
+        feedback: "❌ Incorrect. Even if cost matters, the manager's primary need is a formal agreement and dedicated support — open source rarely provides this." },
+      { text: "Proprietary — because it comes with a formal education licence agreement and a named company to contact for support", correct: true,
+        feedback: "✅ Correct! Proprietary software provides formal licensing agreements and vendor-backed support, which directly matches what the IT manager requires." },
+      { text: "Proprietary — because open source software is not permitted in UK schools", correct: false,
+        feedback: "❌ Incorrect. Open source software is completely legal in UK schools and is widely used." },
+    ]
+  },
+  {
+    scenario: "A cybersecurity researcher needs to study how a widely-used operating system handles network packets. They must read and test the actual program code.",
+    options: [
+      { text: "Open source — because the source code is freely available for the researcher to examine and test", correct: true,
+        feedback: "✅ Correct! Open source software gives researchers full access to the source code, which is essential for in-depth security analysis and testing." },
+      { text: "Open source — because it costs nothing, saving the researcher's institution money", correct: false,
+        feedback: "❌ Partially relevant, but the key requirement is access to source code — that is what makes open source the right choice, not just cost." },
+      { text: "Proprietary — because it is more widely used, so more of its security flaws are already documented", correct: false,
+        feedback: "❌ Incorrect. Proprietary source code is kept private, so the researcher cannot examine it directly — which is the core requirement here." },
+      { text: "Proprietary — because it includes a built-in security analysis dashboard", correct: false,
+        feedback: "❌ Incorrect. Most proprietary operating systems do not provide built-in deep security analysis tools for external researchers." },
+    ]
+  },
+];
+
+const mcAnswered = new Array(mcData.length).fill(false);
+const mcCorrect  = new Array(mcData.length).fill(false);
+
+function buildMC() {
+  mcAnswered.fill(false);
+  mcCorrect.fill(false);
+  const con = document.getElementById('mcContainer');
+  con.innerHTML = '';
+  const labels = ['A', 'B', 'C', 'D'];
+  mcData.forEach((q, qi) => {
+    const shuffled = q.options.map((o, i) => ({ ...o })).sort(() => Math.random() - .5);
+    const card = document.createElement('div');
+    card.className = 'mc-card';
+    card.innerHTML = `
+      <div class="mc-qnum">Question ${qi + 1} of ${mcData.length}</div>
+      <div class="mc-scenario">${q.scenario}</div>
+      <div class="mc-prompt">Which software licence type would you recommend, and why?</div>
+      <div class="mc-options" id="mcOpts${qi}">
+        ${shuffled.map((o, li) => `
+          <div class="mc-option" data-qi="${qi}" data-correct="${o.correct}"
+               data-feedback="${encodeURIComponent(o.feedback)}" onclick="selectMC(this,${qi})">
+            <span class="mc-label">${labels[li]}</span>${o.text}
+          </div>`).join('')}
+      </div>
+      <div class="feedback" id="mcqfb${qi}" style="margin-top:10px;"></div>`;
+    con.appendChild(card);
+  });
+}
+
+function selectMC(optEl, qi) {
+  if (!window.Classroom?.verifyAuth()) return;
+  if (mcAnswered[qi]) return;
+  mcAnswered[qi] = true;
+
+  const isCorrect = optEl.dataset.correct === 'true';
+  mcCorrect[qi] = isCorrect;
+
+  document.querySelectorAll(`#mcOpts${qi} .mc-option`).forEach(o => {
+    o.classList.add('disabled');
+    if (o.dataset.correct === 'true') o.classList.add('correct');
+    else if (o === optEl) o.classList.add('wrong');
+  });
+
+  const fb = document.getElementById(`mcqfb${qi}`);
+  fb.className = 'feedback show ' + (isCorrect ? 'ok' : 'err');
+  fb.textContent = decodeURIComponent(optEl.dataset.feedback);
+
+  recalcMC();
+}
+
+function recalcMC() {
+  const answered = mcAnswered.filter(Boolean).length;
+  const score = mcCorrect.filter(Boolean).length;
+  state.tabScores[3] = answered > 0 ? score : null;
+  updateScore();
+  const fb = document.getElementById('mcFeedback');
+  if (answered === mcData.length) {
+    fb.className = 'feedback show ' + (score === mcData.length ? 'ok' : score >= 3 ? 'warn' : 'err');
+    fb.textContent = score === mcData.length
+      ? '✅ Perfect — all 5 recommendations correct!'
+      : `${score}/5 correct. Review the explanations — understanding the reasoning is key for exam questions.`;
+  } else { fb.className = 'feedback'; }
+}
+
+function resetMC() {
+  state.tabScores[3] = null;
+  document.getElementById('mcFeedback').className = 'feedback';
+  buildMC();
+  updateScore();
+}
+
+// ════════════════════════════════════════════════════════════════
+// TAB 4 — GAP FILL
+// ════════════════════════════════════════════════════════════════
+const gapSegments = [
+  'Software licences determine how a program may be used, shared, and changed. Open ',
+  ' software makes its underlying code publicly available. This means anyone can view, ',
+  ', and redistribute it without charge. It is often maintained by a global ',
+  ' of developers and is usually ',
+  ' to download. One potential drawback is that there may be no guaranteed ',
+  ' if something goes wrong.\n\nProprietary software, by contrast, keeps its source code ',
+  '. Users must purchase a ',
+  ' to use it legally, and they cannot distribute or modify it. However, proprietary products typically come with regular security ',
+  ' from the developer.',
+];
+const gapCorrect = ['source', 'modify', 'community', 'free', 'support', 'secret', 'licence', 'updates'];
+const gapAlts = [
+  ['open source'],
+  ['change', 'alter', 'edit', 'adapt'],
+  [],
+  ['freely', 'no-cost'],
+  ['help', 'assistance'],
+  ['private', 'hidden'],
+  ['license'],
+  ['patches', 'patch', 'patch'],
+];
+const gapWidths = ['84px', '82px', '110px', '60px', '84px', '78px', '80px', '84px'];
+const gapBank = ['source', 'modify', 'community', 'free', 'support', 'secret', 'licence', 'updates', 'encrypt', 'register', 'download'];
+
+let selectedBankWord = null;
+
+function buildGap() {
+  selectedBankWord = null;
+  const wb = document.getElementById('wordBank');
+  wb.innerHTML = '';
+  [...gapBank].sort(() => Math.random() - .5).forEach(w => {
+    const chip = document.createElement('span');
+    chip.className = 'word-chip';
+    chip.textContent = w;
+    chip.dataset.word = w;
+    chip.onclick = () => {
+      document.querySelectorAll('.word-chip').forEach(c => c.classList.remove('selected-chip'));
+      selectedBankWord = w;
+      chip.classList.add('selected-chip');
+    };
+    wb.appendChild(chip);
+  });
+
+  const para = document.getElementById('gapPara');
+  para.innerHTML = '';
+  gapSegments.forEach((seg, si) => {
+    seg.split('\n').forEach((part, pi) => {
+      if (pi > 0) para.appendChild(document.createElement('br'));
+      if (part) para.appendChild(document.createTextNode(part));
+    });
+    if (si < gapSegments.length - 1) {
+      const inp = document.createElement('input');
+      inp.className = 'gap-input';
+      inp.dataset.idx = si;
+      inp.id = 'gap' + si;
+      inp.style.width = gapWidths[si];
+      inp.setAttribute('autocomplete', 'off');
+      inp.addEventListener('focus', () => {
+        if (selectedBankWord) {
+          inp.value = selectedBankWord;
+          markBankUsed(selectedBankWord);
+          selectedBankWord = null;
+          document.querySelectorAll('.word-chip').forEach(c => c.classList.remove('selected-chip'));
+          checkOneGap(si);
+        }
+      });
+      inp.addEventListener('blur', () => checkOneGap(si));
+      inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); inp.blur(); } });
+      para.appendChild(inp);
+    }
+  });
+}
+
+function markBankUsed(w) {
+  document.querySelectorAll('.word-chip').forEach(c => { if (c.dataset.word === w) c.classList.add('used'); });
+}
+
+function checkOneGap(i) {
+  if (!window.Classroom?.verifyAuth()) return;
+  const inp = document.getElementById('gap' + i);
+  if (!inp) return;
+  const typed = (inp.value || '').trim().toLowerCase();
+  if (typed.length === 0) { inp.classList.remove('ok', 'err'); recalcGap(); return; }
+  const correct = gapCorrect[i].toLowerCase();
+  const alts = (gapAlts[i] || []).map(a => a.toLowerCase());
+  const ok = typed === correct || alts.some(a => typed === a);
+  inp.classList.remove('ok', 'err');
+  inp.classList.add(ok ? 'ok' : 'err');
+  inp.title = ok ? '' : ('Expected: ' + gapCorrect[i]);
+  recalcGap();
+}
+
+function recalcGap() {
+  let score = 0, filled = 0;
+  for (let i = 0; i < gapCorrect.length; i++) {
+    const inp = document.getElementById('gap' + i);
+    if (!inp) continue;
+    if ((inp.value || '').trim()) filled++;
+    if (inp.classList.contains('ok')) score++;
+  }
+  state.tabScores[4] = score > 0 ? score : null;
+  updateScore();
+  const fb = document.getElementById('gapFeedback');
+  if (score === gapCorrect.length) {
+    fb.className = 'feedback show ok';
+    fb.textContent = '✅ All 8 blanks correct! Excellent knowledge of software licences.';
+  } else if (filled === gapCorrect.length) {
+    fb.className = 'feedback show warn';
+    fb.textContent = `${score}/${gapCorrect.length} correct. Hover over red blanks to see the expected word.`;
+  } else { fb.className = 'feedback'; }
+}
+
+function resetGap() {
+  state.tabScores[4] = null;
+  document.getElementById('gapFeedback').className = 'feedback';
+  buildGap();
+  updateScore();
+}
+
+// ════════════════════════════════════════════════════════════════
+// TAB 5 — EXAM PRACTICE
+// ════════════════════════════════════════════════════════════════
+const eqData = [
+  {
+    question: "A supermarket chain has introduced a smartphone app that tracks which aisles customers walk through and for how long. This data is used to change the store layout and target customers with personalised offers. Identify <strong>two different types</strong> of issue this technology raises for wider society, and explain each one. [4]",
+    marks: 4,
+    markScheme: [
+      "1 mark: Identify a valid issue type — e.g. Privacy issue.",
+      "1 mark: Explanation — Customers' movements are tracked and analysed without most being aware of it. Their personal shopping behaviour is collected and used commercially without meaningful informed consent.",
+      "1 mark: Identify a second, different issue type — e.g. Ethical issue.",
+      "1 mark: Explanation — An algorithm makes decisions about store layout and targeted advertising using data collected without full transparency, raising questions about whether customers are being manipulated without their knowledge.",
+      "Also accept: Cultural (changing shopping behaviour or reducing human interaction); Environmental (energy use of app infrastructure); Legal (potential DPA violation if consent procedures are inadequate). Both issue types must be different and must be named explicitly.",
+    ],
+    maxSA: 3,
+  },
+  {
+    question: "A school is deciding whether to replace its paid proprietary office suite with an open source alternative. Give one benefit and one drawback of choosing open source software for this purpose. [4]",
+    marks: 4,
+    markScheme: [
+      "1 mark: Benefit — Open source software is typically free to download and use, so there are no licence fees.",
+      "1 mark: Development — The money saved on software licences could be redirected towards hardware, staffing, or other resources, significantly reducing IT costs.",
+      "1 mark: Drawback — Open source software usually has no guaranteed technical support from a named company.",
+      "1 mark: Development — If staff encounter problems, they may need to rely on community forums or online documentation rather than a paid support contract, which could be slow or unhelpful in a time-critical situation.",
+      "Also accept as drawback: some staff may need retraining if the interface differs significantly from what they are used to; some proprietary file formats may not be fully supported.",
+    ],
+    maxSA: 3,
+  },
+  {
+    question: "State two features of open source software and explain how each feature could benefit a software development company. [4]",
+    marks: 4,
+    markScheme: [
+      "1 mark: Feature — The source code is publicly available and can be freely viewed.",
+      "1 mark: Benefit — The company can study and build upon existing, tested code rather than starting from scratch, speeding up development and reducing costs.",
+      "1 mark: Feature — Users are permitted to modify and redistribute the software.",
+      "1 mark: Benefit — The company can adapt open source tools to their specific needs and, if they choose to contribute improvements back, may receive further enhancements from the wider developer community.",
+    ],
+    maxSA: 3,
+  },
+];
+
+const eqSelfScores = new Array(eqData.length).fill(null);
+
+function buildEQ() {
+  const con = document.getElementById('eqContainer');
+  con.innerHTML = '';
+  eqData.forEach((q, qi) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'card';
+    wrap.style.marginBottom = '20px';
+    const halfPts = Math.ceil(q.maxSA / 2);
+    wrap.innerHTML = `
+      <div class="eq-question">Q${qi + 1}: ${q.question}</div>
+      <div class="eq-mark-note">${q.marks} marks — aim for ${q.marks} separate, distinct points. Name the issue/feature type first, then explain.</div>
+      <textarea class="eq-textarea" id="eqta${qi}" placeholder="Write your answer here…"></textarea>
+      <div style="margin-top:10px;">
+        <button class="ac-btn-secondary" onclick="revealMS(${qi})">📋 Reveal Mark Scheme</button>
+      </div>
+      <div class="mark-scheme" id="ms${qi}">
+        <div class="ms-head">Mark Scheme</div>
+        ${q.markScheme.map(pt => `<div class="ms-item"><div class="ms-bullet">✓</div><div>${pt}</div></div>`).join('')}
+        <div style="margin-top:14px;font-size:.86rem;font-weight:600;color:var(--text);">How did you do?</div>
+        <div class="self-assess-btns">
+          <button class="sa-btn green-btn" onclick="selfAssess(${qi},${q.maxSA},event)">✅ Got all/most points (${q.maxSA}/${q.maxSA})</button>
+          <button class="sa-btn amber-btn" onclick="selfAssess(${qi},${halfPts},event)">⚠️ Got some points (${halfPts}/${q.maxSA})</button>
+          <button class="sa-btn red-btn"   onclick="selfAssess(${qi},0,event)">❌ Missed most points (0/${q.maxSA})</button>
+        </div>
+        <div class="feedback" id="eqfb${qi}"></div>
+      </div>`;
+    con.appendChild(wrap);
+  });
+}
+
+function revealMS(qi) {
+  document.getElementById('ms' + qi).classList.add('show');
+}
+
+function selfAssess(qi, pts, ev) {
+  if (!window.Classroom?.verifyAuth()) return;
+  eqSelfScores[qi] = pts;
+  document.querySelectorAll(`#ms${qi} .sa-btn`).forEach(b => b.classList.remove('selected'));
+  ev.currentTarget.classList.add('selected');
+  const max = eqData[qi].maxSA;
+  const fb = document.getElementById('eqfb' + qi);
+  fb.className = 'feedback show ' + (pts === max ? 'ok' : pts > 0 ? 'warn' : 'err');
+  if (pts === max)   fb.textContent = '✅ Excellent — you have covered the key points well.';
+  else if (pts > 0)  fb.textContent = '⚠️ Partially correct. Focus on the points you missed — especially naming the issue type clearly before explaining it.';
+  else               fb.textContent = '❌ Review the mark scheme. Remember: (1) name the issue type explicitly, then (2) explain it in the context of the specific scenario given.';
+  state.tabScores[5] = eqSelfScores.reduce((a, b) => a + (b || 0), 0);
+  updateScore();
+}
+
+// ════════════════════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════════════════════
+buildIssues();
+buildFeatures();
+buildTF();
+buildMC();
+buildGap();
+buildEQ();
+updateScore();
+</script>
+
+<script src="../../classroom.js"></script>
+</body>
+</html>
