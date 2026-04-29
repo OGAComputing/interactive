@@ -25,6 +25,18 @@
  * deploys a personal Apps Script proxy and saves its URL to localStorage so
  * activity pages on that browser work automatically.
  */
+// Derive data-year and data-topic from the URL path if not already set.
+// Path segments: …/Y11/Legislation/file.html or …/Y11/Legislation/L1_Name/file.html
+(function () {
+  const parts = location.pathname.split('/');
+  const yIdx  = parts.findIndex(p => /^Y\d+$/.test(p));
+  if (yIdx >= 0) {
+    const body = document.body;
+    if (!body.dataset.year)  body.dataset.year  = parts[yIdx].replace('Y', '');
+    if (!body.dataset.topic) body.dataset.topic = parts[yIdx + 1] || '';
+  }
+})();
+
 (function () {
   'use strict';
 
