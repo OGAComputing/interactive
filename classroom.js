@@ -46,6 +46,15 @@
   let courseId      = urlParams.get('courseId');
   const isClassroomContext = !!courseId;
 
+  function isAssessment() {
+    const iterator = document.createNodeIterator(document.head, NodeFilter.SHOW_COMMENT);
+    let node;
+    while (node = iterator.nextNode()) {
+      if (/type:\s*Assessment/i.test(node.nodeValue)) return true;
+    }
+    return false;
+  }
+
   // Proxy URL resolution: URL param wins, then localStorage (saved by setup page)
   let proxyUrl = urlParams.get('proxyUrl') || (() => {
     try { return localStorage.getItem('oga_proxy_url'); } catch (_) { return null; }
@@ -167,6 +176,28 @@
       }
       #cr-drive-search-btn:hover { background: #1e293b; color: #e2e8f0; }
       #cr-drive-search-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+      /* Sign-in reminder modal & flashing banner */
+      #cr-reminder-modal-backdrop {
+        display: none; position: fixed; inset: 0; z-index: 99998;
+        background: rgba(0,0,0,0.7); align-items: center; justify-content: center;
+      }
+      #cr-reminder-modal-backdrop.open { display: flex; }
+      @keyframes classroom-flash-red {
+        0%, 100% { background: #111827; }
+        50%      { background: #991b1b; }
+      }
+      #classroom-banner.flashing {
+        animation: classroom-flash-red 1s infinite;
+      }
+
+      /* Assessment blocking modal */
+      #cr-auth-blocking-modal-backdrop {
+        display: none; position: fixed; inset: 0; z-index: 10000;
+        background: rgba(0,0,0,0.9); align-items: center; justify-content: center;
+        backdrop-filter: blur(4px);
+      }
+      #cr-auth-blocking-modal-backdrop.open { display: flex; }
     `;
     document.head.appendChild(style);
 
@@ -234,6 +265,40 @@
       </div>
     `;
     document.body.appendChild(modal);
+
+    // Reminder modal (hidden until 10 mins pass without sign-in)
+    const reminderModal = document.createElement('div');
+    reminderModal.id = 'cr-reminder-modal-backdrop';
+    reminderModal.innerHTML = `
+      <div id="cr-modal">
+        <h2>👋 Don't forget to sign in</h2>
+        <p>
+          This activity is linked to Google Classroom, but you haven't signed in yet.
+          Your progress and scores won't be saved until you sign in.
+        </p>
+        <div id="cr-modal-actions">
+          <button id="cr-modal-skip" onclick="window._classroomReminderModalClose()">Dismiss</button>
+          <button id="cr-modal-save" onclick="window._classroomSignIn()">Sign in now</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(reminderModal);
+
+    // Auth required modal — non-dismissible blocking modal for assessments
+    const authModal = document.createElement('div');
+    authModal.id = 'cr-auth-blocking-modal-backdrop';
+    authModal.innerHTML = `
+      <div id="cr-modal" style="text-align:center;">
+        <div style="font-size:3rem; margin-bottom:20px;">📝</div>
+        <h2>Assessment Login Required</h2>
+        <p>
+          This is a formal assessment linked to Google Classroom.
+          You must sign in with your school Google account to begin.
+        </p>
+        <button id="cr-modal-save" style="width:100%; padding:12px; font-size:1rem;" onclick="window._classroomSignIn()">Sign in with Google</button>
+      </div>
+    `;
+    document.body.appendChild(authModal);
   }
 
   function setBannerStudent() {
@@ -279,6 +344,13 @@
   window._classroomModalSkip = function () {
     const el = document.getElementById('cr-modal-backdrop');
     if (el) el.classList.remove('open');
+  };
+
+  window._classroomReminderModalClose = function () {
+    const el = document.getElementById('cr-reminder-modal-backdrop');
+    if (el) el.classList.remove('open');
+    const banner = document.getElementById('classroom-banner');
+    if (banner) banner.classList.remove('flashing');
   };
 
   window._classroomModalSave = function () {
@@ -1083,6 +1155,9 @@
     accessToken = tokenResponse.access_token;
     userInfo    = await fetchUserInfo(accessToken);
 
+    const blockingModal = document.getElementById('cr-auth-blocking-modal-backdrop');
+    if (blockingModal) blockingModal.classList.remove('open');
+
     // Detect teacher role first so we can make a smarter proxy URL decision below.
     const isTeacher = await detectTeacher(accessToken);
     isTeacherMode = isTeacher;
@@ -1344,21 +1419,45 @@
   function bootstrap() {
     if (!isClassroomContext) return;
     injectBanner();
+
+    // Start 10-minute reminder timer. If 10 minutes pass and the user
+    // hasn't signed in, flash the top banner red and show a modal.
+    setTimeout(() => {
+      if (!accessToken) {
+        const banner = document.getElementById('classroom-banner');
+        if (banner) banner.classList.add('flashing');
+        const modal = document.getElementById('cr-reminder-modal-backdrop');
+        if (modal) modal.classList.add('open');
+      }
+    }, 10 * 60 * 1000);
+
     // Pick up token from redirect, or restore a persisted one (refresh / different activity).
-    if (!checkPendingOAuthToken() && !checkStoredToken()) {
+    const hasToken = checkPendingOAuthToken() || checkStoredToken();
+
+    if (!hasToken) {
       // No token available. Check if a previous silent-auth attempt already failed
       // (set by oauth-callback.html when prompt=none returns an error).
       let silentFailed = false;
       try { silentFailed = !!sessionStorage.getItem('oga_silent_failed'); } catch (_) {}
-      if (silentFailed) {
-        // Silent auth failed — clear flag and leave the sign-in button visible.
-        try { sessionStorage.removeItem('oga_silent_failed'); } catch (_) {}
+
+      if (isAssessment()) {
+        if (silentFailed) {
+          document.getElementById('cr-auth-blocking-modal-backdrop').classList.add('open');
+          try { sessionStorage.removeItem('oga_silent_failed'); } catch (_) {}
+        } else {
+          signInViaRedirect({ prompt: 'none' });
+        }
       } else {
-        // Try silent sign-in using the browser's existing Google session.
-        // Works automatically if the student is already signed into Chrome and has
-        // previously granted the required scopes (common in a managed school environment).
-        // If it fails, oauth-callback.html sets oga_silent_failed and bounces back here.
-        signInViaRedirect({ prompt: 'none' });
+        if (silentFailed) {
+          // Silent auth failed — clear flag and leave the sign-in button visible.
+          try { sessionStorage.removeItem('oga_silent_failed'); } catch (_) {}
+        } else {
+          // Try silent sign-in using the browser's existing Google session.
+          // Works automatically if the student is already signed into Chrome and has
+          // previously granted the required scopes (common in a managed school environment).
+          // If it fails, oauth-callback.html sets oga_silent_failed and bounces back here.
+          signInViaRedirect({ prompt: 'none' });
+        }
       }
     }
   }
