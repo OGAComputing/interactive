@@ -83,8 +83,15 @@ color:  teal
   .code-panel-header.amber { background: var(--amber-dark); }
   .code-body { background: var(--code-bg); padding: 14px 16px; font-family: 'Courier New', monospace; font-size: 0.85rem; line-height: 1.65; overflow-x: auto; }
   .code-line { white-space: pre; display: block; }
-  .code-line.err { color: var(--code-err); font-weight: 700; }
-  .code-line.ok  { color: var(--code-text); }
+  .code-line.err { 
+    color: var(--code-err); 
+    font-weight: 700; 
+    background: rgba(244, 162, 97, 0.1);
+    border-radius: 3px;
+    padding: 0 4px;
+    margin: 0 -4px;
+  }
+  .code-line.ok  { color: var(--code-text); opacity: 0.8; }
   .code-errors-strip { background: #162030; padding: 5px 14px; font-size: 0.72rem; color: var(--muted); font-style: italic; border-top: 1px solid #2a3d52; }
 
   .fix-panel { border-radius: 6px; overflow: hidden; border: 2px solid var(--teal); display: flex; flex-direction: column; }
@@ -95,8 +102,9 @@ color:  teal
   .fix-textarea:focus { outline: 2px solid var(--teal); outline-offset: -2px; }
   .fix-textarea.correct { outline: 2px solid var(--green); color: var(--green); }
 
-  .colour-key { display: flex; gap: 16px; font-size: 0.77rem; color: var(--mid); margin-top: 8px; align-items: center; }
-  .key-swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; vertical-align: middle; }
+  .colour-key { display: flex; gap: 16px; font-size: 0.8rem; color: var(--mid); margin-top: 10px; align-items: center; background: rgba(255,255,255,0.5); padding: 8px 12px; border-radius: 6px; }
+  .key-swatch { display: inline-block; width: 12px; height: 12px; border-radius: 2px; margin-right: 6px; vertical-align: middle; }
+  .colour-key strong { color: var(--navy); }
 
   .hint-section { margin-top: 14px; }
   .hint-toggle { background: none; border: none; cursor: pointer; color: var(--amber-dark); font-size: 0.82rem; font-weight: 700; display: flex; align-items: center; gap: 5px; padding: 0; }
@@ -773,6 +781,29 @@ function check(idx) {
   if (!v) { fb.className='feedback wrong'; fb.textContent='Type your fixed code in the box first.'; return; }
 
   const fails = [];
+  
+  // New: Check if they modified the "ok" lines
+  const panel = document.getElementById('panel-' + idx);
+  const originalLines = Array.from(panel.querySelectorAll('.code-line'));
+  const userLines = ta.value.split('\n');
+  
+  let modifiedOk = false;
+  for (let i = 0; i < originalLines.length; i++) {
+    if (originalLines[i].classList.contains('ok')) {
+      const origText = originalLines[i].textContent.trim();
+      const userLine = (userLines[i] || "").trim();
+      // If the user line doesn't match the original correct line
+      if (origText !== userLine) {
+        modifiedOk = true;
+        break;
+      }
+    }
+  }
+  
+  if (modifiedOk) {
+    fails.push("You've changed a line that was already correct! Focus on fixing ONLY the <strong style='color:var(--amber-dark)'>orange lines</strong>.");
+  }
+
   tasks[idx].checks.forEach((fn, i) => { if (!fn(v)) fails.push(tasks[idx].hints[i]); });
 
   if (fails.length === 0) {
