@@ -1,0 +1,1368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- ACTIVITY
+title:  Targeted Practice — Year 8 Python
+type:   Practice
+stars:  3
+desc:   Personalised follow-up to the assessment — practises the topics each student found tricky.
+color:  teal
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Targeted Practice — Year 8 Python</title>
+<link rel="stylesheet" href="../../../shared.css">
+<style>
+  /* ── Header ───────────────────────────────────────────── */
+  .header { background:var(--surface); padding:16px 28px 14px; border-bottom:4px solid var(--accent); }
+  .header-title { font-family:var(--font-head); font-size:1.45rem; font-weight:700; color:var(--text-inv); }
+  .header-sub   { font-size:0.82rem; color:var(--accent-light); margin-top:3px; }
+  .score-row    { display:flex; align-items:center; gap:14px; margin-top:10px; flex-wrap:wrap; }
+  .score-pill   { background:var(--surface-dim); border:2px solid var(--accent); border-radius:20px;
+                  padding:4px 16px; font-size:0.85rem; font-weight:700; color:var(--text-inv); }
+  .score-bar-wrap { flex:1; min-width:120px; max-width:260px; height:8px;
+                    background:var(--surface-dim); border-radius:4px; overflow:hidden; }
+  .score-bar    { height:100%; background:var(--accent); border-radius:4px; width:0%;
+                  transition:width 0.5s ease; }
+
+  /* ── Boot / loading screen ────────────────────────────── */
+  .boot-card {
+    max-width:560px; margin:80px auto; padding:32px 36px;
+    background:#fff; border-radius:12px; border-left:6px solid var(--accent);
+    box-shadow:0 6px 30px rgba(26,46,74,0.12);
+    font-size:1rem; color:var(--surface); line-height:1.55;
+  }
+  .boot-card h2 { font-family:var(--font-head); font-size:1.2rem; margin-bottom:10px; color:var(--surface); }
+  .boot-card p  { font-size:0.92rem; color:#475569; }
+  .spinner {
+    display:inline-block; width:18px; height:18px;
+    border:3px solid var(--accent-light); border-top-color:var(--accent);
+    border-radius:50%; vertical-align:middle; margin-right:8px;
+    animation:spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform:rotate(360deg); } }
+
+  /* ── Picker (no data fallback) ────────────────────────── */
+  .picker-list { display:grid; gap:10px; margin:14px 0 18px; }
+  .picker-opt {
+    display:flex; align-items:flex-start; gap:10px; padding:11px 14px;
+    border:2px solid #e2e8f0; border-radius:8px; cursor:pointer; background:#f8fafc;
+    transition:border-color 0.15s, background 0.15s;
+  }
+  .picker-opt:hover { border-color:var(--accent); background:#eff6ff; }
+  .picker-opt input { margin-top:3px; accent-color:var(--accent); flex-shrink:0; }
+  .picker-opt strong { font-size:0.92rem; color:var(--surface); }
+  .picker-opt small  { display:block; font-size:0.78rem; color:#64748b; margin-top:2px; }
+
+  /* ── Plan summary ─────────────────────────────────────── */
+  .plan-list { margin:12px 0 18px; padding:0; list-style:none; }
+  .plan-list li {
+    display:flex; align-items:center; gap:10px; padding:9px 12px;
+    background:#f1f5f9; border-radius:6px; margin-bottom:6px; font-size:0.92rem;
+  }
+  .plan-list li .plan-icon { font-size:1.15rem; }
+  .plan-list li .plan-meta { margin-left:auto; font-size:0.78rem; color:#64748b; }
+
+  /* ── Tab bar ──────────────────────────────────────────── */
+  .tab-bar { display:flex; background:var(--surface-mid); padding:0 16px; gap:2px;
+             overflow-x:auto; border-bottom:1px solid #2a4060; }
+  .tab     { padding:9px 13px 8px; border:none; background:transparent; color:var(--muted);
+             font-family:var(--font-body); font-size:0.8rem; font-weight:600; cursor:pointer;
+             border-bottom:3px solid transparent; white-space:nowrap; user-select:none;
+             transition:color 0.15s, border-color 0.15s; }
+  .tab:hover  { color:var(--accent-light); }
+  .tab.active { color:var(--text-inv); border-bottom-color:var(--accent); }
+  .tab.done   { color:var(--gold); border-bottom-color:var(--gold); }
+
+  /* ── Panels ───────────────────────────────────────────── */
+  .panel        { display:none; padding:24px 28px 60px; max-width:860px; margin:0 auto; }
+  .panel.active { display:block; }
+
+  /* ── Section header ───────────────────────────────────── */
+  .sec-header { display:flex; align-items:center; gap:12px; margin-bottom:6px; }
+  .sec-badge  { width:42px; height:42px; border-radius:50%; background:var(--accent);
+                display:flex; align-items:center; justify-content:center;
+                font-size:1.25rem; flex-shrink:0; }
+  .sec-title  { font-family:var(--font-head); font-size:1.2rem; font-weight:700; color:var(--surface); }
+  .sec-pts    { font-size:0.78rem; color:var(--muted); margin-left:auto; white-space:nowrap; }
+
+  /* ── Goal ─────────────────────────────────────────────── */
+  .goal { background:#fff; border-left:4px solid var(--accent); padding:9px 14px;
+          border-radius:0 6px 6px 0; font-size:0.88rem; font-weight:600;
+          color:var(--surface); margin:12px 0 18px; line-height:1.5; }
+
+  /* ── Help / scaffolding callout (Walkthrough only) ────── */
+  .ac-help {
+    background:#FFFBEA; border:1px solid var(--gold); border-radius:8px;
+    padding:11px 16px; margin:8px 0 14px; font-size:0.86rem; color:#78350f; line-height:1.55;
+  }
+  .ac-help strong { color:#78350f; display:block; margin-bottom:4px; }
+  .ac-help ul { margin:6px 0 0 18px; }
+  .ac-help li { margin:3px 0; }
+  .ac-help code { background:#FEF3C7; }
+
+  /* ── Question block ───────────────────────────────────── */
+  .q-block       { background:#fff; border-radius:8px; padding:16px 18px; margin-bottom:16px;
+                   border:2px solid #d1e0f0; transition:border-color 0.25s; }
+  .q-block.correct { border-color:#22c55e; }
+  .q-block.partial { border-color:#f59e0b; }
+  .q-block.wrong   { border-color:#ef4444; }
+  .q-block.locked-task {
+    background:#f8fafc; opacity:0.65; pointer-events:none;
+    border-style:dashed;
+  }
+  .q-block.locked-task::before {
+    content:"🔒 Pass the walkthrough above to unlock this task.";
+    display:block; font-size:0.82rem; color:#64748b; font-style:italic;
+    margin-bottom:6px;
+  }
+  .q-num  { font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em;
+            color:var(--muted); margin-bottom:8px; }
+  .pts-tag { display:inline-block; font-size:0.7rem; font-weight:700;
+             background:#e2e8f0; color:#64748b; border-radius:4px;
+             padding:2px 6px; margin-left:6px; vertical-align:middle; }
+
+  /* ── Error / code display ─────────────────────────────── */
+  .q-err  { background:#1e1e2e; color:#f87171; font-family:'Cascadia Code',Consolas,monospace;
+            font-size:0.82rem; padding:8px 12px; border-radius:6px; margin:8px 0;
+            border-left:3px solid #ef4444; white-space:pre-wrap; word-break:break-all; }
+  .q-code { background:#1e1e2e; color:#cdd6f4; font-family:'Cascadia Code',Consolas,monospace;
+            font-size:0.84rem; padding:10px 14px; border-radius:6px; margin:8px 0;
+            white-space:pre; overflow-x:auto; line-height:1.65; }
+  .q-text { font-size:0.9rem; color:#1e293b; font-weight:600; margin:10px 0 4px; }
+  .q-hint { font-size:0.83rem; color:#64748b; margin:4px 0 8px; }
+
+  /* ── MCQ options ──────────────────────────────────────── */
+  .q-opts { display:flex; flex-direction:column; gap:6px; margin:10px 0 12px; }
+  .q-opt  { display:flex; align-items:flex-start; gap:9px; padding:9px 12px;
+            border-radius:6px; border:2px solid #e2e8f0; cursor:pointer;
+            font-size:0.87rem; color:#1e293b; background:#f8fafc;
+            transition:border-color 0.15s, background 0.15s; user-select:none; }
+  .q-opt:hover:not(.locked) { border-color:var(--accent); background:#eff6ff; }
+  .q-opt input  { margin-top:2px; flex-shrink:0; accent-color:var(--accent); }
+  .q-opt.locked { cursor:default; }
+  .q-opt.opt-correct { border-color:#22c55e !important; background:#dcfce7 !important; }
+  .q-opt.opt-wrong   { border-color:#ef4444 !important; background:#fee2e2 !important; }
+
+  /* ── Textarea (write-the-fix style) ───────────────────── */
+  .q-ta       { width:100%; font-family:'Cascadia Code',Consolas,monospace; font-size:0.84rem;
+                background:#1e1e2e; color:#cdd6f4; border:2px solid #334155; border-radius:6px;
+                padding:10px 12px; resize:vertical; margin:8px 0;
+                transition:border-color 0.15s; }
+  .q-ta:focus { outline:none; border-color:var(--accent); }
+
+  /* ── Feedback ─────────────────────────────────────────── */
+  .q-fb         { font-size:0.86rem; font-weight:600; min-height:1.3em; margin-top:8px; line-height:1.5; }
+  .q-fb.pass    { color:#15803d; }
+  .q-fb.partial { color:#92400e; }
+  .q-fb.fail    { color:#dc2626; }
+
+  /* ── Body backgrounds ─────────────────────────────────── */
+  body.bg-gold  { background:#fffacd !important; }
+  body.bg-green { background:#d1fae5 !important; }
+
+  /* ── Gold banner ──────────────────────────────────────── */
+  .gbanner { display:none; margin:8px 28px; padding:14px 20px; border-radius:8px;
+             font-size:1rem; font-weight:700; text-align:center;
+             background:#fef9c3; border:2px solid #f59e0b; color:#78350f; }
+  .gbanner.show { display:block; }
+
+  /* ── Fireworks canvas ─────────────────────────────────── */
+  #fwc { position:fixed; top:0; left:0; width:100%; height:100%;
+         pointer-events:none; z-index:9999; display:none; }
+  #fwc.show { display:block; }
+
+  code { font-family:'Cascadia Code',Consolas,monospace; font-size:0.9em;
+         background:#f1f5f9; padding:1px 5px; border-radius:3px; color:#1e293b; }
+
+  /* Continuation border so editor-wrap connects to checker-header inside a q-block */
+  .q-block .editor-wrap { border: 2px solid #3d2d5e; border-top: none; }
+
+  /* ── Reflection panel ─────────────────────────────────── */
+  .reflect-ta {
+    width:100%; min-height:140px; padding:12px 14px;
+    border:2px solid #cbd5e1; border-radius:8px; background:#fff;
+    font-family:var(--font-body); font-size:0.92rem; color:var(--surface);
+    line-height:1.55; resize:vertical; margin:8px 0 12px;
+  }
+  .reflect-ta:focus { outline:none; border-color:var(--accent); }
+
+  /* Turtle output modal */
+  .turtle-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,10,0.88); z-index: 200; align-items: center; justify-content: center; }
+  .turtle-modal.open { display: flex; }
+  .turtle-modal-inner { background: #0d0d1a; border: 2px solid #7c3fbf; border-radius: 14px; padding: 1rem 1.2rem 1.2rem; max-width: 460px; width: 95vw; }
+  .turtle-modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.8rem; }
+  .turtle-modal-header .turtle-title { color: #cba6f7; font-weight: 700; font-size: 0.95rem; font-family: 'Trebuchet MS',sans-serif; }
+  .turtle-modal-header .turtle-close { background: #2d1060; color: #b4a0e0; border: 1px solid #4a2d80; border-radius: 6px; padding: 0.3rem 0.75rem; cursor: pointer; font-size: 0.8rem; font-family: 'Trebuchet MS',sans-serif; transition: background 0.2s; }
+  .turtle-modal-header .turtle-close:hover { background: #3d2080; color: white; }
+  #turtleCanvas { width: 100%; border-radius: 8px; display: block; border: 1px solid #2d1060; }
+  .turtle-status { text-align: center; font-size: 0.78rem; color: #6b5a90; margin-top: 0.5rem; font-family: 'Trebuchet MS',sans-serif; min-height: 1.2em; }
+</style>
+</head>
+
+<body data-year="8" data-topic="Python">
+<canvas id="fwc"></canvas>
+
+<div class="gbanner" id="gbanner">🏆 Outstanding — every targeted topic mastered!</div>
+
+<!-- ── Header ───────────────────────────────────────────────────── -->
+<div class="header">
+  <div class="header-title">Targeted Practice</div>
+  <div class="header-sub">Personalised follow-up to your Year 8 Python assessment</div>
+  <div class="score-row">
+    <div class="score-pill" id="score-pill">Score: 0 / 0  (0%)</div>
+    <div class="score-bar-wrap"><div class="score-bar" id="score-bar"></div></div>
+  </div>
+</div>
+
+<!-- ── Boot / loading screen (shown initially) ─────────────────── -->
+<div id="boot-screen">
+  <div class="boot-card">
+    <h2><span class="spinner"></span>Looking up your assessment results…</h2>
+    <p>This activity tailors the tasks to the topics you found tricky in the assessment. Hang on a moment while we read your scores.</p>
+  </div>
+</div>
+
+<!-- ── Plan summary (shown when results are loaded) ────────────── -->
+<div id="plan-screen" hidden>
+  <div class="boot-card">
+    <h2 id="plan-heading">Today's practice plan</h2>
+    <p id="plan-intro">Based on your assessment, here's what we'll work on. For each topic you'll get a guided walkthrough, then a similar task to try on your own.</p>
+    <ul class="plan-list" id="plan-list"></ul>
+    <button class="ac-btn" onclick="startPractice()">Start practising →</button>
+  </div>
+</div>
+
+<!-- ── Manual picker (shown when no results data is available) ─── -->
+<div id="picker-screen" hidden>
+  <div class="boot-card">
+    <h2>Pick the topics you want to practise</h2>
+    <p>We couldn't find your assessment results on this device. Tick the topics you'd like to work on (you can pick a few — the lesson is around 50 minutes if you do 5–6).</p>
+    <div class="picker-list" id="picker-list"></div>
+    <button class="ac-btn" onclick="startWithPicker()">Start practising →</button>
+  </div>
+</div>
+
+<!-- ── Tab bar (built dynamically) ─────────────────────────────── -->
+<div class="tab-bar" id="tab-bar" hidden></div>
+
+<!-- ── Panels container (built dynamically) ────────────────────── -->
+<div id="panels-container" hidden></div>
+
+<!-- Turtle output modal -->
+<div id="turtleModal" class="turtle-modal" onclick="if(event.target===this)closeTurtleModal()">
+  <div class="turtle-modal-inner">
+    <div class="turtle-modal-header">
+      <span class="turtle-title">🐢 <span id="turtleModalTitle">Turtle Output</span></span>
+      <button class="turtle-close" onclick="closeTurtleModal()">✕ Close</button>
+    </div>
+    <canvas id="turtleCanvas" width="420" height="420"></canvas>
+    <div class="turtle-status" id="turtleStatus">Drawing…</div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+// CLUSTER DEFINITIONS
+//   Each cluster groups source assessment questions into one
+//   pedagogical skill, and provides two follow-up tasks:
+//     taskA — walkthrough (with hints / scaffolding)
+//     taskB — independent (no hints)
+// ══════════════════════════════════════════════════════════════
+const CLUSTERS = [
+  {
+    id: 'errors_read',
+    title: 'Reading error messages',
+    icon: '🐛',
+    sourceQs: ['qE1','qE2','qE3','qE4'],
+    maxAssessPts: 4,
+    estMins: 6,
+    taskA: {
+      title: 'Walkthrough — Spot the right fix',
+      html: `
+        <div class="ac-help">
+          <strong>Quick reminder — three common error types:</strong>
+          <ul>
+            <li><code>SyntaxError</code> — Python can't read the line. Look for missing brackets, quotes, or colons.</li>
+            <li><code>NameError</code> — a variable name is misspelled or hasn't been created yet.</li>
+            <li><code>IndentationError</code> — the spaces at the start of a line are wrong.</li>
+          </ul>
+        </div>
+        <pre class="q-code">total = 10
+print(toatl)</pre>
+        <div class="q-err">NameError: name 'toatl' is not defined</div>
+        <p class="q-text">Which fix is correct?</p>
+        <p class="q-hint">💡 The error mentions a <em>name</em> — compare the spellings on each line.</p>
+        <div class="q-opts">
+          <label class="q-opt"><input type="radio" name="$Q$" value="A"> Add a colon at the end of line 1</label>
+          <label class="q-opt"><input type="radio" name="$Q$" value="B"> Indent line 2 with four spaces</label>
+          <label class="q-opt"><input type="radio" name="$Q$" value="C"> Change <code>toatl</code> on line 2 to <code>total</code></label>
+          <label class="q-opt"><input type="radio" name="$Q$" value="D"> Wrap <code>toatl</code> in quotes</label>
+        </div>
+      `,
+      check: { type: 'mcq', correct: 'C', key: 'errors_read_A' }
+    },
+    taskB: {
+      title: 'On your own — Spot the right fix',
+      html: `
+        <pre class="q-code">if score > 5
+    print("Pass")</pre>
+        <div class="q-err">SyntaxError: expected ':'</div>
+        <p class="q-text">Which fix is correct?</p>
+        <div class="q-opts">
+          <label class="q-opt"><input type="radio" name="$Q$" value="A"> Remove the indent before <code>print</code></label>
+          <label class="q-opt"><input type="radio" name="$Q$" value="B"> Add a colon: <code>if score > 5:</code></label>
+          <label class="q-opt"><input type="radio" name="$Q$" value="C"> Change <code>></code> to <code>=</code></label>
+          <label class="q-opt"><input type="radio" name="$Q$" value="D"> Wrap <code>"Pass"</code> in <code>int()</code></label>
+        </div>
+      `,
+      check: { type: 'mcq', correct: 'B', key: 'errors_read_B' }
+    }
+  },
+
+  {
+    id: 'errors_fix',
+    title: 'Fixing common errors',
+    icon: '🔧',
+    sourceQs: ['qE5','qE6'],
+    maxAssessPts: 2,
+    estMins: 6,
+    taskA: {
+      title: 'Walkthrough — Type the corrected line',
+      html: `
+        <div class="ac-help">
+          <strong>How to fix a NameError:</strong> the variable on one line must match exactly the variable on the other. Copy/paste from the line that's working to be safe.
+        </div>
+        <pre class="q-code">player_score = 75
+print("Score:", playerscore)</pre>
+        <div class="q-err">NameError: name 'playerscore' is not defined</div>
+        <p class="q-text">Re-type the program below with the bug fixed.</p>
+        <p class="q-hint">💡 Look at how the variable is spelled on line 1 — match it on line 2.</p>
+        <textarea class="q-ta" id="$Q$-ta" rows="3" placeholder="Type the full corrected program here..."></textarea>
+      `,
+      check: { type: 'code', key: 'errors_fix_A' }
+    },
+    taskB: {
+      title: 'On your own — Fix the indentation',
+      html: `
+        <pre class="q-code">if temp > 30:
+print("It's hot!")</pre>
+        <div class="q-err">IndentationError: expected an indented block after 'if' statement on line 1</div>
+        <p class="q-text">Re-type the program below with the bug fixed.</p>
+        <textarea class="q-ta" id="$Q$-ta" rows="3" placeholder="Type the full corrected program here..."></textarea>
+      `,
+      check: { type: 'code', key: 'errors_fix_B' }
+    }
+  },
+
+  {
+    id: 'cast_to_int',
+    title: 'Casting input to a number',
+    icon: '🔢',
+    sourceQs: ['qC1','qC2','qC4','qC5'],
+    maxAssessPts: 4,
+    estMins: 7,
+    taskA: {
+      title: 'Walkthrough — Fill in the cast',
+      html: `
+        <div class="ac-help">
+          <strong>Why we need <code>int()</code> around <code>input()</code>:</strong>
+          <ul>
+            <li><code>input()</code> always returns a <strong>string</strong>, even if the user types a number.</li>
+            <li>You can't do maths on a string — Python gives a <code>TypeError</code>.</li>
+            <li><code>int(input(...))</code> converts the typed text into a real number.</li>
+          </ul>
+        </div>
+        <p class="q-text">Complete the program so it asks for an age and prints what age the user will be next year.</p>
+        <p class="q-hint">💡 Replace <code>___</code> with the casting function that turns a string into a whole number.</p>
+        <pre class="q-code">age = ___(input("How old are you? "))
+print("Next year you'll be", age + 1)</pre>
+        <p class="q-text">Type the full corrected program in the box.</p>
+        <textarea class="q-ta" id="$Q$-ta" rows="4" placeholder="Type the full program with int(...) added..."></textarea>
+      `,
+      check: { type: 'code', key: 'cast_to_int_A' }
+    },
+    taskB: {
+      title: 'On your own — Cast then calculate',
+      html: `
+        <p class="q-text">Write a program that:</p>
+        <ul style="margin:6px 0 10px 20px; font-size:0.9rem; color:#1e293b; line-height:1.7;">
+          <li>Asks the user how many minutes they exercised today (using <code>input()</code>)</li>
+          <li>Stores the answer as a <strong>number</strong>, not a string</li>
+          <li>Prints the total in <strong>seconds</strong> (minutes × 60)</li>
+        </ul>
+        <textarea class="q-ta" id="$Q$-ta" rows="5" placeholder="# Write your Python code here..."></textarea>
+      `,
+      check: { type: 'code', key: 'cast_to_int_B' }
+    }
+  },
+
+  {
+    id: 'cast_to_str',
+    title: 'Casting numbers into strings',
+    icon: '🔤',
+    sourceQs: ['qC3','qC6'],
+    maxAssessPts: 2,
+    estMins: 6,
+    taskA: {
+      title: 'Walkthrough — Wrap the number',
+      html: `
+        <div class="ac-help">
+          <strong>Why we need <code>str()</code> when we use <code>+</code>:</strong>
+          The <code>+</code> sign joins strings together. If one side is a string and the other is a number, Python doesn't know what you mean and gives a <code>TypeError</code>. Wrapping the number in <code>str()</code> turns it into text so it can be joined.
+        </div>
+        <pre class="q-code">score = 50
+message = "You scored " + score
+print(message)</pre>
+        <div class="q-err">TypeError: can only concatenate str (not "int") to str</div>
+        <p class="q-text">Re-type the program below with <code>str(...)</code> added in the right place.</p>
+        <p class="q-hint">💡 The bug is on line 2 — wrap <code>score</code> with <code>str()</code>.</p>
+        <textarea class="q-ta" id="$Q$-ta" rows="4" placeholder="Type the full corrected program here..."></textarea>
+      `,
+      check: { type: 'code', key: 'cast_to_str_A' }
+    },
+    taskB: {
+      title: 'On your own — Build a sentence',
+      html: `
+        <p class="q-text">Write a program that:</p>
+        <ul style="margin:6px 0 10px 20px; font-size:0.9rem; color:#1e293b; line-height:1.7;">
+          <li>Stores your <code>age</code> as a <strong>number</strong> (e.g. <code>age = 12</code>)</li>
+          <li>Uses the <code>+</code> sign to print a sentence like: <code>I am 12 years old</code></li>
+        </ul>
+        <p class="q-hint">💡 You'll need <code>str(age)</code> somewhere in your <code>print(...)</code>.</p>
+        <textarea class="q-ta" id="$Q$-ta" rows="4" placeholder="# Write your Python code here..."></textarea>
+      `,
+      check: { type: 'code', key: 'cast_to_str_B' }
+    }
+  },
+
+  {
+    id: 'range_basics',
+    title: 'How range() works',
+    icon: '🔁',
+    sourceQs: ['qL1','qL2','qL3','qLC1'],
+    maxAssessPts: 5,
+    estMins: 7,
+    taskA: {
+      title: 'Walkthrough — Print Hi four times',
+      html: `
+        <div class="ac-help">
+          <strong>How <code>range()</code> works:</strong>
+          <ul>
+            <li><code>range(N)</code> goes from <strong>0 up to (but not including) N</strong> — that's exactly N times.</li>
+            <li><code>range(2, 6)</code> goes <code>2, 3, 4, 5</code> — the first number is included, the last is not.</li>
+            <li><code>range(0, 10, 2)</code> goes <code>0, 2, 4, 6, 8</code> — the third number is the step.</li>
+          </ul>
+        </div>
+        <p class="q-text">Fill in the blank so the loop prints <code>Hi</code> exactly <strong>4 times</strong>.</p>
+        <p class="q-hint">💡 You only need to change <code>___</code> — leave the rest the same.</p>
+        <pre class="q-code">for i in range(___):
+    print("Hi")</pre>
+        <p class="q-text">Type the full program in the box below.</p>
+        <textarea class="q-ta" id="$Q$-ta" rows="4" placeholder="Type the full program with the blank filled in..."></textarea>
+      `,
+      check: { type: 'code', key: 'range_basics_A' }
+    },
+    taskB: {
+      title: 'On your own — Print numbers 5 to 10',
+      html: `
+        <p class="q-text">Write a <code>for</code> loop that prints the numbers <strong>5, 6, 7, 8, 9, 10</strong> — each on its own line.</p>
+        <p class="q-hint">💡 Remember the second number in <code>range()</code> is <em>not</em> included.</p>
+        <textarea class="q-ta" id="$Q$-ta" rows="4" placeholder="# Write your Python code here..."></textarea>
+      `,
+      check: { type: 'code', key: 'range_basics_B' }
+    }
+  },
+
+  {
+    id: 'turtle_loops',
+    title: 'Loops with turtle graphics',
+    icon: '🐢',
+    sourceQs: ['qL4','qLC2','qLC3'],
+    maxAssessPts: 5,
+    estMins: 8,
+    taskA: {
+      title: 'Walkthrough — Draw a triangle',
+      html: `
+        <div class="ac-help">
+          <strong>The "polygon recipe" for turtle:</strong>
+          <ul>
+            <li>For a regular shape with N sides, repeat <strong>N times</strong>: forward + turn.</li>
+            <li>The turn angle is always <strong>360 ÷ N</strong>.</li>
+            <li>Square = 4 sides, turn 90°. Triangle = 3 sides, turn 120°. Hexagon = 6 sides, turn 60°.</li>
+          </ul>
+        </div>
+        <p class="q-text">Fill in the blanks so the program draws a <strong>triangle</strong> (3 sides).</p>
+        <p class="q-hint">💡 The turning angle for a triangle is <strong>360 ÷ 3 = 120°</strong>.</p>
+        <pre class="q-code">import turtle
+t = turtle.Turtle()
+for i in range(___):
+    t.forward(100)
+    t.left(___)</pre>
+        <p class="q-text">Type the full program in the editor below.</p>
+        <textarea class="checker-textarea" id="$Q$-ta" rows="8" data-title="Triangle" placeholder="# Write your full program here...">import turtle
+t = turtle.Turtle()
+
+</textarea>
+      `,
+      check: { type: 'turtle', key: 'turtle_loops_A' }
+    },
+    taskB: {
+      title: 'On your own — Draw a pentagon',
+      html: `
+        <p class="q-text">Write a turtle program that uses a <code>for</code> loop to draw a regular <strong>pentagon</strong> (5 sides).</p>
+        <p class="q-hint">💡 Use the polygon recipe: turn = 360 ÷ number of sides.</p>
+        <textarea class="checker-textarea" id="$Q$-ta" rows="8" data-title="Pentagon" placeholder="# Write your Python code here...">import turtle
+t = turtle.Turtle()
+
+</textarea>
+      `,
+      check: { type: 'turtle', key: 'turtle_loops_B' }
+    }
+  },
+
+  {
+    id: 'function_basics',
+    title: 'Defining and calling functions',
+    icon: '📦',
+    sourceQs: ['qF1','qF2','qF3','qF4','qFC1'],
+    maxAssessPts: 6,
+    estMins: 7,
+    taskA: {
+      title: 'Walkthrough — Define and call say_bye',
+      html: `
+        <div class="ac-help">
+          <strong>Three steps for every function:</strong>
+          <ul>
+            <li><strong>Define</strong> — start with <code>def name():</code> and a colon.</li>
+            <li><strong>Indent the body</strong> — put each instruction inside the function on a new indented line.</li>
+            <li><strong>Call it</strong> — write the function name with brackets, e.g. <code>say_bye()</code>.</li>
+          </ul>
+          <p style="margin-top:6px;">A function only runs when you <em>call</em> it. Calling it twice runs it twice.</p>
+        </div>
+        <p class="q-text">Fill in the blanks so the program defines <code>say_bye</code> (which prints <code>Goodbye!</code>) and then calls it <strong>3 times</strong>.</p>
+        <pre class="q-code">def ___():
+    print("Goodbye!")
+
+say_bye()
+___
+___</pre>
+        <p class="q-text">Type the full program in the box below.</p>
+        <textarea class="q-ta" id="$Q$-ta" rows="6" placeholder="Type the full program here..."></textarea>
+      `,
+      check: { type: 'code', key: 'function_basics_A' }
+    },
+    taskB: {
+      title: 'On your own — Build a welcome',
+      html: `
+        <p class="q-text">Write a program that:</p>
+        <ul style="margin:6px 0 10px 20px; font-size:0.9rem; color:#1e293b; line-height:1.7;">
+          <li>Defines a function called <code>welcome</code> that prints <strong>two lines</strong> (any two messages you like)</li>
+          <li>Calls <code>welcome()</code> <strong>twice</strong></li>
+        </ul>
+        <textarea class="q-ta" id="$Q$-ta" rows="7" placeholder="# Write your Python code here..."></textarea>
+      `,
+      check: { type: 'code', key: 'function_basics_B' }
+    }
+  },
+
+  {
+    id: 'function_loop',
+    title: 'Functions with loops inside',
+    icon: '🧱',
+    sourceQs: ['qFC2'],
+    maxAssessPts: 2,
+    estMins: 6,
+    taskA: {
+      title: 'Walkthrough — Reusable square',
+      html: `
+        <div class="ac-help">
+          <strong>Why functions are useful:</strong> when you put the same instructions inside a function, you can re-use them just by calling the function again — no copy-paste needed.
+          <p style="margin-top:6px;">Below, <code>square()</code> contains the loop. Each call draws one square.</p>
+        </div>
+        <p class="q-text">Fill in the blanks so the program defines a function <code>square</code> that draws a square, then calls it <strong>twice</strong>.</p>
+        <pre class="q-code">import turtle
+t = turtle.Turtle()
+
+def ___():
+    for i in range(4):
+        t.forward(80)
+        t.left(90)
+
+square()
+___</pre>
+        <textarea class="checker-textarea" id="$Q$-ta" rows="10" data-title="Two squares" placeholder="Type the full program here...">import turtle
+t = turtle.Turtle()
+
+</textarea>
+      `,
+      check: { type: 'turtle', key: 'function_loop_A' }
+    },
+    taskB: {
+      title: 'On your own — Reusable triangle',
+      html: `
+        <p class="q-text">Write a program that:</p>
+        <ul style="margin:6px 0 10px 20px; font-size:0.9rem; color:#1e293b; line-height:1.7;">
+          <li>Defines a function called <code>triangle</code> that uses a <code>for</code> loop to draw a triangle</li>
+          <li>Calls <code>triangle()</code> <strong>twice</strong></li>
+        </ul>
+        <p class="q-hint">💡 A triangle has 3 sides; the turn is 360 ÷ 3 = 120°.</p>
+        <textarea class="checker-textarea" id="$Q$-ta" rows="10" data-title="Two triangles" placeholder="# Write your Python code here...">import turtle
+t = turtle.Turtle()
+
+</textarea>
+      `,
+      check: { type: 'turtle', key: 'function_loop_B' }
+    }
+  }
+];
+
+// Foundational cluster — only shown if the student scored 0 on either basic.
+const FOUNDATIONAL_CLUSTER = {
+  id: 'io_basics',
+  title: 'Print and input — back to basics',
+  icon: '🖨️',
+  sourceQs: ['qB1','qB2'],
+  maxAssessPts: 4,
+  estMins: 6,
+  taskA: {
+    title: 'Walkthrough — Print three messages',
+    html: `
+      <div class="ac-help">
+        <strong>How <code>print()</code> works:</strong>
+        <ul>
+          <li>The text you want to show goes <strong>inside the brackets</strong>, in <strong>quotes</strong>.</li>
+          <li>Each <code>print(...)</code> adds a new line of output.</li>
+        </ul>
+      </div>
+      <p class="q-text">Write a program that prints three messages, one per line:</p>
+      <ul style="margin:6px 0 10px 20px; font-size:0.9rem; color:#1e293b;">
+        <li><code>Hello!</code></li>
+        <li><code>I am learning Python.</code></li>
+        <li><code>This is fun.</code></li>
+      </ul>
+      <textarea class="q-ta" id="$Q$-ta" rows="5" placeholder="# Three print statements..."></textarea>
+    `,
+    check: { type: 'code', key: 'io_basics_A' }
+  },
+  taskB: {
+    title: 'On your own — Ask and double',
+    html: `
+      <p class="q-text">Write a program that:</p>
+      <ul style="margin:6px 0 10px 20px; font-size:0.9rem; color:#1e293b; line-height:1.7;">
+        <li>Asks the user for a number using <code>input()</code></li>
+        <li>Stores the answer (cast to an integer)</li>
+        <li>Prints the number doubled</li>
+      </ul>
+      <textarea class="q-ta" id="$Q$-ta" rows="5" placeholder="# Write your Python code here..."></textarea>
+    `,
+    check: { type: 'code', key: 'io_basics_B' }
+  }
+};
+
+// ══════════════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════════════
+const ASSESS_KEY  = 'oga_y8py_assess_v1';
+const SAVE_KEY    = 'oga_y8py_l6_v1';
+const MAX_PER_CLUSTER = 2;          // Task A = 1 pt, Task B = 1 pt
+const ACTIVITY_NAME = 'Year 8 Python — Targeted Practice';
+const SOURCE_ACTIVITY = 'Year 8 Python Assessment';
+
+let activeClusters = [];     // ordered list of cluster objects shown in this session
+let qPoints = {};            // points per task id (e.g. errors_read_A: 1)
+let totalMax = 0;            // updated when activeClusters set
+
+// ══════════════════════════════════════════════════════════════
+// BOOT — decide which clusters to show
+// ══════════════════════════════════════════════════════════════
+async function boot() {
+  // 1. Try local assessment results
+  let assessResults = readLocalAssessment();
+
+  // 2. If absent, try Drive (Classroom context only)
+  if (!assessResults && window.Classroom?.isClassroomContext) {
+    setBootMessage('Reading your assessment results from Google Drive…');
+    const drive = await window.Classroom.fetchResults(SOURCE_ACTIVITY);
+    if (drive && drive.qPoints) assessResults = { qPoints: drive.qPoints };
+  }
+
+  if (assessResults && assessResults.qPoints) {
+    activeClusters = chooseClustersFromResults(assessResults.qPoints);
+    showPlanScreen(assessResults.qPoints);
+  } else {
+    showPickerScreen();
+  }
+}
+
+function readLocalAssessment() {
+  try {
+    const raw = localStorage.getItem(ASSESS_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch (_) { return null; }
+}
+
+function setBootMessage(msg) {
+  const card = document.querySelector('#boot-screen .boot-card h2');
+  if (card) card.innerHTML = '<span class="spinner"></span>' + msg;
+}
+
+// Decide weak clusters and order them weakest-first.
+// A cluster is "weak" when pointsEarned / pointsAvailable < 0.6.
+// Foundational cluster is shown first if either qB1 or qB2 is 0.
+function chooseClustersFromResults(qp) {
+  const scored = CLUSTERS.map(c => {
+    const earned = c.sourceQs.reduce((s, id) => s + (qp[id] || 0), 0);
+    return {
+      cluster: c,
+      earned,
+      max: c.maxAssessPts,
+      ratio: earned / c.maxAssessPts
+    };
+  });
+  const weak = scored.filter(s => s.ratio < 0.6);
+  weak.sort((a, b) => {
+    if (a.ratio !== b.ratio) return a.ratio - b.ratio;
+    // Tiebreaker: clusters where more points were lost come first.
+    // Ensures an "all wrong" student gets a balanced spread across topics
+    // rather than the first six in array order.
+    return (b.max - b.earned) - (a.max - a.earned);
+  });
+  // Cap at 6 weak clusters so the lesson fits in ~50 minutes
+  let chosen = weak.slice(0, 6).map(s => Object.assign({}, s.cluster, { earned: s.earned, max: s.max }));
+
+  // Add foundational cluster at the front if needed
+  const foundationalNeeded = (qp.qB1 || 0) < 2 || (qp.qB2 || 0) < 2;
+  if (foundationalNeeded && (qp.qB1 === 0 || qp.qB2 === 0)) {
+    const fEarned = (qp.qB1 || 0) + (qp.qB2 || 0);
+    chosen.unshift(Object.assign({}, FOUNDATIONAL_CLUSTER, { earned: fEarned, max: 4 }));
+  }
+
+  // If a student got everything right, show a small celebration cluster set so the page isn't empty
+  if (chosen.length === 0) {
+    // Pick the three strongest topics for a quick refresher rather than nothing
+    const sortedDesc = scored.slice().sort((a, b) => b.ratio - a.ratio).slice(0, 3);
+    chosen = sortedDesc.map(s => Object.assign({}, s.cluster, { earned: s.earned, max: s.max, _allRight: true }));
+  }
+
+  return chosen;
+}
+
+// ══════════════════════════════════════════════════════════════
+// PLAN SCREEN
+// ══════════════════════════════════════════════════════════════
+function showPlanScreen(qp) {
+  document.getElementById('boot-screen').hidden = true;
+  const screen = document.getElementById('plan-screen');
+  const list   = document.getElementById('plan-list');
+  const heading = document.getElementById('plan-heading');
+  const intro   = document.getElementById('plan-intro');
+
+  if (activeClusters.length > 0 && activeClusters[0]._allRight) {
+    heading.textContent = '🎉 You did brilliantly in the assessment!';
+    intro.textContent = "There weren't any topics you really struggled with, so we'll do a quick refresh of three areas you can polish further.";
+  } else {
+    heading.textContent = "Today's practice plan";
+    intro.textContent = `Based on your assessment, here are the topics we'll work on. For each topic you'll get a guided walkthrough, then a similar task to try on your own. About ${activeClusters.reduce((s,c)=>s+c.estMins,0)} minutes of practice in total.`;
+  }
+
+  list.innerHTML = activeClusters.map(c => `
+    <li>
+      <span class="plan-icon">${c.icon}</span>
+      <span><strong>${c.title}</strong> ${c._allRight ? '<small style="color:#15803d;">(refresher)</small>' : `<small style="color:#64748b;">— you got ${c.earned}/${c.max} in the assessment</small>`}</span>
+      <span class="plan-meta">~${c.estMins} min</span>
+    </li>
+  `).join('');
+
+  screen.hidden = false;
+}
+
+// ══════════════════════════════════════════════════════════════
+// PICKER SCREEN (no data fallback)
+// ══════════════════════════════════════════════════════════════
+function showPickerScreen() {
+  document.getElementById('boot-screen').hidden = true;
+  const screen = document.getElementById('picker-screen');
+  const list   = document.getElementById('picker-list');
+  list.innerHTML = CLUSTERS.map(c => `
+    <label class="picker-opt">
+      <input type="checkbox" data-cid="${c.id}">
+      <div>
+        <strong>${c.icon} ${c.title}</strong>
+        <small>~${c.estMins} min — covers the assessment topics around ${c.id.replace(/_/g, ' ')}</small>
+      </div>
+    </label>
+  `).join('') + `
+    <label class="picker-opt">
+      <input type="checkbox" data-cid="${FOUNDATIONAL_CLUSTER.id}">
+      <div>
+        <strong>${FOUNDATIONAL_CLUSTER.icon} ${FOUNDATIONAL_CLUSTER.title}</strong>
+        <small>~${FOUNDATIONAL_CLUSTER.estMins} min — print() and input() basics</small>
+      </div>
+    </label>
+  `;
+  screen.hidden = false;
+}
+
+function startWithPicker() {
+  const ticked = [...document.querySelectorAll('#picker-list input:checked')]
+    .map(el => el.dataset.cid);
+  if (ticked.length === 0) {
+    alert('Pick at least one topic to practise!');
+    return;
+  }
+  const all = CLUSTERS.concat(FOUNDATIONAL_CLUSTER);
+  activeClusters = ticked.map(cid => Object.assign({ earned: null, max: null }, all.find(c => c.id === cid)));
+  document.getElementById('picker-screen').hidden = true;
+  buildAndStart();
+}
+
+function startPractice() {
+  document.getElementById('plan-screen').hidden = true;
+  buildAndStart();
+}
+
+// ══════════════════════════════════════════════════════════════
+// BUILD TABS + PANELS, then render
+// ══════════════════════════════════════════════════════════════
+function buildAndStart() {
+  const tabBar = document.getElementById('tab-bar');
+  const panels = document.getElementById('panels-container');
+  tabBar.innerHTML = '';
+  panels.innerHTML = '';
+
+  totalMax = activeClusters.length * MAX_PER_CLUSTER;
+
+  activeClusters.forEach((c, i) => {
+    // Tab
+    const btn = document.createElement('button');
+    btn.className = 'tab' + (i === 0 ? ' active' : '');
+    btn.dataset.idx = i;
+    btn.textContent = `${i + 1}. ${c.icon} ${c.title}`;
+    tabBar.appendChild(btn);
+
+    // Panel
+    const panel = document.createElement('div');
+    panel.className = 'panel' + (i === 0 ? ' active' : '');
+    panel.id = 'panel-' + i;
+    panel.innerHTML = renderClusterPanel(c, i);
+    panels.appendChild(panel);
+  });
+
+  // Reflection tab + panel
+  const reflectTab = document.createElement('button');
+  reflectTab.className = 'tab';
+  reflectTab.dataset.idx = activeClusters.length;
+  reflectTab.textContent = `${activeClusters.length + 1}. 📝 Reflect`;
+  tabBar.appendChild(reflectTab);
+
+  const reflectPanel = document.createElement('div');
+  reflectPanel.className = 'panel';
+  reflectPanel.id = 'panel-' + activeClusters.length;
+  reflectPanel.innerHTML = `
+    <div class="sec-header">
+      <div class="sec-badge">📝</div>
+      <div class="sec-title">Reflection</div>
+    </div>
+    <div class="goal">🎯 Take a minute to think back. Your reflection is saved with your work.</div>
+    <div class="q-block">
+      <div class="q-num">Reflection</div>
+      <p class="q-text">Which topic feels clearer now after today's practice?</p>
+      <textarea class="reflect-ta" id="reflect-clearer" placeholder="e.g. I now understand that range(5) loops 5 times, not 4..."></textarea>
+      <p class="q-text" style="margin-top:14px;">Which topic do you still want more help with?</p>
+      <textarea class="reflect-ta" id="reflect-stuck" placeholder="e.g. I'm still confused about when to use str() vs int()..."></textarea>
+      <button class="ac-btn" onclick="finishLesson()">Finish lesson</button>
+      <div class="q-fb" id="reflect-fb"></div>
+    </div>
+  `;
+  panels.appendChild(reflectPanel);
+
+  tabBar.hidden = false;
+  panels.hidden = false;
+
+  // Tab switching
+  tabBar.addEventListener('click', e => {
+    const tab = e.target.closest('.tab');
+    if (!tab) return;
+    const idx = +tab.dataset.idx;
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('panel-' + idx).classList.add('active');
+  });
+
+  // Wire up Check buttons
+  activeClusters.forEach((c, i) => {
+    const aId = `${c.id}_A`;
+    const bId = `${c.id}_B`;
+    document.getElementById(aId + '-btn')?.addEventListener('click', () => runCheck(c, 'A'));
+    document.getElementById(bId + '-btn')?.addEventListener('click', () => runCheck(c, 'B'));
+  });
+
+  // Initialise code editors for any .checker-textarea we just inserted.
+  // The module that defines _setupL6Editors loads asynchronously, so retry briefly
+  // if it isn't ready yet (idempotent: rerunning on the same textareas is a no-op).
+  (function tryEditors(tries = 0) {
+    if (window._setupL6Editors) { window._setupL6Editors(); return; }
+    if (tries < 20) setTimeout(() => tryEditors(tries + 1), 100);
+  })();
+
+  loadProgress();
+  refreshScore();
+}
+
+function renderClusterPanel(c, idx) {
+  const aId = `${c.id}_A`;
+  const bId = `${c.id}_B`;
+  const aHtml = c.taskA.html.replace(/\$Q\$/g, aId);
+  const bHtml = c.taskB.html.replace(/\$Q\$/g, bId);
+
+  const intro = c.earned !== null && c.earned !== undefined && !c._allRight
+    ? `<div class="goal">🎯 You scored ${c.earned}/${c.max} on this in the assessment. Let's strengthen it.</div>`
+    : c._allRight
+      ? `<div class="goal">🎯 You did well on this — here's a quick refresher to keep it fresh.</div>`
+      : `<div class="goal">🎯 Practice on a topic you picked.</div>`;
+
+  return `
+    <div class="sec-header">
+      <div class="sec-badge">${c.icon}</div>
+      <div class="sec-title">${c.title}</div>
+      <div class="sec-pts">~${c.estMins} min</div>
+    </div>
+    ${intro}
+
+    <div class="q-block" id="${aId}">
+      <div class="q-num">${c.taskA.title} <span class="pts-tag">1 pt</span></div>
+      ${aHtml}
+      <button class="ac-btn" id="${aId}-btn">Check</button>
+      <div class="q-fb" id="${aId}-fb"></div>
+    </div>
+
+    <div class="q-block locked-task" id="${bId}">
+      <div class="q-num">${c.taskB.title} <span class="pts-tag">1 pt</span></div>
+      ${bHtml}
+      <button class="ac-btn" id="${bId}-btn">Check</button>
+      <div class="q-fb" id="${bId}-fb"></div>
+    </div>
+  `;
+}
+
+// ══════════════════════════════════════════════════════════════
+// CHECK / SCORE
+// ══════════════════════════════════════════════════════════════
+const PASS_MSGS = ['✅ Correct!', '✅ That\'s right!', '✅ Well done!', '✅ Exactly right!'];
+const FAIL_MSGS = ['❌ Not quite — have another go.', '❌ Almost — try again.', '❌ Keep going — re-read the hint.'];
+
+function runCheck(cluster, taskKey /* 'A' or 'B' */) {
+  const task = taskKey === 'A' ? cluster.taskA : cluster.taskB;
+  const qId  = `${cluster.id}_${taskKey}`;
+
+  if (window.Classroom?.verifyAuth() === false) return;
+
+  const block = document.getElementById(qId);
+  const fb    = document.getElementById(qId + '-fb');
+  const btn   = document.getElementById(qId + '-btn');
+  const check = task.check;
+
+  let passed = false;
+
+  if (check.type === 'mcq') {
+    const selected = document.querySelector(`input[name="${qId}"]:checked`);
+    if (!selected) {
+      fb.textContent = '⚠️ Please select an answer first.';
+      fb.className = 'q-fb fail';
+      return;
+    }
+    passed = selected.value === check.correct;
+
+    // Always lock once an MCQ is checked
+    btn.disabled = true;
+    document.querySelectorAll(`input[name="${qId}"]`).forEach(r => {
+      r.disabled = true;
+      r.closest('.q-opt').classList.add('locked');
+      if (r.value === check.correct) r.closest('.q-opt').classList.add('opt-correct');
+      else if (r.checked && !passed)  r.closest('.q-opt').classList.add('opt-wrong');
+    });
+
+  } else {
+    // 'code' or 'turtle' — read the textarea, run detect, allow retry on fail
+    const ta = document.getElementById(qId + '-ta');
+    const code = (ta?.value || '').trim();
+    if (!code) {
+      fb.textContent = '⚠️ Please write some code first.';
+      fb.className = 'q-fb fail';
+      return;
+    }
+    try {
+      const fn = check.detect ?? window.L6_CHECKERS?.[check.key];
+      passed = !!fn?.(code);
+    } catch (_) { passed = false; }
+
+    if (passed) {
+      // Disable further edits / button to lock the win in
+      btn.disabled = true;
+      ta.readOnly = true;
+      window._clearSyntaxHint?.(ta);
+    }
+
+    if (check.type === 'turtle' && passed) {
+      window._openTurtlePreview?.(ta, cluster.title);
+    }
+  }
+
+  block.classList.remove('correct', 'partial', 'wrong');
+  if (passed) {
+    block.classList.add('correct');
+    fb.textContent = PASS_MSGS[Math.floor(Math.random() * PASS_MSGS.length)];
+    fb.className = 'q-fb pass';
+    awardPoints(qId, 1);
+    if (taskKey === 'A') unlockTaskB(cluster.id);
+  } else {
+    block.classList.add('wrong');
+    fb.textContent = FAIL_MSGS[Math.floor(Math.random() * FAIL_MSGS.length)];
+    fb.className = 'q-fb fail';
+  }
+}
+
+function unlockTaskB(clusterId) {
+  const block = document.getElementById(`${clusterId}_B`);
+  if (block) block.classList.remove('locked-task');
+}
+
+function awardPoints(qId, pts) {
+  const prev = qPoints[qId] || 0;
+  if (pts > prev) {
+    qPoints[qId] = pts;
+    saveProgress();
+    refreshScore();
+    markTabProgress();
+    checkCompletion();
+  }
+}
+
+function refreshScore() {
+  const total = Object.values(qPoints).reduce((s, v) => s + v, 0);
+  const pct   = totalMax > 0 ? Math.round(total / totalMax * 100) : 0;
+  const pill  = document.getElementById('score-pill');
+  const bar   = document.getElementById('score-bar');
+  if (pill) pill.textContent = `Score: ${total} / ${totalMax}  (${pct}%)`;
+  if (bar)  bar.style.width  = pct + '%';
+
+  // Mirror to Classroom (debounced inside)
+  window.Classroom?.submitGrade(pct, ACTIVITY_NAME);
+  window.Classroom?.submitResults({ qPoints, total, max: totalMax, pct, clusterIds: activeClusters.map(c => c.id) }, ACTIVITY_NAME);
+}
+
+function markTabProgress() {
+  activeClusters.forEach((c, i) => {
+    const a = qPoints[`${c.id}_A`] || 0;
+    const b = qPoints[`${c.id}_B`] || 0;
+    const tab = document.querySelector(`.tab[data-idx="${i}"]`);
+    if (tab && a + b === MAX_PER_CLUSTER) tab.classList.add('done');
+  });
+}
+
+function checkCompletion() {
+  const total = Object.values(qPoints).reduce((s, v) => s + v, 0);
+  const banner = document.getElementById('gbanner');
+  if (totalMax > 0 && total >= totalMax) {
+    if (!banner.classList.contains('show')) {
+      banner.classList.add('show');
+      document.body.classList.remove('bg-green');
+      document.body.classList.add('bg-gold');
+      startFW();
+    }
+  } else if (totalMax > 0 && total >= Math.round(totalMax * 0.8)) {
+    if (!banner.classList.contains('show')) {
+      document.body.classList.remove('bg-gold');
+      document.body.classList.add('bg-green');
+    }
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+// FINISH LESSON — final score + reflection sync
+// ══════════════════════════════════════════════════════════════
+function finishLesson() {
+  const fb = document.getElementById('reflect-fb');
+  fb.textContent = '✅ Reflection saved — well done for sticking with it!';
+  fb.className = 'q-fb pass';
+  saveProgress();
+  // Force a final upload (debounced inside Classroom helpers)
+  refreshScore();
+  startFW();
+}
+
+// ══════════════════════════════════════════════════════════════
+// PERSISTENCE — local progress within the lesson
+// ══════════════════════════════════════════════════════════════
+function saveProgress() {
+  try {
+    const taVals = {};
+    document.querySelectorAll('.q-ta, .checker-textarea, .reflect-ta').forEach(el => {
+      if (el.value) taVals[el.id] = el.value;
+    });
+    const radioVals = {};
+    document.querySelectorAll('.q-opts input:checked').forEach(r => { radioVals[r.name] = r.value; });
+    localStorage.setItem(SAVE_KEY, JSON.stringify({
+      qPoints,
+      taVals,
+      radioVals,
+      activeClusterIds: activeClusters.map(c => c.id)
+    }));
+  } catch(_) {}
+}
+
+function loadProgress() {
+  let s = null;
+  try { s = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); } catch (_) {}
+  if (!s) return;
+
+  // Only restore if the active cluster set matches — otherwise the saved data
+  // refers to a different lesson configuration (e.g. teacher reset assessment).
+  const same = s.activeClusterIds && s.activeClusterIds.length === activeClusters.length &&
+               s.activeClusterIds.every((id, i) => activeClusters[i].id === id);
+  if (!same) return;
+
+  if (s.taVals) Object.entries(s.taVals).forEach(([id, v]) => {
+    const el = document.getElementById(id); if (el) el.value = v;
+  });
+  if (s.radioVals) Object.entries(s.radioVals).forEach(([name, val]) => {
+    const r = document.querySelector(`input[name="${name}"][value="${val}"]`);
+    if (r) r.checked = true;
+  });
+  if (s.qPoints) {
+    Object.entries(s.qPoints).forEach(([qId, pts]) => {
+      if (pts > 0) {
+        qPoints[qId] = pts;
+        const block = document.getElementById(qId);
+        if (block) block.classList.add('correct');
+        const btn = document.getElementById(qId + '-btn');
+        if (btn) btn.disabled = true;
+        // Re-lock MCQ inputs if it was an MCQ
+        document.querySelectorAll(`input[name="${qId}"]`).forEach(r => {
+          r.disabled = true;
+          r.closest('.q-opt').classList.add('locked');
+        });
+        // Re-lock textarea if it was a code task
+        const ta = document.getElementById(qId + '-ta');
+        if (ta) ta.readOnly = true;
+        // Unlock the corresponding Task B if Task A passed
+        if (qId.endsWith('_A')) unlockTaskB(qId.slice(0, -2));
+      }
+    });
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+// FIREWORKS  (lifted from L5_Assessment for visual consistency)
+// ══════════════════════════════════════════════════════════════
+const cvs = document.getElementById('fwc'), ctx = cvs.getContext('2d');
+let fwOn = false, fwP = [], fwId = null;
+const FWC = ['#F5C300','#22c55e','#00B4D8','#E07B2A','#ff6b9d','#a78bfa','#fff'];
+function startFW(){cvs.classList.add('show');cvs.width=innerWidth;cvs.height=innerHeight;fwOn=true;fwP=[];fwLoop();setTimeout(stopFW,7000)}
+function stopFW(){fwOn=false;if(fwId)cancelAnimationFrame(fwId);ctx.clearRect(0,0,cvs.width,cvs.height);cvs.classList.remove('show')}
+function fwLoop(){if(!fwOn)return;fwId=requestAnimationFrame(fwLoop);ctx.fillStyle='rgba(255,250,200,0.15)';ctx.fillRect(0,0,cvs.width,cvs.height);if(Math.random()<.07)fwBurst();fwP=fwP.filter(p=>p.l>0);fwP.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.055;p.vx*=.98;p.vy*=.98;p.l--;ctx.globalAlpha=p.l/p.ml;ctx.fillStyle=p.c;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill()});ctx.globalAlpha=1}
+function fwBurst(){const x=Math.random()*cvs.width,y=Math.random()*cvs.height*.65,c=FWC[Math.floor(Math.random()*FWC.length)],n=55+Math.floor(Math.random()*40);for(let i=0;i<n;i++){const a=Math.random()*Math.PI*2,sp=1.5+Math.random()*4;fwP.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-1,r:1.5+Math.random()*2.5,c,l:65+Math.floor(Math.random()*35),ml:100})}}
+addEventListener('resize',()=>{if(fwOn){cvs.width=innerWidth;cvs.height=innerHeight}});
+
+// ══════════════════════════════════════════════════════════════
+// BOOT
+// Wait until classroom.js has loaded (it sits in a sync <script>
+// after this one) so window.Classroom is available.
+// ══════════════════════════════════════════════════════════════
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', boot);
+} else {
+  boot();
+}
+</script>
+
+<script src="../../../classroom.js"></script>
+<script type="module">
+import { setupEditors, clearSyntaxHint } from '../../../code-editor.js';
+import { CHECKERS } from './checkers.js';
+window._clearSyntaxHint = clearSyntaxHint;
+window._setupL6Editors = () => setupEditors('.checker-textarea');
+// Expose checkers globally so the inline cluster definitions (which run
+// before this module loads) can reach them at click time.
+window.L6_CHECKERS = CHECKERS;
+
+// ── Turtle Simulator (lifted verbatim from L5_Assessment for parity) ─────────
+let _turtleTimer = null;
+
+function _interpretTurtle(code) {
+  const cmds = [], output = [];
+  const lines = code.split('\n');
+  const functions = {};
+
+  function evalExpr(e, env) {
+    e = e.trim();
+    if (/^-?\d+(\.\d+)?$/.test(e)) return parseFloat(e);
+    const sm = e.match(/^["']([\s\S]*?)["']$/); if (sm) return sm[1];
+    const mm = e.match(/^(\S+)\s*\*\s*(\S+)$/);
+    if (mm) { const a = evalExpr(mm[1], env), b = evalExpr(mm[2], env); return (typeof a === 'number' && typeof b === 'number') ? a * b : 0; }
+    const am = e.match(/^(\S+)\s*([+\-])\s*(\S+)$/);
+    if (am) { const a = evalExpr(am[1], env), b = evalExpr(am[3], env); return (typeof a === 'number' && typeof b === 'number') ? (am[2] === '+' ? a + b : a - b) : 0; }
+    if (Object.prototype.hasOwnProperty.call(env, e)) return env[e];
+    if (/input\s*\(/.test(e)) return 'cyan';
+    return e;
+  }
+
+  function evalArgs(s, env) {
+    if (!s.trim()) return [];
+    const args = []; let depth = 0, cur = '';
+    for (const ch of s) {
+      if ('(['.includes(ch)) depth++;
+      else if (')]'.includes(ch)) depth--;
+      else if (ch === ',' && depth === 0) { args.push(cur.trim()); cur = ''; continue; }
+      cur += ch;
+    }
+    if (cur.trim()) args.push(cur.trim());
+    return args.map(a => evalExpr(a, env));
+  }
+
+  function execLine(line, env) {
+    const t = line.trim();
+    if (!t || t[0] === '#') return;
+    if (/^import|turtle\.done|^t\s*=\s*turtle\.Turtle|^screen\s*=/.test(t)) return;
+    if (t.startsWith('print(') && t.endsWith(')')) { output.push(evalArgs(t.slice(6,-1), env).join(' ')); return; }
+    const dotIdx = t.indexOf('.');
+    if (dotIdx > 0) {
+      const obj = t.slice(0, dotIdx).trim();
+      if (obj === 't' || obj === 'turtle') {
+        const parenIdx = t.indexOf('(', dotIdx);
+        if (parenIdx > 0) {
+          const method = t.slice(dotIdx+1, parenIdx).trim();
+          let depth = 0, end = -1;
+          for (let k = parenIdx; k < t.length; k++) { if (t[k] === '(') depth++; else if (t[k] === ')') { depth--; if (depth === 0) { end = k; break; } } }
+          if (end > 0) { cmds.push({ cmd: method, args: evalArgs(t.slice(parenIdx+1, end), env) }); return; }
+        }
+      }
+    }
+    const ia = t.match(/^(\w+)\s*=\s*input\s*\(/); if (ia) { env[ia[1]] = 'cyan'; return; }
+    const av = t.match(/^(\w+)\s*=\s*(.+)$/); if (av && av[1] !== 't') env[av[1]] = evalExpr(av[2], env);
+  }
+
+  function execBlock(blockLines, env) {
+    let j = 0;
+    while (j < blockLines.length) {
+      const line = blockLines[j], t = line.trim();
+      if (!t) { j++; continue; }
+      const indent = line.length - line.trimStart().length;
+      if (t.match(/^def\s+\w+\s*\(.*\)\s*:/)) {
+        j++;
+        while (j < blockLines.length && (!blockLines[j].trim() || (blockLines[j].length - blockLines[j].trimStart().length) > indent)) j++;
+        continue;
+      }
+      const fm = t.match(/^for\s+(\w+)\s+in\s+range\s*\(\s*(\d+)\s*\)\s*:/);
+      if (fm) {
+        const lv = fm[1], count = parseInt(fm[2]), body = []; j++;
+        while (j < blockLines.length) { const bl = blockLines[j]; if (bl.trim() && (bl.length - bl.trimStart().length) <= indent) break; body.push(bl); j++; }
+        for (let k = 0; k < count; k++) { env[lv] = k; execBlock(body, env); }
+        continue;
+      }
+      const callM = t.match(/^(\w+)\s*\(\s*\)\s*$/);
+      if (callM && functions[callM[1]]) { execBlock(functions[callM[1]], env); j++; continue; }
+      execLine(line, env); j++;
+    }
+  }
+
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i], t = line.trim();
+    const indent = line.length - line.trimStart().length;
+    const defM = t.match(/^def\s+(\w+)\s*\(.*\)\s*:/);
+    if (defM && indent === 0) {
+      const fname = defM[1], body = []; i++;
+      while (i < lines.length) { const bl = lines[i]; if (bl.trim() && (bl.length - bl.trimStart().length) <= 0) break; body.push(bl); i++; }
+      functions[fname] = body; continue;
+    }
+    i++;
+  }
+
+  execBlock(lines, {});
+  return { cmds, output };
+}
+
+function _runTurtleOnCanvas({ cmds }, canvas, onDone) {
+  if (_turtleTimer) { clearTimeout(_turtleTimer); _turtleTimer = null; }
+  const ctx = canvas.getContext('2d'), W = canvas.width, H = canvas.height;
+  let x = W/2, y = H/2, h = 0, penDown = true, pc = '#cdd6f4', pw = 1.5;
+  const steps = [];
+  function moveFwd(dist, sign) {
+    const rad = h * Math.PI / 180, nx = x + dist * sign * Math.cos(rad), ny = y - dist * sign * Math.sin(rad);
+    steps.push({ draw: penDown && dist !== 0, x1: x, y1: y, x2: nx, y2: ny, tx: nx, ty: ny, th: h, pc, pw });
+    x = nx; y = ny;
+  }
+  for (const { cmd: c, args } of cmds) {
+    if      (c === 'forward' || c === 'fd')                    moveFwd(+args[0]||0,  1);
+    else if (c === 'backward' || c === 'bk' || c === 'back')   moveFwd(+args[0]||0, -1);
+    else if (c === 'left'  || c === 'lt') { h = (h + (+args[0]||0) + 3600) % 360; steps.push({ draw:false, tx:x, ty:y, th:h }); }
+    else if (c === 'right' || c === 'rt') { h = (h - (+args[0]||0) + 3600) % 360; steps.push({ draw:false, tx:x, ty:y, th:h }); }
+    else if (c === 'penup'   || c === 'pu' || c === 'up')   penDown = false;
+    else if (c === 'pendown' || c === 'pd' || c === 'down') penDown = true;
+    else if (c === 'pencolor' || c === 'color')  pc = String(args[0]||'white');
+    else if (c === 'pensize'  || c === 'width')  pw = Math.max(0.5, +args[0]||1);
+    else if (c === 'goto' || c === 'setpos' || c === 'setposition') {
+      const nx = W/2+(+args[0]||0), ny = H/2-(+args[1]||0);
+      steps.push({ draw:penDown, x1:x, y1:y, x2:nx, y2:ny, tx:nx, ty:ny, th:h, pc, pw }); x = nx; y = ny;
+    }
+  }
+  const off = document.createElement('canvas'); off.width = W; off.height = H;
+  const oc = off.getContext('2d');
+  function drawBg(c) {
+    c.fillStyle = '#0d0d1a'; c.fillRect(0,0,W,H);
+    c.lineWidth = 0.5; c.strokeStyle = '#1a1a2e';
+    for (let gx=0; gx<W; gx+=25) { c.beginPath(); c.moveTo(gx,0); c.lineTo(gx,H); c.stroke(); }
+    for (let gy=0; gy<H; gy+=25) { c.beginPath(); c.moveTo(0,gy); c.lineTo(W,gy); c.stroke(); }
+    c.lineWidth = 1; c.strokeStyle = '#252545';
+    c.beginPath(); c.moveTo(W/2,0); c.lineTo(W/2,H); c.stroke();
+    c.beginPath(); c.moveTo(0,H/2); c.lineTo(W,H/2); c.stroke();
+  }
+  function drawTurtle(c, tx, ty, th) {
+    const r = th * Math.PI / 180;
+    c.save(); c.translate(tx,ty); c.rotate(-r);
+    c.beginPath(); c.moveTo(11,0); c.lineTo(-7,-6); c.lineTo(-4,0); c.lineTo(-7,6); c.closePath();
+    c.fillStyle = '#4ade80'; c.strokeStyle = '#16a34a'; c.lineWidth = 1.5; c.fill(); c.stroke();
+    c.beginPath(); c.arc(7,-3,1.5,0,Math.PI*2); c.fillStyle = '#0d0d1a'; c.fill();
+    c.restore();
+  }
+  drawBg(oc); drawBg(ctx); drawTurtle(ctx, W/2, H/2, 0);
+  if (!steps.length) { if (onDone) onDone('No turtle commands found — check your code includes t.forward() and t.left().'); return; }
+  const drawCount = steps.filter(s => s.draw).length;
+  const delay = drawCount > 60 ? 24 : drawCount > 25 ? 44 : 90;
+  let idx = 0;
+  function tick() {
+    if (idx >= steps.length) { ctx.drawImage(off,0,0); const last = steps[steps.length-1]; drawTurtle(ctx,last.tx,last.ty,last.th); if (onDone) onDone('Done!'); return; }
+    const s = steps[idx++];
+    if (s.draw) { oc.beginPath(); oc.moveTo(s.x1,s.y1); oc.lineTo(s.x2,s.y2); oc.strokeStyle=s.pc; oc.lineWidth=s.pw; oc.lineCap='round'; oc.lineJoin='round'; oc.stroke(); }
+    ctx.drawImage(off,0,0); drawTurtle(ctx,s.tx,s.ty,s.th);
+    _turtleTimer = setTimeout(tick, s.draw ? delay : 8);
+  }
+  setTimeout(tick, 160);
+}
+
+function _openTurtlePreview(ta, title) {
+  const code = (ta?.value || '').trim();
+  if (!code || code.length < 10) return;
+  const out = _interpretTurtle(code);
+  document.getElementById('turtleModalTitle').textContent = title || 'Turtle Output';
+  document.getElementById('turtleStatus').textContent = 'Drawing…';
+  document.getElementById('turtleModal').classList.add('open');
+  _runTurtleOnCanvas(out, document.getElementById('turtleCanvas'), msg => {
+    document.getElementById('turtleStatus').textContent = msg || '';
+  });
+}
+
+function _closeTurtleModal() {
+  if (_turtleTimer) { clearTimeout(_turtleTimer); _turtleTimer = null; }
+  document.getElementById('turtleModal').classList.remove('open');
+}
+
+window._openTurtlePreview = _openTurtlePreview;
+window.closeTurtleModal   = _closeTurtleModal;
+</script>
+</body>
+</html>
