@@ -39,30 +39,27 @@ test.describe('Page shell', () => {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
-//  PICKER SCREEN — shown when no localStorage data is available
+//  FALLBACK — shown when no localStorage data is available
 // ═══════════════════════════════════════════════════════════════════════════════
 
-test.describe('Picker screen (no data)', () => {
+test.describe('Fallback (no data)', () => {
   test.beforeEach(async ({ page }) => {
-    // No seed — localStorage is empty, so the picker screen shows.
+    // No seed — localStorage is empty, so it falls back to showing all activities.
     await page.goto(ACTIVITY);
   });
 
-  test('shows picker panel', async ({ page }) => {
-    await expect(page.locator('#picker-screen')).toBeVisible({ timeout: 5000 });
-    await expect(page.locator('#picker-list')).toBeVisible();
+  test('shows plan screen instead of picker', async ({ page }) => {
+    await expect(page.locator('#plan-screen')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('#plan-list')).toBeVisible();
   });
 
-  test('alerts when starting with nothing checked', async ({ page }) => {
-    let alerted = false;
-    page.on('dialog', d => { alerted = true; d.accept(); });
-    await page.locator('#picker-screen button:has-text("Start practising")').click();
-    expect(alerted).toBe(true);
+  test('shows a full list of all activities in fallback mode', async ({ page }) => {
+    // All clusters (9) + extension (1) = 10
+    await expect(page.locator('#plan-list li')).toHaveCount(10);
   });
 
-  test('ticking a cluster and clicking Start practising builds tabs directly', async ({ page }) => {
-    await page.locator('#picker-list input[type="checkbox"]').first().check();
-    await page.locator('#picker-screen button:has-text("Start practising")').click();
+  test('clicking Start practising from fallback builds tabs', async ({ page }) => {
+    await page.locator('#plan-screen button:has-text("Start practising")').click();
     await expect(page.locator('#tab-bar')).toBeVisible();
     await expect(page.locator('.tab').first()).toBeVisible();
   });
@@ -74,13 +71,14 @@ test.describe('Picker screen (no data)', () => {
 
 test.describe('Plan screen (with data)', () => {
   test.beforeEach(async ({ page }) => {
-    await seedAssessResults(page); // cast_to_int weak by default
+    await seedAssessResults(page); // cast_to_int (0/4) and range_basics (4/8) are weak
     await page.goto(ACTIVITY);
   });
 
   test('shows plan screen with cluster list', async ({ page }) => {
     await expect(page.locator('#plan-screen')).toBeVisible({ timeout: 5000 });
-    await expect(page.locator('#plan-list li')).toHaveCount(1); // only cast_to_int weak
+    // weak clusters (2) + extension (1) = 3
+    await expect(page.locator('#plan-list li')).toHaveCount(3);
   });
 
   test('plan screen shows assessment score for the weak cluster', async ({ page }) => {
