@@ -50,8 +50,7 @@ Lesson folders must start with `L<number>` (e.g. `L1`, `L02`, `L1_Variables`, `L
    color:  teal|amber|red|green|blue|cyan|purple|indigo
    -->
    ```
-3. Set `data-year` and `data-topic` on `<body>` to apply the correct palette from `shared.css`
-4. Replace placeholder content with your tasks; update `TASK_COUNT` in the script to match
+3. Replace placeholder content with your tasks; update `TASK_COUNT` in the script to match
 5. Push to main — the workflow auto-generates `activities.json` and `meta.json`
 
 ## Shared Files
@@ -71,12 +70,9 @@ These files are allowed exceptions to the self-contained rule because:
 
 ## Year-Group Themes (shared.css)
 
-Apply themes by setting attributes on `<body>`:
-```html
-<body data-year="8"  data-topic="Python">          <!-- light navy/teal, system fonts -->
-<body data-year="9"  data-topic="Hardware_Networks"> <!-- dark space, DM Sans + Space Mono -->
-<body data-year="11" data-topic="Networks">          <!-- dark navy, system fonts -->
-```
+`classroom.js` automatically sets `data-year` and `data-topic` on `<body>` at load time by parsing the URL path (e.g. `Y11/Legislation/file.html` → `data-year="11" data-topic="Legislation"`). **Do not set these attributes manually** in new activities — the correct theme is applied automatically.
+
+Explicit attributes on `<body>` still take precedence if present, so existing activities are unaffected.
 
 Topic values map to accent colour overrides. Current supported topics:
 
@@ -111,7 +107,7 @@ Animations available: `ac-shake`, `ac-fade-in`, `ac-slide-down`, `ac-pulse-accen
 - **Vanilla JS only**: No frameworks or libraries; direct DOM manipulation
 - **Files/folders starting with `_`** are excluded from the manifest (use `_drafts/` for WIP, `_templates/` for starters)
 - **Folder structure determines metadata**: `Y8/` → "Year 8", topic folder names become topic labels, `L<n>_Name` folders become lesson subheadings
-- **Color themes**: The `color:` field in the `<!-- ACTIVITY -->` block controls card styling in the hub; `data-topic` on `<body>` controls the activity's own accent colour
+- **Color themes**: The `color:` field in the `<!-- ACTIVITY -->` block controls card styling in the hub; the activity's own accent colour is set automatically from the folder path via `classroom.js`
 
 ## Mandatory: Grade submission and work evidence
 

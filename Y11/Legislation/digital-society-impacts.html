@@ -430,7 +430,7 @@ main { max-width: 880px; margin: 0 auto; padding: 26px 18px 80px; }
 </style>
 </head>
 
-<body data-year="11" data-topic="Impacts">
+<body>
 
 <header>
   <div class="header-inner">
@@ -686,9 +686,11 @@ function dropIssue(catKey, box) {
 
   const isCorrect = issueScenarios[idx].cat === catKey;
   const chip = makePlacedChip(idx, issueScenarios[idx].text, isCorrect, () => {
-    delete issuePlaced[idx];
-    document.getElementById('issuePool').appendChild(makeIssueChip(idx));
-    recalcIssues();
+    if (isCorrect) return;
+    const pool = document.getElementById('issuePool');
+    if (!pool.querySelector(`[data-idx="${idx}"]`)) {
+      pool.appendChild(makeIssueChip(idx));
+    }
   });
   box.appendChild(chip);
   issueDragIdx = null;
@@ -815,9 +817,11 @@ function dropFeature(catKey, box) {
 
   const isCorrect = licenceFeatures[idx].cat === catKey;
   const chip = makePlacedChip(idx, licenceFeatures[idx].text, isCorrect, () => {
-    delete featurePlaced[idx];
-    document.getElementById('featurePool').appendChild(makeFeatureChip(idx));
-    recalcFeatures();
+    if (isCorrect) return;
+    const pool = document.getElementById('featurePool');
+    if (!pool.querySelector(`[data-idx="${idx}"]`)) {
+      pool.appendChild(makeFeatureChip(idx));
+    }
   });
   box.appendChild(chip);
   featureDragIdx = null;
