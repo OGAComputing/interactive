@@ -685,12 +685,15 @@ function dropIssue(catKey, box) {
   document.querySelectorAll('#issuePool .scenario-chip').forEach(c => { if (+c.dataset.idx === idx) c.remove(); });
 
   const isCorrect = issueScenarios[idx].cat === catKey;
-  const chip = makePlacedChip(idx, issueScenarios[idx].text, isCorrect, () => {
+  const chip = makePlacedChip(idx, issueScenarios[idx].text, isCorrect, (ev) => {
     if (isCorrect) return;
+    ev.currentTarget.remove();
+    delete issuePlaced[idx];
     const pool = document.getElementById('issuePool');
     if (!pool.querySelector(`[data-idx="${idx}"]`)) {
       pool.appendChild(makeIssueChip(idx));
     }
+    recalcIssues();
   });
   box.appendChild(chip);
   issueDragIdx = null;
@@ -816,12 +819,15 @@ function dropFeature(catKey, box) {
   document.querySelectorAll('#featurePool .feature-chip').forEach(c => { if (+c.dataset.idx === idx) c.remove(); });
 
   const isCorrect = licenceFeatures[idx].cat === catKey;
-  const chip = makePlacedChip(idx, licenceFeatures[idx].text, isCorrect, () => {
+  const chip = makePlacedChip(idx, licenceFeatures[idx].text, isCorrect, (ev) => {
     if (isCorrect) return;
+    ev.currentTarget.remove();
+    delete featurePlaced[idx];
     const pool = document.getElementById('featurePool');
     if (!pool.querySelector(`[data-idx="${idx}"]`)) {
       pool.appendChild(makeFeatureChip(idx));
     }
+    recalcFeatures();
   });
   box.appendChild(chip);
   featureDragIdx = null;
