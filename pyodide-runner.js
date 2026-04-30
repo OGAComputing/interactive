@@ -99,9 +99,10 @@ export async function runPython(code, { inputs = [] } = {}) {
   _pyodide.setStdout({ batched: s => out.push(s) });
   _pyodide.setStderr({ batched: () => {} }); // errors surface via exception
 
-  // Inject input() mock when test values are supplied
+  // Inject input() mock when test values are supplied.
+  // Fallback '0' (not '') so exhausted inputs don't produce a str that breaks arithmetic.
   const preamble = inputs.length
-    ? `import builtins as _b\n_q = iter(${JSON.stringify(inputs)})\n_b.input = lambda *_: next(_q, '')\n`
+    ? `import builtins as _b\n_q = iter(${JSON.stringify(inputs)})\n_b.input = lambda *_: next(_q, '0')\n`
     : '';
 
   try {

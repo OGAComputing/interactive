@@ -58,6 +58,7 @@ def _psc_open_read(name): return _PscReadFile(name)
 def _psc_open_write(name): return _PscWriteFile(name)
 def _psc_input(prompt=''):
     v = input(prompt)
+    if v is None: v = ''
     try: return int(v)
     except (ValueError, TypeError): pass
     try: return float(v)
@@ -314,10 +315,10 @@ function classify(line, ctx) {
     return { emit: [`if ${rewriteOperators(m[1], ctx)}: break`], closeBlock: true, emitBeforeClose: true };
   }
 
-  if ((m = t.match(/^if\s+(.+)\s+then$/i))) {
+  if ((m = t.match(/^if\s+(.+?)(?:\s+then)?$/i))) {
     return { emit: [`if ${rewriteOperators(m[1], ctx)}:`], openBlock: true };
   }
-  if ((m = t.match(/^elseif\s+(.+)\s+then$/i))) {
+  if ((m = t.match(/^elseif\s+(.+?)(?:\s+then)?$/i))) {
     return { emit: [`elif ${rewriteOperators(m[1], ctx)}:`], midBlock: true };
   }
   if (/^else$/i.test(t)) return { emit: ['else:'], midBlock: true };
