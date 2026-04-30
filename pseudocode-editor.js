@@ -484,7 +484,12 @@ export function setupEditors(selector = '.pseudocode-textarea') {
     });
 
     ta.addEventListener('input', () => _debouncedCheck(ta));
-    ta.addEventListener('focus', () => _debouncedCheck(ta));
+    ta.addEventListener('focus', () => {
+      if (ta.value.trim() === '// Write your OCR pseudocode here') {
+        ta.value = '';
+      }
+      _debouncedCheck(ta);
+    });
 
     ta.addEventListener('keydown', e => {
       if (e.key !== 'Tab') return;
