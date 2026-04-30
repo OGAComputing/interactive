@@ -1,0 +1,612 @@
+<!doctype html>
+<!-- ACTIVITY
+title:  Pseudocode Sandbox
+type:   Practice
+stars:  1
+desc:   Write and run OCR pseudocode — see it transpiled to Python and executed instantly.
+color:  purple
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pseudocode Sandbox — Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700&family=Space+Mono&display=swap">
+<link rel="stylesheet" href="../../shared.css">
+<style>
+  html, body { height: 100%; }
+  body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  /* ── Header ──────────────────────────────────────────── */
+  header {
+    background: var(--surface);
+    border-bottom: 2px solid var(--surface-mid);
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.4);
+    position: sticky; top: 0; z-index: 100;
+  }
+  header h1 {
+    font-family: var(--font-head);
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+  }
+  .header-pill {
+    font-size: 0.65rem;
+    color: var(--muted);
+    border: 1px solid var(--surface-mid);
+    padding: 2px 8px;
+    border-radius: 99px;
+    white-space: nowrap;
+  }
+  .header-gap { flex: 1; }
+  header select {
+    background: var(--surface-mid);
+    color: var(--text);
+    border: 1px solid var(--surface-dim);
+    padding: 5px 8px;
+    font-size: 0.78rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: var(--font-body);
+    max-width: 200px;
+  }
+  #togglePyBtn {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--surface-mid);
+    padding: 5px 12px;
+    font-size: 0.78rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: var(--font-body);
+    transition: color 0.15s, border-color 0.15s;
+    white-space: nowrap;
+  }
+  #togglePyBtn:hover   { color: var(--accent); border-color: var(--accent); }
+  #togglePyBtn.active  { color: var(--accent-light); border-color: var(--accent); }
+
+  /* ── Main layout ─────────────────────────────────────── */
+  .page-wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 16px;
+    gap: 12px;
+    min-height: 0;
+  }
+
+  /* Editor row: the setupEditors() widget fills this */
+  .editor-row {
+    border-radius: 12px;
+    border: 2px solid var(--surface-mid);
+    overflow: hidden;
+  }
+  .editor-row .checker-header {
+    border-radius: 0;
+    border: none;
+    border-bottom: 2px solid var(--surface-mid);
+  }
+  /* Give the editor adequate height */
+  .editor-row .pseudocode-textarea {
+    min-height: 260px;
+  }
+
+  /* ── Inputs bar ──────────────────────────────────────── */
+  .inputs-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--surface);
+    border: 1px solid var(--surface-mid);
+    border-radius: 8px;
+    padding: 8px 14px;
+  }
+  .inputs-bar label {
+    font-size: 0.75rem;
+    color: var(--muted);
+    white-space: nowrap;
+    font-family: var(--font-body);
+  }
+  .inputs-bar input {
+    flex: 1;
+    background: var(--surface-mid);
+    color: var(--text);
+    border: 1px solid var(--surface-dim);
+    padding: 5px 10px;
+    font-size: 0.8rem;
+    font-family: 'Courier New', monospace;
+    border-radius: 6px;
+    min-width: 0;
+  }
+  .inputs-bar input::placeholder { color: var(--muted); opacity: 0.7; }
+
+  /* ── Transpiled Python panel ─────────────────────────── */
+  #pyPanel {
+    background: var(--surface);
+    border: 1px solid var(--surface-mid);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .panel-bar {
+    background: var(--surface-mid);
+    padding: 6px 14px;
+    font-size: 0.65rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  #pyOut {
+    padding: 6px 0;
+    max-height: 260px;
+    overflow: auto;
+    font-family: 'Courier New', 'Consolas', monospace;
+    font-size: 0.8rem;
+    line-height: 1.55;
+  }
+  .pyrow {
+    display: grid;
+    grid-template-columns: 5.5rem 1fr;
+    padding: 1px 10px;
+  }
+  .pyrow.errline { background: rgba(248,113,113,0.08); }
+  .pyrow .gutter {
+    color: var(--muted);
+    user-select: none;
+    padding-right: 8px;
+    text-align: right;
+    border-right: 1px dashed var(--surface-mid);
+    margin-right: 8px;
+    font-size: 0.72rem;
+  }
+  .pyrow .gutter.injected { color: #334155; font-style: italic; }
+  .pyrow.errline .gutter  { color: var(--red); font-weight: 700; }
+  .pyrow .code { white-space: pre; color: var(--text); }
+
+  /* ── Files panel ─────────────────────────────────────── */
+  details.files-panel {
+    background: var(--surface);
+    border: 1px solid var(--surface-mid);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  details.files-panel summary {
+    padding: 8px 14px;
+    cursor: pointer;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    background: var(--surface-mid);
+    user-select: none;
+  }
+  details.files-panel summary:hover { color: var(--accent); }
+  .files-body {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    padding: 14px;
+  }
+  @media (max-width: 640px) { .files-body { grid-template-columns: 1fr; } }
+  .files-col h3 {
+    font-size: 0.72rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    margin-bottom: 8px;
+    font-family: var(--font-body);
+    font-weight: 600;
+  }
+  .file-entry {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 6px 8px;
+    align-items: start;
+    margin-bottom: 10px;
+    font-size: 0.78rem;
+  }
+  .file-entry .fname {
+    padding: 4px 8px;
+    background: var(--surface-mid);
+    color: var(--accent-light);
+    border: 1px solid var(--surface-dim);
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.75rem;
+    white-space: nowrap;
+  }
+  .file-entry textarea {
+    resize: vertical;
+    background: var(--surface-mid);
+    color: var(--text);
+    border: 1px solid var(--surface-dim);
+    padding: 5px 8px;
+    font-size: 0.75rem;
+    font-family: 'Courier New', monospace;
+    border-radius: 4px;
+    min-height: 60px;
+    line-height: 1.5;
+  }
+  .file-entry textarea[readonly] {
+    color: var(--muted);
+  }
+  #addFileBtn {
+    font-size: 0.75rem;
+    color: var(--accent);
+    background: transparent;
+    border: 1px dashed var(--accent);
+    padding: 4px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: var(--font-body);
+    margin-top: 2px;
+  }
+  #addFileBtn:hover { background: rgba(56,189,248,0.06); }
+  #writtenFiles .empty { font-size: 0.75rem; color: var(--muted); font-style: italic; }
+  .written-file-name {
+    font-family: 'Courier New', monospace;
+    font-size: 0.72rem;
+    color: var(--accent-light);
+    margin-bottom: 2px;
+  }
+  .written-file-content {
+    background: var(--surface-mid);
+    color: var(--code-text);
+    padding: 6px 8px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.75rem;
+    border-radius: 4px;
+    white-space: pre-wrap;
+    margin-bottom: 8px;
+    border: 1px solid var(--surface-dim);
+  }
+</style>
+</head>
+<body data-year="9" data-topic="Algorithms">
+
+<header>
+  <h1>OCR Pseudocode Sandbox</h1>
+  <span class="header-pill">demo</span>
+  <span class="header-gap"></span>
+  <select id="sampleSel" aria-label="Load sample program">
+    <option value="">Load sample…</option>
+  </select>
+  <button id="togglePyBtn" type="button" aria-pressed="false">Show transpiled</button>
+  <button id="runBtn" class="ac-btn" type="button" disabled>Loading…</button>
+</header>
+
+<main class="page-wrap">
+
+  <!-- Pseudocode editor -->
+  <div class="editor-row">
+    <div class="checker-header">
+      <span class="checker-dot dot-r"></span>
+      <span class="checker-dot dot-y"></span>
+      <span class="checker-dot dot-g"></span>
+      <span>Pseudocode</span>
+    </div>
+    <textarea class="pseudocode-textarea" id="pscEditor" spellcheck="false"
+              autocomplete="off" autocapitalize="off" data-allow-paste="1">for i = 0 to 4
+    print("Hello " + str(i))
+next i
+</textarea>
+  </div>
+
+  <!-- Inputs bar -->
+  <div class="inputs-bar">
+    <label for="inputsField">Inputs (one per line, for input() calls):</label>
+    <input type="text" id="inputsField" placeholder="e.g.  Alice  (press Enter to add more)">
+  </div>
+
+  <!-- Transpiled Python panel (hidden by default) -->
+  <div id="pyPanel" hidden aria-label="Transpiled Python">
+    <div class="panel-bar">
+      Transpiled Python
+      <span id="pyLineCount"></span>
+    </div>
+    <div id="pyOut"></div>
+  </div>
+
+  <!-- File I/O panel -->
+  <details class="files-panel" id="filesDetails">
+    <summary>File I/O (openRead / openWrite)</summary>
+    <div class="files-body">
+      <div class="files-col">
+        <h3>Input files</h3>
+        <div id="fileInputs">
+          <!-- Populated by JS -->
+        </div>
+        <button id="addFileBtn" type="button">+ Add file</button>
+      </div>
+      <div class="files-col">
+        <h3>Written files (after Run)</h3>
+        <div id="writtenFiles"><p class="empty">No files written yet.</p></div>
+      </div>
+    </div>
+  </details>
+
+</main>
+
+<script type="module">
+import { transpile, mapErrorLine } from '../../pseudocode-transpiler.js';
+import { setupEditors, runPseudocode, setFiles, getWrittenFiles } from '../../pseudocode-editor.js';
+import { preload } from '../../pyodide-runner.js';
+
+// ── Samples (embedded) ────────────────────────────────────────────────────────
+const SAMPLES = [
+  ['Count loop (for…to…next)',
+`for i = 0 to 7
+    print("Hello")
+next i`],
+  ['Countdown (for…step -1)',
+`for i = 5 to 0 step -1
+    print(i)
+next i`],
+  ['Password (while…endwhile)',
+`password = "computer"
+guess = input("What is the password?")
+while guess != password
+    guess = input("What is the password?")
+endwhile
+print("Access granted")`],
+  ['Password (do…until)',
+`password = "computer"
+do
+    guess = input("What is the password?")
+until guess == password
+print("Access granted")`],
+  ['If / elseif / else',
+`choice = input("Pick a or b: ")
+if choice == "a" then
+    print("You selected A")
+elseif choice == "b" then
+    print("You selected B")
+else
+    print("Unknown choice")
+endif`],
+  ['Switch / case',
+`choice = "A"
+switch choice:
+    case "A":
+        print("You selected A")
+    case "B":
+        print("You selected B")
+    default:
+        print("Unknown")
+endswitch`],
+  ['Function & procedure',
+`function double(n)
+    return n * 2
+endfunction
+
+procedure greet(name)
+    print("hello " + name)
+endprocedure
+
+print(double(21))
+greet("World")`],
+  ['String methods (.length / .substring)',
+`function getGreeting()
+    return "Hello World"
+endfunction
+text = getGreeting()
+print(text.length)
+print(text.substring(6, 5))
+print(getGreeting().substring(0, 5))`],
+  ['2D array (board[r,c])',
+`array board[3,3]
+board[0,0] = "rook"
+board[1,1] = "king"
+board[2,2] = "bishop"
+print(board[0,0])
+print(board[1,1])
+print(board[2,2])`],
+  ['File I/O (openRead / openWrite)',
+`myFile = openRead("notes.txt")
+while NOT myFile.endOfFile()
+    line = myFile.readLine()
+    print(line)
+endwhile
+myFile.close()
+
+out = openWrite("result.txt")
+out.writeLine("Done reading!")
+out.close()`],
+  ['Logical operators (AND / OR / NOT / MOD)',
+`x = 3
+while x <= 5 AND NOT (x MOD 2 == 0)
+    print(x)
+    x = x + 1
+endwhile`],
+];
+
+// ── DOM references ────────────────────────────────────────────────────────────
+const pscEditor  = document.getElementById('pscEditor');
+const runBtn     = document.getElementById('runBtn');
+const toggleBtn  = document.getElementById('togglePyBtn');
+const pyPanel    = document.getElementById('pyPanel');
+const pyOut      = document.getElementById('pyOut');
+const pyLineCount = document.getElementById('pyLineCount');
+const sampleSel  = document.getElementById('sampleSel');
+const inputsFld  = document.getElementById('inputsField');
+const fileInputs = document.getElementById('fileInputs');
+const addFileBtn = document.getElementById('addFileBtn');
+const writtenFiles = document.getElementById('writtenFiles');
+
+// ── Sample loader ─────────────────────────────────────────────────────────────
+for (const [label] of SAMPLES) {
+  const opt = document.createElement('option');
+  opt.textContent = label;
+  sampleSel.appendChild(opt);
+}
+sampleSel.addEventListener('change', () => {
+  const idx = sampleSel.selectedIndex - 1;
+  if (idx < 0) return;
+  pscEditor.value = SAMPLES[idx][1];
+  sampleSel.selectedIndex = 0;
+  // Trigger re-highlight via input event
+  pscEditor.dispatchEvent(new Event('input'));
+  retranspileForDisplay();
+  // Pre-load the file I/O sample's input file
+  if (SAMPLES[idx][0].startsWith('File I/O')) {
+    ensureFileRow('notes.txt', 'First line\nSecond line\nThird line');
+    document.getElementById('filesDetails').open = true;
+  }
+});
+
+// ── Pyodide load ──────────────────────────────────────────────────────────────
+preload().then(() => {
+  runBtn.disabled = false;
+  runBtn.textContent = 'Run ▶';
+}).catch(err => {
+  runBtn.textContent = 'Pyodide failed';
+  runBtn.title = String(err);
+});
+
+// ── Editor setup ──────────────────────────────────────────────────────────────
+setupEditors('#pscEditor');
+
+// ── "Show transpiled" toggle ──────────────────────────────────────────────────
+let pyVisible = false;
+let lastResult = null;
+
+function retranspileForDisplay() {
+  lastResult = transpile(pscEditor.value);
+  if (pyVisible) renderPython(lastResult);
+}
+
+pscEditor.addEventListener('input', retranspileForDisplay);
+retranspileForDisplay();
+
+toggleBtn.addEventListener('click', () => {
+  pyVisible = !pyVisible;
+  pyPanel.hidden = !pyVisible;
+  toggleBtn.classList.toggle('active', pyVisible);
+  toggleBtn.setAttribute('aria-pressed', pyVisible);
+  toggleBtn.textContent = pyVisible ? 'Hide transpiled' : 'Show transpiled';
+  if (pyVisible && lastResult) renderPython(lastResult);
+});
+
+function renderPython(r, errPyLine = null) {
+  pyOut.innerHTML = '';
+  const lines = r.python.split('\n');
+  lines.forEach((line, i) => {
+    const sl = r.map[i];
+    const row = document.createElement('div');
+    row.className = 'pyrow' + (errPyLine === i + 1 ? ' errline' : '');
+    const g = document.createElement('span');
+    g.className = 'gutter' + (sl == null ? ' injected' : '');
+    g.textContent = sl == null ? '—' : `src=${sl}`;
+    const c = document.createElement('span');
+    c.className = 'code';
+    c.textContent = line || ' ';
+    row.appendChild(g);
+    row.appendChild(c);
+    pyOut.appendChild(row);
+  });
+  pyLineCount.textContent = `${lines.length} py lines`;
+}
+
+// ── File I/O helpers ──────────────────────────────────────────────────────────
+let fileRowCount = 0;
+
+function ensureFileRow(name = '', content = '') {
+  // Check if a row with this name already exists
+  for (const row of fileInputs.querySelectorAll('.file-entry')) {
+    const nameEl = row.querySelector('[data-file-name]');
+    if (nameEl && nameEl.value === name) {
+      row.querySelector('[data-file-content]').value = content;
+      return;
+    }
+  }
+  const id = ++fileRowCount;
+  const div = document.createElement('div');
+  div.className = 'file-entry';
+  div.innerHTML = `
+    <input type="text" data-file-name placeholder="filename.txt"
+           value="${name.replace(/"/g, '&quot;')}" style="padding:4px 8px;background:var(--surface-mid);color:var(--accent-light);border:1px solid var(--surface-dim);border-radius:4px;font-family:'Courier New',monospace;font-size:0.75rem;">
+    <textarea data-file-content rows="3" placeholder="file contents…">${content.replace(/</g, '&lt;')}</textarea>
+  `;
+  fileInputs.appendChild(div);
+}
+
+addFileBtn.addEventListener('click', () => ensureFileRow());
+
+function getInputFiles() {
+  const files = {};
+  for (const row of fileInputs.querySelectorAll('.file-entry')) {
+    const name = row.querySelector('[data-file-name]').value.trim();
+    const content = row.querySelector('[data-file-content]').value;
+    if (name) files[name] = content;
+  }
+  return files;
+}
+
+function renderWrittenFiles(files) {
+  if (!files || Object.keys(files).length === 0) {
+    writtenFiles.innerHTML = '<p class="empty">No files written.</p>';
+    return;
+  }
+  writtenFiles.innerHTML = '';
+  for (const [name, content] of Object.entries(files)) {
+    const d = document.createElement('div');
+    d.innerHTML = `<div class="written-file-name">${name.replace(/</g, '&lt;')}</div>
+                   <div class="written-file-content">${content.replace(/</g, '&lt;') || '(empty)'}</div>`;
+    writtenFiles.appendChild(d);
+  }
+  document.getElementById('filesDetails').open = true;
+}
+
+// ── Run ───────────────────────────────────────────────────────────────────────
+runBtn.addEventListener('click', async () => {
+  runBtn.disabled = true;
+  runBtn.textContent = 'Running…';
+
+  // Collect inputs (one per comma-separated token in the single input field)
+  const inputs = inputsFld.value
+    .split(',')
+    .map(s => s.trim())
+    .filter(Boolean);
+
+  // Inject any input files the user has set up
+  setFiles(getInputFiles());
+
+  const r = await runPseudocode(pscEditor, { inputs });
+
+  // Re-render Python panel with error line highlighted if needed
+  if (lastResult && pyVisible) {
+    const m = r.ok ? null : (r.output || '').match(/line\s+(\d+)/);
+    const errPyLine = m ? Number(m[1]) : null;
+    renderPython(lastResult, errPyLine);
+  }
+
+  // Show written files
+  if (r.ok) {
+    const written = await getWrittenFiles();
+    renderWrittenFiles(written);
+  }
+
+  runBtn.disabled = false;
+  runBtn.textContent = 'Run ▶';
+});
+
+</script>
+</body>
+</html>

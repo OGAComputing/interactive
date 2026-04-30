@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- ACTIVITY
+title:  Activity Title
+type:   Practice
+stars:  3
+desc:   Short description shown on the hub card (one sentence).
+color:  blue
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Activity Title — Year 11</title>
+
+<!-- Shared reset, year-group palette, and ac-* utilities -->
+<!-- NOTE: use ../../../shared.css if this file is inside a lesson subfolder (L1_…/file.html) -->
+<link rel="stylesheet" href="../../shared.css">
+
+<style>
+  /* ── Sticky header ───────────────────────────────────── */
+
+  header {
+    background: var(--surface);
+    border-bottom: 2px solid var(--surface-mid);
+    padding: 12px 20px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.35);
+  }
+  header h1 {
+    font-family: var(--font-head);
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 0.04em;
+  }
+  .header-sub {
+    font-size: 0.72rem;
+    color: var(--muted);
+    margin-top: 1px;
+  }
+  .header-badge {
+    margin-left: auto;
+    background: var(--surface-mid);
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  /* ── Page body padding ───────────────────────────────── */
+
+  .page-wrap { padding: 28px 16px 60px; }
+
+  /* ── Page title (below header) ───────────────────────── */
+
+  .page-title {
+    font-size: 1.35rem;
+    font-weight: 700;
+    text-align: center;
+    color: var(--accent-light);
+    margin-bottom: 4px;
+  }
+  .page-subtitle {
+    text-align: center;
+    font-size: 0.82rem;
+    color: var(--muted);
+    margin-bottom: 28px;
+  }
+
+  /* ── Pill tab bar ────────────────────────────────────── */
+
+  .tabs {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 28px;
+  }
+  .tab-btn {
+    padding: 8px 20px;
+    border: 2px solid var(--surface-mid);
+    border-radius: 20px;
+    background: var(--surface);
+    color: var(--muted);
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s, color 0.2s;
+    user-select: none;
+  }
+  .tab-btn:hover:not(.active) { border-color: var(--accent); color: var(--text); }
+  .tab-btn.active    { background: var(--accent);  border-color: var(--accent);  color: var(--text-inv); }
+  .tab-btn.done-green { background: var(--green);  border-color: var(--green);   color: #fff; }
+  .tab-btn.done-gold  { background: var(--gold);   border-color: var(--gold);    color: #111; }
+
+  /* ── Panels ──────────────────────────────────────────── */
+
+  .panel {
+    display: none;
+    max-width: 880px;
+    margin: 0 auto;
+    animation: ac-fade-in 0.2s ease;
+  }
+  .panel.active { display: block; }
+
+  /* ── Section card ────────────────────────────────────── */
+
+  .card {
+    background: var(--surface);
+    border-left: 4px solid var(--accent);
+    border-radius: 8px;
+    padding: 18px 22px;
+    margin-bottom: 22px;
+  }
+  .card h2 {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 12px;
+  }
+
+  /* ── Goal banner ─────────────────────────────────────── */
+
+  .goal {
+    background: var(--surface);
+    border-left: 4px solid var(--accent);
+    border-radius: 0 8px 8px 0;
+    padding: 10px 16px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 20px;
+  }
+
+  /* ── Pseudocode checker card ─────────────────────────── */
+
+  .code-checker {
+    background: var(--surface);
+    border-radius: 12px;
+    border: 2px solid var(--surface-mid);
+    overflow: hidden;
+    margin-bottom: 18px;
+  }
+  .checker-footer {
+    display: flex;
+    gap: 10px;
+    padding: 10px 14px;
+    background: var(--surface-mid);
+    border-top: 1px solid var(--surface-dim);
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .checker-footer .ac-btn-secondary { font-size: 0.78rem; padding: 5px 14px; }
+  .checker-footer .ac-btn           { font-size: 0.78rem; padding: 5px 14px; }
+
+  /* Feedback below the checker */
+  .checker-feedback {
+    min-height: 1.4em;
+    padding: 8px 0 4px;
+    font-size: 0.88rem;
+    font-weight: 600;
+  }
+  .checker-feedback.pass { color: var(--green); }
+  .checker-feedback.fail { color: var(--red); animation: ac-shake 0.35s ease; }
+
+  /* ── Score / progress bar ────────────────────────────── */
+
+  .score-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .score-label {
+    font-size: 0.72rem;
+    font-family: var(--font-head, monospace);
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    white-space: nowrap;
+  }
+  .score-pct {
+    font-family: var(--font-head, monospace);
+    font-size: 0.8rem;
+    color: var(--accent);
+    margin-top: 3px;
+  }
+
+  /* ── Row layout helper ───────────────────────────────── */
+
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 14px; }
+</style>
+</head>
+
+<body data-year="11" data-topic="Algorithms">
+<!--
+  data-topic options for Year 11:
+  Algorithms | Networks | NetworkHardware | Legislation | System_Software | Security
+  (add a new entry to shared.css if your topic is not listed above)
+-->
+
+<!-- Completion banner -->
+<div id="done-banner" class="ac-banner gold">
+  All tasks complete — excellent work!
+</div>
+
+<!-- Sticky header -->
+<header>
+  <div>
+    <h1>Activity Title</h1>
+    <div class="header-sub">GCSE Computer Science</div>
+  </div>
+  <div class="header-badge">Year 11</div>
+</header>
+
+<div class="page-wrap">
+  <!-- Page title -->
+  <h2 class="page-title">Activity Title</h2>
+  <p class="page-subtitle">Topic / Unit Name</p>
+
+  <!-- Progress bar -->
+  <div class="score-row">
+    <span class="score-label">Progress</span>
+    <div class="ac-progress-bar" style="flex:1;">
+      <div class="ac-progress-fill" id="progress-fill"></div>
+    </div>
+    <span class="score-pct" id="progress-pct">0%</span>
+  </div>
+
+  <!-- Pill tabs — one per task -->
+  <div class="tabs" id="tab-bar">
+    <button class="tab-btn active" data-idx="0">Task 1</button>
+    <button class="tab-btn"        data-idx="1">Task 2</button>
+  </div>
+
+  <!-- ── Task 1 ─────────────────────────────────────────── -->
+  <div class="panel active" id="panel-0">
+    <div class="goal">What the student needs to do or produce.</div>
+
+    <div class="card">
+      <h2>Instructions</h2>
+      <p style="color:var(--text); font-size:0.9rem; line-height:1.7;">
+        Task 1 content goes here.
+      </p>
+    </div>
+
+    <!-- Pseudocode editor + run -->
+    <div class="code-checker" id="checker-0">
+      <div class="checker-header">
+        <span class="checker-dot dot-r"></span>
+        <span class="checker-dot dot-y"></span>
+        <span class="checker-dot dot-g"></span>
+        <span>Task 1 — Write your pseudocode</span>
+      </div>
+      <textarea class="pseudocode-textarea" id="editor-0" spellcheck="false"
+                autocomplete="off" autocapitalize="off">// Write your OCR pseudocode here
+</textarea>
+      <div class="checker-footer">
+        <button class="ac-btn" id="run-0" type="button">Run ▶</button>
+        <button class="ac-btn-secondary" id="clear-0" type="button">Clear</button>
+        <span id="run-status-0" style="font-size:0.75rem;color:var(--muted);"></span>
+      </div>
+    </div>
+    <div class="checker-feedback" id="feedback-0"></div>
+  </div>
+
+  <!-- ── Task 2 ─────────────────────────────────────────── -->
+  <div class="panel" id="panel-1">
+    <div class="goal">What the student needs to do or produce.</div>
+
+    <div class="card">
+      <h2>Instructions</h2>
+      <p style="color:var(--text); font-size:0.9rem; line-height:1.7;">
+        Task 2 content goes here.
+      </p>
+    </div>
+
+    <div class="code-checker" id="checker-1">
+      <div class="checker-header">
+        <span class="checker-dot dot-r"></span>
+        <span class="checker-dot dot-y"></span>
+        <span class="checker-dot dot-g"></span>
+        <span>Task 2 — Write your pseudocode</span>
+      </div>
+      <textarea class="pseudocode-textarea" id="editor-1" spellcheck="false"
+                autocomplete="off" autocapitalize="off">// Write your OCR pseudocode here
+</textarea>
+      <div class="checker-footer">
+        <button class="ac-btn" id="run-1" type="button">Run ▶</button>
+        <button class="ac-btn-secondary" id="clear-1" type="button">Clear</button>
+        <span id="run-status-1" style="font-size:0.75rem;color:var(--muted);"></span>
+      </div>
+    </div>
+    <div class="checker-feedback" id="feedback-1"></div>
+  </div>
+</div><!-- /.page-wrap -->
+
+<!-- Toast for Classroom feedback -->
+<div class="ac-toast" id="toast"></div>
+
+<script type="module">
+import { setupEditors, runPseudocode, clearSyntaxHint } from '../../pseudocode-editor.js';
+import { preload } from '../../pyodide-runner.js';
+
+// ── Constants ──────────────────────────────────────────
+const TASK_COUNT = 2;   // update if you add/remove tasks
+const ACTIVITY_TITLE = 'Activity Title';   // must match title: in ACTIVITY block
+
+// ── State ──────────────────────────────────────────────
+const completed = new Array(TASK_COUNT).fill(false);
+
+// ── Editor setup ───────────────────────────────────────
+// setupEditors() wires highlighting, line numbers, Tab key, and syntax check.
+// Call AFTER any saved-state restoration if you add localStorage save/restore.
+setupEditors('.pseudocode-textarea');
+
+// ── Pyodide preload ────────────────────────────────────
+// Starts background download so Run responds faster on first click.
+preload();
+
+// ── Tab switching ──────────────────────────────────────
+document.getElementById('tab-bar').addEventListener('click', e => {
+  const tab = e.target.closest('.tab-btn');
+  if (!tab) return;
+  const idx = +tab.dataset.idx;
+  document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  tab.classList.add('active');
+  document.getElementById('panel-' + idx).classList.add('active');
+});
+
+// ── Run buttons ────────────────────────────────────────
+for (let idx = 0; idx < TASK_COUNT; idx++) {
+  const runBtn    = document.getElementById('run-' + idx);
+  const clearBtn  = document.getElementById('clear-' + idx);
+  const statusEl  = document.getElementById('run-status-' + idx);
+  const editorEl  = document.getElementById('editor-' + idx);
+
+  runBtn.addEventListener('click', async () => {
+    runBtn.disabled = true;
+    statusEl.textContent = 'Running…';
+    const r = await runPseudocode(editorEl);
+    statusEl.textContent = r.ok ? '' : '';
+    runBtn.disabled = false;
+
+    if (r.ok) {
+      clearSyntaxHint(editorEl);
+      // TODO: check the output against expected answers and call markDone(idx).
+      // Example: if (r.output.trim() === '42') markDone(idx, 'green');
+    }
+  });
+
+  clearBtn.addEventListener('click', () => {
+    editorEl.value = '';
+    editorEl.dispatchEvent(new Event('input'));
+  });
+}
+
+// ── Mark a task done ───────────────────────────────────
+// type: 'green' (full marks) | 'gold' (partially correct / completed)
+function markDone(idx, type = 'gold') {
+  if (completed[idx]) return;
+  completed[idx] = true;
+
+  const tab = document.querySelector('.tab-btn[data-idx="' + idx + '"]');
+  if (tab) tab.classList.add('done-' + type);
+
+  updateProgress();
+
+  const pct = Math.round(completed.filter(Boolean).length / TASK_COUNT * 100);
+  window.Classroom?.submitGrade(pct, ACTIVITY_TITLE);
+
+  if (completed.every(Boolean)) allComplete();
+}
+
+// ── Progress bar ───────────────────────────────────────
+function updateProgress() {
+  const pct = Math.round(completed.filter(Boolean).length / TASK_COUNT * 100);
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-pct').textContent  = pct + '%';
+}
+
+// ── All tasks complete ─────────────────────────────────
+function allComplete() {
+  document.getElementById('done-banner').classList.add('show');
+}
+
+// ── Toast helper ───────────────────────────────────────
+window.showToast = function(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'ac-toast show' + (type ? ' ' + type : '');
+  setTimeout(() => t.classList.remove('show'), 3500);
+};
+</script>
+
+<!-- Google Classroom integration (no-op when no ?courseId= param) -->
+<!-- NOTE: use ../../../classroom.js if this file is inside a lesson subfolder (L1_…/file.html) -->
+<script src="../../classroom.js"></script>
+</body>
+</html>

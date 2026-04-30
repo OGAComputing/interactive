@@ -14,7 +14,9 @@ Interactive Computing Education Platform — a static web hub serving self-conta
 - **`.github/workflows/build-manifest.yml`** — Parses `<!-- ACTIVITY -->` comment blocks from HTML files to rebuild the manifest files
 - **`shared.css`** — Shared reset, year-group colour tokens, topic accent overrides, and `ac-*` utility classes. Used by new activities built from templates; existing activities are not required to adopt it.
 - **`classroom.js`** — Shared Google Classroom integration. Referenced by activities via `../../classroom.js` (or `../../../classroom.js` if the activity is in a lesson subfolder).
-- **`_templates/`** — Activity starter templates (excluded from manifest). Copy `Y8.html`, `Y9.html`, or `Y11.html` as the basis for a new activity.
+- **`pseudocode-transpiler.js`** — OCR pseudocode → Python transpiler. Exports `transpile(src)` and `mapErrorLine(map, pyLine)`. Covers the procedural subset + file I/O. OOP (`class`/`inherits`/`super`) is unsupported and emits a friendly transpiler error.
+- **`pseudocode-editor.js`** — Editor widget for OCR pseudocode activities (fork of `code-editor.js`). Targets `.pseudocode-textarea`. Exports `setupEditors`, `clearSyntaxHint`, `setEditorOutput`, `refreshEditor`, `setFiles`, `getWrittenFiles`, `runPseudocode`.
+- **`_templates/`** — Activity starter templates (excluded from manifest). Copy `Y8.html`, `Y9.html`, `Y11.html`, or `Pseudocode_Y11.html` as the basis for a new activity.
 
 ## Running Locally
 
@@ -55,16 +57,19 @@ Lesson folders must start with `L<number>` (e.g. `L1`, `L02`, `L1_Variables`, `L
 
 ## Shared Files
 
-Two files are intentionally shared across activities via relative paths (`../../` for topic-level, `../../../` for lesson-level):
+These files are intentionally shared across activities via relative paths (`../../` for topic-level, `../../../` for lesson-level):
 
 | File | Purpose | Used by |
 |------|---------|---------|
 | `shared.css` | CSS reset, year-group themes (`data-year`), topic accent overrides (`data-topic`), `ac-*` utility classes | New activities (from templates) |
 | `classroom.js` | Google Classroom sign-in, grade submission, teacher mode | Any activity that includes it |
+| `pseudocode-transpiler.js` | OCR pseudocode → Python transpiler (`transpile`, `mapErrorLine`) | `pseudocode-editor.js` (indirect) |
+| `pseudocode-editor.js` | Editor widget — highlighting, syntax hints, run/output panel (`setupEditors`, `runPseudocode`, …) | Pseudocode activities (import via `../../pseudocode-editor.js` or `../../../pseudocode-editor.js`) |
 
 These files are allowed exceptions to the self-contained rule because:
 - Activities are always accessed through the hub or GitHub Pages, never as isolated downloads
-- Both files degrade gracefully: a missing `classroom.js` just disables Classroom features; activities built from templates rely on `shared.css` being co-located in the repo
+- Both presentation files (`shared.css`, `classroom.js`) degrade gracefully when absent
+- The pseudocode files (`pseudocode-editor.js`, `pseudocode-transpiler.js`) are only required by pseudocode activities; non-pseudocode activities do not reference them
 
 **Do not reference any other external files** from activity HTML — no CDN URLs, no third-party libraries.
 
@@ -100,10 +105,41 @@ New activities can use these instead of re-implementing them inline:
 
 Animations available: `ac-shake`, `ac-fade-in`, `ac-slide-down`, `ac-pulse-accent`, `ac-pulse-gold`.
 
+## OCR Pseudocode Activities
+
+Use `Pseudocode_Y11.html` from `_templates/` as the starting point. It wires up `pseudocode-editor.js` automatically.
+
+### Language coverage (pseudocode-transpiler.js)
+
+The transpiler covers the OCR GCSE procedural subset:
+
+| Construct | Status |
+|-----------|--------|
+| Variables, assignment, arithmetic (`+`, `-`, `*`, `/`, `^`, `MOD`, `DIV`) | ✅ |
+| `if`/`elseif`/`else`/`endif` | ✅ |
+| `while`/`endwhile`, `do`/`until` | ✅ |
+| `for i = a to b [step s]`/`next i` (inclusive, any step sign) | ✅ |
+| `switch`/`case`/`default`/`endswitch` | ✅ |
+| `function`/`procedure`/`return`/`endfunction`/`endprocedure` | ✅ |
+| 1D and 2D `array` declarations; 2D `x[r,c]` access | ✅ |
+| `.length`, `.substring(start, count)` on any expression | ✅ |
+| `openRead`/`openWrite`, `.readLine()`/`.writeLine()`/`.close()`/`.endOfFile()` | ✅ |
+| `AND`, `OR`, `NOT`, `true`, `false`, `null` | ✅ |
+| `//` line comments | ✅ |
+| `class`/`inherits`/`super`/`endclass` (OOP) | ❌ — emits a friendly transpiler error pointing at the offending line |
+
+### Pseudocode activity checklist
+
+- Import from `../../pseudocode-editor.js` (topic-level) or `../../../pseudocode-editor.js` (lesson-level)
+- Call `setupEditors('.pseudocode-textarea')` once on load, after any saved-state restore
+- Call `preload()` from `../../pyodide-runner.js` so Pyodide is warm before the first Run click
+- Use `runPseudocode(editorEl)` in Run button handlers; check `r.ok` before calling `markDone`
+- Call `window.Classroom?.submitGrade(pct, ACTIVITY_TITLE)` inside `markDone` as usual
+
 ## Key Conventions
 
 - **Self-contained logic**: Every activity's HTML structure, questions, and JS remain inline — no external game logic
-- **Shared presentation only**: `shared.css` and `classroom.js` are the only permitted relative-path dependencies
+- **Shared files**: `shared.css`, `classroom.js`, and (for pseudocode activities) `pseudocode-editor.js` are the only permitted relative-path dependencies
 - **Vanilla JS only**: No frameworks or libraries; direct DOM manipulation
 - **Files/folders starting with `_`** are excluded from the manifest (use `_drafts/` for WIP, `_templates/` for starters)
 - **Folder structure determines metadata**: `Y8/` → "Year 8", topic folder names become topic labels, `L<n>_Name` folders become lesson subheadings
