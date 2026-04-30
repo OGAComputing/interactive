@@ -7,7 +7,7 @@
 //   helpers - the preamble Python string (shown in "Transpiled Python" panel)
 //
 // OCR v2 pseudocode coverage (procedural subset + file I/O):
-//   variables, assignment, casting (int/str/float/real), print, input, comments
+//   variables, assignment, auto-typed input (int→float→str), explicit casting (int/str/float/real), print, comments
 //   for...next (inclusive, step support including negative via _psc_rng)
 //   while...endwhile, do...until
 //   if/elseif/else/endif
@@ -55,7 +55,15 @@ class _PscWriteFile:
     def writeLine(self, s): _psc_writes[self._name].append(str(s))
     def close(self): pass
 def _psc_open_read(name): return _PscReadFile(name)
-def _psc_open_write(name): return _PscWriteFile(name)`;
+def _psc_open_write(name): return _PscWriteFile(name)
+def _psc_input(prompt=''):
+    v = input(prompt)
+    try: return int(v)
+    except (ValueError, TypeError): pass
+    try: return float(v)
+    except (ValueError, TypeError): pass
+    return v
+real = float`;
 
 // ── Utilities ─────────────────────────────────────────────────────────────────
 
@@ -207,6 +215,9 @@ function rewriteOperators(code, ctx) {
   // File I/O constructors
   s = s.replace(/\bopenRead\s*\(/g, '_psc_open_read(');
   s = s.replace(/\bopenWrite\s*\(/g, '_psc_open_write(');
+
+  // input() → _psc_input() for OCR-style auto-typing (int → float → str)
+  s = s.replace(/\binput\s*\(/g, '_psc_input(');
 
   // Logical/arithmetic operators
   s = s.replace(/\bAND\b/g, 'and');

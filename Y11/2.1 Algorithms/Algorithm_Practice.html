@@ -1,0 +1,1362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- ACTIVITY
+title:  Algorithm Practice
+type:   Practice
+stars:  4
+desc:   Eight progressive algorithm-writing challenges using OCR pseudocode — from basic input/output to an 8-mark sentinel-loop question — with instant mark-scheme feedback on every Run.
+color:  blue
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Algorithm Practice — Year 11</title>
+
+<link rel="stylesheet" href="../../shared.css">
+
+<style>
+  /* ── Sticky header ───────────────────────────────────── */
+  header {
+    background: var(--surface);
+    border-bottom: 2px solid var(--surface-mid);
+    padding: 12px 20px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.35);
+  }
+  header h1 {
+    font-family: var(--font-head);
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 0.04em;
+  }
+  .header-sub { font-size: 0.72rem; color: var(--muted); margin-top: 1px; }
+  .header-badge {
+    margin-left: auto;
+    background: var(--surface-mid);
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  /* ── Page body ───────────────────────────────────────── */
+  .page-wrap { padding: 28px 16px 60px; }
+
+  /* ── Page title ──────────────────────────────────────── */
+  .page-title {
+    font-size: 1.35rem;
+    font-weight: 700;
+    text-align: center;
+    color: var(--accent-light);
+    margin-bottom: 4px;
+  }
+  .page-subtitle {
+    text-align: center;
+    font-size: 0.82rem;
+    color: var(--muted);
+    margin-bottom: 28px;
+  }
+
+  /* ── Pill tab bar ────────────────────────────────────── */
+  .tabs {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 28px;
+  }
+  .tab-btn {
+    padding: 7px 16px;
+    border: 2px solid var(--surface-mid);
+    border-radius: 20px;
+    background: var(--surface);
+    color: var(--muted);
+    font-family: var(--font-body);
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s, color 0.2s;
+    user-select: none;
+  }
+  .tab-btn:hover:not(.active) { border-color: var(--accent); color: var(--text); }
+  .tab-btn.active    { background: var(--accent);  border-color: var(--accent);  color: var(--text-inv); }
+  .tab-btn.done-green { background: var(--green);  border-color: var(--green);   color: #fff; }
+  .tab-btn.done-gold  { background: var(--gold);   border-color: var(--gold);    color: #111; }
+
+  /* ── Panels ──────────────────────────────────────────── */
+  .panel { display: none; max-width: 880px; margin: 0 auto; animation: ac-fade-in 0.2s ease; }
+  .panel.active { display: block; }
+
+  /* ── Section card ────────────────────────────────────── */
+  .card {
+    background: var(--surface);
+    border-left: 4px solid var(--accent);
+    border-radius: 8px;
+    padding: 18px 22px;
+    margin-bottom: 22px;
+  }
+  .card h2 {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 12px;
+  }
+  .card p { color: var(--text); font-size: 0.9rem; line-height: 1.7; margin-bottom: 10px; }
+  .card p:last-child { margin-bottom: 0; }
+  .card ul {
+    margin: 6px 0 0 1.2em;
+    color: var(--text);
+    font-size: 0.9rem;
+    line-height: 1.8;
+  }
+  .card code {
+    background: var(--code-bg, #1a1a2e);
+    color: var(--code-text, #a0c4ff);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-family: var(--font-head, monospace);
+    font-size: 0.85em;
+  }
+
+  /* ── Goal banner ─────────────────────────────────────── */
+  .goal {
+    background: var(--surface);
+    border-left: 4px solid var(--accent);
+    border-radius: 0 8px 8px 0;
+    padding: 10px 16px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 20px;
+  }
+
+  /* ── Code checker ────────────────────────────────────── */
+  .code-checker {
+    background: var(--surface);
+    border-radius: 12px;
+    border: 2px solid var(--surface-mid);
+    overflow: hidden;
+    margin-bottom: 14px;
+  }
+  .checker-footer {
+    display: flex;
+    gap: 10px;
+    padding: 10px 14px;
+    background: var(--surface-mid);
+    border-top: 1px solid var(--surface-dim);
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .checker-footer .ac-btn-secondary { font-size: 0.78rem; padding: 5px 14px; }
+  .checker-footer .ac-btn           { font-size: 0.78rem; padding: 5px 14px; }
+
+  /* ── Mark scheme card ────────────────────────────────── */
+  .markscheme {
+    background: var(--surface);
+    border: 2px solid var(--surface-mid);
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin-bottom: 22px;
+  }
+  .ms-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .ms-header h3 {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--accent);
+  }
+  .ms-total {
+    font-size: 0.72rem;
+    font-family: var(--font-head, monospace);
+    color: var(--muted);
+    letter-spacing: 0.06em;
+  }
+  .ms-list {
+    list-style: none;
+    margin: 0 0 10px;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .ms-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 5px 8px;
+    border-radius: 6px;
+    font-size: 0.87rem;
+    transition: background 0.15s;
+  }
+  .ms-tick {
+    font-size: 1rem;
+    width: 1.3em;
+    text-align: center;
+    color: var(--muted);
+    flex-shrink: 0;
+    margin-top: 0.05em;
+  }
+  .ms-text { flex: 1; color: var(--text); line-height: 1.5; }
+  .ms-marks {
+    font-size: 0.7rem;
+    font-family: var(--font-head, monospace);
+    color: var(--muted);
+    white-space: nowrap;
+    margin-top: 0.2em;
+    flex-shrink: 0;
+  }
+  .ms-row.pass { background: rgba(52,211,153,0.08); }
+  .ms-row.pass .ms-tick { color: var(--green); }
+  .ms-row.pass .ms-text { color: var(--green); }
+  .ms-row.pass .ms-marks { color: var(--green); }
+  .ms-row.fail { background: rgba(248,113,113,0.06); }
+  .ms-row.fail .ms-tick { color: var(--red); }
+  .ms-row.fail .ms-text { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--red); }
+
+  .ms-divider {
+    border: none;
+    border-top: 1px solid var(--surface-mid);
+    margin: 8px 0;
+  }
+  .ms-score {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--accent);
+    text-align: right;
+  }
+  .ms-score.full { color: var(--green); }
+
+  /* ── Score / progress bar ────────────────────────────── */
+  .score-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .score-label {
+    font-size: 0.72rem;
+    font-family: var(--font-head, monospace);
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    white-space: nowrap;
+  }
+  .score-pct {
+    font-family: var(--font-head, monospace);
+    font-size: 0.8rem;
+    color: var(--accent);
+  }
+
+  /* ── Tip box ─────────────────────────────────────────── */
+  .tip {
+    background: rgba(96,165,250,0.08);
+    border: 1px solid rgba(96,165,250,0.25);
+    border-radius: 6px;
+    padding: 8px 14px;
+    font-size: 0.82rem;
+    color: var(--muted);
+    margin-top: 10px;
+    line-height: 1.6;
+  }
+  .tip strong { color: var(--text); }
+</style>
+</head>
+
+<body data-year="11" data-topic="Algorithms">
+
+<!-- Completion banner -->
+<div id="done-banner" class="ac-banner gold">
+  Full marks — outstanding algorithm writing!
+</div>
+
+<!-- Sticky header -->
+<header>
+  <div>
+    <h1>Algorithm Practice</h1>
+    <div class="header-sub">GCSE Computer Science · OCR J277</div>
+  </div>
+  <div class="header-badge">Year 11</div>
+</header>
+
+<div class="page-wrap">
+  <h2 class="page-title">Algorithm Writing — Exam Practice</h2>
+  <p class="page-subtitle">Selection &amp; Iteration · 34 marks total</p>
+
+  <!-- Progress bar -->
+  <div class="score-row">
+    <span class="score-label">Progress</span>
+    <div class="ac-progress-bar" style="flex:1;">
+      <div class="ac-progress-fill" id="progress-fill"></div>
+    </div>
+    <span class="score-pct" id="progress-pct">0 / 34</span>
+  </div>
+
+  <!-- Tab bar -->
+  <div class="tabs" id="tab-bar">
+    <button class="tab-btn active" data-idx="0">Q1 · 2m</button>
+    <button class="tab-btn"        data-idx="1">Q2 · 3m</button>
+    <button class="tab-btn"        data-idx="2">Q3 · 3m</button>
+    <button class="tab-btn"        data-idx="3">Q4 · 4m</button>
+    <button class="tab-btn"        data-idx="4">Q5 · 4m</button>
+    <button class="tab-btn"        data-idx="5">Q6 · 4m</button>
+    <button class="tab-btn"        data-idx="6">Q7 · 6m</button>
+    <button class="tab-btn"        data-idx="7">Q8 · 8m</button>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       Q1 — Library Welcome (2 marks)
+       ══════════════════════════════════════════════════════════ -->
+  <div class="panel active" id="panel-0">
+    <div class="goal">Write a short algorithm that greets a library visitor by name.</div>
+
+    <div class="card">
+      <h2>Scenario</h2>
+      <p>A school library has a self-service check-in screen. When a student touches the screen, they enter their name and the screen displays a personalised welcome message.</p>
+      <h2 style="margin-top:14px;">Your algorithm must:</h2>
+      <ul>
+        <li>Ask the user to enter their name</li>
+        <li>Output a welcome message that includes the name they entered</li>
+      </ul>
+    </div>
+
+    <div class="code-checker" id="checker-0">
+      <div class="checker-header">
+        <span class="checker-dot dot-r"></span>
+        <span class="checker-dot dot-y"></span>
+        <span class="checker-dot dot-g"></span>
+        <span>Q1 — Write your pseudocode here</span>
+      </div>
+      <textarea class="pseudocode-textarea" id="editor-0" spellcheck="false"
+                autocomplete="off" autocapitalize="off">// Write your OCR pseudocode here
+</textarea>
+      <div class="checker-footer">
+        <button class="ac-btn" id="run-0" type="button">Run ▶</button>
+        <button class="ac-btn-secondary" id="clear-0" type="button">Clear</button>
+        <span id="run-status-0" style="font-size:0.75rem;color:var(--muted);"></span>
+      </div>
+    </div>
+
+    <!-- Mark scheme -->
+    <div class="markscheme" id="ms-0">
+      <div class="ms-header">
+        <h3>Mark Scheme</h3>
+        <span class="ms-total">2 marks available</span>
+      </div>
+      <ul class="ms-list" id="ms-list-0">
+        <li class="ms-row" data-bp="0">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Inputs and stores the visitor's name</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="1">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Outputs a welcome message that includes the entered name</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+      </ul>
+      <hr class="ms-divider">
+      <div class="ms-score" id="ms-score-0">— / 2 marks</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       Q2 — Bubble Tea Loyalty (3 marks)
+       ══════════════════════════════════════════════════════════ -->
+  <div class="panel" id="panel-1">
+    <div class="goal">Calculate and display a customer's loyalty points from the number of drinks bought.</div>
+
+    <div class="card">
+      <h2>Scenario</h2>
+      <p>A bubble tea shop runs a loyalty scheme. For every drink bought, a customer earns <strong>7 points</strong>. The shop assistant enters how many drinks a customer has bought, and the till displays the total points earned.</p>
+      <h2 style="margin-top:14px;">Your algorithm must:</h2>
+      <ul>
+        <li>Ask the user to enter the number of drinks bought</li>
+        <li>Calculate the total points (7 points per drink)</li>
+        <li>Output the total points earned</li>
+      </ul>
+      <div class="tip"><strong>Note:</strong> <code>input()</code> in OCR pseudocode automatically stores the value as a number when the user enters digits — no explicit type conversion is needed.</div>
+    </div>
+
+    <div class="code-checker" id="checker-1">
+      <div class="checker-header">
+        <span class="checker-dot dot-r"></span>
+        <span class="checker-dot dot-y"></span>
+        <span class="checker-dot dot-g"></span>
+        <span>Q2 — Write your pseudocode here</span>
+      </div>
+      <textarea class="pseudocode-textarea" id="editor-1" spellcheck="false"
+                autocomplete="off" autocapitalize="off">// Write your OCR pseudocode here
+</textarea>
+      <div class="checker-footer">
+        <button class="ac-btn" id="run-1" type="button">Run ▶</button>
+        <button class="ac-btn-secondary" id="clear-1" type="button">Clear</button>
+        <span id="run-status-1" style="font-size:0.75rem;color:var(--muted);"></span>
+      </div>
+    </div>
+
+    <div class="markscheme" id="ms-1">
+      <div class="ms-header">
+        <h3>Mark Scheme</h3>
+        <span class="ms-total">3 marks available</span>
+      </div>
+      <ul class="ms-list" id="ms-list-1">
+        <li class="ms-row" data-bp="0">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Inputs and stores the number of drinks</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="1">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Multiplies by 7 to calculate the total points</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="2">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Outputs the correct total points (e.g. 3 drinks → 21 points, 10 drinks → 70 points)</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+      </ul>
+      <hr class="ms-divider">
+      <div class="ms-score" id="ms-score-1">— / 3 marks</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       Q3 — Pet Age Stage (3 marks)
+       ══════════════════════════════════════════════════════════ -->
+  <div class="panel" id="panel-2">
+    <div class="goal">Classify a dog as 'Senior' or 'Adult' based on its age.</div>
+
+    <div class="card">
+      <h2>Scenario</h2>
+      <p>A vet's system classifies dogs by age stage. A dog aged <strong>8 years or older</strong> is classed as a <strong>Senior</strong> dog. Any younger dog is classed as <strong>Adult</strong>.</p>
+      <h2 style="margin-top:14px;">Your algorithm must:</h2>
+      <ul>
+        <li>Ask the user to enter the dog's age in years</li>
+        <li>Output <code>Senior</code> if the age is 8 or over</li>
+        <li>Output <code>Adult</code> otherwise</li>
+      </ul>
+    </div>
+
+    <div class="code-checker" id="checker-2">
+      <div class="checker-header">
+        <span class="checker-dot dot-r"></span>
+        <span class="checker-dot dot-y"></span>
+        <span class="checker-dot dot-g"></span>
+        <span>Q3 — Write your pseudocode here</span>
+      </div>
+      <textarea class="pseudocode-textarea" id="editor-2" spellcheck="false"
+                autocomplete="off" autocapitalize="off">// Write your OCR pseudocode here
+</textarea>
+      <div class="checker-footer">
+        <button class="ac-btn" id="run-2" type="button">Run ▶</button>
+        <button class="ac-btn-secondary" id="clear-2" type="button">Clear</button>
+        <span id="run-status-2" style="font-size:0.75rem;color:var(--muted);"></span>
+      </div>
+    </div>
+
+    <div class="markscheme" id="ms-2">
+      <div class="ms-header">
+        <h3>Mark Scheme</h3>
+        <span class="ms-total">3 marks available</span>
+      </div>
+      <ul class="ms-list" id="ms-list-2">
+        <li class="ms-row" data-bp="0">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Inputs and stores the dog's age</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="1">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Correct boundary — age 8 → Senior, age 7 → Adult (not age 9 → Senior, age 8 → Adult)</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="2">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Both 'Senior' and 'Adult' output correctly for valid ages</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+      </ul>
+      <hr class="ms-divider">
+      <div class="ms-score" id="ms-score-2">— / 3 marks</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       Q4 — Hospital Triage (4 marks)
+       ══════════════════════════════════════════════════════════ -->
+  <div class="panel" id="panel-3">
+    <div class="goal">Categorise a patient's pain level into one of four bands, rejecting invalid input.</div>
+
+    <div class="card">
+      <h2>Scenario</h2>
+      <p>A hospital triage app asks patients to rate their pain on a scale of <strong>1 to 10</strong>. The app displays a category based on the score:</p>
+      <ul>
+        <li><strong>Mild</strong> — pain levels 1, 2, or 3</li>
+        <li><strong>Moderate</strong> — pain levels 4, 5, or 6</li>
+        <li><strong>Severe</strong> — pain levels 7, 8, 9, or 10</li>
+        <li><strong>Invalid</strong> — any value outside 1–10</li>
+      </ul>
+      <div class="tip"><strong>Tip:</strong> Use <code>if … then … elseif … then … else … endif</code> for multiple branches.</div>
+    </div>
+
+    <div class="code-checker" id="checker-3">
+      <div class="checker-header">
+        <span class="checker-dot dot-r"></span>
+        <span class="checker-dot dot-y"></span>
+        <span class="checker-dot dot-g"></span>
+        <span>Q4 — Write your pseudocode here</span>
+      </div>
+      <textarea class="pseudocode-textarea" id="editor-3" spellcheck="false"
+                autocomplete="off" autocapitalize="off">// Write your OCR pseudocode here
+</textarea>
+      <div class="checker-footer">
+        <button class="ac-btn" id="run-3" type="button">Run ▶</button>
+        <button class="ac-btn-secondary" id="clear-3" type="button">Clear</button>
+        <span id="run-status-3" style="font-size:0.75rem;color:var(--muted);"></span>
+      </div>
+    </div>
+
+    <div class="markscheme" id="ms-3">
+      <div class="ms-header">
+        <h3>Mark Scheme</h3>
+        <span class="ms-total">4 marks available</span>
+      </div>
+      <ul class="ms-list" id="ms-list-3">
+        <li class="ms-row" data-bp="0">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Inputs and stores the pain level</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="1">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Outputs 'Mild' correctly for pain levels 1–3 (tested with input 2)</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="2">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Outputs 'Moderate' correctly for pain levels 4–6 (tested with input 5)</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="3">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Outputs 'Severe' for 7–10 AND 'Invalid' for values outside 1–10</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+      </ul>
+      <hr class="ms-divider">
+      <div class="ms-score" id="ms-score-3">— / 4 marks</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       Q5 — Username Generator (4 marks)
+       ══════════════════════════════════════════════════════════ -->
+  <div class="panel" id="panel-4">
+    <div class="goal">Automatically generate a gaming username from a player's first name and surname.</div>
+
+    <div class="card">
+      <h2>Scenario</h2>
+      <p>A gaming platform auto-generates usernames for new accounts. Each username is built from the <strong>first 3 characters of the player's first name</strong> followed by the <strong>first 3 characters of their surname</strong>.</p>
+      <p>Example: first name <code>Alice</code>, surname <code>Smith</code> → username <code>AliSmi</code></p>
+      <h2 style="margin-top:14px;">Your algorithm must:</h2>
+      <ul>
+        <li>Ask the user to enter their first name and their surname separately</li>
+        <li>Use <code>.substring()</code> to extract the first 3 characters of each</li>
+        <li>Concatenate the two parts and output the username</li>
+      </ul>
+      <div class="tip"><strong>OCR syntax:</strong> <code>name.substring(startPos, length)</code> — e.g. <code>firstname.substring(0, 3)</code> gives the first 3 characters.</div>
+    </div>
+
+    <div class="code-checker" id="checker-4">
+      <div class="checker-header">
+        <span class="checker-dot dot-r"></span>
+        <span class="checker-dot dot-y"></span>
+        <span class="checker-dot dot-g"></span>
+        <span>Q5 — Write your pseudocode here</span>
+      </div>
+      <textarea class="pseudocode-textarea" id="editor-4" spellcheck="false"
+                autocomplete="off" autocapitalize="off">// Write your OCR pseudocode here
+</textarea>
+      <div class="checker-footer">
+        <button class="ac-btn" id="run-4" type="button">Run ▶</button>
+        <button class="ac-btn-secondary" id="clear-4" type="button">Clear</button>
+        <span id="run-status-4" style="font-size:0.75rem;color:var(--muted);"></span>
+      </div>
+    </div>
+
+    <div class="markscheme" id="ms-4">
+      <div class="ms-header">
+        <h3>Mark Scheme</h3>
+        <span class="ms-total">4 marks available</span>
+      </div>
+      <ul class="ms-list" id="ms-list-4">
+        <li class="ms-row" data-bp="0">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Inputs and stores both the first name and the surname (two separate inputs)</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="1">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Uses <code>.substring()</code> to extract characters from the first name</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="2">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Uses <code>.substring()</code> a second time to extract characters from the surname</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="3">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Concatenates the two parts and outputs the correct username (e.g. Alice + Smith → AliSmi)</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+      </ul>
+      <hr class="ms-divider">
+      <div class="ms-score" id="ms-score-4">— / 4 marks</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       Q6 — Daily Step Goal (4 marks)
+       ══════════════════════════════════════════════════════════ -->
+  <div class="panel" id="panel-5">
+    <div class="goal">Use a for loop to total the steps walked across 5 exercise sessions.</div>
+
+    <div class="card">
+      <h2>Scenario</h2>
+      <p>A fitness app records how many steps a user walks across <strong>5 separate sessions</strong> in one day. After all sessions are entered, the app shows the total steps walked.</p>
+      <h2 style="margin-top:14px;">Your algorithm must:</h2>
+      <ul>
+        <li>Initialise a total to 0 before the loop</li>
+        <li>Use a <code>for</code> loop that repeats exactly 5 times</li>
+        <li>On each iteration, input the steps for that session and add them to the total</li>
+        <li>Output the total steps after the loop ends</li>
+      </ul>
+    </div>
+
+    <div class="code-checker" id="checker-5">
+      <div class="checker-header">
+        <span class="checker-dot dot-r"></span>
+        <span class="checker-dot dot-y"></span>
+        <span class="checker-dot dot-g"></span>
+        <span>Q6 — Write your pseudocode here</span>
+      </div>
+      <textarea class="pseudocode-textarea" id="editor-5" spellcheck="false"
+                autocomplete="off" autocapitalize="off">// Write your OCR pseudocode here
+</textarea>
+      <div class="checker-footer">
+        <button class="ac-btn" id="run-5" type="button">Run ▶</button>
+        <button class="ac-btn-secondary" id="clear-5" type="button">Clear</button>
+        <span id="run-status-5" style="font-size:0.75rem;color:var(--muted);"></span>
+      </div>
+    </div>
+
+    <div class="markscheme" id="ms-5">
+      <div class="ms-header">
+        <h3>Mark Scheme</h3>
+        <span class="ms-total">4 marks available</span>
+      </div>
+      <ul class="ms-list" id="ms-list-5">
+        <li class="ms-row" data-bp="0">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Initialises a running total to 0 before the loop begins</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="1">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Uses a <code>for</code> loop that iterates exactly 5 times</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="2">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Inputs a step count each iteration and adds it to the running total</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="3">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Outputs the correct total after all 5 sessions (e.g. 1000+2000+3000+4000+5000 → 15000)</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+      </ul>
+      <hr class="ms-divider">
+      <div class="ms-score" id="ms-score-5">— / 4 marks</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       Q7 — Gym Weekly Visits (6 marks)
+       ══════════════════════════════════════════════════════════ -->
+  <div class="panel" id="panel-6">
+    <div class="goal">Track 7 days of gym visits, then output the total, average, and busiest day.</div>
+
+    <div class="card">
+      <h2>Scenario</h2>
+      <p>A gym manager uses a system to track how many members visit each day of the week. They enter a visit count for each of the <strong>7 days</strong>, and the system then reports three things: the total visits for the week, the average visits per day, and which day number was the busiest.</p>
+      <h2 style="margin-top:14px;">Your algorithm must:</h2>
+      <ul>
+        <li>Initialise a total and a maximum-tracking variable to 0 before the loop</li>
+        <li>Use a <code>for</code> loop for days 1 to 7, inputting each day's visit count</li>
+        <li>Accumulate the running total and track the day with the highest count</li>
+        <li>After the loop, output: total visits, average per day, and the day number with most visits</li>
+      </ul>
+      <div class="tip"><strong>Tip:</strong> Use an <code>if</code> statement inside the loop to compare each day's count with the current maximum, and update both the maximum <em>and</em> the day number when a higher value is found.</div>
+    </div>
+
+    <div class="code-checker" id="checker-6">
+      <div class="checker-header">
+        <span class="checker-dot dot-r"></span>
+        <span class="checker-dot dot-y"></span>
+        <span class="checker-dot dot-g"></span>
+        <span>Q7 — Write your pseudocode here</span>
+      </div>
+      <textarea class="pseudocode-textarea" id="editor-6" spellcheck="false"
+                autocomplete="off" autocapitalize="off">// Write your OCR pseudocode here
+</textarea>
+      <div class="checker-footer">
+        <button class="ac-btn" id="run-6" type="button">Run ▶</button>
+        <button class="ac-btn-secondary" id="clear-6" type="button">Clear</button>
+        <span id="run-status-6" style="font-size:0.75rem;color:var(--muted);"></span>
+      </div>
+    </div>
+
+    <div class="markscheme" id="ms-6">
+      <div class="ms-header">
+        <h3>Mark Scheme</h3>
+        <span class="ms-total">6 marks available</span>
+      </div>
+      <ul class="ms-list" id="ms-list-6">
+        <li class="ms-row" data-bp="0">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Initialises both a total variable and a maximum-tracking variable to 0 before the loop</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="1">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Uses a <code>for</code> loop that iterates 7 times, inputting a visit count on each iteration</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="2">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Correctly accumulates the total visits across all 7 days (e.g. 10+15+5+8+20+3+9 → 70)</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="3">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Uses an <code>if</code> statement to update the maximum only when a higher daily count is found</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="4">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Tracks the day number (not just the count) when the new maximum is recorded</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="5">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Outputs total visits, average per day, and the busiest day number (total=70, average=10 for test case)</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+      </ul>
+      <hr class="ms-divider">
+      <div class="ms-score" id="ms-score-6">— / 6 marks</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       Q8 — Marathon Pace Tracker (8 marks)
+       ══════════════════════════════════════════════════════════ -->
+  <div class="panel" id="panel-7">
+    <div class="goal">Use a sentinel-controlled loop to log training run paces, then output a full statistical summary.</div>
+
+    <div class="card">
+      <h2>Scenario</h2>
+      <p>A runner uses an app to log their pace (in <strong>whole minutes per km</strong>) after each training run. The app keeps asking for a pace until the runner enters <strong>−1</strong> as a sentinel value to stop. It then outputs: total runs logged, average pace, fastest (lowest) pace, and slowest (highest) pace.</p>
+      <p>If the runner enters −1 immediately (no runs logged), the app outputs <strong>No runs recorded</strong> instead.</p>
+      <h2 style="margin-top:14px;">Your algorithm must:</h2>
+      <ul>
+        <li>Initialise variables for the run count, total pace, fastest pace, and slowest pace</li>
+        <li>Use a condition-controlled loop (<code>while</code> or <code>do…until</code>) that stops when −1 is entered</li>
+        <li>On each valid iteration: add the pace to the total, increment the count, update fastest and slowest</li>
+        <li>Not include the sentinel value (−1) in any calculations</li>
+        <li>If count > 0: output run count, average pace, fastest, and slowest</li>
+        <li>If count = 0: output <code>No runs recorded</code></li>
+      </ul>
+      <div class="tip"><strong>Test case hint:</strong> With paces 12, 20, 16 then −1 → count=3, average=16, fastest=12, slowest=20. Your output should contain these values so the checker can verify each criterion.</div>
+    </div>
+
+    <div class="code-checker" id="checker-7">
+      <div class="checker-header">
+        <span class="checker-dot dot-r"></span>
+        <span class="checker-dot dot-y"></span>
+        <span class="checker-dot dot-g"></span>
+        <span>Q8 — Write your pseudocode here</span>
+      </div>
+      <textarea class="pseudocode-textarea" id="editor-7" spellcheck="false"
+                autocomplete="off" autocapitalize="off">// Write your OCR pseudocode here
+</textarea>
+      <div class="checker-footer">
+        <button class="ac-btn" id="run-7" type="button">Run ▶</button>
+        <button class="ac-btn-secondary" id="clear-7" type="button">Clear</button>
+        <span id="run-status-7" style="font-size:0.75rem;color:var(--muted);"></span>
+      </div>
+    </div>
+
+    <div class="markscheme" id="ms-7">
+      <div class="ms-header">
+        <h3>Mark Scheme</h3>
+        <span class="ms-total">8 marks available</span>
+      </div>
+      <ul class="ms-list" id="ms-list-7">
+        <li class="ms-row" data-bp="0">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Initialises a run counter to 0 before the loop (fastest and slowest are tested via outputs)</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="1">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Uses a condition-controlled loop (<code>while</code> or <code>do…until</code>) keyed on the −1 sentinel</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="2">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Inputs the pace inside the loop on each iteration</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="3">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Correctly uses −1 as the sentinel — loop terminates and −1 is not included in calculations</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="4">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Accumulates pace totals and count correctly — average is 16 for the test inputs (12, 20, 16, −1)</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="5">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Tracks the fastest (lowest) pace — fastest is 12 for the test inputs</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="6">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Tracks the slowest (highest) pace — slowest is 20 for the test inputs</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="7">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Branches correctly: outputs full summary when runs ≥ 1, outputs 'No runs recorded' when count = 0</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+      </ul>
+      <hr class="ms-divider">
+      <div class="ms-score" id="ms-score-7">— / 8 marks</div>
+    </div>
+  </div>
+
+</div><!-- /.page-wrap -->
+
+<div class="ac-toast" id="toast"></div>
+
+<script type="module">
+import { setupEditors, runPseudocode, clearSyntaxHint } from '../../pseudocode-editor.js';
+import { preload } from '../../pyodide-runner.js';
+
+// ── Constants ─────────────────────────────────────────────────
+const TASK_COUNT    = 8;
+const TOTAL_MARKS   = 34;
+const ACTIVITY_TITLE = 'Algorithm Practice — Selection & Iteration';
+
+// ── Task definitions ───────────────────────────────────────────
+// Each task has:
+//   maxMarks  — total marks for this question
+//   tests     — array of { inputs: string[], needle?: string }
+//   criteria  — array of { text, marks, check({src, runs}) → bool }
+//
+// src  = normalised (lowercase, comments stripped) pseudocode source
+// runs = [{ inputs, output, ok }, …] parallel to tests array
+
+const TASKS = [
+
+  // ── Q1: Library Welcome (2 marks) ──────────────────────────
+  {
+    maxMarks: 2,
+    tests: [
+      { inputs: ['Alice'] },
+      { inputs: ['Zara']  },
+    ],
+    criteria: [
+      {
+        text: 'Inputs and stores the visitor\'s name',
+        marks: 1,
+        check: ({ src }) => /\binput\s*\(/.test(src),
+      },
+      {
+        text: 'Outputs a welcome message that includes the entered name',
+        marks: 1,
+        check: ({ runs }) =>
+          runs.some(r => r.ok && r.output.toLowerCase().includes(r.inputs[0].toLowerCase())),
+      },
+    ],
+  },
+
+  // ── Q2: Bubble Tea Loyalty (3 marks) ───────────────────────
+  {
+    maxMarks: 3,
+    tests: [
+      { inputs: ['3']  },
+      { inputs: ['10'] },
+    ],
+    criteria: [
+      {
+        text: 'Inputs and stores the number of drinks',
+        marks: 1,
+        check: ({ src }) => /\binput\s*\(/.test(src),
+      },
+      {
+        text: 'Multiplies by 7 to calculate the total points',
+        marks: 1,
+        check: ({ src }) => /[*]\s*7\b|7\s*[*]/.test(src),
+      },
+      {
+        text: 'Outputs the correct total points',
+        marks: 1,
+        check: ({ runs }) =>
+          outHas(runs[0], '21') && outHas(runs[1], '70'),
+      },
+    ],
+  },
+
+  // ── Q3: Pet Age Stage (3 marks) ────────────────────────────
+  {
+    maxMarks: 3,
+    tests: [
+      { inputs: ['8']  },  // exact boundary → Senior
+      { inputs: ['7']  },  // one below     → Adult
+      { inputs: ['3']  },  // well below    → Adult
+      { inputs: ['12'] },  // well above    → Senior
+    ],
+    criteria: [
+      {
+        text: 'Inputs and stores the dog\'s age',
+        marks: 1,
+        check: ({ src }) => /\binput\s*\(/.test(src),
+      },
+      {
+        text: 'Correct boundary — age 8 → Senior, age 7 → Adult',
+        marks: 1,
+        check: ({ runs }) =>
+          outHas(runs[0], 'senior') && outHas(runs[1], 'adult'),
+      },
+      {
+        text: 'Both \'Senior\' and \'Adult\' output correctly for valid ages',
+        marks: 1,
+        check: ({ runs }) =>
+          outHas(runs[3], 'senior') && outHas(runs[2], 'adult'),
+      },
+    ],
+  },
+
+  // ── Q4: Hospital Triage (4 marks) ──────────────────────────
+  {
+    maxMarks: 4,
+    tests: [
+      { inputs: ['2']  },  // Mild
+      { inputs: ['5']  },  // Moderate
+      { inputs: ['9']  },  // Severe
+      { inputs: ['0']  },  // Invalid (below range)
+      { inputs: ['11'] },  // Invalid (above range)
+    ],
+    criteria: [
+      {
+        text: 'Inputs and stores the pain level',
+        marks: 1,
+        check: ({ src }) => /\binput\s*\(/.test(src),
+      },
+      {
+        text: 'Outputs \'Mild\' correctly for pain levels 1–3',
+        marks: 1,
+        check: ({ runs }) => outHas(runs[0], 'mild'),
+      },
+      {
+        text: 'Outputs \'Moderate\' correctly for pain levels 4–6',
+        marks: 1,
+        check: ({ runs }) => outHas(runs[1], 'moderate'),
+      },
+      {
+        text: 'Outputs \'Severe\' for 7–10 AND \'Invalid\' for values outside 1–10',
+        marks: 1,
+        check: ({ runs }) =>
+          outHas(runs[2], 'severe') &&
+          (outHas(runs[3], 'invalid') || outHas(runs[4], 'invalid')),
+      },
+    ],
+  },
+
+  // ── Q5: Username Generator (4 marks) ───────────────────────
+  {
+    maxMarks: 4,
+    tests: [
+      { inputs: ['Alice', 'Smith'] },  // → AliSmi
+      { inputs: ['Noah',  'Jones'] },  // → NoaJon
+    ],
+    criteria: [
+      {
+        text: 'Inputs and stores both the first name and the surname',
+        marks: 1,
+        check: ({ src }) => (src.match(/\binput\s*\(/g) || []).length >= 2,
+      },
+      {
+        text: 'Uses .substring() to extract characters from the first name',
+        marks: 1,
+        check: ({ src }) => /\.substring\s*\(/.test(src),
+      },
+      {
+        text: 'Uses .substring() a second time to extract characters from the surname',
+        marks: 1,
+        check: ({ src }) => (src.match(/\.substring\s*\(/g) || []).length >= 2,
+      },
+      {
+        text: 'Outputs the correct combined username',
+        marks: 1,
+        check: ({ runs }) =>
+          outHas(runs[0], 'alismi') && outHas(runs[1], 'noajon'),
+      },
+    ],
+  },
+
+  // ── Q6: Daily Step Goal (4 marks) ──────────────────────────
+  {
+    maxMarks: 4,
+    tests: [
+      { inputs: ['1000','2000','3000','4000','5000'] },  // total = 15000
+      { inputs: ['100', '200', '300', '400', '500']  },  // total = 1500
+    ],
+    criteria: [
+      {
+        text: 'Initialises a running total to 0 before the loop',
+        marks: 1,
+        check: ({ src }) => /\b\w+\s*=\s*0\b/.test(src),
+      },
+      {
+        text: 'Uses a for loop that repeats exactly 5 times',
+        marks: 1,
+        check: ({ src }) => /\bfor\b/.test(src) && /\b5\b/.test(src),
+      },
+      {
+        text: 'Inputs a step count each iteration and adds it to the total',
+        marks: 1,
+        check: ({ src }) => /\binput\s*\(/.test(src) && /[+]/.test(src),
+      },
+      {
+        text: 'Outputs the correct total steps after all 5 sessions',
+        marks: 1,
+        check: ({ runs }) =>
+          outHas(runs[0], '15000') && outHas(runs[1], '1500'),
+      },
+    ],
+  },
+
+  // ── Q7: Gym Weekly Visits (6 marks) ────────────────────────
+  {
+    maxMarks: 6,
+    // Test 1: total=70, average=10, busiest=day 5 (20 visits)
+    // Test 2: total=66, average≈9.4, busiest=day 3 (25 visits)
+    tests: [
+      { inputs: ['10','15','5','8','20','3','9'] },
+      { inputs: ['8', '3','25','9','11','6','4'] },
+    ],
+    criteria: [
+      {
+        text: 'Initialises both a total and a maximum-tracking variable to 0',
+        marks: 1,
+        check: ({ src }) => (src.match(/\b\w+\s*=\s*0\b/g) || []).length >= 2,
+      },
+      {
+        text: 'Uses a for loop iterating 7 times, inputting visits each iteration',
+        marks: 1,
+        check: ({ src }) =>
+          /\bfor\b/.test(src) && /\b7\b/.test(src) && /\binput\s*\(/.test(src),
+      },
+      {
+        text: 'Correctly accumulates total visits across all 7 days',
+        marks: 1,
+        check: ({ runs }) => outHas(runs[0], '70'),
+      },
+      {
+        text: 'Uses an if statement to update the maximum when a higher daily count is found',
+        marks: 1,
+        check: ({ src }) => /\bif\b/.test(src) && />/.test(src),
+      },
+      {
+        text: 'Tracks the day number (not just the count) alongside the maximum',
+        marks: 1,
+        check: ({ src }) => {
+          // Heuristic: at least 4 distinct variable names being assigned
+          const varNames = new Set(
+            (src.match(/\b([a-z_]\w*)\s*=/g) || [])
+              .map(s => s.replace(/\s*=$/, '').trim())
+              .filter(v => v.length > 0 && !/\bfor\b/.test(v))
+          );
+          return varNames.size >= 4;
+        },
+      },
+      {
+        text: 'Outputs total visits and average per day (total=70, average=10 for test case)',
+        marks: 1,
+        check: ({ runs }) => outHas(runs[0], '70') && outHas(runs[0], '10'),
+      },
+    ],
+  },
+
+  // ── Q8: Marathon Pace Tracker (8 marks) ────────────────────
+  {
+    maxMarks: 8,
+    // Test 1: paces 12,20,16 then sentinel -1 → count=3, avg=16, fastest=12, slowest=20
+    // Test 2: sentinel immediately → 'No runs recorded'
+    tests: [
+      { inputs: ['12','20','16','-1'] },
+      { inputs: ['-1']                },
+    ],
+    criteria: [
+      {
+        text: 'Initialises a run counter to 0 before the loop (fastest and slowest tested via outputs)',
+        marks: 1,
+        check: ({ src }) => /\b\w+\s*=\s*0\b/.test(src),
+      },
+      {
+        text: 'Uses a condition-controlled loop (while or do…until) with the −1 sentinel',
+        marks: 1,
+        check: ({ src }) => /\bwhile\b|\bdo\b/.test(src),
+      },
+      {
+        text: 'Inputs the pace inside the loop on each iteration',
+        marks: 1,
+        check: ({ src }) => (/\bwhile\b|\bdo\b/.test(src)) && /\binput\s*\(/.test(src),
+      },
+      {
+        text: 'Uses −1 as sentinel — terminates the loop without including −1 in calculations',
+        marks: 1,
+        check: ({ src }) => /-\s*1\b|-1\b/.test(src),
+      },
+      {
+        text: 'Accumulates totals and count correctly — average is 16 for test inputs (12, 20, 16, −1)',
+        marks: 1,
+        check: ({ runs }) => outHas(runs[0], '16'),
+      },
+      {
+        text: 'Tracks the fastest (lowest) pace — fastest is 12 for test inputs',
+        marks: 1,
+        check: ({ runs }) => outHas(runs[0], '12'),
+      },
+      {
+        text: 'Tracks the slowest (highest) pace — slowest is 20 for test inputs',
+        marks: 1,
+        check: ({ runs }) => outHas(runs[0], '20'),
+      },
+      {
+        text: 'Outputs full summary when count ≥ 1; outputs \'No runs recorded\' when count = 0',
+        marks: 1,
+        check: ({ runs }) => outHas(runs[1], 'no runs'),
+      },
+    ],
+  },
+
+]; // end TASKS
+
+// ── State ──────────────────────────────────────────────────────
+const taskEarned = new Array(TASK_COUNT).fill(0);
+const taskAttempted = new Array(TASK_COUNT).fill(false);
+
+// ── Helpers ────────────────────────────────────────────────────
+
+function normSrc(raw) {
+  // Strip // comments, collapse whitespace, lowercase
+  return raw.replace(/\/\/[^\n]*/g, ' ').replace(/\s+/g, ' ').toLowerCase().trim();
+}
+
+function outHas(run, ...needles) {
+  if (!run || !run.ok || !run.output) return false;
+  const o = run.output.toLowerCase();
+  return needles.every(n => o.includes(n.toLowerCase()));
+}
+
+// ── Editor setup ───────────────────────────────────────────────
+setupEditors('.pseudocode-textarea');
+
+// ── Pyodide preload ────────────────────────────────────────────
+preload();
+
+// ── Tab switching ──────────────────────────────────────────────
+document.getElementById('tab-bar').addEventListener('click', e => {
+  const tab = e.target.closest('.tab-btn');
+  if (!tab) return;
+  const idx = +tab.dataset.idx;
+  document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  tab.classList.add('active');
+  document.getElementById('panel-' + idx).classList.add('active');
+});
+
+// ── Run button wiring ──────────────────────────────────────────
+for (let idx = 0; idx < TASK_COUNT; idx++) {
+  const runBtn   = document.getElementById('run-' + idx);
+  const clearBtn = document.getElementById('clear-' + idx);
+  const statusEl = document.getElementById('run-status-' + idx);
+  const editorEl = document.getElementById('editor-' + idx);
+
+  runBtn.addEventListener('click', async () => {
+    await handleRun(idx, editorEl, runBtn, statusEl);
+  });
+
+  clearBtn.addEventListener('click', () => {
+    editorEl.value = '';
+    editorEl.dispatchEvent(new Event('input'));
+    // Reset mark scheme to pending state
+    resetMarkscheme(idx);
+  });
+}
+
+async function handleRun(idx, editorEl, runBtn, statusEl) {
+  const task = TASKS[idx];
+
+  runBtn.disabled = true;
+  statusEl.textContent = 'Running…';
+
+  // Run each test case sequentially
+  const runs = [];
+  for (const test of task.tests) {
+    const r = await runPseudocode(editorEl, { inputs: test.inputs });
+    runs.push({ inputs: test.inputs, output: r.output || '', ok: r.ok });
+  }
+
+  statusEl.textContent = '';
+  runBtn.disabled = false;
+  taskAttempted[idx] = true;
+
+  // If the first run didn't produce any output at all, likely a syntax error
+  if (!runs[0].ok && !runs[0].output) {
+    showToast('Fix the syntax error shown in the editor before checking marks.', 'warn');
+  }
+
+  // Evaluate each criterion
+  const src = normSrc(editorEl.value);
+  let earned = 0;
+  const passed = task.criteria.map(c => {
+    let result = false;
+    try { result = !!c.check({ src, runs }); } catch (_) { result = false; }
+    if (result) earned += c.marks;
+    return result;
+  });
+
+  // Update mark scheme UI
+  applyMarkscheme(idx, passed, earned, task.maxMarks);
+
+  // Update tab + global progress
+  taskEarned[idx] = earned;
+  updateTabState(idx, earned, task.maxMarks);
+  updateProgress();
+
+  // Submit grade
+  const totalEarned = taskEarned.reduce((s, v) => s + v, 0);
+  window.Classroom?.submitGrade(
+    Math.round(totalEarned / TOTAL_MARKS * 100),
+    ACTIVITY_TITLE
+  );
+
+  if (totalEarned === TOTAL_MARKS) allComplete();
+}
+
+// ── Mark scheme DOM updates ────────────────────────────────────
+
+function applyMarkscheme(idx, passed, earned, maxMarks) {
+  const list = document.getElementById('ms-list-' + idx);
+  const rows = list.querySelectorAll('.ms-row');
+  rows.forEach((row, i) => {
+    const tick = row.querySelector('.ms-tick');
+    row.classList.remove('pass', 'fail');
+    if (passed[i]) {
+      row.classList.add('pass');
+      tick.textContent = '✓';
+    } else {
+      row.classList.add('fail');
+      tick.textContent = '✗';
+    }
+  });
+
+  const scoreEl = document.getElementById('ms-score-' + idx);
+  scoreEl.textContent = earned + ' / ' + maxMarks + ' mark' + (maxMarks === 1 ? '' : 's');
+  scoreEl.classList.toggle('full', earned === maxMarks);
+}
+
+function resetMarkscheme(idx) {
+  const list = document.getElementById('ms-list-' + idx);
+  list.querySelectorAll('.ms-row').forEach(row => {
+    row.classList.remove('pass', 'fail');
+    row.querySelector('.ms-tick').textContent = '○';
+  });
+  document.getElementById('ms-score-' + idx).textContent =
+    '— / ' + TASKS[idx].maxMarks + ' mark' + (TASKS[idx].maxMarks === 1 ? '' : 's');
+  document.getElementById('ms-score-' + idx).classList.remove('full');
+}
+
+// ── Tab state ──────────────────────────────────────────────────
+
+function updateTabState(idx, earned, maxMarks) {
+  const tab = document.querySelector('.tab-btn[data-idx="' + idx + '"]');
+  if (!tab) return;
+  tab.classList.remove('done-green', 'done-gold');
+  if (earned === maxMarks) {
+    tab.classList.add('done-green');
+  } else if (earned > 0) {
+    tab.classList.add('done-gold');
+  }
+}
+
+// ── Progress bar ───────────────────────────────────────────────
+
+function updateProgress() {
+  const totalEarned = taskEarned.reduce((s, v) => s + v, 0);
+  const pct = Math.round(totalEarned / TOTAL_MARKS * 100);
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-pct').textContent  = totalEarned + ' / ' + TOTAL_MARKS;
+}
+
+// ── All tasks complete ─────────────────────────────────────────
+
+function allComplete() {
+  document.getElementById('done-banner').classList.add('show');
+}
+
+// ── Toast ──────────────────────────────────────────────────────
+
+window.showToast = function(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'ac-toast show' + (type ? ' ' + type : '');
+  setTimeout(() => t.classList.remove('show'), 3500);
+};
+</script>
+
+<!-- Google Classroom integration -->
+<script src="../../classroom.js"></script>
+</body>
+</html>

@@ -7,7 +7,7 @@
 //   helpers - the preamble Python string (shown in "Transpiled Python" panel)
 //
 // OCR v2 pseudocode coverage (procedural subset + file I/O):
-//   variables, assignment, casting (int/str/float/real), print, input, comments
+//   variables, assignment, auto-typed input (int→float→str), explicit casting (int/str/float/real), print, comments
 //   for...next (inclusive, step support including negative via _psc_rng)
 //   while...endwhile, do...until
 //   if/elseif/else/endif
@@ -55,7 +55,15 @@ class _PscWriteFile:
     def writeLine(self, s): _psc_writes[self._name].append(str(s))
     def close(self): pass
 def _psc_open_read(name): return _PscReadFile(name)
-def _psc_open_write(name): return _PscWriteFile(name)`;
+def _psc_open_write(name): return _PscWriteFile(name)
+def _psc_input(prompt=''):
+    v = input(prompt)
+    try: return int(v)
+    except (ValueError, TypeError): pass
+    try: return float(v)
+    except (ValueError, TypeError): pass
+    return v
+real = float`;
 
 // ── Utilities ─────────────────────────────────────────────────────────────────
 
@@ -208,6 +216,9 @@ function rewriteOperators(code, ctx) {
   s = s.replace(/\bopenRead\s*\(/g, '_psc_open_read(');
   s = s.replace(/\bopenWrite\s*\(/g, '_psc_open_write(');
 
+  // input() → _psc_input() for OCR-style auto-typing (int → float → str)
+  s = s.replace(/\binput\s*\(/g, '_psc_input(');
+
   // Logical/arithmetic operators
   s = s.replace(/\bAND\b/g, 'and');
   s = s.replace(/\bOR\b/g, 'or');
@@ -248,6 +259,35 @@ function classify(line, ctx) {
   }
   if (/^inherits\b/i.test(t)) {
     return { oop: "'inherits' is not supported" };
+  }
+
+  // ── Python-ism detection — friendly hints for common Python syntax mistakes ──
+  if (/^#/.test(t)) {
+    return { pythonic: "use '//' for comments in OCR pseudocode, not '#'" };
+  }
+  if (/^elif\b/i.test(t)) {
+    return { pythonic: "use 'elseif <condition> then' not Python's 'elif'" };
+  }
+  if (/^else\s*:$/.test(t)) {
+    return { pythonic: "write 'else' without a colon in OCR pseudocode" };
+  }
+  if (/^if\s+.+:\s*$/i.test(t) && !/^if\s+.+\s+then\s*$/i.test(t)) {
+    return { pythonic: "'if' statements end with 'then' in OCR pseudocode, not ':' — e.g. 'if x > 5 then'" };
+  }
+  if (/^while\s+.+:\s*$/i.test(t)) {
+    return { pythonic: "'while' does not end with ':' in OCR pseudocode — close the loop with 'endwhile'" };
+  }
+  if (/^for\s+[A-Za-z_]\w*\s+in\s+/i.test(t)) {
+    return { pythonic: "use 'for <var> = <start> to <end>' — OCR pseudocode does not use Python's 'for ... in ...'" };
+  }
+  if (/^def\s+[A-Za-z_]\w*\s*\(/i.test(t)) {
+    return { pythonic: "use 'function <name>(<params>)' and 'endfunction' — OCR pseudocode does not use 'def'" };
+  }
+  if (/^continue$/i.test(t)) {
+    return { pythonic: "'continue' is not part of OCR pseudocode — restructure your loop condition to skip iterations" };
+  }
+  if (/^break$/i.test(t)) {
+    return { pythonic: "'break' is not part of OCR pseudocode — use a flag variable or a 'do...until' loop instead" };
   }
 
   let m;
@@ -358,6 +398,11 @@ export function transpile(src) {
 
     if (cls.oop) {
       errors.push({ line: lineNum, msg: cls.oop });
+      continue;
+    }
+
+    if (cls.pythonic) {
+      errors.push({ line: lineNum, msg: cls.pythonic });
       continue;
     }
 
