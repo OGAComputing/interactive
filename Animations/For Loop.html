@@ -477,8 +477,7 @@ function renderTurtle(ts) {
 }
 
 // ── Apply a step ──────────────────────────────────────────────────────────────
-function reset() {
-  stopAuto();
+function resetState() {
   current = -1;
 
   allArrowIds.forEach(id => document.getElementById(id).classList.remove('visible'));
@@ -498,6 +497,11 @@ function reset() {
 
   document.getElementById('btnNext').disabled = false;
   document.getElementById('stepCounter').textContent = '';
+}
+
+function reset() {
+  stopAuto();
+  resetState();
 }
 
 function applyStep(s) {
@@ -538,7 +542,9 @@ function toggleAuto() {
   if (autoTimer) { stopAuto(); return; }
   document.getElementById('btnAuto').textContent = '⏸ Pause';
   autoTimer = setInterval(() => {
-    if (current >= steps.length - 1) { stopAuto(); return; }
+    if (current >= steps.length - 1) {
+      resetState();
+    }
     nextStep();
   }, autoSpeed);
 }
