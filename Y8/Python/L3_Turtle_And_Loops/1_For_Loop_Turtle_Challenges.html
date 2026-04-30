@@ -116,6 +116,8 @@ color:  purple
   .btn-check { background: var(--purple-light); color: white; } .btn-check:hover { background: var(--stage-p); }
   .btn-next  { background: var(--teal); color: var(--navy); font-weight: 800; } .btn-next:hover { background: #009e8c; }
   .btn-clear { background: transparent; color: var(--muted); border: 1px solid #3d3d5a; font-size: 0.75rem; } .btn-clear:hover { background: #1a1a2e; color: white; }
+  .btn-skip { background: transparent; color: var(--muted); border: 1px dashed #3d3d5a; font-size: 0.75rem; font-style: italic; } .btn-skip:hover { background: #1a0a2e; color: #f87171; border-color: var(--red); border-style: solid; }
+  .primm-nav button.skipped .stage-letter { background: var(--red) !important; color: white !important; }
 
   /* FEEDBACK */
   .feedback { padding: 0.6rem 0.9rem; border-radius: 6px; font-size: 0.82rem; font-weight: 600; flex: 1; min-width: 0; }
@@ -346,6 +348,7 @@ color:  purple
       <div style="font-size:0.78rem;color:var(--muted);margin:0.5rem 0 0.3rem">What actually happened?</div>
       <textarea id="i1b" placeholder="What actually happened…" rows="2" oninput="saveState()"></textarea>
       <button class="btn btn-next" style="margin-top:10px" onclick="nextStep('I', 1)">Next Investigation →</button>
+      <button class="btn btn-skip" id="btn_skip_i1" style="margin-top:6px;display:none" onclick="skipStep('I')">Move on without completing →</button>
     </div>
 
     <div class="q-card step-hidden" id="qcard_i2" style="border-left-color:var(--stage-i)">
@@ -358,12 +361,14 @@ color:  purple
         <input type="text" id="i2b" placeholder="shape name…" style="width:160px" oninput="saveState()">
       </div>
       <button class="btn btn-next" style="margin-top:10px" onclick="nextStep('I', 2)">Next Investigation →</button>
+      <button class="btn btn-skip" id="btn_skip_i2" style="margin-top:6px;display:none" onclick="skipStep('I')">Move on without completing →</button>
     </div>
 
     <div class="q-card step-hidden" id="qcard_i3" style="border-left-color:var(--stage-i)">
       <label><span class="q-num" style="background:var(--stage-i)">3</span> Now add <code style="background:#ede0ff;padding:0 3px;border-radius:3px">t.pencolor("red")</code> before the <code style="background:#ede0ff;padding:0 3px;border-radius:3px">for</code> line</label>
       <textarea id="i3" placeholder="Describe what happened…" rows="3" oninput="saveState()"></textarea>
       <button class="btn btn-next" style="margin-top:10px" onclick="tryCompleteInvestigate()">Finish Investigation →</button>
+      <button class="btn btn-skip" id="btn_skip_i3" style="margin-top:6px;display:none" onclick="skipStep('I')">Move on without completing →</button>
     </div>
   </div>
 
@@ -421,6 +426,7 @@ color:  purple
     </div>
   </div>
 
+  <button class="btn btn-skip" id="btn_skip_m1" onclick="skipStep('M1')" style="margin-top:0.5rem;display:none">Skip this task →</button>
   <button class="btn btn-next step-hidden" id="btn_goto_m2_from_m1" onclick="completeStage('M1')" style="margin-top:1rem">
     ✓ Modifications done — go to Make →
   </button>
@@ -508,6 +514,8 @@ let passedMake      = state.passedMake      || { burst: false, shape: false, spi
 let stepI = state.stepI || 1;
 let stepM1 = state.stepM1 || 1;
 let stepM2 = state.stepM2 || 1;
+let skippedStages = state.skippedStages || [];
+let attemptCounts = state.attemptCounts || {};
 
 const ALL_FIELDS = ['p1','p2','p3','p4','r1','r2','r3',
   'i1a','i1b','i2a','i2b','i3',
@@ -525,6 +533,18 @@ window.addEventListener('DOMContentLoaded', () => {
   updateStepVisibility();
 
   if (completedStages.includes('M2')) showCompletion();
+
+  skippedStages.forEach(s => {
+    const btn = document.querySelector(`[data-stage="${s}"]`);
+    if (btn) btn.classList.add('skipped');
+  });
+
+  for (let i = 1; i <= 3; i++) {
+    if ((attemptCounts['i' + i] || 0) >= 3) {
+      const btn = document.getElementById('btn_skip_i' + i);
+      if (btn) btn.style.display = '';
+    }
+  }
 
   if (completedStages.includes('P')) {
     document.getElementById('predict-review')?.classList.remove('step-hidden');
@@ -613,6 +633,8 @@ function saveState() {
   state.stepI = stepI;
   state.stepM1 = stepM1;
   state.stepM2 = stepM2;
+  state.skippedStages = skippedStages;
+  state.attemptCounts = attemptCounts;
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
   updateGranularProgress();
 }
@@ -628,6 +650,8 @@ function updateStepVisibility() {
   }
   const m1Btn = document.getElementById('btn_check_m1');
   if (m1Btn) m1Btn.textContent = '▶ Run and Check Task ' + stepM1;
+  const skipM1Btn = document.getElementById('btn_skip_m1');
+  if (skipM1Btn) skipM1Btn.style.display = (attemptCounts['m1_' + stepM1] || 0) >= 3 ? '' : 'none';
   document.getElementById('btn_goto_m2_from_m1')?.classList.toggle('step-hidden', !completedStages.includes('M1'));
 
   for(let i=1; i<=3; i++) {
@@ -905,6 +929,7 @@ function nextStep(stage, n) {
       card.classList.add('error');
       fieldHint(card, firstError);
       card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      recordIAttempt(n);
       return;
     }
 
@@ -942,6 +967,9 @@ function tryCompleteInvestigate() {
   if (allOk) {
     completeStage('I');
   } else {
+    if (cardErrors['qcard_i1']) recordIAttempt(1);
+    if (cardErrors['qcard_i2']) recordIAttempt(2);
+    if (cardErrors['qcard_i3']) recordIAttempt(3);
     // Switch to the first step that has an error
     if (cardErrors['qcard_i1']) stepI = 1;
     else if (cardErrors['qcard_i2']) stepI = 2;
@@ -1069,6 +1097,8 @@ function runAndCheckMod() {
       saveState();
       submitScore();
     }
+  } else {
+    recordM1Attempt();
   }
 }
 
@@ -1362,12 +1392,54 @@ function closeTurtleModal() {
   document.getElementById('turtleModal').classList.remove('open');
 }
 
+// ═══════════════════════════════════════════════════════
+//  SKIP STEP
+// ═══════════════════════════════════════════════════════
+function markStageSkipped(stage) {
+  if (!skippedStages.includes(stage)) skippedStages.push(stage);
+  const btn = document.querySelector(`[data-stage="${stage}"]`);
+  if (btn) btn.classList.add('skipped');
+  saveState();
+}
+
+function skipStep(stage) {
+  markStageSkipped(stage);
+  if (stage === 'I') {
+    if (stepI < 3) { stepI++; updateStepVisibility(); saveState(); }
+    else { completeStage('I'); }
+  } else if (stage === 'M1') {
+    if (stepM1 < 5) { stepM1++; updateStepVisibility(); saveState(); }
+    else { completeStage('M1'); }
+  }
+}
+
+function recordIAttempt(n) {
+  const key = 'i' + n;
+  attemptCounts[key] = (attemptCounts[key] || 0) + 1;
+  if (attemptCounts[key] >= 3) {
+    const btn = document.getElementById('btn_skip_i' + n);
+    if (btn) btn.style.display = '';
+  }
+  saveState();
+}
+
+function recordM1Attempt() {
+  const key = 'm1_' + stepM1;
+  attemptCounts[key] = (attemptCounts[key] || 0) + 1;
+  if (attemptCounts[key] >= 3) {
+    const btn = document.getElementById('btn_skip_m1');
+    if (btn) btn.style.display = '';
+  }
+  saveState();
+}
+
 // Expose globals for onclick handlers
 Object.assign(window, {
   showStage, saveState, clearError,
   tryCompletePredict, tryCompleteRun, tryCompleteInvestigate, nextStep,
   runAndCheckMod, runAndCheckMake,
-  openTurtleFromChecker, closeTurtleModal
+  openTurtleFromChecker, closeTurtleModal,
+  skipStep
 });
 </script>
 

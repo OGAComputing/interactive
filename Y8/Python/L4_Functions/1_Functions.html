@@ -182,6 +182,8 @@ color:  purple
   .btn { padding: 0.5rem 1.2rem; border-radius: 6px; border: none; cursor: pointer; font-family: 'Trebuchet MS',sans-serif; font-weight: 700; font-size: 0.82rem; transition: all 0.2s; display: inline-flex; align-items: center; gap: 0.4rem; }
   .btn-check { background: var(--purple-light); color: white; } .btn-check:hover { background: var(--stage-p); }
   .btn-next  { background: var(--teal); color: var(--navy); font-weight: 800; } .btn-next:hover { background: #009e8c; }
+  .btn-skip { background: transparent; color: var(--muted); border: 1px dashed #3d3d5a; font-size: 0.75rem; font-style: italic; } .btn-skip:hover { background: #1a0a2e; color: #f87171; border-color: var(--red); border-style: solid; }
+  .primm-nav button.skipped .stage-letter { background: var(--red) !important; color: white !important; }
 
   /* ── FEEDBACK (checker footer) ── */
   .feedback { padding: 0.6rem 0.9rem; border-radius: 6px; font-size: 0.82rem; font-weight: 600; flex: 1; min-width: 0; }
@@ -390,30 +392,35 @@ color:  purple
       <label class="q-label"><span class="q-num" style="background:var(--stage-i)">1</span> Add a third <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print</code> line inside <code style="background:#ede0ff;padding:0 3px;border-radius:3px">greet()</code>. Run it. How does the output change?</label>
       <textarea id="i1" placeholder="Describe what changed…" oninput="saveState()"></textarea>
       <button class="btn btn-next" style="margin-top:10px" onclick="nextStep('I', 1)">Next Investigation →</button>
+      <button class="btn btn-skip" id="btn_skip_i1" style="margin-top:6px;display:none" onclick="skipStep('I')">Move on without completing →</button>
     </div>
 
     <div class="q-card step-hidden" id="qcard_i2" style="border-left-color:var(--stage-i)">
       <label class="q-label"><span class="q-num" style="background:var(--stage-i)">2</span> Add a <strong>second</strong> <code style="background:#ede0ff;padding:0 3px;border-radius:3px">greet()</code> call at the very bottom. Run it. Why does the output repeat? <strong>(Important: Remove this extra line before moving to the next task.)</strong></label>
       <textarea id="i2" placeholder="Describe why it repeats…" oninput="saveState()"></textarea>
       <button class="btn btn-next" style="margin-top:10px" onclick="nextStep('I', 2)">Next Investigation →</button>
+      <button class="btn btn-skip" id="btn_skip_i2" style="margin-top:6px;display:none" onclick="skipStep('I')">Move on without completing →</button>
     </div>
 
     <div class="q-card step-hidden" id="qcard_i3" style="border-left-color:var(--stage-i)">
       <label class="q-label"><span class="q-num" style="background:var(--stage-i)">3</span> Change <code style="background:#ede0ff;padding:0 3px;border-radius:3px">"Hello!"</code> to your own name. Run it. What changes?</label>
       <textarea id="i3" placeholder="Describe what changed…" oninput="saveState()"></textarea>
       <button class="btn btn-next" style="margin-top:10px" onclick="nextStep('I', 3)">Next Investigation →</button>
+      <button class="btn btn-skip" id="btn_skip_i3" style="margin-top:6px;display:none" onclick="skipStep('I')">Move on without completing →</button>
     </div>
 
     <div class="q-card step-hidden" id="qcard_i4" style="border-left-color:var(--stage-i)">
       <label class="q-label"><span class="q-num" style="background:var(--stage-i)">4</span> Remove the brackets from the call at the bottom (so it's just <code style="background:#ede0ff;padding:0 3px;border-radius:3px">greet</code>). Run it — what happens? Why?</label>
       <textarea id="i4" placeholder="What happened and why…" oninput="saveState()"></textarea>
       <button class="btn btn-next" style="margin-top:10px" onclick="nextStep('I', 4)">Next Investigation →</button>
+      <button class="btn btn-skip" id="btn_skip_i4" style="margin-top:6px;display:none" onclick="skipStep('I')">Move on without completing →</button>
     </div>
 
     <div class="q-card step-hidden" id="qcard_i5" style="border-left-color:var(--stage-i)">
       <label class="q-label"><span class="q-num" style="background:var(--stage-i)">5</span> Add a second function called <code style="background:#ede0ff;padding:0 3px;border-radius:3px">farewell()</code> that prints "Goodbye!" and call it after <code style="background:#ede0ff;padding:0 3px;border-radius:3px">greet()</code>. Run it. What do you see?</label>
       <textarea id="i5" placeholder="Describe the full output…" oninput="saveState()"></textarea>
       <button class="btn btn-next" style="margin-top:10px" onclick="tryCompleteInvestigate()">Finish Investigation →</button>
+      <button class="btn btn-skip" id="btn_skip_i5" style="margin-top:6px;display:none" onclick="skipStep('I')">Move on without completing →</button>
     </div>
   </div>
 
@@ -487,6 +494,7 @@ color:  purple
     </div>
   </div>
 
+  <button class="btn btn-skip" id="btn_skip_m1" onclick="skipStep('M1')" style="margin-top:0.5rem;display:none">Skip this task →</button>
   <button class="btn btn-next step-hidden" id="btn_goto_m2" onclick="completeStage('M1')" style="margin-top:1rem">
     ✓ All modifications done — go to Make →
   </button>
@@ -581,6 +589,8 @@ let passedChecks    = state.passedChecks    || {};
 let stepI = state.stepI || 1;
 let stepM1 = state.stepM1 || 1;
 let stepM2 = state.stepM2 || 1;
+let skippedStages = state.skippedStages || [];
+let attemptCounts = state.attemptCounts || {};
 
 const STAGES = ['P','R','I','M1','M2'];
 
@@ -602,6 +612,8 @@ function saveState() {
   state.stepI = stepI;
   state.stepM1 = stepM1;
   state.stepM2 = stepM2;
+  state.skippedStages = skippedStages;
+  state.attemptCounts = attemptCounts;
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
 }
 
@@ -645,6 +657,8 @@ function updateStepVisibility() {
   }
   const m1Btn = document.getElementById('btn_check_m1');
   if (m1Btn) m1Btn.textContent = stepM1 === 4 ? '⚡ Check final modification' : '⚡ Check modification ' + stepM1;
+  const skipM1Btn = document.getElementById('btn_skip_m1');
+  if (skipM1Btn) skipM1Btn.style.display = (attemptCounts['m1_' + stepM1] || 0) >= 3 ? '' : 'none';
 
   document.getElementById('btn_goto_m2')?.classList.toggle('step-hidden', !passedChecks['m1_code4']);
   document.getElementById('m2_ext_task')?.classList.toggle('step-hidden', !passedChecks['m2_make']);
@@ -988,7 +1002,8 @@ function nextStep(stage, n) {
     }
 
     if (msg) {
-      card.classList.add('error'); fieldHint(card, msg); 
+      card.classList.add('error'); fieldHint(card, msg);
+      recordIAttempt(n);
       return;
     }
 
@@ -1065,7 +1080,7 @@ function tryCompleteInvestigate() {
   });
 
   if (allOk) { completeStage('I'); }
-  else { firstError?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+  else { recordIAttempt(stepI); firstError?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1093,6 +1108,7 @@ async function checkMod() {
   if (!structural.pass) {
     fbEl.className = 'feedback fail';
     fbEl.textContent = structural.msg;
+    recordM1Attempt();
     return;
   }
 
@@ -1104,6 +1120,7 @@ async function checkMod() {
   if (!run.ok) {
     fbEl.className = 'feedback fail';
     fbEl.textContent = '❌ Error: ' + run.output;
+    recordM1Attempt();
     return;
   }
 
@@ -1210,6 +1227,47 @@ function showCompletion() {
 }
 
 // ═══════════════════════════════════════════════════════
+//  SKIP STEP
+// ═══════════════════════════════════════════════════════
+function markStageSkipped(stage) {
+  if (!skippedStages.includes(stage)) skippedStages.push(stage);
+  const btn = document.querySelector(`[data-stage="${stage}"]`);
+  if (btn) btn.classList.add('skipped');
+  saveState();
+}
+
+function skipStep(stage) {
+  markStageSkipped(stage);
+  if (stage === 'I') {
+    if (stepI < 5) { stepI++; updateStepVisibility(); saveState(); }
+    else { completeStage('I'); }
+  } else if (stage === 'M1') {
+    if (stepM1 < 4) { stepM1++; updateStepVisibility(); saveState(); }
+    else { completeStage('M1'); }
+  }
+}
+
+function recordIAttempt(n) {
+  const key = 'i' + n;
+  attemptCounts[key] = (attemptCounts[key] || 0) + 1;
+  if (attemptCounts[key] >= 3) {
+    const btn = document.getElementById('btn_skip_i' + n);
+    if (btn) btn.style.display = '';
+  }
+  saveState();
+}
+
+function recordM1Attempt() {
+  const key = 'm1_' + stepM1;
+  attemptCounts[key] = (attemptCounts[key] || 0) + 1;
+  if (attemptCounts[key] >= 3) {
+    const btn = document.getElementById('btn_skip_m1');
+    if (btn) btn.style.display = '';
+  }
+  saveState();
+}
+
+// ═══════════════════════════════════════════════════════
 //  EXPOSE GLOBALS (required because this is a module script)
 // ═══════════════════════════════════════════════════════
 Object.assign(window, {
@@ -1219,7 +1277,8 @@ Object.assign(window, {
   tryCompleteInvestigate, nextStep,
   checkMod, completeStage,
   checkMake, checkExt,
-  runCodeInEditor, // Expose the new function for editor-based code execution
+  runCodeInEditor,
+  skipStep,
 });
 
 // ═══════════════════════════════════════════════════════
@@ -1264,6 +1323,19 @@ window.addEventListener('DOMContentLoaded', () => {
     if (fb) { fb.classList.remove('hidden'); fb.className = 'feedback pass'; fb.textContent = '✅ Main task complete.'; }
   }
   if (completedStages.includes('M2')) showCompletion();
+
+  skippedStages.forEach(s => {
+    const btn = document.querySelector(`[data-stage="${s}"]`);
+    if (btn) btn.classList.add('skipped');
+  });
+
+  for (let i = 1; i <= 5; i++) {
+    if ((attemptCounts['i' + i] || 0) >= 3) {
+      const btn = document.getElementById('btn_skip_i' + i);
+      if (btn) btn.style.display = '';
+    }
+  }
+
   updateStepVisibility();
 });
 </script>
