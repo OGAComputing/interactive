@@ -17,9 +17,9 @@ test.describe('Page shell', () => {
     await expect(page.locator('#pscEditor')).toBeVisible();
   });
 
-  test('Run button is initially disabled while Pyodide loads', async ({ page }) => {
-    // Button should start disabled
-    await expect(page.locator('#runBtn')).toBeDisabled();
+  test('Run button is enabled once Pyodide loads', async ({ page }) => {
+    // Wait for the button to be enabled (might be instant if cached)
+    await expect(page.locator('#runBtn')).toBeEnabled({ timeout: 30000 });
   });
 });
 
@@ -69,6 +69,18 @@ test.describe('Pseudocode highlighting', () => {
     await page.waitForTimeout(200);
     const html = await page.locator('.highlight-layer').innerHTML();
     expect(html).toContain('tok-str');
+  });
+
+  test('placeholder comment clears on focus', async ({ page }) => {
+    const ta = page.locator('#pscEditor');
+    // Set placeholder value
+    await ta.fill('// Write your OCR pseudocode here');
+    // Blur to ensure we can focus again
+    await ta.blur();
+    // Focus it
+    await ta.focus();
+    // It should be cleared
+    await expect(ta).toHaveValue('');
   });
 });
 

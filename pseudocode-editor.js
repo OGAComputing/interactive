@@ -63,7 +63,7 @@ function _injectStyles() {
       overflow: hidden;
       flex-shrink: 0;
     }
-    :where(.editor-container) { position: relative; flex: 1; display: block; }
+    :where(.editor-container) { position: relative; flex: 1; display: block; overflow: hidden; }
     .editor-container .pseudocode-textarea { color: transparent !important; background: transparent !important; }
     .pseudocode-textarea {
       width: 100%;
@@ -77,13 +77,15 @@ function _injectStyles() {
       border: none;
       outline: none;
       resize: none;
-      overflow: hidden;
+      overflow-x: auto;
+      overflow-y: hidden;
       min-height: 200px;
       white-space: pre;
     }
     :where(.highlight-layer) {
       position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
+      top: 0; left: 0; bottom: 0;
+      min-width: 100%; width: max-content;
       padding: .8rem 1rem;
       font-family: 'Courier New', 'Consolas', monospace;
       font-size: .88rem;
@@ -484,11 +486,18 @@ export function setupEditors(selector = '.pseudocode-textarea') {
     });
 
     ta.addEventListener('input', () => _debouncedCheck(ta));
+    ta.addEventListener('scroll', () => {
+      const hl = _hlMap.get(ta);
+      if (hl) hl.style.transform = `translateX(-${ta.scrollLeft}px)`;
+    });
     ta.addEventListener('focus', () => {
-      if (ta.value.trim() === '// Write your OCR pseudocode here') {
+      const v = ta.value.trim();
+      if (v === '// Write your OCR pseudocode here' || v === '// Write your pseudocode here') {
         ta.value = '';
+        _debouncedCheck(ta);
+      } else {
+        _debouncedCheck(ta);
       }
-      _debouncedCheck(ta);
     });
 
     ta.addEventListener('keydown', e => {
