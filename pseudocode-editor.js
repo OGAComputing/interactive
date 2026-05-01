@@ -126,7 +126,8 @@ function _injectStyles() {
       display: flex;
       flex-direction: column;
     }
-    :where(.output-panel.error) { color: #f38ba8; }
+    .output-panel.error,
+    .output-panel.error .output-content { color: #ff6b6b; }
     :where(.output-header) {
       font-size: 0.65rem;
       color: #585b70;
