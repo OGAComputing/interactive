@@ -29,7 +29,10 @@ const PREAMBLE = `\
 def _psc_rng(a, b, s=1):
     return range(a, b + 1, s) if s > 0 else range(a, b - 1, s)
 def _psc_len(x): return len(x)
-def _psc_substr(s, start, count): return s[start:start + count]
+class _PscStr(str):
+    def __add__(self, other): return _PscStr(str(self) + str(other))
+    def __radd__(self, other): return _PscStr(str(other) + str(self))
+def _psc_substr(s, start, count): return _PscStr(s[start:start + count])
 _psc_files = globals().get('_psc_files', {})
 _psc_writes = {}
 class _PscReadFile:
@@ -241,7 +244,7 @@ function rewriteOperators(code, ctx) {
 
 function rewrite(line, ctx) {
   return segment(line).map(s => {
-    if (s.kind === 'string') return s.text;
+    if (s.kind === 'string') return '_PscStr(' + s.text + ')';
     if (s.kind === 'comment') return '#' + s.text.slice(2);
     return rewriteOperators(s.text, ctx);
   }).join('');

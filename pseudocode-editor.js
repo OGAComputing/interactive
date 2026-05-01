@@ -279,7 +279,7 @@ function _highlightPseudocode(src) {
 function _translateMsg(pyMsg, srcLine) {
   let msg = String(pyMsg).replace(/^(?:SyntaxError|IndentationError|TabError): /, '').split('\n')[0];
 
-  if (/expected.*':'|invalid syntax/i.test(msg))
+  if (/expected.*':'|invalid syntax|missing colon/i.test(msg))
     msg = "Syntax error — check for a missing keyword (then, do, to) or unmatched brackets";
   else if (/expected an indented block/i.test(msg))
     msg = "Empty block — add at least one statement inside your if/while/for/function";
