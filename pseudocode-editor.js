@@ -278,7 +278,9 @@ function _highlightPseudocode(src) {
 
 // ── Error message translation (Python → pseudocode-flavoured) ────────────────
 function _translateMsg(pyMsg, srcLine) {
-  let msg = String(pyMsg).replace(/^(?:SyntaxError|IndentationError|TabError): /, '').split('\n')[0];
+  if (String(pyMsg).includes('_psc_loop_limit'))
+    return "Infinite loop — your program was stopped because a loop ran too many times. Check that your loop condition will eventually be false.";
+  let msg = String(pyMsg).replace(/^(?:SyntaxError|IndentationError|TabError|RuntimeError|Exception): /, '').split('\n')[0];
 
   if (/expected.*':'|invalid syntax|missing colon/i.test(msg))
     msg = "Syntax error — check for a missing keyword (then, do, to) or unmatched brackets";

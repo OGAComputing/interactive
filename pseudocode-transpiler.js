@@ -67,7 +67,13 @@ def _psc_input(prompt=''):
     try: return float(v)
     except (ValueError, TypeError): pass
     return v
-real = float`;
+real = float
+_psc_ticks = 0
+def _psc_tick():
+    global _psc_ticks
+    _psc_ticks += 1
+    if _psc_ticks > 500000:
+        raise Exception("_psc_loop_limit")`;
 
 // ── Utilities ─────────────────────────────────────────────────────────────────
 
@@ -303,17 +309,17 @@ function classify(line, ctx) {
     const py = step
       ? `for ${v} in _psc_rng(${A}, ${B}, ${rewriteOperators(step, ctx)}):`
       : `for ${v} in _psc_rng(${A}, ${B}):`;
-    return { emit: [py], openBlock: true };
+    return { emit: [py], openBlock: true, addLoopGuard: true };
   }
 
   if (t.match(/^next\s+[A-Za-z_]\w*$/i)) return { emit: [], closeBlock: true };
 
   if ((m = t.match(/^while\s+(.+)$/i))) {
-    return { emit: [`while ${rewriteOperators(m[1], ctx)}:`], openBlock: true };
+    return { emit: [`while ${rewriteOperators(m[1], ctx)}:`], openBlock: true, addLoopGuard: true };
   }
   if (/^endwhile$/i.test(t)) return { emit: [], closeBlock: true };
 
-  if (/^do$/i.test(t)) return { emit: ['while True:'], openBlock: true };
+  if (/^do$/i.test(t)) return { emit: ['while True:'], openBlock: true, addLoopGuard: true };
   if ((m = t.match(/^until\s+(.+)$/i))) {
     return { emit: [`if ${rewriteOperators(m[1], ctx)}: break`], closeBlock: true, emitBeforeClose: true };
   }
@@ -461,6 +467,10 @@ export function transpile(src) {
       for (const e of cls.emit) out.push({ py: ind() + e, srcLine: lineNum });
       noteBody();
       depthStack.push({ kind: 'block', hasBody: false });
+      if (cls.addLoopGuard) {
+        out.push({ py: ind() + '_psc_tick()', srcLine: null });
+        noteBody();
+      }
       continue;
     }
 
