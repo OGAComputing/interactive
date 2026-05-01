@@ -67,6 +67,10 @@ function _injectStyles() {
     .editor-container .pseudocode-textarea { color: transparent !important; background: transparent !important; }
     .pseudocode-textarea {
       width: 100%;
+      box-sizing: border-box;
+      -webkit-appearance: none;
+      appearance: none;
+      margin: 0;
       caret-color: #cdd6f4;
       position: relative;
       z-index: 2;
@@ -86,6 +90,7 @@ function _injectStyles() {
       position: absolute;
       top: 0; left: 0; bottom: 0;
       min-width: 100%; width: max-content;
+      box-sizing: border-box;
       padding: .8rem 1rem;
       font-family: 'Courier New', 'Consolas', monospace;
       font-size: .88rem;
@@ -316,6 +321,12 @@ function _updateNums(ta, nums) {
 }
 
 function _debouncedCheck(ta) {
+  // Immediate: sync highlight layer so text is never invisible during debounce window
+  const val = ta.value;
+  const hl = _hlMap.get(ta);
+  if (hl) hl.innerHTML = _highlightPseudocode(val) + (val.endsWith('\n') ? ' ' : '');
+  _containerMap.get(ta)?.classList.remove('loading');
+
   clearTimeout(_uiTimers.get(ta));
   _uiTimers.set(ta, setTimeout(() => {
     _updateNums(ta, _numsMap.get(ta));
@@ -619,6 +630,10 @@ export function setupEditors(selector = '.pseudocode-textarea') {
 
     ta.addEventListener('input', () => _debouncedCheck(ta));
     ta.addEventListener('scroll', () => {
+      // overflow-y:hidden hides the scrollbar but doesn't prevent scrollTop drifting.
+      // A non-zero scrollTop shifts the cursor mapping vs the highlight layer, causing
+      // clicks to land one line above the visual text. Reset it immediately.
+      if (ta.scrollTop !== 0) ta.scrollTop = 0;
       const hl = _hlMap.get(ta);
       if (hl) hl.style.transform = `translateX(-${ta.scrollLeft}px)`;
     });
