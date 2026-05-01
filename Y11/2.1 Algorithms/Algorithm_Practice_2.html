@@ -310,17 +310,17 @@ color:  blue
        Q4 — Number Plate Year Code (4 marks)
        ══════════════════════════════════════════════════════════ -->
   <div class="panel" id="panel-3">
-    <div class="goal">Extract the last 3 characters of a vehicle number plate.</div>
+    <div class="goal">Check if a vehicle number plate is exactly 7 characters, then extract the last 3.</div>
 
     <div class="card">
       <h2>Scenario</h2>
-      <p>A garage's vehicle management system reads a car's number plate and extracts the <strong>3-character code at the end of the plate</strong>.</p>
+      <p>A garage's vehicle management system reads a car's number plate. It must first check that the plate is <strong>exactly 7 characters long</strong>. If it is, the system extracts the <strong>3-character code at the end of the plate</strong>.</p>
       <p>Example: plate <code>AB12XYZ</code> → year code <code>XYZ</code></p>
       <h2 style="margin-top:14px;">Your algorithm must:</h2>
       <ul>
         <li>Ask the user to enter the number plate</li>
-        <li>Use <code>.length</code> to find the position of the last 3 characters</li>
-        <li>Use <code>.substring()</code> to extract and output the last 3 characters</li>
+        <li>Check if the length of the plate is exactly 7 characters</li>
+        <li>If it is, extract and output the last 3 characters</li>
       </ul>
     </div>
 
@@ -354,12 +354,12 @@ color:  blue
         </li>
         <li class="ms-row" data-bp="1">
           <span class="ms-tick">○</span>
-          <span class="ms-text">Uses <code>.length</code> to reference the length of the plate</span>
+          <span class="ms-text">Checks if the length of the plate is exactly 7</span>
           <span class="ms-marks">1 mark</span>
         </li>
         <li class="ms-row" data-bp="2">
           <span class="ms-tick">○</span>
-          <span class="ms-text">Uses <code>.substring()</code> with <code>.length - 3</code> as the start position</span>
+          <span class="ms-text">Uses <code>.substring()</code> to extract the last 3 characters</span>
           <span class="ms-marks">1 mark</span>
         </li>
         <li class="ms-row" data-bp="3">
@@ -777,6 +777,7 @@ const TASKS = [
     tests: [
       { inputs: ['AB12XYZ'] },   // last 3 → XYZ
       { inputs: ['LK23ABC'] },   // last 3 → ABC
+      { inputs: ['A1']      },   // length != 7
     ],
     criteria: [
       {
@@ -785,12 +786,12 @@ const TASKS = [
         check: ({ src }) => /\binput\s*\(/.test(src),
       },
       {
-        text: 'Uses .length to reference the length of the plate',
+        text: 'Checks if the length of the plate is exactly 7',
         marks: 1,
-        check: ({ src }) => /\.length/.test(src),
+        check: ({ src }) => /\bif\b.*\.\s*length\s*(==|=)\s*7/i.test(src),
       },
       {
-        text: 'Uses .substring() with .length - 3 as the starting position',
+        text: 'Uses .substring() to extract the last 3 characters',
         marks: 1,
         check: ({ src }) => /\.substring\s*\(/.test(src),
       },
@@ -798,7 +799,7 @@ const TASKS = [
         text: 'Outputs the correct last 3 characters (\'AB12XYZ\' → \'XYZ\', \'LK23ABC\' → \'ABC\')',
         marks: 1,
         check: ({ runs }) =>
-          outHas(runs[0], 'xyz') && outHas(runs[1], 'abc'),
+          outHas(runs[0], 'xyz') && outHas(runs[1], 'abc') && !outHas(runs[2], '1'),
       },
     ],
   },
