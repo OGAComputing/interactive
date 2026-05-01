@@ -136,6 +136,33 @@ function _injectStyles() {
       letter-spacing: 0.05em;
     }
     :where(.output-content) { white-space: pre-wrap; word-break: break-all; }
+    :where(.output-input-row) {
+      display: flex;
+      align-items: center;
+      border-top: 1px solid #1a1060;
+      margin-top: 0.3rem;
+      padding-top: 0.3rem;
+      flex-shrink: 0;
+    }
+    :where(.output-prompt-label) {
+      color: #5eead4;
+      white-space: pre;
+      font-family: 'Courier New', monospace;
+      font-size: .82rem;
+      flex-shrink: 0;
+    }
+    :where(.output-input-field) {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #f9e2af;
+      font-family: 'Courier New', monospace;
+      font-size: .82rem;
+      caret-color: #f9e2af;
+      padding: 0;
+      min-width: 4ch;
+    }
     @media (max-width: 768px) {
       :where(.editor-wrap) { flex-direction: column; }
       :where(.output-panel) { border-left: none; border-top: 1px solid #2d1060; min-height: 120px; flex: none; }
@@ -366,6 +393,78 @@ export function setEditorOutput(ta, text, isError = false) {
   panel.classList.toggle('error', isError);
   const content = panel.querySelector('.output-content');
   if (content) content.textContent = text || '';
+  const inputRow = panel.querySelector('.output-input-row');
+  if (inputRow) inputRow.hidden = true;
+}
+
+// ── Interactive input collection ──────────────────────────────────────────────
+
+// Scan pseudocode source for input("prompt") calls; returns array of prompt strings.
+function _extractPrompts(src) {
+  const prompts = [];
+  const re = /\binput\s*\(\s*(?:"([^"]*?)"|'([^']*?)')?/g;
+  let m;
+  while ((m = re.exec(src)) !== null) prompts.push(m[1] ?? m[2] ?? '');
+  return prompts;
+}
+
+// Map of ta → current input abort flag (replacing listener when re-run)
+const _inputAbort = new Map();
+
+// Show sequential prompts in the output panel; resolves with collected values.
+function _collectInputs(ta, prompts) {
+  const panel = _outputMap.get(ta);
+  if (!panel || prompts.length === 0) return Promise.resolve([]);
+
+  // Cancel any in-progress collection for this editor
+  const prev = _inputAbort.get(ta);
+  if (prev) prev();
+
+  const content = panel.querySelector('.output-content');
+  const inputRow = panel.querySelector('.output-input-row');
+  const promptLabel = panel.querySelector('.output-prompt-label');
+  const inputField = panel.querySelector('.output-input-field');
+
+  panel.classList.remove('error');
+  content.textContent = '';
+
+  return new Promise(resolve => {
+    const collected = [];
+    let idx = 0;
+    let done = false;
+
+    function finish() {
+      if (done) return;
+      done = true;
+      inputRow.hidden = true;
+      inputField.removeEventListener('keydown', onKey);
+      _inputAbort.delete(ta);
+      resolve(collected);
+    }
+
+    function advance(val) {
+      content.textContent += prompts[idx] + val + '\n';
+      collected.push(val);
+      idx++;
+      if (idx >= prompts.length) {
+        finish();
+      } else {
+        promptLabel.textContent = prompts[idx];
+        inputField.value = '';
+      }
+    }
+
+    function onKey(e) {
+      if (e.key === 'Enter') { e.preventDefault(); advance(inputField.value); }
+    }
+
+    _inputAbort.set(ta, finish);
+    inputField.addEventListener('keydown', onKey);
+    promptLabel.textContent = prompts[0];
+    inputField.value = '';
+    inputRow.hidden = false;
+    inputField.focus();
+  });
 }
 
 /**
@@ -397,25 +496,49 @@ export async function getWrittenFiles() {
  * @param {{ inputs?: string[] }} opts
  * @returns {Promise<{ ok: boolean, output?: string, errors?: object[], map?: (number|null)[] }>}
  */
-export async function runPseudocode(ta, { inputs = [] } = {}) {
+// inputs = null  → auto-collect from the output panel (default for new activities)
+// inputs = []    → run with no inputs (pre-supplied empty list, skips collection)
+// inputs = [...] → use the supplied values directly (backwards-compatible)
+export async function runPseudocode(ta, { inputs = null } = {}) {
   const { python, map, errors } = transpile(ta.value);
   if (errors.length) {
     setEditorOutput(ta, errors.map(e => `line ${e.line}: ${e.msg}`).join('\n'), true);
     return { ok: false, errors, map };
   }
 
+  let resolvedInputs = inputs;
+  if (resolvedInputs === null) {
+    const prompts = _extractPrompts(ta.value);
+    resolvedInputs = prompts.length > 0 ? await _collectInputs(ta, prompts) : [];
+  }
+
   // Inject files and reset writes before each run.
-  // _psc_files is read from globals() inside the preamble so this must come first.
   const injection = `_psc_files = ${JSON.stringify(_currentFiles)}\n_psc_writes = {}\n`;
-  const r = await runPython(injection + python, { inputs });
+  const r = await runPython(injection + python, { inputs: resolvedInputs });
+
+  const panel = _outputMap.get(ta);
+  const content = panel?.querySelector('.output-content');
+  const hasHistory = resolvedInputs.length > 0 && content?.textContent;
 
   if (r.ok) {
-    setEditorOutput(ta, r.output || '(no output)');
+    const out = r.output || '(no output)';
+    if (hasHistory) {
+      panel.classList.remove('error');
+      content.textContent += out;
+    } else {
+      setEditorOutput(ta, out);
+    }
   } else {
     const m = r.output.match(/line\s+(\d+)/);
     const pyLine = m ? Number(m[1]) : null;
     const srcLine = pyLine ? mapErrorLine(map, pyLine) : null;
-    setEditorOutput(ta, '⚠ ' + _translateMsg(r.output, srcLine), true);
+    const msg = '⚠ ' + _translateMsg(r.output, srcLine);
+    if (hasHistory) {
+      panel.classList.add('error');
+      content.textContent += '\n' + msg;
+    } else {
+      setEditorOutput(ta, msg, true);
+    }
   }
   return { ...r, map };
 }
@@ -471,7 +594,13 @@ export function setupEditors(selector = '.pseudocode-textarea') {
 
     const output = document.createElement('div');
     output.className = 'output-panel';
-    output.innerHTML = '<div class="output-header">Output</div><div class="output-content"></div>';
+    output.innerHTML =
+      '<div class="output-header">Output</div>' +
+      '<div class="output-content"></div>' +
+      '<div class="output-input-row" hidden>' +
+        '<span class="output-prompt-label"></span>' +
+        '<input class="output-input-field" type="text" autocomplete="off" spellcheck="false">' +
+      '</div>';
     wrap.appendChild(output);
     _outputMap.set(ta, output);
 

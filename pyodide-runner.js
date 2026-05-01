@@ -107,7 +107,7 @@ export async function runPython(code, { inputs = [] } = {}) {
 
   try {
     await _pyodide.runPythonAsync(preamble + code);
-    return { ok: true, output: out.join('\n') };
+    return { ok: true, output: out.length ? out.join('\n') + '\n' : '' };
   } catch (err) {
     // Return only the final error line — strip the Python traceback header
     const lines = String(err).split('\n').filter(l => l.trim());

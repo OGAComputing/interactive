@@ -17,7 +17,7 @@
 // The Tab key inserts 4 spaces; Shift-Tab removes up to 4 leading spaces.
 // window.saveState() is called after Tab/Shift-Tab if the activity exposes it.
 
-import { analyzeCode } from './pyodide-runner.js';
+import { analyzeCode, runPython } from './pyodide-runner.js';
 
 // ── Styles injected once per page ─────────────────────────────────────────────
 // :where() gives these zero specificity so any local .checker-textarea rule
@@ -161,6 +161,33 @@ function _injectStyles() {
     :where(.output-content) {
       white-space: pre-wrap;
       word-break: break-all;
+    }
+    :where(.output-input-row) {
+      display: flex;
+      align-items: center;
+      border-top: 1px solid #1a1060;
+      margin-top: 0.3rem;
+      padding-top: 0.3rem;
+      flex-shrink: 0;
+    }
+    :where(.output-prompt-label) {
+      color: #5eead4;
+      white-space: pre;
+      font-family: 'Courier New', monospace;
+      font-size: .82rem;
+      flex-shrink: 0;
+    }
+    :where(.output-input-field) {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #f9e2af;
+      font-family: 'Courier New', monospace;
+      font-size: .82rem;
+      caret-color: #f9e2af;
+      padding: 0;
+      min-width: 4ch;
     }
 
     @media (max-width: 768px) {
@@ -321,6 +348,119 @@ export function setEditorOutput(ta, text, isError = false) {
   panel.classList.toggle('error', isError);
   const content = panel.querySelector('.output-content');
   if (content) content.textContent = text || '';
+  const inputRow = panel.querySelector('.output-input-row');
+  if (inputRow) inputRow.hidden = true;
+}
+
+// ── Interactive input collection ──────────────────────────────────────────────
+
+function _extractPythonPrompts(src) {
+  const prompts = [];
+  const re = /\binput\s*\(\s*(?:"([^"]*?)"|'([^']*?)')?/g;
+  let m;
+  while ((m = re.exec(src)) !== null) prompts.push(m[1] ?? m[2] ?? '');
+  return prompts;
+}
+
+const _inputAbort = new Map();
+
+function _collectInputs(ta, prompts) {
+  const panel = _outputMap.get(ta);
+  if (!panel || prompts.length === 0) return Promise.resolve([]);
+
+  const prev = _inputAbort.get(ta);
+  if (prev) prev();
+
+  const content = panel.querySelector('.output-content');
+  const inputRow = panel.querySelector('.output-input-row');
+  const promptLabel = panel.querySelector('.output-prompt-label');
+  const inputField = panel.querySelector('.output-input-field');
+
+  panel.classList.remove('error');
+  content.textContent = '';
+
+  return new Promise(resolve => {
+    const collected = [];
+    let idx = 0;
+    let done = false;
+
+    function finish() {
+      if (done) return;
+      done = true;
+      inputRow.hidden = true;
+      inputField.removeEventListener('keydown', onKey);
+      _inputAbort.delete(ta);
+      resolve(collected);
+    }
+
+    function advance(val) {
+      content.textContent += prompts[idx] + val + '\n';
+      collected.push(val);
+      idx++;
+      if (idx >= prompts.length) {
+        finish();
+      } else {
+        promptLabel.textContent = prompts[idx];
+        inputField.value = '';
+      }
+    }
+
+    function onKey(e) {
+      if (e.key === 'Enter') { e.preventDefault(); advance(inputField.value); }
+    }
+
+    _inputAbort.set(ta, finish);
+    inputField.addEventListener('keydown', onKey);
+    promptLabel.textContent = prompts[0];
+    inputField.value = '';
+    inputRow.hidden = false;
+    inputField.focus();
+  });
+}
+
+/**
+ * Run the Python code in `ta`, collecting any required inputs interactively
+ * via the output panel, then display the result.
+ *
+ * inputs = null  → auto-collect from output panel (default)
+ * inputs = []    → run with no inputs
+ * inputs = [...] → use supplied values directly
+ *
+ * @param {HTMLTextAreaElement} ta
+ * @param {{ inputs?: string[]|null }} opts
+ * @returns {Promise<{ ok: boolean, output: string }>}
+ */
+export async function runCode(ta, { inputs = null } = {}) {
+  let resolvedInputs = inputs;
+  if (resolvedInputs === null) {
+    const prompts = _extractPythonPrompts(ta.value);
+    resolvedInputs = prompts.length > 0 ? await _collectInputs(ta, prompts) : [];
+  }
+
+  const r = await runPython(ta.value, { inputs: resolvedInputs });
+
+  const panel = _outputMap.get(ta);
+  const content = panel?.querySelector('.output-content');
+  const hasHistory = resolvedInputs.length > 0 && content?.textContent;
+
+  if (r.ok) {
+    const out = r.output || '(no output)';
+    if (hasHistory) {
+      panel.classList.remove('error');
+      content.textContent += out;
+    } else {
+      setEditorOutput(ta, out);
+    }
+  } else {
+    const msg = r.output;
+    if (hasHistory) {
+      panel.classList.add('error');
+      content.textContent += '\n' + msg;
+    } else {
+      setEditorOutput(ta, msg, true);
+    }
+  }
+  return r;
 }
 
 /**
@@ -376,7 +516,13 @@ export function setupEditors(selector = '.checker-textarea') {
     // Output panel sits on the right
     const output = document.createElement('div');
     output.className = 'output-panel';
-    output.innerHTML = '<div class="output-header">Python Shell Output</div><div class="output-content"></div>';
+    output.innerHTML =
+      '<div class="output-header">Python Shell Output</div>' +
+      '<div class="output-content"></div>' +
+      '<div class="output-input-row" hidden>' +
+        '<span class="output-prompt-label"></span>' +
+        '<input class="output-input-field" type="text" autocomplete="off" spellcheck="false">' +
+      '</div>';
     wrap.appendChild(output);
     _outputMap.set(ta, output);
 
