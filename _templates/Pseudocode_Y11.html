@@ -330,6 +330,7 @@ import { preload } from '../../pyodide-runner.js';
 // ── Constants ──────────────────────────────────────────
 const TASK_COUNT = 2;   // update if you add/remove tasks
 const ACTIVITY_TITLE = 'Activity Title';   // must match title: in ACTIVITY block
+const STORE_NS = location.pathname;
 
 // ── State ──────────────────────────────────────────────
 const completed = new Array(TASK_COUNT).fill(false);
@@ -337,6 +338,10 @@ const completed = new Array(TASK_COUNT).fill(false);
 // ── Editor setup ───────────────────────────────────────
 // setupEditors() wires highlighting, line numbers, Tab key, and syntax check.
 // Call AFTER any saved-state restoration if you add localStorage save/restore.
+for (let i = 0; i < TASK_COUNT; i++) {
+  const saved = localStorage.getItem(STORE_NS + ':e' + i);
+  if (saved !== null) document.getElementById('editor-' + i).value = saved;
+}
 setupEditors('.pseudocode-textarea');
 
 // ── Pyodide preload ────────────────────────────────────
@@ -412,6 +417,15 @@ for (let idx = 0; idx < TASK_COUNT; idx++) {
   clearBtn.addEventListener('click', () => {
     editorEl.value = '';
     editorEl.dispatchEvent(new Event('input'));
+    try { localStorage.removeItem(STORE_NS + ':e' + idx); } catch (_) {}
+  });
+
+  let saveTimer;
+  editorEl.addEventListener('input', () => {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+      try { localStorage.setItem(STORE_NS + ':e' + idx, editorEl.value); } catch (_) {}
+    }, 500);
   });
 }
 

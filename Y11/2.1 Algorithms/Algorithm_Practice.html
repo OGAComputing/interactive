@@ -875,6 +875,7 @@ import { preload } from '../../pyodide-runner.js';
 const TASK_COUNT    = 8;
 const TOTAL_MARKS   = 35;
 const ACTIVITY_TITLE = 'Algorithm Practice — Selection & Iteration';
+const STORE_NS = location.pathname;
 
 // ── Task definitions ───────────────────────────────────────────
 // Each task has:
@@ -1194,10 +1195,27 @@ function outHas(run, ...needles) {
 }
 
 // ── Editor setup ───────────────────────────────────────────────
+for (let i = 0; i < TASK_COUNT; i++) {
+  const saved = localStorage.getItem(STORE_NS + ':e' + i);
+  if (saved !== null) document.getElementById('editor-' + i).value = saved;
+}
 setupEditors('.pseudocode-textarea');
 
 // ── Pyodide preload ────────────────────────────────────────────
 preload();
+
+// ── Restore mark scheme state ──────────────────────────────────
+for (let i = 0; i < TASK_COUNT; i++) {
+  const raw = localStorage.getItem(STORE_NS + ':ms' + i);
+  if (!raw) continue;
+  try {
+    const { earned, passed } = JSON.parse(raw);
+    taskEarned[i] = earned;
+    applyMarkscheme(i, passed, earned, TASKS[i].maxMarks);
+    updateTabState(i, earned, TASKS[i].maxMarks);
+  } catch (_) {}
+}
+updateProgress();
 
 // ── Tab switching ──────────────────────────────────────────────
 document.getElementById('tab-bar').addEventListener('click', e => {
@@ -1224,8 +1242,19 @@ for (let idx = 0; idx < TASK_COUNT; idx++) {
   clearBtn.addEventListener('click', () => {
     editorEl.value = '';
     editorEl.dispatchEvent(new Event('input'));
-    // Reset mark scheme to pending state
     resetMarkscheme(idx);
+    try {
+      localStorage.removeItem(STORE_NS + ':e' + idx);
+      localStorage.removeItem(STORE_NS + ':ms' + idx);
+    } catch (_) {}
+  });
+
+  let saveTimer;
+  editorEl.addEventListener('input', () => {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+      try { localStorage.setItem(STORE_NS + ':e' + idx, editorEl.value); } catch (_) {}
+    }, 500);
   });
 }
 
@@ -1274,6 +1303,7 @@ async function handleRun(idx, editorEl, runBtn, statusEl) {
 
   // Update mark scheme UI
   applyMarkscheme(idx, passed, earned, task.maxMarks);
+  try { localStorage.setItem(STORE_NS + ':ms' + idx, JSON.stringify({ earned, passed })); } catch (_) {}
 
   // Update tab + global progress
   taskEarned[idx] = earned;

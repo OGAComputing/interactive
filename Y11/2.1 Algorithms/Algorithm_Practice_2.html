@@ -711,6 +711,7 @@ import { preload } from '../../pyodide-runner.js';
 const TASK_COUNT   = 8;
 const TOTAL_MARKS  = 35;
 const ACTIVITY_TITLE = 'Algorithm Practice 2 — Concatenation & Compound Conditions';
+const STORE_NS = location.pathname;
 
 // Each task: maxMarks, tests [{inputs}], criteria [{text, marks, check({src, runs})}]
 const TASKS = [
@@ -1011,8 +1012,25 @@ function outHas(run, ...needles) {
 }
 
 // ── Editor setup ───────────────────────────────────────────────
+for (let i = 0; i < TASK_COUNT; i++) {
+  const saved = localStorage.getItem(STORE_NS + ':e' + i);
+  if (saved !== null) document.getElementById('editor-' + i).value = saved;
+}
 setupEditors('.pseudocode-textarea');
 preload();
+
+// ── Restore mark scheme state ──────────────────────────────────
+for (let i = 0; i < TASK_COUNT; i++) {
+  const raw = localStorage.getItem(STORE_NS + ':ms' + i);
+  if (!raw) continue;
+  try {
+    const { earned, passed } = JSON.parse(raw);
+    taskEarned[i] = earned;
+    applyMarkscheme(i, passed, earned, TASKS[i].maxMarks);
+    updateTabState(i, earned, TASKS[i].maxMarks);
+  } catch (_) {}
+}
+updateProgress();
 
 // ── Tab switching ──────────────────────────────────────────────
 document.getElementById('tab-bar').addEventListener('click', e => {
@@ -1040,6 +1058,18 @@ for (let idx = 0; idx < TASK_COUNT; idx++) {
     editorEl.value = '';
     editorEl.dispatchEvent(new Event('input'));
     resetMarkscheme(idx);
+    try {
+      localStorage.removeItem(STORE_NS + ':e' + idx);
+      localStorage.removeItem(STORE_NS + ':ms' + idx);
+    } catch (_) {}
+  });
+
+  let saveTimer;
+  editorEl.addEventListener('input', () => {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+      try { localStorage.setItem(STORE_NS + ':e' + idx, editorEl.value); } catch (_) {}
+    }, 500);
   });
 }
 
@@ -1082,6 +1112,7 @@ async function handleRun(idx, editorEl, runBtn, statusEl) {
   });
 
   applyMarkscheme(idx, passed, earned, task.maxMarks);
+  try { localStorage.setItem(STORE_NS + ':ms' + idx, JSON.stringify({ earned, passed })); } catch (_) {}
 
   taskEarned[idx] = earned;
   updateTabState(idx, earned, task.maxMarks);
