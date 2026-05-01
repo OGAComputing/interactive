@@ -15,7 +15,7 @@
 //   function/procedure/endfunction/endprocedure, return, global X = ...
 //   array name[N] (1D),  array name[R,C] (2D with [a,b] access rewrite)
 //   AND OR NOT, MOD DIV, ^
-//   .length, .substring(start, count)  (receiver-walking tokenizer)
+//   .length, .left(n), .right(n), .substring(start, count)  (receiver-walking tokenizer)
 //   openRead, openWrite, .readLine(), .writeLine(), .endOfFile(), .close()
 //
 // Unsupported (emits friendly error): class, endclass, inherits
@@ -33,6 +33,8 @@ class _PscStr(str):
     def __add__(self, other): return _PscStr(str(self) + str(other))
     def __radd__(self, other): return _PscStr(str(other) + str(self))
 def _psc_substr(s, start, count): return _PscStr(s[start:start + count])
+def _psc_left(s, n): return _PscStr(s[:n])
+def _psc_right(s, n): return _PscStr(s[-n:]) if n > 0 else _PscStr('')
 _psc_files = globals().get('_psc_files', {})
 _psc_writes = {}
 class _PscReadFile:
@@ -166,6 +168,23 @@ function _rewriteStringMethods(code) {
     const receiver = code.slice(recStart, dotPos);
     if (!receiver.trim()) continue;
     reps.push({ start: recStart, end: dotPos + m[0].length, replacement: `_psc_len(${receiver})` });
+  }
+
+  // .left( and .right(
+  for (const [mName, pyFn] of [['left', '_psc_left'], ['right', '_psc_right']]) {
+    const lrRe = new RegExp(`\\.${mName}\\s*\\(`, 'g');
+    while ((m = lrRe.exec(code)) !== null) {
+      const dotPos = m.index;
+      const openParen = code.indexOf('(', dotPos + 1);
+      if (openParen === -1) continue;
+      const closeParen = _findClose(code, openParen, '(', ')');
+      if (closeParen === -1) continue;
+      const recStart = _walkLeft(code, dotPos);
+      const receiver = code.slice(recStart, dotPos);
+      if (!receiver.trim()) continue;
+      const arg = code.slice(openParen + 1, closeParen).trim();
+      reps.push({ start: recStart, end: closeParen + 1, replacement: `${pyFn}(${receiver}, ${arg})` });
+    }
   }
 
   // .substring( or .subString(
