@@ -679,7 +679,7 @@ color:  blue
 <div class="ac-toast" id="toast"></div>
 
 <script type="module">
-import { setupEditors, runPseudocode, clearSyntaxHint, setEditorOutput } from '../../pseudocode-editor.js';
+import { setupEditors, runPseudocode, clearSyntaxHint } from '../../pseudocode-editor.js';
 import { preload } from '../../pyodide-runner.js';
 
 const TASK_COUNT   = 8;
@@ -694,8 +694,8 @@ const TASKS = [
   {
     maxMarks: 2,
     tests: [
-      { inputs: ['Alice'] },
-      { inputs: ['Sam']   },
+      { inputs: ['Alice'], expected: 'alice' },
+      { inputs: ['Sam'],   expected: 'sam' },
     ],
     criteria: [
       {
@@ -716,8 +716,8 @@ const TASKS = [
   {
     maxMarks: 3,
     tests: [
-      { inputs: ['4']  },   // 4 * 4.5 = 18
-      { inputs: ['10'] },   // 10 * 4.5 = 45
+      { inputs: ['4'],  expected: '18' },   // 4 * 4.5 = 18
+      { inputs: ['10'], expected: '45' },   // 10 * 4.5 = 45
     ],
     criteria: [
       {
@@ -742,8 +742,8 @@ const TASKS = [
   {
     maxMarks: 4,
     tests: [
-      { inputs: ['Johnson'] },   // → johns@school.ac.uk
-      { inputs: ['Smith']   },   // → smith@school.ac.uk
+      { inputs: ['Johnson'], expected: ['johns', 'school.ac.uk'] },  // → johns@school.ac.uk
+      { inputs: ['Smith'],   expected: ['smith', 'school.ac.uk'] },  // → smith@school.ac.uk
     ],
     criteria: [
       {
@@ -775,9 +775,9 @@ const TASKS = [
   {
     maxMarks: 4,
     tests: [
-      { inputs: ['AB12XYZ'] },   // last 3 → XYZ
-      { inputs: ['LK23ABC'] },   // last 3 → ABC
-      { inputs: ['A1']      },   // length != 7
+      { inputs: ['AB12XYZ'], expected: 'xyz' },  // last 3 → XYZ
+      { inputs: ['LK23ABC'], expected: 'abc' },  // last 3 → ABC
+      { inputs: ['A1']      },                   // invalid length — no defined expected output
     ],
     criteria: [
       {
@@ -808,11 +808,11 @@ const TASKS = [
   {
     maxMarks: 5,
     tests: [
-      { inputs: ['8']  },   // under 12 → £6.50
-      { inputs: ['30'] },   // 12–64 → £10.00
-      { inputs: ['70'] },   // 65+ → £6.50
-      { inputs: ['12'] },   // boundary: NOT under 12 → £10.00
-      { inputs: ['64'] },   // boundary: NOT 65+ → £10.00
+      { inputs: ['8'],  expected: '6.5' },  // under 12 → £6.50
+      { inputs: ['30'], expected: '10' },   // 12–64 → £10.00
+      { inputs: ['70'], expected: '6.5' },  // 65+ → £6.50
+      { inputs: ['12'], expected: '10' },   // boundary: NOT under 12 → £10.00
+      { inputs: ['64'], expected: '10' },   // boundary: NOT 65+ → £10.00
     ],
     criteria: [
       {
@@ -850,8 +850,8 @@ const TASKS = [
   {
     maxMarks: 5,
     tests: [
-      { inputs: ['12','8','15','6','9'] },   // total = 50
-      { inputs: ['5','5','5','5','5']   },   // total = 25
+      { inputs: ['12','8','15','6','9'], expected: '50' },  // total = 50
+      { inputs: ['5','5','5','5','5'],   expected: '25' },  // total = 25
     ],
     criteria: [
       {
@@ -887,9 +887,9 @@ const TASKS = [
   {
     maxMarks: 6,
     tests: [
-      { inputs: ['25', '123456'] },   // age ≥ 18, valid code → confirmed
-      { inputs: ['25', '99']     },   // age ≥ 18, invalid code
-      { inputs: ['16', '123456'] },   // age < 18
+      { inputs: ['25', '123456'], expected: 'confirmed' },  // age ≥ 18, valid code
+      { inputs: ['25', '99'],     expected: 'invalid' },   // age ≥ 18, invalid code
+      { inputs: ['16', '123456'], expected: '18' },        // age < 18, should mention 18
     ],
     criteria: [
       {
@@ -931,8 +931,8 @@ const TASKS = [
     // Test 1: deposits 100, 200, 250 → total hits 550 (≥500), loop ends; extra 0 unread
     // Test 2: deposits 150, 100, 0 → user enters 0, loop ends; total = 250
     tests: [
-      { inputs: ['100','200','250','0'] },
-      { inputs: ['150','100','0','0']   },
+      { inputs: ['100','200','250','0'], expected: '550' },  // hits £500 target
+      { inputs: ['150','100','0','0'],   expected: '250' },  // stops on 0 entry
     ],
     criteria: [
       {
@@ -1063,15 +1063,7 @@ async function handleRun(idx, editorEl, runBtn, statusEl) {
   runBtn.disabled = false;
   taskAttempted[idx] = true;
 
-  const SEP = '─'.repeat(44);
-  const combinedOutput = runs.map((run, i) => {
-    const label = run.inputs.length === 1
-      ? `input: "${run.inputs[0]}"`
-      : `inputs: ${run.inputs.map(v => `"${v}"`).join(', ')}`;
-    const out = run.ok ? (run.output || '(no output)') : `⚠ ${run.output || 'Error — check syntax'}`;
-    return `Test ${i + 1}  (${label})\n${SEP}\n${out}`;
-  }).join('\n\n');
-  setEditorOutput(editorEl, combinedOutput);
+  _renderTestOutput(editorEl, task.tests, runs);
 
   if (!runs[0].ok && !runs[0].output) {
     showToast('Fix the syntax error shown in the editor before checking marks.', 'warn');
@@ -1100,6 +1092,43 @@ async function handleRun(idx, editorEl, runBtn, statusEl) {
   );
 
   if (totalEarned === TOTAL_MARKS) allComplete();
+}
+
+// ── Per-test coloured output ───────────────────────────────────
+
+function _renderTestOutput(editorEl, tests, runs) {
+  const outputPanel = editorEl.closest('.editor-wrap')?.querySelector('.output-panel');
+  if (!outputPanel) return;
+  outputPanel.classList.remove('error');
+  const content = outputPanel.querySelector('.output-content');
+  const inputRow = outputPanel.querySelector('.output-input-row');
+  if (inputRow) inputRow.hidden = true;
+  if (!content) return;
+
+  const SEP = '─'.repeat(44);
+  const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+  content.innerHTML = runs.map((run, i) => {
+    const test = tests[i];
+    const label = run.inputs.length === 1
+      ? `input: "${run.inputs[0]}"`
+      : `inputs: ${run.inputs.map(v => `"${v}"`).join(', ')}`;
+
+    let testPassed;
+    if (!run.ok) {
+      testPassed = false;
+    } else if (test.expected !== undefined) {
+      const out = (run.output || '').toLowerCase();
+      const needles = Array.isArray(test.expected) ? test.expected : [test.expected];
+      testPassed = needles.every(n => out.includes(n.toLowerCase()));
+    } else {
+      testPassed = true;
+    }
+
+    const out = run.ok ? (run.output || '(no output)') : `⚠ ${run.output || 'Error — check syntax'}`;
+    const color = testPassed ? '#5eead4' : '#ff6b6b';
+    return `<span style="color:${color}">${esc(`Test ${i + 1}  (${label})\n${SEP}\n${out}`)}</span>`;
+  }).join('\n\n');
 }
 
 // ── Mark scheme DOM updates ────────────────────────────────────

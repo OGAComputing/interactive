@@ -310,6 +310,9 @@ const _lastLineCount = new Map();
 function _autoResize(ta, force = false) {
   const lines = ta.value.split('\n').length;
   if (!force && lines === _lastLineCount.get(ta)) return;
+  // Hidden elements (inside display:none) have scrollHeight = 0. Don't set height
+  // and don't cache the line count so the resize runs properly when shown.
+  if (ta.offsetParent === null) return;
   _lastLineCount.set(ta, lines);
   ta.style.height = 'auto';
   ta.style.height = ta.scrollHeight + 'px';
@@ -398,6 +401,11 @@ export function refreshEditor(ta) {
 /** Hide the syntax hint — call after a successful code check. */
 export function clearSyntaxHint(ta) {
   _hintMap.get(ta)?.classList.remove('visible');
+}
+
+/** Turn the output panel red to signal a failed test (does not change the text). */
+export function markOutputFailed(ta) {
+  _outputMap.get(ta)?.classList.add('error');
 }
 
 /** Update the output panel for a specific textarea. */

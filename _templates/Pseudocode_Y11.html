@@ -284,7 +284,7 @@ color:  blue
 <div class="ac-toast" id="toast"></div>
 
 <script type="module">
-import { setupEditors, runPseudocode, clearSyntaxHint } from '../../pseudocode-editor.js';
+import { setupEditors, runPseudocode, clearSyntaxHint, markOutputFailed } from '../../pseudocode-editor.js';
 import { preload } from '../../pyodide-runner.js';
 
 // ── Constants ──────────────────────────────────────────
@@ -336,9 +336,30 @@ for (let idx = 0; idx < TASK_COUNT; idx++) {
     if (r.ok) {
       clearSyntaxHint(editorEl);
       // TODO: check the output against expected answers and call markDone(idx).
-      // Example: if (r.output.trim() === '42') markDone(idx, 'green');
+      //
+      // ── Single-run check (simple pass/fail) ───────────────────────────────────
+      //   if (r.output.trim() === '42') { markDone(idx, 'green'); }
+      //   else { markOutputFailed(editorEl); }  // turns output red for wrong answer
+      //
+      // ── Multi-test check (multiple inputs, per-test red/teal colouring) ───────
+      // Use _renderTestOutput (defined below) instead of runPseudocode directly.
+      // Add an `expected` field to each test case; _renderTestOutput colours each
+      // block red when the output doesn't contain the expected string(s).
+      //   const r = await runPseudocode(editorEl, { inputs: test.inputs });
+      //   _renderTestOutput(editorEl, task.tests, runs);
+      // See Algorithm_Practice.html for the full TASKS-array pattern.
       //
       // ── Mark scheme conventions (OCR J277) ────────────────────────────────────
+      //
+      // FUNCTION / PROCEDURE DEFINITION — three separate marks
+      // - 1 mark: Uses the function/procedure keyword with a name
+      //   Check: /\bfunction\s+\w+/.test(src)  or  /\bprocedure\s+\w+/.test(src)
+      // - 1 mark: Valid parameter(s) in brackets (non-empty parameter list)
+      //   Check: /\bfunction\s+\w+\s*\(\s*\w/.test(src)
+      // - 1 mark: Uses return correctly (functions only; procedures do not return a value)
+      //   Check: /\breturn\b/.test(src)
+      // These three marks replace any single "defines a function" criterion.
+      // Do NOT bundle the parameter or return into the definition mark.
       //
       // STRING EXTRACTION — accept any equivalent function
       // - Do NOT restrict the mark to one specific function. Accept .substring(),
@@ -425,6 +446,44 @@ function updateProgress() {
 // ── All tasks complete ─────────────────────────────────
 function allComplete() {
   document.getElementById('done-banner').classList.add('show');
+}
+
+// ── Per-test coloured output (for multi-test activities) ───────
+// Each test entry needs an `expected` field (string or string[]).
+// Passing tests show teal; failing tests (wrong output or error) show red.
+function _renderTestOutput(editorEl, tests, runs) {
+  const outputPanel = editorEl.closest('.editor-wrap')?.querySelector('.output-panel');
+  if (!outputPanel) return;
+  outputPanel.classList.remove('error');
+  const content = outputPanel.querySelector('.output-content');
+  const inputRow = outputPanel.querySelector('.output-input-row');
+  if (inputRow) inputRow.hidden = true;
+  if (!content) return;
+
+  const SEP = '─'.repeat(44);
+  const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+  content.innerHTML = runs.map((run, i) => {
+    const test = tests[i];
+    const label = run.inputs.length === 1
+      ? `input: "${run.inputs[0]}"`
+      : `inputs: ${run.inputs.map(v => `"${v}"`).join(', ')}`;
+
+    let testPassed;
+    if (!run.ok) {
+      testPassed = false;
+    } else if (test.expected !== undefined) {
+      const out = (run.output || '').toLowerCase();
+      const needles = Array.isArray(test.expected) ? test.expected : [test.expected];
+      testPassed = needles.every(n => out.includes(n.toLowerCase()));
+    } else {
+      testPassed = true;
+    }
+
+    const out = run.ok ? (run.output || '(no output)') : `⚠ ${run.output || 'Error — check syntax'}`;
+    const color = testPassed ? '#5eead4' : '#ff6b6b';
+    return `<span style="color:${color}">${esc(`Test ${i + 1}  (${label})\n${SEP}\n${out}`)}</span>`;
+  }).join('\n\n');
 }
 
 // ── Toast helper ───────────────────────────────────────
