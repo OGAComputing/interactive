@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { mockSignedOut, mockAsStudent, mockAsTeacher } from './helpers/mockClassroom.js';
+import { mockSignedOut, mockAsStudent, mockAsTeacher, mockAsStudentReusedPost, mockAsTeacherReusedPost } from './helpers/mockClassroom.js';
 
 // Any activity that loads classroom.js works as a host page; Functions is used here.
 const HOST = '/Y8/Python/L4_Functions/1_Functions.html';
@@ -95,6 +95,29 @@ test.describe('Signed in as student', () => {
 // ═══════════════════════════════════════════════════════════════════════════════
 //  courseId present — signed in as teacher
 // ═══════════════════════════════════════════════════════════════════════════════
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  Re-used post — URL contains a courseId from a different classroom
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const OLD_COURSE_ID = 'old-course-aaa';
+const NEW_COURSE_ID = 'new-course-bbb';
+
+test.describe('Re-used post (wrong courseId in URL)', () => {
+  test('student: banner shows Connected after fallback course scan', async ({ page }) => {
+    await mockAsStudentReusedPost(page, OLD_COURSE_ID, NEW_COURSE_ID, ACTIVITY_URL);
+    await page.goto(`${HOST}?courseId=${OLD_COURSE_ID}`);
+    await expect(page.locator('#classroom-text')).toContainText('Connected to Google Classroom', { timeout: 8000 });
+    await expect(page.locator('#classroom-dot')).toHaveClass(/online/);
+  });
+
+  test('teacher: teacher mode restored after fallback course scan corrects courseId', async ({ page }) => {
+    await mockAsTeacherReusedPost(page, OLD_COURSE_ID, NEW_COURSE_ID, ACTIVITY_URL);
+    await page.goto(`${HOST}?courseId=${OLD_COURSE_ID}`);
+    await expect(page.locator('#classroom-dot')).toHaveClass(/teacher/, { timeout: 8000 });
+    await expect(page.locator('#classroom-text')).toContainText('Teacher mode');
+  });
+});
 
 test.describe('Signed in as teacher', () => {
   test.beforeEach(async ({ page }) => {

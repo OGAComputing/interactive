@@ -91,6 +91,90 @@ export async function mockAsStudent(page, courseId = 'test-course-123', activity
   );
 }
 
+// Token seeded + APIs mocked to simulate a student whose link has the WRONG courseId
+// (e.g. a teacher used "Re-use post" from another classroom).
+// The mock returns no assignment for oldCourseId, then returns the correct assignment
+// inside newCourseId via the findCorrectCourse fallback scan.
+export async function mockAsStudentReusedPost(page, oldCourseId, newCourseId, activityUrl) {
+  await page.addInitScript(seedTokenScript());
+  await interceptOAuth(page);
+
+  await page.route('https://www.googleapis.com/oauth2/v3/userinfo', route =>
+    route.fulfill({ json: { email: 'student@test.com', name: 'Test Student', sub: '12345' } })
+  );
+
+  await page.route('https://www.googleapis.com/drive/**', route =>
+    route.fulfill({ json: { files: [] } })
+  );
+
+  await page.route('https://script.googleapis.com/**', route =>
+    route.fulfill({ json: { deployments: [] } })
+  );
+
+  await page.route('https://classroom.googleapis.com/**', async (route) => {
+    const url = route.request().url();
+    if (url.includes('teacherId=me')) {
+      await route.fulfill({ json: { courses: [] } }); // student, no courses taught
+    } else if (url.includes('/studentSubmissions')) {
+      await route.fulfill({ json: { studentSubmissions: [{ id: 'mock-sub-reuse' }] } });
+    } else if (url.includes(`/courses/${newCourseId}/courseWork`)) {
+      // Correct course — assignment link matches this page
+      await route.fulfill({ json: {
+        courseWork: [{ id: 'mock-cw-reuse', materials: [{ link: { url: activityUrl } }] }]
+      }});
+    } else if (url.includes(`/courses/${oldCourseId}/courseWork`)) {
+      // Wrong course — student not enrolled here, no matching assignment
+      await route.fulfill({ json: {} });
+    } else {
+      // findCorrectCourse: courses.list returns the correct course
+      await route.fulfill({ json: { courses: [{ id: newCourseId, name: 'Year 8 Computing 2025' }] } });
+    }
+  });
+
+  await page.route('https://www.googleapis.com/upload/drive/**', route =>
+    route.fulfill({ json: { id: 'mock-drive-file-id' } })
+  );
+}
+
+// Token seeded + APIs mocked to simulate a teacher whose link has the WRONG courseId
+// (teacher only teaches newCourseId, not oldCourseId).
+// Verifies that detectTeacher is re-run after findCorrectCourse corrects courseId.
+export async function mockAsTeacherReusedPost(page, oldCourseId, newCourseId, activityUrl) {
+  await page.addInitScript(seedTokenScript());
+  await interceptOAuth(page);
+
+  await page.route('https://www.googleapis.com/oauth2/v3/userinfo', route =>
+    route.fulfill({ json: { email: 'teacher@test.com', name: 'Test Teacher', sub: '99999' } })
+  );
+
+  await page.route('https://www.googleapis.com/drive/**', route =>
+    route.fulfill({ json: { files: [] } })
+  );
+
+  await page.route('https://script.googleapis.com/**', route =>
+    route.fulfill({ json: { deployments: [] } })
+  );
+
+  await page.route('https://classroom.googleapis.com/**', async (route) => {
+    const url = route.request().url();
+    if (url.includes('teacherId=me')) {
+      // Teacher only teaches newCourseId — first detectTeacher call (courseId=old) returns
+      // false; second call after correction (courseId=new) returns true.
+      await route.fulfill({ json: { courses: [{ id: newCourseId, name: 'Year 8 Computing 2025' }] } });
+    } else if (url.includes(`/courses/${oldCourseId}/courseWork`)) {
+      // No matching assignment in the original course
+      await route.fulfill({ json: {} });
+    } else if (url.includes(`/courses/${newCourseId}/courseWork`)) {
+      await route.fulfill({ json: {
+        courseWork: [{ id: 'mock-cw-teacher-reuse', materials: [{ link: { url: activityUrl } }] }]
+      }});
+    } else {
+      // findCorrectCourse: courses.list returns the correct course
+      await route.fulfill({ json: { courses: [{ id: newCourseId, name: 'Year 8 Computing 2025' }] } });
+    }
+  });
+}
+
 // Token seeded + all downstream APIs mocked as a teacher of the given courseId.
 export async function mockAsTeacher(page, courseId = 'test-course-123') {
   await page.addInitScript(seedTokenScript());
