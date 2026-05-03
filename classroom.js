@@ -1171,7 +1171,8 @@
     if (blockingModal) blockingModal.classList.remove('open');
 
     // Detect teacher role first so we can make a smarter proxy URL decision below.
-    const isTeacher = await detectTeacher(accessToken);
+    // Re-evaluated below if findCorrectCourse corrects courseId (re-used post scenario).
+    let isTeacher = await detectTeacher(accessToken);
     isTeacherMode = isTeacher;
 
     // Proxy URL resolution strategy:
@@ -1211,6 +1212,9 @@
       if (found.courseId) {
         courseId    = found.courseId;    // update module-level so submitGrade etc. use correct course
         courseWorkId = found.courseWorkId;
+        // Re-check teacher role against the corrected course — the initial check used the wrong courseId.
+        isTeacher = await detectTeacher(accessToken);
+        isTeacherMode = isTeacher;
       }
     }
     submissionId = await lookupSubmissionId(accessToken, courseWorkId);
