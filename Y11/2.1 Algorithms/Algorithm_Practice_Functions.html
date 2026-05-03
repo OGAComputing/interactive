@@ -1,0 +1,1248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- ACTIVITY
+title:  Functions — Exam Practice
+type:   Challenge
+stars:  4
+desc:   Eight focused exam questions on defining and calling functions and procedures — with instant mark-scheme feedback on every Run.
+color:  blue
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Functions — Exam Practice — Year 11</title>
+
+<link rel="stylesheet" href="../../shared.css">
+
+<style>
+  /* ── Sticky header ───────────────────────────────────── */
+  header {
+    background: var(--surface);
+    border-bottom: 2px solid var(--surface-mid);
+    padding: 12px 20px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.35);
+  }
+  .header-progress { display: flex; align-items: center; gap: 10px; }
+
+  /* ── Page body ───────────────────────────────────────── */
+  .page-wrap { padding: 28px 16px 60px; }
+
+  /* ── Page title ──────────────────────────────────────── */
+  .page-title { font-size: 1.35rem; font-weight: 700; text-align: center; color: var(--accent-light); margin-bottom: 4px; }
+  .page-subtitle { text-align: center; font-size: 0.82rem; color: var(--muted); margin-bottom: 28px; }
+
+  /* ── Pill tab bar ────────────────────────────────────── */
+  .tabs { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-bottom: 28px; }
+  .tab-btn {
+    padding: 7px 16px;
+    border: 2px solid var(--surface-mid);
+    border-radius: 20px;
+    background: var(--surface);
+    color: var(--muted);
+    font-family: var(--font-body);
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s, color 0.2s;
+    user-select: none;
+  }
+  .tab-btn:hover:not(.active) { border-color: var(--accent); color: var(--text); }
+  .tab-btn.active     { background: var(--accent); border-color: var(--accent); color: var(--text-inv); }
+  .tab-btn.done-green { background: var(--green);  border-color: var(--green);  color: #fff; }
+  .tab-btn.done-gold  { background: var(--gold);   border-color: var(--gold);   color: #111; }
+
+  /* ── Panels ──────────────────────────────────────────── */
+  .panel { display: none; max-width: 880px; margin: 0 auto; animation: ac-fade-in 0.2s ease; }
+  .panel.active { display: block; }
+
+  /* ── Section card ────────────────────────────────────── */
+  .card { background: var(--surface); border-left: 4px solid var(--accent); border-radius: 8px; padding: 18px 22px; margin-bottom: 22px; }
+  .card h2 { font-size: 0.82rem; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 12px; }
+  .card p { color: var(--text); font-size: 0.9rem; line-height: 1.7; margin-bottom: 10px; }
+  .card p:last-child { margin-bottom: 0; }
+  .card ul { margin: 6px 0 0 1.2em; color: var(--text); font-size: 0.9rem; line-height: 1.8; }
+  .card code { background: var(--code-bg, #1a1a2e); color: var(--code-text, #a0c4ff); padding: 1px 6px; border-radius: 4px; font-family: var(--font-head, monospace); font-size: 0.85em; }
+
+  /* ── Goal banner ─────────────────────────────────────── */
+  .goal { background: var(--surface); border-left: 4px solid var(--accent); border-radius: 0 8px 8px 0; padding: 10px 16px; font-size: 0.9rem; font-weight: 600; color: var(--text); margin-bottom: 20px; }
+
+  /* ── Code checker ────────────────────────────────────── */
+  .code-checker { background: var(--surface); border-radius: 12px; border: 2px solid var(--surface-mid); overflow: hidden; margin-bottom: 14px; }
+  .checker-footer { display: flex; gap: 10px; padding: 10px 14px; background: var(--surface-mid); border-top: 1px solid var(--surface-dim); flex-wrap: wrap; align-items: center; }
+  .checker-footer .ac-btn-secondary { font-size: 0.78rem; padding: 5px 14px; }
+  .checker-footer .ac-btn           { font-size: 0.78rem; padding: 5px 14px; }
+
+  /* ── Mark scheme card ────────────────────────────────── */
+  .markscheme { background: var(--surface); border: 2px solid var(--surface-mid); border-radius: 8px; padding: 14px 18px; margin-bottom: 22px; }
+  .ms-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .ms-header h3 { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); }
+  .ms-total { font-size: 0.72rem; font-family: var(--font-head, monospace); color: var(--muted); letter-spacing: 0.06em; }
+  .ms-list { list-style: none; margin: 0 0 10px; padding: 0; display: flex; flex-direction: column; gap: 5px; }
+  .ms-row { display: flex; align-items: flex-start; gap: 10px; padding: 5px 8px; border-radius: 6px; font-size: 0.87rem; transition: background 0.15s; }
+  .ms-tick { font-size: 1rem; width: 1.3em; text-align: center; color: var(--muted); flex-shrink: 0; margin-top: 0.05em; }
+  .ms-text { flex: 1; color: var(--text); line-height: 1.5; }
+  .ms-marks { font-size: 0.7rem; font-family: var(--font-head, monospace); color: var(--muted); white-space: nowrap; margin-top: 0.2em; flex-shrink: 0; }
+  .ms-row.pass { background: rgba(52,211,153,0.08); }
+  .ms-row.pass .ms-tick  { color: var(--green); }
+  .ms-row.pass .ms-text  { color: var(--green); }
+  .ms-row.pass .ms-marks { color: var(--green); }
+  .ms-row.fail { background: rgba(248,113,113,0.06); }
+  .ms-row.fail .ms-tick  { color: var(--red); }
+  .ms-row.fail .ms-text  { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--red); }
+  .ms-divider { border: none; border-top: 1px solid var(--surface-mid); margin: 8px 0; }
+  .ms-score { font-size: 0.88rem; font-weight: 700; color: var(--accent); text-align: right; }
+  .ms-score.full { color: var(--green); }
+
+  /* ── Progress percentage ─────────────────────────────── */
+  .score-pct { font-family: var(--font-head, monospace); font-size: 0.8rem; color: var(--accent); }
+</style>
+</head>
+
+<body data-year="11" data-topic="Algorithms">
+
+<!-- Completion banner -->
+<div id="done-banner" class="ac-banner gold">
+  Full marks — outstanding function writing!
+</div>
+
+<!-- Sticky header -->
+<header>
+  <div class="header-progress">
+    <div class="ac-progress-bar" style="flex:1;">
+      <div class="ac-progress-fill" id="progress-fill"></div>
+    </div>
+    <span class="score-pct" id="progress-pct">0 / 32</span>
+  </div>
+</header>
+
+<div class="page-wrap">
+  <h2 class="page-title">Functions — Exam Practice</h2>
+  <p class="page-subtitle">Defining &amp; Calling · 32 marks total</p>
+
+  <!-- Tab bar -->
+  <div class="tabs" id="tab-bar">
+    <button class="tab-btn active" data-idx="0">Q1 · 3m</button>
+    <button class="tab-btn"        data-idx="1">Q2 · 3m</button>
+    <button class="tab-btn"        data-idx="2">Q3 · 4m</button>
+    <button class="tab-btn"        data-idx="3">Q4 · 5m</button>
+    <button class="tab-btn"        data-idx="4">Q5 · 3m</button>
+    <button class="tab-btn"        data-idx="5">Q6 · 4m</button>
+    <button class="tab-btn"        data-idx="6">Q7 · 5m</button>
+    <button class="tab-btn"        data-idx="7">Q8 · 5m</button>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       Q1 — Square Number (3 marks) — DEFINE ONLY (named)
+       ══════════════════════════════════════════════════════════ -->
+  <div class="panel active" id="panel-0">
+    <div class="goal">Define a function called <code>square</code> that returns the square of a number.</div>
+
+    <div class="card">
+      <h2>Scenario</h2>
+      <p>A maths quiz app needs a squaring tool. The two lines that <em>call</em> the function have already been written for you in the editor below — your job is to write the <strong>function definition</strong> above them.</p>
+      <h2 style="margin-top:14px;">Your algorithm must:</h2>
+      <ul>
+        <li>Define a function called <code>square</code> that takes one number as a parameter</li>
+        <li>Return that number multiplied by itself</li>
+      </ul>
+    </div>
+
+    <div class="code-checker" id="checker-0">
+      <div class="checker-header">
+        <span class="checker-dot dot-r"></span>
+        <span class="checker-dot dot-y"></span>
+        <span class="checker-dot dot-g"></span>
+        <span>Q1 — Write your function definition above the calls</span>
+      </div>
+      <textarea class="pseudocode-textarea" id="editor-0" spellcheck="false"
+                autocomplete="off" autocapitalize="off">// Write your square function definition above this line.
+// ──────────────────────────────────────────────────────
+
+output(square(4))
+output(square(7))
+</textarea>
+      <div class="checker-footer">
+        <button class="ac-btn" id="run-0" type="button">Run ▶</button>
+        <button class="ac-btn-secondary" id="clear-0" type="button">Clear</button>
+        <span id="run-status-0" style="font-size:0.75rem;color:var(--muted);"></span>
+      </div>
+    </div>
+
+    <div class="markscheme" id="ms-0">
+      <div class="ms-header">
+        <h3>Mark Scheme</h3>
+        <span class="ms-total">3 marks available</span>
+      </div>
+      <ul class="ms-list" id="ms-list-0">
+        <li class="ms-row" data-bp="0">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Defines a function using the <code>function</code> keyword with a name</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="1">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Valid parameter in brackets</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="2">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Returns the correct squared value — <code>square(4)</code> &rarr; 16, <code>square(7)</code> &rarr; 49</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+      </ul>
+      <hr class="ms-divider">
+      <div class="ms-score" id="ms-score-0">— / 3 marks</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       Q2 — Minutes to Seconds (3 marks) — DEFINE + CALL (no name prescribed)
+       ══════════════════════════════════════════════════════════ -->
+  <div class="panel" id="panel-1">
+    <div class="goal">Define and call a function that converts whole minutes to seconds.</div>
+
+    <div class="card">
+      <h2>Scenario</h2>
+      <p>A cooking timer app converts minutes into seconds before counting down. The user enters how many minutes they want to set the timer for, and the app outputs the total number of seconds.</p>
+      <h2 style="margin-top:14px;">Your algorithm must:</h2>
+      <ul>
+        <li>Define a function (you choose the name) that takes a number of minutes as a parameter and returns the equivalent number of seconds</li>
+        <li>Ask the user to enter a number of minutes</li>
+        <li>Call the function and output the total seconds</li>
+      </ul>
+    </div>
+
+    <div class="code-checker" id="checker-1">
+      <div class="checker-header">
+        <span class="checker-dot dot-r"></span>
+        <span class="checker-dot dot-y"></span>
+        <span class="checker-dot dot-g"></span>
+        <span>Q2 — Write your pseudocode here</span>
+      </div>
+      <textarea class="pseudocode-textarea" id="editor-1" spellcheck="false"
+                autocomplete="off" autocapitalize="off">// Write your OCR pseudocode here
+</textarea>
+      <div class="checker-footer">
+        <button class="ac-btn" id="run-1" type="button">Run ▶</button>
+        <button class="ac-btn-secondary" id="clear-1" type="button">Clear</button>
+        <span id="run-status-1" style="font-size:0.75rem;color:var(--muted);"></span>
+      </div>
+    </div>
+
+    <div class="markscheme" id="ms-1">
+      <div class="ms-header">
+        <h3>Mark Scheme</h3>
+        <span class="ms-total">3 marks available</span>
+      </div>
+      <ul class="ms-list" id="ms-list-1">
+        <li class="ms-row" data-bp="0">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Defines a function using the <code>function</code> keyword with a name</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="1">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Valid parameter in brackets</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="2">
+          <span class="ms-text">Calls the function and outputs the correct total — 3 minutes &rarr; 180 seconds, 10 minutes &rarr; 600 seconds</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+      </ul>
+      <hr class="ms-divider">
+      <div class="ms-score" id="ms-score-1">— / 3 marks</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       Q3 — Fahrenheit to Celsius (4 marks) — DEFINE + CALL (named)
+       ══════════════════════════════════════════════════════════ -->
+  <div class="panel" id="panel-2">
+    <div class="goal">Define and call a function that converts a temperature from Fahrenheit to Celsius.</div>
+
+    <div class="card">
+      <h2>Scenario</h2>
+      <p>A weather app shows temperatures in Celsius for UK users. When a Fahrenheit value comes in from a US weather feed, it must be converted using the formula:</p>
+      <p style="text-align:center; font-family:var(--font-head, monospace); color:var(--accent-light);">celsius = (fahrenheit &minus; 32) &times; 5 / 9</p>
+      <h2 style="margin-top:14px;">Your algorithm must:</h2>
+      <ul>
+        <li>Define a function called <code>fahrenheitToCelsius</code> that takes a Fahrenheit temperature as a parameter and returns the Celsius equivalent</li>
+        <li>Ask the user to enter a Fahrenheit temperature</li>
+        <li>Call the function and output the Celsius result</li>
+      </ul>
+    </div>
+
+    <div class="code-checker" id="checker-2">
+      <div class="checker-header">
+        <span class="checker-dot dot-r"></span>
+        <span class="checker-dot dot-y"></span>
+        <span class="checker-dot dot-g"></span>
+        <span>Q3 — Write your pseudocode here</span>
+      </div>
+      <textarea class="pseudocode-textarea" id="editor-2" spellcheck="false"
+                autocomplete="off" autocapitalize="off">// Write your OCR pseudocode here
+</textarea>
+      <div class="checker-footer">
+        <button class="ac-btn" id="run-2" type="button">Run ▶</button>
+        <button class="ac-btn-secondary" id="clear-2" type="button">Clear</button>
+        <span id="run-status-2" style="font-size:0.75rem;color:var(--muted);"></span>
+      </div>
+    </div>
+
+    <div class="markscheme" id="ms-2">
+      <div class="ms-header">
+        <h3>Mark Scheme</h3>
+        <span class="ms-total">4 marks available</span>
+      </div>
+      <ul class="ms-list" id="ms-list-2">
+        <li class="ms-row" data-bp="0">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Defines a function using the <code>function</code> keyword with a name</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="1">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Valid parameter in brackets</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="2">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Uses <code>return</code> to return the converted value</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="3">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Calls the function and outputs correct results — 32&deg;F &rarr; 0&deg;C, 212&deg;F &rarr; 100&deg;C</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+      </ul>
+      <hr class="ms-divider">
+      <div class="ms-score" id="ms-score-2">— / 4 marks</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       Q4 — Shipping Cost (5 marks) — DEFINE + CALL with selection
+       ══════════════════════════════════════════════════════════ -->
+  <div class="panel" id="panel-3">
+    <div class="goal">Define and call a function that returns the shipping cost based on the parcel's weight.</div>
+
+    <div class="card">
+      <h2>Scenario</h2>
+      <p>An online shop charges shipping based on the weight of a parcel:</p>
+      <ul>
+        <li><strong>Up to 1 kg</strong> &rarr; &pound;2.99</li>
+        <li><strong>Over 1 kg, up to 5 kg</strong> &rarr; &pound;4.99</li>
+        <li><strong>Over 5 kg</strong> &rarr; &pound;8.99</li>
+      </ul>
+      <h2 style="margin-top:14px;">Your algorithm must:</h2>
+      <ul>
+        <li>Define a function called <code>getShipping</code> that takes a weight as a parameter and returns the correct cost</li>
+        <li>Ask the user to enter the weight of their parcel</li>
+        <li>Call the function and output the shipping cost</li>
+      </ul>
+    </div>
+
+    <div class="code-checker" id="checker-3">
+      <div class="checker-header">
+        <span class="checker-dot dot-r"></span>
+        <span class="checker-dot dot-y"></span>
+        <span class="checker-dot dot-g"></span>
+        <span>Q4 — Write your pseudocode here</span>
+      </div>
+      <textarea class="pseudocode-textarea" id="editor-3" spellcheck="false"
+                autocomplete="off" autocapitalize="off">// Write your OCR pseudocode here
+</textarea>
+      <div class="checker-footer">
+        <button class="ac-btn" id="run-3" type="button">Run ▶</button>
+        <button class="ac-btn-secondary" id="clear-3" type="button">Clear</button>
+        <span id="run-status-3" style="font-size:0.75rem;color:var(--muted);"></span>
+      </div>
+    </div>
+
+    <div class="markscheme" id="ms-3">
+      <div class="ms-header">
+        <h3>Mark Scheme</h3>
+        <span class="ms-total">5 marks available</span>
+      </div>
+      <ul class="ms-list" id="ms-list-3">
+        <li class="ms-row" data-bp="0">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Defines a function using the <code>function</code> keyword with a name</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="1">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Valid parameter in brackets</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="2">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Attempts to use selection (any <code>if</code> statement present)</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="3">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Uses <code>return</code> to return the shipping cost</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="4">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">All three costs output correctly — 1&nbsp;kg &rarr; 2.99, 3&nbsp;kg &rarr; 4.99, 7&nbsp;kg &rarr; 8.99</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+      </ul>
+      <hr class="ms-divider">
+      <div class="ms-score" id="ms-score-3">— / 5 marks</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       Q5 — Abbreviate (3 marks) — CALL ONLY, function visible in editor
+       ══════════════════════════════════════════════════════════ -->
+  <div class="panel" id="panel-4">
+    <div class="goal">Use a pre-written function that returns the first letter of a word.</div>
+
+    <div class="card">
+      <h2>Scenario</h2>
+      <p>A teacher's seating-plan tool shortens each pupil's name to a single initial. The function <code>abbreviate</code> has <strong>already been written for you</strong> and is shown in the editor below.</p>
+      <h2 style="margin-top:14px;">Your algorithm must:</h2>
+      <ul>
+        <li>Leave the existing <code>abbreviate</code> function unchanged</li>
+        <li>Below the function, ask the user to enter a word</li>
+        <li>Call <code>abbreviate</code> with the word and output the result</li>
+      </ul>
+    </div>
+
+    <div class="code-checker" id="checker-4">
+      <div class="checker-header">
+        <span class="checker-dot dot-r"></span>
+        <span class="checker-dot dot-y"></span>
+        <span class="checker-dot dot-g"></span>
+        <span>Q5 — Add your calling code below the given function</span>
+      </div>
+      <textarea class="pseudocode-textarea" id="editor-4" spellcheck="false"
+                autocomplete="off" autocapitalize="off">function abbreviate(word)
+  return word.substring(0, 1)
+endfunction
+
+// The function above has been written for you.
+// Write your code below — ask the user for a word and call abbreviate().
+
+</textarea>
+      <div class="checker-footer">
+        <button class="ac-btn" id="run-4" type="button">Run ▶</button>
+        <button class="ac-btn-secondary" id="clear-4" type="button">Clear</button>
+        <span id="run-status-4" style="font-size:0.75rem;color:var(--muted);"></span>
+      </div>
+    </div>
+
+    <div class="markscheme" id="ms-4">
+      <div class="ms-header">
+        <h3>Mark Scheme</h3>
+        <span class="ms-total">3 marks available</span>
+      </div>
+      <ul class="ms-list" id="ms-list-4">
+        <li class="ms-row" data-bp="0">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Asks the user for a word and stores it</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="1">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Calls <code>abbreviate</code> with the entered word</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="2">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Outputs the correct first character — Python &rarr; P, Alice &rarr; A</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+      </ul>
+      <hr class="ms-divider">
+      <div class="ms-score" id="ms-score-4">— / 3 marks</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       Q6 — BMI Calculator (4 marks) — CALL ONLY, function HIDDEN
+       ══════════════════════════════════════════════════════════ -->
+  <div class="panel" id="panel-5">
+    <div class="goal">Use a pre-written function whose code is hidden from you.</div>
+
+    <div class="card">
+      <h2>Scenario</h2>
+      <p>A health screening tool calculates a person's <strong>Body Mass Index (BMI)</strong>. Another developer has already written the function for you. You do <strong>not</strong> see its code — only its description:</p>
+      <p style="margin:6px 0 0; color:var(--accent-light); font-family:var(--font-head, monospace); font-size:0.88rem;">
+        <strong>calcBMI(weight, height)</strong> &mdash; takes a weight in kilograms and a height in metres, and returns the BMI value.
+      </p>
+      <h2 style="margin-top:14px;">Your algorithm must:</h2>
+      <ul>
+        <li>Ask the user to enter their weight (in kg) and their height (in metres)</li>
+        <li>Call <code>calcBMI</code> with the two values</li>
+        <li>Output the BMI result</li>
+      </ul>
+      <p style="margin-top:10px; color:var(--muted); font-size:0.83rem;">When you press Run, the hidden <code>calcBMI</code> function is added to your code automatically — just write the part that uses it.</p>
+    </div>
+
+    <div class="code-checker" id="checker-5">
+      <div class="checker-header">
+        <span class="checker-dot dot-r"></span>
+        <span class="checker-dot dot-y"></span>
+        <span class="checker-dot dot-g"></span>
+        <span>Q6 — Write your calling code here</span>
+      </div>
+      <textarea class="pseudocode-textarea" id="editor-5" spellcheck="false"
+                autocomplete="off" autocapitalize="off">// calcBMI(weight, height) is already available — do not redefine it.
+// Write your algorithm below: input weight + height, call calcBMI, output the result.
+
+</textarea>
+      <div class="checker-footer">
+        <button class="ac-btn" id="run-5" type="button">Run ▶</button>
+        <button class="ac-btn-secondary" id="clear-5" type="button">Clear</button>
+        <span id="run-status-5" style="font-size:0.75rem;color:var(--muted);"></span>
+      </div>
+    </div>
+
+    <div class="markscheme" id="ms-5">
+      <div class="ms-header">
+        <h3>Mark Scheme</h3>
+        <span class="ms-total">4 marks available</span>
+      </div>
+      <ul class="ms-list" id="ms-list-5">
+        <li class="ms-row" data-bp="0">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Inputs and stores both the weight and the height (two separate inputs)</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="1">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Calls <code>calcBMI</code> with the two values</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="2">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Outputs the result of the function call</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="3">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Correct BMI output — weight 100&nbsp;kg, height 2&nbsp;m &rarr; 25; weight 50&nbsp;kg, height 5&nbsp;m &rarr; 2</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+      </ul>
+      <hr class="ms-divider">
+      <div class="ms-score" id="ms-score-5">— / 4 marks</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       Q7 — Print Label Procedure (5 marks)
+       ══════════════════════════════════════════════════════════ -->
+  <div class="panel" id="panel-6">
+    <div class="goal">Define a procedure that prints a label, then call it three times for three items.</div>
+
+    <div class="card">
+      <h2>Scenario</h2>
+      <p>A till at a market stall prints a label for each item it sells. A label shows the item name and its price on a single line.</p>
+      <h2 style="margin-top:14px;">Your algorithm must:</h2>
+      <ul>
+        <li>Define a procedure called <code>printLabel</code> that takes <code>item</code> and <code>price</code> as parameters and outputs them as a single label line</li>
+        <li>Ask the user to enter the name and price of <strong>three</strong> items</li>
+        <li>Call <code>printLabel</code> once for each of the three items</li>
+      </ul>
+    </div>
+
+    <div class="code-checker" id="checker-6">
+      <div class="checker-header">
+        <span class="checker-dot dot-r"></span>
+        <span class="checker-dot dot-y"></span>
+        <span class="checker-dot dot-g"></span>
+        <span>Q7 — Write your pseudocode here</span>
+      </div>
+      <textarea class="pseudocode-textarea" id="editor-6" spellcheck="false"
+                autocomplete="off" autocapitalize="off">// Write your OCR pseudocode here
+</textarea>
+      <div class="checker-footer">
+        <button class="ac-btn" id="run-6" type="button">Run ▶</button>
+        <button class="ac-btn-secondary" id="clear-6" type="button">Clear</button>
+        <span id="run-status-6" style="font-size:0.75rem;color:var(--muted);"></span>
+      </div>
+    </div>
+
+    <div class="markscheme" id="ms-6">
+      <div class="ms-header">
+        <h3>Mark Scheme</h3>
+        <span class="ms-total">5 marks available</span>
+      </div>
+      <ul class="ms-list" id="ms-list-6">
+        <li class="ms-row" data-bp="0">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Defines a procedure using the <code>procedure</code> keyword with a name</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="1">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Valid parameters in brackets</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="2">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Uses an <code>output</code> statement somewhere in the algorithm</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="3">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Calls <code>printLabel</code> at least once</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="4">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">All three items appear in the output (Apple, Bread, Milk for the test inputs)</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+      </ul>
+      <hr class="ms-divider">
+      <div class="ms-score" id="ms-score-6">— / 5 marks</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       Q8 — Count Vowels (5 marks) — DEFINE + CALL with iteration
+       ══════════════════════════════════════════════════════════ -->
+  <div class="panel" id="panel-7">
+    <div class="goal">Define and call a function that counts the number of vowels in a word.</div>
+
+    <div class="card">
+      <h2>Scenario</h2>
+      <p>A spelling-game app needs to count how many vowels appear in a word. Vowels are the letters <strong>a, e, i, o, u</strong> (lowercase).</p>
+      <h2 style="margin-top:14px;">Your algorithm must:</h2>
+      <ul>
+        <li>Define a function called <code>countVowels</code> that takes a word as a parameter</li>
+        <li>Use a loop inside the function to look at each character and count the vowels</li>
+        <li>Return the total count</li>
+        <li>Ask the user to enter a word, call the function, and output the count</li>
+      </ul>
+    </div>
+
+    <div class="code-checker" id="checker-7">
+      <div class="checker-header">
+        <span class="checker-dot dot-r"></span>
+        <span class="checker-dot dot-y"></span>
+        <span class="checker-dot dot-g"></span>
+        <span>Q8 — Write your pseudocode here</span>
+      </div>
+      <textarea class="pseudocode-textarea" id="editor-7" spellcheck="false"
+                autocomplete="off" autocapitalize="off">// Write your OCR pseudocode here
+</textarea>
+      <div class="checker-footer">
+        <button class="ac-btn" id="run-7" type="button">Run ▶</button>
+        <button class="ac-btn-secondary" id="clear-7" type="button">Clear</button>
+        <span id="run-status-7" style="font-size:0.75rem;color:var(--muted);"></span>
+      </div>
+    </div>
+
+    <div class="markscheme" id="ms-7">
+      <div class="ms-header">
+        <h3>Mark Scheme</h3>
+        <span class="ms-total">5 marks available</span>
+      </div>
+      <ul class="ms-list" id="ms-list-7">
+        <li class="ms-row" data-bp="0">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Defines a function using the <code>function</code> keyword with a name</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="1">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Valid parameter in brackets</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="2">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Attempts to use iteration (any loop present)</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="3">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Uses <code>return</code> to return the vowel count</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="4">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Outputs the correct count — hello &rarr; 2, aeiou &rarr; 5</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+      </ul>
+      <hr class="ms-divider">
+      <div class="ms-score" id="ms-score-7">— / 5 marks</div>
+    </div>
+  </div>
+
+</div><!-- /.page-wrap -->
+
+<div class="ac-toast" id="toast"></div>
+
+<script type="module">
+import { setupEditors, runPseudocode, clearSyntaxHint, refreshEditor } from '../../pseudocode-editor.js';
+import { preload } from '../../pyodide-runner.js';
+
+// ── Constants ─────────────────────────────────────────────────
+const TASK_COUNT     = 8;
+const TOTAL_MARKS    = 32;
+const ACTIVITY_TITLE = 'Functions — Exam Practice';
+const STORE_NS = location.pathname;
+
+// ── Default starter code per task ─────────────────────────────
+// Stored once, used both as the initial textarea value (set in HTML)
+// AND restored by the Clear button so pre-loaded code can't be permanently lost.
+const DEFAULT_CODE = {
+  0: `// Write your square function definition above this line.
+// ──────────────────────────────────────────────────────
+
+output(square(4))
+output(square(7))
+`,
+  4: `function abbreviate(word)
+  return word.substring(0, 1)
+endfunction
+
+// The function above has been written for you.
+// Write your code below — ask the user for a word and call abbreviate().
+
+`,
+  5: `// calcBMI(weight, height) is already available — do not redefine it.
+// Write your algorithm below: input weight + height, call calcBMI, output the result.
+
+`,
+};
+
+// ── Hidden code injected at run-time only (not shown to the student) ──
+// For Q6 the student calls calcBMI without seeing its body; we prepend
+// the definition to the source before passing it to the transpiler.
+const HIDDEN_CODE = {
+  5: `function calcBMI(weight, height)
+  return weight / (height * height)
+endfunction
+`,
+};
+
+// ── Task definitions ──────────────────────────────────────────
+const TASKS = [
+
+  // ── Q1: Square (3 marks) — define only, calling code pre-loaded ──
+  {
+    maxMarks: 3,
+    tests: [
+      { inputs: [], expected: ['16', '49'] },
+    ],
+    criteria: [
+      {
+        text: 'Defines a function using the function keyword with a name',
+        marks: 1,
+        check: ({ src }) => /\bfunction\s+\w+/.test(src),
+      },
+      {
+        text: 'Valid parameter in brackets',
+        marks: 1,
+        check: ({ src }) => /\bfunction\s+\w+\s*\(\s*\w/.test(src),
+      },
+      {
+        text: 'Returns the correct squared value — square(4) → 16, square(7) → 49',
+        marks: 1,
+        check: ({ runs }) => outHas(runs[0], '16') && outHas(runs[0], '49'),
+      },
+    ],
+  },
+
+  // ── Q2: Minutes to Seconds (3 marks) — no name prescribed ──
+  {
+    maxMarks: 3,
+    tests: [
+      { inputs: ['3'],  expected: '180' },
+      { inputs: ['10'], expected: '600' },
+    ],
+    criteria: [
+      {
+        text: 'Defines a function using the function keyword with a name',
+        marks: 1,
+        check: ({ src }) => /\bfunction\s+\w+/.test(src),
+      },
+      {
+        text: 'Valid parameter in brackets',
+        marks: 1,
+        check: ({ src }) => /\bfunction\s+\w+\s*\(\s*\w/.test(src),
+      },
+      {
+        text: 'Calls the function and outputs the correct total — 3 → 180, 10 → 600',
+        marks: 1,
+        check: ({ runs }) => outHas(runs[0], '180') && outHas(runs[1], '600'),
+      },
+    ],
+  },
+
+  // ── Q3: Fahrenheit → Celsius (4 marks) — full define + call ──
+  {
+    maxMarks: 4,
+    tests: [
+      { inputs: ['32'],  expected: '0' },
+      { inputs: ['212'], expected: '100' },
+    ],
+    criteria: [
+      {
+        text: 'Defines a function using the function keyword with a name',
+        marks: 1,
+        check: ({ src }) => /\bfunction\s+\w+/.test(src),
+      },
+      {
+        text: 'Valid parameter in brackets',
+        marks: 1,
+        check: ({ src }) => /\bfunction\s+\w+\s*\(\s*\w/.test(src),
+      },
+      {
+        text: 'Uses return to return the converted value',
+        marks: 1,
+        check: ({ src }) => /\breturn\b/.test(src),
+      },
+      {
+        text: 'Calls the function and outputs correct results — 32°F → 0°C, 212°F → 100°C',
+        marks: 1,
+        check: ({ runs }) => outHas(runs[0], '0') && outHas(runs[1], '100'),
+      },
+    ],
+  },
+
+  // ── Q4: Shipping Cost (5 marks) — selection inside function ──
+  {
+    maxMarks: 5,
+    tests: [
+      { inputs: ['1'], expected: '2.99' },
+      { inputs: ['3'], expected: '4.99' },
+      { inputs: ['7'], expected: '8.99' },
+    ],
+    criteria: [
+      {
+        text: 'Defines a function using the function keyword with a name',
+        marks: 1,
+        check: ({ src }) => /\bfunction\s+\w+/.test(src),
+      },
+      {
+        text: 'Valid parameter in brackets',
+        marks: 1,
+        check: ({ src }) => /\bfunction\s+\w+\s*\(\s*\w/.test(src),
+      },
+      {
+        text: 'Attempts to use selection (any if statement present)',
+        marks: 1,
+        check: ({ src }) => /\bif\b/.test(src),
+      },
+      {
+        text: 'Uses return to return the shipping cost',
+        marks: 1,
+        check: ({ src }) => /\breturn\b/.test(src),
+      },
+      {
+        text: 'All three costs output correctly — 1 kg → 2.99, 3 kg → 4.99, 7 kg → 8.99',
+        marks: 1,
+        check: ({ runs }) =>
+          outHas(runs[0], '2.99') && outHas(runs[1], '4.99') && outHas(runs[2], '8.99'),
+      },
+    ],
+  },
+
+  // ── Q5: Abbreviate (3 marks) — call only, function visible ──
+  {
+    maxMarks: 3,
+    tests: [
+      { inputs: ['Python'], expected: 'p' },
+      { inputs: ['Alice'],  expected: 'a' },
+    ],
+    criteria: [
+      {
+        text: 'Asks the user for a word and stores it',
+        marks: 1,
+        check: ({ src }) => /\binput\s*\(/.test(src),
+      },
+      {
+        text: 'Calls abbreviate with the entered word',
+        marks: 1,
+        check: ({ src }) => /\babbreviate\s*\(\s*\w/.test(src),
+      },
+      {
+        text: 'Outputs the correct first character — Python → P, Alice → A',
+        marks: 1,
+        check: ({ runs }) => outHas(runs[0], 'p') && outHas(runs[1], 'a'),
+      },
+    ],
+  },
+
+  // ── Q6: BMI (4 marks) — call only, function HIDDEN (injected at run-time) ──
+  // The student's source is checked against the criteria below; when running,
+  // HIDDEN_CODE[5] is prepended to provide the calcBMI definition.
+  {
+    maxMarks: 4,
+    tests: [
+      { inputs: ['100', '2'], expected: '25' },
+      { inputs: ['50',  '5'], expected: '2'  },
+    ],
+    criteria: [
+      {
+        text: 'Inputs and stores both the weight and the height (two separate inputs)',
+        marks: 1,
+        check: ({ src }) => (src.match(/\binput\s*\(/g) || []).length >= 2,
+      },
+      {
+        text: 'Calls calcBMI with the two values',
+        marks: 1,
+        check: ({ src }) => /\bcalcbmi\s*\(\s*\w/.test(src),
+      },
+      {
+        text: 'Outputs the result of the function call',
+        marks: 1,
+        check: ({ src }) => /\boutput\s*\(/.test(src),
+      },
+      {
+        text: 'Correct BMI output — (100, 2) → 25; (50, 5) → 2',
+        marks: 1,
+        check: ({ runs }) => outHas(runs[0], '25') && outHas(runs[1], '2'),
+      },
+    ],
+  },
+
+  // ── Q7: printLabel procedure (5 marks) — define + call 3 times ──
+  {
+    maxMarks: 5,
+    tests: [
+      {
+        inputs: ['Apple', '1.20', 'Bread', '0.85', 'Milk', '1.50'],
+        expected: ['apple', 'bread', 'milk'],
+      },
+    ],
+    criteria: [
+      {
+        text: 'Defines a procedure using the procedure keyword with a name',
+        marks: 1,
+        check: ({ src }) => /\bprocedure\s+\w+/.test(src),
+      },
+      {
+        text: 'Valid parameters in brackets',
+        marks: 1,
+        check: ({ src }) => /\bprocedure\s+\w+\s*\(\s*\w/.test(src),
+      },
+      {
+        text: 'Uses an output statement somewhere in the algorithm',
+        marks: 1,
+        check: ({ src }) => /\boutput\s*\(/.test(src),
+      },
+      {
+        text: 'Calls printLabel at least once',
+        marks: 1,
+        check: ({ src }) => /\bprintlabel\s*\(\s*\w/.test(src),
+      },
+      {
+        text: 'All three items appear in the output (Apple, Bread, Milk)',
+        marks: 1,
+        check: ({ runs }) => outHas(runs[0], 'apple', 'bread', 'milk'),
+      },
+    ],
+  },
+
+  // ── Q8: countVowels (5 marks) — define + call with iteration ──
+  {
+    maxMarks: 5,
+    tests: [
+      { inputs: ['hello'],  expected: '2' },
+      { inputs: ['aeiou'],  expected: '5' },
+      { inputs: ['rhythm'], expected: '0' },
+    ],
+    criteria: [
+      {
+        text: 'Defines a function using the function keyword with a name',
+        marks: 1,
+        check: ({ src }) => /\bfunction\s+\w+/.test(src),
+      },
+      {
+        text: 'Valid parameter in brackets',
+        marks: 1,
+        check: ({ src }) => /\bfunction\s+\w+\s*\(\s*\w/.test(src),
+      },
+      {
+        text: 'Attempts to use iteration (any loop present)',
+        marks: 1,
+        check: ({ src }) => /\bfor\b|\bwhile\b|\bdo\b/.test(src),
+      },
+      {
+        text: 'Uses return to return the vowel count',
+        marks: 1,
+        check: ({ src }) => /\breturn\b/.test(src),
+      },
+      {
+        text: 'Outputs the correct count — hello → 2, aeiou → 5',
+        marks: 1,
+        check: ({ runs }) => outHas(runs[0], '2') && outHas(runs[1], '5'),
+      },
+    ],
+  },
+
+]; // end TASKS
+
+// ── State ──────────────────────────────────────────────────────
+const taskEarned    = new Array(TASK_COUNT).fill(0);
+const taskAttempted = new Array(TASK_COUNT).fill(false);
+
+// ── Helpers ────────────────────────────────────────────────────
+
+function normSrc(raw) {
+  return raw.replace(/\/\/[^\n]*/g, ' ').replace(/\s+/g, ' ').toLowerCase().trim();
+}
+
+function outHas(run, ...needles) {
+  if (!run || !run.ok || !run.output) return false;
+  const o = run.output.toLowerCase();
+  return needles.every(n => o.includes(n.toLowerCase()));
+}
+
+// ── Editor setup ───────────────────────────────────────────────
+for (let i = 0; i < TASK_COUNT; i++) {
+  const saved = localStorage.getItem(STORE_NS + ':e' + i);
+  if (saved !== null) document.getElementById('editor-' + i).value = saved;
+}
+setupEditors('.pseudocode-textarea');
+
+// ── Pyodide preload ────────────────────────────────────────────
+preload();
+
+// ── Restore mark scheme state ──────────────────────────────────
+for (let i = 0; i < TASK_COUNT; i++) {
+  const raw = localStorage.getItem(STORE_NS + ':ms' + i);
+  if (!raw) continue;
+  try {
+    const { earned, passed } = JSON.parse(raw);
+    taskEarned[i] = earned;
+    applyMarkscheme(i, passed, earned, TASKS[i].maxMarks);
+    updateTabState(i, earned, TASKS[i].maxMarks);
+  } catch (_) {}
+}
+updateProgress();
+
+// ── Tab switching ──────────────────────────────────────────────
+document.getElementById('tab-bar').addEventListener('click', e => {
+  const tab = e.target.closest('.tab-btn');
+  if (!tab) return;
+  const idx = +tab.dataset.idx;
+  document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  tab.classList.add('active');
+  document.getElementById('panel-' + idx).classList.add('active');
+  refreshEditor(document.getElementById('editor-' + idx));
+});
+
+// ── Run button wiring ──────────────────────────────────────────
+for (let idx = 0; idx < TASK_COUNT; idx++) {
+  const runBtn   = document.getElementById('run-' + idx);
+  const clearBtn = document.getElementById('clear-' + idx);
+  const statusEl = document.getElementById('run-status-' + idx);
+  const editorEl = document.getElementById('editor-' + idx);
+
+  runBtn.addEventListener('click', async () => {
+    await handleRun(idx, editorEl, runBtn, statusEl);
+  });
+
+  clearBtn.addEventListener('click', () => {
+    editorEl.value = DEFAULT_CODE[idx] ?? '';
+    editorEl.dispatchEvent(new Event('input'));
+    refreshEditor(editorEl);
+    resetMarkscheme(idx);
+    try {
+      localStorage.removeItem(STORE_NS + ':e' + idx);
+      localStorage.removeItem(STORE_NS + ':ms' + idx);
+    } catch (_) {}
+  });
+
+  let saveTimer;
+  editorEl.addEventListener('input', () => {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+      try { localStorage.setItem(STORE_NS + ':e' + idx, editorEl.value); } catch (_) {}
+    }, 500);
+  });
+}
+
+async function handleRun(idx, editorEl, runBtn, statusEl) {
+  const task = TASKS[idx];
+
+  runBtn.disabled = true;
+  statusEl.textContent = 'Running…';
+
+  // For hidden-code tasks, prepend the hidden definition before each run.
+  const studentCode = editorEl.value;
+  const hidden = HIDDEN_CODE[idx];
+
+  const runs = [];
+  for (const test of task.tests) {
+    if (hidden) editorEl.value = hidden + '\n' + studentCode;
+    const r = await runPseudocode(editorEl, { inputs: test.inputs });
+    runs.push({ inputs: test.inputs, output: r.output || '', ok: r.ok });
+  }
+
+  if (hidden) {
+    editorEl.value = studentCode;
+    refreshEditor(editorEl);
+  }
+
+  statusEl.textContent = '';
+  runBtn.disabled = false;
+  taskAttempted[idx] = true;
+
+  _renderTestOutput(editorEl, task.tests, runs);
+
+  if (!runs[0].ok && !runs[0].output) {
+    showToast('Fix the syntax error shown in the editor before checking marks.', 'warn');
+  }
+
+  // Criteria checks always run on the student's own source (without hidden code).
+  const src = normSrc(studentCode);
+  let earned = 0;
+  const passed = task.criteria.map(c => {
+    let result = false;
+    try { result = !!c.check({ src, runs }); } catch (_) { result = false; }
+    if (result) earned += c.marks;
+    return result;
+  });
+
+  applyMarkscheme(idx, passed, earned, task.maxMarks);
+  try { localStorage.setItem(STORE_NS + ':ms' + idx, JSON.stringify({ earned, passed })); } catch (_) {}
+
+  taskEarned[idx] = earned;
+  updateTabState(idx, earned, task.maxMarks);
+  updateProgress();
+
+  const totalEarned = taskEarned.reduce((s, v) => s + v, 0);
+  window.Classroom?.submitGrade(
+    Math.round(totalEarned / TOTAL_MARKS * 100),
+    ACTIVITY_TITLE
+  );
+
+  if (totalEarned === TOTAL_MARKS) allComplete();
+}
+
+// ── Per-test coloured output ───────────────────────────────────
+
+function _renderTestOutput(editorEl, tests, runs) {
+  const outputPanel = editorEl.closest('.editor-wrap')?.querySelector('.output-panel');
+  if (!outputPanel) return;
+  outputPanel.classList.remove('error');
+  const content = outputPanel.querySelector('.output-content');
+  const inputRow = outputPanel.querySelector('.output-input-row');
+  if (inputRow) inputRow.hidden = true;
+  if (!content) return;
+
+  const SEP = '─'.repeat(44);
+  const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+  content.innerHTML = runs.map((run, i) => {
+    const test = tests[i];
+    const label = run.inputs.length === 0
+      ? '(no inputs)'
+      : run.inputs.length === 1
+        ? `input: "${run.inputs[0]}"`
+        : `inputs: ${run.inputs.map(v => `"${v}"`).join(', ')}`;
+
+    let testPassed;
+    if (!run.ok) {
+      testPassed = false;
+    } else if (test.expected !== undefined) {
+      const out = (run.output || '').toLowerCase();
+      const needles = Array.isArray(test.expected) ? test.expected : [test.expected];
+      testPassed = needles.every(n => out.includes(n.toLowerCase()));
+    } else {
+      testPassed = true;
+    }
+
+    const out = run.ok ? (run.output || '(no output)') : `⚠ ${run.output || 'Error — check syntax'}`;
+    const color = testPassed ? '#5eead4' : '#ff6b6b';
+    return `<span style="color:${color}">${esc(`Test ${i + 1}  (${label})\n${SEP}\n${out}`)}</span>`;
+  }).join('\n\n');
+}
+
+// ── Mark scheme DOM updates ────────────────────────────────────
+
+function applyMarkscheme(idx, passed, earned, maxMarks) {
+  const list = document.getElementById('ms-list-' + idx);
+  const rows = list.querySelectorAll('.ms-row');
+  rows.forEach((row, i) => {
+    const tick = row.querySelector('.ms-tick');
+    row.classList.remove('pass', 'fail');
+    if (passed[i]) {
+      row.classList.add('pass');
+      tick.textContent = '✓';
+    } else {
+      row.classList.add('fail');
+      tick.textContent = '✗';
+    }
+  });
+  const scoreEl = document.getElementById('ms-score-' + idx);
+  scoreEl.textContent = earned + ' / ' + maxMarks + ' mark' + (maxMarks === 1 ? '' : 's');
+  scoreEl.classList.toggle('full', earned === maxMarks);
+}
+
+function resetMarkscheme(idx) {
+  const list = document.getElementById('ms-list-' + idx);
+  list.querySelectorAll('.ms-row').forEach(row => {
+    row.classList.remove('pass', 'fail');
+    row.querySelector('.ms-tick').textContent = '○';
+  });
+  const scoreEl = document.getElementById('ms-score-' + idx);
+  scoreEl.textContent = '— / ' + TASKS[idx].maxMarks + ' mark' + (TASKS[idx].maxMarks === 1 ? '' : 's');
+  scoreEl.classList.remove('full');
+  taskEarned[idx] = 0;
+  updateTabState(idx, 0, TASKS[idx].maxMarks);
+  updateProgress();
+}
+
+// ── Tab state ──────────────────────────────────────────────────
+
+function updateTabState(idx, earned, maxMarks) {
+  const tab = document.querySelector('.tab-btn[data-idx="' + idx + '"]');
+  if (!tab) return;
+  tab.classList.remove('done-green', 'done-gold');
+  if (earned === maxMarks) {
+    tab.classList.add('done-green');
+  } else if (earned > 0) {
+    tab.classList.add('done-gold');
+  }
+}
+
+// ── Progress bar ───────────────────────────────────────────────
+
+function updateProgress() {
+  const totalEarned = taskEarned.reduce((s, v) => s + v, 0);
+  document.getElementById('progress-fill').style.width =
+    Math.round(totalEarned / TOTAL_MARKS * 100) + '%';
+  document.getElementById('progress-pct').textContent = totalEarned + ' / ' + TOTAL_MARKS;
+}
+
+// ── All tasks complete ─────────────────────────────────────────
+
+function allComplete() {
+  document.getElementById('done-banner').classList.add('show');
+}
+
+// ── Toast ──────────────────────────────────────────────────────
+
+window.showToast = function(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'ac-toast show' + (type ? ' ' + type : '');
+  setTimeout(() => t.classList.remove('show'), 3500);
+};
+</script>
+
+<!-- Google Classroom integration -->
+<script src="../../classroom.js"></script>
+</body>
+</html>
