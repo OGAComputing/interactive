@@ -448,16 +448,16 @@ color:  blue
        Q6 — School Café Daily Specials (5 marks)
        ══════════════════════════════════════════════════════════ -->
   <div class="panel" id="panel-5">
-    <div class="goal">Total the portions sold across 5 daily specials using a count-controlled loop.</div>
+    <div class="goal">Track lunch and break portions sold across 5 daily specials using two separate running totals.</div>
 
     <div class="card">
       <h2>Scenario</h2>
-      <p>A school café offers <strong>5 daily specials</strong>. At the end of lunch, the café manager enters how many portions of each special were sold. The system then displays the total number of portions sold across all 5 specials.</p>
+      <p>A school café offers <strong>5 daily specials</strong>. For each special, the café manager enters <strong>two figures</strong>: how many portions were sold <strong>at lunch</strong> and how many were sold <strong>at break time</strong>. The system then displays the <strong>total portions sold at lunch</strong> and the <strong>total portions sold at break</strong> across all 5 specials.</p>
       <h2 style="margin-top:14px;">Your algorithm must:</h2>
       <ul>
         <li>Use a count-controlled loop that repeats exactly 5 times</li>
-        <li>On each iteration, ask for and store the number of portions sold for that special and add it to the running total</li>
-        <li>Output the total number of portions after the loop ends</li>
+        <li>On each iteration, ask for the lunch portions and the break portions for that special, and update two separate running totals</li>
+        <li>After the loop ends, output both totals — the lunch total and the break total</li>
       </ul>
     </div>
 
@@ -486,7 +486,7 @@ color:  blue
       <ul class="ms-list" id="ms-list-5">
         <li class="ms-row" data-bp="0">
           <span class="ms-tick">○</span>
-          <span class="ms-text">Asks for and stores a portion count inside the loop on each iteration</span>
+          <span class="ms-text">Asks for and stores both portion counts (lunch and break) inside the loop on each iteration</span>
           <span class="ms-marks">1 mark</span>
         </li>
         <li class="ms-row" data-bp="1">
@@ -501,12 +501,12 @@ color:  blue
         </li>
         <li class="ms-row" data-bp="3">
           <span class="ms-tick">○</span>
-          <span class="ms-text">Adds each portion count to a running total on each iteration</span>
+          <span class="ms-text">Maintains two separate running totals — one for lunch, one for break</span>
           <span class="ms-marks">1 mark</span>
         </li>
         <li class="ms-row" data-bp="4">
           <span class="ms-tick">○</span>
-          <span class="ms-text">Outputs the correct total after all 5 specials (e.g. 12+8+15+6+9 → 50, 5+5+5+5+5 → 25)</span>
+          <span class="ms-text">Outputs both correct totals after all 5 specials (e.g. lunch = 50, break = 15)</span>
           <span class="ms-marks">1 mark</span>
         </li>
       </ul>
@@ -849,15 +849,18 @@ const TASKS = [
   // ── Q6: School Café Specials (5 marks) ─────────────────────
   {
     maxMarks: 5,
+    // Inputs are paired: lunch1, break1, lunch2, break2, …
     tests: [
-      { inputs: ['12','8','15','6','9'], expected: '50' },  // total = 50
-      { inputs: ['5','5','5','5','5'],   expected: '25' },  // total = 25
+      // lunch (12,8,15,6,9) → 50, break (3,2,4,1,5) → 15
+      { inputs: ['12','3','8','2','15','4','6','1','9','5'], expected: ['50', '15'] },
+      // lunch (4,4,4,4,4) → 20, break (7,7,7,7,7) → 35
+      { inputs: ['4','7','4','7','4','7','4','7','4','7'],   expected: ['20', '35'] },
     ],
     criteria: [
       {
-        text: 'Asks for and stores a portion count inside the loop on each iteration',
+        text: 'Asks for and stores both portion counts (lunch and break) inside the loop on each iteration',
         marks: 1,
-        check: ({ src }) => /\binput\s*\(/.test(src),
+        check: ({ src }) => (src.match(/\binput\s*\(/g) || []).length >= 2,
       },
       {
         text: 'Attempts to use iteration (any loop present)',
@@ -870,15 +873,17 @@ const TASKS = [
         check: ({ src }) => /\bfor\b/.test(src) && /\b5\b/.test(src),
       },
       {
-        text: 'Adds each portion count to a running total on each iteration',
+        text: 'Maintains two separate running totals (one for lunch, one for break)',
         marks: 1,
-        check: ({ src }) => /[+]/.test(src),
+        check: ({ src }) =>
+          (src.match(/(\w+)\s*=\s*\1\s*\+/g) || []).length >= 2,
       },
       {
-        text: 'Outputs the correct total after all 5 specials (e.g. 12+8+15+6+9 → 50)',
+        text: 'Outputs both correct totals after all 5 specials (e.g. lunch = 50, break = 15)',
         marks: 1,
         check: ({ runs }) =>
-          outHas(runs[0], '50') && outHas(runs[1], '25'),
+          outHas(runs[0], '50') && outHas(runs[0], '15') &&
+          outHas(runs[1], '20') && outHas(runs[1], '35'),
       },
     ],
   },
