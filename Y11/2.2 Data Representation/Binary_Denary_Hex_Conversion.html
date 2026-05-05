@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- ACTIVITY
+title:  Binary, Denary & Hexadecimal Conversion
+type:   Practice
+stars:  3
+desc:   Master conversions between number bases with adaptive difficulty.
+color:  pink
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Binary, Denary & Hexadecimal Conversion — Year 11</title>
+
+<link rel="stylesheet" href="../../shared.css">
+
+<style>
+  /* ── Sticky header ───────────────────────────────────── */
+  header {
+    background: var(--surface);
+    border-bottom: 2px solid var(--surface-mid);
+    padding: 12px 20px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.35);
+  }
+  header h1 {
+    font-family: var(--font-head);
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 0.04em;
+  }
+  .header-sub {
+    font-size: 0.72rem;
+    color: var(--muted);
+    margin-top: 1px;
+  }
+  .header-badge {
+    margin-left: auto;
+    background: var(--surface-mid);
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  /* ── Page body padding ───────────────────────────────── */
+  .page-wrap { padding: 28px 16px 60px; }
+
+  /* ── Page title (below header) ───────────────────────── */
+  .page-title {
+    font-size: 1.35rem;
+    font-weight: 700;
+    text-align: center;
+    color: var(--accent-light);
+    margin-bottom: 4px;
+  }
+  .page-subtitle {
+    text-align: center;
+    font-size: 0.82rem;
+    color: var(--muted);
+    margin-bottom: 28px;
+  }
+
+  /* ── Pill tab bar ────────────────────────────────────── */
+  .tabs {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 28px;
+  }
+  .tab-btn {
+    padding: 8px 20px;
+    border: 2px solid var(--surface-mid);
+    border-radius: 20px;
+    background: var(--surface);
+    color: var(--muted);
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s, color 0.2s;
+    user-select: none;
+  }
+  .tab-btn:hover:not(.active) { border-color: var(--accent); color: var(--text); }
+  .tab-btn.active   { background: var(--accent);  border-color: var(--accent);  color: var(--text-inv); }
+  .tab-btn.done-gold  { background: var(--gold);  border-color: var(--gold);    color: #111; }
+
+  /* ── Panels ──────────────────────────────────────────── */
+  .panel {
+    display: none;
+    max-width: 600px;
+    margin: 0 auto;
+    animation: ac-fade-in 0.2s ease;
+  }
+  .panel.active { display: block; }
+
+  /* ── Section card ────────────────────────────────────── */
+  .card {
+    background: var(--surface);
+    border-left: 4px solid var(--accent);
+    border-radius: 8px;
+    padding: 18px 22px;
+    margin-bottom: 22px;
+    position: relative;
+  }
+  .card h2 {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 12px;
+  }
+
+  /* ── Difficulty Indicator ────────────────────────────── */
+  .diff-badge {
+    position: absolute;
+    top: 18px;
+    right: 22px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--muted);
+    background: var(--surface-mid);
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+
+  /* ── Question UI ─────────────────────────────────────── */
+  .q-box {
+    text-align: center;
+    padding: 20px 0;
+  }
+  .q-prompt {
+    font-size: 1rem;
+    color: var(--text);
+    margin-bottom: 16px;
+  }
+  .q-value {
+    font-family: var(--font-head, monospace);
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--accent-light);
+    margin-bottom: 24px;
+    letter-spacing: 0.05em;
+  }
+  .q-input-wrap {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+  }
+  .q-input {
+    width: 200px;
+    padding: 12px 16px;
+    border: 2px solid var(--surface-mid);
+    border-radius: 8px;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 1.2rem;
+    text-align: center;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .q-input:focus { border-color: var(--accent); }
+
+  /* ── Goal banner ─────────────────────────────────────── */
+  .goal {
+    background: var(--surface);
+    border-left: 4px solid var(--accent);
+    border-radius: 0 8px 8px 0;
+    padding: 10px 16px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 20px;
+  }
+
+  /* ── Feedback line ───────────────────────────────────── */
+  .feedback {
+    min-height: 1.4em;
+    font-size: 1rem;
+    font-weight: 600;
+    margin-top: 12px;
+    text-align: center;
+  }
+  .feedback.correct { color: var(--green); }
+  .feedback.wrong   { color: var(--red); animation: ac-shake 0.35s ease; }
+
+  /* ── Score / progress bar ────────────────────────────── */
+  .score-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .score-label {
+    font-size: 0.72rem;
+    font-family: var(--font-head, monospace);
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    white-space: nowrap;
+  }
+  .score-pct {
+    font-family: var(--font-head, monospace);
+    font-size: 0.8rem;
+    color: var(--accent);
+    margin-top: 3px;
+  }
+
+  .streak-dots {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 10px;
+  }
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--surface-mid);
+    transition: background 0.2s;
+  }
+  .dot.active { background: var(--accent); }
+</style>
+</head>
+
+<body data-year="11" data-topic="Data_Representation">
+
+<div id="done-banner" class="ac-banner gold">
+  🏆 All tasks complete — conversion expert status achieved!
+</div>
+
+<header>
+  <div>
+    <h1>Binary, Denary & Hexadecimal</h1>
+    <div class="header-sub">GCSE Computer Science</div>
+  </div>
+  <div class="header-badge">Year 11</div>
+</header>
+
+<div class="page-wrap">
+  <h2 class="page-title">Number Base Conversion</h2>
+  <p class="page-subtitle">Convert between Binary (Base 2), Denary (Base 10) and Hexadecimal (Base 16)</p>
+
+  <div class="score-row">
+    <span class="score-label">Total Progress</span>
+    <div class="ac-progress-bar" style="flex:1;">
+      <div class="ac-progress-fill" id="progress-fill"></div>
+    </div>
+    <span class="score-pct" id="progress-pct">0%</span>
+  </div>
+
+  <div class="tabs" id="tab-bar">
+    <button class="tab-btn active" data-idx="0">Binary ↔ Denary</button>
+    <button class="tab-btn"        data-idx="1">Hex ↔ Binary</button>
+    <button class="tab-btn"        data-idx="2">Hex ↔ Denary</button>
+    <button class="tab-btn"        data-idx="3">Final Challenge</button>
+  </div>
+
+  <!-- Task Panels -->
+  <div id="panels">
+    <!-- Panels will be handled by a single structure and updated by JS -->
+    <div class="panel active" id="active-panel">
+      <div class="goal" id="task-goal">🎯 Master number base conversions. Get 10 correct to complete each task.</div>
+
+      <div class="card">
+        <div class="diff-badge" id="diff-label">Level: Easy</div>
+        <h2>Question</h2>
+        <div class="q-box">
+          <div class="q-prompt" id="q-prompt">Convert the binary number to denary:</div>
+          <p style="font-size: 0.75rem; color: var(--muted); margin-bottom: 12px;" id="q-format-hint">
+            Always use 8-bit binary and 2-digit hexadecimal answers.
+          </p>
+          <div class="q-value" id="q-value">00001010</div>
+          <div class="q-input-wrap">
+            <input type="text" class="q-input" id="q-input" placeholder="?" autocomplete="off">
+            <button class="ac-btn" id="check-btn">Check</button>
+          </div>
+          <div class="streak-dots" id="streak-dots">
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="feedback" id="feedback"></div>
+    </div>
+  </div>
+
+</div>
+
+<div class="ac-toast" id="toast"></div>
+
+<script>
+  // ── State ──────────────────────────────────────────────
+  const TASK_COUNT = 4;
+  const STREAK_TO_LEVEL_UP = 3;
+  
+  const state = {
+    currentIdx: 0,
+    lastValue: -1,
+    completed: new Array(TASK_COUNT).fill(false),
+    tasks: [
+      { id: 0, type: 'bin-den', diff: 0, streak: 0, count: 0, target: 10, title: 'Binary ↔ Denary' },
+      { id: 1, type: 'hex-bin', diff: 0, streak: 0, count: 0, target: 10, title: 'Hex ↔ Binary' },
+      { id: 2, type: 'hex-den', diff: 0, streak: 0, count: 0, target: 10, title: 'Hex ↔ Denary' },
+      { id: 3, type: 'mixed',   diff: 0, streak: 0, count: 0, target: 15, title: 'Final Challenge' }
+    ]
+  };
+
+  const diffNames = ["Beginner (0-15)", "Intermediate (16-63)", "Advanced (64-255)"];
+
+  // ── Initialization ─────────────────────────────────────
+  window.addEventListener('load', () => {
+    generateQuestion();
+    updateUI();
+  });
+
+  // ── Tab switching ──────────────────────────────────────
+  document.getElementById('tab-bar').addEventListener('click', e => {
+    const tab = e.target.closest('.tab-btn');
+    if (!tab) return;
+    const idx = +tab.dataset.idx;
+
+    state.currentIdx = idx;
+    state.lastValue = -1; // Reset last value on tab change
+    
+    document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    
+    document.getElementById('feedback').textContent = '';
+    document.getElementById('q-input').value = '';
+    
+    generateQuestion();
+    updateUI();
+  });
+
+  // ── Question Generation ────────────────────────────────
+  function generateQuestion() {
+    const task = state.tasks[state.currentIdx];
+    const diff = task.diff;
+    
+    let min, max;
+    if (diff === 0) { min = 0; max = 16; }
+    else if (diff === 1) { min = 16; max = 64; }
+    else { min = 64; max = 256; }
+
+    let val, type, isHex, hasLetter;
+    
+    // Loop until we get a value that meets all constraints
+    let attempts = 0;
+    do {
+      val = Math.floor(Math.random() * (max - min)) + min;
+      
+      // Prevent immediate reversal or duplicate value
+      if (val === state.lastValue) continue;
+
+      type = task.type;
+      if (type === 'mixed') {
+        const types = ['bin-den', 'hex-bin', 'hex-den'];
+        type = types[Math.floor(Math.random() * types.length)];
+      }
+
+      isHex = type.includes('hex');
+      hasLetter = (val % 16 >= 10) || (Math.floor(val / 16) >= 10);
+
+      // Constraints:
+      // 1. If binary<->denary, value must be > 3 (mostly relevant for Level 0)
+      // 2. If hex is involved, must have at least one letter (A-F)
+      if (type === 'bin-den' && val <= 3) continue;
+      if (isHex && !hasLetter) {
+        attempts++;
+        if (attempts > 100) break; 
+        continue;
+      }
+      
+      break;
+    } while (true);
+
+    state.lastValue = val;
+    let subType; // 0: A->B, 1: B->A
+    subType = Math.floor(Math.random() * 2);
+
+    let prompt, displayValue, answer;
+
+    if (type === 'bin-den') {
+      if (subType === 0) { // Binary to Denary
+        prompt = "Convert this 8-bit binary number to denary:";
+        displayValue = toBinary(val);
+        answer = val.toString();
+      } else { // Denary to Binary
+        prompt = "Convert this denary number to 8-bit binary:";
+        displayValue = val.toString();
+        answer = toBinary(val);
+      }
+    } else if (type === 'hex-bin') {
+      if (subType === 0) { // Hex to Binary
+        prompt = "Convert this 2-digit hex number to 8-bit binary:";
+        displayValue = toHex(val);
+        answer = toBinary(val);
+      } else { // Binary to Hex
+        prompt = "Convert this 8-bit binary number to 2-digit hex:";
+        displayValue = toBinary(val);
+        answer = toHex(val);
+      }
+    } else if (type === 'hex-den') {
+      if (subType === 0) { // Hex to Denary
+        prompt = "Convert this 2-digit hex number to denary:";
+        displayValue = toHex(val);
+        answer = val.toString();
+      } else { // Denary to Hex
+        prompt = "Convert this denary number to 2-digit hex:";
+        displayValue = val.toString();
+        answer = toHex(val);
+      }
+    }
+
+    task.current = { prompt, displayValue, answer, type: type, subType: subType };
+    
+    // Set input limits based on expected answer
+    const inputEl = document.getElementById('q-input');
+    if (type === 'bin-den') {
+        if (subType === 1) inputEl.maxLength = 8; // Binary
+        else inputEl.maxLength = 3;              // Denary (max 255)
+    } else if (type === 'hex-bin') {
+        if (subType === 0) inputEl.maxLength = 8; // Binary
+        else inputEl.maxLength = 2;              // Hex
+    } else if (type === 'hex-den') {
+        if (subType === 0) inputEl.maxLength = 3; // Denary
+        else inputEl.maxLength = 2;              // Hex
+    }
+
+    document.getElementById('q-prompt').textContent = prompt;
+    document.getElementById('q-value').textContent = displayValue;
+    document.getElementById('diff-label').textContent = "Level: " + diffNames[diff];
+    document.getElementById('task-goal').textContent = `🎯 Task: ${task.title}. Correct: ${task.count}/${task.target}`;
+  }
+
+  function toBinary(n) {
+    return n.toString(2).padStart(8, '0');
+  }
+
+  function toHex(n) {
+    return n.toString(16).toUpperCase().padStart(2, '0');
+  }
+
+  // ── Check Answer ───────────────────────────────────────
+  function checkAnswer() {
+    const inputEl = document.getElementById('q-input');
+    const userAnswer = inputEl.value.trim().toUpperCase();
+    const task = state.tasks[state.currentIdx];
+    const feedback = document.getElementById('feedback');
+
+    if (!userAnswer) return;
+
+    // Clean user binary input of spaces
+    const cleanUser = userAnswer.replace(/\s/g, '');
+    const cleanCorrect = task.current.answer.replace(/\s/g, '');
+
+    const isCorrect = cleanUser === cleanCorrect;
+
+    if (isCorrect) {
+      feedback.textContent = '✅ Correct!';
+      feedback.className = 'feedback correct';
+      
+      task.count++;
+      task.streak++;
+      
+      if (task.streak >= STREAK_TO_LEVEL_UP) {
+        if (task.diff < 2) {
+          task.diff++;
+          showToast("Difficulty increased!", "success");
+        }
+        task.streak = 0;
+      }
+      
+      if (task.count >= task.target) {
+        markDone(state.currentIdx);
+      }
+
+      setTimeout(() => {
+        feedback.textContent = '';
+        inputEl.value = '';
+        generateQuestion();
+        updateUI();
+      }, 1000);
+
+    } else {
+      feedback.textContent = `❌ Not quite. The answer was ${task.current.answer}.`;
+      feedback.className = 'feedback wrong';
+      
+      task.streak = 0;
+      if (task.diff > 0) {
+        task.diff--;
+        showToast("Difficulty decreased.", "warn");
+      }
+      
+      setTimeout(() => {
+        feedback.textContent = '';
+        inputEl.value = '';
+        generateQuestion();
+        updateUI();
+      }, 2500);
+    }
+  }
+
+  document.getElementById('check-btn').addEventListener('click', checkAnswer);
+  document.getElementById('q-input').addEventListener('keypress', e => {
+    if (e.key === 'Enter') checkAnswer();
+  });
+
+  // ── Mark Done ──────────────────────────────────────────
+  function markDone(idx) {
+    if (state.completed[idx]) return;
+    state.completed[idx] = true;
+
+    const tab = document.querySelector(`.tab-btn[data-idx="${idx}"]`);
+    if (tab) tab.classList.add('done-gold');
+
+    updateProgress();
+
+    const totalCorrect = state.tasks.reduce((acc, t) => acc + Math.min(t.count, t.target), 0);
+    const totalTarget = state.tasks.reduce((acc, t) => acc + t.target, 0);
+    const pct = Math.round(totalCorrect / totalTarget * 100);
+    
+    window.Classroom?.submitGrade(pct, 'Binary Denary Hex Conversion');
+
+    if (state.completed.every(Boolean)) {
+      allComplete();
+    }
+  }
+
+  function updateUI() {
+    const task = state.tasks[state.currentIdx];
+    const dots = document.querySelectorAll('.dot');
+    dots.forEach((d, i) => {
+      d.className = i < task.streak ? 'dot active' : 'dot';
+    });
+    updateProgress();
+  }
+
+  function updateProgress() {
+    const totalCorrect = state.tasks.reduce((acc, t) => acc + Math.min(t.count, t.target), 0);
+    const totalTarget = state.tasks.reduce((acc, t) => acc + t.target, 0);
+    const pct = Math.round(totalCorrect / totalTarget * 100);
+    
+    document.getElementById('progress-fill').style.width = pct + '%';
+    document.getElementById('progress-pct').textContent = pct + '%';
+  }
+
+  function allComplete() {
+    document.getElementById('done-banner').classList.add('show');
+  }
+
+  function showToast(msg, type = '') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'ac-toast show' + (type ? ' ' + type : '');
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+</script>
+
+<script src="../../classroom.js"></script>
+</body>
+</html>
