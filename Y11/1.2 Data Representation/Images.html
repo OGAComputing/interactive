@@ -169,6 +169,30 @@ color:  blue
   .ms-point.ms-err { border-color: var(--red); background: rgba(220,38,38,.08); }
   .ms-fb { margin-top: 10px; padding: 10px; border-radius: 8px; display: none; line-height: 1.6; }
   .ms-fb.show { display: block; }
+  .comparison-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 10px 0; }
+  .comparison-card { border: 1px solid var(--surface-mid); border-radius: 8px; padding: 10px; background: var(--bg); }
+  .comparison-card strong { display: block; color: var(--accent); margin-bottom: 6px; }
+  .sample-image { display: grid; width: 100%; max-width: 160px; aspect-ratio: 1; border: 1px solid var(--surface-mid); margin-bottom: 8px; background: #f8fafc; overflow: hidden; }
+  .sample-image.low { grid-template-columns: repeat(5, 1fr); }
+  .sample-image.high { grid-template-columns: repeat(10, 1fr); }
+  .sample-image.depth { grid-template-columns: repeat(10, 1fr); }
+  .sample-image span { border: 1px solid rgba(17,24,39,.12); }
+  .sample-image.low span:nth-child(4n+1), .sample-image.high span:nth-child(5n+1) { background: #1d4ed8; }
+  .sample-image.low span:nth-child(4n+2), .sample-image.high span:nth-child(5n+2) { background: #38bdf8; }
+  .sample-image.low span:nth-child(4n+3), .sample-image.high span:nth-child(5n+3) { background: #facc15; }
+  .sample-image.low span:nth-child(4n), .sample-image.high span:nth-child(5n+4), .sample-image.high span:nth-child(5n) { background: #15803d; }
+  .sample-image.depth span:nth-child(8n+1) { background: #0f172a; }
+  .sample-image.depth span:nth-child(8n+2) { background: #1d4ed8; }
+  .sample-image.depth span:nth-child(8n+3) { background: #0891b2; }
+  .sample-image.depth span:nth-child(8n+4) { background: #16a34a; }
+  .sample-image.depth span:nth-child(8n+5) { background: #facc15; }
+  .sample-image.depth span:nth-child(8n+6) { background: #f97316; }
+  .sample-image.depth span:nth-child(8n+7) { background: #dc2626; }
+  .sample-image.depth span:nth-child(8n) { background: #7e22ce; }
+  .comparison-meta { color: var(--muted); font-size: .82rem; line-height: 1.5; }
+  @media (max-width: 760px) {
+    .comparison-grid { grid-template-columns: 1fr; }
+  }
 </style>
 </head>
 <body>
@@ -196,11 +220,46 @@ color:  blue
   </div>
 
   <div class="panel" id="panel-1"><div class="card">
-    <h3>Image File Size Foundations</h3>
+    <h3>Image Quality and File Size</h3>
     <div class="question"><p>Q1. An image needs to represent 4 colours. What is the minimum colour depth in bits?</p><input id="t1a" class="qa-input mono"></div>
     <div class="question"><p>Q2. What is the maximum number of colours available with 3-bit colour depth?</p><input id="t1b" class="qa-input mono"></div>
     <div class="question"><p>Q3. 3 images are each 100 x 50 pixels with 4-bit colour. What is their total size in bytes?</p><input id="t1c" class="qa-input mono"></div>
     <div class="question"><p>Q4. Complete the sentence: reducing colour depth reduces file size because fewer _____ are stored for each pixel.</p><input id="t1d" class="qa-input mono"></div>
+    <div class="question">
+      <p><strong>Quality trade-off exercise.</strong> Compare three uncompressed versions of the same simple image. Use:</p>
+      <p class="mono">file size in bits = width x height x colour depth</p>
+      <div class="comparison-grid">
+        <div class="comparison-card">
+          <strong>Image A</strong>
+          <div class="sample-image low" id="sample-low"></div>
+          <div class="comparison-meta">100 x 100 pixels<br>2-bit colour depth<br>Lower detail, 4 colours</div>
+        </div>
+        <div class="comparison-card">
+          <strong>Image B</strong>
+          <div class="sample-image high" id="sample-high"></div>
+          <div class="comparison-meta">200 x 200 pixels<br>2-bit colour depth<br>More detail, same 4 colours</div>
+        </div>
+        <div class="comparison-card">
+          <strong>Image C</strong>
+          <div class="sample-image depth" id="sample-depth"></div>
+          <div class="comparison-meta">200 x 200 pixels<br>4-bit colour depth<br>More detail, up to 16 colours</div>
+        </div>
+      </div>
+    </div>
+    <div class="question"><p>Q5. Image A has 100 x 100 pixels and 2-bit colour depth. What is its file size in bytes?</p><input id="t1e" class="qa-input mono"></div>
+    <div class="question"><p>Q6. Image B doubles the width and height to 200 x 200 pixels, but keeps 2-bit colour depth. What is its file size in bytes?</p><input id="t1f" class="qa-input mono"></div>
+    <div class="question"><p>Q7. Compared with Image A, how many times larger is Image B's file size?</p><input id="t1g" class="qa-input mono"></div>
+    <div class="question"><p>Q8. Image C keeps 200 x 200 pixels but increases colour depth from 2-bit to 4-bit. Compared with Image B, how many times larger is Image C's file size?</p><input id="t1h" class="qa-input mono"></div>
+    <div class="question">
+      <p>Q9. Which statement best explains the relationship between image quality and file size?</p>
+      <select id="t1i" class="match-sel">
+        <option value="">Choose</option>
+        <option>Increasing resolution can improve detail, but stores more pixels so file size increases.</option>
+        <option>Increasing resolution always decreases file size because the image is clearer.</option>
+        <option>Increasing colour depth improves sharpness because it adds more pixels.</option>
+        <option>Compression never affects quality or file size.</option>
+      </select>
+    </div>
     <div class="row"><button class="ac-btn" onclick="checkTask1()">Check answers</button><button class="ac-btn-secondary" onclick="resetTask1()">Reset</button></div>
     <div class="feedback" id="feedback-1"></div>
   </div></div>
@@ -413,15 +472,32 @@ function updateProgress(){ const pct=Math.round(completed.filter(Boolean).length
 function setFb(i, ok, msg){ const el=document.getElementById("feedback-"+i); el.textContent=msg; el.className="feedback "+(ok?"correct":"wrong"); if(!ok) wrongBefore[i]=true; }
 function approx(v, t){ return Math.abs(v-t) <= 1; }
 
+function buildSamples(){
+  [["sample-low",25],["sample-high",100],["sample-depth",100]].forEach(([id,count])=>{
+    const el=document.getElementById(id);
+    if(!el) return;
+    el.innerHTML="";
+    for(let i=0;i<count;i++) el.appendChild(document.createElement("span"));
+  });
+}
+
 function checkTask1(){
   if (window.Classroom?.verifyAuth()===false) return;
   const a=Number(document.getElementById("t1a").value), b=Number(document.getElementById("t1b").value), c=Number(document.getElementById("t1c").value);
   const d=(document.getElementById("t1d").value || "").trim().toLowerCase();
   const okd = d==="bits" || d==="bit";
-  if(a===2 && b===8 && c===7500 && okd){ setFb(1,true,!wrongBefore[1]?"Perfect first attempt across the image-size foundations.":"All image-size foundations are correct."); markDone(1); }
-  else { setFb(1,false,"Not quite. Use bits per pixel, 2^bits for colours, then width x height x colour depth x images before converting bits to bytes."); }
+  const e=Number(document.getElementById("t1e").value), f=Number(document.getElementById("t1f").value), g=Number(document.getElementById("t1g").value), h=Number(document.getElementById("t1h").value);
+  const i=document.getElementById("t1i").value;
+  const oki = i==="Increasing resolution can improve detail, but stores more pixels so file size increases.";
+  if(a===2 && b===8 && c===7500 && okd && e===2500 && f===10000 && g===4 && h===2 && oki){
+    setFb(1,true,!wrongBefore[1]?"Perfect first attempt across image size and quality trade-offs.":"All image size and quality trade-off answers are correct.");
+    markDone(1);
+  }
+  else {
+    setFb(1,false,"Not quite. Resolution changes the number of pixels; colour depth changes bits per pixel. More pixels or more bits per pixel usually improve quality but increase file size.");
+  }
 }
-function resetTask1(){ ["t1a","t1b","t1c","t1d"].forEach(id=>document.getElementById(id).value=""); setFb(1,true,""); }
+function resetTask1(){ ["t1a","t1b","t1c","t1d","t1e","t1f","t1g","t1h"].forEach(id=>document.getElementById(id).value=""); document.getElementById("t1i").value=""; setFb(1,true,""); }
 
 function buildTask2(){
   const target1=document.getElementById("target-grid-1"); target1.innerHTML="";
@@ -851,6 +927,7 @@ function checkMSQ(qi){
 }
 function resetMSQ(qi){ const q=msData[qi]; q.points.forEach((p,pi)=>{ document.getElementById("ms-"+qi+"-"+pi).checked=false; document.getElementById("msp-"+qi+"-"+pi).classList.remove("ms-ok","ms-err"); }); const fb=document.getElementById("msfb-"+qi); fb.className="ms-fb"; fb.innerHTML=""; msDone[qi]=false; setFb(5,true,""); }
 
+buildSamples();
 buildTask2();
 buildSort();
 buildMS();
