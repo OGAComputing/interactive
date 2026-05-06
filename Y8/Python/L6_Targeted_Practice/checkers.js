@@ -12,7 +12,7 @@ export const CHECKERS = {
   errors_read_B: code => /^B$/.test((code || '').trim()),
 
   // ── Fixing common errors ───────────────────────────────
-  errors_fix_A: code => /player_score/.test(code) && /print\s*\(.*player_score/.test(code),
+  errors_fix_A: code => /\bscore\b/.test(code) && /print\s*\([^)]*\bscore\b/.test(code),
   errors_fix_B: code => /if\s+temp\s*>\s*30\s*:/.test(code) && /^([ ]{2,}|\t)print\s*\(\s*["']It's hot!["']/m.test(code),
 
   // ── Casting input to a number ──────────────────────────
@@ -33,10 +33,10 @@ export const CHECKERS = {
 
   // ── Defining and calling functions ─────────────────────
   function_basics_A: code => {
-    const hasDef = /def\s+say_bye\s*\(\s*\)\s*:/.test(code);
+    const def = code.match(/def\s+((?:say_)?bye)\s*\(\s*\)\s*:/);
     const hasPrint = /print\s*\(\s*["']Goodbye!["']/.test(code);
-    const callCount = (code.match(/say_bye\s*\(\s*\)/g) || []).length;
-    return hasDef && hasPrint && callCount >= 4; // def + 3 calls
+    const callCount = def ? (code.match(new RegExp(`\\b${def[1]}\\s*\\(\\s*\\)`, 'g')) || []).length : 0;
+    return !!def && hasPrint && callCount >= 4; // def + 3 calls
   },
   function_basics_B: code => {
     const hasDef = /def\s+welcome\s*\(\s*\)\s*:/.test(code);
@@ -68,11 +68,12 @@ export const CHECKERS = {
   },
   io_basics_B: code => {
     const printCount = (code.match(/print\s*\(/g) || []).length;
+    const printedText = (code.match(/["'][^"']*["']/g) || []).join(' ');
     return printCount >= 4 &&
       !/input\s*\(/.test(code) &&
-      /Python/i.test(code) &&
-      /print/i.test(code) &&
-      /quotes/i.test(code) &&
-      /ready/i.test(code);
+      /Python/i.test(printedText) &&
+      /print/i.test(printedText) &&
+      /quotes/i.test(printedText) &&
+      /ready/i.test(printedText);
   },
 };

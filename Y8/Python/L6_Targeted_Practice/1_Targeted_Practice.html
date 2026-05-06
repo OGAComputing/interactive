@@ -349,9 +349,9 @@ print(toatl)</pre>
         <div class="ac-help">
           <strong>How to fix a NameError:</strong> the variable on one line must match exactly the variable on the other. Copy/paste from the line that's working to be safe.
         </div>
-        <pre class="q-code">player_score = 75
-print("Score:", playerscore)</pre>
-        <div class="q-err">NameError: name 'playerscore' is not defined</div>
+        <pre class="q-code">score = 75
+print("Score:", scroe)</pre>
+        <div class="q-err">NameError: name 'scroe' is not defined</div>
         <p class="q-text">Re-type the program below with the bug fixed.</p>
         <p class="q-hint">💡 Look at how the variable is spelled on line 1 — match it on line 2.</p>
         <textarea class="checker-textarea" id="$Q$-ta" rows="3" data-title="Fix the NameError" placeholder="Type the full corrected program here..."></textarea>
@@ -545,26 +545,26 @@ t = turtle.Turtle()
     maxAssessPts: 7,
     estMins: 7,
     taskA: {
-      title: 'Walkthrough — Define and call say_bye',
+      title: 'Walkthrough — Define and call bye',
       html: `
         <div class="ac-help">
           <strong>Three steps for every function:</strong>
           <ul>
             <li><strong>Define</strong> — start with <code>def name():</code> and a colon.</li>
             <li><strong>Indent the body</strong> — put each instruction inside the function on a new indented line.</li>
-            <li><strong>Call it</strong> — write the function name with brackets, e.g. <code>say_bye()</code>.</li>
+            <li><strong>Call it</strong> — write the function name with brackets, e.g. <code>bye()</code>.</li>
           </ul>
           <p style="margin-top:6px;">A function only runs when you <em>call</em> it. Calling it twice runs it twice.</p>
         </div>
-        <p class="q-text">Fill in the blanks so the program defines <code>say_bye</code> (which prints <code>Goodbye!</code>) and then calls it <strong>3 times</strong>.</p>
+        <p class="q-text">Fill in the blanks so the program defines <code>bye</code> (which prints <code>Goodbye!</code>) and then calls it <strong>3 times</strong>.</p>
         <pre class="q-code">def ___():
     print("Goodbye!")
 
-say_bye()
+bye()
 ___
 ___</pre>
         <p class="q-text">Type the full program in the box below.</p>
-        <textarea class="checker-textarea" id="$Q$-ta" rows="6" data-title="Define and call say_bye" placeholder="Type the full program here..."></textarea>
+        <textarea class="checker-textarea" id="$Q$-ta" rows="6" data-title="Define and call bye" placeholder="Type the full program here..."></textarea>
       `,
       check: { type: 'code', key: 'function_basics_A' }
     },
@@ -1075,7 +1075,7 @@ function taskExampleHtml(clusterId, taskKey) {
     },
     errors_fix_A: {
       text: 'Different context: copy the exact variable name from where it was created, then use that same name in print.',
-      code: 'team_points = 12\nprint("Points:", teampoints)\n\n# Correct fix:\nteam_points = 12\nprint("Points:", team_points)'
+      code: 'score = 12\nprint("Points:", scroe)\n\n# Correct fix:\nscore = 12\nprint("Points:", score)'
     },
     errors_fix_B: {
       text: 'Different context: code inside an if statement must be indented so Python knows it belongs to the if.',
@@ -1260,7 +1260,9 @@ function runCheck(cluster, taskKey /* 'A' or 'B' */) {
     block.classList.add('correct');
     fb.textContent = PASS_MSGS[Math.floor(Math.random() * PASS_MSGS.length)];
     fb.className = 'q-fb pass';
+    const isFirstAward = !(qPoints[qId] > 0);
     awardPoints(qId, 1);
+    if (taskKey === 'B' && isFirstAward) startCelebration();
     if (taskKey === 'A') unlockTaskB(cluster.id);
   } else {
     block.classList.add('wrong');
@@ -1315,7 +1317,6 @@ function checkCompletion() {
       banner.classList.add('show');
       document.body.classList.remove('bg-green');
       document.body.classList.add('bg-gold');
-      startFW();
     }
   } else if (totalMax > 0 && total >= Math.round(totalMax * 0.8)) {
     if (!banner.classList.contains('show')) {
@@ -1335,7 +1336,6 @@ function finishLesson() {
   saveProgress();
   // Force a final upload (debounced inside Classroom helpers)
   refreshScore();
-  startFW();
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -1403,12 +1403,39 @@ function loadProgress() {
 window.saveState = saveProgress;
 
 const cvs = document.getElementById('fwc'), ctx = cvs.getContext('2d');
-let fwOn = false, fwP = [], fwId = null;
+let fwOn = false, fwP = [], fwId = null, fwMode = 'fireworks', fwTimer = null;
 const FWC = ['#F5C300','#22c55e','#00B4D8','#E07B2A','#ff6b9d','#a78bfa','#fff'];
-function startFW(){cvs.classList.add('show');cvs.width=innerWidth;cvs.height=innerHeight;fwOn=true;fwP=[];fwLoop();setTimeout(stopFW,7000)}
-function stopFW(){fwOn=false;if(fwId)cancelAnimationFrame(fwId);ctx.clearRect(0,0,cvs.width,cvs.height);cvs.classList.remove('show')}
-function fwLoop(){if(!fwOn)return;fwId=requestAnimationFrame(fwLoop);ctx.fillStyle='rgba(255,250,200,0.15)';ctx.fillRect(0,0,cvs.width,cvs.height);if(Math.random()<.07)fwBurst();fwP=fwP.filter(p=>p.l>0);fwP.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.055;p.vx*=.98;p.vy*=.98;p.l--;ctx.globalAlpha=p.l/p.ml;ctx.fillStyle=p.c;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill()});ctx.globalAlpha=1}
-function fwBurst(){const x=Math.random()*cvs.width,y=Math.random()*cvs.height*.65,c=FWC[Math.floor(Math.random()*FWC.length)],n=55+Math.floor(Math.random()*40);for(let i=0;i<n;i++){const a=Math.random()*Math.PI*2,sp=1.5+Math.random()*4;fwP.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-1,r:1.5+Math.random()*2.5,c,l:65+Math.floor(Math.random()*35),ml:100})}}
+function startCelebration(){
+  startEffect(['fireworks','confetti','stars'][Math.floor(Math.random()*3)]);
+}
+function startFW(){startEffect('fireworks')}
+function startEffect(mode){
+  if(fwOn) stopFW();
+  fwMode = mode;
+  cvs.classList.add('show');cvs.width=innerWidth;cvs.height=innerHeight;fwOn=true;fwP=[];
+  if(fwMode==='confetti') confettiBurst();
+  if(fwMode==='stars') starBurst();
+  fwLoop();
+  fwTimer = setTimeout(stopFW, fwMode==='fireworks'?5200:4300);
+}
+function stopFW(){fwOn=false;if(fwId)cancelAnimationFrame(fwId);if(fwTimer)clearTimeout(fwTimer);ctx.clearRect(0,0,cvs.width,cvs.height);cvs.classList.remove('show')}
+function fwLoop(){
+  if(!fwOn)return;fwId=requestAnimationFrame(fwLoop);
+  ctx.clearRect(0,0,cvs.width,cvs.height);
+  if(fwMode==='fireworks'){ctx.fillStyle='rgba(255,250,200,0.15)';ctx.fillRect(0,0,cvs.width,cvs.height);if(Math.random()<.07)fwBurst();}
+  fwP=fwP.filter(p=>p.l>0);
+  fwP.forEach(p=>{
+    p.x+=p.vx;p.y+=p.vy;p.vy+=p.g;p.vx*=p.drag;p.vy*=p.drag;p.l--;ctx.globalAlpha=p.l/p.ml;ctx.fillStyle=p.c;
+    if(p.shape==='star') drawStar(p.x,p.y,p.r,p.rot+=p.spin);
+    else if(p.shape==='rect'){ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.rot+=p.spin);ctx.fillRect(-p.r,-p.r/2,p.r*2,p.r);ctx.restore();}
+    else {ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill();}
+  });
+  ctx.globalAlpha=1;
+}
+function fwBurst(){const x=Math.random()*cvs.width,y=Math.random()*cvs.height*.65,c=FWC[Math.floor(Math.random()*FWC.length)],n=55+Math.floor(Math.random()*40);for(let i=0;i<n;i++){const a=Math.random()*Math.PI*2,sp=1.5+Math.random()*4;fwP.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-1,r:1.5+Math.random()*2.5,c,l:65+Math.floor(Math.random()*35),ml:100,g:.055,drag:.98,shape:'dot',rot:0,spin:0})}}
+function confettiBurst(){for(let i=0;i<150;i++){fwP.push({x:Math.random()*cvs.width,y:-20-Math.random()*cvs.height*.35,vx:-1.7+Math.random()*3.4,vy:1.2+Math.random()*2.8,r:4+Math.random()*5,c:FWC[Math.floor(Math.random()*FWC.length)],l:110+Math.floor(Math.random()*45),ml:155,g:.035,drag:.995,shape:'rect',rot:Math.random()*6,spin:-.12+Math.random()*.24})}}
+function starBurst(){for(let i=0;i<34;i++){fwP.push({x:-30-Math.random()*cvs.width*.2,y:40+Math.random()*cvs.height*.55,vx:6+Math.random()*7,vy:-2.5+Math.random()*3,r:3+Math.random()*5,c:FWC[Math.floor(Math.random()*FWC.length)],l:45+Math.floor(Math.random()*35),ml:80,g:.025,drag:.985,shape:'star',rot:Math.random()*6,spin:.08+Math.random()*.15})}}
+function drawStar(x,y,r,rot){ctx.save();ctx.translate(x,y);ctx.rotate(rot);ctx.beginPath();for(let i=0;i<10;i++){const rr=i%2?r*.45:r,a=-Math.PI/2+i*Math.PI/5;ctx.lineTo(Math.cos(a)*rr,Math.sin(a)*rr)}ctx.closePath();ctx.fill();ctx.restore()}
 addEventListener('resize',()=>{if(fwOn){cvs.width=innerWidth;cvs.height=innerHeight}});
 
 // ══════════════════════════════════════════════════════════════

@@ -26,10 +26,11 @@ describe('errors_read_B', () => {
 
 describe('errors_fix_A', () => {
   const fn = CHECKERS.errors_fix_A;
-  const PASS = 'player_score = 10\nprint(player_score)';
+  const PASS = 'score = 10\nprint(score)';
   test('passes valid code', () => expect(fn(PASS)).toBe(true));
-  test('rejects code without player_score variable', () => expect(fn('score = 10\nprint(score)')).toBe(false));
-  test('rejects code that never prints player_score', () => expect(fn('player_score = 10\nprint("hello")')).toBe(false));
+  test('rejects the old underscore variable', () => expect(fn('player_score = 10\nprint(player_score)')).toBe(false));
+  test('rejects code without score variable', () => expect(fn('player = "Asha"\nprint(player)')).toBe(false));
+  test('rejects code that never prints score', () => expect(fn('score = 10\nprint("hello")')).toBe(false));
   test('rejects empty string', () => expect(fn('')).toBe(false));
 });
 
@@ -136,10 +137,16 @@ describe('function_basics_A', () => {
   const fn = CHECKERS.function_basics_A;
   const PASS = 'def say_bye():\n    print("Goodbye!")\n\nsay_bye()\nsay_bye()\nsay_bye()';
   test('passes with def + 3 calls (4 occurrences total)', () => expect(fn(PASS)).toBe(true));
-  test('rejects missing def', () => expect(fn('say_bye()\nsay_bye()\nsay_bye()')).toBe(false));
-  test('rejects wrong print message', () => expect(fn('def say_bye():\n    print("Bye!")\nsay_bye()\nsay_bye()\nsay_bye()')).toBe(false));
+  test('passes bye() as the simpler function name', () => {
+    expect(fn('def bye():\n    print("Goodbye!")\n\nbye()\nbye()\nbye()')).toBe(true);
+  });
+  test('rejects mixed function names', () => {
+    expect(fn('def say_bye():\n    print("Goodbye!")\n\nbye()\nbye()\nbye()')).toBe(false);
+  });
+  test('rejects missing def', () => expect(fn('bye()\nbye()\nbye()')).toBe(false));
+  test('rejects wrong print message', () => expect(fn('def bye():\n    print("Bye!")\nbye()\nbye()\nbye()')).toBe(false));
   test('rejects too few calls (only 2 total — def + 1 call)', () => {
-    expect(fn('def say_bye():\n    print("Goodbye!")\nsay_bye()')).toBe(false);
+    expect(fn('def bye():\n    print("Goodbye!")\nbye()')).toBe(false);
   });
   test('rejects empty', () => expect(fn('')).toBe(false));
 });
