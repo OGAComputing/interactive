@@ -114,6 +114,52 @@ color:  blue
     border-radius: 0;
     text-align: center;
   }
+  .decode-layout {
+    display: grid;
+    grid-template-columns: minmax(150px, 1fr) minmax(180px, 1fr) minmax(210px, 1.2fr);
+    gap: 14px;
+    align-items: start;
+    margin-top: 10px;
+  }
+  .decode-col {
+    min-width: 0;
+  }
+  .decode-label {
+    display: block;
+    color: var(--muted);
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .edit-note {
+    display: inline-block;
+    border: 1px solid var(--accent);
+    border-radius: 999px;
+    color: var(--accent);
+    font-size: .68rem;
+    font-weight: 700;
+    letter-spacing: .04em;
+    padding: 3px 8px;
+    text-transform: uppercase;
+  }
+  .readonly-note {
+    border-color: var(--surface-mid);
+    color: var(--muted);
+  }
+  .bit-string {
+    min-height: 68px;
+    resize: vertical;
+    overflow-wrap: anywhere;
+  }
+  .bit-string[readonly] {
+    opacity: .78;
+    cursor: default;
+  }
+  @media (max-width: 760px) {
+    .decode-layout { grid-template-columns: 1fr; }
+  }
   .ms-q-wrapper { border: 1.5px solid var(--surface-mid); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
   .ms-q-num { font-size: .75rem; letter-spacing: 1px; text-transform: uppercase; color: var(--accent); margin-bottom: 10px; display: block; }
   .ms-q-box { background: var(--surface-mid); border-left: 4px solid var(--accent); border-radius: 8px; padding: 12px; margin-bottom: 10px; line-height: 1.6; }
@@ -150,10 +196,11 @@ color:  blue
   </div>
 
   <div class="panel active" id="panel-0"><div class="card">
-    <h3>No-Calculator File Size Questions</h3>
-    <div class="question"><p>Q1. 1 image, 100 x 100 pixels, 8-bit colour. File size in bytes:</p><input id="t1a" class="qa-input mono" placeholder="e.g. 10000"></div>
-    <div class="question"><p>Q2. 2 images, each 200 x 100 pixels, 8-bit colour. Total size in bytes:</p><input id="t1b" class="qa-input mono"></div>
-    <div class="question"><p>Q3. 4 images, each 200 x 100 pixels, 8-bit colour. Total size in KB (divide by 1000):</p><input id="t1c" class="qa-input mono"></div>
+    <h3>Image File Size Foundations</h3>
+    <div class="question"><p>Q1. An image needs to represent 4 colours. What is the minimum colour depth in bits?</p><input id="t1a" class="qa-input mono"></div>
+    <div class="question"><p>Q2. What is the maximum number of colours available with 3-bit colour depth?</p><input id="t1b" class="qa-input mono"></div>
+    <div class="question"><p>Q3. 3 images are each 100 x 50 pixels with 4-bit colour. What is their total size in bytes?</p><input id="t1c" class="qa-input mono"></div>
+    <div class="question"><p>Q4. Complete the sentence: reducing colour depth reduces file size because fewer _____ are stored for each pixel.</p><input id="t1d" class="qa-input mono"></div>
     <div class="row"><button class="ac-btn" onclick="checkTask1()">Check answers</button><button class="ac-btn-secondary" onclick="resetTask1()">Reset</button></div>
     <div class="feedback" id="feedback-0"></div>
   </div></div>
@@ -161,46 +208,50 @@ color:  blue
   <div class="panel" id="panel-1"><div class="card">
     <h3>Paint and Encode Pixels</h3>
     <div class="question">
-      <p><strong>Q1 (easy):</strong> Type <span class="mono">0</span> or <span class="mono">1</span> directly into each pixel to recreate the 4x2 black/white image.</p>
-      <p class="mono">Target image:</p>
-      <div class="pixel-grid bw" id="target-grid-1" style="grid-template-columns:repeat(4,32px);"></div>
-      <p class="mono">Your typed pixel image:</p>
-      <div class="pixel-grid bw" id="paint-grid-1" style="grid-template-columns:repeat(4,32px);"></div>
+      <p><strong>Q1.</strong> Type <span class="mono">0</span> or <span class="mono">1</span> directly into each pixel to recreate the 4x2 black/white image.</p>
+      <div class="decode-layout">
+        <div class="decode-col"><span class="decode-label">Target image</span><div class="pixel-grid bw" id="target-grid-1" style="grid-template-columns:repeat(4,32px);"></div></div>
+        <div class="decode-col"><span class="decode-label">Typed pixel grid <span class="edit-note">Editable</span></span><div class="pixel-grid bw" id="paint-grid-1" style="grid-template-columns:repeat(4,32px);"></div></div>
+        <div class="decode-col"><span class="decode-label">Result bit string <span class="edit-note readonly-note">Auto</span></span><textarea id="bit-string-1" class="qa-input mono bit-string" readonly></textarea></div>
+      </div>
     </div>
     <div class="question">
-      <p><strong>Q2 (medium):</strong> Type a 2-bit code in each cell to recreate the shown colour image.</p>
-      <p class="mono">Each entry is one pixel (left-right, top-bottom).</p>
+      <p><strong>Q2.</strong> Type a 2-bit code in each cell to recreate the shown colour image.</p>
       <div class="legend" id="legend-q2"></div>
-      <p class="mono">Target image:</p>
-      <div class="pixel-grid" id="target-grid-2" style="grid-template-columns:repeat(4,32px);"></div>
-      <p class="mono">Your binary pixel grid (live colour preview in each cell):</p>
-      <div class="entry-grid" id="entry-grid-2"></div>
+      <div class="decode-layout">
+        <div class="decode-col"><span class="decode-label">Target image</span><div class="pixel-grid" id="target-grid-2" style="grid-template-columns:repeat(4,32px);"></div></div>
+        <div class="decode-col"><span class="decode-label">Typed pixel grid <span class="edit-note">Editable</span></span><div class="entry-grid" id="entry-grid-2"></div></div>
+        <div class="decode-col"><span class="decode-label">Result bit string <span class="edit-note readonly-note">Auto</span></span><textarea id="bit-string-2" class="qa-input mono bit-string" readonly></textarea></div>
+      </div>
     </div>
     <div class="question">
-      <p><strong>Q3 (harder):</strong> Type <span class="mono">0</span> or <span class="mono">1</span> directly into each pixel to recreate this image.</p>
-      <p class="mono">Target image:</p>
-      <div class="pixel-grid bw" id="target-grid-3" style="grid-template-columns:repeat(4,32px);"></div>
-      <p class="mono">Your typed pixel image:</p>
-      <div class="pixel-grid bw" id="bit-inputs-3" style="grid-template-columns:repeat(4,32px);"></div>
+      <p><strong>Q3.</strong> Type <span class="mono">0</span> or <span class="mono">1</span> directly into each pixel to recreate this image.</p>
+      <div class="decode-layout">
+        <div class="decode-col"><span class="decode-label">Target image</span><div class="pixel-grid bw" id="target-grid-3" style="grid-template-columns:repeat(4,32px);"></div></div>
+        <div class="decode-col"><span class="decode-label">Typed pixel grid <span class="edit-note">Editable</span></span><div class="pixel-grid bw" id="bit-inputs-3" style="grid-template-columns:repeat(4,32px);"></div></div>
+        <div class="decode-col"><span class="decode-label">Result bit string <span class="edit-note readonly-note">Auto</span></span><textarea id="bit-string-3" class="qa-input mono bit-string" readonly></textarea></div>
+      </div>
     </div>
     <div class="question">
-      <p><strong>Q4 (challenge):</strong> Type one long 16-bit string to recreate this 4x4 black/white image. Preview updates live.</p>
+      <p><strong>Q4.</strong> Type one long 16-bit string to recreate this 4x4 black/white image. Preview updates live.</p>
       <div class="legend">
         <span class="legend-item"><span class="legend-swatch" style="background:#111111;"></span><span class="mono">1 = black</span></span>
         <span class="legend-item"><span class="legend-swatch" style="background:#ffffff;"></span><span class="mono">0 = white</span></span>
       </div>
-      <p class="mono">Target image:</p>
-      <div class="pixel-grid bw" id="target-grid-4" style="grid-template-columns:repeat(4,32px);"></div>
-      <input id="long-bits-4" class="qa-input mono" maxlength="16" placeholder="e.g. 1100001111000011" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
-      <div class="pixel-grid bw" id="preview-grid-4" style="grid-template-columns:repeat(4,32px);"></div>
+      <div class="decode-layout">
+        <div class="decode-col"><span class="decode-label">Target image</span><div class="pixel-grid bw" id="target-grid-4" style="grid-template-columns:repeat(4,32px);"></div></div>
+        <div class="decode-col"><span class="decode-label">Typed pixel grid <span class="edit-note readonly-note">Auto</span></span><div class="pixel-grid bw" id="preview-grid-4" style="grid-template-columns:repeat(4,32px);"></div></div>
+        <div class="decode-col"><span class="decode-label">Result bit string <span class="edit-note">Editable</span></span><textarea id="long-bits-4" class="qa-input mono bit-string" maxlength="16" placeholder="Type 16 bits" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea></div>
+      </div>
     </div>
     <div class="question">
-      <p><strong>Q5 (extension):</strong> Bit depth 2. Type one long 16-bit string (8 pixels x 2 bits) to recreate this 4x2 colour image.</p>
+      <p><strong>Q5.</strong> Bit depth 2. Type one long 16-bit string (8 pixels x 2 bits) to recreate this 4x2 colour image.</p>
       <div class="legend" id="legend-q5"></div>
-      <p class="mono">Target image:</p>
-      <div class="pixel-grid" id="target-grid-5" style="grid-template-columns:repeat(4,32px);"></div>
-      <input id="long-bits-5" class="qa-input mono" maxlength="16" placeholder="e.g. 0010110001101001" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
-      <div class="pixel-grid" id="preview-grid-5" style="grid-template-columns:repeat(4,32px);"></div>
+      <div class="decode-layout">
+        <div class="decode-col"><span class="decode-label">Target image</span><div class="pixel-grid" id="target-grid-5" style="grid-template-columns:repeat(4,32px);"></div></div>
+        <div class="decode-col"><span class="decode-label">Typed pixel grid <span class="edit-note readonly-note">Auto</span></span><div class="pixel-grid" id="preview-grid-5" style="grid-template-columns:repeat(4,32px);"></div></div>
+        <div class="decode-col"><span class="decode-label">Result bit string <span class="edit-note">Editable</span></span><textarea id="long-bits-5" class="qa-input mono bit-string" maxlength="16" placeholder="Type 16 bits" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea></div>
+      </div>
     </div>
     <div class="row"><button class="ac-btn" onclick="checkTask2()">Check answers</button><button class="ac-btn-secondary" onclick="resetTask2()">Reset</button></div>
     <div class="feedback" id="feedback-1"></div>
@@ -319,13 +370,12 @@ function approx(v, t){ return Math.abs(v-t) <= 1; }
 function checkTask1(){
   if (window.Classroom?.verifyAuth()===false) return;
   const a=Number(document.getElementById("t1a").value), b=Number(document.getElementById("t1b").value), c=Number(document.getElementById("t1c").value);
-  const oka = a===10000;
-  const okb = b===40000;
-  const okc = c===80;
-  if(oka&&okb&&okc){ setFb(0,true,!wrongBefore[0]?"Perfect first attempt across all file-size questions.":"All file-size questions correct."); markDone(0); }
-  else { setFb(0,false,"Not quite. Step up in order: one image bytes, then multiply images, then convert bytes to KB by dividing by 1000."); }
+  const d=(document.getElementById("t1d").value || "").trim().toLowerCase();
+  const okd = d==="bits" || d==="bit";
+  if(a===2 && b===8 && c===7500 && okd){ setFb(0,true,!wrongBefore[0]?"Perfect first attempt across the image-size foundations.":"All image-size foundations are correct."); markDone(0); }
+  else { setFb(0,false,"Not quite. Use bits per pixel, 2^bits for colours, then width x height x colour depth x images before converting bits to bytes."); }
 }
-function resetTask1(){ ["t1a","t1b","t1c"].forEach(id=>document.getElementById(id).value=""); setFb(0,true,""); }
+function resetTask1(){ ["t1a","t1b","t1c","t1d"].forEach(id=>document.getElementById(id).value=""); setFb(0,true,""); }
 
 function buildTask2(){
   const target1=document.getElementById("target-grid-1"); target1.innerHTML="";
@@ -469,30 +519,41 @@ function buildTask2(){
     px.style.background="#ffffff";
     preview5.appendChild(px);
   }
+  updatePreview1();
+  updatePreview2();
+  updatePreview3();
+  updatePreview4();
+  updatePreview5();
 }
 function checkTask2(){
   if (window.Classroom?.verifyAuth()===false) return;
   const q1 = Array.from({length:8}, (_,i)=>(document.getElementById("q1b-"+i).value || "")).every((b,i)=>b===bwTargets.q1[i]);
   const q2 = Array.from({length:8}, (_,i)=>(document.getElementById("q2b-"+i).value || "")).every((bits,i)=>bits===colorTargetQ2[i]);
-  const q3 = Array.from({length:8}, (_,i)=>(document.getElementById("q3b-"+i).value || "0")).every((b,i)=>b===bwTargets.q3[i]);
-  const q4val = (document.getElementById("long-bits-4").value || "").padEnd(16,"0").slice(0,16).split("");
-  const q4 = q4val.every((b,i)=>b===bwTargets.q4[i]);
-  const q5val = (document.getElementById("long-bits-5").value || "").padEnd(16,"0").slice(0,16);
+  const q3 = Array.from({length:8}, (_,i)=>(document.getElementById("q3b-"+i).value || "")).every((b,i)=>b===bwTargets.q3[i]);
+  const q4val = (document.getElementById("long-bits-4").value || "").slice(0,16).split("");
+  const q4 = q4val.length===16 && q4val.every((b,i)=>b===bwTargets.q4[i]);
+  const q5val = (document.getElementById("long-bits-5").value || "").slice(0,16);
   const q5 = q5val===colorTargetQ5;
 
   if(q1 && q2 && q3 && q4 && q5){
     setFb(1,true,!wrongBefore[1]?"Perfect paint/encode progression.":"All paint and encoding questions are correct.");
     markDone(1);
   } else {
-    setFb(1,false,"Some parts are still off. Recheck Q1 typed B/W pixels, Q2 per-pixel 2-bit codes, Q3 per-pixel bits, Q4 long B/W string, then Q5 long 2-bit colour string.");
+    setFb(1,false,"Some parts are still off. Recheck the editable area for each row: pixel grid for Q1 to Q3, bit string for Q4 and Q5.");
   }
 }
 function resetTask2(){ buildTask2(); setFb(1,true,""); }
 
+function setAutoBitString(id, bits){
+  document.getElementById(id).value = bits.join("");
+}
+
 function updatePreview1(){
+  const bits=[];
   for(let i=0;i<8;i++){
     const cell=document.getElementById("q1b-"+i);
     const bit=(cell.value || "");
+    bits.push(bit);
     if(bit==="1"){
       cell.style.background="#111111";
       cell.style.color="#ffffff";
@@ -504,22 +565,28 @@ function updatePreview1(){
       cell.style.color="var(--text)";
     }
   }
+  setAutoBitString("bit-string-1", bits);
 }
 
 function updatePreview2(){
+  const bitParts=[];
   for(let i=0;i<8;i++){
-    const bits=(document.getElementById("q2b-"+i).value || "");
-    const color=colorCodeMap[bits];
+    const cellBits=(document.getElementById("q2b-"+i).value || "");
+    const color=colorCodeMap[cellBits];
     const cell=document.getElementById("q2b-"+i);
     cell.style.background = color ? colorMap[color] : "var(--bg)";
     cell.classList.toggle("active-dark", !!color);
+    bitParts.push(cellBits);
   }
+  document.getElementById("bit-string-2").value = bitParts.join("");
 }
 
 function updatePreview3(){
+  const bits=[];
   for(let i=0;i<8;i++){
     const cell=document.getElementById("q3b-"+i);
     const bit=(cell.value || "");
+    bits.push(bit);
     if(bit==="1"){
       cell.style.background="#111111";
       cell.style.color="#ffffff";
@@ -531,6 +598,7 @@ function updatePreview3(){
       cell.style.color="var(--text)";
     }
   }
+  setAutoBitString("bit-string-3", bits);
 }
 
 function updatePreview4(){
