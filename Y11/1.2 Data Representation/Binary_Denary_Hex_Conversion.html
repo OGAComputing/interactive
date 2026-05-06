@@ -338,20 +338,24 @@ color:  pink
   document.getElementById('tab-bar').addEventListener('click', e => {
     const tab = e.target.closest('.tab-btn');
     if (!tab) return;
-    const idx = +tab.dataset.idx;
+    switchToTab(+tab.dataset.idx);
+  });
 
+  function switchToTab(idx) {
     state.currentIdx = idx;
     state.lastValue = -1; // Reset last value on tab change
     
     document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
-    tab.classList.add('active');
+    document.querySelector(`.tab-btn[data-idx="${idx}"]`)?.classList.add('active');
     
+    const inputEl = document.getElementById('q-input');
     document.getElementById('feedback').textContent = '';
-    document.getElementById('q-input').value = '';
+    inputEl.value = '';
     
     generateQuestion();
     updateUI();
-  });
+    inputEl.focus();
+  }
 
   // ── Question Generation ────────────────────────────────
   function generateQuestion() {
@@ -492,15 +496,19 @@ color:  pink
         task.streak = 0;
       }
       
-      if (task.count >= task.target) {
-        markDone(state.currentIdx);
-      }
+      const completedIdx = state.currentIdx;
+      const completedThisTurn = task.count >= task.target && markDone(completedIdx);
 
       setTimeout(() => {
-        feedback.textContent = '';
-        inputEl.value = '';
-        generateQuestion();
-        updateUI();
+        const nextIdx = completedIdx + 1;
+        if (completedThisTurn && state.currentIdx === completedIdx && nextIdx < TASK_COUNT) {
+          switchToTab(nextIdx);
+        } else {
+          feedback.textContent = '';
+          inputEl.value = '';
+          generateQuestion();
+          updateUI();
+        }
       }, 1000);
 
     } else {
@@ -529,7 +537,7 @@ color:  pink
 
   // ── Mark Done ──────────────────────────────────────────
   function markDone(idx) {
-    if (state.completed[idx]) return;
+    if (state.completed[idx]) return false;
     state.completed[idx] = true;
 
     const tab = document.querySelector(`.tab-btn[data-idx="${idx}"]`);
@@ -546,6 +554,8 @@ color:  pink
     if (state.completed.every(Boolean)) {
       allComplete();
     }
+
+    return true;
   }
 
   function updateUI() {
