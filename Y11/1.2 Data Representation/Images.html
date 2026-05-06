@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- ACTIVITY
+title:  Data Representation: Images
+type:   Practice
+stars:  4
+desc:   OCR J277 image calculations, pixel decoding, bit-depth practice, misconceptions, compression, and mark-scheme application.
+color:  blue
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Data Representation: Images - Year 11</title>
+<link rel="stylesheet" href="../../shared.css">
+<style>
+  body { background: var(--bg); color: var(--text); }
+  header { background: var(--surface); border-bottom: 2px solid var(--surface-mid); padding: 12px 18px; position: sticky; top: 0; z-index: 5; }
+  .header-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  .header-row h1 { font-size: 1rem; color: var(--accent); }
+  .badge { border: 1px solid var(--accent); color: var(--accent); border-radius: 14px; padding: 4px 10px; font-size: .72rem; font-weight: 700; }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 22px 14px 56px; }
+  .sub { color: var(--muted); margin-bottom: 16px; font-size: .9rem; }
+  .tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
+  .tab-btn { border: 2px solid var(--surface-mid); background: var(--surface); color: var(--muted); border-radius: 18px; padding: 8px 14px; cursor: pointer; font-weight: 600; }
+  .tab-btn.active { background: var(--accent); border-color: var(--accent); color: var(--text-inv); }
+  .tab-btn.done-gold { background: var(--gold); border-color: var(--gold); color: #111; }
+  .panel { display: none; }
+  .panel.active { display: block; }
+  .card { background: var(--surface); border-left: 4px solid var(--accent); border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+  .card h3 { color: var(--accent); font-size: .9rem; letter-spacing: .03em; text-transform: uppercase; margin-bottom: 8px; }
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 8px 0; }
+  .row input, .row select, textarea { background: var(--bg); color: var(--text); border: 1px solid var(--surface-mid); border-radius: 6px; padding: 8px; }
+  .feedback { min-height: 1.4em; margin-top: 10px; font-weight: 600; }
+  .feedback.correct { color: var(--green); }
+  .feedback.wrong { color: var(--red); }
+  .score-row { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+  .score-label { font-size: .78rem; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+  .score-pct { font-size: .78rem; color: var(--accent); min-width: 34px; text-align: right; }
+  .mono { font-family: Consolas, "Courier New", monospace; }
+  .pixel-grid { display: grid; gap: 1px; margin: 10px 0; width: max-content; background: var(--surface-mid); padding: 2px; border-radius: 4px; }
+  .pixel { width: 32px; height: 32px; border: 1px solid var(--surface-mid); border-radius: 0; cursor: pointer; }
+  .pixel.target { cursor: default; box-shadow: inset 0 0 0 1px rgba(255,255,255,.2); }
+  .question { border: 1px solid var(--surface-mid); border-radius: 8px; padding: 10px; margin-bottom: 10px; }
+  .match-sel {
+    width: 100%; padding: 8px 10px; border: 2px solid var(--surface-mid); border-radius: 7px;
+    background: var(--bg); color: var(--white); font-family: var(--font-body, sans-serif); font-size: .88rem; cursor: pointer;
+  }
+  .match-sel:focus { outline: none; border-color: var(--accent); }
+  .qa-input {
+    width: 100%; padding: 8px 10px; border: 2px solid var(--surface-mid); border-radius: 7px;
+    background: var(--bg); color: var(--white); font-family: "Space Mono", Consolas, "Courier New", monospace; font-size: .88rem;
+  }
+  .qa-input:focus { outline: none; border-color: var(--accent); }
+  .bit-input {
+    width: 34px;
+    text-align: center;
+    padding: 6px 0;
+    border: 2px solid var(--surface-mid);
+    border-radius: 6px;
+    background: var(--bg);
+    color: var(--text);
+    font-family: Consolas, "Courier New", monospace;
+    font-weight: 700;
+  }
+  .bit-input:focus { outline: none; border-color: var(--accent); }
+  .bit-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+  .pixel-grid.bw .pixel { cursor: default; background: #fff; }
+  .pixel-grid.bw .pixel.target { background: #fff; }
+  .legend { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid var(--surface-mid);
+    border-radius: 8px;
+    padding: 5px 8px;
+    font-size: .82rem;
+  }
+  .legend-swatch {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    border: 1px solid rgba(255,255,255,.3);
+    flex: 0 0 14px;
+  }
+  .entry-grid {
+    display: grid;
+    gap: 1px;
+    margin-top: 8px;
+    grid-template-columns: repeat(4, 52px);
+    width: max-content;
+    background: var(--surface-mid);
+    padding: 2px;
+    border-radius: 4px;
+  }
+  .entry-cell {
+    width: 52px;
+    text-align: center;
+    padding: 6px 4px;
+    border: 2px solid var(--surface-mid);
+    border-radius: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: Consolas, "Courier New", monospace;
+    font-weight: 700;
+  }
+  .entry-cell:focus { outline: none; border-color: var(--accent); }
+  .entry-cell.active-dark { color: #ffffff; }
+  .entry-cell.pixel-input {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border-width: 1px;
+    border-radius: 0;
+    text-align: center;
+  }
+  .ms-q-wrapper { border: 1.5px solid var(--surface-mid); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+  .ms-q-num { font-size: .75rem; letter-spacing: 1px; text-transform: uppercase; color: var(--accent); margin-bottom: 10px; display: block; }
+  .ms-q-box { background: var(--surface-mid); border-left: 4px solid var(--accent); border-radius: 8px; padding: 12px; margin-bottom: 10px; line-height: 1.6; }
+  .ms-student { background: #0a2a18; border: 1px solid var(--green); border-radius: 8px; padding: 12px; margin-bottom: 10px; color: #86efac; line-height: 1.7; }
+  .ms-point { display: flex; gap: 10px; border: 1.5px solid var(--surface-mid); border-radius: 8px; padding: 10px; margin-bottom: 7px; }
+  .ms-point.ms-ok { border-color: var(--green); background: rgba(5,150,105,.08); }
+  .ms-point.ms-err { border-color: var(--red); background: rgba(220,38,38,.08); }
+  .ms-fb { margin-top: 10px; padding: 10px; border-radius: 8px; display: none; line-height: 1.6; }
+  .ms-fb.show { display: block; }
+</style>
+</head>
+<body>
+<div id="done-banner" class="ac-banner gold">All tasks complete - excellent work.</div>
+<header>
+  <div class="header-row">
+    <h1>Data Representation: Images</h1>
+    <div class="badge">Year 11</div>
+  </div>
+</header>
+<div class="wrap">
+  <p class="sub">OCR J277 1.2 - multiple exam-style tasks with interactive pixel activities.</p>
+  <div class="score-row">
+    <span class="score-label">Progress</span>
+    <div class="ac-progress-bar" style="flex:1"><div class="ac-progress-fill" id="progress-fill"></div></div>
+    <span class="score-pct" id="progress-pct">0%</span>
+  </div>
+  <div class="tabs" id="tab-bar">
+    <button class="tab-btn active" data-idx="0">1. File Size</button>
+    <button class="tab-btn" data-idx="1">2. Decode & Paint</button>
+    <button class="tab-btn" data-idx="2">3. Bit Depth</button>
+    <button class="tab-btn" data-idx="3">4. Quality Diagnosis</button>
+    <button class="tab-btn" data-idx="4">5. Compression</button>
+    <button class="tab-btn" data-idx="5">6. Mark Scheme</button>
+  </div>
+
+  <div class="panel active" id="panel-0"><div class="card">
+    <h3>No-Calculator File Size Questions</h3>
+    <div class="question"><p>Q1. 1 image, 100 x 100 pixels, 8-bit colour. File size in bytes:</p><input id="t1a" class="qa-input mono" placeholder="e.g. 10000"></div>
+    <div class="question"><p>Q2. 2 images, each 200 x 100 pixels, 8-bit colour. Total size in bytes:</p><input id="t1b" class="qa-input mono"></div>
+    <div class="question"><p>Q3. 4 images, each 200 x 100 pixels, 8-bit colour. Total size in KB (divide by 1000):</p><input id="t1c" class="qa-input mono"></div>
+    <div class="row"><button class="ac-btn" onclick="checkTask1()">Check answers</button><button class="ac-btn-secondary" onclick="resetTask1()">Reset</button></div>
+    <div class="feedback" id="feedback-0"></div>
+  </div></div>
+
+  <div class="panel" id="panel-1"><div class="card">
+    <h3>Paint and Encode Pixels</h3>
+    <div class="question">
+      <p><strong>Q1 (easy):</strong> Type <span class="mono">0</span> or <span class="mono">1</span> directly into each pixel to recreate the 4x2 black/white image.</p>
+      <p class="mono">Target image:</p>
+      <div class="pixel-grid bw" id="target-grid-1" style="grid-template-columns:repeat(4,32px);"></div>
+      <p class="mono">Your typed pixel image:</p>
+      <div class="pixel-grid bw" id="paint-grid-1" style="grid-template-columns:repeat(4,32px);"></div>
+    </div>
+    <div class="question">
+      <p><strong>Q2 (medium):</strong> Type a 2-bit code in each cell to recreate the shown colour image.</p>
+      <p class="mono">Each entry is one pixel (left-right, top-bottom).</p>
+      <div class="legend" id="legend-q2"></div>
+      <p class="mono">Target image:</p>
+      <div class="pixel-grid" id="target-grid-2" style="grid-template-columns:repeat(4,32px);"></div>
+      <p class="mono">Your binary pixel grid (live colour preview in each cell):</p>
+      <div class="entry-grid" id="entry-grid-2"></div>
+    </div>
+    <div class="question">
+      <p><strong>Q3 (harder):</strong> Type <span class="mono">0</span> or <span class="mono">1</span> directly into each pixel to recreate this image.</p>
+      <p class="mono">Target image:</p>
+      <div class="pixel-grid bw" id="target-grid-3" style="grid-template-columns:repeat(4,32px);"></div>
+      <p class="mono">Your typed pixel image:</p>
+      <div class="pixel-grid bw" id="bit-inputs-3" style="grid-template-columns:repeat(4,32px);"></div>
+    </div>
+    <div class="question">
+      <p><strong>Q4 (challenge):</strong> Type one long 16-bit string to recreate this 4x4 black/white image. Preview updates live.</p>
+      <div class="legend">
+        <span class="legend-item"><span class="legend-swatch" style="background:#111111;"></span><span class="mono">1 = black</span></span>
+        <span class="legend-item"><span class="legend-swatch" style="background:#ffffff;"></span><span class="mono">0 = white</span></span>
+      </div>
+      <p class="mono">Target image:</p>
+      <div class="pixel-grid bw" id="target-grid-4" style="grid-template-columns:repeat(4,32px);"></div>
+      <input id="long-bits-4" class="qa-input mono" maxlength="16" placeholder="e.g. 1100001111000011" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+      <div class="pixel-grid bw" id="preview-grid-4" style="grid-template-columns:repeat(4,32px);"></div>
+    </div>
+    <div class="question">
+      <p><strong>Q5 (extension):</strong> Bit depth 2. Type one long 16-bit string (8 pixels x 2 bits) to recreate this 4x2 colour image.</p>
+      <div class="legend" id="legend-q5"></div>
+      <p class="mono">Target image:</p>
+      <div class="pixel-grid" id="target-grid-5" style="grid-template-columns:repeat(4,32px);"></div>
+      <input id="long-bits-5" class="qa-input mono" maxlength="16" placeholder="e.g. 0010110001101001" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+      <div class="pixel-grid" id="preview-grid-5" style="grid-template-columns:repeat(4,32px);"></div>
+    </div>
+    <div class="row"><button class="ac-btn" onclick="checkTask2()">Check answers</button><button class="ac-btn-secondary" onclick="resetTask2()">Reset</button></div>
+    <div class="feedback" id="feedback-1"></div>
+  </div></div>
+
+  <div class="panel" id="panel-2"><div class="card">
+    <h3>Bit Depth Questions (1, 2, 3, and 4-bit)</h3>
+    <div class="question"><p>Q1. Maximum colours with 2-bit colour depth:</p><input id="bd1" class="qa-input mono"></div>
+    <div class="question"><p>Q2. Maximum colours with 3-bit colour depth:</p><input id="bd2" class="qa-input mono"></div>
+    <div class="question"><p>Q3. Minimum bits needed for 6 colours:</p><input id="bd3" class="qa-input mono"></div>
+    <div class="question"><p>Q4. If colour depth rises from 2 bits to 3 bits, how many times more colour values are available?</p><input id="bd4" class="qa-input mono"></div>
+    <div class="row"><button class="ac-btn" onclick="checkTask3()">Check answers</button><button class="ac-btn-secondary" onclick="resetTask3()">Reset</button></div>
+    <div class="feedback" id="feedback-2"></div>
+  </div></div>
+
+  <div class="panel" id="panel-3"><div class="card">
+    <h3>Picture Quality Diagnosis</h3>
+    <p style="color:var(--muted);margin-bottom:10px;">
+      For each scenario, identify the <strong>main factor</strong> affecting picture quality. This checks whether you can distinguish
+      between resolution, colour depth, and compression impacts.
+    </p>
+    <div id="sort-wrap"></div>
+    <div class="row"><button class="ac-btn" onclick="checkTask4()">Check answers</button><button class="ac-btn-secondary" onclick="resetTask4()">Reset</button></div>
+    <div class="feedback" id="feedback-3"></div>
+  </div></div>
+
+  <div class="panel" id="panel-4"><div class="card">
+    <h3>Compression Trade-Off Challenge</h3>
+    <div class="question"><p>Scenario A: Online photo gallery, smaller files needed, slight quality loss acceptable.</p><select id="cA" class="match-sel"><option value="">Choose</option><option>Lossy</option><option>Lossless</option></select></div>
+    <div class="question"><p>Scenario B: School logo for repeated edits and print.</p><select id="cB" class="match-sel"><option value="">Choose</option><option>Lossy</option><option>Lossless</option></select></div>
+    <div class="question"><p>Select both valid ways to reduce image file size:</p><label><input type="checkbox" id="s1"> Reduce resolution</label><br><label><input type="checkbox" id="s2"> Increase colour depth</label><br><label><input type="checkbox" id="s3"> Reduce number of colours</label><br><label><input type="checkbox" id="s4"> Increase image dimensions</label></div>
+    <div class="row"><button class="ac-btn" onclick="checkTask5()">Check answers</button><button class="ac-btn-secondary" onclick="resetTask5()">Reset</button></div>
+    <div class="feedback" id="feedback-4"></div>
+  </div></div>
+
+  <div class="panel" id="panel-5"><div class="card">
+    <h3>Apply the Mark Scheme</h3>
+    <div id="ms-wrap"></div>
+    <div class="feedback" id="feedback-5"></div>
+  </div></div>
+</div>
+<script>
+const TASK_COUNT = 6;
+const completed = new Array(TASK_COUNT).fill(false);
+const wrongBefore = new Array(TASK_COUNT).fill(false);
+const colorMap = { red:"#b91c1c", green:"#15803d", blue:"#1d4ed8", purple:"#7e22ce" };
+const colorCodeMap = { "00":"red", "01":"green", "10":"blue", "11":"purple" };
+const bwTargets = {
+  q1: ["1","1","0","0","1","0","0","1"],
+  q3: ["0","1","1","0","1","0","0","1"],
+  q4: "0000101000000110".split("")
+};
+const colorTargetQ2 = ["00","01","10","11","01","10","11","00"];
+const colorTargetQ5 = "0000010110101111";
+const sortData = [
+  { s:"A poster image looks blocky after being enlarged from a small source image.", a:"Resolution" },
+  { s:"A sunset shows visible colour banding instead of smooth gradients.", a:"Colour depth" },
+  { s:"A photo has blocky artefacts after strong JPEG export settings.", a:"Compression" },
+  { s:"Image dimensions were reduced and file size dropped a lot.", a:"Resolution" },
+  { s:"A logo is crisp because it was exported lossless, preserving sharp edges.", a:"Compression" }
+];
+const sortOptions = ["Resolution","Colour depth","Compression"];
+const msData = [
+  { title:"Colour depth effects", marks:2, q:"A student says: Increasing colour depth makes an image look better and can increase file size. Apply the mark scheme.",
+    student:"When colour depth is bigger, the image can use more colours. More data is needed for each pixel so files get larger.",
+    points:[
+      { code:"ME1", text:"More colours can be represented / image can be more colourful [1]", correct:true, explain:"Awarded: this is accurate OCR phrasing." },
+      { code:"ME2", text:"File size increases because more bits are stored per pixel [1]", correct:true, explain:"Awarded: correct reason for larger files." },
+      { code:"ME3", text:"Resolution increases when colour depth increases [0]", correct:false, explain:"Not awarded: this is a common misconception." }
+    ]
+  },
+  { title:"Metadata", marks:2, q:"A student says: Metadata means data about the image file, for example image width. Apply the mark scheme.",
+    student:"Metadata is data about the image file. It can include width in pixels.",
+    points:[
+      { code:"MF1", text:"Defines metadata as data about data/file/image [1]", correct:true, explain:"Awarded: clear definition." },
+      { code:"MF2", text:"Gives a valid metadata example (e.g. width, height, colour depth, date) [1]", correct:true, explain:"Awarded: width is valid metadata." },
+      { code:"MF3", text:"Says metadata is each pixel colour value in sequence [0]", correct:false, explain:"Not awarded: this confuses metadata with pixel data." }
+    ]
+  },
+  { title:"Image quality factors", marks:4, q:"A student explains why one photo looks blurry and banded after editing and export. Apply the mark scheme points.",
+    student:"The image was resized larger from a low resolution source, so each pixel was stretched and it looked blurry. It also used a low colour depth, so smooth gradients became banded. Then it was exported with high lossy compression, introducing blocky artefacts.",
+    points:[
+      { code:"MQ1", text:"Low resolution / upscaling can reduce sharpness and make pixels visible [1]", correct:true, explain:"Awarded: correctly links low resolution/upscaling to blur/pixelation." },
+      { code:"MQ2", text:"Low colour depth can cause banding due to fewer available colours [1]", correct:true, explain:"Awarded: this is a valid colour-depth quality impact." },
+      { code:"MQ3", text:"High lossy compression can create artefacts and reduce visual quality [1]", correct:true, explain:"Awarded: accurate compression-quality trade-off." },
+      { code:"MQ4", text:"Increasing colour depth always increases resolution [0]", correct:false, explain:"Not awarded: colour depth and resolution are separate properties." }
+    ]
+  },
+  { title:"Quality vs file size trade-off", marks:4, q:"Apply the mark scheme to this student response about improving picture quality while managing file size.",
+    student:"To improve quality, you can increase resolution and colour depth so there are more pixels and colour values. But both usually increase file size. If storage is limited, use light lossy compression for photos or lossless compression for logos/text where sharp edges matter.",
+    points:[
+      { code:"MR1", text:"Higher resolution can improve detail (more pixels) [1]", correct:true, explain:"Awarded: resolution-detail link is correct." },
+      { code:"MR2", text:"Higher colour depth can improve tonal smoothness / colour realism [1]", correct:true, explain:"Awarded: this is a valid quality effect." },
+      { code:"MR3", text:"Resolution/colour depth increases usually increase file size [1]", correct:true, explain:"Awarded: correct file-size impact." },
+      { code:"MR4", text:"Compression choice should depend on use case (lossy photos vs lossless logos/text) [1]", correct:true, explain:"Awarded: good application of format/compression trade-offs." },
+      { code:"MR5", text:"Lossless compression always gives smaller files than lossy [0]", correct:false, explain:"Not awarded: generally the opposite for photos." }
+    ]
+  }
+];
+let msDone = new Array(msData.length).fill(false);
+
+document.getElementById("tab-bar").addEventListener("click", (e) => {
+  const tab = e.target.closest(".tab-btn"); if (!tab) return;
+  const idx = Number(tab.dataset.idx);
+  document.querySelectorAll(".tab-btn").forEach(t => t.classList.remove("active"));
+  document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+  tab.classList.add("active");
+  document.getElementById("panel-"+idx).classList.add("active");
+});
+
+function markDone(idx){ if(completed[idx]) return; completed[idx]=true; document.querySelector('.tab-btn[data-idx="'+idx+'"]').classList.add("done-gold"); updateProgress(); const pct=Math.round(completed.filter(Boolean).length/TASK_COUNT*100); window.Classroom?.submitGrade(pct,"Data Representation: Images"); if(completed.every(Boolean)) document.getElementById("done-banner").classList.add("show"); }
+function updateProgress(){ const pct=Math.round(completed.filter(Boolean).length/TASK_COUNT*100); document.getElementById("progress-fill").style.width=pct+"%"; document.getElementById("progress-pct").textContent=pct+"%"; }
+function setFb(i, ok, msg){ const el=document.getElementById("feedback-"+i); el.textContent=msg; el.className="feedback "+(ok?"correct":"wrong"); if(!ok) wrongBefore[i]=true; }
+function approx(v, t){ return Math.abs(v-t) <= 1; }
+
+function checkTask1(){
+  if (window.Classroom?.verifyAuth()===false) return;
+  const a=Number(document.getElementById("t1a").value), b=Number(document.getElementById("t1b").value), c=Number(document.getElementById("t1c").value);
+  const oka = a===10000;
+  const okb = b===40000;
+  const okc = c===80;
+  if(oka&&okb&&okc){ setFb(0,true,!wrongBefore[0]?"Perfect first attempt across all file-size questions.":"All file-size questions correct."); markDone(0); }
+  else { setFb(0,false,"Not quite. Step up in order: one image bytes, then multiply images, then convert bytes to KB by dividing by 1000."); }
+}
+function resetTask1(){ ["t1a","t1b","t1c"].forEach(id=>document.getElementById(id).value=""); setFb(0,true,""); }
+
+function buildTask2(){
+  const target1=document.getElementById("target-grid-1"); target1.innerHTML="";
+  const paint1=document.getElementById("paint-grid-1"); paint1.innerHTML="";
+  for(let i=0;i<8;i++){
+    const targetPx=document.createElement("div");
+    targetPx.className="pixel target";
+    targetPx.style.background = bwTargets.q1[i]==="1" ? "#111111" : "#ffffff";
+    target1.appendChild(targetPx);
+
+    const inp=document.createElement("input");
+    inp.id="q1b-"+i;
+    inp.className="entry-cell pixel-input";
+    inp.maxLength=1;
+    inp.inputMode="numeric";
+    inp.placeholder="0";
+    inp.autocomplete="off";
+    inp.autocorrect="off";
+    inp.autocapitalize="off";
+    inp.spellcheck=false;
+    inp.addEventListener("input",()=>{
+      inp.value = inp.value.replace(/[^01]/g,"").slice(0,1);
+      updatePreview1();
+    });
+    paint1.appendChild(inp);
+  }
+
+  const legendQ2=document.getElementById("legend-q2"); legendQ2.innerHTML="";
+  Object.entries(colorCodeMap).forEach(([bits, color])=>{
+    const item=document.createElement("span");
+    item.className="legend-item";
+    item.innerHTML = '<span class="legend-swatch" style="background:'+colorMap[color]+';"></span><span class="mono">'+bits+' = '+color+"</span>";
+    legendQ2.appendChild(item);
+  });
+
+  const target2=document.getElementById("target-grid-2"); target2.innerHTML="";
+  const entry2=document.getElementById("entry-grid-2"); entry2.innerHTML="";
+  for(let i=0;i<8;i++){
+    const targetPx=document.createElement("div");
+    targetPx.className="pixel target";
+    targetPx.style.background=colorMap[colorCodeMap[colorTargetQ2[i]]];
+    target2.appendChild(targetPx);
+
+    const inp=document.createElement("input");
+    inp.id="q2b-"+i;
+    inp.className="entry-cell";
+    inp.maxLength=2;
+    inp.inputMode="numeric";
+    inp.placeholder="00";
+    inp.autocomplete="off";
+    inp.autocorrect="off";
+    inp.autocapitalize="off";
+    inp.spellcheck=false;
+    inp.addEventListener("input",()=>{
+      inp.value = inp.value.replace(/[^01]/g,"").slice(0,2);
+      updatePreview2();
+    });
+    entry2.appendChild(inp);
+  }
+
+  const target3=document.getElementById("target-grid-3"); target3.innerHTML="";
+  const bits3=document.getElementById("bit-inputs-3"); bits3.innerHTML="";
+  for(let i=0;i<8;i++){
+    const targetPx=document.createElement("div");
+    targetPx.className="pixel target";
+    targetPx.style.background = bwTargets.q3[i]==="1" ? "#111111" : "#ffffff";
+    target3.appendChild(targetPx);
+
+    const inp=document.createElement("input");
+    inp.id="q3b-"+i;
+    inp.className="entry-cell pixel-input";
+    inp.maxLength=1;
+    inp.inputMode="numeric";
+    inp.placeholder="0";
+    inp.autocomplete="off";
+    inp.autocorrect="off";
+    inp.autocapitalize="off";
+    inp.spellcheck=false;
+    inp.addEventListener("input",()=>{
+      inp.value = inp.value.replace(/[^01]/g,"").slice(0,1);
+      updatePreview3();
+    });
+    bits3.appendChild(inp);
+  }
+
+  const long=document.getElementById("long-bits-4");
+  long.value="";
+  long.autocomplete="off";
+  long.autocorrect="off";
+  long.autocapitalize="off";
+  long.spellcheck=false;
+  long.oninput = ()=>{
+    long.value = long.value.replace(/[^01]/g,"").slice(0,16);
+    updatePreview4();
+  };
+  const preview4=document.getElementById("preview-grid-4"); preview4.innerHTML="";
+  const target4=document.getElementById("target-grid-4"); target4.innerHTML="";
+  for(let i=0;i<16;i++){
+    const px=document.createElement("div");
+    px.className="pixel";
+    px.id="q4p-"+i;
+    px.style.background="#ffffff";
+    preview4.appendChild(px);
+
+    const targetPx=document.createElement("div");
+    targetPx.className="pixel target";
+    targetPx.style.background=bwTargets.q4[i]==="1" ? "#111111" : "#ffffff";
+    target4.appendChild(targetPx);
+  }
+
+  const legendQ5=document.getElementById("legend-q5"); legendQ5.innerHTML="";
+  Object.entries(colorCodeMap).forEach(([bits, color])=>{
+    const item=document.createElement("span");
+    item.className="legend-item";
+    item.innerHTML = '<span class="legend-swatch" style="background:'+colorMap[color]+';"></span><span class="mono">'+bits+' = '+color+"</span>";
+    legendQ5.appendChild(item);
+  });
+
+  const long5=document.getElementById("long-bits-5");
+  long5.value="";
+  long5.autocomplete="off";
+  long5.autocorrect="off";
+  long5.autocapitalize="off";
+  long5.spellcheck=false;
+  long5.oninput = ()=>{
+    long5.value = long5.value.replace(/[^01]/g,"").slice(0,16);
+    updatePreview5();
+  };
+  const target5=document.getElementById("target-grid-5"); target5.innerHTML="";
+  const preview5=document.getElementById("preview-grid-5"); preview5.innerHTML="";
+  for(let i=0;i<8;i++){
+    const bits=colorTargetQ5.slice(i*2, i*2+2);
+    const targetPx=document.createElement("div");
+    targetPx.className="pixel target";
+    targetPx.style.background=colorMap[colorCodeMap[bits]];
+    target5.appendChild(targetPx);
+
+    const px=document.createElement("div");
+    px.className="pixel";
+    px.id="q5p-"+i;
+    px.style.background="#ffffff";
+    preview5.appendChild(px);
+  }
+}
+function checkTask2(){
+  if (window.Classroom?.verifyAuth()===false) return;
+  const q1 = Array.from({length:8}, (_,i)=>(document.getElementById("q1b-"+i).value || "")).every((b,i)=>b===bwTargets.q1[i]);
+  const q2 = Array.from({length:8}, (_,i)=>(document.getElementById("q2b-"+i).value || "")).every((bits,i)=>bits===colorTargetQ2[i]);
+  const q3 = Array.from({length:8}, (_,i)=>(document.getElementById("q3b-"+i).value || "0")).every((b,i)=>b===bwTargets.q3[i]);
+  const q4val = (document.getElementById("long-bits-4").value || "").padEnd(16,"0").slice(0,16).split("");
+  const q4 = q4val.every((b,i)=>b===bwTargets.q4[i]);
+  const q5val = (document.getElementById("long-bits-5").value || "").padEnd(16,"0").slice(0,16);
+  const q5 = q5val===colorTargetQ5;
+
+  if(q1 && q2 && q3 && q4 && q5){
+    setFb(1,true,!wrongBefore[1]?"Perfect paint/encode progression.":"All paint and encoding questions are correct.");
+    markDone(1);
+  } else {
+    setFb(1,false,"Some parts are still off. Recheck Q1 typed B/W pixels, Q2 per-pixel 2-bit codes, Q3 per-pixel bits, Q4 long B/W string, then Q5 long 2-bit colour string.");
+  }
+}
+function resetTask2(){ buildTask2(); setFb(1,true,""); }
+
+function updatePreview1(){
+  for(let i=0;i<8;i++){
+    const cell=document.getElementById("q1b-"+i);
+    const bit=(cell.value || "");
+    if(bit==="1"){
+      cell.style.background="#111111";
+      cell.style.color="#ffffff";
+    } else if(bit==="0"){
+      cell.style.background="#ffffff";
+      cell.style.color="#111111";
+    } else {
+      cell.style.background="var(--bg)";
+      cell.style.color="var(--text)";
+    }
+  }
+}
+
+function updatePreview2(){
+  for(let i=0;i<8;i++){
+    const bits=(document.getElementById("q2b-"+i).value || "");
+    const color=colorCodeMap[bits];
+    const cell=document.getElementById("q2b-"+i);
+    cell.style.background = color ? colorMap[color] : "var(--bg)";
+    cell.classList.toggle("active-dark", !!color);
+  }
+}
+
+function updatePreview3(){
+  for(let i=0;i<8;i++){
+    const cell=document.getElementById("q3b-"+i);
+    const bit=(cell.value || "");
+    if(bit==="1"){
+      cell.style.background="#111111";
+      cell.style.color="#ffffff";
+    } else if(bit==="0"){
+      cell.style.background="#ffffff";
+      cell.style.color="#111111";
+    } else {
+      cell.style.background="var(--bg)";
+      cell.style.color="var(--text)";
+    }
+  }
+}
+
+function updatePreview4(){
+  const val=(document.getElementById("long-bits-4").value||"").padEnd(16,"0").slice(0,16);
+  for(let i=0;i<16;i++){
+    document.getElementById("q4p-"+i).style.background = val[i]==="1" ? "#111111" : "#ffffff";
+  }
+}
+
+function updatePreview5(){
+  const val=(document.getElementById("long-bits-5").value||"").padEnd(16,"0").slice(0,16);
+  for(let i=0;i<8;i++){
+    const bits=val.slice(i*2, i*2+2);
+    const color=colorCodeMap[bits];
+    document.getElementById("q5p-"+i).style.background = color ? colorMap[color] : "#ffffff";
+  }
+}
+
+function checkTask3(){
+  if (window.Classroom?.verifyAuth()===false) return;
+  const a=Number(document.getElementById("bd1").value), b=Number(document.getElementById("bd2").value), c=Number(document.getElementById("bd3").value), d=Number(document.getElementById("bd4").value);
+  if(a===4 && b===8 && c===3 && d===2){ setFb(2,true,!wrongBefore[2]?"Perfect bit-depth set.":"All bit-depth questions correct."); markDone(2); }
+  else setFb(2,false,"Use 2^n for max colours. For 6 colours, choose smallest n where 2^n >= 6.");
+}
+function resetTask3(){ ["bd1","bd2","bd3","bd4"].forEach(id=>document.getElementById(id).value=""); setFb(2,true,""); }
+
+function buildSort(){
+  const wrap=document.getElementById("sort-wrap"); wrap.innerHTML="";
+  sortData.forEach((item,i)=>{ const q=document.createElement("div"); q.className="question"; q.innerHTML='<p>'+item.s+'</p><select id="m'+i+'" class="match-sel"><option value="">Choose category</option>'+sortOptions.map(o=>"<option>"+o+"</option>").join("")+"</select>"; wrap.appendChild(q); });
+}
+function checkTask4(){
+  if (window.Classroom?.verifyAuth()===false) return;
+  let ok=0; sortData.forEach((s,i)=>{ if(document.getElementById("m"+i).value===s.a) ok++; });
+  if(ok===sortData.length){ setFb(3,true,!wrongBefore[3]?"Perfect quality diagnosis.":"All scenarios classified correctly."); markDone(3); }
+  else setFb(3,false,ok+"/"+sortData.length+" correct. Focus on which single factor most directly causes each quality change.");
+}
+function resetTask4(){ buildSort(); setFb(3,true,""); }
+
+function checkTask5(){
+  if (window.Classroom?.verifyAuth()===false) return;
+  const ok = document.getElementById("cA").value==="Lossy" && document.getElementById("cB").value==="Lossless" &&
+    document.getElementById("s1").checked && !document.getElementById("s2").checked && document.getElementById("s3").checked && !document.getElementById("s4").checked;
+  if(ok){ setFb(4,true,!wrongBefore[4]?"Perfect compression choices.":"Compression choices are correct."); markDone(4); }
+  else setFb(4,false,"Review: lossy for web photos, lossless for logos/edits; reduce size via resolution and fewer colours.");
+}
+function resetTask5(){ document.getElementById("cA").value=""; document.getElementById("cB").value=""; ["s1","s2","s3","s4"].forEach(id=>document.getElementById(id).checked=false); setFb(4,true,""); }
+
+function buildMS(){
+  const wrap=document.getElementById("ms-wrap"); wrap.innerHTML="";
+  msData.forEach((q,qi)=>{
+    const box=document.createElement("div"); box.className="ms-q-wrapper";
+    let html='<span class="ms-q-num">Question '+(qi+1)+' - '+q.title+' ['+q.marks+' marks]</span><div class="ms-q-box">'+q.q+'</div><div class="ms-student">'+q.student+'</div>';
+    q.points.forEach((p,pi)=>{ html+='<label class="ms-point" id="msp-'+qi+'-'+pi+'"><input type="checkbox" id="ms-'+qi+'-'+pi+'"><span><strong>'+p.code+'</strong> '+p.text+'</span></label>'; });
+    html+='<div class="row"><button class="ac-btn" onclick="checkMSQ('+qi+')">Submit My Marking</button><button class="ac-btn-secondary" onclick="resetMSQ('+qi+')">Reset</button></div><div class="ms-fb" id="msfb-'+qi+'"></div>';
+    box.innerHTML=html; wrap.appendChild(box);
+  });
+}
+function checkMSQ(qi){
+  if (window.Classroom?.verifyAuth()===false) return;
+  const q=msData[qi]; let correct=0; let detail="";
+  q.points.forEach((p,pi)=>{ const checked=document.getElementById("ms-"+qi+"-"+pi).checked; const row=document.getElementById("msp-"+qi+"-"+pi); row.classList.remove("ms-ok","ms-err"); if(checked===p.correct){ correct++; row.classList.add("ms-ok"); } else row.classList.add("ms-err"); detail += "<div>"+p.code+": "+p.explain+"</div>"; });
+  const fb=document.getElementById("msfb-"+qi); fb.className="ms-fb show"; fb.innerHTML=(correct===q.points.length?"<strong>All mark decisions correct.</strong>":"<strong>"+correct+"/"+q.points.length+" decisions correct.</strong>")+"<div style='margin-top:8px'>"+detail+"</div>";
+  msDone[qi]=correct===q.points.length;
+  if(msDone.every(Boolean)){ setFb(5,true,!wrongBefore[5]?"Perfect mark-scheme application.":"Mark-scheme section completed."); markDone(5); } else { setFb(5,false,"Complete each mark-scheme question with all decisions correct to finish this task."); }
+}
+function resetMSQ(qi){ const q=msData[qi]; q.points.forEach((p,pi)=>{ document.getElementById("ms-"+qi+"-"+pi).checked=false; document.getElementById("msp-"+qi+"-"+pi).classList.remove("ms-ok","ms-err"); }); const fb=document.getElementById("msfb-"+qi); fb.className="ms-fb"; fb.innerHTML=""; msDone[qi]=false; setFb(5,true,""); }
+
+buildTask2();
+buildSort();
+buildMS();
+</script>
+<script src="../../classroom.js"></script>
+</body>
+</html>
