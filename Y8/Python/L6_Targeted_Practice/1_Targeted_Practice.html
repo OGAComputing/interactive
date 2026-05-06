@@ -101,6 +101,13 @@ color:  teal
   .ac-help ul { margin:6px 0 0 18px; }
   .ac-help li { margin:3px 0; }
   .ac-help code { background:#FEF3C7; }
+  .worked-example {
+    background:#ecfeff; border:1px solid #67e8f9; border-left:4px solid #0891b2;
+    border-radius:8px; padding:11px 14px; margin:8px 0 14px;
+    color:#164e63; font-size:0.86rem; line-height:1.55;
+  }
+  .worked-example strong { display:block; color:#155e75; margin-bottom:6px; }
+  .worked-example .q-code { margin:7px 0 0; border-radius:6px; }
 
   /* ── Question block ───────────────────────────────────── */
   .q-block       { background:#fff; border-radius:8px; padding:16px 18px; margin-bottom:16px;
@@ -178,6 +185,14 @@ color:  teal
 
   /* Continuation border so editor-wrap connects to checker-header inside a q-block */
   .q-block .editor-wrap { border: 2px solid #3d2d5e; border-top: none; }
+  .q-block .editor-container { min-width:0; overflow-x:auto; overflow-y:hidden; }
+  .q-block .editor-container .checker-textarea {
+    overflow-x:auto !important; overflow-y:hidden !important;
+    min-width:100%; width:100%; white-space:pre;
+  }
+  .q-block .editor-container .highlight-layer {
+    right:auto; width:max-content; min-width:100%; overflow:visible;
+  }
 
   /* ── Reflection panel ─────────────────────────────────── */
   .reflect-ta {
@@ -579,19 +594,19 @@ ___</pre>
       html: `
         <div class="ac-help">
           <strong>Why functions are useful:</strong> when you put the same instructions inside a function, you can re-use them just by calling the function again — no copy-paste needed.
-          <p style="margin-top:6px;">Below, <code>square()</code> contains the loop. Each call draws one square.</p>
+          <p style="margin-top:6px;">The blank after <code>def</code> must be the function name <code>square</code>, because the calls at the bottom use <code>square()</code>. Each call draws one square.</p>
         </div>
-        <p class="q-text">Fill in the blanks so the program defines a function <code>square</code> that draws a square, then calls it <strong>twice</strong>.</p>
+        <p class="q-text">Fill in the blanks so the program defines a function named exactly <code>square</code> that draws a square, then calls <code>square()</code> <strong>twice</strong>.</p>
         <pre class="q-code">import turtle
 t = turtle.Turtle()
 
-def ___():
+def ___():   # replace ___ with square
     for i in range(4):
         t.forward(80)
         t.left(90)
 
 square()
-___</pre>
+___          # write square() here too</pre>
         <textarea class="checker-textarea" id="$Q$-ta" rows="10" data-title="Two squares" placeholder="Type the full program here...">import turtle
 t = turtle.Turtle()
 
@@ -1016,16 +1031,124 @@ function buildAndStart() {
     document.getElementById(bId + '-btn')?.addEventListener('click', () => runCheck(c, 'B'));
   });
 
+  loadProgress();
+
+  // Keep draft code/reflection text across reloads, not just completed tasks.
+  document.querySelectorAll('.q-ta, .checker-textarea, .reflect-ta').forEach(el => {
+    el.addEventListener('input', saveProgress);
+  });
+
   // Initialise code editors for any .checker-textarea we just inserted.
   // The module that defines _setupL6Editors loads asynchronously, so retry briefly
   // if it isn't ready yet (idempotent: rerunning on the same textareas is a no-op).
   (function tryEditors(tries = 0) {
-    if (window._setupL6Editors) { window._setupL6Editors(); return; }
+    if (window._setupL6Editors) { window._setupL6Editors(); wireEditorScrolling(); return; }
     if (tries < 20) setTimeout(() => tryEditors(tries + 1), 100);
   })();
 
-  loadProgress();
   refreshScore();
+}
+
+function wireEditorScrolling() {
+  document.querySelectorAll('.checker-textarea').forEach(ta => {
+    if (ta.dataset.scrollSyncReady) return;
+    ta.dataset.scrollSyncReady = 'true';
+    const sync = () => {
+      const layer = ta.parentElement?.querySelector('.highlight-layer');
+      if (layer) layer.style.transform = `translateX(${-ta.scrollLeft}px)`;
+    };
+    ta.addEventListener('scroll', sync);
+    ta.addEventListener('input', sync);
+    sync();
+  });
+}
+
+function taskExampleHtml(clusterId, taskKey) {
+  const examples = {
+    errors_read_A: {
+      text: 'Different context: this is a NameError because one variable has been misspelled. The fix is to use the same spelling both times.',
+      code: 'lives = 3\nprint(lifes)\n\n# Correct fix:\nprint(lives)'
+    },
+    errors_read_B: {
+      text: 'Different context: this is a SyntaxError because an if line needs a colon before its indented block.',
+      code: 'if coins > 10\n    print("Bonus")\n\n# Correct fix:\nif coins > 10:\n    print("Bonus")'
+    },
+    errors_fix_A: {
+      text: 'Different context: copy the exact variable name from where it was created, then use that same name in print.',
+      code: 'team_points = 12\nprint("Points:", teampoints)\n\n# Correct fix:\nteam_points = 12\nprint("Points:", team_points)'
+    },
+    errors_fix_B: {
+      text: 'Different context: code inside an if statement must be indented so Python knows it belongs to the if.',
+      code: 'if lives == 0:\nprint("Game over")\n\n# Correct fix:\nif lives == 0:\n    print("Game over")'
+    },
+    cast_to_int_A: {
+      text: 'Different context: use int(input(...)) when the answer needs to be used in a calculation.',
+      code: 'goals = int(input("How many goals? "))\nprint("Double goals:", goals * 2)'
+    },
+    cast_to_int_B: {
+      text: 'Different context: store the input as a number first, then multiply it.',
+      code: 'hours = int(input("How many hours? "))\nminutes = hours * 60\nprint(minutes)'
+    },
+    cast_to_str_A: {
+      text: 'Different context: use str(...) when joining a number into a sentence with +.',
+      code: 'level = 4\nmessage = "You reached level " + str(level)\nprint(message)'
+    },
+    cast_to_str_B: {
+      text: 'Different context: keep the number as a number, but convert it at the moment you join it to text.',
+      code: 'coins = 25\nprint("I collected " + str(coins) + " coins")'
+    },
+    range_basics_A: {
+      text: 'Different context: range(3) repeats the loop body three times.',
+      code: 'for i in range(3):\n    print("Ready")'
+    },
+    range_basics_B: {
+      text: 'Different context: to print 2 to 6, the range stops at 7 because the stop number is not included.',
+      code: 'for number in range(2, 7):\n    print(number)'
+    },
+    turtle_loops_A: {
+      text: 'Different context: a square has 4 sides, so the loop repeats 4 times and turns 90 degrees.',
+      code: 'import turtle\nt = turtle.Turtle()\nfor i in range(4):\n    t.forward(80)\n    t.left(90)'
+    },
+    turtle_loops_B: {
+      text: 'Different context: a hexagon has 6 sides, so the turn is 360 / 6 = 60 degrees.',
+      code: 'import turtle\nt = turtle.Turtle()\nfor i in range(6):\n    t.forward(70)\n    t.left(60)'
+    },
+    function_basics_A: {
+      text: 'Different context: define the function once, then call it each time you want it to run.',
+      code: 'def say_hello():\n    print("Hello!")\n\nsay_hello()\nsay_hello()'
+    },
+    function_basics_B: {
+      text: 'Different context: a function can contain more than one print line, and every call runs the whole body.',
+      code: 'def cheer():\n    print("You can do it!")\n    print("Keep going!")\n\ncheer()\ncheer()'
+    },
+    function_loop_A: {
+      text: 'Different context: put the drawing loop inside a function, then call the function to draw the shape.',
+      code: 'import turtle\nt = turtle.Turtle()\n\ndef small_triangle():\n    for i in range(3):\n        t.forward(60)\n        t.left(120)\n\nsmall_triangle()'
+    },
+    function_loop_B: {
+      text: 'Different context: calling the same drawing function twice repeats the whole shape twice.',
+      code: 'import turtle\nt = turtle.Turtle()\n\ndef square():\n    for i in range(4):\n        t.forward(60)\n        t.left(90)\n\nsquare()\nsquare()'
+    },
+    io_basics_A: {
+      text: 'Different context: each print statement displays one line.',
+      code: 'print("Welcome")\nprint("This is my first line")\nprint("This is my second line")'
+    },
+    io_basics_B: {
+      text: 'Different context: use several print statements to build a small badge or certificate.',
+      code: 'print("Coding badge")\nprint("I can use print")\nprint("I can use quotes")\nprint("I am ready")'
+    },
+    game_build_A: {
+      text: 'Different context: this tiny quiz uses the same pattern: greet, input, convert, check, and print feedback.',
+      code: 'def greet():\n    print("Welcome to the quiz!")\n\ngreet()\nanswer = int(input("What is 2 + 3? "))\nif answer == 5:\n    print("Correct!")\nelse:\n    print("Try again next time")'
+    },
+    game_build_B: {
+      text: 'Different context: a stretch change can add an attempts counter without changing the whole game.',
+      code: 'attempts = 0\nfor i in range(3):\n    attempts = attempts + 1\n    guess = int(input("Guess: "))\nprint("You used " + str(attempts) + " attempts")'
+    }
+  };
+  const ex = examples[`${clusterId}_${taskKey}`];
+  if (!ex) return '';
+  return `<div class="worked-example"><strong>Example</strong>${ex.text}<pre class="q-code">${ex.code}</pre></div>`;
 }
 
 function renderClusterPanel(c, idx) {
@@ -1050,6 +1173,7 @@ function renderClusterPanel(c, idx) {
 
     <div class="q-block" id="${aId}">
       <div class="q-num">${c.taskA.title} <span class="pts-tag">1 pt</span></div>
+      ${taskExampleHtml(c.id, 'A')}
       ${aHtml}
       <button class="ac-btn" id="${aId}-btn">Check</button>
       <div class="q-fb" id="${aId}-fb"></div>
@@ -1057,6 +1181,7 @@ function renderClusterPanel(c, idx) {
 
     <div class="q-block locked-task" id="${bId}">
       <div class="q-num">${c.taskB.title} <span class="pts-tag">1 pt</span></div>
+      ${taskExampleHtml(c.id, 'B')}
       ${bHtml}
       <button class="ac-btn" id="${bId}-btn">Check</button>
       <div class="q-fb" id="${bId}-fb"></div>
@@ -1122,8 +1247,11 @@ function runCheck(cluster, taskKey /* 'A' or 'B' */) {
       window._clearSyntaxHint?.(ta);
     }
 
-    if (check.type === 'turtle' && passed) {
-      window._openTurtlePreview?.(ta, cluster.title);
+    if (check.type === 'turtle') {
+      const shown = window._openTurtlePreview?.(ta, cluster.title);
+      if (!shown && passed) {
+        fb.textContent = 'Correct code, but no turtle movement was found to preview.';
+      }
     }
   }
 
@@ -1255,15 +1383,13 @@ function loadProgress() {
         const block = document.getElementById(qId);
         if (block) block.classList.add('correct');
         const btn = document.getElementById(qId + '-btn');
-        if (btn) btn.disabled = true;
+        const ta = document.getElementById(qId + '-ta');
+        if (btn && !ta) btn.disabled = true;
         // Re-lock MCQ inputs if it was an MCQ
         document.querySelectorAll(`input[name="${qId}"]`).forEach(r => {
           r.disabled = true;
           r.closest('.q-opt').classList.add('locked');
         });
-        // Re-lock textarea if it was a code task
-        const ta = document.getElementById(qId + '-ta');
-        if (ta) ta.readOnly = true;
         // Unlock the corresponding Task B if Task A passed
         if (qId.endsWith('_A')) unlockTaskB(qId.slice(0, -2));
       }
@@ -1274,6 +1400,8 @@ function loadProgress() {
 // ══════════════════════════════════════════════════════════════
 // FIREWORKS  (lifted from L5_Assessment for visual consistency)
 // ══════════════════════════════════════════════════════════════
+window.saveState = saveProgress;
+
 const cvs = document.getElementById('fwc'), ctx = cvs.getContext('2d');
 let fwOn = false, fwP = [], fwId = null;
 const FWC = ['#F5C300','#22c55e','#00B4D8','#E07B2A','#ff6b9d','#a78bfa','#fff'];
@@ -1312,6 +1440,7 @@ function _interpretTurtle(code) {
   const cmds = [], output = [];
   const lines = code.split('\n');
   const functions = {};
+  const turtleNames = new Set(['turtle', 't']);
 
   function evalExpr(e, env) {
     e = e.trim();
@@ -1342,12 +1471,14 @@ function _interpretTurtle(code) {
   function execLine(line, env) {
     const t = line.trim();
     if (!t || t[0] === '#') return;
-    if (/^import|turtle\.done|^t\s*=\s*turtle\.Turtle|^screen\s*=/.test(t)) return;
+    if (/^import|turtle\.done|^screen\s*=/.test(t)) return;
+    const tm = t.match(/^(\w+)\s*=\s*turtle\.(?:Turtle|Pen)\s*\(/);
+    if (tm) { turtleNames.add(tm[1]); return; }
     if (t.startsWith('print(') && t.endsWith(')')) { output.push(evalArgs(t.slice(6,-1), env).join(' ')); return; }
     const dotIdx = t.indexOf('.');
     if (dotIdx > 0) {
       const obj = t.slice(0, dotIdx).trim();
-      if (obj === 't' || obj === 'turtle') {
+      if (turtleNames.has(obj)) {
         const parenIdx = t.indexOf('(', dotIdx);
         if (parenIdx > 0) {
           const method = t.slice(dotIdx+1, parenIdx).trim();
@@ -1462,14 +1593,16 @@ function _runTurtleOnCanvas({ cmds }, canvas, onDone) {
 
 function _openTurtlePreview(ta, title) {
   const code = (ta?.value || '').trim();
-  if (!code || code.length < 10) return;
+  if (!code || code.length < 10) return false;
   const out = _interpretTurtle(code);
+  if (!out.cmds.length) return false;
   document.getElementById('turtleModalTitle').textContent = title || 'Turtle Output';
   document.getElementById('turtleStatus').textContent = 'Drawing…';
   document.getElementById('turtleModal').classList.add('open');
   _runTurtleOnCanvas(out, document.getElementById('turtleCanvas'), msg => {
     document.getElementById('turtleStatus').textContent = msg || '';
   });
+  return true;
 }
 
 function _closeTurtleModal() {
