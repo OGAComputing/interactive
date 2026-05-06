@@ -61,10 +61,18 @@ export const CHECKERS = {
     return hasDef && hasFor && has120 && callCount >= 3;
   },
 
-  // ── Foundational: print and input ──────────────────────
+  // ── Foundational: print ────────────────────────────────
   io_basics_A: code => {
     const printCount = (code.match(/print\s*\(/g) || []).length;
     return printCount >= 3 && /Hello/.test(code) && /Python/.test(code) && /fun/i.test(code);
   },
-  io_basics_B: code => /int\s*\(\s*input\s*\(/.test(code) && /\*\s*2|2\s*\*/.test(code) && /print\s*\(/.test(code),
+  io_basics_B: code => {
+    const printCount = (code.match(/print\s*\(/g) || []).length;
+    return printCount >= 4 &&
+      !/input\s*\(/.test(code) &&
+      /Python/i.test(code) &&
+      /print/i.test(code) &&
+      /quotes/i.test(code) &&
+      /ready/i.test(code);
+  },
 };

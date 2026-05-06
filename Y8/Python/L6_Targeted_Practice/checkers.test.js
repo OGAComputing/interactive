@@ -224,11 +224,13 @@ describe('io_basics_A', () => {
 
 describe('io_basics_B', () => {
   const fn = CHECKERS.io_basics_B;
-  const PASS = 'n = int(input("Enter a number: "))\nprint(n * 2)';
-  test('passes n * 2', () => expect(fn(PASS)).toBe(true));
-  test('passes 2 * n', () => expect(fn('n = int(input("Enter: "))\nprint(2 * n)')).toBe(true));
-  test('rejects missing int(input(', () => expect(fn('n = input("Enter: ")\nprint(n * 2)')).toBe(false));
-  test('rejects missing multiplication by 2', () => expect(fn('n = int(input("Enter: "))\nprint(n + 2)')).toBe(false));
-  test('rejects missing print', () => expect(fn('n = int(input("Enter: "))\nresult = n * 2')).toBe(false));
+  const PASS = 'print("My Python badge")\nprint("I can use print()")\nprint("I can put text in quotes")\nprint("Ready for the next challenge!")';
+  test('passes four print lines with required words', () => expect(fn(PASS)).toBe(true));
+  test('rejects only 3 prints', () => expect(fn('print("Python")\nprint("print")\nprint("quotes and ready")')).toBe(false));
+  test('rejects input', () => expect(fn('name = input("Name: ")\nprint("Python")\nprint("print")\nprint("quotes")\nprint("ready")')).toBe(false));
+  test('rejects missing Python', () => expect(fn('print("My badge")\nprint("I can use print()")\nprint("I can use quotes")\nprint("Ready!")')).toBe(false));
+  test('rejects missing print word', () => expect(fn('print("My Python badge")\nprint("I can code")\nprint("I can use quotes")\nprint("Ready!")')).toBe(false));
+  test('rejects missing quotes', () => expect(fn('print("My Python badge")\nprint("I can use print()")\nprint("I can write text")\nprint("Ready!")')).toBe(false));
+  test('rejects missing ready', () => expect(fn('print("My Python badge")\nprint("I can use print()")\nprint("I can use quotes")\nprint("Next challenge!")')).toBe(false));
   test('rejects empty', () => expect(fn('')).toBe(false));
 });
