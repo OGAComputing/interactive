@@ -82,7 +82,12 @@
 
   let userInfo             = null; // { email, name } fetched from Google userinfo after sign-in
   let isTeacherMode        = false; // true once detectTeacher confirms the signed-in user is a teacher
-  let pendingEvidenceTimer = null; // debounce handle — evidence upload fires 2 s after last submitGrade
+  const CLASSROOM_SYNC_INTERVAL_MS = 60 * 1000;
+
+  let pendingClassroomSyncTimer = null;
+  let pendingClassroomSyncPayload = null;
+  let hasFlushedClassroomSync = false;
+  let lastClassroomSyncAt = 0;
 
   // ── Login banner ─────────────────────────────────────────────────────────────
 
@@ -765,14 +770,13 @@
       ? esc(userInfo.name || '') + (userInfo.email ? ' &lt;' + esc(userInfo.email) + '&gt;' : '')
       : 'Student';
     const scoreHtml = score !== null && score !== undefined
-      ? `<div class="ev-score"><div class="score-num">${Number(score)}%</div><div class="score-label">Score</div></div>`
+      ? `<p><strong>Score:</strong> ${Number(score)}%</p>`
       : '';
 
     const answers = scrapeWorkAnswers();
     const sectionsHtml = answers.length === 0
       ? '<p class="ev-empty">No answers recorded yet — the student has not completed any tasks.</p>'
       : answers.map((a, i) => {
-          const typeIcon  = { text: '📝', code: '💻', choice: '🔘' }[a.type] || '📝';
           const typeLabel = { text: 'Written answer', code: 'Code', choice: 'Multiple choice' }[a.type] || 'Response';
           const answerHtml = a.value.trim()
             ? (a.type === 'code'
@@ -784,9 +788,9 @@
             : '';
           return `
     <div class="ev-section">
-      <div class="ev-label">${typeIcon} ${typeLabel.toUpperCase()} · QUESTION ${i + 1}</div>
+      <div class="ev-label">Question ${i + 1} - ${typeLabel}</div>
       <div class="ev-question">${esc(a.label)}</div>
-      <div class="ev-response-head">Response:</div>
+      <div class="ev-response-head">Response</div>
       ${answerHtml}${fbHtml}
     </div>`;
         }).join('');
@@ -799,32 +803,29 @@
 <title>${esc(activityTitle)} — Work Evidence</title>
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:'Segoe UI',system-ui,sans-serif;background:#f1f5f9;color:#1e293b;padding:20px;min-height:100vh}
-  .ev-wrap{max-width:820px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.12)}
-  .ev-head{background:linear-gradient(135deg,#1e3a5f 0%,#0f2040 100%);color:#fff;padding:24px 28px;border-bottom:3px solid #3b82f6;overflow:hidden}
-  .ev-score{float:right;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:10px;padding:10px 18px;text-align:center;margin:0 0 8px 16px}
-  .ev-score .score-num{font-size:2rem;font-weight:800;line-height:1;color:#fff}
-  .ev-score .score-label{font-size:.7rem;color:#bfdbfe;margin-top:2px}
-  .ev-title{font-size:1.35rem;font-weight:700;margin-bottom:3px}
-  .ev-subtitle{font-size:.92rem;color:#93c5fd;margin-bottom:10px}
-  .ev-meta{font-size:.78rem;color:#bfdbfe;display:flex;flex-wrap:wrap;gap:4px 16px}
-  .ev-body{padding:24px 28px}
-  .ev-section{margin-bottom:32px;padding-bottom:24px;border-bottom:1px solid #f1f5f9}
+  body{font-family:Arial,'Segoe UI',system-ui,sans-serif;background:#fff;color:#111827;padding:24px;line-height:1.5}
+  .ev-wrap{max-width:820px;margin:0 auto;background:#fff}
+  .ev-head{border-bottom:2px solid #111827;padding-bottom:16px;margin-bottom:20px}
+  .ev-title{font-size:1.5rem;font-weight:700;margin-bottom:6px;color:#111827}
+  .ev-subtitle{font-size:1rem;color:#374151;margin-bottom:12px}
+  .ev-meta{font-size:.9rem;color:#374151}
+  .ev-meta p{margin:3px 0}
+  .ev-body{padding:0}
+  .ev-section{margin-bottom:24px;padding-bottom:18px;border-bottom:1px solid #d1d5db}
   .ev-section:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
-  .ev-label{font-size:.65rem;font-weight:700;text-transform:uppercase;color:#94a3b8;letter-spacing:.06em;margin-bottom:8px}
-  .ev-question{font-size:1.1rem;font-weight:700;color:#0f172a;margin-bottom:12px;line-height:1.4}
-  .ev-response-head{font-size:.75rem;font-weight:700;color:#64748b;margin-bottom:6px;text-transform:uppercase}
-  .ev-answer{background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:14px;font-size:.95rem;color:#1e293b;white-space:pre-wrap;word-break:break-word;line-height:1.6}
-  .ev-answer.code{font-family:'Cascadia Code','Consolas','Courier New',monospace;font-size:.85rem;background:#0f172a;color:#f1f5f9;border-color:#1e293b;overflow-x:auto}
-  .ev-answer.empty{color:#94a3b8;font-style:italic}
-  .ev-feedback{margin-top:10px;font-size:.85rem;font-weight:600;padding:8px 12px;border-radius:6px;display:inline-block}
-  .ev-feedback.pass{background:#f0fdf4;color:#166534;border:1px solid #bbf7d0}
-  .ev-feedback.fail{background:#fef2f2;color:#991b1b;border:1px solid #fecaca}
-  .ev-empty{color:#94a3b8;font-style:italic;font-size:.9rem}
-  .ev-footer{text-align:center;font-size:.72rem;color:#94a3b8;padding:14px 28px;border-top:1px solid #f1f5f9;background:#fafafa}
+  .ev-label{font-size:.85rem;font-weight:700;color:#374151;margin-bottom:6px}
+  .ev-question{font-size:1rem;font-weight:700;color:#111827;margin-bottom:10px}
+  .ev-response-head{font-size:.85rem;font-weight:700;color:#374151;margin-bottom:4px}
+  .ev-answer{background:#fff;border:1px solid #9ca3af;border-radius:4px;padding:12px;font-size:.95rem;color:#111827;white-space:pre-wrap;word-break:break-word;line-height:1.5}
+  .ev-answer.code{font-family:'Cascadia Code','Consolas','Courier New',monospace;font-size:.85rem;background:#f9fafb;color:#111827;overflow-x:auto}
+  .ev-answer.empty{color:#6b7280;font-style:italic}
+  .ev-feedback{margin-top:8px;font-size:.9rem;font-weight:700;color:#111827}
+  .ev-feedback.pass,.ev-feedback.fail{background:#fff;color:#111827;border:none;padding:0}
+  .ev-empty{color:#6b7280;font-style:italic;font-size:.95rem}
+  .ev-footer{font-size:.8rem;color:#4b5563;padding-top:14px;border-top:1px solid #d1d5db;margin-top:20px}
   @media print{
     body{background:#fff;padding:0}
-    .ev-wrap{box-shadow:none;border-radius:0;max-width:100%}
+    .ev-wrap{max-width:100%}
     .ev-section{break-inside:avoid}
   }
 </style>
@@ -832,18 +833,18 @@
 <body>
 <div class="ev-wrap">
   <div class="ev-head">
-    ${scoreHtml}
-    <div class="ev-title">📋 Work Evidence</div>
+    <div class="ev-title">Work Evidence</div>
     <div class="ev-subtitle">${esc(activityTitle)}</div>
     <div class="ev-meta">
-      <span>👤 ${studentLabel}</span>
-      <span>🕐 ${esc(now)}</span>
-      <span>🔗 ${esc(window.location.pathname)}</span>
+      <p><strong>Student:</strong> ${studentLabel}</p>
+      <p><strong>Updated:</strong> ${esc(now)}</p>
+      ${scoreHtml}
+      <p><strong>Activity path:</strong> ${esc(window.location.pathname)}</p>
     </div>
   </div>
   <div class="ev-body">${sectionsHtml}
   </div>
-  <div class="ev-footer">OGA Computing Interactive · Work Evidence · ${esc(now)}</div>
+  <div class="ev-footer">OGA Computing Interactive - Work Evidence - ${esc(now)}</div>
 </div>
 </body>
 </html>`;
@@ -977,15 +978,56 @@
     }
   }
 
-  // Debounce: when submitGrade is called several times in quick succession
-  // (e.g. each code check fires a score update), wait for things to settle
-  // before taking a DOM snapshot and uploading.
-  function scheduleEvidenceUpload(activityName, score) {
-    if (pendingEvidenceTimer) clearTimeout(pendingEvidenceTimer);
-    pendingEvidenceTimer = setTimeout(() => {
-      pendingEvidenceTimer = null;
-      doUploadWorkEvidence(activityName, score);
-    }, 2000);
+  function isCompletionGrade(gradePercent) {
+    return Number(gradePercent) >= 100;
+  }
+
+  // Grade and evidence uploads share one scheduler so Google receives the
+  // latest score and DOM snapshot together. The first update and completion
+  // update flush immediately; all intermediate updates are capped at once a minute.
+  function scheduleClassroomSync(activityName, gradePercent) {
+    if (!accessToken) return;
+
+    const payload = { activityName, gradePercent };
+    pendingClassroomSyncPayload = payload;
+
+    const firstSync = !hasFlushedClassroomSync;
+    const completed = isCompletionGrade(gradePercent);
+    const now = Date.now();
+    const elapsed = now - lastClassroomSyncAt;
+
+    if (firstSync || completed || elapsed >= CLASSROOM_SYNC_INTERVAL_MS) {
+      flushPendingClassroomSync();
+      return;
+    }
+
+    if (pendingClassroomSyncTimer) return;
+
+    pendingClassroomSyncTimer = setTimeout(() => {
+      flushPendingClassroomSync();
+    }, CLASSROOM_SYNC_INTERVAL_MS - elapsed);
+  }
+
+  function flushPendingClassroomSync() {
+    if (pendingClassroomSyncTimer) {
+      clearTimeout(pendingClassroomSyncTimer);
+      pendingClassroomSyncTimer = null;
+    }
+
+    const payload = pendingClassroomSyncPayload;
+    pendingClassroomSyncPayload = null;
+    if (!payload) return;
+
+    hasFlushedClassroomSync = true;
+    lastClassroomSyncAt = Date.now();
+    doClassroomSync(payload.activityName, payload.gradePercent);
+  }
+
+  async function doClassroomSync(activityName, gradePercent) {
+    await Promise.all([
+      submitGradeNow(gradePercent, activityName),
+      doUploadWorkEvidence(activityName, gradePercent)
+    ]);
   }
 
   // ── Per-activity results JSON ──────────────────────────────────────────────
@@ -1296,6 +1338,79 @@
 
   window._classroomSignIn = function () { signInViaRedirect(); };
 
+  async function submitGradeNow(gradePercent, activityName) {
+    if (!proxyUrl) {
+      console.error('Classroom: grade not submitted — no proxy URL configured.');
+      showClassroomToast('⚠️ Grade not saved — proxy not configured.');
+      return;
+    }
+    await checkProxyVersion();
+    if (!proxyVersionOk) {
+      console.error('Classroom: grade not submitted — proxy version is below minimum required (need v' + PROXY_MIN_VERSION + ').');
+      showClassroomToast('⚠️ Grade not saved — proxy is outdated, please redeploy.');
+      return;
+    }
+    if (!courseWorkId || !submissionId) {
+      console.error('Classroom: grade not submitted — could not find matching assignment or submission.',
+        { courseWorkId, submissionId });
+      showClassroomToast('⚠️ Grade not saved — assignment not found.');
+      return;
+    }
+    try {
+      // Send the student's own OAuth token rather than a self-reported userId.
+      // The proxy calls the userinfo endpoint to verify identity server-side.
+      // submissionId is looked up client-side using the student's own token so
+      // the proxy does not need a teacher-level studentSubmissions.list call.
+      const res = await fetch(proxyUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          courseId,
+          courseWorkId,
+          submissionId,
+          studentToken: accessToken,
+          grade: gradePercent
+        }).toString()
+      });
+
+      if (!res.ok) {
+        const text = await res.text().catch(() => res.status);
+        throw new Error(`Proxy returned ${res.status}: ${text}`);
+      }
+      const result = await res.text();
+      if (result !== 'ok') {
+        console.warn(`Classroom proxy responded: "${result}" for "${activityName}"`);
+
+        // SERVICE_DISABLED — show actionable modal so the teacher can fix it
+        if (result.includes('SERVICE_DISABLED') || result.includes('has not been used')) {
+          let projectNum = null;
+          try {
+            const match = result.match(/"containerInfo":\s*"(\d+)"/);
+            if (match) projectNum = match[1];
+          } catch (_) {}
+          const backdrop = document.getElementById('cr-api-modal-backdrop');
+          if (backdrop) {
+            if (projectNum) {
+              const link = document.getElementById('cr-api-console-link');
+              if (link) link.href = 'https://console.developers.google.com/apis/api/classroom.googleapis.com/overview?project=' + projectNum;
+            }
+            backdrop.classList.add('open');
+          }
+          showClassroomToast('⚠️ Classroom API not enabled — see popup.');
+          return;
+        }
+
+        showClassroomToast('⚠️ Grade sync issue — see console.');
+        return;
+      }
+      showClassroomToast('Grade sent to Classroom! ✅');
+      console.log(`Classroom grade submitted via proxy: ${gradePercent}% for "${activityName}" — proxy said: ${result}`);
+    } catch (err) {
+      console.error('Classroom sync failed:', err);
+      showClassroomToast('⚠️ Grade sync failed — see console.');
+    }
+  }
+
   // ── Public API ────────────────────────────────────────────────────────────────
 
   window.Classroom = {
@@ -1311,96 +1426,23 @@
     },
 
     /**
-     * Submit a draft grade via the teacher's Apps Script proxy.
-     * No-op when not in a Classroom context, not authenticated, or no proxy configured.
+     * Queue a draft grade and work-evidence snapshot for Classroom.
+     * The first update and a 100% update are sent immediately; intermediate
+     * updates are coalesced and sent at most once a minute.
      *
      * @param {number} gradePercent  0–100
      * @param {string} activityName  Logged to console for debugging
      */
     async submitGrade(gradePercent, activityName) {
       if (!accessToken) return;
-
-      // Always schedule a work evidence upload when a student completes a task,
-      // regardless of whether the grade proxy is configured.
-      scheduleEvidenceUpload(activityName, gradePercent);
-
-      if (!proxyUrl) {
-        console.error('Classroom: grade not submitted — no proxy URL configured.');
-        showClassroomToast('⚠️ Grade not saved — proxy not configured.');
-        return;
-      }
-      await checkProxyVersion();
-      if (!proxyVersionOk) {
-        console.error('Classroom: grade not submitted — proxy version is below minimum required (need v' + PROXY_MIN_VERSION + ').');
-        showClassroomToast('⚠️ Grade not saved — proxy is outdated, please redeploy.');
-        return;
-      }
-      if (!courseWorkId || !submissionId) {
-        console.error('Classroom: grade not submitted — could not find matching assignment or submission.',
-          { courseWorkId, submissionId });
-        showClassroomToast('⚠️ Grade not saved — assignment not found.');
-        return;
-      }
-      try {
-        // Send the student's own OAuth token rather than a self-reported userId.
-        // The proxy calls the userinfo endpoint to verify identity server-side.
-        // submissionId is looked up client-side using the student's own token so
-        // the proxy does not need a teacher-level studentSubmissions.list call.
-        const res = await fetch(proxyUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: new URLSearchParams({
-            courseId,
-            courseWorkId,
-            submissionId,
-            studentToken: accessToken,
-            grade: gradePercent
-          }).toString()
-        });
-
-        if (!res.ok) {
-          const text = await res.text().catch(() => res.status);
-          throw new Error(`Proxy returned ${res.status}: ${text}`);
-        }
-        const result = await res.text();
-        if (result !== 'ok') {
-          console.warn(`Classroom proxy responded: "${result}" for "${activityName}"`);
-
-          // SERVICE_DISABLED — show actionable modal so the teacher can fix it
-          if (result.includes('SERVICE_DISABLED') || result.includes('has not been used')) {
-            let projectNum = null;
-            try {
-              const match = result.match(/"containerInfo":\s*"(\d+)"/);
-              if (match) projectNum = match[1];
-            } catch (_) {}
-            const backdrop = document.getElementById('cr-api-modal-backdrop');
-            if (backdrop) {
-              if (projectNum) {
-                const link = document.getElementById('cr-api-console-link');
-                if (link) link.href = 'https://console.developers.google.com/apis/api/classroom.googleapis.com/overview?project=' + projectNum;
-              }
-              backdrop.classList.add('open');
-            }
-            showClassroomToast('⚠️ Classroom API not enabled — see popup.');
-            return;
-          }
-
-          showClassroomToast('⚠️ Grade sync issue — see console.');
-          return;
-        }
-        showClassroomToast('Grade sent to Classroom! ✅');
-        console.log(`Classroom grade submitted via proxy: ${gradePercent}% for "${activityName}" — proxy said: ${result}`);
-      } catch (err) {
-        console.error('Classroom sync failed:', err);
-        showClassroomToast('⚠️ Grade sync failed — see console.');
-      }
+      scheduleClassroomSync(activityName, gradePercent);
     },
 
     /**
      * Save a small per-activity results JSON to the student's Drive so a
      * follow-up activity can read which questions were missed even when
      * localStorage is unavailable (different device / cleared browser).
-     * Independent of the grade proxy.  Debounced 2 s the same way evidence is.
+     * Independent of the grade proxy. Debounced separately from Classroom sync.
      *
      * @param {object} resultsObj  Plain JSON-serialisable object to store.
      * @param {string} activityName  Used to derive the Drive filename.
