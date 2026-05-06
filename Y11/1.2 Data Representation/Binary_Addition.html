@@ -109,6 +109,7 @@ color:  pink
     margin-bottom: 22px;
     position: relative;
   }
+  .card.hidden { display: none; }
   .card h2 {
     font-size: 0.82rem;
     font-weight: 700;
@@ -295,6 +296,12 @@ color:  pink
     flex-wrap: wrap;
     margin-top: 18px;
   }
+  .restart-btn {
+    display: none;
+  }
+  .restart-btn.show {
+    display: inline-flex;
+  }
   .feedback {
     min-height: 1.4em;
     font-size: 0.95rem;
@@ -379,7 +386,7 @@ color:  pink
 
 <div class="page-wrap">
   <h2 class="page-title">8-bit Binary Addition</h2>
-  <p class="page-subtitle">Add random 8-bit numbers, record carries, and avoid overflow.</p>
+  <p class="page-subtitle">Complete 3 guided additions, then answer 5 exam-style questions.</p>
 
   <div class="score-row">
     <span class="score-label">Total Progress</span>
@@ -391,15 +398,13 @@ color:  pink
 
   <div class="tabs" id="tab-bar">
     <button class="tab-btn active" data-idx="0">Guided</button>
-    <button class="tab-btn" data-idx="1">Practice</button>
-    <button class="tab-btn" data-idx="2">Exam Mode</button>
-    <button class="tab-btn" data-idx="3">Final Challenge</button>
+    <button class="tab-btn" data-idx="1">Exam Questions</button>
   </div>
 
   <div class="panel active" id="active-panel">
-    <div class="goal" id="task-goal">Task: Guided. Correct: 0/5</div>
+    <div class="goal" id="task-goal">Task: Guided. Correct: 0/3</div>
 
-    <div class="card">
+    <div class="card" id="rules-card">
       <div class="diff-badge" id="diff-label">Level: Structured</div>
       <h2>Binary Addition Rules</h2>
       <div class="rule-grid" aria-label="Binary addition rules">
@@ -430,6 +435,7 @@ color:  pink
       <div class="button-row">
         <button class="ac-btn" id="check-btn">Check</button>
         <button class="ac-btn ac-btn-secondary" id="new-btn">New question</button>
+        <button class="ac-btn ac-btn-secondary restart-btn" id="restart-btn">Restart</button>
       </div>
       <div class="feedback" id="feedback"></div>
     </div>
@@ -440,18 +446,17 @@ color:  pink
 
 <script>
   const ACTIVITY_TITLE = 'Binary Addition';
-  const TASK_COUNT = 4;
+  const TASK_COUNT = 2;
   const STREAK_TO_LEVEL_UP = 3;
 
   const state = {
     currentIdx: 0,
     completed: new Array(TASK_COUNT).fill(false),
     lastPair: '',
+    examUnlocked: false,
     tasks: [
-      { title: 'Guided', diff: 0, streak: 0, count: 0, target: 5 },
-      { title: 'Practice', diff: 1, streak: 0, count: 0, target: 8 },
-      { title: 'Exam Mode', diff: 2, streak: 0, count: 0, target: 8 },
-      { title: 'Final Challenge', diff: 2, streak: 0, count: 0, target: 10 }
+      { title: 'Guided', diff: 0, streak: 0, count: 0, target: 3 },
+      { title: 'Exam Questions', diff: 2, streak: 0, count: 0, target: 5 }
     ],
     current: null
   };
@@ -476,8 +481,13 @@ color:  pink
     document.getElementById('feedback').textContent = '';
     focusFirstAnswer();
   });
+  document.getElementById('restart-btn').addEventListener('click', restartActivity);
 
   function switchToTab(idx) {
+    if (idx === 1 && !state.examUnlocked) {
+      showToast('Complete 3 guided questions first.', 'warn');
+      return;
+    }
     state.currentIdx = idx;
     document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
     document.querySelector('.tab-btn[data-idx="' + idx + '"]')?.classList.add('active');
@@ -609,13 +619,13 @@ color:  pink
       input.setAttribute('aria-label', 'Answer bit ' + (8 - i));
       input.addEventListener('input', () => {
         input.value = input.value.replace(/[^01]/g, '').slice(0, 1);
-        if (input.value && i < 7) {
-          document.querySelector('.answer-bit[data-bit="' + (i + 1) + '"]')?.focus();
+        if (input.value && i > 0) {
+          document.querySelector('.answer-bit[data-bit="' + (i - 1) + '"]')?.focus();
         }
       });
       input.addEventListener('keydown', e => {
-        if (e.key === 'Backspace' && !input.value && i > 0) {
-          document.querySelector('.answer-bit[data-bit="' + (i - 1) + '"]')?.focus();
+        if (e.key === 'Backspace' && !input.value && i < 7) {
+          document.querySelector('.answer-bit[data-bit="' + (i + 1) + '"]')?.focus();
         }
         if (e.key === 'Enter') checkAnswer();
       });
@@ -704,6 +714,7 @@ color:  pink
       setTimeout(() => {
         const nextIdx = completedIdx + 1;
         if (completedThisTurn && state.currentIdx === completedIdx && nextIdx < TASK_COUNT) {
+          state.examUnlocked = true;
           switchToTab(nextIdx);
         } else {
           feedback.textContent = '';
@@ -730,6 +741,9 @@ color:  pink
   function markDone(idx) {
     if (state.completed[idx]) return false;
     state.completed[idx] = true;
+    if (idx === 0) {
+      state.examUnlocked = true;
+    }
 
     const tab = document.querySelector('.tab-btn[data-idx="' + idx + '"]');
     if (tab) tab.classList.add('done-gold');
@@ -751,6 +765,9 @@ color:  pink
     document.getElementById('task-goal').textContent = 'Task: ' + task.title + '. Correct: ' + Math.min(task.count, task.target) + '/' + task.target;
     document.getElementById('diff-label').textContent = 'Level: ' + diffNames[task.diff];
     document.getElementById('guidance').innerHTML = guidanceText(task.diff);
+    document.getElementById('rules-card').classList.toggle('hidden', state.examUnlocked);
+    document.getElementById('restart-btn').classList.toggle('show', state.currentIdx === 0);
+    document.querySelector('.tab-btn[data-idx="1"]')?.classList.toggle('done-gold', state.completed[1]);
 
     const dots = document.querySelectorAll('.dot');
     dots.forEach((dot, i) => {
@@ -776,8 +793,27 @@ color:  pink
     document.getElementById('done-banner').classList.add('show');
   }
 
+  function restartActivity() {
+    state.currentIdx = 0;
+    state.completed = new Array(TASK_COUNT).fill(false);
+    state.examUnlocked = false;
+    state.lastPair = '';
+    state.tasks = [
+      { title: 'Guided', diff: 0, streak: 0, count: 0, target: 3 },
+      { title: 'Exam Questions', diff: 2, streak: 0, count: 0, target: 5 }
+    ];
+
+    document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active', 'done-gold'));
+    document.querySelector('.tab-btn[data-idx="0"]')?.classList.add('active');
+    document.getElementById('done-banner').classList.remove('show');
+    document.getElementById('feedback').textContent = '';
+    generateQuestion();
+    updateUI();
+    focusFirstAnswer();
+  }
+
   function focusFirstAnswer() {
-    document.querySelector('.answer-bit')?.focus();
+    document.querySelector('.answer-bit[data-bit="7"]')?.focus();
   }
 
   function toBinary(n) {
@@ -789,10 +825,10 @@ color:  pink
   }
 
   function decimalHintText(q) {
-    if (state.currentIdx < 2) {
+    if (state.currentIdx === 0) {
       return q.a + ' + ' + q.b + ' in denary';
     }
-    return 'Random no-overflow 8-bit addition';
+    return 'Exam question - no denary hint';
   }
 
   function expectedCarryText() {
