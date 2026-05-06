@@ -31,7 +31,7 @@ color:  orange
   .stars{color:var(--orange);}
 
   /* PROGRESS */
-  .progress-row{display:flex;align-items:center;gap:12px;padding:8px 30px;background:#111827;}
+  .progress-row{display:flex;align-items:center;gap:12px;padding:8px 30px;background:#111827;position:sticky;top:0;z-index:100;border-bottom:2px solid #243244;box-shadow:0 2px 12px rgba(0,0,0,.32);}
   .progress-label,.progress-count{color:#adb5bd;font-size:.82rem;white-space:nowrap;}
   .progress-bar-wrap{flex:1;background:#374151;border-radius:6px;height:10px;overflow:hidden;}
   .progress-bar-fill{height:100%;background:linear-gradient(90deg,var(--teal),var(--orange));border-radius:6px;transition:width .5s;width:0%;}
@@ -920,6 +920,7 @@ const state = {
   done:   new Array(N).fill(false),
   gold:   new Array(N).fill(true),
 };
+let completionShown = false;
 
 // ═══════════════════ FILL-IN-THE-BLANKS DATA ═══════════════════
 // For each FITB question: correct words + plausible distractors
@@ -1128,11 +1129,11 @@ function updateProgress() {
   const cor = state.scores.reduce((a,b)=>a+b,0);
   $('progress-bar').style.width = tot ? (cor/tot*100)+'%' : '0%';
   $('progress-count').textContent = `${cor} / ${tot} correct`;
-  if (state.done.every(Boolean)) triggerCompletion(state.gold.every(Boolean));
+  if (state.done.every(Boolean) && !completionShown) triggerCompletion(state.gold.every(Boolean));
 }
 
 function triggerCompletion(goldAll) {
-  Classroom.submitGrade(goldAll ? 100 : 80, 'Client-Server & P2P Networks');
+  completionShown = true;
   const banner = $('global-cb');
   document.body.classList.remove('all-correct','all-gold');
   if (goldAll) {
@@ -1149,6 +1150,7 @@ function triggerCompletion(goldAll) {
 }
 
 function finishTab(ti, score, total, allOk) {
+  const wasDone = state.done[ti];
   state.scores[ti] = score;
   state.totals[ti] = total;
   const done = score === total && total > 0;
@@ -1161,6 +1163,13 @@ function finishTab(ti, score, total, allOk) {
     banner.innerHTML  = state.gold[ti] ? '🌟 Perfect score on first attempt!' : '✅ All correct! Well done.';
   } else {
     banner.className = 'completion-banner'; banner.innerHTML = '';
+    completionShown = false;
+  }
+  if (done && !wasDone) {
+    const doneCount = state.done.filter(Boolean).length;
+    const goldCount = state.done.filter((doneTab, i) => doneTab && state.gold[i]).length;
+    const pct = Math.round((doneCount / N * 80) + (goldCount / N * 20));
+    window.Classroom?.submitGrade(pct, 'Client-Server & P2P Networks');
   }
   updateProgress();
 }
@@ -1181,7 +1190,7 @@ function launchConfetti(gold) {
 
 // ═══════════════════ CHECK TABS ═══════════════════
 function checkTab(ti) {
-  if (!Classroom.verifyAuth()) return;
+  if (window.Classroom?.verifyAuth() === false) return;
   let score=0, total=0, allOk=true;
   function q(ok){ total++; if(ok) score++; else allOk=false; return ok; }
   function qN(n, ok){ total+=n; if(ok) score+=n; else allOk=false; return ok; }
@@ -1448,6 +1457,7 @@ function resetTab(ti) {
   $(`tb${ti}`).classList.remove('done');
   $(`cb${ti}`).className='completion-banner'; $(`cb${ti}`).innerHTML='';
   $('global-cb').className='completion-banner'; $('global-cb').innerHTML='';
+  completionShown = false;
   document.body.classList.remove('all-correct','all-gold');
   updateProgress();
 }

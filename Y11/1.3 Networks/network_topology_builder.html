@@ -12,7 +12,6 @@ color:  cyan
 <title>Network Topology Builder – GCSE CS</title>
 <link rel="stylesheet" href="../../shared.css">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Exo+2:wght@400;600;700;900&display=swap');
   :root {
     --bg: #0a0e1a; --panel: #111827; --border: #1e3a5f;
     --accent: #00d4ff; --accent2: #ff6b35; --success: #00ff9d;
@@ -20,10 +19,11 @@ color:  cyan
     --hub: #a855f7; --server: #f59e0b;
   }
   body { font-family: 'Exo 2', sans-serif; background: var(--bg); color: var(--text); height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
-  header { background: var(--panel); border-bottom: 2px solid var(--border); padding: 8px 16px; display: flex; align-items: center; gap: 14px; flex-shrink: 0; }
+  header { background: var(--panel); border-bottom: 2px solid var(--border); padding: 8px 16px; display: grid; grid-template-columns: auto minmax(160px, 1fr) auto; align-items: center; gap: 14px; flex-shrink: 0; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 12px rgba(0,0,0,.32); }
   header h1 { font-size: 1rem; font-weight: 900; letter-spacing: 0.05em; color: var(--accent); text-transform: uppercase; }
   header .subtitle { font-family: 'Share Tech Mono', monospace; font-size: 0.65rem; color: var(--muted); }
   .badge { margin-left: auto; background: var(--border); border: 1px solid var(--accent); color: var(--accent); font-size: 0.62rem; font-weight: 700; padding: 3px 10px; border-radius: 20px; letter-spacing: 0.1em; text-transform: uppercase; white-space: nowrap; }
+  .header-progress { display: flex; align-items: center; gap: 10px; min-width: 0; }
   .layout { display: flex; flex: 1; overflow: hidden; }
   .sidebar { width: 210px; flex-shrink: 0; background: var(--panel); border-right: 2px solid var(--border); display: flex; flex-direction: column; overflow-y: auto; }
   .sidebar-section { padding: 10px 12px; border-bottom: 1px solid var(--border); }
@@ -68,6 +68,12 @@ color:  cyan
   .task-instruction .c-mcs   { color: #f59e0b; }
   .node-counter { font-family: 'Share Tech Mono', monospace; font-size: 0.6rem; color: var(--muted); background: #0d1526; border: 1px solid var(--border); border-radius: 4px; padding: 4px 9px; display: flex; gap: 8px; white-space: nowrap; }
   .node-counter span { color: var(--accent); font-weight: 700; }
+  @media (max-width: 700px) {
+    header { grid-template-columns: 1fr auto; gap: 8px; padding: 7px 10px; }
+    header h1 { font-size: 0.82rem; }
+    header .subtitle { display: none; }
+    .header-progress { grid-column: 1 / -1; }
+  }
   .check-btn { padding: 5px 14px; background: transparent; border: 1.5px solid var(--success); border-radius: 4px; color: var(--success); font-family: 'Exo 2', sans-serif; font-size: 0.66rem; font-weight: 700; cursor: pointer; letter-spacing: 0.05em; transition: all 0.15s; white-space: nowrap; }
   .check-btn:hover { background: var(--success); color: #000; }
   .reset-btn { padding: 5px 10px; background: transparent; border: 1.5px solid var(--muted); border-radius: 4px; color: var(--muted); font-family: 'Exo 2', sans-serif; font-size: 0.63rem; font-weight: 600; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
@@ -96,6 +102,10 @@ color:  cyan
   <div>
     <h1>⬡ Network Topology Builder</h1>
     <div class="subtitle">GCSE Computer Science — Networks Unit</div>
+  </div>
+  <div class="header-progress">
+    <div class="progress-bar" style="flex:1;"><div class="progress-fill js-progress-fill"></div></div>
+    <div class="progress-pct js-progress-pct">0 / 6 tasks</div>
   </div>
   <div class="badge">Year 11</div>
 </header>
@@ -132,8 +142,8 @@ color:  cyan
     </div>
     <div class="progress-wrap">
       <div class="progress-label">Progress</div>
-      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
-      <div class="progress-pct" id="progressPct">0 / 6 tasks</div>
+      <div class="progress-bar"><div class="progress-fill js-progress-fill"></div></div>
+      <div class="progress-pct js-progress-pct">0 / 6 tasks</div>
     </div>
   </aside>
 
@@ -229,10 +239,8 @@ function loadState() {
   try { st = JSON.parse(raw); } catch(e) { return; }
   if (st.taskCompleted)    Object.assign(taskCompleted,    st.taskCompleted);
   if (st.taskFirstAttempt) Object.assign(taskFirstAttempt, st.taskFirstAttempt);
-  // Update progress bar
   const done = Object.values(taskCompleted).filter(Boolean).length;
-  document.getElementById('progressFill').style.width = (done/6*100)+'%';
-  document.getElementById('progressPct').textContent  = done+' / 6 tasks';
+  updateProgress(done);
   renderTaskList();
   if (done === 6) checkAllComplete();
 }
@@ -246,7 +254,6 @@ function checkAllComplete() {
 }
 
 function showCelebration(isGold) {
-  Classroom.submitGrade(isGold ? 100 : 80, 'Network Topology Builder');
   let banner = document.getElementById('all-done-banner');
   if (!banner) {
     banner = document.createElement('div');
@@ -302,6 +309,15 @@ function showCelebration(isGold) {
     else ctx.clearRect(0, 0, canvas.width, canvas.height);
   }
   requestAnimationFrame(fwFrame);
+}
+
+function updateProgress(done) {
+  document.querySelectorAll('.js-progress-fill').forEach(el => {
+    el.style.width = (done / 6 * 100) + '%';
+  });
+  document.querySelectorAll('.js-progress-pct').forEach(el => {
+    el.textContent = done + ' / 6 tasks';
+  });
 }
 
 // ── State ─────────────────────────────────────────────────────────────────────
@@ -632,7 +648,7 @@ function updateCounters() {
 
 // ── Check dispatcher ──────────────────────────────────────────────────────────
 function checkTopology() {
-  if (!Classroom.verifyAuth()) return;
+  if (window.Classroom?.verifyAuth() === false) return;
   if(!currentTaskId) return showFeedback(false,'No Task Selected','Click a task in the sidebar to begin.');
   const t=TASKS.find(x=>x.id===currentTaskId);
   if(!t)return;
@@ -771,13 +787,18 @@ function checkMeshP2P(){
 
 // ── Progress ──────────────────────────────────────────────────────────────────
 function markDone(id){
+  const wasDone = Boolean(taskCompleted[id]);
   const isGold = taskFirstAttempt[id];
   taskCompleted[id] = isGold ? 'gold' : 'green';
   const done=Object.values(taskCompleted).filter(Boolean).length;
-  document.getElementById('progressFill').style.width=(done/6*100)+'%';
-  document.getElementById('progressPct').textContent=done+' / 6 tasks';
+  updateProgress(done);
   renderTaskList();
   saveState();
+  if (!wasDone) {
+    const gold = Object.values(taskCompleted).filter(v => v === 'gold').length;
+    const pct = Math.round((done / 6 * 80) + (gold / 6 * 20));
+    window.Classroom?.submitGrade(pct, 'Network Topology Builder');
+  }
   checkAllComplete();
 }
 

@@ -13,8 +13,6 @@ color:  purple
 <title>CPU Architecture &amp; Embedded Systems</title>
 <link rel="stylesheet" href="../../shared.css">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;700&display=swap');
-
 :root {
   --bg:#0B1929; --surf:#0D2137; --surf2:#112844;
   --purple:#7C3AED; --purp-l:#A78BFA;
@@ -31,7 +29,7 @@ color:  purple
 
 body {
   background:var(--bg); color:var(--white); font-family:'DM Sans',sans-serif;
-  min-height:100vh; padding:32px 20px 60px; transition:background 1.4s ease;
+  min-height:100vh; padding:0 20px 60px; transition:background 1.4s ease;
 }
 body.complete-green { animation:pulse-green 2.5s ease-in-out infinite; }
 body.complete-gold  { animation:pulse-gold  2.5s ease-in-out infinite; }
@@ -47,6 +45,18 @@ body.complete-gold  { animation:pulse-gold  2.5s ease-in-out infinite; }
 .completion-banner.show        { transform:translateY(0); display:block; }
 .completion-banner.green-banner{ background:#047857; border-bottom:4px solid #6ee7b7; color:#fff; }
 .completion-banner.gold-banner { background:#b45309; border-bottom:4px solid #fde68a; color:#fff; }
+
+.sticky-progress {
+  position:sticky; top:0; z-index:100;
+  margin:0 -20px 28px; padding:12px 20px;
+  background:var(--surf); border-bottom:2px solid var(--surf2);
+  box-shadow:0 2px 12px rgba(0,0,0,.32);
+}
+.header-progress { display:flex; align-items:center; gap:10px; max-width:940px; margin:0 auto; }
+.score-pct {
+  font-family:'Space Mono',Consolas,'Courier New',monospace;
+  font-size:13px; color:var(--purp-l); white-space:nowrap;
+}
 
 h1 {
   font-family:'Space Mono',monospace; font-size:13px; letter-spacing:3px;
@@ -326,6 +336,15 @@ h2 { font-size:26px; font-weight:700; text-align:center; color:var(--white); mar
 <canvas id="fwCanvas"></canvas>
 <div class="completion-banner" id="completionBanner"></div>
 
+<header class="sticky-progress">
+  <div class="header-progress">
+    <div class="ac-progress-bar" style="flex:1;">
+      <div class="ac-progress-fill" id="progress-fill"></div>
+    </div>
+    <span class="score-pct" id="progress-pct">0%</span>
+  </div>
+</header>
+
 <h1>Year 11 Computing — J277</h1>
 <h2>CPU Architecture &amp; Embedded Systems</h2>
 
@@ -567,13 +586,22 @@ const tabPerf    = new Array(6).fill(false);
 
 function markDone(idx, isPerfect) {
   tabDone[idx] = true; tabPerf[idx] = isPerfect;
+  const pct = updateProgress();
+  const allDone = tabDone.filter(Boolean).length === TASK_COUNT;
+  const allPerfect = allDone && tabPerf.every(Boolean);
+  window.Classroom?.submitGrade(pct, 'CPU Architecture & Embedded Systems');
+  setTabTick(idx, isPerfect);
+  if (allDone) setTimeout(() => triggerCompletion(allPerfect), 400);
+}
+
+function updateProgress() {
   const doneCount  = tabDone.filter(Boolean).length;
   const allDone    = doneCount === TASK_COUNT;
   const allPerfect = allDone && tabPerf.every(Boolean);
   const pct        = allDone ? (allPerfect ? 100 : 80) : Math.round(doneCount / TASK_COUNT * 80);
-  window.Classroom?.submitGrade(pct, 'CPU Architecture & Embedded Systems');
-  setTabTick(idx, isPerfect);
-  if (allDone) setTimeout(() => triggerCompletion(allPerfect), 400);
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-pct').textContent = pct + '%';
+  return pct;
 }
 
 function triggerCompletion(perfect) {
@@ -603,6 +631,7 @@ function clearTabState(idx) {
   document.getElementById('tick-'+idx).classList.remove('show');
   const btn = document.querySelectorAll('.tab-btn')[idx];
   btn.classList.remove('done-green','done-gold');
+  updateProgress();
 }
 
 // ─────────────────────────────────────────────────────────────

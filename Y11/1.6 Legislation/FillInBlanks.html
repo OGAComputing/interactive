@@ -18,8 +18,22 @@ color:  orange
     font-family: 'Segoe UI', sans-serif;
     background: #0f1b2d;
     color: #e2e8f0;
-    padding: 28px 20px 60px;
+    padding: 0 20px 60px;
     min-height: 100vh;
+  }
+  .sticky-progress {
+    position: sticky; top: 0; z-index: 100;
+    margin: 0 -20px 28px; padding: 12px 20px;
+    background: #1e2f45; border-bottom: 2px solid #334155;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.32);
+  }
+  .header-progress {
+    display: flex; align-items: center; gap: 10px;
+    max-width: 880px; margin: 0 auto;
+  }
+  .score-pct {
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 0.82rem; color: #38bdf8; white-space: nowrap;
   }
   h1 { text-align: center; font-size: 1.45rem; color: #7dd3fc; margin-bottom: 4px; }
   .subtitle { text-align: center; font-size: 0.82rem; color: #94a3b8; margin-bottom: 30px; }
@@ -151,6 +165,14 @@ color:  orange
 </style>
 </head>
 <body>
+<header class="sticky-progress">
+  <div class="header-progress">
+    <div class="ac-progress-bar" style="flex:1;">
+      <div class="ac-progress-fill" id="progress-fill"></div>
+    </div>
+    <span class="score-pct" id="progress-pct">0%</span>
+  </div>
+</header>
 
 <h1>📋 Legislation Activities</h1>
 <p class="subtitle">OCR GCSE Computer Science &nbsp;·&nbsp; Year 11</p>
@@ -326,6 +348,8 @@ color:  orange
 <script>
 // ── localStorage key ──
 const LS_KEY = 'legislation_fillinblanks_y11_v1';
+const TASK_COUNT = 3;
+const ACTIVITY_TITLE = 'Legislation Activities';
 
 // ── Per-exercise everWrong tracking ──
 let ex1EverWrong = false, ex2EverWrong = false, ex3EverWrong = false;
@@ -427,8 +451,22 @@ function liveCheck(zone) {
 function markTab(n, everWrong) {
   const btn = document.querySelector(`.tab-btn[data-tab="${n}"]`);
   if (!btn) return;
+  const wasDone = btn.classList.contains('done-gold') || btn.classList.contains('done-green');
   btn.classList.remove('done', 'done-gold', 'done-green');
   btn.classList.add(everWrong ? 'done-green' : 'done-gold');
+  const pct = updateProgress();
+  if (!wasDone) {
+    window.Classroom?.submitGrade(pct, ACTIVITY_TITLE);
+  }
+}
+
+function updateProgress() {
+  const goldCount = document.querySelectorAll('.tab-btn.done-gold').length;
+  const doneCount = goldCount + document.querySelectorAll('.tab-btn.done-green').length;
+  const pct = Math.round((doneCount / TASK_COUNT * 80) + (goldCount / TASK_COUNT * 20));
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-pct').textContent = pct + '%';
+  return pct;
 }
 
 // ── Check if all exercises are done-gold (trigger celebration) ──
@@ -436,12 +474,11 @@ function checkAllGold() {
   const goldCount = document.querySelectorAll('.tab-btn.done-gold').length;
   const doneCount = goldCount + document.querySelectorAll('.tab-btn.done-green').length;
   if (goldCount === 3) showCelebration();
-  if (doneCount === 3) Classroom.submitGrade(goldCount === 3 ? 100 : 80, 'Legislation Activities');
 }
 
 // ── Check / Reveal / Reset for Ex1 & Ex2 ──
 function checkEx(exId) {
-  if (!Classroom.verifyAuth()) return;
+  if (window.Classroom?.verifyAuth() === false) return;
   const panel = document.getElementById(exId);
   const zones = panel.querySelectorAll('.drop-zone');
   let correct = 0, attempted = 0;
@@ -510,6 +547,7 @@ function resetEx(exId) {
   if (exId === 'ex2') ex2EverWrong = false;
   const btn = document.querySelector(`.tab-btn[data-tab="${exId}"]`);
   if (btn) btn.classList.remove('done', 'done-gold', 'done-green');
+  updateProgress();
   saveState();
 }
 
@@ -578,7 +616,7 @@ function liveCheckAct(zone) {
 }
 
 function checkAllCorrectEx3() {
-  if (!Classroom.verifyAuth()) return;
+  if (window.Classroom?.verifyAuth() === false) return;
   const zones = [...document.querySelectorAll('.act-drop')];
   const total = zones.length;
   const allFilled = zones.every(z => z.dataset.current && z.dataset.current.trim() !== '');
@@ -607,6 +645,7 @@ function checkAllCorrectEx3() {
 }
 
 function checkEx3() {
+  if (window.Classroom?.verifyAuth() === false) return;
   const zones = document.querySelectorAll('.act-drop');
   let correct = 0, attempted = 0;
   zones.forEach(z => {
@@ -656,6 +695,7 @@ function resetEx3() {
   ex3EverWrong = false;
   const btn = document.querySelector('.tab-btn[data-tab="ex3"]');
   if (btn) btn.classList.remove('done', 'done-gold', 'done-green');
+  updateProgress();
   stopFireworks();
   saveState();
 }
@@ -896,6 +936,7 @@ function loadState() {
       else if (tabState.doneGreen) btn.classList.add('done-green');
     });
   }
+  updateProgress();
 
   // If all tabs are done-gold, show celebration
   const allDoneGold = document.querySelectorAll('.tab-btn.done-gold').length === 3;
