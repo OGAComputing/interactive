@@ -502,7 +502,7 @@ color:  pink
       if (task.streak >= STREAK_TO_LEVEL_UP) {
         if (task.diff < 2) {
           task.diff++;
-          showToast("Difficulty increased!", "success");
+          window.ActivityUI?.showToast("Difficulty increased!", "success");
         }
         task.streak = 0;
       }
@@ -529,7 +529,7 @@ color:  pink
       task.streak = 0;
       if (task.diff > 0) {
         task.diff--;
-        showToast("Difficulty decreased.", "warn");
+        window.ActivityUI?.showToast("Difficulty decreased.", "warn");
       }
       
       setTimeout(() => {
@@ -589,141 +589,14 @@ color:  pink
 
   function allComplete() {
     document.getElementById('done-banner').classList.add('show');
-    launchCelebration();
+    window.ActivityUI?.launchCelebration();
   }
+  const showToast = (msg, type = '') => window.ActivityUI?.showToast(msg, type);
 
-  function showToast(msg, type = '') {
-    const t = document.getElementById('toast');
-    t.textContent = msg;
-    t.className = 'ac-toast show' + (type ? ' ' + type : '');
-    setTimeout(() => t.classList.remove('show'), 3000);
-  }
 
-  function launchCelebration() {
-    if (state.celebrationPlayed || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    state.celebrationPlayed = true;
-
-    const canvas = document.getElementById('celebration-canvas');
-    const ctx = canvas.getContext('2d');
-    const colors = ['#fbbf24', '#22c55e', '#38bdf8', '#f472b6', '#c084fc', '#ffffff'];
-    const particles = [];
-    const shootingStars = [];
-    let animationFrame = null;
-
-    function resizeCanvas() {
-      const dpr = window.devicePixelRatio || 1;
-      canvas.width = window.innerWidth * dpr;
-      canvas.height = window.innerHeight * dpr;
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    }
-
-    function addBurst(x, y, count = 64) {
-      for (let i = 0; i < count; i++) {
-        const angle = Math.random() * Math.PI * 2;
-        const speed = 2 + Math.random() * 6;
-        particles.push({
-          x,
-          y,
-          vx: Math.cos(angle) * speed,
-          vy: Math.sin(angle) * speed - 1,
-          size: 3 + Math.random() * 5,
-          rotation: Math.random() * Math.PI,
-          spin: (Math.random() - 0.5) * 0.22,
-          color: colors[Math.floor(Math.random() * colors.length)],
-          life: 90 + Math.random() * 40,
-          maxLife: 130
-        });
-      }
-    }
-
-    function addShootingStar(delay) {
-      shootingStars.push({
-        x: -80 - Math.random() * 160,
-        y: 60 + Math.random() * (window.innerHeight * 0.45),
-        vx: 10 + Math.random() * 5,
-        vy: 3 + Math.random() * 2,
-        life: 80,
-        delay
-      });
-    }
-
-    function drawParticle(p) {
-      const alpha = Math.max(p.life / p.maxLife, 0);
-      ctx.save();
-      ctx.globalAlpha = alpha;
-      ctx.translate(p.x, p.y);
-      ctx.rotate(p.rotation);
-      ctx.fillStyle = p.color;
-      ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.55);
-      ctx.restore();
-    }
-
-    function drawShootingStar(star) {
-      if (star.delay > 0) return;
-      const tail = 90;
-      const gradient = ctx.createLinearGradient(star.x, star.y, star.x - tail, star.y - tail * 0.34);
-      gradient.addColorStop(0, 'rgba(255,255,255,0.95)');
-      gradient.addColorStop(1, 'rgba(255,255,255,0)');
-      ctx.strokeStyle = gradient;
-      ctx.lineWidth = 3;
-      ctx.lineCap = 'round';
-      ctx.beginPath();
-      ctx.moveTo(star.x, star.y);
-      ctx.lineTo(star.x - tail, star.y - tail * 0.34);
-      ctx.stroke();
-    }
-
-    function animate() {
-      ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
-
-      particles.forEach(p => {
-        p.x += p.vx;
-        p.y += p.vy;
-        p.vy += 0.08;
-        p.vx *= 0.99;
-        p.rotation += p.spin;
-        p.life--;
-        drawParticle(p);
-      });
-
-      shootingStars.forEach(star => {
-        star.delay--;
-        if (star.delay <= 0) {
-          star.x += star.vx;
-          star.y += star.vy;
-          star.life--;
-        }
-        drawShootingStar(star);
-      });
-
-      for (let i = particles.length - 1; i >= 0; i--) {
-        if (particles[i].life <= 0 || particles[i].y > window.innerHeight + 40) particles.splice(i, 1);
-      }
-      for (let i = shootingStars.length - 1; i >= 0; i--) {
-        if (shootingStars[i].life <= 0 || shootingStars[i].x > window.innerWidth + 160) shootingStars.splice(i, 1);
-      }
-
-      if (particles.length || shootingStars.length) {
-        animationFrame = requestAnimationFrame(animate);
-      } else {
-        ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
-        window.removeEventListener('resize', resizeCanvas);
-        if (animationFrame) cancelAnimationFrame(animationFrame);
-      }
-    }
-
-    resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
-    addBurst(window.innerWidth * 0.25, window.innerHeight * 0.36, 70);
-    addBurst(window.innerWidth * 0.5, window.innerHeight * 0.28, 90);
-    addBurst(window.innerWidth * 0.75, window.innerHeight * 0.4, 70);
-    addShootingStar(0);
-    addShootingStar(16);
-    addShootingStar(32);
-    animate();
-  }
 </script>
 
+<script src="../../activity-ui.js"></script>
 <script src="../../classroom.js"></script>
 </body>
 </html>

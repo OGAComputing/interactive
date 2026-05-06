@@ -1003,7 +1003,7 @@ function handleDrop(e, nodeId) {
     // In level 3, re-promote to typed input instead of marking correct immediately
     if (currentLevel === 3) {
       if (matchDz) { const t = matchDz.querySelector('.dz-text'); if (t) t.textContent = val; matchDz.classList.remove('awaiting'); matchDz.classList.add('correct-dd'); }
-      showToast('✓ That\'s right! Now type it from memory.', 'info');
+      window.ActivityUI?.showToast('✓ That\'s right! Now type it from memory.', 'info');
       setTimeout(() => {
         ms.mastered = true;
         ms.value = '';
@@ -1035,7 +1035,7 @@ function handleDrop(e, nodeId) {
       createTile(val, document.getElementById('word-bank'));
       s.value = '';
     }, 800);
-    showToast('Not quite — try again!', 'error');
+    window.ActivityUI?.showToast('Not quite — try again!', 'error');
     updateScoreboard();
   }
 }
@@ -1068,7 +1068,7 @@ function checkInput(nodeId) {
     streak = 0;
     inp.classList.add('wrong-fi');
     setTimeout(() => inp.classList.remove('wrong-fi'), 600);
-    showToast('Not quite — check your spelling!', 'error');
+    window.ActivityUI?.showToast('Not quite — check your spelling!', 'error');
     updateScoreboard();
   }
 }
@@ -1125,7 +1125,7 @@ function markCorrect(nodeId, mode) {
         const { elapsed, isNewBest } = stopL3Timer();
         setTimeout(() => celebrate(), 400);
         setTimeout(() => {
-          showToast(
+          window.ActivityUI?.showToast(
             isNewBest
               ? `🏅 New best: ${fmtTime(elapsed)}! Hit Reset and try to beat it!`
               : `⏱️ ${fmtTime(elapsed)} — best is ${fmtTime(l3BestTime)}. Can you beat it?`,
@@ -1138,7 +1138,7 @@ function markCorrect(nodeId, mode) {
     }
   } else {
     const msgs = ['✓ Correct!','✓ Nice one!','✓ That\'s right!','✓ Well done!'];
-    showToast(msgs[Math.floor(Math.random()*msgs.length)], 'success');
+    window.ActivityUI?.showToast(msgs[Math.floor(Math.random()*msgs.length)], 'success');
   }
 }
 
@@ -1188,7 +1188,7 @@ function demoteNode(nodeId) {
   updateScoreboard();
   updateStageText();
   saveState();
-  showToast('↩ Switched back to drag-and-drop for that word.', 'info');
+  window.ActivityUI?.showToast('↩ Switched back to drag-and-drop for that word.', 'info');
 }
 
 
@@ -1240,7 +1240,7 @@ function checkAll() {
   if (remaining === 0) {
     celebrate();
   } else {
-    showToast(`${totalCorrect} / ${TOTAL} correct · Score so far: ${pct}/100`, 'info');
+    window.ActivityUI?.showToast(`${totalCorrect} / ${TOTAL} correct · Score so far: ${pct}/100`, 'info');
   }
 }
 
@@ -1298,7 +1298,7 @@ function revealAll() {
   totalCorrect = TOTAL;
   updateScoreboard();
   updateProgress();
-  showToast('Answers revealed. Study the mind map carefully!', 'info');
+  window.ActivityUI?.showToast('Answers revealed. Study the mind map carefully!', 'info');
 }
 
 // ═══════════════════════════════════════════════
@@ -1315,7 +1315,7 @@ function updateLevelButtons() {
 function setLevel(level) {
   if (level > levelsUnlocked) {
     const needed = level - 1;
-    showToast(`Complete Level ${needed} first to unlock Level ${level}!`, 'error');
+    window.ActivityUI?.showToast(`Complete Level ${needed} first to unlock Level ${level}!`, 'error');
     return;
   }
   // Bank the current level's score before clearing
@@ -1356,7 +1356,7 @@ function setLevel(level) {
   if (level === 3) { showL3Timer(); startL3Timer(); } else { hideL3Timer(); }
 
   const msgs = { 1: '🖼️ Level 1 — icons visible to help you.', 2: '🧩 Level 2 — icons hidden, recall from layout!', 3: '🧠 Level 3 — type all answers from memory!' };
-  showToast(msgs[level], 'info');
+  window.ActivityUI?.showToast(msgs[level], 'info');
 }
 
 // ═══════════════════════════════════════════════
@@ -1392,16 +1392,16 @@ function updateScoreboard() {
 function celebrate() {
   if (firstAttemptAllCorrect && !l3DemoteUsed) {
     document.body.classList.add('perfect');
-    showToast('🏆 Perfect — all correct, no hints needed!', 'success');
-    launchConfetti();
+    window.ActivityUI?.showToast('🏆 Perfect — all correct, no hints needed!', 'success');
+    window.ActivityUI?.launchCelebration();
   } else if (l3DemoteUsed) {
     document.body.classList.add('all-correct');
-    showToast('✅ All correct! Try without the ↩ button next time for full marks.', 'success');
-    launchConfetti(false);
+    window.ActivityUI?.showToast('✅ All correct! Try without the ↩ button next time for full marks.', 'success');
+    window.ActivityUI?.launchCelebration();
   } else {
     document.body.classList.add('all-correct');
-    showToast('✅ All correct! Great work.', 'success');
-    launchConfetti(false);
+    window.ActivityUI?.showToast('✅ All correct! Great work.', 'success');
+    window.ActivityUI?.launchCelebration();
   }
 }
 
@@ -1540,7 +1540,7 @@ function applyDemotePenalty() {
     el.style.color = '#ef4444';
     setTimeout(() => { el.style.color = ''; el.style.transition = ''; }, 800);
   }
-  showToast(`⏱️ +${DEMOTE_PENALTY}s penalty for using a hint!`, 'error');
+  window.ActivityUI?.showToast(`⏱️ +${DEMOTE_PENALTY}s penalty for using a hint!`, 'error');
 }
 
 function startL3Timer() {
@@ -1626,6 +1626,7 @@ updateLevelButtons();
   document.addEventListener('drop',    stopScroll);
 })();
 </script>
+<script src="../../activity-ui.js"></script>
 <script src="../../classroom.js"></script>
 </body>
 </html>

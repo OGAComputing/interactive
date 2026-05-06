@@ -485,7 +485,7 @@ color:  pink
 
   function switchToTab(idx) {
     if (idx === 1 && !state.examUnlocked) {
-      showToast('Complete 3 guided questions first.', 'warn');
+      window.ActivityUI?.showToast('Complete 3 guided questions first.', 'warn');
       return;
     }
     state.currentIdx = idx;
@@ -703,7 +703,7 @@ color:  pink
       if (task.streak >= STREAK_TO_LEVEL_UP) {
         if (task.diff < 2) {
           task.diff++;
-          showToast('Difficulty increased.', 'success');
+          window.ActivityUI?.showToast('Difficulty increased.', 'success');
         }
         task.streak = 0;
       }
@@ -731,7 +731,7 @@ color:  pink
       task.streak = 0;
       if (task.diff > 0) {
         task.diff--;
-        showToast('Difficulty decreased.', 'warn');
+        window.ActivityUI?.showToast('Difficulty decreased.', 'warn');
       }
     }
 
@@ -791,6 +791,7 @@ color:  pink
 
   function allComplete() {
     document.getElementById('done-banner').classList.add('show');
+    window.ActivityUI?.launchCelebration();
   }
 
   function restartActivity() {
@@ -806,6 +807,7 @@ color:  pink
     document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active', 'done-gold'));
     document.querySelector('.tab-btn[data-idx="0"]')?.classList.add('active');
     document.getElementById('done-banner').classList.remove('show');
+    window.ActivityUI?.resetCelebration();
     document.getElementById('feedback').textContent = '';
     generateQuestion();
     updateUI();
@@ -848,15 +850,10 @@ color:  pink
     }
     return '<strong>Carry marks:</strong> exam questions can award method marks for the little carried <code>1</code>s, so the carry row is checked as well as the answer.';
   }
-
-  function showToast(msg, type = '') {
-    const t = document.getElementById('toast');
-    t.textContent = msg;
-    t.className = 'ac-toast show' + (type ? ' ' + type : '');
-    setTimeout(() => t.classList.remove('show'), 3000);
-  }
+  const showToast = (msg, type = '') => window.ActivityUI?.showToast(msg, type);
 </script>
 
+<script src="../../activity-ui.js"></script>
 <script src="../../classroom.js"></script>
 </body>
 </html>

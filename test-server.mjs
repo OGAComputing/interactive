@@ -20,7 +20,7 @@ const TYPES = {
 
 createServer(async (req, res) => {
   const url = new URL(req.url, `http://localhost:${PORT}`);
-  const filePath = join(ROOT, url.pathname);
+  const filePath = join(ROOT, decodeURIComponent(url.pathname));
   
   try {
     const s = await stat(filePath);
