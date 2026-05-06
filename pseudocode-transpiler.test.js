@@ -311,3 +311,19 @@ describe('operator and construct coverage', () => {
     expect(py('x = 1 // set x')).toContain('# set x');
   });
 });
+
+describe('J277 keyword compatibility', () => {
+  test('break can be used as a variable name', () => {
+    const out = py('break = 0\nbreak = break + 1\nprint(break)');
+    expect(out).toContain('_psc_break = 0');
+    expect(out).toContain('_psc_break = _psc_break + 1');
+    expect(out).toContain('print(_psc_break)');
+    expect(errs('break = 0')).toHaveLength(0);
+  });
+
+  test('do...until still emits Python break internally', () => {
+    const out = py('do\n    break = break + 1\nuntil break == 3');
+    expect(out).toContain('_psc_break = _psc_break + 1');
+    expect(out).toContain('if _psc_break == 3: break');
+  });
+});

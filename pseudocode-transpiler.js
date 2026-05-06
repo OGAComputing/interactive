@@ -83,6 +83,10 @@ function _esc(s) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+function _pyIdent(name) {
+  return /^break$/i.test(name) ? '_psc_break' : name;
+}
+
 // Walk left from dotPos to find the start of the receiver expression.
 // Balances () [] {} so it can handle chained calls like getName().substring(...)
 function _walkLeft(s, dotPos) {
@@ -248,6 +252,9 @@ function rewriteOperators(code, ctx) {
   // input() → _psc_input() for OCR-style auto-typing (int → float → str)
   s = s.replace(/\binput\s*\(/g, '_psc_input(');
 
+  // OCR J277 has no break keyword; allow it as a student variable name.
+  s = s.replace(/\bbreak\b/gi, '_psc_break');
+
   // Logical/arithmetic operators
   s = s.replace(/\bAND\b/g, 'and');
   s = s.replace(/\bOR\b/g, 'or');
@@ -315,10 +322,6 @@ function classify(line, ctx) {
   if (/^continue$/i.test(t)) {
     return { pythonic: "'continue' is not part of OCR pseudocode — restructure your loop condition to skip iterations" };
   }
-  if (/^break$/i.test(t)) {
-    return { pythonic: "'break' is not part of OCR pseudocode — use a flag variable or a 'do...until' loop instead" };
-  }
-
   let m;
 
   // for X = A to B [step S]  (uses _psc_rng for correct inclusive step handling)
@@ -326,8 +329,8 @@ function classify(line, ctx) {
     const [, v, a, b, step] = m;
     const A = rewriteOperators(a, ctx), B = rewriteOperators(b, ctx);
     const py = step
-      ? `for ${v} in _psc_rng(${A}, ${B}, ${rewriteOperators(step, ctx)}):`
-      : `for ${v} in _psc_rng(${A}, ${B}):`;
+      ? `for ${_pyIdent(v)} in _psc_rng(${A}, ${B}, ${rewriteOperators(step, ctx)}):`
+      : `for ${_pyIdent(v)} in _psc_rng(${A}, ${B}):`;
     return { emit: [py], openBlock: true, addLoopGuard: true };
   }
 
@@ -362,13 +365,14 @@ function classify(line, ctx) {
   if (/^endswitch$/i.test(t)) return { emit: [], switchClose: true };
 
   if ((m = t.match(/^(?:public\s+|private\s+)?function\s+([A-Za-z_]\w*)\s*\((.*?)\)\s*$/i))) {
-    return { emit: [`def ${m[1]}(${m[2]}):`], openBlock: true };
+    const params = m[2].split(',').map(p => _pyIdent(p.trim())).filter(Boolean).join(', ');
+    return { emit: [`def ${_pyIdent(m[1])}(${params}):`], openBlock: true };
   }
   if (/^endfunction$/i.test(t)) return { emit: [], closeBlock: true };
 
   if ((m = t.match(/^(?:public\s+|private\s+)?procedure\s+([A-Za-z_]\w*)\s*\((.*?)\)\s*$/i))) {
-    const params = m[2].split(',').map(p => p.split(':')[0].trim()).filter(Boolean).join(', ');
-    return { emit: [`def ${m[1]}(${params}):`], openBlock: true };
+    const params = m[2].split(',').map(p => _pyIdent(p.split(':')[0].trim())).filter(Boolean).join(', ');
+    return { emit: [`def ${_pyIdent(m[1])}(${params}):`], openBlock: true };
   }
   if (/^endprocedure$/i.test(t)) return { emit: [], closeBlock: true };
 
@@ -377,17 +381,17 @@ function classify(line, ctx) {
   }
 
   if ((m = t.match(/^global\s+([A-Za-z_]\w*)\s*=\s*(.+)$/i))) {
-    return { emit: [`${m[1]} = ${rewriteOperators(m[2], ctx)}`] };
+    return { emit: [`${_pyIdent(m[1])} = ${rewriteOperators(m[2], ctx)}`] };
   }
 
   // 1D array declaration
   if ((m = t.match(/^array\s+([A-Za-z_]\w*)\s*\[\s*(\d+)\s*\]\s*$/i))) {
-    return { emit: [`${m[1]} = [None] * ${m[2]}`] };
+    return { emit: [`${_pyIdent(m[1])} = [None] * ${m[2]}`] };
   }
   // 2D array declaration — register name so accesses get rewritten
   if ((m = t.match(/^array\s+([A-Za-z_]\w*)\s*\[\s*(\d+)\s*,\s*(\d+)\s*\]\s*$/i))) {
     ctx.twoDArrNames.add(m[1]);
-    return { emit: [`${m[1]} = [[None] * ${m[3]} for _ in range(${m[2]})]`] };
+    return { emit: [`${_pyIdent(m[1])} = [[None] * ${m[3]} for _ in range(${m[2]})]`] };
   }
 
   // Fallthrough: plain expression / assignment
