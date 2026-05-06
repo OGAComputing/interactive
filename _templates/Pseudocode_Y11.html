@@ -152,6 +152,12 @@ color:  blue
   }
   .checker-feedback.pass { color: var(--green); }
   .checker-feedback.fail { color: var(--red); animation: ac-shake 0.35s ease; }
+  .code-checker.is-wrong,
+  .card.is-wrong,
+  .panel.is-wrong {
+    outline: 2px solid var(--red);
+    background: rgba(220,38,38,.08);
+  }
 
   /* ── Score / progress bar ────────────────────────────── */
 
@@ -338,8 +344,10 @@ for (let idx = 0; idx < TASK_COUNT; idx++) {
       // TODO: check the output against expected answers and call markDone(idx).
       //
       // ── Single-run check (simple pass/fail) ───────────────────────────────────
-      //   if (r.output.trim() === '42') { markDone(idx, 'green'); }
-      //   else { markOutputFailed(editorEl); }  // turns output red for wrong answer
+      //   const ok = r.output.trim() === '42';
+      //   setAnswerState(editorEl, ok);          // highlights this checker if wrong
+      //   if (ok) { markDone(idx, 'green'); }
+      //   else { markOutputFailed(editorEl); }   // turns output red for wrong answer
       //
       // ── Multi-test check (multiple inputs, per-test red/teal colouring) ───────
       // Use _renderTestOutput (defined below) instead of runPseudocode directly.
@@ -425,6 +433,7 @@ for (let idx = 0; idx < TASK_COUNT; idx++) {
   clearBtn.addEventListener('click', () => {
     editorEl.value = '';
     editorEl.dispatchEvent(new Event('input'));
+    setAnswerState(editorEl, true);
     try { localStorage.removeItem(STORE_NS + ':e' + idx); } catch (_) {}
   });
 
@@ -464,6 +473,55 @@ function updateProgress() {
 // ── All tasks complete ─────────────────────────────────
 function allComplete() {
   document.getElementById('done-banner').classList.add('show');
+  launchCelebration();
+}
+
+// Highlight the specific answer/checker block that needs attention.
+function setAnswerState(target, ok) {
+  const el = typeof target === 'string' ? document.getElementById(target) : target;
+  const block = el?.closest('.code-checker, .card, .panel');
+  if (block) block.classList.toggle('is-wrong', !ok);
+}
+
+function launchCelebration() {
+  if (window._celebrationShown || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+  window._celebrationShown = true;
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  canvas.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:9999;';
+  document.body.appendChild(canvas);
+  const colors = ['#facc15', '#22c55e', '#38bdf8', '#f472b6', '#fb7185'];
+  const pieces = Array.from({ length: 120 }, () => ({
+    x: Math.random() * innerWidth,
+    y: -20 - Math.random() * innerHeight * 0.35,
+    vx: -2 + Math.random() * 4,
+    vy: 2 + Math.random() * 4,
+    size: 5 + Math.random() * 7,
+    spin: Math.random() * Math.PI,
+    color: colors[Math.floor(Math.random() * colors.length)]
+  }));
+  let frame = 0;
+  function draw() {
+    canvas.width = innerWidth;
+    canvas.height = innerHeight;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    pieces.forEach(p => {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 0.04;
+      p.spin += 0.18;
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.spin);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.65);
+      ctx.restore();
+    });
+    frame++;
+    if (frame < 140) requestAnimationFrame(draw);
+    else canvas.remove();
+  }
+  draw();
 }
 
 // ── Per-test coloured output (for multi-test activities) ───────

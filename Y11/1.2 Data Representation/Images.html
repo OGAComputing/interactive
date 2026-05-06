@@ -41,6 +41,7 @@ color:  blue
   .pixel { width: 32px; height: 32px; border: 1px solid var(--surface-mid); border-radius: 0; cursor: pointer; }
   .pixel.target { cursor: default; box-shadow: inset 0 0 0 1px rgba(255,255,255,.2); }
   .question { border: 1px solid var(--surface-mid); border-radius: 8px; padding: 10px; margin-bottom: 10px; }
+  .question.is-wrong { border-color: var(--red); background: rgba(220,38,38,.08); }
   .match-sel {
     width: 100%; padding: 8px 10px; border: 2px solid var(--surface-mid); border-radius: 7px;
     background: var(--bg); color: var(--white); font-family: var(--font-body, sans-serif); font-size: .88rem; cursor: pointer;
@@ -681,6 +682,18 @@ function checkTask2(){
   const q7 = q7val===colorTargetQ7;
   const q8val = (document.getElementById("long-bits-8").value || "").slice(0,25).split("");
   const q8 = q8val.length===25 && q8val.every((b,i)=>b===bwTargets.q8[i]);
+  [
+    ["q1b-0", q1],
+    ["q2b-0", q2],
+    ["q3b-0", q3],
+    ["long-bits-4", q4],
+    ["long-bits-5", q5],
+    ["long-bits-6", q6],
+    ["long-bits-7", q7],
+    ["long-bits-8", q8]
+  ].forEach(([id, ok]) => {
+    document.getElementById(id).closest(".question").classList.toggle("is-wrong", !ok);
+  });
 
   if(q1 && q2 && q3 && q4 && q5 && q6 && q7 && q8){
     setFb(0,true,!wrongBefore[0]?"Perfect paint/encode progression.":"All paint and encoding questions are correct.");
@@ -689,7 +702,7 @@ function checkTask2(){
     setFb(0,false,"Some parts are still off. Recheck the editable area for each row: pixel grid for Q1 to Q3, bit string for Q4 to Q8.");
   }
 }
-function resetTask2(){ buildTask2(); setFb(0,true,""); }
+function resetTask2(){ buildTask2(); document.querySelectorAll("#panel-0 .question").forEach(q=>q.classList.remove("is-wrong")); setFb(0,true,""); }
 
 function setAutoBitString(id, bits){
   document.getElementById(id).value = bits.join("");

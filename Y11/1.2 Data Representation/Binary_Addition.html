@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- ACTIVITY
+title:  Binary Addition
+type:   Practice
+stars:  3
+desc:   Practise adding random 8-bit binary numbers and marking the carries.
+color:  pink
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Binary Addition - Year 11</title>
+
+<link rel="stylesheet" href="../../shared.css">
+
+<style>
+  header {
+    background: var(--surface);
+    border-bottom: 2px solid var(--surface-mid);
+    padding: 12px 20px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.35);
+  }
+  header h1 {
+    font-family: var(--font-head);
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 0.04em;
+  }
+  .header-sub {
+    font-size: 0.72rem;
+    color: var(--muted);
+    margin-top: 1px;
+  }
+  .header-badge {
+    margin-left: auto;
+    background: var(--surface-mid);
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .page-wrap { padding: 28px 16px 60px; }
+
+  .page-title {
+    font-size: 1.35rem;
+    font-weight: 700;
+    text-align: center;
+    color: var(--accent-light);
+    margin-bottom: 4px;
+  }
+  .page-subtitle {
+    text-align: center;
+    font-size: 0.82rem;
+    color: var(--muted);
+    margin-bottom: 28px;
+  }
+
+  .tabs {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 28px;
+  }
+  .tab-btn {
+    padding: 8px 20px;
+    border: 2px solid var(--surface-mid);
+    border-radius: 20px;
+    background: var(--surface);
+    color: var(--muted);
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s, color 0.2s;
+    user-select: none;
+  }
+  .tab-btn:hover:not(.active) { border-color: var(--accent); color: var(--text); }
+  .tab-btn.active { background: var(--accent); border-color: var(--accent); color: var(--text-inv); }
+  .tab-btn.done-gold { background: var(--gold); border-color: var(--gold); color: #111; }
+
+  .panel {
+    display: none;
+    max-width: 760px;
+    margin: 0 auto;
+    animation: ac-fade-in 0.2s ease;
+  }
+  .panel.active { display: block; }
+
+  .card {
+    background: var(--surface);
+    border-left: 4px solid var(--accent);
+    border-radius: 8px;
+    padding: 18px 22px;
+    margin-bottom: 22px;
+    position: relative;
+  }
+  .card h2 {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 12px;
+  }
+
+  .goal {
+    background: var(--surface);
+    border-left: 4px solid var(--accent);
+    border-radius: 0 8px 8px 0;
+    padding: 10px 16px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 20px;
+  }
+
+  .score-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0 auto 24px;
+    max-width: 760px;
+  }
+  .score-label {
+    font-size: 0.72rem;
+    font-family: var(--font-head, monospace);
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    white-space: nowrap;
+  }
+  .score-pct {
+    font-family: var(--font-head, monospace);
+    font-size: 0.8rem;
+    color: var(--accent);
+    margin-top: 3px;
+  }
+
+  .diff-badge {
+    position: absolute;
+    top: 18px;
+    right: 22px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--muted);
+    background: var(--surface-mid);
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+
+  .rule-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(110px, 1fr));
+    gap: 8px;
+    margin-bottom: 18px;
+  }
+  .rule-card {
+    background: var(--surface-mid);
+    border: 1px solid transparent;
+    border-radius: 8px;
+    padding: 10px;
+    text-align: center;
+  }
+  .rule-card strong {
+    display: block;
+    color: var(--accent-light);
+    font-family: var(--font-head, monospace);
+    font-size: 1.05rem;
+    margin-bottom: 4px;
+  }
+  .rule-card span {
+    display: block;
+    color: var(--muted);
+    font-size: 0.75rem;
+    line-height: 1.4;
+  }
+
+  .question-meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    color: var(--muted);
+    font-size: 0.78rem;
+    margin-bottom: 12px;
+  }
+  .question-meta strong { color: var(--text); }
+
+  .addition-wrap {
+    overflow-x: auto;
+    padding: 10px 0 4px;
+  }
+  .addition-grid {
+    display: grid;
+    grid-template-columns: 34px repeat(8, 48px);
+    grid-auto-rows: 46px;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    min-width: 445px;
+    font-family: var(--font-head, Consolas, "Courier New", monospace);
+  }
+  .row-label {
+    color: var(--muted);
+    font-size: 0.78rem;
+    text-align: right;
+    padding-right: 4px;
+  }
+  .plus-label {
+    color: var(--accent);
+    font-size: 1.3rem;
+    font-weight: 800;
+    text-align: right;
+    padding-right: 4px;
+  }
+  .bit-cell,
+  .answer-bit,
+  .carry-btn,
+  .carry-locked {
+    width: 48px;
+    height: 42px;
+    border-radius: 8px;
+    display: grid;
+    place-items: center;
+    font-size: 1.3rem;
+    font-weight: 800;
+    box-sizing: border-box;
+  }
+  .bit-cell {
+    background: var(--surface-mid);
+    color: var(--text);
+  }
+  .answer-bit {
+    border: 2px solid var(--surface-mid);
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-head, Consolas, "Courier New", monospace);
+    text-align: center;
+    outline: none;
+  }
+  .answer-bit:focus { border-color: var(--accent); }
+  .answer-bit.ok { border-color: var(--green); }
+  .answer-bit.err { border-color: var(--red); }
+  .carry-btn,
+  .carry-locked {
+    height: 34px;
+    font-size: 0.95rem;
+  }
+  .carry-btn {
+    border: 2px dashed var(--surface-mid);
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+  }
+  .carry-btn:hover { border-color: var(--accent); color: var(--text); }
+  .carry-btn.on {
+    border-style: solid;
+    border-color: var(--gold);
+    background: color-mix(in srgb, var(--gold) 18%, transparent);
+    color: var(--gold);
+  }
+  .carry-btn.ok { border-color: var(--green); color: var(--green); }
+  .carry-btn.err { border-color: var(--red); color: var(--red); }
+  .carry-locked {
+    border: 1px solid var(--surface-mid);
+    color: var(--muted);
+    opacity: 0.55;
+  }
+  .sum-line {
+    grid-column: 1 / -1;
+    height: 2px;
+    background: var(--accent);
+    opacity: 0.75;
+  }
+
+  .button-row {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 18px;
+  }
+  .feedback {
+    min-height: 1.4em;
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-top: 12px;
+    text-align: center;
+  }
+  .feedback.correct { color: var(--green); }
+  .feedback.wrong { color: var(--red); animation: ac-shake 0.35s ease; }
+  .feedback.warn { color: var(--gold); }
+
+  .workings {
+    background: var(--surface-mid);
+    border-radius: 8px;
+    padding: 12px 14px;
+    margin-top: 16px;
+    color: var(--muted);
+    font-size: 0.82rem;
+    line-height: 1.6;
+  }
+  .workings strong { color: var(--text); }
+  .workings code {
+    color: var(--accent-light);
+    font-family: var(--font-head, Consolas, "Courier New", monospace);
+  }
+
+  .streak-dots {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 10px;
+  }
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--surface-mid);
+    transition: background 0.2s;
+  }
+  .dot.active { background: var(--accent); }
+
+  @media (max-width: 640px) {
+    .rule-grid { grid-template-columns: repeat(2, minmax(120px, 1fr)); }
+    .question-meta { flex-direction: column; }
+    .addition-grid {
+      grid-template-columns: 28px repeat(8, 38px);
+      grid-auto-rows: 42px;
+      min-width: 367px;
+      gap: 4px;
+    }
+    .bit-cell,
+    .answer-bit,
+    .carry-btn,
+    .carry-locked {
+      width: 38px;
+      height: 38px;
+      font-size: 1.05rem;
+    }
+    .carry-btn,
+    .carry-locked {
+      height: 30px;
+      font-size: 0.82rem;
+    }
+    .score-row { align-items: flex-start; }
+  }
+</style>
+</head>
+
+<body data-year="11" data-topic="Data_Representation">
+
+<div id="done-banner" class="ac-banner gold">
+  All tasks complete - brilliant binary addition.
+</div>
+
+<header>
+  <div>
+    <h1>Binary Addition</h1>
+    <div class="header-sub">GCSE Computer Science</div>
+  </div>
+  <div class="header-badge">Year 11</div>
+</header>
+
+<div class="page-wrap">
+  <h2 class="page-title">8-bit Binary Addition</h2>
+  <p class="page-subtitle">Add random 8-bit numbers, record carries, and avoid overflow.</p>
+
+  <div class="score-row">
+    <span class="score-label">Total Progress</span>
+    <div class="ac-progress-bar" style="flex:1;">
+      <div class="ac-progress-fill" id="progress-fill"></div>
+    </div>
+    <span class="score-pct" id="progress-pct">0%</span>
+  </div>
+
+  <div class="tabs" id="tab-bar">
+    <button class="tab-btn active" data-idx="0">Guided</button>
+    <button class="tab-btn" data-idx="1">Practice</button>
+    <button class="tab-btn" data-idx="2">Exam Mode</button>
+    <button class="tab-btn" data-idx="3">Final Challenge</button>
+  </div>
+
+  <div class="panel active" id="active-panel">
+    <div class="goal" id="task-goal">Task: Guided. Correct: 0/5</div>
+
+    <div class="card">
+      <div class="diff-badge" id="diff-label">Level: Structured</div>
+      <h2>Binary Addition Rules</h2>
+      <div class="rule-grid" aria-label="Binary addition rules">
+        <div class="rule-card"><strong>0 + 0 = 0</strong><span>No carry</span></div>
+        <div class="rule-card"><strong>0 + 1 = 1</strong><span>Same for 1 + 0</span></div>
+        <div class="rule-card"><strong>1 + 1 = 10</strong><span>Write 0, carry 1</span></div>
+        <div class="rule-card"><strong>1 + 1 + 1 = 11</strong><span>Write 1, carry 1</span></div>
+      </div>
+      <div class="workings" id="guidance">
+        <strong>Carry marks:</strong> click a carry box to show a carried <code>1</code>. Each random question is chosen so all four rules appear somewhere in the columns.
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Question</h2>
+      <div class="question-meta">
+        <span id="question-count">Question 1</span>
+        <span><strong>No overflow:</strong> the answer always fits in 8 bits.</span>
+      </div>
+      <div class="addition-wrap">
+        <div class="addition-grid" id="addition-grid"></div>
+      </div>
+      <div class="streak-dots" id="streak-dots">
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+      </div>
+      <div class="button-row">
+        <button class="ac-btn" id="check-btn">Check</button>
+        <button class="ac-btn ac-btn-secondary" id="new-btn">New question</button>
+      </div>
+      <div class="feedback" id="feedback"></div>
+    </div>
+  </div>
+</div>
+
+<div class="ac-toast" id="toast"></div>
+
+<script>
+  const ACTIVITY_TITLE = 'Binary Addition';
+  const TASK_COUNT = 4;
+  const STREAK_TO_LEVEL_UP = 3;
+
+  const state = {
+    currentIdx: 0,
+    completed: new Array(TASK_COUNT).fill(false),
+    lastPair: '',
+    tasks: [
+      { title: 'Guided', diff: 0, streak: 0, count: 0, target: 5 },
+      { title: 'Practice', diff: 1, streak: 0, count: 0, target: 8 },
+      { title: 'Exam Mode', diff: 2, streak: 0, count: 0, target: 8 },
+      { title: 'Final Challenge', diff: 2, streak: 0, count: 0, target: 10 }
+    ],
+    current: null
+  };
+
+  const diffNames = ['Structured', 'Standard', 'Exam style'];
+
+  window.addEventListener('load', () => {
+    generateQuestion();
+    updateUI();
+  });
+
+  document.getElementById('tab-bar').addEventListener('click', e => {
+    const tab = e.target.closest('.tab-btn');
+    if (!tab) return;
+    switchToTab(+tab.dataset.idx);
+  });
+
+  document.getElementById('check-btn').addEventListener('click', checkAnswer);
+  document.getElementById('new-btn').addEventListener('click', () => {
+    generateQuestion();
+    updateUI();
+    document.getElementById('feedback').textContent = '';
+    focusFirstAnswer();
+  });
+
+  function switchToTab(idx) {
+    state.currentIdx = idx;
+    document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+    document.querySelector('.tab-btn[data-idx="' + idx + '"]')?.classList.add('active');
+    document.getElementById('feedback').textContent = '';
+    generateQuestion();
+    updateUI();
+    focusFirstAnswer();
+  }
+
+  function generateQuestion() {
+    const task = state.tasks[state.currentIdx];
+    let question;
+    let attempts = 0;
+
+    do {
+      question = makeQuestion(task.diff);
+      attempts++;
+    } while ((question.key === state.lastPair || !hasAllRules(question)) && attempts < 4000);
+
+    state.current = question;
+    state.lastPair = question.key;
+    renderQuestion();
+  }
+
+  function makeQuestion(diff) {
+    let a;
+    let b;
+    let sum;
+
+    do {
+      a = randomInt(0, 255);
+      b = randomInt(0, 255 - a);
+      sum = a + b;
+    } while (
+      (diff === 1 && sum < 64) ||
+      (diff === 2 && sum < 128)
+    );
+
+    return analysePair(a, b);
+  }
+
+  function analysePair(a, b) {
+    const aBits = toBinary(a).split('').map(Number);
+    const bBits = toBinary(b).split('').map(Number);
+    const sumBits = toBinary(a + b).split('').map(Number);
+    const carryInto = new Array(8).fill(0);
+    const carryOut = new Array(8).fill(0);
+    const rules = { zeroZero: false, zeroOne: false, oneOne: false, oneOneOne: false };
+
+    let carry = 0;
+    for (let bit = 0; bit < 8; bit++) {
+      const displayIndex = 7 - bit;
+      const av = aBits[displayIndex];
+      const bv = bBits[displayIndex];
+      carryInto[displayIndex] = carry;
+
+      if (carry === 0 && av === 0 && bv === 0) rules.zeroZero = true;
+      if (carry === 0 && av + bv === 1) rules.zeroOne = true;
+      if (carry === 0 && av === 1 && bv === 1) rules.oneOne = true;
+      if (carry === 1 && av === 1 && bv === 1) rules.oneOneOne = true;
+
+      const total = av + bv + carry;
+      carry = total > 1 ? 1 : 0;
+      carryOut[displayIndex] = carry;
+    }
+
+    return {
+      a,
+      b,
+      sum: a + b,
+      aBits,
+      bBits,
+      sumBits,
+      carryInto,
+      carryOut,
+      rules,
+      key: a + ':' + b
+    };
+  }
+
+  function hasAllRules(q) {
+    return q.rules.zeroZero && q.rules.zeroOne && q.rules.oneOne && q.rules.oneOneOne && q.carryOut[0] === 0;
+  }
+
+  function renderQuestion() {
+    const q = state.current;
+    const grid = document.getElementById('addition-grid');
+    grid.innerHTML = '';
+
+    appendLabel(grid, 'carry');
+    for (let i = 0; i < 8; i++) {
+      if (i === 7) {
+        const locked = document.createElement('div');
+        locked.className = 'carry-locked';
+        locked.textContent = '-';
+        locked.title = 'No incoming carry for the rightmost bit';
+        grid.appendChild(locked);
+      } else {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'carry-btn';
+        btn.dataset.bit = i;
+        btn.textContent = '';
+        btn.title = 'Click to mark a carried 1 into this column';
+        btn.addEventListener('click', () => toggleCarry(btn));
+        grid.appendChild(btn);
+      }
+    }
+
+    appendLabel(grid, '');
+    q.aBits.forEach(bit => appendBit(grid, bit));
+
+    appendPlus(grid);
+    q.bBits.forEach(bit => appendBit(grid, bit));
+
+    const line = document.createElement('div');
+    line.className = 'sum-line';
+    grid.appendChild(line);
+
+    appendLabel(grid, 'sum');
+    q.sumBits.forEach((_, i) => {
+      const input = document.createElement('input');
+      input.className = 'answer-bit';
+      input.type = 'text';
+      input.inputMode = 'numeric';
+      input.maxLength = 1;
+      input.autocomplete = 'off';
+      input.dataset.bit = i;
+      input.setAttribute('aria-label', 'Answer bit ' + (8 - i));
+      input.addEventListener('input', () => {
+        input.value = input.value.replace(/[^01]/g, '').slice(0, 1);
+        if (input.value && i < 7) {
+          document.querySelector('.answer-bit[data-bit="' + (i + 1) + '"]')?.focus();
+        }
+      });
+      input.addEventListener('keydown', e => {
+        if (e.key === 'Backspace' && !input.value && i > 0) {
+          document.querySelector('.answer-bit[data-bit="' + (i - 1) + '"]')?.focus();
+        }
+        if (e.key === 'Enter') checkAnswer();
+      });
+      grid.appendChild(input);
+    });
+
+    document.getElementById('question-count').textContent = decimalHintText(q);
+  }
+
+  function appendLabel(grid, text) {
+    const label = document.createElement('div');
+    label.className = 'row-label';
+    label.textContent = text;
+    grid.appendChild(label);
+  }
+
+  function appendPlus(grid) {
+    const label = document.createElement('div');
+    label.className = 'plus-label';
+    label.textContent = '+';
+    grid.appendChild(label);
+  }
+
+  function appendBit(grid, bit) {
+    const cell = document.createElement('div');
+    cell.className = 'bit-cell';
+    cell.textContent = bit;
+    grid.appendChild(cell);
+  }
+
+  function toggleCarry(btn) {
+    btn.classList.remove('ok', 'err');
+    btn.classList.toggle('on');
+    btn.textContent = btn.classList.contains('on') ? '1' : '';
+  }
+
+  function checkAnswer() {
+    if (window.Classroom?.verifyAuth() === false) return;
+
+    const task = state.tasks[state.currentIdx];
+    const feedback = document.getElementById('feedback');
+    const answerInputs = [...document.querySelectorAll('.answer-bit')];
+    const carryButtons = [...document.querySelectorAll('.carry-btn')];
+
+    if (answerInputs.some(input => input.value === '')) {
+      feedback.textContent = 'Complete all 8 answer bits before checking.';
+      feedback.className = 'feedback warn';
+      return;
+    }
+
+    const sumOk = answerInputs.every(input => {
+      const bit = +input.dataset.bit;
+      const ok = input.value === String(state.current.sumBits[bit]);
+      input.classList.toggle('ok', ok);
+      input.classList.toggle('err', !ok);
+      return ok;
+    });
+
+    const carriesOk = carryButtons.every(btn => {
+      const bit = +btn.dataset.bit;
+      const expected = state.current.carryInto[bit] === 1;
+      const actual = btn.classList.contains('on');
+      const ok = expected === actual;
+      btn.classList.toggle('ok', ok);
+      btn.classList.toggle('err', !ok);
+      return ok;
+    });
+
+    if (sumOk && carriesOk) {
+      feedback.textContent = 'Correct - answer and carry marks both match.';
+      feedback.className = 'feedback correct';
+      task.count++;
+      task.streak++;
+
+      if (task.streak >= STREAK_TO_LEVEL_UP) {
+        if (task.diff < 2) {
+          task.diff++;
+          showToast('Difficulty increased.', 'success');
+        }
+        task.streak = 0;
+      }
+
+      const completedIdx = state.currentIdx;
+      const completedThisTurn = task.count >= task.target && markDone(completedIdx);
+
+      setTimeout(() => {
+        const nextIdx = completedIdx + 1;
+        if (completedThisTurn && state.currentIdx === completedIdx && nextIdx < TASK_COUNT) {
+          switchToTab(nextIdx);
+        } else {
+          feedback.textContent = '';
+          generateQuestion();
+          updateUI();
+          focusFirstAnswer();
+        }
+      }, 1200);
+    } else {
+      const correctAnswer = state.current.sumBits.join('');
+      const carryHint = expectedCarryText();
+      feedback.textContent = 'Not quite. Sum: ' + correctAnswer + '. Carries: ' + carryHint + '.';
+      feedback.className = 'feedback wrong';
+      task.streak = 0;
+      if (task.diff > 0) {
+        task.diff--;
+        showToast('Difficulty decreased.', 'warn');
+      }
+    }
+
+    updateUI();
+  }
+
+  function markDone(idx) {
+    if (state.completed[idx]) return false;
+    state.completed[idx] = true;
+
+    const tab = document.querySelector('.tab-btn[data-idx="' + idx + '"]');
+    if (tab) tab.classList.add('done-gold');
+
+    updateProgress();
+
+    const pct = progressPercent();
+    window.Classroom?.submitGrade(pct, ACTIVITY_TITLE);
+
+    if (state.completed.every(Boolean)) {
+      allComplete();
+    }
+
+    return true;
+  }
+
+  function updateUI() {
+    const task = state.tasks[state.currentIdx];
+    document.getElementById('task-goal').textContent = 'Task: ' + task.title + '. Correct: ' + Math.min(task.count, task.target) + '/' + task.target;
+    document.getElementById('diff-label').textContent = 'Level: ' + diffNames[task.diff];
+    document.getElementById('guidance').innerHTML = guidanceText(task.diff);
+
+    const dots = document.querySelectorAll('.dot');
+    dots.forEach((dot, i) => {
+      dot.className = i < task.streak ? 'dot active' : 'dot';
+    });
+
+    updateProgress();
+  }
+
+  function updateProgress() {
+    const pct = progressPercent();
+    document.getElementById('progress-fill').style.width = pct + '%';
+    document.getElementById('progress-pct').textContent = pct + '%';
+  }
+
+  function progressPercent() {
+    const totalCorrect = state.tasks.reduce((acc, task) => acc + Math.min(task.count, task.target), 0);
+    const totalTarget = state.tasks.reduce((acc, task) => acc + task.target, 0);
+    return Math.round(totalCorrect / totalTarget * 100);
+  }
+
+  function allComplete() {
+    document.getElementById('done-banner').classList.add('show');
+  }
+
+  function focusFirstAnswer() {
+    document.querySelector('.answer-bit')?.focus();
+  }
+
+  function toBinary(n) {
+    return n.toString(2).padStart(8, '0');
+  }
+
+  function randomInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  function decimalHintText(q) {
+    if (state.currentIdx < 2) {
+      return q.a + ' + ' + q.b + ' in denary';
+    }
+    return 'Random no-overflow 8-bit addition';
+  }
+
+  function expectedCarryText() {
+    const marks = [];
+    state.current.carryInto.forEach((carry, bit) => {
+      if (carry === 1 && bit < 7) marks.push('put 1 above bit ' + (7 - bit));
+    });
+    return marks.length ? marks.join(', ') : 'no carries';
+  }
+
+  function guidanceText(diff) {
+    if (diff === 0) {
+      return '<strong>Carry marks:</strong> work from right to left. Click a carry box when the column to its right makes <code>10</code> or <code>11</code>.';
+    }
+    if (diff === 1) {
+      return '<strong>Carry marks:</strong> remember that <code>1 + 1</code> writes <code>0</code> and carries <code>1</code>; <code>1 + 1 + 1</code> writes <code>1</code> and carries <code>1</code>.';
+    }
+    return '<strong>Carry marks:</strong> exam questions can award method marks for the little carried <code>1</code>s, so the carry row is checked as well as the answer.';
+  }
+
+  function showToast(msg, type = '') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'ac-toast show' + (type ? ' ' + type : '');
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+</script>
+
+<script src="../../classroom.js"></script>
+</body>
+</html>

@@ -124,7 +124,8 @@ color:  purple
     background: var(--off-white); border-radius: 10px; padding: 1rem 1.2rem;
     margin-bottom: 1rem; border-left: 4px solid var(--purple-light); transition: border-left-color 0.2s, background 0.2s;
   }
-  .q-card.error { border-left-color: var(--red); background: #fff5f5; }
+  .q-card.error,
+  .q-card.is-wrong { border-left-color: var(--red); background: #fff5f5; }
   .q-label { display: block; font-weight: 700; color: var(--navy); margin-bottom: 0.6rem; font-size: 0.9rem; }
   .q-num { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: var(--purple-light); color: white; font-size: 0.75rem; margin-right: 0.4rem; flex-shrink: 0; vertical-align: middle; }
   .q-card input[type=text], .q-card textarea {
@@ -134,7 +135,10 @@ color:  purple
   }
   .q-card input[type=text]:focus, .q-card textarea:focus { outline: none; border-color: var(--purple-light); }
   .q-card textarea { min-height: 65px; }
-  .q-card.error input[type=text], .q-card.error textarea { border-color: var(--red); }
+  .q-card.error input[type=text],
+  .q-card.error textarea,
+  .q-card.is-wrong input[type=text],
+  .q-card.is-wrong textarea { border-color: var(--red); }
 
   /* ── MCQ inside q-card ── */
   .radio-opts { display: flex; flex-direction: column; gap: 0.4rem; }
@@ -926,7 +930,56 @@ function calcScore() {
 }
 
 function submitScore() {
-  window.Classroom?.submitGrade(calcScore(), ACTIVITY_TITLE);
+  const score = calcScore();
+  window.Classroom?.submitGrade(score, ACTIVITY_TITLE);
+  if (score >= 100) launchCelebration();
+}
+
+function setAnswerState(target, ok) {
+  const el = typeof target === 'string' ? document.getElementById(target) : target;
+  const block = el?.closest('.q-card, .modify-task, .req-list li, .code-checker');
+  if (block) block.classList.toggle('is-wrong', !ok);
+}
+
+function launchCelebration() {
+  if (window._celebrationShown || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+  window._celebrationShown = true;
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  canvas.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:9999;';
+  document.body.appendChild(canvas);
+  const colors = ['#facc15', '#22c55e', '#38bdf8', '#f472b6', '#fb7185'];
+  const pieces = Array.from({ length: 120 }, () => ({
+    x: Math.random() * innerWidth,
+    y: -20 - Math.random() * innerHeight * 0.35,
+    vx: -2 + Math.random() * 4,
+    vy: 2 + Math.random() * 4,
+    size: 5 + Math.random() * 7,
+    spin: Math.random() * Math.PI,
+    color: colors[Math.floor(Math.random() * colors.length)]
+  }));
+  let frame = 0;
+  function draw() {
+    canvas.width = innerWidth;
+    canvas.height = innerHeight;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    pieces.forEach(p => {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 0.04;
+      p.spin += 0.18;
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.spin);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.65);
+      ctx.restore();
+    });
+    frame++;
+    if (frame < 140) requestAnimationFrame(draw);
+    else canvas.remove();
+  }
+  draw();
 }
 
 // ── Nav ───────────────────────────────────────────────

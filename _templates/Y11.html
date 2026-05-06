@@ -235,6 +235,12 @@ color:  blue
     padding: 10px 12px;
     margin-bottom: 10px;
   }
+  .question-card.is-wrong,
+  .card.is-wrong,
+  .panel.is-wrong {
+    border-color: var(--red);
+    background: rgba(220,38,38,.08);
+  }
 
   .how-to {
     font-size: 0.85rem;
@@ -351,9 +357,9 @@ color:  blue
 
     <div class="card">
       <h2>Instructions</h2>
-      <!-- Example consistent components -->
+      <!-- Example consistent components. Keep each answer inside a question-card so it can be highlighted when wrong. -->
       <p class="how-to"><strong>Tip:</strong> Use <code>question-card</code>, <code>ac-input</code>, and <code>ac-select</code> for consistent Year 11 styling.</p>
-      <div class="question-card">
+      <div class="question-card" id="q-0">
         <p style="color:var(--text); font-size:0.9rem; line-height:1.7;">Task 1 question prompt goes here.</p>
         <input class="ac-input mono" type="text" placeholder="Student answer">
       </div>
@@ -371,10 +377,12 @@ color:  blue
 
     <div class="card">
       <h2>Instructions</h2>
-      <!-- Your task content here -->
-      <p style="color:var(--text); font-size:0.9rem; line-height:1.7;">
-        Task 2 content goes here.
-      </p>
+      <!-- Keep each answer inside a question-card so it can be highlighted when wrong. -->
+      <div class="question-card" id="q-1">
+        <p style="color:var(--text); font-size:0.9rem; line-height:1.7;">
+          Task 2 content goes here.
+        </p>
+      </div>
     </div>
 
     <div class="row">
@@ -411,6 +419,7 @@ color:  blue
 
     // TODO: replace this stub with your actual answer-checking logic.
     const isCorrect = true;
+    setAnswerState('q-' + idx, isCorrect);
 
     const feedback = document.getElementById('feedback-' + idx);
     if (isCorrect) {
@@ -454,10 +463,59 @@ color:  blue
   // ── All tasks complete ─────────────────────────────────
   function allComplete() {
     document.getElementById('done-banner').classList.add('show');
+    launchCelebration();
     // Grade (100%) already submitted via markDone — no extra call needed.
   }
 
   // ── Toast helper ───────────────────────────────────────
+  // Highlight the specific answer/question block that needs attention.
+  function setAnswerState(target, ok) {
+    const el = typeof target === 'string' ? document.getElementById(target) : target;
+    const block = el?.closest('.question-card, .card, .panel');
+    if (block) block.classList.toggle('is-wrong', !ok);
+  }
+
+  function launchCelebration() {
+    if (window._celebrationShown || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+    window._celebrationShown = true;
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:9999;';
+    document.body.appendChild(canvas);
+    const colors = ['#facc15', '#22c55e', '#38bdf8', '#f472b6', '#fb7185'];
+    const pieces = Array.from({ length: 120 }, () => ({
+      x: Math.random() * innerWidth,
+      y: -20 - Math.random() * innerHeight * 0.35,
+      vx: -2 + Math.random() * 4,
+      vy: 2 + Math.random() * 4,
+      size: 5 + Math.random() * 7,
+      spin: Math.random() * Math.PI,
+      color: colors[Math.floor(Math.random() * colors.length)]
+    }));
+    let frame = 0;
+    function draw() {
+      canvas.width = innerWidth;
+      canvas.height = innerHeight;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      pieces.forEach(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.04;
+        p.spin += 0.18;
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.spin);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.65);
+        ctx.restore();
+      });
+      frame++;
+      if (frame < 140) requestAnimationFrame(draw);
+      else canvas.remove();
+    }
+    draw();
+  }
+
   function showToast(msg, type = '') {
     const t = document.getElementById('toast');
     t.textContent = msg;
