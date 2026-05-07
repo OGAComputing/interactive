@@ -1,0 +1,1378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- ACTIVITY
+title:  File Handling Challenge
+type:   Challenge
+stars:  4
+desc:   Eight progressive file-handling tasks — read, write, search, store in arrays, and write from inside a procedure.
+color:  cyan
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>File Handling Challenge — Year 11</title>
+
+<link rel="stylesheet" href="../../shared.css">
+
+<style>
+  /* ── Sticky header ───────────────────────────────────── */
+  header {
+    background: var(--surface);
+    border-bottom: 2px solid var(--surface-mid);
+    padding: 12px 20px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.35);
+  }
+  .header-progress { display: flex; align-items: center; gap: 10px; }
+
+  /* ── Page body ───────────────────────────────────────── */
+  .page-wrap { padding: 28px 16px 60px; }
+
+  /* ── Page title ──────────────────────────────────────── */
+  .page-title { font-size: 1.35rem; font-weight: 700; text-align: center; color: var(--accent-light); margin-bottom: 4px; }
+  .page-subtitle { text-align: center; font-size: 0.82rem; color: var(--muted); margin-bottom: 28px; }
+
+  /* ── Pill tab bar ────────────────────────────────────── */
+  .tabs { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-bottom: 28px; }
+  .tab-btn {
+    padding: 7px 16px;
+    border: 2px solid var(--surface-mid);
+    border-radius: 20px;
+    background: var(--surface);
+    color: var(--muted);
+    font-family: var(--font-body);
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s, color 0.2s;
+    user-select: none;
+  }
+  .tab-btn:hover:not(.active) { border-color: var(--accent); color: var(--text); }
+  .tab-btn.active     { background: var(--accent); border-color: var(--accent); color: var(--text-inv); }
+  .tab-btn.done-green { background: var(--green);  border-color: var(--green);  color: #fff; }
+  .tab-btn.done-gold  { background: var(--gold);   border-color: var(--gold);   color: #111; }
+
+  /* ── Panels ──────────────────────────────────────────── */
+  .panel { display: none; max-width: 880px; margin: 0 auto; animation: ac-fade-in 0.2s ease; }
+  .panel.active { display: block; }
+
+  /* ── Section card ────────────────────────────────────── */
+  .card { background: var(--surface); border-left: 4px solid var(--accent); border-radius: 8px; padding: 18px 22px; margin-bottom: 22px; }
+  .card h2 { font-size: 0.82rem; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 12px; }
+  .card p { color: var(--text); font-size: 0.9rem; line-height: 1.7; margin-bottom: 10px; }
+  .card p:last-child { margin-bottom: 0; }
+  .card ul { margin: 6px 0 0 1.2em; color: var(--text); font-size: 0.9rem; line-height: 1.8; }
+  .card code { background: var(--code-bg, #1a1a2e); color: var(--code-text, #a0c4ff); padding: 1px 6px; border-radius: 4px; font-family: var(--font-head, monospace); font-size: 0.85em; }
+
+  /* ── File preview block ──────────────────────────────── */
+  .file-preview {
+    background: var(--code-bg, #1a1a2e);
+    color: var(--code-text, #a0c4ff);
+    border-radius: 6px;
+    padding: 10px 14px;
+    font-family: var(--font-head, monospace);
+    font-size: 0.82rem;
+    line-height: 1.6;
+    margin: 10px 0 4px;
+    white-space: pre;
+    overflow-x: auto;
+  }
+  .file-preview .file-name {
+    display: block;
+    color: var(--muted);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 4px;
+  }
+
+  /* ── Goal banner ─────────────────────────────────────── */
+  .goal { background: var(--surface); border-left: 4px solid var(--accent); border-radius: 0 8px 8px 0; padding: 10px 16px; font-size: 0.9rem; font-weight: 600; color: var(--text); margin-bottom: 20px; }
+
+  /* ── Code checker ────────────────────────────────────── */
+  .code-checker { background: var(--surface); border-radius: 12px; border: 2px solid var(--surface-mid); overflow: hidden; margin-bottom: 14px; }
+  .checker-footer { display: flex; gap: 10px; padding: 10px 14px; background: var(--surface-mid); border-top: 1px solid var(--surface-dim); flex-wrap: wrap; align-items: center; }
+  .checker-footer .ac-btn-secondary { font-size: 0.78rem; padding: 5px 14px; }
+  .checker-footer .ac-btn           { font-size: 0.78rem; padding: 5px 14px; }
+
+  /* ── Mark scheme card ────────────────────────────────── */
+  .markscheme { background: var(--surface); border: 2px solid var(--surface-mid); border-radius: 8px; padding: 14px 18px; margin-bottom: 22px; }
+  .ms-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .ms-header h3 { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); }
+  .ms-total { font-size: 0.72rem; font-family: var(--font-head, monospace); color: var(--muted); letter-spacing: 0.06em; }
+  .ms-list { list-style: none; margin: 0 0 10px; padding: 0; display: flex; flex-direction: column; gap: 5px; }
+  .ms-row { display: flex; align-items: flex-start; gap: 10px; padding: 5px 8px; border-radius: 6px; font-size: 0.87rem; transition: background 0.15s; }
+  .ms-tick { font-size: 1rem; width: 1.3em; text-align: center; color: var(--muted); flex-shrink: 0; margin-top: 0.05em; }
+  .ms-text { flex: 1; color: var(--text); line-height: 1.5; }
+  .ms-marks { font-size: 0.7rem; font-family: var(--font-head, monospace); color: var(--muted); white-space: nowrap; margin-top: 0.2em; flex-shrink: 0; }
+  .ms-row.pass { background: rgba(52,211,153,0.08); }
+  .ms-row.pass .ms-tick  { color: var(--green); }
+  .ms-row.pass .ms-text  { color: var(--green); }
+  .ms-row.pass .ms-marks { color: var(--green); }
+  .ms-row.fail { background: rgba(248,113,113,0.06); }
+  .ms-row.fail .ms-tick  { color: var(--red); }
+  .ms-row.fail .ms-text  { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--red); }
+  .ms-divider { border: none; border-top: 1px solid var(--surface-mid); margin: 8px 0; }
+  .ms-score { font-size: 0.88rem; font-weight: 700; color: var(--accent); text-align: right; }
+  .ms-score.full { color: var(--green); }
+
+  /* ── Progress percentage ─────────────────────────────── */
+  .score-pct { font-family: var(--font-head, monospace); font-size: 0.8rem; color: var(--accent); }
+</style>
+</head>
+
+<body>
+
+<!-- Completion banner -->
+<div id="done-banner" class="ac-banner gold">
+  Full marks — outstanding file handling!
+</div>
+
+<!-- Sticky header -->
+<header>
+  <div class="header-progress">
+    <div class="ac-progress-bar" style="flex:1;">
+      <div class="ac-progress-fill" id="progress-fill"></div>
+    </div>
+    <span class="score-pct" id="progress-pct">0 / 40</span>
+  </div>
+</header>
+
+<div class="page-wrap">
+  <h2 class="page-title">File Handling — Exam Practice</h2>
+  <p class="page-subtitle">Read · Write · Search · Arrays · Subprograms · 40 marks total</p>
+
+  <!-- Tab bar -->
+  <div class="tabs" id="tab-bar">
+    <button class="tab-btn active" data-idx="0">Q1 · 4m</button>
+    <button class="tab-btn"        data-idx="1">Q2 · 4m</button>
+    <button class="tab-btn"        data-idx="2">Q3 · 4m</button>
+    <button class="tab-btn"        data-idx="3">Q4 · 5m</button>
+    <button class="tab-btn"        data-idx="4">Q5 · 5m</button>
+    <button class="tab-btn"        data-idx="5">Q6 · 5m</button>
+    <button class="tab-btn"        data-idx="6">Q7 · 6m</button>
+    <button class="tab-btn"        data-idx="7">Q8 · 7m</button>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       Q1 — Save Username (4 marks)
+       ══════════════════════════════════════════════════════════ -->
+  <div class="panel active" id="panel-0">
+    <div class="goal">Ask the user for a username and write it to a file.</div>
+
+    <div class="card">
+      <h2>Scenario</h2>
+      <p>A sign-up screen records the username chosen by a new player. The program asks for the username and saves it to a file called <code>user.txt</code> so the player can be welcomed back next time.</p>
+      <h2 style="margin-top:14px;">Your algorithm must:</h2>
+      <ul>
+        <li>Open a file called <code>user.txt</code> for writing</li>
+        <li>Ask the user to enter a username</li>
+        <li>Write the username to the file</li>
+        <li>Close the file</li>
+      </ul>
+    </div>
+
+    <div class="code-checker" id="checker-0">
+      <div class="checker-header">
+        <span class="checker-dot dot-r"></span>
+        <span class="checker-dot dot-y"></span>
+        <span class="checker-dot dot-g"></span>
+        <span>Q1 — Write your pseudocode here</span>
+      </div>
+      <textarea class="pseudocode-textarea" id="editor-0" spellcheck="false"
+                autocomplete="off" autocapitalize="off">// Write your OCR pseudocode here
+</textarea>
+      <div class="checker-footer">
+        <button class="ac-btn" id="run-0" type="button">Run ▶</button>
+        <button class="ac-btn-secondary" id="clear-0" type="button">Clear</button>
+        <span id="run-status-0" style="font-size:0.75rem;color:var(--muted);"></span>
+      </div>
+    </div>
+
+    <div class="markscheme" id="ms-0">
+      <div class="ms-header">
+        <h3>Mark Scheme</h3>
+        <span class="ms-total">4 marks available</span>
+      </div>
+      <ul class="ms-list" id="ms-list-0">
+        <li class="ms-row" data-bp="0">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Asks the user for the username using <code>input()</code></span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="1">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Opens <code>user.txt</code> for writing using <code>openWrite</code></span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="2">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Writes the username to the file using <code>.writeLine()</code></span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="3">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Closes the file with <code>.close()</code></span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+      </ul>
+      <hr class="ms-divider">
+      <div class="ms-score" id="ms-score-0">— / 4 marks</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       Q2 — Display Welcome Message (4 marks)
+       ══════════════════════════════════════════════════════════ -->
+  <div class="panel" id="panel-1">
+    <div class="goal">Read the welcome message stored in a file and display it.</div>
+
+    <div class="card">
+      <h2>Scenario</h2>
+      <p>An online classroom shows a welcome message every time a student signs in. The message is stored on the first line of a file called <code>welcome.txt</code> so the teacher can update it.</p>
+      <p>An example of the file is shown:</p>
+      <div class="file-preview"><span class="file-name">welcome.txt</span>Welcome to Year 11 Computing</div>
+      <h2 style="margin-top:14px;">Your algorithm must:</h2>
+      <ul>
+        <li>Open <code>welcome.txt</code> for reading</li>
+        <li>Read the first line of the file</li>
+        <li>Output the line that was read</li>
+        <li>Close the file</li>
+      </ul>
+    </div>
+
+    <div class="code-checker" id="checker-1">
+      <div class="checker-header">
+        <span class="checker-dot dot-r"></span>
+        <span class="checker-dot dot-y"></span>
+        <span class="checker-dot dot-g"></span>
+        <span>Q2 — Write your pseudocode here</span>
+      </div>
+      <textarea class="pseudocode-textarea" id="editor-1" spellcheck="false"
+                autocomplete="off" autocapitalize="off">// Write your OCR pseudocode here
+</textarea>
+      <div class="checker-footer">
+        <button class="ac-btn" id="run-1" type="button">Run ▶</button>
+        <button class="ac-btn-secondary" id="clear-1" type="button">Clear</button>
+        <span id="run-status-1" style="font-size:0.75rem;color:var(--muted);"></span>
+      </div>
+    </div>
+
+    <div class="markscheme" id="ms-1">
+      <div class="ms-header">
+        <h3>Mark Scheme</h3>
+        <span class="ms-total">4 marks available</span>
+      </div>
+      <ul class="ms-list" id="ms-list-1">
+        <li class="ms-row" data-bp="0">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Opens <code>welcome.txt</code> for reading using <code>openRead</code></span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="1">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Reads a line from the file using <code>.readLine()</code></span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="2">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Outputs the line that was read (e.g. "Welcome to Year 11 Computing")</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="3">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Closes the file with <code>.close()</code></span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+      </ul>
+      <hr class="ms-divider">
+      <div class="ms-score" id="ms-score-1">— / 4 marks</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       Q3 — Drone Pilot Logger (4 marks) — adapted from OCR sample
+       ══════════════════════════════════════════════════════════ -->
+  <div class="panel" id="panel-2">
+    <div class="goal">Ask the user for a pilot code and date of birth, then write both to a file.</div>
+
+    <div class="card">
+      <h2>Scenario</h2>
+      <p>OCR Drones flies goods around the country using drones. A text file is used to store each pilot's code and date of birth.</p>
+      <p>An example of the file <code>pilots.txt</code> is shown:</p>
+      <div class="file-preview"><span class="file-name">pilots.txt</span>JP670,17/05/1986
+CC200,31/06/1980
+SM720,01/04/1976
+GC730,06/06/1978</div>
+      <h2 style="margin-top:14px;">Your algorithm must:</h2>
+      <ul>
+        <li>Ask the user to enter a pilot code</li>
+        <li>Ask the user to enter a date of birth</li>
+        <li>Open <code>pilots.txt</code> for writing</li>
+        <li>Write the pilot code and date of birth to the file</li>
+        <li>Close the file</li>
+      </ul>
+    </div>
+
+    <div class="code-checker" id="checker-2">
+      <div class="checker-header">
+        <span class="checker-dot dot-r"></span>
+        <span class="checker-dot dot-y"></span>
+        <span class="checker-dot dot-g"></span>
+        <span>Q3 — Write your pseudocode here</span>
+      </div>
+      <textarea class="pseudocode-textarea" id="editor-2" spellcheck="false"
+                autocomplete="off" autocapitalize="off">// Write your OCR pseudocode here
+</textarea>
+      <div class="checker-footer">
+        <button class="ac-btn" id="run-2" type="button">Run ▶</button>
+        <button class="ac-btn-secondary" id="clear-2" type="button">Clear</button>
+        <span id="run-status-2" style="font-size:0.75rem;color:var(--muted);"></span>
+      </div>
+    </div>
+
+    <div class="markscheme" id="ms-2">
+      <div class="ms-header">
+        <h3>Mark Scheme</h3>
+        <span class="ms-total">4 marks available</span>
+      </div>
+      <ul class="ms-list" id="ms-list-2">
+        <li class="ms-row" data-bp="0">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Asks the user for both inputs (pilot code and date of birth)</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="1">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Opens <code>pilots.txt</code> for writing using <code>openWrite</code></span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="2">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Writes both inputs to the file using <code>.writeLine()</code></span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="3">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Closes the file with <code>.close()</code></span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+      </ul>
+      <hr class="ms-divider">
+      <div class="ms-score" id="ms-score-2">— / 4 marks</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       Q4 — Read All Tasks (5 marks)
+       ══════════════════════════════════════════════════════════ -->
+  <div class="panel" id="panel-3">
+    <div class="goal">Read every line from a file and output each one until the end of the file.</div>
+
+    <div class="card">
+      <h2>Scenario</h2>
+      <p>A reminders app stores a to-do list in a text file called <code>tasks.txt</code>. Each task is stored on its own line. When the app starts, it should display every task that is currently saved.</p>
+      <p>An example of the file is shown:</p>
+      <div class="file-preview"><span class="file-name">tasks.txt</span>buy milk
+walk dog
+call mum</div>
+      <h2 style="margin-top:14px;">Your algorithm must:</h2>
+      <ul>
+        <li>Open <code>tasks.txt</code> for reading</li>
+        <li>Use a loop to read every line until the end of the file</li>
+        <li>Output each task as it is read</li>
+        <li>Close the file when the end of the file is reached</li>
+      </ul>
+    </div>
+
+    <div class="code-checker" id="checker-3">
+      <div class="checker-header">
+        <span class="checker-dot dot-r"></span>
+        <span class="checker-dot dot-y"></span>
+        <span class="checker-dot dot-g"></span>
+        <span>Q4 — Write your pseudocode here</span>
+      </div>
+      <textarea class="pseudocode-textarea" id="editor-3" spellcheck="false"
+                autocomplete="off" autocapitalize="off">// Write your OCR pseudocode here
+</textarea>
+      <div class="checker-footer">
+        <button class="ac-btn" id="run-3" type="button">Run ▶</button>
+        <button class="ac-btn-secondary" id="clear-3" type="button">Clear</button>
+        <span id="run-status-3" style="font-size:0.75rem;color:var(--muted);"></span>
+      </div>
+    </div>
+
+    <div class="markscheme" id="ms-3">
+      <div class="ms-header">
+        <h3>Mark Scheme</h3>
+        <span class="ms-total">5 marks available</span>
+      </div>
+      <ul class="ms-list" id="ms-list-3">
+        <li class="ms-row" data-bp="0">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Opens <code>tasks.txt</code> for reading using <code>openRead</code></span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="1">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Attempts to use iteration (any loop present)</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="2">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Uses <code>.endOfFile()</code> in the loop condition to stop at the end of the file</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="3">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Reads each line with <code>.readLine()</code> and outputs it (all 3 example tasks appear in the output)</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="4">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Closes the file with <code>.close()</code></span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+      </ul>
+      <hr class="ms-divider">
+      <div class="ms-score" id="ms-score-3">— / 5 marks</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       Q5 — Customer Feedback Log (5 marks)
+       ══════════════════════════════════════════════════════════ -->
+  <div class="panel" id="panel-4">
+    <div class="goal">Keep collecting feedback comments until the user types <strong>exit</strong>, writing each one to a file.</div>
+
+    <div class="card">
+      <h2>Scenario</h2>
+      <p>A café asks its customers to leave feedback at a tablet. Each customer types a short comment and presses enter. When the manager has collected enough comments, they type <strong>exit</strong> to stop. Every comment is saved to a file called <code>feedback.txt</code>.</p>
+      <h2 style="margin-top:14px;">Your algorithm must:</h2>
+      <ul>
+        <li>Open <code>feedback.txt</code> for writing</li>
+        <li>Keep asking for feedback until the user enters <strong>exit</strong></li>
+        <li>Write each comment to the file (do not write <strong>exit</strong> itself)</li>
+        <li>Close the file once the manager has finished</li>
+        <li>Output the total number of comments that were saved</li>
+      </ul>
+    </div>
+
+    <div class="code-checker" id="checker-4">
+      <div class="checker-header">
+        <span class="checker-dot dot-r"></span>
+        <span class="checker-dot dot-y"></span>
+        <span class="checker-dot dot-g"></span>
+        <span>Q5 — Write your pseudocode here</span>
+      </div>
+      <textarea class="pseudocode-textarea" id="editor-4" spellcheck="false"
+                autocomplete="off" autocapitalize="off">// Write your OCR pseudocode here
+</textarea>
+      <div class="checker-footer">
+        <button class="ac-btn" id="run-4" type="button">Run ▶</button>
+        <button class="ac-btn-secondary" id="clear-4" type="button">Clear</button>
+        <span id="run-status-4" style="font-size:0.75rem;color:var(--muted);"></span>
+      </div>
+    </div>
+
+    <div class="markscheme" id="ms-4">
+      <div class="ms-header">
+        <h3>Mark Scheme</h3>
+        <span class="ms-total">5 marks available</span>
+      </div>
+      <ul class="ms-list" id="ms-list-4">
+        <li class="ms-row" data-bp="0">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Opens <code>feedback.txt</code> for writing using <code>openWrite</code></span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="1">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Uses a condition-controlled loop that stops when <strong>exit</strong> is entered</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="2">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Writes each comment to the file using <code>.writeLine()</code></span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="3">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Closes the file with <code>.close()</code></span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="4">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Outputs the correct count of comments saved (2 for "Great service", "Loved it", "exit"; 1 for "OK", "exit")</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+      </ul>
+      <hr class="ms-divider">
+      <div class="ms-score" id="ms-score-4">— / 5 marks</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       Q6 — Library Lookup (5 marks)
+       ══════════════════════════════════════════════════════════ -->
+  <div class="panel" id="panel-5">
+    <div class="goal">Search a file for a book title the user enters, and output whether it was found.</div>
+
+    <div class="card">
+      <h2>Scenario</h2>
+      <p>A school library keeps a list of currently borrowed books in a file called <code>borrowed.txt</code>, with one title per line. A librarian types the title of a book and the system searches the file to check whether that book is currently borrowed.</p>
+      <p>An example of the file is shown:</p>
+      <div class="file-preview"><span class="file-name">borrowed.txt</span>Holes
+Coraline
+Matilda
+Skellig</div>
+      <h2 style="margin-top:14px;">Your algorithm must:</h2>
+      <ul>
+        <li>Ask the user to enter a book title</li>
+        <li>Open <code>borrowed.txt</code> for reading</li>
+        <li>Read every line until the end of the file, comparing each one with the title entered</li>
+        <li>Output <strong>found</strong> if the title appears in the file, or <strong>not found</strong> if it does not</li>
+        <li>Close the file</li>
+      </ul>
+    </div>
+
+    <div class="code-checker" id="checker-5">
+      <div class="checker-header">
+        <span class="checker-dot dot-r"></span>
+        <span class="checker-dot dot-y"></span>
+        <span class="checker-dot dot-g"></span>
+        <span>Q6 — Write your pseudocode here</span>
+      </div>
+      <textarea class="pseudocode-textarea" id="editor-5" spellcheck="false"
+                autocomplete="off" autocapitalize="off">// Write your OCR pseudocode here
+</textarea>
+      <div class="checker-footer">
+        <button class="ac-btn" id="run-5" type="button">Run ▶</button>
+        <button class="ac-btn-secondary" id="clear-5" type="button">Clear</button>
+        <span id="run-status-5" style="font-size:0.75rem;color:var(--muted);"></span>
+      </div>
+    </div>
+
+    <div class="markscheme" id="ms-5">
+      <div class="ms-header">
+        <h3>Mark Scheme</h3>
+        <span class="ms-total">5 marks available</span>
+      </div>
+      <ul class="ms-list" id="ms-list-5">
+        <li class="ms-row" data-bp="0">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Asks the user for the book title using <code>input()</code> and opens <code>borrowed.txt</code> for reading using <code>openRead</code></span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="1">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Uses a loop to read each line from the file using <code>.readLine()</code></span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="2">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Uses an <code>if</code> statement to compare each line with the title entered</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="3">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Outputs the correct result for both cases — <strong>found</strong> for "Coraline", <strong>not found</strong> for "Hatchet"</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="4">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Closes the file with <code>.close()</code></span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+      </ul>
+      <hr class="ms-divider">
+      <div class="ms-score" id="ms-score-5">— / 5 marks</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       Q7 — Top Scores (6 marks) — uses an array
+       ══════════════════════════════════════════════════════════ -->
+  <div class="panel" id="panel-6">
+    <div class="goal">Read five scores from a file into an array, then output the highest score.</div>
+
+    <div class="card">
+      <h2>Scenario</h2>
+      <p>A puzzle game keeps the last 5 scores in a file called <code>scores.txt</code>, one score per line. When the high-score screen opens, the program reads every score into an array and then displays the highest score from that round.</p>
+      <p>An example of the file is shown:</p>
+      <div class="file-preview"><span class="file-name">scores.txt</span>40
+25
+60
+35
+50</div>
+      <h2 style="margin-top:14px;">Your algorithm must:</h2>
+      <ul>
+        <li>Declare an array large enough to hold 5 scores</li>
+        <li>Open <code>scores.txt</code> for reading</li>
+        <li>Use a loop to read each score from the file and store it in the array</li>
+        <li>Close the file once all five scores have been read</li>
+        <li>Search the array to find the highest score</li>
+        <li>Output the highest score</li>
+      </ul>
+    </div>
+
+    <div class="code-checker" id="checker-6">
+      <div class="checker-header">
+        <span class="checker-dot dot-r"></span>
+        <span class="checker-dot dot-y"></span>
+        <span class="checker-dot dot-g"></span>
+        <span>Q7 — Write your pseudocode here</span>
+      </div>
+      <textarea class="pseudocode-textarea" id="editor-6" spellcheck="false"
+                autocomplete="off" autocapitalize="off">// Write your OCR pseudocode here
+</textarea>
+      <div class="checker-footer">
+        <button class="ac-btn" id="run-6" type="button">Run ▶</button>
+        <button class="ac-btn-secondary" id="clear-6" type="button">Clear</button>
+        <span id="run-status-6" style="font-size:0.75rem;color:var(--muted);"></span>
+      </div>
+    </div>
+
+    <div class="markscheme" id="ms-6">
+      <div class="ms-header">
+        <h3>Mark Scheme</h3>
+        <span class="ms-total">6 marks available</span>
+      </div>
+      <ul class="ms-list" id="ms-list-6">
+        <li class="ms-row" data-bp="0">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Declares a 1D array</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="1">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Opens <code>scores.txt</code> for reading using <code>openRead</code></span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="2">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Uses a loop with <code>.readLine()</code> to read each score and store it in the array using bracket access</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="3">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Closes the file with <code>.close()</code></span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="4">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Uses an <code>if</code> statement with a comparison to update the highest score when a higher value is found in the array</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="5">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Outputs the correct highest score (60 for the example file; 81 for 12 / 81 / 47 / 9 / 33)</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+      </ul>
+      <hr class="ms-divider">
+      <div class="ms-score" id="ms-score-6">— / 6 marks</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       Q8 — Save Review (7 marks) — function that writes to a file
+       ══════════════════════════════════════════════════════════ -->
+  <div class="panel" id="panel-7">
+    <div class="goal">Define a procedure that writes a song review to a file, then ask the user for a review and call the procedure.</div>
+
+    <div class="card">
+      <h2>Scenario</h2>
+      <p>A music streaming app lets users save a short review for a song. Each review is the song's title and a rating from 1 to 5. The reviews are saved to a file called <code>reviews.txt</code> so they can be read back later.</p>
+      <p>The procedure <code>saveReview()</code>:</p>
+      <ul>
+        <li>takes the song title and rating as parameters</li>
+        <li>opens <code>reviews.txt</code> for writing</li>
+        <li>writes the song title and rating to the file</li>
+        <li>closes the file.</li>
+      </ul>
+      <h2 style="margin-top:14px;">Your algorithm must:</h2>
+      <ul>
+        <li>Define the procedure <code>saveReview</code> with two parameters</li>
+        <li>Inside the procedure, open <code>reviews.txt</code> for writing, write both parameters to the file, and close it</li>
+        <li>Outside the procedure, ask the user for the song title and the rating</li>
+        <li>Call <code>saveReview</code> using the values entered by the user</li>
+      </ul>
+    </div>
+
+    <div class="code-checker" id="checker-7">
+      <div class="checker-header">
+        <span class="checker-dot dot-r"></span>
+        <span class="checker-dot dot-y"></span>
+        <span class="checker-dot dot-g"></span>
+        <span>Q8 — Write your pseudocode here</span>
+      </div>
+      <textarea class="pseudocode-textarea" id="editor-7" spellcheck="false"
+                autocomplete="off" autocapitalize="off">// Write your OCR pseudocode here
+</textarea>
+      <div class="checker-footer">
+        <button class="ac-btn" id="run-7" type="button">Run ▶</button>
+        <button class="ac-btn-secondary" id="clear-7" type="button">Clear</button>
+        <span id="run-status-7" style="font-size:0.75rem;color:var(--muted);"></span>
+      </div>
+    </div>
+
+    <div class="markscheme" id="ms-7">
+      <div class="ms-header">
+        <h3>Mark Scheme</h3>
+        <span class="ms-total">7 marks available</span>
+      </div>
+      <ul class="ms-list" id="ms-list-7">
+        <li class="ms-row" data-bp="0">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Defines a procedure (or function) using the <code>procedure</code> keyword with a name</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="1">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Valid parameters in brackets (two parameters for title and rating)</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="2">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Opens <code>reviews.txt</code> for writing using <code>openWrite</code></span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="3">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Writes both parameters to the file using <code>.writeLine()</code></span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="4">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Closes the file with <code>.close()</code></span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="5">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Asks the user for both the song title and the rating using <code>input()</code></span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="6">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Calls <code>saveReview</code> with the values entered by the user (program runs without errors)</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+      </ul>
+      <hr class="ms-divider">
+      <div class="ms-score" id="ms-score-7">— / 7 marks</div>
+    </div>
+  </div>
+
+</div><!-- /.page-wrap -->
+
+<div class="ac-toast" id="toast"></div>
+
+<script type="module">
+import { setupEditors, runPseudocode, clearSyntaxHint, refreshEditor, setFiles } from '../../pseudocode-editor.js';
+import { preload } from '../../pyodide-runner.js';
+
+// ── Constants ─────────────────────────────────────────────────
+const TASK_COUNT     = 8;
+const TOTAL_MARKS    = 40;
+const ACTIVITY_TITLE = 'File Handling Challenge';
+const STORE_NS = location.pathname;
+
+// ── Task definitions ───────────────────────────────────────────
+// Each task has:
+//   maxMarks  — total marks for this question
+//   tests     — array of { inputs: string[], files?: { name: content }, expected? }
+//   criteria  — array of { text, marks, check({src, runs}) → bool }
+//
+// src  = normalised (lowercase, comments stripped) pseudocode source
+// runs = [{ inputs, output, ok }, …] parallel to tests array
+
+const TASKS = [
+
+  // ── Q1: Save Username (4 marks) ─────────────────────────────
+  {
+    maxMarks: 4,
+    tests: [
+      { inputs: ['Alice'] },
+      { inputs: ['Bob']   },
+    ],
+    criteria: [
+      {
+        text: 'Asks the user for the username using input()',
+        marks: 1,
+        check: ({ src }) => /\binput\s*\(/.test(src),
+      },
+      {
+        text: 'Opens user.txt for writing using openWrite',
+        marks: 1,
+        check: ({ src }) => /openwrite\s*\(/.test(src) && /user\.txt/.test(src),
+      },
+      {
+        text: 'Writes the username to the file using .writeLine()',
+        marks: 1,
+        check: ({ src }) => /\.writeline\s*\(/.test(src),
+      },
+      {
+        text: 'Closes the file with .close()',
+        marks: 1,
+        check: ({ src, runs }) => /\.close\s*\(/.test(src) && runs[0].ok,
+      },
+    ],
+  },
+
+  // ── Q2: Display Welcome Message (4 marks) ───────────────────
+  {
+    maxMarks: 4,
+    tests: [
+      {
+        inputs: [],
+        files: { 'welcome.txt': 'Welcome to Year 11 Computing' },
+        expected: 'Welcome to Year 11 Computing',
+      },
+      {
+        inputs: [],
+        files: { 'welcome.txt': 'Have a great lesson today' },
+        expected: 'Have a great lesson today',
+      },
+    ],
+    criteria: [
+      {
+        text: 'Opens welcome.txt for reading using openRead',
+        marks: 1,
+        check: ({ src }) => /openread\s*\(/.test(src) && /welcome\.txt/.test(src),
+      },
+      {
+        text: 'Reads a line from the file using .readLine()',
+        marks: 1,
+        check: ({ src }) => /\.readline\s*\(/.test(src),
+      },
+      {
+        text: 'Outputs the line that was read',
+        marks: 1,
+        check: ({ runs }) =>
+          outHas(runs[0], 'Welcome to Year 11 Computing') &&
+          outHas(runs[1], 'Have a great lesson today'),
+      },
+      {
+        text: 'Closes the file with .close()',
+        marks: 1,
+        check: ({ src }) => /\.close\s*\(/.test(src),
+      },
+    ],
+  },
+
+  // ── Q3: Drone Pilot Logger (4 marks) ────────────────────────
+  {
+    maxMarks: 4,
+    tests: [
+      { inputs: ['JP670', '17/05/1986'] },
+      { inputs: ['SM720', '01/04/1976'] },
+    ],
+    criteria: [
+      {
+        text: 'Asks the user for both inputs (pilot code and date of birth)',
+        marks: 1,
+        check: ({ src }) => (src.match(/\binput\s*\(/g) || []).length >= 2,
+      },
+      {
+        text: 'Opens pilots.txt for writing using openWrite',
+        marks: 1,
+        check: ({ src }) => /openwrite\s*\(/.test(src) && /pilots\.txt/.test(src),
+      },
+      {
+        text: 'Writes both inputs to the file using .writeLine()',
+        marks: 1,
+        check: ({ src }) => /\.writeline\s*\(/.test(src),
+      },
+      {
+        text: 'Closes the file with .close()',
+        marks: 1,
+        check: ({ src, runs }) => /\.close\s*\(/.test(src) && runs[0].ok,
+      },
+    ],
+  },
+
+  // ── Q4: Read All Tasks (5 marks) ────────────────────────────
+  {
+    maxMarks: 5,
+    tests: [
+      {
+        inputs: [],
+        files: { 'tasks.txt': 'buy milk\nwalk dog\ncall mum' },
+        expected: ['buy milk', 'walk dog', 'call mum'],
+      },
+      {
+        inputs: [],
+        files: { 'tasks.txt': 'tidy bedroom\nfeed cat' },
+        expected: ['tidy bedroom', 'feed cat'],
+      },
+    ],
+    criteria: [
+      {
+        text: 'Opens tasks.txt for reading using openRead',
+        marks: 1,
+        check: ({ src }) => /openread\s*\(/.test(src) && /tasks\.txt/.test(src),
+      },
+      {
+        text: 'Attempts to use iteration (any loop present)',
+        marks: 1,
+        check: ({ src }) => /\bfor\b|\bwhile\b|\bdo\b/.test(src),
+      },
+      {
+        text: 'Uses .endOfFile() in the loop condition to stop at the end of the file',
+        marks: 1,
+        check: ({ src }) => /\.endoffile\s*\(/.test(src),
+      },
+      {
+        text: 'Reads each line with .readLine() and outputs every task',
+        marks: 1,
+        check: ({ src, runs }) =>
+          /\.readline\s*\(/.test(src) &&
+          outHas(runs[0], 'buy milk', 'walk dog', 'call mum') &&
+          outHas(runs[1], 'tidy bedroom', 'feed cat'),
+      },
+      {
+        text: 'Closes the file with .close()',
+        marks: 1,
+        check: ({ src }) => /\.close\s*\(/.test(src),
+      },
+    ],
+  },
+
+  // ── Q5: Customer Feedback Log (5 marks) ─────────────────────
+  {
+    maxMarks: 5,
+    tests: [
+      { inputs: ['Great service', 'Loved it', 'exit'], expected: '2' },
+      { inputs: ['OK', 'exit'],                        expected: '1' },
+    ],
+    criteria: [
+      {
+        text: 'Opens feedback.txt for writing using openWrite',
+        marks: 1,
+        check: ({ src }) => /openwrite\s*\(/.test(src) && /feedback\.txt/.test(src),
+      },
+      {
+        text: 'Uses a condition-controlled loop that stops when "exit" is entered',
+        marks: 1,
+        check: ({ src }) => (/\bwhile\b|\bdo\b/.test(src)) && /exit/.test(src),
+      },
+      {
+        text: 'Writes each comment to the file using .writeLine()',
+        marks: 1,
+        check: ({ src }) => /\.writeline\s*\(/.test(src),
+      },
+      {
+        text: 'Closes the file with .close()',
+        marks: 1,
+        check: ({ src }) => /\.close\s*\(/.test(src),
+      },
+      {
+        text: 'Outputs the correct count of comments saved (2 then 1)',
+        marks: 1,
+        check: ({ runs }) => outHas(runs[0], '2') && outHas(runs[1], '1'),
+      },
+    ],
+  },
+
+  // ── Q6: Library Lookup (5 marks) ────────────────────────────
+  {
+    maxMarks: 5,
+    tests: [
+      {
+        inputs: ['Coraline'],
+        files: { 'borrowed.txt': 'Holes\nCoraline\nMatilda\nSkellig' },
+        expected: 'found',
+      },
+      {
+        inputs: ['Hatchet'],
+        files: { 'borrowed.txt': 'Holes\nCoraline\nMatilda\nSkellig' },
+        expected: 'not found',
+      },
+    ],
+    criteria: [
+      {
+        text: 'Asks for a title with input() and opens borrowed.txt for reading using openRead',
+        marks: 1,
+        check: ({ src }) =>
+          /\binput\s*\(/.test(src) && /openread\s*\(/.test(src) && /borrowed\.txt/.test(src),
+      },
+      {
+        text: 'Uses a loop to read each line from the file using .readLine()',
+        marks: 1,
+        check: ({ src }) =>
+          /\bfor\b|\bwhile\b|\bdo\b/.test(src) && /\.readline\s*\(/.test(src),
+      },
+      {
+        text: 'Uses an if statement to compare each line with the title entered',
+        marks: 1,
+        check: ({ src }) => /\bif\b/.test(src),
+      },
+      {
+        text: 'Outputs the correct result for both cases (found / not found)',
+        marks: 1,
+        check: ({ runs }) => {
+          const o0 = (runs[0]?.ok ? runs[0].output || '' : '').toLowerCase();
+          const o1 = (runs[1]?.ok ? runs[1].output || '' : '').toLowerCase();
+          // Test 1 says "found" without saying "not found"; test 2 says "not found".
+          return o0.includes('found') && !o0.includes('not found') && o1.includes('not found');
+        },
+      },
+      {
+        text: 'Closes the file with .close()',
+        marks: 1,
+        check: ({ src }) => /\.close\s*\(/.test(src),
+      },
+    ],
+  },
+
+  // ── Q7: Top Scores (6 marks) — uses an array ────────────────
+  {
+    maxMarks: 6,
+    tests: [
+      {
+        inputs: [],
+        files: { 'scores.txt': '40\n25\n60\n35\n50' },
+        expected: '60',
+      },
+      {
+        inputs: [],
+        files: { 'scores.txt': '12\n81\n47\n9\n33' },
+        expected: '81',
+      },
+    ],
+    criteria: [
+      {
+        text: 'Declares a 1D array',
+        marks: 1,
+        check: ({ src }) => /\barray\b/.test(src),
+      },
+      {
+        text: 'Opens scores.txt for reading using openRead',
+        marks: 1,
+        check: ({ src }) => /openread\s*\(/.test(src) && /scores\.txt/.test(src),
+      },
+      {
+        text: 'Uses a loop with .readLine() and stores each score in the array using bracket access',
+        marks: 1,
+        check: ({ src }) =>
+          (/\bfor\b|\bwhile\b/.test(src)) &&
+          /\.readline\s*\(/.test(src) &&
+          /\[/.test(src),
+      },
+      {
+        text: 'Closes the file with .close()',
+        marks: 1,
+        check: ({ src }) => /\.close\s*\(/.test(src),
+      },
+      {
+        text: 'Uses an if with a comparison to find the highest value in the array',
+        marks: 1,
+        check: ({ src }) => /\bif\b/.test(src) && /[<>]/.test(src),
+      },
+      {
+        text: 'Outputs the correct highest score (60 then 81)',
+        marks: 1,
+        check: ({ runs }) => outHas(runs[0], '60') && outHas(runs[1], '81'),
+      },
+    ],
+  },
+
+  // ── Q8: Save Review (7 marks) — function that writes to a file
+  {
+    maxMarks: 7,
+    tests: [
+      { inputs: ['Stairway to Heaven', '5'] },
+      { inputs: ['Wonderwall',         '4'] },
+    ],
+    criteria: [
+      {
+        text: 'Defines a procedure (or function) using the procedure keyword with a name',
+        marks: 1,
+        check: ({ src }) => /\bprocedure\s+\w+/.test(src) || /\bfunction\s+\w+/.test(src),
+      },
+      {
+        text: 'Valid parameters in brackets (two parameters)',
+        marks: 1,
+        check: ({ src }) => /\b(?:procedure|function)\s+\w+\s*\(\s*\w+\s*,\s*\w+/.test(src),
+      },
+      {
+        text: 'Opens reviews.txt for writing using openWrite',
+        marks: 1,
+        check: ({ src }) => /openwrite\s*\(/.test(src) && /reviews\.txt/.test(src),
+      },
+      {
+        text: 'Writes both parameters to the file using .writeLine()',
+        marks: 1,
+        check: ({ src }) => /\.writeline\s*\(/.test(src),
+      },
+      {
+        text: 'Closes the file with .close()',
+        marks: 1,
+        check: ({ src }) => /\.close\s*\(/.test(src),
+      },
+      {
+        text: 'Asks the user for both the song title and the rating',
+        marks: 1,
+        check: ({ src }) => (src.match(/\binput\s*\(/g) || []).length >= 2,
+      },
+      {
+        text: 'Calls saveReview with the values entered (program runs without errors)',
+        marks: 1,
+        check: ({ src, runs }) => {
+          // Strip the definition signature so only the call site remains.
+          const withoutDef = src.replace(/\b(?:procedure|function)\s+savereview\s*\([^)]*\)/g, '');
+          return /\bsavereview\s*\(/.test(withoutDef) && runs[0].ok;
+        },
+      },
+    ],
+  },
+
+]; // end TASKS
+
+// ── State ──────────────────────────────────────────────────────
+const taskEarned    = new Array(TASK_COUNT).fill(0);
+const taskAttempted = new Array(TASK_COUNT).fill(false);
+
+// ── Helpers ────────────────────────────────────────────────────
+
+function normSrc(raw) {
+  return raw.replace(/\/\/[^\n]*/g, ' ').replace(/\s+/g, ' ').toLowerCase().trim();
+}
+
+function outHas(run, ...needles) {
+  if (!run || !run.ok || !run.output) return false;
+  const o = run.output.toLowerCase();
+  return needles.every(n => o.includes(n.toLowerCase()));
+}
+
+// ── Editor setup ───────────────────────────────────────────────
+for (let i = 0; i < TASK_COUNT; i++) {
+  const saved = localStorage.getItem(STORE_NS + ':e' + i);
+  if (saved !== null) document.getElementById('editor-' + i).value = saved;
+}
+setupEditors('.pseudocode-textarea');
+
+// ── Pyodide preload ────────────────────────────────────────────
+preload();
+
+// ── Restore mark scheme state ──────────────────────────────────
+for (let i = 0; i < TASK_COUNT; i++) {
+  const raw = localStorage.getItem(STORE_NS + ':ms' + i);
+  if (!raw) continue;
+  try {
+    const { earned, passed } = JSON.parse(raw);
+    taskEarned[i] = earned;
+    applyMarkscheme(i, passed, earned, TASKS[i].maxMarks);
+    updateTabState(i, earned, TASKS[i].maxMarks);
+  } catch (_) {}
+}
+updateProgress();
+
+// ── Tab switching ──────────────────────────────────────────────
+document.getElementById('tab-bar').addEventListener('click', e => {
+  const tab = e.target.closest('.tab-btn');
+  if (!tab) return;
+  const idx = +tab.dataset.idx;
+  document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  tab.classList.add('active');
+  document.getElementById('panel-' + idx).classList.add('active');
+  refreshEditor(document.getElementById('editor-' + idx));
+});
+
+// ── Run button wiring ──────────────────────────────────────────
+for (let idx = 0; idx < TASK_COUNT; idx++) {
+  const runBtn   = document.getElementById('run-' + idx);
+  const clearBtn = document.getElementById('clear-' + idx);
+  const statusEl = document.getElementById('run-status-' + idx);
+  const editorEl = document.getElementById('editor-' + idx);
+
+  runBtn.addEventListener('click', async () => {
+    await handleRun(idx, editorEl, runBtn, statusEl);
+  });
+
+  clearBtn.addEventListener('click', () => {
+    editorEl.value = '';
+    editorEl.dispatchEvent(new Event('input'));
+    resetMarkscheme(idx);
+    try {
+      localStorage.removeItem(STORE_NS + ':e' + idx);
+      localStorage.removeItem(STORE_NS + ':ms' + idx);
+    } catch (_) {}
+  });
+
+  let saveTimer;
+  editorEl.addEventListener('input', () => {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+      try { localStorage.setItem(STORE_NS + ':e' + idx, editorEl.value); } catch (_) {}
+    }, 500);
+  });
+}
+
+async function handleRun(idx, editorEl, runBtn, statusEl) {
+  const task = TASKS[idx];
+
+  runBtn.disabled = true;
+  statusEl.textContent = 'Running…';
+
+  const runs = [];
+  for (const test of task.tests) {
+    // Seed any input files this test needs (or clear leftover state).
+    setFiles(test.files || {});
+    const r = await runPseudocode(editorEl, { inputs: test.inputs });
+    runs.push({ inputs: test.inputs, output: r.output || '', ok: r.ok });
+  }
+
+  statusEl.textContent = '';
+  runBtn.disabled = false;
+  taskAttempted[idx] = true;
+
+  _renderTestOutput(editorEl, task.tests, runs);
+
+  if (!runs[0].ok && !runs[0].output) {
+    window.ActivityUI?.showToast('Fix the syntax error shown in the editor before checking marks.', 'warn');
+  }
+
+  const src = normSrc(editorEl.value);
+  let earned = 0;
+  const passed = task.criteria.map(c => {
+    let result = false;
+    try { result = !!c.check({ src, runs }); } catch (_) { result = false; }
+    if (result) earned += c.marks;
+    return result;
+  });
+
+  applyMarkscheme(idx, passed, earned, task.maxMarks);
+  try { localStorage.setItem(STORE_NS + ':ms' + idx, JSON.stringify({ earned, passed })); } catch (_) {}
+
+  taskEarned[idx] = earned;
+  updateTabState(idx, earned, task.maxMarks);
+  updateProgress();
+
+  const totalEarned = taskEarned.reduce((s, v) => s + v, 0);
+  window.Classroom?.submitGrade(
+    Math.round(totalEarned / TOTAL_MARKS * 100),
+    ACTIVITY_TITLE
+  );
+
+  if (totalEarned === TOTAL_MARKS) allComplete();
+}
+
+// ── Per-test coloured output ───────────────────────────────────
+
+function _renderTestOutput(editorEl, tests, runs) {
+  const outputPanel = editorEl.closest('.editor-wrap')?.querySelector('.output-panel');
+  if (!outputPanel) return;
+  outputPanel.classList.remove('error');
+  const content = outputPanel.querySelector('.output-content');
+  const inputRow = outputPanel.querySelector('.output-input-row');
+  if (inputRow) inputRow.hidden = true;
+  if (!content) return;
+
+  const SEP = '─'.repeat(44);
+  const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+  content.innerHTML = runs.map((run, i) => {
+    const test = tests[i];
+    const fileLabel = test.files
+      ? `file: ${Object.keys(test.files).join(', ')}`
+      : null;
+    const inputLabel = run.inputs.length === 0
+      ? null
+      : run.inputs.length === 1
+        ? `input: "${run.inputs[0]}"`
+        : `inputs: ${run.inputs.map(v => `"${v}"`).join(', ')}`;
+    const label = [fileLabel, inputLabel].filter(Boolean).join('  •  ') || '(no inputs)';
+
+    let testPassed;
+    if (!run.ok) {
+      testPassed = false;
+    } else if (test.expected !== undefined) {
+      const out = (run.output || '').toLowerCase();
+      const needles = Array.isArray(test.expected) ? test.expected : [test.expected];
+      testPassed = needles.every(n => out.includes(n.toLowerCase()));
+    } else {
+      testPassed = true;
+    }
+
+    const out = run.ok ? (run.output || '(no output)') : `⚠ ${run.output || 'Error — check syntax'}`;
+    const color = testPassed ? '#5eead4' : '#ff6b6b';
+    return `<span style="color:${color}">${esc(`Test ${i + 1}  (${label})\n${SEP}\n${out}`)}</span>`;
+  }).join('\n\n');
+}
+
+// ── Mark scheme DOM updates ────────────────────────────────────
+
+function applyMarkscheme(idx, passed, earned, maxMarks) {
+  const list = document.getElementById('ms-list-' + idx);
+  const rows = list.querySelectorAll('.ms-row');
+  rows.forEach((row, i) => {
+    const tick = row.querySelector('.ms-tick');
+    row.classList.remove('pass', 'fail');
+    if (passed[i]) {
+      row.classList.add('pass');
+      tick.textContent = '✓';
+    } else {
+      row.classList.add('fail');
+      tick.textContent = '✗';
+    }
+  });
+  const scoreEl = document.getElementById('ms-score-' + idx);
+  scoreEl.textContent = earned + ' / ' + maxMarks + ' mark' + (maxMarks === 1 ? '' : 's');
+  scoreEl.classList.toggle('full', earned === maxMarks);
+}
+
+function resetMarkscheme(idx) {
+  const list = document.getElementById('ms-list-' + idx);
+  list.querySelectorAll('.ms-row').forEach(row => {
+    row.classList.remove('pass', 'fail');
+    row.querySelector('.ms-tick').textContent = '○';
+  });
+  const scoreEl = document.getElementById('ms-score-' + idx);
+  scoreEl.textContent = '— / ' + TASKS[idx].maxMarks + ' mark' + (TASKS[idx].maxMarks === 1 ? '' : 's');
+  scoreEl.classList.remove('full');
+}
+
+// ── Tab state ──────────────────────────────────────────────────
+
+function updateTabState(idx, earned, maxMarks) {
+  const tab = document.querySelector('.tab-btn[data-idx="' + idx + '"]');
+  if (!tab) return;
+  tab.classList.remove('done-green', 'done-gold');
+  if (earned === maxMarks) {
+    tab.classList.add('done-green');
+  } else if (earned > 0) {
+    tab.classList.add('done-gold');
+  }
+}
+
+// ── Progress bar ───────────────────────────────────────────────
+
+function updateProgress() {
+  const totalEarned = taskEarned.reduce((s, v) => s + v, 0);
+  document.getElementById('progress-fill').style.width =
+    Math.round(totalEarned / TOTAL_MARKS * 100) + '%';
+  document.getElementById('progress-pct').textContent = totalEarned + ' / ' + TOTAL_MARKS;
+}
+
+// ── All tasks complete ─────────────────────────────────────────
+
+function allComplete() {
+  document.getElementById('done-banner').classList.add('show');
+  window.ActivityUI?.launchCelebration();
+}
+
+// ── Toast ──────────────────────────────────────────────────────
+
+window.showToast = (msg, type = '') => window.ActivityUI?.showToast(msg, type);
+</script>
+
+<script src="../../activity-ui.js"></script>
+<!-- Google Classroom integration -->
+<script src="../../classroom.js"></script>
+</body>
+</html>
