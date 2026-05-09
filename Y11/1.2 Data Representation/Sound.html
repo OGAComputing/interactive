@@ -1,0 +1,1250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- ACTIVITY
+title:  Data Representation: Sound
+type:   Practice
+stars:  4
+desc:   OCR J277 – analogue to digital conversion, sampling, bit depth, sample rate, interactive wave visualiser, live sound quality explorer, and file size calculations.
+color:  blue
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Data Representation: Sound — Year 11</title>
+<link rel="stylesheet" href="../../shared.css">
+<style>
+  header { background:var(--surface); border-bottom:2px solid var(--surface-mid); padding:12px 20px; position:sticky; top:0; z-index:100; box-shadow:0 2px 12px rgba(0,0,0,.35); }
+  .header-progress { display:flex; align-items:center; gap:10px; }
+  .score-pct { font-family:var(--font-head,monospace); font-size:.8rem; color:var(--accent); }
+  .page-wrap { padding:28px 16px 60px; }
+  .page-title { font-size:1.35rem; font-weight:700; text-align:center; color:var(--accent-light); margin-bottom:4px; }
+  .page-subtitle { text-align:center; font-size:.82rem; color:var(--muted); margin-bottom:28px; }
+
+  .tabs { display:flex; justify-content:center; gap:8px; flex-wrap:wrap; margin-bottom:28px; }
+  .tab-btn { padding:8px 18px; border:2px solid var(--surface-mid); border-radius:20px; background:var(--surface); color:var(--muted); font-family:var(--font-body); font-size:.83rem; font-weight:600; cursor:pointer; transition:border-color .2s,background .2s,color .2s; user-select:none; }
+  .tab-btn:hover:not(.active) { border-color:var(--accent); color:var(--text); }
+  .tab-btn.active  { background:var(--accent);  border-color:var(--accent);  color:var(--text-inv); }
+  .tab-btn.done-gold  { background:var(--gold);  border-color:var(--gold);   color:#111; }
+  .tab-btn.done-green { background:var(--green); border-color:var(--green);  color:#fff; }
+
+  .panel { display:none; max-width:900px; margin:0 auto; animation:ac-fade-in .2s ease; }
+  .panel.active { display:block; }
+
+  .card { background:var(--surface); border-left:4px solid var(--accent); border-radius:8px; padding:18px 22px; margin-bottom:22px; }
+  .card h2 { font-size:.82rem; font-weight:700; color:var(--accent); text-transform:uppercase; letter-spacing:.8px; margin-bottom:12px; }
+
+  .goal { background:var(--surface); border-left:4px solid var(--accent); border-radius:0 8px 8px 0; padding:10px 16px; font-size:.9rem; font-weight:600; color:var(--text); margin-bottom:20px; }
+
+  .feedback { min-height:1.4em; font-size:.88rem; font-weight:600; margin-top:12px; }
+  .feedback.correct { color:var(--green); }
+  .feedback.wrong   { color:var(--red); animation:ac-shake .35s ease; }
+
+  .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:14px; }
+
+  /* Key definition callout */
+  .def-box {
+    background: color-mix(in srgb, var(--accent) 10%, var(--surface));
+    border: 2px solid var(--accent);
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin: 0 0 18px;
+    line-height: 1.85;
+  }
+  .def-box .def-title {
+    font-size: .72rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em;
+    color:var(--accent); margin-bottom:6px;
+  }
+  .def-box .def-body { font-size:.95rem; color:var(--text); }
+  .def-box em { font-style:normal; font-weight:700; color:var(--gold); text-decoration:underline dotted 2px; }
+
+  /* How-to */
+  .how-to { font-size:.85rem; color:var(--muted); margin-bottom:14px; padding:10px 12px; background:var(--surface-mid); border-radius:8px; line-height:1.6; }
+  .how-to strong { color:var(--text); }
+
+  /* Gap fill */
+  .gap-text { font-size:.93rem; line-height:2.4; color:var(--text); }
+  .blank {
+    display:inline-block; min-width:100px; padding:2px 10px;
+    border-bottom:2px solid var(--accent); border-radius:0;
+    cursor:pointer; text-align:center; color:var(--muted); font-style:italic;
+    transition:background .15s, border-color .15s;
+    vertical-align:bottom;
+  }
+  .blank.filled { color:var(--text); font-style:normal; font-weight:700; background:color-mix(in srgb,var(--accent) 14%,transparent); border-radius:4px; }
+  .blank.ok   { border-color:var(--green); background:color-mix(in srgb,var(--green) 12%,transparent); color:var(--green); font-style:normal; font-weight:700; border-radius:4px; }
+  .blank.bad  { border-color:var(--red);   background:color-mix(in srgb,var(--red)   10%,transparent); color:var(--red);   font-style:normal; font-weight:700; border-radius:4px; }
+
+  .word-pool { display:flex; flex-wrap:wrap; gap:8px; margin:14px 0; padding:12px; background:var(--surface-mid); border-radius:8px; min-height:46px; }
+  .chip { padding:6px 14px; background:var(--surface); border:2px solid var(--surface-mid); border-radius:20px; cursor:pointer; font-size:.87rem; font-weight:600; color:var(--text); transition:border-color .15s,background .15s; user-select:none; }
+  .chip:hover { border-color:var(--accent); }
+  .chip.sel { border-color:var(--gold); background:color-mix(in srgb,var(--gold) 15%,var(--surface)); color:var(--gold); }
+
+  /* Wave visualiser */
+  .wave-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:14px 0; }
+  @media(max-width:580px){ .wave-row { grid-template-columns:1fr; } }
+  .wave-box { background:var(--bg); border:1px solid var(--surface-mid); border-radius:8px; overflow:hidden; }
+  .wave-lbl { padding:6px 12px; font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; border-bottom:1px solid var(--surface-mid); }
+  .wave-lbl.ana { color:#60a5fa; }
+  .wave-lbl.dig { color:var(--gold); }
+  canvas { display:block; width:100%; image-rendering:auto; }
+
+  /* Sliders */
+  .slider-row { display:flex; gap:16px; flex-wrap:wrap; margin:12px 0; }
+  .slider-grp { flex:1; min-width:200px; }
+  .slider-grp label { display:block; font-size:.78rem; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.07em; margin-bottom:5px; }
+  .slider-val { font-family:var(--font-head,monospace); font-size:.88rem; color:var(--accent); margin-left:6px; }
+  input[type=range] { width:100%; accent-color:var(--accent); cursor:pointer; }
+
+  /* Stats strip */
+  .stat-row { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin:12px 0; }
+  .stat-card { background:var(--surface-mid); border-radius:8px; padding:10px; text-align:center; }
+  .stat-val  { font-size:1.25rem; font-weight:700; color:var(--accent); font-family:var(--font-head,monospace); }
+  .stat-lbl  { font-size:.68rem; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; margin-top:2px; }
+
+  /* MCQ options */
+  .mcq-opt {
+    display:flex; align-items:center; gap:12px;
+    padding:10px 14px; border:2px solid var(--surface-mid); border-radius:8px;
+    margin-bottom:8px; cursor:pointer; transition:border-color .15s,background .15s;
+    font-size:.88rem; user-select:none;
+  }
+  .mcq-opt:hover { border-color:var(--accent); }
+  .mcq-opt.sel   { border-color:var(--accent); background:color-mix(in srgb,var(--accent) 10%,transparent); }
+  .mcq-opt.right { border-color:var(--green);  background:color-mix(in srgb,var(--green)  12%,transparent); }
+  .mcq-opt.wrong { border-color:var(--red);    background:color-mix(in srgb,var(--red)    10%,transparent); }
+  .mcq-dot { width:18px; height:18px; border:2px solid var(--surface-mid); border-radius:50%; flex-shrink:0; transition:border-color .15s,background .15s; }
+  .mcq-opt.sel .mcq-dot { border-color:var(--accent); background:var(--accent); }
+  .q-card { border:1px solid var(--surface-mid); border-radius:8px; padding:12px; margin-bottom:12px; }
+  .q-card.bad { border-color:var(--red); background:rgba(220,38,38,.07); }
+
+  /* Sound lab */
+  .quality-meter { margin:14px 0; padding:12px 16px; background:var(--surface-mid); border-radius:8px; }
+  .qm-lbl { font-size:.72rem; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.07em; margin-bottom:6px; }
+  .qm-track { height:12px; background:var(--bg); border-radius:6px; overflow:hidden; margin-bottom:6px; }
+  .qm-fill  { height:100%; border-radius:6px; transition:width .35s ease, background .35s ease; }
+  .qm-desc  { font-size:.85rem; font-weight:600; }
+  .qm-size  { font-size:.78rem; color:var(--muted); margin-top:4px; }
+
+  /* Effects table */
+  .eff-table { width:100%; border-collapse:collapse; font-size:.86rem; margin:10px 0; }
+  .eff-table th { background:var(--surface-mid); color:var(--accent); font-size:.72rem; text-transform:uppercase; letter-spacing:.07em; padding:9px 6px; text-align:center; border:1px solid var(--surface-mid); }
+  .eff-table th:first-child { text-align:left; }
+  .eff-table td { padding:10px 6px; border:1px solid var(--surface-mid); text-align:center; vertical-align:middle; }
+  .eff-table td:first-child { text-align:left; font-weight:600; color:var(--text); }
+  .eff-table tr:hover td { background:color-mix(in srgb,var(--accent) 4%,transparent); }
+
+  .tk { width:30px; height:30px; border:2px solid var(--surface-mid); border-radius:6px; background:var(--bg); cursor:pointer; font-size:.95rem; transition:border-color .15s,background .15s; display:inline-flex; align-items:center; justify-content:center; }
+  .tk.on    { border-color:var(--accent); background:color-mix(in srgb,var(--accent) 18%,transparent); }
+  .tk.right { border-color:var(--green);  background:color-mix(in srgb,var(--green)  18%,transparent); }
+  .tk.wrong { border-color:var(--red);    background:color-mix(in srgb,var(--red)    15%,transparent); }
+  .tk.miss  { border-color:var(--green);  background:color-mix(in srgb,var(--green)   9%,transparent); opacity:.75; }
+
+  /* TF buttons */
+  .tf-row { display:flex; gap:8px; margin-top:8px; }
+  .tf-btn { padding:6px 18px; border:2px solid var(--surface-mid); border-radius:20px; background:var(--bg); color:var(--text); font-size:.85rem; font-weight:700; cursor:pointer; transition:border-color .15s,background .15s; }
+  .tf-btn:hover { border-color:var(--accent); }
+  .tf-btn.on    { border-color:var(--accent); background:color-mix(in srgb,var(--accent) 15%,transparent); color:var(--accent); }
+  .tf-btn.right { border-color:var(--green);  background:color-mix(in srgb,var(--green)  15%,transparent); color:var(--green); }
+  .tf-btn.wrong { border-color:var(--red);    background:color-mix(in srgb,var(--red)    12%,transparent); color:var(--red); }
+
+  /* Calc */
+  .formula-box { background:var(--surface-mid); border-radius:10px; padding:14px 18px; margin:10px 0; font-size:.9rem; }
+  .formula { color:var(--accent); font-weight:700; font-family:var(--font-head,monospace); margin-bottom:4px; }
+  .calc-step { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:10px 0; font-size:.88rem; }
+  .calc-step span { color:var(--muted); }
+  .calc-input { width:130px; padding:6px 10px; border:2px solid var(--surface-mid); border-radius:6px; background:var(--bg); color:var(--text); font-family:var(--font-head,monospace); font-size:.88rem; text-align:right; }
+  .calc-input:focus { outline:none; border-color:var(--accent); }
+  .calc-input.ok  { border-color:var(--green); background:color-mix(in srgb,var(--green) 8%,var(--bg)); }
+  .calc-input.bad { border-color:var(--red);   background:color-mix(in srgb,var(--red)   8%,var(--bg)); }
+  .ac-input { width:100%; max-width:400px; padding:8px 10px; border:2px solid var(--surface-mid); border-radius:7px; background:var(--bg); color:var(--text); font-family:var(--font-body); font-size:.85rem; }
+  .ac-input:focus { outline:none; border-color:var(--accent); }
+  .ac-input.ok  { border-color:var(--green); background:color-mix(in srgb,var(--green) 8%,var(--bg)); }
+  .ac-input.bad { border-color:var(--red);   background:color-mix(in srgb,var(--red)   8%,var(--bg)); }
+  .tf-correction { margin-top:10px; padding:10px 12px; background:color-mix(in srgb,var(--accent) 6%,var(--surface)); border-radius:6px; border-left:3px solid var(--accent); }
+  .tf-correction label { display:block; font-size:.8rem; color:var(--muted); margin-bottom:6px; }
+  .tf-key { font-weight:700; color:var(--warn, #f97316); }
+
+  /* Mark scheme clinic */
+  .ms-q-wrapper { border:1px solid var(--surface-mid); border-radius:12px; padding:22px 24px; margin-bottom:22px; }
+  .ms-q-wrapper:last-child { margin-bottom:0; }
+  .ms-q-num { display:block; font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; color:var(--accent); margin-bottom:14px; }
+  .ms-q-box { background:var(--surface-mid); border-left:4px solid var(--accent); border-radius:8px; padding:14px 18px; margin-bottom:14px; font-size:.92rem; line-height:1.75; }
+  .qhead { display:block; font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; color:var(--accent); margin-bottom:8px; }
+  .ms-student { background:color-mix(in srgb,var(--green) 5%,var(--bg)); border:1.5px solid var(--green); border-radius:8px; padding:14px 18px; margin-bottom:14px; font-size:.93rem; line-height:1.9; font-style:italic; }
+  .ms-student::before { content:'STUDENT RESPONSE'; display:block; font-size:.7rem; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--green); margin-bottom:8px; font-style:normal; opacity:.8; }
+  .ms-pts-lbl { display:block; font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; color:var(--muted); margin-bottom:12px; }
+  .ms-point { display:flex; align-items:flex-start; gap:12px; padding:12px 16px; margin-bottom:8px; border-radius:8px; border:1.5px solid var(--surface-mid); background:var(--surface); cursor:pointer; transition:border-color .2s,background .2s; }
+  .ms-point:hover:not(.ms-ok):not(.ms-err) { border-color:var(--accent); }
+  .ms-point input[type=checkbox] { margin-top:3px; flex-shrink:0; accent-color:var(--accent); width:17px; height:17px; cursor:pointer; }
+  .ms-point .pcode { font-family:var(--font-head,monospace); font-size:.75rem; color:var(--accent); flex-shrink:0; padding-top:2px; min-width:36px; }
+  .ms-point .ptext { font-size:.88rem; color:var(--text); line-height:1.5; }
+  .ms-point.ms-ok  { border-color:var(--green); background:color-mix(in srgb,var(--green) 8%,var(--surface)); }
+  .ms-point.ms-err { border-color:var(--red);   background:color-mix(in srgb,var(--red)   6%,var(--surface)); }
+  .ms-fb { margin-top:14px; padding:14px 18px; border-radius:8px; font-size:.88rem; line-height:1.7; display:none; }
+  .ms-fb.show   { display:block; }
+  .ms-fb.fb-ok  { background:color-mix(in srgb,var(--green) 8%,var(--surface)); border:1px solid var(--green); }
+  .ms-fb.fb-err { background:color-mix(in srgb,var(--red)   5%,var(--surface)); border:1px solid var(--red); }
+
+  /* Sentence tagger (Part A) */
+  .tag-btn { padding:6px 14px; border:2px solid var(--surface-mid); border-radius:20px; background:var(--bg); color:var(--muted); font-size:.82rem; font-weight:600; cursor:pointer; transition:border-color .15s,background .15s,color .15s; }
+  .tag-btn:hover:not(:disabled) { border-color:var(--accent); color:var(--text); }
+  .tag-btn:disabled { opacity:.5; cursor:default; }
+  .tag-btn.tag-right { border-color:var(--green); background:color-mix(in srgb,var(--green) 15%,transparent); color:var(--green); }
+  .tag-btn.tag-wrong { border-color:var(--red);   background:color-mix(in srgb,var(--red)   12%,transparent); color:var(--red); }
+  .sent-explain { margin-top:8px; padding:8px 12px; border-radius:6px; font-size:.82rem; line-height:1.55; display:none; }
+  .sent-explain.exp-ok  { display:block; background:color-mix(in srgb,var(--green) 8%,var(--surface)); border-left:3px solid var(--green); }
+  .sent-explain.exp-bad { display:block; background:color-mix(in srgb,var(--red)   8%,var(--surface)); border-left:3px solid var(--red); }
+</style>
+</head>
+<body>
+
+<div id="done-banner" class="ac-banner gold">🏆 All tasks complete — excellent work!</div>
+
+<header>
+  <div class="header-progress">
+    <div class="ac-progress-bar" style="flex:1;"><div class="ac-progress-fill" id="progress-fill"></div></div>
+    <span class="score-pct" id="progress-pct">0%</span>
+  </div>
+</header>
+
+<div class="page-wrap">
+  <h2 class="page-title">Data Representation: Sound</h2>
+  <p class="page-subtitle">1.2 Data Representation — OCR J277</p>
+
+  <div class="tabs" id="tab-bar">
+    <button class="tab-btn active" data-idx="0">Task 1 — Key Terms</button>
+    <button class="tab-btn"        data-idx="1">Task 2 — Wave Visualiser</button>
+    <button class="tab-btn"        data-idx="2">Task 3 — Sound Lab</button>
+    <button class="tab-btn"        data-idx="3">Task 4 — Effects Table</button>
+    <button class="tab-btn"        data-idx="4">Task 5 — File Size</button>
+    <button class="tab-btn"        data-idx="5">Task 6 — Exam Clinic</button>
+  </div>
+
+  <!-- ── Task 1: Gap Fill ──────────────────────────────────── -->
+  <div class="panel active" id="panel-0">
+    <div class="goal">🎯 Complete the description of how analogue sound is converted and stored as digital data.</div>
+
+    <div class="def-box">
+      <div class="def-title">★ Core definition — commit this to memory</div>
+      <div class="def-body">
+        "Sampling is when the <em>amplitude</em> of the sound wave is measured at <em>regular intervals</em>."
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Fill in the Gaps</h2>
+      <p class="how-to"><strong>How to play:</strong> Click a word from the pool to select it (it turns gold), then click a blank to place it. Click a filled blank to return the word to the pool.</p>
+
+      <div class="gap-text" id="gap-text">
+        An <span class="blank" data-answer="analogue">___</span> sound wave needs to be converted into a digital sound wave.<br><br>
+        Sound <span class="blank" data-answer="sampling">___</span> is when the amplitude of the sound wave is measured at set intervals.<br><br>
+        The <span class="blank" data-answer="sample rate">___</span> is the number of times a second the sound wave is measured. This is given in Hertz.<br><br>
+        Each amplitude is given a <span class="blank" data-answer="unique">___</span> binary number.
+        The number of bits allocated to each sample is the <span class="blank" data-answer="bit depth">___</span>.<br><br>
+        The <span class="blank" data-answer="higher">___</span> the number of bits, the wider the range of amplitudes that can be measured.
+      </div>
+
+      <div class="word-pool" id="word-pool"></div>
+    </div>
+
+    <div class="row">
+      <button class="ac-btn" onclick="checkTask(0)">Check Answers</button>
+      <button class="ac-btn-secondary" onclick="resetGapFill()">Reset</button>
+    </div>
+    <div class="feedback" id="feedback-0"></div>
+  </div>
+
+  <!-- ── Task 2: Wave Visualiser ───────────────────────────── -->
+  <div class="panel" id="panel-1">
+    <div class="goal">🎯 Explore how sample rate and bit depth affect the digital representation of a sound wave.</div>
+
+    <div class="card">
+      <h2>Analogue vs Digital Wave</h2>
+      <p style="font-size:.85rem; color:var(--muted); margin-bottom:12px;">
+        Adjust the sliders and watch how the digital wave (right) compares to the original analogue wave (left).
+        The <span style="color:#60a5fa; font-weight:700;">blue ghost</span> on the right shows the original for comparison.
+        Red dots are the sample points. The <span style="color:var(--gold); font-weight:700;">gold stepped line</span> is what the computer stores.
+      </p>
+
+      <div class="wave-row">
+        <div class="wave-box">
+          <div class="wave-lbl ana">Analogue — original continuous wave</div>
+          <canvas id="cv-ana" width="400" height="170"></canvas>
+        </div>
+        <div class="wave-box">
+          <div class="wave-lbl dig" id="dig-lbl">Digital — sampled approximation</div>
+          <canvas id="cv-dig" width="400" height="170"></canvas>
+        </div>
+      </div>
+
+      <div class="slider-row">
+        <div class="slider-grp">
+          <label>Sample Rate: <span class="slider-val" id="sr-lbl">8 kHz — Low</span></label>
+          <input type="range" id="sr-sl" min="0" max="3" value="1" step="1" oninput="refreshWaves()">
+        </div>
+        <div class="slider-grp">
+          <label>Bit Depth: <span class="slider-val" id="bd-lbl">4-bit (16 levels)</span></label>
+          <input type="range" id="bd-sl" min="0" max="3" value="1" step="1" oninput="refreshWaves()">
+        </div>
+      </div>
+
+      <div class="stat-row">
+        <div class="stat-card"><div class="stat-val" id="st-samples">8</div><div class="stat-lbl">Sample points shown</div></div>
+        <div class="stat-card"><div class="stat-val" id="st-levels">16</div><div class="stat-lbl">Amplitude levels</div></div>
+        <div class="stat-card"><div class="stat-val" id="st-acc">25%</div><div class="stat-lbl">Approx. accuracy</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>What Do You Observe?</h2>
+      <div class="q-card" id="obs-q1-card">
+        <p style="font-size:.88rem; margin-bottom:10px;">When you <strong>increase the sample rate</strong>, what happens to the digital wave?</p>
+        <div class="mcq-opt" data-q="obs1" data-v="a" onclick="pickMCQ(this)"><div class="mcq-dot"></div>The wave becomes less accurate and more distorted</div>
+        <div class="mcq-opt" data-q="obs1" data-v="b" onclick="pickMCQ(this)"><div class="mcq-dot"></div>The wave has more sample points and better follows the analogue wave in time</div>
+        <div class="mcq-opt" data-q="obs1" data-v="c" onclick="pickMCQ(this)"><div class="mcq-dot"></div>The height of each sample becomes more precise</div>
+        <div class="mcq-opt" data-q="obs1" data-v="d" onclick="pickMCQ(this)"><div class="mcq-dot"></div>The number of amplitude levels increases</div>
+      </div>
+
+      <div class="q-card" id="obs-q2-card">
+        <p style="font-size:.88rem; margin-bottom:10px;">When you <strong>increase the bit depth</strong>, what happens to the digital wave?</p>
+        <div class="mcq-opt" data-q="obs2" data-v="a" onclick="pickMCQ(this)"><div class="mcq-dot"></div>More samples are taken per second — the time accuracy improves</div>
+        <div class="mcq-opt" data-q="obs2" data-v="b" onclick="pickMCQ(this)"><div class="mcq-dot"></div>The amplitude becomes smoother — each sample can be stored more precisely</div>
+        <div class="mcq-opt" data-q="obs2" data-v="c" onclick="pickMCQ(this)"><div class="mcq-dot"></div>The frequency of the wave increases</div>
+        <div class="mcq-opt" data-q="obs2" data-v="d" onclick="pickMCQ(this)"><div class="mcq-dot"></div>The sample rate also automatically increases</div>
+      </div>
+    </div>
+
+    <div class="row">
+      <button class="ac-btn" onclick="checkTask(1)">Check Answers</button>
+    </div>
+    <div class="feedback" id="feedback-1"></div>
+  </div>
+
+  <!-- ── Task 3: Sound Lab ─────────────────────────────────── -->
+  <div class="panel" id="panel-2">
+    <div class="goal">🎯 Hear the real effect of sample rate and bit depth on sound quality — effects are exaggerated for clarity.</div>
+
+    <div class="card">
+      <h2>Sound Quality Explorer</h2>
+      <p class="how-to"><strong>Instructions:</strong> Set the sliders, then click Play to hear a 440 Hz tone (A4 note) with those settings applied. Try extremes first — set both to minimum, listen, then set both to maximum.</p>
+
+      <div class="slider-row">
+        <div class="slider-grp">
+          <label>Sample Rate: <span class="slider-val" id="lab-sr-lbl">8 kHz</span></label>
+          <input type="range" id="lab-sr" min="0" max="3" value="1" step="1" oninput="updateLabUI()">
+        </div>
+        <div class="slider-grp">
+          <label>Bit Depth: <span class="slider-val" id="lab-bd-lbl">4-bit</span></label>
+          <input type="range" id="lab-bd" min="0" max="3" value="1" step="1" oninput="updateLabUI()">
+        </div>
+      </div>
+
+      <div class="quality-meter">
+        <div class="qm-lbl">Estimated Quality</div>
+        <div class="qm-track"><div class="qm-fill" id="qm-fill" style="width:25%; background:var(--gold);"></div></div>
+        <div class="qm-desc" id="qm-desc">Low — noticeable distortion</div>
+        <div class="qm-size" id="qm-size">Estimated file size for 1 min (mono): ~3.75 MB</div>
+      </div>
+
+      <div class="row" style="margin-top:0;">
+        <button class="ac-btn" id="play-btn" onclick="playTone()" style="padding:12px 32px; font-size:1rem;">▶ Play Tone</button>
+        <span style="font-size:.78rem; color:var(--muted);">Plays for ~3 seconds — pitch sweeps up and down</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Observations</h2>
+      <div class="q-card" id="sq1-card">
+        <p style="font-size:.88rem; margin-bottom:10px;">Which combination produces the <strong>best quality</strong> sound?</p>
+        <div class="mcq-opt" data-q="sq1" data-v="a" onclick="pickMCQ(this)"><div class="mcq-dot"></div>Low sample rate + low bit depth</div>
+        <div class="mcq-opt" data-q="sq1" data-v="b" onclick="pickMCQ(this)"><div class="mcq-dot"></div>High sample rate + low bit depth</div>
+        <div class="mcq-opt" data-q="sq1" data-v="c" onclick="pickMCQ(this)"><div class="mcq-dot"></div>Low sample rate + high bit depth</div>
+        <div class="mcq-opt" data-q="sq1" data-v="d" onclick="pickMCQ(this)"><div class="mcq-dot"></div>High sample rate + high bit depth</div>
+      </div>
+
+      <div class="q-card" id="sq2-card">
+        <p style="font-size:.88rem; margin-bottom:10px;">What is the <strong>trade-off</strong> of using a higher sample rate and higher bit depth?</p>
+        <div class="mcq-opt" data-q="sq2" data-v="a" onclick="pickMCQ(this)"><div class="mcq-dot"></div>The pitch of the sound increases</div>
+        <div class="mcq-opt" data-q="sq2" data-v="b" onclick="pickMCQ(this)"><div class="mcq-dot"></div>The file size increases because more data is stored per second</div>
+        <div class="mcq-opt" data-q="sq2" data-v="c" onclick="pickMCQ(this)"><div class="mcq-dot"></div>The duration of the recording is automatically reduced</div>
+        <div class="mcq-opt" data-q="sq2" data-v="d" onclick="pickMCQ(this)"><div class="mcq-dot"></div>The amplitude of the sound decreases</div>
+      </div>
+    </div>
+
+    <div class="row">
+      <button class="ac-btn" onclick="checkTask(2)">Check Answers</button>
+    </div>
+    <div class="feedback" id="feedback-2"></div>
+  </div>
+
+  <!-- ── Task 4: Effects Table + True/False ────────────────── -->
+  <div class="panel" id="panel-3">
+    <div class="goal">🎯 Identify the effects of changing sample rate, bit depth, and duration on a sound file.</div>
+
+    <div class="card">
+      <h2>Tick the Correct Effects</h2>
+      <p class="how-to"><strong>Instructions:</strong> For each change, tick <em>all</em> effects that apply. Some rows need more than one tick. Click again to un-tick.</p>
+
+      <table class="eff-table">
+        <thead>
+          <tr>
+            <th style="min-width:180px;">Change</th>
+            <th>File size<br>increases</th>
+            <th>File size<br>decreases</th>
+            <th>Accuracy<br>increases</th>
+            <th>Accuracy<br>decreases</th>
+          </tr>
+        </thead>
+        <tbody id="eff-tbody">
+          <tr>
+            <td>Duration: 10 minutes → 20 minutes</td>
+            <td><button class="tk" data-r="0" data-c="0" onclick="toggleTk(this)"></button></td>
+            <td><button class="tk" data-r="0" data-c="1" onclick="toggleTk(this)"></button></td>
+            <td><button class="tk" data-r="0" data-c="2" onclick="toggleTk(this)"></button></td>
+            <td><button class="tk" data-r="0" data-c="3" onclick="toggleTk(this)"></button></td>
+          </tr>
+          <tr>
+            <td>Sample rate: 44 kHz → 8 kHz</td>
+            <td><button class="tk" data-r="1" data-c="0" onclick="toggleTk(this)"></button></td>
+            <td><button class="tk" data-r="1" data-c="1" onclick="toggleTk(this)"></button></td>
+            <td><button class="tk" data-r="1" data-c="2" onclick="toggleTk(this)"></button></td>
+            <td><button class="tk" data-r="1" data-c="3" onclick="toggleTk(this)"></button></td>
+          </tr>
+          <tr>
+            <td>Bit depth: 8 bits → 16 bits</td>
+            <td><button class="tk" data-r="2" data-c="0" onclick="toggleTk(this)"></button></td>
+            <td><button class="tk" data-r="2" data-c="1" onclick="toggleTk(this)"></button></td>
+            <td><button class="tk" data-r="2" data-c="2" onclick="toggleTk(this)"></button></td>
+            <td><button class="tk" data-r="2" data-c="3" onclick="toggleTk(this)"></button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>True or False?</h2>
+      <p class="how-to"><strong>Instructions:</strong> Click True or False for each statement.</p>
+      <div id="tf-wrap"></div>
+    </div>
+
+    <div class="row">
+      <button class="ac-btn" onclick="checkTask(3)">Check Answers</button>
+    </div>
+    <div class="feedback" id="feedback-3"></div>
+  </div>
+
+  <!-- ── Task 5: File Size Calculation ─────────────────────── -->
+  <div class="panel" id="panel-4">
+    <div class="goal">🎯 Use the file size formula to calculate the size of sound recordings.</div>
+
+    <div class="card">
+      <h2>The Formula</h2>
+      <div class="formula-box">
+        <div class="formula">File size (bits) = Sample Rate (Hz) × Bit Depth × Duration (seconds)</div>
+        <div style="font-size:.8rem; color:var(--muted); margin-top:6px;">÷ 8 → bytes &nbsp;|&nbsp; ÷ 1,024 → KB &nbsp;|&nbsp; ÷ 1,024 → MB</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Question 1 — Step by Step</h2>
+      <p style="font-size:.88rem; line-height:1.7; margin-bottom:14px;">
+        A <strong>30-second</strong> mono recording is made at a sample rate of <strong>44,100 Hz</strong> using a bit depth of <strong>16 bits</strong>.
+        Work through each step.
+      </p>
+      <div class="q-card" id="cq1">
+        <div class="calc-step">
+          <span>Step 1 — bits per second:</span>
+          <span>44,100 × 16 =</span>
+          <input class="calc-input" id="c1s1" type="number" placeholder="?">
+          <span>bits/sec</span>
+        </div>
+        <div class="calc-step">
+          <span>Step 2 — total bits (× 30 sec):</span>
+          <input class="calc-input" id="c1s2" type="number" placeholder="?">
+          <span>bits</span>
+        </div>
+        <div class="calc-step">
+          <span>Step 3 — convert to bytes (÷ 8):</span>
+          <input class="calc-input" id="c1s3" type="number" placeholder="?">
+          <span>bytes</span>
+        </div>
+        <div class="calc-step">
+          <span>Step 4 — convert to MB (÷ 1024 ÷ 1024):</span>
+          <input class="calc-input" id="c1s4" type="number" step="0.01" placeholder="? MB">
+          <span>MB</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Question 2 — Full Calculation</h2>
+      <p style="font-size:.88rem; line-height:1.7; margin-bottom:14px;">
+        A <strong>30-second</strong> section of audio is sampled at <strong>48,000 Hz</strong> using <strong>24 bits per sample</strong>.
+        Calculate the file size in MB.
+      </p>
+      <div class="q-card" id="cq2">
+        <div class="calc-step">
+          <span>Show your working:</span>
+          <input class="ac-input" id="c2work" type="text" placeholder="e.g. 48000 × 24 × 30 ÷ 8 ÷ 1024 ÷ 1024" style="font-size:.82rem;">
+        </div>
+        <div class="calc-step" style="margin-top:6px;">
+          <span>Answer:</span>
+          <input class="calc-input" id="c2ans" type="number" step="0.01" placeholder="? MB">
+          <span>MB</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <button class="ac-btn" onclick="checkTask(4)">Check Answers</button>
+    </div>
+    <div class="feedback" id="feedback-4"></div>
+  </div>
+
+  <!-- ── Task 6: Exam Clinic ───────────────────────────────── -->
+  <div class="panel" id="panel-5">
+    <div class="goal">🎯 Two exercises: tag each sentence of a student answer for immediate feedback, then apply the mark scheme to a second response.</div>
+
+    <div class="card">
+      <h2>Part A — Tag Each Sentence</h2>
+      <p class="how-to"><strong>How to play:</strong> Read the student answer below, then tag each sentence using the buttons. You get <strong>immediate feedback</strong> on each click — if wrong, try again until you get it right.</p>
+      <div class="ms-q-box"><span class="qhead">Exam Question</span>Explain how the sample rate and bit depth affect the quality and file size of a digital audio recording. [4]</div>
+      <div class="ms-student">The sample rate is how many times each second the sound is recorded. A higher sample rate makes the recording sound better because more samples are captured. Bit depth is the number of bits used per sample, which controls how precisely the amplitude is measured. Increasing the sample rate or bit depth will produce a larger file. A longer recording will also use more storage space.</div>
+      <p style="font-size:.82rem; color:var(--muted); margin-bottom:14px; padding-left:2px;">Now tag each sentence:</p>
+      <div id="sentence-wrap"></div>
+      <div class="feedback" id="feedback-5a" style="margin-top:14px;"></div>
+    </div>
+
+    <div class="card">
+      <h2>Part B — Apply the Mark Scheme</h2>
+      <p class="how-to"><strong>Instructions:</strong> Read the student response carefully. Tick each mark-scheme point you think it has earned — some are simply <strong style="color:var(--warn);">missing key words</strong>, others give the outcome without the <strong style="color:var(--red);">reason</strong>. Submit to see the examiner's reasoning.</p>
+      <div id="ms-container"></div>
+    </div>
+  </div>
+
+</div><!-- /.page-wrap -->
+
+<div class="ac-toast" id="toast"></div>
+
+<script>
+// ─────────────────────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────────────────────
+const TASK_COUNT = 6;
+const completed  = new Array(TASK_COUNT).fill(false);
+
+document.getElementById('tab-bar').addEventListener('click', e => {
+  const tab = e.target.closest('.tab-btn');
+  if (!tab) return;
+  const idx = +tab.dataset.idx;
+  document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  tab.classList.add('active');
+  document.getElementById('panel-' + idx).classList.add('active');
+});
+
+function markDone(idx, type = 'gold') {
+  if (completed[idx]) return;
+  completed[idx] = true;
+  const tab = document.querySelector('.tab-btn[data-idx="' + idx + '"]');
+  if (tab) tab.classList.add('done-' + type);
+  updateProgress();
+  const pct = Math.round(completed.filter(Boolean).length / TASK_COUNT * 100);
+  window.Classroom?.submitGrade(pct, 'Data Representation: Sound');
+  if (completed.every(Boolean)) allComplete();
+}
+
+function updateProgress() {
+  const pct = Math.round(completed.filter(Boolean).length / TASK_COUNT * 100);
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-pct').textContent = pct + '%';
+}
+
+function allComplete() {
+  document.getElementById('done-banner').classList.add('show');
+  window.ActivityUI?.launchCelebration();
+}
+
+function checkTask(idx) {
+  if (window.Classroom?.verifyAuth() === false) return;
+  [checkGapFill, checkWaveObs, checkSoundObs, checkEffects, checkCalc, () => {}][idx]();
+}
+
+// ─────────────────────────────────────────────────────────
+// TASK 1 — GAP FILL
+// ─────────────────────────────────────────────────────────
+const POOL_WORDS = ['analogue','sampling','sample rate','unique','bit depth','higher',
+                    'digital','lower','frequency','repeated','colour depth','byte'];
+
+let selChip = null;
+
+function initGapFill() {
+  const pool = document.getElementById('word-pool');
+  pool.innerHTML = '';
+  selChip = null;
+  [...POOL_WORDS].sort(() => Math.random() - .5).forEach(w => pool.appendChild(mkChip(w)));
+  document.querySelectorAll('.blank').forEach(b => {
+    b.textContent = '___';
+    b.dataset.filled = '';
+    b.className = 'blank';
+    b.onclick = () => blankClick(b);
+  });
+}
+
+function mkChip(word) {
+  const c = document.createElement('span');
+  c.className = 'chip';
+  c.textContent = word;
+  c.onclick = () => chipClick(c);
+  return c;
+}
+
+function chipClick(chip) {
+  if (selChip) selChip.classList.remove('sel');
+  if (selChip === chip) { selChip = null; return; }
+  selChip = chip;
+  chip.classList.add('sel');
+}
+
+function blankClick(blank) {
+  if (!selChip) {
+    if (blank.dataset.filled) {
+      document.getElementById('word-pool').appendChild(mkChip(blank.dataset.filled));
+      blank.textContent = '___'; blank.dataset.filled = ''; blank.className = 'blank';
+    }
+    return;
+  }
+  if (blank.dataset.filled) document.getElementById('word-pool').appendChild(mkChip(blank.dataset.filled));
+  blank.textContent = selChip.textContent;
+  blank.dataset.filled = selChip.textContent;
+  blank.classList.add('filled');
+  selChip.remove(); selChip = null;
+}
+
+function resetGapFill() {
+  initGapFill();
+  const fb = document.getElementById('feedback-0');
+  fb.textContent = ''; fb.className = 'feedback';
+}
+
+function checkGapFill() {
+  const blanks = document.querySelectorAll('.blank');
+  let ok = 0;
+  blanks.forEach(b => {
+    b.classList.remove('ok','bad');
+    if (b.dataset.filled === b.dataset.answer) { b.classList.add('ok'); ok++; }
+    else if (b.dataset.filled) b.classList.add('bad');
+  });
+  const fb = document.getElementById('feedback-0');
+  if (ok === blanks.length) {
+    fb.textContent = '✅ All 6 correct! The key sentence to remember: "Sampling is when the amplitude of the sound wave is measured at regular intervals."';
+    fb.className = 'feedback correct';
+    markDone(0, 'gold');
+  } else {
+    fb.textContent = `❌ ${ok} / ${blanks.length} correct — red blanks need fixing. Remember: amplitude (not frequency!) is measured at regular intervals.`;
+    fb.className = 'feedback wrong';
+  }
+}
+
+initGapFill();
+
+// ─────────────────────────────────────────────────────────
+// TASK 2 — WAVE VISUALISER
+// ─────────────────────────────────────────────────────────
+const SR_CFG = [
+  { lbl:'2 kHz — Very Low',  pts:4  },
+  { lbl:'8 kHz — Low',       pts:8  },
+  { lbl:'22 kHz — Medium',   pts:22 },
+  { lbl:'44 kHz — High',     pts:44 }
+];
+const BD_CFG = [
+  { lbl:'2-bit (4 levels)',        lvl:4     },
+  { lbl:'4-bit (16 levels)',       lvl:16    },
+  { lbl:'8-bit (256 levels)',      lvl:256   },
+  { lbl:'16-bit (65,536 levels)', lvl:65536 }
+];
+
+function getSR() { return SR_CFG[+document.getElementById('sr-sl').value]; }
+function getBD() { return BD_CFG[+document.getElementById('bd-sl').value]; }
+
+function drawAna() {
+  const cv = document.getElementById('cv-ana');
+  const ctx = cv.getContext('2d');
+  const W = cv.width, H = cv.height, A = H * 0.40;
+  ctx.clearRect(0, 0, W, H);
+
+  ctx.strokeStyle = 'rgba(255,255,255,.08)';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(0, H/2); ctx.lineTo(W, H/2); ctx.stroke();
+
+  ctx.strokeStyle = '#60a5fa'; ctx.lineWidth = 2.5;
+  ctx.shadowColor = '#60a5fa'; ctx.shadowBlur = 7;
+  ctx.beginPath();
+  for (let x = 0; x <= W; x++) {
+    const y = H/2 - A * Math.sin(2 * Math.PI * (x / W) * 2);
+    x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  }
+  ctx.stroke(); ctx.shadowBlur = 0;
+
+  ctx.fillStyle = 'rgba(255,255,255,.3)'; ctx.font = '10px monospace';
+  ctx.fillText('↕ Amplitude', 5, 14); ctx.fillText('Time →', W - 56, H - 5);
+}
+
+function drawDig() {
+  const cv = document.getElementById('cv-dig');
+  const ctx = cv.getContext('2d');
+  const W = cv.width, H = cv.height, A = H * 0.40;
+  ctx.clearRect(0, 0, W, H);
+
+  const sr = getSR(), bd = getBD();
+  const nPts = sr.pts * 2;           // shown over 2 visible cycles
+  const lvl  = Math.min(bd.lvl, 256);
+
+  // Bit-depth grid lines (visible when levels ≤ 32)
+  if (lvl <= 32) {
+    ctx.strokeStyle = 'rgba(245,158,11,.18)'; ctx.lineWidth = 1;
+    for (let i = 0; i <= lvl; i++) {
+      const y = H * (1 - i / lvl);
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+    }
+  }
+
+  // Centre line
+  ctx.strokeStyle = 'rgba(255,255,255,.1)'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(0, H/2); ctx.lineTo(W, H/2); ctx.stroke();
+
+  // Ghost analogue
+  ctx.strokeStyle = 'rgba(96,165,250,.22)'; ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  for (let x = 0; x <= W; x++) {
+    const y = H/2 - A * Math.sin(2 * Math.PI * (x / W) * 2);
+    x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+
+  // Quantize samples
+  const pts = [];
+  for (let i = 0; i <= nPts; i++) {
+    const t   = (i / nPts) * 2;
+    const raw = Math.sin(2 * Math.PI * t);           // -1..1
+    const n   = (raw + 1) / 2;                       // 0..1
+    const q   = Math.round(n * (lvl - 1)) / (lvl - 1);
+    pts.push({ x: (i / nPts) * W, y: H/2 - A * (q * 2 - 1) });
+  }
+
+  // Stepped wave
+  ctx.strokeStyle = '#f59e0b'; ctx.lineWidth = 2;
+  ctx.shadowColor = '#f59e0b'; ctx.shadowBlur = 5;
+  ctx.beginPath();
+  for (let i = 0; i < pts.length - 1; i++) {
+    i === 0 ? ctx.moveTo(pts[i].x, pts[i].y) : null;
+    ctx.lineTo(pts[i+1].x, pts[i].y);
+    ctx.lineTo(pts[i+1].x, pts[i+1].y);
+  }
+  ctx.stroke(); ctx.shadowBlur = 0;
+
+  // Vertical sample lines
+  ctx.strokeStyle = 'rgba(245,158,11,.3)'; ctx.lineWidth = 1;
+  pts.forEach(p => {
+    ctx.setLineDash([2, 3]);
+    ctx.beginPath(); ctx.moveTo(p.x, H/2); ctx.lineTo(p.x, p.y); ctx.stroke();
+  });
+  ctx.setLineDash([]);
+
+  // Dots
+  ctx.fillStyle = '#ef4444'; ctx.shadowColor = '#ef4444'; ctx.shadowBlur = 5;
+  pts.forEach(p => { ctx.beginPath(); ctx.arc(p.x, p.y, 3.5, 0, Math.PI*2); ctx.fill(); });
+  ctx.shadowBlur = 0;
+
+  ctx.fillStyle = 'rgba(255,255,255,.3)'; ctx.font = '10px monospace';
+  ctx.fillText('↕ Amplitude', 5, 14); ctx.fillText('Time →', W - 56, H - 5);
+}
+
+function refreshWaves() {
+  const sr = getSR(), bd = getBD();
+  document.getElementById('sr-lbl').textContent = sr.lbl;
+  document.getElementById('bd-lbl').textContent = bd.lbl;
+  document.getElementById('st-samples').textContent = sr.pts * 2;
+  document.getElementById('st-levels').textContent  = bd.lvl.toLocaleString();
+  const srScore = +document.getElementById('sr-sl').value / 3;
+  const bdScore = +document.getElementById('bd-sl').value / 3;
+  document.getElementById('st-acc').textContent = Math.round((srScore*.5 + bdScore*.5)*100) + '%';
+  document.getElementById('dig-lbl').textContent =
+    'Digital — ' + sr.lbl.split('—')[0].trim() + ', ' + bd.lbl;
+  drawAna(); drawDig();
+}
+refreshWaves();
+
+// MCQ shared state
+const mcqSel = {};
+function pickMCQ(el) {
+  const q = el.dataset.q;
+  document.querySelectorAll('[data-q="' + q + '"]').forEach(o => o.classList.remove('sel'));
+  el.classList.add('sel');
+  mcqSel[q] = el.dataset.v;
+}
+
+const MCQ_ANS = { obs1:'b', obs2:'b', sq1:'d', sq2:'b' };
+
+function showMCQResult(qs) {
+  let score = 0;
+  qs.forEach(q => {
+    document.querySelectorAll('[data-q="' + q + '"]').forEach(o => {
+      o.classList.remove('right','wrong');
+      if (o.dataset.v === MCQ_ANS[q]) { o.classList.add('right'); if (mcqSel[q] === MCQ_ANS[q]) score++; }
+      else if (o.dataset.v === mcqSel[q]) o.classList.add('wrong');
+    });
+  });
+  return score;
+}
+
+function checkWaveObs() {
+  const s = showMCQResult(['obs1','obs2']);
+  const fb = document.getElementById('feedback-1');
+  if (s === 2) {
+    fb.textContent = '✅ Correct! Sample rate controls time accuracy (how often); bit depth controls amplitude precision (how precisely the height is stored).';
+    fb.className = 'feedback correct';
+    markDone(1, 'gold');
+  } else {
+    fb.textContent = '❌ Not quite — correct answers are highlighted green. Try moving the sliders to see the effect for yourself!';
+    fb.className = 'feedback wrong';
+  }
+}
+
+// ─────────────────────────────────────────────────────────
+// TASK 3 — SOUND LAB
+// ─────────────────────────────────────────────────────────
+const LAB_SR  = [2000, 8000, 22050, 44100];
+const LAB_BD  = [2, 4, 8, 16];
+const SR_LBLS = ['2 kHz', '8 kHz', '22 kHz', '44 kHz'];
+const BD_LBLS = ['2-bit', '4-bit', '8-bit', '16-bit'];
+
+let audioCtx = null, curSrc = null;
+
+function updateLabUI() {
+  const si = +document.getElementById('lab-sr').value;
+  const bi = +document.getElementById('lab-bd').value;
+  document.getElementById('lab-sr-lbl').textContent = SR_LBLS[si];
+  document.getElementById('lab-bd-lbl').textContent = BD_LBLS[bi];
+
+  const q = Math.round((si/3 * .5 + bi/3 * .5) * 100);
+  const fill = document.getElementById('qm-fill');
+  fill.style.width = q + '%';
+  const color = q < 25 ? '#ef4444' : q < 45 ? '#f97316' : q < 65 ? '#f59e0b' : q < 85 ? '#84cc16' : '#22c55e';
+  fill.style.background = color;
+  const descs = ['Very Low — severe distortion / robotic buzz', 'Low — noticeable distortion', 'Medium — audible artefacts', 'Good — minor artefacts', 'High — clean, accurate reproduction'];
+  document.getElementById('qm-desc').textContent = descs[Math.min(4, Math.floor(q / 20))];
+
+  const bytes = LAB_SR[si] * LAB_BD[bi] * 60 / 8;
+  document.getElementById('qm-size').textContent =
+    'Estimated file size for 1 min (mono): ~' + (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+}
+
+function playTone() {
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    if (curSrc) { try { curSrc.stop(); } catch(e){} }
+
+    const si = +document.getElementById('lab-sr').value;
+    const bi = +document.getElementById('lab-bd').value;
+    const sr = LAB_SR[si], bd = LAB_BD[bi];
+    const dur = 3.0, nsr = audioCtx.sampleRate;
+    const N   = Math.round(dur * nsr);
+    const buf = audioCtx.createBuffer(1, N, nsr);
+    const dat = buf.getChannelData(0);
+
+    const levels = Math.pow(2, bd);
+    const dsf    = Math.max(1, Math.round(nsr / sr));
+    let lastQ = 0, phase = 0;
+    for (let i = 0; i < N; i++) {
+      const t    = i / nsr;
+      const freq = 440 + 100 * Math.sin(2 * Math.PI * 0.8 * t);
+      phase += 2 * Math.PI * freq / nsr;
+      if (i % dsf === 0) {
+        const raw  = Math.sin(phase) * 0.8;
+        const norm = (raw + 1) / 2;
+        lastQ = (Math.round(norm * (levels - 1)) / (levels - 1)) * 2 - 1;
+      }
+      dat[i] = lastQ;
+    }
+
+    const gain = audioCtx.createGain(); gain.gain.value = 0.55;
+    const src  = audioCtx.createBufferSource(); src.buffer = buf;
+    src.connect(gain); gain.connect(audioCtx.destination);
+    src.start(); curSrc = src;
+
+    const btn = document.getElementById('play-btn');
+    btn.textContent = '⏸ Playing…'; btn.disabled = true;
+    src.onended = () => { btn.textContent = '▶ Play Tone'; btn.disabled = false; };
+  } catch(e) {
+    window.ActivityUI?.showToast('Audio not available in this browser.', 'warn');
+  }
+}
+
+updateLabUI();
+
+function checkSoundObs() {
+  const s = showMCQResult(['sq1','sq2']);
+  const fb = document.getElementById('feedback-2');
+  if (s === 2) {
+    fb.textContent = '✅ Correct! High sample rate + high bit depth gives the best quality — but produces the largest file size.';
+    fb.className = 'feedback correct';
+    markDone(2, 'gold');
+  } else {
+    fb.textContent = '❌ Not quite — correct answers highlighted green. Try playing the sound at min and max settings to hear the difference!';
+    fb.className = 'feedback wrong';
+  }
+}
+
+// ─────────────────────────────────────────────────────────
+// TASK 4 — EFFECTS TABLE + TRUE/FALSE
+// ─────────────────────────────────────────────────────────
+// rows: duration++, sample rate--, bit depth++
+// cols: size+, size-, acc+, acc-
+const TK_ANS = [
+  [true,  false, false, false],
+  [false, true,  false, true ],
+  [true,  false, true,  false]
+];
+const tkState = Array.from({length:3}, () => [false,false,false,false]);
+
+function toggleTk(btn) {
+  const r = +btn.dataset.r, c = +btn.dataset.c;
+  tkState[r][c] = !tkState[r][c];
+  btn.classList.toggle('on', tkState[r][c]);
+  btn.textContent = tkState[r][c] ? '✓' : '';
+}
+
+const TF_DATA = [
+  { q: 'The sample rate is the number of times the <span class="tf-key">amplitude</span> is recorded per second.',             ans: true  },
+  { q: 'The smaller the bit depth, the <span class="tf-key">smaller</span> the range of amplitudes that can be stored.',       ans: true  },
+  { q: 'The larger the sample rate, the <span class="tf-key">smaller</span> the file size.',                                   ans: false, wrongWord: 'smaller', accept: ['larger'] },
+  { q: 'Sound is stored using <span class="tf-key">pixels</span>.',                                                            ans: false, wrongWord: 'pixels',    accept: ['samples', 'sample'] },
+  { q: 'Increasing the sample rate <span class="tf-key">increases</span> the file size.',                                      ans: true  },
+];
+const tfState = {};
+
+function buildTF() {
+  const wrap = document.getElementById('tf-wrap');
+  TF_DATA.forEach((item, i) => {
+    const div = document.createElement('div');
+    div.className = 'q-card'; div.id = 'tf-' + i;
+    const corrLabel = item.accept
+      ? `Replace "<strong>${item.wrongWord}</strong>" — write the correct word or phrase:`
+      : `Which word would you change, and what would you replace it with?`;
+    const corrHTML = `
+      <div class="tf-correction" id="tf-cor-${i}" style="display:none;">
+        <label>${corrLabel}</label>
+        <input type="text" class="ac-input" id="tf-cor-inp-${i}" placeholder="your correction…" style="max-width:280px;" autocomplete="off">
+      </div>`;
+    div.innerHTML = `<p style="font-size:.88rem; margin-bottom:8px;">${item.q}</p>
+      <div class="tf-row">
+        <button class="tf-btn" id="tf-t-${i}" onclick="pickTF(${i},true)">True</button>
+        <button class="tf-btn" id="tf-f-${i}" onclick="pickTF(${i},false)">False</button>
+      </div>${corrHTML}`;
+    wrap.appendChild(div);
+  });
+}
+
+function pickTF(i, val) {
+  tfState[i] = val;
+  document.getElementById('tf-t-' + i).classList.toggle('on', val === true);
+  document.getElementById('tf-f-' + i).classList.toggle('on', val === false);
+  const cor = document.getElementById('tf-cor-' + i);
+  if (cor) cor.style.display = val === false ? 'block' : 'none';
+}
+
+buildTF();
+
+function checkEffects() {
+  // Table: 1 mark per fully-correct row
+  let tableScore = 0;
+  for (let r = 0; r < 3; r++) {
+    let rowOk = true;
+    for (let c = 0; c < 4; c++) {
+      const btn = document.querySelector(`.tk[data-r="${r}"][data-c="${c}"]`);
+      btn.classList.remove('on','right','wrong','miss');
+      const exp = TK_ANS[r][c], got = tkState[r][c];
+      if (got  &&  exp) { btn.classList.add('right'); btn.textContent = '✓'; }
+      else if (got && !exp) { btn.classList.add('wrong'); btn.textContent = '✗'; rowOk = false; }
+      else if (!got && exp) { btn.classList.add('miss');  btn.textContent = '✓'; rowOk = false; }
+      else { btn.textContent = ''; }
+    }
+    if (rowOk) tableScore++;
+  }
+
+  // TF
+  let tfScore = 0;
+  TF_DATA.forEach((item, i) => {
+    ['t','f'].forEach(x => document.getElementById('tf-'+x+'-'+i).classList.remove('on','right','wrong'));
+    const correctBtn = item.ans ? 'tf-t-' : 'tf-f-';
+    const wrongBtn   = item.ans ? 'tf-f-' : 'tf-t-';
+    let tfCorrect = tfState[i] === item.ans;
+
+    if (!item.ans && item.accept) {
+      const corInput = document.getElementById('tf-cor-inp-' + i);
+      corInput.classList.remove('ok', 'bad');
+      if (tfState[i] === false) {
+        const userVal = corInput.value.trim().toLowerCase();
+        const corrOk  = item.accept.some(a => a.toLowerCase() === userVal);
+        corInput.classList.add(corrOk ? 'ok' : 'bad');
+        if (!corrOk) tfCorrect = false;
+      }
+    }
+
+    if (tfCorrect) {
+      document.getElementById(correctBtn + i).classList.add('right'); tfScore++;
+    } else {
+      document.getElementById(correctBtn + i).classList.add('right');
+      if (tfState[i] !== undefined) document.getElementById(wrongBtn + i).classList.add('wrong');
+    }
+  });
+
+  const total = tableScore + tfScore, max = 3 + TF_DATA.length;
+  const fb = document.getElementById('feedback-3');
+  if (total === max) {
+    fb.textContent = '✅ Perfect — all correct! Green = should be ticked; you clearly understand the effects of each setting.';
+    fb.className = 'feedback correct';
+    markDone(3, 'gold');
+  } else {
+    fb.textContent = `❌ ${total} / ${max} correct. Green = correct answer; red = incorrect tick; faded green = missed tick. Review and try again.`;
+    fb.className = 'feedback wrong';
+  }
+}
+
+// ─────────────────────────────────────────────────────────
+// TASK 5 — FILE SIZE CALCULATION
+// ─────────────────────────────────────────────────────────
+// Q1: 44100 × 16 × 30 = 21,168,000 bits ÷ 8 = 2,646,000 bytes ÷ 1024² = 2.5215... ≈ 2.52 MB
+// Q2: 48000 × 24 × 30 = 34,560,000 bits ÷ 8 = 4,320,000 bytes ÷ 1024² = 4.1198... ≈ 4.12 MB
+const C1 = { s1: 705600, s2: 21168000, s3: 2646000, s4: 2646000 / (1024*1024) };
+const C2_ANS = 48000 * 24 * 30 / 8 / (1024*1024); // ≈ 4.12
+
+function near(v, t, tol = 0.04) { return Math.abs(v - t) / Math.abs(t) <= tol; }
+
+function markCalc(id, ok) {
+  const el = document.getElementById(id);
+  el.classList.remove('ok','bad');
+  if (el.value === '') return false;
+  el.classList.add(ok ? 'ok' : 'bad');
+  return ok;
+}
+
+function checkCalc() {
+  const s1 = parseFloat(document.getElementById('c1s1').value);
+  const s2 = parseFloat(document.getElementById('c1s2').value);
+  const s3 = parseFloat(document.getElementById('c1s3').value);
+  const s4 = parseFloat(document.getElementById('c1s4').value);
+  const a2 = parseFloat(document.getElementById('c2ans').value);
+
+  let score = 0;
+  if (markCalc('c1s1', s1 === C1.s1))    score++;
+  if (markCalc('c1s2', s2 === C1.s2))    score++;
+  if (markCalc('c1s3', s3 === C1.s3))    score++;
+  if (markCalc('c1s4', near(s4, C1.s4))) score++;
+  if (markCalc('c2ans', near(a2, C2_ANS))) score++;
+
+  const fb = document.getElementById('feedback-4');
+  if (score >= 4) {
+    fb.textContent = `✅ ${score}/5 correct! Q1: 705,600 → 21,168,000 → 2,646,000 → ≈2.52 MB.  Q2: ≈4.12 MB.`;
+    fb.className = 'feedback correct';
+    markDone(4, 'gold');
+  } else {
+    fb.textContent = `❌ ${score}/5 correct. Q1 steps: 44,100 × 16 = 705,600 bits/sec → × 30 = 21,168,000 bits → ÷ 8 = 2,646,000 bytes → ÷ 1024 ÷ 1024 ≈ 2.52 MB.  Q2: 48,000 × 24 × 30 ÷ 8 ÷ 1024 ÷ 1024 ≈ 4.12 MB.`;
+    fb.className = 'feedback wrong';
+  }
+}
+
+// resize-aware canvas redraw
+const ro = new ResizeObserver(() => refreshWaves());
+ro.observe(document.getElementById('cv-ana'));
+
+// ─────────────────────────────────────────────────────────
+// TASK 6 — EXAM CLINIC (Part A: sentence tagger, Part B: mark scheme)
+// ─────────────────────────────────────────────────────────
+
+// ── Part A data ──────────────────────────────────────────
+const SENTENCES = [
+  { text: 'The sample rate is how many times each second the sound is recorded.',
+    correct: 'incomplete',
+    explain: 'Incomplete ⚠ — "per second" is correct, but "the sound is recorded" is too vague. The mark scheme requires that the <em>amplitude of the sound wave</em> is measured. That word is doing a lot of work on the mark scheme.' },
+  { text: 'A higher sample rate makes the recording sound better because more samples are captured.',
+    correct: 'point',
+    explain: 'Good point ✓ — correctly links a higher sample rate to better quality and gives the reason ("more samples are captured"). This earns the quality mark.' },
+  { text: 'Bit depth is the number of bits used per sample, which controls how precisely the amplitude is measured.',
+    correct: 'point',
+    explain: 'Good point ✓ — a complete definition that also states the mechanism. Both key parts ("per sample" and "precisely the amplitude") are present.' },
+  { text: 'Increasing the sample rate or bit depth will produce a larger file.',
+    correct: 'point',
+    explain: 'Good point ✓ — correctly links both settings to a larger file size in one concise sentence. Earns the file size mark.' },
+  { text: 'A longer recording will also use more storage space.',
+    correct: 'irrelevant',
+    explain: 'Irrelevant ✗ — true, but the question asks only about sample rate and bit depth. Duration is not being examined here and earns no marks.' },
+];
+
+const sentCorrect = new Array(SENTENCES.length).fill(false);
+let partADone = false;
+
+// ── Part B data ──────────────────────────────────────────
+const MS_QUESTION = {
+  marks: 3,
+  examQ: 'What is meant by the term "bit depth"? Explain why a higher bit depth produces better quality sound. [3]',
+  student: 'Bit depth is the number of bits used to record the sound. A higher bit depth means the file will be better quality because it uses more bits. For example, a CD uses 16 bits which gives 65,536 possible values, compared to 8 bits which gives only 256.',
+  points: [
+    { code:'SB1', text:'Bit depth = number of bits used <em>per sample</em>',
+      correct:false,
+      explain:'<strong>SB1 — NOT awarded.</strong> The student says "number of bits used to record the sound." The key phrase <em>per sample</em> is missing — bit depth is a property of each individual sample, not of the whole recording. This precision is required for the definition mark.' },
+    { code:'SB2', text:'Higher bit depth → more possible values / more amplitude levels',
+      correct:true,
+      explain:'<strong>SB2 — Awarded.</strong> The 65,536 vs 256 example clearly demonstrates that more bits produce more possible values. Even without the word "amplitude," the example is strong enough to earn this point.' },
+    { code:'SB3', text:'More amplitude levels → amplitude stored more precisely / closer reproduction of the wave',
+      correct:false,
+      explain:'<strong>SB3 — NOT awarded.</strong> The student says "better quality" but never explains the mechanism: that more amplitude levels allow the height of the wave at each sample to be recorded more precisely. Stating the outcome without the reason is not enough for a mark.' },
+  ],
+};
+
+let partBDone = false;
+
+// ── Build ─────────────────────────────────────────────────
+function buildExamClinic() {
+  // Part A — sentence tagger
+  const sentWrap = document.getElementById('sentence-wrap');
+  sentWrap.innerHTML = '';
+  SENTENCES.forEach((s, i) => {
+    const div = document.createElement('div');
+    div.className = 'q-card'; div.id = 'sent-' + i;
+    div.innerHTML = `
+      <p style="font-size:.87rem; color:var(--muted); font-style:italic; margin-bottom:10px;">"${s.text}"</p>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <button class="tag-btn" data-sent="${i}" data-val="point"      onclick="tagSent(this)">Good point ✓</button>
+        <button class="tag-btn" data-sent="${i}" data-val="incomplete" onclick="tagSent(this)">Incomplete ⚠</button>
+        <button class="tag-btn" data-sent="${i}" data-val="irrelevant" onclick="tagSent(this)">Irrelevant ✗</button>
+      </div>
+      <div class="sent-explain" id="sent-exp-${i}"></div>`;
+    sentWrap.appendChild(div);
+  });
+
+  // Part B — mark scheme
+  const q = MS_QUESTION;
+  let html = `
+    <div class="ms-q-wrapper" style="margin-bottom:0;">
+      <div class="ms-q-box"><span class="qhead">Exam Question</span>${q.examQ}</div>
+      <div class="ms-student">${q.student}</div>
+      <span class="ms-pts-lbl">Mark scheme — tick each point you think this response earns</span>`;
+  q.points.forEach((pt, pi) => {
+    html += `
+      <div class="ms-point" id="msp-${pi}" onclick="toggleMSPoint(this)">
+        <input type="checkbox" id="mscb-${pi}" onclick="event.stopPropagation()">
+        <span class="pcode">${pt.code}</span>
+        <span class="ptext">${pt.text}</span>
+      </div>`;
+  });
+  html += `
+      <div style="display:flex; gap:10px; margin-top:16px; flex-wrap:wrap;">
+        <button class="ac-btn" onclick="submitPartB()">Submit My Marking</button>
+        <button class="ac-btn-secondary" onclick="resetPartB()">Reset</button>
+      </div>
+      <div class="ms-fb" id="ms-fb"></div>
+    </div>`;
+  document.getElementById('ms-container').innerHTML = html;
+}
+
+// ── Part A logic ──────────────────────────────────────────
+function tagSent(btn) {
+  const i = +btn.dataset.sent;
+  if (sentCorrect[i]) return;
+
+  const isRight = btn.dataset.val === SENTENCES[i].correct;
+  document.querySelectorAll(`.tag-btn[data-sent="${i}"]`).forEach(b => {
+    b.classList.remove('tag-right', 'tag-wrong');
+    if (b === btn) b.classList.add(isRight ? 'tag-right' : 'tag-wrong');
+  });
+
+  const expDiv = document.getElementById('sent-exp-' + i);
+  expDiv.innerHTML = SENTENCES[i].explain;
+  expDiv.className = 'sent-explain ' + (isRight ? 'exp-ok' : 'exp-bad');
+
+  if (isRight) {
+    sentCorrect[i] = true;
+    document.querySelectorAll(`.tag-btn[data-sent="${i}"]`).forEach(b => b.disabled = true);
+    if (sentCorrect.every(Boolean) && !partADone) {
+      partADone = true;
+      const fb = document.getElementById('feedback-5a');
+      fb.textContent = '✅ All sentences correctly tagged! Notice how one perfectly true sentence earns no marks, and a mostly correct definition still misses a critical word.';
+      fb.className = 'feedback correct';
+      checkBothDone();
+    }
+  }
+}
+
+// ── Part B logic ──────────────────────────────────────────
+function toggleMSPoint(el) {
+  const cb = el.querySelector('input[type=checkbox]');
+  if (cb.disabled) return;
+  cb.checked = !cb.checked;
+}
+
+function submitPartB() {
+  if (window.Classroom?.verifyAuth() === false) return;
+  const q = MS_QUESTION;
+  let correct = 0;
+
+  q.points.forEach((pt, pi) => {
+    const cb      = document.getElementById(`mscb-${pi}`);
+    const pointEl = document.getElementById(`msp-${pi}`);
+    pointEl.classList.remove('ms-ok', 'ms-err');
+    const got = cb.checked === pt.correct;
+    if (got) { correct++; pointEl.classList.add('ms-ok'); }
+    else pointEl.classList.add('ms-err');
+    cb.disabled = true;
+  });
+
+  const total = q.points.length;
+  const fbEl  = document.getElementById('ms-fb');
+  fbEl.classList.remove('fb-ok', 'fb-err');
+
+  let html = correct === total
+    ? `<strong>✅ All ${total} marking decisions correct!</strong>`
+    : `<strong>⚠ ${correct}/${total} marking decisions correct.</strong>`;
+  html += '<div style="margin-top:12px; display:flex; flex-direction:column; gap:10px;">';
+  q.points.forEach((pt, pi) => {
+    const ok = document.getElementById(`mscb-${pi}`).checked === pt.correct;
+    html += `<div style="padding:10px 14px; border-radius:8px;
+      background:${ok ? 'color-mix(in srgb,var(--green) 8%,var(--surface))' : 'color-mix(in srgb,var(--red) 6%,var(--surface))'};
+      border:1px solid ${ok ? 'var(--green)' : 'var(--red)'};">
+      <span style="font-size:.86rem; color:${ok ? 'var(--green)' : 'var(--red)'};">${pt.explain}</span>
+    </div>`;
+  });
+  html += '</div>';
+
+  fbEl.innerHTML = html;
+  fbEl.classList.add(correct === total ? 'fb-ok' : 'fb-err', 'show');
+
+  partBDone = true;
+  checkBothDone();
+}
+
+function resetPartB() {
+  MS_QUESTION.points.forEach((pt, pi) => {
+    const cb = document.getElementById(`mscb-${pi}`);
+    cb.checked = false; cb.disabled = false;
+    document.getElementById(`msp-${pi}`).classList.remove('ms-ok', 'ms-err');
+  });
+  const fb = document.getElementById('ms-fb');
+  fb.classList.remove('show', 'fb-ok', 'fb-err');
+  fb.innerHTML = '';
+  partBDone = false;
+}
+
+function checkBothDone() {
+  if (partADone && partBDone) markDone(5, 'green');
+}
+
+buildExamClinic();
+</script>
+
+<script src="../../activity-ui.js"></script>
+<script src="../../classroom.js"></script>
+</body>
+</html>

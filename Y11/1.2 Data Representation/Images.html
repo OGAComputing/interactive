@@ -5,7 +5,7 @@
 title:  Data Representation: Images
 type:   Practice
 stars:  4
-desc:   OCR J277 image calculations, pixel decoding, bit-depth practice, misconceptions, compression, and mark-scheme application.
+desc:   OCR J277 – pixels, resolution, metadata, file size calculations, pixel decoding, compression, and mark-scheme application.
 color:  blue
 -->
 <meta charset="UTF-8">
@@ -170,30 +170,12 @@ color:  blue
   .ms-point.ms-err { border-color: var(--red); background: rgba(220,38,38,.08); }
   .ms-fb { margin-top: 10px; padding: 10px; border-radius: 8px; display: none; line-height: 1.6; }
   .ms-fb.show { display: block; }
-  .comparison-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 10px 0; }
-  .comparison-card { border: 1px solid var(--surface-mid); border-radius: 8px; padding: 10px; background: var(--bg); }
-  .comparison-card strong { display: block; color: var(--accent); margin-bottom: 6px; }
-  .sample-image { display: grid; width: 100%; max-width: 160px; aspect-ratio: 1; border: 1px solid var(--surface-mid); margin-bottom: 8px; background: #f8fafc; overflow: hidden; }
-  .sample-image.low { grid-template-columns: repeat(5, 1fr); }
-  .sample-image.high { grid-template-columns: repeat(10, 1fr); }
-  .sample-image.depth { grid-template-columns: repeat(10, 1fr); }
-  .sample-image span { border: 1px solid rgba(17,24,39,.12); }
-  .sample-image.low span:nth-child(4n+1), .sample-image.high span:nth-child(5n+1) { background: #1d4ed8; }
-  .sample-image.low span:nth-child(4n+2), .sample-image.high span:nth-child(5n+2) { background: #38bdf8; }
-  .sample-image.low span:nth-child(4n+3), .sample-image.high span:nth-child(5n+3) { background: #facc15; }
-  .sample-image.low span:nth-child(4n), .sample-image.high span:nth-child(5n+4), .sample-image.high span:nth-child(5n) { background: #15803d; }
-  .sample-image.depth span:nth-child(8n+1) { background: #0f172a; }
-  .sample-image.depth span:nth-child(8n+2) { background: #1d4ed8; }
-  .sample-image.depth span:nth-child(8n+3) { background: #0891b2; }
-  .sample-image.depth span:nth-child(8n+4) { background: #16a34a; }
-  .sample-image.depth span:nth-child(8n+5) { background: #facc15; }
-  .sample-image.depth span:nth-child(8n+6) { background: #f97316; }
-  .sample-image.depth span:nth-child(8n+7) { background: #dc2626; }
-  .sample-image.depth span:nth-child(8n) { background: #7e22ce; }
-  .comparison-meta { color: var(--muted); font-size: .82rem; line-height: 1.5; }
-  @media (max-width: 760px) {
-    .comparison-grid { grid-template-columns: 1fr; }
-  }
+  .question.is-correct { border-color: var(--green); background: rgba(5,150,105,.08); }
+  .cloze-passage { line-height: 2.5; font-size: .95rem; }
+  .cloze-passage p { margin-bottom: 14px; }
+  .inline-sel { display: inline-block; padding: 3px 6px; border: 2px solid var(--accent); border-radius: 6px; background: var(--bg); color: var(--text); font-family: inherit; font-size: .9rem; cursor: pointer; vertical-align: baseline; margin: 0 2px; }
+  .inline-sel.ans-correct { border-color: var(--green); background: rgba(5,150,105,.18); }
+  .inline-sel.ans-wrong { border-color: var(--red); background: rgba(220,38,38,.13); }
 </style>
 </head>
 <body>
@@ -209,53 +191,24 @@ color:  blue
   <p class="sub">OCR J277 1.2 - multiple exam-style tasks with interactive pixel activities.</p>
   <div class="tabs" id="tab-bar">
     <button class="tab-btn active" data-idx="0">1. Decode & Paint</button>
-    <button class="tab-btn" data-idx="1">2. File Size</button>
-    <button class="tab-btn" data-idx="2">3. Bit Depth</button>
+    <button class="tab-btn" data-idx="1">2. Pixels &amp; Resolution</button>
+    <button class="tab-btn" data-idx="2">3. File Size &amp; Colour Depth</button>
     <button class="tab-btn" data-idx="3">4. Quality Diagnosis</button>
     <button class="tab-btn" data-idx="4">5. Compression</button>
     <button class="tab-btn" data-idx="5">6. Mark Scheme</button>
   </div>
 
   <div class="panel" id="panel-1"><div class="card">
-    <h3>Image Quality and File Size</h3>
-    <div class="question"><p>Q1. An image needs to represent 4 colours. What is the minimum colour depth in bits?</p><input id="t1a" class="qa-input mono"></div>
-    <div class="question"><p>Q2. What is the maximum number of colours available with 3-bit colour depth?</p><input id="t1b" class="qa-input mono"></div>
-    <div class="question"><p>Q3. 3 images are each 100 x 50 pixels with 4-bit colour. What is their total size in bytes?</p><input id="t1c" class="qa-input mono"></div>
-    <div class="question"><p>Q4. Complete the sentence: reducing colour depth reduces file size because fewer _____ are stored for each pixel.</p><input id="t1d" class="qa-input mono"></div>
-    <div class="question">
-      <p><strong>Quality trade-off exercise.</strong> Compare three uncompressed versions of the same simple image. Use:</p>
-      <p class="mono">file size in bits = width x height x colour depth</p>
-      <div class="comparison-grid">
-        <div class="comparison-card">
-          <strong>Image A</strong>
-          <div class="sample-image low" id="sample-low"></div>
-          <div class="comparison-meta">100 x 100 pixels<br>2-bit colour depth<br>Lower detail, 4 colours</div>
-        </div>
-        <div class="comparison-card">
-          <strong>Image B</strong>
-          <div class="sample-image high" id="sample-high"></div>
-          <div class="comparison-meta">200 x 200 pixels<br>2-bit colour depth<br>More detail, same 4 colours</div>
-        </div>
-        <div class="comparison-card">
-          <strong>Image C</strong>
-          <div class="sample-image depth" id="sample-depth"></div>
-          <div class="comparison-meta">200 x 200 pixels<br>4-bit colour depth<br>More detail, up to 16 colours</div>
-        </div>
-      </div>
-    </div>
-    <div class="question"><p>Q5. Image A has 100 x 100 pixels and 2-bit colour depth. What is its file size in bytes?</p><input id="t1e" class="qa-input mono"></div>
-    <div class="question"><p>Q6. Image B doubles the width and height to 200 x 200 pixels, but keeps 2-bit colour depth. What is its file size in bytes?</p><input id="t1f" class="qa-input mono"></div>
-    <div class="question"><p>Q7. Compared with Image A, how many times larger is Image B's file size?</p><input id="t1g" class="qa-input mono"></div>
-    <div class="question"><p>Q8. Image C keeps 200 x 200 pixels but increases colour depth from 2-bit to 4-bit. Compared with Image B, how many times larger is Image C's file size?</p><input id="t1h" class="qa-input mono"></div>
-    <div class="question">
-      <p>Q9. Which statement best explains the relationship between image quality and file size?</p>
-      <select id="t1i" class="match-sel">
-        <option value="">Choose</option>
-        <option>Increasing resolution can improve detail, but stores more pixels so file size increases.</option>
-        <option>Increasing resolution always decreases file size because the image is clearer.</option>
-        <option>Increasing colour depth improves sharpness because it adds more pixels.</option>
-        <option>Compression never affects quality or file size.</option>
-      </select>
+    <h3>Pixels, Resolution &amp; Metadata</h3>
+    <p style="color:var(--muted);margin-bottom:14px;font-size:.9rem;">Choose the correct word or phrase for each blank.</p>
+    <div class="cloze-passage">
+      <p>A <select id="c1" class="inline-sel"><option value="">Choose…</option><option>pixel</option><option>resolution</option><option>colour depth</option><option>byte</option></select> is the smallest unit of a bitmap image. Each one stores exactly one <select id="c2" class="inline-sel"><option value="">Choose…</option><option>colour</option><option>bit</option><option>pixel</option><option>file</option></select> at a time.</p>
+
+      <p>The <select id="c3" class="inline-sel"><option value="">Choose…</option><option>resolution</option><option>colour depth</option><option>metadata</option><option>compression</option></select> of an image is the number of pixels it contains. A higher value means more pixels and greater <select id="c4" class="inline-sel"><option value="">Choose…</option><option>detail</option><option>colour</option><option>compression</option><option>metadata</option></select>, but also a larger file size.</p>
+
+      <p>The <select id="c5" class="inline-sel"><option value="">Choose…</option><option>colour depth</option><option>resolution</option><option>metadata</option><option>pixel count</option></select> is the number of <select id="c6" class="inline-sel"><option value="">Choose…</option><option>bits</option><option>pixels</option><option>colours</option><option>bytes</option></select> used to store each pixel's colour. With a colour depth of 3, a maximum of <select id="c7" class="inline-sel"><option value="">Choose…</option><option>8</option><option>3</option><option>6</option><option>16</option></select> different colours can be represented.</p>
+
+      <p><select id="c8" class="inline-sel"><option value="">Choose…</option><option>Metadata</option><option>Pixel data</option><option>Resolution</option><option>Colour depth</option></select> is data about the image file itself, not the image content. It can include width, height, colour depth, and date created. The <select id="c9" class="inline-sel"><option value="">Choose…</option><option>colour value</option><option>resolution</option><option>file type</option><option>file size</option></select> stored for every pixel is NOT metadata — that is the actual image data.</p>
     </div>
     <div class="row"><button class="ac-btn" onclick="checkTask1()">Check answers</button><button class="ac-btn-secondary" onclick="resetTask1()">Reset</button></div>
     <div class="feedback" id="feedback-1"></div>
@@ -336,15 +289,12 @@ color:  blue
       </div>
     </div>
     <div class="question">
-      <p><strong>Q8.</strong> Type one 25-bit string to recreate this 5x5 black/white image.</p>
-      <div class="legend">
-        <span class="legend-item"><span class="legend-swatch" style="background:#111111;"></span><span class="mono">1 = black</span></span>
-        <span class="legend-item"><span class="legend-swatch" style="background:#ffffff;"></span><span class="mono">0 = white</span></span>
-      </div>
+      <p><strong>Q8.</strong> Bit depth 2. Type one 50-bit string (25 pixels × 2 bits) to recreate this 5×5 Christmas tree.</p>
+      <div class="legend" id="legend-q8"></div>
       <div class="decode-layout">
-        <div class="decode-col"><span class="decode-label">Target image</span><div class="pixel-grid bw" id="target-grid-8" style="grid-template-columns:repeat(5,32px);"></div></div>
-        <div class="decode-col"><span class="decode-label">Typed pixel grid <span class="edit-note readonly-note">Auto</span></span><div class="pixel-grid bw" id="preview-grid-8" style="grid-template-columns:repeat(5,32px);"></div></div>
-        <div class="decode-col"><span class="decode-label">Result bit string <span class="edit-note">Editable</span></span><textarea id="long-bits-8" class="qa-input mono bit-string" maxlength="25" placeholder="Type 25 bits" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea></div>
+        <div class="decode-col"><span class="decode-label">Target image</span><div class="pixel-grid" id="target-grid-8" style="grid-template-columns:repeat(5,32px);"></div></div>
+        <div class="decode-col"><span class="decode-label">Typed pixel grid <span class="edit-note readonly-note">Auto</span></span><div class="pixel-grid" id="preview-grid-8" style="grid-template-columns:repeat(5,32px);"></div></div>
+        <div class="decode-col"><span class="decode-label">Result bit string <span class="edit-note">Editable</span></span><textarea id="long-bits-8" class="qa-input mono bit-string" maxlength="50" placeholder="Type 50 bits" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea></div>
       </div>
     </div>
     <div class="row"><button class="ac-btn" onclick="checkTask2()">Check answers</button><button class="ac-btn-secondary" onclick="resetTask2()">Reset</button></div>
@@ -352,11 +302,25 @@ color:  blue
   </div></div>
 
   <div class="panel" id="panel-2"><div class="card">
-    <h3>Bit Depth Questions (1, 2, 3, and 4-bit)</h3>
-    <div class="question"><p>Q1. Maximum colours with 2-bit colour depth:</p><input id="bd1" class="qa-input mono"></div>
-    <div class="question"><p>Q2. Maximum colours with 3-bit colour depth:</p><input id="bd2" class="qa-input mono"></div>
-    <div class="question"><p>Q3. Minimum bits needed for 6 colours:</p><input id="bd3" class="qa-input mono"></div>
-    <div class="question"><p>Q4. If colour depth rises from 2 bits to 3 bits, how many times more colour values are available?</p><input id="bd4" class="qa-input mono"></div>
+    <h3>File Size &amp; Colour Depth</h3>
+    <div class="question"><p>Q1. What is the maximum number of colours that can be represented with 2-bit colour depth?</p><input id="fs1" class="qa-input mono"></div>
+    <div class="question"><p>Q2. What is the maximum number of colours that can be represented with 3-bit colour depth?</p><input id="fs2" class="qa-input mono"></div>
+    <div class="question"><p>Q3. An image needs to represent 4 colours. What is the minimum colour depth in bits?</p><input id="fs3" class="qa-input mono"></div>
+    <div class="question"><p>Q4. What is the minimum number of bits needed to represent 6 different colours?</p><input id="fs4" class="qa-input mono"></div>
+    <div class="question"><p>Q5. Three images are each 100 × 50 pixels with 4-bit colour depth. What is their total file size in bytes?</p><input id="fs5" class="qa-input mono"></div>
+    <div class="question"><p>Q6. Complete the sentence: reducing colour depth reduces file size because fewer _____ are stored for each pixel.</p><input id="fs6" class="qa-input mono"></div>
+    <div class="question"><p>Q7. An image is 100 × 100 pixels with 2-bit colour depth. What is its file size in bytes?</p><input id="fs7" class="qa-input mono"></div>
+    <div class="question"><p>Q8. An image is 200 × 200 pixels with 2-bit colour depth. What is its file size in bytes?</p><input id="fs8" class="qa-input mono"></div>
+    <div class="question">
+      <p>Q9. Which statement best explains the relationship between image quality and file size?</p>
+      <select id="fs9" class="match-sel">
+        <option value="">Choose</option>
+        <option>Increasing resolution can improve detail, but stores more pixels so file size increases.</option>
+        <option>Increasing resolution always decreases file size because the image is clearer.</option>
+        <option>Increasing colour depth improves sharpness because it adds more pixels.</option>
+        <option>Compression never affects quality or file size.</option>
+      </select>
+    </div>
     <div class="row"><button class="ac-btn" onclick="checkTask3()">Check answers</button><button class="ac-btn-secondary" onclick="resetTask3()">Reset</button></div>
     <div class="feedback" id="feedback-2"></div>
   </div></div>
@@ -404,9 +368,11 @@ const colorCodeMap3 = {
 const bwTargets = {
   q1: ["1","1","0","0","1","0","0","1"],
   q3: ["0","1","1","0","1","0","0","1"],
-  q4: "0000101000000110".split(""),
-  q8: "1000101010001000101010001".split("")
+  q4: "0000101000000110".split("")
 };
+const colorMapQ8 = { white:"#ffffff", green:"#15803d", yellow:"#facc15", brown:"#92400e" };
+const colorCodeMapQ8 = { "00":"white", "01":"green", "10":"yellow", "11":"brown" };
+const colorTargetQ8 = "00001000000000010000000101010001010101010000110000";
 const colorTargetQ2 = ["00","01","10","11","01","10","11","00"];
 const colorTargetQ5 = "0000010110101111";
 const colorTargetQ6 = "000110111110010000100111";
@@ -469,32 +435,33 @@ function updateProgress(){ const pct=Math.round(completed.filter(Boolean).length
 function setFb(i, ok, msg){ const el=document.getElementById("feedback-"+i); el.textContent=msg; el.className="feedback "+(ok?"correct":"wrong"); if(!ok) wrongBefore[i]=true; }
 function approx(v, t){ return Math.abs(v-t) <= 1; }
 
-function buildSamples(){
-  [["sample-low",25],["sample-high",100],["sample-depth",100]].forEach(([id,count])=>{
-    const el=document.getElementById(id);
-    if(!el) return;
-    el.innerHTML="";
-    for(let i=0;i<count;i++) el.appendChild(document.createElement("span"));
-  });
-}
 
+const CLOZE_ANSWERS = { c1:"pixel", c2:"colour", c3:"resolution", c4:"detail", c5:"colour depth", c6:"bits", c7:"8", c8:"Metadata", c9:"colour value" };
 function checkTask1(){
   if (window.Classroom?.verifyAuth()===false) return;
-  const a=Number(document.getElementById("t1a").value), b=Number(document.getElementById("t1b").value), c=Number(document.getElementById("t1c").value);
-  const d=(document.getElementById("t1d").value || "").trim().toLowerCase();
-  const okd = d==="bits" || d==="bit";
-  const e=Number(document.getElementById("t1e").value), f=Number(document.getElementById("t1f").value), g=Number(document.getElementById("t1g").value), h=Number(document.getElementById("t1h").value);
-  const i=document.getElementById("t1i").value;
-  const oki = i==="Increasing resolution can improve detail, but stores more pixels so file size increases.";
-  if(a===2 && b===8 && c===7500 && okd && e===2500 && f===10000 && g===4 && h===2 && oki){
-    setFb(1,true,!wrongBefore[1]?"Perfect first attempt across image size and quality trade-offs.":"All image size and quality trade-off answers are correct.");
+  let allOk=true;
+  Object.entries(CLOZE_ANSWERS).forEach(([id,correct])=>{
+    const el=document.getElementById(id);
+    const ok=el.value===correct;
+    el.classList.toggle("ans-correct",ok);
+    el.classList.toggle("ans-wrong",!ok);
+    if(!ok) allOk=false;
+  });
+  if(allOk){
+    setFb(1,true,!wrongBefore[1]?"Perfect first attempt — all definitions correct.":"All blanks are correct.");
     markDone(1);
-  }
-  else {
-    setFb(1,false,"Not quite. Resolution changes the number of pixels; colour depth changes bits per pixel. More pixels or more bits per pixel usually improve quality but increase file size.");
+  } else {
+    setFb(1,false,"Some blanks are incorrect — the highlighted words need changing.");
   }
 }
-function resetTask1(){ ["t1a","t1b","t1c","t1d","t1e","t1f","t1g","t1h"].forEach(id=>document.getElementById(id).value=""); document.getElementById("t1i").value=""; setFb(1,true,""); }
+function resetTask1(){
+  Object.keys(CLOZE_ANSWERS).forEach(id=>{
+    const el=document.getElementById(id);
+    el.value="";
+    el.classList.remove("ans-correct","ans-wrong");
+  });
+  setFb(1,true,"");
+}
 
 function buildTask2(){
   const target1=document.getElementById("target-grid-1"); target1.innerHTML="";
@@ -707,6 +674,14 @@ function buildTask2(){
     preview7.appendChild(px);
   }
 
+  const legendQ8=document.getElementById("legend-q8"); legendQ8.innerHTML="";
+  Object.entries(colorCodeMapQ8).forEach(([bits, color])=>{
+    const item=document.createElement("span");
+    item.className="legend-item";
+    item.innerHTML = '<span class="legend-swatch" style="background:'+colorMapQ8[color]+';"></span><span class="mono">'+bits+' = '+color+"</span>";
+    legendQ8.appendChild(item);
+  });
+
   const long8=document.getElementById("long-bits-8");
   long8.value="";
   long8.autocomplete="off";
@@ -714,15 +689,16 @@ function buildTask2(){
   long8.autocapitalize="off";
   long8.spellcheck=false;
   long8.oninput = ()=>{
-    long8.value = long8.value.replace(/[^01]/g,"").slice(0,25);
+    long8.value = long8.value.replace(/[^01]/g,"").slice(0,50);
     updatePreview8();
   };
   const target8=document.getElementById("target-grid-8"); target8.innerHTML="";
   const preview8=document.getElementById("preview-grid-8"); preview8.innerHTML="";
   for(let i=0;i<25;i++){
+    const bits=colorTargetQ8.slice(i*2, i*2+2);
     const targetPx=document.createElement("div");
     targetPx.className="pixel target";
-    targetPx.style.background=bwTargets.q8[i]==="1" ? "#111111" : "#ffffff";
+    targetPx.style.background=colorMapQ8[colorCodeMapQ8[bits]];
     target8.appendChild(targetPx);
 
     const px=document.createElement("div");
@@ -753,8 +729,8 @@ function checkTask2(){
   const q6 = q6val===colorTargetQ6;
   const q7val = (document.getElementById("long-bits-7").value || "").slice(0,27);
   const q7 = q7val===colorTargetQ7;
-  const q8val = (document.getElementById("long-bits-8").value || "").slice(0,25).split("");
-  const q8 = q8val.length===25 && q8val.every((b,i)=>b===bwTargets.q8[i]);
+  const q8val = (document.getElementById("long-bits-8").value || "").slice(0,50);
+  const q8 = q8val===colorTargetQ8;
   [
     ["q1b-0", q1],
     ["q2b-0", q2],
@@ -765,7 +741,9 @@ function checkTask2(){
     ["long-bits-7", q7],
     ["long-bits-8", q8]
   ].forEach(([id, ok]) => {
-    document.getElementById(id).closest(".question").classList.toggle("is-wrong", !ok);
+    const q=document.getElementById(id).closest(".question");
+    q.classList.toggle("is-wrong", !ok);
+    q.classList.toggle("is-correct", ok);
   });
 
   if(q1 && q2 && q3 && q4 && q5 && q6 && q7 && q8){
@@ -775,7 +753,7 @@ function checkTask2(){
     setFb(0,false,"Some parts are still off. Recheck the editable area for each row: pixel grid for Q1 to Q3, bit string for Q4 to Q8.");
   }
 }
-function resetTask2(){ buildTask2(); document.querySelectorAll("#panel-0 .question").forEach(q=>q.classList.remove("is-wrong")); setFb(0,true,""); }
+function resetTask2(){ buildTask2(); document.querySelectorAll("#panel-0 .question").forEach(q=>q.classList.remove("is-wrong","is-correct")); setFb(0,true,""); }
 
 function setAutoBitString(id, bits){
   document.getElementById(id).value = bits.join("");
@@ -869,19 +847,46 @@ function updatePreview7(){
 }
 
 function updatePreview8(){
-  const val=(document.getElementById("long-bits-8").value||"").padEnd(25,"0").slice(0,25);
+  const val=(document.getElementById("long-bits-8").value||"").padEnd(50,"0").slice(0,50);
   for(let i=0;i<25;i++){
-    document.getElementById("q8p-"+i).style.background = val[i]==="1" ? "#111111" : "#ffffff";
+    const bits=val.slice(i*2, i*2+2);
+    const color=colorCodeMapQ8[bits];
+    document.getElementById("q8p-"+i).style.background = color ? colorMapQ8[color] : "#ffffff";
   }
 }
 
 function checkTask3(){
   if (window.Classroom?.verifyAuth()===false) return;
-  const a=Number(document.getElementById("bd1").value), b=Number(document.getElementById("bd2").value), c=Number(document.getElementById("bd3").value), d=Number(document.getElementById("bd4").value);
-  if(a===4 && b===8 && c===3 && d===2){ setFb(2,true,!wrongBefore[2]?"Perfect bit-depth set.":"All bit-depth questions correct."); markDone(2); }
-  else setFb(2,false,"Use 2^n for max colours. For 6 colours, choose smallest n where 2^n >= 6.");
+  const f=(document.getElementById("fs6").value||"").trim().toLowerCase();
+  const checks=[
+    ["fs1", Number(document.getElementById("fs1").value)===4],
+    ["fs2", Number(document.getElementById("fs2").value)===8],
+    ["fs3", Number(document.getElementById("fs3").value)===2],
+    ["fs4", Number(document.getElementById("fs4").value)===3],
+    ["fs5", Number(document.getElementById("fs5").value)===7500],
+    ["fs6", f==="bits"||f==="bit"],
+    ["fs7", Number(document.getElementById("fs7").value)===2500],
+    ["fs8", Number(document.getElementById("fs8").value)===10000],
+    ["fs9", document.getElementById("fs9").value==="Increasing resolution can improve detail, but stores more pixels so file size increases."]
+  ];
+  checks.forEach(([id,ok])=>{
+    const q=document.getElementById(id).closest(".question");
+    q.classList.toggle("is-correct",ok);
+    q.classList.toggle("is-wrong",!ok);
+  });
+  if(checks.every(([,ok])=>ok)){
+    setFb(2,true,!wrongBefore[2]?"Perfect — colour depth and file size calculations all correct.":"All file size and colour depth answers are correct.");
+    markDone(2);
+  } else {
+    setFb(2,false,"Not quite. Use 2ⁿ for max colours. File size in bits = width × height × colour depth, then ÷ 8 for bytes.");
+  }
 }
-function resetTask3(){ ["bd1","bd2","bd3","bd4"].forEach(id=>document.getElementById(id).value=""); setFb(2,true,""); }
+function resetTask3(){
+  ["fs1","fs2","fs3","fs4","fs5","fs6","fs7","fs8"].forEach(id=>document.getElementById(id).value="");
+  document.getElementById("fs9").value="";
+  document.querySelectorAll("#panel-2 .question").forEach(q=>q.classList.remove("is-wrong","is-correct"));
+  setFb(2,true,"");
+}
 
 function buildSort(){
   const wrap=document.getElementById("sort-wrap"); wrap.innerHTML="";
@@ -889,7 +894,14 @@ function buildSort(){
 }
 function checkTask4(){
   if (window.Classroom?.verifyAuth()===false) return;
-  let ok=0; sortData.forEach((s,i)=>{ if(document.getElementById("m"+i).value===s.a) ok++; });
+  let ok=0;
+  sortData.forEach((s,i)=>{
+    const correct=document.getElementById("m"+i).value===s.a;
+    const q=document.getElementById("m"+i).closest(".question");
+    q.classList.toggle("is-correct",correct);
+    q.classList.toggle("is-wrong",!correct);
+    if(correct) ok++;
+  });
   if(ok===sortData.length){ setFb(3,true,!wrongBefore[3]?"Perfect quality diagnosis.":"All scenarios classified correctly."); markDone(3); }
   else setFb(3,false,ok+"/"+sortData.length+" correct. Focus on which single factor most directly causes each quality change.");
 }
@@ -897,12 +909,24 @@ function resetTask4(){ buildSort(); setFb(3,true,""); }
 
 function checkTask5(){
   if (window.Classroom?.verifyAuth()===false) return;
-  const ok = document.getElementById("cA").value==="Lossy" && document.getElementById("cB").value==="Lossless" &&
-    document.getElementById("s1").checked && !document.getElementById("s2").checked && document.getElementById("s3").checked && !document.getElementById("s4").checked;
-  if(ok){ setFb(4,true,!wrongBefore[4]?"Perfect compression choices.":"Compression choices are correct."); markDone(4); }
+  const okA=document.getElementById("cA").value==="Lossy";
+  const okB=document.getElementById("cB").value==="Lossless";
+  const okCB=document.getElementById("s1").checked && !document.getElementById("s2").checked && document.getElementById("s3").checked && !document.getElementById("s4").checked;
+  [["cA",okA],["cB",okB],["s1",okCB]].forEach(([id,ok])=>{
+    const q=document.getElementById(id).closest(".question");
+    q.classList.toggle("is-correct",ok);
+    q.classList.toggle("is-wrong",!ok);
+  });
+  if(okA&&okB&&okCB){ setFb(4,true,!wrongBefore[4]?"Perfect compression choices.":"Compression choices are correct."); markDone(4); }
   else setFb(4,false,"Review: lossy for web photos, lossless for logos/edits; reduce size via resolution and fewer colours.");
 }
-function resetTask5(){ document.getElementById("cA").value=""; document.getElementById("cB").value=""; ["s1","s2","s3","s4"].forEach(id=>document.getElementById(id).checked=false); setFb(4,true,""); }
+function resetTask5(){
+  document.getElementById("cA").value="";
+  document.getElementById("cB").value="";
+  ["s1","s2","s3","s4"].forEach(id=>document.getElementById(id).checked=false);
+  document.querySelectorAll("#panel-4 .question").forEach(q=>q.classList.remove("is-wrong","is-correct"));
+  setFb(4,true,"");
+}
 
 function buildMS(){
   const wrap=document.getElementById("ms-wrap"); wrap.innerHTML="";
@@ -924,7 +948,6 @@ function checkMSQ(qi){
 }
 function resetMSQ(qi){ const q=msData[qi]; q.points.forEach((p,pi)=>{ document.getElementById("ms-"+qi+"-"+pi).checked=false; document.getElementById("msp-"+qi+"-"+pi).classList.remove("ms-ok","ms-err"); }); const fb=document.getElementById("msfb-"+qi); fb.className="ms-fb"; fb.innerHTML=""; msDone[qi]=false; setFb(5,true,""); }
 
-buildSamples();
 buildTask2();
 buildSort();
 buildMS();
