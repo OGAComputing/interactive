@@ -239,6 +239,8 @@ const _pyTimers = new Map(); // textarea → debounce for heavy pyodide tasks
 const _hintTimers = new Map(); // textarea → debounce for syntax hint visibility
 const _uiTimers = new Map(); // textarea → debounce for fast UI tasks
 
+const _EDITOR_CLIPBOARD_TYPE = 'application/x-interactive-code-editor';
+
 // ── Private helpers ───────────────────────────────────────────────────────────
 const _lastLineCount = new Map();
 function _autoResize(ta, force = false) {
@@ -269,6 +271,23 @@ function _debouncedCheck(ta) {
     _lastVal.set(ta, ta.value);
     _runHeavyTasks(ta);
   }, 50));
+}
+
+function _selectedText(ta) {
+  return ta.value.slice(ta.selectionStart, ta.selectionEnd);
+}
+
+function _tagEditorClipboard(e, text) {
+  if (!text || !e.clipboardData) return false;
+  e.clipboardData.setData('text/plain', text);
+  e.clipboardData.setData(_EDITOR_CLIPBOARD_TYPE, '1');
+  e.preventDefault();
+  return true;
+}
+
+function _pasteIsAllowed(ta, e) {
+  if (ta.dataset.allowPaste) return true;
+  return e.clipboardData?.types?.includes(_EDITOR_CLIPBOARD_TYPE);
 }
 
 async function _runHeavyTasks(ta) {
@@ -533,8 +552,23 @@ export function setupEditors(selector = '.checker-textarea') {
     _hintMap.set(ta, hint);
 
     // ── Events ────────────────────────────────────────────────────────────
+    ta.addEventListener('copy', e => {
+      _tagEditorClipboard(e, _selectedText(ta));
+    });
+
+    ta.addEventListener('cut', e => {
+      const start = ta.selectionStart;
+      const end = ta.selectionEnd;
+      if (!_tagEditorClipboard(e, _selectedText(ta))) return;
+
+      ta.value = ta.value.slice(0, start) + ta.value.slice(end);
+      ta.selectionStart = ta.selectionEnd = start;
+      ta.dispatchEvent(new Event('input', { bubbles: true }));
+      window.saveState?.();
+    });
+
     ta.addEventListener('paste', e => {
-      if (!ta.dataset.allowPaste) e.preventDefault();
+      if (!_pasteIsAllowed(ta, e)) e.preventDefault();
     });
 
     ta.addEventListener('input', () => {
