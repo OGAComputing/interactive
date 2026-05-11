@@ -123,6 +123,18 @@ test.describe('Tabs and panels', () => {
     await expect(page.locator('#panel-0 .locked-task')).toBeVisible();
   });
 
+  test('optional examples and hints are hidden until opened', async ({ page }) => {
+    await expect(page.locator('#panel-0 .optional-example').first()).toBeVisible();
+    await expect(page.locator('#panel-0 .worked-example').first()).not.toBeVisible();
+    await expect(page.locator('#panel-0 .optional-hint').first()).toBeVisible();
+    await expect(page.locator('#panel-0 .q-hint').first()).not.toBeVisible();
+  });
+
+  test('optional reminders name the current skill', async ({ page }) => {
+    await expect(page.locator('#panel-0 .optional-reminder summary').first())
+      .toHaveText('Remind me how casting input to a number works');
+  });
+
   test('clicking a different tab switches panels', async ({ page }) => {
     const tabs = page.locator('.tab');
     const count = await tabs.count();
@@ -194,13 +206,13 @@ test.describe('Task check — code (cast_to_int)', () => {
   test('wrong code shows fail feedback', async ({ page }) => {
     await page.locator('#cast_to_int_A-ta').fill('age = input("Age? ")\nprint(age)');
     await page.locator('#cast_to_int_A-btn').click();
-    await expect(page.locator('#cast_to_int_A-fb')).toHaveClass(/fail/);
+    await expect(page.locator('#cast_to_int_A-fb')).toHaveClass(/fail/, { timeout: 30000 });
   });
 
   test('valid code passes and unlocks Task B', async ({ page }) => {
     await page.locator('#cast_to_int_A-ta').fill('age = int(input("Age? "))\nprint(age + 1)');
     await page.locator('#cast_to_int_A-btn').click();
-    await expect(page.locator('#cast_to_int_A-fb')).toHaveClass(/pass/, { timeout: 10000 });
+    await expect(page.locator('#cast_to_int_A-fb')).toHaveClass(/pass/, { timeout: 30000 });
     await expect(page.locator('#cast_to_int_B')).not.toHaveClass(/locked-task/);
   });
 
@@ -208,22 +220,22 @@ test.describe('Task check — code (cast_to_int)', () => {
     // First pass Task A
     await page.locator('#cast_to_int_A-ta').fill('age = int(input("Age? "))\nprint(age + 1)');
     await page.locator('#cast_to_int_A-btn').click();
-    await expect(page.locator('#cast_to_int_A-fb')).toHaveClass(/pass/, { timeout: 10000 });
+    await expect(page.locator('#cast_to_int_A-fb')).toHaveClass(/pass/, { timeout: 30000 });
 
     // Then complete Task B
     await page.locator('#cast_to_int_B-ta').fill('mins = int(input("Minutes? "))\nprint(mins * 60)');
     await page.locator('#cast_to_int_B-btn').click();
-    await expect(page.locator('#cast_to_int_B-fb')).toHaveClass(/pass/, { timeout: 10000 });
+    await expect(page.locator('#cast_to_int_B-fb')).toHaveClass(/pass/, { timeout: 30000 });
   });
 
   test('completing both tasks marks the tab as done', async ({ page }) => {
     await page.locator('#cast_to_int_A-ta').fill('age = int(input("Age? "))\nprint(age + 1)');
     await page.locator('#cast_to_int_A-btn').click();
-    await expect(page.locator('#cast_to_int_A-fb')).toHaveClass(/pass/, { timeout: 10000 });
+    await expect(page.locator('#cast_to_int_A-fb')).toHaveClass(/pass/, { timeout: 30000 });
 
     await page.locator('#cast_to_int_B-ta').fill('mins = int(input("Minutes? "))\nprint(mins * 60)');
     await page.locator('#cast_to_int_B-btn').click();
-    await expect(page.locator('#cast_to_int_B-fb')).toHaveClass(/pass/, { timeout: 10000 });
+    await expect(page.locator('#cast_to_int_B-fb')).toHaveClass(/pass/, { timeout: 30000 });
 
     // First cluster tab should now be marked done
     await expect(page.locator('.tab[data-idx="0"]')).toHaveClass(/done/);
@@ -233,6 +245,182 @@ test.describe('Task check — code (cast_to_int)', () => {
 // ═══════════════════════════════════════════════════════════════════════════════
 //  SCORE
 // ═══════════════════════════════════════════════════════════════════════════════
+
+test.describe('Task check - code execution (range_basics)', () => {
+  test.beforeEach(async ({ page }) => {
+    await seedAssessResults(page, {
+      qC1: 1, qC2: 1, qC4: 1, qC5: 1,     // cast_to_int PASS (override default)
+      qL1: 0, qL2: 0, qL3: 0, qLC1: 0,    // range_basics WEAK
+    });
+    await page.goto(ACTIVITY);
+    await expect(page.locator('#plan-screen')).toBeVisible({ timeout: 5000 });
+    await page.locator('#plan-screen button:has-text("Start practising")').click();
+    await expect(page.locator('#tab-bar')).toBeVisible();
+  });
+
+  test('Check runs the code and accepts lowercase hi four times', async ({ page }) => {
+    await page.locator('#range_basics_A-ta').fill('for i in range(4):\n    print("hi")');
+    await page.locator('#range_basics_A-btn').click();
+
+    await expect(page.locator('#range_basics_A-fb')).toHaveClass(/pass/, { timeout: 30000 });
+    await expect(page.locator('#range_basics_A .output-content')).toContainText('hi');
+  });
+
+  test('range reminder reads naturally', async ({ page }) => {
+    await expect(page.locator('#panel-0 .sec-title')).toHaveText('Using range()');
+    await expect(page.locator('#panel-0 .optional-reminder summary').first())
+      .toHaveText('Remind me how using range() works');
+  });
+
+  test('Check shows Python errors in the editor output', async ({ page }) => {
+    await page.locator('#range_basics_A-ta').fill('for i in range(4)\n    print("hi")');
+    await page.locator('#range_basics_A-btn').click();
+
+    await expect(page.locator('#range_basics_A-fb')).toContainText('Fix the error shown', { timeout: 30000 });
+    await expect(page.locator('#range_basics_A .output-panel')).toHaveClass(/error/);
+    await expect(page.locator('#range_basics_A .output-content')).toContainText('SyntaxError');
+  });
+
+  test('Check gives precise feedback for Hi with punctuation', async ({ page }) => {
+    await page.locator('#range_basics_A-ta').fill('for i in range(4):\n    print("Hi!")');
+    await page.locator('#range_basics_A-btn').click();
+
+    await expect(page.locator('#range_basics_A-fb')).toContainText('no exclamation mark', { timeout: 30000 });
+    await expect(page.locator('#range_basics_A .output-content')).toContainText('Hi!');
+  });
+});
+
+test.describe('Task check - relaxed output checks (function_basics)', () => {
+  test.beforeEach(async ({ page }) => {
+    await seedAssessResults(page, {
+      qC1: 1, qC2: 1, qC4: 1, qC5: 1,   // cast_to_int PASS (override default)
+      qF1: 0, qF2: 0, qF3: 0, qF4: 0, qFC1: 0, // function_basics WEAK
+    });
+    await page.goto(ACTIVITY);
+    await expect(page.locator('#plan-screen')).toBeVisible({ timeout: 5000 });
+    await page.locator('#plan-screen button:has-text("Start practising")').click();
+    await expect(page.locator('#tab-bar')).toBeVisible();
+  });
+
+  test('Goodbye task accepts any three output lines containing bye', async ({ page }) => {
+    await page.locator('#function_basics_A-ta').fill('print("bye")\nprint("bye for now")\nprint("goodbye")');
+    await page.locator('#function_basics_A-btn').click();
+
+    await expect(page.locator('#function_basics_A-fb')).toHaveClass(/pass/, { timeout: 30000 });
+    await expect(page.locator('#function_basics_A .output-content')).toContainText('bye');
+  });
+});
+
+test.describe('Task check - fill blanks (function_loop)', () => {
+  test.beforeEach(async ({ page }) => {
+    await seedAssessResults(page, {
+      qC1: 1, qC2: 1, qC4: 1, qC5: 1, // cast_to_int PASS (override default)
+      qL1: 1, qL2: 1, qL3: 1, qLC1: 1, qLM1: 1, qLC4: 1, // range_basics PASS
+      qFC2: 0,                         // function_loop WEAK
+    });
+    await page.goto(ACTIVITY);
+    await expect(page.locator('#plan-screen')).toBeVisible({ timeout: 5000 });
+    await page.locator('#plan-screen button:has-text("Start practising")').click();
+    await expect(page.locator('#function_loop_A')).toBeVisible();
+  });
+
+  test('square task asks for blanks instead of a full editor', async ({ page }) => {
+    await expect(page.locator('#function_loop_A .fill-input')).toHaveCount(4);
+    await expect(page.locator('#function_loop_A .checker-textarea')).toHaveCount(0);
+  });
+
+  test('square task passes when all four blanks are completed', async ({ page }) => {
+    await page.locator('#function_loop_A-name').fill('square');
+    await page.locator('#function_loop_A-repeat').fill('4');
+    await page.locator('#function_loop_A-turn').fill('90');
+    await page.locator('#function_loop_A-call').fill('square()');
+    await page.locator('#function_loop_A-btn').click();
+
+    await expect(page.locator('#function_loop_A-fb')).toHaveClass(/pass/);
+    await expect(page.locator('#function_loop_B')).not.toHaveClass(/locked-task/);
+  });
+
+  test('square task prompts students to complete every blank', async ({ page }) => {
+    await page.locator('#function_loop_A-name').fill('square');
+    await page.locator('#function_loop_A-btn').click();
+
+    await expect(page.locator('#function_loop_A-fb')).toContainText('Complete all four blanks');
+  });
+});
+
+test.describe('Extension game flow', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto(ACTIVITY);
+    await expect(page.locator('#plan-screen')).toBeVisible({ timeout: 5000 });
+    await page.locator('#plan-screen button:has-text("Start practising")').click();
+    await page.getByRole('button', { name: /Build a guessing game/ }).click();
+    await expect(page.locator('#game_build_A')).toBeVisible();
+  });
+
+  test('stretch uses the same editor and paste is not allowed', async ({ page }) => {
+    await expect(page.locator('#game_build_A-ta')).toBeVisible();
+    await expect(page.locator('#game_build_A-ta')).not.toHaveAttribute('data-allowPaste', 'true');
+    await expect(page.locator('#game_build_B-ta')).toHaveCount(0);
+    await expect(page.locator('#game_build_B')).toContainText('same Guessing Game editor above');
+  });
+
+  test('first check leaves the game editor editable for the stretch', async ({ page }) => {
+    const baseGame = [
+      'def greet():',
+      '    print("Welcome to Guess My Number!")',
+      '',
+      'greet()',
+      'secret = 7',
+      'for i in range(5):',
+      '    guess = int(input("Guess: "))',
+      '    if guess == secret:',
+      '        print("Correct!")',
+      '        break',
+      '    elif guess > secret:',
+      '        print("Too high")',
+      '    else:',
+      '        print("Too low")',
+      'print("Game over! The secret was " + str(secret))',
+    ].join('\n');
+
+    await page.locator('#game_build_A-ta').fill(baseGame);
+    await page.locator('#game_build_A-btn').click();
+
+    await expect(page.locator('#game_build_A-fb')).toHaveClass(/pass/, { timeout: 30000 });
+    await expect(page.locator('#game_build_A-ta')).not.toHaveAttribute('readonly', '');
+    await expect(page.locator('#game_build_B')).not.toHaveClass(/locked-task/);
+  });
+
+  test('stretch check reads the original game editor', async ({ page }) => {
+    const stretchedGame = [
+      'def greet():',
+      '    print("Welcome to Guess My Number!")',
+      '',
+      'greet()',
+      'secret = 7',
+      'attempts = 0',
+      'for i in range(5):',
+      '    attempts = attempts + 1',
+      '    guess = int(input("Guess: "))',
+      '    if guess == secret:',
+      '        print("Correct!")',
+      '        break',
+      '    elif guess > secret:',
+      '        print("Too high")',
+      '    else:',
+      '        print("Too low")',
+      'print("You used " + str(attempts) + " tries")',
+      'print("Game over! The secret was " + str(secret))',
+    ].join('\n');
+
+    await page.locator('#game_build_A-ta').fill(stretchedGame);
+    await page.locator('#game_build_A-btn').click();
+    await expect(page.locator('#game_build_A-fb')).toHaveClass(/pass/, { timeout: 30000 });
+
+    await page.locator('#game_build_B-btn').click();
+    await expect(page.locator('#game_build_B-fb')).toHaveClass(/pass/, { timeout: 30000 });
+  });
+});
 
 test.describe('Score pill', () => {
   test.beforeEach(async ({ page }) => {
@@ -249,7 +437,7 @@ test.describe('Score pill', () => {
   test('score increases after passing a task', async ({ page }) => {
     await page.locator('#cast_to_int_A-ta').fill('age = int(input("Age? "))\nprint(age + 1)');
     await page.locator('#cast_to_int_A-btn').click();
-    await expect(page.locator('#cast_to_int_A-fb')).toHaveClass(/pass/, { timeout: 10000 });
+    await expect(page.locator('#cast_to_int_A-fb')).toHaveClass(/pass/, { timeout: 30000 });
     await expect(page.locator('#score-pill')).toContainText('1 /');
   });
 });

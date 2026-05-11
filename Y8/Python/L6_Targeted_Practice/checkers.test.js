@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest';
-import { CHECKERS } from './checkers.js';
+import { CHECKERS, FEEDBACK } from './checkers.js';
 
 // ─── errors_read ──────────────────────────────────────────────────────────────
 
@@ -92,15 +92,52 @@ describe('range_basics_A', () => {
   const fn = CHECKERS.range_basics_A;
   const PASS = 'for i in range(4):\n    print("Hi")';
   test('passes valid loop', () => expect(fn(PASS)).toBe(true));
+  test('passes lowercase hi, matching what students often type in Thonny', () => {
+    expect(fn('for i in range(4):\n    print("hi")')).toBe(true);
+  });
+  test('passes when the executed output is exactly four hi lines', () => {
+    expect(fn('for word in ["hi", "hi", "hi", "hi"]:\n    print(word)', {
+      ok: true,
+      output: 'hi\nhi\nhi\nhi\n'
+    })).toBe(true);
+  });
   test('rejects range(3)', () => expect(fn('for i in range(3):\n    print("Hi")')).toBe(false));
+  test('rejects executed output with only three hi lines', () => {
+    expect(fn('for i in range(3):\n    print("hi")', {
+      ok: true,
+      output: 'hi\nhi\nhi\n'
+    })).toBe(false);
+  });
   test('rejects missing print Hi', () => expect(fn('for i in range(4):\n    print("Hello")')).toBe(false));
   test('rejects empty', () => expect(fn('')).toBe(false));
+});
+
+describe('range_basics_A feedback', () => {
+  const fb = FEEDBACK.range_basics_A;
+  test('flags Hi with an exclamation mark as not exact output', () => {
+    expect(fb('for i in range(4):\n    print("Hi!")', {
+      ok: true,
+      output: 'Hi!\nHi!\nHi!\nHi!\n'
+    })).toContain('no exclamation mark');
+  });
+  test('flags the wrong repeat count from actual output', () => {
+    expect(fb('for i in range(3):\n    print("Hi")', {
+      ok: true,
+      output: 'Hi\nHi\nHi\n'
+    })).toContain('exactly 4');
+  });
 });
 
 describe('range_basics_B', () => {
   const fn = CHECKERS.range_basics_B;
   const PASS = 'for n in range(5, 11):\n    print(n)';
   test('passes valid loop', () => expect(fn(PASS)).toBe(true));
+  test('passes when executed output is the numbers 5 to 10', () => {
+    expect(fn('for n in [5, 6, 7, 8, 9, 10]:\n    print(n)', {
+      ok: true,
+      output: '5\n6\n7\n8\n9\n10\n'
+    })).toBe(true);
+  });
   test('rejects wrong range start', () => expect(fn('for n in range(1, 11):\n    print(n)')).toBe(false));
   test('rejects wrong range end', () => expect(fn('for n in range(5, 10):\n    print(n)')).toBe(false));
   test('rejects missing print', () => expect(fn('for n in range(5, 11):\n    pass')).toBe(false));
@@ -137,14 +174,23 @@ describe('function_basics_A', () => {
   const fn = CHECKERS.function_basics_A;
   const PASS = 'def say_bye():\n    print("Goodbye!")\n\nsay_bye()\nsay_bye()\nsay_bye()';
   test('passes with def + 3 calls (4 occurrences total)', () => expect(fn(PASS)).toBe(true));
+  test('passes simple code that prints three lines containing bye', () => {
+    expect(fn('print("bye")\nprint("bye for now")\nprint("goodbye")')).toBe(true);
+  });
+  test('passes when executed output has three lines containing bye', () => {
+    expect(fn('for word in ["bye", "bye", "bye"]:\n    print(word)', {
+      ok: true,
+      output: 'bye\nbye\nbye\n'
+    })).toBe(true);
+  });
   test('passes bye() as the simpler function name', () => {
     expect(fn('def bye():\n    print("Goodbye!")\n\nbye()\nbye()\nbye()')).toBe(true);
   });
   test('rejects mixed function names', () => {
     expect(fn('def say_bye():\n    print("Goodbye!")\n\nbye()\nbye()\nbye()')).toBe(false);
   });
-  test('rejects missing def', () => expect(fn('bye()\nbye()\nbye()')).toBe(false));
-  test('rejects wrong print message', () => expect(fn('def bye():\n    print("Bye!")\nbye()\nbye()\nbye()')).toBe(false));
+  test('rejects missing def when there is no successful output evidence', () => expect(fn('bye()\nbye()\nbye()')).toBe(false));
+  test('accepts any print message containing bye', () => expect(fn('def bye():\n    print("Bye!")\nbye()\nbye()\nbye()')).toBe(true));
   test('rejects too few calls (only 2 total — def + 1 call)', () => {
     expect(fn('def bye():\n    print("Goodbye!")\nbye()')).toBe(false);
   });
