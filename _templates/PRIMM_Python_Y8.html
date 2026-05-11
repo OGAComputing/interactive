@@ -169,6 +169,7 @@ color:  purple
 
   /* ── BUTTONS ── */
   .btn { padding: 0.5rem 1.2rem; border-radius: 6px; border: none; cursor: pointer; font-family: 'Trebuchet MS',sans-serif; font-weight: 700; font-size: 0.82rem; transition: all 0.2s; display: inline-flex; align-items: center; gap: 0.4rem; }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(1); }
   .btn-check { background: var(--purple-light); color: white; } .btn-check:hover { background: var(--stage-p); }
   .btn-next  { background: var(--teal); color: var(--navy); font-weight: 800; } .btn-next:hover { background: #009e8c; }
   .btn-reset { background: #2d1060; color: #b4a0e0; font-size: 0.78rem; } .btn-reset:hover { background: #3d2070; }
@@ -338,10 +339,10 @@ color:  purple
     ⚠️ Please answer every question above — even a guess is fine!
   </div>
 
-  <button class="btn btn-check" onclick="tryCompletePredict()" style="margin-top:1rem">
+  <button class="btn btn-check" id="btn_check_predict" onclick="tryCompletePredict()" style="margin-top:1rem">
     ✓ Check predictions
   </button>
-  <button class="btn btn-next step-hidden" id="btn_goto_r" onclick="completeStage('P')" style="margin-top:1rem">
+  <button class="btn btn-next step-hidden" id="btn_goto_r" onclick="reviewedGoToRun()" style="margin-top:1rem">
     ✓ Reviewed — go to Run →
   </button>
 </section>
@@ -830,6 +831,8 @@ let stepI  = state.stepI  || 1;
 let stepM1 = state.stepM1 || 1;
 let skippedStages = state.skippedStages || [];
 let attemptCounts = state.attemptCounts || {};
+let predictReviewTimer = null;
+const PREDICT_REVIEW_DELAY_MS = 10000;
 
 const STAGES = ['P','R','I','M1','M2'];
 
@@ -1000,6 +1003,47 @@ function completeStage(s) {
   submitScore();
 }
 
+function showPredictReviewButton(startDelay = true) {
+  const checkBtn = document.getElementById('btn_check_predict');
+  const gotoBtn = document.getElementById('btn_goto_r');
+  if (checkBtn) checkBtn.classList.add('step-hidden');
+  if (!gotoBtn) return;
+
+  gotoBtn.classList.remove('step-hidden');
+  if (startDelay) {
+    state.predictReviewReadyAt = Date.now() + PREDICT_REVIEW_DELAY_MS;
+    saveState();
+  }
+
+  const readyAt = completedStages.includes('P') ? 0 : (Number(state.predictReviewReadyAt) || Date.now());
+  updatePredictReviewTimer(readyAt);
+}
+
+function updatePredictReviewTimer(readyAt) {
+  const gotoBtn = document.getElementById('btn_goto_r');
+  if (!gotoBtn) return;
+  if (predictReviewTimer) clearTimeout(predictReviewTimer);
+
+  const remaining = Math.max(0, Math.ceil((readyAt - Date.now()) / 1000));
+  if (remaining > 0) {
+    gotoBtn.disabled = true;
+    gotoBtn.textContent = `✓ Reviewed — go to Run (${remaining}s)`;
+    predictReviewTimer = setTimeout(() => updatePredictReviewTimer(readyAt), 250);
+    return;
+  }
+
+  gotoBtn.disabled = false;
+  gotoBtn.textContent = '✓ Reviewed — go to Run →';
+  state.predictReviewReadyAt = 0;
+  saveState();
+}
+
+function reviewedGoToRun() {
+  const gotoBtn = document.getElementById('btn_goto_r');
+  if (gotoBtn?.disabled) return;
+  completeStage('P');
+}
+
 // ── Pyodide status ────────────────────────────────────
 
 function setPyStatus(st) {
@@ -1148,9 +1192,8 @@ function tryCompletePredict() {
     firstError?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   } else {
     warning.style.display = 'none';
-    const gotoBtn = document.getElementById('btn_goto_r');
-    gotoBtn?.classList.remove('step-hidden');
-    gotoBtn?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    showPredictReviewButton();
+    document.getElementById('btn_goto_r')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 }
 
@@ -1382,6 +1425,7 @@ function recordM1Attempt() {
 Object.assign(window, {
   showStage, saveState,
   clearPredictError, tryCompletePredict,
+  reviewedGoToRun,
   clearRunError, tryCompleteRun,
   tryCompleteInvestigate, nextStep,
   checkMod, completeStage,
@@ -1403,9 +1447,9 @@ window.addEventListener('DOMContentLoaded', () => {
   preload().then(() => setPyStatus('ready')).catch(() => setPyStatus('error'));
 
   // Restore Predict MCQ feedback if Predict was already completed.
-  if (completedStages.includes('P')) {
+  if (completedStages.includes('P') || Number(state.predictReviewReadyAt) > 0) {
     RADIO_GROUPS.forEach(name => applyMCQFeedback(name, P_CORRECT[name]));
-    document.getElementById('btn_goto_r')?.classList.remove('step-hidden');
+    showPredictReviewButton(false);
 
     // FILL IN ⑨: Re-show free-text feedback on reload.
     // Copy this block for each free-text question, matching the ok logic in tryCompletePredict().

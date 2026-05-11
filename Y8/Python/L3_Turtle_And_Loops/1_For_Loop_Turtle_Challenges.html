@@ -152,12 +152,12 @@ color:  purple
   /* TURTLE MODAL */
   .turtle-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,10,0.88); z-index: 200; align-items: center; justify-content: center; }
   .turtle-modal.open { display: flex; }
-  .turtle-modal-inner { background: #0d0d1a; border: 2px solid var(--purple-light); border-radius: 14px; padding: 1rem 1.2rem 1.2rem; max-width: 460px; width: 95vw; }
+  .turtle-modal-inner { background: #0d0d1a; border: 2px solid var(--purple-light); border-radius: 14px; padding: 1rem 1.2rem 1.2rem; max-width: 620px; width: 95vw; }
   .turtle-modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.8rem; }
   .turtle-modal-header .turtle-title { color: #cba6f7; font-weight: 700; font-size: 0.95rem; font-family: 'Trebuchet MS',sans-serif; }
   .turtle-modal-header .turtle-close { background: #2d1060; color: #b4a0e0; border: 1px solid #4a2d80; border-radius: 6px; padding: 0.3rem 0.75rem; cursor: pointer; font-size: 0.8rem; font-family: 'Trebuchet MS',sans-serif; transition: background 0.2s; }
   .turtle-modal-header .turtle-close:hover { background: #3d2080; color: white; }
-  #turtleCanvas { width: 100%; border-radius: 8px; display: block; border: 1px solid #2d1060; }
+  #turtleCanvas { width: 100%; max-height: 78vh; border-radius: 8px; display: block; border: 1px solid #2d1060; }
   .turtle-status { text-align: center; font-size: 0.78rem; color: #6b5a90; margin-top: 0.5rem; font-family: 'Trebuchet MS',sans-serif; min-height: 1.2em; }
   .btn-run { background: var(--stage-i); color: white; } .btn-run:hover { background: #047857; }
 
@@ -258,10 +258,10 @@ color:  purple
     </div>
   </div>
 
-  <button class="btn btn-check" onclick="tryCompletePredict()" style="margin-top:1rem">
+  <button class="btn btn-check" id="btn_check_predict" onclick="tryCompletePredict()" style="margin-top:1rem">
     ✓ Check predictions
   </button>
-  <button class="btn btn-next step-hidden" id="btn_goto_r" onclick="completeStage('P')" style="margin-top:1rem">
+  <button class="btn btn-next step-hidden" id="btn_goto_r" onclick="reviewedGoToRun()" style="margin-top:1rem">
     ✓ Reviewed — go to Run →
   </button>
 </section>
@@ -402,7 +402,7 @@ color:  purple
     </div>
     <div id="m1_step_2" class="step-hidden">
       <div class="section-label">★★ Task 2 — Hexagon</div>
-      <div class="modify-task"><span class="stars">★★</span><div class="task-text">Keep your triangle code. Change <strong>range(3)</strong> to <strong>range(6)</strong> and the angle to <strong>60°</strong> — your triangle becomes a hexagon.</div></div>
+      <div class="modify-task"><span class="stars">★★</span><div class="task-text">Keep your triangle code and change it so the turtle draws a <strong>regular hexagon</strong>. Use the hint above to work out what the loop and turn should be.</div></div>
     </div>
     <div id="m1_step_3" class="step-hidden">
       <div class="section-label">★★ Task 3 — Colour and pen size</div>
@@ -410,11 +410,15 @@ color:  purple
     </div>
     <div id="m1_step_4" class="step-hidden">
       <div class="section-label">★★★ Task 4 — Pentagon</div>
-      <div class="modify-task" style="border-left-color:#dc2626"><span class="stars">★★★</span><div class="task-text">Keep your colour. Change to <strong>range(5)</strong> and angle <strong>72°</strong> to draw a coloured pentagon.</div></div>
+      <div class="modify-task" style="border-left-color:#dc2626"><span class="stars">★★★</span><div class="task-text">Keep your colour and pen size. Change your code so it draws a <strong>coloured regular pentagon</strong>. Work out the number of repeats and the turn angle yourself.</div></div>
     </div>
     <div id="m1_step_5" class="step-hidden">
-      <div class="section-label">★★★★ Task 5 — Growing pattern</div>
-      <div class="modify-task"><span class="stars">★★★★</span><div class="task-text">Keep your coloured pentagon. Change <strong>t.forward(100)</strong> to <strong>t.forward(i * 25)</strong> — what pattern does this create?</div></div>
+      <div class="section-label">★★★★ Task 5 — Green octagon</div>
+      <div class="modify-task"><span class="stars">★★★★</span><div class="task-text">Now draw a <strong>green octagon</strong>. You should only need to adapt the polygon code you already have.</div></div>
+    </div>
+    <div id="m1_step_6" class="step-hidden">
+      <div class="section-label">★★★★ Task 6 — Growing pattern</div>
+      <div class="modify-task"><span class="stars">★★★★</span><div class="task-text">Turn your octagon into a growing pattern. Try <strong>range(60)</strong> or more, keep the octagon turn, and change the distance to something like <strong><code>t.forward(i + 5)</code></strong>. This starts much smaller than your octagon side length, so the pattern stays on screen while it grows.</div></div>
     </div>
   </div>
 
@@ -427,7 +431,7 @@ color:  purple
   </div>
 
   <button class="btn btn-skip" id="btn_skip_m1" onclick="skipStep('M1')" style="margin-top:0.5rem;display:none">Skip this task →</button>
-  <button class="btn btn-next step-hidden" id="btn_goto_m2_from_m1" onclick="completeStage('M1')" style="margin-top:1rem">
+  <button class="btn btn-next step-hidden" id="btn_goto_m2_from_m1" onclick="goToMakeFromModify()" style="margin-top:1rem">
     ✓ Modifications done — go to Make →
   </button>
 </section>
@@ -468,16 +472,16 @@ color:  purple
       <div class="section-label">Challenge 2 of 3 — Shape Chooser 📐</div>
       <div class="modify-task" style="border-left-color:var(--stage-m2)">
         <span class="stars">📐</span>
-        <div class="task-text">Draw a triangle, square and pentagon one after another. Use <strong>penup()</strong> / <strong>pendown()</strong> to move between them.</div>
+        <div class="task-text">Draw a triangle, square and pentagon one after another. Use <strong>t.penup()</strong> / <strong>t.pendown()</strong> to move between them.</div>
       </div>
     </div>
 
     <!-- Challenge 3 -->
     <div id="m2_step_3" class="step-hidden">
-      <div class="section-label">Challenge 3 of 3 — Spiral 🌀</div>
+      <div class="section-label">Challenge 3 of 3 — Additive pattern 🌀</div>
       <div class="modify-task" style="border-left-color:var(--stage-m2)">
         <span class="stars">🌀</span>
-        <div class="task-text">Make the distance grow each loop by using the loop variable <strong>i</strong> in your <code>forward()</code> command. Try <code>left(91)</code> instead of <code>90</code> — what happens?</div>
+        <div class="task-text">Create your own growing turtle pattern from scratch. Use a loop with <strong>at least 60 repeats</strong>, make the distance grow with <strong>addition</strong> such as <code>t.forward(i + 5)</code>, and keep the starting distance small so the pattern stays on screen. Choose a turn angle that makes an interesting pattern.</div>
       </div>
     </div>
   </div>
@@ -512,10 +516,13 @@ let completedStages = state.completedStages || [];
 let passedChecks    = state.passedChecks    || {};
 let passedMake      = state.passedMake      || { burst: false, shape: false, spiral: false };
 let stepI = state.stepI || 1;
+const M1_TASK_COUNT = 6;
 let stepM1 = state.stepM1 || 1;
 let stepM2 = state.stepM2 || 1;
 let skippedStages = state.skippedStages || [];
 let attemptCounts = state.attemptCounts || {};
+let predictReviewTimer = null;
+const PREDICT_REVIEW_DELAY_MS = 10000;
 
 const ALL_FIELDS = ['p1','p2','p3','p4','r1','r2','r3',
   'i1a','i1b','i2a','i2b','i3',
@@ -546,9 +553,9 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  if (completedStages.includes('P')) {
+  if (completedStages.includes('P') || Number(state.predictReviewReadyAt) > 0) {
     document.getElementById('predict-review')?.classList.remove('step-hidden');
-    document.getElementById('btn_goto_r')?.classList.remove('step-hidden');
+    showPredictReviewButton(false);
   }
 
   setPyStatus('loading');
@@ -595,7 +602,10 @@ function updateGranularProgress() {
 
   // Modify
   const m1Fill = document.getElementById('progress-fill-M1');
-  if (m1Fill) m1Fill.style.width = Math.round(((stepM1 - 1) / 5) * 100) + '%';
+  if (m1Fill) {
+    const m1Pct = completedStages.includes('M1') ? 100 : Math.round(((stepM1 - 1) / M1_TASK_COUNT) * 100);
+    m1Fill.style.width = m1Pct + '%';
+  }
 
   // Make
   const m2Fill = document.getElementById('progress-fill-M2');
@@ -645,7 +655,7 @@ function updateStepVisibility() {
   }
   document.getElementById('btn_goto_m1_from_i')?.classList.toggle('step-hidden', !completedStages.includes('I'));
 
-  for(let i=1; i<=5; i++) {
+  for(let i=1; i<=M1_TASK_COUNT; i++) {
     document.getElementById('m1_step_'+i)?.classList.toggle('step-hidden', i !== stepM1);
   }
   const m1Btn = document.getElementById('btn_check_m1');
@@ -672,7 +682,7 @@ function calcScore() {
   if (completedStages.includes('P')) s += 5;
   if (completedStages.includes('R')) s += 5;
   if (completedStages.includes('I')) s += 10;
-  s += (stepM1 - 1) * 8; // max 40
+  s += (stepM1 - 1) * 8; // max 40 before Make
   s += (stepM2 - 1) * 13; // max 39 + 1 extra if complete
   if (completedStages.includes('M2')) s = 100;
   return Math.min(100, s);
@@ -710,9 +720,7 @@ function showStage(s, save=true) {
     refreshEditor(ta);
   }
   if (s === 'M2') {
-    const ta = document.getElementById('m2_editor');
-    if (!ta.value) ta.value = document.getElementById('m1_editor').value || RUN_CODE;
-    refreshEditor(ta);
+    ensureMakeStarter();
   }
 
   updateStepVisibility();
@@ -744,6 +752,63 @@ function completeStage(s) {
   }
   saveState();
   submitScore();
+}
+
+function showPredictReviewButton(startDelay = true) {
+  const checkBtn = document.getElementById('btn_check_predict');
+  const gotoBtn = document.getElementById('btn_goto_r');
+  if (checkBtn) checkBtn.classList.add('step-hidden');
+  if (!gotoBtn) return;
+
+  gotoBtn.classList.remove('step-hidden');
+  if (startDelay) {
+    state.predictReviewReadyAt = Date.now() + PREDICT_REVIEW_DELAY_MS;
+    saveState();
+  }
+
+  const readyAt = completedStages.includes('P') ? 0 : (Number(state.predictReviewReadyAt) || Date.now());
+  updatePredictReviewTimer(readyAt);
+}
+
+function updatePredictReviewTimer(readyAt) {
+  const gotoBtn = document.getElementById('btn_goto_r');
+  if (!gotoBtn) return;
+  if (predictReviewTimer) clearTimeout(predictReviewTimer);
+
+  const remaining = Math.max(0, Math.ceil((readyAt - Date.now()) / 1000));
+  if (remaining > 0) {
+    gotoBtn.disabled = true;
+    gotoBtn.textContent = `✓ Reviewed — go to Run (${remaining}s)`;
+    predictReviewTimer = setTimeout(() => updatePredictReviewTimer(readyAt), 250);
+    return;
+  }
+
+  gotoBtn.disabled = false;
+  gotoBtn.textContent = '✓ Reviewed — go to Run →';
+  state.predictReviewReadyAt = 0;
+  saveState();
+}
+
+function reviewedGoToRun() {
+  const gotoBtn = document.getElementById('btn_goto_r');
+  if (gotoBtn?.disabled) return;
+  completeStage('P');
+}
+
+function goToMakeFromModify() {
+  if (!completedStages.includes('M1')) return;
+  completeStage('M1');
+}
+
+function ensureMakeStarter(force = false) {
+  const ta = document.getElementById('m2_editor');
+  if (!ta) return;
+  const needsStarter = force || !ta.value.trim() || state.m2StarterStep !== stepM2;
+  if (needsStarter) {
+    ta.value = MAKE_STARTER_CODE;
+    state.m2StarterStep = stepM2;
+  }
+  refreshEditor(ta);
 }
 
 // ═══════════════════════════════════════════════════════
@@ -830,9 +895,8 @@ function tryCompletePredict() {
   } else {
     if (warning) warning.style.display = 'none';
     document.getElementById('predict-review')?.classList.remove('step-hidden');
-    const gotoBtn = document.getElementById('btn_goto_r');
-    gotoBtn?.classList.remove('step-hidden');
-    gotoBtn?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    showPredictReviewButton();
+    document.getElementById('btn_goto_r')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 }
 
@@ -1010,10 +1074,10 @@ const CHECKS = {
   mod2(raw) {
     const c = normalise(raw);
     if (!has(c, /for\s+\w+\s+in\s+range\s*\(\s*6\s*\)/))
-      return { pass:false, msg:'❌ A hexagon has 6 sides — change range() to range(6).' };
+      return { pass:false, msg:'❌ Check how many sides a hexagon has, then update the loop to match.' };
     if (!has(c, /\.\s*left\s*\(\s*60\s*\)/) && !has(c, /\.\s*right\s*\(\s*300\s*\)/))
-      return { pass:false, msg:'❌ Check the angle — 360 ÷ 6 = 60°.' };
-    return { pass:true, msg:'✅ Perfect — range(6) and 60° draws a hexagon!' };
+      return { pass:false, msg:'❌ Check the turn angle. Use 360 ÷ number of sides.' };
+    return { pass:true, msg:'✅ Perfect — your loop and turn angle draw a hexagon!' };
   },
 
   mod3(raw) {
@@ -1028,17 +1092,38 @@ const CHECKS = {
   mod4(raw) {
     const c = normalise(raw);
     if (!has(c, /for\s+\w+\s+in\s+range\s*\(\s*5\s*\)/))
-      return { pass:false, msg:'❌ A pentagon has 5 sides — use range(5).' };
+      return { pass:false, msg:'❌ Check how many sides a pentagon has, then update the loop to match.' };
     if (!has(c, /\.\s*left\s*\(\s*72\s*\)/) && !has(c, /\.\s*right\s*\(\s*288\s*\)/))
-      return { pass:false, msg:'❌ Check the angle — 360 ÷ 5 = 72°.' };
+      return { pass:false, msg:'❌ Check the turn angle. Use the polygon angle hint above.' };
     return { pass:true, msg:'✅ Excellent — a coloured pentagon!' };
   },
 
   mod5(raw) {
     const c = normalise(raw);
-    if (!has(c, /\.\s*forward\s*\(\s*i\s*\*/) && !has(c, /\.\s*forward\s*\(\s*\w+\s*\*\s*i/))
-      return { pass:false, msg:'❌ Use i * 25 inside t.forward() to make it grow each time.' };
-    return { pass:true, msg:'✅ Correct — multiplying by i makes it grow!' };
+    const rawLower = raw.toLowerCase();
+    if (!has(rawLower, /\.\s*pencolor\s*\(\s*["']green["']\s*\)/) && !has(rawLower, /\.\s*color\s*\(\s*["']green["']\s*\)/))
+      return { pass:false, msg:'❌ Make sure the turtle is drawing in green.' };
+    if (!has(c, /for\s+\w+\s+in\s+range\s*\(\s*8\s*\)/))
+      return { pass:false, msg:'❌ Check how many sides an octagon has, then update the loop to match.' };
+    if (!has(c, /\.\s*left\s*\(\s*45\s*\)/) && !has(c, /\.\s*right\s*\(\s*315\s*\)/))
+      return { pass:false, msg:'❌ Check the octagon turn angle using 360 ÷ number of sides.' };
+    return { pass:true, msg:'✅ Great — a green octagon!' };
+  },
+
+  mod6(raw) {
+    const c = normalise(raw);
+    const loopMatch = c.match(/for\s+\w+\s+in\s+range\s*\(\s*(\d+)\s*\)/);
+    if (!loopMatch || parseInt(loopMatch[1], 10) < 50)
+      return { pass:false, msg:'❌ Make the loop run many more times, for example range(60), so the pattern can build up.' };
+    if (!has(c, /\.\s*forward\s*\(\s*[^)]*\bi\b[^)]*\+/) && !has(c, /\.\s*forward\s*\(\s*[^)]*\+[^)]*\bi\b/))
+      return { pass:false, msg:'❌ Use addition with the loop variable inside forward(), not multiplication.' };
+    if (has(c, /\.\s*forward\s*\(\s*[^)]*\*/))
+      return { pass:false, msg:'❌ This final pattern should grow using addition, not multiplication.' };
+    const distanceMatch = c.match(/\.\s*forward\s*\(\s*(?:\bi\b\s*\+\s*(\d+)|(\d+)\s*\+\s*\bi\b)/);
+    const startingDistance = distanceMatch ? parseInt(distanceMatch[1] || distanceMatch[2], 10) : null;
+    if (startingDistance !== null && startingDistance > 15)
+      return { pass:false, msg:'❌ Reduce the starting distance so it stays on screen. Try a small number such as i + 5.' };
+    return { pass:true, msg:'✅ Lovely — an additive growing pattern with lots of repeats!' };
   },
 
   make1(raw) {
@@ -1059,9 +1144,20 @@ const CHECKS = {
 
   make3(raw) {
     const c = normalise(raw);
-    if (!has(c, /\.\s*forward\s*\(\s*i\s*\*/) && !has(c, /\.\s*forward\s*\(\s*\w+\s*\*\s*i/))
-      return { pass:false, msg:'❌ Use i * 10 in t.forward() to create the spiral.' };
-    return { pass:true, msg:'✅ Spiral complete — looks great!' };
+    const loopMatch = c.match(/for\s+\w+\s+in\s+range\s*\(\s*(\d+)\s*\)/);
+    if (!loopMatch || parseInt(loopMatch[1], 10) < 60)
+      return { pass:false, msg:'❌ Use at least 60 repeats so the growing pattern has time to build.' };
+    if (!has(c, /\.\s*forward\s*\(\s*[^)]*\bi\b[^)]*\+/) && !has(c, /\.\s*forward\s*\(\s*[^)]*\+[^)]*\bi\b/))
+      return { pass:false, msg:'❌ Make the distance grow using addition with i, for example t.forward(i + 5).' };
+    if (has(c, /\.\s*forward\s*\(\s*[^)]*\*/))
+      return { pass:false, msg:'❌ This challenge should use additive growth, not multiplication.' };
+    const distanceMatch = c.match(/\.\s*forward\s*\(\s*(?:\bi\b\s*\+\s*(\d+)|(\d+)\s*\+\s*\bi\b)/);
+    const startingDistance = distanceMatch ? parseInt(distanceMatch[1] || distanceMatch[2], 10) : null;
+    if (startingDistance !== null && startingDistance > 15)
+      return { pass:false, msg:'❌ Reduce the starting distance so the pattern stays on screen. Try i + 5 or i + 10.' };
+    if (!has(c, /\.\s*left\s*\(\s*\d+/) && !has(c, /\.\s*right\s*\(\s*\d+/))
+      return { pass:false, msg:'❌ Add a turn inside the loop so the turtle makes a pattern, not just a line.' };
+    return { pass:true, msg:'✅ Additive growing pattern complete — looks great!' };
   },
 };
 
@@ -1084,7 +1180,7 @@ function runAndCheckMod() {
   openTurtleFromChecker('m1_editor', 'Modify Task ' + stepM1);
 
   if (result.pass) {
-    if (stepM1 < 5) {
+    if (stepM1 < M1_TASK_COUNT) {
       setTimeout(() => {
         stepM1++;
         updateStepVisibility();
@@ -1094,6 +1190,7 @@ function runAndCheckMod() {
     } else {
       if (!completedStages.includes('M1')) completedStages.push('M1');
       updateNav();
+      updateStepVisibility();
       saveState();
       submitScore();
     }
@@ -1124,6 +1221,7 @@ function runAndCheckMake() {
       setTimeout(() => {
         stepM2++;
         updateStepVisibility();
+        ensureMakeStarter(true);
         saveState();
         fbEl.classList.add('hidden');
       }, 2000);
@@ -1153,6 +1251,11 @@ for i in range(4):
     t.left(90)
 
 turtle.done()`;
+
+const MAKE_STARTER_CODE = `import turtle
+t = turtle.Turtle()
+
+`;
 
 let turtleTimer = null;
 
@@ -1408,7 +1511,7 @@ function skipStep(stage) {
     if (stepI < 3) { stepI++; updateStepVisibility(); saveState(); }
     else { completeStage('I'); }
   } else if (stage === 'M1') {
-    if (stepM1 < 5) { stepM1++; updateStepVisibility(); saveState(); }
+    if (stepM1 < M1_TASK_COUNT) { stepM1++; updateStepVisibility(); saveState(); }
     else { completeStage('M1'); }
   }
 }
@@ -1437,6 +1540,8 @@ function recordM1Attempt() {
 Object.assign(window, {
   showStage, saveState, clearError,
   tryCompletePredict, tryCompleteRun, tryCompleteInvestigate, nextStep,
+  reviewedGoToRun,
+  goToMakeFromModify,
   runAndCheckMod, runAndCheckMake,
   openTurtleFromChecker, closeTurtleModal,
   skipStep
@@ -1450,7 +1555,7 @@ Object.assign(window, {
       <span class="turtle-title">🐢 <span id="turtleModalTitle">Turtle Output</span></span>
       <button class="turtle-close" onclick="closeTurtleModal()">✕ Close</button>
     </div>
-    <canvas id="turtleCanvas" width="420" height="420"></canvas>
+    <canvas id="turtleCanvas" width="560" height="560"></canvas>
     <div class="turtle-status" id="turtleStatus">Drawing…</div>
   </div>
 </div>
