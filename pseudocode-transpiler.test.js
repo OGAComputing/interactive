@@ -60,7 +60,7 @@ describe('2D array access rewriting', () => {
   test('1D array with single index is not affected', () => {
     const src = 'array names[5]\nnames[2] = "Alice"';
     const out = py(src);
-    expect(out).toContain('names[2] = "Alice"');
+    expect(out).toContain('names[2] = _PscStr("Alice")');
     expect(out).not.toContain('names[2][]');
   });
 
@@ -146,11 +146,11 @@ describe('.length and .substring receiver walking', () => {
 // ── File I/O ──────────────────────────────────────────────────────────────────
 describe('file I/O transpilation', () => {
   test('openRead rewrites to _psc_open_read', () => {
-    expect(py('f = openRead("a.txt")')).toContain('_psc_open_read("a.txt")');
+    expect(py('f = openRead("a.txt")')).toContain('_psc_open_read(_PscStr("a.txt"))');
   });
 
   test('openWrite rewrites to _psc_open_write', () => {
-    expect(py('f = openWrite("out.txt")')).toContain('_psc_open_write("out.txt")');
+    expect(py('f = openWrite("out.txt")')).toContain('_psc_open_write(_PscStr("out.txt"))');
   });
 
   test('method calls readLine / writeLine / close / endOfFile pass through unchanged', () => {
