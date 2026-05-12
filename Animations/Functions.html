@@ -190,8 +190,19 @@ color:  blue
   .btn:active { transform: scale(0.97); }
   .btn:disabled { opacity: 0.3; cursor: not-allowed; }
   .btn-next  { background: var(--amber); color: #1a1203; }
+  .btn-next:hover  { background: #d97706; }
   .btn-prev  { background: rgba(255,255,255,0.09); color: var(--text); border: 1px solid var(--border); }
+  .btn-prev:hover  { background: rgba(255,255,255,0.15); }
   .btn-reset { background: rgba(255,255,255,0.06); color: var(--muted); border: 1px solid var(--border); margin-left: auto; }
+  .btn-reset:hover { background: rgba(255,255,255,0.11); }
+  .btn-auto  { background: var(--purple); color: #fff; }
+  .btn-auto:hover  { background: #a855f7; }
+  .speed-row { display: flex; align-items: center; gap: 10px; font-size: 0.74rem; color: var(--muted); }
+  input[type=range] { accent-color: var(--purple); cursor: pointer; width: 90px; }
+
+  @media (max-width: 620px) {
+    .stage { grid-template-columns: 1fr; }
+  }
 
   /* ── Progress ── */
   .progress-wrap {
@@ -304,7 +315,13 @@ color:  blue
 <div class="controls">
   <button class="btn btn-prev" id="btnPrev" onclick="prev()" disabled>◀ Back</button>
   <button class="btn btn-next" id="btnNext" onclick="next()">Next Step ▶</button>
+  <button class="btn btn-auto" id="btnAuto" onclick="toggleAuto()">⏵ Auto Play</button>
   <button class="btn btn-reset" onclick="reset()">↺ Reset</button>
+</div>
+<div class="speed-row">
+  <span>Speed:</span>
+  <input type="range" id="speedSlider" min="400" max="2000" value="1100" step="100" oninput="updateSpeed()">
+  <span id="speedLabel">Medium</span>
 </div>
 
 <script>
@@ -386,6 +403,8 @@ const STEPS = [
 const TOTAL = STEPS.length;
 let current = 0;
 let shownOutputs = new Set();
+let autoTimer = null;
+let autoSpeed = 1100;
 
 const lineToAnn   = {L1:'AN1',L2:'AN2',L3:'AN3',L4:'AN4',L5:'AN5',L6:'AN6',L7:'AN7',L8:'AN8'};
 const lineToArrow = {L1:'A1', L2:'A2', L3:'A3', L4:'A4', L5:'A5', L6:'A6', L7:'A7', L8:'A8'};
@@ -438,9 +457,13 @@ function updateUI(n) {
   document.getElementById('btnNext').disabled = n >= TOTAL;
 }
 
-function next() { if (current < TOTAL) { current++; applyStep(current); } }
+function next() {
+  stopAuto();
+  if (current < TOTAL) { current++; applyStep(current); }
+}
 
 function prev() {
+  stopAuto();
   if (current > 0) {
     current--;
     shownOutputs = new Set();
@@ -453,10 +476,42 @@ function prev() {
 }
 
 function reset() {
+  stopAuto();
   current = 0; shownOutputs = new Set();
   ['O1','O2','O3','O4','O5'].forEach(id => document.getElementById(id).classList.remove('on'));
   document.getElementById('cursor').style.display = 'none';
   applyStep(0);
+}
+
+function toggleAuto() {
+  if (autoTimer) { stopAuto(); return; }
+  document.getElementById('btnAuto').textContent = '⏸ Pause';
+  autoTimer = setInterval(() => {
+    if (current >= TOTAL) {
+      current = 0; shownOutputs = new Set();
+      ['O1','O2','O3','O4','O5'].forEach(id => document.getElementById(id).classList.remove('on'));
+      document.getElementById('cursor').style.display = 'none';
+    }
+    current++;
+    applyStep(current);
+  }, autoSpeed);
+}
+
+function stopAuto() {
+  clearInterval(autoTimer);
+  autoTimer = null;
+  const btn = document.getElementById('btnAuto');
+  if (btn) btn.textContent = '⏵ Auto Play';
+}
+
+function updateSpeed() {
+  const raw = parseInt(document.getElementById('speedSlider').value);
+  autoSpeed = 2400 - raw;
+  const labels = [[400,'Very fast'],[700,'Fast'],[1100,'Medium'],[1500,'Slow'],[2000,'Very slow']];
+  let label = 'Medium';
+  for (const [thresh, lbl] of labels) { if (raw <= thresh) { label = lbl; break; } }
+  document.getElementById('speedLabel').textContent = label;
+  if (autoTimer) { stopAuto(); toggleAuto(); }
 }
 
 applyStep(0);
