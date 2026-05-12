@@ -376,13 +376,13 @@
   // After sign-in Google redirects to /oauth-callback.html, which stores the
   // token in sessionStorage and bounces back here.
 
-  function signInViaRedirect() {
+  function signInViaRedirect(opts) {
     const params = new URLSearchParams({
       client_id    : GOOGLE_CONFIG.clientId,
       redirect_uri : window.location.origin + '/interactive/oauth-callback.html',
       response_type: 'token',
       scope        : GOOGLE_CONFIG.scopes,
-      prompt       : 'select_account',
+      prompt       : (opts && opts.prompt) || 'select_account',
     });
     try { sessionStorage.setItem('oga_return_url', window.location.href); } catch (_) {}
     window.location.href = 'https://accounts.google.com/o/oauth2/v2/auth?' + params;
@@ -433,10 +433,21 @@
       }
       try { sessionStorage.removeItem('oga_hub_token'); } catch (_) {}
     }
-    // 3. Previously signed in on this device (different session) — hint the button
+    // 3. Previously signed in on this device (different session) — try to reuse
+    // the browser's existing Google session without showing a consent screen.
+    let silentFailed = false;
+    try { silentFailed = !!sessionStorage.getItem('oga_silent_failed'); } catch (_) {}
+    if (silentFailed) {
+      try { sessionStorage.removeItem('oga_silent_failed'); } catch (_) {}
+    }
+
     if (localStorage.getItem('oga_hub_autosignin')) {
       const btn = document.getElementById('btnLogin');
-      if (btn) btn.textContent = 'Sign in again to Classroom';
+      if (btn) btn.textContent = silentFailed ? 'Sign in again to Classroom' : 'Signing in...';
+      if (!silentFailed) {
+        document.getElementById('teacher-status').textContent = 'Checking your Google Classroom sign-in...';
+        signInViaRedirect({ prompt: 'none' });
+      }
     }
   }
 
