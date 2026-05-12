@@ -27,6 +27,8 @@ color:  blue
     --def-col: #c084fc;
     --body-col:#60a5fa;
     --out-col: #4ade80;
+    --active-line: rgba(245,158,11,0.17);
+    --active-border: rgba(245,158,11,0.7);
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -58,6 +60,7 @@ color:  blue
   }
   .leg { display: flex; align-items: center; gap: 6px; font-size: 0.76rem; color: var(--muted); }
   .swatch { width: 11px; height: 11px; border-radius: 3px; flex-shrink: 0; }
+  .swatch.active { background: var(--active-line); border: 1px solid var(--active-border); }
 
   /* ── Main layout ── */
   .stage {
@@ -83,7 +86,7 @@ color:  blue
     border-bottom: 1px solid var(--border);
     background: rgba(255,255,255,0.03);
   }
-  .code-body { padding: 10px 6px; }
+  .code-body { padding: 10px 6px; position: relative; }
 
   /* ── Lines ── */
   .line {
@@ -92,7 +95,7 @@ color:  blue
     border-radius: 6px;
     padding: 0 4px;
     border: 2px solid transparent;
-    transition: background 0.25s, border-color 0.25s;
+    transition: background 0.25s, border-color 0.25s, box-shadow 0.25s;
     min-height: 34px;
   }
   .line-gap { height: 7px; }
@@ -135,19 +138,50 @@ color:  blue
   }
   .ann.on { opacity: 1; transform: translateX(0); }
 
-  /* Highlight states */
-  .line.hl-def  { background: rgba(192,132,252,0.12); border-color: rgba(192,132,252,0.38); }
-  .line.hl-body { background: rgba(96,165,250,0.12);  border-color: rgba(96,165,250,0.35);  }
-  .line.hl-call { background: rgba(245,158,11,0.13);  border-color: rgba(245,158,11,0.42);  }
-  .line.hl-skip { background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.07); }
-  .line.hl-done { background: rgba(74,222,128,0.07);  border-color: rgba(74,222,128,0.2);   }
+  /* A single moving highlight shows the line currently being run. */
+  .line.is-active {
+    background: var(--active-line);
+    border-color: var(--active-border);
+    box-shadow: inset 3px 0 0 var(--amber);
+  }
+  .line.jump-target {
+    border-color: rgba(245,158,11,0.42);
+  }
+  .jump-guide {
+    position: absolute;
+    left: 14px;
+    width: 16px;
+    border-left: 2px solid var(--amber);
+    border-top: 2px solid var(--amber);
+    border-bottom: 2px solid var(--amber);
+    border-radius: 9px 0 0 9px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+  .jump-guide.on { opacity: 1; }
+  .jump-guide::before {
+    content: "";
+    position: absolute;
+    top: -5px;
+    right: -7px;
+    width: 0;
+    height: 0;
+    border-top: 5px solid transparent;
+    border-bottom: 5px solid transparent;
+    border-left: 8px solid var(--amber);
+  }
+  .jump-guide.jump-down::before {
+    top: auto;
+    bottom: -5px;
+  }
 
-  /* Annotation pill colour per highlight */
-  .line.hl-def  .ann { background: rgba(192,132,252,0.22); color: var(--def-col);  }
-  .line.hl-body .ann { background: rgba(96,165,250,0.2);   color: var(--body-col); }
-  .line.hl-call .ann { background: rgba(245,158,11,0.22);  color: var(--amber);    }
-  .line.hl-skip .ann { background: rgba(255,255,255,0.08); color: var(--muted);    }
-  .line.hl-done .ann { background: rgba(74,222,128,0.18);  color: var(--out-col);  }
+  /* Annotation pill colour per state, without extra line backgrounds. */
+  .line.hl-def  .ann { color: var(--def-col);  }
+  .line.hl-body .ann { color: var(--body-col); }
+  .line.hl-call .ann { color: var(--amber);    }
+  .line.hl-skip .ann { color: var(--muted);    }
+  .line.hl-done .ann { color: var(--out-col);  }
 
   /* ── Output panel ── */
   .output-panel {
@@ -222,10 +256,8 @@ color:  blue
 </header>
 
 <div class="legend">
-  <div class="leg"><div class="swatch" style="background:rgba(192,132,252,0.45);border:1px solid var(--def-col)"></div>Definition — stored, not run yet</div>
-  <div class="leg"><div class="swatch" style="background:rgba(96,165,250,0.4);border:1px solid var(--blue)"></div>Body — runs when called</div>
-  <div class="leg"><div class="swatch" style="background:rgba(245,158,11,0.4);border:1px solid var(--amber)"></div>Call</div>
-  <div class="leg"><div class="swatch" style="background:rgba(74,222,128,0.25);border:1px solid var(--out-col)"></div>Complete</div>
+  <div class="leg"><div class="swatch active"></div>Current line being run</div>
+  <div class="leg">Coloured notes explain why Python is there</div>
 </div>
 
 <div class="stage">
@@ -233,6 +265,7 @@ color:  blue
   <div class="code-panel">
     <div class="panel-title">program.py</div>
     <div class="code-body">
+      <div class="jump-guide" id="jumpGuide" aria-hidden="true"></div>
 
       <div class="line" id="L1">
         <span class="arrow-col" id="A1">▶</span>
@@ -329,6 +362,8 @@ color:  blue
   Each step: full state to render.
   lines: [ { id, cls, arrow?, ann? } ]
     cls: 'hl-def' | 'hl-body' | 'hl-call' | 'hl-skip' | 'hl-done'
+    arrow: marks the single current line and shows the pointer
+  jump: { from, to } draws the left gutter jump cue between two lines
   outputs: ids to add this step (cumulative)
 */
 const STEPS = [
@@ -338,61 +373,98 @@ const STEPS = [
   ]},
   // 2 — body skipped
   { lines: [
-      { id:'L1', cls:'hl-def', ann:'stored — not run yet' },
+      { id:'L1', cls:'hl-def', arrow:true, ann:'stored — not run yet' },
       { id:'L2', cls:'hl-skip', ann:'skipped for now' },
       { id:'L3', cls:'hl-skip', ann:'skipped for now' },
   ]},
-  // 3 — def say_goodbye(): stored (body skipped)
+  // 3 — def say_goodbye(): stored
+  { lines: [
+      { id:'L4', cls:'hl-def', arrow:true, ann:'stored — not run yet' },
+  ]},
+  // 4 — say_goodbye() body skipped
   { lines: [
       { id:'L4', cls:'hl-def', arrow:true, ann:'stored — not run yet' },
       { id:'L5', cls:'hl-skip', ann:'skipped for now' },
   ]},
-  // 4 — say_hello() call #1
+  // 5 — say_hello() call #1
   { lines: [
-      { id:'L6', cls:'hl-call', arrow:true, ann:'call #1 → jumps to say_hello' },
+      { id:'L6', cls:'hl-call', arrow:true, ann:'call #1' },
   ]},
-  // 5 — runs line 2
+  // 6 — jump to say_hello()
+  { lines: [
+      { id:'L1', cls:'hl-def', ann:'jump to this definition' },
+      { id:'L6', cls:'hl-call', ann:'jump from here' },
+  ], jump:{ from:'L6', to:'L1' }},
+  // 7 — runs line 2
   { lines: [
       { id:'L1', cls:'hl-def',  ann:'say_hello ↓' },
       { id:'L2', cls:'hl-body', arrow:true, ann:'→ Hello!' },
       { id:'L6', cls:'hl-call', ann:'called from here' },
   ], outputs:['O1'] },
-  // 6 — runs line 3
+  // 8 — runs line 3
   { lines: [
       { id:'L1', cls:'hl-def',  ann:'say_hello ↓' },
       { id:'L3', cls:'hl-body', arrow:true, ann:'→ Nice to meet you!' },
       { id:'L6', cls:'hl-call', ann:'called from here' },
   ], outputs:['O2'] },
-  // 7 — returned; call #2
+  // 9 — return to call #1
+  { lines: [
+      { id:'L3', cls:'hl-body', ann:'jump back from here' },
+      { id:'L6', cls:'hl-call', ann:'return here' },
+  ], jump:{ from:'L3', to:'L6' }},
+  // 10 — call #1 finished; call #2
   { lines: [
       { id:'L6', cls:'hl-done', ann:'✓ done' },
-      { id:'L7', cls:'hl-call', arrow:true, ann:'call #2 → jumps to say_hello again' },
+      { id:'L7', cls:'hl-call', arrow:true, ann:'call #2' },
   ]},
-  // 8 — runs line 2 again
+  // 11 — jump to say_hello() again
+  { lines: [
+      { id:'L1', cls:'hl-def', ann:'jump to this definition' },
+      { id:'L6', cls:'hl-done', ann:'✓ done' },
+      { id:'L7', cls:'hl-call', ann:'jump from here' },
+  ], jump:{ from:'L7', to:'L1' }},
+  // 12 — runs line 2 again
   { lines: [
       { id:'L1', cls:'hl-def',  ann:'say_hello ↓' },
       { id:'L2', cls:'hl-body', arrow:true, ann:'→ Hello! (again)' },
       { id:'L7', cls:'hl-call', ann:'called from here' },
   ], outputs:['O3'] },
-  // 9 — runs line 3 again
+  // 13 — runs line 3 again
   { lines: [
       { id:'L1', cls:'hl-def',  ann:'say_hello ↓' },
       { id:'L3', cls:'hl-body', arrow:true, ann:'→ Nice to meet you! (again)' },
       { id:'L7', cls:'hl-call', ann:'called from here' },
   ], outputs:['O4'] },
-  // 10 — returned; say_goodbye call
+  // 14 — return to call #2
+  { lines: [
+      { id:'L3', cls:'hl-body', ann:'jump back from here' },
+      { id:'L7', cls:'hl-call', ann:'return here' },
+  ], jump:{ from:'L3', to:'L7' }},
+  // 15 — call #2 finished; say_goodbye call
   { lines: [
       { id:'L6', cls:'hl-done', ann:'✓ done' },
       { id:'L7', cls:'hl-done', ann:'✓ done' },
-      { id:'L8', cls:'hl-call', arrow:true, ann:'call → jumps to say_goodbye' },
+      { id:'L8', cls:'hl-call', arrow:true, ann:'call' },
   ]},
-  // 11 — runs line 5
+  // 16 — jump to say_goodbye()
+  { lines: [
+      { id:'L4', cls:'hl-def', ann:'jump to this definition' },
+      { id:'L6', cls:'hl-done', ann:'✓ done' },
+      { id:'L7', cls:'hl-done', ann:'✓ done' },
+      { id:'L8', cls:'hl-call', ann:'jump from here' },
+  ], jump:{ from:'L8', to:'L4' }},
+  // 17 — runs line 5
   { lines: [
       { id:'L4', cls:'hl-def',  ann:'say_goodbye ↓' },
       { id:'L5', cls:'hl-body', arrow:true, ann:'→ Goodbye!' },
       { id:'L8', cls:'hl-call', ann:'called from here' },
   ], outputs:['O5'] },
-  // 12 — finished
+  // 18 — return to say_goodbye() call
+  { lines: [
+      { id:'L5', cls:'hl-body', ann:'jump back from here' },
+      { id:'L8', cls:'hl-call', ann:'return here' },
+  ], jump:{ from:'L5', to:'L8' }},
+  // 19 — finished
   { lines: [
       { id:'L6', cls:'hl-done', ann:'ran twice' },
       { id:'L7', cls:'hl-done', ann:'ran twice' },
@@ -413,12 +485,35 @@ function clearAll() {
   Object.keys(lineToAnn).forEach(id => {
     document.getElementById(id).className = 'line';
   });
-  Object.values(lineToArrow).forEach(id => document.getElementById(id).classList.remove('on'));
+  Object.values(lineToArrow).forEach(id => {
+    const el = document.getElementById(id);
+    el.classList.remove('on');
+    el.textContent = '▶';
+  });
   Object.values(lineToAnn).forEach(id => {
     const el = document.getElementById(id);
     el.classList.remove('on');
     el.textContent = '';
   });
+  document.getElementById('jumpGuide').className = 'jump-guide';
+}
+
+function showJump({ from, to }) {
+  const guide = document.getElementById('jumpGuide');
+  const fromEl = document.getElementById(from);
+  const toEl = document.getElementById(to);
+  const bodyEl = fromEl.parentElement;
+  const bodyTop = bodyEl.getBoundingClientRect().top;
+  const fromMid = fromEl.getBoundingClientRect().top - bodyTop + fromEl.offsetHeight / 2;
+  const toMid = toEl.getBoundingClientRect().top - bodyTop + toEl.offsetHeight / 2;
+
+  fromEl.classList.add('jump-source');
+  toEl.classList.add('jump-target');
+
+  guide.classList.toggle('jump-down', toMid > fromMid);
+  guide.style.top = Math.min(fromMid, toMid) + 'px';
+  guide.style.height = Math.max(18, Math.abs(fromMid - toMid)) + 'px';
+  requestAnimationFrame(() => guide.classList.add('on'));
 }
 
 function applyStep(n) {
@@ -432,7 +527,10 @@ function applyStep(n) {
     const lineEl = document.getElementById(id);
     if (cls) lineEl.classList.add(cls);
 
-    if (arrow) document.getElementById(lineToArrow[id]).classList.add('on');
+    if (arrow) {
+      lineEl.classList.add('is-active');
+      document.getElementById(lineToArrow[id]).classList.add('on');
+    }
 
     if (ann != null) {
       const annEl = document.getElementById(lineToAnn[id]);
@@ -440,6 +538,8 @@ function applyStep(n) {
       requestAnimationFrame(() => annEl.classList.add('on'));
     }
   });
+
+  if (step.jump) showJump(step.jump);
 
   if (step.outputs) step.outputs.forEach(id => shownOutputs.add(id));
   ['O1','O2','O3','O4','O5'].forEach(id => {
