@@ -175,7 +175,18 @@ color:  blue
     top: auto;
     bottom: -5px;
   }
-
+  .scope-guide {
+    position: absolute;
+    left: 80px;
+    width: 14px;
+    border-left: 2px solid rgba(96,165,250,0.8);
+    border-bottom: 2px solid rgba(96,165,250,0.8);
+    border-radius: 0 0 0 8px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+  .scope-guide.on { opacity: 1; }
   /* Annotation pill colour per state, without extra line backgrounds. */
   .line.hl-def  .ann { color: var(--def-col);  }
   .line.hl-body .ann { color: var(--body-col); }
@@ -266,6 +277,7 @@ color:  blue
     <div class="panel-title">program.py</div>
     <div class="code-body">
       <div class="jump-guide" id="jumpGuide" aria-hidden="true"></div>
+      <div class="scope-guide" id="scopeGuide" aria-hidden="true"></div>
 
       <div class="line" id="L1">
         <span class="arrow-col" id="A1">▶</span>
@@ -364,6 +376,7 @@ color:  blue
     cls: 'hl-def' | 'hl-body' | 'hl-call' | 'hl-skip' | 'hl-done'
     arrow: marks the single current line and shows the pointer
   jump: { from, to } draws the left gutter jump cue between two lines
+  scope: { from, to } draws an indentation bracket for a function body
   outputs: ids to add this step (cumulative)
 */
 const STEPS = [
@@ -376,7 +389,7 @@ const STEPS = [
       { id:'L1', cls:'hl-def', arrow:true, ann:'stored — not run yet' },
       { id:'L2', cls:'hl-skip', ann:'skipped for now' },
       { id:'L3', cls:'hl-skip', ann:'skipped for now' },
-  ]},
+  ], scope:{ from:'L2', to:'L3' }},
   // 3 — def say_goodbye(): stored
   { lines: [
       { id:'L4', cls:'hl-def', arrow:true, ann:'stored — not run yet' },
@@ -385,7 +398,7 @@ const STEPS = [
   { lines: [
       { id:'L4', cls:'hl-def', arrow:true, ann:'stored — not run yet' },
       { id:'L5', cls:'hl-skip', ann:'skipped for now' },
-  ]},
+  ], scope:{ from:'L5', to:'L5' }},
   // 5 — say_hello() call #1
   { lines: [
       { id:'L6', cls:'hl-call', arrow:true, ann:'call #1' },
@@ -400,13 +413,13 @@ const STEPS = [
       { id:'L1', cls:'hl-def',  ann:'say_hello ↓' },
       { id:'L2', cls:'hl-body', arrow:true, ann:'→ Hello!' },
       { id:'L6', cls:'hl-call', ann:'called from here' },
-  ], outputs:['O1'] },
+  ], scope:{ from:'L2', to:'L3' }, outputs:['O1'] },
   // 8 — runs line 3
   { lines: [
       { id:'L1', cls:'hl-def',  ann:'say_hello ↓' },
       { id:'L3', cls:'hl-body', arrow:true, ann:'→ Nice to meet you!' },
       { id:'L6', cls:'hl-call', ann:'called from here' },
-  ], outputs:['O2'] },
+  ], scope:{ from:'L2', to:'L3' }, outputs:['O2'] },
   // 9 — return to call #1
   { lines: [
       { id:'L3', cls:'hl-body', ann:'jump back from here' },
@@ -428,13 +441,13 @@ const STEPS = [
       { id:'L1', cls:'hl-def',  ann:'say_hello ↓' },
       { id:'L2', cls:'hl-body', arrow:true, ann:'→ Hello! (again)' },
       { id:'L7', cls:'hl-call', ann:'called from here' },
-  ], outputs:['O3'] },
+  ], scope:{ from:'L2', to:'L3' }, outputs:['O3'] },
   // 13 — runs line 3 again
   { lines: [
       { id:'L1', cls:'hl-def',  ann:'say_hello ↓' },
       { id:'L3', cls:'hl-body', arrow:true, ann:'→ Nice to meet you! (again)' },
       { id:'L7', cls:'hl-call', ann:'called from here' },
-  ], outputs:['O4'] },
+  ], scope:{ from:'L2', to:'L3' }, outputs:['O4'] },
   // 14 — return to call #2
   { lines: [
       { id:'L3', cls:'hl-body', ann:'jump back from here' },
@@ -458,7 +471,7 @@ const STEPS = [
       { id:'L4', cls:'hl-def',  ann:'say_goodbye ↓' },
       { id:'L5', cls:'hl-body', arrow:true, ann:'→ Goodbye!' },
       { id:'L8', cls:'hl-call', ann:'called from here' },
-  ], outputs:['O5'] },
+  ], scope:{ from:'L5', to:'L5' }, outputs:['O5'] },
   // 18 — return to say_goodbye() call
   { lines: [
       { id:'L5', cls:'hl-body', ann:'jump back from here' },
@@ -496,6 +509,7 @@ function clearAll() {
     el.textContent = '';
   });
   document.getElementById('jumpGuide').className = 'jump-guide';
+  document.getElementById('scopeGuide').classList.remove('on');
 }
 
 function showJump({ from, to }) {
@@ -513,6 +527,20 @@ function showJump({ from, to }) {
   guide.classList.toggle('jump-down', toMid > fromMid);
   guide.style.top = Math.min(fromMid, toMid) + 'px';
   guide.style.height = Math.max(18, Math.abs(fromMid - toMid)) + 'px';
+  requestAnimationFrame(() => guide.classList.add('on'));
+}
+
+function showScope({ from, to }) {
+  const guide = document.getElementById('scopeGuide');
+  const fromEl = document.getElementById(from);
+  const toEl = document.getElementById(to);
+  const bodyEl = fromEl.parentElement;
+  const bodyTop = bodyEl.getBoundingClientRect().top;
+  const fromTop = fromEl.getBoundingClientRect().top - bodyTop + 4;
+  const toBottom = toEl.getBoundingClientRect().bottom - bodyTop - 4;
+
+  guide.style.top = fromTop + 'px';
+  guide.style.height = Math.max(22, toBottom - fromTop) + 'px';
   requestAnimationFrame(() => guide.classList.add('on'));
 }
 
@@ -540,6 +568,7 @@ function applyStep(n) {
   });
 
   if (step.jump) showJump(step.jump);
+  if (step.scope) showScope(step.scope);
 
   if (step.outputs) step.outputs.forEach(id => shownOutputs.add(id));
   ['O1','O2','O3','O4','O5'].forEach(id => {
