@@ -430,7 +430,8 @@ color:  pink
       { title: 'Guided', diff: 0, streak: 0, count: 0, target: 3 },
       { title: 'Exam Questions', diff: 2, streak: 0, count: 0, target: 5 }
     ],
-    current: null
+    current: null,
+    isAdvancing: false
   };
 
   const diffNames = ['Structured', 'Standard', 'Exam style'];
@@ -470,6 +471,8 @@ color:  pink
   }
 
   function generateQuestion() {
+    setAdvancing(false);
+
     const task = state.tasks[state.currentIdx];
     let question;
     let attempts = 0;
@@ -635,6 +638,7 @@ color:  pink
   }
 
   function checkAnswer() {
+    if (state.isAdvancing) return;
     if (window.Classroom?.verifyAuth() === false) return;
 
     const task = state.tasks[state.currentIdx];
@@ -667,6 +671,7 @@ color:  pink
     });
 
     if (sumOk && carriesOk) {
+      setAdvancing(true);
       feedback.textContent = 'Correct - answer and carry marks both match.';
       feedback.className = 'feedback correct';
       task.count++;
@@ -784,6 +789,11 @@ color:  pink
     generateQuestion();
     updateUI();
     focusFirstAnswer();
+  }
+
+  function setAdvancing(isAdvancing) {
+    state.isAdvancing = isAdvancing;
+    document.getElementById('check-btn').disabled = isAdvancing;
   }
 
   function focusFirstAnswer() {

@@ -300,6 +300,7 @@ color:  pink
     currentIdx: 0,
     lastValue: -1,
     celebrationPlayed: false,
+    isAdvancing: false,
     completed: new Array(TASK_COUNT).fill(false),
     tasks: [
       { id: 0, type: 'bin-den', diff: 0, streak: 0, count: 0, target: 10, title: 'Binary ↔ Denary' },
@@ -342,6 +343,8 @@ color:  pink
 
   // ── Question Generation ────────────────────────────────
   function generateQuestion() {
+    setAdvancing(false);
+
     const task = state.tasks[state.currentIdx];
     const diff = task.diff;
     
@@ -451,6 +454,8 @@ color:  pink
 
   // ── Check Answer ───────────────────────────────────────
   function checkAnswer() {
+    if (state.isAdvancing) return;
+
     const inputEl = document.getElementById('q-input');
     const userAnswer = inputEl.value.trim().toUpperCase();
     const task = state.tasks[state.currentIdx];
@@ -463,6 +468,7 @@ color:  pink
     const cleanCorrect = task.current.answer.replace(/\s/g, '');
 
     const isCorrect = cleanUser === cleanCorrect;
+    if (isCorrect) setAdvancing(true);
 
     if (isCorrect) {
       feedback.textContent = '✅ Correct!';
@@ -564,6 +570,12 @@ color:  pink
     window.ActivityUI?.launchCelebration();
   }
   const showToast = (msg, type = '') => window.ActivityUI?.showToast(msg, type);
+
+  function setAdvancing(isAdvancing) {
+    state.isAdvancing = isAdvancing;
+    document.getElementById('check-btn').disabled = isAdvancing;
+    document.getElementById('q-input').disabled = isAdvancing;
+  }
 
 
 </script>
