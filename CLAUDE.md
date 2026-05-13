@@ -15,7 +15,7 @@ Interactive Computing Education Platform — a static web hub serving self-conta
 - **`shared.css`** — Shared reset, year-group colour tokens, topic accent overrides, and `ac-*` utility classes. Used by new activities built from templates; existing activities are not required to adopt it.
 - **`classroom.js`** — Shared Google Classroom integration. Referenced by activities via `../../classroom.js` (or `../../../classroom.js` if the activity is in a lesson subfolder).
 - **`activity-ui.js`** — Shared completion celebrations and toast helper. Referenced by activities via `../../activity-ui.js` (or `../../../activity-ui.js` if the activity is in a lesson subfolder).
-- **`pseudocode-transpiler.js`** — OCR pseudocode → Python transpiler. Exports `transpile(src)` and `mapErrorLine(map, pyLine)`. Covers the procedural subset + file I/O. OOP (`class`/`inherits`/`super`) is unsupported and emits a friendly transpiler error.
+- **`pseudocode-transpiler.js`** — OCR pseudocode → Python transpiler. Exports `transpile(src)` and `mapErrorLine(map, pyLine)`. Covers the procedural subset, file I/O, and the OCR class/inheritance subset.
 - **`pseudocode-editor.js`** — Editor widget for OCR pseudocode activities (fork of `code-editor.js`). Targets `.pseudocode-textarea`. Exports `setupEditors`, `clearSyntaxHint`, `setEditorOutput`, `refreshEditor`, `setFiles`, `getWrittenFiles`, `runPseudocode`.
 - **`_templates/`** — Activity starter templates (excluded from manifest). Copy `Y8.html`, `Y9.html`, `Y11.html`, or `Pseudocode_Y11.html` as the basis for a new activity.
 
@@ -129,7 +129,7 @@ The transpiler covers the OCR GCSE procedural subset:
 | `openRead`/`openWrite`, `.readLine()`/`.writeLine()`/`.close()`/`.endOfFile()` | ✅ |
 | `AND`, `OR`, `NOT`, `true`, `false`, `null` | ✅ |
 | `//` line comments | ✅ |
-| `class`/`inherits`/`super`/`endclass` (OOP) | ❌ — emits a friendly transpiler error pointing at the offending line |
+| `class`/`inherits`/`super`/`endclass` (OOP) | ✅ — OCR-style classes, constructors, attributes, methods, and inheritance |
 
 ### Pseudocode activity checklist
 

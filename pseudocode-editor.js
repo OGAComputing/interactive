@@ -211,6 +211,7 @@ const _KEYWORDS = new Set([
   'switch', 'case', 'default', 'endswitch',
   'function', 'endfunction', 'procedure', 'endprocedure',
   'return', 'global', 'array', 'class', 'endclass', 'inherits',
+  'public', 'private', 'super',
   'and', 'or', 'not', 'mod', 'div',
   'true', 'false', 'null',
 ]);

@@ -54,6 +54,16 @@ test.describe('Pseudocode highlighting', () => {
     expect(html).toMatch(/class="tok-kw"[^>]*>if|>if<[^>]*class="tok-kw"/i);
   });
 
+  test('OOP keywords get tok-kw class', async ({ page }) => {
+    const ta = page.locator('#pscEditor');
+    await ta.fill('class Dog inherits Pet\n    private breed\n    public procedure new(name)\n        super.new(name)\n    endprocedure\nendclass');
+    await page.waitForTimeout(200);
+    const html = await page.locator('.highlight-layer').innerHTML();
+    for (const word of ['class', 'inherits', 'private', 'public', 'super']) {
+      expect(html).toMatch(new RegExp(`class="tok-kw"[^>]*>${word}<`, 'i'));
+    }
+  });
+
   test('print appears as a builtin', async ({ page }) => {
     const ta = page.locator('#pscEditor');
     await ta.fill('print("hello")');
@@ -99,22 +109,22 @@ test.describe('Syntax hint', () => {
 
   test('transpiler error shows immediately (no 800ms wait)', async ({ page }) => {
     const ta = page.locator('#pscEditor');
-    await ta.fill('class Foo\n    x = 1\nendclass');
+    await ta.fill('endclass');
     await page.waitForTimeout(200); // well within 800ms
     const hint = page.locator('.syntax-hint');
     await expect(hint).toHaveClass(/visible/);
     const text = await hint.textContent();
-    expect(text).toMatch(/class/i);
+    expect(text).toMatch(/endclass/i);
   });
 
-  test('valid code clears the hint', async ({ page }) => {
+  test('valid class code clears the hint', async ({ page }) => {
     const ta = page.locator('#pscEditor');
     // First trigger an error
-    await ta.fill('class Foo\nendclass');
+    await ta.fill('endclass');
     await page.waitForTimeout(200);
     await expect(page.locator('.syntax-hint')).toHaveClass(/visible/);
     // Then clear to valid code
-    await ta.fill('x = 1');
+    await ta.fill('class Foo\nendclass');
     await page.waitForTimeout(200);
     await expect(page.locator('.syntax-hint')).not.toHaveClass(/visible/);
   });
@@ -239,13 +249,51 @@ test.describe('Error handling', () => {
     expect(text).toMatch(/pseudocode line 2/);
   });
 
-  test('transpiler error for class shows line in output panel', async ({ page }) => {
-    // OOP is unsupported — transpiler error references line 1
-    await page.locator('#pscEditor').fill('class Foo\nendclass');
+  test('OCR class constructor and method run correctly', async ({ page }) => {
+    const code = [
+      'class Pet',
+      '    private name',
+      '    public procedure new(givenName)',
+      '        name = givenName',
+      '    endprocedure',
+      '    public function getName()',
+      '        return name',
+      '    endfunction',
+      'endclass',
+      'myPet = new Pet("Fido")',
+      'print(myPet.getName())',
+    ].join('\n');
+    await page.locator('#pscEditor').fill(code);
     await page.locator('#runBtn').click();
-    await expect(page.locator('.output-panel')).toHaveClass(/error/, { timeout: 30000 });
-    const text = await page.locator('.output-content').textContent();
-    expect(text).toMatch(/line 1/);
-    expect(text).toMatch(/class/i);
+    await expect(page.locator('.output-content')).toHaveText('Fido', { timeout: 30000 });
+  });
+
+  test('OCR inheritance and super.new run correctly', async ({ page }) => {
+    const code = [
+      'class Pet',
+      '    private name',
+      '    public procedure new(givenName)',
+      '        name = givenName',
+      '    endprocedure',
+      '    public function getName()',
+      '        return name',
+      '    endfunction',
+      'endclass',
+      'class Dog inherits Pet',
+      '    private breed',
+      '    public procedure new(givenName, givenBreed)',
+      '        super.new(givenName)',
+      '        breed = givenBreed',
+      '    endprocedure',
+      '    public function getLabel()',
+      '        return super.getName() + " " + breed',
+      '    endfunction',
+      'endclass',
+      'myDog = new Dog("Fido", "Terrier")',
+      'print(myDog.getLabel())',
+    ].join('\n');
+    await page.locator('#pscEditor').fill(code);
+    await page.locator('#runBtn').click();
+    await expect(page.locator('.output-content')).toHaveText('Fido Terrier', { timeout: 30000 });
   });
 });

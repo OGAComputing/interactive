@@ -17,8 +17,7 @@
 //   AND OR NOT, MOD DIV, ^
 //   .length, .left(n), .right(n), .substring(start, count)  (receiver-walking tokenizer)
 //   openRead, openWrite, .readLine(), .writeLine(), .endOfFile(), .close()
-//
-// Unsupported (emits friendly error): class, endclass, inherits
+//   class/endclass, inherits, public/private attributes and methods, new, super
 
 const INDENT = '    ';
 
@@ -85,6 +84,13 @@ function _esc(s) {
 
 function _pyIdent(name) {
   return /^break$/i.test(name) ? '_psc_break' : name;
+}
+
+function _splitParams(params) {
+  return params
+    .split(',')
+    .map(p => _pyIdent(p.split(':')[0].trim()))
+    .filter(Boolean);
 }
 
 // Walk left from dotPos to find the start of the receiver expression.
@@ -217,6 +223,40 @@ function _rewriteStringMethods(code) {
   return s;
 }
 
+function _rewriteOopConstructs(code) {
+  let s = code;
+  s = s.replace(/\bsuper\s*\.\s*new\s*\(/gi, 'super().__init__(');
+  s = s.replace(/\bsuper\s*\.\s*([A-Za-z_]\w*)\s*\(/gi, 'super().$1(');
+  s = s.replace(/\bnew\s+([A-Za-z_]\w*)\s*\(/gi, '$1(');
+  return s;
+}
+
+function _rewriteClassAttributes(code, ctx) {
+  if (!ctx?.currentMethodAttrs || ctx.currentMethodAttrs.size === 0) return code;
+  let out = '';
+  let i = 0;
+  while (i < code.length) {
+    const c = code[i];
+    if (/[A-Za-z_]/.test(c)) {
+      let j = i + 1;
+      while (j < code.length && /[A-Za-z0-9_]/.test(code[j])) j++;
+      const word = code.slice(i, j);
+      const prev = i > 0 ? code[i - 1] : '';
+      const alreadyQualified = prev === '.';
+      if (ctx.currentMethodAttrs.has(word) && !alreadyQualified) {
+        out += 'self.' + _pyIdent(word);
+      } else {
+        out += word;
+      }
+      i = j;
+      continue;
+    }
+    out += c;
+    i++;
+  }
+  return out;
+}
+
 // ── Operator + syntax rewrites (applied to code segments only) ────────────────
 function rewriteOperators(code, ctx) {
   let s = code;
@@ -249,6 +289,9 @@ function rewriteOperators(code, ctx) {
   s = s.replace(/\bopenRead\s*\(/g, '_psc_open_read(');
   s = s.replace(/\bopenWrite\s*\(/g, '_psc_open_write(');
 
+  // OCR class/object syntax
+  s = _rewriteOopConstructs(s);
+
   // input() → _psc_input() for OCR-style auto-typing (int → float → str)
   s = s.replace(/\binput\s*\(/g, '_psc_input(');
 
@@ -271,6 +314,9 @@ function rewriteOperators(code, ctx) {
   // String methods via receiver-walking tokenizer
   s = _rewriteStringMethods(s);
 
+  // Inside class methods, unqualified declared attributes mean self.attribute.
+  s = _rewriteClassAttributes(s, ctx);
+
   return s;
 }
 
@@ -282,6 +328,49 @@ function rewrite(line, ctx) {
   }).join('');
 }
 
+function _scanClassInfo(srcLines) {
+  const ownAttrs = new Map();
+  const parents = new Map();
+  let currentClass = null;
+
+  for (const raw of srcLines) {
+    const t = raw.trim();
+    let m;
+    if ((m = t.match(/^class\s+([A-Za-z_]\w*)(?:\s+inherits\s+([A-Za-z_]\w*))?\s*$/i))) {
+      currentClass = m[1];
+      if (!ownAttrs.has(currentClass)) ownAttrs.set(currentClass, new Set());
+      if (m[2]) parents.set(currentClass, m[2]);
+      continue;
+    }
+    if (/^endclass$/i.test(t)) {
+      currentClass = null;
+      continue;
+    }
+    if (!currentClass) continue;
+    if ((m = t.match(/^(?:public|private)\s+(?!function\b|procedure\b)([A-Za-z_]\w*)(?:\s*=.+)?$/i))) {
+      ownAttrs.get(currentClass).add(m[1]);
+    }
+  }
+
+  const merged = new Map();
+  const mergeFor = (name, seen = new Set()) => {
+    if (merged.has(name)) return merged.get(name);
+    if (seen.has(name)) return new Set(ownAttrs.get(name) || []);
+    seen.add(name);
+    const attrs = new Set();
+    const parent = parents.get(name);
+    if (parent) {
+      for (const attr of mergeFor(parent, seen)) attrs.add(attr);
+    }
+    for (const attr of ownAttrs.get(name) || []) attrs.add(attr);
+    merged.set(name, attrs);
+    return attrs;
+  };
+
+  for (const name of ownAttrs.keys()) mergeFor(name);
+  return { classAttrs: merged, classParents: parents };
+}
+
 // ── Per-line classification ───────────────────────────────────────────────────
 function classify(line, ctx) {
   const t = line.trim();
@@ -289,13 +378,18 @@ function classify(line, ctx) {
 
   if (/^\/\//.test(t)) return { emit: ['#' + t.slice(2)] };
 
-  // Unsupported OOP constructs — emit a friendly transpiler error
-  if (/^class\s+/i.test(t) || /^endclass$/i.test(t)) {
-    return { oop: "classes are not supported — use functions and procedures instead" };
+  let m;
+
+  if ((m = t.match(/^class\s+([A-Za-z_]\w*)(?:\s+inherits\s+([A-Za-z_]\w*))?\s*$/i))) {
+    const [, name, parent] = m;
+    return {
+      emit: [parent ? `class ${_pyIdent(name)}(${_pyIdent(parent)}):` : `class ${_pyIdent(name)}:`],
+      openBlock: true,
+      classOpen: { name },
+    };
   }
-  if (/^inherits\b/i.test(t)) {
-    return { oop: "'inherits' is not supported" };
-  }
+  if (/^endclass$/i.test(t)) return { classClose: true };
+  if (/^inherits\b/i.test(t)) return { pythonic: "write inheritance as 'class Child inherits Parent'" };
 
   // ── Python-ism detection — friendly hints for common Python syntax mistakes ──
   if (/^#/.test(t)) {
@@ -322,8 +416,6 @@ function classify(line, ctx) {
   if (/^continue$/i.test(t)) {
     return { pythonic: "'continue' is not part of OCR pseudocode — restructure your loop condition to skip iterations" };
   }
-  let m;
-
   // for X = A to B [step S]  (uses _psc_rng for correct inclusive step handling)
   if ((m = t.match(/^for\s+([A-Za-z_]\w*)\s*=\s*(.+?)\s+to\s+(.+?)(?:\s+step\s+(.+))?$/i))) {
     const [, v, a, b, step] = m;
@@ -365,16 +457,32 @@ function classify(line, ctx) {
   if (/^endswitch$/i.test(t)) return { emit: [], switchClose: true };
 
   if ((m = t.match(/^(?:public\s+|private\s+)?function\s+([A-Za-z_]\w*)\s*\((.*?)\)\s*$/i))) {
-    const params = m[2].split(',').map(p => _pyIdent(p.trim())).filter(Boolean).join(', ');
-    return { emit: [`def ${_pyIdent(m[1])}(${params}):`], openBlock: true };
+    const params = _splitParams(m[2]);
+    const pyParams = ctx.inClass ? ['self', ...params].join(', ') : params.join(', ');
+    return {
+      emit: [`def ${_pyIdent(m[1])}(${pyParams}):`],
+      openBlock: true,
+      classMethodOpen: ctx.inClass,
+    };
   }
   if (/^endfunction$/i.test(t)) return { emit: [], closeBlock: true };
 
   if ((m = t.match(/^(?:public\s+|private\s+)?procedure\s+([A-Za-z_]\w*)\s*\((.*?)\)\s*$/i))) {
-    const params = m[2].split(',').map(p => _pyIdent(p.split(':')[0].trim())).filter(Boolean).join(', ');
-    return { emit: [`def ${_pyIdent(m[1])}(${params}):`], openBlock: true };
+    const name = /^new$/i.test(m[1]) && ctx.inClass ? '__init__' : _pyIdent(m[1]);
+    const params = _splitParams(m[2]);
+    const pyParams = ctx.inClass ? ['self', ...params].join(', ') : params.join(', ');
+    return {
+      emit: [`def ${name}(${pyParams}):`],
+      openBlock: true,
+      classMethodOpen: ctx.inClass,
+    };
   }
   if (/^endprocedure$/i.test(t)) return { emit: [], closeBlock: true };
+
+  if (ctx.inClass && !ctx.currentMethodAttrs && (m = t.match(/^(?:public|private)\s+(?!function\b|procedure\b)([A-Za-z_]\w*)(?:\s*=\s*(.+))?$/i))) {
+    const [, name, value] = m;
+    return { emit: [`${_pyIdent(name)} = ${value == null ? 'None' : rewriteOperators(value, ctx)}`] };
+  }
 
   if ((m = t.match(/^return(?:\s+(.+))?$/i))) {
     return { emit: [m[1] ? `return ${rewriteOperators(m[1], ctx)}` : 'return'] };
@@ -403,7 +511,15 @@ export function transpile(src) {
   const srcLines = src.split('\n');
   const out = []; // { py, srcLine }
   const errors = [];
-  const ctx = { twoDArrNames: new Set() };
+  const classInfo = _scanClassInfo(srcLines);
+  const ctx = {
+    twoDArrNames: new Set(),
+    classAttrs: classInfo.classAttrs,
+    classParents: classInfo.classParents,
+    inClass: false,
+    currentClassName: null,
+    currentMethodAttrs: null,
+  };
 
   // Prepend preamble (srcLine: null for all preamble lines)
   for (const py of PREAMBLE.split('\n')) out.push({ py, srcLine: null });
@@ -414,6 +530,15 @@ export function transpile(src) {
   const depth = () => depthStack.length - 1;
   const ind = (d = depth()) => INDENT.repeat(d);
   const noteBody = () => { if (depthStack.length > 0) depthStack[depthStack.length - 1].hasBody = true; };
+  const currentClassFrame = () => [...depthStack].reverse().find(f => f.kind === 'class') || null;
+  const currentMethodFrame = () => [...depthStack].reverse().find(f => f.kind === 'classMethod') || null;
+  const refreshClassContext = () => {
+    const cls = currentClassFrame();
+    const method = currentMethodFrame();
+    ctx.inClass = !!cls;
+    ctx.currentClassName = cls?.name || null;
+    ctx.currentMethodAttrs = method && cls ? cls.attrs : null;
+  };
   const closeBlock = () => {
     const top = depthStack.pop();
     if (top && !top.hasBody) out.push({ py: ind() + INDENT + 'pass', srcLine: null });
@@ -423,6 +548,7 @@ export function transpile(src) {
     const lineNum = i + 1;
     let cls;
     try {
+      refreshClassContext();
       cls = classify(srcLines[i], ctx);
     } catch (e) {
       errors.push({ line: lineNum, msg: String(e.message || e) });
@@ -436,6 +562,14 @@ export function transpile(src) {
 
     if (cls.pythonic) {
       errors.push({ line: lineNum, msg: cls.pythonic });
+      continue;
+    }
+
+    if (cls.classClose) {
+      const classFrame = currentClassFrame();
+      if (!classFrame) { errors.push({ line: lineNum, msg: 'endclass without matching class' }); continue; }
+      while (depthStack[depthStack.length - 1] !== classFrame) closeBlock();
+      closeBlock();
       continue;
     }
 
@@ -489,7 +623,18 @@ export function transpile(src) {
     if (cls.openBlock) {
       for (const e of cls.emit) out.push({ py: ind() + e, srcLine: lineNum });
       noteBody();
-      depthStack.push({ kind: 'block', hasBody: false });
+      if (cls.classOpen) {
+        depthStack.push({
+          kind: 'class',
+          hasBody: false,
+          name: cls.classOpen.name,
+          attrs: ctx.classAttrs.get(cls.classOpen.name) || new Set(),
+        });
+      } else if (cls.classMethodOpen) {
+        depthStack.push({ kind: 'classMethod', hasBody: false });
+      } else {
+        depthStack.push({ kind: 'block', hasBody: false });
+      }
       if (cls.addLoopGuard) {
         out.push({ py: ind() + '_psc_tick()', srcLine: null });
         noteBody();

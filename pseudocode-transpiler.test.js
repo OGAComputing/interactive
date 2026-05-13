@@ -179,28 +179,101 @@ describe('file I/O transpilation', () => {
   });
 });
 
-// ── OOP — friendly errors ─────────────────────────────────────────────────────
-describe('unsupported OOP constructs', () => {
-  test('class declaration emits a transpiler error', () => {
-    const e = errs('class Foo\nendclass');
-    expect(e.length).toBeGreaterThan(0);
-    expect(e[0].msg).toMatch(/class/i);
+// ── OOP class support ─────────────────────────────────────────────────────────
+describe('OOP class support', () => {
+  test('class declaration transpiles to a Python class', () => {
+    const out = py('class Pet\nendclass');
+    expect(errs('class Pet\nendclass')).toHaveLength(0);
+    expect(out).toContain('class Pet:');
   });
 
-  test('error points at the class line', () => {
-    const e = errs('x = 1\nclass Foo\nendclass');
-    expect(e[0].line).toBe(2);
+  test('public and private attributes become class attributes', () => {
+    const out = py('class Game\n    private attempts = 3\n    public score\nendclass');
+    expect(out).toContain('attempts = 3');
+    expect(out).toContain('score = None');
   });
 
-  test('inherits keyword emits a transpiler error', () => {
-    const e = errs('class Bar inherits Foo\nendclass');
-    // "class Bar inherits Foo" is caught by the class pattern first
-    expect(e.length).toBeGreaterThan(0);
+  test('procedure new becomes __init__ with self and rewrites attributes', () => {
+    const src = [
+      'class Pet',
+      '    private name',
+      '    public procedure new(givenName)',
+      '        name = givenName',
+      '    endprocedure',
+      'endclass',
+    ].join('\n');
+    const out = py(src);
+    expect(out).toContain('def __init__(self, givenName):');
+    expect(out).toContain('self.name = givenName');
+  });
+
+  test('methods receive self and return declared attributes through self', () => {
+    const src = [
+      'class Pet',
+      '    private name',
+      '    public function getName()',
+      '        return name',
+      '    endfunction',
+      'endclass',
+    ].join('\n');
+    const out = py(src);
+    expect(out).toContain('def getName(self):');
+    expect(out).toContain('return self.name');
+  });
+
+  test('new object creation rewrites to a constructor call', () => {
+    const out = py('class Pet\nendclass\np = new Pet("Fido")');
+    expect(out).toContain('p = Pet(_PscStr("Fido"))');
+  });
+
+  test('inherits rewrites to a Python base class', () => {
+    const out = py('class Pet\nendclass\nclass Dog inherits Pet\nendclass');
+    expect(out).toContain('class Dog(Pet):');
+  });
+
+  test('super.new and super.method calls rewrite to Python super calls', () => {
+    const src = [
+      'class Pet',
+      '    public procedure new(name)',
+      '    endprocedure',
+      '    public function label()',
+      '        return "pet"',
+      '    endfunction',
+      'endclass',
+      'class Dog inherits Pet',
+      '    public procedure new(name)',
+      '        super.new(name)',
+      '    endprocedure',
+      '    public function label()',
+      '        return super.label()',
+      '    endfunction',
+      'endclass',
+    ].join('\n');
+    const out = py(src);
+    expect(out).toContain('super().__init__(name)');
+    expect(out).toContain('return super().label()');
+  });
+
+  test('subclass methods can reference inherited and own attributes', () => {
+    const src = [
+      'class Pet',
+      '    private name',
+      'endclass',
+      'class Dog inherits Pet',
+      '    private breed',
+      '    public function label()',
+      '        return name + " " + breed',
+      '    endfunction',
+      'endclass',
+    ].join('\n');
+    const out = py(src);
+    expect(out).toContain('return self.name + " " + self.breed');
   });
 
   test('endclass on its own emits a transpiler error', () => {
     const e = errs('endclass');
     expect(e.length).toBeGreaterThan(0);
+    expect(e[0].msg).toMatch(/endclass/i);
   });
 });
 
@@ -236,6 +309,19 @@ describe('source map', () => {
     const pyIdx = python.split('\n').findIndex(l => l.includes('bad_expr'));
     const pyLine = pyIdx + 1;
     expect(mapErrorLine(map, pyLine)).toBe(2);
+  });
+
+  test('mapErrorLine returns correct pseudocode line inside class methods', () => {
+    const src = [
+      'class Pet',
+      '    public function broken()',
+      '        return missing +',
+      '    endfunction',
+      'endclass',
+    ].join('\n');
+    const { python, map } = transpile(src);
+    const pyIdx = python.split('\n').findIndex(l => l.includes('missing +'));
+    expect(mapErrorLine(map, pyIdx + 1)).toBe(3);
   });
 
   test('mapErrorLine returns null for out-of-range line', () => {
