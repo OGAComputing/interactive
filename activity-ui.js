@@ -1,6 +1,8 @@
 (function () {
   'use strict';
 
+  const MIN_CELEBRATION_MS = 5000;
+  const TARGET_FRAME_MS = 1000 / 60;
   let celebrationShown = false;
 
   function dispatch(name, detail) {
@@ -89,9 +91,18 @@
     return toast;
   }
 
+  function celebrationElapsed(start) {
+    return performance.now() - start;
+  }
+
+  function celebrationFrameDelta(lastTime) {
+    return Math.min((performance.now() - lastTime) / TARGET_FRAME_MS, 2);
+  }
+
   function runConfetti() {
     const canvas = makeCanvas();
     const ctx = canvas.getContext('2d');
+    const start = performance.now();
     const colors = ['#facc15', '#22c55e', '#38bdf8', '#f472b6', '#fb7185'];
     const pieces = Array.from({ length: 120 }, () => ({
       x: Math.random() * window.innerWidth,
@@ -102,15 +113,22 @@
       spin: Math.random() * Math.PI,
       color: colors[Math.floor(Math.random() * colors.length)]
     }));
-    let frame = 0;
+    let lastTime = start;
     function draw() {
+      const delta = celebrationFrameDelta(lastTime);
+      lastTime = performance.now();
       resizeCanvas(canvas, ctx);
       ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
       pieces.forEach(p => {
-        p.x += p.vx;
-        p.y += p.vy;
-        p.vy += 0.04;
-        p.spin += 0.18;
+        p.x += p.vx * delta;
+        p.y += p.vy * delta;
+        p.vy += 0.04 * delta;
+        p.spin += 0.18 * delta;
+        if (celebrationElapsed(start) < MIN_CELEBRATION_MS && p.y > window.innerHeight + 30) {
+          p.x = Math.random() * window.innerWidth;
+          p.y = -20 - Math.random() * window.innerHeight * 0.25;
+          p.vy = 2 + Math.random() * 4;
+        }
         ctx.save();
         ctx.translate(p.x, p.y);
         ctx.rotate(p.spin);
@@ -118,8 +136,7 @@
         ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.65);
         ctx.restore();
       });
-      frame++;
-      if (frame < 140) requestAnimationFrame(draw);
+      if (celebrationElapsed(start) < MIN_CELEBRATION_MS) requestAnimationFrame(draw);
       else canvas.remove();
     }
     draw();
@@ -128,6 +145,7 @@
   function runFireworks() {
     const canvas = makeCanvas();
     const ctx = canvas.getContext('2d');
+    const start = performance.now();
     const colors = ['#facc15', '#22c55e', '#38bdf8', '#f472b6', '#fb7185'];
     const bursts = Array.from({ length: 6 }, (_, burst) => {
       const x = window.innerWidth * (0.15 + Math.random() * 0.7);
@@ -135,20 +153,23 @@
       return Array.from({ length: 28 }, () => {
         const angle = Math.random() * Math.PI * 2;
         const speed = 1.4 + Math.random() * 3.2;
-        return { x, y, delay: burst * 18, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed, life: 80, color: colors[Math.floor(Math.random() * colors.length)] };
+        return { x, y, delay: burst * 32, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed, life: 220, color: colors[Math.floor(Math.random() * colors.length)] };
       });
     }).flat();
     let frame = 0;
+    let lastTime = start;
     function draw() {
+      const delta = celebrationFrameDelta(lastTime);
+      lastTime = performance.now();
       resizeCanvas(canvas, ctx);
       ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
       bursts.forEach(p => {
         if (frame < p.delay || p.life <= 0) return;
-        p.x += p.vx;
-        p.y += p.vy;
-        p.vy += 0.035;
-        p.life--;
-        ctx.globalAlpha = Math.max(p.life / 80, 0);
+        p.x += p.vx * delta;
+        p.y += p.vy * delta;
+        p.vy += 0.035 * delta;
+        p.life -= delta;
+        ctx.globalAlpha = Math.max(p.life / 220, 0);
         ctx.fillStyle = p.color;
         ctx.beginPath();
         ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
@@ -156,7 +177,7 @@
         ctx.globalAlpha = 1;
       });
       frame++;
-      if (frame < 180) requestAnimationFrame(draw);
+      if (celebrationElapsed(start) < MIN_CELEBRATION_MS) requestAnimationFrame(draw);
       else canvas.remove();
     }
     draw();
@@ -165,6 +186,7 @@
   function runShootingStars() {
     const canvas = makeCanvas();
     const ctx = canvas.getContext('2d');
+    const start = performance.now();
     const stars = Array.from({ length: 18 }, (_, i) => ({
       x: -120 - Math.random() * window.innerWidth,
       y: Math.random() * window.innerHeight * 0.55,
@@ -173,13 +195,20 @@
       size: 2 + Math.random() * 2
     }));
     let frame = 0;
+    let lastTime = start;
     function draw() {
+      const delta = celebrationFrameDelta(lastTime);
+      lastTime = performance.now();
       resizeCanvas(canvas, ctx);
       ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
       stars.forEach(s => {
         if (frame < s.delay) return;
-        s.x += s.speed;
-        s.y += s.speed * 0.32;
+        s.x += s.speed * delta;
+        s.y += s.speed * 0.32 * delta;
+        if (celebrationElapsed(start) < MIN_CELEBRATION_MS && s.x > window.innerWidth + 140) {
+          s.x = -120 - Math.random() * window.innerWidth * 0.3;
+          s.y = Math.random() * window.innerHeight * 0.55;
+        }
         const trail = 70;
         const grad = ctx.createLinearGradient(s.x - trail, s.y - trail * 0.32, s.x, s.y);
         grad.addColorStop(0, 'rgba(250,204,21,0)');
@@ -196,7 +225,7 @@
         ctx.fill();
       });
       frame++;
-      if (frame < 150) requestAnimationFrame(draw);
+      if (celebrationElapsed(start) < MIN_CELEBRATION_MS) requestAnimationFrame(draw);
       else canvas.remove();
     }
     draw();
@@ -215,32 +244,34 @@
     setTimeout(() => {
       badge.style.opacity = '0';
       badge.style.transform = 'translate(-50%,-55%) scale(.85) rotate(-6deg)';
-    }, 1300);
-    setTimeout(() => badge.remove(), 1800);
+    }, MIN_CELEBRATION_MS - 500);
+    setTimeout(() => badge.remove(), MIN_CELEBRATION_MS);
   }
 
   function runXpBurst() {
     const canvas = makeCanvas();
     const ctx = canvas.getContext('2d');
-    const bits = Array.from({ length: 34 }, () => ({ x: window.innerWidth / 2 + (Math.random() - .5) * 260, y: window.innerHeight * .62 + Math.random() * 40, vx: (Math.random() - .5) * 3, vy: -4 - Math.random() * 4, life: 70 + Math.random() * 35, text: Math.random() > .25 ? '+XP' : '+100' }));
-    let frame = 0;
+    const start = performance.now();
+    const bits = Array.from({ length: 34 }, () => ({ x: window.innerWidth / 2 + (Math.random() - .5) * 260, y: window.innerHeight * .62 + Math.random() * 40, vx: (Math.random() - .5) * 3, vy: -4 - Math.random() * 4, life: 250 + Math.random() * 60, text: Math.random() > .25 ? '+XP' : '+100' }));
+    let lastTime = start;
     function draw() {
+      const delta = celebrationFrameDelta(lastTime);
+      lastTime = performance.now();
       resizeCanvas(canvas, ctx);
       ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
       ctx.font = '800 22px sans-serif';
       ctx.textAlign = 'center';
       bits.forEach(p => {
-        p.x += p.vx;
-        p.y += p.vy;
-        p.vy += .05;
-        p.life--;
-        ctx.globalAlpha = Math.max(p.life / 90, 0);
+        p.x += p.vx * delta;
+        p.y += p.vy * delta;
+        p.vy += .05 * delta;
+        p.life -= delta;
+        ctx.globalAlpha = Math.max(p.life / 270, 0);
         ctx.fillStyle = '#facc15';
         ctx.fillText(p.text, p.x, p.y);
       });
       ctx.globalAlpha = 1;
-      frame++;
-      if (frame < 110) requestAnimationFrame(draw);
+      if (celebrationElapsed(start) < MIN_CELEBRATION_MS) requestAnimationFrame(draw);
       else canvas.remove();
     }
     draw();
@@ -249,22 +280,26 @@
   function runPixelSparkle() {
     const canvas = makeCanvas();
     const ctx = canvas.getContext('2d');
+    const start = performance.now();
     const colors = ['#38bdf8', '#22c55e', '#facc15', '#f472b6'];
-    const pixels = Array.from({ length: 150 }, () => ({ x: Math.random() * window.innerWidth, y: Math.random() * window.innerHeight, size: 4 + Math.random() * 9, life: 45 + Math.random() * 60, color: colors[Math.floor(Math.random() * colors.length)] }));
+    const pixels = Array.from({ length: 150 }, () => ({ x: Math.random() * window.innerWidth, y: Math.random() * window.innerHeight, size: 4 + Math.random() * 9, life: 240 + Math.random() * 80, color: colors[Math.floor(Math.random() * colors.length)] }));
     let frame = 0;
+    let lastTime = start;
     function draw() {
+      const delta = celebrationFrameDelta(lastTime);
+      lastTime = performance.now();
       resizeCanvas(canvas, ctx);
       ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
       pixels.forEach(p => {
-        p.life--;
+        p.life -= delta;
         const pulse = Math.sin((frame + p.size) * .25) * 0.5 + 0.5;
-        ctx.globalAlpha = Math.max(p.life / 80, 0) * pulse;
+        ctx.globalAlpha = Math.max(p.life / 260, 0) * pulse;
         ctx.fillStyle = p.color;
         ctx.fillRect(p.x, p.y, p.size, p.size);
       });
       ctx.globalAlpha = 1;
       frame++;
-      if (frame < 120) requestAnimationFrame(draw);
+      if (celebrationElapsed(start) < MIN_CELEBRATION_MS) requestAnimationFrame(draw);
       else canvas.remove();
     }
     draw();
@@ -279,17 +314,21 @@
     wrap.lastChild.style.cssText = 'display:block;font-size:clamp(2.2rem,9vw,7rem);color:#facc15;';
     document.body.appendChild(wrap);
     requestAnimationFrame(() => { wrap.style.opacity = '1'; });
-    setTimeout(() => { wrap.style.opacity = '0'; }, 1200);
-    setTimeout(() => wrap.remove(), 1600);
+    setTimeout(() => { wrap.style.opacity = '0'; }, MIN_CELEBRATION_MS - 500);
+    setTimeout(() => wrap.remove(), MIN_CELEBRATION_MS);
   }
 
   function runMatrixTick() {
     const canvas = makeCanvas();
     const ctx = canvas.getContext('2d');
     canvas.style.background = 'rgba(0,0,0,.18)';
+    const start = performance.now();
     let drops = [];
     let frame = 0;
+    let lastTime = start;
     function draw() {
+      const delta = celebrationFrameDelta(lastTime);
+      lastTime = performance.now();
       resizeCanvas(canvas, ctx);
       if (!drops.length) drops = Array.from({ length: Math.ceil(window.innerWidth / 18) }, () => Math.random() * -40);
       ctx.fillStyle = 'rgba(0,0,0,.16)';
@@ -299,7 +338,7 @@
       drops.forEach((y, i) => {
         const x = i * 18;
         ctx.fillText(Math.random() > .5 ? '1' : '0', x, y);
-        drops[i] = y > window.innerHeight + 20 ? 0 : y + 18;
+        drops[i] = y > window.innerHeight + 20 ? 0 : y + 18 * delta;
       });
       if (frame > 70) {
         ctx.fillStyle = '#facc15';
@@ -308,7 +347,7 @@
         ctx.fillText('100%', window.innerWidth / 2, window.innerHeight / 2);
       }
       frame++;
-      if (frame < 140) requestAnimationFrame(draw);
+      if (celebrationElapsed(start) < MIN_CELEBRATION_MS) requestAnimationFrame(draw);
       else canvas.remove();
     }
     draw();
