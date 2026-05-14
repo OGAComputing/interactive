@@ -225,6 +225,8 @@ function _rewriteStringMethods(code) {
 
 function _rewriteOopConstructs(code) {
   let s = code;
+  // ORDER MATTERS: super.new( must be replaced before the catch-all super.method( regex,
+  // because 'new' also matches [A-Za-z_]\w*.
   s = s.replace(/\bsuper\s*\.\s*new\s*\(/gi, 'super().__init__(');
   s = s.replace(/\bsuper\s*\.\s*([A-Za-z_]\w*)\s*\(/gi, 'super().$1(');
   s = s.replace(/\bnew\s+([A-Za-z_]\w*)\s*\(/gi, '$1(');
@@ -233,6 +235,7 @@ function _rewriteOopConstructs(code) {
 
 function _rewriteClassAttributes(code, ctx) {
   if (!ctx?.currentMethodAttrs || ctx.currentMethodAttrs.size === 0) return code;
+  const params = ctx.currentMethodParams;
   let out = '';
   let i = 0;
   while (i < code.length) {
@@ -243,7 +246,7 @@ function _rewriteClassAttributes(code, ctx) {
       const word = code.slice(i, j);
       const prev = i > 0 ? code[i - 1] : '';
       const alreadyQualified = prev === '.';
-      if (ctx.currentMethodAttrs.has(word) && !alreadyQualified) {
+      if (ctx.currentMethodAttrs.has(word) && !alreadyQualified && !params?.has(word)) {
         out += 'self.' + _pyIdent(word);
       } else {
         out += word;
@@ -299,9 +302,9 @@ function rewriteOperators(code, ctx) {
   s = s.replace(/\bbreak\b/gi, '_psc_break');
 
   // Logical/arithmetic operators
-  s = s.replace(/\bAND\b/g, 'and');
-  s = s.replace(/\bOR\b/g, 'or');
-  s = s.replace(/\bNOT\b/g, 'not');
+  s = s.replace(/\bAND\b/gi, 'and');
+  s = s.replace(/\bOR\b/gi, 'or');
+  s = s.replace(/\bNOT\b/gi, 'not');
   s = s.replace(/\s+MOD\s+/g, ' % ');
   s = s.replace(/\s+DIV\s+/g, ' // ');
   s = s.replace(/\^/g, '**');
@@ -332,21 +335,27 @@ function _scanClassInfo(srcLines) {
   const ownAttrs = new Map();
   const parents = new Map();
   let currentClass = null;
+  let methodDepth = 0;
 
   for (const raw of srcLines) {
     const t = raw.trim();
     let m;
     if ((m = t.match(/^class\s+([A-Za-z_]\w*)(?:\s+inherits\s+([A-Za-z_]\w*))?\s*$/i))) {
       currentClass = m[1];
+      methodDepth = 0;
       if (!ownAttrs.has(currentClass)) ownAttrs.set(currentClass, new Set());
       if (m[2]) parents.set(currentClass, m[2]);
       continue;
     }
     if (/^endclass$/i.test(t)) {
       currentClass = null;
+      methodDepth = 0;
       continue;
     }
     if (!currentClass) continue;
+    if (/^(?:public\s+|private\s+)?(?:function|procedure)\b/i.test(t)) { methodDepth++; continue; }
+    if (/^(?:endfunction|endprocedure)$/i.test(t)) { if (methodDepth > 0) methodDepth--; continue; }
+    if (methodDepth > 0) continue;
     if ((m = t.match(/^(?:public|private)\s+(?!function\b|procedure\b)([A-Za-z_]\w*)(?:\s*=.+)?$/i))) {
       ownAttrs.get(currentClass).add(m[1]);
     }
@@ -416,6 +425,26 @@ function classify(line, ctx) {
   if (/^continue$/i.test(t)) {
     return { pythonic: "'continue' is not part of OCR pseudocode — restructure your loop condition to skip iterations" };
   }
+  if (/^else\s+if\b/i.test(t)) {
+    return { pythonic: "write 'elseif <condition> then' not 'else if'" };
+  }
+  if (/^end\s+if$/i.test(t))        return { pythonic: "write 'endif' without a space" };
+  if (/^end\s+while$/i.test(t))     return { pythonic: "write 'endwhile' without a space" };
+  if (/^end\s+function$/i.test(t))  return { pythonic: "write 'endfunction' without a space" };
+  if (/^end\s+procedure$/i.test(t)) return { pythonic: "write 'endprocedure' without a space" };
+  if (/^end\s+class$/i.test(t))     return { pythonic: "write 'endclass' without a space" };
+  if (/^end\s+switch$/i.test(t))    return { pythonic: "write 'endswitch' without a space" };
+  if (/^print\s+[^(]/i.test(t)) {
+    return { pythonic: "use print(...) with parentheses in OCR pseudocode — e.g. print(\"hello\")" };
+  }
+  {
+    const _code = segment(t).filter(s => s.kind === 'code').map(s => s.text).join('');
+    if (/\+\+/.test(_code))   return { pythonic: "OCR pseudocode has no '++' operator — use x = x + 1" };
+    if (/-{2}/.test(_code))   return { pythonic: "OCR pseudocode has no '--' operator — use x = x - 1" };
+    if (/\blen\s*\(/.test(_code))    return { pythonic: "use '.length' not 'len()' in OCR pseudocode — e.g. myStr.length" };
+    if (/\.append\s*\(/.test(_code)) return { pythonic: "OCR pseudocode arrays use index assignment, not '.append()'" };
+  }
+
   // for X = A to B [step S]  (uses _psc_rng for correct inclusive step handling)
   if ((m = t.match(/^for\s+([A-Za-z_]\w*)\s*=\s*(.+?)\s+to\s+(.+?)(?:\s+step\s+(.+))?$/i))) {
     const [, v, a, b, step] = m;
@@ -423,29 +452,29 @@ function classify(line, ctx) {
     const py = step
       ? `for ${_pyIdent(v)} in _psc_rng(${A}, ${B}, ${rewriteOperators(step, ctx)}):`
       : `for ${_pyIdent(v)} in _psc_rng(${A}, ${B}):`;
-    return { emit: [py], openBlock: true, addLoopGuard: true };
+    return { emit: [py], openBlock: true, addLoopGuard: true, opener: 'for' };
   }
 
-  if (t.match(/^next\s+[A-Za-z_]\w*$/i)) return { emit: [], closeBlock: true };
+  if (t.match(/^next\s+[A-Za-z_]\w*$/i)) return { emit: [], closeBlock: true, closer: 'next', expectedOpener: 'for' };
 
   if ((m = t.match(/^while\s+(.+)$/i))) {
-    return { emit: [`while ${rewriteOperators(m[1], ctx)}:`], openBlock: true, addLoopGuard: true };
+    return { emit: [`while ${rewriteOperators(m[1], ctx)}:`], openBlock: true, addLoopGuard: true, opener: 'while' };
   }
-  if (/^endwhile$/i.test(t)) return { emit: [], closeBlock: true };
+  if (/^endwhile$/i.test(t)) return { emit: [], closeBlock: true, closer: 'endwhile', expectedOpener: 'while' };
 
-  if (/^do$/i.test(t)) return { emit: ['while True:'], openBlock: true, addLoopGuard: true };
+  if (/^do$/i.test(t)) return { emit: ['while True:'], openBlock: true, addLoopGuard: true, opener: 'do' };
   if ((m = t.match(/^until\s+(.+)$/i))) {
-    return { emit: [`if ${rewriteOperators(m[1], ctx)}: break`], closeBlock: true, emitBeforeClose: true };
+    return { emit: [`if ${rewriteOperators(m[1], ctx)}: break`], closeBlock: true, emitBeforeClose: true, closer: 'until', expectedOpener: 'do' };
   }
 
   if ((m = t.match(/^if\s+(.+?)(?:\s+then)?$/i))) {
-    return { emit: [`if ${rewriteOperators(m[1], ctx)}:`], openBlock: true };
+    return { emit: [`if ${rewriteOperators(m[1], ctx)}:`], openBlock: true, opener: 'if' };
   }
   if ((m = t.match(/^elseif\s+(.+?)(?:\s+then)?$/i))) {
-    return { emit: [`elif ${rewriteOperators(m[1], ctx)}:`], midBlock: true };
+    return { emit: [`elif ${rewriteOperators(m[1], ctx)}:`], midBlock: true, midKeyword: 'elseif' };
   }
-  if (/^else$/i.test(t)) return { emit: ['else:'], midBlock: true };
-  if (/^endif$/i.test(t)) return { emit: [], closeBlock: true };
+  if (/^else$/i.test(t)) return { emit: ['else:'], midBlock: true, midKeyword: 'else' };
+  if (/^endif$/i.test(t)) return { emit: [], closeBlock: true, closer: 'endif', expectedOpener: 'if' };
 
   if ((m = t.match(/^switch\s+(.+?):?\s*$/i))) {
     return { emit: [`__sw = ${rewriteOperators(m[1].replace(/:$/, ''), ctx)}`], switchOpen: true };
@@ -463,9 +492,11 @@ function classify(line, ctx) {
       emit: [`def ${_pyIdent(m[1])}(${pyParams}):`],
       openBlock: true,
       classMethodOpen: ctx.inClass,
+      methodParams: params,
+      opener: 'function',
     };
   }
-  if (/^endfunction$/i.test(t)) return { emit: [], closeBlock: true };
+  if (/^endfunction$/i.test(t)) return { emit: [], closeBlock: true, closer: 'endfunction', expectedOpener: 'function' };
 
   if ((m = t.match(/^(?:public\s+|private\s+)?procedure\s+([A-Za-z_]\w*)\s*\((.*?)\)\s*$/i))) {
     const name = /^new$/i.test(m[1]) && ctx.inClass ? '__init__' : _pyIdent(m[1]);
@@ -475,10 +506,14 @@ function classify(line, ctx) {
       emit: [`def ${name}(${pyParams}):`],
       openBlock: true,
       classMethodOpen: ctx.inClass,
+      methodParams: params,
+      opener: 'procedure',
     };
   }
-  if (/^endprocedure$/i.test(t)) return { emit: [], closeBlock: true };
+  if (/^endprocedure$/i.test(t)) return { emit: [], closeBlock: true, closer: 'endprocedure', expectedOpener: 'procedure' };
 
+  // Emits a Python class variable (name = None). Instance assignment in __init__ shadows it,
+  // so this works correctly in practice. Avoid mutable defaults (e.g. []) here.
   if (ctx.inClass && !ctx.currentMethodAttrs && (m = t.match(/^(?:public|private)\s+(?!function\b|procedure\b)([A-Za-z_]\w*)(?:\s*=\s*(.+))?$/i))) {
     const [, name, value] = m;
     return { emit: [`${_pyIdent(name)} = ${value == null ? 'None' : rewriteOperators(value, ctx)}`] };
@@ -519,6 +554,7 @@ export function transpile(src) {
     inClass: false,
     currentClassName: null,
     currentMethodAttrs: null,
+    currentMethodParams: null,
   };
 
   // Prepend preamble (srcLine: null for all preamble lines)
@@ -538,6 +574,7 @@ export function transpile(src) {
     ctx.inClass = !!cls;
     ctx.currentClassName = cls?.name || null;
     ctx.currentMethodAttrs = method && cls ? cls.attrs : null;
+    ctx.currentMethodParams = method ? method.params : null;
   };
   const closeBlock = () => {
     const top = depthStack.pop();
@@ -604,14 +641,31 @@ export function transpile(src) {
     }
 
     if (cls.midBlock) {
-      if (!depthStack[depthStack.length - 1].hasBody) out.push({ py: ind() + 'pass', srcLine: null });
+      const top = depthStack[depthStack.length - 1];
+      if (!top || top.opener !== 'if') {
+        errors.push({ line: lineNum, msg: `'${cls.midKeyword}' without a preceding 'if'` });
+        continue;
+      }
+      if (!top.hasBody) out.push({ py: ind() + 'pass', srcLine: null });
+      const ifOpenLine = top.openLine;
       depthStack.pop();
       out.push({ py: ind() + cls.emit[0], srcLine: lineNum });
-      depthStack.push({ kind: 'mid', hasBody: false });
+      depthStack.push({ kind: 'mid', hasBody: false, opener: 'if', openLine: ifOpenLine });
       continue;
     }
 
     if (cls.closeBlock) {
+      if (cls.expectedOpener) {
+        const top = depthStack[depthStack.length - 1];
+        if (!top || top.kind === 'root') {
+          errors.push({ line: lineNum, msg: `'${cls.closer}' without a matching '${cls.expectedOpener}'` });
+          continue;
+        }
+        if (top.opener !== cls.expectedOpener) {
+          errors.push({ line: lineNum, msg: `'${cls.closer}' here but the open block is '${top.opener}' (opened on line ${top.openLine})` });
+          continue;
+        }
+      }
       if (cls.emitBeforeClose && cls.emit.length) {
         for (const e of cls.emit) out.push({ py: ind() + e, srcLine: lineNum });
         noteBody();
@@ -629,11 +683,13 @@ export function transpile(src) {
           hasBody: false,
           name: cls.classOpen.name,
           attrs: ctx.classAttrs.get(cls.classOpen.name) || new Set(),
+          opener: 'class',
+          openLine: lineNum,
         });
       } else if (cls.classMethodOpen) {
-        depthStack.push({ kind: 'classMethod', hasBody: false });
+        depthStack.push({ kind: 'classMethod', hasBody: false, params: new Set(cls.methodParams || []), opener: cls.opener, openLine: lineNum });
       } else {
-        depthStack.push({ kind: 'block', hasBody: false });
+        depthStack.push({ kind: 'block', hasBody: false, opener: cls.opener, openLine: lineNum });
       }
       if (cls.addLoopGuard) {
         out.push({ py: ind() + '_psc_tick()', srcLine: null });
@@ -646,7 +702,16 @@ export function transpile(src) {
     if (cls.emit.some(e => e !== '')) noteBody();
   }
 
-  while (depthStack.length > 1) closeBlock();
+  const _closerName = { for: 'next <var>', while: 'endwhile', do: 'until <condition>',
+    if: 'endif', function: 'endfunction', procedure: 'endprocedure', class: 'endclass' };
+  while (depthStack.length > 1) {
+    const top = depthStack[depthStack.length - 1];
+    if (top.opener && top.openLine) {
+      const expected = _closerName[top.opener] || `end${top.opener}`;
+      errors.push({ line: top.openLine, msg: `'${top.opener}' on line ${top.openLine} is never closed — expected '${expected}'` });
+    }
+    closeBlock();
+  }
 
   return {
     python: out.map(o => o.py).join('\n'),
