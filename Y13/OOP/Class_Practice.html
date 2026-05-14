@@ -1,0 +1,1383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- ACTIVITY
+title:  OOP Class Practice
+type:   Practice
+stars:  4
+desc:   Six progressive OOP challenges — write constructors and methods from UML diagrams, with a worked example and instant mark-scheme feedback on every Run.
+color:  indigo
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OOP Class Practice — Year 13</title>
+
+<link rel="stylesheet" href="../../shared.css">
+
+<style>
+  /* ── Sticky header ───────────────────────────────────────── */
+  header {
+    background: var(--surface);
+    border-bottom: 2px solid var(--surface-mid);
+    padding: 12px 20px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.45);
+  }
+  .header-progress { display: flex; align-items: center; gap: 10px; }
+
+  /* ── Page body ───────────────────────────────────────────── */
+  .page-wrap { padding: 28px 16px 60px; }
+  .page-title {
+    font-size: 1.35rem;
+    font-weight: 700;
+    text-align: center;
+    color: var(--accent-light);
+    margin-bottom: 4px;
+  }
+  .page-subtitle {
+    text-align: center;
+    font-size: 0.82rem;
+    color: var(--muted);
+    margin-bottom: 28px;
+  }
+
+  /* ── Pill tab bar ────────────────────────────────────────── */
+  .tabs {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 28px;
+  }
+  .tab-btn {
+    padding: 7px 16px;
+    border: 2px solid var(--surface-mid);
+    border-radius: 20px;
+    background: var(--surface);
+    color: var(--muted);
+    font-family: var(--font-body);
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s, color 0.2s;
+    user-select: none;
+  }
+  .tab-btn:hover:not(.active) { border-color: var(--accent); color: var(--text); }
+  .tab-btn.active    { background: var(--accent);  border-color: var(--accent);  color: var(--text-inv); }
+  .tab-btn.done-green { background: var(--green);  border-color: var(--green);   color: #fff; }
+  .tab-btn.done-gold  { background: var(--gold);   border-color: var(--gold);    color: #111; }
+
+  /* ── Panels ──────────────────────────────────────────────── */
+  .panel { display: none; max-width: 900px; margin: 0 auto; animation: ac-fade-in 0.2s ease; }
+  .panel.active { display: block; }
+
+  /* ── Card ────────────────────────────────────────────────── */
+  .card {
+    background: var(--surface);
+    border-left: 4px solid var(--accent);
+    border-radius: 8px;
+    padding: 18px 22px;
+    margin-bottom: 22px;
+  }
+  .card h2 {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 12px;
+  }
+  .card p { color: var(--text); font-size: 0.9rem; line-height: 1.7; margin-bottom: 10px; }
+  .card p:last-child { margin-bottom: 0; }
+  .card ul {
+    margin: 6px 0 0 1.2em;
+    color: var(--text);
+    font-size: 0.9rem;
+    line-height: 1.8;
+  }
+  .card code {
+    background: var(--code-bg, #0A0C18);
+    color: var(--code-text, #C7D2FE);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-family: var(--font-mono, monospace);
+    font-size: 0.85em;
+  }
+
+  /* ── Goal banner ─────────────────────────────────────────── */
+  .goal {
+    background: var(--surface);
+    border-left: 4px solid var(--accent);
+    border-radius: 0 8px 8px 0;
+    padding: 10px 16px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 20px;
+  }
+
+  /* ── UML class diagram ───────────────────────────────────── */
+  .uml-wrap {
+    display: flex;
+    justify-content: center;
+    gap: 32px;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    margin: 18px 0 22px;
+  }
+  .uml-class {
+    border: 2px solid var(--accent);
+    border-radius: 4px;
+    overflow: hidden;
+    min-width: 260px;
+    max-width: 520px;
+    width: fit-content;
+  }
+  .uml-name {
+    background: var(--accent);
+    color: var(--text-inv);
+    text-align: center;
+    padding: 8px 20px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    letter-spacing: 0.4px;
+  }
+  .uml-section {
+    padding: 8px 16px;
+    border-top: 2px solid var(--accent);
+  }
+  .uml-row {
+    font-family: var(--font-mono, monospace);
+    font-size: 0.8rem;
+    color: var(--text);
+    padding: 2px 0;
+  }
+  .uml-arrow {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    font-size: 0.78rem;
+    color: var(--muted);
+    font-family: var(--font-mono, monospace);
+    padding-top: 40px;
+  }
+  .uml-arrow-line {
+    width: 2px;
+    height: 40px;
+    background: var(--accent);
+    position: relative;
+  }
+  .uml-arrow-line::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-bottom: 10px solid var(--accent);
+  }
+
+  /* ── Worked example (collapsible) ────────────────────────── */
+  .worked-example {
+    background: var(--surface);
+    border: 1px dashed var(--accent);
+    border-radius: 8px;
+    margin-bottom: 18px;
+    overflow: hidden;
+  }
+  .worked-example summary {
+    padding: 11px 16px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--accent);
+    user-select: none;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .worked-example summary::-webkit-details-marker { display: none; }
+  .worked-example summary::before {
+    content: '▶';
+    font-size: 0.7em;
+    transition: transform 0.2s;
+    flex-shrink: 0;
+  }
+  .worked-example[open] summary::before { transform: rotate(90deg); }
+  .worked-example-body {
+    padding: 16px 20px;
+    border-top: 1px dashed var(--accent);
+  }
+  .worked-example-body p {
+    font-size: 0.87rem;
+    color: var(--muted);
+    margin-bottom: 14px;
+    line-height: 1.6;
+  }
+  .example-grid {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 20px;
+    align-items: start;
+  }
+  @media (max-width: 600px) { .example-grid { grid-template-columns: 1fr; } }
+  .example-code {
+    background: var(--code-bg);
+    color: var(--code-text);
+    border-radius: 6px;
+    padding: 14px 16px;
+    font-family: var(--font-mono, monospace);
+    font-size: 0.82rem;
+    line-height: 1.7;
+    white-space: pre;
+    overflow-x: auto;
+  }
+  .example-notes {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .note-row {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    font-size: 0.83rem;
+  }
+  .note-badge {
+    background: var(--accent);
+    color: var(--text-inv);
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    white-space: nowrap;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .note-text { color: var(--text); line-height: 1.55; }
+
+  /* ── Code checker ────────────────────────────────────────── */
+  .code-checker {
+    background: var(--surface);
+    border-radius: 12px;
+    border: 2px solid var(--surface-mid);
+    overflow: hidden;
+    margin-bottom: 14px;
+  }
+  .checker-footer {
+    display: flex;
+    gap: 10px;
+    padding: 10px 14px;
+    background: var(--surface-mid);
+    border-top: 1px solid var(--surface-dim);
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .checker-footer .ac-btn-secondary { font-size: 0.78rem; padding: 5px 14px; }
+  .checker-footer .ac-btn           { font-size: 0.78rem; padding: 5px 14px; }
+
+  /* ── Mark scheme ─────────────────────────────────────────── */
+  .markscheme {
+    background: var(--surface);
+    border: 2px solid var(--surface-mid);
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin-bottom: 22px;
+  }
+  .ms-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .ms-header h3 {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--accent);
+  }
+  .ms-total {
+    font-size: 0.72rem;
+    font-family: var(--font-mono, monospace);
+    color: var(--muted);
+    letter-spacing: 0.06em;
+  }
+  .ms-list {
+    list-style: none;
+    margin: 0 0 10px;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .ms-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 5px 8px;
+    border-radius: 6px;
+    font-size: 0.87rem;
+    transition: background 0.15s;
+  }
+  .ms-tick { font-size: 1rem; width: 1.3em; text-align: center; color: var(--muted); flex-shrink: 0; margin-top: 0.05em; }
+  .ms-text { flex: 1; color: var(--text); line-height: 1.5; }
+  .ms-marks { font-size: 0.7rem; font-family: var(--font-mono, monospace); color: var(--muted); white-space: nowrap; margin-top: 0.2em; flex-shrink: 0; }
+  .ms-row.pass { background: rgba(52,211,153,0.08); }
+  .ms-row.pass .ms-tick  { color: var(--green); }
+  .ms-row.pass .ms-text  { color: var(--green); }
+  .ms-row.pass .ms-marks { color: var(--green); }
+  .ms-row.fail { background: rgba(248,113,113,0.06); }
+  .ms-row.fail .ms-tick  { color: var(--red); }
+  .ms-row.fail .ms-text  { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--red); }
+  .ms-divider { border: none; border-top: 1px solid var(--surface-mid); margin: 8px 0; }
+  .ms-score { font-size: 0.88rem; font-weight: 700; color: var(--accent); text-align: right; }
+  .ms-score.full { color: var(--green); }
+
+  /* ── Score pct ───────────────────────────────────────────── */
+  .score-pct { font-family: var(--font-mono, monospace); font-size: 0.8rem; color: var(--accent); }
+</style>
+</head>
+
+<body>
+
+<!-- Completion banner -->
+<div id="done-banner" class="ac-banner gold">
+  Full marks — outstanding OOP skills!
+</div>
+
+<!-- Sticky header -->
+<header>
+  <div class="header-progress">
+    <div class="ac-progress-bar" style="flex:1;">
+      <div class="ac-progress-fill" id="progress-fill"></div>
+    </div>
+    <span class="score-pct" id="progress-pct">0 / 25</span>
+  </div>
+</header>
+
+<div class="page-wrap">
+  <h2 class="page-title">OOP — Class Practice</h2>
+  <p class="page-subtitle">Constructors &amp; Methods from UML &nbsp;·&nbsp; 25 marks total</p>
+
+  <!-- Tab bar -->
+  <div class="tabs" id="tab-bar">
+    <button class="tab-btn active" data-idx="0">Q1 · 4m</button>
+    <button class="tab-btn"        data-idx="1">Q2 · 3m</button>
+    <button class="tab-btn"        data-idx="2">Q3 · 4m</button>
+    <button class="tab-btn"        data-idx="3">Q4 · 4m</button>
+    <button class="tab-btn"        data-idx="4">Q5 · 5m</button>
+    <button class="tab-btn"        data-idx="5">Q6 · 5m</button>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       Q1 — BankAccount constructor (4 marks)
+       ══════════════════════════════════════════════════════════ -->
+  <div class="panel active" id="panel-0">
+    <div class="goal">Declare the <code>BankAccount</code> class with a constructor that sets two attributes.</div>
+
+    <!-- Worked example (collapsible) -->
+    <details class="worked-example">
+      <summary>Show worked example — a different class (Car) for reference</summary>
+      <div class="worked-example-body">
+        <p>The UML below describes a <strong>Car</strong> class. Study the pseudocode that implements it, then close this panel and write your own <strong>BankAccount</strong> class.</p>
+        <div class="example-grid">
+          <!-- Car UML -->
+          <div>
+            <div class="uml-class" style="min-width:200px;">
+              <div class="uml-name">Car</div>
+              <div class="uml-section">
+                <div class="uml-row">private make : string</div>
+                <div class="uml-row">private model : string</div>
+              </div>
+              <div class="uml-section">
+                <div class="uml-row">public new(make : string, model : string)</div>
+              </div>
+            </div>
+          </div>
+          <!-- Car pseudocode -->
+          <div>
+<pre class="example-code">class Car
+  private make
+  private model
+
+  public procedure new(carMake, carModel)
+    make = carMake
+    model = carModel
+  endprocedure
+endclass
+
+// Create an instance and test it
+myCar = new Car("Toyota", "Corolla")
+print(myCar.make)
+print(myCar.model)</pre>
+          </div>
+        </div>
+        <!-- Annotations -->
+        <div class="example-notes" style="margin-top:16px;">
+          <div class="note-row">
+            <span class="note-badge">class … endclass</span>
+            <span class="note-text">Wraps the whole class definition. The class name matches the UML box header.</span>
+          </div>
+          <div class="note-row">
+            <span class="note-badge">private attribute</span>
+            <span class="note-text">Each attribute shown in the UML is declared with <code>private</code> before the name — OCR uses encapsulation by default. No type annotation needed in pseudocode.</span>
+          </div>
+          <div class="note-row">
+            <span class="note-badge">procedure new</span>
+            <span class="note-text">The constructor is always named <code>new</code>. Parameter names can differ from attribute names — the body assigns parameter values to attributes.</span>
+          </div>
+        </div>
+      </div>
+    </details>
+
+    <div class="card">
+      <h2>UML Class Diagram</h2>
+      <div class="uml-wrap">
+        <div class="uml-class">
+          <div class="uml-name">BankAccount</div>
+          <div class="uml-section">
+            <div class="uml-row">private accountNumber : string</div>
+            <div class="uml-row">private balance : float</div>
+          </div>
+          <div class="uml-section">
+            <div class="uml-row">public new(accountNumber : string, balance : float)</div>
+          </div>
+        </div>
+      </div>
+      <h2>Your class must:</h2>
+      <ul>
+        <li>Declare <code>accountNumber</code> and <code>balance</code> as private attributes</li>
+        <li>Define a constructor <code>procedure new</code> that accepts both values as parameters</li>
+        <li>Assign each parameter to the corresponding attribute inside the constructor</li>
+      </ul>
+      <p style="margin-top:12px;font-size:0.83rem;color:var(--muted);">
+        The test code at the bottom of the editor creates a <code>BankAccount</code> and prints both attributes.
+        A correct solution outputs <code>12345678</code> then <code>500.0</code>.
+      </p>
+    </div>
+
+    <div class="code-checker" id="checker-0">
+      <div class="checker-header">
+        <span class="checker-dot dot-r"></span>
+        <span class="checker-dot dot-y"></span>
+        <span class="checker-dot dot-g"></span>
+        <span>Q1 — Write your BankAccount class</span>
+      </div>
+      <textarea class="pseudocode-textarea" id="editor-0" spellcheck="false"
+                autocomplete="off" autocapitalize="off">// Write your BankAccount class here:
+
+
+// ─── Test code (do not delete) ─────────────────────────
+account = new BankAccount("12345678", 500.00)
+print(account.accountNumber)
+print(account.balance)
+</textarea>
+      <div class="checker-footer">
+        <button class="ac-btn" id="run-0" type="button">Run ▶</button>
+        <button class="ac-btn-secondary" id="clear-0" type="button">Reset</button>
+        <span id="run-status-0" style="font-size:0.75rem;color:var(--muted);"></span>
+      </div>
+    </div>
+
+    <div class="markscheme" id="ms-0">
+      <div class="ms-header">
+        <h3>Mark Scheme</h3>
+        <span class="ms-total">4 marks available</span>
+      </div>
+      <ul class="ms-list" id="ms-list-0">
+        <li class="ms-row" data-bp="0">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Class <code>BankAccount</code> declared using the <code>class</code> keyword</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="1">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Private attributes <code>accountNumber</code> and <code>balance</code> both declared</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="2">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Constructor <code>procedure new</code> defined with parameter(s)</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="3">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Constructor correctly assigns values — accountNumber and balance accessible after instantiation</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+      </ul>
+      <hr class="ms-divider">
+      <div class="ms-score" id="ms-score-0">— / 4 marks</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       Q2 — Student constructor (3 marks)
+       ══════════════════════════════════════════════════════════ -->
+  <div class="panel" id="panel-1">
+    <div class="goal">Declare the <code>Student</code> class with a constructor that stores a name and year group.</div>
+
+    <div class="card">
+      <h2>UML Class Diagram</h2>
+      <div class="uml-wrap">
+        <div class="uml-class">
+          <div class="uml-name">Student</div>
+          <div class="uml-section">
+            <div class="uml-row">private name : string</div>
+            <div class="uml-row">private yearGroup : integer</div>
+          </div>
+          <div class="uml-section">
+            <div class="uml-row">public new(name : string, yearGroup : integer)</div>
+          </div>
+        </div>
+      </div>
+      <h2>Your class must:</h2>
+      <ul>
+        <li>Declare <code>name</code> and <code>yearGroup</code> as private attributes</li>
+        <li>Define a constructor <code>procedure new</code> with appropriate parameters</li>
+        <li>Assign each parameter to the correct attribute</li>
+      </ul>
+      <p style="margin-top:12px;font-size:0.83rem;color:var(--muted);">
+        A correct solution outputs <code>Alex</code> then <code>12</code>.
+      </p>
+    </div>
+
+    <div class="code-checker" id="checker-1">
+      <div class="checker-header">
+        <span class="checker-dot dot-r"></span>
+        <span class="checker-dot dot-y"></span>
+        <span class="checker-dot dot-g"></span>
+        <span>Q2 — Write your Student class</span>
+      </div>
+      <textarea class="pseudocode-textarea" id="editor-1" spellcheck="false"
+                autocomplete="off" autocapitalize="off">// Write your Student class here:
+
+
+// ─── Test code (do not delete) ─────────────────────────
+s = new Student("Alex", 12)
+print(s.name)
+print(s.yearGroup)
+</textarea>
+      <div class="checker-footer">
+        <button class="ac-btn" id="run-1" type="button">Run ▶</button>
+        <button class="ac-btn-secondary" id="clear-1" type="button">Reset</button>
+        <span id="run-status-1" style="font-size:0.75rem;color:var(--muted);"></span>
+      </div>
+    </div>
+
+    <div class="markscheme" id="ms-1">
+      <div class="ms-header">
+        <h3>Mark Scheme</h3>
+        <span class="ms-total">3 marks available</span>
+      </div>
+      <ul class="ms-list" id="ms-list-1">
+        <li class="ms-row" data-bp="0">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Class <code>Student</code> declared</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="1">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Constructor <code>procedure new</code> defined with parameter(s)</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="2">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Constructor correctly assigns values — name and yearGroup accessible after instantiation</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+      </ul>
+      <hr class="ms-divider">
+      <div class="ms-score" id="ms-score-1">— / 3 marks</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       Q3 — Product constructor (4 marks)
+       ══════════════════════════════════════════════════════════ -->
+  <div class="panel" id="panel-2">
+    <div class="goal">Declare the <code>Product</code> class with a constructor that stores three attributes.</div>
+
+    <div class="card">
+      <h2>UML Class Diagram</h2>
+      <div class="uml-wrap">
+        <div class="uml-class">
+          <div class="uml-name">Product</div>
+          <div class="uml-section">
+            <div class="uml-row">private name : string</div>
+            <div class="uml-row">private price : float</div>
+            <div class="uml-row">private quantity : integer</div>
+          </div>
+          <div class="uml-section">
+            <div class="uml-row">public new(name : string, price : float, quantity : integer)</div>
+          </div>
+        </div>
+      </div>
+      <h2>Your class must:</h2>
+      <ul>
+        <li>Declare all three attributes as private</li>
+        <li>Define a constructor <code>procedure new</code> with three parameters</li>
+        <li>Assign all three parameters to the correct attributes</li>
+      </ul>
+      <p style="margin-top:12px;font-size:0.83rem;color:var(--muted);">
+        A correct solution outputs <code>Notebook</code>, <code>2.99</code>, then <code>50</code>.
+      </p>
+    </div>
+
+    <div class="code-checker" id="checker-2">
+      <div class="checker-header">
+        <span class="checker-dot dot-r"></span>
+        <span class="checker-dot dot-y"></span>
+        <span class="checker-dot dot-g"></span>
+        <span>Q3 — Write your Product class</span>
+      </div>
+      <textarea class="pseudocode-textarea" id="editor-2" spellcheck="false"
+                autocomplete="off" autocapitalize="off">// Write your Product class here:
+
+
+// ─── Test code (do not delete) ─────────────────────────
+p = new Product("Notebook", 2.99, 50)
+print(p.name)
+print(p.price)
+print(p.quantity)
+</textarea>
+      <div class="checker-footer">
+        <button class="ac-btn" id="run-2" type="button">Run ▶</button>
+        <button class="ac-btn-secondary" id="clear-2" type="button">Reset</button>
+        <span id="run-status-2" style="font-size:0.75rem;color:var(--muted);"></span>
+      </div>
+    </div>
+
+    <div class="markscheme" id="ms-2">
+      <div class="ms-header">
+        <h3>Mark Scheme</h3>
+        <span class="ms-total">4 marks available</span>
+      </div>
+      <ul class="ms-list" id="ms-list-2">
+        <li class="ms-row" data-bp="0">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Class <code>Product</code> declared</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="1">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Three private attributes declared (<code>name</code>, <code>price</code>, <code>quantity</code>)</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="2">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Constructor <code>procedure new</code> defined with three parameters</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="3">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">All three attributes correctly assigned — name, price, and quantity accessible after instantiation</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+      </ul>
+      <hr class="ms-divider">
+      <div class="ms-score" id="ms-score-2">— / 4 marks</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       Q4 — Rectangle constructor + calcArea method (4 marks)
+       ══════════════════════════════════════════════════════════ -->
+  <div class="panel" id="panel-3">
+    <div class="goal">Declare the <code>Rectangle</code> class with a constructor and a <code>calcArea()</code> method.</div>
+
+    <div class="card">
+      <h2>UML Class Diagram</h2>
+      <div class="uml-wrap">
+        <div class="uml-class">
+          <div class="uml-name">Rectangle</div>
+          <div class="uml-section">
+            <div class="uml-row">private width : float</div>
+            <div class="uml-row">private height : float</div>
+          </div>
+          <div class="uml-section">
+            <div class="uml-row">public new(width : float, height : float)</div>
+            <div class="uml-row">public calcArea() : float</div>
+          </div>
+        </div>
+      </div>
+      <h2>Your class must:</h2>
+      <ul>
+        <li>Declare <code>width</code> and <code>height</code> as private attributes</li>
+        <li>Define a constructor that assigns both parameters</li>
+        <li>Define a <code>function calcArea()</code> that returns width × height</li>
+      </ul>
+      <p style="margin-top:12px;font-size:0.83rem;color:var(--muted);">
+        A correct solution outputs <code>5.0</code>, <code>3.0</code>, then <code>15.0</code>.
+      </p>
+    </div>
+
+    <div class="code-checker" id="checker-3">
+      <div class="checker-header">
+        <span class="checker-dot dot-r"></span>
+        <span class="checker-dot dot-y"></span>
+        <span class="checker-dot dot-g"></span>
+        <span>Q4 — Write your Rectangle class</span>
+      </div>
+      <textarea class="pseudocode-textarea" id="editor-3" spellcheck="false"
+                autocomplete="off" autocapitalize="off">// Write your Rectangle class here:
+
+
+// ─── Test code (do not delete) ─────────────────────────
+r = new Rectangle(5.0, 3.0)
+print(r.width)
+print(r.height)
+print(r.calcArea())
+</textarea>
+      <div class="checker-footer">
+        <button class="ac-btn" id="run-3" type="button">Run ▶</button>
+        <button class="ac-btn-secondary" id="clear-3" type="button">Reset</button>
+        <span id="run-status-3" style="font-size:0.75rem;color:var(--muted);"></span>
+      </div>
+    </div>
+
+    <div class="markscheme" id="ms-3">
+      <div class="ms-header">
+        <h3>Mark Scheme</h3>
+        <span class="ms-total">4 marks available</span>
+      </div>
+      <ul class="ms-list" id="ms-list-3">
+        <li class="ms-row" data-bp="0">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Class <code>Rectangle</code> declared with private attributes <code>width</code> and <code>height</code></span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="1">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Constructor <code>procedure new</code> defined with parameters</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="2">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Method <code>calcArea()</code> defined using the <code>function</code> keyword</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="3">
+          <span class="ms-tick">○</span>
+          <span class="ms-text"><code>calcArea()</code> returns the correct area — 15.0 for width 5, height 3</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+      </ul>
+      <hr class="ms-divider">
+      <div class="ms-score" id="ms-score-3">— / 4 marks</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       Q5 — Circle: constructor + calcArea + calcCircumference (5 marks)
+       ══════════════════════════════════════════════════════════ -->
+  <div class="panel" id="panel-4">
+    <div class="goal">Declare the <code>Circle</code> class with a constructor and two calculation methods.</div>
+
+    <div class="card">
+      <h2>UML Class Diagram</h2>
+      <div class="uml-wrap">
+        <div class="uml-class">
+          <div class="uml-name">Circle</div>
+          <div class="uml-section">
+            <div class="uml-row">private radius : float</div>
+          </div>
+          <div class="uml-section">
+            <div class="uml-row">public new(radius : float)</div>
+            <div class="uml-row">public calcArea() : float</div>
+            <div class="uml-row">public calcCircumference() : float</div>
+          </div>
+        </div>
+      </div>
+      <h2>Your class must:</h2>
+      <ul>
+        <li>Declare <code>radius</code> as a public attribute</li>
+        <li>Define a constructor that assigns the radius</li>
+        <li>Define <code>function calcArea()</code> — returns π × radius²</li>
+        <li>Define <code>function calcCircumference()</code> — returns 2 × π × radius</li>
+        <li>Use <code>3.14159</code> for π in both methods</li>
+      </ul>
+      <p style="margin-top:12px;font-size:0.83rem;color:var(--muted);">
+        For radius 5: area ≈ 78.54, circumference ≈ 31.42.
+      </p>
+    </div>
+
+    <div class="code-checker" id="checker-4">
+      <div class="checker-header">
+        <span class="checker-dot dot-r"></span>
+        <span class="checker-dot dot-y"></span>
+        <span class="checker-dot dot-g"></span>
+        <span>Q5 — Write your Circle class</span>
+      </div>
+      <textarea class="pseudocode-textarea" id="editor-4" spellcheck="false"
+                autocomplete="off" autocapitalize="off">// Write your Circle class here (use 3.14159 for pi):
+
+
+// ─── Test code (do not delete) ─────────────────────────
+c = new Circle(5.0)
+print(c.radius)
+print(c.calcArea())
+print(c.calcCircumference())
+</textarea>
+      <div class="checker-footer">
+        <button class="ac-btn" id="run-4" type="button">Run ▶</button>
+        <button class="ac-btn-secondary" id="clear-4" type="button">Reset</button>
+        <span id="run-status-4" style="font-size:0.75rem;color:var(--muted);"></span>
+      </div>
+    </div>
+
+    <div class="markscheme" id="ms-4">
+      <div class="ms-header">
+        <h3>Mark Scheme</h3>
+        <span class="ms-total">5 marks available</span>
+      </div>
+      <ul class="ms-list" id="ms-list-4">
+        <li class="ms-row" data-bp="0">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Class <code>Circle</code> declared with private attribute <code>radius</code></span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="1">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Constructor <code>procedure new</code> defined with parameter</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="2">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Method <code>calcArea()</code> defined using the <code>function</code> keyword</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="3">
+          <span class="ms-tick">○</span>
+          <span class="ms-text"><code>calcArea()</code> returns correct area — ≈ 78.5 for radius 5</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="4">
+          <span class="ms-tick">○</span>
+          <span class="ms-text"><code>calcCircumference()</code> defined and returns correct circumference — ≈ 31.4 for radius 5</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+      </ul>
+      <hr class="ms-divider">
+      <div class="ms-score" id="ms-score-4">— / 5 marks</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       Q6 — SavingsAccount inherits BankAccount (5 marks)
+       ══════════════════════════════════════════════════════════ -->
+  <div class="panel" id="panel-5">
+    <div class="goal">Declare <code>SavingsAccount</code> as a subclass of <code>BankAccount</code>, with an interest-calculation method.</div>
+
+    <div class="card">
+      <h2>UML Class Diagram</h2>
+      <div class="uml-wrap" style="align-items:center; gap:0; flex-direction:column;">
+        <div class="uml-class">
+          <div class="uml-name">BankAccount</div>
+          <div class="uml-section">
+            <div class="uml-row">private accountNumber : string</div>
+            <div class="uml-row">private balance : float</div>
+          </div>
+          <div class="uml-section">
+            <div class="uml-row">public new(accountNumber : string, balance : float)</div>
+          </div>
+        </div>
+        <div class="uml-arrow">
+          <div class="uml-arrow-line"></div>
+          <span>inherits</span>
+        </div>
+        <div class="uml-class">
+          <div class="uml-name">SavingsAccount</div>
+          <div class="uml-section">
+            <div class="uml-row">private interestRate : float</div>
+          </div>
+          <div class="uml-section">
+            <div class="uml-row">public new(accountNumber : string, balance : float, interestRate : float)</div>
+            <div class="uml-row">public addInterest()</div>
+          </div>
+        </div>
+      </div>
+      <h2>Your class must:</h2>
+      <ul>
+        <li>Declare <code>SavingsAccount</code> using <code>inherits BankAccount</code></li>
+        <li>Add <code>interestRate</code> as a private attribute</li>
+        <li>Define a constructor that calls <code>super.new(...)</code> for the inherited attributes, then sets <code>interestRate</code></li>
+        <li>Define <code>addInterest()</code> which increases <code>balance</code> by <code>balance × interestRate</code></li>
+      </ul>
+      <p style="margin-top:12px;font-size:0.83rem;color:var(--muted);">
+        <code>BankAccount</code> is already written in the editor. After <code>addInterest()</code> with rate 0.05 on balance 1000, the new balance should be 1050.
+      </p>
+    </div>
+
+    <div class="code-checker" id="checker-5">
+      <div class="checker-header">
+        <span class="checker-dot dot-r"></span>
+        <span class="checker-dot dot-y"></span>
+        <span class="checker-dot dot-g"></span>
+        <span>Q6 — Write your SavingsAccount class</span>
+      </div>
+      <textarea class="pseudocode-textarea" id="editor-5" spellcheck="false"
+                autocomplete="off" autocapitalize="off">// BankAccount is already written for you:
+class BankAccount
+  private accountNumber
+  private balance
+
+  public procedure new(accNum, bal)
+    accountNumber = accNum
+    balance = bal
+  endprocedure
+endclass
+
+// Write your SavingsAccount class below:
+
+
+// ─── Test code (do not delete) ─────────────────────────
+sa = new SavingsAccount("SA001", 1000.00, 0.05)
+print(sa.accountNumber)
+print(sa.balance)
+sa.addInterest()
+print(sa.balance)
+</textarea>
+      <div class="checker-footer">
+        <button class="ac-btn" id="run-5" type="button">Run ▶</button>
+        <button class="ac-btn-secondary" id="clear-5" type="button">Reset</button>
+        <span id="run-status-5" style="font-size:0.75rem;color:var(--muted);"></span>
+      </div>
+    </div>
+
+    <div class="markscheme" id="ms-5">
+      <div class="ms-header">
+        <h3>Mark Scheme</h3>
+        <span class="ms-total">5 marks available</span>
+      </div>
+      <ul class="ms-list" id="ms-list-5">
+        <li class="ms-row" data-bp="0">
+          <span class="ms-tick">○</span>
+          <span class="ms-text"><code>SavingsAccount</code> declared with <code>inherits BankAccount</code></span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="1">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Additional private attribute <code>interestRate</code> declared</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="2">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Constructor calls <code>super.new(...)</code> to initialise inherited attributes</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="3">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">Method <code>addInterest()</code> defined</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+        <li class="ms-row" data-bp="4">
+          <span class="ms-tick">○</span>
+          <span class="ms-text"><code>addInterest()</code> correctly updates balance — 1000 + 5% interest = 1050</span>
+          <span class="ms-marks">1 mark</span>
+        </li>
+      </ul>
+      <hr class="ms-divider">
+      <div class="ms-score" id="ms-score-5">— / 5 marks</div>
+    </div>
+  </div>
+
+</div><!-- /.page-wrap -->
+
+<div class="ac-toast" id="toast"></div>
+
+<script type="module">
+import { setupEditors, runPseudocode } from '../../pseudocode-editor.js';
+import { preload } from '../../pyodide-runner.js';
+
+// ── Constants ─────────────────────────────────────────────────
+const TASK_COUNT     = 6;
+const TOTAL_MARKS    = 25;
+const ACTIVITY_TITLE = 'OOP Class Practice';
+const STORE_NS       = location.pathname;
+
+// ── Scaffolds — restored when Reset is pressed ─────────────────
+const SCAFFOLDS = [
+  // Q1 — BankAccount
+  `// Write your BankAccount class here:\n\n\n// ─── Test code (do not delete) ─────────────────────────\naccount = new BankAccount("12345678", 500.00)\nprint(account.accountNumber)\nprint(account.balance)\n`,
+  // Q2 — Student
+  `// Write your Student class here:\n\n\n// ─── Test code (do not delete) ─────────────────────────\ns = new Student("Alex", 12)\nprint(s.name)\nprint(s.yearGroup)\n`,
+  // Q3 — Product
+  `// Write your Product class here:\n\n\n// ─── Test code (do not delete) ─────────────────────────\np = new Product("Notebook", 2.99, 50)\nprint(p.name)\nprint(p.price)\nprint(p.quantity)\n`,
+  // Q4 — Rectangle
+  `// Write your Rectangle class here:\n\n\n// ─── Test code (do not delete) ─────────────────────────\nr = new Rectangle(5.0, 3.0)\nprint(r.width)\nprint(r.height)\nprint(r.calcArea())\n`,
+  // Q5 — Circle
+  `// Write your Circle class here (use 3.14159 for pi):\n\n\n// ─── Test code (do not delete) ─────────────────────────\nc = new Circle(5.0)\nprint(c.radius)\nprint(c.calcArea())\nprint(c.calcCircumference())\n`,
+  // Q6 — SavingsAccount
+  `// BankAccount is already written for you:\nclass BankAccount\n  private accountNumber\n  private balance\n\n  public procedure new(accNum, bal)\n    accountNumber = accNum\n    balance = bal\n  endprocedure\nendclass\n\n// Write your SavingsAccount class below:\n\n\n// ─── Test code (do not delete) ─────────────────────────\nsa = new SavingsAccount("SA001", 1000.00, 0.05)\nprint(sa.accountNumber)\nprint(sa.balance)\nsa.addInterest()\nprint(sa.balance)\n`,
+];
+
+// ── Task definitions ────────────────────────────────────────────
+const TASKS = [
+
+  // Q1: BankAccount constructor (4 marks)
+  {
+    maxMarks: 4,
+    criteria: [
+      {
+        text: 'Class <code>BankAccount</code> declared using the <code>class</code> keyword',
+        marks: 1,
+        check: ({ src }) => /\bclass\s+bankaccount\b/.test(src),
+      },
+      {
+        text: 'Public attributes <code>accountNumber</code> and <code>balance</code> both declared',
+        marks: 1,
+        check: ({ src }) =>
+          /\bprivate\s+accountnumber\b/.test(src) && /\bprivate\s+balance\b/.test(src),
+      },
+      {
+        text: 'Constructor <code>procedure new</code> defined with parameter(s)',
+        marks: 1,
+        check: ({ src }) => /\bprocedure\s+new\s*\(\s*\w/.test(src),
+      },
+      {
+        text: 'Constructor correctly assigns values — accountNumber and balance accessible after instantiation',
+        marks: 1,
+        check: ({ runs }) => outHas(runs[0], '12345678') && outHas(runs[0], '500'),
+      },
+    ],
+  },
+
+  // Q2: Student constructor (3 marks)
+  {
+    maxMarks: 3,
+    criteria: [
+      {
+        text: 'Class <code>Student</code> declared',
+        marks: 1,
+        check: ({ src }) => /\bclass\s+student\b/.test(src),
+      },
+      {
+        text: 'Constructor <code>procedure new</code> defined with parameter(s)',
+        marks: 1,
+        check: ({ src }) => /\bprocedure\s+new\s*\(\s*\w/.test(src),
+      },
+      {
+        text: 'Constructor correctly assigns values — name and yearGroup accessible after instantiation',
+        marks: 1,
+        check: ({ runs }) => outHas(runs[0], 'alex') && outHas(runs[0], '12'),
+      },
+    ],
+  },
+
+  // Q3: Product constructor (4 marks)
+  {
+    maxMarks: 4,
+    criteria: [
+      {
+        text: 'Class <code>Product</code> declared',
+        marks: 1,
+        check: ({ src }) => /\bclass\s+product\b/.test(src),
+      },
+      {
+        text: 'Three public attributes declared (<code>name</code>, <code>price</code>, <code>quantity</code>)',
+        marks: 1,
+        check: ({ src }) => (src.match(/\bprivate\s+\w+/g) || []).length >= 3,
+      },
+      {
+        text: 'Constructor <code>procedure new</code> defined with three parameters',
+        marks: 1,
+        check: ({ src }) => /\bprocedure\s+new\s*\([^)]*,[^)]*,[^)]*\)/.test(src),
+      },
+      {
+        text: 'All three attributes correctly assigned — name, price, and quantity accessible',
+        marks: 1,
+        check: ({ runs }) =>
+          outHas(runs[0], 'notebook') && outHas(runs[0], '2.99') && outHas(runs[0], '50'),
+      },
+    ],
+  },
+
+  // Q4: Rectangle constructor + calcArea (4 marks)
+  {
+    maxMarks: 4,
+    criteria: [
+      {
+        text: 'Class <code>Rectangle</code> declared with public attributes <code>width</code> and <code>height</code>',
+        marks: 1,
+        check: ({ src }) =>
+          /\bclass\s+rectangle\b/.test(src) &&
+          /\bprivate\s+width\b/.test(src) &&
+          /\bprivate\s+height\b/.test(src),
+      },
+      {
+        text: 'Constructor <code>procedure new</code> defined with parameters',
+        marks: 1,
+        check: ({ src }) => /\bprocedure\s+new\s*\(\s*\w/.test(src),
+      },
+      {
+        text: 'Method <code>calcArea()</code> defined using the <code>function</code> keyword',
+        marks: 1,
+        check: ({ src }) => /\bfunction\s+calcarea\b/.test(src),
+      },
+      {
+        text: '<code>calcArea()</code> returns the correct area — 15.0 for width 5, height 3',
+        marks: 1,
+        check: ({ runs }) => outHas(runs[0], '15'),
+      },
+    ],
+  },
+
+  // Q5: Circle constructor + calcArea + calcCircumference (5 marks)
+  {
+    maxMarks: 5,
+    criteria: [
+      {
+        text: 'Class <code>Circle</code> declared with public attribute <code>radius</code>',
+        marks: 1,
+        check: ({ src }) =>
+          /\bclass\s+circle\b/.test(src) && /\bprivate\s+radius\b/.test(src),
+      },
+      {
+        text: 'Constructor <code>procedure new</code> defined with parameter',
+        marks: 1,
+        check: ({ src }) => /\bprocedure\s+new\s*\(\s*\w/.test(src),
+      },
+      {
+        text: 'Method <code>calcArea()</code> defined using the <code>function</code> keyword',
+        marks: 1,
+        check: ({ src }) => /\bfunction\s+calcarea\b/.test(src),
+      },
+      {
+        text: '<code>calcArea()</code> returns correct area — ≈ 78.5 for radius 5',
+        marks: 1,
+        check: ({ runs }) => outHas(runs[0], '78'),
+      },
+      {
+        text: '<code>calcCircumference()</code> defined and returns correct circumference — ≈ 31.4 for radius 5',
+        marks: 1,
+        check: ({ src, runs }) =>
+          /\bfunction\s+calccircumference\b/.test(src) && outHas(runs[0], '31'),
+      },
+    ],
+  },
+
+  // Q6: SavingsAccount inherits BankAccount (5 marks)
+  {
+    maxMarks: 5,
+    criteria: [
+      {
+        text: '<code>SavingsAccount</code> declared with <code>inherits BankAccount</code>',
+        marks: 1,
+        check: ({ src }) => /\bclass\s+savingsaccount\s+inherits\s+bankaccount\b/.test(src),
+      },
+      {
+        text: 'Additional public attribute <code>interestRate</code> declared',
+        marks: 1,
+        check: ({ src }) => /\bprivate\s+interestrate\b/.test(src),
+      },
+      {
+        text: 'Constructor calls <code>super.new(...)</code> to initialise inherited attributes',
+        marks: 1,
+        check: ({ src }) => /\bsuper\s*\.\s*new\s*\(/.test(src),
+      },
+      {
+        text: 'Method <code>addInterest()</code> defined',
+        marks: 1,
+        check: ({ src }) => /\b(?:procedure|function)\s+addinterest\b/.test(src),
+      },
+      {
+        text: '<code>addInterest()</code> correctly updates balance — 1000 + 5% interest = 1050',
+        marks: 1,
+        check: ({ runs }) => outHas(runs[0], '1050'),
+      },
+    ],
+  },
+
+]; // end TASKS
+
+// ── State ──────────────────────────────────────────────────────
+const taskEarned    = new Array(TASK_COUNT).fill(0);
+
+// ── Helpers ────────────────────────────────────────────────────
+function normSrc(raw) {
+  return raw.replace(/\/\/[^\n]*/g, ' ').replace(/\s+/g, ' ').toLowerCase().trim();
+}
+
+function outHas(run, ...needles) {
+  if (!run || !run.ok || !run.output) return false;
+  const o = run.output.toLowerCase();
+  return needles.every(n => o.includes(n.toLowerCase()));
+}
+
+// ── Editor setup ───────────────────────────────────────────────
+for (let i = 0; i < TASK_COUNT; i++) {
+  const saved = localStorage.getItem(STORE_NS + ':e' + i);
+  if (saved !== null) document.getElementById('editor-' + i).value = saved;
+}
+setupEditors('.pseudocode-textarea');
+
+// ── Pyodide preload ────────────────────────────────────────────
+preload();
+
+// ── Restore mark scheme state ──────────────────────────────────
+for (let i = 0; i < TASK_COUNT; i++) {
+  const raw = localStorage.getItem(STORE_NS + ':ms' + i);
+  if (!raw) continue;
+  try {
+    const { earned, passed } = JSON.parse(raw);
+    taskEarned[i] = earned;
+    applyMarkscheme(i, passed, earned, TASKS[i].maxMarks);
+    updateTabState(i, earned, TASKS[i].maxMarks);
+  } catch (_) {}
+}
+updateProgress();
+
+// ── Tab switching ──────────────────────────────────────────────
+document.getElementById('tab-bar').addEventListener('click', e => {
+  const tab = e.target.closest('.tab-btn');
+  if (!tab) return;
+  const idx = +tab.dataset.idx;
+  document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  tab.classList.add('active');
+  document.getElementById('panel-' + idx).classList.add('active');
+});
+
+// ── Run / Reset button wiring ──────────────────────────────────
+for (let idx = 0; idx < TASK_COUNT; idx++) {
+  const runBtn   = document.getElementById('run-' + idx);
+  const clearBtn = document.getElementById('clear-' + idx);
+  const statusEl = document.getElementById('run-status-' + idx);
+  const editorEl = document.getElementById('editor-' + idx);
+
+  runBtn.addEventListener('click', async () => {
+    await handleRun(idx, editorEl, runBtn, statusEl);
+  });
+
+  clearBtn.addEventListener('click', () => {
+    editorEl.value = SCAFFOLDS[idx];
+    editorEl.dispatchEvent(new Event('input'));
+    resetMarkscheme(idx);
+    try {
+      localStorage.removeItem(STORE_NS + ':e' + idx);
+      localStorage.removeItem(STORE_NS + ':ms' + idx);
+    } catch (_) {}
+  });
+
+  let saveTimer;
+  editorEl.addEventListener('input', () => {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+      try { localStorage.setItem(STORE_NS + ':e' + idx, editorEl.value); } catch (_) {}
+    }, 500);
+  });
+}
+
+async function handleRun(idx, editorEl, runBtn, statusEl) {
+  const task = TASKS[idx];
+
+  runBtn.disabled = true;
+  statusEl.textContent = 'Running…';
+
+  const r = await runPseudocode(editorEl);
+  const runs = [{ inputs: [], output: r.output || '', ok: r.ok }];
+
+  statusEl.textContent = '';
+  runBtn.disabled = false;
+
+  if (!r.ok && !r.output) {
+    window.ActivityUI?.showToast('Fix the syntax error shown in the editor before checking marks.', 'warn');
+  }
+
+  // Evaluate criteria
+  const src = normSrc(editorEl.value);
+  let earned = 0;
+  const passed = task.criteria.map(c => {
+    let result = false;
+    try { result = !!c.check({ src, runs }); } catch (_) { result = false; }
+    if (result) earned += c.marks;
+    return result;
+  });
+
+  applyMarkscheme(idx, passed, earned, task.maxMarks);
+  try { localStorage.setItem(STORE_NS + ':ms' + idx, JSON.stringify({ earned, passed })); } catch (_) {}
+
+  taskEarned[idx] = earned;
+  updateTabState(idx, earned, task.maxMarks);
+  updateProgress();
+
+  const totalEarned = taskEarned.reduce((s, v) => s + v, 0);
+  window.Classroom?.submitGrade(
+    Math.round(totalEarned / TOTAL_MARKS * 100),
+    ACTIVITY_TITLE
+  );
+
+  if (totalEarned === TOTAL_MARKS) allComplete();
+}
+
+// ── Mark scheme DOM updates ────────────────────────────────────
+function applyMarkscheme(idx, passed, earned, maxMarks) {
+  const list = document.getElementById('ms-list-' + idx);
+  list.querySelectorAll('.ms-row').forEach((row, i) => {
+    const tick = row.querySelector('.ms-tick');
+    row.classList.remove('pass', 'fail');
+    if (passed[i]) {
+      row.classList.add('pass');
+      tick.textContent = '✓';
+    } else {
+      row.classList.add('fail');
+      tick.textContent = '✗';
+    }
+  });
+  const scoreEl = document.getElementById('ms-score-' + idx);
+  scoreEl.textContent = earned + ' / ' + maxMarks + ' mark' + (maxMarks === 1 ? '' : 's');
+  scoreEl.classList.toggle('full', earned === maxMarks);
+}
+
+function resetMarkscheme(idx) {
+  const list = document.getElementById('ms-list-' + idx);
+  list.querySelectorAll('.ms-row').forEach(row => {
+    row.classList.remove('pass', 'fail');
+    row.querySelector('.ms-tick').textContent = '○';
+  });
+  const scoreEl = document.getElementById('ms-score-' + idx);
+  scoreEl.textContent = '— / ' + TASKS[idx].maxMarks + ' marks';
+  scoreEl.classList.remove('full');
+  taskEarned[idx] = 0;
+  updateTabState(idx, 0, TASKS[idx].maxMarks);
+  updateProgress();
+}
+
+// ── Tab state ──────────────────────────────────────────────────
+function updateTabState(idx, earned, maxMarks) {
+  const tab = document.querySelector('.tab-btn[data-idx="' + idx + '"]');
+  if (!tab) return;
+  tab.classList.remove('done-green', 'done-gold');
+  if (earned === maxMarks)  tab.classList.add('done-green');
+  else if (earned > 0)      tab.classList.add('done-gold');
+}
+
+// ── Progress bar ───────────────────────────────────────────────
+function updateProgress() {
+  const totalEarned = taskEarned.reduce((s, v) => s + v, 0);
+  const pct = Math.round(totalEarned / TOTAL_MARKS * 100);
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-pct').textContent  = totalEarned + ' / ' + TOTAL_MARKS;
+}
+
+// ── All tasks complete ─────────────────────────────────────────
+function allComplete() {
+  document.getElementById('done-banner').classList.add('show');
+  window.ActivityUI?.launchCelebration();
+}
+
+window.showToast = (msg, type = '') => window.ActivityUI?.showToast(msg, type);
+</script>
+
+<script src="../../activity-ui.js"></script>
+<script src="../../classroom.js"></script>
+</body>
+</html>
