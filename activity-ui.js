@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  const MIN_CELEBRATION_MS = 5000;
+  const MIN_CELEBRATION_MS = 8000;
   const TARGET_FRAME_MS = 1000 / 60;
   let celebrationShown = false;
 
@@ -158,24 +158,70 @@
     ctx.restore();
   }
 
+  function drawBalloon(ctx, balloon) {
+    ctx.save();
+    ctx.translate(balloon.x, balloon.y);
+    ctx.rotate(Math.sin(balloon.floatOffset) * 0.08);
+    ctx.globalAlpha = balloon.alpha;
+    ctx.strokeStyle = 'rgba(255,255,255,.58)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(0, balloon.size * 0.92);
+    ctx.bezierCurveTo(-7, balloon.size * 1.28, 9, balloon.size * 1.55, -3, balloon.size * 1.92);
+    ctx.stroke();
+    ctx.fillStyle = balloon.color;
+    ctx.shadowColor = balloon.color;
+    ctx.shadowBlur = 10;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, balloon.size * 0.72, balloon.size, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = 'rgba(255,255,255,.48)';
+    ctx.beginPath();
+    ctx.ellipse(-balloon.size * 0.26, -balloon.size * 0.32, balloon.size * 0.17, balloon.size * 0.28, -0.55, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = balloon.color;
+    ctx.beginPath();
+    ctx.moveTo(-balloon.size * 0.16, balloon.size * 0.92);
+    ctx.lineTo(balloon.size * 0.16, balloon.size * 0.92);
+    ctx.lineTo(0, balloon.size * 1.16);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+
   function runConfetti() {
     const canvas = makeCanvas();
     const ctx = canvas.getContext('2d');
     const start = performance.now();
-    const colors = ['#facc15', '#22c55e', '#38bdf8', '#f472b6', '#fb7185'];
-    const pieces = Array.from({ length: 120 }, () => ({
+    const colors = ['#facc15', '#22c55e', '#38bdf8', '#f472b6', '#fb7185', '#a78bfa'];
+    const pieces = Array.from({ length: 170 }, () => ({
       x: Math.random() * window.innerWidth,
       y: -20 - Math.random() * window.innerHeight * 0.35,
-      vx: -2 + Math.random() * 4,
-      vy: 2 + Math.random() * 4,
+      vx: -2.7 + Math.random() * 5.4,
+      vy: 2.2 + Math.random() * 4.4,
       size: 5 + Math.random() * 7,
       spin: Math.random() * Math.PI,
       color: colors[Math.floor(Math.random() * colors.length)]
     }));
+    const balloons = Array.from({ length: 10 }, (_, i) => ({
+      x: window.innerWidth * (0.08 + Math.random() * 0.84),
+      y: window.innerHeight + 80 + Math.random() * 150,
+      vx: -0.55 + Math.random() * 1.1,
+      vy: -1.4 - Math.random() * 1.1,
+      size: 22 + Math.random() * 14,
+      popAt: 900 + i * 520 + Math.random() * 550,
+      popped: false,
+      alpha: 0,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      floatOffset: Math.random() * Math.PI * 2
+    }));
+    let starBursts = [];
     let lastTime = start;
     function draw() {
       const delta = celebrationFrameDelta(lastTime);
       lastTime = performance.now();
+      const elapsed = celebrationElapsed(start);
       resizeCanvas(canvas, ctx);
       ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
       pieces.forEach(p => {
@@ -183,7 +229,7 @@
         p.y += p.vy * delta;
         p.vy += 0.04 * delta;
         p.spin += 0.18 * delta;
-        if (celebrationElapsed(start) < MIN_CELEBRATION_MS && p.y > window.innerHeight + 30) {
+        if (elapsed < MIN_CELEBRATION_MS && p.y > window.innerHeight + 30) {
           p.x = Math.random() * window.innerWidth;
           p.y = -20 - Math.random() * window.innerHeight * 0.25;
           p.vy = 2 + Math.random() * 4;
@@ -195,7 +241,51 @@
         ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.65);
         ctx.restore();
       });
-      if (celebrationElapsed(start) < MIN_CELEBRATION_MS) requestAnimationFrame(draw);
+      balloons.forEach(balloon => {
+        if (balloon.popped) return;
+        balloon.x += balloon.vx * delta;
+        balloon.y += balloon.vy * delta;
+        balloon.floatOffset += 0.08 * delta;
+        balloon.alpha = Math.min(1, balloon.alpha + 0.035 * delta);
+        if (elapsed >= balloon.popAt || balloon.y < window.innerHeight * 0.18) {
+          balloon.popped = true;
+          starBursts.push(...makeBurst(balloon.x, balloon.y, 30, ['#fff7ad', '#facc15', '#fde68a', balloon.color], {
+            minSpeed: 1.2,
+            maxSpeed: 5.3,
+            minSize: 1.8,
+            maxSize: 4.7,
+            life: 170,
+            shapes: ['star', 'star', 'dot', 'flare']
+          }));
+          return;
+        }
+        drawBalloon(ctx, balloon);
+      });
+      if (elapsed < MIN_CELEBRATION_MS - 1100 && Math.random() < 0.035 * delta) {
+        starBursts.push(...makeBurst(window.innerWidth * (0.1 + Math.random() * 0.8), window.innerHeight * (0.16 + Math.random() * 0.46), 18, ['#facc15', '#fde68a', '#38bdf8', '#f472b6'], {
+          minSpeed: 0.9,
+          maxSpeed: 3.8,
+          minSize: 1.5,
+          maxSize: 3.8,
+          life: 130,
+          shapes: ['star', 'dot']
+        }));
+      }
+      starBursts = starBursts.filter(p => p.life > 0);
+      starBursts.forEach(p => {
+        p.x += p.vx * delta;
+        p.y += p.vy * delta;
+        p.vy += 0.035 * delta;
+        p.life -= delta;
+        p.spin += p.spinSpeed * delta;
+        ctx.globalAlpha = Math.max(p.life / p.maxLife, 0);
+        ctx.shadowColor = p.color;
+        ctx.shadowBlur = p.shape === 'star' ? 10 : 5;
+        drawSpark(ctx, p);
+        ctx.shadowBlur = 0;
+      });
+      ctx.globalAlpha = 1;
+      if (elapsed < MIN_CELEBRATION_MS) requestAnimationFrame(draw);
       else canvas.remove();
     }
     draw();
