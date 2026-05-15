@@ -1,0 +1,1169 @@
+<!DOCTYPE html>
+<!-- ACTIVITY
+title:  IDEs and Translators
+type:   Practice
+stars:  3
+desc:   Gap-fill, compiler vs interpreter sort, IDE annotation, and exam practice for J277 section 2.5
+color:  teal
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IDEs and Translators | OCR GCSE Computer Science</title>
+<link rel="stylesheet" href="../../shared.css">
+<style>
+  body {
+    font-family: 'Segoe UI', sans-serif;
+    background: #0f1b2d;
+    color: #e2e8f0;
+    padding: 0 20px 60px;
+    min-height: 100vh;
+  }
+  .sticky-progress {
+    position: sticky; top: 0; z-index: 100;
+    margin: 0 -20px 28px; padding: 12px 20px;
+    background: #1e2f45; border-bottom: 2px solid #334155;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.32);
+  }
+  .header-progress { display: flex; align-items: center; gap: 10px; max-width: 900px; margin: 0 auto; }
+  .score-pct { font-family: Consolas, monospace; font-size: 0.82rem; color: #38bdf8; white-space: nowrap; }
+  h1 { text-align: center; font-size: 1.45rem; color: #7dd3fc; margin-bottom: 4px; }
+  .subtitle { text-align: center; font-size: 0.82rem; color: #94a3b8; margin-bottom: 30px; }
+
+  /* ── TABS ── */
+  .tabs { display: flex; gap: 6px; justify-content: center; margin-bottom: 28px; flex-wrap: wrap; }
+  .tab-btn {
+    padding: 8px 18px; border: 2px solid #334155; border-radius: 20px;
+    background: #1e2f45; color: #94a3b8; font-size: 0.82rem; font-weight: 600;
+    cursor: pointer; transition: all 0.2s; user-select: none;
+  }
+  .tab-btn.active { background: #0ea5e9; border-color: #0ea5e9; color: white; }
+  .tab-btn:hover:not(.active) { border-color: #38bdf8; color: #e2e8f0; }
+  .tab-btn.done-gold  { background: #f59e0b !important; border-color: #f59e0b !important; color: #000 !important; }
+  .tab-btn.done-green { background: #22c55e !important; border-color: #22c55e !important; color: #fff !important; }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ── LAYOUT ── */
+  .max-w { max-width: 900px; margin: 0 auto; }
+  .section {
+    background: #1e2f45; border-left: 4px solid #38bdf8;
+    border-radius: 8px; padding: 18px 22px; margin-bottom: 22px;
+    transition: background 0.6s, border-left-color 0.6s;
+  }
+  .section h2 { font-size: 0.9rem; color: #38bdf8; margin-bottom: 14px; text-transform: uppercase; letter-spacing: 0.8px; }
+  .sentence { font-size: 0.88rem; line-height: 2.6rem; margin-bottom: 2px; color: #cbd5e1; }
+  .hint { font-size: 0.78rem; color: #64748b; margin-bottom: 14px; font-style: italic; }
+
+  /* ── WORD BANK ── */
+  .word-bank {
+    background: #162032; border: 1px dashed #334155;
+    border-radius: 8px; padding: 14px 18px; margin-bottom: 22px;
+  }
+  .word-bank h3 { font-size: 0.72rem; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+  .word-bank .tiles { display: flex; flex-wrap: wrap; gap: 8px; min-height: 36px; }
+  .tile {
+    background: #1e3a5f; border: 1.5px solid #38bdf8;
+    border-radius: 5px; padding: 4px 14px;
+    font-size: 0.83rem; color: #7dd3fc;
+    cursor: grab; user-select: none; transition: all 0.15s;
+  }
+  .tile:hover { background: #1e4a7a; }
+  .tile.dragging { opacity: 0.35; }
+  .tile.used { opacity: 0.28; pointer-events: none; }
+
+  /* ── DROP ZONES (gap-fill) ── */
+  .drop-zone {
+    display: inline-block; min-width: 118px; height: 27px;
+    border-bottom: 2px solid #38bdf8; vertical-align: middle;
+    border-radius: 3px; padding: 0 8px; font-size: 0.85rem;
+    color: #f0f9ff; text-align: center; line-height: 25px;
+    background: #0f1b2d; cursor: pointer; transition: all 0.2s;
+  }
+  .drop-zone.drag-over { background: #1e4a7a; border-color: #7dd3fc; border-style: dashed; }
+  .drop-zone.correct  { border-color: #4ade80; background: #052e16; color: #86efac; border-style: solid; }
+  .drop-zone.incorrect{ border-color: #f87171; background: #2d0a0a; color: #fca5a5; border-style: solid; }
+  .drop-zone.filled   { border-style: solid; }
+
+  /* ── SORT (Task 2) ── */
+  .sort-source {
+    background: #162032; border: 1px dashed #334155; border-radius: 8px;
+    padding: 14px 18px; margin-bottom: 18px; min-height: 60px;
+  }
+  .sort-source h3 { font-size: 0.72rem; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+  .sort-source .tiles { display: flex; flex-wrap: wrap; gap: 8px; }
+  .sort-grid {
+    display: grid; grid-template-columns: 1fr 1fr 1fr;
+    gap: 14px; margin-bottom: 20px;
+  }
+  @media (max-width: 680px) { .sort-grid { grid-template-columns: 1fr; } }
+  .sort-col {
+    border: 2px dashed #334155; border-radius: 10px;
+    padding: 12px; min-height: 160px; transition: border-color 0.2s, background 0.2s;
+  }
+  .sort-col.drag-over { border-color: #38bdf8; background: #1a2e45; }
+  .sort-col h3 {
+    font-size: 0.78rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.8px; margin-bottom: 10px; text-align: center;
+    padding-bottom: 8px; border-bottom: 1px solid #334155;
+  }
+  .sort-col.col-compiler h3 { color: #7dd3fc; border-bottom-color: #38bdf8; }
+  .sort-col.col-interp h3   { color: #a78bfa; border-bottom-color: #7c3aed; }
+  .sort-col.col-both h3     { color: #4ade80; border-bottom-color: #22c55e; }
+  .sort-stmt {
+    background: #1e3a5f; border: 1.5px solid #38bdf8;
+    border-radius: 6px; padding: 8px 12px;
+    font-size: 0.82rem; color: #cbd5e1; margin-bottom: 8px;
+    cursor: grab; user-select: none; line-height: 1.45;
+    transition: all 0.2s;
+  }
+  .sort-stmt:hover { border-color: #7dd3fc; }
+  .sort-stmt.dragging { opacity: 0.35; }
+  .sort-stmt.correct  { border-color: #4ade80 !important; background: color-mix(in srgb, #4ade80 12%, #1e2f45); }
+  .sort-stmt.incorrect{ border-color: #f87171 !important; background: color-mix(in srgb, #f87171 10%, #1e2f45); }
+  .sort-source .sort-stmt { border-color: #38bdf8; }
+  #sort-pool { transition: border-color 0.2s, background 0.2s; }
+  #sort-pool.drag-over { border-color: #38bdf8; background: #1a2e45; }
+
+  /* ── IDE SIMULATOR (Task 3) ── */
+  .ide-frame {
+    background: #1a1a2e; border: 2px solid #334155; border-radius: 10px;
+    overflow: hidden; margin-bottom: 20px;
+    font-family: Consolas, "Courier New", monospace; font-size: 0.82rem;
+  }
+  .ide-titlebar {
+    background: #16213e; padding: 7px 14px; border-bottom: 1px solid #334155;
+    display: flex; align-items: center; gap: 7px;
+    font-size: 0.78rem; color: #94a3b8;
+  }
+  .ide-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  .ide-dot.r { background: #ef4444; }
+  .ide-dot.y { background: #f59e0b; }
+  .ide-dot.g { background: #22c55e; }
+  .ide-body { display: grid; grid-template-columns: 1fr 260px; }
+  .ide-editor { border-right: 1px solid #334155; padding: 10px 0; position: relative; }
+  .code-line { display: flex; align-items: center; padding: 1px 0; position: relative; min-height: 22px; }
+  .line-num { width: 36px; text-align: right; padding-right: 10px; color: #4a5568; font-size: 0.77rem; user-select: none; flex-shrink: 0; }
+  .line-code { color: #e2e8f0; white-space: pre; font-size: 0.79rem; }
+  .kw  { color: #c084fc; }
+  .fn  { color: #60a5fa; }
+  .str { color: #86efac; }
+  .num { color: #fb923c; }
+  .cm  { color: #4a5568; font-style: italic; }
+  .err-sq { text-decoration: underline wavy #ef4444; }
+  .bp { width: 9px; height: 9px; border-radius: 50%; background: #ef4444; margin: 0 5px 0 8px; flex-shrink: 0; }
+  .bp-placeholder { width: 9px; height: 9px; margin: 0 5px 0 8px; flex-shrink: 0; }
+  .ide-sidebar { display: flex; flex-direction: column; }
+  .ide-panel { flex: 1; border-bottom: 1px solid #334155; padding: 9px 11px; position: relative; min-height: 80px; }
+  .ide-panel:last-child { border-bottom: none; }
+  .ide-panel-label { font-size: 0.67rem; text-transform: uppercase; letter-spacing: 1px; color: #64748b; margin-bottom: 6px; }
+  .ide-error-msg { color: #f87171; font-size: 0.76rem; line-height: 1.7; }
+  .ide-warning    { color: #fbbf24; font-size: 0.76rem; line-height: 1.7; padding-left: 12px; }
+  .ide-run-btn { background: #22c55e; color: #fff; border: none; border-radius: 4px; padding: 4px 12px; font-size: 0.74rem; cursor: default; font-family: inherit; margin-bottom: 8px; }
+  .ide-output-txt { color: #4a5568; font-size: 0.76rem; font-style: italic; }
+  .ide-status {
+    background: #16213e; border-top: 1px solid #334155;
+    padding: 5px 14px; font-size: 0.74rem; color: #64748b;
+    display: flex; gap: 18px; font-family: Consolas, monospace;
+    position: relative; align-items: center;
+  }
+  /* Callout badges */
+  .badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 20px; height: 20px; border-radius: 50%;
+    background: #f59e0b; color: #000; font-weight: 700; font-size: 0.72rem;
+    font-family: 'Segoe UI', sans-serif; flex-shrink: 0;
+  }
+  .badge-corner {
+    position: absolute; top: 5px; left: 6px; z-index: 5;
+    width: 20px; height: 20px; border-radius: 50%;
+    background: #f59e0b; color: #000; font-weight: 700; font-size: 0.72rem;
+    font-family: 'Segoe UI', sans-serif;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 0 0 2px #1a1a2e;
+  }
+  .region-outline { outline: 2px dashed #f59e0b; outline-offset: -2px; }
+
+  /* IDE match table */
+  .ide-match-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-top: 16px; }
+  .ide-match-table th {
+    background: #0f1b2d; color: #38bdf8; padding: 8px 12px;
+    border: 1px solid #334155; text-align: left; font-size: 0.78rem;
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .ide-match-table td { border: 1px solid #334155; padding: 9px 12px; color: #cbd5e1; vertical-align: middle; }
+  .ide-match-table tr:nth-child(even) td { background: #162032; }
+  .lbl-drop {
+    display: block; min-width: 130px; min-height: 30px;
+    border: 2px dashed #334155; border-radius: 5px;
+    padding: 4px 10px; font-size: 0.8rem; color: #7dd3fc;
+    text-align: center; line-height: 22px; transition: all 0.2s; cursor: pointer;
+  }
+  .lbl-drop.drag-over { border-color: #7dd3fc; background: #1e4a7a; }
+  .lbl-drop.correct  { border-color: #4ade80; background: #052e16; color: #86efac; border-style: solid; }
+  .lbl-drop.incorrect{ border-color: #f87171; background: #2d0a0a; color: #fca5a5; border-style: solid; }
+  .lbl-drop.filled   { border-style: solid; border-color: #38bdf8; }
+  .lbl-tiles { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+  .lbl-tile {
+    background: #1e3a5f; border: 1.5px solid #f59e0b;
+    border-radius: 5px; padding: 5px 14px;
+    font-size: 0.82rem; color: #fcd34d;
+    cursor: grab; user-select: none; transition: all 0.15s;
+  }
+  .lbl-tile:hover { background: #2a3f5f; }
+  .lbl-tile.dragging { opacity: 0.3; }
+  .lbl-tile.used { opacity: 0.28; pointer-events: none; }
+
+  /* ── EXAM PRACTICE (Task 4) ── */
+  .exam-q {
+    background: #1e2f45; border-left: 4px solid #38bdf8;
+    border-radius: 8px; padding: 16px 20px; margin-bottom: 18px;
+  }
+  .exam-q-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
+  .exam-q-head p { font-size: 0.9rem; color: #cbd5e1; line-height: 1.6; margin: 0; flex: 1; }
+  .marks { font-size: 0.75rem; color: #64748b; font-family: Consolas, monospace; white-space: nowrap; margin-left: 12px; }
+  .exam-textarea {
+    width: 100%; box-sizing: border-box; padding: 10px 12px;
+    border: 2px solid #334155; border-radius: 7px;
+    background: #0f1b2d; color: #e2e8f0;
+    font-family: 'Segoe UI', sans-serif; font-size: 0.85rem;
+    resize: vertical; min-height: 90px; line-height: 1.6; transition: border-color 0.2s;
+  }
+  .exam-textarea:focus { outline: none; border-color: #38bdf8; }
+  .ms-block {
+    display: none; margin-top: 12px; background: #052e16;
+    border: 1px solid #22c55e; border-radius: 8px;
+    padding: 12px 14px; font-size: 0.83rem; line-height: 1.75; color: #86efac;
+  }
+  .ms-block.show { display: block; }
+  .ms-block strong { color: #4ade80; display: block; margin-bottom: 4px; }
+  .ms-block ul { margin: 4px 0 0 18px; }
+  .ms-block li { margin-bottom: 3px; }
+
+  /* ── CONTROLS ── */
+  .controls { display: flex; gap: 10px; justify-content: center; margin-top: 22px; flex-wrap: wrap; }
+  .controls button {
+    padding: 10px 24px; border: none; border-radius: 6px;
+    font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: all 0.15s;
+  }
+  .controls button:hover { opacity: 0.85; transform: translateY(-1px); }
+  .btn-check  { background: #0ea5e9; color: white; }
+  .btn-reveal { background: #64748b; color: white; }
+  .btn-reset  { background: #1e2f45; color: #94a3b8; border: 1px solid #334155 !important; }
+  .btn-done   { background: #22c55e; color: white; }
+  .score-box  { text-align: center; margin-top: 16px; font-size: 1rem; font-weight: 700; color: #7dd3fc; min-height: 1.4rem; }
+  .goal-banner {
+    background: #1e2f45; border-left: 4px solid #0ea5e9;
+    border-radius: 6px; padding: 10px 16px; margin-bottom: 20px;
+    font-size: 0.88rem; font-weight: 600; color: #e2e8f0;
+  }
+</style>
+</head>
+<body>
+
+<header class="sticky-progress">
+  <div class="header-progress">
+    <div class="ac-progress-bar" style="flex:1;">
+      <div class="ac-progress-fill" id="progress-fill"></div>
+    </div>
+    <span class="score-pct" id="progress-pct">0%</span>
+  </div>
+</header>
+
+<h1>💻 IDEs and Translators</h1>
+<p class="subtitle">OCR GCSE Computer Science &nbsp;·&nbsp; J277 Section 2.5</p>
+
+<div class="tabs">
+  <button class="tab-btn active" data-tab="ex1" onclick="switchTab('ex1',this)">1 — Language Gap-Fill</button>
+  <button class="tab-btn" data-tab="ex2" onclick="switchTab('ex2',this)">2 — Compiler vs Interpreter</button>
+  <button class="tab-btn" data-tab="ex3" onclick="switchTab('ex3',this)">3 — Spot the IDE Tool</button>
+  <button class="tab-btn" data-tab="ex4" onclick="switchTab('ex4',this)">4 — Exam Practice</button>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     TASK 1 — Language Levels Gap-Fill (15 blanks)
+════════════════════════════════════════════════════ -->
+<div id="ex1" class="tab-panel active">
+<div class="max-w">
+
+  <div class="goal-banner">🎯 Complete the passage about programming languages and translators by dragging the correct words onto each blank.</div>
+
+  <div class="word-bank" id="wb1">
+    <h3>Word Bank — drag tiles onto the blanks</h3>
+    <div class="tiles" id="tiles1"></div>
+  </div>
+
+  <div class="section">
+    <h2>Programming Language Levels</h2>
+    <div class="sentence">1. Programming languages can be broadly classified as either <span class="drop-zone" data-answer="high-level" data-bank="1"></span> or <span class="drop-zone" data-answer="low-level" data-bank="1"></span>.</div>
+    <div class="sentence">2. Languages that use an <span class="drop-zone" data-answer="English-like" data-bank="1"></span> syntax are much easier for humans to read and write.</div>
+    <div class="sentence">3. High-level languages are <span class="drop-zone" data-answer="abstracted" data-bank="1"></span> from the hardware — the programmer does not need to know how the computer works internally.</div>
+    <div class="sentence">4. This also means programs are typically <span class="drop-zone" data-answer="portable" data-bank="1"></span>, able to run on different types of hardware without major changes.</div>
+    <div class="sentence">5. <span class="drop-zone" data-answer="assembly" data-bank="1"></span> language is a low-level language that replaces raw binary numbers with short mnemonics such as MOV and ADD.</div>
+    <div class="sentence">6. Because low-level code maps closely to the <span class="drop-zone" data-answer="processor" data-bank="1"></span>'s own instruction set, programs can be written to run very <span class="drop-zone" data-answer="efficiently" data-bank="1"></span> and use minimal memory.</div>
+    <div class="sentence">7. The lowest-level language is <span class="drop-zone" data-answer="machine code" data-bank="1"></span> — a stream of <span class="drop-zone" data-answer="binary" data-bank="1"></span> digits (1s and 0s) that the CPU can execute directly.</div>
+  </div>
+
+  <div class="section">
+    <h2>Translators</h2>
+    <div class="sentence">8. Since CPUs can only execute machine code, programs written in higher-level languages must be converted first. The software tools that perform this conversion are called <span class="drop-zone" data-answer="translators" data-bank="1"></span>.</div>
+    <div class="sentence">9. A <span class="drop-zone" data-answer="compiler" data-bank="1"></span> processes the entire source code in one go and produces a standalone <span class="drop-zone" data-answer="executable" data-bank="1"></span> file that can run without the original source code.</div>
+    <div class="sentence">10. An <span class="drop-zone" data-answer="interpreter" data-bank="1"></span> reads and runs code one line at a time. Because translation has already been done in full, compiled programs generally run <span class="drop-zone" data-answer="faster" data-bank="1"></span> at execution time.</div>
+  </div>
+
+  <div class="controls">
+    <button class="btn-check"  onclick="checkEx1()">✅ Check Answers</button>
+    <button class="btn-reveal" onclick="revealEx1()">👁 Reveal All</button>
+    <button class="btn-reset"  onclick="resetEx1()">🔄 Reset</button>
+  </div>
+  <div class="score-box" id="score-ex1"></div>
+
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     TASK 2 — Compiler vs Interpreter Sort
+════════════════════════════════════════════════════ -->
+<div id="ex2" class="tab-panel">
+<div class="max-w">
+
+  <div class="goal-banner">🎯 Drag each statement into the correct column. Click a statement that you've placed to return it to the pool.</div>
+
+  <div class="sort-source" id="sort-pool">
+    <h3>Statement pool — drag statements into a column below</h3>
+    <div class="tiles" id="sort-tiles"></div>
+  </div>
+
+  <div class="sort-grid">
+    <div class="sort-col col-compiler" id="col-compiler" data-col="compiler">
+      <h3>⚙️ Compiler only</h3>
+    </div>
+    <div class="sort-col col-interp" id="col-interp" data-col="interpreter">
+      <h3>🔄 Interpreter only</h3>
+    </div>
+    <div class="sort-col col-both" id="col-both" data-col="both">
+      <h3>↔️ Both</h3>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button class="btn-check"  onclick="checkSort()">✅ Check Answers</button>
+    <button class="btn-reveal" onclick="revealSort()">👁 Reveal All</button>
+    <button class="btn-reset"  onclick="resetSort()">🔄 Reset</button>
+  </div>
+  <div class="score-box" id="score-ex2"></div>
+
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     TASK 3 — Spot the IDE Tool (annotated simulator)
+════════════════════════════════════════════════════ -->
+<div id="ex3" class="tab-panel">
+<div class="max-w">
+
+  <div class="goal-banner">🎯 Each numbered badge ① ② ③ ④ marks a different region of this IDE. Drag the correct tool name from the word bank to match each region in the table below.</div>
+
+  <!-- Fake IDE -->
+  <div class="ide-frame">
+    <div class="ide-titlebar">
+      <span class="ide-dot r"></span><span class="ide-dot y"></span><span class="ide-dot g"></span>
+      <span style="margin-left:8px;">temperature_converter.py — PyCode IDE</span>
+    </div>
+    <div class="ide-body">
+      <!-- ① Editor region -->
+      <div class="ide-editor region-outline" style="position:relative;">
+        <div class="badge-corner">①</div>
+        <div class="code-line" style="margin-top:4px;"><span class="bp-placeholder"></span><span class="line-num">1</span><span class="line-code"><span class="cm"># Temperature converter</span></span></div>
+        <div class="code-line"><span class="bp-placeholder"></span><span class="line-num">2</span><span class="line-code"></span></div>
+        <div class="code-line"><span class="bp-placeholder"></span><span class="line-num">3</span><span class="line-code"><span class="kw">def</span> <span class="fn">convert</span>(celsius):</span></div>
+        <div class="code-line"><span class="bp" title="Breakpoint set on line 4"></span><span class="line-num">4</span><span class="line-code">    fahrenheit = (celsius * <span class="num">9</span>/<span class="num">5</span>) + <span class="num">32</span></span></div>
+        <div class="code-line"><span class="bp-placeholder"></span><span class="line-num">5</span><span class="line-code">    <span class="kw">return</span> fahrenheit</span></div>
+        <div class="code-line"><span class="bp-placeholder"></span><span class="line-num">6</span><span class="line-code"></span></div>
+        <div class="code-line"><span class="bp-placeholder"></span><span class="line-num">7</span><span class="line-code">temp = <span class="fn">float</span>(<span class="fn err-sq">input</span>(<span class="str">"Enter °C: "</span>)</span></div>
+        <div class="code-line"><span class="bp-placeholder"></span><span class="line-num">8</span><span class="line-code"><span class="fn">print</span>(convert(temp))</span></div>
+      </div>
+      <!-- Right-side panels -->
+      <div class="ide-sidebar">
+        <!-- ② Error Diagnostics region -->
+        <div class="ide-panel region-outline" style="position:relative;">
+          <div class="badge-corner" style="left:auto; right:6px;">②</div>
+          <div class="ide-panel-label">Problems</div>
+          <div class="ide-error-msg">⛔ Line 7 — SyntaxError</div>
+          <div class="ide-warning">unexpected EOF — missing )</div>
+          <div class="ide-error-msg" style="margin-top:6px; color:#94a3b8; font-size:0.72rem;">0 warnings &nbsp;|&nbsp; 1 error</div>
+        </div>
+        <!-- ③ Run-time Environment region -->
+        <div class="ide-panel region-outline" style="position:relative;">
+          <div class="badge-corner" style="left:auto; right:6px;">③</div>
+          <div class="ide-panel-label">Console / Output</div>
+          <button class="ide-run-btn">▶ Run</button>
+          <div class="ide-output-txt">Fix all errors before running.</div>
+        </div>
+      </div>
+    </div>
+    <!-- ④ Translator / Status bar region -->
+    <div class="ide-status region-outline" style="position:relative;">
+      <div class="badge-corner">④</div>
+      <span style="margin-left:28px; color:#38bdf8;">Translating...</span>
+      <span style="color:#f87171;">⚠ 1 error</span>
+      <span>Python 3.11</span>
+      <span style="margin-left:auto;">Ln 7, Col 28</span>
+    </div>
+  </div>
+
+  <!-- IDE label word bank -->
+  <div class="section">
+    <h2>Match each region to its IDE tool</h2>
+    <p class="hint">Drag tiles from the word bank onto each row. Click a placed tile to return it.</p>
+
+    <div class="lbl-tiles" id="lbl-bank"></div>
+
+    <table class="ide-match-table">
+      <thead>
+        <tr><th style="width:45%">Region</th><th>IDE Tool</th><th>How it helps the programmer</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="badge">①</span> &nbsp;Main code area (with syntax colours &amp; breakpoint)</td>
+          <td><span class="lbl-drop" data-answer="Editor"></span></td>
+          <td style="font-size:0.8rem; color:#94a3b8;">Write, view and edit source code with formatting and auto-complete support.</td>
+        </tr>
+        <tr>
+          <td><span class="badge">②</span> &nbsp;Problems panel (error list)</td>
+          <td><span class="lbl-drop" data-answer="Error Diagnostics"></span></td>
+          <td style="font-size:0.8rem; color:#94a3b8;">Highlights mistakes and shows exactly which line contains the error.</td>
+        </tr>
+        <tr>
+          <td><span class="badge">③</span> &nbsp;Console / output area</td>
+          <td><span class="lbl-drop" data-answer="Run-time Environment"></span></td>
+          <td style="font-size:0.8rem; color:#94a3b8;">Run and test the program within the IDE, view output, and step through code with a debugger.</td>
+        </tr>
+        <tr>
+          <td><span class="badge">④</span> &nbsp;Status bar showing "Translating…"</td>
+          <td><span class="lbl-drop" data-answer="Translator"></span></td>
+          <td style="font-size:0.8rem; color:#94a3b8;">Converts source code into machine code automatically so the program can be executed.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="controls">
+    <button class="btn-check"  onclick="checkIde()">✅ Check Answers</button>
+    <button class="btn-reveal" onclick="revealIde()">👁 Reveal All</button>
+    <button class="btn-reset"  onclick="resetIde()">🔄 Reset</button>
+  </div>
+  <div class="score-box" id="score-ex3"></div>
+
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     TASK 4 — Exam Practice
+════════════════════════════════════════════════════ -->
+<div id="ex4" class="tab-panel">
+<div class="max-w">
+
+  <div class="goal-banner">🎯 Write exam-style answers below. When you are ready, reveal the mark scheme for each question to self-assess. Then click <em>Mark as Complete</em>.</div>
+
+  <!-- Q1 -->
+  <div class="exam-q">
+    <div class="exam-q-head">
+      <p><strong>Q1.</strong> Explain what is meant by a <em>high-level programming language</em>. Give one advantage of using a high-level language over a low-level language.</p>
+      <span class="marks">[3 marks]</span>
+    </div>
+    <textarea class="exam-textarea" id="ans1" placeholder="Write your answer here…"></textarea>
+    <div style="margin-top:8px; text-align:right;">
+      <button class="btn-reveal" style="font-size:0.8rem; padding:6px 16px;" onclick="revealMs(1)">👁 Show Mark Scheme</button>
+    </div>
+    <div class="ms-block" id="ms1">
+      <strong>Mark Scheme — Q1 (3 marks)</strong>
+      <ul>
+        <li>Uses English-like / human-readable syntax (1)</li>
+        <li>Is abstracted from the hardware / programmer does not need to know how the processor works (1)</li>
+        <li>Advantage (any one): portable — code runs on different hardware without major changes (1) <em>or</em> easier/quicker to write and maintain (1) <em>or</em> less chance of hardware-level errors (1)</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Q2 -->
+  <div class="exam-q">
+    <div class="exam-q-head">
+      <p><strong>Q2.</strong> State <strong>one advantage</strong> and <strong>one disadvantage</strong> of using a compiler compared to an interpreter.</p>
+      <span class="marks">[2 marks]</span>
+    </div>
+    <textarea class="exam-textarea" id="ans2" placeholder="Write your answer here…"></textarea>
+    <div style="margin-top:8px; text-align:right;">
+      <button class="btn-reveal" style="font-size:0.8rem; padding:6px 16px;" onclick="revealMs(2)">👁 Show Mark Scheme</button>
+    </div>
+    <div class="ms-block" id="ms2">
+      <strong>Mark Scheme — Q2 (2 marks)</strong>
+      <ul>
+        <li><strong>Advantage (any one):</strong> produces a standalone executable / programs run faster at execution time / source code not needed by the end user / more secure distribution (1)</li>
+        <li><strong>Disadvantage (any one):</strong> errors only reported after the whole program is scanned / harder to pinpoint specific bugs / must recompile after every change (1)</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Q3 -->
+  <div class="exam-q">
+    <div class="exam-q-head">
+      <p><strong>Q3.</strong> Describe <strong>three</strong> tools available in an Integrated Development Environment (IDE) and explain how each one helps a programmer develop a program.</p>
+      <span class="marks">[6 marks]</span>
+    </div>
+    <textarea class="exam-textarea" id="ans3" style="min-height:130px;" placeholder="Write your answer here…"></textarea>
+    <div style="margin-top:8px; text-align:right;">
+      <button class="btn-reveal" style="font-size:0.8rem; padding:6px 16px;" onclick="revealMs(3)">👁 Show Mark Scheme</button>
+    </div>
+    <div class="ms-block" id="ms3">
+      <strong>Mark Scheme — Q3 (2 marks per tool × 3 tools = 6 marks)</strong>
+      <ul>
+        <li><strong>Editor:</strong> allows the programmer to write and edit source code (1); features such as syntax highlighting and auto-complete reduce mistakes and speed up coding (1)</li>
+        <li><strong>Error diagnostics:</strong> detects and flags errors (syntax / logic) in the code (1); shows the line number where the error occurs so the programmer can find and fix bugs quickly (1)</li>
+        <li><strong>Run-time environment:</strong> allows the programmer to run and test the program without leaving the IDE (1); includes a debugger so they can step through code line by line and inspect variable values (1)</li>
+        <li><strong>Translator:</strong> converts the source code into machine code automatically (1); built into the IDE so the programmer does not need a separate tool (1)</li>
+      </ul>
+      <em style="font-size:0.8rem; color:#4ade80;">(Award marks for any three tools, 2 marks each: 1 for naming/describing the tool, 1 for explaining the benefit to the programmer.)</em>
+    </div>
+  </div>
+
+  <!-- Q4 -->
+  <div class="exam-q">
+    <div class="exam-q-head">
+      <p><strong>Q4.</strong> A developer writes a new mobile app. During development they use an interpreter. When the app is finished, they use a compiler to create the final version.<br>Explain why each choice is appropriate.</p>
+      <span class="marks">[4 marks]</span>
+    </div>
+    <textarea class="exam-textarea" id="ans4" style="min-height:120px;" placeholder="Write your answer here…"></textarea>
+    <div style="margin-top:8px; text-align:right;">
+      <button class="btn-reveal" style="font-size:0.8rem; padding:6px 16px;" onclick="revealMs(4)">👁 Show Mark Scheme</button>
+    </div>
+    <div class="ms-block" id="ms4">
+      <strong>Mark Scheme — Q4 (4 marks)</strong>
+      <ul>
+        <li><strong>Interpreter during development (any two):</strong></li>
+        <li style="margin-left:16px;">Stops and reports errors immediately on the line where they occur, making debugging easier (1)</li>
+        <li style="margin-left:16px;">The developer can test small sections of code as they write it, without waiting for a full compilation (1)</li>
+        <li style="margin-left:16px;">No need to recompile after every small change (1)</li>
+        <li><strong>Compiler for the finished product (any two):</strong></li>
+        <li style="margin-left:16px;">Produces a standalone executable that runs faster for end users (1)</li>
+        <li style="margin-left:16px;">Source code is not included / not exposed, protecting the developer's intellectual property (1)</li>
+        <li style="margin-left:16px;">Users do not need an interpreter installed to run the app (1)</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button class="btn-done" onclick="completeExam()">✅ Mark as Complete</button>
+  </div>
+  <div class="score-box" id="score-ex4"></div>
+
+</div>
+</div>
+
+<div class="ac-toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════
+const TASK_COUNT    = 4;
+const ACTIVITY_TITLE = 'IDEs and Translators';
+const LS_KEY        = 'ide_translators_y11_v2';
+
+const completed = [false, false, false, false];
+const everWrong = [false, false, false, false];
+
+// Shared drag state
+let dragWord = null, dragTile = null;
+let dragStmt = null;                    // for sort task
+let dragLblTile = null;                 // for IDE label task
+
+// ═══════════════════════════════════════════════════
+//  TABS
+// ═══════════════════════════════════════════════════
+function switchTab(id, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ═══════════════════════════════════════════════════
+//  PROGRESS
+// ═══════════════════════════════════════════════════
+function updateProgress() {
+  const goldCount = document.querySelectorAll('.tab-btn.done-gold').length;
+  const doneCount = goldCount + document.querySelectorAll('.tab-btn.done-green').length;
+  const pct = Math.round((doneCount / TASK_COUNT * 80) + (goldCount / TASK_COUNT * 20));
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-pct').textContent  = pct + '%';
+  return pct;
+}
+
+function markTab(idx, wrong) {
+  const tab = document.querySelector(`.tab-btn[data-tab="ex${idx + 1}"]`);
+  if (!tab) return;
+  const wasDone = tab.classList.contains('done-gold') || tab.classList.contains('done-green');
+  tab.classList.remove('done-gold', 'done-green');
+  tab.classList.add(wrong ? 'done-green' : 'done-gold');
+  completed[idx] = true;
+  const pct = updateProgress();
+  if (!wasDone) {
+    window.Classroom?.submitGrade(pct, ACTIVITY_TITLE);
+  }
+  if (completed.every(Boolean)) allComplete();
+}
+
+function allComplete() {
+  document.querySelectorAll('.tab-btn.done-gold').length === TASK_COUNT
+    ? window.ActivityUI?.launchCelebration({ type: 'gold' })
+    : window.ActivityUI?.launchCelebration();
+}
+
+// ═══════════════════════════════════════════════════
+//  TASK 1 — Gap-Fill
+// ═══════════════════════════════════════════════════
+const words1 = [
+  'high-level','low-level','English-like','abstracted','portable',
+  'assembly','processor','efficiently','machine code','binary',
+  'translators','compiler','executable','interpreter','faster'
+];
+
+function buildBank1() {
+  const container = document.getElementById('tiles1');
+  container.innerHTML = '';
+  [...words1].sort(() => Math.random() - 0.5).forEach(w => {
+    const t = document.createElement('span');
+    t.className = 'tile';
+    t.textContent = w;
+    t.draggable = true;
+    t.dataset.word = w;
+    t.dataset.bank = '1';
+    addGapTileDrag(t);
+    container.appendChild(t);
+  });
+}
+
+function addGapTileDrag(tile) {
+  tile.addEventListener('dragstart', e => {
+    dragWord = tile.dataset.word;
+    dragTile = tile;
+    tile.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+  });
+  tile.addEventListener('dragend', () => tile.classList.remove('dragging'));
+}
+
+function initDropZones(selector) {
+  document.querySelectorAll(selector).forEach(zone => {
+    zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+    zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+    zone.addEventListener('drop', e => {
+      e.preventDefault();
+      zone.classList.remove('drag-over');
+      if (!dragWord) return;
+      const prev = zone.dataset.current;
+      if (prev) returnGapTile(prev, zone.dataset.bank);
+      zone.textContent = dragWord;
+      zone.dataset.current = dragWord;
+      zone.classList.add('filled');
+      zone.classList.remove('correct','incorrect');
+      if (dragTile) dragTile.classList.add('used');
+      liveCheckZone(zone);
+      dragWord = null; dragTile = null;
+      saveState();
+    });
+    zone.addEventListener('click', () => {
+      if (!zone.dataset.current) return;
+      returnGapTile(zone.dataset.current, zone.dataset.bank);
+      zone.textContent = '';
+      zone.dataset.current = '';
+      zone.classList.remove('filled','correct','incorrect');
+      saveState();
+    });
+  });
+}
+
+function returnGapTile(word, bankId) {
+  const container = document.getElementById('tiles' + bankId);
+  container.querySelectorAll('.tile').forEach(t => {
+    if (t.dataset.word === word) t.classList.remove('used');
+  });
+}
+
+function liveCheckZone(zone) {
+  const cur = (zone.dataset.current || '').trim().toLowerCase();
+  const ans = (zone.dataset.answer  || '').trim().toLowerCase();
+  if (!cur) return;
+  zone.classList.remove('correct','incorrect');
+  if (cur === ans) zone.classList.add('correct');
+}
+
+function checkEx1() {
+  if (window.Classroom?.verifyAuth() === false) return;
+  const zones = document.querySelectorAll('#ex1 .drop-zone');
+  let correct = 0;
+  zones.forEach(z => {
+    const cur = (z.dataset.current || '').trim().toLowerCase();
+    const ans = (z.dataset.answer  || '').trim().toLowerCase();
+    z.classList.remove('correct','incorrect');
+    if (!z.dataset.current) return;
+    if (cur === ans) { z.classList.add('correct'); correct++; }
+    else             { z.classList.add('incorrect'); everWrong[0] = true; }
+  });
+  const score = document.getElementById('score-ex1');
+  score.textContent = `Score: ${correct} / ${zones.length}`;
+  if (correct === zones.length) {
+    markTab(0, everWrong[0]);
+    score.textContent = '🎉 All 15 blanks correct!';
+  }
+  saveState();
+}
+
+function revealEx1() {
+  document.querySelectorAll('#ex1 .drop-zone').forEach(z => {
+    const prev = z.dataset.current;
+    if (prev) returnGapTile(prev, '1');
+    z.textContent = z.dataset.answer;
+    z.dataset.current = z.dataset.answer;
+    z.classList.add('filled','correct');
+    z.classList.remove('incorrect');
+    document.querySelectorAll('#tiles1 .tile').forEach(t => {
+      if (t.dataset.word === z.dataset.answer) t.classList.add('used');
+    });
+  });
+  document.getElementById('score-ex1').textContent = 'All answers revealed.';
+  saveState();
+}
+
+function resetEx1() {
+  document.querySelectorAll('#ex1 .drop-zone').forEach(z => {
+    z.textContent = ''; z.dataset.current = '';
+    z.classList.remove('filled','correct','incorrect');
+  });
+  everWrong[0] = false;
+  completed[0] = false;
+  const btn = document.querySelector('.tab-btn[data-tab="ex1"]');
+  if (btn) btn.classList.remove('done-gold','done-green');
+  buildBank1();
+  initDropZones('#ex1 .drop-zone');
+  document.getElementById('score-ex1').textContent = '';
+  updateProgress();
+  saveState();
+}
+
+// ═══════════════════════════════════════════════════
+//  TASK 2 — Compiler vs Interpreter Sort
+// ═══════════════════════════════════════════════════
+const stmts = [
+  { id: 'st0',  text: 'Translates the entire source code before the program can run',                      col: 'compiler'    },
+  { id: 'st1',  text: 'Produces a standalone executable file',                                             col: 'compiler'    },
+  { id: 'st2',  text: 'End users do not need the original source code to run the program',                 col: 'compiler'    },
+  { id: 'st3',  text: 'Errors are only reported after the whole program has been scanned',                 col: 'compiler'    },
+  { id: 'st4',  text: 'Typically produces programs that run faster at execution time',                     col: 'compiler'    },
+  { id: 'st5',  text: 'Well suited to finished, commercial software distributed to customers',             col: 'compiler'    },
+  { id: 'st6',  text: 'Translates and executes code one line at a time',                                  col: 'interpreter' },
+  { id: 'st7',  text: 'Does not produce an executable file',                                               col: 'interpreter' },
+  { id: 'st8',  text: 'Source code must be present every time the program runs',                           col: 'interpreter' },
+  { id: 'st9',  text: 'Stops and reports an error immediately on the line where it occurs',                col: 'interpreter' },
+  { id: 'st10', text: 'Slower at runtime because translation happens as the program executes',             col: 'interpreter' },
+  { id: 'st11', text: 'Particularly useful during development and testing when code changes frequently',   col: 'interpreter' },
+  { id: 'st12', text: 'Converts high-level source code into machine code',                                 col: 'both'        },
+  { id: 'st13', text: 'Is classified as a type of translator',                                             col: 'both'        }
+];
+
+function buildSort() {
+  const pool = document.getElementById('sort-tiles');
+  pool.innerHTML = '';
+  [...stmts].sort(() => Math.random() - 0.5).forEach(s => {
+    const el = document.createElement('div');
+    el.className = 'sort-stmt';
+    el.textContent = s.text;
+    el.dataset.id  = s.id;
+    el.dataset.answer = s.col;
+    el.draggable = true;
+    addSortDrag(el);
+    pool.appendChild(el);
+  });
+  initSortCols();
+}
+
+function addSortDrag(el) {
+  el.addEventListener('dragstart', e => {
+    dragStmt = el;
+    el.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+  });
+  el.addEventListener('dragend', () => el.classList.remove('dragging'));
+  el.addEventListener('click', () => {
+    // return to pool
+    const pool = document.getElementById('sort-tiles');
+    if (el.parentElement !== pool) {
+      pool.appendChild(el);
+      el.classList.remove('correct','incorrect');
+      saveState();
+    }
+  });
+}
+
+function initSortCols() {
+  const targets = [...document.querySelectorAll('.sort-col'), document.getElementById('sort-pool')];
+  targets.forEach(col => {
+    // remove old listeners by cloning
+    const fresh = col.cloneNode(false);
+    while (col.firstChild) fresh.appendChild(col.firstChild);
+    col.parentNode.replaceChild(fresh, col);
+
+    fresh.addEventListener('dragover', e => { e.preventDefault(); fresh.classList.add('drag-over'); });
+    fresh.addEventListener('dragleave', () => fresh.classList.remove('drag-over'));
+    fresh.addEventListener('drop', e => {
+      e.preventDefault();
+      fresh.classList.remove('drag-over');
+      if (!dragStmt) return;
+      if (fresh.id === 'sort-pool') {
+        document.getElementById('sort-tiles').appendChild(dragStmt);
+      } else {
+        fresh.appendChild(dragStmt);
+      }
+      dragStmt.classList.remove('correct','incorrect');
+      dragStmt = null;
+      saveState();
+    });
+  });
+}
+
+function checkSort() {
+  if (window.Classroom?.verifyAuth() === false) return;
+  const allStmts = document.querySelectorAll('.sort-stmt');
+  const poolEl   = document.getElementById('sort-tiles');
+  let correct = 0, placed = 0, total = stmts.length;
+  allStmts.forEach(el => {
+    const parent = el.parentElement;
+    const colEl  = parent.closest('.sort-col');
+    el.classList.remove('correct','incorrect');
+    if (!colEl) return; // still in pool
+    placed++;
+    const placed_col = colEl.dataset.col;
+    const ans_col    = el.dataset.answer;
+    if (placed_col === ans_col) { el.classList.add('correct'); correct++; }
+    else                        { el.classList.add('incorrect'); everWrong[1] = true; }
+  });
+  const score = document.getElementById('score-ex2');
+  if (placed === 0) { score.textContent = 'Drag some statements into the columns first!'; return; }
+  score.textContent = `Score: ${correct} / ${total} (${total - placed} not yet placed)`;
+  if (correct === total && placed === total) {
+    markTab(1, everWrong[1]);
+    score.textContent = '🎉 All 14 statements correctly sorted!';
+  }
+  saveState();
+}
+
+function revealSort() {
+  // move all statements to their correct column, clear from pool
+  stmts.forEach(s => {
+    const el = document.querySelector(`.sort-stmt[data-id="${s.id}"]`);
+    if (!el) return;
+    const colEl = document.getElementById('col-' + (s.col === 'interpreter' ? 'interp' : s.col));
+    if (colEl) { colEl.appendChild(el); el.classList.add('correct'); el.classList.remove('incorrect'); }
+  });
+  document.getElementById('score-ex2').textContent = 'All answers revealed.';
+  saveState();
+}
+
+function resetSort() {
+  // return all to pool
+  const pool = document.getElementById('sort-tiles');
+  document.querySelectorAll('.sort-stmt').forEach(el => {
+    el.classList.remove('correct','incorrect');
+    pool.appendChild(el);
+  });
+  [...stmts].sort(() => Math.random() - 0.5).forEach(s => {
+    const el = pool.querySelector(`[data-id="${s.id}"]`);
+    if (el) pool.appendChild(el);
+  });
+  everWrong[1] = false;
+  completed[1] = false;
+  const btn = document.querySelector('.tab-btn[data-tab="ex2"]');
+  if (btn) btn.classList.remove('done-gold','done-green');
+  document.getElementById('score-ex2').textContent = '';
+  updateProgress();
+  initSortCols();
+  saveState();
+}
+
+// ═══════════════════════════════════════════════════
+//  TASK 3 — IDE Annotation
+// ═══════════════════════════════════════════════════
+const ideLabels = ['Editor','Error Diagnostics','Run-time Environment','Translator'];
+
+function buildIdeBank() {
+  const bank = document.getElementById('lbl-bank');
+  bank.innerHTML = '';
+  [...ideLabels].sort(() => Math.random() - 0.5).forEach(lbl => {
+    const t = document.createElement('span');
+    t.className = 'lbl-tile';
+    t.textContent = lbl;
+    t.draggable = true;
+    t.dataset.lbl = lbl;
+    addLblDrag(t);
+    bank.appendChild(t);
+  });
+  initLblDrops();
+}
+
+function addLblDrag(tile) {
+  tile.addEventListener('dragstart', e => {
+    dragLblTile = tile;
+    tile.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+  });
+  tile.addEventListener('dragend', () => tile.classList.remove('dragging'));
+}
+
+function initLblDrops() {
+  document.querySelectorAll('.lbl-drop').forEach(zone => {
+    zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+    zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+    zone.addEventListener('drop', e => {
+      e.preventDefault();
+      zone.classList.remove('drag-over');
+      if (!dragLblTile) return;
+      // return previous if any
+      const prev = zone.dataset.current;
+      if (prev) returnLblTile(prev);
+      zone.textContent = dragLblTile.dataset.lbl;
+      zone.dataset.current = dragLblTile.dataset.lbl;
+      zone.classList.add('filled');
+      zone.classList.remove('correct','incorrect');
+      dragLblTile.classList.add('used');
+      checkAllIde();
+      dragLblTile = null;
+      saveState();
+    });
+    zone.addEventListener('click', () => {
+      if (!zone.dataset.current) return;
+      returnLblTile(zone.dataset.current);
+      zone.textContent = '';
+      zone.dataset.current = '';
+      zone.classList.remove('filled','correct','incorrect');
+      saveState();
+    });
+  });
+}
+
+function returnLblTile(lbl) {
+  document.querySelectorAll('#lbl-bank .lbl-tile').forEach(t => {
+    if (t.dataset.lbl === lbl) t.classList.remove('used');
+  });
+}
+
+function checkAllIde() {
+  const zones = [...document.querySelectorAll('.lbl-drop')];
+  const allFilled  = zones.every(z => z.dataset.current);
+  const allCorrect = zones.every(z => (z.dataset.current||'').toLowerCase() === (z.dataset.answer||'').toLowerCase());
+  if (allFilled && allCorrect) {
+    zones.forEach(z => z.classList.add('correct'));
+    document.getElementById('score-ex3').textContent = '🎉 All regions correctly identified!';
+    markTab(2, everWrong[2]);
+  }
+}
+
+function checkIde() {
+  if (window.Classroom?.verifyAuth() === false) return;
+  const zones = document.querySelectorAll('.lbl-drop');
+  let correct = 0, placed = 0;
+  zones.forEach(z => {
+    z.classList.remove('correct','incorrect');
+    if (!z.dataset.current) return;
+    placed++;
+    if ((z.dataset.current||'').toLowerCase() === (z.dataset.answer||'').toLowerCase()) { z.classList.add('correct'); correct++; }
+    else { z.classList.add('incorrect'); everWrong[2] = true; }
+  });
+  const score = document.getElementById('score-ex3');
+  if (placed === 0) { score.textContent = 'Drag some tool names onto the table first!'; return; }
+  score.textContent = `Score: ${correct} / ${zones.length}`;
+  if (correct === zones.length) {
+    markTab(2, everWrong[2]);
+    score.textContent = '🎉 All regions correctly identified!';
+  }
+  saveState();
+}
+
+function revealIde() {
+  document.querySelectorAll('.lbl-drop').forEach(z => {
+    const prev = z.dataset.current;
+    if (prev) returnLblTile(prev);
+    z.textContent = z.dataset.answer;
+    z.dataset.current = z.dataset.answer;
+    z.classList.add('filled','correct');
+    z.classList.remove('incorrect');
+    document.querySelectorAll('#lbl-bank .lbl-tile').forEach(t => {
+      if (t.dataset.lbl === z.dataset.answer) t.classList.add('used');
+    });
+  });
+  document.getElementById('score-ex3').textContent = 'All answers revealed.';
+  saveState();
+}
+
+function resetIde() {
+  document.querySelectorAll('.lbl-drop').forEach(z => {
+    z.textContent = ''; z.dataset.current = '';
+    z.classList.remove('filled','correct','incorrect');
+  });
+  everWrong[2] = false;
+  completed[2] = false;
+  const btn = document.querySelector('.tab-btn[data-tab="ex3"]');
+  if (btn) btn.classList.remove('done-gold','done-green');
+  document.getElementById('score-ex3').textContent = '';
+  updateProgress();
+  buildIdeBank();
+  saveState();
+}
+
+// ═══════════════════════════════════════════════════
+//  TASK 4 — Exam Practice
+// ═══════════════════════════════════════════════════
+function revealMs(n) {
+  document.getElementById('ms' + n).classList.add('show');
+}
+
+function completeExam() {
+  if (window.Classroom?.verifyAuth() === false) return;
+  const allRevealed = [1,2,3,4].every(n => document.getElementById('ms' + n).classList.contains('show'));
+  markTab(3, !allRevealed);
+  document.getElementById('score-ex4').textContent = allRevealed
+    ? '✅ Marked as complete — well done!'
+    : '✅ Marked as complete. Tip: reveal all mark schemes before finishing for full marks.';
+  saveState();
+}
+
+// ═══════════════════════════════════════════════════
+//  SAVE / LOAD STATE
+// ═══════════════════════════════════════════════════
+function saveState() {
+  try {
+    const state = {
+      everWrong,
+      completed,
+      tabs: {},
+      ex1: [],
+      ex2: {},
+      ex3: [],
+      ex4: { ms: [false,false,false,false], done: completed[3] },
+      ans: {}
+    };
+    document.querySelectorAll('.tab-btn[data-tab]').forEach(b => {
+      state.tabs[b.dataset.tab] = { gold: b.classList.contains('done-gold'), green: b.classList.contains('done-green') };
+    });
+    document.querySelectorAll('#ex1 .drop-zone').forEach(z => state.ex1.push({ a: z.dataset.answer, c: z.dataset.current||'' }));
+    // sort: record which column each stmt is in
+    stmts.forEach(s => {
+      const el = document.querySelector(`.sort-stmt[data-id="${s.id}"]`);
+      const colEl = el ? el.parentElement.closest('.sort-col') : null;
+      state.ex2[s.id] = colEl ? colEl.dataset.col : 'pool';
+    });
+    document.querySelectorAll('.lbl-drop').forEach((z,i) => state.ex3.push({ a: z.dataset.answer, c: z.dataset.current||'' }));
+    [1,2,3,4].forEach(n => { state.ex4.ms[n-1] = document.getElementById('ms'+n).classList.contains('show'); });
+    [1,2,3,4].forEach(n => { const el = document.getElementById('ans'+n); if (el) state.ans['q'+n] = el.value; });
+    localStorage.setItem(LS_KEY, JSON.stringify(state));
+  } catch(e) {}
+}
+
+function loadState() {
+  let state;
+  try { const r = localStorage.getItem(LS_KEY); if (!r) return; state = JSON.parse(r); } catch(e) { return; }
+
+  if (Array.isArray(state.everWrong)) state.everWrong.forEach((v,i) => { everWrong[i] = v; });
+  if (Array.isArray(state.completed)) state.completed.forEach((v,i) => { completed[i] = v; });
+
+  // Restore tab states
+  if (state.tabs) {
+    document.querySelectorAll('.tab-btn[data-tab]').forEach(b => {
+      const t = state.tabs[b.dataset.tab];
+      if (!t) return;
+      b.classList.remove('done-gold','done-green');
+      if (t.gold)  b.classList.add('done-gold');
+      if (t.green) b.classList.add('done-green');
+    });
+  }
+
+  // Restore ex1
+  if (Array.isArray(state.ex1)) {
+    const zones = [...document.querySelectorAll('#ex1 .drop-zone')];
+    state.ex1.forEach((saved, i) => {
+      const z = zones[i];
+      if (!z || !saved.c) return;
+      z.textContent = saved.c; z.dataset.current = saved.c; z.classList.add('filled');
+      document.querySelectorAll('#tiles1 .tile').forEach(t => { if (t.dataset.word === saved.c) t.classList.add('used'); });
+      if (saved.c.trim().toLowerCase() === saved.a.trim().toLowerCase()) z.classList.add('correct');
+    });
+  }
+
+  // Restore sort
+  if (state.ex2) {
+    const pool = document.getElementById('sort-tiles');
+    stmts.forEach(s => {
+      const col = state.ex2[s.id];
+      if (!col || col === 'pool') return;
+      const el = pool.querySelector(`[data-id="${s.id}"]`);
+      const colKey = col === 'interpreter' ? 'col-interp' : 'col-' + col;
+      const colEl  = document.getElementById(colKey);
+      if (el && colEl) colEl.appendChild(el);
+    });
+  }
+
+  // Restore ex3
+  if (Array.isArray(state.ex3)) {
+    const zones = [...document.querySelectorAll('.lbl-drop')];
+    state.ex3.forEach((saved, i) => {
+      const z = zones[i];
+      if (!z || !saved.c) return;
+      z.textContent = saved.c; z.dataset.current = saved.c; z.classList.add('filled');
+      document.querySelectorAll('#lbl-bank .lbl-tile').forEach(t => { if (t.dataset.lbl === saved.c) t.classList.add('used'); });
+      if (saved.c.toLowerCase() === saved.a.toLowerCase()) z.classList.add('correct');
+    });
+  }
+
+  // Restore ex4
+  if (state.ex4) {
+    if (Array.isArray(state.ex4.ms)) {
+      state.ex4.ms.forEach((shown, i) => { if (shown) document.getElementById('ms'+(i+1))?.classList.add('show'); });
+    }
+  }
+  if (state.ans) {
+    [1,2,3,4].forEach(n => { const el = document.getElementById('ans'+n); if (el && state.ans['q'+n]) el.value = state.ans['q'+n]; });
+  }
+
+  updateProgress();
+
+  // If all done-gold, fire celebration silently
+  if (document.querySelectorAll('.tab-btn.done-gold').length === TASK_COUNT) {
+    window.ActivityUI?.launchCelebration({ type: 'gold' });
+  }
+}
+
+// Auto-save textareas
+[1,2,3,4].forEach(n => {
+  const el = document.getElementById('ans'+n);
+  if (el) el.addEventListener('input', () => saveState());
+});
+
+// ═══════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  buildBank1();
+  initDropZones('#ex1 .drop-zone');
+  buildSort();
+  buildIdeBank();
+  loadState();
+  // Re-wire sort cols after DOM settle (cloneNode in buildSort wipes listeners)
+  initSortCols();
+});
+</script>
+
+<script src="../../activity-ui.js"></script>
+<script src="../../classroom.js"></script>
+</body>
+</html>
