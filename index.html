@@ -818,16 +818,24 @@
     // ── Group: year → topic → lesson_num ('__none__' if unset) → {name, activities} ──
     const tree = {};
     activities.forEach(a => {
-      if (!tree[a.year])          tree[a.year] = {};
-      if (!tree[a.year][a.topic]) tree[a.year][a.topic] = {};
+      const isYearGroup = /^Year\s+\d+$/i.test(a.year);
+      const group = isYearGroup ? a.year : 'Other';
+      const topic = isYearGroup
+        ? a.topic
+        : `${a.year.toUpperCase() === 'RS' ? 'Religious Studies' : a.year} / ${a.topic}`;
+
+      if (!tree[group])          tree[group] = {};
+      if (!tree[group][topic]) tree[group][topic] = {};
       const lKey = a.lesson_num != null ? String(a.lesson_num) : '__none__';
-      if (!tree[a.year][a.topic][lKey]) {
-        tree[a.year][a.topic][lKey] = { name: a.lesson || null, activities: [] };
+      if (!tree[group][topic][lKey]) {
+        tree[group][topic][lKey] = { name: a.lesson || null, activities: [] };
       }
-      tree[a.year][a.topic][lKey].activities.push(a);
+      tree[group][topic][lKey].activities.push(a);
     });
 
     const years = Object.keys(tree).sort((a, b) => {
+      if (a === 'Other') return 1;
+      if (b === 'Other') return -1;
       const n = s => parseInt(s.replace(/\D+/, ''), 10);
       return n(a) - n(b);
     });
