@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- ACTIVITY
+title:  SQL SELECT FROM WHERE Practice
+type:   Practice
+stars:  3
+desc:   Build GCSE-style SQL queries and see the selected records update live.
+color:  blue
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SQL SELECT FROM WHERE Practice - Year 11</title>
+<link rel="stylesheet" href="../../shared.css">
+
+<style>
+  body {
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+  }
+
+  header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: var(--surface);
+    border-bottom: 2px solid var(--surface-mid);
+    box-shadow: 0 2px 16px rgba(0,0,0,0.28);
+    padding: 12px 18px;
+  }
+
+  .header-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 16px;
+    align-items: center;
+    max-width: 1120px;
+    margin: 0 auto;
+  }
+
+  .score {
+    font-family: var(--font-head, Consolas, "Courier New", monospace);
+    color: var(--accent-light);
+    font-size: 0.84rem;
+    white-space: nowrap;
+  }
+
+  main {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 28px 16px 64px;
+  }
+
+  .page-title {
+    color: var(--accent-light);
+    text-align: center;
+    font-size: 1.45rem;
+    margin-bottom: 4px;
+  }
+
+  .page-subtitle {
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.9rem;
+    margin-bottom: 24px;
+  }
+
+  .data-panel,
+  .query-panel,
+  .reference-panel {
+    background: var(--surface);
+    border: 1px solid var(--surface-mid);
+    border-radius: 8px;
+    padding: 18px;
+    margin-bottom: 18px;
+  }
+
+  .data-panel {
+    border-left: 4px solid var(--accent);
+  }
+
+  .section-title {
+    color: var(--accent);
+    font-size: 0.76rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 12px;
+    font-weight: 800;
+  }
+
+  .table-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--surface-mid);
+    border-radius: 8px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 520px;
+  }
+
+  th,
+  td {
+    text-align: left;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--surface-mid);
+    font-size: 0.9rem;
+  }
+
+  th {
+    color: var(--accent-light);
+    background: color-mix(in srgb, var(--surface-mid) 76%, transparent);
+    font-family: var(--font-head, Consolas, "Courier New", monospace);
+    font-size: 0.78rem;
+    letter-spacing: 0.04em;
+  }
+
+  tr:last-child td {
+    border-bottom: 0;
+  }
+
+  .selected-row td {
+    background: color-mix(in srgb, var(--green) 18%, transparent);
+  }
+
+  .tabs {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 18px;
+  }
+
+  .tab-btn {
+    border: 2px solid var(--surface-mid);
+    background: var(--surface);
+    color: var(--muted);
+    min-width: 44px;
+    height: 40px;
+    border-radius: 8px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s, color 0.2s;
+  }
+
+  .tab-btn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--text-inv);
+  }
+
+  .tab-btn.done {
+    background: var(--green);
+    border-color: var(--green);
+    color: #fff;
+  }
+
+  .query-panel {
+    display: none;
+  }
+
+  .query-panel.active {
+    display: block;
+    animation: ac-fade-in 0.2s ease;
+  }
+
+  .prompt {
+    font-size: 1rem;
+    line-height: 1.55;
+    margin-bottom: 14px;
+  }
+
+  .sql-editor {
+    width: 100%;
+    min-height: 112px;
+    resize: vertical;
+    border: 2px solid var(--surface-mid);
+    border-radius: 8px;
+    padding: 12px 14px;
+    background: var(--code-bg, #101827);
+    color: var(--code-text, #e5edf7);
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 0.95rem;
+    line-height: 1.55;
+  }
+
+  .sql-editor:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+
+  .feedback {
+    min-height: 1.5em;
+    margin-top: 10px;
+    font-weight: 700;
+    font-size: 0.9rem;
+  }
+
+  .feedback.ok {
+    color: var(--green);
+  }
+
+  .feedback.warn {
+    color: var(--gold);
+  }
+
+  .feedback.err {
+    color: var(--red);
+    animation: ac-shake 0.35s ease;
+  }
+
+  .output-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(260px, 0.85fr);
+    gap: 16px;
+    align-items: start;
+    margin-top: 16px;
+  }
+
+  .mini-output {
+    border: 1px solid var(--surface-mid);
+    border-radius: 8px;
+    overflow: hidden;
+    min-height: 116px;
+  }
+
+  .output-heading {
+    padding: 9px 12px;
+    background: var(--surface-mid);
+    color: var(--accent-light);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 800;
+  }
+
+  .output-empty,
+  .hint-list {
+    color: var(--muted);
+    padding: 12px;
+    font-size: 0.88rem;
+    line-height: 1.6;
+  }
+
+  .hint-list {
+    margin: 0;
+    padding-left: 28px;
+  }
+
+  code {
+    font-family: Consolas, "Courier New", monospace;
+    color: var(--accent-light);
+  }
+
+  .reference-panel {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .ref-item {
+    border: 1px solid var(--surface-mid);
+    border-radius: 8px;
+    padding: 10px 12px;
+    background: color-mix(in srgb, var(--surface-mid) 38%, transparent);
+  }
+
+  .ref-item strong {
+    display: block;
+    color: var(--accent-light);
+    font-family: var(--font-head, Consolas, "Courier New", monospace);
+    margin-bottom: 4px;
+    font-size: 0.82rem;
+  }
+
+  .ref-item span {
+    color: var(--muted);
+    font-size: 0.82rem;
+  }
+
+  .complete-note {
+    display: none;
+    text-align: center;
+    padding: 18px;
+    background: color-mix(in srgb, var(--green) 16%, var(--surface));
+    border: 1px solid var(--green);
+    border-radius: 8px;
+    color: var(--text);
+    font-weight: 700;
+  }
+
+  .complete-note.show {
+    display: block;
+  }
+
+  @media (max-width: 780px) {
+    .header-row,
+    .output-grid,
+    .reference-panel {
+      grid-template-columns: 1fr;
+    }
+
+    .score {
+      justify-self: end;
+    }
+  }
+</style>
+</head>
+
+<body>
+<div id="done-banner" class="ac-banner gold">All SQL tasks complete - excellent work.</div>
+
+<header>
+  <div class="header-row">
+    <div class="ac-progress-bar">
+      <div class="ac-progress-fill" id="progress-fill"></div>
+    </div>
+    <div class="score" id="progress-pct">0%</div>
+  </div>
+</header>
+
+<main>
+  <h1 class="page-title">SQL SELECT FROM WHERE Practice</h1>
+  <p class="page-subtitle">Write GCSE-style SQL queries. The selected records and output update as you type.</p>
+
+  <section class="data-panel" aria-labelledby="data-title">
+    <h2 class="section-title" id="data-title">Database table: TblMusic</h2>
+    <div class="table-wrap">
+      <table id="source-table">
+        <thead>
+          <tr>
+            <th>ActID</th>
+            <th>ActName</th>
+            <th>Stage</th>
+            <th>Day</th>
+            <th>SetLength</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="reference-panel" aria-label="SQL reminders">
+    <div class="ref-item"><strong>SELECT</strong><span>field names, separated with commas</span></div>
+    <div class="ref-item"><strong>FROM</strong><span>the exact table name</span></div>
+    <div class="ref-item"><strong>WHERE</strong><span>the condition records must match</span></div>
+    <div class="ref-item"><strong>"text"</strong><span>quotes around string values</span></div>
+  </section>
+
+  <nav class="tabs" id="tab-bar" aria-label="SQL questions"></nav>
+
+  <section id="query-panels"></section>
+
+  <div class="complete-note" id="complete-note">You have completed every SELECT FROM WHERE query.</div>
+</main>
+
+<div class="ac-toast" id="toast"></div>
+
+<script>
+  const ACTIVITY_TITLE = 'SQL SELECT FROM WHERE Practice';
+  const TABLE_NAME = 'TblMusic';
+  const FIELDS = ['ActID', 'ActName', 'Stage', 'Day', 'SetLength'];
+  const DATA = [
+    { ActID: 1, ActName: 'Nova Beats', Stage: 'Platinum', Day: 'Saturday', SetLength: 0.5 },
+    { ActID: 2, ActName: 'The Vectors', Stage: 'Hills', Day: 'Saturday', SetLength: 1.5 },
+    { ActID: 3, ActName: 'Pixel Pulse', Stage: 'Triangle', Day: 'Sunday', SetLength: 1.0 },
+    { ActID: 4, ActName: 'Echo Array', Stage: 'Platinum', Day: 'Sunday', SetLength: 0.5 },
+    { ActID: 5, ActName: 'Syntax Error', Stage: 'Hills', Day: 'Sunday', SetLength: 2.0 },
+    { ActID: 6, ActName: 'Cloud Nine', Stage: 'Triangle', Day: 'Saturday', SetLength: 1.0 }
+  ];
+
+  const QUESTIONS = [
+    {
+      prompt: 'Show the ActID and Stage for all acts playing on Saturday.',
+      starter: 'SELECT \nFROM TblMusic\nWHERE ',
+      select: ['ActID', 'Stage'],
+      where: { field: 'Day', op: '=', value: 'Saturday' }
+    },
+    {
+      prompt: 'Show the ActName and SetLength for all acts on the Platinum stage.',
+      starter: 'SELECT \nFROM TblMusic\nWHERE ',
+      select: ['ActName', 'SetLength'],
+      where: { field: 'Stage', op: '=', value: 'Platinum' }
+    },
+    {
+      prompt: 'Show the ActID, ActName and Day for all acts with a set length of 1.0 hours.',
+      starter: 'SELECT \nFROM TblMusic\nWHERE ',
+      select: ['ActID', 'ActName', 'Day'],
+      where: { field: 'SetLength', op: '=', value: 1.0 }
+    },
+    {
+      prompt: 'Show the ActName and Stage for all acts with a set length greater than 1.0 hours.',
+      starter: 'SELECT \nFROM TblMusic\nWHERE ',
+      select: ['ActName', 'Stage'],
+      where: { field: 'SetLength', op: '>', value: 1.0 }
+    },
+    {
+      prompt: 'Show the ActID, Stage and SetLength for all acts playing on Sunday.',
+      starter: 'SELECT \nFROM TblMusic\nWHERE ',
+      select: ['ActID', 'Stage', 'SetLength'],
+      where: { field: 'Day', op: '=', value: 'Sunday' }
+    }
+  ];
+
+  const TASK_COUNT = QUESTIONS.length;
+  const STORAGE_KEY = 'sql-select-where-y11-v1';
+  const completed = new Array(TASK_COUNT).fill(false);
+  let activeIdx = 0;
+  let advancing = false;
+
+  function renderSourceTable(selectedIds = []) {
+    const body = document.querySelector('#source-table tbody');
+    body.innerHTML = DATA.map(row => `
+      <tr class="${selectedIds.includes(row.ActID) ? 'selected-row' : ''}">
+        ${FIELDS.map(field => `<td>${escapeHtml(row[field])}</td>`).join('')}
+      </tr>
+    `).join('');
+  }
+
+  function renderTabs() {
+    const bar = document.getElementById('tab-bar');
+    bar.innerHTML = QUESTIONS.map((_, idx) => `
+      <button class="tab-btn ${idx === activeIdx ? 'active' : ''} ${completed[idx] ? 'done' : ''}" data-idx="${idx}" aria-label="Question ${idx + 1}">
+        ${idx + 1}
+      </button>
+    `).join('');
+  }
+
+  function renderPanels() {
+    const panels = document.getElementById('query-panels');
+    panels.innerHTML = QUESTIONS.map((q, idx) => `
+      <article class="query-panel ${idx === activeIdx ? 'active' : ''}" id="panel-${idx}">
+        <h2 class="section-title">Question ${idx + 1}</h2>
+        <p class="prompt">${q.prompt}</p>
+        <label class="sr-only" for="sql-${idx}">SQL answer for question ${idx + 1}</label>
+        <textarea class="sql-editor code-checker" id="sql-${idx}" spellcheck="false">${escapeHtml(q.starter)}</textarea>
+        <div class="feedback" id="feedback-${idx}" aria-live="polite"></div>
+        <div class="output-grid">
+          <div class="mini-output">
+            <div class="output-heading">Output table</div>
+            <div id="output-${idx}"></div>
+          </div>
+          <div class="mini-output">
+            <div class="output-heading">Exam focus</div>
+            <ul class="hint-list">
+              <li>Use commas between fields after <code>SELECT</code>.</li>
+              <li>Use the exact table name <code>TblMusic</code>.</li>
+              <li>Use <code>WHERE</code> for the condition.</li>
+              <li>Put quotes around text values such as <code>"Saturday"</code>.</li>
+            </ul>
+          </div>
+        </div>
+      </article>
+    `).join('');
+
+    QUESTIONS.forEach((_, idx) => {
+      const editor = document.getElementById('sql-' + idx);
+      editor.addEventListener('input', () => {
+        evaluateQuestion(idx);
+        saveState();
+      });
+      editor.addEventListener('blur', () => evaluateQuestion(idx));
+    });
+  }
+
+  function showQuestion(idx, focusEditor = true) {
+    activeIdx = idx;
+    document.querySelectorAll('.tab-btn').forEach(tab => {
+      tab.classList.toggle('active', Number(tab.dataset.idx) === idx);
+    });
+    document.querySelectorAll('.query-panel').forEach((panel, panelIdx) => {
+      panel.classList.toggle('active', panelIdx === idx);
+    });
+    evaluateQuestion(idx);
+    saveState();
+    if (focusEditor) {
+      document.getElementById('sql-' + idx)?.focus();
+    }
+  }
+
+  function parseSQL(raw) {
+    const cleaned = raw
+      .replace(/--.*$/gm, '')
+      .replace(/;+/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    if (!cleaned) return { ok: false, message: 'Write a SELECT query.' };
+    if (/\bAND\b/i.test(cleaned.split(/\bFROM\b/i)[0] || '')) {
+      return { ok: false, message: 'Use commas between selected fields, not AND.' };
+    }
+    if (/\bIF\b/i.test(cleaned)) {
+      return { ok: false, message: 'SQL uses WHERE for this condition, not IF.' };
+    }
+
+    const match = cleaned.match(/^SELECT\s+(.+?)\s+FROM\s+([A-Za-z][A-Za-z0-9_]*)\s+WHERE\s+([A-Za-z][A-Za-z0-9_]*)\s*(=|==|>=|<=|>|<)\s*(.+)$/i);
+    if (!match) {
+      return { ok: false, message: 'Use SELECT fields FROM table WHERE field = value.' };
+    }
+
+    const fields = match[1].split(',').map(part => part.trim()).filter(Boolean);
+    const table = match[2].trim();
+    const whereField = match[3].trim();
+    const op = match[4] === '==' ? '=' : match[4];
+    const rawValue = match[5].trim();
+    const parsedValue = parseValue(rawValue);
+
+    if (fields.length === 0) return { ok: false, message: 'Choose at least one field after SELECT.' };
+    const badField = fields.find(field => !fieldByName(field));
+    if (badField) return { ok: false, message: `Field name ${badField} is not in this table.` };
+    if (table.toLowerCase() !== TABLE_NAME.toLowerCase()) return { ok: false, message: `The table name must be ${TABLE_NAME}.` };
+    const realWhereField = fieldByName(whereField);
+    if (!realWhereField) return { ok: false, message: `Field name ${whereField} is not in this table.` };
+    if (parsedValue.needsQuotes) return { ok: false, message: 'Text values need quotation marks.' };
+
+    return {
+      ok: true,
+      fields: fields.map(fieldByName),
+      table: TABLE_NAME,
+      where: { field: realWhereField, op, value: parsedValue.value }
+    };
+  }
+
+  function parseValue(rawValue) {
+    const quoted = rawValue.match(/^["'](.+)["']$/);
+    if (quoted) return { value: quoted[1], needsQuotes: false };
+    if (/^-?\d+(\.\d+)?$/.test(rawValue)) return { value: Number(rawValue), needsQuotes: false };
+    return { value: rawValue, needsQuotes: true };
+  }
+
+  function runQuery(parsed) {
+    const rows = DATA.filter(row => compare(row[parsed.where.field], parsed.where.op, parsed.where.value));
+    return {
+      rows,
+      output: rows.map(row => Object.fromEntries(parsed.fields.map(field => [field, row[field]])))
+    };
+  }
+
+  function compare(left, op, right) {
+    if (typeof left === 'number' && typeof right !== 'number') return false;
+    const a = typeof left === 'number' ? Number(left) : String(left).toLowerCase();
+    const b = typeof left === 'number' ? Number(right) : String(right).toLowerCase();
+    if (op === '=') return a === b;
+    if (op === '>') return a > b;
+    if (op === '<') return a < b;
+    if (op === '>=') return a >= b;
+    if (op === '<=') return a <= b;
+    return false;
+  }
+
+  function evaluateQuestion(idx) {
+    const editor = document.getElementById('sql-' + idx);
+    const feedback = document.getElementById('feedback-' + idx);
+    const output = document.getElementById('output-' + idx);
+    const parsed = parseSQL(editor.value);
+
+    if (!parsed.ok) {
+      output.innerHTML = '<div class="output-empty">No valid output yet.</div>';
+      feedback.className = 'feedback warn';
+      feedback.textContent = parsed.message;
+      if (idx === activeIdx) renderSourceTable([]);
+      return false;
+    }
+
+    const result = runQuery(parsed);
+    output.innerHTML = renderOutputTable(parsed.fields, result.output);
+    if (idx === activeIdx) renderSourceTable(result.rows.map(row => row.ActID));
+
+    const correct = matchesExpected(idx, parsed, result.output);
+    if (correct) {
+      feedback.className = 'feedback ok';
+      feedback.textContent = completed[idx] ? 'Correct.' : 'Correct. Moving to the next question...';
+      markDone(idx);
+      return true;
+    }
+
+    feedback.className = 'feedback warn';
+    feedback.textContent = 'This runs, but it does not match the question yet.';
+    return false;
+  }
+
+  function renderOutputTable(fields, rows) {
+    if (rows.length === 0) return '<div class="output-empty">The query is valid, but no records match.</div>';
+    return `
+      <div class="table-wrap" style="border:0;border-radius:0;">
+        <table>
+          <thead><tr>${fields.map(field => `<th>${field}</th>`).join('')}</tr></thead>
+          <tbody>
+            ${rows.map(row => `<tr>${fields.map(field => `<td>${escapeHtml(row[field])}</td>`).join('')}</tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  function matchesExpected(idx, parsed, actualOutput) {
+    const expected = QUESTIONS[idx];
+    if (!sameList(parsed.fields, expected.select)) return false;
+    if (parsed.table !== TABLE_NAME) return false;
+    if (parsed.where.field !== expected.where.field) return false;
+    if (parsed.where.op !== expected.where.op) return false;
+    if (normalValue(parsed.where.value) !== normalValue(expected.where.value)) return false;
+
+    const expectedRows = runQuery({ fields: expected.select, where: expected.where }).output;
+    return JSON.stringify(actualOutput) === JSON.stringify(expectedRows);
+  }
+
+  function sameList(a, b) {
+    return a.length === b.length && a.every((item, idx) => item === b[idx]);
+  }
+
+  function normalValue(value) {
+    return typeof value === 'number' ? String(value) : String(value).toLowerCase();
+  }
+
+  function markDone(idx) {
+    if (completed[idx]) return;
+    completed[idx] = true;
+    renderTabs();
+    updateProgress();
+
+    const pct = Math.round(completed.filter(Boolean).length / TASK_COUNT * 100);
+    window.Classroom?.submitGrade(pct, ACTIVITY_TITLE);
+
+    if (completed.every(Boolean)) {
+      allComplete();
+      return;
+    }
+
+    if (!advancing) {
+      advancing = true;
+      setTimeout(() => {
+        const next = completed.findIndex(done => !done);
+        if (next >= 0) showQuestion(next);
+        advancing = false;
+      }, 900);
+    }
+  }
+
+  function updateProgress() {
+    const pct = Math.round(completed.filter(Boolean).length / TASK_COUNT * 100);
+    document.getElementById('progress-fill').style.width = pct + '%';
+    document.getElementById('progress-pct').textContent = pct + '%';
+  }
+
+  function allComplete() {
+    document.getElementById('done-banner').classList.add('show');
+    document.getElementById('complete-note').classList.add('show');
+    window.ActivityUI?.launchCelebration();
+  }
+
+  function fieldByName(name) {
+    return FIELDS.find(field => field.toLowerCase() === String(name).toLowerCase());
+  }
+
+  function escapeHtml(value) {
+    return String(value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function saveState() {
+    const answers = QUESTIONS.map((_, idx) => document.getElementById('sql-' + idx)?.value || '');
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ answers, completed, activeIdx }));
+  }
+
+  function restoreState() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+      if (Array.isArray(saved.completed)) {
+        saved.completed.forEach((done, idx) => { completed[idx] = Boolean(done); });
+      }
+      if (Number.isInteger(saved.activeIdx) && saved.activeIdx >= 0 && saved.activeIdx < TASK_COUNT) {
+        activeIdx = saved.activeIdx;
+      }
+      if (Array.isArray(saved.answers)) {
+        saved.answers.forEach((answer, idx) => {
+          const editor = document.getElementById('sql-' + idx);
+          if (editor && typeof answer === 'string') editor.value = answer;
+        });
+      }
+    } catch (err) {
+      localStorage.removeItem(STORAGE_KEY);
+    }
+  }
+
+  document.getElementById('tab-bar').addEventListener('click', event => {
+    const tab = event.target.closest('.tab-btn');
+    if (!tab) return;
+    showQuestion(Number(tab.dataset.idx));
+  });
+
+  renderSourceTable();
+  renderTabs();
+  renderPanels();
+  restoreState();
+  renderTabs();
+  showQuestion(activeIdx, false);
+  updateProgress();
+  QUESTIONS.forEach((_, idx) => evaluateQuestion(idx));
+  if (completed.every(Boolean)) allComplete();
+</script>
+
+<script src="../../activity-ui.js"></script>
+<script src="../../classroom.js"></script>
+</body>
+</html>
