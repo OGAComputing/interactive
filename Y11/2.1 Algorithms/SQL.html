@@ -373,12 +373,13 @@ color:  blue
       <h2 class="section-title">Worked example</h2>
       <pre class="example-code">SELECT ActName
 FROM TblMusic
-WHERE Stage = "Hills"</pre>
+WHERE Stage LIKE "H%"</pre>
       <ul class="rule-list">
         <li><strong>SELECT</strong> the field names, separated with commas.</li>
+        <li><strong>SELECT *</strong> means show every field.</li>
         <li><strong>FROM</strong> the exact table name: <code>TblMusic</code>.</li>
         <li><strong>WHERE</strong> gives the condition records must match.</li>
-        <li>Use quotes around text values, e.g. <code>"Saturday"</code>.</li>
+        <li><strong>%</strong> matches any text when used with <code>LIKE</code>.</li>
       </ul>
     </aside>
   </div>
@@ -429,6 +430,19 @@ WHERE Stage = "Hills"</pre>
       starter: 'SELECT \nFROM TblMusic\nWHERE ',
       select: ['ActID', 'Stage', 'SetLength'],
       where: { field: 'Day', op: '=', value: 'Sunday' }
+    },
+    {
+      prompt: 'Use * to show every field for all acts playing on the Platinum stage.',
+      starter: 'SELECT *\nFROM TblMusic\nWHERE ',
+      select: FIELDS,
+      selectAll: true,
+      where: { field: 'Stage', op: '=', value: 'Platinum' }
+    },
+    {
+      prompt: 'Use % with LIKE to show the ActName and Stage for acts where the ActName ends with "Array".',
+      starter: 'SELECT ActName, Stage\nFROM TblMusic\nWHERE ActName LIKE ',
+      select: ['ActName', 'Stage'],
+      where: { field: 'ActName', op: 'LIKE', value: '%Array' }
     }
   ];
 
@@ -514,15 +528,17 @@ WHERE Stage = "Hills"</pre>
       return { ok: false, message: 'SQL uses WHERE for this condition, not IF.' };
     }
 
-    const match = cleaned.match(/^SELECT\s+(.+?)\s+FROM\s+([A-Za-z][A-Za-z0-9_]*)\s+WHERE\s+([A-Za-z][A-Za-z0-9_]*)\s*(=|==|>=|<=|>|<)\s*(.+)$/i);
+    const match = cleaned.match(/^SELECT\s+(.+?)\s+FROM\s+([A-Za-z][A-Za-z0-9_]*)\s+WHERE\s+([A-Za-z][A-Za-z0-9_]*)\s*(LIKE|=|==|>=|<=|>|<)\s*(.+)$/i);
     if (!match) {
       return { ok: false, message: 'Use SELECT fields FROM table WHERE field = value.' };
     }
 
-    const fields = match[1].split(',').map(part => part.trim()).filter(Boolean);
+    const selectText = match[1].trim();
+    const selectAll = selectText === '*';
+    const fields = selectAll ? [...FIELDS] : selectText.split(',').map(part => part.trim()).filter(Boolean);
     const table = match[2].trim();
     const whereField = match[3].trim();
-    const op = match[4] === '==' ? '=' : match[4];
+    const op = match[4].toUpperCase() === 'LIKE' ? 'LIKE' : (match[4] === '==' ? '=' : match[4]);
     const rawValue = match[5].trim();
     const parsedValue = parseValue(rawValue);
 
@@ -533,10 +549,12 @@ WHERE Stage = "Hills"</pre>
     const realWhereField = fieldByName(whereField);
     if (!realWhereField) return { ok: false, message: `Field name ${whereField} is not in this table.` };
     if (parsedValue.needsQuotes) return { ok: false, message: 'Text values need quotation marks.' };
+    if (op === 'LIKE' && typeof parsedValue.value !== 'string') return { ok: false, message: 'LIKE needs a quoted text pattern.' };
 
     return {
       ok: true,
       fields: fields.map(fieldByName),
+      selectAll,
       table: TABLE_NAME,
       where: { field: realWhereField, op, value: parsedValue.value }
     };
@@ -566,7 +584,14 @@ WHERE Stage = "Hills"</pre>
     if (op === '<') return a < b;
     if (op === '>=') return a >= b;
     if (op === '<=') return a <= b;
+    if (op === 'LIKE') return likeMatch(String(left), String(right));
     return false;
+  }
+
+  function likeMatch(value, pattern) {
+    const escaped = pattern.replace(/[.+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp('^' + escaped.replace(/%/g, '.*') + '$', 'i');
+    return regex.test(value);
   }
 
   function evaluateQuestion(idx) {
@@ -616,7 +641,7 @@ WHERE Stage = "Hills"</pre>
 
   function matchesExpected(idx, parsed, actualOutput) {
     const expected = QUESTIONS[idx];
-    if (!sameList(parsed.fields, expected.select)) return false;
+    if (expected.selectAll ? !parsed.selectAll : !sameList(parsed.fields, expected.select)) return false;
     if (parsed.table !== TABLE_NAME) return false;
     if (parsed.where.field !== expected.where.field) return false;
     if (parsed.where.op !== expected.where.op) return false;

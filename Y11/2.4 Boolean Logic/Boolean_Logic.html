@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<!-- ACTIVITY
+title:  Boolean Logic
+type:   Practice
+stars:  4
+desc:   Identify logic gates, complete truth tables, and analyse logic circuits — J277 2.4
+color:  blue
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Boolean Logic — Year 11</title>
+<link rel="stylesheet" href="../../shared.css">
+<style>
+  /* ── Sticky header ── */
+  header {
+    background: var(--surface);
+    border-bottom: 2px solid var(--surface-mid);
+    padding: 12px 20px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.35);
+  }
+  .header-progress { display: flex; align-items: center; gap: 10px; }
+  .score-pct {
+    font-family: var(--font-head, monospace);
+    font-size: 0.8rem; color: var(--accent);
+  }
+
+  .page-wrap { padding: 28px 16px 60px; }
+
+  .page-title {
+    font-size: 1.35rem; font-weight: 700; text-align: center;
+    color: var(--accent-light); margin-bottom: 4px;
+  }
+  .page-subtitle {
+    text-align: center; font-size: 0.82rem;
+    color: var(--muted); margin-bottom: 28px;
+  }
+
+  /* ── Pill tabs ── */
+  .tabs { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-bottom: 28px; }
+  .tab-btn {
+    padding: 8px 20px; border: 2px solid var(--surface-mid);
+    border-radius: 20px; background: var(--surface); color: var(--muted);
+    font-family: var(--font-body); font-size: 0.85rem; font-weight: 600;
+    cursor: pointer; transition: border-color 0.2s, background 0.2s, color 0.2s;
+    user-select: none;
+  }
+  .tab-btn:hover:not(.active) { border-color: var(--accent); color: var(--text); }
+  .tab-btn.active   { background: var(--accent); border-color: var(--accent); color: var(--text-inv); }
+  .tab-btn.done-green { background: var(--green); border-color: var(--green); color: #fff; }
+  .tab-btn.done-gold  { background: var(--gold);  border-color: var(--gold);  color: #111; }
+
+  /* ── Panels ── */
+  .panel { display: none; max-width: 880px; margin: 0 auto; animation: ac-fade-in 0.2s ease; }
+  .panel.active { display: block; }
+
+  /* ── Cards ── */
+  .card {
+    background: var(--surface); border-left: 4px solid var(--accent);
+    border-radius: 8px; padding: 18px 22px; margin-bottom: 22px;
+  }
+  .card h2 {
+    font-size: 0.82rem; font-weight: 700; color: var(--accent);
+    text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 12px;
+  }
+
+  .goal {
+    background: var(--surface); border-left: 4px solid var(--accent);
+    border-radius: 0 8px 8px 0; padding: 10px 16px;
+    font-size: 0.9rem; font-weight: 600; color: var(--text); margin-bottom: 20px;
+  }
+
+  .feedback {
+    min-height: 1.4em; font-size: 0.88rem; font-weight: 600; margin-top: 12px;
+  }
+  .feedback.correct { color: var(--green); }
+  .feedback.wrong   { color: var(--red); animation: ac-shake 0.35s ease; }
+
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 14px; }
+
+  .how-to {
+    font-size: 0.85rem; color: var(--muted); margin-bottom: 14px; line-height: 1.6;
+    padding: 10px 12px; background: var(--surface-mid); border-radius: 8px;
+  }
+  .how-to strong { color: var(--text); }
+
+  /* ── Question cards ── */
+  .question-card {
+    border: 1px solid var(--surface-mid);
+    border-radius: 8px; padding: 10px 12px; margin-bottom: 10px;
+    transition: border-color 0.25s, background 0.25s;
+  }
+  .question-card.is-correct { border-color: var(--green); background: rgba(16,185,129,.08); }
+  .question-card.is-wrong   { border-color: var(--red);   background: rgba(220,38,38,.08); }
+
+  .ac-select {
+    padding: 7px 10px; border: 2px solid var(--surface-mid);
+    border-radius: 7px; background: var(--bg); color: var(--text);
+    font-family: var(--font-body); font-size: 0.88rem; cursor: pointer;
+  }
+  .ac-select:focus { outline: none; border-color: var(--accent); }
+
+  /* ── Inline code expression ── */
+  .expr {
+    display: inline-block; font-family: var(--font-head, monospace);
+    background: var(--surface-mid); color: var(--accent-light);
+    padding: 3px 9px; border-radius: 6px;
+    font-size: 0.92rem; font-weight: 700;
+  }
+
+  /* ── Scenario input table ── */
+  .scenario-table {
+    width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 0.88rem;
+  }
+  .scenario-table th {
+    background: var(--surface-mid); color: var(--accent);
+    padding: 8px 12px; text-align: left; font-weight: 700;
+    font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.6px;
+  }
+  .scenario-table td {
+    padding: 7px 12px; border-bottom: 1px solid var(--surface-mid); color: var(--text);
+  }
+  .scenario-table tbody tr:last-child td { border-bottom: none; }
+
+  /* ── Gate display (Task 1) ── */
+  .gate-display {
+    display: flex; gap: 32px; flex-wrap: wrap;
+    justify-content: center; margin: 20px 0;
+  }
+  .gate-item {
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+  }
+  .gate-label {
+    font-size: 0.78rem; font-weight: 700; color: var(--accent);
+    text-transform: uppercase; letter-spacing: 0.8px;
+  }
+  .gate-card {
+    border: 1px solid var(--surface-mid); border-radius: 8px;
+    padding: 18px 20px; margin-bottom: 2px;
+    transition: border-color 0.25s, background 0.25s;
+    background: var(--bg);
+  }
+  .gate-card.is-correct { border-color: var(--green); background: rgba(16,185,129,.08); }
+  .gate-card.is-wrong   { border-color: var(--red);   background: rgba(220,38,38,.08); }
+
+  /* ── Truth tables ── */
+  .truth-table {
+    border-collapse: collapse; font-size: 0.88rem; margin-bottom: 10px;
+  }
+  .truth-table th {
+    background: var(--surface-mid); color: var(--accent);
+    padding: 8px 16px; text-align: center;
+    font-family: var(--font-head, monospace); font-weight: 700; font-size: 0.8rem;
+    letter-spacing: 0.8px;
+  }
+  .truth-table td {
+    padding: 6px 16px; text-align: center;
+    border-bottom: 1px solid var(--surface-mid);
+    font-family: var(--font-head, monospace);
+  }
+  .truth-table tbody tr:last-child td { border-bottom: none; }
+  .truth-table .tt-in { color: var(--muted); }
+  .truth-table td.cell-correct { background: rgba(16,185,129,.15); color: var(--green); font-weight: 700; }
+  .truth-table td.cell-wrong   { background: rgba(220,38,38,.12);  color: var(--red);   font-weight: 700; }
+  .truth-table td select { width: 62px; text-align: center; }
+
+  /* ── Side-by-side truth table trio (Task 2) ── */
+  .tt-group {
+    display: flex; gap: 28px; flex-wrap: wrap;
+    justify-content: center; margin-bottom: 10px;
+  }
+  .tt-group-item { display: flex; flex-direction: column; align-items: center; }
+  .tt-group-label {
+    font-size: 0.78rem; font-weight: 700; color: var(--accent);
+    text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px;
+  }
+
+  /* ── Circuit diagram ── */
+  .circuit-wrap {
+    display: flex; flex-direction: column; align-items: center; margin: 10px 0 20px;
+  }
+  .circuit-svg {
+    width: 100%; max-width: 560px; overflow: visible;
+  }
+
+  /* ── Gate selectors (Task 3) ── */
+  .gate-selector-row {
+    display: flex; gap: 24px; flex-wrap: wrap;
+    justify-content: center; margin-top: 16px;
+  }
+  .gate-selector { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .gate-selector label {
+    font-size: 0.78rem; font-weight: 700; color: var(--accent);
+    text-transform: uppercase; letter-spacing: 0.6px;
+  }
+</style>
+</head>
+
+<body>
+
+<!-- Completion banner -->
+<div id="done-banner" class="ac-banner gold">
+  🏆 All tasks complete — excellent work!
+</div>
+
+<!-- Sticky header -->
+<header>
+  <div class="header-progress">
+    <div class="ac-progress-bar" style="flex:1;">
+      <div class="ac-progress-fill" id="progress-fill"></div>
+    </div>
+    <span class="score-pct" id="progress-pct">0%</span>
+  </div>
+</header>
+
+<div class="page-wrap">
+  <h2 class="page-title">Boolean Logic</h2>
+  <p class="page-subtitle">2.4 Boolean Logic · J277</p>
+
+  <!-- Tab bar -->
+  <div class="tabs" id="tab-bar">
+    <button class="tab-btn active" data-idx="0">Task 1 · Gates</button>
+    <button class="tab-btn"        data-idx="1">Task 2 · Truth Tables</button>
+    <button class="tab-btn"        data-idx="2">Task 3 · Circuits</button>
+    <button class="tab-btn"        data-idx="3">Task 4 · Complex Tables</button>
+    <button class="tab-btn"        data-idx="4">Task 5 · Scenario</button>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       Task 1 — Identify the three logic gates
+  ══════════════════════════════════════════════════════════ -->
+  <div class="panel active" id="panel-0">
+    <div class="goal">🎯 Identify the three logic gates you need to know for GCSE.</div>
+
+    <div class="card">
+      <h2>Identify Each Gate</h2>
+      <p style="color:var(--muted);font-size:0.88rem;margin-bottom:4px;">
+        Three logic gate symbols are shown below. Select the correct name for each gate.
+      </p>
+      <p style="color:var(--muted);font-size:0.82rem;margin-bottom:18px;">
+        Remember: the <strong style="color:var(--text)">NOT gate</strong> must have a circle (bubble) at its output — without it, the symbol is just a buffer.
+      </p>
+
+      <div class="gate-display">
+
+        <!-- Gate A: AND -->
+        <div class="gate-item">
+          <span class="gate-label">Gate A</span>
+          <div class="gate-card" id="gc-a">
+            <!-- AND gate: flat left edge + semicircular right side -->
+            <!-- Body: M16,6 L40,6 arc to 40,50 L16,50; rightmost point at x=40+22=62, y=28 -->
+            <svg viewBox="0 0 90 56" width="110" height="68"
+                 style="display:block;color:var(--text);">
+              <path d="M16,6 L40,6 A22,22 0 0,1 40,50 L16,50 Z"
+                    stroke="currentColor" stroke-width="2.5" fill="none" stroke-linejoin="round"/>
+              <line x1="0"  y1="18" x2="16" y2="18" stroke="currentColor" stroke-width="2.5"/>
+              <line x1="0"  y1="38" x2="16" y2="38" stroke="currentColor" stroke-width="2.5"/>
+              <line x1="62" y1="28" x2="90" y2="28" stroke="currentColor" stroke-width="2.5"/>
+              <text x="4"  y="16" font-size="11" fill="var(--muted)" font-family="monospace">A</text>
+              <text x="4"  y="36" font-size="11" fill="var(--muted)" font-family="monospace">B</text>
+            </svg>
+          </div>
+          <select class="ac-select" id="sel-a">
+            <option value="">— select —</option>
+            <option value="AND">AND</option>
+            <option value="OR">OR</option>
+            <option value="NOT">NOT</option>
+          </select>
+        </div>
+
+        <!-- Gate B: OR -->
+        <div class="gate-item">
+          <span class="gate-label">Gate B</span>
+          <div class="gate-card" id="gc-b">
+            <!-- OR gate: curved concave back, curved top/bottom meeting at right point -->
+            <!-- Back curve from (16,50) to (16,6) via control (24,28) -->
+            <!-- Top  curve from (16,6)  to (62,28) via control (26,6)  -->
+            <!-- Bot  curve from (62,28) to (16,50) via control (26,50) -->
+            <!-- At y=18 and y=38, left spine sits at approx x=19        -->
+            <svg viewBox="0 0 90 56" width="110" height="68"
+                 style="display:block;color:var(--text);">
+              <path d="M16,6 Q26,6 62,28 Q26,50 16,50 Q24,28 16,6 Z"
+                    stroke="currentColor" stroke-width="2.5" fill="none" stroke-linejoin="round"/>
+              <line x1="0"  y1="18" x2="19" y2="18" stroke="currentColor" stroke-width="2.5"/>
+              <line x1="0"  y1="38" x2="19" y2="38" stroke="currentColor" stroke-width="2.5"/>
+              <line x1="62" y1="28" x2="90" y2="28" stroke="currentColor" stroke-width="2.5"/>
+              <text x="4"  y="16" font-size="11" fill="var(--muted)" font-family="monospace">A</text>
+              <text x="4"  y="36" font-size="11" fill="var(--muted)" font-family="monospace">B</text>
+            </svg>
+          </div>
+          <select class="ac-select" id="sel-b">
+            <option value="">— select —</option>
+            <option value="AND">AND</option>
+            <option value="OR">OR</option>
+            <option value="NOT">NOT</option>
+          </select>
+        </div>
+
+        <!-- Gate C: NOT -->
+        <div class="gate-item">
+          <span class="gate-label">Gate C</span>
+          <div class="gate-card" id="gc-c">
+            <!-- NOT gate: right-pointing triangle + bubble at output -->
+            <!-- Triangle: (16,6) (16,50) (54,28). Bubble: cx=59,r=5. Output from x=64 -->
+            <svg viewBox="0 0 90 56" width="110" height="68"
+                 style="display:block;color:var(--text);">
+              <polygon points="16,6 16,50 54,28"
+                       stroke="currentColor" stroke-width="2.5" fill="none"
+                       stroke-linejoin="round" stroke-linecap="round"/>
+              <circle cx="59" cy="28" r="5"
+                      stroke="currentColor" stroke-width="2.5" fill="none"/>
+              <line x1="0"  y1="28" x2="16" y2="28" stroke="currentColor" stroke-width="2.5"/>
+              <line x1="64" y1="28" x2="90" y2="28" stroke="currentColor" stroke-width="2.5"/>
+              <text x="4"  y="26" font-size="11" fill="var(--muted)" font-family="monospace">A</text>
+            </svg>
+          </div>
+          <select class="ac-select" id="sel-c">
+            <option value="">— select —</option>
+            <option value="AND">AND</option>
+            <option value="OR">OR</option>
+            <option value="NOT">NOT</option>
+          </select>
+        </div>
+
+      </div><!-- /.gate-display -->
+    </div>
+
+    <div class="row">
+      <button class="ac-btn" onclick="checkTask(0)">Check answers</button>
+    </div>
+    <div class="feedback" id="feedback-0"></div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       Task 2 — Single-gate truth tables
+  ══════════════════════════════════════════════════════════ -->
+  <div class="panel" id="panel-1">
+    <div class="goal">🎯 Complete the truth tables for the AND, OR, and NOT gates.</div>
+
+    <div class="card">
+      <h2>Truth Tables</h2>
+      <p style="color:var(--muted);font-size:0.88rem;margin-bottom:16px;">
+        Fill in the output column for each gate. Use <strong style="color:var(--text)">0</strong> for False and
+        <strong style="color:var(--text)">1</strong> for True.
+      </p>
+
+      <div class="tt-group">
+
+        <!-- AND -->
+        <div class="tt-group-item">
+          <span class="tt-group-label">AND gate</span>
+          <table class="truth-table">
+            <thead><tr><th>A</th><th>B</th><th>Output</th></tr></thead>
+            <tbody>
+              <tr><td class="tt-in">0</td><td class="tt-in">0</td>
+                  <td id="and-00"><select class="ac-select"><option value="">—</option><option>0</option><option>1</option></select></td></tr>
+              <tr><td class="tt-in">0</td><td class="tt-in">1</td>
+                  <td id="and-01"><select class="ac-select"><option value="">—</option><option>0</option><option>1</option></select></td></tr>
+              <tr><td class="tt-in">1</td><td class="tt-in">0</td>
+                  <td id="and-10"><select class="ac-select"><option value="">—</option><option>0</option><option>1</option></select></td></tr>
+              <tr><td class="tt-in">1</td><td class="tt-in">1</td>
+                  <td id="and-11"><select class="ac-select"><option value="">—</option><option>0</option><option>1</option></select></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- OR -->
+        <div class="tt-group-item">
+          <span class="tt-group-label">OR gate</span>
+          <table class="truth-table">
+            <thead><tr><th>A</th><th>B</th><th>Output</th></tr></thead>
+            <tbody>
+              <tr><td class="tt-in">0</td><td class="tt-in">0</td>
+                  <td id="or-00"><select class="ac-select"><option value="">—</option><option>0</option><option>1</option></select></td></tr>
+              <tr><td class="tt-in">0</td><td class="tt-in">1</td>
+                  <td id="or-01"><select class="ac-select"><option value="">—</option><option>0</option><option>1</option></select></td></tr>
+              <tr><td class="tt-in">1</td><td class="tt-in">0</td>
+                  <td id="or-10"><select class="ac-select"><option value="">—</option><option>0</option><option>1</option></select></td></tr>
+              <tr><td class="tt-in">1</td><td class="tt-in">1</td>
+                  <td id="or-11"><select class="ac-select"><option value="">—</option><option>0</option><option>1</option></select></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- NOT -->
+        <div class="tt-group-item">
+          <span class="tt-group-label">NOT gate</span>
+          <table class="truth-table">
+            <thead><tr><th>A</th><th>Output</th></tr></thead>
+            <tbody>
+              <tr><td class="tt-in">0</td>
+                  <td id="not-0"><select class="ac-select"><option value="">—</option><option>0</option><option>1</option></select></td></tr>
+              <tr><td class="tt-in">1</td>
+                  <td id="not-1"><select class="ac-select"><option value="">—</option><option>0</option><option>1</option></select></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div><!-- /.tt-group -->
+    </div>
+
+    <div class="row">
+      <button class="ac-btn" onclick="checkTask(1)">Check answers</button>
+    </div>
+    <div class="feedback" id="feedback-1"></div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       Task 3 — Identify gates in a circuit diagram
+  ══════════════════════════════════════════════════════════ -->
+  <div class="panel" id="panel-2">
+    <div class="goal">🎯 Identify the logic gate for each position in the circuit diagram.</div>
+
+    <div class="card">
+      <h2>Restaurant Discount System</h2>
+      <p style="color:var(--text);font-size:0.9rem;line-height:1.7;margin-bottom:12px;">
+        A fast food restaurant offers half-price meals to certain customers.
+        The offer is <strong>not valid on Saturdays</strong>.
+        A computer system determines whether a customer qualifies.
+      </p>
+
+      <table class="scenario-table">
+        <thead><tr><th>Input</th><th>Description</th><th>Value when True</th></tr></thead>
+        <tbody>
+          <tr><td><strong>A</strong></td><td>Customer is a student</td><td>Is a student</td></tr>
+          <tr><td><strong>B</strong></td><td>Customer has a discount card</td><td>Has a discount card</td></tr>
+          <tr><td><strong>C</strong></td><td>Day of the week</td><td>Today is Saturday</td></tr>
+        </tbody>
+      </table>
+
+      <p style="font-size:0.88rem;color:var(--muted);margin-bottom:16px;">
+        Output P is True when the customer qualifies. The logic expression is:
+        <span class="expr">P = (A OR B) AND NOT C</span>
+      </p>
+
+      <p style="font-size:0.85rem;color:var(--muted);margin-bottom:6px;">
+        Complete the logic diagram by identifying the gate that belongs in each numbered box.
+      </p>
+
+      <!-- Circuit diagram: P = (A OR B) AND NOT C
+           Layout: A,B → [Gate 1] → [Gate 3] → P
+                   C   → [Gate 2] → [Gate 3]
+      -->
+      <div class="circuit-wrap">
+        <svg class="circuit-svg" viewBox="0 0 560 200" style="color:var(--text);">
+
+          <!-- Input labels -->
+          <text x="8"  y="44"  font-size="14" font-weight="700" fill="currentColor" font-family="monospace">A</text>
+          <text x="8"  y="80"  font-size="14" font-weight="700" fill="currentColor" font-family="monospace">B</text>
+          <text x="8"  y="156" font-size="14" font-weight="700" fill="currentColor" font-family="monospace">C</text>
+
+          <!-- A → Gate 1 -->
+          <line x1="22" y1="41" x2="110" y2="41" stroke="currentColor" stroke-width="2"/>
+          <!-- B → Gate 1 -->
+          <line x1="22" y1="77" x2="110" y2="77" stroke="currentColor" stroke-width="2"/>
+          <!-- C → Gate 2 -->
+          <line x1="22" y1="153" x2="110" y2="153" stroke="currentColor" stroke-width="2"/>
+
+          <!-- Gate 1 box -->
+          <rect x="110" y="24" width="110" height="70" rx="7"
+                stroke="var(--accent)" stroke-width="2" fill="var(--surface-mid)"/>
+          <text x="165" y="54"  text-anchor="middle" font-size="11" font-weight="700"
+                fill="var(--accent)" font-family="monospace" letter-spacing="0.5">GATE 1</text>
+          <text x="165" y="70"  text-anchor="middle" font-size="10"
+                fill="var(--muted)" font-family="monospace">2 inputs</text>
+          <text x="165" y="84"  text-anchor="middle" font-size="10"
+                fill="var(--muted)" font-family="monospace">A, B</text>
+
+          <!-- Gate 2 box -->
+          <rect x="110" y="132" width="110" height="44" rx="7"
+                stroke="var(--accent)" stroke-width="2" fill="var(--surface-mid)"/>
+          <text x="165" y="152" text-anchor="middle" font-size="11" font-weight="700"
+                fill="var(--accent)" font-family="monospace" letter-spacing="0.5">GATE 2</text>
+          <text x="165" y="168" text-anchor="middle" font-size="10"
+                fill="var(--muted)" font-family="monospace">input C</text>
+
+          <!-- Gate 1 output → Gate 3 (diagonal wire from right of Gate 1 to top-left of Gate 3) -->
+          <line x1="220" y1="59" x2="320" y2="91" stroke="currentColor" stroke-width="2"/>
+          <!-- Gate 2 output → Gate 3 -->
+          <line x1="220" y1="154" x2="320" y2="111" stroke="currentColor" stroke-width="2"/>
+
+          <!-- Gate 3 box -->
+          <rect x="320" y="74" width="110" height="70" rx="7"
+                stroke="var(--accent)" stroke-width="2" fill="var(--surface-mid)"/>
+          <text x="375" y="104" text-anchor="middle" font-size="11" font-weight="700"
+                fill="var(--accent)" font-family="monospace" letter-spacing="0.5">GATE 3</text>
+          <text x="375" y="120" text-anchor="middle" font-size="10"
+                fill="var(--muted)" font-family="monospace">2 inputs</text>
+          <text x="375" y="134" text-anchor="middle" font-size="10"
+                fill="var(--muted)" font-family="monospace">Gate1, Gate2</text>
+
+          <!-- Gate 3 → P -->
+          <line x1="430" y1="109" x2="538" y2="109" stroke="currentColor" stroke-width="2"/>
+          <text x="542" y="113" font-size="14" font-weight="700" fill="currentColor" font-family="monospace">P</text>
+
+        </svg>
+      </div>
+
+      <!-- Gate selectors -->
+      <div class="gate-selector-row">
+        <div class="gate-selector">
+          <label for="cg1">Gate 1</label>
+          <div class="question-card" id="qc-cg1" style="padding:8px 10px;">
+            <select class="ac-select" id="cg1">
+              <option value="">— select —</option>
+              <option value="AND">AND</option>
+              <option value="OR">OR</option>
+              <option value="NOT">NOT</option>
+            </select>
+          </div>
+        </div>
+        <div class="gate-selector">
+          <label for="cg2">Gate 2</label>
+          <div class="question-card" id="qc-cg2" style="padding:8px 10px;">
+            <select class="ac-select" id="cg2">
+              <option value="">— select —</option>
+              <option value="AND">AND</option>
+              <option value="OR">OR</option>
+              <option value="NOT">NOT</option>
+            </select>
+          </div>
+        </div>
+        <div class="gate-selector">
+          <label for="cg3">Gate 3</label>
+          <div class="question-card" id="qc-cg3" style="padding:8px 10px;">
+            <select class="ac-select" id="cg3">
+              <option value="">— select —</option>
+              <option value="AND">AND</option>
+              <option value="OR">OR</option>
+              <option value="NOT">NOT</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <button class="ac-btn" onclick="checkTask(2)">Check answers</button>
+    </div>
+    <div class="feedback" id="feedback-2"></div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       Task 4 — Complete a compound truth table
+  ══════════════════════════════════════════════════════════ -->
+  <div class="panel" id="panel-3">
+    <div class="goal">🎯 Complete the full truth table for a compound Boolean expression.</div>
+
+    <div class="card">
+      <h2>Complete the Truth Table</h2>
+      <p style="font-size:0.88rem;color:var(--muted);margin-bottom:14px;">
+        Complete all 8 rows of the truth table for:
+        <span class="expr">P = (A AND B) OR C</span>
+      </p>
+      <div class="how-to">
+        <strong>Tip:</strong> Work out the inner bracket first — calculate <strong>(A AND B)</strong>
+        for each row, then apply <strong>OR C</strong> to get P.
+      </div>
+
+      <table class="truth-table">
+        <thead>
+          <tr><th>A</th><th>B</th><th>C</th><th>P</th></tr>
+        </thead>
+        <tbody>
+          <!-- P = (A AND B) OR C
+               Row answers: 0,1,0,1,0,1,1,1 -->
+          <tr><td class="tt-in">0</td><td class="tt-in">0</td><td class="tt-in">0</td>
+              <td id="t4-0"><select class="ac-select"><option value="">—</option><option>0</option><option>1</option></select></td></tr>
+          <tr><td class="tt-in">0</td><td class="tt-in">0</td><td class="tt-in">1</td>
+              <td id="t4-1"><select class="ac-select"><option value="">—</option><option>0</option><option>1</option></select></td></tr>
+          <tr><td class="tt-in">0</td><td class="tt-in">1</td><td class="tt-in">0</td>
+              <td id="t4-2"><select class="ac-select"><option value="">—</option><option>0</option><option>1</option></select></td></tr>
+          <tr><td class="tt-in">0</td><td class="tt-in">1</td><td class="tt-in">1</td>
+              <td id="t4-3"><select class="ac-select"><option value="">—</option><option>0</option><option>1</option></select></td></tr>
+          <tr><td class="tt-in">1</td><td class="tt-in">0</td><td class="tt-in">0</td>
+              <td id="t4-4"><select class="ac-select"><option value="">—</option><option>0</option><option>1</option></select></td></tr>
+          <tr><td class="tt-in">1</td><td class="tt-in">0</td><td class="tt-in">1</td>
+              <td id="t4-5"><select class="ac-select"><option value="">—</option><option>0</option><option>1</option></select></td></tr>
+          <tr><td class="tt-in">1</td><td class="tt-in">1</td><td class="tt-in">0</td>
+              <td id="t4-6"><select class="ac-select"><option value="">—</option><option>0</option><option>1</option></select></td></tr>
+          <tr><td class="tt-in">1</td><td class="tt-in">1</td><td class="tt-in">1</td>
+              <td id="t4-7"><select class="ac-select"><option value="">—</option><option>0</option><option>1</option></select></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="row">
+      <button class="ac-btn" onclick="checkTask(3)">Check answers</button>
+    </div>
+    <div class="feedback" id="feedback-3"></div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       Task 5 — Scenario: security system, full analysis
+  ══════════════════════════════════════════════════════════ -->
+  <div class="panel" id="panel-4">
+    <div class="goal">🎯 Analyse the complete logic system for an online payment security check.</div>
+
+    <div class="card">
+      <h2>Online Payment Security System</h2>
+      <p style="color:var(--text);font-size:0.9rem;line-height:1.7;margin-bottom:12px;">
+        A security system protects online credit card payments.
+        The output P is True when <strong>both</strong> of the following are True:
+      </p>
+      <ul style="color:var(--text);font-size:0.9rem;line-height:2;margin-bottom:14px;padding-left:20px;">
+        <li>The user has entered either their correct password <strong>or</strong> their correct PIN</li>
+        <li>The card is <strong>not</strong> blocked</li>
+      </ul>
+      <table class="scenario-table">
+        <thead><tr><th>Input</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><strong>A</strong></td><td>True when the user enters their correct password</td></tr>
+          <tr><td><strong>B</strong></td><td>True when the user enters their correct PIN</td></tr>
+          <tr><td><strong>C</strong></td><td>True when the card is blocked</td></tr>
+        </tbody>
+      </table>
+      <p style="font-size:0.88rem;color:var(--muted);">
+        The logic expression for the system is:
+        <span class="expr">P = (A OR B) AND NOT C</span>
+      </p>
+    </div>
+
+    <div class="card">
+      <h2>Part (a) — Complete the Truth Table</h2>
+      <p style="font-size:0.88rem;color:var(--muted);margin-bottom:14px;">
+        The intermediate columns <strong>A OR B</strong> and <strong>NOT C</strong> have been
+        filled in to help you. Complete the final column P.
+      </p>
+      <div class="how-to">
+        <strong>Tip:</strong> P is True only when <strong>both</strong> A&nbsp;OR&nbsp;B <strong>and</strong>
+        NOT&nbsp;C are True. Use the intermediate columns as your working.
+      </div>
+
+      <table class="truth-table">
+        <thead>
+          <tr><th>A</th><th>B</th><th>C</th><th>A OR B</th><th>NOT C</th><th>P</th></tr>
+        </thead>
+        <tbody>
+          <!-- P = (A OR B) AND NOT C. Answers: 0,0,1,0,1,0,1,0 -->
+          <tr>
+            <td class="tt-in">0</td><td class="tt-in">0</td><td class="tt-in">0</td>
+            <td class="tt-in">0</td><td class="tt-in">1</td>
+            <td id="t5-0"><select class="ac-select"><option value="">—</option><option>0</option><option>1</option></select></td>
+          </tr>
+          <tr>
+            <td class="tt-in">0</td><td class="tt-in">0</td><td class="tt-in">1</td>
+            <td class="tt-in">0</td><td class="tt-in">0</td>
+            <td id="t5-1"><select class="ac-select"><option value="">—</option><option>0</option><option>1</option></select></td>
+          </tr>
+          <tr>
+            <td class="tt-in">0</td><td class="tt-in">1</td><td class="tt-in">0</td>
+            <td class="tt-in">1</td><td class="tt-in">1</td>
+            <td id="t5-2"><select class="ac-select"><option value="">—</option><option>0</option><option>1</option></select></td>
+          </tr>
+          <tr>
+            <td class="tt-in">0</td><td class="tt-in">1</td><td class="tt-in">1</td>
+            <td class="tt-in">1</td><td class="tt-in">0</td>
+            <td id="t5-3"><select class="ac-select"><option value="">—</option><option>0</option><option>1</option></select></td>
+          </tr>
+          <tr>
+            <td class="tt-in">1</td><td class="tt-in">0</td><td class="tt-in">0</td>
+            <td class="tt-in">1</td><td class="tt-in">1</td>
+            <td id="t5-4"><select class="ac-select"><option value="">—</option><option>0</option><option>1</option></select></td>
+          </tr>
+          <tr>
+            <td class="tt-in">1</td><td class="tt-in">0</td><td class="tt-in">1</td>
+            <td class="tt-in">1</td><td class="tt-in">0</td>
+            <td id="t5-5"><select class="ac-select"><option value="">—</option><option>0</option><option>1</option></select></td>
+          </tr>
+          <tr>
+            <td class="tt-in">1</td><td class="tt-in">1</td><td class="tt-in">0</td>
+            <td class="tt-in">1</td><td class="tt-in">1</td>
+            <td id="t5-6"><select class="ac-select"><option value="">—</option><option>0</option><option>1</option></select></td>
+          </tr>
+          <tr>
+            <td class="tt-in">1</td><td class="tt-in">1</td><td class="tt-in">1</td>
+            <td class="tt-in">1</td><td class="tt-in">0</td>
+            <td id="t5-7"><select class="ac-select"><option value="">—</option><option>0</option><option>1</option></select></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>Part (b) — Truth Table Size</h2>
+      <div class="question-card" id="qc-t5b">
+        <p style="color:var(--text);font-size:0.9rem;line-height:1.7;margin-bottom:10px;">
+          State how many rows (excluding the heading) would be required in a truth table
+          for a logic expression with <strong>4 inputs</strong>.
+        </p>
+        <select class="ac-select" id="t5-rows">
+          <option value="">— select —</option>
+          <option value="4">4</option>
+          <option value="8">8</option>
+          <option value="12">12</option>
+          <option value="16">16</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="row">
+      <button class="ac-btn" onclick="checkTask(4)">Check answers</button>
+    </div>
+    <div class="feedback" id="feedback-4"></div>
+  </div>
+
+</div><!-- /.page-wrap -->
+
+<div class="ac-toast" id="toast"></div>
+
+<script>
+  // ── State ──────────────────────────────────────────────────
+  const TASK_COUNT    = 5;
+  const ACTIVITY_TITLE = 'Boolean Logic';
+  const completed     = new Array(TASK_COUNT).fill(false);
+
+  // ── Tab switching ──────────────────────────────────────────
+  document.getElementById('tab-bar').addEventListener('click', e => {
+    const tab = e.target.closest('.tab-btn');
+    if (!tab) return;
+    const idx = +tab.dataset.idx;
+    document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p  => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('panel-' + idx).classList.add('active');
+  });
+
+  // ── Per-item highlight helpers ─────────────────────────────
+  function setCardState(id, ok) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.classList.toggle('is-correct', ok);
+    el.classList.toggle('is-wrong',   !ok);
+  }
+
+  function setCellState(id, ok) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.classList.toggle('cell-correct', ok);
+    el.classList.toggle('cell-wrong',   !ok);
+  }
+
+  // ── Task dispatch ──────────────────────────────────────────
+  function checkTask(idx) {
+    if (window.Classroom?.verifyAuth() === false) return;
+    const ok = [check0, check1, check2, check3, check4][idx]();
+    const fb = document.getElementById('feedback-' + idx);
+    if (ok) {
+      fb.textContent = '✅ Correct!';
+      fb.className   = 'feedback correct';
+      markDone(idx, 'gold');
+    } else {
+      fb.textContent = '❌ Not quite — check the highlighted answers and try again.';
+      fb.className   = 'feedback wrong';
+    }
+  }
+
+  // ── Task 1: Gate identification ────────────────────────────
+  // Gate A = AND, Gate B = OR, Gate C = NOT
+  function check0() {
+    const answers = { a: 'AND', b: 'OR', c: 'NOT' };
+    let all = true;
+    for (const [k, expected] of Object.entries(answers)) {
+      const ok = document.getElementById('sel-' + k)?.value === expected;
+      setCardState('gc-' + k, ok);
+      if (!ok) all = false;
+    }
+    return all;
+  }
+
+  // ── Task 2: Single-gate truth tables ──────────────────────
+  function check1() {
+    const cells = {
+      'and-00': '0', 'and-01': '0', 'and-10': '0', 'and-11': '1',
+      'or-00':  '0', 'or-01':  '1', 'or-10':  '1', 'or-11':  '1',
+      'not-0':  '1', 'not-1':  '0'
+    };
+    let all = true;
+    for (const [id, expected] of Object.entries(cells)) {
+      const val = document.getElementById(id)?.querySelector('select')?.value;
+      const ok  = val === expected;
+      setCellState(id, ok);
+      if (!ok) all = false;
+    }
+    return all;
+  }
+
+  // ── Task 3: Circuit gate identification ───────────────────
+  // P = (A OR B) AND NOT C → Gate1=OR, Gate2=NOT, Gate3=AND
+  function check2() {
+    const ans = { cg1: 'OR', cg2: 'NOT', cg3: 'AND' };
+    let all = true;
+    for (const [id, expected] of Object.entries(ans)) {
+      const ok = document.getElementById(id)?.value === expected;
+      setCardState('qc-' + id, ok);
+      if (!ok) all = false;
+    }
+    return all;
+  }
+
+  // ── Task 4: P = (A AND B) OR C ────────────────────────────
+  // A B C → (A AND B) → OR C = P
+  // 0 0 0 → 0 → 0
+  // 0 0 1 → 0 → 1
+  // 0 1 0 → 0 → 0
+  // 0 1 1 → 0 → 1
+  // 1 0 0 → 0 → 0
+  // 1 0 1 → 0 → 1
+  // 1 1 0 → 1 → 1
+  // 1 1 1 → 1 → 1
+  function check3() {
+    const expected = ['0','1','0','1','0','1','1','1'];
+    let all = true;
+    for (let i = 0; i < 8; i++) {
+      const val = document.getElementById('t4-' + i)?.querySelector('select')?.value;
+      const ok  = val === expected[i];
+      setCellState('t4-' + i, ok);
+      if (!ok) all = false;
+    }
+    return all;
+  }
+
+  // ── Task 5: P = (A OR B) AND NOT C + rows question ────────
+  // 0 0 0: AorB=0, notC=1 → 0 AND 1 = 0
+  // 0 0 1: AorB=0, notC=0 → 0 AND 0 = 0
+  // 0 1 0: AorB=1, notC=1 → 1 AND 1 = 1
+  // 0 1 1: AorB=1, notC=0 → 1 AND 0 = 0
+  // 1 0 0: AorB=1, notC=1 → 1 AND 1 = 1
+  // 1 0 1: AorB=1, notC=0 → 1 AND 0 = 0
+  // 1 1 0: AorB=1, notC=1 → 1 AND 1 = 1
+  // 1 1 1: AorB=1, notC=0 → 1 AND 0 = 0
+  function check4() {
+    const expected = ['0','0','1','0','1','0','1','0'];
+    let all = true;
+    for (let i = 0; i < 8; i++) {
+      const val = document.getElementById('t5-' + i)?.querySelector('select')?.value;
+      const ok  = val === expected[i];
+      setCellState('t5-' + i, ok);
+      if (!ok) all = false;
+    }
+    // Part b: 2^4 = 16
+    const rowsOk = document.getElementById('t5-rows')?.value === '16';
+    setCardState('qc-t5b', rowsOk);
+    if (!rowsOk) all = false;
+    return all;
+  }
+
+  // ── Mark a task done ───────────────────────────────────────
+  function markDone(idx, type = 'gold') {
+    if (completed[idx]) return;
+    completed[idx] = true;
+    const tab = document.querySelector('.tab-btn[data-idx="' + idx + '"]');
+    if (tab) tab.classList.add('done-' + type);
+    updateProgress();
+    const pct = Math.round(completed.filter(Boolean).length / TASK_COUNT * 100);
+    window.Classroom?.submitGrade(pct, ACTIVITY_TITLE);
+    if (completed.every(Boolean)) allComplete();
+  }
+
+  // ── Progress bar ───────────────────────────────────────────
+  function updateProgress() {
+    const pct = Math.round(completed.filter(Boolean).length / TASK_COUNT * 100);
+    document.getElementById('progress-fill').style.width = pct + '%';
+    document.getElementById('progress-pct').textContent  = pct + '%';
+  }
+
+  // ── All tasks complete ─────────────────────────────────────
+  function allComplete() {
+    document.getElementById('done-banner').classList.add('show');
+    window.ActivityUI?.launchCelebration();
+  }
+
+  const showToast = (msg, type = '') => window.ActivityUI?.showToast(msg, type);
+</script>
+
+<script src="../../activity-ui.js"></script>
+<script src="../../classroom.js"></script>
+</body>
+</html>
