@@ -278,6 +278,34 @@ color:  blue
     white-space: pre-wrap;
   }
 
+  .example-toggle {
+    width: 100%;
+    background: var(--surface-mid);
+    border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--surface-mid));
+    border-radius: 6px;
+    color: var(--accent-light);
+    font-size: 0.82rem;
+    font-weight: 700;
+    padding: 7px 10px;
+    cursor: pointer;
+    text-align: left;
+    margin-bottom: 8px;
+    transition: background 0.2s;
+  }
+
+  .example-toggle:hover {
+    background: color-mix(in srgb, var(--accent) 14%, var(--surface-mid));
+  }
+
+  .example-body {
+    display: none;
+  }
+
+  .example-body.open {
+    display: block;
+    animation: ac-fade-in 0.2s ease;
+  }
+
   .rule-list {
     margin: 0;
     padding: 0;
@@ -371,16 +399,19 @@ color:  blue
 
     <aside class="side-panel" aria-label="Worked example and SQL reminders">
       <h2 class="section-title">Worked example</h2>
-      <pre class="example-code">SELECT ActName
+      <button class="example-toggle" id="example-toggle" aria-expanded="false">Show worked example ▸</button>
+      <div class="example-body" id="example-body">
+        <pre class="example-code">SELECT ActName
 FROM TblMusic
 WHERE Stage LIKE "H%"</pre>
-      <ul class="rule-list">
-        <li><strong>SELECT</strong> the field names, separated with commas.</li>
-        <li><strong>SELECT *</strong> means show every field.</li>
-        <li><strong>FROM</strong> the exact table name: <code>TblMusic</code>.</li>
-        <li><strong>WHERE</strong> gives the condition records must match.</li>
-        <li><strong>%</strong> matches any text when used with <code>LIKE</code>.</li>
-      </ul>
+        <ul class="rule-list">
+          <li><strong>SELECT</strong> the field names, separated with commas.</li>
+          <li><strong>SELECT *</strong> means show every field.</li>
+          <li><strong>FROM</strong> the exact table name: <code>TblMusic</code>.</li>
+          <li><strong>WHERE</strong> gives the condition records must match.</li>
+          <li><strong>%</strong> matches any text when used with <code>LIKE</code>.</li>
+        </ul>
+      </div>
     </aside>
   </div>
 
@@ -403,44 +434,44 @@ WHERE Stage LIKE "H%"</pre>
   const QUESTIONS = [
     {
       prompt: 'Show the ActID and Stage for all acts playing on Saturday.',
-      starter: 'SELECT \nFROM TblMusic\nWHERE ',
+      starter: '',
       select: ['ActID', 'Stage'],
       where: { field: 'Day', op: '=', value: 'Saturday' }
     },
     {
       prompt: 'Show the ActName and SetLength for all acts on the Platinum stage.',
-      starter: 'SELECT \nFROM TblMusic\nWHERE ',
+      starter: '',
       select: ['ActName', 'SetLength'],
       where: { field: 'Stage', op: '=', value: 'Platinum' }
     },
     {
       prompt: 'Show the ActID, ActName and Day for all acts with a set length of 1.0 hours.',
-      starter: 'SELECT \nFROM TblMusic\nWHERE ',
+      starter: '',
       select: ['ActID', 'ActName', 'Day'],
       where: { field: 'SetLength', op: '=', value: 1.0 }
     },
     {
       prompt: 'Show the ActName and Stage for all acts with a set length greater than 1.0 hours.',
-      starter: 'SELECT \nFROM TblMusic\nWHERE ',
+      starter: '',
       select: ['ActName', 'Stage'],
       where: { field: 'SetLength', op: '>', value: 1.0 }
     },
     {
       prompt: 'Show the ActID, Stage and SetLength for all acts playing on Sunday.',
-      starter: 'SELECT \nFROM TblMusic\nWHERE ',
+      starter: '',
       select: ['ActID', 'Stage', 'SetLength'],
       where: { field: 'Day', op: '=', value: 'Sunday' }
     },
     {
       prompt: 'Use * to show every field for all acts playing on the Platinum stage.',
-      starter: 'SELECT *\nFROM TblMusic\nWHERE ',
+      starter: '',
       select: FIELDS,
       selectAll: true,
       where: { field: 'Stage', op: '=', value: 'Platinum' }
     },
     {
       prompt: 'Use % with LIKE to show the ActName and Stage for acts where the ActName ends with "Array".',
-      starter: 'SELECT ActName, Stage\nFROM TblMusic\nWHERE ActName LIKE ',
+      starter: '',
       select: ['ActName', 'Stage'],
       where: { field: 'ActName', op: 'LIKE', value: '%Array' }
     }
@@ -732,6 +763,14 @@ WHERE Stage LIKE "H%"</pre>
       localStorage.removeItem(STORAGE_KEY);
     }
   }
+
+  document.getElementById('example-toggle').addEventListener('click', () => {
+    const body = document.getElementById('example-body');
+    const btn = document.getElementById('example-toggle');
+    const open = body.classList.toggle('open');
+    btn.textContent = open ? 'Hide worked example ▾' : 'Show worked example ▸';
+    btn.setAttribute('aria-expanded', String(open));
+  });
 
   document.getElementById('tab-bar').addEventListener('click', event => {
     const tab = event.target.closest('.tab-btn');
