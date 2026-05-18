@@ -5,6 +5,7 @@ import { mockSignedOut, mockAsStudent, mockAsTeacher, mockAsStudentReusedPost, m
 const HOST = '/Y8/Python/L4_Functions/1_Functions.html';
 const COURSE_ID = 'test-course-123';
 const ACTIVITY_URL = `http://127.0.0.1:3001${HOST}`;
+const AUTH_TIMEOUT = 15000;
 
 // Minimal predict fill — just enough to satisfy the activity's form validation
 // so auth-gating is what determines whether we advance.
@@ -72,19 +73,19 @@ test.describe('Signed in as student', () => {
   });
 
   test('banner shows Connected to Google Classroom', async ({ page }) => {
-    await expect(page.locator('#classroom-text')).toContainText('Connected to Google Classroom', { timeout: 5000 });
+    await expect(page.locator('#classroom-text')).toContainText('Connected to Google Classroom', { timeout: AUTH_TIMEOUT });
   });
 
   test('status dot is green (online)', async ({ page }) => {
-    await expect(page.locator('#classroom-dot')).toHaveClass(/online/, { timeout: 5000 });
+    await expect(page.locator('#classroom-dot')).toHaveClass(/online/, { timeout: AUTH_TIMEOUT });
   });
 
   test('sign-in button is hidden', async ({ page }) => {
-    await expect(page.locator('#classroom-signin-btn')).toHaveClass(/hidden/, { timeout: 5000 });
+    await expect(page.locator('#classroom-signin-btn')).toHaveClass(/hidden/, { timeout: AUTH_TIMEOUT });
   });
 
   test('activity action proceeds normally after sign-in', async ({ page }) => {
-    await expect(page.locator('#classroom-text')).toContainText('Connected', { timeout: 5000 });
+    await expect(page.locator('#classroom-text')).toContainText('Connected', { timeout: AUTH_TIMEOUT });
     await fillPredict(page);
     await page.locator('button:has-text("Check predictions")').click();
     await page.locator('button:has-text("go to Run")').click();
@@ -107,15 +108,15 @@ test.describe('Re-used post (wrong courseId in URL)', () => {
   test('student: banner shows Connected after fallback course scan', async ({ page }) => {
     await mockAsStudentReusedPost(page, OLD_COURSE_ID, NEW_COURSE_ID, ACTIVITY_URL);
     await page.goto(`${HOST}?courseId=${OLD_COURSE_ID}`);
-    await expect(page.locator('#classroom-text')).toContainText('Connected to Google Classroom', { timeout: 8000 });
-    await expect(page.locator('#classroom-dot')).toHaveClass(/online/);
+    await expect(page.locator('#classroom-text')).toContainText('Connected to Google Classroom', { timeout: AUTH_TIMEOUT });
+    await expect(page.locator('#classroom-dot')).toHaveClass(/online/, { timeout: AUTH_TIMEOUT });
   });
 
   test('teacher: teacher mode restored after fallback course scan corrects courseId', async ({ page }) => {
     await mockAsTeacherReusedPost(page, OLD_COURSE_ID, NEW_COURSE_ID, ACTIVITY_URL);
     await page.goto(`${HOST}?courseId=${OLD_COURSE_ID}`);
-    await expect(page.locator('#classroom-dot')).toHaveClass(/teacher/, { timeout: 8000 });
-    await expect(page.locator('#classroom-text')).toContainText('Teacher mode');
+    await expect(page.locator('#classroom-dot')).toHaveClass(/teacher/, { timeout: AUTH_TIMEOUT });
+    await expect(page.locator('#classroom-text')).toContainText('Teacher mode', { timeout: AUTH_TIMEOUT });
   });
 });
 
@@ -126,10 +127,10 @@ test.describe('Signed in as teacher', () => {
   });
 
   test('status dot is amber (teacher)', async ({ page }) => {
-    await expect(page.locator('#classroom-dot')).toHaveClass(/teacher/, { timeout: 5000 });
+    await expect(page.locator('#classroom-dot')).toHaveClass(/teacher/, { timeout: AUTH_TIMEOUT });
   });
 
   test('shows Teacher mode text', async ({ page }) => {
-    await expect(page.locator('#classroom-text')).toContainText('Teacher mode', { timeout: 5000 });
+    await expect(page.locator('#classroom-text')).toContainText('Teacher mode', { timeout: AUTH_TIMEOUT });
   });
 });

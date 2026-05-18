@@ -48,7 +48,7 @@ test.describe('ActivityUI shared helpers', () => {
       window.__celebrations = [];
       window.addEventListener('activity-ui:celebration-start', e => window.__celebrations.push(e.detail.effect));
       window.ActivityUI.resetCelebration();
-      window.ActivityUI.launchCelebration({ effectIndex: 3 });
+      window.ActivityUI.launchCelebration({ effectIndex: 4 });
     });
 
     await expect.poll(() => page.evaluate(() => window.__celebrations)).toEqual(['badge-pop']);
@@ -61,14 +61,14 @@ test.describe('ActivityUI shared helpers', () => {
       window.__count = 0;
       window.addEventListener('activity-ui:celebration-start', () => window.__count++);
       window.ActivityUI.resetCelebration();
-      window.ActivityUI.launchCelebration({ effectIndex: 3 });
-      window.ActivityUI.launchCelebration({ effectIndex: 3 });
+      window.ActivityUI.launchCelebration({ effectIndex: 4 });
+      window.ActivityUI.launchCelebration({ effectIndex: 4 });
     });
     await expect.poll(() => page.evaluate(() => window.__count)).toBe(1);
 
     await page.evaluate(() => {
       window.ActivityUI.resetCelebration();
-      window.ActivityUI.launchCelebration({ effectIndex: 3 });
+      window.ActivityUI.launchCelebration({ effectIndex: 4 });
     });
     await expect.poll(() => page.evaluate(() => window.__count)).toBe(2);
   });
@@ -80,7 +80,7 @@ test.describe('ActivityUI shared helpers', () => {
       window.__count = 0;
       window.addEventListener('activity-ui:celebration-start', () => window.__count++);
       window.ActivityUI.resetCelebration();
-      return window.ActivityUI.launchCelebration({ effectIndex: 3 });
+      return window.ActivityUI.launchCelebration({ effectIndex: 4 });
     });
 
     expect(result).toBe(false);
