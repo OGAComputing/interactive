@@ -330,6 +330,23 @@ color:  blue
     font-family: Consolas, "Courier New", monospace;
   }
 
+  .run-btn {
+    margin-top: 8px;
+    padding: 7px 18px;
+    background: var(--accent);
+    color: var(--text-inv);
+    border: none;
+    border-radius: 6px;
+    font-weight: 800;
+    font-size: 0.88rem;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+
+  .run-btn:hover {
+    opacity: 0.85;
+  }
+
   .complete-note {
     display: none;
     text-align: center;
@@ -375,7 +392,7 @@ color:  blue
   <p class="page-subtitle">Write GCSE-style SQL queries. The selected records and output update as you type.</p>
 
   <section class="data-panel" aria-labelledby="data-title">
-    <h2 class="section-title" id="data-title">Database table: TblMusic</h2>
+    <h2 class="section-title" id="data-title">Database table: <span style="text-transform:none">tbl_music</span></h2>
     <div class="table-wrap">
       <table id="source-table">
         <thead>
@@ -402,12 +419,12 @@ color:  blue
       <button class="example-toggle" id="example-toggle" aria-expanded="false">Show worked example ▸</button>
       <div class="example-body" id="example-body">
         <pre class="example-code">SELECT ActName
-FROM TblMusic
+FROM tbl_music
 WHERE Stage LIKE "H%"</pre>
         <ul class="rule-list">
           <li><strong>SELECT</strong> the field names, separated with commas.</li>
           <li><strong>SELECT *</strong> means show every field.</li>
-          <li><strong>FROM</strong> the exact table name: <code>TblMusic</code>.</li>
+          <li><strong>FROM</strong> the exact table name: <code>tbl_music</code> (case-sensitive).</li>
           <li><strong>WHERE</strong> gives the condition records must match.</li>
           <li><strong>%</strong> matches any text when used with <code>LIKE</code>.</li>
         </ul>
@@ -422,7 +439,7 @@ WHERE Stage LIKE "H%"</pre>
 
 <script>
   const ACTIVITY_TITLE = 'SQL SELECT FROM WHERE Practice';
-  const TABLE_NAME = 'TblMusic';
+  const TABLE_NAME = 'tbl_music';
   const FIELDS = ['ActID', 'ActName', 'Stage', 'Day', 'SetLength'];
   const DATA = [
     { ActID: 1, ActName: 'Nova Beats', Stage: 'Platinum', Day: 'Saturday', SetLength: 0.5 },
@@ -509,6 +526,7 @@ WHERE Stage LIKE "H%"</pre>
         <p class="prompt">${q.prompt}</p>
         <label class="sr-only" for="sql-${idx}">SQL answer for question ${idx + 1}</label>
         <textarea class="sql-editor code-checker" id="sql-${idx}" spellcheck="false">${escapeHtml(q.starter)}</textarea>
+        <button class="run-btn" id="run-${idx}">Run Query</button>
         <div class="feedback" id="feedback-${idx}" aria-live="polite"></div>
         <div class="output-grid">
           <div class="mini-output">
@@ -526,6 +544,10 @@ WHERE Stage LIKE "H%"</pre>
         saveState();
       });
       editor.addEventListener('blur', () => evaluateQuestion(idx));
+      document.getElementById('run-' + idx).addEventListener('click', () => {
+        evaluateQuestion(idx);
+        saveState();
+      });
     });
   }
 
@@ -576,7 +598,7 @@ WHERE Stage LIKE "H%"</pre>
     if (fields.length === 0) return { ok: false, message: 'Choose at least one field after SELECT.' };
     const badField = fields.find(field => !fieldByName(field));
     if (badField) return { ok: false, message: `Field name ${badField} is not in this table.` };
-    if (table.toLowerCase() !== TABLE_NAME.toLowerCase()) return { ok: false, message: `The table name must be ${TABLE_NAME}.` };
+    if (table !== TABLE_NAME) return { ok: false, message: `The table name must be ${TABLE_NAME} (case-sensitive).` };
     const realWhereField = fieldByName(whereField);
     if (!realWhereField) return { ok: false, message: `Field name ${whereField} is not in this table.` };
     if (parsedValue.needsQuotes) return { ok: false, message: 'Text values need quotation marks.' };
