@@ -1,0 +1,568 @@
+<!-- ACTIVITY
+title:  Algorithm Quest
+type:   Practice
+stars:  4
+desc:   Your interactive skill-tree roadmap through all Algorithm Practice activities — from basics to the boss-level challenge.
+color:  blue
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Algorithm Quest — Year 11 CS</title>
+<style>
+:root {
+  --bg:          #02020e;
+  --blue:        #3b82f6;
+  --blue-glow:   rgba(59,130,246,0.55);
+  --blue-dim:    rgba(59,130,246,0.14);
+  --purple:      #8b5cf6;
+  --purple-glow: rgba(139,92,246,0.55);
+  --purple-dim:  rgba(139,92,246,0.14);
+  --green:       #10b981;
+  --green-glow:  rgba(16,185,129,0.5);
+  --green-dim:   rgba(16,185,129,0.13);
+  --orange:      #f97316;
+  --orange-glow: rgba(249,115,22,0.6);
+  --orange-dim:  rgba(249,115,22,0.14);
+  --amber:       #f59e0b;
+  --amber-glow:  rgba(245,158,11,0.5);
+  --amber-dim:   rgba(245,158,11,0.13);
+  --text:        #e2e8f0;
+  --muted:       #64748b;
+  --card:        rgba(6,8,28,0.75);
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Courier New', Courier, monospace;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── Background layers ── */
+body::before {
+  content:'';
+  position:fixed;inset:0;
+  background-image:
+    linear-gradient(rgba(56,189,248,.028) 1px, transparent 1px),
+    linear-gradient(90deg,rgba(56,189,248,.028) 1px, transparent 1px);
+  background-size: 48px 48px;
+  pointer-events:none;z-index:0;
+}
+body::after {
+  content:'';
+  position:fixed;inset:0;
+  background: repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.07) 2px,rgba(0,0,0,.07) 4px);
+  pointer-events:none;z-index:2;
+}
+#glow-bg {
+  position:fixed;inset:0;
+  background: radial-gradient(ellipse 80% 55% at 50% 20%, rgba(59,130,246,.06) 0%, transparent 70%);
+  pointer-events:none;z-index:0;
+}
+#particleCanvas {position:fixed;inset:0;pointer-events:none;z-index:0}
+
+/* ── Layout ── */
+.container {
+  position:relative;z-index:1;
+  max-width:940px;margin:0 auto;
+  padding: 3rem 1.25rem 5rem;
+}
+
+/* ── Header ── */
+.hdr { text-align:center; margin-bottom:3.5rem; }
+
+.hdr-eye {
+  font-size:.65rem;letter-spacing:.3em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:.9rem;
+  animation: rise .9s ease both;
+}
+
+.hdr-title {
+  font-size: clamp(2.4rem,8vw,5rem);
+  font-weight:900;letter-spacing:.12em;text-transform:uppercase;line-height:1;
+  background:linear-gradient(130deg,#60a5fa 0%,#a78bfa 35%,#f472b6 65%,#60a5fa 100%);
+  background-size:280% 280%;
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  animation: title-shift 6s ease infinite, rise .7s ease both;
+}
+@keyframes title-shift {
+  0%,100%{background-position:0% 50%}50%{background-position:100% 50%}
+}
+
+.hdr-sub {
+  font-size:.82rem;color:var(--muted);letter-spacing:.07em;margin-top:.75rem;
+  font-family:system-ui,-apple-system,sans-serif;
+  animation: rise 1.1s ease both;
+}
+
+@keyframes rise {
+  from{opacity:0;transform:translateY(14px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+/* ── Skill tree shell ── */
+.tree { display:flex;flex-direction:column;align-items:center; }
+
+/* ── Node cards ── */
+.node-wrap { width:100%;display:flex;justify-content:center; }
+
+.node {
+  position:relative;
+  display:flex;flex-direction:column;gap:.85rem;
+  padding:1.55rem 1.75rem;border-radius:14px;
+  text-decoration:none;color:var(--text);
+  background:var(--card);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border:1.5px solid;
+  width:100%;max-width:480px;
+  overflow:hidden;
+  animation: node-in .55s ease both;
+  transition: transform .22s cubic-bezier(.34,1.56,.64,1), box-shadow .22s ease;
+}
+.node::before {
+  content:'';position:absolute;inset:0;border-radius:inherit;
+  background:linear-gradient(135deg,rgba(255,255,255,.05) 0%,transparent 55%);
+  pointer-events:none;
+}
+
+a.node:hover { transform:translateY(-5px) scale(1.02); }
+
+@keyframes node-in {
+  from{opacity:0;transform:translateY(22px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+/* Colour variants */
+.n-blue   { border-color:var(--blue);   box-shadow:0 0 28px var(--blue-glow),   0 0 90px rgba(59,130,246,.1);  animation:node-in .55s ease both, pulse-b 3s ease-in-out infinite; }
+.n-purple { border-color:var(--purple); box-shadow:0 0 22px var(--purple-glow), 0 0 60px rgba(139,92,246,.08); }
+.n-green  { border-color:var(--green);  box-shadow:0 0 18px var(--green-glow),  0 0 45px rgba(16,185,129,.07); }
+.n-orange { border-color:var(--orange); box-shadow:0 0 32px var(--orange-glow), 0 0 110px rgba(249,115,22,.12); animation:node-in .55s ease both, pulse-o 2.5s ease-in-out infinite; }
+.n-locked { border-color:#1e293b; box-shadow:none; opacity:.48; pointer-events:none; filter:grayscale(.6); }
+.n-cyan   { border-color:rgba(56,189,248,.5); box-shadow:0 0 16px rgba(56,189,248,.2); }
+.n-amber  { border-color:var(--amber); box-shadow:0 0 20px var(--amber-glow), 0 0 55px rgba(245,158,11,.08); }
+
+/* Full-width inside branch rows */
+.branch-row .node,.branch-row-2 .node { max-width:100%; }
+
+@keyframes pulse-b {
+  0%,100%{box-shadow:0 0 28px var(--blue-glow),   0 0 90px rgba(59,130,246,.1)}
+  50%    {box-shadow:0 0 44px rgba(59,130,246,.9), 0 0 130px rgba(59,130,246,.22)}
+}
+@keyframes pulse-o {
+  0%,100%{box-shadow:0 0 32px var(--orange-glow),  0 0 110px rgba(249,115,22,.12)}
+  50%    {box-shadow:0 0 52px rgba(249,115,22,.95), 0 0 160px rgba(249,115,22,.28)}
+}
+
+/* ── Inside a node ── */
+.n-hdr { display:flex;align-items:center;gap:.65rem;flex-wrap:wrap; }
+
+.lvl-tag {
+  font-size:.59rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;
+  padding:.22rem .65rem;border-radius:20px;white-space:nowrap;
+}
+.t-blue   { background:var(--blue-dim);   color:#93c5fd; border:1px solid rgba(59,130,246,.28); }
+.t-purple { background:var(--purple-dim); color:#c4b5fd; border:1px solid rgba(139,92,246,.28); }
+.t-green  { background:var(--green-dim);  color:#6ee7b7; border:1px solid rgba(16,185,129,.28); }
+.t-orange { background:var(--orange-dim); color:#fdba74; border:1px solid rgba(249,115,22,.28); }
+.t-locked { background:rgba(30,41,59,.3); color:#475569; border:1px solid rgba(30,41,59,.4); }
+.t-cyan   { background:rgba(56,189,248,.1);color:#7dd3fc; border:1px solid rgba(56,189,248,.28); }
+.t-amber  { background:var(--amber-dim); color:#fde68a; border:1px solid rgba(245,158,11,.28); }
+
+.type-pill {
+  margin-left:auto;font-size:.57rem;letter-spacing:.13em;text-transform:uppercase;
+  padding:.18rem .5rem;border-radius:4px;
+  background:rgba(255,255,255,.04);color:var(--muted);
+  border:1px solid rgba(255,255,255,.06);
+}
+
+.n-icon { font-size:1.45rem;line-height:1; }
+
+.n-title {
+  font-size:1.12rem;font-weight:700;letter-spacing:.04em;
+  text-transform:uppercase;line-height:1.2;
+}
+.n-blue   .n-title { color:#bfdbfe }
+.n-purple .n-title { color:#ddd6fe }
+.n-green  .n-title { color:#a7f3d0 }
+.n-orange .n-title { color:#fed7aa }
+.n-locked .n-title { color:#475569 }
+.n-cyan   .n-title { color:#bae6fd }
+.n-amber  .n-title { color:#fde68a }
+
+.n-desc {
+  font-family:system-ui,-apple-system,sans-serif;
+  font-size:.81rem;color:#94a3b8;line-height:1.6;
+}
+
+.n-footer { display:flex;align-items:center;justify-content:space-between;margin-top:.2rem; }
+
+.stars { font-size:.95rem;letter-spacing:.14em;color:#fbbf24;text-shadow:0 0 8px rgba(251,191,36,.5); }
+.stars-dim { color:#1e293b;text-shadow:none; }
+
+/* Play button — styled div inside <a> card */
+.play {
+  display:inline-flex;align-items:center;gap:.4rem;
+  padding:.55rem 1.35rem;border-radius:8px;
+  font-family:'Courier New',monospace;font-size:.75rem;
+  font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+  position:relative;overflow:hidden;
+  transition:filter .2s;
+}
+.play::after {
+  content:'';position:absolute;inset:0;
+  background:rgba(255,255,255,.12);
+  transform:translateX(-100%);transition:transform .28s ease;
+}
+a.node:hover .play::after { transform:translateX(0); }
+
+.p-blue   { background:var(--blue);   color:#fff;        box-shadow:0 0 14px var(--blue-glow); }
+.p-purple { background:var(--purple); color:#fff;        box-shadow:0 0 14px var(--purple-glow); }
+.p-green  { background:var(--green);  color:#022c22;     box-shadow:0 0 14px var(--green-glow); }
+.p-orange { background:var(--orange); color:#fff;        box-shadow:0 0 18px var(--orange-glow); }
+.p-cyan   { background:rgba(56,189,248,.85); color:#0c4a6e; }
+.p-amber  { background:var(--amber); color:#422006; box-shadow:0 0 14px var(--amber-glow); }
+
+/* Locked overlay */
+.lock-over {
+  position:absolute;inset:0;border-radius:inherit;
+  display:flex;align-items:center;justify-content:center;
+}
+.lock-badge {
+  display:flex;align-items:center;gap:.45rem;
+  background:rgba(2,6,20,.88);border:1px solid rgba(30,41,59,.7);
+  border-radius:8px;padding:.45rem 1.1rem;
+  font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:#475569;
+}
+
+/* ── SVG connectors ── */
+.conn-wrap { width:100%;position:relative; }
+.conn-wrap svg { width:100%;display:block;overflow:visible; }
+
+@keyframes flow {
+  from { stroke-dashoffset:200 }
+  to   { stroke-dashoffset:0 }
+}
+
+/* ── Branch rows ── */
+.branch-row {
+  width:100%;
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  gap:1rem;
+}
+.branch-row-2 {
+  width:100%;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:1rem;
+}
+
+/* ── Side quest ── */
+.sq-section {
+  margin-top:3.5rem;
+  border-top:1px solid rgba(56,189,248,.13);
+  padding-top:2.5rem;
+}
+.sq-label {
+  text-align:center;font-size:.63rem;letter-spacing:.28em;
+  text-transform:uppercase;color:var(--muted);margin-bottom:1.5rem;
+}
+.sq-label::before,.sq-label::after {
+  content:'';display:inline-block;
+  width:60px;height:1px;background:rgba(56,189,248,.25);
+  vertical-align:middle;margin:0 1rem;
+}
+
+/* Animation delays */
+.node-wrap:nth-child(1)              { animation-delay:.05s }
+.node-wrap:nth-child(1) .node        { animation-delay:.1s }
+.branch-row-2 .node:nth-child(1)     { animation-delay:.28s }
+.branch-row-2 .node:nth-child(2)     { animation-delay:.36s }
+.branch-row .node:nth-child(1)       { animation-delay:.5s }
+.branch-row .node:nth-child(2)       { animation-delay:.58s }
+.branch-row .node:nth-child(3)       { animation-delay:.66s }
+.node-wrap:nth-child(7) .node        { animation-delay:.82s }
+
+/* Responsive */
+@media(max-width:640px){
+  .branch-row, .branch-row-2 { grid-template-columns:1fr }
+  .conn-wrap.hide-mobile { display:none }
+}
+</style>
+</head>
+<body>
+
+<div id="glow-bg"></div>
+<canvas id="particleCanvas"></canvas>
+
+<div class="container">
+
+  <!-- HEADER -->
+  <header class="hdr">
+    <div class="hdr-eye">OCR J277 · Year 11 Computer Science</div>
+    <h1 class="hdr-title">⚡ Algorithm Quest</h1>
+    <p class="hdr-sub">Master OCR pseudocode, one challenge at a time — follow the path to the final boss</p>
+  </header>
+
+  <!-- SKILL TREE -->
+  <div class="tree">
+
+    <!-- ① Level 1 -->
+    <div class="node-wrap">
+      <a href="./Algorithm_Practice.html" class="node n-blue">
+        <div class="n-hdr">
+          <span class="lvl-tag t-blue">★ Start Here · Level 1</span>
+          <span class="type-pill">Practice</span>
+        </div>
+        <div class="n-icon">⚡</div>
+        <div class="n-title">Algorithm Practice</div>
+        <div class="n-desc">Eight progressive challenges — from basic input/output to condition-controlled loops. Every Algorithm Quest begins here.</div>
+        <div class="n-footer">
+          <div class="stars">★★★★</div>
+          <div class="play p-blue">▶&nbsp;Start</div>
+        </div>
+      </a>
+    </div>
+
+    <!-- Branch connector: 1 → 2 -->
+    <div class="conn-wrap hide-mobile" style="height:52px">
+      <svg viewBox="0 0 940 52" preserveAspectRatio="none">
+        <path d="M470,0 L470,18" stroke="#8b5cf6" stroke-width="2" stroke-dasharray="7 3.5" fill="none"
+          style="animation:flow 1.3s linear infinite"/>
+        <path d="M470,18 Q470,52 241,52" stroke="#8b5cf6" stroke-width="2" stroke-dasharray="7 3.5" fill="none"
+          style="animation:flow 1.5s linear infinite"/>
+        <path d="M470,18 Q470,52 699,52" stroke="#8b5cf6" stroke-width="2" stroke-dasharray="7 3.5" fill="none"
+          style="animation:flow 1.5s linear infinite"/>
+      </svg>
+    </div>
+
+    <!-- ② Level 2 branch row -->
+    <div class="branch-row-2">
+
+      <!-- 2a · Algorithm Practice 2 -->
+      <a href="./Algorithm_Practice_2.html" class="node n-purple">
+        <div class="n-hdr">
+          <span class="lvl-tag t-purple">Level 2 · Path A</span>
+          <span class="type-pill">Practice</span>
+        </div>
+        <div class="n-icon">🔮</div>
+        <div class="n-title">Algorithm Practice 2</div>
+        <div class="n-desc">String handling, substring extraction, compound conditions (AND / OR), nested selection, and condition-controlled loops.</div>
+        <div class="n-footer">
+          <div class="stars">★★★★</div>
+          <div class="play p-purple">▶&nbsp;Continue</div>
+        </div>
+      </a>
+
+      <!-- 2b · Do…Until & Switch -->
+      <a href="./Do_Until_Switch.html" class="node n-purple">
+        <div class="n-hdr">
+          <span class="lvl-tag t-purple">Level 2 · Path B</span>
+          <span class="type-pill">Practice</span>
+        </div>
+        <div class="n-icon">🔁</div>
+        <div class="n-title">do…until &amp; switch</div>
+        <div class="n-desc">Condition-controlled do…until loops and switch/case statements in OCR pseudocode — then combine both in a final challenge.</div>
+        <div class="n-footer">
+          <div class="stars" style="font-size:.88rem">★★★</div>
+          <div class="play p-purple">▶&nbsp;Play</div>
+        </div>
+      </a>
+
+    </div>
+
+    <!-- Branch connector: 2 → 3 (bus then fan) -->
+    <div class="conn-wrap hide-mobile" style="height:80px">
+      <svg viewBox="0 0 940 80" preserveAspectRatio="none">
+        <!-- stems down from each L2 node -->
+        <path d="M241,0 L241,34" stroke="#8b5cf6" stroke-width="2" stroke-dasharray="7 3.5" fill="none"
+          style="animation:flow 1.3s linear infinite"/>
+        <path d="M699,0 L699,34" stroke="#8b5cf6" stroke-width="2" stroke-dasharray="7 3.5" fill="none"
+          style="animation:flow 1.3s linear infinite"/>
+        <!-- horizontal bus -->
+        <path d="M241,34 L699,34" stroke="#8b5cf6" stroke-width="1.5" stroke-dasharray="7 3.5" fill="none"
+          style="animation:flow 1.8s linear infinite"/>
+        <!-- left fork → Functions -->
+        <path d="M241,34 Q165,60 165,80" stroke="#8b5cf6" stroke-width="2" stroke-dasharray="7 3.5" fill="none"
+          style="animation:flow 1.5s linear infinite"/>
+        <!-- centre fork → Arrays -->
+        <path d="M470,34 L470,80" stroke="#f59e0b" stroke-width="2" stroke-dasharray="7 3.5" fill="none"
+          style="animation:flow 1.5s linear infinite"/>
+        <!-- right fork → File Handling -->
+        <path d="M699,34 Q775,60 775,80" stroke="#10b981" stroke-width="2" stroke-dasharray="7 3.5" fill="none"
+          style="animation:flow 1.5s linear infinite"/>
+      </svg>
+    </div>
+
+    <!-- ③ Branch row -->
+    <div class="branch-row">
+
+      <!-- 3a · Functions -->
+      <a href="./Algorithm_Practice_Functions.html" class="node n-purple">
+        <div class="n-hdr">
+          <span class="lvl-tag t-purple">Level 3 · Path A</span>
+          <span class="type-pill">Challenge</span>
+        </div>
+        <div class="n-icon">⚙️</div>
+        <div class="n-title">Functions &amp; Procedures</div>
+        <div class="n-desc">Eight focused exam questions on defining and calling functions and procedures — with instant mark-scheme feedback.</div>
+        <div class="n-footer">
+          <div class="stars">★★★★</div>
+          <div class="play p-purple">▶&nbsp;Play</div>
+        </div>
+      </a>
+
+      <!-- 3b · Arrays -->
+      <a href="./Algorithm_Arrays.html" class="node n-amber">
+        <div class="n-hdr">
+          <span class="lvl-tag t-amber">Level 3 · Path B</span>
+          <span class="type-pill">Practice</span>
+        </div>
+        <div class="n-icon">📊</div>
+        <div class="n-title">Arrays Practice</div>
+        <div class="n-desc">1D iteration, 2D searching and totalling, and writing functions with arrays — OCR pseudocode array challenges.</div>
+        <div class="n-footer">
+          <div class="stars" style="font-size:.88rem">★★★</div>
+          <div class="play p-amber">▶&nbsp;Play</div>
+        </div>
+      </a>
+
+      <!-- 3c · File Handling -->
+      <a href="./Algorithm_File_Handling.html" class="node n-green">
+        <div class="n-hdr">
+          <span class="lvl-tag t-green">Level 3 · Path C</span>
+          <span class="type-pill">Challenge</span>
+        </div>
+        <div class="n-icon">📁</div>
+        <div class="n-title">File Handling</div>
+        <div class="n-desc">Read, write, search, store in arrays, write from inside a procedure — eight progressive file-handling challenges.</div>
+        <div class="n-footer">
+          <div class="stars">★★★★</div>
+          <div class="play p-green">▶&nbsp;Play</div>
+        </div>
+      </a>
+
+    </div>
+
+    <!-- Merge connector: 3 → 1 -->
+    <div class="conn-wrap hide-mobile" style="height:68px">
+      <svg viewBox="0 0 940 68" preserveAspectRatio="none">
+        <!-- left merge -->
+        <path d="M158,0 Q158,40 470,50" stroke="#f97316" stroke-width="2" stroke-dasharray="7 3.5" fill="none"
+          style="animation:flow 1.5s linear infinite"/>
+        <!-- centre merge -->
+        <path d="M470,0 L470,50" stroke="#64748b" stroke-width="2" stroke-dasharray="7 3.5" fill="none"
+          style="animation:flow 1.5s linear infinite"/>
+        <!-- right merge -->
+        <path d="M782,0 Q782,40 470,50" stroke="#f97316" stroke-width="2" stroke-dasharray="7 3.5" fill="none"
+          style="animation:flow 1.5s linear infinite"/>
+        <!-- final stem -->
+        <path d="M470,50 L470,68" stroke="#f97316" stroke-width="2" stroke-dasharray="7 3.5" fill="none"
+          style="animation:flow 1.2s linear infinite"/>
+      </svg>
+    </div>
+
+    <!-- ④ Boss level -->
+    <div class="node-wrap">
+      <a href="./Algorithm_Practice_Challenge.html" class="node n-orange">
+        <div class="n-hdr">
+          <span class="lvl-tag t-orange">👑 Boss Level · Level 4</span>
+          <span class="type-pill">Challenge</span>
+        </div>
+        <div class="n-icon" style="font-size:2rem">👑</div>
+        <div class="n-title">Algorithm Challenge</div>
+        <div class="n-desc">Functions, 1D arrays, file writing, and 2D arrays — the ultimate pseudocode test. Eight boss-level questions, instant mark-scheme feedback. Are you ready?</div>
+        <div class="n-footer">
+          <div class="stars">★★★★</div>
+          <div class="play p-orange">👑&nbsp;Final Challenge</div>
+        </div>
+      </a>
+    </div>
+
+  </div><!-- /tree -->
+
+  <!-- SIDE QUEST: SQL -->
+  <div class="sq-section">
+    <div class="sq-label">⚡ Side Quest</div>
+    <div style="display:flex;justify-content:center">
+      <a href="./SQL.html" class="node n-cyan" style="max-width:480px;width:100%">
+        <div class="n-hdr">
+          <span class="lvl-tag t-cyan">SQL · Database Queries</span>
+          <span class="type-pill">Practice</span>
+        </div>
+        <div class="n-icon">🗄️</div>
+        <div class="n-title">SQL SELECT Practice</div>
+        <div class="n-desc">Build GCSE-style SQL queries and see the selected records update live. A different kind of challenge — no pseudocode, pure data.</div>
+        <div class="n-footer">
+          <div class="stars" style="font-size:.88rem">★★★</div>
+          <div class="play p-cyan">▶&nbsp;Play</div>
+        </div>
+      </a>
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<script>
+// ── Floating particles ──────────────────────────────────────────────
+(function () {
+  const cv = document.getElementById('particleCanvas');
+  const cx = cv.getContext('2d');
+  const COLS = ['#3b82f6','#8b5cf6','#10b981','#f97316','#38bdf8','#a78bfa'];
+  let W, H, pts = [];
+
+  function resize() { W = cv.width = innerWidth; H = cv.height = innerHeight; }
+  resize();
+  addEventListener('resize', resize);
+
+  function mk() {
+    return {
+      x: Math.random() * W,
+      y: H + 8,
+      vx: (Math.random() - .5) * .35,
+      vy: -(0.3 + Math.random() * .7),
+      r: .6 + Math.random() * 1.8,
+      col: COLS[Math.floor(Math.random() * COLS.length)],
+      life: 0,
+      max: 130 + Math.random() * 200,
+    };
+  }
+
+  for (let i = 0; i < 45; i++) {
+    const p = mk();
+    p.y = Math.random() * H;
+    p.life = Math.random() * p.max;
+    pts.push(p);
+  }
+
+  function frame() {
+    cx.clearRect(0, 0, W, H);
+    if (pts.length < 55 && Math.random() < .12) pts.push(mk());
+    pts = pts.filter(p => p.life < p.max);
+    for (const p of pts) {
+      p.life++; p.x += p.vx; p.y += p.vy;
+      const t = p.life / p.max;
+      const a = (t < .1 ? t * 10 : t > .8 ? (1 - t) * 5 : 1) * .55;
+      cx.save();
+      cx.globalAlpha = a;
+      cx.fillStyle = p.col;
+      cx.shadowBlur = 7;
+      cx.shadowColor = p.col;
+      cx.beginPath();
+      cx.arc(p.x, p.y, p.r, 0, 6.283);
+      cx.fill();
+      cx.restore();
+    }
+    requestAnimationFrame(frame);
+  }
+  frame();
+})();
+</script>
+</body>
+</html>
