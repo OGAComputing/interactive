@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  const MIN_CELEBRATION_MS = 8000;
+  const MIN_CELEBRATION_MS = 10000;
   const TARGET_FRAME_MS = 1000 / 60;
   let celebrationShown = false;
 
@@ -38,14 +38,15 @@
     const effects = [
       runConfetti,
       runFireworks,
-      runShootingStars,
+      runBouncingStars,
+      runExplodingStars,
       runBadgePop,
       runXpBurst,
       runPixelSparkle,
       runLevelUpFlash,
       runMatrixTick
     ];
-    const names = ['confetti', 'fireworks', 'shooting-stars', 'badge-pop', 'xp-burst', 'pixel-sparkle', 'level-up-flash', 'matrix-tick'];
+    const names = ['confetti', 'fireworks', 'bouncing-stars', 'exploding-stars', 'badge-pop', 'xp-burst', 'pixel-sparkle', 'level-up-flash', 'matrix-tick'];
     const index = typeof options.effectIndex === 'number'
       ? Math.max(0, Math.min(effects.length - 1, options.effectIndex))
       : Math.floor(Math.random() * effects.length);
@@ -93,6 +94,14 @@
 
   function celebrationElapsed(start) {
     return performance.now() - start;
+  }
+
+  function isCelebrationFiring(start, leadTime = 0, duration = MIN_CELEBRATION_MS) {
+    return celebrationElapsed(start) < duration - leadTime;
+  }
+
+  function hasLiveParticles(particles) {
+    return particles.some(p => p.life > 0);
   }
 
   function celebrationFrameDelta(lastTime) {
@@ -190,6 +199,66 @@
     ctx.restore();
   }
 
+  function drawShades(ctx, x, y, width, progress, split) {
+    const lensWidth = width * 0.31;
+    const lensHeight = width * 0.12;
+    const bridgeWidth = width * 0.13;
+    const slide = (1 - progress) * split;
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.globalAlpha = progress;
+    ctx.lineWidth = Math.max(5, width * 0.035);
+    ctx.strokeStyle = '#020617';
+    ctx.fillStyle = '#020617';
+    ctx.lineCap = 'round';
+
+    ctx.save();
+    ctx.translate(-slide, 0);
+    ctx.beginPath();
+    ctx.moveTo(-bridgeWidth * 0.5, -lensHeight * 0.4);
+    ctx.lineTo(-bridgeWidth * 1.15 - lensWidth, -lensHeight * 0.55);
+    ctx.lineTo(-bridgeWidth * 0.9 - lensWidth * 0.84, lensHeight * 0.62);
+    ctx.quadraticCurveTo(-bridgeWidth * 0.75 - lensWidth * 0.36, lensHeight * 0.86, -bridgeWidth * 0.45, lensHeight * 0.28);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,255,255,.3)';
+    ctx.lineWidth = Math.max(2, width * 0.012);
+    ctx.beginPath();
+    ctx.moveTo(-bridgeWidth * 0.92 - lensWidth * 0.7, -lensHeight * 0.2);
+    ctx.lineTo(-bridgeWidth * 0.68 - lensWidth * 0.23, -lensHeight * 0.08);
+    ctx.stroke();
+    ctx.restore();
+
+    ctx.save();
+    ctx.translate(slide, 0);
+    ctx.strokeStyle = '#020617';
+    ctx.lineWidth = Math.max(5, width * 0.035);
+    ctx.beginPath();
+    ctx.moveTo(bridgeWidth * 0.5, -lensHeight * 0.4);
+    ctx.lineTo(bridgeWidth * 1.15 + lensWidth, -lensHeight * 0.55);
+    ctx.lineTo(bridgeWidth * 0.9 + lensWidth * 0.84, lensHeight * 0.62);
+    ctx.quadraticCurveTo(bridgeWidth * 0.75 + lensWidth * 0.36, lensHeight * 0.86, bridgeWidth * 0.45, lensHeight * 0.28);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,255,255,.3)';
+    ctx.lineWidth = Math.max(2, width * 0.012);
+    ctx.beginPath();
+    ctx.moveTo(bridgeWidth * 0.68 + lensWidth * 0.23, -lensHeight * 0.08);
+    ctx.lineTo(bridgeWidth * 0.92 + lensWidth * 0.7, -lensHeight * 0.2);
+    ctx.stroke();
+    ctx.restore();
+
+    ctx.strokeStyle = '#020617';
+    ctx.lineWidth = Math.max(5, width * 0.03);
+    ctx.beginPath();
+    ctx.moveTo(-bridgeWidth * 0.55, -lensHeight * 0.34);
+    ctx.quadraticCurveTo(0, -lensHeight * 0.72, bridgeWidth * 0.55, -lensHeight * 0.34);
+    ctx.stroke();
+    ctx.restore();
+  }
+
   function runConfetti() {
     const canvas = makeCanvas();
     const ctx = canvas.getContext('2d');
@@ -222,6 +291,7 @@
       const delta = celebrationFrameDelta(lastTime);
       lastTime = performance.now();
       const elapsed = celebrationElapsed(start);
+      const firing = isCelebrationFiring(start);
       resizeCanvas(canvas, ctx);
       ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
       pieces.forEach(p => {
@@ -229,7 +299,7 @@
         p.y += p.vy * delta;
         p.vy += 0.04 * delta;
         p.spin += 0.18 * delta;
-        if (elapsed < MIN_CELEBRATION_MS && p.y > window.innerHeight + 30) {
+        if (firing && p.y > window.innerHeight + 30) {
           p.x = Math.random() * window.innerWidth;
           p.y = -20 - Math.random() * window.innerHeight * 0.25;
           p.vy = 2 + Math.random() * 4;
@@ -261,7 +331,7 @@
         }
         drawBalloon(ctx, balloon);
       });
-      if (elapsed < MIN_CELEBRATION_MS - 1100 && Math.random() < 0.035 * delta) {
+      if (isCelebrationFiring(start, 1100) && Math.random() < 0.035 * delta) {
         starBursts.push(...makeBurst(window.innerWidth * (0.1 + Math.random() * 0.8), window.innerHeight * (0.16 + Math.random() * 0.46), 18, ['#facc15', '#fde68a', '#38bdf8', '#f472b6'], {
           minSpeed: 0.9,
           maxSpeed: 3.8,
@@ -285,7 +355,9 @@
         ctx.shadowBlur = 0;
       });
       ctx.globalAlpha = 1;
-      if (elapsed < MIN_CELEBRATION_MS) requestAnimationFrame(draw);
+      const hasVisiblePieces = pieces.some(p => p.y < window.innerHeight + p.size + 30);
+      const hasVisibleBalloons = balloons.some(balloon => !balloon.popped);
+      if (firing || hasVisiblePieces || hasVisibleBalloons || hasLiveParticles(starBursts)) requestAnimationFrame(draw);
       else canvas.remove();
     }
     draw();
@@ -327,21 +399,44 @@
         ctx.globalAlpha = 1;
       });
       frame++;
-      if (celebrationElapsed(start) < MIN_CELEBRATION_MS) requestAnimationFrame(draw);
+      if (bursts.some(p => p.life > 0 || frame < p.delay)) requestAnimationFrame(draw);
       else canvas.remove();
     }
     draw();
   }
 
-  function runShootingStars() {
+  function drawShootingStar(ctx, s) {
+    const trail = 110;
+    const speed = Math.hypot(s.vx, s.vy) || 1;
+    const trailX = s.x - (s.vx / speed) * trail;
+    const trailY = s.y - (s.vy / speed) * trail;
+    const grad = ctx.createLinearGradient(trailX, trailY, s.x, s.y);
+    grad.addColorStop(0, 'rgba(250,204,21,0)');
+    grad.addColorStop(0.6, 'rgba(253,230,138,0.45)');
+    grad.addColorStop(1, 'rgba(250,204,21,0.95)');
+    ctx.strokeStyle = grad;
+    ctx.lineWidth = Math.max(2, s.size * 0.45);
+    ctx.beginPath();
+    ctx.moveTo(trailX, trailY);
+    ctx.lineTo(s.x, s.y);
+    ctx.stroke();
+    ctx.shadowColor = '#facc15';
+    ctx.shadowBlur = 18;
+    ctx.fillStyle = '#fff7ad';
+    drawFivePointStar(ctx, s.x, s.y, s.size, s.size * 0.42, s.spin);
+    ctx.shadowBlur = 0;
+  }
+
+  function runBouncingStars() {
     const canvas = makeCanvas();
     const ctx = canvas.getContext('2d');
     const start = performance.now();
     const stars = Array.from({ length: 26 }, (_, i) => ({
-      x: -120 - Math.random() * window.innerWidth,
-      y: Math.random() * window.innerHeight * 0.55,
+      x: window.innerWidth * (0.08 + Math.random() * 0.28),
+      y: window.innerHeight * (0.12 + Math.random() * 0.48),
       delay: i * 5,
-      speed: 10 + Math.random() * 7,
+      vx: 7 + Math.random() * 6,
+      vy: (Math.random() - 0.25) * 7,
       size: 5 + Math.random() * 5,
       spin: Math.random() * Math.PI * 2
     }));
@@ -351,18 +446,31 @@
     function draw() {
       const delta = celebrationFrameDelta(lastTime);
       lastTime = performance.now();
+      const firing = isCelebrationFiring(start);
       resizeCanvas(canvas, ctx);
       ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
       stars.forEach(s => {
         if (frame < s.delay) return;
-        s.x += s.speed * delta;
-        s.y += s.speed * 0.32 * delta;
-        if (celebrationElapsed(start) < MIN_CELEBRATION_MS && s.x > window.innerWidth + 140) {
-          s.x = -120 - Math.random() * window.innerWidth * 0.3;
-          s.y = Math.random() * window.innerHeight * 0.55;
-          s.spin = Math.random() * Math.PI * 2;
+        s.x += s.vx * delta;
+        s.y += s.vy * delta;
+        s.spin += 0.13 * delta;
+        if (firing && (s.x < s.size || s.x > window.innerWidth - s.size)) {
+          s.vx *= -1;
+          s.x = Math.max(s.size, Math.min(window.innerWidth - s.size, s.x));
+          bursts.push(...makeBurst(s.x, s.y, 14, ['#facc15', '#fde68a', '#f59e0b'], {
+            minSpeed: 0.6,
+            maxSpeed: 2.6,
+            minSize: 1.3,
+            maxSize: 3.2,
+            life: 90,
+            shapes: ['dot', 'star']
+          }));
         }
-        if (Math.random() < 0.035 * delta) {
+        if (firing && (s.y < s.size || s.y > window.innerHeight - s.size)) {
+          s.vy *= -1;
+          s.y = Math.max(s.size, Math.min(window.innerHeight - s.size, s.y));
+        }
+        if (firing && Math.random() < 0.035 * delta) {
           bursts.push(...makeBurst(s.x, s.y, 18, ['#facc15', '#fde68a', '#f59e0b'], {
             minSpeed: 0.8,
             maxSpeed: 3.4,
@@ -372,23 +480,7 @@
             shapes: ['dot', 'star']
           }));
         }
-        const trail = 110;
-        const grad = ctx.createLinearGradient(s.x - trail, s.y - trail * 0.32, s.x, s.y);
-        grad.addColorStop(0, 'rgba(250,204,21,0)');
-        grad.addColorStop(0.6, 'rgba(253,230,138,0.45)');
-        grad.addColorStop(1, 'rgba(250,204,21,0.95)');
-        ctx.strokeStyle = grad;
-        ctx.lineWidth = Math.max(2, s.size * 0.45);
-        ctx.beginPath();
-        ctx.moveTo(s.x - trail, s.y - trail * 0.32);
-        ctx.lineTo(s.x, s.y);
-        ctx.stroke();
-        ctx.shadowColor = '#facc15';
-        ctx.shadowBlur = 18;
-        ctx.fillStyle = '#fff7ad';
-        s.spin += 0.12 * delta;
-        drawFivePointStar(ctx, s.x, s.y, s.size, s.size * 0.42, s.spin);
-        ctx.shadowBlur = 0;
+        drawShootingStar(ctx, s);
       });
       bursts = bursts.filter(p => p.life > 0);
       bursts.forEach(p => {
@@ -402,7 +494,104 @@
         ctx.globalAlpha = 1;
       });
       frame++;
-      if (celebrationElapsed(start) < MIN_CELEBRATION_MS) requestAnimationFrame(draw);
+      const trailPad = 140;
+      const hasVisibleStars = stars.some(s => (
+        frame >= s.delay &&
+        s.x > -trailPad &&
+        s.x < window.innerWidth + trailPad &&
+        s.y > -trailPad &&
+        s.y < window.innerHeight + trailPad
+      ));
+      if (firing || hasVisibleStars || hasLiveParticles(bursts)) requestAnimationFrame(draw);
+      else canvas.remove();
+    }
+    draw();
+  }
+
+  function runExplodingStars() {
+    const canvas = makeCanvas();
+    const ctx = canvas.getContext('2d');
+    const start = performance.now();
+    const colors = ['#facc15', '#fde68a', '#f59e0b', '#38bdf8', '#f472b6'];
+    const makeStar = i => ({
+      x: -120 - Math.random() * window.innerWidth * 0.45,
+      y: window.innerHeight * (0.08 + Math.random() * 0.68),
+      delay: i * 8,
+      vx: 9 + Math.random() * 8,
+      vy: 2 + Math.random() * 4,
+      size: 5 + Math.random() * 5,
+      spin: Math.random() * Math.PI * 2,
+      exploding: false,
+      resetAt: 0
+    });
+    const stars = Array.from({ length: 22 }, (_, i) => makeStar(i));
+    let bursts = [];
+    let frame = 0;
+    let lastTime = start;
+    function draw() {
+      const delta = celebrationFrameDelta(lastTime);
+      lastTime = performance.now();
+      const elapsed = celebrationElapsed(start);
+      const firing = isCelebrationFiring(start);
+      resizeCanvas(canvas, ctx);
+      ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+      stars.forEach((s, i) => {
+        if (frame < s.delay) return;
+        if (s.exploding) {
+          if (elapsed > s.resetAt && isCelebrationFiring(start, 700)) {
+            Object.assign(s, makeStar(i));
+            s.delay = frame + Math.floor(20 + Math.random() * 24);
+          }
+          return;
+        }
+        s.x += s.vx * delta;
+        s.y += s.vy * delta;
+        s.spin += 0.14 * delta;
+        if (s.x > window.innerWidth - s.size || s.y > window.innerHeight - s.size) {
+          s.exploding = true;
+          s.resetAt = elapsed + 420 + Math.random() * 260;
+          bursts.push(...makeBurst(
+            Math.min(window.innerWidth - s.size, s.x),
+            Math.min(window.innerHeight - s.size, s.y),
+            42,
+            colors,
+            {
+              minSpeed: 1.5,
+              maxSpeed: 6.8,
+              minSize: 1.7,
+              maxSize: 4.8,
+              life: 180,
+              shapes: ['star', 'star', 'dot', 'flare']
+            }
+          ));
+          return;
+        }
+        drawShootingStar(ctx, s);
+      });
+      bursts = bursts.filter(p => p.life > 0);
+      bursts.forEach(p => {
+        p.x += p.vx * delta;
+        p.y += p.vy * delta;
+        p.vy += 0.035 * delta;
+        p.life -= delta;
+        p.spin += p.spinSpeed * delta;
+        ctx.globalAlpha = Math.max(p.life / p.maxLife, 0);
+        ctx.shadowColor = p.color;
+        ctx.shadowBlur = p.shape === 'star' ? 10 : 5;
+        drawSpark(ctx, p);
+        ctx.shadowBlur = 0;
+      });
+      ctx.globalAlpha = 1;
+      frame++;
+      const hasVisibleStars = stars.some(s => (
+        !s.exploding &&
+        frame >= s.delay &&
+        s.x > -140 &&
+        s.x < window.innerWidth + 140 &&
+        s.y > -140 &&
+        s.y < window.innerHeight + 140
+      ));
+      if (firing || hasVisibleStars || hasLiveParticles(bursts)) requestAnimationFrame(draw);
       else canvas.remove();
     }
     draw();
@@ -461,6 +650,7 @@
     function draw() {
       const delta = celebrationFrameDelta(lastTime);
       lastTime = performance.now();
+      const firing = isCelebrationFiring(start);
       resizeCanvas(canvas, ctx);
       ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
       ctx.font = '800 22px sans-serif';
@@ -485,7 +675,7 @@
         s.x += s.speed * delta;
         s.y += s.speed * 0.34 * delta;
         s.spin += 0.14 * delta;
-        if (celebrationElapsed(start) < MIN_CELEBRATION_MS && s.x > window.innerWidth + 120) {
+        if (firing && s.x > window.innerWidth + 120) {
           s.x = -80 - Math.random() * window.innerWidth * 0.4;
           s.y = window.innerHeight * (0.12 + Math.random() * 0.58);
         }
@@ -503,7 +693,7 @@
         drawFivePointStar(ctx, s.x, s.y, s.size, s.size * 0.42, s.spin);
       });
       sparks = sparks.filter(p => p.life > 0);
-      if (Math.random() < 0.04 * delta) {
+      if (firing && Math.random() < 0.04 * delta) {
         sparks.push(...makeBurst(window.innerWidth / 2 + (Math.random() - .5) * 260, window.innerHeight * (0.38 + Math.random() * .28), 22, ['#facc15', '#fde68a', '#f59e0b'], {
           minSpeed: 1,
           maxSpeed: 4,
@@ -524,7 +714,15 @@
       });
       ctx.globalAlpha = 1;
       frame++;
-      if (celebrationElapsed(start) < MIN_CELEBRATION_MS) requestAnimationFrame(draw);
+      const trailPad = 140;
+      const hasVisibleStars = stars.some(s => (
+        frame >= s.delay &&
+        s.x > -trailPad &&
+        s.x < window.innerWidth + trailPad &&
+        s.y > -trailPad &&
+        s.y < window.innerHeight + trailPad
+      ));
+      if (firing || bits.some(p => p.life > 0) || hasVisibleStars || hasLiveParticles(sparks)) requestAnimationFrame(draw);
       else canvas.remove();
     }
     draw();
@@ -566,6 +764,7 @@
     function draw() {
       const delta = celebrationFrameDelta(lastTime);
       lastTime = performance.now();
+      const firing = isCelebrationFiring(start);
       resizeCanvas(canvas, ctx);
       ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
       sparkles.forEach(p => {
@@ -573,7 +772,7 @@
         p.y += p.vy * delta;
         p.spin += p.spinSpeed * delta;
         p.life -= delta;
-        if (celebrationElapsed(start) < MIN_CELEBRATION_MS && p.life <= 0) {
+        if (firing && p.life <= 0) {
           p.x = Math.random() * window.innerWidth;
           p.y = window.innerHeight * (0.18 + Math.random() * 0.72);
           p.vx = (Math.random() - 0.5) * 0.8;
@@ -589,7 +788,7 @@
         drawFivePointStar(ctx, p.x, p.y, p.size, p.size * 0.38, p.spin);
         ctx.shadowBlur = 0;
       });
-      if (celebrationElapsed(start) < MIN_CELEBRATION_MS - 800 && frame % 28 === 0) {
+      if (isCelebrationFiring(start, 800) && frame % 28 === 0) {
         const origin = fountains[Math.floor(Math.random() * fountains.length)];
         bursts.push(...makeBurst(origin.x, origin.y, 24, colors, {
           minSpeed: 1.1,
@@ -615,7 +814,7 @@
       });
       ctx.globalAlpha = 1;
       frame++;
-      if (celebrationElapsed(start) < MIN_CELEBRATION_MS) requestAnimationFrame(draw);
+      if (firing || hasLiveParticles(sparkles) || hasLiveParticles(bursts)) requestAnimationFrame(draw);
       else canvas.remove();
     }
     draw();
@@ -658,6 +857,7 @@
     function draw() {
       const delta = celebrationFrameDelta(lastTime);
       lastTime = performance.now();
+      const firing = isCelebrationFiring(start);
       resizeCanvas(canvas, ctx);
       const columnWidth = 14;
       const nextColumns = Math.ceil(window.innerWidth / columnWidth) + 6;
@@ -675,24 +875,56 @@
         ctx.globalAlpha = 0.55 + Math.random() * 0.45;
         ctx.fillText(glyph, x, y);
         if (Math.random() > .78) ctx.fillText(Math.random() > .5 ? '1' : '0', x, y - 28);
-        drops[i] = y > window.innerHeight + 36 ? Math.random() * -120 : y + (18 + Math.random() * 8) * delta;
+        drops[i] = firing && y > window.innerHeight + 36
+          ? Math.random() * -120
+          : y + (18 + Math.random() * 8) * delta;
       });
       ctx.globalAlpha = 1;
       if (frame > 70) {
+        const elapsed = celebrationElapsed(start);
+        const popElapsed = Math.max(0, elapsed - 3000);
+        const shadeElapsed = Math.max(0, elapsed - 5000);
+        const hasGreenPop = popElapsed > 0;
+        const bounce = hasGreenPop ? Math.sin(popElapsed / 150) * 12 : 0;
+        const popScale = hasGreenPop ? Math.min(1.12, 0.72 + popElapsed / 520) : 1;
+        const textY = window.innerHeight / 2 + bounce;
         ctx.shadowColor = '#22c55e';
-        ctx.shadowBlur = 28;
+        ctx.shadowBlur = hasGreenPop ? 38 : 28;
         ctx.strokeStyle = 'rgba(34,197,94,.7)';
         ctx.lineWidth = 6;
         const fontSize = Math.max(86, Math.min(160, window.innerWidth * 0.14));
-        ctx.font = '900 ' + fontSize + 'px sans-serif';
+        ctx.font = '900 ' + (fontSize * popScale) + 'px sans-serif';
         ctx.textAlign = 'center';
-        ctx.strokeText('100%', window.innerWidth / 2, window.innerHeight / 2);
-        ctx.fillStyle = '#facc15';
-        ctx.fillText('100%', window.innerWidth / 2, window.innerHeight / 2);
+        ctx.strokeText('100%', window.innerWidth / 2, textY);
+        ctx.fillStyle = hasGreenPop ? '#4ade80' : '#facc15';
+        ctx.fillText('100%', window.innerWidth / 2, textY);
+        if (hasGreenPop) {
+          const labelScale = Math.min(1, popElapsed / 420);
+          ctx.globalAlpha = Math.min(1, popElapsed / 320);
+          ctx.font = '900 ' + (Math.max(28, Math.min(58, window.innerWidth * 0.05)) * labelScale) + 'px sans-serif';
+          ctx.fillStyle = '#bbf7d0';
+          ctx.strokeStyle = 'rgba(2,6,23,.85)';
+          ctx.lineWidth = 5;
+          ctx.strokeText('COMPLETE!', window.innerWidth / 2, textY + fontSize * 0.62);
+          ctx.fillText('COMPLETE!', window.innerWidth / 2, textY + fontSize * 0.62);
+          ctx.globalAlpha = 1;
+        }
+        if (shadeElapsed > 0) {
+          const shadeProgress = Math.min(1, shadeElapsed / 1600);
+          const easedShadeProgress = 1 - Math.pow(1 - shadeProgress, 3);
+          drawShades(
+            ctx,
+            window.innerWidth / 2,
+            textY - fontSize * 0.28,
+            fontSize * 1.05,
+            easedShadeProgress,
+            window.innerWidth * 0.55
+          );
+        }
         ctx.shadowBlur = 0;
       }
       frame++;
-      if (celebrationElapsed(start) < MIN_CELEBRATION_MS) requestAnimationFrame(draw);
+      if (firing || drops.some(y => y <= window.innerHeight + 36)) requestAnimationFrame(draw);
       else canvas.remove();
     }
     draw();
@@ -727,10 +959,11 @@
     function draw() {
       const delta = celebrationFrameDelta(lastTime);
       lastTime = performance.now();
+      const firing = isCelebrationFiring(start, 0, duration);
       resizeCanvas(canvas, ctx);
       ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
       particles = particles.filter(p => p.life > 0);
-      if (celebrationElapsed(start) < duration - 900 && Math.random() < 0.05 * delta) {
+      if (isCelebrationFiring(start, 900, duration) && Math.random() < 0.05 * delta) {
         addBurst(window.innerWidth * (0.1 + Math.random() * 0.8), window.innerHeight * (0.14 + Math.random() * 0.56), 34);
       }
       particles.forEach(p => {
@@ -744,7 +977,7 @@
         drawSpark(ctx, p);
       });
       ctx.globalAlpha = 1;
-      if (celebrationElapsed(start) < duration) requestAnimationFrame(draw);
+      if (firing || hasLiveParticles(particles)) requestAnimationFrame(draw);
       else canvas.remove();
     }
     draw();
