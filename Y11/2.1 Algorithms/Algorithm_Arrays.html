@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- ACTIVITY
+title:  Arrays Practice
+type:   Practice
+stars:  3
+desc:   OCR pseudocode array practice — 1D iteration, 2D searching and totalling, and writing functions with arrays.
+color:  blue
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Arrays Practice — Year 11</title>
+
+<!-- NOTE: use ../../../shared.css if this file is inside a lesson subfolder (L1_…/file.html) -->
+<link rel="stylesheet" href="../../shared.css">
+
+<style>
+  /* ── Sticky header ───────────────────────────────────── */
+
+  header {
+    background: var(--surface);
+    border-bottom: 2px solid var(--surface-mid);
+    padding: 12px 20px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.35);
+  }
+  .header-progress {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  /* ── Page body padding ───────────────────────────────── */
+
+  .page-wrap { padding: 28px 16px 60px; }
+
+  /* ── Page title (below header) ───────────────────────── */
+
+  .page-title {
+    font-size: 1.35rem;
+    font-weight: 700;
+    text-align: center;
+    color: var(--accent-light);
+    margin-bottom: 4px;
+  }
+  .page-subtitle {
+    text-align: center;
+    font-size: 0.82rem;
+    color: var(--muted);
+    margin-bottom: 28px;
+  }
+
+  /* ── Pill tab bar ────────────────────────────────────── */
+
+  .tabs {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 28px;
+  }
+  .tab-btn {
+    padding: 8px 20px;
+    border: 2px solid var(--surface-mid);
+    border-radius: 20px;
+    background: var(--surface);
+    color: var(--muted);
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s, color 0.2s;
+    user-select: none;
+  }
+  .tab-btn:hover:not(.active) { border-color: var(--accent); color: var(--text); }
+  .tab-btn.active    { background: var(--accent);  border-color: var(--accent);  color: var(--text-inv); }
+  .tab-btn.done-green { background: var(--green);  border-color: var(--green);   color: #fff; }
+  .tab-btn.done-gold  { background: var(--gold);   border-color: var(--gold);    color: #111; }
+
+  /* ── Panels ──────────────────────────────────────────── */
+
+  .panel {
+    display: none;
+    max-width: 880px;
+    margin: 0 auto;
+    animation: ac-fade-in 0.2s ease;
+  }
+  .panel.active { display: block; }
+
+  /* ── Section card ────────────────────────────────────── */
+
+  .card {
+    background: var(--surface);
+    border-left: 4px solid var(--accent);
+    border-radius: 8px;
+    padding: 18px 22px;
+    margin-bottom: 22px;
+  }
+  .card h2 {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 12px;
+  }
+
+  /* ── Goal banner ─────────────────────────────────────── */
+
+  .goal {
+    background: var(--surface);
+    border-left: 4px solid var(--accent);
+    border-radius: 0 8px 8px 0;
+    padding: 10px 16px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 20px;
+  }
+
+  /* ── Pseudocode checker card ─────────────────────────── */
+
+  .code-checker {
+    background: var(--surface);
+    border-radius: 12px;
+    border: 2px solid var(--surface-mid);
+    overflow: hidden;
+    margin-bottom: 18px;
+  }
+  .checker-footer {
+    display: flex;
+    gap: 10px;
+    padding: 10px 14px;
+    background: var(--surface-mid);
+    border-top: 1px solid var(--surface-dim);
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .checker-footer .ac-btn-secondary { font-size: 0.78rem; padding: 5px 14px; }
+  .checker-footer .ac-btn           { font-size: 0.78rem; padding: 5px 14px; }
+
+  .checker-feedback {
+    min-height: 1.4em;
+    padding: 8px 0 4px;
+    font-size: 0.88rem;
+    font-weight: 600;
+  }
+  .checker-feedback.pass { color: var(--green); }
+  .checker-feedback.fail { color: var(--red); animation: ac-shake 0.35s ease; }
+
+  .code-checker.is-wrong,
+  .card.is-wrong,
+  .panel.is-wrong {
+    outline: 2px solid var(--red);
+    background: rgba(220,38,38,.08);
+  }
+
+  /* ── Score / progress bar ────────────────────────────── */
+
+  .score-pct {
+    font-family: var(--font-head, monospace);
+    font-size: 0.8rem;
+    color: var(--accent);
+    margin-top: 3px;
+  }
+
+  /* ── Trace table ─────────────────────────────────────── */
+
+  .trace-wrap {
+    overflow-x: auto;
+    margin: 14px 0 8px;
+  }
+  .trace-table {
+    border-collapse: collapse;
+    font-size: 0.82rem;
+    font-family: var(--font-mono, monospace);
+    min-width: 320px;
+  }
+  .trace-table th {
+    background: var(--surface-mid);
+    color: var(--accent);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 6px 16px;
+    border: 1px solid var(--surface-dim);
+    text-align: center;
+  }
+  .trace-table td {
+    padding: 5px 16px;
+    border: 1px solid var(--surface-dim);
+    color: var(--text);
+    text-align: center;
+  }
+  .trace-table tr:nth-child(even) td { background: var(--surface-mid); }
+  .trace-table .highlight td { color: var(--accent); font-weight: 700; }
+
+  /* ── 1D array diagram ────────────────────────────────── */
+
+  .array-diagram {
+    display: flex;
+    margin: 12px 0 4px;
+    font-family: var(--font-mono, monospace);
+    font-size: 0.82rem;
+    overflow-x: auto;
+  }
+  .array-cell {
+    min-width: 48px;
+    padding: 6px 8px;
+    text-align: center;
+    border: 1px solid var(--surface-dim);
+    background: var(--surface-mid);
+    color: var(--text);
+    border-right: none;
+  }
+  .array-cell:last-child { border-right: 1px solid var(--surface-dim); }
+  .array-idx {
+    font-size: 0.68rem;
+    color: var(--muted);
+    text-align: center;
+    padding-top: 3px;
+  }
+
+  /* ── 2D array table ──────────────────────────────────── */
+
+  .array-2d {
+    border-collapse: collapse;
+    font-size: 0.82rem;
+    font-family: var(--font-mono, monospace);
+    margin: 10px 0;
+  }
+  .array-2d th {
+    background: var(--surface-mid);
+    color: var(--muted);
+    font-size: 0.72rem;
+    padding: 5px 14px;
+    border: 1px solid var(--surface-dim);
+    text-align: left;
+    white-space: nowrap;
+  }
+  .array-2d th.col-head {
+    color: var(--accent);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .array-2d td {
+    padding: 5px 14px;
+    border: 1px solid var(--surface-dim);
+    color: var(--text);
+  }
+  .array-2d tr:nth-child(odd) td { background: var(--surface-mid); }
+</style>
+</head>
+
+<body>
+<!--
+  Year-group and topic are auto-detected from the URL path by classroom.js.
+  Do NOT set data-year or data-topic manually.
+-->
+
+<!-- Completion banner -->
+<div id="done-banner" class="ac-banner gold">
+  All tasks complete — excellent work!
+</div>
+
+<!-- Sticky header -->
+<header>
+  <div class="header-progress">
+    <div class="ac-progress-bar" style="flex:1;">
+      <div class="ac-progress-fill" id="progress-fill"></div>
+    </div>
+    <span class="score-pct" id="progress-pct">0%</span>
+  </div>
+</header>
+
+<div class="page-wrap">
+  <h2 class="page-title">Arrays Practice</h2>
+  <p class="page-subtitle">Algorithms — OCR J277</p>
+
+  <div class="tabs" id="tab-bar">
+    <button class="tab-btn active" data-idx="0">Task 1</button>
+    <button class="tab-btn"        data-idx="1">Task 2</button>
+    <button class="tab-btn"        data-idx="2">Task 3</button>
+    <button class="tab-btn"        data-idx="3">Task 4</button>
+  </div>
+
+  <!-- ── Task 1: 1D Array — Worked Example + Extension ──── -->
+  <div class="panel active" id="panel-0">
+    <div class="goal">Study the worked example, then extend the code to count how many days recorded a temperature strictly above 20 °C.</div>
+
+    <div class="card">
+      <h2>Scenario</h2>
+      <p style="color:var(--text); font-size:0.9rem; line-height:1.7;">
+        An automated weather station records the daily maximum temperature (°C) for one week and stores the values in an array called <code>temperatures</code>:
+      </p>
+      <div class="array-diagram">
+        <div><div class="array-cell">18</div><div class="array-idx">[0]</div></div>
+        <div><div class="array-cell">22</div><div class="array-idx">[1]</div></div>
+        <div><div class="array-cell">15</div><div class="array-idx">[2]</div></div>
+        <div><div class="array-cell">29</div><div class="array-idx">[3]</div></div>
+        <div><div class="array-cell">25</div><div class="array-idx">[4]</div></div>
+        <div><div class="array-cell">12</div><div class="array-idx">[5]</div></div>
+        <div><div class="array-cell">20</div><div class="array-idx">[6]</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Worked Example — Totalling an Array</h2>
+      <p style="color:var(--text); font-size:0.88rem; line-height:1.7; margin-bottom:12px;">
+        The pseudocode below uses a <strong>for loop</strong> to iterate through every element of the array, accumulating a running total.
+        A variable <code>total</code> is set to zero before the loop begins, then each element is added to it in turn.
+      </p>
+      <pre class="ac-code" style="font-size:0.82rem; line-height:1.75;">temperatures = [18, 22, 15, 29, 25, 12, 20]
+total = 0
+for i = 0 to 6
+    total = total + temperatures[i]
+next i
+print("Total temperature this week: " + str(total) + "°C")</pre>
+
+      <p style="color:var(--muted); font-size:0.82rem; margin: 14px 0 6px;">
+        Trace through each iteration — watch how <code>i</code> and <code>total</code> change:
+      </p>
+      <div class="trace-wrap">
+        <table class="trace-table">
+          <thead>
+            <tr><th>i</th><th>temperatures[i]</th><th>total</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>—</td><td>—</td><td>0</td></tr>
+            <tr><td>0</td><td>18</td><td>18</td></tr>
+            <tr><td>1</td><td>22</td><td>40</td></tr>
+            <tr><td>2</td><td>15</td><td>55</td></tr>
+            <tr><td>3</td><td>29</td><td>84</td></tr>
+            <tr><td>4</td><td>25</td><td>109</td></tr>
+            <tr><td>5</td><td>12</td><td>121</td></tr>
+            <tr class="highlight"><td>6</td><td>20</td><td>141</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="color:var(--muted); font-size:0.82rem; margin-top:8px;">
+        Output: <code>Total temperature this week: 141°C</code>
+      </p>
+    </div>
+
+    <div class="card">
+      <h2>Your Task</h2>
+      <p style="color:var(--text); font-size:0.9rem; line-height:1.7;">
+        The worked example code is already in the editor. Add further code so that the program also:
+      </p>
+      <ul style="color:var(--text); font-size:0.9rem; line-height:1.9; padding-left:1.4em;">
+        <li>Counts how many days had a temperature <strong>strictly above</strong> 20 °C</li>
+        <li>Outputs the count with a suitable message</li>
+      </ul>
+    </div>
+
+    <div class="code-checker" id="checker-0">
+      <div class="checker-header">
+        <span class="checker-dot dot-r"></span>
+        <span class="checker-dot dot-y"></span>
+        <span class="checker-dot dot-g"></span>
+        <span>Task 1 — Extend the algorithm</span>
+      </div>
+      <textarea class="pseudocode-textarea" id="editor-0" spellcheck="false"
+                autocomplete="off" autocapitalize="off">temperatures = [18, 22, 15, 29, 25, 12, 20]
+total = 0
+for i = 0 to 6
+    total = total + temperatures[i]
+next i
+print("Total temperature this week: " + str(total) + "°C")
+
+// Add your code here to count days above 20°C
+</textarea>
+      <div class="checker-footer">
+        <button class="ac-btn" id="run-0" type="button">Run ▶</button>
+        <button class="ac-btn-secondary" id="clear-0" type="button">Reset</button>
+        <span id="run-status-0" style="font-size:0.75rem;color:var(--muted);"></span>
+      </div>
+    </div>
+    <div class="checker-feedback" id="feedback-0"></div>
+  </div>
+
+  <!-- ── Task 2: 2D Array — Cinema Screenings ──────────── -->
+  <div class="panel" id="panel-1">
+    <div class="goal">Write a program that asks for a film title and outputs all start times and seats remaining for that film.</div>
+
+    <div class="card">
+      <h2>Scenario</h2>
+      <p style="color:var(--text); font-size:0.9rem; line-height:1.7;">
+        A cinema stores its daily schedule in a 2D array called <code>screenings</code>.
+        Each row holds three pieces of information about one showing, accessed using <code>screenings[row, column]</code>:
+      </p>
+      <div style="overflow-x:auto; margin-top:12px;">
+        <table class="array-2d">
+          <thead>
+            <tr>
+              <th>Row</th>
+              <th class="col-head">[row, 0]&nbsp; Film title</th>
+              <th class="col-head">[row, 1]&nbsp; Start time</th>
+              <th class="col-head">[row, 2]&nbsp; Seats remaining</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>0</td><td>Ghostlight</td><td>11:00</td><td>34</td></tr>
+            <tr><td>1</td><td>Ironveil</td><td>11:30</td><td>12</td></tr>
+            <tr><td>2</td><td>Ghostlight</td><td>14:00</td><td>57</td></tr>
+            <tr><td>3</td><td>Ironveil</td><td>15:30</td><td>6</td></tr>
+            <tr><td>4</td><td>Ghostlight</td><td>18:00</td><td>21</td></tr>
+            <tr><td>5</td><td>Ironveil</td><td>20:00</td><td>48</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="color:var(--text); font-size:0.9rem; line-height:1.7; margin-top:14px;">
+        Your algorithm must:
+      </p>
+      <ul style="color:var(--text); font-size:0.9rem; line-height:1.9; padding-left:1.4em;">
+        <li>Ask the user to enter a film title</li>
+        <li>Iterate through all rows of the array</li>
+        <li>For each row where the film title matches, output the start time and seats remaining</li>
+      </ul>
+    </div>
+
+    <div class="code-checker" id="checker-1">
+      <div class="checker-header">
+        <span class="checker-dot dot-r"></span>
+        <span class="checker-dot dot-y"></span>
+        <span class="checker-dot dot-g"></span>
+        <span>Task 2 — Cinema screenings</span>
+      </div>
+      <textarea class="pseudocode-textarea" id="editor-1" spellcheck="false"
+                autocomplete="off" autocapitalize="off">// Cinema schedule — film title, start time, seats remaining
+array screenings[6,3]
+screenings[0,0] = "Ghostlight"
+screenings[0,1] = "11:00"
+screenings[0,2] = "34"
+screenings[1,0] = "Ironveil"
+screenings[1,1] = "11:30"
+screenings[1,2] = "12"
+screenings[2,0] = "Ghostlight"
+screenings[2,1] = "14:00"
+screenings[2,2] = "57"
+screenings[3,0] = "Ironveil"
+screenings[3,1] = "15:30"
+screenings[3,2] = "6"
+screenings[4,0] = "Ghostlight"
+screenings[4,1] = "18:00"
+screenings[4,2] = "21"
+screenings[5,0] = "Ironveil"
+screenings[5,1] = "20:00"
+screenings[5,2] = "48"
+
+// Write your code below
+</textarea>
+      <div class="checker-footer">
+        <button class="ac-btn" id="run-1" type="button">Run ▶</button>
+        <button class="ac-btn-secondary" id="clear-1" type="button">Reset</button>
+        <span id="run-status-1" style="font-size:0.75rem;color:var(--muted);"></span>
+      </div>
+    </div>
+    <div class="checker-feedback" id="feedback-1"></div>
+  </div>
+
+  <!-- ── Task 3: 2D Array — Warehouse Deliveries ────────── -->
+  <div class="panel" id="panel-2">
+    <div class="goal">Write a program that asks for a supplier name and outputs the total quantity of goods delivered by that supplier.</div>
+
+    <div class="card">
+      <h2>Scenario</h2>
+      <p style="color:var(--text); font-size:0.9rem; line-height:1.7;">
+        A warehouse records incoming deliveries in a 2D array called <code>deliveries</code>. Each row stores one delivery:
+      </p>
+      <div style="overflow-x:auto; margin-top:12px;">
+        <table class="array-2d">
+          <thead>
+            <tr>
+              <th>Row</th>
+              <th class="col-head">[row, 0]&nbsp; Supplier</th>
+              <th class="col-head">[row, 1]&nbsp; Product code</th>
+              <th class="col-head">[row, 2]&nbsp; Quantity</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>0</td><td>FastShip</td><td>P001</td><td>120</td></tr>
+            <tr><td>1</td><td>QuickBolt</td><td>B022</td><td>200</td></tr>
+            <tr><td>2</td><td>FastShip</td><td>P001</td><td>85</td></tr>
+            <tr><td>3</td><td>QuickBolt</td><td>C003</td><td>65</td></tr>
+            <tr><td>4</td><td>FastShip</td><td>R009</td><td>40</td></tr>
+            <tr><td>5</td><td>QuickBolt</td><td>A101</td><td>110</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="color:var(--text); font-size:0.9rem; line-height:1.7; margin-top:14px;">
+        Your algorithm must:
+      </p>
+      <ul style="color:var(--text); font-size:0.9rem; line-height:1.9; padding-left:1.4em;">
+        <li>Ask the user to enter a supplier name</li>
+        <li>Iterate through all rows and accumulate the quantity for every row that matches</li>
+        <li>Output the total with a suitable message</li>
+      </ul>
+      <p style="color:var(--muted); font-size:0.82rem; margin-top:10px;">
+        Note: the quantities in the array are stored as text — you may need to convert them before adding.
+      </p>
+    </div>
+
+    <div class="code-checker" id="checker-2">
+      <div class="checker-header">
+        <span class="checker-dot dot-r"></span>
+        <span class="checker-dot dot-y"></span>
+        <span class="checker-dot dot-g"></span>
+        <span>Task 3 — Warehouse deliveries</span>
+      </div>
+      <textarea class="pseudocode-textarea" id="editor-2" spellcheck="false"
+                autocomplete="off" autocapitalize="off">// Delivery records — supplier, product code, quantity (stored as text)
+array deliveries[6,3]
+deliveries[0,0] = "FastShip"
+deliveries[0,1] = "P001"
+deliveries[0,2] = "120"
+deliveries[1,0] = "QuickBolt"
+deliveries[1,1] = "B022"
+deliveries[1,2] = "200"
+deliveries[2,0] = "FastShip"
+deliveries[2,1] = "P001"
+deliveries[2,2] = "85"
+deliveries[3,0] = "QuickBolt"
+deliveries[3,1] = "C003"
+deliveries[3,2] = "65"
+deliveries[4,0] = "FastShip"
+deliveries[4,1] = "R009"
+deliveries[4,2] = "40"
+deliveries[5,0] = "QuickBolt"
+deliveries[5,1] = "A101"
+deliveries[5,2] = "110"
+
+// Write your code below
+</textarea>
+      <div class="checker-footer">
+        <button class="ac-btn" id="run-2" type="button">Run ▶</button>
+        <button class="ac-btn-secondary" id="clear-2" type="button">Reset</button>
+        <span id="run-status-2" style="font-size:0.75rem;color:var(--muted);"></span>
+      </div>
+    </div>
+    <div class="checker-feedback" id="feedback-2"></div>
+  </div>
+
+  <!-- ── Task 4: Function + 2D Array — Patient Lookup ───── -->
+  <div class="panel" id="panel-3">
+    <div class="goal">Write a function called findPatient that searches the patient records and returns the name and ward for a given ID, or "Not found" if the ID does not exist.</div>
+
+    <div class="card">
+      <h2>Scenario</h2>
+      <p style="color:var(--text); font-size:0.9rem; line-height:1.7;">
+        A hospital stores patient records in a 2D array called <code>patients</code>:
+      </p>
+      <div style="overflow-x:auto; margin-top:12px;">
+        <table class="array-2d">
+          <thead>
+            <tr>
+              <th>Row</th>
+              <th class="col-head">[row, 0]&nbsp; Patient ID</th>
+              <th class="col-head">[row, 1]&nbsp; Name</th>
+              <th class="col-head">[row, 2]&nbsp; Ward</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>0</td><td>P101</td><td>James Carter</td><td>Cardiology</td></tr>
+            <tr><td>1</td><td>P102</td><td>Amara Singh</td><td>Orthopaedics</td></tr>
+            <tr><td>2</td><td>P103</td><td>Beth Owens</td><td>Neurology</td></tr>
+            <tr><td>3</td><td>P104</td><td>Marco Reyes</td><td>Cardiology</td></tr>
+            <tr><td>4</td><td>P105</td><td>Yuki Tanaka</td><td>Oncology</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="color:var(--text); font-size:0.9rem; line-height:1.7; margin-top:14px;">
+        Your algorithm must:
+      </p>
+      <ul style="color:var(--text); font-size:0.9rem; line-height:1.9; padding-left:1.4em;">
+        <li>Define a function called <code>findPatient</code> that takes a patient ID as a parameter</li>
+        <li>The function searches the array and returns the patient's name and ward if the ID is found</li>
+        <li>If no match is found, the function returns <code>"Not found"</code></li>
+        <li>After the function definition, write a short program that asks the user for a patient ID, calls the function, and outputs the result</li>
+      </ul>
+    </div>
+
+    <div class="code-checker" id="checker-3">
+      <div class="checker-header">
+        <span class="checker-dot dot-r"></span>
+        <span class="checker-dot dot-y"></span>
+        <span class="checker-dot dot-g"></span>
+        <span>Task 4 — Patient lookup function</span>
+      </div>
+      <textarea class="pseudocode-textarea" id="editor-3" spellcheck="false"
+                autocomplete="off" autocapitalize="off">// Patient records — ID, name, ward
+array patients[5,3]
+patients[0,0] = "P101"
+patients[0,1] = "James Carter"
+patients[0,2] = "Cardiology"
+patients[1,0] = "P102"
+patients[1,1] = "Amara Singh"
+patients[1,2] = "Orthopaedics"
+patients[2,0] = "P103"
+patients[2,1] = "Beth Owens"
+patients[2,2] = "Neurology"
+patients[3,0] = "P104"
+patients[3,1] = "Marco Reyes"
+patients[3,2] = "Cardiology"
+patients[4,0] = "P105"
+patients[4,1] = "Yuki Tanaka"
+patients[4,2] = "Oncology"
+
+// Write your function and program below
+</textarea>
+      <div class="checker-footer">
+        <button class="ac-btn" id="run-3" type="button">Run ▶</button>
+        <button class="ac-btn-secondary" id="clear-3" type="button">Reset</button>
+        <span id="run-status-3" style="font-size:0.75rem;color:var(--muted);"></span>
+      </div>
+    </div>
+    <div class="checker-feedback" id="feedback-3"></div>
+  </div>
+
+</div><!-- /.page-wrap -->
+
+<div class="ac-toast" id="toast"></div>
+
+<script type="module">
+import { setupEditors, runPseudocode, clearSyntaxHint, markOutputFailed } from '../../pseudocode-editor.js';
+import { preload } from '../../pyodide-runner.js';
+
+// ── Constants ──────────────────────────────────────────
+const TASK_COUNT    = 4;
+const ACTIVITY_TITLE = 'Arrays Practice';
+const STORE_NS      = location.pathname;
+
+// ── Starter code — Reset restores these ───────────────
+const STARTERS = [
+  // Task 1
+`temperatures = [18, 22, 15, 29, 25, 12, 20]
+total = 0
+for i = 0 to 6
+    total = total + temperatures[i]
+next i
+print("Total temperature this week: " + str(total) + "°C")
+
+// Add your code here to count days above 20°C
+`,
+  // Task 2
+`// Cinema schedule — film title, start time, seats remaining
+array screenings[6,3]
+screenings[0,0] = "Ghostlight"
+screenings[0,1] = "11:00"
+screenings[0,2] = "34"
+screenings[1,0] = "Ironveil"
+screenings[1,1] = "11:30"
+screenings[1,2] = "12"
+screenings[2,0] = "Ghostlight"
+screenings[2,1] = "14:00"
+screenings[2,2] = "57"
+screenings[3,0] = "Ironveil"
+screenings[3,1] = "15:30"
+screenings[3,2] = "6"
+screenings[4,0] = "Ghostlight"
+screenings[4,1] = "18:00"
+screenings[4,2] = "21"
+screenings[5,0] = "Ironveil"
+screenings[5,1] = "20:00"
+screenings[5,2] = "48"
+
+// Write your code below
+`,
+  // Task 3
+`// Delivery records — supplier, product code, quantity (stored as text)
+array deliveries[6,3]
+deliveries[0,0] = "FastShip"
+deliveries[0,1] = "P001"
+deliveries[0,2] = "120"
+deliveries[1,0] = "QuickBolt"
+deliveries[1,1] = "B022"
+deliveries[1,2] = "200"
+deliveries[2,0] = "FastShip"
+deliveries[2,1] = "P001"
+deliveries[2,2] = "85"
+deliveries[3,0] = "QuickBolt"
+deliveries[3,1] = "C003"
+deliveries[3,2] = "65"
+deliveries[4,0] = "FastShip"
+deliveries[4,1] = "R009"
+deliveries[4,2] = "40"
+deliveries[5,0] = "QuickBolt"
+deliveries[5,1] = "A101"
+deliveries[5,2] = "110"
+
+// Write your code below
+`,
+  // Task 4
+`// Patient records — ID, name, ward
+array patients[5,3]
+patients[0,0] = "P101"
+patients[0,1] = "James Carter"
+patients[0,2] = "Cardiology"
+patients[1,0] = "P102"
+patients[1,1] = "Amara Singh"
+patients[1,2] = "Orthopaedics"
+patients[2,0] = "P103"
+patients[2,1] = "Beth Owens"
+patients[2,2] = "Neurology"
+patients[3,0] = "P104"
+patients[3,1] = "Marco Reyes"
+patients[3,2] = "Cardiology"
+patients[4,0] = "P105"
+patients[4,1] = "Yuki Tanaka"
+patients[4,2] = "Oncology"
+
+// Write your function and program below
+`,
+];
+
+// ── Test cases for Tasks 2–4 (Task 1 handled separately) ─
+const TESTS = [
+  null,
+  // Task 2 — search cinema screenings by film title
+  [
+    { inputs: ['Ghostlight'], expected: ['11:00', '14:00', '18:00'] },
+    { inputs: ['Ironveil'],   expected: ['11:30', '15:30', '20:00'] },
+  ],
+  // Task 3 — total deliveries by supplier (FastShip=245, QuickBolt=375)
+  [
+    { inputs: ['FastShip'],  expected: ['245'] },
+    { inputs: ['QuickBolt'], expected: ['375'] },
+  ],
+  // Task 4 — patient lookup function
+  [
+    { inputs: ['P103'], expected: ['beth owens',  'neurology'] },
+    { inputs: ['P105'], expected: ['yuki tanaka', 'oncology']  },
+    { inputs: ['P999'], expected: ['not found']                },
+  ],
+];
+
+// ── State ──────────────────────────────────────────────
+const completed = new Array(TASK_COUNT).fill(false);
+
+// ── Editor setup — restore saved state or use starter ──
+for (let i = 0; i < TASK_COUNT; i++) {
+  const saved = localStorage.getItem(STORE_NS + ':e' + i);
+  document.getElementById('editor-' + i).value = saved !== null ? saved : STARTERS[i];
+}
+setupEditors('.pseudocode-textarea');
+
+// ── Pyodide preload ────────────────────────────────────
+preload();
+
+// ── Tab switching ──────────────────────────────────────
+document.getElementById('tab-bar').addEventListener('click', e => {
+  const tab = e.target.closest('.tab-btn');
+  if (!tab) return;
+  const idx = +tab.dataset.idx;
+  document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  tab.classList.add('active');
+  document.getElementById('panel-' + idx).classList.add('active');
+});
+
+// ── Run + Clear + Save handlers ────────────────────────
+for (let idx = 0; idx < TASK_COUNT; idx++) {
+  const runBtn    = document.getElementById('run-'        + idx);
+  const clearBtn  = document.getElementById('clear-'      + idx);
+  const statusEl  = document.getElementById('run-status-' + idx);
+  const editorEl  = document.getElementById('editor-'     + idx);
+  const feedbackEl = document.getElementById('feedback-'  + idx);
+
+  runBtn.addEventListener('click', async () => {
+    runBtn.disabled = true;
+    statusEl.textContent = 'Running…';
+
+    if (idx === 0) {
+      // ── Task 1: single run — count days above 20 °C ────
+      // Mark scheme:
+      //   [1] Attempts selection — any if statement present
+      //   [1] Correct threshold — compares against 20
+      //   [1] Correct output  — count of 3 appears in output
+      const r = await runPseudocode(editorEl);
+      statusEl.textContent = '';
+      runBtn.disabled = false;
+
+      if (r.ok) {
+        clearSyntaxHint(editorEl);
+        const src = editorEl.value;
+        const out = r.output;
+        const hasIf        = /\bif\b/i.test(src);
+        const hasThreshold = />\s*20/.test(src) || /20\s*</.test(src);
+        const hasCount     = /\b3\b/.test(out);
+
+        if (hasIf && hasThreshold && hasCount) {
+          setAnswerState(editorEl, true);
+          feedbackEl.textContent = '✓ Correct — 3 days exceeded 20 °C.';
+          feedbackEl.className   = 'checker-feedback pass';
+          markDone(0, 'green');
+        } else {
+          markOutputFailed(editorEl);
+          feedbackEl.textContent = 'Not quite — check your output and try again.';
+          feedbackEl.className   = 'checker-feedback fail';
+        }
+      }
+
+    } else {
+      // ── Tasks 2–4: multi-test ──────────────────────────
+      const tests = TESTS[idx];
+      const runs  = await Promise.all(
+        tests.map(async t => {
+          const r = await runPseudocode(editorEl, { inputs: t.inputs });
+          return { ...r, inputs: t.inputs };
+        })
+      );
+      statusEl.textContent = '';
+      runBtn.disabled = false;
+
+      _renderTestOutput(editorEl, tests, runs);
+
+      const allPass = runs.every((run, i) => {
+        if (!run.ok) return false;
+        const out     = run.output.toLowerCase();
+        const needles = Array.isArray(tests[i].expected) ? tests[i].expected : [tests[i].expected];
+        return needles.every(n => out.includes(n.toLowerCase()));
+      });
+
+      if (allPass) {
+        setAnswerState(editorEl, true);
+        feedbackEl.textContent = '✓ All tests passed!';
+        feedbackEl.className   = 'checker-feedback pass';
+        markDone(idx, 'green');
+      } else {
+        markOutputFailed(editorEl);
+        feedbackEl.textContent = '';
+        feedbackEl.className   = 'checker-feedback';
+      }
+    }
+  });
+
+  clearBtn.addEventListener('click', () => {
+    editorEl.value = STARTERS[idx];
+    editorEl.dispatchEvent(new Event('input'));
+    setAnswerState(editorEl, true);
+    feedbackEl.textContent = '';
+    feedbackEl.className   = 'checker-feedback';
+    try { localStorage.removeItem(STORE_NS + ':e' + idx); } catch (_) {}
+  });
+
+  let saveTimer;
+  editorEl.addEventListener('input', () => {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+      try { localStorage.setItem(STORE_NS + ':e' + idx, editorEl.value); } catch (_) {}
+    }, 500);
+  });
+}
+
+// ── Mark a task done ───────────────────────────────────
+function markDone(idx, type = 'gold') {
+  if (completed[idx]) return;
+  completed[idx] = true;
+
+  const tab = document.querySelector('.tab-btn[data-idx="' + idx + '"]');
+  if (tab) tab.classList.add('done-' + type);
+
+  updateProgress();
+
+  const pct = Math.round(completed.filter(Boolean).length / TASK_COUNT * 100);
+  window.Classroom?.submitGrade(pct, ACTIVITY_TITLE);
+
+  if (completed.every(Boolean)) allComplete();
+}
+
+// ── Progress bar ───────────────────────────────────────
+function updateProgress() {
+  const pct = Math.round(completed.filter(Boolean).length / TASK_COUNT * 100);
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-pct').textContent  = pct + '%';
+}
+
+// ── All tasks complete ─────────────────────────────────
+function allComplete() {
+  document.getElementById('done-banner').classList.add('show');
+  window.ActivityUI?.launchCelebration();
+}
+
+// ── Highlight checker block on wrong answer ────────────
+function setAnswerState(target, ok) {
+  const el    = typeof target === 'string' ? document.getElementById(target) : target;
+  const block = el?.closest('.code-checker, .card, .panel');
+  if (block) block.classList.toggle('is-wrong', !ok);
+}
+
+// ── Per-test coloured output (teal = pass, red = fail) ─
+function _renderTestOutput(editorEl, tests, runs) {
+  const outputPanel = editorEl.closest('.editor-wrap')?.querySelector('.output-panel');
+  if (!outputPanel) return;
+  outputPanel.classList.remove('error');
+  const content  = outputPanel.querySelector('.output-content');
+  const inputRow = outputPanel.querySelector('.output-input-row');
+  if (inputRow) inputRow.hidden = true;
+  if (!content) return;
+
+  const SEP = '─'.repeat(44);
+  const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+  content.innerHTML = runs.map((run, i) => {
+    const test  = tests[i];
+    const label = run.inputs.length === 1
+      ? `input: "${run.inputs[0]}"`
+      : `inputs: ${run.inputs.map(v => `"${v}"`).join(', ')}`;
+
+    let testPassed;
+    if (!run.ok) {
+      testPassed = false;
+    } else if (test.expected !== undefined) {
+      const out     = (run.output || '').toLowerCase();
+      const needles = Array.isArray(test.expected) ? test.expected : [test.expected];
+      testPassed    = needles.every(n => out.includes(n.toLowerCase()));
+    } else {
+      testPassed = true;
+    }
+
+    const out   = run.ok ? (run.output || '(no output)') : `⚠ ${run.output || 'Error — check syntax'}`;
+    const color = testPassed ? '#5eead4' : '#ff6b6b';
+    return `<span style="color:${color}">${esc(`Test ${i + 1}  (${label})\n${SEP}\n${out}`)}</span>`;
+  }).join('\n\n');
+}
+
+window.showToast = (msg, type = '') => window.ActivityUI?.showToast(msg, type);
+</script>
+
+<script src="../../activity-ui.js"></script>
+<!-- NOTE: use ../../../classroom.js if this file is inside a lesson subfolder -->
+<script src="../../classroom.js"></script>
+</body>
+</html>
