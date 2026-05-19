@@ -550,26 +550,7 @@ next i</pre>
         <span>Task 5 — Cinema screenings</span>
       </div>
       <textarea class="pseudocode-textarea" id="editor-4" spellcheck="false"
-                autocomplete="off" autocapitalize="off">// Cinema schedule — [row,0] film title  [row,1] start time  [row,2] seats remaining
-array screenings[6,3]
-screenings[0,0] = "Ghostlight"
-screenings[0,1] = "11:00"
-screenings[0,2] = "34"
-screenings[1,0] = "Ironveil"
-screenings[1,1] = "11:30"
-screenings[1,2] = "12"
-screenings[2,0] = "Ghostlight"
-screenings[2,1] = "14:00"
-screenings[2,2] = "57"
-screenings[3,0] = "Ironveil"
-screenings[3,1] = "15:30"
-screenings[3,2] = "6"
-screenings[4,0] = "Ghostlight"
-screenings[4,1] = "18:00"
-screenings[4,2] = "21"
-screenings[5,0] = "Ironveil"
-screenings[5,1] = "20:00"
-screenings[5,2] = "48"
+                autocomplete="off" autocapitalize="off">// The array screenings has been defined with the data from the table above.
 </textarea>
       <div class="checker-footer">
         <button class="ac-btn" id="run-4" type="button">Run ▶</button>
@@ -625,23 +606,7 @@ screenings[5,2] = "48"
         <span>Task 6 — Patient lookup function</span>
       </div>
       <textarea class="pseudocode-textarea" id="editor-5" spellcheck="false"
-                autocomplete="off" autocapitalize="off">// Patient records — [row,0] ID  [row,1] name  [row,2] ward
-array patients[5,3]
-patients[0,0] = "P101"
-patients[0,1] = "James Carter"
-patients[0,2] = "Cardiology"
-patients[1,0] = "P102"
-patients[1,1] = "Amara Singh"
-patients[1,2] = "Orthopaedics"
-patients[2,0] = "P103"
-patients[2,1] = "Beth Owens"
-patients[2,2] = "Neurology"
-patients[3,0] = "P104"
-patients[3,1] = "Marco Reyes"
-patients[3,2] = "Cardiology"
-patients[4,0] = "P105"
-patients[4,1] = "Yuki Tanaka"
-patients[4,2] = "Oncology"
+                autocomplete="off" autocapitalize="off">// The array patients has been defined with the data from the table above.
 </textarea>
       <div class="checker-footer">
         <button class="ac-btn" id="run-5" type="button">Run ▶</button>
@@ -670,9 +635,16 @@ const STARTERS = [
   'temperatures = [18, 22, 15, 29, 25, 12, 20]\n',
   'temperatures = [18, 22, 15, 29, 25, 12, 20]\n',
   'temperatures = [18, 22, 15, 29, 25, 12, 20]\n',
-  // Task 5: 2D cinema
-  `// Cinema schedule — [row,0] film title  [row,1] start time  [row,2] seats remaining
-array screenings[6,3]
+  // Tasks 5–6: editors start with just a comment; array is injected at run time
+  '// The array screenings has been defined with the data from the table above.\n',
+  '// The array patients has been defined with the data from the table above.\n',
+];
+
+// Hidden preamble code injected before student code at run time for Tasks 5–6
+const PREAMBLES = [
+  '', '', '', '',
+  // Task 5 — cinema screenings
+`array screenings[6,3]
 screenings[0,0] = "Ghostlight"
 screenings[0,1] = "11:00"
 screenings[0,2] = "34"
@@ -690,11 +662,9 @@ screenings[4,1] = "18:00"
 screenings[4,2] = "21"
 screenings[5,0] = "Ironveil"
 screenings[5,1] = "20:00"
-screenings[5,2] = "48"
-`,
-  // Task 6: 2D patients
-  `// Patient records — [row,0] ID  [row,1] name  [row,2] ward
-array patients[5,3]
+screenings[5,2] = "48"`,
+  // Task 6 — hospital patients
+`array patients[5,3]
 patients[0,0] = "P101"
 patients[0,1] = "James Carter"
 patients[0,2] = "Cardiology"
@@ -709,8 +679,7 @@ patients[3,1] = "Marco Reyes"
 patients[3,2] = "Cardiology"
 patients[4,0] = "P105"
 patients[4,1] = "Yuki Tanaka"
-patients[4,2] = "Oncology"
-`,
+patients[4,2] = "Oncology"`,
 ];
 
 // Multi-test cases for Tasks 5 and 6
@@ -821,14 +790,17 @@ for (let idx = 0; idx < TASK_COUNT; idx++) {
       }
 
     } else {
-      // Tasks 5–6: multi-test
-      const tests = TESTS[idx];
+      // Tasks 5–6: multi-test — prepend hidden array definition before running
+      const tests       = TESTS[idx];
+      const studentCode = editorEl.value;
+      editorEl.value    = PREAMBLES[idx] + '\n' + studentCode; // inject silently (no event)
       const runs  = await Promise.all(
         tests.map(async t => {
           const r = await runPseudocode(editorEl, { inputs: t.inputs });
           return { ...r, inputs: t.inputs };
         })
       );
+      editorEl.value = studentCode; // restore without triggering save/highlight events
       statusEl.textContent = '';
       runBtn.disabled = false;
 
