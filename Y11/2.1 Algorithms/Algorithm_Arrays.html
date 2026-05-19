@@ -5,19 +5,16 @@
 title:  Arrays Practice
 type:   Practice
 stars:  3
-desc:   OCR pseudocode array practice — 1D iteration, 2D searching and totalling, and writing functions with arrays.
+desc:   OCR pseudocode array practice — accessing elements, looping, totalling, counting with conditions, 2D arrays, and functions.
 color:  blue
 -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Arrays Practice — Year 11</title>
 
-<!-- NOTE: use ../../../shared.css if this file is inside a lesson subfolder (L1_…/file.html) -->
 <link rel="stylesheet" href="../../shared.css">
 
 <style>
-  /* ── Sticky header ───────────────────────────────────── */
-
   header {
     background: var(--surface);
     border-bottom: 2px solid var(--surface-mid);
@@ -27,17 +24,9 @@ color:  blue
     z-index: 100;
     box-shadow: 0 2px 12px rgba(0,0,0,0.35);
   }
-  .header-progress {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  /* ── Page body padding ───────────────────────────────── */
+  .header-progress { display: flex; align-items: center; gap: 10px; }
 
   .page-wrap { padding: 28px 16px 60px; }
-
-  /* ── Page title (below header) ───────────────────────── */
 
   .page-title {
     font-size: 1.35rem;
@@ -52,8 +41,6 @@ color:  blue
     color: var(--muted);
     margin-bottom: 28px;
   }
-
-  /* ── Pill tab bar ────────────────────────────────────── */
 
   .tabs {
     display: flex;
@@ -76,11 +63,9 @@ color:  blue
     user-select: none;
   }
   .tab-btn:hover:not(.active) { border-color: var(--accent); color: var(--text); }
-  .tab-btn.active    { background: var(--accent);  border-color: var(--accent);  color: var(--text-inv); }
-  .tab-btn.done-green { background: var(--green);  border-color: var(--green);   color: #fff; }
-  .tab-btn.done-gold  { background: var(--gold);   border-color: var(--gold);    color: #111; }
-
-  /* ── Panels ──────────────────────────────────────────── */
+  .tab-btn.active     { background: var(--accent); border-color: var(--accent); color: var(--text-inv); }
+  .tab-btn.done-green { background: var(--green);  border-color: var(--green);  color: #fff; }
+  .tab-btn.done-gold  { background: var(--gold);   border-color: var(--gold);   color: #111; }
 
   .panel {
     display: none;
@@ -89,8 +74,6 @@ color:  blue
     animation: ac-fade-in 0.2s ease;
   }
   .panel.active { display: block; }
-
-  /* ── Section card ────────────────────────────────────── */
 
   .card {
     background: var(--surface);
@@ -108,8 +91,6 @@ color:  blue
     margin-bottom: 12px;
   }
 
-  /* ── Goal banner ─────────────────────────────────────── */
-
   .goal {
     background: var(--surface);
     border-left: 4px solid var(--accent);
@@ -120,8 +101,6 @@ color:  blue
     color: var(--text);
     margin-bottom: 20px;
   }
-
-  /* ── Pseudocode checker card ─────────────────────────── */
 
   .code-checker {
     background: var(--surface);
@@ -152,13 +131,7 @@ color:  blue
   .checker-feedback.fail { color: var(--red); animation: ac-shake 0.35s ease; }
 
   .code-checker.is-wrong,
-  .card.is-wrong,
-  .panel.is-wrong {
-    outline: 2px solid var(--red);
-    background: rgba(220,38,38,.08);
-  }
-
-  /* ── Score / progress bar ────────────────────────────── */
+  .card.is-wrong { outline: 2px solid var(--red); background: rgba(220,38,38,.08); }
 
   .score-pct {
     font-family: var(--font-head, monospace);
@@ -167,20 +140,57 @@ color:  blue
     margin-top: 3px;
   }
 
+  /* ── Collapsible worked example ──────────────────────── */
+
+  details.worked-example {
+    background: var(--surface-mid);
+    border-left: 4px solid var(--gold);
+    border-radius: 0 8px 8px 0;
+    margin-bottom: 22px;
+    overflow: hidden;
+  }
+  details.worked-example > summary {
+    padding: 11px 16px;
+    cursor: pointer;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--gold);
+    user-select: none;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  details.worked-example > summary::before {
+    content: '▶';
+    font-size: 0.65rem;
+    transition: transform 0.15s;
+    display: inline-block;
+  }
+  details.worked-example[open] > summary::before { transform: rotate(90deg); }
+  details.worked-example > summary::-webkit-details-marker { display: none; }
+  .example-body {
+    padding: 4px 18px 18px;
+    border-top: 1px solid var(--surface-dim);
+  }
+  .example-body p {
+    color: var(--text);
+    font-size: 0.88rem;
+    line-height: 1.7;
+    margin: 10px 0;
+  }
+
   /* ── Trace table ─────────────────────────────────────── */
 
-  .trace-wrap {
-    overflow-x: auto;
-    margin: 14px 0 8px;
-  }
+  .trace-wrap { overflow-x: auto; margin: 10px 0 4px; }
   .trace-table {
     border-collapse: collapse;
     font-size: 0.82rem;
     font-family: var(--font-mono, monospace);
-    min-width: 320px;
+    min-width: 240px;
   }
   .trace-table th {
-    background: var(--surface-mid);
+    background: var(--surface);
     color: var(--accent);
     font-weight: 700;
     text-transform: uppercase;
@@ -195,8 +205,7 @@ color:  blue
     color: var(--text);
     text-align: center;
   }
-  .trace-table tr:nth-child(even) td { background: var(--surface-mid); }
-  .trace-table .highlight td { color: var(--accent); font-weight: 700; }
+  .trace-table tr:nth-child(even) td { background: var(--surface); }
 
   /* ── 1D array diagram ────────────────────────────────── */
 
@@ -257,17 +266,11 @@ color:  blue
 </head>
 
 <body>
-<!--
-  Year-group and topic are auto-detected from the URL path by classroom.js.
-  Do NOT set data-year or data-topic manually.
--->
 
-<!-- Completion banner -->
 <div id="done-banner" class="ac-banner gold">
   All tasks complete — excellent work!
 </div>
 
-<!-- Sticky header -->
 <header>
   <div class="header-progress">
     <div class="ac-progress-bar" style="flex:1;">
@@ -286,16 +289,18 @@ color:  blue
     <button class="tab-btn"        data-idx="1">Task 2</button>
     <button class="tab-btn"        data-idx="2">Task 3</button>
     <button class="tab-btn"        data-idx="3">Task 4</button>
+    <button class="tab-btn"        data-idx="4">Task 5</button>
+    <button class="tab-btn"        data-idx="5">Task 6</button>
   </div>
 
-  <!-- ── Task 1: 1D Array — Worked Example + Extension ──── -->
+  <!-- ── Task 1: Access specific elements ─────────────────────────────────── -->
   <div class="panel active" id="panel-0">
-    <div class="goal">Study the worked example, then extend the code to count how many days recorded a temperature strictly above 20 °C.</div>
+    <div class="goal">Output the temperature recorded on day 1 (Monday) and day 4 (Thursday).</div>
 
     <div class="card">
       <h2>Scenario</h2>
       <p style="color:var(--text); font-size:0.9rem; line-height:1.7;">
-        An automated weather station records the daily maximum temperature (°C) for one week and stores the values in an array called <code>temperatures</code>:
+        A weather station records the daily maximum temperature (°C) for one week:
       </p>
       <div class="array-diagram">
         <div><div class="array-cell">18</div><div class="array-idx">[0]</div></div>
@@ -306,73 +311,33 @@ color:  blue
         <div><div class="array-cell">12</div><div class="array-idx">[5]</div></div>
         <div><div class="array-cell">20</div><div class="array-idx">[6]</div></div>
       </div>
-    </div>
-
-    <div class="card">
-      <h2>Worked Example — Totalling an Array</h2>
-      <p style="color:var(--text); font-size:0.88rem; line-height:1.7; margin-bottom:12px;">
-        The pseudocode below uses a <strong>for loop</strong> to iterate through every element of the array, accumulating a running total.
-        A variable <code>total</code> is set to zero before the loop begins, then each element is added to it in turn.
-      </p>
-      <pre class="ac-code" style="font-size:0.82rem; line-height:1.75;">temperatures = [18, 22, 15, 29, 25, 12, 20]
-total = 0
-for i = 0 to 6
-    total = total + temperatures[i]
-next i
-print("Total temperature this week: " + str(total) + "°C")</pre>
-
-      <p style="color:var(--muted); font-size:0.82rem; margin: 14px 0 6px;">
-        Trace through each iteration — watch how <code>i</code> and <code>total</code> change:
-      </p>
-      <div class="trace-wrap">
-        <table class="trace-table">
-          <thead>
-            <tr><th>i</th><th>temperatures[i]</th><th>total</th></tr>
-          </thead>
-          <tbody>
-            <tr><td>—</td><td>—</td><td>0</td></tr>
-            <tr><td>0</td><td>18</td><td>18</td></tr>
-            <tr><td>1</td><td>22</td><td>40</td></tr>
-            <tr><td>2</td><td>15</td><td>55</td></tr>
-            <tr><td>3</td><td>29</td><td>84</td></tr>
-            <tr><td>4</td><td>25</td><td>109</td></tr>
-            <tr><td>5</td><td>12</td><td>121</td></tr>
-            <tr class="highlight"><td>6</td><td>20</td><td>141</td></tr>
-          </tbody>
-        </table>
-      </div>
-      <p style="color:var(--muted); font-size:0.82rem; margin-top:8px;">
-        Output: <code>Total temperature this week: 141°C</code>
-      </p>
-    </div>
-
-    <div class="card">
-      <h2>Your Task</h2>
-      <p style="color:var(--text); font-size:0.9rem; line-height:1.7;">
-        The worked example code is already in the editor. Add further code so that the program also:
-      </p>
+      <p style="color:var(--muted); font-size:0.82rem; margin-top:6px;">Index [0] = Monday &nbsp;·&nbsp; [1] = Tuesday &nbsp;·&nbsp; … &nbsp;·&nbsp; [6] = Sunday</p>
+      <p style="color:var(--text); font-size:0.9rem; line-height:1.7; margin-top:14px;">Your algorithm must:</p>
       <ul style="color:var(--text); font-size:0.9rem; line-height:1.9; padding-left:1.4em;">
-        <li>Counts how many days had a temperature <strong>strictly above</strong> 20 °C</li>
-        <li>Outputs the count with a suitable message</li>
+        <li>Output the temperature for Monday (day 1)</li>
+        <li>Output the temperature for Thursday (day 4)</li>
       </ul>
     </div>
+
+    <details class="worked-example">
+      <summary>Show worked example</summary>
+      <div class="example-body">
+        <p>To read a single element, write the array name followed by its <strong>index</strong> in square brackets. Indices start at <strong>0</strong> — so the first element is <code>[0]</code>, the second is <code>[1]</code>, and so on.</p>
+        <pre class="ac-code" style="font-size:0.82rem; line-height:1.75;">cities = ["Paris", "Tokyo", "Cairo", "Sydney"]
+print(cities[0])   // outputs: Paris
+print(cities[2])   // outputs: Cairo</pre>
+      </div>
+    </details>
 
     <div class="code-checker" id="checker-0">
       <div class="checker-header">
         <span class="checker-dot dot-r"></span>
         <span class="checker-dot dot-y"></span>
         <span class="checker-dot dot-g"></span>
-        <span>Task 1 — Extend the algorithm</span>
+        <span>Task 1 — Access specific elements</span>
       </div>
       <textarea class="pseudocode-textarea" id="editor-0" spellcheck="false"
                 autocomplete="off" autocapitalize="off">temperatures = [18, 22, 15, 29, 25, 12, 20]
-total = 0
-for i = 0 to 6
-    total = total + temperatures[i]
-next i
-print("Total temperature this week: " + str(total) + "°C")
-
-// Add your code here to count days above 20°C
 </textarea>
       <div class="checker-footer">
         <button class="ac-btn" id="run-0" type="button">Run ▶</button>
@@ -383,15 +348,171 @@ print("Total temperature this week: " + str(total) + "°C")
     <div class="checker-feedback" id="feedback-0"></div>
   </div>
 
-  <!-- ── Task 2: 2D Array — Cinema Screenings ──────────── -->
+  <!-- ── Task 2: Loop through all elements ────────────────────────────────── -->
   <div class="panel" id="panel-1">
-    <div class="goal">Write a program that asks for a film title and outputs all start times and seats remaining for that film.</div>
+    <div class="goal">Output all seven temperature readings, one per line, using a loop.</div>
 
     <div class="card">
       <h2>Scenario</h2>
       <p style="color:var(--text); font-size:0.9rem; line-height:1.7;">
-        A cinema stores its daily schedule in a 2D array called <code>screenings</code>.
-        Each row holds three pieces of information about one showing, accessed using <code>screenings[row, column]</code>:
+        Using the same weather station array, write code that outputs every reading in order from Monday to Sunday.
+      </p>
+      <div class="array-diagram">
+        <div><div class="array-cell">18</div><div class="array-idx">[0]</div></div>
+        <div><div class="array-cell">22</div><div class="array-idx">[1]</div></div>
+        <div><div class="array-cell">15</div><div class="array-idx">[2]</div></div>
+        <div><div class="array-cell">29</div><div class="array-idx">[3]</div></div>
+        <div><div class="array-cell">25</div><div class="array-idx">[4]</div></div>
+        <div><div class="array-cell">12</div><div class="array-idx">[5]</div></div>
+        <div><div class="array-cell">20</div><div class="array-idx">[6]</div></div>
+      </div>
+      <p style="color:var(--text); font-size:0.9rem; line-height:1.7; margin-top:14px;">Your algorithm must:</p>
+      <ul style="color:var(--text); font-size:0.9rem; line-height:1.9; padding-left:1.4em;">
+        <li>Use a loop to iterate through all seven elements</li>
+        <li>Output each temperature reading on a separate line</li>
+      </ul>
+    </div>
+
+    <details class="worked-example">
+      <summary>Show worked example</summary>
+      <div class="example-body">
+        <p>Use a <strong>for loop</strong> with a counter that steps through each valid index from <code>0</code> to the last position. Inside the loop, use the counter as the index to access each element.</p>
+        <pre class="ac-code" style="font-size:0.82rem; line-height:1.75;">scores = [45, 62, 38, 71, 55]
+for i = 0 to 4
+    print(scores[i])
+next i</pre>
+        <p style="margin-top:12px; margin-bottom:6px;">Trace through the loop:</p>
+        <div class="trace-wrap">
+          <table class="trace-table">
+            <thead><tr><th>i</th><th>scores[i]</th><th>output</th></tr></thead>
+            <tbody>
+              <tr><td>0</td><td>45</td><td>45</td></tr>
+              <tr><td>1</td><td>62</td><td>62</td></tr>
+              <tr><td>2</td><td>38</td><td>38</td></tr>
+              <tr><td>3</td><td>71</td><td>71</td></tr>
+              <tr><td>4</td><td>55</td><td>55</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </details>
+
+    <div class="code-checker" id="checker-1">
+      <div class="checker-header">
+        <span class="checker-dot dot-r"></span>
+        <span class="checker-dot dot-y"></span>
+        <span class="checker-dot dot-g"></span>
+        <span>Task 2 — Loop through the array</span>
+      </div>
+      <textarea class="pseudocode-textarea" id="editor-1" spellcheck="false"
+                autocomplete="off" autocapitalize="off">temperatures = [18, 22, 15, 29, 25, 12, 20]
+</textarea>
+      <div class="checker-footer">
+        <button class="ac-btn" id="run-1" type="button">Run ▶</button>
+        <button class="ac-btn-secondary" id="clear-1" type="button">Reset</button>
+        <span id="run-status-1" style="font-size:0.75rem;color:var(--muted);"></span>
+      </div>
+    </div>
+    <div class="checker-feedback" id="feedback-1"></div>
+  </div>
+
+  <!-- ── Task 3: Total all elements ───────────────────────────────────────── -->
+  <div class="panel" id="panel-2">
+    <div class="goal">Calculate and output the total of all seven temperature readings.</div>
+
+    <div class="card">
+      <h2>Scenario</h2>
+      <p style="color:var(--text); font-size:0.9rem; line-height:1.7;">
+        Using the same weather station array, calculate the sum of all seven readings and output the result with a suitable message.
+      </p>
+      <div class="array-diagram">
+        <div><div class="array-cell">18</div><div class="array-idx">[0]</div></div>
+        <div><div class="array-cell">22</div><div class="array-idx">[1]</div></div>
+        <div><div class="array-cell">15</div><div class="array-idx">[2]</div></div>
+        <div><div class="array-cell">29</div><div class="array-idx">[3]</div></div>
+        <div><div class="array-cell">25</div><div class="array-idx">[4]</div></div>
+        <div><div class="array-cell">12</div><div class="array-idx">[5]</div></div>
+        <div><div class="array-cell">20</div><div class="array-idx">[6]</div></div>
+      </div>
+      <p style="color:var(--text); font-size:0.9rem; line-height:1.7; margin-top:14px;">Your algorithm must:</p>
+      <ul style="color:var(--text); font-size:0.9rem; line-height:1.9; padding-left:1.4em;">
+        <li>Iterate through all seven elements</li>
+        <li>Calculate the total of all the readings</li>
+        <li>Output the total with a suitable message</li>
+      </ul>
+    </div>
+
+    <div class="code-checker" id="checker-2">
+      <div class="checker-header">
+        <span class="checker-dot dot-r"></span>
+        <span class="checker-dot dot-y"></span>
+        <span class="checker-dot dot-g"></span>
+        <span>Task 3 — Total the array</span>
+      </div>
+      <textarea class="pseudocode-textarea" id="editor-2" spellcheck="false"
+                autocomplete="off" autocapitalize="off">temperatures = [18, 22, 15, 29, 25, 12, 20]
+</textarea>
+      <div class="checker-footer">
+        <button class="ac-btn" id="run-2" type="button">Run ▶</button>
+        <button class="ac-btn-secondary" id="clear-2" type="button">Reset</button>
+        <span id="run-status-2" style="font-size:0.75rem;color:var(--muted);"></span>
+      </div>
+    </div>
+    <div class="checker-feedback" id="feedback-2"></div>
+  </div>
+
+  <!-- ── Task 4: Count with a condition ───────────────────────────────────── -->
+  <div class="panel" id="panel-3">
+    <div class="goal">Count how many days had a temperature strictly above 20 °C and output the result.</div>
+
+    <div class="card">
+      <h2>Scenario</h2>
+      <p style="color:var(--text); font-size:0.9rem; line-height:1.7;">
+        Using the same weather station array, count how many of the seven readings exceeded 20 °C. Your algorithm must:
+      </p>
+      <div class="array-diagram">
+        <div><div class="array-cell">18</div><div class="array-idx">[0]</div></div>
+        <div><div class="array-cell">22</div><div class="array-idx">[1]</div></div>
+        <div><div class="array-cell">15</div><div class="array-idx">[2]</div></div>
+        <div><div class="array-cell">29</div><div class="array-idx">[3]</div></div>
+        <div><div class="array-cell">25</div><div class="array-idx">[4]</div></div>
+        <div><div class="array-cell">12</div><div class="array-idx">[5]</div></div>
+        <div><div class="array-cell">20</div><div class="array-idx">[6]</div></div>
+      </div>
+      <ul style="color:var(--text); font-size:0.9rem; line-height:1.9; padding-left:1.4em; margin-top:14px;">
+        <li>Iterate through all elements using a loop</li>
+        <li>Count how many readings are strictly above 20</li>
+        <li>Output the count with a suitable message</li>
+      </ul>
+    </div>
+
+    <div class="code-checker" id="checker-3">
+      <div class="checker-header">
+        <span class="checker-dot dot-r"></span>
+        <span class="checker-dot dot-y"></span>
+        <span class="checker-dot dot-g"></span>
+        <span>Task 4 — Count with a condition</span>
+      </div>
+      <textarea class="pseudocode-textarea" id="editor-3" spellcheck="false"
+                autocomplete="off" autocapitalize="off">temperatures = [18, 22, 15, 29, 25, 12, 20]
+</textarea>
+      <div class="checker-footer">
+        <button class="ac-btn" id="run-3" type="button">Run ▶</button>
+        <button class="ac-btn-secondary" id="clear-3" type="button">Reset</button>
+        <span id="run-status-3" style="font-size:0.75rem;color:var(--muted);"></span>
+      </div>
+    </div>
+    <div class="checker-feedback" id="feedback-3"></div>
+  </div>
+
+  <!-- ── Task 5: 2D Array — Cinema Screenings ─────────────────────────────── -->
+  <div class="panel" id="panel-4">
+    <div class="goal">Ask the user for a film title and output all start times and seats remaining for that film.</div>
+
+    <div class="card">
+      <h2>Scenario</h2>
+      <p style="color:var(--text); font-size:0.9rem; line-height:1.7;">
+        A cinema stores its daily schedule in a 2D array. Each row holds three values about one showing, accessed as <code>screenings[row, column]</code>:
       </p>
       <div style="overflow-x:auto; margin-top:12px;">
         <table class="array-2d">
@@ -413,9 +534,7 @@ print("Total temperature this week: " + str(total) + "°C")
           </tbody>
         </table>
       </div>
-      <p style="color:var(--text); font-size:0.9rem; line-height:1.7; margin-top:14px;">
-        Your algorithm must:
-      </p>
+      <p style="color:var(--text); font-size:0.9rem; line-height:1.7; margin-top:14px;">Your algorithm must:</p>
       <ul style="color:var(--text); font-size:0.9rem; line-height:1.9; padding-left:1.4em;">
         <li>Ask the user to enter a film title</li>
         <li>Iterate through all rows of the array</li>
@@ -423,15 +542,15 @@ print("Total temperature this week: " + str(total) + "°C")
       </ul>
     </div>
 
-    <div class="code-checker" id="checker-1">
+    <div class="code-checker" id="checker-4">
       <div class="checker-header">
         <span class="checker-dot dot-r"></span>
         <span class="checker-dot dot-y"></span>
         <span class="checker-dot dot-g"></span>
-        <span>Task 2 — Cinema screenings</span>
+        <span>Task 5 — Cinema screenings</span>
       </div>
-      <textarea class="pseudocode-textarea" id="editor-1" spellcheck="false"
-                autocomplete="off" autocapitalize="off">// Cinema schedule — film title, start time, seats remaining
+      <textarea class="pseudocode-textarea" id="editor-4" spellcheck="false"
+                autocomplete="off" autocapitalize="off">// Cinema schedule — [row,0] film title  [row,1] start time  [row,2] seats remaining
 array screenings[6,3]
 screenings[0,0] = "Ghostlight"
 screenings[0,1] = "11:00"
@@ -451,108 +570,24 @@ screenings[4,2] = "21"
 screenings[5,0] = "Ironveil"
 screenings[5,1] = "20:00"
 screenings[5,2] = "48"
-
-// Write your code below
 </textarea>
       <div class="checker-footer">
-        <button class="ac-btn" id="run-1" type="button">Run ▶</button>
-        <button class="ac-btn-secondary" id="clear-1" type="button">Reset</button>
-        <span id="run-status-1" style="font-size:0.75rem;color:var(--muted);"></span>
+        <button class="ac-btn" id="run-4" type="button">Run ▶</button>
+        <button class="ac-btn-secondary" id="clear-4" type="button">Reset</button>
+        <span id="run-status-4" style="font-size:0.75rem;color:var(--muted);"></span>
       </div>
     </div>
-    <div class="checker-feedback" id="feedback-1"></div>
+    <div class="checker-feedback" id="feedback-4"></div>
   </div>
 
-  <!-- ── Task 3: 2D Array — Warehouse Deliveries ────────── -->
-  <div class="panel" id="panel-2">
-    <div class="goal">Write a program that asks for a supplier name and outputs the total quantity of goods delivered by that supplier.</div>
+  <!-- ── Task 6: Function + 2D Array — Patient Lookup ─────────────────────── -->
+  <div class="panel" id="panel-5">
+    <div class="goal">Write a function called findPatient that takes a patient ID and returns the name and ward, or "Not found" if the ID does not exist.</div>
 
     <div class="card">
       <h2>Scenario</h2>
       <p style="color:var(--text); font-size:0.9rem; line-height:1.7;">
-        A warehouse records incoming deliveries in a 2D array called <code>deliveries</code>. Each row stores one delivery:
-      </p>
-      <div style="overflow-x:auto; margin-top:12px;">
-        <table class="array-2d">
-          <thead>
-            <tr>
-              <th>Row</th>
-              <th class="col-head">[row, 0]&nbsp; Supplier</th>
-              <th class="col-head">[row, 1]&nbsp; Product code</th>
-              <th class="col-head">[row, 2]&nbsp; Quantity</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr><td>0</td><td>FastShip</td><td>P001</td><td>120</td></tr>
-            <tr><td>1</td><td>QuickBolt</td><td>B022</td><td>200</td></tr>
-            <tr><td>2</td><td>FastShip</td><td>P001</td><td>85</td></tr>
-            <tr><td>3</td><td>QuickBolt</td><td>C003</td><td>65</td></tr>
-            <tr><td>4</td><td>FastShip</td><td>R009</td><td>40</td></tr>
-            <tr><td>5</td><td>QuickBolt</td><td>A101</td><td>110</td></tr>
-          </tbody>
-        </table>
-      </div>
-      <p style="color:var(--text); font-size:0.9rem; line-height:1.7; margin-top:14px;">
-        Your algorithm must:
-      </p>
-      <ul style="color:var(--text); font-size:0.9rem; line-height:1.9; padding-left:1.4em;">
-        <li>Ask the user to enter a supplier name</li>
-        <li>Iterate through all rows and accumulate the quantity for every row that matches</li>
-        <li>Output the total with a suitable message</li>
-      </ul>
-      <p style="color:var(--muted); font-size:0.82rem; margin-top:10px;">
-        Note: the quantities in the array are stored as text — you may need to convert them before adding.
-      </p>
-    </div>
-
-    <div class="code-checker" id="checker-2">
-      <div class="checker-header">
-        <span class="checker-dot dot-r"></span>
-        <span class="checker-dot dot-y"></span>
-        <span class="checker-dot dot-g"></span>
-        <span>Task 3 — Warehouse deliveries</span>
-      </div>
-      <textarea class="pseudocode-textarea" id="editor-2" spellcheck="false"
-                autocomplete="off" autocapitalize="off">// Delivery records — supplier, product code, quantity (stored as text)
-array deliveries[6,3]
-deliveries[0,0] = "FastShip"
-deliveries[0,1] = "P001"
-deliveries[0,2] = "120"
-deliveries[1,0] = "QuickBolt"
-deliveries[1,1] = "B022"
-deliveries[1,2] = "200"
-deliveries[2,0] = "FastShip"
-deliveries[2,1] = "P001"
-deliveries[2,2] = "85"
-deliveries[3,0] = "QuickBolt"
-deliveries[3,1] = "C003"
-deliveries[3,2] = "65"
-deliveries[4,0] = "FastShip"
-deliveries[4,1] = "R009"
-deliveries[4,2] = "40"
-deliveries[5,0] = "QuickBolt"
-deliveries[5,1] = "A101"
-deliveries[5,2] = "110"
-
-// Write your code below
-</textarea>
-      <div class="checker-footer">
-        <button class="ac-btn" id="run-2" type="button">Run ▶</button>
-        <button class="ac-btn-secondary" id="clear-2" type="button">Reset</button>
-        <span id="run-status-2" style="font-size:0.75rem;color:var(--muted);"></span>
-      </div>
-    </div>
-    <div class="checker-feedback" id="feedback-2"></div>
-  </div>
-
-  <!-- ── Task 4: Function + 2D Array — Patient Lookup ───── -->
-  <div class="panel" id="panel-3">
-    <div class="goal">Write a function called findPatient that searches the patient records and returns the name and ward for a given ID, or "Not found" if the ID does not exist.</div>
-
-    <div class="card">
-      <h2>Scenario</h2>
-      <p style="color:var(--text); font-size:0.9rem; line-height:1.7;">
-        A hospital stores patient records in a 2D array called <code>patients</code>:
+        A hospital stores patient records in a 2D array:
       </p>
       <div style="overflow-x:auto; margin-top:12px;">
         <table class="array-2d">
@@ -573,26 +608,24 @@ deliveries[5,2] = "110"
           </tbody>
         </table>
       </div>
-      <p style="color:var(--text); font-size:0.9rem; line-height:1.7; margin-top:14px;">
-        Your algorithm must:
-      </p>
+      <p style="color:var(--text); font-size:0.9rem; line-height:1.7; margin-top:14px;">Your algorithm must:</p>
       <ul style="color:var(--text); font-size:0.9rem; line-height:1.9; padding-left:1.4em;">
         <li>Define a function called <code>findPatient</code> that takes a patient ID as a parameter</li>
         <li>The function searches the array and returns the patient's name and ward if the ID is found</li>
-        <li>If no match is found, the function returns <code>"Not found"</code></li>
-        <li>After the function definition, write a short program that asks the user for a patient ID, calls the function, and outputs the result</li>
+        <li>If no match exists, the function returns <code>"Not found"</code></li>
+        <li>After the function definition, write a short program that asks for a patient ID, calls the function, and outputs the result</li>
       </ul>
     </div>
 
-    <div class="code-checker" id="checker-3">
+    <div class="code-checker" id="checker-5">
       <div class="checker-header">
         <span class="checker-dot dot-r"></span>
         <span class="checker-dot dot-y"></span>
         <span class="checker-dot dot-g"></span>
-        <span>Task 4 — Patient lookup function</span>
+        <span>Task 6 — Patient lookup function</span>
       </div>
-      <textarea class="pseudocode-textarea" id="editor-3" spellcheck="false"
-                autocomplete="off" autocapitalize="off">// Patient records — ID, name, ward
+      <textarea class="pseudocode-textarea" id="editor-5" spellcheck="false"
+                autocomplete="off" autocapitalize="off">// Patient records — [row,0] ID  [row,1] name  [row,2] ward
 array patients[5,3]
 patients[0,0] = "P101"
 patients[0,1] = "James Carter"
@@ -609,16 +642,14 @@ patients[3,2] = "Cardiology"
 patients[4,0] = "P105"
 patients[4,1] = "Yuki Tanaka"
 patients[4,2] = "Oncology"
-
-// Write your function and program below
 </textarea>
       <div class="checker-footer">
-        <button class="ac-btn" id="run-3" type="button">Run ▶</button>
-        <button class="ac-btn-secondary" id="clear-3" type="button">Reset</button>
-        <span id="run-status-3" style="font-size:0.75rem;color:var(--muted);"></span>
+        <button class="ac-btn" id="run-5" type="button">Run ▶</button>
+        <button class="ac-btn-secondary" id="clear-5" type="button">Reset</button>
+        <span id="run-status-5" style="font-size:0.75rem;color:var(--muted);"></span>
       </div>
     </div>
-    <div class="checker-feedback" id="feedback-3"></div>
+    <div class="checker-feedback" id="feedback-5"></div>
   </div>
 
 </div><!-- /.page-wrap -->
@@ -629,25 +660,18 @@ patients[4,2] = "Oncology"
 import { setupEditors, runPseudocode, clearSyntaxHint, markOutputFailed } from '../../pseudocode-editor.js';
 import { preload } from '../../pyodide-runner.js';
 
-// ── Constants ──────────────────────────────────────────
-const TASK_COUNT    = 4;
+const TASK_COUNT     = 6;
 const ACTIVITY_TITLE = 'Arrays Practice';
-const STORE_NS      = location.pathname;
+const STORE_NS       = location.pathname;
 
-// ── Starter code — Reset restores these ───────────────
 const STARTERS = [
-  // Task 1
-`temperatures = [18, 22, 15, 29, 25, 12, 20]
-total = 0
-for i = 0 to 6
-    total = total + temperatures[i]
-next i
-print("Total temperature this week: " + str(total) + "°C")
-
-// Add your code here to count days above 20°C
-`,
-  // Task 2
-`// Cinema schedule — film title, start time, seats remaining
+  // Tasks 1–4: 1D array only
+  'temperatures = [18, 22, 15, 29, 25, 12, 20]\n',
+  'temperatures = [18, 22, 15, 29, 25, 12, 20]\n',
+  'temperatures = [18, 22, 15, 29, 25, 12, 20]\n',
+  'temperatures = [18, 22, 15, 29, 25, 12, 20]\n',
+  // Task 5: 2D cinema
+  `// Cinema schedule — [row,0] film title  [row,1] start time  [row,2] seats remaining
 array screenings[6,3]
 screenings[0,0] = "Ghostlight"
 screenings[0,1] = "11:00"
@@ -667,35 +691,9 @@ screenings[4,2] = "21"
 screenings[5,0] = "Ironveil"
 screenings[5,1] = "20:00"
 screenings[5,2] = "48"
-
-// Write your code below
 `,
-  // Task 3
-`// Delivery records — supplier, product code, quantity (stored as text)
-array deliveries[6,3]
-deliveries[0,0] = "FastShip"
-deliveries[0,1] = "P001"
-deliveries[0,2] = "120"
-deliveries[1,0] = "QuickBolt"
-deliveries[1,1] = "B022"
-deliveries[1,2] = "200"
-deliveries[2,0] = "FastShip"
-deliveries[2,1] = "P001"
-deliveries[2,2] = "85"
-deliveries[3,0] = "QuickBolt"
-deliveries[3,1] = "C003"
-deliveries[3,2] = "65"
-deliveries[4,0] = "FastShip"
-deliveries[4,1] = "R009"
-deliveries[4,2] = "40"
-deliveries[5,0] = "QuickBolt"
-deliveries[5,1] = "A101"
-deliveries[5,2] = "110"
-
-// Write your code below
-`,
-  // Task 4
-`// Patient records — ID, name, ward
+  // Task 6: 2D patients
+  `// Patient records — [row,0] ID  [row,1] name  [row,2] ward
 array patients[5,3]
 patients[0,0] = "P101"
 patients[0,1] = "James Carter"
@@ -712,25 +710,18 @@ patients[3,2] = "Cardiology"
 patients[4,0] = "P105"
 patients[4,1] = "Yuki Tanaka"
 patients[4,2] = "Oncology"
-
-// Write your function and program below
 `,
 ];
 
-// ── Test cases for Tasks 2–4 (Task 1 handled separately) ─
+// Multi-test cases for Tasks 5 and 6
 const TESTS = [
-  null,
-  // Task 2 — search cinema screenings by film title
+  null, null, null, null,
+  // Task 5 — cinema search
   [
     { inputs: ['Ghostlight'], expected: ['11:00', '14:00', '18:00'] },
     { inputs: ['Ironveil'],   expected: ['11:30', '15:30', '20:00'] },
   ],
-  // Task 3 — total deliveries by supplier (FastShip=245, QuickBolt=375)
-  [
-    { inputs: ['FastShip'],  expected: ['245'] },
-    { inputs: ['QuickBolt'], expected: ['375'] },
-  ],
-  // Task 4 — patient lookup function
+  // Task 6 — patient lookup function
   [
     { inputs: ['P103'], expected: ['beth owens',  'neurology'] },
     { inputs: ['P105'], expected: ['yuki tanaka', 'oncology']  },
@@ -738,20 +729,15 @@ const TESTS = [
   ],
 ];
 
-// ── State ──────────────────────────────────────────────
 const completed = new Array(TASK_COUNT).fill(false);
 
-// ── Editor setup — restore saved state or use starter ──
 for (let i = 0; i < TASK_COUNT; i++) {
   const saved = localStorage.getItem(STORE_NS + ':e' + i);
   document.getElementById('editor-' + i).value = saved !== null ? saved : STARTERS[i];
 }
 setupEditors('.pseudocode-textarea');
-
-// ── Pyodide preload ────────────────────────────────────
 preload();
 
-// ── Tab switching ──────────────────────────────────────
 document.getElementById('tab-bar').addEventListener('click', e => {
   const tab = e.target.closest('.tab-btn');
   if (!tab) return;
@@ -762,50 +748,80 @@ document.getElementById('tab-bar').addEventListener('click', e => {
   document.getElementById('panel-' + idx).classList.add('active');
 });
 
-// ── Run + Clear + Save handlers ────────────────────────
 for (let idx = 0; idx < TASK_COUNT; idx++) {
-  const runBtn    = document.getElementById('run-'        + idx);
-  const clearBtn  = document.getElementById('clear-'      + idx);
-  const statusEl  = document.getElementById('run-status-' + idx);
-  const editorEl  = document.getElementById('editor-'     + idx);
-  const feedbackEl = document.getElementById('feedback-'  + idx);
+  const runBtn     = document.getElementById('run-'        + idx);
+  const clearBtn   = document.getElementById('clear-'      + idx);
+  const statusEl   = document.getElementById('run-status-' + idx);
+  const editorEl   = document.getElementById('editor-'     + idx);
+  const feedbackEl = document.getElementById('feedback-'   + idx);
 
   runBtn.addEventListener('click', async () => {
     runBtn.disabled = true;
     statusEl.textContent = 'Running…';
 
-    if (idx === 0) {
-      // ── Task 1: single run — count days above 20 °C ────
-      // Mark scheme:
-      //   [1] Attempts selection — any if statement present
-      //   [1] Correct threshold — compares against 20
-      //   [1] Correct output  — count of 3 appears in output
+    if (idx <= 3) {
+      // Tasks 1–4: single run, check output
       const r = await runPseudocode(editorEl);
       statusEl.textContent = '';
       runBtn.disabled = false;
 
-      if (r.ok) {
-        clearSyntaxHint(editorEl);
-        const src = editorEl.value;
-        const out = r.output;
+      if (!r.ok) return;
+      clearSyntaxHint(editorEl);
+      const out = r.output;
+      const src = editorEl.value;
+      let passed = false;
+
+      if (idx === 0) {
+        // Must output 18 (Mon [0]) and 29 (Thu [3])
+        passed = out.includes('18') && out.includes('29');
+      } else if (idx === 1) {
+        // All seven values present; loop required for green
+        const allValues = ['18','22','15','29','25','12','20'].every(v => out.includes(v));
+        const hasLoop   = /\bfor\b|\bwhile\b/i.test(src);
+        if (allValues && hasLoop) {
+          passed = true;
+        } else if (allValues) {
+          if (!completed[idx]) {
+            completed[idx] = true;
+            document.querySelector(`.tab-btn[data-idx="${idx}"]`).classList.add('done-gold');
+            updateProgress();
+            window.Classroom?.submitGrade(
+              Math.round(completed.filter(Boolean).length / TASK_COUNT * 100), ACTIVITY_TITLE);
+          }
+          setAnswerState(editorEl, true);
+          feedbackEl.textContent = 'All values output — now try doing this with a loop.';
+          feedbackEl.className   = 'checker-feedback pass';
+          return;
+        }
+      } else if (idx === 2) {
+        // Total = 141
+        passed = out.includes('141');
+      } else {
+        // Count = 3 (22, 29, 25 are > 20)
         const hasIf        = /\bif\b/i.test(src);
         const hasThreshold = />\s*20/.test(src) || /20\s*</.test(src);
-        const hasCount     = /\b3\b/.test(out);
+        passed = hasIf && hasThreshold && /\b3\b/.test(out);
+      }
 
-        if (hasIf && hasThreshold && hasCount) {
-          setAnswerState(editorEl, true);
-          feedbackEl.textContent = '✓ Correct — 3 days exceeded 20 °C.';
-          feedbackEl.className   = 'checker-feedback pass';
-          markDone(0, 'green');
-        } else {
-          markOutputFailed(editorEl);
-          feedbackEl.textContent = 'Not quite — check your output and try again.';
-          feedbackEl.className   = 'checker-feedback fail';
-        }
+      if (passed) {
+        setAnswerState(editorEl, true);
+        const msgs = [
+          '✓ Correct — 18 °C on Monday and 29 °C on Thursday.',
+          '✓ All seven readings output using a loop.',
+          '✓ Correct — the total is 141 °C.',
+          '✓ Correct — 3 days exceeded 20 °C.',
+        ];
+        feedbackEl.textContent = msgs[idx];
+        feedbackEl.className   = 'checker-feedback pass';
+        markDone(idx, 'green');
+      } else {
+        markOutputFailed(editorEl);
+        feedbackEl.textContent = 'Not quite — check your output and try again.';
+        feedbackEl.className   = 'checker-feedback fail';
       }
 
     } else {
-      // ── Tasks 2–4: multi-test ──────────────────────────
+      // Tasks 5–6: multi-test
       const tests = TESTS[idx];
       const runs  = await Promise.all(
         tests.map(async t => {
@@ -856,43 +872,33 @@ for (let idx = 0; idx < TASK_COUNT; idx++) {
   });
 }
 
-// ── Mark a task done ───────────────────────────────────
 function markDone(idx, type = 'gold') {
   if (completed[idx]) return;
   completed[idx] = true;
-
-  const tab = document.querySelector('.tab-btn[data-idx="' + idx + '"]');
-  if (tab) tab.classList.add('done-' + type);
-
+  document.querySelector(`.tab-btn[data-idx="${idx}"]`).classList.add('done-' + type);
   updateProgress();
-
   const pct = Math.round(completed.filter(Boolean).length / TASK_COUNT * 100);
   window.Classroom?.submitGrade(pct, ACTIVITY_TITLE);
-
   if (completed.every(Boolean)) allComplete();
 }
 
-// ── Progress bar ───────────────────────────────────────
 function updateProgress() {
   const pct = Math.round(completed.filter(Boolean).length / TASK_COUNT * 100);
   document.getElementById('progress-fill').style.width = pct + '%';
   document.getElementById('progress-pct').textContent  = pct + '%';
 }
 
-// ── All tasks complete ─────────────────────────────────
 function allComplete() {
   document.getElementById('done-banner').classList.add('show');
   window.ActivityUI?.launchCelebration();
 }
 
-// ── Highlight checker block on wrong answer ────────────
 function setAnswerState(target, ok) {
   const el    = typeof target === 'string' ? document.getElementById(target) : target;
   const block = el?.closest('.code-checker, .card, .panel');
   if (block) block.classList.toggle('is-wrong', !ok);
 }
 
-// ── Per-test coloured output (teal = pass, red = fail) ─
 function _renderTestOutput(editorEl, tests, runs) {
   const outputPanel = editorEl.closest('.editor-wrap')?.querySelector('.output-panel');
   if (!outputPanel) return;
@@ -932,7 +938,6 @@ window.showToast = (msg, type = '') => window.ActivityUI?.showToast(msg, type);
 </script>
 
 <script src="../../activity-ui.js"></script>
-<!-- NOTE: use ../../../classroom.js if this file is inside a lesson subfolder -->
 <script src="../../classroom.js"></script>
 </body>
 </html>
