@@ -14,10 +14,10 @@ const y11Activities = [
   '/Y11/1.5 System Software/os-mindmap.html',
   '/Y11/1.6 Legislation/FillInBlanks.html',
   '/Y11/1.6 Legislation/digital-society-impacts.html',
-  '/Y11/2.1 Algorithms/Algorithm_Practice.html',
-  '/Y11/2.1 Algorithms/Algorithm_Practice_2.html',
-  '/Y11/2.1 Algorithms/Algorithm_Practice_Challenge.html',
-  '/Y11/2.1 Algorithms/Algorithm_Practice_Functions.html'
+  '/Y11/2.1 Algorithms/Practice.html',
+  '/Y11/2.1 Algorithms/Practice_2.html',
+  '/Y11/2.1 Algorithms/Challenge.html',
+  '/Y11/2.1 Algorithms/Functions.html'
 ];
 
 const templates = [
@@ -103,7 +103,7 @@ test.describe('ActivityUI completion regressions', () => {
   });
 
   test('weighted algorithm activity keeps completion banner and launches one celebration', async ({ page }) => {
-    await page.goto('/Y11/2.1%20Algorithms/Algorithm_Practice.html');
+    await page.goto('/Y11/2.1%20Algorithms/Practice.html');
     await installCelebrationCounter(page);
     await page.evaluate(() => {
       document.getElementById('done-banner').classList.add('show');
