@@ -593,11 +593,41 @@ color:  amber
   .feedback.correct { color: var(--rs-green); }
   .feedback.wrong   { animation: ac-shake 0.35s ease; color: var(--red); }
 
+  /* ── Term matching ── */
+  .term-slot-row {
+    align-items: center;
+    border-bottom: 1px solid rgba(124, 28, 46, 0.10);
+    display: grid;
+    gap: 12px;
+    grid-template-columns: 1fr minmax(150px, 200px);
+    padding: 12px 0;
+  }
+  .term-slot-row:last-child { border-bottom: none; }
+  .term-slot-row.is-correct { background: rgba(38, 88, 64, 0.07); border-radius: 6px; padding-left: 8px; padding-right: 8px; }
+  .term-slot-row.is-wrong   { background: rgba(176, 40, 32, 0.07); border-radius: 6px; padding-left: 8px; padding-right: 8px; }
+  .term-def { color: var(--rs-ink); font-size: 0.93rem; line-height: 1.65; }
+
+  /* ── Sequence ordering ── */
+  .seq-row {
+    align-items: center;
+    border-bottom: 1px solid rgba(124, 28, 46, 0.10);
+    display: grid;
+    gap: 12px;
+    grid-template-columns: minmax(110px, 150px) 1fr;
+    padding: 10px 0;
+  }
+  .seq-row:last-child { border-bottom: none; }
+  .seq-row.correct  { background: rgba(38, 88, 64, 0.07); border-radius: 6px; padding-left: 8px; }
+  .seq-row.is-wrong { background: rgba(176, 40, 32, 0.07); border-radius: 6px; padding-left: 8px; }
+  .seq-label { color: var(--rs-muted); font-size: 0.88rem; font-style: italic; font-weight: 700; line-height: 1.4; }
+
   @media (max-width: 760px) {
     .tab-btn { flex: 1 1 140px; }
     .tf-row  { grid-template-columns: 1fr; }
     .religion-grid .category-card,
     .religion-grid .category-card.wide { grid-column: span 6; }
+    .term-slot-row { grid-template-columns: 1fr; }
+    .seq-row       { grid-template-columns: 1fr; }
   }
 </style>
 </head>
@@ -648,34 +678,43 @@ color:  amber
 
   <!-- ═══════════════════════════════ PANEL 0 — KEY BELIEFS (8 marks) ═══════════════════════════════ -->
   <section class="panel active" id="panel-0">
-    <div class="goal">Section 1 of 5 &nbsp;·&nbsp; Choose the correct answer for each question. &nbsp;·&nbsp; 8 marks</div>
+    <div class="goal">Section 1 of 6 &nbsp;·&nbsp; Match each term to its meaning, then choose the correct answer for each question. &nbsp;·&nbsp; 8 marks</div>
+
+    <div class="card">
+      <h2><span class="icon" aria-hidden="true">🔑</span>Match each term to its meaning</h2>
+      <p class="hint">Drag each term chip into the correct definition box.</p>
+      <div class="drag-bank" id="term-bank" data-randomize-children>
+        <span class="drag-chip" draggable="true" data-term="fundamentalist">Fundamentalist</span>
+        <span class="drag-chip" draggable="true" data-term="imago-dei">Imago Dei</span>
+        <span class="drag-chip" draggable="true" data-term="sola-scriptura">Sola Scriptura</span>
+        <span class="drag-chip" draggable="true" data-term="denomination">Denomination</span>
+      </div>
+      <div id="term-slots">
+        <div class="term-slot-row" id="tsr-fundamentalist">
+          <div class="term-def">A Christian who believes the Bible is the direct word of God and must be read literally</div>
+          <div class="drop-slot" data-accept="fundamentalist"></div>
+        </div>
+        <div class="term-slot-row" id="tsr-imago-dei">
+          <div class="term-def">"Image of God" — humans are made in the likeness of their creator</div>
+          <div class="drop-slot" data-accept="imago-dei"></div>
+        </div>
+        <div class="term-slot-row" id="tsr-sola-scriptura">
+          <div class="term-def">"Bible alone" — the Protestant principle that Scripture is the highest authority in matters of faith</div>
+          <div class="drop-slot" data-accept="sola-scriptura"></div>
+        </div>
+        <div class="term-slot-row" id="tsr-denomination">
+          <div class="term-def">A recognised branch or group within a larger religion (e.g. Baptist, Methodist)</div>
+          <div class="drop-slot" data-accept="denomination"></div>
+        </div>
+      </div>
+    </div>
 
     <div class="card">
       <h2><span class="icon" aria-hidden="true">Aa</span>Key Vocabulary &amp; Beliefs</h2>
       <div class="mcq-list">
 
-        <div class="question-card" id="mc-v0">
-          <p><strong>1.</strong> What is a <em>Fundamentalist</em> Christian?</p>
-          <div class="choice-col">
-            <label class="choice"><input type="radio" name="mc-v0" value="a"> A Christian who believes the Bible is a collection of human writings about God</label>
-            <label class="choice"><input type="radio" name="mc-v0" value="b"> A Christian who believes the Bible is inspired but may use symbolic language</label>
-            <label class="choice"><input type="radio" name="mc-v0" value="c"> A Christian who believes the Bible is the direct word of God, taken literally</label>
-            <label class="choice"><input type="radio" name="mc-v0" value="d"> A Christian who accepts scientific theories such as evolution alongside faith</label>
-          </div>
-        </div>
-
-        <div class="question-card" id="mc-v1">
-          <p><strong>2.</strong> What does the Latin phrase <em>Imago Dei</em> mean?</p>
-          <div class="choice-col">
-            <label class="choice"><input type="radio" name="mc-v1" value="a"> Image of God — humans are made in the likeness of their creator</label>
-            <label class="choice"><input type="radio" name="mc-v1" value="b"> The word of God — describing the authority of Holy Scripture</label>
-            <label class="choice"><input type="radio" name="mc-v1" value="c"> In the beginning — the opening words of the Book of Genesis</label>
-            <label class="choice"><input type="radio" name="mc-v1" value="d"> Bible alone — the Protestant doctrine of scriptural authority</label>
-          </div>
-        </div>
-
         <div class="question-card" id="mc-v2">
-          <p><strong>3.</strong> Which Christian denomination practises <em>believers' baptism</em> by full immersion?</p>
+          <p><strong>1.</strong> Which Christian denomination practises <em>believers' baptism</em> by full immersion?</p>
           <div class="choice-col">
             <label class="choice"><input type="radio" name="mc-v2" value="a"> The Catholic Church baptises infants by pouring water over them</label>
             <label class="choice"><input type="radio" name="mc-v2" value="b"> The Baptist Church baptises believers by full immersion in water</label>
@@ -684,18 +723,8 @@ color:  amber
           </div>
         </div>
 
-        <div class="question-card" id="mc-v3">
-          <p><strong>4.</strong> What does the Protestant principle <em>Sola Scriptura</em> mean?</p>
-          <div class="choice-col">
-            <label class="choice"><input type="radio" name="mc-v3" value="a"> Scripture and Church Tradition together guide the faithful</label>
-            <label class="choice"><input type="radio" name="mc-v3" value="b"> The Church council alone decides all matters of Christian faith</label>
-            <label class="choice"><input type="radio" name="mc-v3" value="c"> Human reason is the highest guide for all Christian believers</label>
-            <label class="choice"><input type="radio" name="mc-v3" value="d"> The Bible alone is the highest authority in matters of faith</label>
-          </div>
-        </div>
-
         <div class="question-card" id="mc-v4">
-          <p><strong>5.</strong> Which religion believes in <em>karma</em>, <em>reincarnation</em> and <em>moksha</em>?</p>
+          <p><strong>2.</strong> Which religion believes in <em>karma</em>, <em>reincarnation</em> and <em>moksha</em>?</p>
           <div class="choice-col">
             <label class="choice"><input type="radio" name="mc-v4" value="a"> Hinduism — an ancient Indian religion with many divine forms</label>
             <label class="choice"><input type="radio" name="mc-v4" value="b"> Judaism — the faith of the Jewish people rooted in Torah</label>
@@ -705,7 +734,7 @@ color:  amber
         </div>
 
         <div class="question-card" id="mc-v5">
-          <p><strong>6.</strong> What is the <em>Torah</em>?</p>
+          <p><strong>3.</strong> What is the <em>Torah</em>?</p>
           <div class="choice-col">
             <label class="choice"><input type="radio" name="mc-v5" value="a"> The New Testament — the Christian scriptures about Jesus</label>
             <label class="choice"><input type="radio" name="mc-v5" value="b"> The Quran — the sacred text of the Islamic faith</label>
@@ -715,22 +744,12 @@ color:  amber
         </div>
 
         <div class="question-card" id="mc-v6">
-          <p><strong>7.</strong> How do most Fundamental Christians view the theory of <em>evolution</em>?</p>
+          <p><strong>4.</strong> How do most Fundamental Christians view the theory of <em>evolution</em>?</p>
           <div class="choice-col">
             <label class="choice"><input type="radio" name="mc-v6" value="a"> They accept it as fully compatible with their reading of Genesis</label>
             <label class="choice"><input type="radio" name="mc-v6" value="b"> They reject it as it directly contradicts the Genesis creation account</label>
             <label class="choice"><input type="radio" name="mc-v6" value="c"> They use it to show how God guided the development of life</label>
             <label class="choice"><input type="radio" name="mc-v6" value="d"> They see it as unproven but not necessarily against scripture</label>
-          </div>
-        </div>
-
-        <div class="question-card" id="mc-v7">
-          <p><strong>8.</strong> What is a <em>denomination</em>?</p>
-          <div class="choice-col">
-            <label class="choice"><input type="radio" name="mc-v7" value="a"> A place of worship used by Christians for their services</label>
-            <label class="choice"><input type="radio" name="mc-v7" value="b"> A set of rules and rituals required to become a Christian</label>
-            <label class="choice"><input type="radio" name="mc-v7" value="c"> An ancient document setting out the original Christian beliefs</label>
-            <label class="choice"><input type="radio" name="mc-v7" value="d"> A recognised branch or group within a larger religion</label>
           </div>
         </div>
 
@@ -1075,54 +1094,43 @@ color:  amber
 
   <!-- ═══════════════════════════════ PANEL 5 — JEWISH LIFECYCLE (9 marks) ═══════════════════════════════ -->
   <section class="panel" id="panel-5">
-    <div class="goal">Section 6 of 6 &nbsp;·&nbsp; Answer the questions about Jewish lifecycle events and Shabbat, then write your extended response. &nbsp;·&nbsp; 9 marks</div>
+    <div class="goal">Section 6 of 6 &nbsp;·&nbsp; Put the lifecycle events in order, answer the questions, then write your extended response. &nbsp;·&nbsp; 9 marks</div>
 
     <div class="card">
-      <h2><span class="icon" aria-hidden="true">✡</span>Jewish Lifecycle &amp; Shabbat</h2>
+      <h2><span class="icon" aria-hidden="true">📅</span>Put the lifecycle events in order</h2>
+      <p class="hint">Drag each event into the correct position — earliest to latest in a Jewish life.</p>
+      <div class="drag-bank" id="lifecycle-bank" data-randomize-children>
+        <span class="drag-chip" draggable="true" data-order="1">Brit Milah</span>
+        <span class="drag-chip" draggable="true" data-order="2">Bar / Bat Mitzvah</span>
+        <span class="drag-chip" draggable="true" data-order="3">Marriage (Kiddushin)</span>
+        <span class="drag-chip" draggable="true" data-order="4">Shiva</span>
+      </div>
+      <div id="lifecycle-slots">
+        <div class="seq-row">
+          <div class="seq-label">1st — at birth</div>
+          <div class="drop-slot" data-accept="1"></div>
+        </div>
+        <div class="seq-row">
+          <div class="seq-label">2nd — coming of age</div>
+          <div class="drop-slot" data-accept="2"></div>
+        </div>
+        <div class="seq-row">
+          <div class="seq-label">3rd — adult life</div>
+          <div class="drop-slot" data-accept="3"></div>
+        </div>
+        <div class="seq-row">
+          <div class="seq-label">4th — bereavement</div>
+          <div class="drop-slot" data-accept="4"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2><span class="icon" aria-hidden="true">✡</span>Jewish Marriage &amp; Mourning</h2>
       <div class="mcq-list">
 
-        <div class="question-card" id="mc-j0">
-          <p><strong>1.</strong> What is <em>Brit Milah</em>?</p>
-          <div class="choice-col">
-            <label class="choice"><input type="radio" name="mc-j0" value="a"> A Jewish coming-of-age ceremony for boys aged thirteen</label>
-            <label class="choice"><input type="radio" name="mc-j0" value="b"> A circumcision ceremony performed on boys on the eighth day after birth</label>
-            <label class="choice"><input type="radio" name="mc-j0" value="c"> A Jewish wedding ceremony held under a special canopy</label>
-            <label class="choice"><input type="radio" name="mc-j0" value="d"> A seven-day period of mourning observed at home after a death</label>
-          </div>
-        </div>
-
-        <div class="question-card" id="mc-j1">
-          <p><strong>2.</strong> At what age does a Jewish boy become <em>Bar Mitzvah</em>?</p>
-          <div class="choice-col">
-            <label class="choice"><input type="radio" name="mc-j1" value="a"> At ten, when he begins formal Torah study</label>
-            <label class="choice"><input type="radio" name="mc-j1" value="b"> At twelve, the same age as girls in all traditions</label>
-            <label class="choice"><input type="radio" name="mc-j1" value="c"> At thirteen, when he becomes responsible for the commandments</label>
-            <label class="choice"><input type="radio" name="mc-j1" value="d"> At sixteen, after completing his religious education</label>
-          </div>
-        </div>
-
-        <div class="question-card" id="mc-j2">
-          <p><strong>3.</strong> What is the main difference between a <em>Bar Mitzvah</em> and a <em>Bat Mitzvah</em>?</p>
-          <div class="choice-col">
-            <label class="choice"><input type="radio" name="mc-j2" value="a"> Bar Mitzvah is for boys aged thirteen; Bat Mitzvah is for girls</label>
-            <label class="choice"><input type="radio" name="mc-j2" value="b"> Bar Mitzvah is a wedding ceremony; Bat Mitzvah is a naming ceremony</label>
-            <label class="choice"><input type="radio" name="mc-j2" value="c"> Bar Mitzvah is practised in Reform Judaism only; Bat Mitzvah in all traditions</label>
-            <label class="choice"><input type="radio" name="mc-j2" value="d"> Bar Mitzvah involves Torah reading; Bat Mitzvah is a purely family celebration</label>
-          </div>
-        </div>
-
-        <div class="question-card" id="mc-j3">
-          <p><strong>4.</strong> When does <em>Shabbat</em> begin and end?</p>
-          <div class="choice-col">
-            <label class="choice"><input type="radio" name="mc-j3" value="a"> Saturday morning until Sunday morning</label>
-            <label class="choice"><input type="radio" name="mc-j3" value="b"> Friday at midday until Friday night</label>
-            <label class="choice"><input type="radio" name="mc-j3" value="c"> Friday sunset until Saturday nightfall</label>
-            <label class="choice"><input type="radio" name="mc-j3" value="d"> Sunday sunrise until Sunday sunset</label>
-          </div>
-        </div>
-
         <div class="question-card" id="mc-j4">
-          <p><strong>5.</strong> What is <em>Shiva</em> in Jewish mourning practice?</p>
+          <p><strong>1.</strong> What is <em>Shiva</em> in Jewish mourning practice?</p>
           <div class="choice-col">
             <label class="choice"><input type="radio" name="mc-j4" value="a"> A prayer said at the start of every Shabbat service</label>
             <label class="choice"><input type="radio" name="mc-j4" value="b"> The seven-day mourning period observed at home after a death</label>
@@ -1132,7 +1140,7 @@ color:  amber
         </div>
 
         <div class="question-card" id="mc-j5">
-          <p><strong>6.</strong> What is the <em>Ketubah</em> in a Jewish wedding?</p>
+          <p><strong>2.</strong> What is the <em>Ketubah</em> in a Jewish wedding?</p>
           <div class="choice-col">
             <label class="choice"><input type="radio" name="mc-j5" value="a"> The canopy under which the couple stand during the ceremony</label>
             <label class="choice"><input type="radio" name="mc-j5" value="b"> The breaking of a glass at the end of the wedding service</label>
@@ -1297,21 +1305,36 @@ color:  amber
     }
   }
 
-  /* ── Section 0: Key Beliefs (8 MCQ) ── */
+  /* ── Section 0: Key Beliefs (4 term match + 4 MCQ = 8 marks) ── */
   function checkVocab() {
-    const correctMap = {
-      'mc-v0': 'c', 'mc-v1': 'a', 'mc-v2': 'b', 'mc-v3': 'd',
-      'mc-v4': 'a', 'mc-v5': 'c', 'mc-v6': 'b', 'mc-v7': 'd'
-    };
-    let correct = 0;
-    Object.entries(correctMap).forEach(([name, ans]) => {
-      const sel = document.querySelector(`input[name="${name}"]:checked`);
+    // Term-definition matching (4 marks)
+    const termKeys = ['fundamentalist', 'imago-dei', 'sola-scriptura', 'denomination'];
+    let termCorrect = 0;
+    termKeys.forEach(key => {
+      const slot = document.querySelector(`#term-slots .drop-slot[data-accept="${key}"]`);
+      const row  = document.getElementById('tsr-' + key);
+      const chip = slot ? slot.firstElementChild : null;
+      const ok   = !!(chip && chip.dataset.term === key);
+      if (ok) termCorrect++;
+      if (slot && !chip) slot.classList.add('is-wrong');
+      if (row)  { row.classList.toggle('is-correct', ok); row.classList.toggle('is-wrong', !ok); }
+      if (chip) { chip.classList.toggle('correct', ok);   chip.classList.toggle('wrong', !ok); }
+    });
+    document.querySelectorAll('#term-bank .drag-chip').forEach(chip => chip.classList.add('wrong'));
+
+    // MCQ (4 marks)
+    const mcqMap = { 'mc-v2': 'b', 'mc-v4': 'a', 'mc-v5': 'c', 'mc-v6': 'b' };
+    let mcqCorrect = 0;
+    Object.entries(mcqMap).forEach(([name, ans]) => {
+      const sel  = document.querySelector(`input[name="${name}"]:checked`);
       const card = document.getElementById(name);
-      const ok = !!sel && sel.value === ans;
-      if (ok) correct++;
+      const ok   = !!sel && sel.value === ans;
+      if (ok) mcqCorrect++;
       card.classList.toggle('is-correct', ok);
       card.classList.toggle('is-wrong', !ok);
     });
+
+    const correct = termCorrect + mcqCorrect;
     sectionScores[0] = correct;
     return {
       ok: correct === 8,
@@ -1466,7 +1489,7 @@ color:  amber
     };
   }
 
-  /* ── Section 5: Jewish Lifecycle + extended response (6 MCQ + 3 extended = 9 marks) ── */
+  /* ── Section 5: Jewish Lifecycle (4 ordering + 2 MCQ + 3 extended = 9 marks) ── */
   function checkJudaism() {
     const textarea = document.getElementById('judaism-response');
     const text = textarea.value.trim();
@@ -1476,17 +1499,32 @@ color:  amber
       return null;
     }
 
-    const mcqMap = { 'mc-j0': 'b', 'mc-j1': 'c', 'mc-j2': 'a', 'mc-j3': 'c', 'mc-j4': 'b', 'mc-j5': 'c' };
+    // Lifecycle ordering (4 marks)
+    let orderCorrect = 0;
+    document.querySelectorAll('#lifecycle-slots .drop-slot').forEach(slot => {
+      const chip = slot.firstElementChild;
+      const ok   = !!(chip && chip.dataset.order === slot.dataset.accept);
+      if (ok) orderCorrect++;
+      const row = slot.closest('.seq-row');
+      if (row)  { row.classList.toggle('correct', ok);  row.classList.toggle('is-wrong', !ok); }
+      if (chip) { chip.classList.toggle('correct', ok); chip.classList.toggle('wrong', !ok); }
+      if (!chip) slot.classList.add('is-wrong');
+    });
+    document.querySelectorAll('#lifecycle-bank .drag-chip').forEach(chip => chip.classList.add('wrong'));
+
+    // MCQ (2 marks)
+    const mcqMap = { 'mc-j4': 'b', 'mc-j5': 'c' };
     let mcqCorrect = 0;
     Object.entries(mcqMap).forEach(([name, ans]) => {
-      const sel = document.querySelector(`input[name="${name}"]:checked`);
+      const sel  = document.querySelector(`input[name="${name}"]:checked`);
       const card = document.getElementById(name);
-      const ok = !!sel && sel.value === ans;
+      const ok   = !!sel && sel.value === ans;
       if (ok) mcqCorrect++;
       card.classList.toggle('is-correct', ok);
       card.classList.toggle('is-wrong', !ok);
     });
 
+    // Extended response (3 marks)
     const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 4).length;
     const keyTerms = [
       'brit', 'milah', 'circumcision', 'bar mitzvah', 'bat mitzvah', 'mitzvah',
@@ -1502,7 +1540,7 @@ color:  amber
     if (sentences >= 5) extScore++;
     if (foundTerms.length >= 3) extScore++;
 
-    const total = mcqCorrect + extScore;
+    const total = orderCorrect + mcqCorrect + extScore;
     sectionScores[5] = total;
 
     let extMsg = '';
@@ -1517,7 +1555,7 @@ color:  amber
 
     return {
       ok: total === 9,
-      message: `${mcqCorrect}/6 on questions. ${extMsg} Total: ${total}/9.`
+      message: `${orderCorrect}/4 ordering, ${mcqCorrect}/2 questions. ${extMsg} Total: ${total}/9.`
     };
   }
 
