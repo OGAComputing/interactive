@@ -83,11 +83,17 @@
   let userInfo             = null; // { email, name } fetched from Google userinfo after sign-in
   let isTeacherMode        = false; // true once detectTeacher confirms the signed-in user is a teacher
   const CLASSROOM_SYNC_INTERVAL_MS = 60 * 1000;
+  const AUTH_HEARTBEAT_INTERVAL_MS = 60 * 1000;
+  const AUTH_RENEWAL_MARGIN_MS     = 15 * 60 * 1000;
 
   let pendingClassroomSyncTimer = null;
   let pendingClassroomSyncPayload = null;
   let hasFlushedClassroomSync = false;
   let lastClassroomSyncAt = 0;
+  let authExpiresAt = 0;
+  let authHealthy = false;
+  let authPaused = false;
+  let authHeartbeatTimer = null;
 
   // ── Login banner ─────────────────────────────────────────────────────────────
 
@@ -322,9 +328,27 @@
     const dot  = document.getElementById('classroom-dot');
     const text = document.getElementById('classroom-text');
     const btn  = document.getElementById('classroom-signin-btn');
-    if (dot)  dot.classList.add('online');
+    if (dot)  {
+      dot.classList.remove('teacher');
+      dot.classList.add('online');
+      dot.style.cssText = '';
+    }
     if (text) text.textContent = '✅ Connected to Google Classroom — your results and work evidence are saved automatically.';
     if (btn)  btn.classList.add('hidden');
+  }
+
+  function setBannerAuthRequired(message) {
+    const dot  = document.getElementById('classroom-dot');
+    const text = document.getElementById('classroom-text');
+    const btn  = document.getElementById('classroom-signin-btn');
+    const copyBtn = document.getElementById('classroom-copy-btn');
+    if (dot) {
+      dot.classList.remove('online', 'teacher');
+      dot.style.cssText = 'background:#ef4444;box-shadow:0 0 8px #ef4444';
+    }
+    if (text) text.textContent = message || 'Google sign-in is required before this assessment can continue.';
+    if (btn) btn.classList.remove('hidden');
+    if (copyBtn) copyBtn.classList.remove('visible');
   }
 
   function setBannerTeacher(hasProxy) {
@@ -352,6 +376,99 @@
   }
 
   // ── Teacher modal ─────────────────────────────────────────────────────────────
+
+  function isAuthStatus(status) {
+    return status === 401 || status === 403;
+  }
+
+  function isAuthFailureMessage(text) {
+    return /invalid[_\s-]?token|invalid[_\s-]?grant|unauthorized|unauthenticated|login[_\s-]?required|permission denied|401|403/i.test(String(text || ''));
+  }
+
+  function clearPendingSyncTimers() {
+    if (pendingClassroomSyncTimer) {
+      clearTimeout(pendingClassroomSyncTimer);
+      pendingClassroomSyncTimer = null;
+    }
+    if (pendingResultsTimer) {
+      clearTimeout(pendingResultsTimer);
+      pendingResultsTimer = null;
+    }
+  }
+
+  function stopAuthWatchdog() {
+    if (authHeartbeatTimer) {
+      clearInterval(authHeartbeatTimer);
+      authHeartbeatTimer = null;
+    }
+  }
+
+  function openAssessmentAuthModal(reason) {
+    const modal = document.getElementById('cr-auth-blocking-modal-backdrop');
+    if (!modal) return;
+    const title = modal.querySelector('h2');
+    const body = modal.querySelector('p');
+    if (title) title.textContent = authPaused ? 'Assessment Paused' : 'Assessment Login Required';
+    if (body) {
+      body.textContent = reason ||
+        'Google sign-in is required before this assessment can continue. Please sign in again with your school Google account.';
+    }
+    modal.classList.add('open');
+  }
+
+  function handleAuthLost(reason) {
+    if (authPaused && !accessToken) return;
+    authPaused = true;
+    authHealthy = false;
+    accessToken = null;
+    authExpiresAt = 0;
+    userInfo = null;
+    clearPendingSyncTimers();
+    stopAuthWatchdog();
+    try { localStorage.removeItem(AUTH_STORAGE_KEY); } catch (_) {}
+    setBannerAuthRequired(reason || 'Google sign-in has expired. Assessment paused until you sign in again.');
+    if (isAssessment()) openAssessmentAuthModal(reason);
+    showClassroomToast('Google sign-in needed - assessment paused.');
+  }
+
+  function tokenNeedsRenewalSoon() {
+    return !!authExpiresAt && authExpiresAt <= Date.now() + AUTH_RENEWAL_MARGIN_MS;
+  }
+
+  async function checkAuthHealth(reason) {
+    if (!accessToken || isTeacherMode) return !!accessToken;
+    if (tokenNeedsRenewalSoon()) {
+      handleAuthLost('Google sign-in needs renewing before the assessment can continue.');
+      return false;
+    }
+    try {
+      const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+        cache: 'no-store'
+      });
+      if (res.ok) {
+        authHealthy = true;
+        return true;
+      }
+      if (isAuthStatus(res.status)) {
+        handleAuthLost(reason || 'Google has signed you out. Assessment paused until you sign in again.');
+        return false;
+      }
+      console.warn('Classroom: auth heartbeat returned non-auth error', res.status);
+      return authHealthy;
+    } catch (e) {
+      console.warn('Classroom: auth heartbeat could not reach Google', e);
+      return authHealthy;
+    }
+  }
+
+  function startAuthWatchdog() {
+    stopAuthWatchdog();
+    if (!isAssessment() || isTeacherMode || !accessToken) return;
+    authHeartbeatTimer = setInterval(() => {
+      checkAuthHealth('Google sign-in could not be verified. Assessment paused until you sign in again.');
+    }, AUTH_HEARTBEAT_INTERVAL_MS);
+  }
 
   window._classroomApiModalClose = function () {
     const el = document.getElementById('cr-api-modal-backdrop');
@@ -627,7 +744,10 @@
     try {
       const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo',
         { headers: { Authorization: `Bearer ${token}` } });
-      if (!res.ok) return null;
+      if (!res.ok) {
+        if (isAuthStatus(res.status)) handleAuthLost('Google Drive access was lost. Assessment paused until you sign in again.');
+        return null;
+      }
       const d = await res.json();
       return { email: d.email || '', name: d.name || d.given_name || '' };
     } catch (_) { return null; }
@@ -870,7 +990,11 @@
         body
       }
     );
-    if (!res.ok) throw new Error(`Drive create ${res.status}: ${await res.text().catch(() => '')}`);
+    if (!res.ok) {
+      if (isAuthStatus(res.status)) handleAuthLost('Google Drive access was lost. Assessment paused until you sign in again.');
+      const err = Object.assign(new Error(`Drive create ${res.status}: ${await res.text().catch(() => '')}`), { status: res.status });
+      throw err;
+    }
     return (await res.json()).id;
   }
 
@@ -893,6 +1017,7 @@
       }
     );
     if (!res.ok) {
+      if (isAuthStatus(res.status)) handleAuthLost('Google Drive access was lost. Assessment paused until you sign in again.');
       const err = Object.assign(new Error(`Drive update ${res.status}`), { status: res.status });
       throw err;
     }
@@ -914,7 +1039,9 @@
       }
     );
     if (!res.ok) {
-      throw new Error(`modifyAttachments ${res.status}: ${await res.text().catch(() => '')}`);
+      if (isAuthStatus(res.status)) handleAuthLost('Google Classroom access was lost. Assessment paused until you sign in again.');
+      const err = Object.assign(new Error(`modifyAttachments ${res.status}: ${await res.text().catch(() => '')}`), { status: res.status });
+      throw err;
     }
   }
 
@@ -1053,7 +1180,10 @@
         }),
         { headers: { Authorization: `Bearer ${accessToken}` } }
       );
-      if (!res.ok) return null;
+      if (!res.ok) {
+        if (isAuthStatus(res.status)) handleAuthLost('Google Drive access was lost. Assessment paused until you sign in again.');
+        return null;
+      }
       const data = await res.json();
       return (data.files && data.files[0]) ? data.files[0].id : null;
     } catch (_) { return null; }
@@ -1077,7 +1207,11 @@
         body
       }
     );
-    if (!res.ok) throw new Error(`Drive results create ${res.status}: ${await res.text().catch(() => '')}`);
+    if (!res.ok) {
+      if (isAuthStatus(res.status)) handleAuthLost('Google Drive access was lost. Assessment paused until you sign in again.');
+      const err = Object.assign(new Error(`Drive results create ${res.status}: ${await res.text().catch(() => '')}`), { status: res.status });
+      throw err;
+    }
     return (await res.json()).id;
   }
 
@@ -1094,6 +1228,7 @@
       }
     );
     if (!res.ok) {
+      if (isAuthStatus(res.status)) handleAuthLost('Google Drive access was lost. Assessment paused until you sign in again.');
       const e = Object.assign(new Error(`Drive results update ${res.status}`), { status: res.status });
       throw e;
     }
@@ -1169,7 +1304,10 @@
         `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}?alt=media`,
         { headers: { Authorization: `Bearer ${accessToken}` } }
       );
-      if (!res.ok) return null;
+      if (!res.ok) {
+        if (isAuthStatus(res.status)) handleAuthLost('Google Drive access was lost. Assessment paused until you sign in again.');
+        return null;
+      }
       const data = await res.json();
       // Return the inner results object (legacy fallback if the file was a bare results object)
       return (data && data.results !== undefined) ? data.results : data;
@@ -1207,7 +1345,11 @@
     }
 
     accessToken = tokenResponse.access_token;
+    authExpiresAt = tokenResponse.expires_at || 0;
+    authHealthy = true;
+    authPaused = false;
     userInfo    = await fetchUserInfo(accessToken);
+    if (!accessToken) return;
 
     const blockingModal = document.getElementById('cr-auth-blocking-modal-backdrop');
     if (blockingModal) blockingModal.classList.remove('open');
@@ -1262,6 +1404,7 @@
     submissionId = await lookupSubmissionId(accessToken, courseWorkId);
 
     if (isTeacher) {
+      stopAuthWatchdog();
       setBannerTeacher(!!proxyUrl);
       if (!proxyUrl) {
         // Show modal so teacher can enter their proxy URL
@@ -1272,6 +1415,8 @@
       }
     } else {
       setBannerStudent();
+      await checkAuthHealth('Google sign-in could not be verified. Assessment paused until you sign in again.');
+      startAuthWatchdog();
     }
   }
 
@@ -1318,7 +1463,7 @@
         expires_at   : data.expires_at
       }));
     } catch (_) {}
-    handleTokenResponse({ access_token: data.access_token, scope: data.scope || '' });
+    handleTokenResponse({ access_token: data.access_token, scope: data.scope || '', expires_at: data.expires_at || 0 });
     return true;
   }
 
@@ -1332,7 +1477,7 @@
       try { localStorage.removeItem(AUTH_STORAGE_KEY); } catch (_) {}
       return false;
     }
-    handleTokenResponse({ access_token: data.access_token, scope: data.scope || '' });
+    handleTokenResponse({ access_token: data.access_token, scope: data.scope || '', expires_at: data.expires_at || 0 });
     return true;
   }
 
@@ -1375,6 +1520,9 @@
 
       if (!res.ok) {
         const text = await res.text().catch(() => res.status);
+        if (isAuthStatus(res.status) || isAuthFailureMessage(text)) {
+          handleAuthLost('Google Classroom sign-in was rejected while saving. Assessment paused until you sign in again.');
+        }
         throw new Error(`Proxy returned ${res.status}: ${text}`);
       }
       const result = await res.text();
@@ -1382,6 +1530,11 @@
         console.warn(`Classroom proxy responded: "${result}" for "${activityName}"`);
 
         // SERVICE_DISABLED — show actionable modal so the teacher can fix it
+        if (isAuthFailureMessage(result)) {
+          handleAuthLost('Google Classroom sign-in was rejected while saving. Assessment paused until you sign in again.');
+          return;
+        }
+
         if (result.includes('SERVICE_DISABLED') || result.includes('has not been used')) {
           let projectNum = null;
           try {
@@ -1419,7 +1572,12 @@
 
     verifyAuth() {
       if (isClassroomContext && !accessToken) {
-        alert("This assignment is linked to Google Classroom.\nPlease click 'Sign in with Google' at the top of the page to record your results.");
+        if (isAssessment()) openAssessmentAuthModal('Google sign-in is required before this assessment can continue.');
+        else alert("This assignment is linked to Google Classroom.\nPlease click 'Sign in with Google' at the top of the page to record your results.");
+        return false;
+      }
+      if (isClassroomContext && !isTeacherMode && (authPaused || tokenNeedsRenewalSoon() || !authHealthy)) {
+        handleAuthLost('Google sign-in needs renewing before the assessment can continue.');
         return false;
       }
       return true;
@@ -1435,6 +1593,7 @@
      */
     async submitGrade(gradePercent, activityName) {
       if (!accessToken) return;
+      if (isAssessment() && !(await checkAuthHealth('Google sign-in could not be verified while saving. Assessment paused until you sign in again.'))) return;
       scheduleClassroomSync(activityName, gradePercent);
     },
 
@@ -1447,8 +1606,9 @@
      * @param {object} resultsObj  Plain JSON-serialisable object to store.
      * @param {string} activityName  Used to derive the Drive filename.
      */
-    submitResults(resultsObj, activityName) {
+    async submitResults(resultsObj, activityName) {
       if (!accessToken) return;
+      if (isAssessment() && !(await checkAuthHealth('Google sign-in could not be verified while saving. Assessment paused until you sign in again.'))) return;
       scheduleResultsUpload(activityName, resultsObj);
     },
 

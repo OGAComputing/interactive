@@ -819,9 +819,8 @@
     const tree = {};
     activities.forEach(a => {
       const isYearGroup = /^Year\s+\d+$/i.test(a.year);
-      const isReligiousStudies = a.year.toUpperCase() === 'RS';
-      const group = isYearGroup ? a.year : (isReligiousStudies ? 'Religious Studies' : 'Other');
-      const topic = (isYearGroup || isReligiousStudies)
+      const group = isYearGroup ? a.year : 'Other';
+      const topic = isYearGroup
         ? a.topic
         : `${a.year} / ${a.topic}`;
 
@@ -857,7 +856,14 @@
       panel.className = 'year-panel' + (i === 0 ? ' active' : '');
       panel.id = 'panel-' + slugify(year);
 
-      Object.keys(tree[year]).sort().forEach(topic => {
+      Object.keys(tree[year]).sort((a, b) => {
+        if (year === 'Other') {
+          const aIsRs = /^rs\s*\//i.test(a);
+          const bIsRs = /^rs\s*\//i.test(b);
+          if (aIsRs !== bIsRs) return aIsRs ? 1 : -1;
+        }
+        return a.localeCompare(b);
+      }).forEach(topic => {
         const lessonBuckets = tree[year][topic];
 
         // Sort lesson keys: ungrouped first, then numerically
