@@ -989,9 +989,32 @@ color:  amber
   .badge.red  { background: rgba(124, 28, 46, 0.10); color: var(--rs-burgundy); }
   .badge.gold { background: rgba(156, 110, 8, 0.12); color: var(--rs-gold); }
 
+  /* ── Gap-fill grid ── */
+  .gf-grid { display: grid; gap: 10px; }
+
+  .gf-row {
+    align-items: center;
+    display: grid;
+    gap: 14px;
+    grid-template-columns: 1fr auto;
+  }
+
+  .gf-row .gf-select { min-width: 180px; }
+
+  /* ── MCQ ── */
+  .mcq-list { display: grid; gap: 12px; }
+
+  .choice-col {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    margin-top: 10px;
+  }
+
   @media (max-width: 760px) {
     .tab-btn { flex: 1 1 150px; }
     .tf-row { grid-template-columns: 1fr; }
+    .gf-row { grid-template-columns: 1fr; }
   }
 </style>
 </head>
@@ -1301,7 +1324,7 @@ color:  amber
             <button class="tf-btn" data-val="true" onclick="selectTf(0, 'true')">True</button>
             <button class="tf-btn" data-val="false" onclick="selectTf(0, 'false')">False</button>
           </div>
-          <select class="ac-select" disabled><option>No correction needed</option></select>
+          <div></div>
         </div>
         <div class="tf-row" id="tf-1" data-answer="true">
           <div class="tf-statement"><span class="icon" aria-hidden="true">E</span>Evangelical Protestants often emphasise personal conversion and <mark>sharing faith</mark>.</div>
@@ -1309,7 +1332,7 @@ color:  amber
             <button class="tf-btn" data-val="true" onclick="selectTf(1, 'true')">True</button>
             <button class="tf-btn" data-val="false" onclick="selectTf(1, 'false')">False</button>
           </div>
-          <select class="ac-select" disabled><option>No correction needed</option></select>
+          <div></div>
         </div>
         <div class="tf-row" id="tf-2" data-answer="false" data-correction="homes">
           <div class="tf-statement"><span class="icon" aria-hidden="true">A</span>Amish worship is usually held in large <mark>cathedrals</mark> with a complex church calendar.</div>
@@ -1317,7 +1340,7 @@ color:  amber
             <button class="tf-btn" data-val="true" onclick="selectTf(2, 'true')">True</button>
             <button class="tf-btn" data-val="false" onclick="selectTf(2, 'false')">False</button>
           </div>
-          <select class="ac-select" id="tf-fix-2" disabled>
+          <select class="ac-select" id="tf-fix-2" style="display:none">
             <option value="">Choose correction</option>
             <option value="homes">homes</option>
             <option value="temples">temples</option>
@@ -1330,7 +1353,7 @@ color:  amber
             <button class="tf-btn" data-val="true" onclick="selectTf(3, 'true')">True</button>
             <button class="tf-btn" data-val="false" onclick="selectTf(3, 'false')">False</button>
           </div>
-          <select class="ac-select" disabled><option>No correction needed</option></select>
+          <div></div>
         </div>
         <div class="tf-row" id="tf-4" data-answer="false" data-correction="important">
           <div class="tf-statement"><span class="icon" aria-hidden="true">F</span>Latter-day Saints treat family life as <mark>unimportant</mark>.</div>
@@ -1338,7 +1361,7 @@ color:  amber
             <button class="tf-btn" data-val="true" onclick="selectTf(4, 'true')">True</button>
             <button class="tf-btn" data-val="false" onclick="selectTf(4, 'false')">False</button>
           </div>
-          <select class="ac-select" id="tf-fix-4" disabled>
+          <select class="ac-select" id="tf-fix-4" style="display:none">
             <option value="">Choose correction</option>
             <option value="optional">optional</option>
             <option value="important">important</option>
@@ -1351,7 +1374,7 @@ color:  amber
             <button class="tf-btn" data-val="true" onclick="selectTf(5, 'true')">True</button>
             <button class="tf-btn" data-val="false" onclick="selectTf(5, 'false')">False</button>
           </div>
-          <select class="ac-select" id="tf-fix-5" disabled>
+          <select class="ac-select" id="tf-fix-5" style="display:none">
             <option value="">Choose correction</option>
             <option value="methodists">Methodists</option>
             <option value="baptists">Baptists</option>
@@ -1587,7 +1610,7 @@ color:  amber
     row.querySelectorAll('.tf-btn').forEach(btn => btn.classList.toggle('selected', btn.dataset.val === value));
     const fix = document.getElementById('tf-fix-' + idx);
     if (fix) {
-      fix.disabled = value !== 'false';
+      fix.style.display = value === 'false' ? '' : 'none';
       if (value !== 'false') fix.value = '';
     }
     row.classList.remove('correct', 'wrong');
@@ -1766,7 +1789,7 @@ color:  amber
         row.classList.remove('correct', 'wrong');
         const num = row.id.replace('tf-', '');
         const fix = document.getElementById('tf-fix-' + num);
-        if (fix) { fix.disabled = true; fix.value = ''; }
+        if (fix) { fix.style.display = 'none'; fix.value = ''; }
       });
     } else if (idx === 4) {
       ['bap-c-who', 'bap-b-who', 'bap-c-what', 'bap-b-what', 'bap-c-why', 'bap-b-why']
