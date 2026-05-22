@@ -104,6 +104,76 @@ color:  blue
   }
   .ac-select:focus { outline: none; border-color: var(--accent); }
 
+  .gate-bank {
+    display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;
+    margin: 16px 0 18px;
+  }
+  .gate-chip {
+    min-width: 74px; min-height: 38px; padding: 8px 14px;
+    border: 2px solid var(--surface-mid); border-radius: 8px;
+    background: var(--bg); color: var(--text);
+    font-family: var(--font-head, monospace); font-size: 0.86rem; font-weight: 700;
+    display: inline-flex; align-items: center; justify-content: center;
+    text-align: center; cursor: grab; user-select: none; touch-action: none;
+    transition: border-color 0.2s, background 0.2s, color 0.2s, transform 0.2s;
+  }
+  .gate-chip svg { display: block; width: 72px; height: 44px; }
+  .gate-chip.notation { min-width: 58px; font-size: 1.35rem; line-height: 1; }
+  .gate-chip:hover,
+  .gate-chip:focus {
+    outline: none; border-color: var(--accent); color: var(--accent-light);
+  }
+  .gate-chip:active { cursor: grabbing; transform: scale(0.98); }
+  .gate-chip.is-picked {
+    border-color: var(--accent); background: rgba(59,130,246,.14); color: var(--accent-light);
+  }
+  .gate-dropzone {
+    min-width: 108px; min-height: 38px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border: 2px dashed var(--surface-mid); border-radius: 8px;
+    background: var(--bg); color: var(--muted);
+    font-family: var(--font-head, monospace); font-size: 0.84rem; font-weight: 700;
+    cursor: pointer; transition: border-color 0.2s, background 0.2s, color 0.2s;
+  }
+  .gate-dropzone.has-value {
+    border-style: solid; border-color: var(--accent); color: var(--text);
+    background: rgba(59,130,246,.1);
+  }
+  .gate-dropzone.is-over {
+    border-color: var(--gold); background: rgba(245,158,11,.14); color: var(--text);
+  }
+  .gate-dropzone.is-correct { border-color: var(--green); background: rgba(16,185,129,.08); color: var(--green); }
+  .gate-dropzone.is-wrong   { border-color: var(--red);   background: rgba(220,38,38,.08);  color: var(--red); }
+  .gate-dropzone:focus {
+    outline: none; border-color: var(--accent-light);
+  }
+  .gate-target.is-over,
+  .gate-slot.is-over [data-shape].slot-active {
+    outline: 3px solid var(--gold);
+    outline-offset: 4px;
+  }
+  .gate-card.gate-target {
+    position: relative; cursor: pointer;
+  }
+  .gate-choice-label {
+    position: absolute; left: 50%; bottom: 6px; transform: translateX(-50%);
+    min-width: 54px; padding: 3px 8px; border-radius: 7px;
+    background: var(--accent); color: var(--text-inv);
+    font-family: var(--font-head, monospace); font-size: 0.72rem; font-weight: 700;
+    text-align: center;
+  }
+  .gate-drag-ghost {
+    position: fixed; z-index: 9999; pointer-events: none;
+    min-width: 74px; padding: 8px 14px; border-radius: 8px;
+    border: 2px solid var(--accent); background: var(--bg); color: var(--accent-light);
+    font-family: var(--font-head, monospace); font-size: 0.86rem; font-weight: 700;
+    text-align: center; box-shadow: 0 10px 28px rgba(0,0,0,.35);
+  }
+  .gate-answer-input {
+    position: absolute; width: 1px; height: 1px;
+    opacity: 0; pointer-events: none;
+  }
+
   /* ── Inline code expression ── */
   .expr {
     display: inline-block; font-family: var(--font-head, monospace);
@@ -167,6 +237,27 @@ color:  blue
   .truth-table td.cell-correct { background: rgba(16,185,129,.15); color: var(--green); font-weight: 700; }
   .truth-table td.cell-wrong   { background: rgba(220,38,38,.12);  color: var(--red);   font-weight: 700; }
   .truth-table td select { width: 62px; text-align: center; }
+  .binary-toggle {
+    width: 54px; height: 34px; border: 2px solid var(--surface-mid);
+    border-radius: 8px; background: var(--bg); color: var(--muted);
+    font-family: var(--font-head, monospace); font-size: 0.95rem; font-weight: 800;
+    cursor: pointer; transition: border-color 0.2s, background 0.2s, color 0.2s, transform 0.12s;
+  }
+  .binary-toggle:hover,
+  .binary-toggle:focus {
+    outline: none; border-color: var(--accent); color: var(--accent-light);
+  }
+  .binary-toggle:active { transform: scale(0.96); }
+  .binary-toggle[data-value="0"] {
+    border-color: var(--accent); background: rgba(59,130,246,.12); color: var(--text);
+  }
+  .binary-toggle[data-value="1"] {
+    border-color: var(--gold); background: rgba(245,158,11,.16); color: var(--text);
+  }
+  .binary-answer-input {
+    position: absolute; width: 1px; height: 1px;
+    opacity: 0; pointer-events: none;
+  }
 
   /* ── Side-by-side truth table trio (Task 2) ── */
   .tt-group {
@@ -197,6 +288,34 @@ color:  blue
     font-size: 0.78rem; font-weight: 700; color: var(--accent);
     text-transform: uppercase; letter-spacing: 0.6px;
   }
+
+  /* ── Gate slot shapes (Task 3 live rendering) ── */
+  .gate-slot [data-shape] { display: none; }
+  .gate-slot [data-shape].slot-active { display: block; }
+  .gate-slot { cursor: pointer; }
+  .gate-slot.is-correct [data-shape].slot-active { color: var(--green); }
+  .gate-slot.is-wrong [data-shape].slot-active { color: var(--red); }
+
+  /* ── Circuit stepper ── */
+  .circuit-stepper {
+    display: flex; align-items: center; justify-content: center;
+    gap: 16px; margin-bottom: 14px; flex-wrap: wrap;
+  }
+  .circuit-counter {
+    font-family: var(--font-head, monospace);
+    font-size: 0.88rem; font-weight: 700; color: var(--text);
+    min-width: 130px; text-align: center;
+  }
+  .circuit-dots {
+    display: flex; justify-content: center; gap: 8px; margin-bottom: 20px; flex-wrap: wrap;
+  }
+  .circuit-dot {
+    width: 13px; height: 13px; border-radius: 50%;
+    border: 2px solid var(--surface-mid); background: var(--surface-mid);
+    cursor: pointer; transition: all 0.2s;
+  }
+  .circuit-dot.active { border-color: var(--accent); background: transparent; }
+  .circuit-dot.done   { border-color: var(--green); background: var(--green); }
 </style>
 </head>
 
@@ -226,8 +345,9 @@ color:  blue
     <button class="tab-btn active" data-idx="0">Task 1 · Gates</button>
     <button class="tab-btn"        data-idx="1">Task 2 · Truth Tables</button>
     <button class="tab-btn"        data-idx="2">Task 3 · Circuits</button>
-    <button class="tab-btn"        data-idx="3">Task 4 · Complex Tables</button>
-    <button class="tab-btn"        data-idx="4">Task 5 · Scenario</button>
+    <button class="tab-btn"        data-idx="3">Task 4 · Notation</button>
+    <button class="tab-btn"        data-idx="4">Task 5 · Complex Tables</button>
+    <button class="tab-btn"        data-idx="5">Task 6 · Scenario</button>
   </div>
 
   <!-- ══════════════════════════════════════════════════════════
@@ -239,18 +359,24 @@ color:  blue
     <div class="card">
       <h2>Identify Each Gate</h2>
       <p style="color:var(--muted);font-size:0.88rem;margin-bottom:4px;">
-        Three logic gate symbols are shown below. Select the correct name for each gate.
+        Drag each gate name onto the matching symbol. You can also tap a name, then tap a symbol.
       </p>
       <p style="color:var(--muted);font-size:0.82rem;margin-bottom:18px;">
         Remember: the <strong style="color:var(--text)">NOT gate</strong> must have a circle (bubble) at its output — without it, the symbol is just a buffer.
       </p>
+
+      <div class="gate-bank" aria-label="Gate names">
+        <button class="gate-chip" type="button" draggable="true" data-gate-type="AND">AND</button>
+        <button class="gate-chip" type="button" draggable="true" data-gate-type="OR">OR</button>
+        <button class="gate-chip" type="button" draggable="true" data-gate-type="NOT">NOT</button>
+      </div>
 
       <div class="gate-display">
 
         <!-- Gate A: AND -->
         <div class="gate-item">
           <span class="gate-label">Gate A</span>
-          <div class="gate-card" id="gc-a">
+          <div class="gate-card gate-target" id="gc-a" data-value="" data-target-slot="sel-a" role="button" tabindex="0" aria-label="Drop answer for Gate A">
             <!-- AND gate: flat left edge + semicircular right side -->
             <!-- Body: M16,6 L40,6 arc to 40,50 L16,50; rightmost point at x=40+22=62, y=28 -->
             <svg viewBox="0 0 90 56" width="110" height="68"
@@ -264,18 +390,13 @@ color:  blue
               <text x="4"  y="36" font-size="11" fill="var(--muted)" font-family="monospace">B</text>
             </svg>
           </div>
-          <select class="ac-select" id="sel-a">
-            <option value="">— select —</option>
-            <option value="AND">AND</option>
-            <option value="OR">OR</option>
-            <option value="NOT">NOT</option>
-          </select>
+          <input class="gate-answer-input" type="text" id="sel-a-input" readonly aria-label="Gate A answer">
         </div>
 
         <!-- Gate B: OR -->
         <div class="gate-item">
           <span class="gate-label">Gate B</span>
-          <div class="gate-card" id="gc-b">
+          <div class="gate-card gate-target" id="gc-b" data-value="" data-target-slot="sel-b" role="button" tabindex="0" aria-label="Drop answer for Gate B">
             <!-- OR gate: curved concave back, curved top/bottom meeting at right point -->
             <!-- Back curve from (16,50) to (16,6) via control (24,28) -->
             <!-- Top  curve from (16,6)  to (62,28) via control (26,6)  -->
@@ -292,18 +413,13 @@ color:  blue
               <text x="4"  y="36" font-size="11" fill="var(--muted)" font-family="monospace">B</text>
             </svg>
           </div>
-          <select class="ac-select" id="sel-b">
-            <option value="">— select —</option>
-            <option value="AND">AND</option>
-            <option value="OR">OR</option>
-            <option value="NOT">NOT</option>
-          </select>
+          <input class="gate-answer-input" type="text" id="sel-b-input" readonly aria-label="Gate B answer">
         </div>
 
         <!-- Gate C: NOT -->
         <div class="gate-item">
           <span class="gate-label">Gate C</span>
-          <div class="gate-card" id="gc-c">
+          <div class="gate-card gate-target" id="gc-c" data-value="" data-target-slot="sel-c" role="button" tabindex="0" aria-label="Drop answer for Gate C">
             <!-- NOT gate: right-pointing triangle + bubble at output -->
             <!-- Triangle: (16,6) (16,50) (54,28). Bubble: cx=59,r=5. Output from x=64 -->
             <svg viewBox="0 0 90 56" width="110" height="68"
@@ -318,12 +434,7 @@ color:  blue
               <text x="4"  y="26" font-size="11" fill="var(--muted)" font-family="monospace">A</text>
             </svg>
           </div>
-          <select class="ac-select" id="sel-c">
-            <option value="">— select —</option>
-            <option value="AND">AND</option>
-            <option value="OR">OR</option>
-            <option value="NOT">NOT</option>
-          </select>
+          <input class="gate-answer-input" type="text" id="sel-c-input" readonly aria-label="Gate C answer">
         </div>
 
       </div><!-- /.gate-display -->
@@ -345,7 +456,7 @@ color:  blue
       <h2>Truth Tables</h2>
       <p style="color:var(--muted);font-size:0.88rem;margin-bottom:16px;">
         Fill in the output column for each gate. Use <strong style="color:var(--text)">0</strong> for False and
-        <strong style="color:var(--text)">1</strong> for True.
+        <strong style="color:var(--text)">1</strong> for True. Click each output cell to toggle its value.
       </p>
 
       <div class="tt-group">
@@ -410,151 +521,60 @@ color:  blue
   </div>
 
   <!-- ══════════════════════════════════════════════════════════
-       Task 3 — Identify gates in a circuit diagram
+       Task 3 — Identify gates in circuit diagrams (stepper)
   ══════════════════════════════════════════════════════════ -->
   <div class="panel" id="panel-2">
-    <div class="goal">🎯 Identify the logic gate for each position in the circuit diagram.</div>
+    <div class="goal">🎯 Identify the logic gate for each position in each circuit diagram.</div>
 
-    <div class="card">
-      <h2>Restaurant Discount System</h2>
-      <p style="color:var(--text);font-size:0.9rem;line-height:1.7;margin-bottom:12px;">
-        A fast food restaurant offers half-price meals to certain customers.
-        The offer is <strong>not valid on Saturdays</strong>.
-        A computer system determines whether a customer qualifies.
-      </p>
-
-      <table class="scenario-table">
-        <thead><tr><th>Input</th><th>Description</th><th>Value when True</th></tr></thead>
-        <tbody>
-          <tr><td><strong>A</strong></td><td>Customer is a student</td><td>Is a student</td></tr>
-          <tr><td><strong>B</strong></td><td>Customer has a discount card</td><td>Has a discount card</td></tr>
-          <tr><td><strong>C</strong></td><td>Day of the week</td><td>Today is Saturday</td></tr>
-        </tbody>
-      </table>
-
-      <p style="font-size:0.88rem;color:var(--muted);margin-bottom:16px;">
-        Output P is True when the customer qualifies. The logic expression is:
-        <span class="expr">P = (A OR B) AND NOT C</span>
-      </p>
-
-      <p style="font-size:0.85rem;color:var(--muted);margin-bottom:6px;">
-        Complete the logic diagram by identifying the gate that belongs in each numbered box.
-      </p>
-
-      <!-- Circuit diagram: P = (A OR B) AND NOT C
-           Layout: A,B → [Gate 1] → [Gate 3] → P
-                   C   → [Gate 2] → [Gate 3]
-      -->
-      <div class="circuit-wrap">
-        <svg class="circuit-svg" viewBox="0 0 560 200" style="color:var(--text);">
-
-          <!-- Input labels -->
-          <text x="8"  y="44"  font-size="14" font-weight="700" fill="currentColor" font-family="monospace">A</text>
-          <text x="8"  y="80"  font-size="14" font-weight="700" fill="currentColor" font-family="monospace">B</text>
-          <text x="8"  y="156" font-size="14" font-weight="700" fill="currentColor" font-family="monospace">C</text>
-
-          <!-- A → Gate 1 -->
-          <line x1="22" y1="41" x2="110" y2="41" stroke="currentColor" stroke-width="2"/>
-          <!-- B → Gate 1 -->
-          <line x1="22" y1="77" x2="110" y2="77" stroke="currentColor" stroke-width="2"/>
-          <!-- C → Gate 2 -->
-          <line x1="22" y1="153" x2="110" y2="153" stroke="currentColor" stroke-width="2"/>
-
-          <!-- Gate 1 box -->
-          <rect x="110" y="24" width="110" height="70" rx="7"
-                stroke="var(--accent)" stroke-width="2" fill="var(--surface-mid)"/>
-          <text x="165" y="54"  text-anchor="middle" font-size="11" font-weight="700"
-                fill="var(--accent)" font-family="monospace" letter-spacing="0.5">GATE 1</text>
-          <text x="165" y="70"  text-anchor="middle" font-size="10"
-                fill="var(--muted)" font-family="monospace">2 inputs</text>
-          <text x="165" y="84"  text-anchor="middle" font-size="10"
-                fill="var(--muted)" font-family="monospace">A, B</text>
-
-          <!-- Gate 2 box -->
-          <rect x="110" y="132" width="110" height="44" rx="7"
-                stroke="var(--accent)" stroke-width="2" fill="var(--surface-mid)"/>
-          <text x="165" y="152" text-anchor="middle" font-size="11" font-weight="700"
-                fill="var(--accent)" font-family="monospace" letter-spacing="0.5">GATE 2</text>
-          <text x="165" y="168" text-anchor="middle" font-size="10"
-                fill="var(--muted)" font-family="monospace">input C</text>
-
-          <!-- Gate 1 output → Gate 3 (diagonal wire from right of Gate 1 to top-left of Gate 3) -->
-          <line x1="220" y1="59" x2="320" y2="91" stroke="currentColor" stroke-width="2"/>
-          <!-- Gate 2 output → Gate 3 -->
-          <line x1="220" y1="154" x2="320" y2="111" stroke="currentColor" stroke-width="2"/>
-
-          <!-- Gate 3 box -->
-          <rect x="320" y="74" width="110" height="70" rx="7"
-                stroke="var(--accent)" stroke-width="2" fill="var(--surface-mid)"/>
-          <text x="375" y="104" text-anchor="middle" font-size="11" font-weight="700"
-                fill="var(--accent)" font-family="monospace" letter-spacing="0.5">GATE 3</text>
-          <text x="375" y="120" text-anchor="middle" font-size="10"
-                fill="var(--muted)" font-family="monospace">2 inputs</text>
-          <text x="375" y="134" text-anchor="middle" font-size="10"
-                fill="var(--muted)" font-family="monospace">Gate1, Gate2</text>
-
-          <!-- Gate 3 → P -->
-          <line x1="430" y1="109" x2="538" y2="109" stroke="currentColor" stroke-width="2"/>
-          <text x="542" y="113" font-size="14" font-weight="700" fill="currentColor" font-family="monospace">P</text>
-
-        </svg>
-      </div>
-
-      <!-- Gate selectors -->
-      <div class="gate-selector-row">
-        <div class="gate-selector">
-          <label for="cg1">Gate 1</label>
-          <div class="question-card" id="qc-cg1" style="padding:8px 10px;">
-            <select class="ac-select" id="cg1">
-              <option value="">— select —</option>
-              <option value="AND">AND</option>
-              <option value="OR">OR</option>
-              <option value="NOT">NOT</option>
-            </select>
-          </div>
-        </div>
-        <div class="gate-selector">
-          <label for="cg2">Gate 2</label>
-          <div class="question-card" id="qc-cg2" style="padding:8px 10px;">
-            <select class="ac-select" id="cg2">
-              <option value="">— select —</option>
-              <option value="AND">AND</option>
-              <option value="OR">OR</option>
-              <option value="NOT">NOT</option>
-            </select>
-          </div>
-        </div>
-        <div class="gate-selector">
-          <label for="cg3">Gate 3</label>
-          <div class="question-card" id="qc-cg3" style="padding:8px 10px;">
-            <select class="ac-select" id="cg3">
-              <option value="">— select —</option>
-              <option value="AND">AND</option>
-              <option value="OR">OR</option>
-              <option value="NOT">NOT</option>
-            </select>
-          </div>
-        </div>
-      </div>
+    <!-- Stepper -->
+    <div class="circuit-stepper">
+      <button class="ac-btn-secondary" id="circ-prev" onclick="stepCircuit(-1)" disabled>◀ Prev</button>
+      <span class="circuit-counter" id="circ-counter">Circuit 1 of 8</span>
+      <button class="ac-btn-secondary" id="circ-next" onclick="stepCircuit(1)">Next ▶</button>
     </div>
+    <div class="circuit-dots" id="circuit-dots"></div>
+
+    <!-- Current circuit card (rendered by JS) -->
+    <div id="circuit-card"></div>
 
     <div class="row">
-      <button class="ac-btn" onclick="checkTask(2)">Check answers</button>
+      <button class="ac-btn" onclick="checkTask(2)">Check this circuit</button>
     </div>
     <div class="feedback" id="feedback-2"></div>
   </div>
 
   <!-- ══════════════════════════════════════════════════════════
-       Task 4 — Complete a compound truth table
+       Task 4 — OCR notation in circuit diagrams
   ══════════════════════════════════════════════════════════ -->
   <div class="panel" id="panel-3">
+    <div class="goal">🎯 Use OCR Boolean notation to identify each gate in the circuit diagrams.</div>
+
+    <div class="circuit-stepper">
+      <button class="ac-btn-secondary" id="notation-circ-prev" onclick="stepNotationCircuit(-1)" disabled>◀ Prev</button>
+      <span class="circuit-counter" id="notation-circ-counter">Circuit 1 of 8</span>
+      <button class="ac-btn-secondary" id="notation-circ-next" onclick="stepNotationCircuit(1)">Next ▶</button>
+    </div>
+    <div class="circuit-dots" id="notation-circuit-dots"></div>
+
+    <div id="notation-circuit-card"></div>
+
+    <div class="row">
+      <button class="ac-btn" onclick="checkTask(3)">Check this circuit</button>
+    </div>
+    <div class="feedback" id="feedback-3"></div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       Task 5 — Complete a compound truth table
+  ══════════════════════════════════════════════════════════ -->
+  <div class="panel" id="panel-4">
     <div class="goal">🎯 Complete the full truth table for a compound Boolean expression.</div>
 
     <div class="card">
       <h2>Complete the Truth Table</h2>
       <p style="font-size:0.88rem;color:var(--muted);margin-bottom:14px;">
         Complete all 8 rows of the truth table for:
-        <span class="expr">P = (A AND B) OR C</span>
+        <span class="expr">P = (A AND B) OR C</span>. Click each output cell to toggle between 0 and 1.
       </p>
       <div class="how-to">
         <strong>Tip:</strong> Work out the inner bracket first — calculate <strong>(A AND B)</strong>
@@ -589,15 +609,15 @@ color:  blue
     </div>
 
     <div class="row">
-      <button class="ac-btn" onclick="checkTask(3)">Check answers</button>
+      <button class="ac-btn" onclick="checkTask(4)">Check answers</button>
     </div>
-    <div class="feedback" id="feedback-3"></div>
+    <div class="feedback" id="feedback-4"></div>
   </div>
 
   <!-- ══════════════════════════════════════════════════════════
-       Task 5 — Scenario: security system, full analysis
+       Task 6 — Scenario: security system, full analysis
   ══════════════════════════════════════════════════════════ -->
-  <div class="panel" id="panel-4">
+  <div class="panel" id="panel-5">
     <div class="goal">🎯 Analyse the complete logic system for an online payment security check.</div>
 
     <div class="card">
@@ -628,7 +648,7 @@ color:  blue
       <h2>Part (a) — Complete the Truth Table</h2>
       <p style="font-size:0.88rem;color:var(--muted);margin-bottom:14px;">
         The intermediate columns <strong>A OR B</strong> and <strong>NOT C</strong> have been
-        filled in to help you. Complete the final column P.
+        filled in to help you. Complete the final column P by clicking each output cell.
       </p>
       <div class="how-to">
         <strong>Tip:</strong> P is True only when <strong>both</strong> A&nbsp;OR&nbsp;B <strong>and</strong>
@@ -703,9 +723,9 @@ color:  blue
     </div>
 
     <div class="row">
-      <button class="ac-btn" onclick="checkTask(4)">Check answers</button>
+      <button class="ac-btn" onclick="checkTask(5)">Check answers</button>
     </div>
-    <div class="feedback" id="feedback-4"></div>
+    <div class="feedback" id="feedback-5"></div>
   </div>
 
 </div><!-- /.page-wrap -->
@@ -714,7 +734,7 @@ color:  blue
 
 <script>
   // ── State ──────────────────────────────────────────────────
-  const TASK_COUNT    = 5;
+  const TASK_COUNT    = 6;
   const ACTIVITY_TITLE = 'Boolean Logic';
   const completed     = new Array(TASK_COUNT).fill(false);
 
@@ -745,27 +765,273 @@ color:  blue
   }
 
   // ── Task dispatch ──────────────────────────────────────────
+  function updateBinaryToggle(button, value) {
+    button.dataset.value = value;
+    button.textContent = value || '—';
+    button.setAttribute('aria-pressed', value ? 'true' : 'false');
+    button.setAttribute('aria-label', `Output value ${value || 'not set'}`);
+    const input = document.getElementById(button.dataset.inputId);
+    if (input) input.value = value;
+  }
+
+  function getBinaryChoice(id) {
+    const cell = document.getElementById(id);
+    return cell?.querySelector('.binary-toggle')?.dataset.value
+      ?? cell?.querySelector('select')?.value
+      ?? '';
+  }
+
+  function setupBinaryToggles() {
+    document.querySelectorAll('.truth-table td select.ac-select').forEach(select => {
+      const values = Array.from(select.options).map(option => option.value);
+      if (values.join('|') !== '|0|1') return;
+      const cell = select.closest('td');
+      if (!cell?.id) return;
+      const current = select.value;
+      const button = document.createElement('button');
+      const input = document.createElement('input');
+      button.type = 'button';
+      button.className = 'binary-toggle';
+      button.dataset.inputId = cell.id + '-binary-input';
+      input.type = 'text';
+      input.className = 'binary-answer-input';
+      input.id = button.dataset.inputId;
+      input.readOnly = true;
+      input.setAttribute('aria-label', cell.id + ' answer');
+      button.addEventListener('click', () => {
+        const next = button.dataset.value === '' ? '0' : button.dataset.value === '0' ? '1' : '';
+        cell.classList.remove('cell-correct', 'cell-wrong');
+        updateBinaryToggle(button, next);
+      });
+      cell.replaceChildren(button, input);
+      updateBinaryToggle(button, current);
+    });
+  }
+
+  setupBinaryToggles();
+
   function checkTask(idx) {
     if (window.Classroom?.verifyAuth() === false) return;
-    const ok = [check0, check1, check2, check3, check4][idx]();
+    const result = [check0, check1, check2, check3, check4, check5][idx]();
+    const ok = typeof result === 'object' ? result.ok : result;
+    const complete = typeof result === 'object' ? result.complete : ok;
     const fb = document.getElementById('feedback-' + idx);
     if (ok) {
-      fb.textContent = '✅ Correct!';
+      fb.textContent = complete ? '✅ Correct!' : '✅ Correct for this circuit. Complete the remaining circuits to finish the task.';
       fb.className   = 'feedback correct';
-      markDone(idx, 'gold');
+      if (complete) markDone(idx, 'gold');
     } else {
       fb.textContent = '❌ Not quite — check the highlighted answers and try again.';
       fb.className   = 'feedback wrong';
     }
   }
 
+  const autoCheckTimers = {};
+
+  function queueAutoCheckTask(idx) {
+    clearTimeout(autoCheckTimers[idx]);
+    autoCheckTimers[idx] = setTimeout(() => checkTask(idx), 80);
+  }
+
+  function currentDiagramIsFilled(taskIdx) {
+    if (taskIdx === 0) {
+      return ['sel-a', 'sel-b', 'sel-c'].every(getGateChoice);
+    }
+    if (taskIdx === 2) {
+      return CIRCUITS[circIdx].slots.every(s => document.getElementById(s.id)?.dataset.value);
+    }
+    if (taskIdx === 3) {
+      return CIRCUITS[notationCircIdx].slots.every(s => document.getElementById('n-' + s.id)?.dataset.value);
+    }
+    return false;
+  }
+
+  function maybeAutoCheckGateDiagram(dropzone) {
+    const panel = dropzone.closest?.('.panel');
+    if (!panel?.id) return;
+    const taskIdx = Number(panel.id.replace('panel-', ''));
+    if (![0, 2, 3].includes(taskIdx)) return;
+    if (currentDiagramIsFilled(taskIdx)) queueAutoCheckTask(taskIdx);
+  }
+
   // ── Task 1: Gate identification ────────────────────────────
+  let pickedGate = '';
+
+  function gateChipContent(type, mode = 'word') {
+    if (mode === 'notation') {
+      return { AND: '∧', OR: '∨', NOT: '¬' }[type] || type;
+    }
+    if (mode !== 'visual') return type;
+    const paths = {
+      AND: '<path d="M14,6 L34,6 A18,18 0 0,1 34,42 L14,42 Z" stroke="currentColor" stroke-width="2.3" fill="none" stroke-linejoin="round"/><line x1="0" y1="16" x2="14" y2="16" stroke="currentColor" stroke-width="2.3"/><line x1="0" y1="32" x2="14" y2="32" stroke="currentColor" stroke-width="2.3"/><line x1="52" y1="24" x2="72" y2="24" stroke="currentColor" stroke-width="2.3"/>',
+      OR: '<path d="M14,6 Q24,6 52,24 Q24,42 14,42 Q21,24 14,6 Z" stroke="currentColor" stroke-width="2.3" fill="none" stroke-linejoin="round"/><line x1="0" y1="16" x2="17" y2="16" stroke="currentColor" stroke-width="2.3"/><line x1="0" y1="32" x2="17" y2="32" stroke="currentColor" stroke-width="2.3"/><line x1="52" y1="24" x2="72" y2="24" stroke="currentColor" stroke-width="2.3"/>',
+      NOT: '<polygon points="14,6 14,42 46,24" stroke="currentColor" stroke-width="2.3" fill="none" stroke-linejoin="round" stroke-linecap="round"/><circle cx="51" cy="24" r="4" stroke="currentColor" stroke-width="2.3" fill="none"/><line x1="0" y1="24" x2="14" y2="24" stroke="currentColor" stroke-width="2.3"/><line x1="55" y1="24" x2="72" y2="24" stroke="currentColor" stroke-width="2.3"/>'
+    };
+    return `<svg viewBox="0 0 72 48" aria-hidden="true">${paths[type] || ''}</svg>`;
+  }
+
+  function gateChipHtml(type, mode = 'word') {
+    const cls = mode === 'notation' ? ' gate-chip notation' : 'gate-chip';
+    const label = mode === 'visual' ? `${type} gate symbol` : mode === 'notation' ? `${type} notation` : type;
+    return `<button class="${cls}" type="button" draggable="true" data-gate-type="${type}" aria-label="${label}">${gateChipContent(type, mode)}</button>`;
+  }
+
+  function gateDropzoneHtml(id, label, value = '') {
+    const display = value || 'Drop gate';
+    const filledClass = value ? ' has-value' : '';
+    return `<div class="gate-dropzone${filledClass}" id="${id}-sel" data-value="${value}" data-target-slot="${id}" role="button" tabindex="0" aria-label="Drop answer for ${label}">${display}</div>
+            <input class="gate-answer-input" type="text" id="${id}-input" value="${value}" readonly aria-label="${label} answer">`;
+  }
+
+  function findGateTarget(el) {
+    return el?.closest?.('.gate-target, .gate-dropzone, .gate-slot') || null;
+  }
+
+  function getGateChoice(slotId) {
+    return document.querySelector(`[data-target-slot="${slotId}"]`)?.dataset.value
+      || document.getElementById(slotId + '-input')?.value
+      || '';
+  }
+
+  function setGateChoice(dropzone, value) {
+    if (!dropzone || !value) return;
+    const targetSlot = dropzone.dataset.targetSlot || dropzone.id;
+    dropzone.dataset.value = value;
+    dropzone.classList.add('has-value');
+    dropzone.classList.remove('is-over', 'is-correct', 'is-wrong');
+    if (dropzone.classList.contains('gate-card')) {
+      let label = dropzone.querySelector('.gate-choice-label');
+      if (!label) {
+        label = document.createElement('span');
+        label.className = 'gate-choice-label';
+        dropzone.appendChild(label);
+      }
+      label.textContent = value;
+    } else if (!dropzone.classList.contains('gate-slot')) {
+      dropzone.textContent = value;
+    }
+    const input = document.getElementById((targetSlot || dropzone.id.replace(/-sel$/, '')) + '-input');
+    if (input) input.value = value;
+    if (dropzone.classList.contains('gate-slot')) updateSlot(dropzone.id, value);
+    maybeAutoCheckGateDiagram(dropzone);
+  }
+
+  function clearPickedGate() {
+    pickedGate = '';
+    document.querySelectorAll('.gate-chip.is-picked').forEach(chip => chip.classList.remove('is-picked'));
+  }
+
+  document.addEventListener('dragstart', e => {
+    const chip = e.target.closest('.gate-chip');
+    if (!chip) return;
+    e.dataTransfer.setData('text/plain', chip.dataset.gateType);
+    e.dataTransfer.effectAllowed = 'copy';
+  });
+
+  document.addEventListener('dragover', e => {
+    const zone = findGateTarget(e.target);
+    if (!zone) return;
+    e.preventDefault();
+    zone.classList.add('is-over');
+    e.dataTransfer.dropEffect = 'copy';
+  });
+
+  document.addEventListener('dragleave', e => {
+    const zone = findGateTarget(e.target);
+    if (zone) zone.classList.remove('is-over');
+  });
+
+  document.addEventListener('drop', e => {
+    const zone = findGateTarget(e.target);
+    if (!zone) return;
+    e.preventDefault();
+    const gateType = e.dataTransfer.getData('text/plain');
+    setGateChoice(zone, gateType);
+    clearPickedGate();
+  });
+
+  document.addEventListener('click', e => {
+    const chip = e.target.closest('.gate-chip');
+    if (chip) {
+      pickedGate = chip.dataset.gateType;
+      document.querySelectorAll('.gate-chip').forEach(btn => btn.classList.toggle('is-picked', btn === chip));
+      return;
+    }
+    const zone = findGateTarget(e.target);
+    if (zone && pickedGate) {
+      setGateChoice(zone, pickedGate);
+      clearPickedGate();
+    }
+  });
+
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const chip = e.target.closest('.gate-chip');
+    const zone = findGateTarget(e.target);
+    if (chip) {
+      e.preventDefault();
+      pickedGate = chip.dataset.gateType;
+      document.querySelectorAll('.gate-chip').forEach(btn => btn.classList.toggle('is-picked', btn === chip));
+    } else if (zone && pickedGate) {
+      e.preventDefault();
+      setGateChoice(zone, pickedGate);
+      clearPickedGate();
+    }
+  });
+
+  let pointerDrag = null;
+
+  function moveGateGhost(x, y) {
+    if (!pointerDrag?.ghost) return;
+    pointerDrag.ghost.style.left = (x + 12) + 'px';
+    pointerDrag.ghost.style.top = (y + 12) + 'px';
+  }
+
+  document.addEventListener('pointerdown', e => {
+    const chip = e.target.closest('.gate-chip');
+    if (!chip || e.button !== 0) return;
+    e.preventDefault();
+    pointerDrag = {
+      type: chip.dataset.gateType,
+      ghost: document.createElement('div'),
+      over: null
+    };
+    pointerDrag.ghost.className = 'gate-drag-ghost';
+    pointerDrag.ghost.textContent = pointerDrag.type;
+    document.body.appendChild(pointerDrag.ghost);
+    moveGateGhost(e.clientX, e.clientY);
+    chip.setPointerCapture?.(e.pointerId);
+  });
+
+  document.addEventListener('pointermove', e => {
+    if (!pointerDrag) return;
+    moveGateGhost(e.clientX, e.clientY);
+    const el = document.elementFromPoint(e.clientX, e.clientY);
+    const zone = findGateTarget(el);
+    if (zone !== pointerDrag.over) {
+      pointerDrag.over?.classList.remove('is-over');
+      zone?.classList.add('is-over');
+      pointerDrag.over = zone;
+    }
+  });
+
+  document.addEventListener('pointerup', e => {
+    if (!pointerDrag) return;
+    const el = document.elementFromPoint(e.clientX, e.clientY);
+    const zone = findGateTarget(el) || pointerDrag.over;
+    if (zone) setGateChoice(zone, pointerDrag.type);
+    pointerDrag.over?.classList.remove('is-over');
+    pointerDrag.ghost.remove();
+    pointerDrag = null;
+    clearPickedGate();
+  });
+
   // Gate A = AND, Gate B = OR, Gate C = NOT
   function check0() {
     const answers = { a: 'AND', b: 'OR', c: 'NOT' };
     let all = true;
     for (const [k, expected] of Object.entries(answers)) {
-      const ok = document.getElementById('sel-' + k)?.value === expected;
+      const ok = getGateChoice('sel-' + k) === expected;
       setCardState('gc-' + k, ok);
       if (!ok) all = false;
     }
@@ -781,7 +1047,7 @@ color:  blue
     };
     let all = true;
     for (const [id, expected] of Object.entries(cells)) {
-      const val = document.getElementById(id)?.querySelector('select')?.value;
+      const val = getBinaryChoice(id);
       const ok  = val === expected;
       setCellState(id, ok);
       if (!ok) all = false;
@@ -789,20 +1055,418 @@ color:  blue
     return all;
   }
 
-  // ── Task 3: Circuit gate identification ───────────────────
-  // P = (A OR B) AND NOT C → Gate1=OR, Gate2=NOT, Gate3=AND
-  function check2() {
-    const ans = { cg1: 'OR', cg2: 'NOT', cg3: 'AND' };
-    let all = true;
-    for (const [id, expected] of Object.entries(ans)) {
-      const ok = document.getElementById(id)?.value === expected;
-      setCardState('qc-' + id, ok);
-      if (!ok) all = false;
-    }
-    return all;
+  // ── Task 3: 8-circuit stepper ─────────────────────────────
+
+  let circIdx = 0;
+  const circDone = new Array(8).fill(false);
+  const circSelections = Array.from({length: 8}, () => ({}));
+  let notationCircIdx = 0;
+  const notationCircDone = new Array(8).fill(false);
+  const notationCircSelections = Array.from({length: 8}, () => ({}));
+
+  // Pre-built SVG innerHTML for each gate shape in a 100×60 slot.
+  // Internal stub wires run from the slot boundary (x=0 or x=100) into the body.
+  // 2-input: boundary inputs at y=20 and y=40; output at y=30.
+  // NOT:     boundary input at y=30; output at y=30.
+  const SLOT_SHAPES = {
+    placeholder: '<rect x="1" y="1" width="98" height="58" rx="6" stroke-dasharray="5,4" stroke="var(--accent)" stroke-width="1.5" fill="var(--surface-mid)"/><text x="50" y="37" text-anchor="middle" font-size="22" font-weight="700" fill="var(--accent)" font-family="monospace">?</text>',
+    and: '<path d="M18,7 L50,7 A23,23 0 0,1 50,53 L18,53 Z" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linejoin="round"/><line x1="0" y1="20" x2="18" y2="20" stroke="currentColor" stroke-width="2.5"/><line x1="0" y1="40" x2="18" y2="40" stroke="currentColor" stroke-width="2.5"/><line x1="73" y1="30" x2="100" y2="30" stroke="currentColor" stroke-width="2.5"/>',
+    or:  '<path d="M18,7 Q30,7 72,30 Q30,53 18,53 Q26,30 18,7 Z" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linejoin="round"/><line x1="0" y1="20" x2="22" y2="20" stroke="currentColor" stroke-width="2.5"/><line x1="0" y1="40" x2="22" y2="40" stroke="currentColor" stroke-width="2.5"/><line x1="72" y1="30" x2="100" y2="30" stroke="currentColor" stroke-width="2.5"/>',
+    not: '<polygon points="18,6 18,54 60,30" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linejoin="round" stroke-linecap="round"/><circle cx="65" cy="30" r="5" stroke="currentColor" stroke-width="2.5" fill="none"/><line x1="0" y1="30" x2="18" y2="30" stroke="currentColor" stroke-width="2.5"/><line x1="70" y1="30" x2="100" y2="30" stroke="currentColor" stroke-width="2.5"/>'
+  };
+
+  function slotG(s, idPrefix = '') {
+    const id = idPrefix + s.id;
+    const shapes = Object.entries(SLOT_SHAPES).map(([name, svg]) =>
+      `<g data-shape="${name}"${name==='placeholder' ? ' class="slot-active"' : ''}>${svg}</g>`
+    ).join('');
+    return `<g id="${id}" class="gate-slot gate-target" data-target-slot="${id}" data-value="" transform="translate(${s.tx},${s.ty})" style="color:var(--text);" role="button" tabindex="0" aria-label="Drop answer for ${s.label}">${shapes}</g>`;
   }
 
-  // ── Task 4: P = (A AND B) OR C ────────────────────────────
+  // Circuit data. External wires connect to slot boundary at:
+  //   2-input slot (tx,ty): A-input=(tx,ty+20), B-input=(tx,ty+40), output=(tx+100,ty+30)
+  //   NOT    slot (tx,ty): input=(tx,ty+30),                         output=(tx+100,ty+30)
+  const CIRCUITS = [
+    // ── C1: P = NOT A ───────────────────────────────────────
+    { title:'P = NOT A',
+      scenario:'A burglar alarm sounds when the door sensor is NOT active — meaning the door is open.',
+      inputs:[{letter:'A', desc:'Door sensor is active (door is closed)'}],
+      expr:'P = NOT A', vb:'0 0 340 60',
+      wires:`<text x="4" y="33" font-size="14" font-weight="700" fill="currentColor" font-family="monospace">A</text>
+        <line x1="18" y1="30" x2="110" y2="30" stroke="currentColor" stroke-width="2"/>
+        <line x1="210" y1="30" x2="330" y2="30" stroke="currentColor" stroke-width="2"/>
+        <text x="333" y="33" font-size="14" font-weight="700" fill="currentColor" font-family="monospace">P</text>`,
+      slots:[{id:'s0g0', tx:110, ty:0, label:'Gate 1', correct:'NOT'}] },
+
+    // ── C2: P = A AND B ─────────────────────────────────────
+    { title:'P = A AND B',
+      scenario:'A secure door unlocks only when BOTH a valid keycard is detected AND the correct PIN is entered. Both conditions must be true at the same time.',
+      inputs:[{letter:'A', desc:'A valid keycard has been detected'},
+              {letter:'B', desc:'The correct PIN has been entered'}],
+      expr:'P = A AND B', vb:'0 0 340 80',
+      wires:`<text x="4" y="33" font-size="14" font-weight="700" fill="currentColor" font-family="monospace">A</text>
+        <text x="4" y="53" font-size="14" font-weight="700" fill="currentColor" font-family="monospace">B</text>
+        <line x1="18" y1="30" x2="110" y2="30" stroke="currentColor" stroke-width="2"/>
+        <line x1="18" y1="50" x2="110" y2="50" stroke="currentColor" stroke-width="2"/>
+        <line x1="210" y1="40" x2="330" y2="40" stroke="currentColor" stroke-width="2"/>
+        <text x="333" y="43" font-size="14" font-weight="700" fill="currentColor" font-family="monospace">P</text>`,
+      slots:[{id:'s1g0', tx:110, ty:10, label:'Gate 1', correct:'AND'}] },
+
+    // ── C3: P = A OR B ──────────────────────────────────────
+    { title:'P = A OR B',
+      scenario:'A smartphone begins charging when it is connected via USB cable OR placed on a wireless charging pad. Either method alone is enough — both do not need to be active.',
+      inputs:[{letter:'A', desc:'USB charging cable is connected'},
+              {letter:'B', desc:'Wireless charging pad is active'}],
+      expr:'P = A OR B', vb:'0 0 340 80',
+      wires:`<text x="4" y="33" font-size="14" font-weight="700" fill="currentColor" font-family="monospace">A</text>
+        <text x="4" y="53" font-size="14" font-weight="700" fill="currentColor" font-family="monospace">B</text>
+        <line x1="18" y1="30" x2="110" y2="30" stroke="currentColor" stroke-width="2"/>
+        <line x1="18" y1="50" x2="110" y2="50" stroke="currentColor" stroke-width="2"/>
+        <line x1="210" y1="40" x2="330" y2="40" stroke="currentColor" stroke-width="2"/>
+        <text x="333" y="43" font-size="14" font-weight="700" fill="currentColor" font-family="monospace">P</text>`,
+      slots:[{id:'s2g0', tx:110, ty:10, label:'Gate 1', correct:'OR'}] },
+
+    // ── C4: P = NOT A AND B ─────────────────────────────────
+    // NOT slot (80,0): input at (80,30), output at (180,30)
+    // AND slot (290,30): inputs at (290,50) and (290,70), output at (390,60)
+    // B wire at y=70 passes below NOT slot (ends at y=60). ✓
+    { title:'P = NOT A AND B',
+      scenario:'A laptop cooling fan turns on when the system is NOT in sleep mode, AND the CPU temperature is high. In sleep mode the fan stays off regardless of temperature.',
+      inputs:[{letter:'A', desc:'System is in sleep mode'},
+              {letter:'B', desc:'CPU temperature is above 80°C'}],
+      expr:'P = NOT A AND B', vb:'0 0 480 90',
+      wires:`<text x="4" y="33" font-size="14" font-weight="700" fill="currentColor" font-family="monospace">A</text>
+        <text x="4" y="73" font-size="14" font-weight="700" fill="currentColor" font-family="monospace">B</text>
+        <line x1="18" y1="30" x2="80" y2="30" stroke="currentColor" stroke-width="2"/>
+        <line x1="180" y1="30" x2="240" y2="30" stroke="currentColor" stroke-width="2"/>
+        <line x1="240" y1="30" x2="240" y2="50" stroke="currentColor" stroke-width="2"/>
+        <line x1="240" y1="50" x2="290" y2="50" stroke="currentColor" stroke-width="2"/>
+        <line x1="18" y1="70" x2="290" y2="70" stroke="currentColor" stroke-width="2"/>
+        <line x1="390" y1="60" x2="468" y2="60" stroke="currentColor" stroke-width="2"/>
+        <text x="470" y="63" font-size="14" font-weight="700" fill="currentColor" font-family="monospace">P</text>`,
+      slots:[{id:'s3g0', tx:80,  ty:0,  label:'Gate 1', correct:'NOT'},
+             {id:'s3g1', tx:290, ty:30, label:'Gate 2', correct:'AND'}] },
+
+    // ── C5: P = A OR NOT B ──────────────────────────────────
+    // NOT slot (80,30): input at (80,60), output at (180,60)
+    // OR  slot (290,0): inputs at (290,20) and (290,40), output at (390,30)
+    // A wire at y=20 passes above NOT slot (starts at y=30). ✓
+    { title:'P = A OR NOT B',
+      scenario:'A Wi-Fi router grants network access when a device is a trusted device (A), OR when the network is NOT in lockdown mode (NOT B). Either condition alone is sufficient.',
+      inputs:[{letter:'A', desc:'Device is on the trusted devices list'},
+              {letter:'B', desc:'Network is in lockdown mode'}],
+      expr:'P = A OR NOT B', vb:'0 0 480 90',
+      wires:`<text x="4" y="23" font-size="14" font-weight="700" fill="currentColor" font-family="monospace">A</text>
+        <text x="4" y="63" font-size="14" font-weight="700" fill="currentColor" font-family="monospace">B</text>
+        <line x1="18" y1="20" x2="290" y2="20" stroke="currentColor" stroke-width="2"/>
+        <line x1="18" y1="60" x2="80" y2="60" stroke="currentColor" stroke-width="2"/>
+        <line x1="180" y1="60" x2="240" y2="60" stroke="currentColor" stroke-width="2"/>
+        <line x1="240" y1="60" x2="240" y2="40" stroke="currentColor" stroke-width="2"/>
+        <line x1="240" y1="40" x2="290" y2="40" stroke="currentColor" stroke-width="2"/>
+        <line x1="390" y1="30" x2="468" y2="30" stroke="currentColor" stroke-width="2"/>
+        <text x="470" y="33" font-size="14" font-weight="700" fill="currentColor" font-family="monospace">P</text>`,
+      slots:[{id:'s4g0', tx:80,  ty:30, label:'Gate 1', correct:'NOT'},
+             {id:'s4g1', tx:290, ty:0,  label:'Gate 2', correct:'OR'}] },
+
+    // ── C6: P = (A OR B) AND C ──────────────────────────────
+    // OR  slot (80,5):   inputs (80,25) and (80,45), output (180,35)
+    // AND slot (290,35): inputs (290,55) and (290,75), output (390,65)
+    // C wire at y=75 passes below OR slot (ends at y=65). ✓
+    { title:'P = (A OR B) AND C',
+      scenario:'A shop gives a discount when a customer is a student (A) OR a loyalty member (B) — but the discount only applies when the customer has also spent more than £20 in the same visit (C). Being eligible is not enough on its own; the spend threshold must also be met.',
+      inputs:[{letter:'A', desc:'Customer is a student'},
+              {letter:'B', desc:'Customer is a loyalty member'},
+              {letter:'C', desc:'Customer has spent more than £20'}],
+      expr:'P = (A OR B) AND C', vb:'0 0 490 115',
+      wires:`<text x="4" y="28" font-size="14" font-weight="700" fill="currentColor" font-family="monospace">A</text>
+        <text x="4" y="48" font-size="14" font-weight="700" fill="currentColor" font-family="monospace">B</text>
+        <text x="4" y="78" font-size="14" font-weight="700" fill="currentColor" font-family="monospace">C</text>
+        <line x1="18" y1="25" x2="80" y2="25" stroke="currentColor" stroke-width="2"/>
+        <line x1="18" y1="45" x2="80" y2="45" stroke="currentColor" stroke-width="2"/>
+        <line x1="180" y1="35" x2="245" y2="35" stroke="currentColor" stroke-width="2"/>
+        <line x1="245" y1="35" x2="245" y2="55" stroke="currentColor" stroke-width="2"/>
+        <line x1="245" y1="55" x2="290" y2="55" stroke="currentColor" stroke-width="2"/>
+        <line x1="18" y1="75" x2="290" y2="75" stroke="currentColor" stroke-width="2"/>
+        <line x1="390" y1="65" x2="478" y2="65" stroke="currentColor" stroke-width="2"/>
+        <text x="480" y="68" font-size="14" font-weight="700" fill="currentColor" font-family="monospace">P</text>`,
+      slots:[{id:'s5g0', tx:80,  ty:5,  label:'Gate 1', correct:'OR'},
+             {id:'s5g1', tx:290, ty:35, label:'Gate 2', correct:'AND'}] },
+
+    // ── C7: P = (A OR B) AND NOT C ──────────────────────────
+    // OR  slot (80,5):   inputs (80,25)(80,45), output (180,35)
+    // NOT slot (80,65):  input (80,95), output (180,95)
+    // AND slot (320,40): inputs (320,60)(320,80), output (420,70)
+    // C wire at y=95 passes below OR slot (ends at y=65). ✓
+    // Vertical routing wires at x=255: y=35→60 and y=80→95 — no crossing. ✓
+    { title:'P = (A OR B) AND NOT C',
+      scenario:'A fast food restaurant offers half-price meals. A customer qualifies when they are a student (A) OR hold a discount card (B) — either one is enough. However, the offer is only valid Monday to Friday: it does NOT apply on Saturdays (NOT C). A qualifying customer on a Saturday still gets no discount.',
+      inputs:[{letter:'A', desc:'Customer is a student'},
+              {letter:'B', desc:'Customer holds a discount card'},
+              {letter:'C', desc:'Today is Saturday'}],
+      expr:'P = (A OR B) AND NOT C', vb:'0 0 510 130',
+      wires:`<text x="4" y="28" font-size="14" font-weight="700" fill="currentColor" font-family="monospace">A</text>
+        <text x="4" y="48" font-size="14" font-weight="700" fill="currentColor" font-family="monospace">B</text>
+        <text x="4" y="98" font-size="14" font-weight="700" fill="currentColor" font-family="monospace">C</text>
+        <line x1="18" y1="25" x2="80" y2="25" stroke="currentColor" stroke-width="2"/>
+        <line x1="18" y1="45" x2="80" y2="45" stroke="currentColor" stroke-width="2"/>
+        <line x1="18" y1="95" x2="80" y2="95" stroke="currentColor" stroke-width="2"/>
+        <line x1="180" y1="35" x2="255" y2="35" stroke="currentColor" stroke-width="2"/>
+        <line x1="255" y1="35" x2="255" y2="60" stroke="currentColor" stroke-width="2"/>
+        <line x1="255" y1="60" x2="320" y2="60" stroke="currentColor" stroke-width="2"/>
+        <line x1="180" y1="95" x2="255" y2="95" stroke="currentColor" stroke-width="2"/>
+        <line x1="255" y1="95" x2="255" y2="80" stroke="currentColor" stroke-width="2"/>
+        <line x1="255" y1="80" x2="320" y2="80" stroke="currentColor" stroke-width="2"/>
+        <line x1="420" y1="70" x2="498" y2="70" stroke="currentColor" stroke-width="2"/>
+        <text x="500" y="73" font-size="14" font-weight="700" fill="currentColor" font-family="monospace">P</text>`,
+      slots:[{id:'s6g0', tx:80,  ty:5,  label:'Gate 1', correct:'OR'},
+             {id:'s6g1', tx:80,  ty:65, label:'Gate 2', correct:'NOT'},
+             {id:'s6g2', tx:320, ty:40, label:'Gate 3', correct:'AND'}] },
+
+    // ── C8: P = NOT A AND (B OR C) ──────────────────────────
+    // NOT slot (80,5):   input (80,35), output (180,35)
+    // OR  slot (80,65):  inputs (80,85)(80,105), output (180,95)
+    // AND slot (310,40): inputs (310,60)(310,80), output (410,70)
+    // Vertical routing at x=245: y=35→60 and y=80→95 — no crossing. ✓
+    { title:'P = NOT A AND (B OR C)',
+      scenario:'A server monitoring system raises an alert when the server is NOT in maintenance mode (NOT A), AND either the CPU usage is critically high (B) OR available memory has dropped dangerously low (C). If the server is in maintenance mode, no alert is raised regardless of CPU or memory.',
+      inputs:[{letter:'A', desc:'Server is in maintenance mode'},
+              {letter:'B', desc:'CPU usage is above 80%'},
+              {letter:'C', desc:'Available memory is below 10%'}],
+      expr:'P = NOT A AND (B OR C)', vb:'0 0 500 130',
+      wires:`<text x="4" y="38" font-size="14" font-weight="700" fill="currentColor" font-family="monospace">A</text>
+        <text x="4" y="88" font-size="14" font-weight="700" fill="currentColor" font-family="monospace">B</text>
+        <text x="4" y="108" font-size="14" font-weight="700" fill="currentColor" font-family="monospace">C</text>
+        <line x1="18" y1="35" x2="80" y2="35" stroke="currentColor" stroke-width="2"/>
+        <line x1="18" y1="85" x2="80" y2="85" stroke="currentColor" stroke-width="2"/>
+        <line x1="18" y1="105" x2="80" y2="105" stroke="currentColor" stroke-width="2"/>
+        <line x1="180" y1="35" x2="245" y2="35" stroke="currentColor" stroke-width="2"/>
+        <line x1="245" y1="35" x2="245" y2="60" stroke="currentColor" stroke-width="2"/>
+        <line x1="245" y1="60" x2="310" y2="60" stroke="currentColor" stroke-width="2"/>
+        <line x1="180" y1="95" x2="245" y2="95" stroke="currentColor" stroke-width="2"/>
+        <line x1="245" y1="95" x2="245" y2="80" stroke="currentColor" stroke-width="2"/>
+        <line x1="245" y1="80" x2="310" y2="80" stroke="currentColor" stroke-width="2"/>
+        <line x1="410" y1="70" x2="488" y2="70" stroke="currentColor" stroke-width="2"/>
+        <text x="490" y="73" font-size="14" font-weight="700" fill="currentColor" font-family="monospace">P</text>`,
+      slots:[{id:'s7g0', tx:80,  ty:5,  label:'Gate 1', correct:'NOT'},
+             {id:'s7g1', tx:80,  ty:65, label:'Gate 2', correct:'OR'},
+             {id:'s7g2', tx:310, ty:40, label:'Gate 3', correct:'AND'}] }
+  ];
+
+  function updateSlot(slotId, value) {
+    const g = document.getElementById(slotId);
+    if (!g) return;
+    g.querySelectorAll('[data-shape]').forEach(el => el.classList.remove('slot-active'));
+    g.querySelector(`[data-shape="${value ? value.toLowerCase() : 'placeholder'}"]`)
+      ?.classList.add('slot-active');
+  }
+
+  function toNotationExpr(expr) {
+    return expr.replace(/\bNOT\b/g, '¬')
+      .replace(/\bAND\b/g, '∧')
+      .replace(/\bOR\b/g, '∨');
+  }
+
+  function renderCircuit(idx) {
+    const c = CIRCUITS[idx];
+    const inputRows = c.inputs.map(r =>
+      `<tr><td><strong>${r.letter}</strong></td><td>${r.desc}</td></tr>`).join('');
+    const slotsHtml = c.slots.map(s => slotG(s)).join('');
+    const svgHtml = `<svg class="circuit-svg" viewBox="${c.vb}" style="color:var(--text);overflow:visible;">${c.wires}${slotsHtml}</svg>`;
+    const gateBankHtml = ['AND', 'OR', 'NOT'].map(type => gateChipHtml(type, 'visual')).join('');
+    const expressionHint = idx < 6
+      ? `<p style="font-size:0.88rem;color:var(--muted);margin-bottom:6px;">
+          Output P uses the expression: <span class="expr">${c.expr}</span>
+        </p>`
+      : '';
+    const evidenceInputs = c.slots.map(s =>
+      `<input class="gate-answer-input" type="text" id="${s.id}-input" value="${circSelections[idx][s.id] || ''}" readonly aria-label="${s.label} answer">`
+    ).join('');
+
+    document.getElementById('circuit-card').innerHTML = `
+      <div class="card">
+        <h2>${c.title}</h2>
+        <p style="color:var(--text);font-size:0.9rem;line-height:1.7;margin-bottom:12px;">${c.scenario}</p>
+        <table class="scenario-table">
+          <thead><tr><th>Input</th><th>Description</th></tr></thead>
+          <tbody>${inputRows}</tbody>
+        </table>
+        ${expressionHint}
+        <p style="font-size:0.85rem;color:var(--muted);margin-bottom:6px;">
+          Drag the matching gate symbol onto each dashed gate position in the diagram.
+        </p>
+        <div class="circuit-wrap">${svgHtml}</div>
+        <div class="gate-bank" aria-label="Gate names">${gateBankHtml}</div>
+        ${evidenceInputs}
+      </div>`;
+
+    // Restore saved selections
+    const saved = circSelections[idx];
+    for (const s of c.slots) {
+      if (saved[s.id]) {
+        setGateChoice(document.getElementById(s.id), saved[s.id]);
+      }
+      // Re-apply correct/wrong state if already checked
+      if (circDone[idx]) setCardState(s.id, true);
+    }
+
+    document.getElementById('circ-counter').textContent = `Circuit ${idx + 1} of ${CIRCUITS.length}`;
+    document.getElementById('circ-prev').disabled = idx === 0;
+    document.getElementById('circ-next').disabled = idx === CIRCUITS.length - 1;
+    updateCircuitDots();
+  }
+
+  function stepCircuit(dir) {
+    // Save current selections before navigating away
+    for (const s of CIRCUITS[circIdx].slots) {
+      const sel = document.getElementById(s.id);
+      if (sel) circSelections[circIdx][s.id] = sel.dataset.value;
+    }
+    circIdx = Math.max(0, Math.min(CIRCUITS.length - 1, circIdx + dir));
+    renderCircuit(circIdx);
+    const fb = document.getElementById('feedback-2');
+    fb.textContent = ''; fb.className = 'feedback';
+  }
+
+  function updateCircuitDots() {
+    document.getElementById('circuit-dots').innerHTML = CIRCUITS.map((_, i) => {
+      let cls = 'circuit-dot';
+      if (circDone[i])    cls += ' done';
+      else if (i === circIdx) cls += ' active';
+      return `<span class="${cls}" title="Circuit ${i + 1}" onclick="jumpCircuit(${i})"></span>`;
+    }).join('');
+  }
+
+  function jumpCircuit(idx) {
+    for (const s of CIRCUITS[circIdx].slots) {
+      const sel = document.getElementById(s.id);
+      if (sel) circSelections[circIdx][s.id] = sel.dataset.value;
+    }
+    circIdx = idx;
+    renderCircuit(idx);
+    const fb = document.getElementById('feedback-2');
+    fb.textContent = ''; fb.className = 'feedback';
+  }
+
+  function check2() {
+    // Save current selections
+    for (const s of CIRCUITS[circIdx].slots) {
+      const sel = document.getElementById(s.id);
+      if (sel) circSelections[circIdx][s.id] = sel.dataset.value;
+    }
+    const c = CIRCUITS[circIdx];
+    let allOk = true;
+    for (const s of c.slots) {
+      const val = document.getElementById(s.id)?.dataset.value;
+      const ok  = val === s.correct;
+      setCardState(s.id, ok);
+      if (!ok) allOk = false;
+    }
+    if (allOk) circDone[circIdx] = true;
+    updateCircuitDots();
+    // Task 3 completes only when every circuit is done.
+    return { ok: allOk, complete: circDone.every(Boolean) };
+  }
+
+  function renderNotationCircuit(idx) {
+    const c = CIRCUITS[idx];
+    const inputRows = c.inputs.map(r =>
+      `<tr><td><strong>${r.letter}</strong></td><td>${r.desc}</td></tr>`).join('');
+    const slotsHtml = c.slots.map(s => slotG(s, 'n-')).join('');
+    const svgHtml = `<svg class="circuit-svg" viewBox="${c.vb}" style="color:var(--text);overflow:visible;">${c.wires}${slotsHtml}</svg>`;
+    const gateBankHtml = ['AND', 'OR', 'NOT'].map(type => gateChipHtml(type, 'notation')).join('');
+    const expressionHint = idx < 6
+      ? `<p style="font-size:0.88rem;color:var(--muted);margin-bottom:6px;">
+          Output P uses the OCR expression: <span class="expr">${toNotationExpr(c.expr)}</span>
+        </p>`
+      : '';
+    const evidenceInputs = c.slots.map(s =>
+      `<input class="gate-answer-input" type="text" id="n-${s.id}-input" value="${notationCircSelections[idx][s.id] || ''}" readonly aria-label="${s.label} notation answer">`
+    ).join('');
+
+    document.getElementById('notation-circuit-card').innerHTML = `
+      <div class="card">
+        <h2>${c.title}</h2>
+        <p style="color:var(--text);font-size:0.9rem;line-height:1.7;margin-bottom:12px;">${c.scenario}</p>
+        <table class="scenario-table">
+          <thead><tr><th>Input</th><th>Description</th></tr></thead>
+          <tbody>${inputRows}</tbody>
+        </table>
+        ${expressionHint}
+        <p style="font-size:0.85rem;color:var(--muted);margin-bottom:6px;">
+          Drag the OCR notation onto each dashed gate position: <span class="expr">¬</span> means NOT,
+          <span class="expr">∨</span> means OR, and <span class="expr">∧</span> means AND.
+        </p>
+        <div class="circuit-wrap">${svgHtml}</div>
+        <div class="gate-bank" aria-label="OCR notation choices">${gateBankHtml}</div>
+        ${evidenceInputs}
+      </div>`;
+
+    const saved = notationCircSelections[idx];
+    for (const s of c.slots) {
+      if (saved[s.id]) setGateChoice(document.getElementById('n-' + s.id), saved[s.id]);
+      if (notationCircDone[idx]) setCardState('n-' + s.id, true);
+    }
+
+    document.getElementById('notation-circ-counter').textContent = `Circuit ${idx + 1} of ${CIRCUITS.length}`;
+    document.getElementById('notation-circ-prev').disabled = idx === 0;
+    document.getElementById('notation-circ-next').disabled = idx === CIRCUITS.length - 1;
+    updateNotationCircuitDots();
+  }
+
+  function stepNotationCircuit(dir) {
+    for (const s of CIRCUITS[notationCircIdx].slots) {
+      const sel = document.getElementById('n-' + s.id);
+      if (sel) notationCircSelections[notationCircIdx][s.id] = sel.dataset.value;
+    }
+    notationCircIdx = Math.max(0, Math.min(CIRCUITS.length - 1, notationCircIdx + dir));
+    renderNotationCircuit(notationCircIdx);
+    const fb = document.getElementById('feedback-3');
+    fb.textContent = ''; fb.className = 'feedback';
+  }
+
+  function updateNotationCircuitDots() {
+    document.getElementById('notation-circuit-dots').innerHTML = CIRCUITS.map((_, i) => {
+      let cls = 'circuit-dot';
+      if (notationCircDone[i]) cls += ' done';
+      else if (i === notationCircIdx) cls += ' active';
+      return `<span class="${cls}" title="Circuit ${i + 1}" onclick="jumpNotationCircuit(${i})"></span>`;
+    }).join('');
+  }
+
+  function jumpNotationCircuit(idx) {
+    for (const s of CIRCUITS[notationCircIdx].slots) {
+      const sel = document.getElementById('n-' + s.id);
+      if (sel) notationCircSelections[notationCircIdx][s.id] = sel.dataset.value;
+    }
+    notationCircIdx = idx;
+    renderNotationCircuit(idx);
+    const fb = document.getElementById('feedback-3');
+    fb.textContent = ''; fb.className = 'feedback';
+  }
+
+  function check3() {
+    for (const s of CIRCUITS[notationCircIdx].slots) {
+      const sel = document.getElementById('n-' + s.id);
+      if (sel) notationCircSelections[notationCircIdx][s.id] = sel.dataset.value;
+    }
+    const c = CIRCUITS[notationCircIdx];
+    let allOk = true;
+    for (const s of c.slots) {
+      const val = document.getElementById('n-' + s.id)?.dataset.value;
+      const ok = val === s.correct;
+      setCardState('n-' + s.id, ok);
+      if (!ok) allOk = false;
+    }
+    if (allOk) notationCircDone[notationCircIdx] = true;
+    updateNotationCircuitDots();
+    return { ok: allOk, complete: notationCircDone.every(Boolean) };
+  }
+
+  // Initialise Task 3 on page load
+  renderCircuit(0);
+  renderNotationCircuit(0);
+
+  // ── Task 5: P = (A AND B) OR C ────────────────────────────
   // A B C → (A AND B) → OR C = P
   // 0 0 0 → 0 → 0
   // 0 0 1 → 0 → 1
@@ -812,11 +1476,11 @@ color:  blue
   // 1 0 1 → 0 → 1
   // 1 1 0 → 1 → 1
   // 1 1 1 → 1 → 1
-  function check3() {
+  function check4() {
     const expected = ['0','1','0','1','0','1','1','1'];
     let all = true;
     for (let i = 0; i < 8; i++) {
-      const val = document.getElementById('t4-' + i)?.querySelector('select')?.value;
+      const val = getBinaryChoice('t4-' + i);
       const ok  = val === expected[i];
       setCellState('t4-' + i, ok);
       if (!ok) all = false;
@@ -824,7 +1488,7 @@ color:  blue
     return all;
   }
 
-  // ── Task 5: P = (A OR B) AND NOT C + rows question ────────
+  // ── Task 6: P = (A OR B) AND NOT C + rows question ────────
   // 0 0 0: AorB=0, notC=1 → 0 AND 1 = 0
   // 0 0 1: AorB=0, notC=0 → 0 AND 0 = 0
   // 0 1 0: AorB=1, notC=1 → 1 AND 1 = 1
@@ -833,11 +1497,11 @@ color:  blue
   // 1 0 1: AorB=1, notC=0 → 1 AND 0 = 0
   // 1 1 0: AorB=1, notC=1 → 1 AND 1 = 1
   // 1 1 1: AorB=1, notC=0 → 1 AND 0 = 0
-  function check4() {
+  function check5() {
     const expected = ['0','0','1','0','1','0','1','0'];
     let all = true;
     for (let i = 0; i < 8; i++) {
-      const val = document.getElementById('t5-' + i)?.querySelector('select')?.value;
+      const val = getBinaryChoice('t5-' + i);
       const ok  = val === expected[i];
       setCellState('t5-' + i, ok);
       if (!ok) all = false;
