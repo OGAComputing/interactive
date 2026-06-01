@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<!-- ACTIVITY
+title:  Criminal Database Investigation
+type:   Practice
+stars:  3
+desc:   Use database search techniques — field searching, primary keys, foreign keys and cross-table queries — to find a suspect in a missing persons case.
+color:  cyan
+-->
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Criminal Database Investigation — CRIMDB</title>
+  <link rel="stylesheet" href="../../shared.css">
+  <style>
+    :root {
+      --bg:           #020c18;
+      --bg2:          #050f1e;
+      --surface:      #091628;
+      --border:       #0e3158;
+      --primary:      #00e5a0;
+      --primary-dim:  #00885e;
+      --cyan:         #00c4e0;
+      --cyan-dim:     #00607a;
+      --red:          #ff3b3b;
+      --amber:        #ffa800;
+      --text:         #8ecfb8;
+      --text-dim:     #3d6b5a;
+      --text-bright:  #dcfff5;
+      --glow-g: 0 0 10px rgba(0,229,160,.55), 0 0 24px rgba(0,229,160,.22);
+      --glow-c: 0 0 10px rgba(0,196,224,.55), 0 0 24px rgba(0,196,224,.22);
+      --glow-r: 0 0 10px rgba(255,59,59,.5);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Courier New', 'Lucida Console', 'Consolas', monospace;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Scanline overlay */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,.07) 2px, rgba(0,0,0,.07) 4px);
+      pointer-events: none; z-index: 9999;
+    }
+    /* Vignette */
+    body::after {
+      content: '';
+      position: fixed; inset: 0;
+      background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,.55) 100%);
+      pointer-events: none; z-index: 9998;
+    }
+
+    /* ── TOP HEADER ── */
+    .db-header {
+      position: sticky; top: 0; z-index: 500;
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      padding: 9px 20px;
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    }
+    .db-header-left { display: flex; align-items: center; gap: 10px; }
+    .pulse-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--primary); box-shadow: 0 0 6px var(--primary);
+      animation: dot-blink 1.8s ease-in-out infinite; flex-shrink: 0;
+    }
+    @keyframes dot-blink { 0%,100%{opacity:1} 50%{opacity:.25} }
+    .db-brand { line-height: 1.3; }
+    .db-brand strong { display:block; font-size:.9rem; letter-spacing:.18em; color:var(--primary); text-shadow:var(--glow-g); }
+    .db-brand span { font-size:.58rem; letter-spacing:.12em; color:var(--text-dim); text-transform:uppercase; }
+    .db-meta { text-align:right; font-size:.62rem; letter-spacing:.07em; color:var(--text-dim); line-height:1.6; }
+    .db-meta .sid { color:var(--cyan); }
+
+    /* ── PROGRESS STRIP ── */
+    .progress-strip {
+      background: var(--bg2); border-bottom: 1px solid rgba(14,49,88,.4);
+      padding: 7px 20px; display:flex; align-items:center; gap:0; overflow-x:auto;
+    }
+    .ps-step { display:flex; align-items:center; gap:0; flex-shrink:0; }
+    .ps-node {
+      width:26px; height:26px; border-radius:50%;
+      border:1.5px solid var(--border);
+      display:flex; align-items:center; justify-content:center;
+      font-size:.62rem; color:var(--text-dim);
+      transition:all .35s ease;
+    }
+    .ps-node.active { border-color:var(--cyan); color:var(--cyan); box-shadow:var(--glow-c); animation:node-pulse 2s ease-in-out infinite; }
+    .ps-node.done   { background:var(--primary); border-color:var(--primary); color:var(--bg); box-shadow:var(--glow-g); }
+    @keyframes node-pulse { 0%,100%{box-shadow:var(--glow-c)} 50%{box-shadow:none} }
+    .ps-label { font-size:.52rem; letter-spacing:.07em; color:var(--text-dim); margin-left:5px; white-space:nowrap; max-width:68px; overflow:hidden; text-overflow:ellipsis; }
+    .ps-label.active { color:var(--cyan); } .ps-label.done { color:var(--primary-dim); }
+    .ps-line { height:1.5px; width:28px; background:var(--border); flex-shrink:0; margin:0 3px; transition:background .35s ease; }
+    .ps-line.done { background:var(--primary-dim); }
+
+    /* ── LAYOUT ── */
+    .db-wrap { max-width:880px; margin:0 auto; padding:22px 18px 90px; }
+
+    /* ── STAGES ── */
+    .stage { display:none; animation:stg-in .35s ease; }
+    .stage.active { display:block; }
+    @keyframes stg-in { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
+
+    /* ── BOOT SCREEN ── */
+    .boot-wrap { min-height:62vh; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:20px; }
+    .boot-logo {
+      font-size:clamp(2rem,8vw,3.2rem); letter-spacing:.4em;
+      color:var(--primary); text-shadow:var(--glow-g), 0 0 80px rgba(0,229,160,.15);
+      margin-bottom:4px;
+      animation:glitch 9s ease-in-out infinite;
+    }
+    @keyframes glitch {
+      0%,95%,100%{ text-shadow:var(--glow-g), 0 0 80px rgba(0,229,160,.15); transform:none; }
+      96%{ text-shadow:-2px 0 #ff3b3b, 2px 0 #00c4e0, var(--glow-g); transform:skewX(-1.5deg); }
+      97%{ text-shadow:2px 0 #ff3b3b,-2px 0 #00c4e0, var(--glow-g); transform:skewX(1deg); }
+    }
+    .boot-sub { font-size:.62rem; letter-spacing:.35em; color:var(--text-dim); text-transform:uppercase; margin-bottom:36px; }
+    .boot-log { text-align:left; width:100%; max-width:480px; margin-bottom:28px; min-height:120px; }
+    .boot-line { display:none; font-size:.72rem; color:var(--text-dim); padding:2px 0; letter-spacing:.04em; }
+    .boot-line.show { display:block; }
+    .boot-line .ok   { color:var(--primary); }
+    .boot-line .info { color:var(--amber); }
+    .boot-line .rdy  { color:var(--cyan); }
+
+    /* ── BRIEFING ── */
+    .briefing {
+      border:1px solid rgba(255,59,59,.35); background:rgba(255,59,59,.03);
+      padding:20px 22px; margin-bottom:20px; position:relative;
+    }
+    .briefing::before {
+      content:'CLASSIFIED — RESTRICTED ACCESS';
+      position:absolute; top:-9px; left:14px;
+      background:var(--bg); padding:0 7px;
+      color:var(--red); font-size:.56rem; letter-spacing:.22em; text-shadow:var(--glow-r);
+    }
+    .stamp {
+      position:absolute; top:50%; right:18px;
+      transform:translateY(-50%) rotate(-11deg);
+      border:3px solid rgba(255,59,59,.28); color:rgba(255,59,59,.25);
+      font-size:1.2rem; font-weight:900; letter-spacing:.18em; padding:4px 8px;
+      pointer-events:none; user-select:none;
+    }
+    .briefing h2 { color:var(--red); font-size:.72rem; letter-spacing:.22em; text-transform:uppercase; margin-bottom:12px; text-shadow:var(--glow-r); }
+    .briefing p  { font-size:.84rem; line-height:1.85; color:var(--text); }
+    .briefing p+p { margin-top:8px; }
+
+    /* ── SECTION LABEL ── */
+    .sec-lbl { font-size:.57rem; letter-spacing:.22em; text-transform:uppercase; color:var(--text-dim); margin-bottom:14px; display:flex; align-items:center; gap:10px; }
+    .sec-lbl::after { content:''; flex:1; height:1px; background:var(--border); }
+    .stg-title { font-size:1.05rem; color:var(--cyan); letter-spacing:.08em; margin-bottom:8px; text-shadow:var(--glow-c); }
+    .stg-instr { font-size:.84rem; color:var(--text); line-height:1.8; margin-bottom:18px; background:rgba(0,196,224,.04); border-left:2px solid var(--cyan-dim); padding:10px 14px; }
+    .stg-instr code { color:var(--primary); background:rgba(0,229,160,.08); padding:1px 5px; }
+
+    /* ── CONCEPT BOX ── */
+    .concept {
+      background:rgba(0,196,224,.04); border:1px solid var(--cyan-dim);
+      padding:13px 16px; margin:14px 0; position:relative;
+    }
+    .concept::before { content:'DATABASE CONCEPT'; position:absolute; top:-9px; left:12px; background:var(--bg); padding:0 7px; color:var(--cyan); font-size:.54rem; letter-spacing:.2em; }
+    .concept p { font-size:.82rem; line-height:1.75; color:var(--text); }
+    .concept strong { color:var(--cyan); }
+
+    /* ── SEARCH TERMINAL ── */
+    .term {
+      background:var(--bg2); border:1px solid var(--border);
+      padding:18px; margin-bottom:18px; position:relative;
+    }
+    .term::before { content:attr(data-lbl); position:absolute; top:-9px; left:12px; background:var(--bg); padding:0 7px; color:var(--primary-dim); font-size:.56rem; letter-spacing:.16em; text-transform:uppercase; }
+    .term-prompt { font-size:.66rem; color:var(--text-dim); margin-bottom:12px; letter-spacing:.05em; }
+    .term-prompt::before { content:'> '; color:var(--primary); }
+    .t-row { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+    .t-row:last-child { margin-bottom:0; }
+    .t-lbl { font-size:.66rem; letter-spacing:.1em; text-transform:uppercase; color:var(--text-dim); min-width:96px; flex-shrink:0; }
+    .db-input {
+      flex:1; background:rgba(0,229,160,.035); border:1px solid var(--border);
+      color:var(--primary); font-family:'Courier New',monospace; font-size:.88rem;
+      padding:7px 11px; outline:none; transition:border-color .2s, box-shadow .2s; letter-spacing:.05em; border-radius:0;
+    }
+    .db-input:focus { border-color:var(--primary); box-shadow:0 0 0 1px rgba(0,229,160,.18), var(--glow-g); }
+    .db-input::placeholder { color:var(--text-dim); opacity:.45; }
+    .db-select {
+      flex:1; background:rgba(0,229,160,.035); border:1px solid var(--border);
+      color:var(--primary); font-family:'Courier New',monospace; font-size:.84rem;
+      padding:7px 11px; outline:none; appearance:none; cursor:pointer;
+    }
+    .db-select option { background:var(--surface); color:var(--text); }
+
+    /* ── BUTTONS ── */
+    .btn {
+      background:transparent; border:1px solid var(--primary); color:var(--primary);
+      font-family:'Courier New',monospace; font-size:.76rem; letter-spacing:.1em;
+      padding:8px 18px; cursor:pointer; text-transform:uppercase;
+      transition:all .2s ease; position:relative; overflow:hidden;
+    }
+    .btn::before { content:''; position:absolute; inset:0; background:var(--primary); transform:translateX(-100%); transition:transform .2s ease; z-index:0; }
+    .btn span { position:relative; z-index:1; }
+    .btn:hover:not(:disabled) { color:var(--bg); box-shadow:var(--glow-g); }
+    .btn:hover:not(:disabled)::before { transform:translateX(0); }
+    .btn:disabled { border-color:var(--border); color:var(--text-dim); cursor:not-allowed; }
+    .btn.cyan { border-color:var(--cyan); color:var(--cyan); }
+    .btn.cyan::before { background:var(--cyan); }
+    .btn.cyan:hover:not(:disabled) { color:var(--bg); box-shadow:var(--glow-c); }
+    .btn.sm { font-size:.62rem; padding:4px 10px; }
+
+    /* ── ERROR ── */
+    .db-err { font-size:.73rem; color:var(--red); padding:6px 10px; background:rgba(255,59,59,.06); border:1px solid rgba(255,59,59,.2); margin-top:8px; display:none; }
+    .db-err.on { display:block; }
+
+    /* ── RESULTS SECTION ── */
+    .results { display:none; animation:stg-in .3s ease; }
+    .results.on { display:block; }
+    .res-lbl { font-size:.57rem; letter-spacing:.2em; text-transform:uppercase; color:var(--text-dim); margin-bottom:8px; display:flex; align-items:center; gap:8px; }
+    .res-count { color:var(--primary); font-size:.62rem; }
+
+    /* ── TABLE ── */
+    .db-table { width:100%; border-collapse:collapse; font-size:.77rem; margin-bottom:14px; }
+    .db-table th { background:rgba(0,229,160,.07); color:var(--primary); font-size:.58rem; letter-spacing:.14em; text-transform:uppercase; padding:8px 11px; border:1px solid var(--border); text-align:left; font-weight:400; }
+    .db-table td { padding:8px 11px; border:1px solid rgba(14,49,88,.45); color:var(--text); vertical-align:top; }
+    .db-table tr:hover td { background:rgba(0,229,160,.025); }
+    .db-table td.k { color:var(--cyan); font-size:.74rem; letter-spacing:.04em; }
+    .db-table td.hi { color:var(--primary); }
+
+    /* ── BADGES ── */
+    .badge { display:inline-block; font-size:.58rem; letter-spacing:.1em; padding:2px 7px; font-weight:700; text-transform:uppercase; }
+    .badge-r { background:rgba(255,59,59,.14); border:1px solid rgba(255,59,59,.38); color:var(--red); }
+    .badge-a { background:rgba(255,168,0,.12); border:1px solid rgba(255,168,0,.35); color:var(--amber); }
+    .badge-g { background:rgba(0,229,160,.1);  border:1px solid rgba(0,229,160,.28); color:var(--primary); }
+
+    /* ── RECORD CARD ── */
+    .rec-card { border:1px solid var(--border); background:var(--surface); margin-bottom:14px; display:none; animation:stg-in .3s ease; }
+    .rec-card.on { display:block; }
+    .rec-hd { background:rgba(0,229,160,.05); border-bottom:1px solid var(--border); padding:9px 14px; display:flex; align-items:center; justify-content:space-between; }
+    .rec-id { font-size:.62rem; color:var(--cyan); letter-spacing:.14em; }
+    .rec-top { display:flex; gap:14px; padding:14px; border-bottom:1px solid var(--border); }
+    .rec-photo { width:74px; height:94px; background:rgba(0,229,160,.05); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:1.8rem; flex-shrink:0; }
+    .rec-name { font-size:1rem; color:var(--text-bright); letter-spacing:.05em; margin-bottom:5px; }
+    .rec-sub  { font-size:.7rem; color:var(--text-dim); margin-bottom:6px; }
+    .rec-grid { display:grid; grid-template-columns:1fr 1fr; }
+    .rec-f { padding:8px 14px; border-bottom:1px solid rgba(14,49,88,.35); border-right:1px solid rgba(14,49,88,.35); }
+    .rec-f:nth-child(even) { border-right:none; }
+    .rec-f.full { grid-column:1/-1; border-right:none; }
+    .rec-fl { font-size:.57rem; letter-spacing:.12em; text-transform:uppercase; color:var(--text-dim); margin-bottom:3px; }
+    .rec-fv { font-size:.83rem; color:var(--text-bright); }
+    .rec-fv.glow { color:var(--primary); text-shadow:0 0 8px rgba(0,229,160,.45); }
+    .rec-fv.note { font-size:.77rem; color:var(--text); }
+
+    /* ── HINT ── */
+    .hint { border:1px solid rgba(255,168,0,.28); background:rgba(255,168,0,.04); padding:10px 14px; font-size:.77rem; color:var(--amber); line-height:1.65; margin:14px 0; display:none; }
+    .hint::before { content:'▶ INVESTIGATOR HINT  '; font-size:.58rem; letter-spacing:.15em; }
+
+    /* ── MCQ ── */
+    .mcq { background:var(--bg2); border:1px solid var(--border); padding:18px; margin-bottom:14px; }
+    .mcq-q { font-size:.87rem; color:var(--text-bright); line-height:1.65; margin-bottom:14px; padding-bottom:12px; border-bottom:1px solid rgba(14,49,88,.5); }
+    .mcq-opts { display:flex; flex-direction:column; gap:7px; }
+    .mcq-opt {
+      display:flex; align-items:flex-start; gap:9px;
+      padding:9px 13px; border:1px solid var(--border);
+      cursor:pointer; transition:all .15s; font-size:.8rem; color:var(--text);
+      background:transparent; text-align:left; font-family:'Courier New',monospace; line-height:1.5; width:100%;
+    }
+    .mcq-opt:hover:not(:disabled) { border-color:var(--cyan-dim); background:rgba(0,196,224,.04); color:var(--text-bright); }
+    .opt-k { min-width:20px; height:20px; border:1px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:.62rem; flex-shrink:0; margin-top:1px; transition:all .15s; }
+    .mcq-opt:hover:not(:disabled) .opt-k { border-color:var(--cyan); color:var(--cyan); }
+    .mcq-opt.correct { border-color:var(--primary); background:rgba(0,229,160,.06); color:var(--primary); }
+    .mcq-opt.correct .opt-k { background:var(--primary); border-color:var(--primary); color:var(--bg); }
+    .mcq-opt.wrong  { border-color:var(--red); background:rgba(255,59,59,.05); color:rgba(255,59,59,.75); }
+    .mcq-opt.wrong .opt-k { background:rgba(255,59,59,.18); border-color:var(--red); color:var(--red); }
+    .mcq-opt:disabled { cursor:default; }
+    .mcq-fb { font-size:.73rem; padding:7px 11px; margin-top:9px; display:none; letter-spacing:.04em; line-height:1.65; }
+    .mcq-fb.correct { border-left:2px solid var(--primary); color:var(--primary); background:rgba(0,229,160,.04); display:block; }
+    .mcq-fb.wrong   { border-left:2px solid var(--red);     color:var(--red);     background:rgba(255,59,59,.04);  display:block; }
+
+    /* ── NAV ROW ── */
+    .nav-row { display:flex; justify-content:flex-end; gap:10px; margin-top:18px; padding-top:14px; border-top:1px solid rgba(14,49,88,.4); }
+
+    /* ── INSTAGRAM FOUND ── */
+    .ig-found { border:1px solid var(--primary); background:rgba(0,229,160,.05); padding:16px 20px; margin-top:14px; display:none; animation:stg-in .3s ease; align-items:center; gap:16px; }
+    .ig-found.on { display:flex; }
+    .ig-handle { font-size:1.25rem; color:var(--text-bright); letter-spacing:.08em; }
+    .ig-handle span { color:var(--primary); text-shadow:var(--glow-g); }
+
+    /* ── COMPLETION ── */
+    .completion { text-align:center; padding:40px 16px; }
+    .comp-icon { font-size:2.8rem; margin-bottom:14px; }
+    .comp-title { font-size:1.25rem; letter-spacing:.18em; color:var(--primary); text-shadow:var(--glow-g); margin-bottom:6px; text-transform:uppercase; }
+    .comp-sub { font-size:.72rem; letter-spacing:.12em; color:var(--text-dim); margin-bottom:22px; }
+    .findings { border:1px solid var(--primary); background:rgba(0,229,160,.04); padding:18px 20px; max-width:460px; margin:0 auto; text-align:left; }
+    .findings h3 { font-size:.6rem; letter-spacing:.2em; color:var(--primary); text-transform:uppercase; margin-bottom:12px; }
+    .f-row { display:flex; justify-content:space-between; font-size:.77rem; padding:5px 0; border-bottom:1px solid rgba(14,49,88,.4); gap:10px; }
+    .f-row:last-child { border-bottom:none; }
+    .f-l { color:var(--text-dim); font-size:.72rem; }
+    .f-v { color:var(--primary); }
+    .comp-note { margin-top:22px; font-size:.73rem; color:var(--text-dim); line-height:1.75; max-width:480px; margin-left:auto; margin-right:auto; }
+    .comp-note strong { color:var(--primary); }
+
+    /* ── RESPONSIVE ── */
+    @media(max-width:580px) {
+      .rec-grid { grid-template-columns:1fr; }
+      .rec-f { border-right:none; }
+      .progress-strip { padding:7px 10px; }
+      .db-wrap { padding:14px 12px 80px; }
+      .t-row { flex-wrap:wrap; }
+      .t-lbl { min-width:80px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── HEADER ────────────────────────────────────────── -->
+<div class="db-header">
+  <div class="db-header-left">
+    <div class="pulse-dot" id="pulse-dot"></div>
+    <div class="db-brand">
+      <strong>CRIMDB</strong>
+      <span>National Criminal Intelligence Platform</span>
+    </div>
+  </div>
+  <div class="db-meta">
+    SESSION: <span class="sid">INV-2026-0047</span><br>
+    ACCESS: TRAINEE INVESTIGATOR<br>
+    <span id="clk">--:--:--</span>
+  </div>
+</div>
+
+<!-- ── PROGRESS STRIP ─────────────────────────────────── -->
+<div class="progress-strip">
+  <div class="ps-step"><div class="ps-node active" id="n0">1</div><span class="ps-label active" id="l0">Briefing</span></div>
+  <div class="ps-line" id="c0"></div>
+  <div class="ps-step"><div class="ps-node" id="n1">2</div><span class="ps-label" id="l1">Person Search</span></div>
+  <div class="ps-line" id="c1"></div>
+  <div class="ps-step"><div class="ps-node" id="n2">3</div><span class="ps-label" id="l2">Check Results</span></div>
+  <div class="ps-line" id="c2"></div>
+  <div class="ps-step"><div class="ps-node" id="n3">4</div><span class="ps-label" id="l3">Associate</span></div>
+  <div class="ps-line" id="c3"></div>
+  <div class="ps-step"><div class="ps-node" id="n4">5</div><span class="ps-label" id="l4">Social Media</span></div>
+  <div class="ps-line" id="c4"></div>
+  <div class="ps-step"><div class="ps-node" id="n5">6</div><span class="ps-label" id="l5">Concepts</span></div>
+  <div class="ps-line" id="c5"></div>
+  <div class="ps-step"><div class="ps-node" id="n6">✓</div><span class="ps-label" id="l6">Complete</span></div>
+</div>
+
+<!-- ── MAIN WRAPPER ───────────────────────────────────── -->
+<div class="db-wrap">
+
+  <!-- ══ STAGE 0: BOOT + BRIEFING ═════════════════════ -->
+  <div class="stage active" id="stage-0">
+
+    <!-- Boot animation -->
+    <div class="boot-wrap" id="boot-anim">
+      <div class="boot-logo">CRIMDB</div>
+      <div class="boot-sub">National Criminal Intelligence Database · v4.2.1</div>
+      <div class="boot-log">
+        <div class="boot-line" id="b0"><span class="ok">[OK]</span> Secure tunnel established — TLS 1.3</div>
+        <div class="boot-line" id="b1"><span class="ok">[OK]</span> Credentials verified — Trainee Investigator</div>
+        <div class="boot-line" id="b2"><span class="ok">[OK]</span> Mounting tbl_persons (94,821 records)…</div>
+        <div class="boot-line" id="b3"><span class="ok">[OK]</span> Mounting tbl_associates (47,332 records)…</div>
+        <div class="boot-line" id="b4"><span class="ok">[OK]</span> Mounting tbl_social_media (211,940 records)…</div>
+        <div class="boot-line" id="b5"><span class="info">[INFO]</span> Active case assigned: MIS-2026-0047 (MISSING PERSON)</div>
+        <div class="boot-line" id="b6"><span class="rdy">[READY]</span> All systems operational. Welcome, Investigator.</div>
+      </div>
+      <button class="btn" id="btn-briefing" style="display:none" onclick="showBriefing()"><span>VIEW MISSION BRIEFING →</span></button>
+    </div>
+
+    <!-- Briefing (hidden until boot completes) -->
+    <div id="briefing-section" style="display:none">
+      <div class="briefing">
+        <div class="stamp">RESTRICTED</div>
+        <h2>🔴 Active Case — MIS-2026-0047</h2>
+        <p>On <strong style="color:var(--text-bright)">29 May 2026</strong>, a 16-year-old named <strong style="color:var(--text-bright)">Mia Burton</strong> was reported missing by her parent/guardian. She was last seen at Riverside Shopping Centre, Manchester, at approximately 14:30.</p>
+        <p>Detectives believe Mia was in contact with one or more individuals from her social circle before she went missing. Phone records confirm social media activity at 16:47 — location unavailable. Phone offline at 17:23.</p>
+        <p><strong style="color:var(--amber)">Your mission:</strong> Use the CRIMDB system to find Mia's record, trace her known associates, and identify the social media username of the key suspect. Work through each stage carefully.</p>
+      </div>
+
+      <div class="concept">
+        <p>A <strong>database</strong> organises information into <strong>tables</strong>. Each row is a <strong>record</strong> (one person or item). Each column is a <strong>field</strong> (one piece of information, e.g. name, DOB). You can <strong>search</strong> by entering a value for any field — the database returns only matching records.</p>
+      </div>
+
+      <div class="nav-row" style="border:none; padding-top:0; justify-content:flex-start">
+        <button class="btn" onclick="gotoStage(1)"><span>BEGIN INVESTIGATION →</span></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ STAGE 1: SEARCH tbl_persons ══════════════════ -->
+  <div class="stage" id="stage-1">
+    <div class="sec-lbl">Stage 1 of 6 — Person Records Search</div>
+    <div class="stg-title">Search the Person Records Database</div>
+    <div class="stg-instr">
+      You need to find Mia Burton's record in the <code>tbl_persons</code> table.
+      Type her <strong>full name</strong> in the search form below and click <strong>EXECUTE SEARCH</strong>.
+      Leave other fields blank for now.
+    </div>
+
+    <div class="term" data-lbl="QUERY — tbl_persons">
+      <div class="term-prompt">SELECT * FROM tbl_persons WHERE full_name LIKE '…'</div>
+      <div class="t-row">
+        <span class="t-lbl">Full Name</span>
+        <input class="db-input" id="s1-name" type="text" placeholder="Enter a name to search for…" autocomplete="off">
+      </div>
+      <div class="t-row">
+        <span class="t-lbl">Date of Birth</span>
+        <input class="db-input" id="s1-dob" type="text" placeholder="(optional) DD/MM/YYYY">
+      </div>
+      <div class="t-row">
+        <span class="t-lbl">Status Filter</span>
+        <select class="db-select" id="s1-status">
+          <option value="">— Any —</option>
+          <option value="missing">Missing</option>
+          <option value="active">Active record</option>
+          <option value="caution">Caution issued</option>
+        </select>
+      </div>
+      <div class="t-row" style="justify-content:flex-end; margin-top:6px">
+        <button class="btn" onclick="searchPersons()"><span>EXECUTE SEARCH</span></button>
+      </div>
+      <div class="db-err" id="s1-err"></div>
+    </div>
+
+    <!-- Results -->
+    <div class="results" id="s1-results">
+      <div class="res-lbl">SEARCH RESULTS — <span class="res-count">1 record found</span></div>
+      <table class="db-table">
+        <thead><tr><th>Record ID</th><th>Full Name</th><th>DOB</th><th>Status</th><th>Action</th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="k">P-1042</td>
+            <td class="hi">Burton, Mia Claire</td>
+            <td>15/03/2010</td>
+            <td><span class="badge badge-r">MISSING</span></td>
+            <td><button class="btn cyan sm" onclick="viewMia()"><span>VIEW RECORD</span></button></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Mia's full record -->
+      <div class="rec-card" id="mia-card">
+        <div class="rec-hd">
+          <span class="rec-id">RECORD ID: P-1042</span>
+          <span class="badge badge-r">MISSING — ACTIVE CASE</span>
+        </div>
+        <div class="rec-top">
+          <div class="rec-photo">👤</div>
+          <div>
+            <div class="rec-name">BURTON, Mia Claire</div>
+            <div class="rec-sub">Reported missing: 29/05/2026 at 14:30</div>
+            <span class="badge badge-r">MISSING PERSONS — PRIORITY CASE</span>
+          </div>
+        </div>
+        <div class="rec-grid">
+          <div class="rec-f"><div class="rec-fl">Date of Birth</div><div class="rec-fv">15/03/2010 (age 16)</div></div>
+          <div class="rec-f"><div class="rec-fl">Gender</div><div class="rec-fv">Female</div></div>
+          <div class="rec-f"><div class="rec-fl">Hair Colour</div><div class="rec-fv">Brown</div></div>
+          <div class="rec-f"><div class="rec-fl">Eye Colour</div><div class="rec-fv">Green / Hazel</div></div>
+          <div class="rec-f full"><div class="rec-fl">Last Known Address</div><div class="rec-fv">14 Oak Street, Manchester, M14 5QR</div></div>
+          <div class="rec-f full"><div class="rec-fl">Last Confirmed Location</div><div class="rec-fv">Riverside Shopping Centre, Manchester — 29/05/2026 ~14:30</div></div>
+          <div class="rec-f full" style="background:rgba(0,229,160,.04)">
+            <div class="rec-fl">⚠ Associated Persons (IDs)</div>
+            <div class="rec-fv glow">A-2847 &nbsp;|&nbsp; <span style="color:var(--text-dim);text-shadow:none">A-1203</span></div>
+          </div>
+          <div class="rec-f full">
+            <div class="rec-fl">Case Notes</div>
+            <div class="rec-fv note">Left home 13:00 on 29/05/2026. Social media activity at 16:47 — location unavailable. Phone offline 17:23. Known associates flagged for immediate follow-up. Subject known to frequent Riverside area.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="hint" id="h1">
+        Mia's record shows an <strong>Associated Persons</strong> field containing the ID <strong>A-2847</strong>. In a relational database, this is called a <strong>foreign key</strong> — a value that links to a record in a different table. You'll use this ID next.
+      </div>
+
+      <div class="nav-row" id="nav1" style="display:none">
+        <button class="btn" onclick="gotoStage(2)"><span>NEXT: ANALYSE RESULTS →</span></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ STAGE 2: COMPREHENSION MCQs ══════════════════ -->
+  <div class="stage" id="stage-2">
+    <div class="sec-lbl">Stage 2 of 6 — Understanding Your Search</div>
+    <div class="stg-title">What did your search actually do?</div>
+    <div class="stg-instr">You just searched a database and found Mia's record. Answer these questions to check you understand the key concepts.</div>
+
+    <!-- Q1 -->
+    <div class="mcq" id="mcq-2a">
+      <div class="mcq-q">Q1. When you typed "Mia Burton" into the search form, which <strong>field</strong> were you filtering on?</div>
+      <div class="mcq-opts" id="opts-2a">
+        <button class="mcq-opt" onclick="checkMCQ('2a',this,false)"><span class="opt-k">A</span>The Record ID field (e.g. P-1042)</button>
+        <button class="mcq-opt" onclick="checkMCQ('2a',this,true)"><span class="opt-k">B</span>The Full Name field</button>
+        <button class="mcq-opt" onclick="checkMCQ('2a',this,false)"><span class="opt-k">C</span>The Status field</button>
+        <button class="mcq-opt" onclick="checkMCQ('2a',this,false)"><span class="opt-k">D</span>All fields at once</button>
+      </div>
+      <div class="mcq-fb" id="fb-2a"></div>
+    </div>
+
+    <!-- Q2 -->
+    <div class="mcq" id="mcq-2b" style="display:none">
+      <div class="mcq-q">Q2. Mia's information appears as one <em>row</em> in the database table. What is the correct term for a single row of data in a database?</div>
+      <div class="mcq-opts" id="opts-2b">
+        <button class="mcq-opt" onclick="checkMCQ('2b',this,false)"><span class="opt-k">A</span>A field</button>
+        <button class="mcq-opt" onclick="checkMCQ('2b',this,false)"><span class="opt-k">B</span>A table</button>
+        <button class="mcq-opt" onclick="checkMCQ('2b',this,true)"><span class="opt-k">C</span>A record</button>
+        <button class="mcq-opt" onclick="checkMCQ('2b',this,false)"><span class="opt-k">D</span>A query</button>
+      </div>
+      <div class="mcq-fb" id="fb-2b"></div>
+    </div>
+
+    <!-- Q3 -->
+    <div class="mcq" id="mcq-2c" style="display:none">
+      <div class="mcq-q">Q3. Mia's Record ID is <strong>P-1042</strong> — unique to her alone. No two people in the database share this ID. What is the correct term for this type of unique identifier?</div>
+      <div class="mcq-opts" id="opts-2c">
+        <button class="mcq-opt" onclick="checkMCQ('2c',this,false)"><span class="opt-k">A</span>A foreign key</button>
+        <button class="mcq-opt" onclick="checkMCQ('2c',this,true)"><span class="opt-k">B</span>A primary key</button>
+        <button class="mcq-opt" onclick="checkMCQ('2c',this,false)"><span class="opt-k">C</span>A field name</button>
+        <button class="mcq-opt" onclick="checkMCQ('2c',this,false)"><span class="opt-k">D</span>A record number</button>
+      </div>
+      <div class="mcq-fb" id="fb-2c"></div>
+    </div>
+
+    <div class="nav-row" id="nav2" style="display:none">
+      <button class="btn" onclick="gotoStage(3)"><span>NEXT: SEARCH FOR ASSOCIATE →</span></button>
+    </div>
+  </div>
+
+  <!-- ══ STAGE 3: ASSOCIATE LOOKUP ═════════════════════ -->
+  <div class="stage" id="stage-3">
+    <div class="sec-lbl">Stage 3 of 6 — Associate Record Lookup</div>
+    <div class="stg-title">Search for Associate A-2847</div>
+    <div class="stg-instr">
+      Mia's record listed associate ID <strong style="color:var(--primary)">A-2847</strong>.
+      This is a <strong>foreign key</strong> — it links to a record in the <code>tbl_associates</code> table.
+      Enter this ID in the search form below to find who it belongs to.
+    </div>
+
+    <div class="concept">
+      <p>A <strong>foreign key</strong> is a value stored in one table that matches the <strong>primary key</strong> of a record in a different table. This is how <strong>relational databases</strong> link information across tables without duplicating data.</p>
+    </div>
+
+    <div class="term" data-lbl="QUERY — tbl_associates">
+      <div class="term-prompt">SELECT * FROM tbl_associates WHERE associate_id = '…'</div>
+      <div class="t-row">
+        <span class="t-lbl">Associate ID</span>
+        <input class="db-input" id="s3-id" type="text" placeholder="Enter associate ID (format: A-XXXX)…" autocomplete="off">
+      </div>
+      <div class="t-row">
+        <span class="t-lbl">Full Name</span>
+        <input class="db-input" id="s3-name" type="text" placeholder="(optional) name to filter…">
+      </div>
+      <div class="t-row" style="justify-content:flex-end; margin-top:6px">
+        <button class="btn" onclick="searchAssociates()"><span>EXECUTE SEARCH</span></button>
+      </div>
+      <div class="db-err" id="s3-err"></div>
+    </div>
+
+    <div class="results" id="s3-results">
+      <div class="res-lbl">SEARCH RESULTS — <span class="res-count">1 record found</span></div>
+      <table class="db-table">
+        <thead><tr><th>Associate ID</th><th>Full Name</th><th>Record</th><th>Linked To</th><th>Action</th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="k">A-2847</td>
+            <td class="hi">Chen, Ashley Morgan</td>
+            <td><span class="badge badge-a">CAUTION</span></td>
+            <td class="k">P-1042</td>
+            <td><button class="btn cyan sm" onclick="viewAshley()"><span>VIEW RECORD</span></button></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Ashley's full record -->
+      <div class="rec-card" id="ashley-card">
+        <div class="rec-hd">
+          <span class="rec-id">ASSOCIATE ID: A-2847</span>
+          <span class="badge badge-a">CAUTION — KNOWN OFFENCES</span>
+        </div>
+        <div class="rec-top">
+          <div class="rec-photo">🕵️</div>
+          <div>
+            <div class="rec-name">CHEN, Ashley Morgan</div>
+            <div class="rec-sub">Linked to missing person: P-1042 (Burton, Mia)</div>
+            <span class="badge badge-a">KEY ASSOCIATE — FOLLOW UP REQUIRED</span>
+          </div>
+        </div>
+        <div class="rec-grid">
+          <div class="rec-f"><div class="rec-fl">Date of Birth</div><div class="rec-fv">22/11/2009 (age 16)</div></div>
+          <div class="rec-f"><div class="rec-fl">Gender</div><div class="rec-fv">Non-binary</div></div>
+          <div class="rec-f full"><div class="rec-fl">Address</div><div class="rec-fv">8 Birch Lane, Salford, M7 3PX</div></div>
+          <div class="rec-f"><div class="rec-fl">Known Offences</div><div class="rec-fv">Caution — Vandalism (2024)</div></div>
+          <div class="rec-f"><div class="rec-fl">Relationship to P-1042</div><div class="rec-fv">Close Friend (Same School)</div></div>
+          <div class="rec-f full" style="background:rgba(0,229,160,.04)">
+            <div class="rec-fl">⚠ Social Media Accounts</div>
+            <div class="rec-fv glow">Cross-reference tbl_social_media — search using Associate ID: A-2847</div>
+          </div>
+          <div class="rec-f full">
+            <div class="rec-fl">Case Notes</div>
+            <div class="rec-fv note">Last contacted P-1042 via social media at 16:32 on 29/05/2026. Phone tower data places Chen near Riverside Shopping Centre at 14:55. Whereabouts after 17:00 unconfirmed. Known to use multiple social media platforms — see tbl_social_media.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="hint" id="h3">
+        Ashley's record references their social media accounts — stored in a <strong>separate table</strong> called <strong>tbl_social_media</strong>. You need to cross-reference that table using Ashley's ID (<strong>A-2847</strong>) as a foreign key.
+      </div>
+
+      <div class="nav-row" id="nav3" style="display:none">
+        <button class="btn" onclick="gotoStage(4)"><span>NEXT: SOCIAL MEDIA LOOKUP →</span></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ STAGE 4: SOCIAL MEDIA CROSS-REFERENCE ════════ -->
+  <div class="stage" id="stage-4">
+    <div class="sec-lbl">Stage 4 of 6 — Cross-Table Query</div>
+    <div class="stg-title">Search the Social Media Accounts Table</div>
+    <div class="stg-instr">
+      Ashley's record told you to look in <code>tbl_social_media</code>. Enter Ashley's Associate ID
+      <strong style="color:var(--primary)">A-2847</strong> in the Person ID field.
+      Then filter by platform <strong>Instagram</strong> to find the specific username detectives need.
+    </div>
+
+    <div class="term" data-lbl="QUERY — tbl_social_media">
+      <div class="term-prompt">SELECT * FROM tbl_social_media WHERE person_id = '…' AND platform = '…'</div>
+      <div class="t-row">
+        <span class="t-lbl">Person ID</span>
+        <input class="db-input" id="s4-id" type="text" placeholder="Enter associate ID to look up…" autocomplete="off">
+      </div>
+      <div class="t-row">
+        <span class="t-lbl">Platform</span>
+        <select class="db-select" id="s4-platform">
+          <option value="">— Any Platform —</option>
+          <option value="Instagram">Instagram</option>
+          <option value="TikTok">TikTok</option>
+          <option value="Snapchat">Snapchat</option>
+          <option value="X / Twitter">X / Twitter</option>
+        </select>
+      </div>
+      <div class="t-row" style="justify-content:flex-end; margin-top:6px">
+        <button class="btn" onclick="searchSocialMedia()"><span>EXECUTE SEARCH</span></button>
+      </div>
+      <div class="db-err" id="s4-err"></div>
+    </div>
+
+    <div class="results" id="s4-results">
+      <div class="res-lbl">SEARCH RESULTS — <span class="res-count" id="s4-count">0 records found</span></div>
+      <table class="db-table">
+        <thead><tr><th>Entry ID</th><th>Person ID (FK)</th><th>Platform</th><th>Username</th><th>Status</th></tr></thead>
+        <tbody id="s4-tbody"></tbody>
+      </table>
+
+      <div class="hint" id="h4">
+        You can see all of Ashley's accounts above. Now filter the search by platform — select <strong>Instagram</strong> and search again to pinpoint the exact username.
+      </div>
+
+      <div class="ig-found" id="ig-found">
+        <div style="font-size:2rem">📱</div>
+        <div>
+          <div style="font-size:.58rem; letter-spacing:.2em; color:var(--primary); margin-bottom:4px">INSTAGRAM ACCOUNT IDENTIFIED</div>
+          <div class="ig-handle">@<span>xxAshxx</span></div>
+          <div style="font-size:.7rem; color:var(--text-dim); margin-top:3px">Account status: ACTIVE — flagged for investigative review</div>
+        </div>
+      </div>
+
+      <div class="nav-row" id="nav4" style="display:none">
+        <button class="btn" onclick="gotoStage(5)"><span>NEXT: DATABASE CONCEPTS →</span></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ STAGE 5: CONCEPT MCQs ═════════════════════════ -->
+  <div class="stage" id="stage-5">
+    <div class="sec-lbl">Stage 5 of 6 — Key Database Concepts</div>
+    <div class="stg-title">Reviewing What You Did</div>
+    <div class="stg-instr">You've completed the investigation using real database techniques. Answer these questions to consolidate your understanding.</div>
+
+    <!-- Q4 -->
+    <div class="mcq" id="mcq-5a">
+      <div class="mcq-q">Q4. You used the ID <strong>A-2847</strong> from Mia's record to search a completely separate table (tbl_associates). What type of database operation is this?</div>
+      <div class="mcq-opts" id="opts-5a">
+        <button class="mcq-opt" onclick="checkMCQ('5a',this,false)"><span class="opt-k">A</span>Sorting records alphabetically</button>
+        <button class="mcq-opt" onclick="checkMCQ('5a',this,false)"><span class="opt-k">B</span>Deleting a record from the database</button>
+        <button class="mcq-opt" onclick="checkMCQ('5a',this,true)"><span class="opt-k">C</span>Cross-referencing two tables using a foreign key</button>
+        <button class="mcq-opt" onclick="checkMCQ('5a',this,false)"><span class="opt-k">D</span>Validating data to check for errors</button>
+      </div>
+      <div class="mcq-fb" id="fb-5a"></div>
+    </div>
+
+    <!-- Q5 -->
+    <div class="mcq" id="mcq-5b" style="display:none">
+      <div class="mcq-q">Q5. The CRIMDB system stores data in three separate tables rather than one big table. What is the main benefit of splitting the data this way?</div>
+      <div class="mcq-opts" id="opts-5b">
+        <button class="mcq-opt" onclick="checkMCQ('5b',this,false)"><span class="opt-k">A</span>It makes the database look more professional</button>
+        <button class="mcq-opt" onclick="checkMCQ('5b',this,false)"><span class="opt-k">B</span>Each person is only allowed one record in any table</button>
+        <button class="mcq-opt" onclick="checkMCQ('5b',this,true)"><span class="opt-k">C</span>It prevents data duplication — if Ashley makes a new social media account, only one row is added to tbl_social_media</button>
+        <button class="mcq-opt" onclick="checkMCQ('5b',this,false)"><span class="opt-k">D</span>Databases cannot store more than one type of data</button>
+      </div>
+      <div class="mcq-fb" id="fb-5b"></div>
+    </div>
+
+    <!-- Q6 -->
+    <div class="mcq" id="mcq-5c" style="display:none">
+      <div class="mcq-q">Q6. The "Person ID" column in tbl_social_media stores the value <strong>A-2847</strong> — Ashley's ID from tbl_associates. What is this type of value called?</div>
+      <div class="mcq-opts" id="opts-5c">
+        <button class="mcq-opt" onclick="checkMCQ('5c',this,false)"><span class="opt-k">A</span>A primary key</button>
+        <button class="mcq-opt" onclick="checkMCQ('5c',this,true)"><span class="opt-k">B</span>A foreign key</button>
+        <button class="mcq-opt" onclick="checkMCQ('5c',this,false)"><span class="opt-k">C</span>A search query</button>
+        <button class="mcq-opt" onclick="checkMCQ('5c',this,false)"><span class="opt-k">D</span>A field label</button>
+      </div>
+      <div class="mcq-fb" id="fb-5c"></div>
+    </div>
+
+    <!-- Q7 -->
+    <div class="mcq" id="mcq-5d" style="display:none">
+      <div class="mcq-q">Q7. When you filtered the social media table by platform "Instagram", which SQL command best describes what the database ran behind the scenes?</div>
+      <div class="mcq-opts" id="opts-5d">
+        <button class="mcq-opt" onclick="checkMCQ('5d',this,false)"><span class="opt-k">A</span>DELETE FROM tbl_social_media WHERE platform = 'Instagram'</button>
+        <button class="mcq-opt" onclick="checkMCQ('5d',this,false)"><span class="opt-k">B</span>CREATE TABLE tbl_social_media</button>
+        <button class="mcq-opt" onclick="checkMCQ('5d',this,true)"><span class="opt-k">C</span>SELECT * FROM tbl_social_media WHERE person_id = 'A-2847' AND platform = 'Instagram'</button>
+        <button class="mcq-opt" onclick="checkMCQ('5d',this,false)"><span class="opt-k">D</span>INSERT INTO tbl_social_media VALUES ('A-2847', 'Instagram')</button>
+      </div>
+      <div class="mcq-fb" id="fb-5d"></div>
+    </div>
+
+    <div class="nav-row" id="nav5" style="display:none">
+      <button class="btn" onclick="gotoStage(6)"><span>COMPLETE INVESTIGATION →</span></button>
+    </div>
+  </div>
+
+  <!-- ══ STAGE 6: COMPLETION ════════════════════════════ -->
+  <div class="stage" id="stage-6">
+    <div class="completion">
+      <div class="comp-icon">🏆</div>
+      <div class="comp-title">Investigation Complete</div>
+      <div class="comp-sub">CASE MIS-2026-0047 — SUSPECT IDENTIFIED</div>
+
+      <div class="findings">
+        <h3>📋 Investigation Findings</h3>
+        <div class="f-row"><span class="f-l">Missing person</span><span class="f-v">Mia Claire Burton (P-1042)</span></div>
+        <div class="f-row"><span class="f-l">Key associate</span><span class="f-v">Ashley Morgan Chen (A-2847)</span></div>
+        <div class="f-row"><span class="f-l">Instagram username</span><span class="f-v">@xxAshxx</span></div>
+        <div class="f-row"><span class="f-l">Tables searched</span><span class="f-v">tbl_persons, tbl_associates, tbl_social_media</span></div>
+        <div class="f-row"><span class="f-l">Techniques used</span><span class="f-v">Field search · Primary key · Foreign key · Cross-table query</span></div>
+      </div>
+
+      <div class="comp-note">
+        You used <strong>field-based searching</strong> to find Mia, followed a <strong>foreign key</strong> (A-2847) across two tables, and applied a <strong>filtered cross-table query</strong> to locate the Instagram username — the same techniques used in every real relational database system.
+      </div>
+    </div>
+  </div>
+
+</div><!-- end db-wrap -->
+
+<script src="../../classroom.js"></script>
+<script src="../../activity-ui.js"></script>
+<script>
+  // ── Config ────────────────────────────────────────────────────────────────
+  const ACTIVITY_TITLE = 'Criminal Database Investigation';
+  const TASK_COUNT = 7;
+  const completed = new Array(TASK_COUNT).fill(false);
+
+  // ── Clock ─────────────────────────────────────────────────────────────────
+  function tick() {
+    const n = new Date();
+    document.getElementById('clk').textContent = n.toTimeString().slice(0,8);
+  }
+  setInterval(tick, 1000); tick();
+
+  // ── Boot sequence ─────────────────────────────────────────────────────────
+  (function boot() {
+    ['b0','b1','b2','b3','b4','b5','b6'].forEach((id, i) => {
+      setTimeout(() => {
+        document.getElementById(id).classList.add('show');
+        if (i === 6) setTimeout(() => {
+          document.getElementById('btn-briefing').style.display = 'inline-block';
+        }, 400);
+      }, 350 + i * 370);
+    });
+  })();
+
+  function showBriefing() {
+    document.getElementById('boot-anim').style.display = 'none';
+    document.getElementById('briefing-section').style.display = 'block';
+  }
+
+  // ── Progress ──────────────────────────────────────────────────────────────
+  function updateProgress(stage) {
+    for (let i = 0; i <= 6; i++) {
+      const node = document.getElementById('n' + i);
+      const lbl  = document.getElementById('l' + i);
+      const conn = document.getElementById('c' + (i - 1));
+      if (!node) continue;
+      if (i < stage) {
+        node.className = 'ps-node done'; node.textContent = '✓';
+        if (lbl) lbl.className = 'ps-label done';
+        if (conn) conn.classList.add('done');
+      } else if (i === stage) {
+        node.className = 'ps-node active';
+        if (lbl) lbl.className = 'ps-label active';
+      } else {
+        node.className = 'ps-node';
+        if (lbl) lbl.className = 'ps-label';
+      }
+    }
+  }
+
+  // ── Stage navigation ──────────────────────────────────────────────────────
+  function gotoStage(n) {
+    document.querySelectorAll('.stage').forEach(s => s.classList.remove('active'));
+    document.getElementById('stage-' + n).classList.add('active');
+    updateProgress(n);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (n === 6) finishUp();
+  }
+
+  // ── Task completion ───────────────────────────────────────────────────────
+  function markDone(i) {
+    if (completed[i]) return;
+    completed[i] = true;
+    const pct = Math.round(completed.filter(Boolean).length / TASK_COUNT * 100);
+    window.Classroom?.submitGrade(pct, ACTIVITY_TITLE);
+  }
+
+  // ── Stage 1: person search ────────────────────────────────────────────────
+  function searchPersons() {
+    const v   = document.getElementById('s1-name').value.trim().toLowerCase();
+    const err = document.getElementById('s1-err');
+    const normalised = v.replace(/,/g,'').replace(/\s+/g,' ');
+    const hit = ['mia burton','mia claire burton','burton mia','burton mia claire'].includes(normalised);
+
+    if (!v) {
+      err.textContent = '⚠ Please enter a name to search for.';
+      err.classList.add('on'); return;
+    }
+    if (hit) {
+      err.classList.remove('on');
+      document.getElementById('s1-results').classList.add('on');
+      markDone(0);
+    } else {
+      err.textContent = '⚠ No records found matching "' + document.getElementById('s1-name').value.trim() + '". Check spelling — try searching the full name.';
+      err.classList.add('on');
+      document.getElementById('s1-results').classList.remove('on');
+    }
+  }
+
+  function viewMia() {
+    document.getElementById('mia-card').classList.add('on');
+    document.getElementById('h1').style.display = 'block';
+    document.getElementById('nav1').style.display = 'flex';
+  }
+
+  // ── MCQ engine ────────────────────────────────────────────────────────────
+  const MCQ_CFG = {
+    '2a': { next:'mcq-2b', taskOnAnswer:1,  correct:'✅ Correct! You filtered on the <strong>Full Name</strong> field. Searching by a specific field is one of the most common database operations.', wrong:'❌ Not quite — you typed into the <strong>Full Name</strong> field, so that\'s what the database filtered by.' },
+    '2b': { next:'mcq-2c', taskOnAnswer:null, correct:'✅ Correct! A <strong>record</strong> is a single row in a table — it holds all the data about one person or item.', wrong:'❌ Not quite. One row of data in a database table is called a <strong>record</strong>.' },
+    '2c': { next:null, taskOnAnswer:2, navId:'nav2', correct:'✅ Correct! A <strong>primary key</strong> uniquely identifies each record — no two records share the same value.', wrong:'❌ Not quite. The unique identifier for each record is called a <strong>primary key</strong>.' },
+    '5a': { next:'mcq-5b', taskOnAnswer:4, correct:'✅ Correct! Using A-2847 (from Mia\'s record) to look up Ashley in a different table is <strong>cross-referencing via a foreign key</strong>.', wrong:'❌ Not quite. You used A-2847 as a <strong>foreign key</strong> to find Ashley\'s record in a different table — this is called <strong>cross-referencing</strong>.' },
+    '5b': { next:'mcq-5c', taskOnAnswer:null, correct:'✅ Correct! Multiple tables <strong>reduce data duplication</strong>. A new social media account is one new row in tbl_social_media — no other table needs changing.', wrong:'❌ Not quite. The main benefit is <strong>avoiding data duplication</strong> — each piece of information is stored in one place only.' },
+    '5c': { next:'mcq-5d', taskOnAnswer:null, correct:'✅ Correct! The Person ID in tbl_social_media is a <strong>foreign key</strong> — it references Ashley\'s primary key in tbl_associates.', wrong:'❌ Not quite. A field that references the primary key of another table is a <strong>foreign key</strong>.' },
+    '5d': { next:null, taskOnAnswer:6, navId:'nav5', correct:'✅ Correct! That\'s the SQL equivalent: <code>SELECT * … WHERE person_id = \'A-2847\' AND platform = \'Instagram\'</code>.', wrong:'❌ Not quite. Searching/filtering uses <code>SELECT</code> with a <code>WHERE</code> clause.' }
+  };
+
+  const mcqAnswered = {};
+
+  function checkMCQ(id, btn, correct) {
+    if (mcqAnswered[id]) return;
+    mcqAnswered[id] = true;
+
+    const opts = btn.closest('.mcq-opts').querySelectorAll('.mcq-opt');
+    opts.forEach(o => { o.disabled = true; });
+    btn.classList.add(correct ? 'correct' : 'wrong');
+    if (!correct) {
+      opts.forEach(o => {
+        if (o.onclick && o.onclick.toString().indexOf(',true)') !== -1) o.classList.add('correct');
+      });
+    }
+
+    const cfg = MCQ_CFG[id];
+    const fb  = document.getElementById('fb-' + id);
+    if (fb) {
+      fb.innerHTML  = correct ? cfg.correct : cfg.wrong;
+      fb.className  = 'mcq-fb ' + (correct ? 'correct' : 'wrong');
+    }
+
+    if (cfg.taskOnAnswer !== null && cfg.taskOnAnswer !== undefined) markDone(cfg.taskOnAnswer);
+
+    setTimeout(() => {
+      if (cfg.next) {
+        const nxt = document.getElementById(cfg.next);
+        if (nxt) { nxt.style.display = 'block'; nxt.scrollIntoView({ behavior:'smooth', block:'center' }); }
+      }
+      if (cfg.navId) {
+        const nav = document.getElementById(cfg.navId);
+        if (nav) nav.style.display = 'flex';
+      }
+    }, 750);
+  }
+
+  // ── Stage 3: associate search ─────────────────────────────────────────────
+  function searchAssociates() {
+    const raw = document.getElementById('s3-id').value.trim().toUpperCase().replace(/\s/g,'');
+    const err = document.getElementById('s3-err');
+    const hit = raw === 'A-2847' || raw === 'A2847';
+
+    if (!raw && !document.getElementById('s3-name').value.trim()) {
+      err.textContent = '⚠ Enter an Associate ID (e.g. A-2847) to search.';
+      err.classList.add('on'); return;
+    }
+    if (hit) {
+      err.classList.remove('on');
+      document.getElementById('s3-results').classList.add('on');
+      markDone(3);
+    } else {
+      err.textContent = '⚠ No records found. Check the ID — it should be A-2847 (from Mia\'s associated persons field).';
+      err.classList.add('on');
+      document.getElementById('s3-results').classList.remove('on');
+    }
+  }
+
+  function viewAshley() {
+    document.getElementById('ashley-card').classList.add('on');
+    document.getElementById('h3').style.display = 'block';
+    document.getElementById('nav3').style.display = 'flex';
+  }
+
+  // ── Stage 4: social media search ─────────────────────────────────────────
+  const SM_DATA = [
+    { id:'SM-001', personId:'A-2847', platform:'Instagram', username:'xxAshxx',    status:'Active' },
+    { id:'SM-002', personId:'A-2847', platform:'TikTok',    username:'ashchen22',   status:'Active' },
+    { id:'SM-003', personId:'A-1203', platform:'Instagram', username:'j_walsh_10',  status:'Active' }
+  ];
+
+  function searchSocialMedia() {
+    const rawId  = document.getElementById('s4-id').value.trim().toUpperCase().replace(/\s/g,'');
+    const plat   = document.getElementById('s4-platform').value;
+    const err    = document.getElementById('s4-err');
+    const hitId  = rawId === 'A-2847' || rawId === 'A2847';
+
+    if (!rawId) {
+      err.textContent = '⚠ Enter a Person ID. Use A-2847 (Ashley Chen\'s associate ID from Stage 3).';
+      err.classList.add('on'); return;
+    }
+    if (!hitId) {
+      err.textContent = '⚠ No social media records found for ID "' + document.getElementById('s4-id').value.trim() + '". Try A-2847.';
+      err.classList.add('on');
+      document.getElementById('s4-results').classList.remove('on'); return;
+    }
+
+    err.classList.remove('on');
+    let rows = SM_DATA.filter(r => r.personId === 'A-2847');
+    if (plat) rows = rows.filter(r => r.platform === plat);
+
+    document.getElementById('s4-tbody').innerHTML = rows.map(r =>
+      `<tr><td class="k">${r.id}</td><td class="k">${r.personId}</td><td>${r.platform}</td><td class="hi">${r.username}</td><td><span class="badge badge-g">ACTIVE</span></td></tr>`
+    ).join('');
+    document.getElementById('s4-count').textContent = rows.length + ' record' + (rows.length !== 1 ? 's' : '') + ' found';
+    document.getElementById('s4-results').classList.add('on');
+
+    const hasInsta = rows.some(r => r.platform === 'Instagram');
+    if (hasInsta) {
+      document.getElementById('ig-found').classList.add('on');
+      document.getElementById('nav4').style.display = 'flex';
+      document.getElementById('h4').style.display = 'none';
+      markDone(5);
+    } else if (rows.length > 0) {
+      document.getElementById('h4').style.display = 'block';
+    }
+
+    // Mark task for any valid search of A-2847
+    markDone(4);
+  }
+
+  // ── Completion ────────────────────────────────────────────────────────────
+  function finishUp() {
+    for (let i = 0; i < TASK_COUNT; i++) markDone(i);
+    setTimeout(() => { window.ActivityUI?.launchCelebration(); }, 500);
+  }
+
+  // ── Enter key support ─────────────────────────────────────────────────────
+  document.getElementById('s1-name').addEventListener('keydown', e => { if (e.key === 'Enter') searchPersons(); });
+  document.getElementById('s3-id').addEventListener('keydown',   e => { if (e.key === 'Enter') searchAssociates(); });
+  document.getElementById('s4-id').addEventListener('keydown',   e => { if (e.key === 'Enter') searchSocialMedia(); });
+
+  // ── Init ──────────────────────────────────────────────────────────────────
+  updateProgress(0);
+</script>
+</body>
+</html>
