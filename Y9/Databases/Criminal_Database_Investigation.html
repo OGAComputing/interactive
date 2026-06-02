@@ -42,14 +42,12 @@ color:  cyan
       overflow-x: hidden;
     }
 
-    /* Scanline overlay */
     body::before {
       content: '';
       position: fixed; inset: 0;
       background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,.07) 2px, rgba(0,0,0,.07) 4px);
       pointer-events: none; z-index: 9999;
     }
-    /* Vignette */
     body::after {
       content: '';
       position: fixed; inset: 0;
@@ -96,7 +94,7 @@ color:  cyan
     @keyframes node-pulse { 0%,100%{box-shadow:var(--glow-c)} 50%{box-shadow:none} }
     .ps-label { font-size:.52rem; letter-spacing:.07em; color:var(--text-dim); margin-left:5px; white-space:nowrap; max-width:68px; overflow:hidden; text-overflow:ellipsis; }
     .ps-label.active { color:var(--cyan); } .ps-label.done { color:var(--primary-dim); }
-    .ps-line { height:1.5px; width:28px; background:var(--border); flex-shrink:0; margin:0 3px; transition:background .35s ease; }
+    .ps-line { height:1.5px; width:22px; background:var(--border); flex-shrink:0; margin:0 3px; transition:background .35s ease; }
     .ps-line.done { background:var(--primary-dim); }
 
     /* ── LAYOUT ── */
@@ -250,6 +248,15 @@ color:  cyan
     .rec-fv.glow { color:var(--primary); text-shadow:0 0 8px rgba(0,229,160,.45); }
     .rec-fv.note { font-size:.77rem; color:var(--text); }
 
+    /* ── CONCEPT TRIO ── */
+    .concept-trio { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin:16px 0 4px; }
+    .ctrio-card { background:rgba(0,196,224,.04); border:1px solid var(--cyan-dim); padding:13px 14px; position:relative; }
+    .ctrio-term { font-size:.56rem; letter-spacing:.2em; text-transform:uppercase; color:var(--cyan); margin-bottom:8px; }
+    .ctrio-def  { font-size:.79rem; line-height:1.72; color:var(--text); }
+    .ctrio-def strong { color:var(--text-bright); }
+    .ctrio-eg   { font-size:.65rem; color:var(--primary-dim); margin-top:8px; padding-top:6px; border-top:1px solid rgba(0,229,160,.13); font-style:italic; }
+    @media(max-width:640px) { .concept-trio { grid-template-columns:1fr; } }
+
     /* ── HINT ── */
     .hint { border:1px solid rgba(255,168,0,.28); background:rgba(255,168,0,.04); padding:10px 14px; font-size:.77rem; color:var(--amber); line-height:1.65; margin:14px 0; display:none; }
     .hint::before { content:'▶ INVESTIGATOR HINT  '; font-size:.58rem; letter-spacing:.15em; }
@@ -299,6 +306,184 @@ color:  cyan
     .comp-note { margin-top:22px; font-size:.73rem; color:var(--text-dim); line-height:1.75; max-width:480px; margin-left:auto; margin-right:auto; }
     .comp-note strong { color:var(--primary); }
 
+    /* ── VIEW-RECORD NUDGE ── */
+    .view-nudge {
+      font-size:.7rem; color:var(--cyan); letter-spacing:.1em;
+      padding:8px 12px; margin-bottom:10px; border:1px dashed var(--cyan-dim);
+      background:rgba(0,196,224,.04);
+      display:flex; align-items:center; gap:8px;
+      animation:nudge-blink 1.4s ease-in-out infinite;
+    }
+    @keyframes nudge-blink { 0%,100%{opacity:1} 50%{opacity:.35} }
+
+    /* ── NARROW RESULTS NUDGE ── */
+    .narrow-nudge {
+      font-size:.7rem; color:var(--amber); letter-spacing:.1em;
+      padding:8px 12px; margin:10px 0; border:1px dashed rgba(255,168,0,.4);
+      background:rgba(255,168,0,.04);
+      display:flex; align-items:center; gap:8px;
+    }
+
+    /* ── TEACHING STEP BAR ── */
+    .teach-steps-bar {
+      display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+      margin-bottom: 0;
+    }
+    .tsb-item {
+      padding: 4px 10px; border: 1px solid var(--border);
+      color: var(--text-dim); font-size: .58rem; letter-spacing: .12em;
+      text-transform: uppercase; transition: all .35s;
+    }
+    .tsb-item.active { border-color: var(--cyan); color: var(--cyan); background: rgba(0,196,224,.07); }
+    .tsb-item.done   { border-color: var(--primary-dim); color: var(--primary); background: rgba(0,229,160,.05); }
+    .tsb-arrow { color: var(--border); font-size: .8rem; }
+
+    /* ── TEACHING TABLE ── */
+    .teach-table-wrap {
+      position: relative; margin: 8px 0 0;
+      border: 1px solid var(--border);
+      transition: border-color .45s, box-shadow .45s;
+    }
+    .teach-table-wrap.hl-table {
+      border: 3px solid var(--cyan);
+      box-shadow: 0 0 32px rgba(0,196,224,.45), inset 0 0 22px rgba(0,196,224,.09);
+    }
+    .teach-tag-outer {
+      position: absolute; top: -11px; left: 14px;
+      background: var(--bg); padding: 0 9px;
+      font-size: .58rem; letter-spacing: .2em; text-transform: uppercase;
+      color: var(--text-dim); border: 1px solid var(--border);
+      font-weight: 700; transition: color .45s, border-color .45s;
+    }
+    .teach-table-wrap.hl-table .teach-tag-outer { color: var(--cyan); border-color: var(--cyan); text-shadow: var(--glow-c); }
+
+    #teach-row-1 td { transition: background .45s, border-color .45s, box-shadow .45s; }
+    .hl-record #teach-row-1 td {
+      background: rgba(0,229,160,.18) !important;
+      border-color: rgba(0,229,160,.6) !important;
+      box-shadow: inset 0 0 12px rgba(0,229,160,.1);
+    }
+    .hl-record #teach-row-1 td:first-child {
+      border-left: 3px solid var(--primary) !important;
+    }
+
+    #th-name, #td-name-1, #td-name-2, #td-name-3 { transition: color .45s, background .45s, box-shadow .45s; }
+    .hl-field #th-name {
+      color: var(--amber) !important; background: rgba(255,168,0,.22) !important;
+      text-shadow: 0 0 8px rgba(255,168,0,.5);
+    }
+    .hl-field #td-name-1, .hl-field #td-name-2, .hl-field #td-name-3 {
+      background: rgba(255,168,0,.13) !important;
+      color: var(--amber) !important;
+      box-shadow: inset 0 0 10px rgba(255,168,0,.08);
+    }
+
+    #td-pk { position: relative; transition: all .45s; }
+    .hl-pk #td-pk {
+      color: var(--cyan) !important;
+      background: rgba(0,196,224,.28) !important;
+      border-color: var(--cyan) !important;
+      border-width: 2px !important;
+      font-weight: 700;
+      box-shadow: inset 0 0 16px rgba(0,196,224,.25), 0 0 12px rgba(0,196,224,.35);
+      text-shadow: var(--glow-c);
+    }
+    .pk-badge {
+      display: none; font-size: .5rem; letter-spacing: .1em; text-transform: uppercase;
+      background: rgba(0,196,224,.18); border: 1px solid rgba(0,196,224,.45);
+      color: var(--cyan); padding: 1px 5px; margin-left: 6px; vertical-align: middle;
+    }
+    .hl-pk .pk-badge { display: inline; }
+
+    /* ── CONCEPT PANEL ── */
+    .teach-panel {
+      background: var(--bg2); border: 1px solid var(--border); border-top: none;
+      padding: 22px 24px; min-height: 165px;
+    }
+    .tp-content { display: none; flex-direction: column; gap: 14px; animation: stg-in .35s ease; }
+    .tp-content.active { display: flex; }
+
+    .tp-intro-row { display: flex; align-items: center; gap: 14px; }
+    .tp-intro-icon { font-size: 2rem; flex-shrink: 0; }
+    .tp-intro-msg { font-size: .84rem; line-height: 1.8; color: var(--text); }
+    .tp-intro-msg strong { color: var(--text-bright); }
+
+    .tp-header { display: flex; align-items: center; gap: 14px; }
+    .tp-step-pip {
+      font-size: .56rem; letter-spacing: .14em; text-transform: uppercase;
+      color: var(--text-dim); border: 1px solid var(--border); padding: 2px 8px; white-space: nowrap;
+    }
+    .tp-term { font-size: 1.1rem; letter-spacing: .16em; text-transform: uppercase; font-weight: 700; }
+    .tp-cyan  { color: var(--cyan);    text-shadow: var(--glow-c); }
+    .tp-green { color: var(--primary); text-shadow: var(--glow-g); }
+    .tp-amber { color: var(--amber); }
+
+    .tp-def { font-size: .84rem; line-height: 1.82; color: var(--text); }
+    .tp-def strong { color: var(--text-bright); }
+    .tp-def code   { color: var(--primary); background: rgba(0,229,160,.08); padding: 1px 5px; font-size: .8rem; }
+
+    .tp-callout {
+      font-size: .72rem; letter-spacing: .06em; font-style: italic;
+      padding: 8px 13px; border-left: 2px solid;
+    }
+    .tp-callout-cyan  { border-color: var(--cyan);    color: var(--cyan);    background: rgba(0,196,224,.05); }
+    .tp-callout-green { border-color: var(--primary);  color: var(--primary); background: rgba(0,229,160,.05); }
+    .tp-callout-amber { border-color: var(--amber);    color: var(--amber);   background: rgba(255,168,0,.05); }
+
+    /* ── DRAG AND DROP ── */
+    .drag-bank {
+      display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+      padding:12px 16px;
+      background:rgba(0,229,160,.03);
+      border:1px solid var(--border);
+      margin-bottom:18px;
+    }
+    .drag-bank-lbl { font-size:.58rem; letter-spacing:.16em; text-transform:uppercase; color:var(--text-dim); flex-shrink:0; margin-right:4px; }
+    .drag-chip {
+      background:transparent;
+      border:1.5px solid var(--primary); color:var(--primary);
+      font-family:'Courier New',monospace;
+      font-size:.7rem; letter-spacing:.12em; text-transform:uppercase;
+      padding:6px 14px; cursor:grab; user-select:none;
+      transition:all .2s;
+    }
+    .drag-chip:active { cursor:grabbing; opacity:.7; }
+    .drag-chip.used { opacity:.2; cursor:default; border-color:var(--border); color:var(--text-dim); pointer-events:none; }
+
+    .id-rows { display:flex; flex-direction:column; gap:8px; margin-bottom:18px; }
+    .id-row {
+      display:flex; align-items:center; gap:12px;
+      padding:10px 14px; border:1px solid rgba(14,49,88,.5);
+      background:var(--bg2);
+    }
+    .id-letter {
+      width:24px; height:24px; border-radius:50%;
+      border:1.5px solid var(--cyan-dim); color:var(--cyan);
+      display:flex; align-items:center; justify-content:center;
+      font-size:.62rem; font-weight:700; flex-shrink:0;
+    }
+    .id-desc { flex:1; font-size:.8rem; line-height:1.6; color:var(--text); }
+    .dz {
+      min-width:120px; min-height:32px;
+      border:1.5px dashed var(--border);
+      display:flex; align-items:center; justify-content:center;
+      font-size:.62rem; letter-spacing:.1em; text-transform:uppercase;
+      color:var(--text-dim); padding:6px 12px;
+      transition:all .2s; cursor:default; flex-shrink:0; text-align:center;
+    }
+    .dz.drag-over { border-color:var(--primary); background:rgba(0,229,160,.06); color:var(--primary); }
+    .dz.correct   { border-color:var(--primary) !important; border-style:solid !important; color:var(--primary) !important; background:rgba(0,229,160,.07) !important; }
+    .dz.wrong     { border-color:var(--red) !important; border-style:solid !important; color:var(--red) !important; background:rgba(255,59,59,.06) !important; }
+
+    .dz-success {
+      border:1px solid var(--primary); background:rgba(0,229,160,.06);
+      padding:12px 18px; font-size:.82rem; color:var(--primary);
+      display:none; align-items:center; gap:10px; margin-bottom:14px;
+      animation:stg-in .3s ease;
+    }
+    .dz-success.on { display:flex; }
+    .dz-ok-icon { font-size:1.1rem; }
+
     /* ── RESPONSIVE ── */
     @media(max-width:580px) {
       .rec-grid { grid-template-columns:1fr; }
@@ -307,7 +492,77 @@ color:  cyan
       .db-wrap { padding:14px 12px 80px; }
       .t-row { flex-wrap:wrap; }
       .t-lbl { min-width:80px; }
+      .id-row { flex-wrap:wrap; }
+      .dz { min-width:90px; }
     }
+
+    /* ── REFERENCE PANEL ── */
+    .ref-panel { margin-bottom: 16px; }
+    .ref-toggle {
+      width: 100%; text-align: left;
+      background: rgba(255,168,0,.04); border: 1px dashed rgba(255,168,0,.35);
+      color: var(--amber); font-family: 'Courier New',monospace;
+      font-size: .68rem; letter-spacing: .14em; text-transform: uppercase;
+      padding: 9px 14px; cursor: pointer;
+      display: flex; align-items: center; justify-content: space-between; gap: 10px;
+      transition: background .2s, border-color .2s;
+    }
+    .ref-toggle:hover { background: rgba(255,168,0,.09); border-color: rgba(255,168,0,.55); }
+    .ref-toggle .ref-arrow { font-size: .75rem; transition: transform .25s; flex-shrink: 0; }
+    .ref-toggle.open .ref-arrow { transform: rotate(90deg); }
+    .ref-body { display: none; border: 1px dashed rgba(255,168,0,.25); border-top: none; }
+    .ref-body.open { display: block; }
+    .ref-body .rec-card { display: block; margin-bottom: 0; animation: none; }
+
+    /* ── CASE FILE PANEL ── */
+    #case-file {
+      display: none;
+      background: var(--bg2);
+      border-bottom: 1px solid rgba(0,229,160,.22);
+      padding: 8px 20px 10px;
+      animation: stg-in .35s ease;
+    }
+    .cf-header {
+      font-size: .54rem; letter-spacing: .2em; text-transform: uppercase;
+      color: var(--primary); text-shadow: var(--glow-g);
+      display: flex; align-items: center; justify-content: space-between; gap: 10px;
+      margin-bottom: 7px;
+    }
+    .cf-count { color: var(--cyan); font-size: .5rem; letter-spacing: .1em; text-shadow: none; }
+    .cf-clues-list { display: flex; flex-wrap: wrap; gap: 5px; }
+    .cf-clue {
+      font-size: .62rem; color: var(--text); line-height: 1.45;
+      padding: 3px 9px; background: rgba(0,229,160,.04);
+      border: 1px solid rgba(0,229,160,.22);
+      display: flex; align-items: flex-start; gap: 5px;
+    }
+    .cf-clue::before { content: '▸'; color: var(--primary); flex-shrink: 0; }
+    @keyframes cf-pop {
+      from { opacity:0; transform:scale(.95); background:rgba(0,229,160,.18); }
+      to   { opacity:1; transform:none;       background:rgba(0,229,160,.04); }
+    }
+
+    /* Wide screens: convert to fixed right sidebar */
+    @media (min-width: 1120px) {
+      #case-file {
+        position: fixed; top: 84px; right: 20px;
+        width: 196px; padding: 0;
+        border: 1px solid rgba(0,229,160,.28); border-bottom: 1px solid rgba(0,229,160,.28);
+        max-height: calc(100vh - 104px); overflow-y: auto;
+        box-shadow: 0 0 22px rgba(0,229,160,.06);
+        z-index: 450;
+      }
+      .cf-header { padding: 9px 12px 8px; margin-bottom: 0; border-bottom: 1px solid rgba(0,229,160,.14); }
+      .cf-clues-list { flex-direction: column; padding: 7px 12px 10px; gap: 0; }
+      .cf-clue {
+        padding: 5px 0; background: transparent;
+        border: none; border-bottom: 1px solid rgba(14,49,88,.4);
+        animation: cf-pop .4s ease;
+      }
+      .cf-clue:last-child { border-bottom: none; }
+    }
+
+    @media (max-width: 480px) { #case-file { display: none !important; } }
   </style>
 </head>
 <body>
@@ -332,17 +587,34 @@ color:  cyan
 <div class="progress-strip">
   <div class="ps-step"><div class="ps-node active" id="n0">1</div><span class="ps-label active" id="l0">Briefing</span></div>
   <div class="ps-line" id="c0"></div>
-  <div class="ps-step"><div class="ps-node" id="n1">2</div><span class="ps-label" id="l1">Person Search</span></div>
+  <div class="ps-step"><div class="ps-node" id="n1">2</div><span class="ps-label" id="l1">DB Concepts</span></div>
   <div class="ps-line" id="c1"></div>
-  <div class="ps-step"><div class="ps-node" id="n2">3</div><span class="ps-label" id="l2">Check Results</span></div>
+  <div class="ps-step"><div class="ps-node" id="n2">3</div><span class="ps-label" id="l2">Identify</span></div>
   <div class="ps-line" id="c2"></div>
-  <div class="ps-step"><div class="ps-node" id="n3">4</div><span class="ps-label" id="l3">Associate</span></div>
+  <div class="ps-step"><div class="ps-node" id="n3">4</div><span class="ps-label" id="l3">Person Search</span></div>
   <div class="ps-line" id="c3"></div>
-  <div class="ps-step"><div class="ps-node" id="n4">5</div><span class="ps-label" id="l4">Social Media</span></div>
+  <div class="ps-step"><div class="ps-node" id="n4">5</div><span class="ps-label" id="l4">Check Results</span></div>
   <div class="ps-line" id="c4"></div>
-  <div class="ps-step"><div class="ps-node" id="n5">6</div><span class="ps-label" id="l5">Concepts</span></div>
+  <div class="ps-step"><div class="ps-node" id="n5">6</div><span class="ps-label" id="l5">Associate</span></div>
   <div class="ps-line" id="c5"></div>
-  <div class="ps-step"><div class="ps-node" id="n6">✓</div><span class="ps-label" id="l6">Complete</span></div>
+  <div class="ps-step"><div class="ps-node" id="n6">7</div><span class="ps-label" id="l6">Social Media</span></div>
+  <div class="ps-line" id="c6"></div>
+  <div class="ps-step"><div class="ps-node" id="n7">8</div><span class="ps-label" id="l7">Devices</span></div>
+  <div class="ps-line" id="c7"></div>
+  <div class="ps-step"><div class="ps-node" id="n8">9</div><span class="ps-label" id="l8">Final Search</span></div>
+  <div class="ps-line" id="c8"></div>
+  <div class="ps-step"><div class="ps-node" id="n9">10</div><span class="ps-label" id="l9">Concepts Q</span></div>
+  <div class="ps-line" id="c9"></div>
+  <div class="ps-step"><div class="ps-node" id="n10">✓</div><span class="ps-label" id="l10">Complete</span></div>
+</div>
+
+<!-- ── CASE FILE PANEL ────────────────────────────────── -->
+<div id="case-file">
+  <div class="cf-header">
+    <span>📋 CASE FILE — MIS-2026-0047</span>
+    <span class="cf-count" id="cf-count">0 clues</span>
+  </div>
+  <div class="cf-clues-list" id="cf-clues"></div>
 </div>
 
 <!-- ── MAIN WRAPPER ───────────────────────────────────── -->
@@ -351,7 +623,6 @@ color:  cyan
   <!-- ══ STAGE 0: BOOT + BRIEFING ═════════════════════ -->
   <div class="stage active" id="stage-0">
 
-    <!-- Boot animation -->
     <div class="boot-wrap" id="boot-anim">
       <div class="boot-logo">CRIMDB</div>
       <div class="boot-sub">National Criminal Intelligence Database · v4.2.1</div>
@@ -367,35 +638,209 @@ color:  cyan
       <button class="btn" id="btn-briefing" style="display:none" onclick="showBriefing()"><span>VIEW MISSION BRIEFING →</span></button>
     </div>
 
-    <!-- Briefing (hidden until boot completes) -->
     <div id="briefing-section" style="display:none">
       <div class="briefing">
         <div class="stamp">RESTRICTED</div>
         <h2>🔴 Active Case — MIS-2026-0047</h2>
-        <p>On <strong style="color:var(--text-bright)">12 October 2024</strong>, a 14-year-old named <strong style="color:var(--text-bright)">Maria Burton</strong> left home at <strong style="color:var(--text-bright)">17:30</strong>, telling her parent she was going to visit her friend Jess. Jess later confirmed that Maria never arrived and the two had not arranged to meet. A missing person report was filed the following day, <strong style="color:var(--text-bright)">13 October 2024</strong>.</p>
-        <p>Maria left her phone at home. Detectives examined her phone's message history and Instagram account. A photo posted to her Instagram was taken on a <strong style="color:var(--amber)">Samsung Galaxy device</strong> — but Maria owns an iPhone, suggesting someone else had accessed her account. Messages on her phone showed repeated contact from an account called <strong style="color:var(--amber)">AshXxX</strong> in the days before she vanished.</p>
-        <p>Two witness statements were recorded: <strong style="color:var(--text-bright)">Mia Matthews</strong> (who tried to contact Maria and noted she had been upset about a recent breakup with her ex, Connor) and <strong style="color:var(--text-bright)">Megan Turner</strong> (who said things between Jess and Maria had been awkward because Jess disliked Connor).</p>
-        <p><strong style="color:var(--amber)">Your mission:</strong> Use the CRIMDB system to find Maria's record, trace the key associate, and identify their social media username. Work through each stage carefully.</p>
-      </div>
-
-      <div class="concept">
-        <p>A <strong>database</strong> organises information into <strong>tables</strong>. Each row is a <strong>record</strong> (one person or item). Each column is a <strong>field</strong> (one piece of information, e.g. name, DOB). You can <strong>search</strong> by entering a value for any field — the database returns only matching records.</p>
+        <p>On <strong style="color:var(--text-bright)">12 October 2024</strong>, 14-year-old <strong style="color:var(--text-bright)">Maria Burton</strong> left home at <strong style="color:var(--text-bright)">17:30</strong>, telling her parent she was visiting her friend Jess. Jess confirmed Maria never arrived and no visit had been arranged. A missing person report was filed the following day.</p>
+        <p>Maria left her phone at home. A photo on her Instagram was taken on a <strong style="color:var(--amber)">Samsung Galaxy</strong> — but Maria owns an iPhone. Messages from an account called <strong style="color:var(--amber)">AshXxX</strong> were found on her phone in the days before she vanished.</p>
+        <p><strong style="color:var(--amber)">Your mission:</strong> Search CRIMDB to find Maria's record, trace the key associate, and identify their Instagram username.</p>
       </div>
 
       <div class="nav-row" style="border:none; padding-top:0; justify-content:flex-start">
-        <button class="btn" onclick="gotoStage(1)"><span>BEGIN INVESTIGATION →</span></button>
+        <button class="btn" onclick="gotoStage(1)"><span>NEXT: DATABASE CONCEPTS →</span></button>
       </div>
     </div>
   </div>
 
-  <!-- ══ STAGE 1: SEARCH tbl_persons ══════════════════ -->
+  <!-- ══ STAGE 1: DATABASE CONCEPTS TEACHING ══════════ -->
   <div class="stage" id="stage-1">
-    <div class="sec-lbl">Stage 1 of 6 — Person Records Search</div>
+    <div class="sec-lbl">Stage 1 of 10 — Database Key Concepts</div>
+    <div class="stg-title">How Databases Are Structured</div>
+    <div class="stg-instr">
+      Click through the concepts below one at a time — the table will highlight each part as you go.
+    </div>
+
+    <!-- Step progress bar -->
+    <div class="teach-steps-bar">
+      <div class="tsb-item" id="tsb-1">Table</div>
+      <div class="tsb-arrow">›</div>
+      <div class="tsb-item" id="tsb-2">Record</div>
+      <div class="tsb-arrow">›</div>
+      <div class="tsb-item" id="tsb-3">Field</div>
+      <div class="tsb-arrow">›</div>
+      <div class="tsb-item" id="tsb-4">Primary Key</div>
+    </div>
+
+    <!-- Database table — highlights applied progressively by setTeachStep() -->
+    <div class="teach-table-wrap" id="teach-table-wrap">
+      <div class="teach-tag-outer" id="teach-tag">tbl_persons</div>
+      <table class="db-table" style="margin-bottom:0">
+        <thead>
+          <tr>
+            <th id="th-recid">Record ID</th>
+            <th id="th-name">Full Name</th>
+            <th>DOB</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr id="teach-row-1">
+            <td class="k" id="td-pk">P-1042<span class="pk-badge">PK</span></td>
+            <td class="hi" id="td-name-1">Burton, Maria</td>
+            <td>15/03/2010</td>
+            <td><span class="badge badge-r">MISSING</span></td>
+          </tr>
+          <tr>
+            <td class="k">P-0731</td>
+            <td id="td-name-2">Chen, Maria L.</td>
+            <td>22/07/2009</td>
+            <td><span class="badge badge-g">ACTIVE</span></td>
+          </tr>
+          <tr>
+            <td class="k">P-1188</td>
+            <td id="td-name-3">Williams, M. K.</td>
+            <td>08/02/2010</td>
+            <td><span class="badge badge-a">CAUTION</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Concept panel — one step at a time -->
+    <div class="teach-panel">
+
+      <!-- Step 0: intro -->
+      <div class="tp-content active" id="tp-0">
+        <div class="tp-intro-row">
+          <div class="tp-intro-icon">🗄️</div>
+          <div class="tp-intro-msg">Above is a real database table from CRIMDB. Click the button below to start exploring each part — <strong>one concept at a time</strong>.</div>
+        </div>
+        <div><button class="btn cyan" onclick="setTeachStep(1)"><span>START — WHAT IS A TABLE? →</span></button></div>
+      </div>
+
+      <!-- Step 1: TABLE -->
+      <div class="tp-content" id="tp-1">
+        <div class="tp-header">
+          <div class="tp-step-pip">1 of 4</div>
+          <div class="tp-term tp-cyan">Table</div>
+        </div>
+        <div class="tp-def">The <strong>table</strong> is the entire grid — a named collection of related data arranged in rows and columns. A database can hold many tables. This one is <code>tbl_persons</code>; CRIMDB also has <code>tbl_devices</code>, <code>tbl_social_media</code> and others.</div>
+        <div class="tp-callout tp-callout-cyan">↑ The whole cyan-bordered grid above is one TABLE</div>
+        <div><button class="btn" onclick="setTeachStep(2)"><span>NEXT — WHAT IS A RECORD? →</span></button></div>
+      </div>
+
+      <!-- Step 2: RECORD -->
+      <div class="tp-content" id="tp-2">
+        <div class="tp-header">
+          <div class="tp-step-pip">2 of 4</div>
+          <div class="tp-term tp-green">Record</div>
+        </div>
+        <div class="tp-def">A <strong>record</strong> is one complete horizontal row in a table. It holds every piece of data about a single person or item. Each row is a separate record — the highlighted green row is Maria Burton's.</div>
+        <div class="tp-callout tp-callout-green">↑ The green-highlighted row is one RECORD</div>
+        <div><button class="btn" onclick="setTeachStep(3)"><span>NEXT — WHAT IS A FIELD? →</span></button></div>
+      </div>
+
+      <!-- Step 3: FIELD -->
+      <div class="tp-content" id="tp-3">
+        <div class="tp-header">
+          <div class="tp-step-pip">3 of 4</div>
+          <div class="tp-term tp-amber">Field</div>
+        </div>
+        <div class="tp-def">A <strong>field</strong> is one vertical column in a table. It stores a single category of information across every record. The highlighted amber column is the "Full Name" field — it holds a name for every person in the database.</div>
+        <div class="tp-callout tp-callout-amber">↑ The amber-highlighted column is one FIELD</div>
+        <div><button class="btn" onclick="setTeachStep(4)"><span>NEXT — WHAT IS A PRIMARY KEY? →</span></button></div>
+      </div>
+
+      <!-- Step 4: PRIMARY KEY -->
+      <div class="tp-content" id="tp-4">
+        <div class="tp-header">
+          <div class="tp-step-pip">4 of 4</div>
+          <div class="tp-term tp-cyan">Primary Key</div>
+        </div>
+        <div class="tp-def">Every record needs a <strong>primary key</strong> — a unique identifier that belongs to that record alone. No two records in the same table can share a primary key. Maria's is <strong style="color:var(--cyan)">P-1042</strong>; it belongs to her and no one else. The glowing cell in the Record ID column is her primary key value.</div>
+        <div class="tp-callout tp-callout-cyan">↑ "P-1042" in the Record ID column is the PRIMARY KEY for Maria's record</div>
+        <div><button class="btn" onclick="markDone(0); gotoStage(2)"><span>GOT IT — TEST MY KNOWLEDGE →</span></button></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══ STAGE 2: DRAG AND DROP IDENTIFY ══════════════ -->
+  <div class="stage" id="stage-2">
+    <div class="sec-lbl">Stage 2 of 10 — Identify the Concepts</div>
+    <div class="stg-title">Label the Database</div>
+    <div class="stg-instr">
+      Drag each term from the bank and drop it onto the correct description. Use the reference table to help you.
+    </div>
+
+    <!-- Chip bank -->
+    <div class="drag-bank" id="chip-bank">
+      <span class="drag-bank-lbl">Term bank:</span>
+      <div class="drag-chip" draggable="true" id="chip-table"  data-term="Table">TABLE</div>
+      <div class="drag-chip" draggable="true" id="chip-record" data-term="Record">RECORD</div>
+      <div class="drag-chip" draggable="true" id="chip-field"  data-term="Field">FIELD</div>
+      <div class="drag-chip" draggable="true" id="chip-pk"     data-term="Primary Key">PRIMARY KEY</div>
+    </div>
+
+    <!-- Reference table -->
+    <div class="sec-lbl">Reference — tbl_persons</div>
+    <table class="db-table" style="margin-bottom:22px">
+      <thead><tr><th>Record ID</th><th>Full Name</th><th>DOB</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td class="k">P-1042</td><td class="hi">Burton, Maria</td><td>15/03/2010</td><td><span class="badge badge-r">MISSING</span></td></tr>
+        <tr><td class="k">P-0731</td><td>Chen, Maria L.</td><td>22/07/2009</td><td><span class="badge badge-g">ACTIVE</span></td></tr>
+        <tr><td class="k">P-1188</td><td>Williams, M. K.</td><td>08/02/2010</td><td><span class="badge badge-a">CAUTION</span></td></tr>
+      </tbody>
+    </table>
+
+    <!-- Drop zones -->
+    <div class="id-rows">
+      <div class="id-row">
+        <div class="id-letter">A</div>
+        <div class="id-desc">The entire organised structure of rows and columns shown above</div>
+        <div class="dz" id="dz-a" data-answer="Table"
+             ondragover="dzOver(event)" ondragleave="dzLeave(event)" ondrop="dzDrop(event)">drag here</div>
+      </div>
+      <div class="id-row">
+        <div class="id-letter">B</div>
+        <div class="id-desc">One complete horizontal row — all the data about one person (e.g. the P-1042 row)</div>
+        <div class="dz" id="dz-b" data-answer="Record"
+             ondragover="dzOver(event)" ondragleave="dzLeave(event)" ondrop="dzDrop(event)">drag here</div>
+      </div>
+      <div class="id-row">
+        <div class="id-letter">C</div>
+        <div class="id-desc">One vertical column — a single category of information such as "Full Name" or "DOB"</div>
+        <div class="dz" id="dz-c" data-answer="Field"
+             ondragover="dzOver(event)" ondragleave="dzLeave(event)" ondrop="dzDrop(event)">drag here</div>
+      </div>
+      <div class="id-row">
+        <div class="id-letter">D</div>
+        <div class="id-desc">The unique identifier in each row that belongs to that record alone — e.g. P-1042 for Maria's row</div>
+        <div class="dz" id="dz-d" data-answer="Primary Key"
+             ondragover="dzOver(event)" ondragleave="dzLeave(event)" ondrop="dzDrop(event)">drag here</div>
+      </div>
+    </div>
+
+    <div class="dz-success" id="dz-success">
+      <span class="dz-ok-icon">✔</span> All four terms correctly identified — you're ready to begin the investigation.
+    </div>
+
+    <div class="nav-row" id="nav2" style="display:none">
+      <button class="btn" onclick="gotoStage(3)"><span>BEGIN INVESTIGATION →</span></button>
+    </div>
+  </div>
+
+  <!-- ══ STAGE 3: SEARCH tbl_persons ══════════════════ -->
+  <div class="stage" id="stage-3">
+    <div class="sec-lbl">Stage 3 of 10 — Person Records Search</div>
     <div class="stg-title">Search the Person Records Database</div>
     <div class="stg-instr">
       You need to find Maria Burton's record in the <code>tbl_persons</code> table.
-      Type her <strong>full name</strong> in the search form below and click <strong>EXECUTE SEARCH</strong>.
-      Leave other fields blank for now.
+      <ul style="margin: 10px 0 0 1.2em; line-height: 2;">
+        <li>Enter just her <strong>first name</strong> and run the search — see how many results come back.</li>
+        <li>Then use the additional fields to <strong>narrow your results</strong> down to a single record.</li>
+      </ul>
     </div>
 
     <div class="term" data-lbl="QUERY — tbl_persons">
@@ -423,23 +868,16 @@ color:  cyan
       <div class="db-err" id="s1-err"></div>
     </div>
 
-    <!-- Results -->
     <div class="results" id="s1-results">
-      <div class="res-lbl">SEARCH RESULTS — <span class="res-count">1 record found</span></div>
+      <div class="res-lbl">SEARCH RESULTS — <span class="res-count" id="s1-count">0 records found</span></div>
       <table class="db-table">
         <thead><tr><th>Record ID</th><th>Full Name</th><th>DOB</th><th>Status</th><th>Action</th></tr></thead>
-        <tbody>
-          <tr>
-            <td class="k">P-1042</td>
-            <td class="hi">Burton, Maria</td>
-            <td>15/03/2010</td>
-            <td><span class="badge badge-r">MISSING</span></td>
-            <td><button class="btn cyan sm" onclick="viewMia()"><span>VIEW RECORD</span></button></td>
-          </tr>
-        </tbody>
+        <tbody id="s1-tbody"></tbody>
       </table>
+      <div class="narrow-nudge" id="narrow-nudge" style="display:none">▶ Multiple records found — add more search criteria above to narrow down to the missing person</div>
 
-      <!-- Mia's full record -->
+      <div class="view-nudge" id="nudge1" style="display:none">▶ Click VIEW RECORD to open the full file and find the next clue</div>
+
       <div class="rec-card" id="mia-card">
         <div class="rec-hd">
           <span class="rec-id">RECORD ID: P-1042</span>
@@ -459,18 +897,14 @@ color:  cyan
           <div class="rec-f"><div class="rec-fl">Own Device</div><div class="rec-fv">iPhone (confirmed)</div></div>
           <div class="rec-f"><div class="rec-fl">Report Filed</div><div class="rec-fv">13/10/2024 by parent/guardian</div></div>
           <div class="rec-f full"><div class="rec-fl">Last Known Address</div><div class="rec-fv">Home address on file — phone left at home on day of disappearance</div></div>
-          <div class="rec-f full"><div class="rec-fl">Last Confirmed Location</div><div class="rec-fv">Home — left at 17:30 on 12/10/2024 stating intention to visit friend "Jess". Jess confirms Maria never arrived and no visit was arranged.</div></div>
+          <div class="rec-f full"><div class="rec-fl">Last Confirmed Location</div><div class="rec-fv">Left home 17:30 on 12/10/2024 — said she was visiting "Jess". Jess confirms Maria never arrived.</div></div>
           <div class="rec-f full" style="background:rgba(255,168,0,.04); border-color:rgba(255,168,0,.25)">
             <div class="rec-fl" style="color:var(--amber)">⚠ Digital Evidence Flag</div>
-            <div class="rec-fv" style="color:var(--amber)">Instagram post uploaded from <strong>Samsung Galaxy device</strong> — subject's own device is iPhone. Suggests third-party account access. Messages from account <strong>AshXxX</strong> found on subject's phone in days prior to disappearance.</div>
+            <div class="rec-fv" style="color:var(--amber)">Photo posted to Maria's Instagram from a <strong>Samsung Galaxy</strong> — she owns an iPhone. Messages from <strong>AshXxX</strong> found on her phone.</div>
           </div>
           <div class="rec-f full" style="background:rgba(0,229,160,.04)">
             <div class="rec-fl">⚠ Associated Persons (IDs)</div>
             <div class="rec-fv glow">A-2847 &nbsp;|&nbsp; <span style="color:var(--text-dim);text-shadow:none">A-1203</span></div>
-          </div>
-          <div class="rec-f full">
-            <div class="rec-fl">Case Notes</div>
-            <div class="rec-fv note">Maria left home 17:30 on 12/10/2024. Friend Jess (A-1203) confirmed no visit arranged — Maria never arrived. Phone left at home. Message history on phone shows contact from 'AshXxX' (A-2847) in days prior. Instagram post metadata indicates non-iPhone device. Subject later located in tears, locked in an upstairs bedroom at suspect's address. Associates flagged for immediate follow-up.</div>
           </div>
         </div>
       </div>
@@ -479,21 +913,49 @@ color:  cyan
         Maria's record shows an <strong>Associated Persons</strong> field containing the ID <strong>A-2847</strong>. In a relational database, this is called a <strong>foreign key</strong> — a value that links to a record in a different table. You'll use this ID next.
       </div>
 
-      <div class="nav-row" id="nav1" style="display:none">
-        <button class="btn" onclick="gotoStage(2)"><span>NEXT: ANALYSE RESULTS →</span></button>
+      <div class="nav-row" id="nav3" style="display:none">
+        <button class="btn" onclick="gotoStage(4)"><span>NEXT: ANALYSE RESULTS →</span></button>
       </div>
     </div>
   </div>
 
-  <!-- ══ STAGE 2: COMPREHENSION MCQs ══════════════════ -->
-  <div class="stage" id="stage-2">
-    <div class="sec-lbl">Stage 2 of 6 — Understanding Your Search</div>
+  <!-- ══ STAGE 4: COMPREHENSION MCQs ══════════════════ -->
+  <div class="stage" id="stage-4">
+    <div class="sec-lbl">Stage 4 of 10 — Understanding Your Search</div>
     <div class="stg-title">What did your search actually do?</div>
-    <div class="stg-instr">You just searched a database and found Maria's record. Answer these questions to check you understand the key concepts.</div>
+    <div class="stg-instr">You learned about records, fields and primary keys in the introduction — and then spotted them in the database you just searched. Answer these questions to confirm your understanding. Maria's record from Stage 3 is available below if you need to refer back to it.</div>
 
-    <!-- Q1 -->
+    <div class="ref-panel">
+      <button class="ref-toggle" id="ref-btn-4-maria" onclick="toggleRef('4-maria')">
+        <span>📋 Reference — Maria Burton's Record (P-1042) · click to expand</span>
+        <span class="ref-arrow">▶</span>
+      </button>
+      <div class="ref-body" id="ref-body-4-maria">
+        <div class="rec-card">
+          <div class="rec-hd">
+            <span class="rec-id">RECORD ID: P-1042</span>
+            <span class="badge badge-r">MISSING — ACTIVE CASE</span>
+          </div>
+          <div class="rec-top">
+            <div class="rec-photo">👤</div>
+            <div>
+              <div class="rec-name">BURTON, Maria</div>
+              <div class="rec-sub">Reported missing: 13/10/2024 — Last seen 12/10/2024 at 17:30</div>
+              <span class="badge badge-r">MISSING PERSONS — PRIORITY CASE</span>
+            </div>
+          </div>
+          <div class="rec-grid">
+            <div class="rec-f"><div class="rec-fl">Record ID (Primary Key)</div><div class="rec-fv glow">P-1042</div></div>
+            <div class="rec-f"><div class="rec-fl">Full Name (search field)</div><div class="rec-fv">Burton, Maria</div></div>
+            <div class="rec-f"><div class="rec-fl">Date of Birth</div><div class="rec-fv">15/03/2010 (age 14)</div></div>
+            <div class="rec-f"><div class="rec-fl">Status</div><div class="rec-fv"><span class="badge badge-r">MISSING</span></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="mcq" id="mcq-2a">
-      <div class="mcq-q">Q1. When you typed "Maria Burton" into the search form, which <strong>field</strong> were you filtering on?</div>
+      <div class="mcq-q">Q1. When you typed a name into the search form to find Maria, which <strong>field</strong> were you filtering on?</div>
       <div class="mcq-opts" id="opts-2a">
         <button class="mcq-opt" onclick="checkMCQ('2a',this,false)"><span class="opt-k">A</span>The Record ID field (e.g. P-1042)</button>
         <button class="mcq-opt" onclick="checkMCQ('2a',this,true)"><span class="opt-k">B</span>The Full Name field</button>
@@ -503,9 +965,8 @@ color:  cyan
       <div class="mcq-fb" id="fb-2a"></div>
     </div>
 
-    <!-- Q2 -->
     <div class="mcq" id="mcq-2b" style="display:none">
-      <div class="mcq-q">Q2. Mia's information appears as one <em>row</em> in the database table. What is the correct term for a single row of data in a database?</div>
+      <div class="mcq-q">Q2. Maria's information appears as one <em>row</em> in the database table. What is the correct term for a single row of data in a database?</div>
       <div class="mcq-opts" id="opts-2b">
         <button class="mcq-opt" onclick="checkMCQ('2b',this,false)"><span class="opt-k">A</span>A field</button>
         <button class="mcq-opt" onclick="checkMCQ('2b',this,false)"><span class="opt-k">B</span>A table</button>
@@ -515,9 +976,8 @@ color:  cyan
       <div class="mcq-fb" id="fb-2b"></div>
     </div>
 
-    <!-- Q3 -->
     <div class="mcq" id="mcq-2c" style="display:none">
-      <div class="mcq-q">Q3. Mia's Record ID is <strong>P-1042</strong> — unique to her alone. No two people in the database share this ID. What is the correct term for this type of unique identifier?</div>
+      <div class="mcq-q">Q3. Maria's Record ID is <strong>P-1042</strong> — unique to her alone. No two people in the database share this ID. What is the correct term for this type of unique identifier?</div>
       <div class="mcq-opts" id="opts-2c">
         <button class="mcq-opt" onclick="checkMCQ('2c',this,false)"><span class="opt-k">A</span>A foreign key</button>
         <button class="mcq-opt" onclick="checkMCQ('2c',this,true)"><span class="opt-k">B</span>A primary key</button>
@@ -527,34 +987,75 @@ color:  cyan
       <div class="mcq-fb" id="fb-2c"></div>
     </div>
 
-    <div class="nav-row" id="nav2" style="display:none">
-      <button class="btn" onclick="gotoStage(3)"><span>NEXT: SEARCH FOR ASSOCIATE →</span></button>
+    <div class="nav-row" id="nav4" style="display:none">
+      <button class="btn" onclick="gotoStage(5)"><span>NEXT: SEARCH FOR ASSOCIATE →</span></button>
     </div>
   </div>
 
-  <!-- ══ STAGE 3: ASSOCIATE LOOKUP ═════════════════════ -->
-  <div class="stage" id="stage-3">
-    <div class="sec-lbl">Stage 3 of 6 — Associate Record Lookup</div>
-    <div class="stg-title">Search for Associate A-2847</div>
+  <!-- ══ STAGE 5: ASSOCIATE LOOKUP ═════════════════════ -->
+  <div class="stage" id="stage-5">
+    <div class="sec-lbl">Stage 5 of 10 — Associate Record Lookup</div>
+    <div class="stg-title">Search the Associates Database</div>
     <div class="stg-instr">
-      Maria's record listed associate ID <strong style="color:var(--primary)">A-2847</strong>.
-      This is a <strong>foreign key</strong> — it links to a record in the <code>tbl_associates</code> table.
-      Enter this ID in the search form below to find who it belongs to.
+      Police found messages from an account called <strong style="color:var(--amber)">@AshXxX</strong> on Maria's phone. Use this clue to identify the associate — search by name and narrow down from there.
+      <ul style="margin: 10px 0 0 1.2em; line-height: 2;">
+        <li>Think about what real name <strong>@AshXxX</strong> might stand for — search for it in the First Name field.</li>
+        <li>There may be several results at first — add a <strong>Gender</strong> filter to narrow down further.</li>
+        <li>Check the <strong>Social Media</strong> column in the results — does a username match the one from the case?</li>
+      </ul>
     </div>
 
-    <div class="concept">
-      <p>A <strong>foreign key</strong> is a value stored in one table that matches the <strong>primary key</strong> of a record in a different table. This is how <strong>relational databases</strong> link information across tables without duplicating data.</p>
+    <div class="ref-panel">
+      <button class="ref-toggle" id="ref-btn-5-maria" onclick="toggleRef('5-maria')">
+        <span>📋 Reference — Maria Burton's Record (P-1042) · click to expand</span>
+        <span class="ref-arrow">▶</span>
+      </button>
+      <div class="ref-body" id="ref-body-5-maria">
+        <div class="rec-card">
+          <div class="rec-hd">
+            <span class="rec-id">RECORD ID: P-1042</span>
+            <span class="badge badge-r">MISSING — ACTIVE CASE</span>
+          </div>
+          <div class="rec-top">
+            <div class="rec-photo">👤</div>
+            <div>
+              <div class="rec-name">BURTON, Maria</div>
+              <div class="rec-sub">Reported missing: 13/10/2024 — Last seen 12/10/2024 at 17:30</div>
+              <span class="badge badge-r">MISSING PERSONS — PRIORITY CASE</span>
+            </div>
+          </div>
+          <div class="rec-grid">
+            <div class="rec-f"><div class="rec-fl">Date of Birth</div><div class="rec-fv">15/03/2010 (age 14)</div></div>
+            <div class="rec-f"><div class="rec-fl">Gender</div><div class="rec-fv">Female</div></div>
+            <div class="rec-f"><div class="rec-fl">Own Device</div><div class="rec-fv">iPhone (confirmed)</div></div>
+            <div class="rec-f"><div class="rec-fl">Report Filed</div><div class="rec-fv">13/10/2024 by parent/guardian</div></div>
+            <div class="rec-f full"><div class="rec-fl">Last Confirmed Location</div><div class="rec-fv">Left home 17:30 on 12/10/2024 — said she was visiting "Jess". Jess confirms Maria never arrived.</div></div>
+            <div class="rec-f full" style="background:rgba(255,168,0,.04); border-color:rgba(255,168,0,.25)">
+              <div class="rec-fl" style="color:var(--amber)">⚠ Digital Evidence Flag</div>
+              <div class="rec-fv" style="color:var(--amber)">Photo posted to Maria's Instagram from a <strong>Samsung Galaxy</strong> — she owns an iPhone. Messages from <strong>AshXxX</strong> found on her phone.</div>
+            </div>
+            <div class="rec-f full" style="background:rgba(0,229,160,.04)">
+              <div class="rec-fl">⚠ Associated Persons (IDs)</div>
+              <div class="rec-fv glow">A-2847 &nbsp;|&nbsp; <span style="color:var(--text-dim);text-shadow:none">A-1203</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div class="term" data-lbl="QUERY — tbl_associates">
-      <div class="term-prompt">SELECT * FROM tbl_associates WHERE associate_id = '…'</div>
+      <div class="term-prompt" id="s3-query">SELECT * FROM tbl_associates WHERE …</div>
       <div class="t-row">
-        <span class="t-lbl">Associate ID</span>
-        <input class="db-input" id="s3-id" type="text" placeholder="Enter associate ID (format: A-XXXX)…" autocomplete="off">
+        <span class="t-lbl">First Name</span>
+        <input class="db-input" id="s3-name" type="text" placeholder="enter a first name to search…" autocomplete="off">
       </div>
       <div class="t-row">
-        <span class="t-lbl">Full Name</span>
-        <input class="db-input" id="s3-name" type="text" placeholder="(optional) name to filter…">
+        <span class="t-lbl">Gender</span>
+        <select class="db-select" id="s3-gender">
+          <option value="">— Any Gender —</option>
+          <option value="M">Male</option>
+          <option value="F">Female</option>
+        </select>
       </div>
       <div class="t-row" style="justify-content:flex-end; margin-top:6px">
         <button class="btn" onclick="searchAssociates()"><span>EXECUTE SEARCH</span></button>
@@ -563,21 +1064,13 @@ color:  cyan
     </div>
 
     <div class="results" id="s3-results">
-      <div class="res-lbl">SEARCH RESULTS — <span class="res-count">1 record found</span></div>
+      <div class="res-lbl">SEARCH RESULTS — <span class="res-count" id="s3-count">1 record found</span></div>
       <table class="db-table">
-        <thead><tr><th>Associate ID</th><th>Full Name</th><th>Record</th><th>Linked To</th><th>Action</th></tr></thead>
-        <tbody>
-          <tr>
-            <td class="k">A-2847</td>
-            <td class="hi">Ashley (surname withheld)</td>
-            <td><span class="badge badge-a">SUSPECT</span></td>
-            <td class="k">P-1042</td>
-            <td><button class="btn cyan sm" onclick="viewAshley()"><span>VIEW RECORD</span></button></td>
-          </tr>
-        </tbody>
+        <thead><tr><th>Associate ID</th><th>Name</th><th>Age</th><th>Gender</th><th>Social Media</th><th>Action</th></tr></thead>
+        <tbody id="s3-tbody"></tbody>
       </table>
+      <div class="view-nudge" id="nudge3" style="display:none">▶ Click VIEW RECORD to open the full file and find the next clue</div>
 
-      <!-- Ashley's full record -->
       <div class="rec-card" id="ashley-card">
         <div class="rec-hd">
           <span class="rec-id">ASSOCIATE ID: A-2847</span>
@@ -597,45 +1090,49 @@ color:  cyan
           <div class="rec-f full"><div class="rec-fl">Address</div><div class="rec-fv">Address on file — Maria found at suspect's address, locked in upstairs bedroom</div></div>
           <div class="rec-f full" style="background:rgba(255,59,59,.04); border-color:rgba(255,59,59,.2)">
             <div class="rec-fl" style="color:var(--red)">⚠ Suspected Offence</div>
-            <div class="rec-fv" style="color:var(--red)">Online grooming — contacted Maria on social media over a period of weeks to gain her trust prior to disappearance. Account shows low follower count and short account age, consistent with fake/predatory profile.</div>
+            <div class="rec-fv" style="color:var(--red)">Online grooming — built trust with Maria over several weeks on social media. Account has low followers and a short account age.</div>
           </div>
           <div class="rec-f full" style="background:rgba(0,229,160,.04)">
             <div class="rec-fl">⚠ Social Media Accounts</div>
-            <div class="rec-fv glow">Cross-reference tbl_social_media — search using Associate ID: A-2847</div>
-          </div>
-          <div class="rec-f full">
-            <div class="rec-fl">Case Notes</div>
-            <div class="rec-fv note">Messages from this suspect found on Maria's (P-1042) phone. Contact began weeks before disappearance — pattern consistent with grooming. Suspect messaged Maria repeatedly in the days immediately before 12/10/2024. An Instagram post on Maria's account uploaded from a Samsung Galaxy device is attributed to this suspect. Maria found at suspect's address, in tears, locked in upstairs bedroom. Suspect known to use multiple social media platforms — see tbl_social_media.</div>
+            <div class="rec-fv glow">Accounts flagged in tbl_social_media — unusually low follower count, recently created</div>
           </div>
         </div>
       </div>
 
       <div class="hint" id="h3">
-        Ashley's record references their social media accounts — stored in a <strong>separate table</strong> called <strong>tbl_social_media</strong>. You need to cross-reference that table using Ashley's ID (<strong>A-2847</strong>) as a foreign key.
+        Ashley's social media accounts are stored in <strong>tbl_social_media</strong>. The clues say they have a <strong>very low follower count</strong> and are <strong>recently created</strong> — use those numeric clues to filter the table in the next stage.
       </div>
 
-      <div class="nav-row" id="nav3" style="display:none">
-        <button class="btn" onclick="gotoStage(4)"><span>NEXT: SOCIAL MEDIA LOOKUP →</span></button>
+      <div class="nav-row" id="nav5" style="display:none">
+        <button class="btn" onclick="gotoStage(6)"><span>NEXT: SOCIAL MEDIA LOOKUP →</span></button>
       </div>
     </div>
   </div>
 
-  <!-- ══ STAGE 4: SOCIAL MEDIA CROSS-REFERENCE ════════ -->
-  <div class="stage" id="stage-4">
-    <div class="sec-lbl">Stage 4 of 6 — Cross-Table Query</div>
+  <!-- ══ STAGE 6: SOCIAL MEDIA CROSS-REFERENCE ════════ -->
+  <div class="stage" id="stage-6">
+    <div class="sec-lbl">Stage 6 of 10 — Social Media Search</div>
     <div class="stg-title">Search the Social Media Accounts Table</div>
     <div class="stg-instr">
-      Ashley's record told you to look in <code>tbl_social_media</code>. Enter Ashley's Associate ID
-      <strong style="color:var(--primary)">A-2847</strong> in the Person ID field.
-      Then filter by platform <strong>Instagram</strong> to find the specific username detectives need.
+      Ashley's record flagged that their accounts had <strong>very few followers</strong> and a <strong>short account age</strong> — classic signs of a fake grooming profile. The table contains hundreds of accounts from many different people. You need a smarter way to search than typing in an ID — that is where <strong>comparison operators</strong> come in.
+    </div>
+
+    <div class="concept">
+      <p>Use <strong>comparison operators</strong> to filter by numbers — type the operator and value directly into the field:</p>
+      <p style="margin-top:8px"><code>&lt; 100</code> fewer than 100 &nbsp;·&nbsp; <code>&lt; 90</code> less than 90 &nbsp;·&nbsp; fill multiple fields to AND the conditions together</p>
+    </div>
+
+    <div class="stg-instr" style="margin-top:14px">
+      <strong>Your task:</strong>
+      <ul style="margin: 8px 0 0 1.2em; line-height: 2;">
+        <li>Start by selecting <strong>Instagram</strong> and running the search — see how many accounts appear.</li>
+        <li>Too many results? Use comparison operators on the <strong>Followers</strong> and <strong>Account Age</strong> fields to narrow down. Ashley's account has very few followers and was created recently — decide on appropriate thresholds yourself.</li>
+        <li>When only one account remains, that is the Instagram handle detectives need.</li>
+      </ul>
     </div>
 
     <div class="term" data-lbl="QUERY — tbl_social_media">
-      <div class="term-prompt">SELECT * FROM tbl_social_media WHERE person_id = '…' AND platform = '…'</div>
-      <div class="t-row">
-        <span class="t-lbl">Person ID</span>
-        <input class="db-input" id="s4-id" type="text" placeholder="Enter associate ID to look up…" autocomplete="off">
-      </div>
+      <div class="term-prompt" id="s4-query">SELECT * FROM tbl_social_media WHERE …</div>
       <div class="t-row">
         <span class="t-lbl">Platform</span>
         <select class="db-select" id="s4-platform">
@@ -646,6 +1143,14 @@ color:  cyan
           <option value="X / Twitter">X / Twitter</option>
         </select>
       </div>
+      <div class="t-row">
+        <span class="t-lbl">Followers</span>
+        <input class="db-input" id="s4-followers" type="text" placeholder="operator + number (e.g. &lt; 1000)">
+      </div>
+      <div class="t-row">
+        <span class="t-lbl">Account Age</span>
+        <input class="db-input" id="s4-age-days" type="text" placeholder="operator + number of days (e.g. &lt; 500)">
+      </div>
       <div class="t-row" style="justify-content:flex-end; margin-top:6px">
         <button class="btn" onclick="searchSocialMedia()"><span>EXECUTE SEARCH</span></button>
       </div>
@@ -655,12 +1160,13 @@ color:  cyan
     <div class="results" id="s4-results">
       <div class="res-lbl">SEARCH RESULTS — <span class="res-count" id="s4-count">0 records found</span></div>
       <table class="db-table">
-        <thead><tr><th>Entry ID</th><th>Person ID (FK)</th><th>Platform</th><th>Username</th><th>Status</th></tr></thead>
+        <thead><tr><th>Entry ID</th><th>Platform</th><th>Username</th><th>Followers</th><th>Account Age</th><th>Status</th></tr></thead>
         <tbody id="s4-tbody"></tbody>
       </table>
+      <div class="narrow-nudge" id="s4-narrow-nudge" style="display:none">▶ Multiple accounts returned — type a condition like &lt; 100 in the Followers field and &lt; 90 in Account Age to narrow down to the suspect account</div>
 
-      <div class="hint" id="h4">
-        You can see all of Ashley's accounts above. Now filter the search by platform — select <strong>Instagram</strong> and search again to pinpoint the exact username.
+      <div class="hint" id="h4" style="display:none">
+        You found multiple results — now narrow it down. Ashley's account has <strong>very few followers</strong> and was <strong>recently created</strong>. Use <code>&lt;</code> with an appropriate threshold on both the Followers and Account Age fields, then search again.
       </div>
 
       <div class="ig-found" id="ig-found">
@@ -668,95 +1174,346 @@ color:  cyan
         <div>
           <div style="font-size:.58rem; letter-spacing:.2em; color:var(--primary); margin-bottom:4px">INSTAGRAM ACCOUNT IDENTIFIED</div>
           <div class="ig-handle">@<span>AshXxX</span></div>
-          <div style="font-size:.7rem; color:var(--text-dim); margin-top:3px">Account status: ACTIVE — flagged for investigative review. Low follower count. Account age suspicious.</div>
+          <div style="font-size:.7rem; color:var(--text-dim); margin-top:3px">Account status: ACTIVE — flagged for investigative review. 47 followers. Account created 61 days ago.</div>
         </div>
       </div>
 
-      <div class="nav-row" id="nav4" style="display:none">
-        <button class="btn" onclick="gotoStage(5)"><span>NEXT: DATABASE CONCEPTS →</span></button>
+      <div class="nav-row" id="nav6" style="display:none">
+        <button class="btn" onclick="gotoStage(7)"><span>NEXT: DEVICE RECORDS →</span></button>
       </div>
     </div>
   </div>
 
-  <!-- ══ STAGE 5: CONCEPT MCQs ═════════════════════════ -->
-  <div class="stage" id="stage-5">
-    <div class="sec-lbl">Stage 5 of 6 — Key Database Concepts</div>
+  <!-- ══ STAGE 7: DEVICE REGISTRY ════════════════════════ -->
+  <div class="stage" id="stage-7">
+    <div class="sec-lbl">Stage 7 of 10 — Device Registry</div>
+    <div class="stg-title">Search the Device Registry</div>
+    <div class="stg-instr">
+      The Instagram photo was taken on a <strong style="color:var(--primary)">Samsung Galaxy</strong> smartphone — not Maria's own iPhone. The device registry holds records for hundreds of registered devices. You know how to use <code>&lt;</code> — now you need its opposite.
+    </div>
+
+    <div class="concept">
+      <p>Now use <strong>greater-than</strong> (<code>&gt;</code>) — the mirror of <code>&lt;</code>. Type the operator and value into the field:</p>
+      <p style="margin-top:8px"><code>&gt; 2020</code> bought after 2020 &nbsp;·&nbsp; <code>&gt; 1000</code> more than 1,000 &nbsp;·&nbsp; mix <code>&lt;</code> and <code>&gt;</code> freely in the same query</p>
+    </div>
+
+    <div class="stg-instr" style="margin-top:14px">
+      <strong>Your task:</strong>
+      <ul style="margin: 8px 0 0 1.2em; line-height: 2;">
+        <li>Filter the registry to <strong>Samsung</strong> make and <strong>Smartphone</strong> type — see how many come back.</li>
+        <li>Still too many? You know the Galaxy S21 Ultra was released in 2021 — use a comparison operator on the <strong>Purchase Year</strong> field to narrow to recently purchased devices.</li>
+        <li>Open the device record and note the <strong>Registered Address</strong> postcode — you will need it for the final search.</li>
+      </ul>
+    </div>
+
+    <div class="term" data-lbl="QUERY — tbl_devices">
+      <div class="term-prompt" id="s5-query">SELECT * FROM tbl_devices WHERE …</div>
+      <div class="t-row">
+        <span class="t-lbl">Make</span>
+        <select class="db-select" id="s5-make">
+          <option value="">— Any Make —</option>
+          <option value="Samsung">Samsung</option>
+          <option value="Apple">Apple</option>
+          <option value="Huawei">Huawei</option>
+          <option value="Sony">Sony</option>
+        </select>
+      </div>
+      <div class="t-row">
+        <span class="t-lbl">Device Type</span>
+        <select class="db-select" id="s5-type">
+          <option value="">— Any Type —</option>
+          <option value="Smartphone">Smartphone</option>
+          <option value="Laptop">Laptop</option>
+          <option value="Tablet">Tablet</option>
+        </select>
+      </div>
+      <div class="t-row">
+        <span class="t-lbl">Purchase Year</span>
+        <input class="db-input" id="s5-year" type="text" placeholder="operator + year (e.g. &gt; 2010)">
+      </div>
+      <div class="t-row" style="justify-content:flex-end; margin-top:6px">
+        <button class="btn" onclick="searchDevices()"><span>EXECUTE SEARCH</span></button>
+      </div>
+      <div class="db-err" id="s5-err"></div>
+    </div>
+
+    <div class="results" id="s5-results">
+      <div class="res-lbl">SEARCH RESULTS — <span class="res-count" id="s5-count">0 records found</span></div>
+      <table class="db-table">
+        <thead><tr><th>Device ID</th><th>Make / Model</th><th>Type</th><th>Yr</th><th>Last Online</th><th>Action</th></tr></thead>
+        <tbody id="s5-tbody"></tbody>
+      </table>
+      <div class="narrow-nudge" id="s5-narrow-nudge" style="display:none">▶ Multiple devices found — use a comparison operator on Purchase Year to narrow down. Think: when was the Galaxy S21 Ultra released?</div>
+      <div class="view-nudge" id="nudge5" style="display:none">▶ Click VIEW RECORD to open the device file and find the next clue</div>
+
+      <div class="rec-card" id="device-card">
+        <div class="rec-hd">
+          <span class="rec-id">DEVICE ID: DV-4421</span>
+          <span class="badge badge-a">ACTIVE — UNDER INVESTIGATION</span>
+        </div>
+        <div class="rec-top">
+          <div class="rec-photo">📱</div>
+          <div>
+            <div class="rec-name">Samsung Galaxy S21 Ultra</div>
+            <div class="rec-sub">Registered to: A-2847 (Ashley) — confirmed match for Instagram post device</div>
+            <span class="badge badge-r">DIGITAL EVIDENCE</span>
+          </div>
+        </div>
+        <div class="rec-grid">
+          <div class="rec-f"><div class="rec-fl">Device ID</div><div class="rec-fv">DV-4421</div></div>
+          <div class="rec-f"><div class="rec-fl">Type</div><div class="rec-fv">Smartphone</div></div>
+          <div class="rec-f"><div class="rec-fl">IMEI</div><div class="rec-fv">352843109872341</div></div>
+          <div class="rec-f"><div class="rec-fl">Owner ID</div><div class="rec-fv">A-2847</div></div>
+          <div class="rec-f full" style="background:rgba(0,229,160,.06); border-color:rgba(0,229,160,.25)">
+            <div class="rec-fl" style="color:var(--primary)">⚠ Registered Address</div>
+            <div class="rec-fv glow">14 Bramley Close, Sheffield, <strong>S12 4JT</strong></div>
+          </div>
+          <div class="rec-f full">
+            <div class="rec-fl">Last Online</div>
+            <div class="rec-fv">12/10/2024 at 18:09</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="hint" id="h5" style="display:none">
+        You now have the registered address for Ashley's device: <strong>14 Bramley Close, Sheffield, S12 4JT</strong>.
+        Make a note of the postcode — you will use it to narrow the CCTV search. You will also need the date Maria disappeared, the time she left home, and her age to narrow down from dozens of sightings logged that day.
+      </div>
+
+      <div class="nav-row" id="nav7" style="display:none">
+        <button class="btn" onclick="gotoStage(8)"><span>NEXT: FINAL SEARCH →</span></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ STAGE 8: CCTV — ITERATIVE NARROWING SEARCH ══════ -->
+  <div class="stage" id="stage-8">
+    <div class="sec-lbl">Stage 8 of 10 — Final Search</div>
+    <div class="stg-title">Narrow Down the CCTV Sightings Log</div>
+    <div class="stg-instr">
+      Detectives have access to a CCTV sightings log covering the whole city — <code>tbl_sightings</code> contains <strong>dozens of records</strong> from that day alone. Your job is to narrow them down to find the single sighting of Maria.
+      <ul style="margin: 10px 0 0 1.2em; line-height: 2;">
+        <li><strong>Start broad</strong> — enter just the date and run the search. See how many sightings come back.</li>
+        <li><strong>Then narrow step by step</strong> — add the postcode area, then use comparison operators (<code>&lt;</code> and <code>&gt;</code>) on the Time and Subject Age fields to filter further.</li>
+        <li>All the values you need are in your <strong style="color:var(--primary)">Case File</strong> — use the clues to fill in each search field and choose your own thresholds.</li>
+      </ul>
+    </div>
+
+    <div class="concept">
+      <p>Mix exact matches with <code>&lt;</code> and <code>&gt;</code> in one query — each extra condition narrows the results further. Add criteria one at a time until only one sighting remains.</p>
+    </div>
+
+    <div class="ref-panel">
+      <button class="ref-toggle" id="ref-btn-8-maria" onclick="toggleRef('8-maria')">
+        <span>📋 Reference — Maria Burton's Record (P-1042) · click to expand</span>
+        <span class="ref-arrow">▶</span>
+      </button>
+      <div class="ref-body" id="ref-body-8-maria">
+        <div class="rec-card">
+          <div class="rec-hd">
+            <span class="rec-id">RECORD ID: P-1042</span>
+            <span class="badge badge-r">MISSING — ACTIVE CASE</span>
+          </div>
+          <div class="rec-top">
+            <div class="rec-photo">👤</div>
+            <div>
+              <div class="rec-name">BURTON, Maria</div>
+              <div class="rec-sub">Reported missing: 13/10/2024 — Last seen 12/10/2024 at 17:30</div>
+              <span class="badge badge-r">MISSING PERSONS — PRIORITY CASE</span>
+            </div>
+          </div>
+          <div class="rec-grid">
+            <div class="rec-f"><div class="rec-fl">Date of Birth</div><div class="rec-fv glow">15/03/2010 (age 14)</div></div>
+            <div class="rec-f"><div class="rec-fl">Report Filed</div><div class="rec-fv">13/10/2024 by parent/guardian</div></div>
+            <div class="rec-f full"><div class="rec-fl">Last Confirmed Location</div><div class="rec-fv">Left home at <strong style="color:var(--primary)">17:30 on 12/10/2024</strong> — any CCTV before this time is not relevant to the investigation.</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ref-panel">
+      <button class="ref-toggle" id="ref-btn-8-device" onclick="toggleRef('8-device')">
+        <span>📋 Reference — Ashley's Device Record (DV-4421) · click to expand</span>
+        <span class="ref-arrow">▶</span>
+      </button>
+      <div class="ref-body" id="ref-body-8-device">
+        <div class="rec-card">
+          <div class="rec-hd">
+            <span class="rec-id">DEVICE ID: DV-4421</span>
+            <span class="badge badge-a">ACTIVE — UNDER INVESTIGATION</span>
+          </div>
+          <div class="rec-top">
+            <div class="rec-photo">📱</div>
+            <div>
+              <div class="rec-name">Samsung Galaxy S21 Ultra</div>
+              <div class="rec-sub">Registered to: A-2847 (Ashley) — confirmed match for Instagram post device</div>
+              <span class="badge badge-r">DIGITAL EVIDENCE</span>
+            </div>
+          </div>
+          <div class="rec-grid">
+            <div class="rec-f"><div class="rec-fl">Device ID</div><div class="rec-fv">DV-4421</div></div>
+            <div class="rec-f"><div class="rec-fl">Owner ID</div><div class="rec-fv">A-2847</div></div>
+            <div class="rec-f full" style="background:rgba(0,229,160,.06); border-color:rgba(0,229,160,.25)">
+              <div class="rec-fl" style="color:var(--primary)">⚠ Registered Address</div>
+              <div class="rec-fv glow">14 Bramley Close, Sheffield, <strong>S12 4JT</strong></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="term" data-lbl="QUERY — tbl_sightings">
+      <div class="term-prompt" id="s6-query">SELECT * FROM tbl_sightings WHERE …</div>
+      <div class="t-row">
+        <span class="t-lbl">Date</span>
+        <input class="db-input" id="s6-date" type="text" placeholder="DD/MM/YYYY — start here" autocomplete="off">
+      </div>
+      <div class="t-row">
+        <span class="t-lbl">Postcode Area</span>
+        <input class="db-input" id="s6-area" type="text" placeholder="postcode area — check the device record" autocomplete="off">
+      </div>
+      <div class="t-row">
+        <span class="t-lbl">Time</span>
+        <input class="db-input" id="s6-time" type="text" placeholder="operator + time in HH:MM — use clues from the case">
+      </div>
+      <div class="t-row">
+        <span class="t-lbl">Subject Age</span>
+        <input class="db-input" id="s6-age" type="text" placeholder="operator + age — how old is the subject?">
+      </div>
+      <div class="t-row" style="justify-content:flex-end; margin-top:6px">
+        <button class="btn" onclick="searchSightings()"><span>EXECUTE SEARCH</span></button>
+      </div>
+      <div class="db-err" id="s6-err"></div>
+    </div>
+
+    <div class="results" id="s6-results">
+      <div class="res-lbl">SEARCH RESULTS — <span class="res-count" id="s6-count">0 records found</span></div>
+      <table class="db-table">
+        <thead><tr><th>Sighting ID</th><th>Date</th><th>Time</th><th>Area</th><th>Subject</th><th>Action</th></tr></thead>
+        <tbody id="s6-tbody"></tbody>
+      </table>
+      <div class="narrow-nudge" id="s6-narrow-nudge" style="display:none"></div>
+
+      <div class="view-nudge" id="nudge8" style="display:none">▶ Single sighting isolated — click VIEW RECORD to open the full file</div>
+
+      <div class="rec-card" id="cctv-card">
+        <div class="rec-hd">
+          <span class="rec-id">SIGHTING ID: SG-0892</span>
+          <span class="badge badge-r">PRIORITY — ACTIVE CASE</span>
+        </div>
+        <div class="rec-top">
+          <div class="rec-photo">📹</div>
+          <div>
+            <div class="rec-name">CCTV SIGHTING — Bramley Close</div>
+            <div class="rec-sub">12/10/2024 at 18:12 — Sheffield, S12 4JT</div>
+            <span class="badge badge-r">CONFIRMED MATCH — MIS-2026-0047</span>
+          </div>
+        </div>
+        <div class="rec-grid">
+          <div class="rec-f"><div class="rec-fl">Sighting ID</div><div class="rec-fv">SG-0892</div></div>
+          <div class="rec-f"><div class="rec-fl">Date / Time</div><div class="rec-fv">12/10/2024 — 18:12</div></div>
+          <div class="rec-f"><div class="rec-fl">Location</div><div class="rec-fv">Bramley Close, Sheffield, S12 4JT</div></div>
+          <div class="rec-f"><div class="rec-fl">CCTV Reference</div><div class="rec-fv">CAM-019 — HD footage secured</div></div>
+          <div class="rec-f full"><div class="rec-fl">Description</div><div class="rec-fv">Female, approximately 14 years old, dark jacket. Accompanied by male, 17–18 years old.</div></div>
+          <div class="rec-f full" style="background:rgba(0,229,160,.06); border-color:rgba(0,229,160,.25)">
+            <div class="rec-fl" style="color:var(--primary)">✔ Case Match</div>
+            <div class="rec-fv glow">Subject matches description of missing person Maria Burton (P-1042). Officers dispatched to 14 Bramley Close. Maria located — safe.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="nav-row" id="nav8" style="display:none">
+        <button class="btn" onclick="gotoStage(9)"><span>NEXT: DATABASE CONCEPTS →</span></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ STAGE 9: CONCEPT MCQs ═════════════════════════ -->
+  <div class="stage" id="stage-9">
+    <div class="sec-lbl">Stage 9 of 10 — Key Database Concepts</div>
     <div class="stg-title">Reviewing What You Did</div>
     <div class="stg-instr">You've completed the investigation using real database techniques. Answer these questions to consolidate your understanding.</div>
 
-    <!-- Q4 -->
-    <div class="mcq" id="mcq-5a">
-      <div class="mcq-q">Q4. You used the ID <strong>A-2847</strong> from Maria's record to search a completely separate table (tbl_associates). What type of database operation is this?</div>
-      <div class="mcq-opts" id="opts-5a">
-        <button class="mcq-opt" onclick="checkMCQ('5a',this,false)"><span class="opt-k">A</span>Sorting records alphabetically</button>
-        <button class="mcq-opt" onclick="checkMCQ('5a',this,false)"><span class="opt-k">B</span>Deleting a record from the database</button>
-        <button class="mcq-opt" onclick="checkMCQ('5a',this,true)"><span class="opt-k">C</span>Cross-referencing two tables using a foreign key</button>
-        <button class="mcq-opt" onclick="checkMCQ('5a',this,false)"><span class="opt-k">D</span>Validating data to check for errors</button>
+    <div class="mcq" id="mcq-7a">
+      <div class="mcq-q">Q4. If Ashley bought a new phone, which table in CRIMDB would need a new row added?</div>
+      <div class="mcq-opts" id="opts-7a">
+        <button class="mcq-opt" onclick="checkMCQ('7a',this,false)"><span class="opt-k">A</span>tbl_persons — because Ashley is a person</button>
+        <button class="mcq-opt" onclick="checkMCQ('7a',this,false)"><span class="opt-k">B</span>tbl_sightings — because it records recent activity</button>
+        <button class="mcq-opt" onclick="checkMCQ('7a',this,true)"><span class="opt-k">C</span>tbl_devices — because device records are stored there, not repeated across every table</button>
+        <button class="mcq-opt" onclick="checkMCQ('7a',this,false)"><span class="opt-k">D</span>All four tables — each one needs to know about the new phone</button>
       </div>
-      <div class="mcq-fb" id="fb-5a"></div>
+      <div class="mcq-fb" id="fb-7a"></div>
     </div>
 
-    <!-- Q5 -->
-    <div class="mcq" id="mcq-5b" style="display:none">
-      <div class="mcq-q">Q5. The CRIMDB system stores data in three separate tables rather than one big table. What is the main benefit of splitting the data this way?</div>
-      <div class="mcq-opts" id="opts-5b">
-        <button class="mcq-opt" onclick="checkMCQ('5b',this,false)"><span class="opt-k">A</span>It makes the database look more professional</button>
-        <button class="mcq-opt" onclick="checkMCQ('5b',this,false)"><span class="opt-k">B</span>Each person is only allowed one record in any table</button>
-        <button class="mcq-opt" onclick="checkMCQ('5b',this,true)"><span class="opt-k">C</span>It prevents data duplication — if Ashley makes a new social media account, only one row is added to tbl_social_media</button>
-        <button class="mcq-opt" onclick="checkMCQ('5b',this,false)"><span class="opt-k">D</span>Databases cannot store more than one type of data</button>
+    <div class="mcq" id="mcq-7b" style="display:none">
+      <div class="mcq-q">Q5. You used Ashley's ID (A-2847) to search tbl_associates, tbl_social_media and tbl_devices. How does using the same ID across multiple tables work?</div>
+      <div class="mcq-opts" id="opts-7b">
+        <button class="mcq-opt" onclick="checkMCQ('7b',this,false)"><span class="opt-k">A</span>The ID is automatically copied into every table when a person is added</button>
+        <button class="mcq-opt" onclick="checkMCQ('7b',this,true)"><span class="opt-k">B</span>The ID in one table links to matching records in other tables — so connected information can be found without duplicating it</button>
+        <button class="mcq-opt" onclick="checkMCQ('7b',this,false)"><span class="opt-k">C</span>All four tables are secretly one big table with different headings</button>
+        <button class="mcq-opt" onclick="checkMCQ('7b',this,false)"><span class="opt-k">D</span>You have to re-enter all Ashley's details into each table manually</button>
       </div>
-      <div class="mcq-fb" id="fb-5b"></div>
+      <div class="mcq-fb" id="fb-7b"></div>
     </div>
 
-    <!-- Q6 -->
-    <div class="mcq" id="mcq-5c" style="display:none">
-      <div class="mcq-q">Q6. The "Person ID" column in tbl_social_media stores the value <strong>A-2847</strong> — Ashley's ID from tbl_associates. What is this type of value called?</div>
-      <div class="mcq-opts" id="opts-5c">
-        <button class="mcq-opt" onclick="checkMCQ('5c',this,false)"><span class="opt-k">A</span>A primary key</button>
-        <button class="mcq-opt" onclick="checkMCQ('5c',this,true)"><span class="opt-k">B</span>A foreign key</button>
-        <button class="mcq-opt" onclick="checkMCQ('5c',this,false)"><span class="opt-k">C</span>A search query</button>
-        <button class="mcq-opt" onclick="checkMCQ('5c',this,false)"><span class="opt-k">D</span>A field label</button>
+    <div class="mcq" id="mcq-7c" style="display:none">
+      <div class="mcq-q">Q6. To search tbl_sightings you needed a date, a postcode area, and an age. Where did the postcode area (S12) come from?</div>
+      <div class="mcq-opts" id="opts-7c">
+        <button class="mcq-opt" onclick="checkMCQ('7c',this,false)"><span class="opt-k">A</span>The mission briefing at the start</button>
+        <button class="mcq-opt" onclick="checkMCQ('7c',this,false)"><span class="opt-k">B</span>Maria's record in tbl_persons</button>
+        <button class="mcq-opt" onclick="checkMCQ('7c',this,true)"><span class="opt-k">C</span>Ashley's device record in tbl_devices — the registered address was 14 Bramley Close, Sheffield, S12 4JT</button>
+        <button class="mcq-opt" onclick="checkMCQ('7c',this,false)"><span class="opt-k">D</span>Ashley's Instagram record in tbl_social_media</button>
       </div>
-      <div class="mcq-fb" id="fb-5c"></div>
+      <div class="mcq-fb" id="fb-7c"></div>
     </div>
 
-    <!-- Q7 -->
-    <div class="mcq" id="mcq-5d" style="display:none">
-      <div class="mcq-q">Q7. When you filtered the social media table by platform "Instagram", which SQL command best describes what the database ran behind the scenes?</div>
-      <div class="mcq-opts" id="opts-5d">
-        <button class="mcq-opt" onclick="checkMCQ('5d',this,false)"><span class="opt-k">A</span>DELETE FROM tbl_social_media WHERE platform = 'Instagram'</button>
-        <button class="mcq-opt" onclick="checkMCQ('5d',this,false)"><span class="opt-k">B</span>CREATE TABLE tbl_social_media</button>
-        <button class="mcq-opt" onclick="checkMCQ('5d',this,true)"><span class="opt-k">C</span>SELECT * FROM tbl_social_media WHERE person_id = 'A-2847' AND platform = 'Instagram'</button>
-        <button class="mcq-opt" onclick="checkMCQ('5d',this,false)"><span class="opt-k">D</span>INSERT INTO tbl_social_media VALUES ('A-2847', 'Instagram')</button>
+    <div class="mcq" id="mcq-7d" style="display:none">
+      <div class="mcq-q">Q7. A CCTV database has a <code>camera_secs</code> field recording how long a subject appeared on camera. Which condition finds sightings where the subject was visible for <strong>more than 45 seconds</strong>?</div>
+      <div class="mcq-opts" id="opts-7d">
+        <button class="mcq-opt" onclick="checkMCQ('7d',this,false)"><span class="opt-k">A</span>camera_secs &lt; 45 — sightings shorter than 45 seconds</button>
+        <button class="mcq-opt" onclick="checkMCQ('7d',this,false)"><span class="opt-k">B</span>camera_secs = 45 — sightings of exactly 45 seconds</button>
+        <button class="mcq-opt" onclick="checkMCQ('7d',this,true)"><span class="opt-k">C</span>camera_secs &gt; 45 — sightings longer than 45 seconds</button>
+        <button class="mcq-opt" onclick="checkMCQ('7d',this,false)"><span class="opt-k">D</span>camera_secs &gt; 0 — any non-zero sighting at all</button>
       </div>
-      <div class="mcq-fb" id="fb-5d"></div>
+      <div class="mcq-fb" id="fb-7d"></div>
     </div>
 
-    <div class="nav-row" id="nav5" style="display:none">
-      <button class="btn" onclick="gotoStage(6)"><span>COMPLETE INVESTIGATION →</span></button>
+    <div class="mcq" id="mcq-7e" style="display:none">
+      <div class="mcq-q">Q8. When searching the social media table for the suspect, you used a <strong>comparison operator</strong> to filter by follower count. Which SQL condition finds accounts with <strong>fewer than 50 followers</strong>?</div>
+      <div class="mcq-opts" id="opts-7e">
+        <button class="mcq-opt" onclick="checkMCQ('7e',this,false)"><span class="opt-k">A</span>WHERE followers = 50</button>
+        <button class="mcq-opt" onclick="checkMCQ('7e',this,true)"><span class="opt-k">B</span>WHERE followers &lt; 50</button>
+        <button class="mcq-opt" onclick="checkMCQ('7e',this,false)"><span class="opt-k">C</span>WHERE followers &gt; 50</button>
+        <button class="mcq-opt" onclick="checkMCQ('7e',this,false)"><span class="opt-k">D</span>WHERE followers AND 50</button>
+      </div>
+      <div class="mcq-fb" id="fb-7e"></div>
+    </div>
+
+    <div class="nav-row" id="nav9" style="display:none">
+      <button class="btn" onclick="gotoStage(10)"><span>COMPLETE INVESTIGATION →</span></button>
     </div>
   </div>
 
-  <!-- ══ STAGE 6: COMPLETION ════════════════════════════ -->
-  <div class="stage" id="stage-6">
+  <!-- ══ STAGE 10: COMPLETION ════════════════════════════ -->
+  <div class="stage" id="stage-10">
     <div class="completion">
       <div class="comp-icon">🏆</div>
       <div class="comp-title">Investigation Complete</div>
-      <div class="comp-sub">CASE MIS-2026-0047 — SUSPECT IDENTIFIED</div>
+      <div class="comp-sub">CASE MIS-2026-0047 — SUSPECT IDENTIFIED — SUBJECT LOCATED</div>
 
       <div class="findings">
         <h3>📋 Investigation Findings</h3>
         <div class="f-row"><span class="f-l">Missing person</span><span class="f-v">Maria Burton, 14F (P-1042)</span></div>
         <div class="f-row"><span class="f-l">Primary suspect</span><span class="f-v">Ashley, 17M (A-2847)</span></div>
         <div class="f-row"><span class="f-l">Instagram username</span><span class="f-v">@AshXxX</span></div>
-        <div class="f-row"><span class="f-l">Device clue</span><span class="f-v">Instagram post from Samsung Galaxy (Maria owns iPhone)</span></div>
-        <div class="f-row"><span class="f-l">Witnesses</span><span class="f-v">Mia Matthews · Megan Turner</span></div>
-        <div class="f-row"><span class="f-l">Tables searched</span><span class="f-v">tbl_persons, tbl_associates, tbl_social_media</span></div>
-        <div class="f-row"><span class="f-l">Techniques used</span><span class="f-v">Field search · Primary key · Foreign key · Cross-table query</span></div>
+        <div class="f-row"><span class="f-l">Device registered to</span><span class="f-v">Samsung Galaxy S21 Ultra — 14 Bramley Close, S12 4JT</span></div>
+        <div class="f-row"><span class="f-l">Maria located</span><span class="f-v">14 Bramley Close, Sheffield — CCTV 18:12 on 12/10/2024</span></div>
+        <div class="f-row"><span class="f-l">Tables searched</span><span class="f-v">tbl_persons · tbl_associates · tbl_social_media · tbl_devices · tbl_sightings</span></div>
+        <div class="f-row"><span class="f-l">Techniques used</span><span class="f-v">Field search · Primary key · Linked IDs · Comparison operators (&lt; &gt;) · Multi-criteria AND query</span></div>
       </div>
 
       <div class="comp-note">
-        You used <strong>field-based searching</strong> to find Mia, followed a <strong>foreign key</strong> (A-2847) across two tables, and applied a <strong>filtered cross-table query</strong> to locate the Instagram username — the same techniques used in every real relational database system.
+        You used <strong>field-based searching</strong>, linked records across four tables using shared IDs, and combined three pieces of evidence in a <strong>multi-criteria query</strong> — the core techniques of any relational database.
       </div>
     </div>
   </div>
@@ -768,7 +1525,7 @@ color:  cyan
 <script>
   // ── Config ────────────────────────────────────────────────────────────────
   const ACTIVITY_TITLE = 'Criminal Database Investigation';
-  const TASK_COUNT = 7;
+  const TASK_COUNT = 12;
   const completed = new Array(TASK_COUNT).fill(false);
 
   // ── Clock ─────────────────────────────────────────────────────────────────
@@ -797,7 +1554,7 @@ color:  cyan
 
   // ── Progress ──────────────────────────────────────────────────────────────
   function updateProgress(stage) {
-    for (let i = 0; i <= 6; i++) {
+    for (let i = 0; i <= 10; i++) {
       const node = document.getElementById('n' + i);
       const lbl  = document.getElementById('l' + i);
       const conn = document.getElementById('c' + (i - 1));
@@ -816,13 +1573,32 @@ color:  cyan
     }
   }
 
+  // ── Stage 1: step-by-step teaching ───────────────────────────────────────
+  function setTeachStep(n) {
+    // Update step bar pills (1–4)
+    for (let i = 1; i <= 4; i++) {
+      const el = document.getElementById('tsb-' + i);
+      if (el) el.className = 'tsb-item' + (i < n ? ' done' : i === n ? ' active' : '');
+    }
+    // Apply exclusive table highlight for current step only
+    const hlMap = { 1: 'hl-table', 2: 'hl-record', 3: 'hl-field', 4: 'hl-pk' };
+    const wrap = document.getElementById('teach-table-wrap');
+    if (wrap) {
+      wrap.className = 'teach-table-wrap' + (hlMap[n] ? ' ' + hlMap[n] : '');
+    }
+    // Swap concept panel content
+    document.querySelectorAll('.tp-content').forEach(el => el.classList.remove('active'));
+    const panel = document.getElementById('tp-' + n);
+    if (panel) panel.classList.add('active');
+  }
+
   // ── Stage navigation ──────────────────────────────────────────────────────
   function gotoStage(n) {
     document.querySelectorAll('.stage').forEach(s => s.classList.remove('active'));
     document.getElementById('stage-' + n).classList.add('active');
     updateProgress(n);
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    if (n === 6) finishUp();
+    if (n === 10) finishUp();
   }
 
   // ── Task completion ───────────────────────────────────────────────────────
@@ -833,43 +1609,189 @@ color:  cyan
     window.Classroom?.submitGrade(pct, ACTIVITY_TITLE);
   }
 
-  // ── Stage 1: person search ────────────────────────────────────────────────
-  function searchPersons() {
-    const v   = document.getElementById('s1-name').value.trim().toLowerCase();
-    const err = document.getElementById('s1-err');
-    const normalised = v.replace(/,/g,'').replace(/\s+/g,' ');
-    const hit = ['maria burton','burton maria','maria claire burton','burton maria claire'].includes(normalised);
+  // ── Case File ─────────────────────────────────────────────────────────────
+  const _cluesSeen = new Set();
+  function addClue(key, text) {
+    if (_cluesSeen.has(key)) return;
+    _cluesSeen.add(key);
+    const panel = document.getElementById('case-file');
+    panel.style.display = 'block';
+    const item = document.createElement('div');
+    item.className = 'cf-clue';
+    item.textContent = text;
+    document.getElementById('cf-clues').appendChild(item);
+    const n = document.getElementById('cf-clues').children.length;
+    document.getElementById('cf-count').textContent = n + ' clue' + (n !== 1 ? 's' : '');
+  }
 
-    if (!v) {
-      err.textContent = '⚠ Please enter a name to search for.';
-      err.classList.add('on'); return;
-    }
-    if (hit) {
-      err.classList.remove('on');
-      document.getElementById('s1-results').classList.add('on');
-      markDone(0);
+  // ── Drag & drop (Stage 2) ─────────────────────────────────────────────────
+  let dragTerm = null;
+  const dzState   = { 'dz-a': null, 'dz-b': null, 'dz-c': null, 'dz-d': null };
+  const DZ_ANSWERS = { 'dz-a': 'Table', 'dz-b': 'Record', 'dz-c': 'Field', 'dz-d': 'Primary Key' };
+  const CHIP_IDS   = { 'Table': 'chip-table', 'Record': 'chip-record', 'Field': 'chip-field', 'Primary Key': 'chip-pk' };
+
+  document.querySelectorAll('.drag-chip').forEach(chip => {
+    chip.addEventListener('dragstart', e => {
+      dragTerm = chip.dataset.term;
+      e.dataTransfer.effectAllowed = 'move';
+    });
+  });
+
+  function dzOver(e)  { e.preventDefault(); e.currentTarget.classList.add('drag-over'); }
+  function dzLeave(e) { e.currentTarget.classList.remove('drag-over'); }
+
+  function dzDrop(e) {
+    e.preventDefault();
+    const zone = e.currentTarget;
+    zone.classList.remove('drag-over');
+    if (!dragTerm) return;
+    if (zone.classList.contains('correct')) { dragTerm = null; return; }
+
+    const correct = dragTerm === DZ_ANSWERS[zone.id];
+    const chip    = document.getElementById(CHIP_IDS[dragTerm]);
+    if (chip) chip.classList.add('used');
+
+    zone.textContent = dragTerm.toUpperCase();
+    zone.className   = 'dz ' + (correct ? 'correct' : 'wrong');
+
+    if (correct) {
+      dzState[zone.id] = dragTerm;
+      checkDragComplete();
     } else {
-      err.textContent = '⚠ No records found matching "' + document.getElementById('s1-name').value.trim() + '". Check spelling — the missing person\'s name is Maria Burton.';
-      err.classList.add('on');
-      document.getElementById('s1-results').classList.remove('on');
+      setTimeout(() => {
+        if (chip) chip.classList.remove('used');
+        zone.textContent = 'drag here';
+        zone.className   = 'dz';
+      }, 900);
+    }
+
+    dragTerm = null;
+  }
+
+  function checkDragComplete() {
+    if (Object.keys(DZ_ANSWERS).every(k => dzState[k] === DZ_ANSWERS[k])) {
+      document.getElementById('dz-success').classList.add('on');
+      document.getElementById('nav2').style.display = 'flex';
+      markDone(1);
     }
   }
 
+  // ── Shared data PRNG helpers ──────────────────────────────────────────────
+  const _rng  = (seed) => { let s = seed >>> 0; return () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; }; };
+  const _pick = (r, a) => a[Math.floor(r() * a.length)];
+  const _int  = (r, lo, hi) => lo + Math.floor(r() * (hi - lo + 1));
+
+  // ── Stage 3: person search ────────────────────────────────────────────────
+  const PERSONS_DATA = (() => {
+    const r  = _rng(7);
+    const SN = ['Adams','Ahmed','Ali','Allen','Anderson','Bailey','Baker','Barker','Bell','Bennett','Bishop','Black','Blake','Bolton','Bradley','Brady','Brooks','Brown','Burke','Burns','Campbell','Carroll','Carter','Chapman','Clark','Cole','Collins','Cook','Cooper','Cox','Crawford','Cross','Curtis','Davies','Davis','Dawson','Dixon','Douglas','Duncan','Edwards','Elliott','Ellis','Evans','Fisher','Fletcher','Flynn','Ford','Foster','Fox','Freeman','Gibson','Gill','Goodwin','Graham','Grant','Gray','Green','Griffin','Hardy','Harris','Harrison','Hart','Harvey','Hayes','Hill','Holmes','Howard','Hudson','Hughes','Hunt','Hunter','Jackson','James','Jenkins','Johnson','Jones','Kaur','Kelly','Kennedy','Khan','King','Knight','Lawrence','Lee','Lewis','Lloyd','Long','Lynch','Marshall','Martin','Mason','Matthews','Mitchell','Moore','Morgan','Morrison','Murphy','Murray','Nelson','Newton','Nixon','Oliver','Owen','Palmer','Parker','Patel','Patterson','Perry','Peters','Phillips','Porter','Powell','Price','Reid','Richards','Richardson','Roberts','Robertson','Robinson','Rogers','Ross','Russell','Scott','Sharp','Shaw','Simpson','Singh','Smith','Spencer','Stevens','Stewart','Taylor','Thomas','Thompson','Turner','Walker','Ward','Watson','Webb','White','Wilson','Wood','Wright','Young'];
+    const DOBS = ['14/02/1987','23/05/1990','07/11/1992','18/03/1994','04/07/1996','29/09/1998','11/01/2000','06/06/2001','14/04/2002','22/08/2003','05/12/2003','17/03/2004','09/07/2004','28/10/2004','13/01/2005','02/04/2005','19/08/2005','30/11/2005','25/01/2006','14/04/2006','08/07/2006','22/09/2006','11/12/2006','05/02/2007','19/06/2007','03/10/2007','27/01/2008','08/04/2008','16/06/2008','02/11/2008','14/02/2009','28/05/2009','13/07/2009','04/09/2009','21/11/2009','08/01/2010','28/05/2010','13/07/2010','04/09/2010','21/11/2010','17/04/2011','02/07/2011','19/09/2011','07/11/2011','23/02/2012','10/05/2012'];
+    const ST   = ['active','active','active','active','active','caution'];
+    const fixed = [
+      { id:'P-0731', name:'Chen, Maria Ling',   dob:'22/07/2009', status:'active'  },
+      { id:'P-0894', name:'Santos, Maria E.',   dob:'03/11/2011', status:'active'  },
+      { id:'P-1042', name:'Burton, Maria',      dob:'15/03/2010', status:'missing' },
+      { id:'P-1188', name:'Williams, Maria K.', dob:'08/02/2010', status:'caution' },
+    ];
+    const skip = new Set(['Chen','Santos','Burton','Williams']);
+    return fixed.concat(
+      SN.filter(s => !skip.has(s)).slice(0, 84).map((s, i) => ({
+        id: 'P-' + String(1300 + i).padStart(4,'0'),
+        name: s + ', Maria',
+        dob: _pick(r, DOBS),
+        status: _pick(r, ST)
+      }))
+    );
+  })();
+
+  let miaViewed = false;
+
+  function nameMatches(personName, query) {
+    const pFlat = personName.toLowerCase().replace(/,/g,' ').replace(/\s+/g,' ').trim();
+    const qFlat = query.toLowerCase().replace(/,/g,' ').replace(/\s+/g,' ').trim();
+    if (pFlat.includes(qFlat)) return true;
+    const qWords = qFlat.split(/\s+/).filter(w => w.length > 1);
+    return qWords.length > 0 && qWords.every(w => pFlat.includes(w));
+  }
+
+  function searchPersons() {
+    const nameVal = document.getElementById('s1-name').value.trim();
+    const dobVal  = document.getElementById('s1-dob').value.trim();
+    const status  = document.getElementById('s1-status').value;
+    const err     = document.getElementById('s1-err');
+
+    if (!nameVal) {
+      err.textContent = '⚠ Please enter a name to search for.';
+      err.classList.add('on'); return;
+    }
+    err.classList.remove('on');
+
+    const badgeMap = { missing:'badge-r', active:'badge-g', caution:'badge-a' };
+    const labelMap = { missing:'MISSING', active:'ACTIVE RECORD', caution:'CAUTION' };
+
+    let rows = PERSONS_DATA.filter(p => nameMatches(p.name, nameVal));
+    if (dobVal) rows = rows.filter(p => p.dob === dobVal);
+    if (status) rows = rows.filter(p => p.status === status);
+
+    if (rows.length === 0) {
+      err.textContent = '⚠ No records found. Try searching just "Maria" to start.';
+      err.classList.add('on');
+      document.getElementById('s1-results').classList.remove('on');
+      return;
+    }
+
+    const isSingleTarget = rows.length === 1 && rows[0].id === 'P-1042';
+
+    document.getElementById('s1-count').textContent =
+      rows.length + ' record' + (rows.length !== 1 ? 's' : '') + ' found';
+
+    document.getElementById('s1-tbody').innerHTML = rows.map(p => `
+      <tr>
+        <td class="k">${p.id}</td>
+        <td class="${p.id === 'P-1042' ? 'hi' : ''}">${p.name}</td>
+        <td>${p.dob}</td>
+        <td><span class="badge ${badgeMap[p.status]}">${labelMap[p.status]}</span></td>
+        <td>${isSingleTarget && p.id === 'P-1042'
+          ? '<button class="btn cyan" onclick="viewMia()"><span>VIEW RECORD →</span></button>'
+          : '<span style="color:var(--text-dim);font-size:.7rem">—</span>'}</td>
+      </tr>
+    `).join('');
+
+    document.getElementById('s1-results').classList.add('on');
+    document.getElementById('narrow-nudge').style.display = rows.length > 1 ? 'flex' : 'none';
+
+    if (!miaViewed) {
+      document.getElementById('nudge1').style.display = isSingleTarget ? 'flex' : 'none';
+      if (!isSingleTarget) {
+        document.getElementById('mia-card').classList.remove('on');
+        document.getElementById('h1').style.display = 'none';
+        document.getElementById('nav3').style.display = 'none';
+      }
+    }
+
+    if (isSingleTarget) markDone(2);
+  }
+
   function viewMia() {
+    miaViewed = true;
+    document.getElementById('nudge1').style.display = 'none';
     document.getElementById('mia-card').classList.add('on');
     document.getElementById('h1').style.display = 'block';
-    document.getElementById('nav1').style.display = 'flex';
+    document.getElementById('nav3').style.display = 'flex';
+    addClue('left-home', 'Left home: 12/10/2024 at 17:30');
+    addClue('maria-age', 'Maria — DOB 15/03/2010, age 14, female');
   }
 
   // ── MCQ engine ────────────────────────────────────────────────────────────
   const MCQ_CFG = {
-    '2a': { next:'mcq-2b', taskOnAnswer:1,  correct:'✅ Correct! You filtered on the <strong>Full Name</strong> field. Searching by a specific field is one of the most common database operations.', wrong:'❌ Not quite — you typed into the <strong>Full Name</strong> field, so that\'s what the database filtered by.' },
-    '2b': { next:'mcq-2c', taskOnAnswer:null, correct:'✅ Correct! A <strong>record</strong> is a single row in a table — it holds all the data about one person or item.', wrong:'❌ Not quite. One row of data in a database table is called a <strong>record</strong>.' },
-    '2c': { next:null, taskOnAnswer:2, navId:'nav2', correct:'✅ Correct! A <strong>primary key</strong> uniquely identifies each record — no two records share the same value.', wrong:'❌ Not quite. The unique identifier for each record is called a <strong>primary key</strong>.' },
-    '5a': { next:'mcq-5b', taskOnAnswer:4, correct:'✅ Correct! Using A-2847 (from Mia\'s record) to look up Ashley in a different table is <strong>cross-referencing via a foreign key</strong>.', wrong:'❌ Not quite. You used A-2847 as a <strong>foreign key</strong> to find Ashley\'s record in a different table — this is called <strong>cross-referencing</strong>.' },
-    '5b': { next:'mcq-5c', taskOnAnswer:null, correct:'✅ Correct! Multiple tables <strong>reduce data duplication</strong>. A new social media account is one new row in tbl_social_media — no other table needs changing.', wrong:'❌ Not quite. The main benefit is <strong>avoiding data duplication</strong> — each piece of information is stored in one place only.' },
-    '5c': { next:'mcq-5d', taskOnAnswer:null, correct:'✅ Correct! The Person ID in tbl_social_media is a <strong>foreign key</strong> — it references Ashley\'s primary key in tbl_associates.', wrong:'❌ Not quite. A field that references the primary key of another table is a <strong>foreign key</strong>.' },
-    '5d': { next:null, taskOnAnswer:6, navId:'nav5', correct:'✅ Correct! That\'s the SQL equivalent: <code>SELECT * … WHERE person_id = \'A-2847\' AND platform = \'Instagram\'</code>.', wrong:'❌ Not quite. Searching/filtering uses <code>SELECT</code> with a <code>WHERE</code> clause.' }
+    '2a': { next:'mcq-2b', taskOnAnswer:3,    correct:'✅ Correct! You filtered on the <strong>Full Name</strong> field. Searching by a specific field is one of the most common database operations.', wrong:'❌ Not quite — you typed into the <strong>Full Name</strong> field, so that\'s what the database filtered by.' },
+    '2b': { next:'mcq-2c', taskOnAnswer:null,  correct:'✅ Correct! A <strong>record</strong> is a single row in a table — it holds all the data about one person or item.', wrong:'❌ Not quite. One row of data in a database table is called a <strong>record</strong>.' },
+    '2c': { next:null,     taskOnAnswer:4, navId:'nav4', correct:'✅ Correct! A <strong>primary key</strong> uniquely identifies each record — no two records share the same value.', wrong:'❌ Not quite. The unique identifier for each record is called a <strong>primary key</strong>.' },
+    '7a': { next:'mcq-7b', taskOnAnswer:null,  correct:'✅ Correct! Only <strong>tbl_devices</strong> needs updating — that\'s the whole point of separate tables. One change, one place.', wrong:'❌ Not quite. Device data lives in <strong>tbl_devices</strong>, so only that table needs a new row.' },
+    '7b': { next:'mcq-7c', taskOnAnswer:null,  correct:'✅ Correct! Shared IDs let you <strong>link records across tables</strong> without copying data everywhere. This is the key idea behind relational databases.', wrong:'❌ Not quite. The same ID (A-2847) appears in different tables as a link — so connected information can be found without duplicating it.' },
+    '7c': { next:'mcq-7d', taskOnAnswer:null,  correct:'✅ Correct! The postcode came from Ashley\'s <strong>device record in tbl_devices</strong> — you had to search that table specifically to find it.', wrong:'❌ Not quite. The postcode S12 came from Ashley\'s device record in <strong>tbl_devices</strong> — registered address: 14 Bramley Close, Sheffield, S12 4JT.' },
+    '7d': { next:'mcq-7e', taskOnAnswer:null, correct:'✅ Correct! <code>&gt;</code> means "greater than" — it returns records where the value is <em>above</em> your threshold, not equal to or below it.', wrong:'❌ Not quite. To find values <em>above</em> a threshold, use <code>&gt;</code> — so <code>camera_secs &gt; 45</code> returns sightings longer than 45 seconds.' },
+    '7e': { next:null,     taskOnAnswer:11, navId:'nav9', correct:'✅ Correct! <code>&lt;</code> (less than) returns only records where the value is below your threshold — fewer than 50 followers in this case.', wrong:'❌ Not quite. To get accounts with <em>fewer than</em> 50 followers, use <code>WHERE followers &lt; 50</code>. Greater-than (<code>&gt;</code>) would return the opposite.' }
   };
 
   const mcqAnswered = {};
@@ -890,8 +1812,8 @@ color:  cyan
     const cfg = MCQ_CFG[id];
     const fb  = document.getElementById('fb-' + id);
     if (fb) {
-      fb.innerHTML  = correct ? cfg.correct : cfg.wrong;
-      fb.className  = 'mcq-fb ' + (correct ? 'correct' : 'wrong');
+      fb.innerHTML = correct ? cfg.correct : cfg.wrong;
+      fb.className = 'mcq-fb ' + (correct ? 'correct' : 'wrong');
     }
 
     if (cfg.taskOnAnswer !== null && cfg.taskOnAnswer !== undefined) markDone(cfg.taskOnAnswer);
@@ -908,78 +1830,226 @@ color:  cyan
     }, 750);
   }
 
-  // ── Stage 3: associate search ─────────────────────────────────────────────
+  // ── Stage 5: associate search ─────────────────────────────────────────────
   function searchAssociates() {
-    const raw = document.getElementById('s3-id').value.trim().toUpperCase().replace(/\s/g,'');
-    const err = document.getElementById('s3-err');
-    const hit = raw === 'A-2847' || raw === 'A2847';
+    const nameVal   = document.getElementById('s3-name').value.trim().toLowerCase();
+    const genderVal = document.getElementById('s3-gender').value;
+    const err       = document.getElementById('s3-err');
 
-    if (!raw && !document.getElementById('s3-name').value.trim()) {
-      err.textContent = '⚠ Enter an Associate ID (e.g. A-2847) to search.';
+    if (!nameVal && !genderVal) {
+      err.textContent = '⚠ Enter a first name or select a gender to begin searching.';
       err.classList.add('on'); return;
     }
-    if (hit) {
-      err.classList.remove('on');
-      document.getElementById('s3-results').classList.add('on');
-      markDone(3);
-    } else {
-      err.textContent = '⚠ No records found. Check the ID — it should be A-2847 (from Mia\'s associated persons field).';
+    err.classList.remove('on');
+
+    let rows = [...ASSOCIATES_DATA];
+    const parts = [];
+    if (nameVal) { rows = rows.filter(a => a.firstName.toLowerCase().startsWith(nameVal)); parts.push(`first_name LIKE '${nameVal}%'`); }
+    if (genderVal) { rows = rows.filter(a => a.gender === genderVal); parts.push(`gender = '${genderVal}'`); }
+    document.getElementById('s3-query').textContent =
+      'SELECT * FROM tbl_associates' + (parts.length ? ' WHERE ' + parts.join(' AND ') : '');
+
+    if (rows.length === 0) {
+      err.textContent = '⚠ No associates found — try a broader name or different criteria.';
       err.classList.add('on');
-      document.getElementById('s3-results').classList.remove('on');
+      document.getElementById('s3-results').classList.remove('on'); return;
+    }
+
+    const hasTarget = rows.some(a => a.id === 'A-2847');
+    const showView  = rows.length <= 5;
+    document.getElementById('s3-tbody').innerHTML = rows.map(a =>
+      `<tr>
+        <td class="k">${a.id}</td>
+        <td class="${a.id === 'A-2847' ? 'hi' : ''}">${a.firstName} ${a.lastName}</td>
+        <td>${a.age}</td>
+        <td>${a.gender === 'M' ? 'Male' : 'Female'}</td>
+        <td>${a.note !== '—' ? `<span style="color:var(--amber);font-weight:600">${a.note}</span>` : '—'}</td>
+        <td>${showView ? `<button class="btn cyan sm" onclick="viewAssociate('${a.id}')"><span>VIEW →</span></button>` : '<span style="color:var(--text-dim);font-size:.7rem">—</span>'}</td>
+      </tr>`
+    ).join('');
+    document.getElementById('s3-count').textContent = rows.length + ' record' + (rows.length !== 1 ? 's' : '') + ' found';
+    document.getElementById('s3-results').classList.add('on');
+
+    const nudge = document.getElementById('nudge3');
+    if (rows.length > 3) {
+      nudge.textContent = '▶ Multiple associates found — add a Gender filter to narrow down further.';
+      nudge.style.display = 'flex';
+    } else if (hasTarget) {
+      nudge.textContent = '▶ Check the Social Media column — does a username look familiar from the case? Click VIEW → to confirm.';
+      nudge.style.display = 'flex';
+    } else {
+      nudge.style.display = 'none';
     }
   }
 
-  function viewAshley() {
+  function viewAssociate(id) {
+    const err = document.getElementById('s3-err');
+    if (id !== 'A-2847') {
+      err.textContent = '⚠ This associate has no active case link — check the Social Media column to spot the right suspect.';
+      err.classList.add('on'); return;
+    }
+    err.classList.remove('on');
+    document.getElementById('nudge3').style.display = 'none';
     document.getElementById('ashley-card').classList.add('on');
     document.getElementById('h3').style.display = 'block';
-    document.getElementById('nav3').style.display = 'flex';
+    document.getElementById('nav5').style.display = 'flex';
+    markDone(5);
+    addClue('suspect', 'Suspect: Ashley (A-2847) — male, 17 — @AshXxX');
   }
 
-  // ── Stage 4: social media search ─────────────────────────────────────────
-  const SM_DATA = [
-    { id:'SM-001', personId:'A-2847', platform:'Instagram', username:'AshXxX',     status:'Active' },
-    { id:'SM-002', personId:'A-2847', platform:'TikTok',    username:'ash_real22',  status:'Active' },
-    { id:'SM-003', personId:'A-1203', platform:'Instagram', username:'jessxo2010',  status:'Active' }
-  ];
+  // ── Stage 5 dataset ───────────────────────────────────────────────────────
+  const ASSOCIATES_DATA = (() => {
+    const r = _rng(41);
+    const FIRST = ['James','Oliver','Harry','George','Noah','Jack','Charlie','Thomas','Jacob','Alfie',
+                   'William','Joshua','Henry','Leo','Isaac','Archie','Ethan','Nathan','Ryan','Sam',
+                   'Aaron','Connor','Tyler','Jordan','Ben','Luke','Daniel','Max','Lewis','Marcus',
+                   'Mia','Olivia','Amelia','Isla','Ava','Emily','Poppy','Sophie','Grace','Lily',
+                   'Ella','Evie','Jessica','Freya','Hannah','Charlotte','Alice','Lucy','Holly','Chloe',
+                   'Emma','Amy','Lauren','Natalie','Rebecca','Victoria','Sarah','Anna','Kate','Zoe'];
+    const LAST  = ['Smith','Jones','Williams','Taylor','Brown','Davies','Evans','Wilson','Thomas',
+                   'Roberts','Johnson','Walker','Wright','Robinson','Thompson','White','Hughes','Martin','Jackson','Harris'];
+    const GEND  = ['M','M','F','F','M','F'];
+    const fixed = [
+      { id:'A-2847', firstName:'Ashley', lastName:'(withheld)', age:17, gender:'M', note:'@AshXxX (Instagram)' },
+      { id:'A-1203', firstName:'Jess',   lastName:'(withheld)', age:14, gender:'F', note:'Witness — friend of P-1042' },
+      { id:'A-0031', firstName:'Ashley', lastName:'Green',       age:19, gender:'F', note:'—' },
+      { id:'A-0088', firstName:'Ashley', lastName:'Morris',      age:24, gender:'F', note:'—' },
+      { id:'A-0117', firstName:'Ashton', lastName:'Clarke',      age:23, gender:'M', note:'—' },
+      { id:'A-0229', firstName:'Ash',    lastName:'Patel',       age:31, gender:'M', note:'—' },
+    ];
+    const gen = [];
+    for (let i = 0; i < 74; i++) {
+      const seq = (500 + i).toString().padStart(4,'0');
+      gen.push({ id:`A-${seq}`, firstName:_pick(r,FIRST), lastName:_pick(r,LAST), age:_int(r,12,65), gender:_pick(r,GEND), note:'—' });
+    }
+    return [...fixed, ...gen];
+  })();
+
+  // ── Stage 6: social media search ─────────────────────────────────────────
+  const SM_DATA = (() => {
+    const r = _rng(17);
+    const fixed = [
+      { id:'SM-001', personId:'A-2847', platform:'Instagram', username:'AshXxX',       followers:47,   ageDays:61   },
+      { id:'SM-002', personId:'A-2847', platform:'TikTok',    username:'ash_real22',    followers:12,   ageDays:43   },
+      { id:'SM-003', personId:'A-1203', platform:'Instagram', username:'jessxo2010',    followers:892,  ageDays:847  },
+      { id:'SM-004', personId:'P-0731', platform:'Instagram', username:'mchen_life',    followers:1204, ageDays:1203 },
+      { id:'SM-005', personId:'P-0894', platform:'TikTok',    username:'mariasantos',   followers:344,  ageDays:512  },
+      { id:'SM-006', personId:'P-1188', platform:'Instagram', username:'mwilliams08',  followers:231,  ageDays:721  },
+      { id:'SM-007', personId:'A-1203', platform:'TikTok',    username:'jess2010uk',    followers:103,  ageDays:390  },
+      { id:'SM-008', personId:'P-0731', platform:'Snapchat',  username:'mchen99',       followers:67,   ageDays:204  },
+      { id:'SM-009', personId:'P-1188', platform:'Snapchat',  username:'mwills_snap',   followers:45,   ageDays:318  },
+      { id:'SM-010', personId:'A-3311', platform:'Instagram', username:'realjakey33',   followers:28,   ageDays:95   },
+    ];
+    // Low-follower Instagram decoys — followers < 100 but ageDays > 90 (not recently created)
+    const decoys = [
+      { id:'SM-D01', personId:'X-0011', platform:'Instagram', username:'quiet_dan_uk',   followers:38, ageDays:312 },
+      { id:'SM-D02', personId:'X-0023', platform:'Instagram', username:'sheff_photos22', followers:72, ageDays:445 },
+      { id:'SM-D03', personId:'X-0034', platform:'Instagram', username:'notactive99',    followers:55, ageDays:901 },
+      { id:'SM-D04', personId:'X-0045', platform:'Instagram', username:'lurker_uk01',    followers:14, ageDays:203 },
+      { id:'SM-D05', personId:'X-0056', platform:'Instagram', username:'rare_post_123',  followers:89, ageDays:667 },
+    ];
+    const PLATS = ['Instagram','Instagram','Instagram','TikTok','TikTok','Snapchat','X / Twitter'];
+    const WDS   = ['user','smith','jones','taylor','brown','wilson','davies','thomas','roberts','walker','hall','allen','young','king','wright','scott','green','baker','adams','hill','white','turner','moore','clark','lewis','harris','evans','martin','jackson','cooper'];
+    const SFX   = ['_uk','_real','2024','2023','22','_pics','_life','xo','_daily','99','123','_snap','_hd','2022','_vibes','_official','_07'];
+    const gen = [];
+    let n = 200;
+    for (let i = 0; i < 230; i++) {
+      gen.push({
+        id: 'SM-' + String(n++).padStart(3,'0'),
+        personId: 'X-' + String(_int(r, 1000, 9999)),
+        platform: _pick(r, PLATS),
+        username: _pick(r, WDS) + _pick(r, SFX) + String(_int(r, 1, 999)),
+        followers: _int(r, 100, 32000),  // all ≥ 100 — followers < 100 filter isolates real suspects
+        ageDays:   _int(r, 92, 3000)    // all > 90 — ageDays < 90 filter leaves only AshXxX
+      });
+    }
+    return [...fixed, ...decoys, ...gen];
+  })();
+
+  function parseOpVal(str) {
+    if (!str || !str.trim()) return null;
+    const m = str.trim().match(/^([<>])\s*(\d+)$/);
+    if (!m) return null;
+    return { op: m[1], val: parseInt(m[2]) };
+  }
+
+  function parseAgeInput(str) {
+    if (!str || !str.trim()) return null;
+    const opv = parseOpVal(str);
+    if (opv) return opv;
+    if (/^\d+$/.test(str.trim())) return { op: '=', val: parseInt(str.trim(), 10) };
+    return null;
+  }
 
   function searchSocialMedia() {
-    const rawId  = document.getElementById('s4-id').value.trim().toUpperCase().replace(/\s/g,'');
-    const plat   = document.getElementById('s4-platform').value;
-    const err    = document.getElementById('s4-err');
-    const hitId  = rawId === 'A-2847' || rawId === 'A2847';
+    const plat    = document.getElementById('s4-platform').value;
+    const follStr = document.getElementById('s4-followers').value.trim();
+    const ageStr  = document.getElementById('s4-age-days').value.trim();
+    const err     = document.getElementById('s4-err');
 
-    if (!rawId) {
-      err.textContent = '⚠ Enter a Person ID. Use A-2847 (Ashley Chen\'s associate ID from Stage 3).';
+    if (!plat && follStr === '' && ageStr === '') {
+      err.textContent = '⚠ Choose at least a platform to start — try Instagram.';
       err.classList.add('on'); return;
     }
-    if (!hitId) {
-      err.textContent = '⚠ No social media records found for ID "' + document.getElementById('s4-id').value.trim() + '". Try A-2847.';
+    if (follStr !== '' && !parseOpVal(follStr)) {
+      err.textContent = '⚠ Followers needs a comparison operator — e.g. type  < 100  to find accounts with fewer than 100 followers.';
+      err.classList.add('on'); return;
+    }
+    if (ageStr !== '' && !parseOpVal(ageStr)) {
+      err.textContent = '⚠ Account Age needs a comparison operator — e.g. type  < 90  to find accounts created less than 90 days ago.';
+      err.classList.add('on'); return;
+    }
+    err.classList.remove('on');
+
+    const follParsed = parseOpVal(follStr);
+    const ageParsed  = parseOpVal(ageStr);
+
+    let rows = [...SM_DATA];
+    if (plat)       rows = rows.filter(r => r.platform === plat);
+    if (follParsed) rows = rows.filter(r => follParsed.op === '<' ? r.followers < follParsed.val : r.followers > follParsed.val);
+    if (ageParsed)  rows = rows.filter(r => ageParsed.op  === '<' ? r.ageDays   < ageParsed.val  : r.ageDays   > ageParsed.val);
+
+    const parts = [];
+    if (plat)       parts.push(`platform = '${plat}'`);
+    if (follParsed) parts.push(`followers ${follParsed.op} ${follParsed.val}`);
+    if (ageParsed)  parts.push(`account_age_days ${ageParsed.op} ${ageParsed.val}`);
+    document.getElementById('s4-query').textContent =
+      'SELECT * FROM tbl_social_media' + (parts.length ? ' WHERE ' + parts.join(' AND ') : '');
+
+    if (rows.length === 0) {
+      err.textContent = '⚠ No accounts match those criteria — try relaxing one of the filters.';
       err.classList.add('on');
       document.getElementById('s4-results').classList.remove('on'); return;
     }
 
-    err.classList.remove('on');
-    let rows = SM_DATA.filter(r => r.personId === 'A-2847');
-    if (plat) rows = rows.filter(r => r.platform === plat);
-
     document.getElementById('s4-tbody').innerHTML = rows.map(r =>
-      `<tr><td class="k">${r.id}</td><td class="k">${r.personId}</td><td>${r.platform}</td><td class="hi">${r.username}</td><td><span class="badge badge-g">ACTIVE</span></td></tr>`
+      `<tr>
+        <td class="k">${r.id}</td>
+        <td>${r.platform}</td>
+        <td class="${r.username === 'AshXxX' ? 'hi' : ''}">${r.username}</td>
+        <td>${r.followers}</td>
+        <td>${r.ageDays} days</td>
+        <td><span class="badge badge-g">ACTIVE</span></td>
+      </tr>`
     ).join('');
     document.getElementById('s4-count').textContent = rows.length + ' record' + (rows.length !== 1 ? 's' : '') + ' found';
     document.getElementById('s4-results').classList.add('on');
+    markDone(6);
 
-    const hasInsta = rows.some(r => r.platform === 'Instagram');
-    if (hasInsta) {
+    const targetFound  = rows.length === 1 && rows[0].username === 'AshXxX';
+    const multipleFound = rows.length > 1;
+
+    document.getElementById('s4-narrow-nudge').style.display = multipleFound ? 'flex' : 'none';
+    document.getElementById('h4').style.display = (multipleFound && (!follParsed || !ageParsed)) ? 'block' : 'none';
+
+    if (targetFound) {
       document.getElementById('ig-found').classList.add('on');
-      document.getElementById('nav4').style.display = 'flex';
+      document.getElementById('nav6').style.display = 'flex';
       document.getElementById('h4').style.display = 'none';
-      markDone(5);
-    } else if (rows.length > 0) {
-      document.getElementById('h4').style.display = 'block';
+      document.getElementById('s4-narrow-nudge').style.display = 'none';
+      markDone(7);
+      addClue('instagram', '@AshXxX — low follower count (<100), recently created (<90 days)');
     }
-
-    // Mark task for any valid search of A-2847
-    markDone(4);
   }
 
   // ── Completion ────────────────────────────────────────────────────────────
@@ -988,10 +2058,270 @@ color:  cyan
     setTimeout(() => { window.ActivityUI?.launchCelebration(); }, 500);
   }
 
+  // ── Stage 7: device search ────────────────────────────────────────────────
+  const DEVICES_DATA = (() => {
+    const r = _rng(29);
+    const fixed = [
+      { id:'DV-4421', ownerId:'A-2847', make:'Samsung', model:'Galaxy S21 Ultra', type:'Smartphone', purchaseYear:2021, lastOnline:'12/10/2024 18:09' },
+      { id:'DV-1103', ownerId:'P-0731', make:'Apple',   model:'iPhone 14',        type:'Smartphone', purchaseYear:2022, lastOnline:'11/10/2024 09:34' },
+      { id:'DV-2291', ownerId:'P-1042', make:'Apple',   model:'iPhone 13',        type:'Smartphone', purchaseYear:2021, lastOnline:'12/10/2024 17:28' },
+      { id:'DV-3304', ownerId:'A-1203', make:'Samsung', model:'Galaxy A52',        type:'Smartphone', purchaseYear:2020, lastOnline:'10/10/2024 14:15' },
+      { id:'DV-3872', ownerId:'P-0894', make:'Samsung', model:'Galaxy S20',        type:'Smartphone', purchaseYear:2020, lastOnline:'09/10/2024 21:05' },
+      { id:'DV-5001', ownerId:'P-1188', make:'Huawei',  model:'P40 Pro',           type:'Smartphone', purchaseYear:2020, lastOnline:'12/10/2024 11:47' },
+      { id:'DV-5552', ownerId:'A-3311', make:'Apple',   model:'iPhone 15',         type:'Smartphone', purchaseYear:2023, lastOnline:'12/10/2024 20:33' },
+      { id:'DV-6108', ownerId:'P-0731', make:'Apple',   model:'MacBook Air',       type:'Laptop',     purchaseYear:2022, lastOnline:'08/10/2024 16:22' },
+      { id:'DV-7743', ownerId:'A-1203', make:'Samsung', model:'Galaxy Tab S7',     type:'Tablet',     purchaseYear:2021, lastOnline:'07/10/2024 19:11' },
+      { id:'DV-8822', ownerId:'P-1188', make:'Huawei',  model:'MatePad Pro',       type:'Tablet',     purchaseYear:2019, lastOnline:'12/10/2024 08:30' },
+    ];
+    // Samsung smartphone models — ALL purchaseYear ≤ 2020 so > 2020 filter leaves only DV-4421
+    const SS = ['Galaxy A12','Galaxy A21s','Galaxy A31','Galaxy A41','Galaxy A51','Galaxy A71','Galaxy S10','Galaxy S10+','Galaxy S10e','Galaxy S20','Galaxy S20+','Galaxy S20 FE','Galaxy Note 10','Galaxy Note 10+','Galaxy Note 20','Galaxy M31','Galaxy M51','Galaxy F41','Galaxy J6+','Galaxy A10s','Galaxy M21','Galaxy A30s','Galaxy A20e','Galaxy S10 Lite','Galaxy Note 9'];
+    const AS = ['iPhone 6s','iPhone 7','iPhone 8','iPhone X','iPhone XR','iPhone 11','iPhone 11 Pro','iPhone 12','iPhone 12 Pro','iPhone 13','iPhone 13 Pro','iPhone 14','iPhone SE','iPhone SE 2nd Gen'];
+    const HS = ['P20 Pro','P30','P30 Pro','P40','Mate 20','Mate 30','Nova 5T','Y7 Pro','Y9 Prime','P Smart 2019'];
+    const SY = ['Xperia 1 II','Xperia 5','Xperia 10 II','Xperia XZ3','Xperia XZ2','Xperia L4'];
+    const LM = ['MacBook Air','MacBook Pro','Galaxy Book','MateBook D14','VAIO S Series'];
+    const TM = ['iPad Air','iPad Pro','iPad Mini','Galaxy Tab A7','Galaxy Tab S6','MatePad','MatePad Pro'];
+    const YO = [2017,2018,2018,2019,2019,2019,2020,2020,2020]; // ≤ 2020 only
+    const lo = (y) => `${String(_int(r,1,28)).padStart(2,'0')}/${String(_int(r,1,12)).padStart(2,'0')}/${y} ${String(_int(r,7,22)).padStart(2,'0')}:${_pick(r,['04','12','23','37','48','55'])}`;
+    const gen = [];
+    let n = 10000;
+    for (let i = 0; i < 98; i++) gen.push({ id:'DV-'+String(n++).padStart(4,'0'), ownerId:'X-'+String(_int(r,1e3,9999)), make:'Samsung', model:_pick(r,SS), type:'Smartphone', purchaseYear:_pick(r,YO), lastOnline:lo(_pick(r,YO)) });
+    for (let i = 0; i < 58; i++) { const tp=r()<.73?'Smartphone':r()<.6?'Laptop':'Tablet'; gen.push({ id:'DV-'+String(n++).padStart(4,'0'), ownerId:'X-'+String(_int(r,1e3,9999)), make:'Apple', model:tp==='Smartphone'?_pick(r,AS):tp==='Laptop'?_pick(r,LM):_pick(r,TM), type:tp, purchaseYear:_int(r,2018,2023), lastOnline:lo(2020) }); }
+    for (let i = 0; i < 32; i++) { const mk=r()<.65?'Huawei':'Sony'; const tp=r()<.8?'Smartphone':'Tablet'; gen.push({ id:'DV-'+String(n++).padStart(4,'0'), ownerId:'X-'+String(_int(r,1e3,9999)), make:mk, model:tp==='Smartphone'?_pick(r,mk==='Huawei'?HS:SY):_pick(r,TM), type:tp, purchaseYear:_int(r,2017,2020), lastOnline:lo(2019) }); }
+    return [...fixed, ...gen];
+  })();
+
+  function searchDevices() {
+    const make    = document.getElementById('s5-make').value;
+    const type    = document.getElementById('s5-type').value;
+    const yearStr = document.getElementById('s5-year').value.trim();
+    const err     = document.getElementById('s5-err');
+
+    if (!make && !type) {
+      err.textContent = '⚠ Select at least a make or device type to begin.';
+      err.classList.add('on'); return;
+    }
+    if (yearStr !== '' && !parseOpVal(yearStr)) {
+      err.textContent = '⚠ Purchase Year needs a comparison operator — e.g. type  > 2020  to find devices bought after 2020.';
+      err.classList.add('on'); return;
+    }
+    err.classList.remove('on');
+
+    const yearParsed = parseOpVal(yearStr);
+
+    let rows = [...DEVICES_DATA];
+    if (make)       rows = rows.filter(d => d.make === make);
+    if (type)       rows = rows.filter(d => d.type === type);
+    if (yearParsed) rows = rows.filter(d => yearParsed.op === '>' ? d.purchaseYear > yearParsed.val : d.purchaseYear < yearParsed.val);
+
+    const parts = [];
+    if (make)       parts.push(`make = '${make}'`);
+    if (type)       parts.push(`type = '${type}'`);
+    if (yearParsed) parts.push(`purchase_year ${yearParsed.op} ${yearParsed.val}`);
+    document.getElementById('s5-query').textContent =
+      'SELECT * FROM tbl_devices' + (parts.length ? ' WHERE ' + parts.join(' AND ') : '');
+
+    if (rows.length === 0) {
+      err.textContent = '⚠ No devices match those criteria — try broadening the search.';
+      err.classList.add('on');
+      document.getElementById('s5-results').classList.remove('on'); return;
+    }
+
+    const singleTarget = rows.length === 1 && rows[0].id === 'DV-4421';
+
+    document.getElementById('s5-tbody').innerHTML = rows.map(d =>
+      `<tr>
+        <td class="k">${d.id}</td>
+        <td class="${d.id === 'DV-4421' ? 'hi' : ''}">${d.make} ${d.model}</td>
+        <td>${d.type}</td>
+        <td>${d.purchaseYear}</td>
+        <td>${d.lastOnline}</td>
+        <td>${singleTarget && d.id === 'DV-4421'
+          ? '<button class="btn cyan" onclick="viewDevice()"><span>VIEW RECORD →</span></button>'
+          : '<span style="color:var(--text-dim);font-size:.7rem">—</span>'}</td>
+      </tr>`
+    ).join('');
+    document.getElementById('s5-count').textContent = rows.length + ' record' + (rows.length !== 1 ? 's' : '') + ' found';
+    document.getElementById('s5-results').classList.add('on');
+    document.getElementById('s5-narrow-nudge').style.display = rows.length > 1 ? 'flex' : 'none';
+
+    if (singleTarget) {
+      document.getElementById('nudge5').style.display = 'flex';
+      document.getElementById('s5-narrow-nudge').style.display = 'none';
+      markDone(8);
+    }
+  }
+
+  function viewDevice() {
+    document.getElementById('nudge5').style.display = 'none';
+    document.getElementById('device-card').classList.add('on');
+    document.getElementById('h5').style.display = 'block';
+    document.getElementById('nav7').style.display = 'flex';
+    addClue('postcode', 'Suspect device registered: 14 Bramley Close, S12 4JT');
+  }
+
+  // ── Stage 8: CCTV sightings dataset ──────────────────────────────────────
+  const SIGHTINGS_DATA = (() => {
+    const r = _rng(53);
+    // S12 records: fixed for narrative control. After 17:30 in S12: SG-0712(19), SG-0803(31), SG-0851(26), SG-0892(14=target).
+    // Adding age < 18 isolates SG-0892 only.
+    const fixed = [
+      { id:'SG-0892', date:'12/10/2024', timeHM:1812, area:'S12', age:14, gender:'F', desc:'Female ~14, dark jacket. Male companion ~17–18.' },
+      { id:'SG-0441', date:'12/10/2024', timeHM:823,  area:'S12', age:34, gender:'M', desc:'Male ~34, shopping bags.' },
+      { id:'SG-0553', date:'12/10/2024', timeHM:1105, area:'S12', age:22, gender:'F', desc:'Female ~22, pushchair.' },
+      { id:'SG-0671', date:'12/10/2024', timeHM:1347, area:'S12', age:45, gender:'M', desc:'Male ~45, dark coat.' },
+      { id:'SG-0712', date:'12/10/2024', timeHM:1734, area:'S12', age:19, gender:'M', desc:'Male ~19, hooded top. Left area quickly.' },
+      { id:'SG-0803', date:'12/10/2024', timeHM:1901, area:'S12', age:31, gender:'F', desc:'Female ~31, with young child.' },
+      { id:'SG-0515', date:'12/10/2024', timeHM:1418, area:'S12', age:52, gender:'M', desc:'Male ~52.' },
+      { id:'SG-0602', date:'12/10/2024', timeHM:1201, area:'S12', age:27, gender:'F', desc:'Female ~27.' },
+      { id:'SG-0744', date:'12/10/2024', timeHM:930,  area:'S12', age:8,  gender:'M', desc:'Male child ~8, with adult.' },
+      { id:'SG-0851', date:'12/10/2024', timeHM:1845, area:'S12', age:26, gender:'F', desc:'Female ~26.' },
+      // Adjacent-date decoys in S12 (wrong dates — filters them out)
+      { id:'SG-0391', date:'11/10/2024', timeHM:1815, area:'S12', age:14, gender:'F', desc:'Female ~14, school bag.' },
+      { id:'SG-0933', date:'13/10/2024', timeHM:1745, area:'S12', age:15, gender:'F', desc:'Female ~15, dark jacket.' },
+    ];
+    // Bulk sightings across other Sheffield areas — never S12
+    const AREAS = ['S1','S1','S1','S2','S2','S2','S3','S3','S4','S5','S5','S5','S6','S6','S6','S7','S7','S8','S8','S8','S9','S9','S10','S10','S11','S11','S13','S13','S14','S14','S17','S18','S20','S21'];
+    const AGES  = [8,10,11,12,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,30,32,34,36,38,40,42,45,48,51,54,58,62,65,68,72];
+    const gen = [];
+    let n = 2000;
+    for (let i = 0; i < 248; i++) {
+      const gdr = r() < 0.5 ? 'F' : 'M';
+      const age = _pick(r, AGES);
+      gen.push({ id:'SG-'+String(n++).padStart(4,'0'), date:'12/10/2024', timeHM:_int(r,6,23)*100+_int(r,0,59), area:_pick(r,AREAS), age, gender:gdr, desc:`${gdr==='F'?'Female':'Male'} ~${age}.` });
+    }
+    return [...fixed, ...gen];
+  })();
+
+  function parseTimeVal(str) {
+    if (!str || !str.trim()) return null;
+    const m = str.trim().match(/^([<>])\s*(\d{1,2}):(\d{2})$/);
+    if (!m) return null;
+    return { op: m[1], val: parseInt(m[2]) * 100 + parseInt(m[3]) };
+  }
+
+  function fmtTime(hhmm) {
+    const h = Math.floor(hhmm / 100);
+    const m = hhmm % 100;
+    return h.toString().padStart(2,'0') + ':' + m.toString().padStart(2,'0');
+  }
+
+  let cctvViewed = false;
+
+  function searchSightings() {
+    const dateVal = document.getElementById('s6-date').value.trim();
+    const rawArea = document.getElementById('s6-area').value.trim().toUpperCase().replace(/\s/g,'');
+    const timeStr = document.getElementById('s6-time').value.trim();
+    const ageStr  = document.getElementById('s6-age').value.trim();
+    const err     = document.getElementById('s6-err');
+
+    if (!dateVal) {
+      err.textContent = '⚠ Start by entering the date — check when Maria went missing from her person record.';
+      err.classList.add('on'); return;
+    }
+    if (timeStr !== '' && !parseTimeVal(timeStr)) {
+      err.textContent = '⚠ Time needs a comparison operator — e.g.  > 17:30  for sightings after that time.';
+      err.classList.add('on'); return;
+    }
+    if (ageStr !== '' && !parseAgeInput(ageStr)) {
+      err.textContent = '⚠ Subject Age: enter a comparison (e.g.  < 18) or an exact age (e.g.  14).';
+      err.classList.add('on'); return;
+    }
+    err.classList.remove('on');
+
+    const timeParsed = parseTimeVal(timeStr);
+    const ageParsed  = parseAgeInput(ageStr);
+
+    // Extract district code from postcode (e.g. "S12 4JT" or "S124JT" → "S12")
+    let areaCode = null;
+    if (rawArea) {
+      const am = rawArea.match(/^([A-Z]{1,2}\d{1,2})/);
+      areaCode = am ? am[1] : rawArea;
+    }
+
+    let rows = SIGHTINGS_DATA.filter(r => r.date === dateVal);
+    if (areaCode)   rows = rows.filter(r => r.area === areaCode);
+    if (timeParsed) rows = rows.filter(r => timeParsed.op === '>' ? r.timeHM > timeParsed.val : r.timeHM < timeParsed.val);
+    if (ageParsed)  rows = rows.filter(r => ageParsed.op === '=' ? r.age === ageParsed.val : ageParsed.op === '<' ? r.age < ageParsed.val : r.age > ageParsed.val);
+
+    const parts = [`date = '${dateVal}'`];
+    if (areaCode)   parts.push(`area LIKE '${areaCode}%'`);
+    if (timeParsed) parts.push(`time ${timeParsed.op} '${fmtTime(timeParsed.val)}'`);
+    if (ageParsed)  parts.push(ageParsed.op === '=' ? `subject_age = ${ageParsed.val}` : `subject_age ${ageParsed.op} ${ageParsed.val}`);
+    document.getElementById('s6-query').textContent =
+      'SELECT * FROM tbl_sightings WHERE ' + parts.join(' AND ');
+
+    if (rows.length === 0) {
+      err.textContent = '⚠ No sightings match those criteria — try adjusting your filters.';
+      err.classList.add('on');
+      document.getElementById('s6-results').classList.remove('on'); return;
+    }
+
+    const singleTarget = rows.length === 1 && rows[0].id === 'SG-0892';
+
+    document.getElementById('s6-tbody').innerHTML = rows.map(r =>
+      `<tr>
+        <td class="k">${r.id}</td>
+        <td>${r.date}</td>
+        <td>${fmtTime(r.timeHM)}</td>
+        <td>${r.area}</td>
+        <td>${r.gender === 'F' ? 'Female' : 'Male'}, ~${r.age}</td>
+        <td>${singleTarget && r.id === 'SG-0892'
+          ? '<button class="btn cyan sm" onclick="viewSighting()"><span>VIEW RECORD →</span></button>'
+          : '<span style="color:var(--text-dim);font-size:.7rem">—</span>'}</td>
+      </tr>`
+    ).join('');
+    document.getElementById('s6-count').textContent = rows.length + ' record' + (rows.length !== 1 ? 's' : '') + ' found';
+    document.getElementById('s6-results').classList.add('on');
+
+    const nudge = document.getElementById('s6-narrow-nudge');
+    if (rows.length > 1) {
+      let msg;
+      if (rows.length > 10) msg = `▶ ${rows.length} sightings found across Sheffield on that date — add the postcode area to narrow to the right neighbourhood`;
+      else if (rows.length > 3) msg = `▶ ${rows.length} sightings remaining — add a time or age filter to narrow down further`;
+      else msg = `▶ ${rows.length} sightings still match — add one more criterion to pinpoint the correct record`;
+      nudge.textContent = msg;
+      nudge.style.display = 'flex';
+    } else {
+      nudge.style.display = 'none';
+    }
+
+    document.getElementById('nudge8').style.display = (singleTarget && !cctvViewed) ? 'flex' : 'none';
+    if (singleTarget) markDone(9);
+  }
+
+  function viewSighting() {
+    cctvViewed = true;
+    document.getElementById('nudge8').style.display = 'none';
+    document.getElementById('cctv-card').classList.add('on');
+    document.getElementById('nav8').style.display = 'flex';
+  }
+
+  // ── Reference panel toggle ────────────────────────────────────────────────
+  function toggleRef(id) {
+    const body = document.getElementById('ref-body-' + id);
+    const btn  = document.getElementById('ref-btn-' + id);
+    const open = body.classList.toggle('open');
+    btn.classList.toggle('open', open);
+  }
+
   // ── Enter key support ─────────────────────────────────────────────────────
-  document.getElementById('s1-name').addEventListener('keydown', e => { if (e.key === 'Enter') searchPersons(); });
-  document.getElementById('s3-id').addEventListener('keydown',   e => { if (e.key === 'Enter') searchAssociates(); });
-  document.getElementById('s4-id').addEventListener('keydown',   e => { if (e.key === 'Enter') searchSocialMedia(); });
+  document.getElementById('s1-name').addEventListener('keydown',   e => { if (e.key === 'Enter') searchPersons(); });
+  document.getElementById('s3-name').addEventListener('keydown',   e => { if (e.key === 'Enter') searchAssociates(); });
+  document.getElementById('s4-followers').addEventListener('keydown', e => { if (e.key === 'Enter') searchSocialMedia(); });
+  document.getElementById('s4-age-days').addEventListener('keydown',  e => { if (e.key === 'Enter') searchSocialMedia(); });
+  document.getElementById('s5-year').addEventListener('keydown',   e => { if (e.key === 'Enter') searchDevices(); });
+  document.getElementById('s6-date').addEventListener('keydown',   e => { if (e.key === 'Enter') searchSightings(); });
+  document.getElementById('s6-area').addEventListener('keydown',   e => { if (e.key === 'Enter') searchSightings(); });
+  document.getElementById('s6-time').addEventListener('keydown',   e => { if (e.key === 'Enter') searchSightings(); });
+  document.getElementById('s6-age').addEventListener('keydown',    e => { if (e.key === 'Enter') searchSightings(); });
+
+  // ── Shuffle drag chip bank ────────────────────────────────────────────────
+  (function shuffleChips() {
+    const bank = document.getElementById('chip-bank');
+    const chips = [...bank.querySelectorAll('.drag-chip')];
+    chips.sort(() => Math.random() - 0.5);
+    chips.forEach(chip => bank.appendChild(chip));
+  })();
 
   // ── Init ──────────────────────────────────────────────────────────────────
   updateProgress(0);
