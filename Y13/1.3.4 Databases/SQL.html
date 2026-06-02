@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- ACTIVITY
+title:  A-Level SQL Practice
+type:   Practice
+stars:  4
+desc:   Practise A-Level SQL — SELECT with ORDER BY and LIKE, INSERT, DELETE, DROP, JOIN between two tables, and nested subqueries. Live query simulation.
+color:  blue
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>A-Level SQL Practice — Year 13</title>
+<link rel="stylesheet" href="../../shared.css">
+<style>
+  body { min-height: 100vh; background: var(--bg); color: var(--text); font-family: var(--font-body); }
+
+  header {
+    position: sticky; top: 0; z-index: 20;
+    background: var(--surface); border-bottom: 2px solid var(--surface-mid);
+    box-shadow: 0 2px 16px rgba(0,0,0,0.28); padding: 12px 18px;
+  }
+  .header-row {
+    display: grid; grid-template-columns: 1fr auto; gap: 16px;
+    align-items: center; max-width: 1200px; margin: 0 auto;
+  }
+  .score { font-family: Consolas, monospace; color: var(--accent-light); font-size: 0.84rem; white-space: nowrap; }
+
+  main { max-width: 1200px; margin: 0 auto; padding: 18px 16px 64px; }
+  .page-title { color: var(--accent-light); text-align: center; font-size: 1.28rem; margin-bottom: 4px; }
+  .page-subtitle { text-align: center; color: var(--muted); font-size: 0.84rem; margin-bottom: 20px; }
+
+  /* ── Section tab bar ─────────────────────────────── */
+  .sec-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 20px; }
+  .sec-btn {
+    padding: 8px 16px; border: 2px solid var(--surface-mid); border-radius: 20px;
+    background: var(--surface); color: var(--muted); font-weight: 700; font-size: 0.82rem;
+    cursor: pointer; transition: background 0.2s, border-color 0.2s, color 0.2s; user-select: none;
+  }
+  .sec-btn:hover:not(.active) { border-color: var(--accent); color: var(--text); }
+  .sec-btn.active { background: var(--accent); border-color: var(--accent); color: var(--text-inv); }
+  .sec-btn.sec-done { background: var(--green); border-color: var(--green); color: #fff; }
+
+  /* ── Section panels ──────────────────────────────── */
+  .sec-panel { display: none; }
+  .sec-panel.active { display: block; animation: ac-fade-in 0.2s ease; }
+
+  /* ── Data table panels ───────────────────────────── */
+  .tables-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px; }
+  .tables-row.single { grid-template-columns: 1fr; max-width: 620px; }
+  @media (max-width: 680px) { .tables-row { grid-template-columns: 1fr; } }
+
+  .table-panel {
+    background: var(--surface); border: 1px solid var(--surface-mid);
+    border-left: 4px solid var(--accent); border-radius: 8px; padding: 12px;
+  }
+  .table-panel-title {
+    color: var(--accent); font-size: 0.72rem; text-transform: uppercase;
+    letter-spacing: 0.1em; font-weight: 800; margin-bottom: 8px;
+  }
+  .table-wrap { overflow-x: auto; border: 1px solid var(--surface-mid); border-radius: 6px; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--surface-mid); font-size: 0.82rem; }
+  th { color: var(--accent-light); background: color-mix(in srgb, var(--surface-mid) 76%, transparent); font-family: Consolas, monospace; font-size: 0.72rem; letter-spacing: 0.04em; }
+  tr:last-child td { border-bottom: 0; }
+  .row-green td { background: color-mix(in srgb, var(--green) 20%, transparent); }
+  .row-red td { background: color-mix(in srgb, var(--red) 16%, transparent); opacity: 0.65; text-decoration: line-through; }
+  .row-selected td { background: color-mix(in srgb, var(--accent) 14%, transparent); }
+
+  /* ── Q sub-tab bar ───────────────────────────────── */
+  .q-tabs { display: flex; gap: 6px; margin-bottom: 14px; }
+  .q-btn {
+    border: 2px solid var(--surface-mid); background: var(--surface); color: var(--muted);
+    min-width: 34px; height: 32px; padding: 0 10px; border-radius: 8px;
+    font-weight: 800; font-size: 0.82rem; cursor: pointer;
+    transition: background 0.2s, border-color 0.2s, color 0.2s;
+  }
+  .q-btn.active { background: var(--accent); border-color: var(--accent); color: var(--text-inv); }
+  .q-btn.done   { background: var(--green);  border-color: var(--green);  color: #fff; }
+
+  /* ── Question card ───────────────────────────────── */
+  .q-panel { display: none; }
+  .q-panel.active { display: block; animation: ac-fade-in 0.18s ease; }
+  .q-card { background: var(--surface); border: 1px solid var(--surface-mid); border-radius: 8px; padding: 16px 18px; }
+  .q-label { color: var(--accent); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 800; margin-bottom: 8px; }
+  .q-prompt { font-size: 0.93rem; line-height: 1.55; margin-bottom: 12px; }
+
+  .sql-editor {
+    width: 100%; min-height: 78px; resize: vertical; box-sizing: border-box;
+    border: 2px solid var(--surface-mid); border-radius: 8px; padding: 10px 12px;
+    background: var(--code-bg, #101827); color: var(--code-text, #e5edf7);
+    font-family: Consolas, "Courier New", monospace; font-size: 0.9rem; line-height: 1.45;
+  }
+  .sql-editor:focus { outline: none; border-color: var(--accent); }
+
+  .run-btn {
+    margin-top: 8px; padding: 7px 20px; background: var(--accent); color: var(--text-inv);
+    border: none; border-radius: 6px; font-weight: 800; font-size: 0.88rem;
+    cursor: pointer; transition: opacity 0.15s;
+  }
+  .run-btn:hover { opacity: 0.85; }
+
+  .feedback { min-height: 1.4em; margin-top: 8px; font-weight: 700; font-size: 0.9rem; }
+  .feedback.ok   { color: var(--green); }
+  .feedback.warn { color: var(--gold); }
+  .feedback.err  { color: var(--red); animation: ac-shake 0.35s ease; }
+
+  .output-area { margin-top: 12px; }
+  .output-heading {
+    padding: 6px 10px; background: var(--surface-mid); color: var(--accent-light);
+    font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 800;
+    border-radius: 6px 6px 0 0;
+  }
+  .output-box { border: 1px solid var(--surface-mid); border-top: 0; border-radius: 0 0 6px 6px; overflow: hidden; min-height: 48px; }
+  .output-empty { color: var(--muted); padding: 10px; font-size: 0.84rem; }
+  .output-msg { color: var(--text); padding: 10px 14px; font-size: 0.86rem; line-height: 1.5; }
+  .output-msg.red { color: var(--red); }
+  .output-msg.green { color: var(--green); }
+
+  /* ── Example tab ─────────────────────────────────── */
+  .example-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 760px) { .example-grid { grid-template-columns: 1fr; } }
+  .ex-card { background: var(--surface); border: 1px solid var(--surface-mid); border-radius: 8px; padding: 14px 16px; }
+  .ex-card-title { color: var(--accent-light); font-size: 0.78rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+  .ex-code {
+    background: var(--code-bg, #101827); color: var(--code-text, #e5edf7);
+    font-family: Consolas, monospace; font-size: 0.82rem; line-height: 1.55;
+    padding: 10px 14px; border-radius: 6px; white-space: pre; overflow-x: auto; margin: 0 0 8px;
+  }
+  .ex-note { color: var(--muted); font-size: 0.82rem; line-height: 1.5; }
+  .ex-note code { font-family: Consolas, monospace; color: var(--accent-light); }
+
+  .complete-note {
+    display: none; text-align: center; padding: 20px; margin-top: 18px;
+    background: color-mix(in srgb, var(--green) 14%, var(--surface));
+    border: 1px solid var(--green); border-radius: 8px; font-weight: 700;
+  }
+  .complete-note.show { display: block; }
+</style>
+</head>
+
+<body>
+<div id="done-banner" class="ac-banner gold">All SQL tasks complete — excellent work.</div>
+
+<header>
+  <div class="header-row">
+    <div class="ac-progress-bar"><div class="ac-progress-fill" id="progress-fill"></div></div>
+    <div class="score" id="progress-pct">0 / 13</div>
+  </div>
+</header>
+
+<main>
+  <h1 class="page-title">A-Level SQL Practice</h1>
+  <p class="page-subtitle">OCR H446 — SELECT · INSERT · DELETE · DROP · JOIN · Nested SELECTs</p>
+
+  <nav class="sec-tabs" id="sec-tabs" aria-label="SQL command sections"></nav>
+  <div id="sec-panels"></div>
+
+  <div class="complete-note" id="complete-note">You have completed all 13 SQL tasks — excellent work!</div>
+</main>
+
+<div class="ac-toast" id="toast"></div>
+
+<script>
+const ACTIVITY_TITLE = 'A-Level SQL Practice';
+const STORAGE_KEY = 'sql-alevel-y13-v1';
+
+/* ── Data ────────────────────────────────────────────────────────── */
+const FILMS = [
+  { FilmID: 1, Title: 'The Matrix',      Genre: 'Sci-Fi', Year: 1999, Rating: 8.7 },
+  { FilmID: 2, Title: 'Interstellar',    Genre: 'Sci-Fi', Year: 2014, Rating: 8.6 },
+  { FilmID: 3, Title: 'The Dark Knight', Genre: 'Action', Year: 2008, Rating: 9.0 },
+  { FilmID: 4, Title: 'Inception',       Genre: 'Action', Year: 2010, Rating: 8.8 },
+  { FilmID: 5, Title: 'Parasite',        Genre: 'Drama',  Year: 2019, Rating: 8.6 },
+  { FilmID: 6, Title: 'La La Land',      Genre: 'Drama',  Year: 2016, Rating: 8.0 },
+  { FilmID: 7, Title: 'Avengers',        Genre: 'Action', Year: 2018, Rating: 8.4 },
+];
+const FILM_FIELDS = ['FilmID', 'Title', 'Genre', 'Year', 'Rating'];
+
+const REVIEWS = [
+  { ReviewID: 1, FilmID: 3, Reviewer: 'Alice', Score: 9  },
+  { ReviewID: 2, FilmID: 1, Reviewer: 'Bob',   Score: 8  },
+  { ReviewID: 3, FilmID: 4, Reviewer: 'Alice', Score: 9  },
+  { ReviewID: 4, FilmID: 7, Reviewer: 'Carol', Score: 8  },
+  { ReviewID: 5, FilmID: 3, Reviewer: 'David', Score: 10 },
+  { ReviewID: 6, FilmID: 5, Reviewer: 'Bob',   Score: 8  },
+  { ReviewID: 7, FilmID: 2, Reviewer: 'Carol', Score: 9  },
+];
+const REVIEW_FIELDS = ['ReviewID', 'FilmID', 'Reviewer', 'Score'];
+
+/* ── Sections & questions ────────────────────────────────────────── */
+const SECTIONS = [
+  { id: 'example', label: 'Example', questions: [] },
+  {
+    id: 'select', label: 'SELECT', tables: ['film'],
+    questions: [
+      {
+        type: 'select',
+        prompt: 'Show <b>FilmID</b> and <b>Title</b> for all films in the "Action" genre.',
+        check: { fields: ['FilmID','Title'], table: 'tbl_film', where: { field:'Genre', op:'=', value:'Action' } }
+      },
+      {
+        type: 'select',
+        prompt: 'Show <b>Title</b> and <b>Rating</b> for films where Rating ≥ 8.6 AND the Genre is "Sci-Fi".',
+        check: {
+          fields: ['Title','Rating'], table: 'tbl_film',
+          where: { logic:'AND', left:{ field:'Rating', op:'>=', value:8.6 }, right:{ field:'Genre', op:'=', value:'Sci-Fi' } }
+        }
+      },
+      {
+        type: 'select',
+        prompt: 'Use <b>LIKE</b> to show <b>FilmID</b> and <b>Title</b> for films whose title begins with "The".',
+        check: { fields: ['FilmID','Title'], table: 'tbl_film', where: { field:'Title', op:'LIKE', value:'The%' } }
+      },
+      {
+        type: 'select',
+        prompt: 'Show <b>all fields (*)</b> for films released after 2010, ordered by Rating descending.',
+        check: {
+          fields: FILM_FIELDS, selectAll: true, table: 'tbl_film',
+          where: { field:'Year', op:'>', value:2010 },
+          orderBy: { field:'Rating', dir:'DESC' }
+        }
+      }
+    ]
+  },
+  {
+    id: 'insert', label: 'INSERT', tables: ['film'],
+    questions: [
+      {
+        type: 'insert',
+        prompt: 'Add a new film to <code>tbl_film</code>:<br>FilmID = 8, Title = "Dune", Genre = "Sci-Fi", Year = 2021, Rating = 7.9',
+        check: { table:'tbl_film', values:[8,'Dune','Sci-Fi',2021,7.9] }
+      },
+      {
+        type: 'insert',
+        prompt: 'Add another film to <code>tbl_film</code>:<br>FilmID = 9, Title = "Get Out", Genre = "Drama", Year = 2017, Rating = 7.7',
+        check: { table:'tbl_film', values:[9,'Get Out','Drama',2017,7.7] }
+      }
+    ]
+  },
+  {
+    id: 'delete', label: 'DELETE', tables: ['film'],
+    questions: [
+      {
+        type: 'delete',
+        prompt: 'Delete the film with <b>FilmID = 6</b> from <code>tbl_film</code>.',
+        check: { table:'tbl_film', where:{ field:'FilmID', op:'=', value:6 } }
+      },
+      {
+        type: 'delete',
+        prompt: 'Delete all films from <code>tbl_film</code> where the <b>Rating is below 8.5</b>.',
+        check: { table:'tbl_film', where:{ field:'Rating', op:'<', value:8.5 } }
+      }
+    ]
+  },
+  {
+    id: 'drop', label: 'DROP', tables: ['review'],
+    questions: [
+      {
+        type: 'drop',
+        prompt: 'Write a statement to permanently remove the entire <code>tbl_review</code> table from the database.',
+        check: { table:'tbl_review' }
+      }
+    ]
+  },
+  {
+    id: 'join', label: 'JOIN', tables: ['film','review'],
+    questions: [
+      {
+        type: 'join',
+        prompt: 'Show the film <b>Title</b> and the <b>Reviewer</b> name for all reviews with a Score ≥ 9. JOIN on FilmID.',
+        check: {
+          outFields: ['Title','Reviewer'], t1:'tbl_film', t2:'tbl_review',
+          joinField: 'FilmID',
+          where: { tbl:'tbl_review', field:'Score', op:'>=', value:9 }
+        }
+      },
+      {
+        type: 'join',
+        prompt: 'Show film <b>Title</b> and review <b>Score</b> for all films reviewed by "Alice". JOIN on FilmID.',
+        check: {
+          outFields: ['Title','Score'], t1:'tbl_film', t2:'tbl_review',
+          joinField: 'FilmID',
+          where: { tbl:'tbl_review', field:'Reviewer', op:'=', value:'Alice' }
+        }
+      }
+    ]
+  },
+  {
+    id: 'subquery', label: 'Subquery', tables: ['film','review'],
+    questions: [
+      {
+        type: 'subquery',
+        prompt: 'Show the <b>Title</b> of films that have received at least one review with <b>Score = 10</b>. Use a nested SELECT.',
+        check: {
+          outerFields: ['Title'], outerTable: 'tbl_film', outerWhereField: 'FilmID', outerOp: 'IN',
+          innerFields: ['FilmID'], innerTable: 'tbl_review', innerWhere: { field:'Score', op:'=', value:10 }
+        }
+      },
+      {
+        type: 'subquery',
+        prompt: 'Show the <b>Title</b> of films that have <b>not been reviewed</b> at all. Use a nested SELECT with NOT IN.',
+        check: {
+          outerFields: ['Title'], outerTable: 'tbl_film', outerWhereField: 'FilmID', outerOp: 'NOT IN',
+          innerFields: ['FilmID'], innerTable: 'tbl_review', innerWhere: null
+        }
+      }
+    ]
+  }
+];
+
+const TASK_COUNT = SECTIONS.reduce((n, s) => n + s.questions.length, 0); // 13
+
+/* ── State ───────────────────────────────────────────────────────── */
+const completed  = SECTIONS.map(s => new Array(s.questions.length).fill(false));
+const activeQ    = new Array(SECTIONS.length).fill(0);
+let   activeSec  = 1;
+let   advancing  = false;
+
+/* ── SQL utilities ───────────────────────────────────────────────── */
+function norm(sql) {
+  return sql.replace(/--.*$/gm, '').replace(/;+\s*$/, '').replace(/\s+/g, ' ').trim();
+}
+
+function pv(raw) {
+  const s = String(raw).trim();
+  const q = s.match(/^["'](.*)["']$/);
+  if (q) return { value: q[1], str: true };
+  if (/^-?\d+(\.\d+)?$/.test(s)) return { value: Number(s), str: false };
+  return { value: s, str: false, bare: true };
+}
+
+function normVal(v) { return String(v).toLowerCase().trim(); }
+
+function cmp(a, op, b) {
+  const na = Number(a), nb = Number(b);
+  const sa = String(a).toLowerCase(), sb = String(b).toLowerCase();
+  if (op === '=')  return !isNaN(na) && !isNaN(nb) ? na === nb : sa === sb;
+  if (op === '>')  return na > nb;
+  if (op === '<')  return na < nb;
+  if (op === '>=') return na >= nb;
+  if (op === '<=') return na <= nb;
+  if (op === '!=') return sa !== sb;
+  if (op === 'LIKE') {
+    const pat = String(b).replace(/[.+?^${}()|[\]\\]/g,'\\$&').replace(/%/g,'.*');
+    return new RegExp('^'+pat+'$','i').test(String(a));
+  }
+  return false;
+}
+
+function parseCondition(part, fieldSet) {
+  const m = part.trim().match(/^([A-Za-z][A-Za-z0-9_.]*)\s*(LIKE|>=|<=|!=|=|>|<)\s*(.+)$/i);
+  if (!m) return null;
+  const inputField = m[1];
+  // Exact match (handles both plain 'Score' and prefixed 'tbl_review.Score')
+  let field = fieldSet.find(f => f.toLowerCase() === inputField.toLowerCase());
+  if (!field) {
+    // Suffix match: strip table prefix from input and search fieldSet by column name
+    const suf = inputField.includes('.') ? inputField.split('.')[1] : inputField;
+    field = fieldSet.find(f => (f.includes('.') ? f.split('.')[1] : f).toLowerCase() === suf.toLowerCase());
+  }
+  if (!field) return null;
+  const op = m[2].toUpperCase() === 'LIKE' ? 'LIKE' : m[2];
+  const val = pv(m[3].trim());
+  if (val.bare) return null;
+  return { field, op, value: val.value };
+}
+
+function applyWhere(rows, wherePart, fieldSet) {
+  if (!wherePart) return rows;
+  const andParts = wherePart.split(/\bAND\b/i);
+  const orParts  = wherePart.split(/\bOR\b/i);
+  if (andParts.length > 1) {
+    const conds = andParts.map(p => parseCondition(p, fieldSet));
+    if (conds.some(c => !c)) return null;
+    return rows.filter(r => conds.every(c => cmp(r[c.field], c.op, c.value)));
+  }
+  if (orParts.length > 1) {
+    const conds = orParts.map(p => parseCondition(p, fieldSet));
+    if (conds.some(c => !c)) return null;
+    return rows.filter(r => conds.some(c => cmp(r[c.field], c.op, c.value)));
+  }
+  const c = parseCondition(wherePart, fieldSet);
+  if (!c) return null;
+  return rows.filter(r => cmp(r[c.field], c.op, c.value));
+}
+
+function applyExpectedWhere(rows, where) {
+  if (!where) return rows;
+  if (where.logic === 'AND') return rows.filter(r => cmp(r[where.left.field], where.left.op, where.left.value) && cmp(r[where.right.field], where.right.op, where.right.value));
+  if (where.logic === 'OR')  return rows.filter(r => cmp(r[where.left.field], where.left.op, where.left.value) || cmp(r[where.right.field], where.right.op, where.right.value));
+  return rows.filter(r => cmp(r[where.field], where.op, where.value));
+}
+
+function parseValueList(s) {
+  const vals = []; let i = 0, cur = '';
+  while (i < s.length) {
+    if (s[i] === '"' || s[i] === "'") {
+      const q = s[i++]; let str = '';
+      while (i < s.length && s[i] !== q) str += s[i++];
+      i++;
+      vals.push(str);
+      cur = '';
+    } else if (s[i] === ',') {
+      const t = cur.trim();
+      if (t) vals.push(pv(t).value);
+      cur = ''; i++;
+    } else { cur += s[i++]; }
+  }
+  const t = cur.trim();
+  if (t) vals.push(pv(t).value);
+  return vals;
+}
+
+/* ── Validators ──────────────────────────────────────────────────── */
+function validateSelect(sql, check) {
+  const s = norm(sql);
+  if (!s) return err('Write a SELECT query.');
+  if (!/^SELECT\s/i.test(s)) return err('Query must start with SELECT.');
+  if (/\bJOIN\b/i.test(s)) return err('This question uses a single table — no JOIN needed.');
+
+  const obMatch = s.match(/\bORDER\s+BY\s+([A-Za-z][A-Za-z0-9_]*)\s*(ASC|DESC)?\s*$/i);
+  const withoutOB = obMatch ? s.slice(0, s.lastIndexOf(obMatch[0])).trim() : s;
+
+  const m = withoutOB.match(/^SELECT\s+(.+?)\s+FROM\s+([A-Za-z][A-Za-z0-9_]*)(?:\s+WHERE\s+(.+))?$/i);
+  if (!m) return err('Use: SELECT fields FROM table [WHERE condition] [ORDER BY field].');
+
+  const [, selPart, tbl, wPart] = m;
+  if (tbl !== 'tbl_film') return err(`Table name must be tbl_film (case-sensitive), got: ${tbl}`);
+
+  const isAll = selPart.trim() === '*';
+  let fields = isAll ? FILM_FIELDS : selPart.split(',').map(f => {
+    const name = f.trim();
+    return FILM_FIELDS.find(ff => ff.toLowerCase() === name.toLowerCase()) || null;
+  });
+  if (!isAll && fields.some(f => !f)) return err(`Unrecognised field name. Available: ${FILM_FIELDS.join(', ')}`);
+
+  const filteredRows = wPart ? applyWhere(FILMS, wPart, FILM_FIELDS) : FILMS;
+  if (filteredRows === null) return err('Could not parse WHERE condition. Check field names, operators and quotes.');
+
+  let rows = [...filteredRows];
+  let parsedOB = null;
+  if (obMatch) {
+    const obField = FILM_FIELDS.find(f => f.toLowerCase() === obMatch[1].toLowerCase());
+    if (!obField) return err(`Unknown ORDER BY field: ${obMatch[1]}`);
+    parsedOB = { field: obField, dir: (obMatch[2] || 'ASC').toUpperCase() };
+    rows.sort((a, b) => parsedOB.dir === 'ASC' ? (a[parsedOB.field] > b[parsedOB.field] ? 1 : -1) : (a[parsedOB.field] < b[parsedOB.field] ? 1 : -1));
+  }
+
+  const actualOut = rows.map(r => Object.fromEntries(fields.map(f => [f, r[f]])));
+
+  // Build expected output
+  let expRows = applyExpectedWhere(FILMS, check.where);
+  if (check.orderBy) expRows = [...expRows].sort((a, b) => check.orderBy.dir === 'ASC' ? (a[check.orderBy.field] > b[check.orderBy.field] ? 1 : -1) : (a[check.orderBy.field] < b[check.orderBy.field] ? 1 : -1));
+  const expOut = expRows.map(r => Object.fromEntries(check.fields.map(f => [f, r[f]])));
+
+  const structOK = (check.selectAll ? isAll : true)
+    && (check.orderBy ? !!parsedOB && parsedOB.field === check.orderBy.field && parsedOB.dir === check.orderBy.dir : true);
+  const correct = structOK && JSON.stringify(actualOut) === JSON.stringify(expOut);
+
+  const highlightIds = rows.map(r => r.FilmID);
+  return { valid: true, correct, fields, rows, highlightIds, msg: correct ? 'Correct.' : 'This runs but does not match the expected output yet.' };
+}
+
+function validateInsert(sql, check) {
+  const s = norm(sql);
+  if (!s) return err('Write an INSERT INTO query.');
+  if (!/^INSERT\s+INTO\s/i.test(s)) return err('Must start with INSERT INTO.');
+
+  const m1 = s.match(/^INSERT\s+INTO\s+([A-Za-z][A-Za-z0-9_]*)\s*\(([^)]+)\)\s+VALUES\s*\(([^)]+)\)/i);
+  const m2 = s.match(/^INSERT\s+INTO\s+([A-Za-z][A-Za-z0-9_]*)\s+VALUES\s*\(([^)]+)\)/i);
+  const m = m1 || m2;
+  if (!m) return err('Use: INSERT INTO table (fields) VALUES (values) or INSERT INTO table VALUES (values).');
+
+  const [, tbl] = m;
+  if (tbl !== check.table) return err(`Table name must be ${check.table} (case-sensitive).`);
+
+  const valuesPart = m1 ? m[3] : m[2];
+  const fieldsPart = m1 ? m[2] : null;
+  const vals = parseValueList(valuesPart);
+
+  let orderedVals = vals;
+  if (fieldsPart) {
+    const cols = fieldsPart.split(',').map(c => c.trim());
+    if (cols.length !== vals.length) return err('Number of fields and values must match.');
+    orderedVals = FILM_FIELDS.map(f => {
+      const idx = cols.findIndex(c => c.toLowerCase() === f.toLowerCase());
+      return idx >= 0 ? vals[idx] : undefined;
+    });
+    if (orderedVals.some(v => v === undefined)) return err('Field list must match tbl_film columns.');
+  } else {
+    if (vals.length !== FILM_FIELDS.length) return err(`Expected ${FILM_FIELDS.length} values for tbl_film.`);
+  }
+
+  const correct = orderedVals.every((v, i) => normVal(v) === normVal(check.values[i]));
+  const newRow = Object.fromEntries(FILM_FIELDS.map((f, i) => [f, orderedVals[i]]));
+  return { valid: true, correct, newRow, msg: correct ? 'Correct.' : 'This runs but the values do not match what was asked for.' };
+}
+
+function validateDelete(sql, check) {
+  const s = norm(sql);
+  if (!s) return err('Write a DELETE query.');
+  if (!/^DELETE\s+FROM\s/i.test(s)) return err('Must start with DELETE FROM.');
+
+  const m = s.match(/^DELETE\s+FROM\s+([A-Za-z][A-Za-z0-9_]*)(?:\s+WHERE\s+(.+))?$/i);
+  if (!m) return err('Use: DELETE FROM table WHERE condition.');
+
+  const [, tbl, wPart] = m;
+  if (tbl !== check.table) return err(`Table name must be ${check.table} (case-sensitive).`);
+  if (!wPart) return err('Always include a WHERE clause with DELETE to avoid deleting all records.');
+
+  const toDelete = applyWhere(FILMS, wPart, FILM_FIELDS);
+  if (toDelete === null) return err('Could not parse WHERE condition. Check field names, operators and quotes.');
+
+  const expDelete = applyExpectedWhere(FILMS, check.where);
+  const correct = JSON.stringify(toDelete.map(r => r.FilmID).sort()) === JSON.stringify(expDelete.map(r => r.FilmID).sort());
+  return { valid: true, correct, toDeleteIds: toDelete.map(r => r.FilmID), msg: correct ? 'Correct.' : 'This runs but the wrong records would be deleted.' };
+}
+
+function validateDrop(sql, check) {
+  const s = norm(sql);
+  if (!s) return err('Write a DROP TABLE statement.');
+  if (!/^DROP\s+TABLE\s/i.test(s)) return err('Must start with DROP TABLE.');
+  const m = s.match(/^DROP\s+TABLE\s+([A-Za-z][A-Za-z0-9_]*)$/i);
+  if (!m) return err('Use: DROP TABLE table_name');
+  if (m[1] !== check.table) return err(`Table name must be ${check.table} (case-sensitive), got: ${m[1]}`);
+  return { valid: true, correct: true, msg: 'Correct.' };
+}
+
+function validateJoin(sql, check) {
+  const s = norm(sql);
+  if (!s) return err('Write a SELECT … JOIN query.');
+  if (!/^SELECT\s/i.test(s)) return err('Must start with SELECT.');
+  if (!/\bJOIN\b/i.test(s)) return err('Must include a JOIN clause to link tbl_film and tbl_review.');
+
+  const m = s.match(/^SELECT\s+(.+?)\s+FROM\s+([A-Za-z][A-Za-z0-9_]*)\s+(?:INNER\s+)?JOIN\s+([A-Za-z][A-Za-z0-9_]*)\s+ON\s+([A-Za-z0-9_.]+)\s*=\s*([A-Za-z0-9_.]+)(?:\s+WHERE\s+(.+))?$/i);
+  if (!m) return err('Use: SELECT fields FROM t1 JOIN t2 ON t1.field = t2.field [WHERE condition]');
+
+  const [, selPart, t1, t2, onL, onR, wPart] = m;
+
+  const tables = [t1, t2];
+  if (!tables.includes('tbl_film') || !tables.includes('tbl_review')) return err('Must JOIN tbl_film and tbl_review.');
+
+  // Build join result
+  const joined = [];
+  for (const film of FILMS) {
+    for (const rev of REVIEWS) {
+      if (film.FilmID === rev.FilmID) {
+        joined.push({ ...Object.fromEntries(Object.entries(film).map(([k,v]) => ['tbl_film.'+k, v])), ...Object.fromEntries(Object.entries(rev).map(([k,v]) => ['tbl_review.'+k, v])) });
+      }
+    }
+  }
+
+  const allJoinFields = [...FILM_FIELDS.map(f=>'tbl_film.'+f), ...REVIEW_FIELDS.map(f=>'tbl_review.'+f)];
+  let rows = joined;
+  if (wPart) {
+    rows = applyWhere(joined, wPart, allJoinFields);
+    if (rows === null) return err('Could not parse WHERE condition. Use table.field notation (e.g. tbl_review.Score >= 9).');
+  }
+
+  // Parse SELECT fields
+  const selFields = selPart.split(',').map(f => f.trim());
+  const resolvedFields = selFields.map(sf => {
+    if (sf.includes('.')) return sf;
+    const match = allJoinFields.find(jf => jf.toLowerCase().endsWith('.'+sf.toLowerCase()));
+    return match || sf;
+  });
+  const badField = resolvedFields.find(f => !allJoinFields.includes(f));
+  if (badField) return err(`Unknown field: ${badField}. Use table.field notation (e.g. tbl_film.Title).`);
+
+  const actualOut = rows.map(r => Object.fromEntries(resolvedFields.map(f => [f.split('.')[1], r[f]])));
+
+  // Expected output
+  const expRows = FILMS.flatMap(film => REVIEWS.filter(r => r.FilmID === film.FilmID).map(r => ({ ...film, ...r })));
+  const expFiltered = check.where
+    ? expRows.filter(r => cmp(r[check.where.field], check.where.op, check.where.value))
+    : expRows;
+  const expOut = expFiltered.map(r => Object.fromEntries(check.outFields.map(f => [f, r[f]])));
+
+  const correct = JSON.stringify(actualOut) === JSON.stringify(expOut);
+  const strippedFields = resolvedFields.map(f => f.includes('.') ? f.split('.')[1] : f);
+  return { valid: true, correct, fields: strippedFields, rows: actualOut, msg: correct ? 'Correct.' : 'This runs but does not match the expected output yet.' };
+}
+
+function validateSubquery(sql, check) {
+  const s = norm(sql);
+  if (!s) return err('Write a SELECT query with a nested SELECT.');
+  if (!/^SELECT\s/i.test(s)) return err('Must start with SELECT.');
+
+  const innerMatch = s.match(/\(\s*(SELECT\s+.+?)\s*\)/i);
+  if (!innerMatch) return err('Must include a nested SELECT inside parentheses.');
+
+  const innerSql = innerMatch[1];
+  const outerSql = s.replace(/\(\s*SELECT\s+.+?\s*\)/i, '__SUB__');
+
+  // Parse outer
+  const outerM = outerSql.match(/^SELECT\s+(.+?)\s+FROM\s+([A-Za-z][A-Za-z0-9_]*)\s+WHERE\s+([A-Za-z][A-Za-z0-9_.]*)\s+(NOT\s+IN|IN|=|>|<)\s+__SUB__/i);
+  if (!outerM) return err('Outer query must be: SELECT fields FROM table WHERE field IN (SELECT …)');
+
+  const [, outerSel, outerTbl, outerWField, outerOp] = outerM;
+  const normOp = outerOp.replace(/\s+/g,' ').toUpperCase().trim();
+
+  if (outerTbl !== check.outerTable) return err(`Outer FROM must be ${check.outerTable}.`);
+  const rawOWF = outerWField.includes('.') ? outerWField.split('.')[1] : outerWField;
+  if (rawOWF.toLowerCase() !== check.outerWhereField.toLowerCase()) return err(`Outer WHERE field must be ${check.outerWhereField}.`);
+  if (normOp !== check.outerOp) return err(`Operator must be ${check.outerOp}.`);
+
+  // Parse inner
+  const innerM = innerSql.match(/^SELECT\s+(.+?)\s+FROM\s+([A-Za-z][A-Za-z0-9_]*)(?:\s+WHERE\s+(.+))?$/i);
+  if (!innerM) return err('Inner SELECT must be: SELECT field FROM table [WHERE condition]');
+
+  const [, innerSel, innerTbl, innerWhere] = innerM;
+  if (innerTbl !== check.innerTable) return err(`Inner FROM must be ${check.innerTable}.`);
+
+  const rawInnerField = innerSel.trim().includes('.') ? innerSel.trim().split('.')[1] : innerSel.trim();
+  if (rawInnerField.toLowerCase() !== check.innerFields[0].toLowerCase()) return err(`Inner SELECT field must be ${check.innerFields[0]}.`);
+
+  // Run inner query
+  const innerRows = innerWhere ? applyWhere(REVIEWS, innerWhere, REVIEW_FIELDS) : REVIEWS;
+  if (innerRows === null) return err('Could not parse inner WHERE condition.');
+  const innerVals = new Set(innerRows.map(r => r[check.innerFields[0]]));
+
+  // Run outer query
+  let outerRows = check.outerOp === 'IN'
+    ? FILMS.filter(r => innerVals.has(r[check.outerWhereField]))
+    : FILMS.filter(r => !innerVals.has(r[check.outerWhereField]));
+
+  const outerFields = outerSel.trim() === '*' ? FILM_FIELDS : outerSel.split(',').map(f => {
+    const name = f.trim().includes('.') ? f.trim().split('.')[1] : f.trim();
+    return FILM_FIELDS.find(ff => ff.toLowerCase() === name.toLowerCase()) || null;
+  });
+  if (outerFields.some(f => !f)) return err('Unrecognised field in outer SELECT.');
+
+  const actualOut = outerRows.map(r => Object.fromEntries(outerFields.map(f => [f, r[f]])));
+
+  // Expected
+  const expInner = check.innerWhere ? applyExpectedWhere(REVIEWS, check.innerWhere) : REVIEWS;
+  const expVals = new Set(expInner.map(r => r[check.innerFields[0]]));
+  const expRows = check.outerOp === 'IN'
+    ? FILMS.filter(r => expVals.has(r[check.outerWhereField]))
+    : FILMS.filter(r => !expVals.has(r[check.outerWhereField]));
+  const expOut = expRows.map(r => Object.fromEntries(check.outerFields.map(f => [f, r[f]])));
+
+  const correct = JSON.stringify(actualOut) === JSON.stringify(expOut);
+  return { valid: true, correct, fields: outerFields, rows: actualOut, msg: correct ? 'Correct.' : 'This runs but the output does not match. Check your conditions.' };
+}
+
+function err(message) { return { valid: false, message }; }
+
+function evaluate(sql, sec, qIdx) {
+  const q = sec.questions[qIdx];
+  if (q.type === 'select')   return validateSelect(sql, q.check);
+  if (q.type === 'insert')   return validateInsert(sql, q.check);
+  if (q.type === 'delete')   return validateDelete(sql, q.check);
+  if (q.type === 'drop')     return validateDrop(sql, q.check);
+  if (q.type === 'join')     return validateJoin(sql, q.check);
+  if (q.type === 'subquery') return validateSubquery(sql, q.check);
+  return err('Unknown question type.');
+}
+
+/* ── HTML builders ───────────────────────────────────────────────── */
+function escHtml(v) {
+  return String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function buildFilmTable(highlightIds = [], strikeIds = [], insertRow = null) {
+  const rows = FILMS.map(r => {
+    const cls = strikeIds.includes(r.FilmID) ? 'row-red' : highlightIds.includes(r.FilmID) ? 'row-selected' : '';
+    return `<tr class="${cls}">${FILM_FIELDS.map(f => `<td>${escHtml(r[f])}</td>`).join('')}</tr>`;
+  });
+  if (insertRow) rows.push(`<tr class="row-green">${FILM_FIELDS.map(f => `<td>${escHtml(insertRow[f] ?? '')}</td>`).join('')}</tr>`);
+  return `<table><thead><tr>${FILM_FIELDS.map(f=>`<th>${f}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table>`;
+}
+
+function buildReviewTable() {
+  const rows = REVIEWS.map(r => `<tr>${REVIEW_FIELDS.map(f=>`<td>${escHtml(r[f])}</td>`).join('')}</tr>`).join('');
+  return `<table><thead><tr>${REVIEW_FIELDS.map(f=>`<th>${f}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+function buildOutputTable(fields, rows) {
+  if (!rows || rows.length === 0) return '<div class="output-empty">Query returned no records.</div>';
+  const theads = fields.map(f => `<th>${escHtml(f)}</th>`).join('');
+  const tbodys = rows.map(r => `<tr>${fields.map(f => `<td>${escHtml(r[f] ?? '')}</td>`).join('')}</tr>`).join('');
+  return `<div class="table-wrap" style="border:0;border-radius:0"><table><thead><tr>${theads}</tr></thead><tbody>${tbodys}</tbody></table></div>`;
+}
+
+function exampleHTML() {
+  return `
+    <div class="example-grid">
+      <div class="ex-card">
+        <div class="ex-card-title">SELECT with WHERE, AND, LIKE</div>
+        <pre class="ex-code">SELECT FilmID, Title
+FROM tbl_film
+WHERE Genre = "Sci-Fi"
+AND Rating >= 8.6</pre>
+        <pre class="ex-code">SELECT *
+FROM tbl_film
+WHERE Title LIKE "The%"</pre>
+        <p class="ex-note"><code>%</code> matches any sequence of characters. <code>*</code> selects every field.</p>
+      </div>
+      <div class="ex-card">
+        <div class="ex-card-title">ORDER BY</div>
+        <pre class="ex-code">SELECT Title, Rating
+FROM tbl_film
+WHERE Year > 2010
+ORDER BY Rating DESC</pre>
+        <p class="ex-note">Append <code>ORDER BY field ASC</code> or <code>DESC</code> to sort results.</p>
+      </div>
+      <div class="ex-card">
+        <div class="ex-card-title">INSERT INTO</div>
+        <pre class="ex-code">INSERT INTO tbl_film
+  (FilmID, Title, Genre, Year, Rating)
+VALUES
+  (10, "Dune", "Sci-Fi", 2021, 7.9)</pre>
+        <p class="ex-note">You may also omit the field list if supplying all values in order.</p>
+      </div>
+      <div class="ex-card">
+        <div class="ex-card-title">DELETE FROM</div>
+        <pre class="ex-code">DELETE FROM tbl_film
+WHERE Rating < 8.0</pre>
+        <p class="ex-note">Always use WHERE with DELETE — without it every record is removed.</p>
+      </div>
+      <div class="ex-card">
+        <div class="ex-card-title">DROP TABLE</div>
+        <pre class="ex-code">DROP TABLE tbl_review</pre>
+        <p class="ex-note">DROP removes the entire table structure and all its data. Unlike DELETE, it cannot be filtered by condition.</p>
+      </div>
+      <div class="ex-card">
+        <div class="ex-card-title">JOIN</div>
+        <pre class="ex-code">SELECT tbl_film.Title, tbl_review.Score
+FROM tbl_film
+JOIN tbl_review
+ON tbl_film.FilmID = tbl_review.FilmID
+WHERE tbl_review.Score >= 9</pre>
+        <p class="ex-note">JOIN (equivalent to INNER JOIN) links rows from two tables on a matching field.</p>
+      </div>
+      <div class="ex-card">
+        <div class="ex-card-title">Nested SELECT (Subquery)</div>
+        <pre class="ex-code">SELECT Title FROM tbl_film
+WHERE FilmID IN
+  (SELECT FilmID FROM tbl_review
+   WHERE Score = 10)</pre>
+        <pre class="ex-code">SELECT Title FROM tbl_film
+WHERE FilmID NOT IN
+  (SELECT FilmID FROM tbl_review)</pre>
+        <p class="ex-note">The inner SELECT runs first and its results are used as the condition for the outer query.</p>
+      </div>
+    </div>`;
+}
+
+/* ── Render sections ─────────────────────────────────────────────── */
+function renderSecTabs() {
+  const bar = document.getElementById('sec-tabs');
+  bar.innerHTML = SECTIONS.map((sec, sIdx) => {
+    const allDone = sec.questions.length > 0 && completed[sIdx].every(Boolean);
+    const cls = allDone ? 'sec-done' : sIdx === activeSec ? 'active' : '';
+    return `<button class="sec-btn ${cls}" data-sec="${sIdx}">${escHtml(sec.label)}</button>`;
+  }).join('');
+}
+
+function renderSecPanels() {
+  const container = document.getElementById('sec-panels');
+  container.innerHTML = SECTIONS.map((sec, sIdx) => {
+    if (sec.id === 'example') {
+      return `<div class="sec-panel ${sIdx === activeSec ? 'active' : ''}" id="sec-${sIdx}">${exampleHTML()}</div>`;
+    }
+    const tableHtml = buildSectionTables(sec, sIdx);
+    const qTabBar = sec.questions.length > 1
+      ? `<div class="q-tabs" id="qtabs-${sIdx}">${sec.questions.map((_,qi) => `<button class="q-btn ${qi === activeQ[sIdx] ? 'active' : ''} ${completed[sIdx][qi] ? 'done' : ''}" data-qi="${qi}">${qi+1}</button>`).join('')}</div>`
+      : '';
+    const qPanels = sec.questions.map((q, qi) => `
+      <div class="q-panel ${qi === activeQ[sIdx] ? 'active' : ''}" id="qpanel-${sIdx}-${qi}">
+        <div class="q-card">
+          <div class="q-label">Question ${qi+1}</div>
+          <p class="q-prompt">${q.prompt}</p>
+          <label class="sr-only" for="sql-${sIdx}-${qi}">SQL answer</label>
+          <textarea class="sql-editor code-checker" id="sql-${sIdx}-${qi}" spellcheck="false"></textarea>
+          <button class="run-btn" id="run-${sIdx}-${qi}">Run Query</button>
+          <div class="feedback" id="fb-${sIdx}-${qi}" aria-live="polite"></div>
+          <div class="output-area" id="out-${sIdx}-${qi}"></div>
+        </div>
+      </div>`).join('');
+    return `<div class="sec-panel ${sIdx === activeSec ? 'active' : ''}" id="sec-${sIdx}">
+      ${tableHtml}
+      ${qTabBar}
+      ${qPanels}
+    </div>`;
+  }).join('');
+
+  // Attach events
+  SECTIONS.forEach((sec, sIdx) => {
+    if (sec.id === 'example') return;
+    const qBar = document.getElementById('qtabs-'+sIdx);
+    if (qBar) qBar.addEventListener('click', e => {
+      const btn = e.target.closest('.q-btn');
+      if (btn) showQ(sIdx, Number(btn.dataset.qi));
+    });
+    sec.questions.forEach((_, qi) => {
+      const editor = document.getElementById('sql-'+sIdx+'-'+qi);
+      const runBtn = document.getElementById('run-'+sIdx+'-'+qi);
+      editor.addEventListener('input', () => { runEval(sIdx, qi); saveState(); });
+      editor.addEventListener('blur', () => runEval(sIdx, qi));
+      runBtn.addEventListener('click', () => { runEval(sIdx, qi); saveState(); });
+    });
+  });
+}
+
+function buildSectionTables(sec, sIdx) {
+  const isSingle = sec.tables.length === 1;
+  const wrap = isSingle ? 'tables-row single' : 'tables-row';
+  return `<div class="${wrap}" id="datatables-${sIdx}">` + sec.tables.map(t => {
+    if (t === 'film') return `<div class="table-panel"><div class="table-panel-title">tbl_film</div><div class="table-wrap" id="filmtable-${sIdx}">${buildFilmTable()}</div></div>`;
+    if (t === 'review') return `<div class="table-panel"><div class="table-panel-title">tbl_review</div><div class="table-wrap">${buildReviewTable()}</div></div>`;
+    return '';
+  }).join('') + '</div>';
+}
+
+function updateFilmTableInSection(sIdx, highlightIds = [], strikeIds = [], insertRow = null) {
+  const el = document.getElementById('filmtable-'+sIdx);
+  if (el) el.innerHTML = buildFilmTable(highlightIds, strikeIds, insertRow);
+}
+
+/* ── Evaluation ──────────────────────────────────────────────────── */
+function runEval(sIdx, qi) {
+  const editor   = document.getElementById('sql-'+sIdx+'-'+qi);
+  const fbEl     = document.getElementById('fb-'+sIdx+'-'+qi);
+  const outEl    = document.getElementById('out-'+sIdx+'-'+qi);
+  const sec      = SECTIONS[sIdx];
+  const q        = sec.questions[qi];
+  const result   = evaluate(editor.value, sec, qi);
+
+  // Reset film table highlight
+  if (sIdx === activeSec) updateFilmTableInSection(sIdx);
+
+  if (!result.valid) {
+    fbEl.className = 'feedback warn'; fbEl.textContent = result.message;
+    outEl.innerHTML = '';
+    return false;
+  }
+
+  // Build output display
+  let outInner = '';
+  let heading = 'Query result';
+
+  if (q.type === 'select' || q.type === 'join' || q.type === 'subquery') {
+    outInner = buildOutputTable(result.fields, result.rows);
+    heading = 'Result';
+    if (q.type === 'select' && sIdx === activeSec) updateFilmTableInSection(sIdx, result.highlightIds);
+  }
+  if (q.type === 'insert') {
+    heading = 'Table after INSERT';
+    outInner = buildFilmTable([], [], result.newRow);
+    if (sIdx === activeSec) updateFilmTableInSection(sIdx, [], [], result.correct ? result.newRow : undefined);
+  }
+  if (q.type === 'delete') {
+    heading = 'Rows that would be deleted (shown in red)';
+    if (sIdx === activeSec) updateFilmTableInSection(sIdx, [], result.toDeleteIds);
+    outInner = buildFilmTable([], result.toDeleteIds);
+  }
+  if (q.type === 'drop') {
+    heading = 'Effect of DROP TABLE';
+    outInner = `<div class="output-msg red">tbl_review would be permanently removed from the database — structure and all data deleted.</div>`;
+  }
+
+  if (outInner) {
+    outEl.innerHTML = `<div class="output-heading">${heading}</div><div class="output-box">${outInner}</div>`;
+  }
+
+  if (result.correct) {
+    fbEl.className = 'feedback ok';
+    fbEl.textContent = completed[sIdx][qi] ? 'Correct.' : 'Correct. ' + (hasNextQ(sIdx, qi) ? 'Moving to the next question…' : '');
+    markDone(sIdx, qi);
+    return true;
+  }
+
+  fbEl.className = 'feedback warn'; fbEl.textContent = result.msg;
+  return false;
+}
+
+function hasNextQ(sIdx, qi) {
+  return SECTIONS[sIdx].questions.some((_, i) => i > qi && !completed[sIdx][i]);
+}
+
+/* ── Progress & completion ───────────────────────────────────────── */
+function markDone(sIdx, qi) {
+  if (completed[sIdx][qi]) return;
+  completed[sIdx][qi] = true;
+  renderSecTabs();
+  refreshQTabs(sIdx);
+  updateProgress();
+
+  const count = SECTIONS.reduce((n, _, si) => n + completed[si].filter(Boolean).length, 0);
+  const pct = Math.round(count / TASK_COUNT * 100);
+  window.Classroom?.submitGrade(pct, ACTIVITY_TITLE);
+
+  if (SECTIONS.every((_, si) => SECTIONS[si].questions.every((_, qi) => completed[si][qi]))) {
+    allComplete(); return;
+  }
+
+  if (!advancing) {
+    advancing = true;
+    setTimeout(() => {
+      const nextQi = SECTIONS[sIdx].questions.findIndex((_, i) => i > qi && !completed[sIdx][i]);
+      if (nextQi >= 0) showQ(sIdx, nextQi);
+      advancing = false;
+    }, 900);
+  }
+}
+
+function updateProgress() {
+  const count = SECTIONS.reduce((n, _, si) => n + completed[si].filter(Boolean).length, 0);
+  const pct = Math.round(count / TASK_COUNT * 100);
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-pct').textContent = count + ' / ' + TASK_COUNT;
+}
+
+function allComplete() {
+  document.getElementById('done-banner').classList.add('show');
+  document.getElementById('complete-note').classList.add('show');
+  window.ActivityUI?.launchCelebration();
+}
+
+/* ── Navigation ──────────────────────────────────────────────────── */
+function showSec(sIdx) {
+  activeSec = sIdx;
+  document.querySelectorAll('.sec-panel').forEach((p, i) => p.classList.toggle('active', i === sIdx));
+  renderSecTabs();
+  // Re-evaluate visible questions to update table highlights
+  if (SECTIONS[sIdx].questions.length) {
+    runEval(sIdx, activeQ[sIdx]);
+  }
+}
+
+function showQ(sIdx, qi) {
+  activeQ[sIdx] = qi;
+  const sec = SECTIONS[sIdx];
+  document.querySelectorAll(`#sec-${sIdx} .q-panel`).forEach((p, i) => p.classList.toggle('active', i === qi));
+  refreshQTabs(sIdx);
+  if (sIdx === activeSec) updateFilmTableInSection(sIdx);
+  document.getElementById('sql-'+sIdx+'-'+qi)?.focus();
+  runEval(sIdx, qi);
+}
+
+function refreshQTabs(sIdx) {
+  const bar = document.getElementById('qtabs-'+sIdx);
+  if (!bar) return;
+  bar.querySelectorAll('.q-btn').forEach(btn => {
+    const i = Number(btn.dataset.qi);
+    btn.className = 'q-btn' + (i === activeQ[sIdx] ? ' active' : '') + (completed[sIdx][i] ? ' done' : '');
+  });
+}
+
+/* ── State persistence ───────────────────────────────────────────── */
+function saveState() {
+  const answers = SECTIONS.map((sec, si) => sec.questions.map((_, qi) => document.getElementById('sql-'+si+'-'+qi)?.value || ''));
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({ answers, completed, activeQ, activeSec }));
+}
+
+function restoreState() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    if (Array.isArray(saved.completed)) {
+      saved.completed.forEach((secArr, si) => {
+        if (Array.isArray(secArr)) secArr.forEach((v, qi) => { if (completed[si]) completed[si][qi] = Boolean(v); });
+      });
+    }
+    if (Array.isArray(saved.activeQ)) saved.activeQ.forEach((v, si) => { if (Number.isInteger(v)) activeQ[si] = v; });
+    if (Number.isInteger(saved.activeSec)) activeSec = saved.activeSec;
+    if (Array.isArray(saved.answers)) {
+      saved.answers.forEach((secArr, si) => {
+        if (Array.isArray(secArr)) secArr.forEach((val, qi) => {
+          const el = document.getElementById('sql-'+si+'-'+qi);
+          if (el && typeof val === 'string') el.value = val;
+        });
+      });
+    }
+  } catch { localStorage.removeItem(STORAGE_KEY); }
+}
+
+/* ── Init ────────────────────────────────────────────────────────── */
+document.getElementById('sec-tabs').addEventListener('click', e => {
+  const btn = e.target.closest('.sec-btn');
+  if (btn) showSec(Number(btn.dataset.sec));
+});
+
+renderSecTabs();
+renderSecPanels();
+restoreState();
+renderSecTabs();
+// Re-apply Q tab states from restored completed[]
+SECTIONS.forEach((_, si) => refreshQTabs(si));
+// Show correct section and run initial evaluations
+showSec(activeSec);
+SECTIONS.forEach((sec, si) => sec.questions.forEach((_, qi) => {
+  if (completed[si][qi]) { /* already done — don't re-run, just refresh tabs */ }
+}));
+updateProgress();
+if (SECTIONS.every((_, si) => SECTIONS[si].questions.every((_, qi) => completed[si][qi]))) allComplete();
+</script>
+
+<script src="../../activity-ui.js"></script>
+<script src="../../classroom.js"></script>
+</body>
+</html>
