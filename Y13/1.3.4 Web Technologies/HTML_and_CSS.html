@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- ACTIVITY
+title:  HTML & CSS
+type:   Practice
+stars:  4
+desc:   Practise OCR A-Level HTML and CSS — concepts, tags, class vs id, fill-in-the-blanks, writing CSS rules, and building HTML from descriptions.
+color:  blue
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HTML &amp; CSS — Year 13</title>
+<link rel="stylesheet" href="../../shared.css">
+<style>
+body { min-height: 100vh; background: var(--bg); color: var(--text); font-family: var(--font-body); }
+
+header {
+  position: sticky; top: 0; z-index: 20;
+  background: var(--surface); border-bottom: 2px solid var(--surface-mid);
+  box-shadow: 0 2px 16px rgba(0,0,0,0.28); padding: 10px 18px;
+}
+.hdr { display: flex; align-items: center; gap: 12px; max-width: 980px; margin: 0 auto; }
+.score-pct { font-family: Consolas, monospace; color: var(--accent-light); font-size: 0.82rem; white-space: nowrap; }
+
+main { max-width: 980px; margin: 0 auto; padding: 18px 16px 64px; }
+.page-title { color: var(--accent-light); text-align: center; font-size: 1.3rem; margin-bottom: 4px; font-weight: 800; }
+.page-subtitle { text-align: center; color: var(--muted); font-size: 0.84rem; margin-bottom: 24px; }
+
+/* ── Tabs ─────────────────────────────────────────────── */
+.tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 22px; justify-content: center; }
+.tab-btn {
+  padding: 7px 16px; border: 2px solid var(--surface-mid); border-radius: 20px;
+  background: var(--surface); color: var(--muted); font-weight: 700; font-size: 0.82rem;
+  cursor: pointer; transition: background 0.2s, border-color 0.2s, color 0.2s; user-select: none;
+}
+.tab-btn:hover:not(.active) { border-color: var(--accent); color: var(--text); }
+.tab-btn.active      { background: var(--accent);  border-color: var(--accent);  color: var(--text-inv); }
+.tab-btn.done-green  { background: var(--green);   border-color: var(--green);   color: #fff; }
+.tab-btn.done-gold   { background: var(--gold);    border-color: var(--gold);    color: #111; }
+
+/* ── Panels ───────────────────────────────────────────── */
+.panel { display: none; }
+.panel.active { display: block; animation: ac-fade-in 0.2s ease; }
+
+/* ── Goal + cards ─────────────────────────────────────── */
+.goal {
+  border-left: 4px solid var(--accent); background: var(--surface);
+  border-radius: 0 8px 8px 0; padding: 10px 16px; font-size: 0.9rem;
+  font-weight: 600; color: var(--text); margin-bottom: 18px;
+}
+.card {
+  background: var(--surface); border-left: 4px solid var(--accent);
+  border-radius: 8px; padding: 18px 22px; margin-bottom: 18px;
+}
+.card h2 {
+  font-size: 0.77rem; font-weight: 800; color: var(--accent);
+  text-transform: uppercase; letter-spacing: 0.9px; margin-bottom: 16px;
+}
+
+/* ── Per-question card ────────────────────────────────── */
+.q-card {
+  border: 1.5px solid var(--surface-mid); border-radius: 8px;
+  padding: 12px 14px; margin-bottom: 12px;
+  transition: border-color 0.2s, background 0.2s;
+}
+.q-card.ok  { border-color: var(--green); background: color-mix(in srgb, var(--green) 10%, transparent); }
+.q-card.err { border-color: var(--red);   background: color-mix(in srgb, var(--red)    8%, transparent); }
+
+.q-label { display: block; font-size: 0.9rem; line-height: 1.65; color: var(--text); margin-bottom: 8px; }
+.q-hint  {
+  font-size: 0.78rem; color: var(--red); margin-top: 6px;
+  padding: 5px 8px; background: color-mix(in srgb, var(--red) 8%, transparent);
+  border-radius: 5px; display: none;
+}
+.q-hint.show { display: block; }
+
+/* ── MCQ options ──────────────────────────────────────── */
+.mc-opts { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+.mc-opt {
+  display: flex; align-items: flex-start; gap: 9px;
+  padding: 8px 11px; border: 1.5px solid var(--surface-mid); border-radius: 7px;
+  cursor: pointer; transition: border-color 0.15s, background 0.15s;
+  font-size: 0.88rem; line-height: 1.4; user-select: none;
+}
+.mc-opt:hover { border-color: var(--accent); }
+.mc-opt.selected { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, transparent); }
+.mc-opt input[type=radio] { margin-top: 2px; accent-color: var(--accent); flex-shrink: 0; }
+
+/* ── Dropdown ─────────────────────────────────────────── */
+.ac-select {
+  display: block; margin-top: 8px;
+  padding: 7px 10px; border: 2px solid var(--surface-mid); border-radius: 7px;
+  background: var(--bg); color: var(--text); font-family: var(--font-body);
+  font-size: 0.88rem; cursor: pointer; max-width: 260px;
+}
+.ac-select:focus { outline: none; border-color: var(--accent); }
+
+/* ── Code textarea ────────────────────────────────────── */
+.code-ta {
+  display: block; width: 100%; box-sizing: border-box; margin-top: 8px;
+  font-family: Consolas, 'Courier New', monospace; font-size: 0.85rem;
+  background: var(--surface-mid); color: var(--text);
+  border: 1.5px solid var(--surface-mid); border-radius: 8px;
+  padding: 12px 14px; line-height: 1.75; resize: vertical; min-height: 100px;
+}
+.code-ta:focus { outline: none; border-color: var(--accent); }
+
+/* ── Fill-in-blanks code block ────────────────────────── */
+.code-block {
+  font-family: Consolas, 'Courier New', monospace; font-size: 0.83rem;
+  line-height: 2.1; background: var(--surface-mid); border-radius: 8px;
+  padding: 14px 16px; white-space: pre-wrap; overflow-x: auto;
+  border: 1px solid color-mix(in srgb, var(--surface-mid) 60%, transparent);
+  word-break: normal; overflow-wrap: normal;
+}
+.blank {
+  display: inline; font-family: Consolas, 'Courier New', monospace; font-size: inherit;
+  background: color-mix(in srgb, var(--accent) 14%, var(--bg));
+  border: 1.5px solid var(--accent); border-radius: 4px;
+  padding: 1px 5px; color: var(--text); vertical-align: baseline;
+  transition: border-color 0.2s, background 0.2s;
+}
+.blank:focus { outline: none; border-color: var(--accent-light); }
+.blank.ok  { border-color: var(--green); background: color-mix(in srgb, var(--green) 15%, var(--bg)); }
+.blank.err { border-color: var(--red);   background: color-mix(in srgb, var(--red)   10%, var(--bg)); }
+
+/* ── Example box ──────────────────────────────────────── */
+.example-box {
+  background: var(--surface-mid); border-radius: 8px;
+  padding: 12px 14px; font-size: 0.85rem; color: var(--muted);
+  line-height: 1.8; margin: 8px 0 6px;
+}
+.example-box code { color: var(--text); }
+
+/* ── Side-by-side question + worked example ──────────── */
+.split-q {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  align-items: start;
+}
+@media (max-width: 640px) { .split-q { grid-template-columns: 1fr; } }
+
+.worked-eg {
+  background: color-mix(in srgb, var(--accent) 7%, var(--surface-mid));
+  border: 1.5px dashed color-mix(in srgb, var(--accent) 40%, transparent);
+  border-radius: 8px;
+  padding: 14px;
+  font-size: 0.83rem;
+  line-height: 1.6;
+  height: 100%;
+  box-sizing: border-box;
+}
+.worked-eg-title {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+.worked-eg p { color: var(--muted); margin: 0 0 6px; }
+.worked-eg pre {
+  font-family: Consolas, 'Courier New', monospace;
+  font-size: 0.82rem;
+  line-height: 1.75;
+  color: var(--text);
+  margin: 0;
+  white-space: pre;
+  background: var(--surface-mid);
+  border-radius: 5px;
+  padding: 8px 10px;
+}
+
+/* ── Row / feedback ───────────────────────────────────── */
+.row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 14px; }
+.feedback { min-height: 1.4em; font-size: 0.88rem; font-weight: 600; margin-top: 10px; }
+.feedback.correct { color: var(--green); }
+.feedback.wrong   { color: var(--red); animation: ac-shake 0.35s ease; }
+</style>
+</head>
+
+<body>
+<!-- Completion banner -->
+<div id="done-banner" class="ac-banner gold">
+  All tasks complete — excellent work!
+</div>
+
+<!-- Sticky header -->
+<header>
+  <div class="hdr">
+    <div class="ac-progress-bar" style="flex:1">
+      <div class="ac-progress-fill" id="prog-fill"></div>
+    </div>
+    <span class="score-pct" id="prog-pct">0%</span>
+  </div>
+</header>
+
+<main>
+  <h1 class="page-title">HTML &amp; CSS</h1>
+  <p class="page-subtitle">OCR A-Level Computer Science &middot; 1.3.4 Web Technologies</p>
+
+  <!-- ── Tab bar ────────────────────────────────────────── -->
+  <div class="tabs" id="tab-bar">
+    <button class="tab-btn active" data-idx="0">1. Concepts</button>
+    <button class="tab-btn"        data-idx="1">2. HTML Tags</button>
+    <button class="tab-btn"        data-idx="2">3. Class vs ID</button>
+    <button class="tab-btn"        data-idx="3">4. Fill the Blanks</button>
+    <button class="tab-btn"        data-idx="4">5. Write CSS</button>
+    <button class="tab-btn"        data-idx="5">6. Write HTML</button>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════ -->
+  <!-- Task 1 — Concepts                                    -->
+  <!-- ════════════════════════════════════════════════════ -->
+  <div class="panel active" id="panel-0">
+    <div class="goal">🎯 Answer four knowledge questions about the roles of HTML and CSS.</div>
+    <div class="card">
+      <h2>HTML &amp; CSS Concepts</h2>
+
+      <div class="q-card" id="c0-0">
+        <span class="q-label">1. What does HTML stand for?</span>
+        <div class="mc-opts">
+          <label class="mc-opt"><input type="radio" name="c0q0" value="a"> HyperText Machine Language</label>
+          <label class="mc-opt"><input type="radio" name="c0q0" value="b"> HyperText Markup Language</label>
+          <label class="mc-opt"><input type="radio" name="c0q0" value="c"> HyperTransfer Markup Library</label>
+          <label class="mc-opt"><input type="radio" name="c0q0" value="d"> HighText Multipage Language</label>
+        </div>
+      </div>
+
+      <div class="q-card" id="c0-1">
+        <span class="q-label">2. What is the primary role of HTML in a webpage?</span>
+        <div class="mc-opts">
+          <label class="mc-opt"><input type="radio" name="c0q1" value="a"> Defines the structure and content using tags</label>
+          <label class="mc-opt"><input type="radio" name="c0q1" value="b"> Controls the visual style and layout of elements</label>
+          <label class="mc-opt"><input type="radio" name="c0q1" value="c"> Handles user interactions such as button clicks</label>
+          <label class="mc-opt"><input type="radio" name="c0q1" value="d"> Manages communication between browser and server</label>
+        </div>
+      </div>
+
+      <div class="q-card" id="c0-2">
+        <span class="q-label">3. A website uses HTML, CSS and JavaScript. Describe the purpose of CSS.</span>
+        <div class="mc-opts">
+          <label class="mc-opt"><input type="radio" name="c0q2" value="a"> CSS uses tags to define the structure of a page</label>
+          <label class="mc-opt"><input type="radio" name="c0q2" value="b"> CSS uses selectors to control the style of elements</label>
+          <label class="mc-opt"><input type="radio" name="c0q2" value="c"> CSS runs server-side to generate HTML on demand</label>
+          <label class="mc-opt"><input type="radio" name="c0q2" value="d"> CSS adds interactivity such as validating user input</label>
+        </div>
+      </div>
+
+      <div class="q-card" id="c0-3">
+        <span class="q-label">4. Which of the following is a valid way to apply CSS to a webpage?</span>
+        <div class="mc-opts">
+          <label class="mc-opt"><input type="radio" name="c0q3" value="a"> Only via a linked external <code>.css</code> file</label>
+          <label class="mc-opt"><input type="radio" name="c0q3" value="b"> Using the <code>style</code> attribute on any element, a <code>&lt;style&gt;</code> block in <code>&lt;head&gt;</code>, or an external stylesheet linked with <code>&lt;link&gt;</code></label>
+          <label class="mc-opt"><input type="radio" name="c0q3" value="c"> Only inside <code>&lt;script&gt;</code> tags in the HTML file</label>
+          <label class="mc-opt"><input type="radio" name="c0q3" value="d"> Using a <code>style</code> attribute inside the <code>&lt;head&gt;</code> tag only</label>
+        </div>
+      </div>
+    </div>
+    <div class="row"><button class="ac-btn" onclick="checkConcepts()">Check answers</button></div>
+    <div class="feedback" id="fb-0"></div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════ -->
+  <!-- Task 2 — HTML Tags                                   -->
+  <!-- ════════════════════════════════════════════════════ -->
+  <div class="panel" id="panel-1">
+    <div class="goal">🎯 Select the correct HTML tag or attribute for each description.</div>
+    <div class="card">
+      <h2>HTML Tags &amp; Attributes</h2>
+
+      <div class="q-card" id="t1-0">
+        <span class="q-label">1. Which tag creates an <strong>unordered (bullet) list</strong>?</span>
+        <select class="ac-select" id="t1q0">
+          <option value="">— select —</option>
+          <option value="ol">&lt;ol&gt;</option>
+          <option value="ul">&lt;ul&gt;</option>
+          <option value="li">&lt;li&gt;</option>
+          <option value="list">&lt;list&gt;</option>
+        </select>
+      </div>
+
+      <div class="q-card" id="t1-1">
+        <span class="q-label">2. Which tag creates an <strong>ordered (numbered) list</strong>?</span>
+        <select class="ac-select" id="t1q1">
+          <option value="">— select —</option>
+          <option value="ul">&lt;ul&gt;</option>
+          <option value="li">&lt;li&gt;</option>
+          <option value="ol">&lt;ol&gt;</option>
+          <option value="num">&lt;num&gt;</option>
+        </select>
+      </div>
+
+      <div class="q-card" id="t1-2">
+        <span class="q-label">3. Which tag wraps each item inside a <code>&lt;ul&gt;</code> or <code>&lt;ol&gt;</code>?</span>
+        <select class="ac-select" id="t1q2">
+          <option value="">— select —</option>
+          <option value="item">&lt;item&gt;</option>
+          <option value="dt">&lt;dt&gt;</option>
+          <option value="li">&lt;li&gt;</option>
+          <option value="p">&lt;p&gt;</option>
+        </select>
+      </div>
+
+      <div class="q-card" id="t1-3">
+        <span class="q-label">4. Which <strong>attribute</strong> on an <code>&lt;a&gt;</code> tag specifies the destination URL?</span>
+        <select class="ac-select" id="t1q3">
+          <option value="">— select —</option>
+          <option value="src">src</option>
+          <option value="link">link</option>
+          <option value="url">url</option>
+          <option value="href">href</option>
+        </select>
+      </div>
+
+      <div class="q-card" id="t1-4">
+        <span class="q-label">5. Which <strong>attribute</strong> on an <code>&lt;img&gt;</code> tag specifies the image file path?</span>
+        <select class="ac-select" id="t1q4">
+          <option value="">— select —</option>
+          <option value="href">href</option>
+          <option value="src">src</option>
+          <option value="path">path</option>
+          <option value="file">file</option>
+        </select>
+      </div>
+
+      <div class="q-card" id="t1-5">
+        <span class="q-label">6. Which input type creates a <strong>submit button</strong> in a form?</span>
+        <select class="ac-select" id="t1q5">
+          <option value="">— select —</option>
+          <option value="button">button</option>
+          <option value="text">text</option>
+          <option value="submit">submit</option>
+          <option value="send">send</option>
+        </select>
+      </div>
+    </div>
+    <div class="row"><button class="ac-btn" onclick="checkTags()">Check answers</button></div>
+    <div class="feedback" id="fb-1"></div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════ -->
+  <!-- Task 3 — Class vs ID                                 -->
+  <!-- ════════════════════════════════════════════════════ -->
+  <div class="panel" id="panel-2">
+    <div class="goal">🎯 Answer four questions about HTML class and id attributes and their CSS selectors.</div>
+    <div class="card">
+      <h2>Class vs ID</h2>
+
+      <div class="q-card" id="ci2-0">
+        <span class="q-label">1. What is the key difference between an HTML <code>id</code> and a <code>class</code> attribute?</span>
+        <div class="mc-opts">
+          <label class="mc-opt"><input type="radio" name="ci2q0" value="a"> An id can be reused on many elements; a class must be unique per page</label>
+          <label class="mc-opt"><input type="radio" name="ci2q0" value="b"> An id must be unique per page; a class can be used on many elements</label>
+          <label class="mc-opt"><input type="radio" name="ci2q0" value="c"> id applies to external CSS only; class only works inside the HTML file</label>
+          <label class="mc-opt"><input type="radio" name="ci2q0" value="d"> id and class are interchangeable and have the same behaviour</label>
+        </div>
+      </div>
+
+      <div class="q-card" id="ci2-1">
+        <span class="q-label">2. How do you target elements with <code>class="highlight"</code> in an external CSS stylesheet?</span>
+        <div class="mc-opts">
+          <label class="mc-opt"><input type="radio" name="ci2q1" value="a"> #highlight { ... }</label>
+          <label class="mc-opt"><input type="radio" name="ci2q1" value="b"> highlight { ... }</label>
+          <label class="mc-opt"><input type="radio" name="ci2q1" value="c"> .highlight { ... }</label>
+          <label class="mc-opt"><input type="radio" name="ci2q1" value="d"> *highlight { ... }</label>
+        </div>
+      </div>
+
+      <div class="q-card" id="ci2-2">
+        <span class="q-label">3. How do you target the element with <code>id="menu"</code> in an external CSS stylesheet?</span>
+        <div class="mc-opts">
+          <label class="mc-opt"><input type="radio" name="ci2q2" value="a"> .menu { ... }</label>
+          <label class="mc-opt"><input type="radio" name="ci2q2" value="b"> menu { ... }</label>
+          <label class="mc-opt"><input type="radio" name="ci2q2" value="c"> *menu { ... }</label>
+          <label class="mc-opt"><input type="radio" name="ci2q2" value="d"> #menu { ... }</label>
+        </div>
+      </div>
+
+      <div class="q-card" id="ci2-3">
+        <span class="q-label">4. A developer has this HTML: <code>&lt;div class="offer"&gt;</code>. Which CSS rule correctly targets it with an orange border?</span>
+        <div class="mc-opts">
+          <label class="mc-opt"><input type="radio" name="ci2q3" value="a"><pre style="margin:0;font-size:0.82rem;font-family:Consolas,monospace">#offer { border-color: orange; border-style: solid; }</pre></label>
+          <label class="mc-opt"><input type="radio" name="ci2q3" value="b"><pre style="margin:0;font-size:0.82rem;font-family:Consolas,monospace">offer { border-color: orange; border-style: solid; }</pre></label>
+          <label class="mc-opt"><input type="radio" name="ci2q3" value="c"><pre style="margin:0;font-size:0.82rem;font-family:Consolas,monospace">.offer { border-color: orange; border-style: solid; }</pre></label>
+          <label class="mc-opt"><input type="radio" name="ci2q3" value="d"><pre style="margin:0;font-size:0.82rem;font-family:Consolas,monospace">div#offer { border-color: orange; border-style: solid; }</pre></label>
+        </div>
+      </div>
+    </div>
+    <div class="row"><button class="ac-btn" onclick="checkClassID()">Check answers</button></div>
+    <div class="feedback" id="fb-2"></div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════ -->
+  <!-- Task 4 — Fill the Blanks                             -->
+  <!-- ════════════════════════════════════════════════════ -->
+  <div class="panel" id="panel-3">
+    <div class="goal">🎯 Complete the six missing parts of this HTML file. [5 marks in the exam — note the list tags together count as one mark.]</div>
+    <div class="card">
+      <h2>Fill in the HTML Blanks</h2>
+      <p class="q-label" style="margin-bottom:14px;">
+        The page displays: a heading "Robot prime directives", a <strong>bullet list</strong> of three directives,
+        a <strong>hyperlink</strong> to <em>updates.html</em>, a paragraph with the word <em>Login</em>,
+        and a form with a plain-text input for a password and a <strong>submit button</strong>.
+        Type the missing tag, attribute, or value into each gap.
+      </p>
+      <div class="code-block">&lt;html&gt;
+&lt;head&gt;
+  &lt;title&gt;Robot User Interface&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+  &lt;h1&gt;Robot prime directives&lt;/h1&gt;
+  <input class="blank" id="bl0" size="7" placeholder="tag">
+  &lt;li&gt;Serve the company trust&lt;/li&gt;
+  &lt;li&gt;Protect data&lt;/li&gt;
+  &lt;li&gt;Uphold standards&lt;/li&gt;
+  <input class="blank" id="bl1" size="8" placeholder="tag">
+  &lt;a <input class="blank" id="bl2" size="6" placeholder="attr">="updates.html"&gt;Updates&lt;/a&gt;
+  &lt;p&gt;<input class="blank" id="bl3" size="7" placeholder="text">&lt;/p&gt;
+  &lt;form action="dologin.php"&gt;
+    Password
+    &lt;input type="<input class="blank" id="bl4" size="8" placeholder="type">" name="pw"&gt;
+    &lt;input type="<input class="blank" id="bl5" size="7" placeholder="type">"&gt;
+  &lt;/form&gt;
+&lt;/body&gt;
+&lt;/html&gt;</div>
+    </div>
+    <div class="row"><button class="ac-btn" onclick="checkBlanks()">Check answers</button></div>
+    <div class="feedback" id="fb-3"></div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════ -->
+  <!-- Task 5 — Write CSS                                   -->
+  <!-- ════════════════════════════════════════════════════ -->
+  <div class="panel" id="panel-4">
+    <div class="goal">🎯 Write complete CSS rules for each requirement. Use correct selectors, property names, and values.</div>
+    <div class="card">
+      <h2>Write CSS Rules</h2>
+
+      <!-- Q1 — with worked example at the side -->
+      <div class="q-card" id="css4-0">
+        <span class="q-label" style="margin-bottom:12px;display:block;"><strong>a) [3 marks]</strong> Write CSS to display all <code>&lt;h1&gt;</code> elements with <strong>white text</strong> on a <strong>red background</strong>.</span>
+        <div class="split-q">
+          <div>
+            <textarea class="code-ta" id="css0" rows="5" spellcheck="false" placeholder="/* your CSS */"></textarea>
+            <div class="q-hint" id="css-hint-0"></div>
+          </div>
+          <div class="worked-eg">
+            <span class="worked-eg-title">Worked example</span>
+            <p>To make all <code>&lt;p&gt;</code> elements show blue text on a light grey background:</p>
+            <pre>p {
+  color: blue;
+  background-color: lightgrey;
+}</pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- Q2 — no worked example -->
+      <div class="q-card" id="css4-1">
+        <span class="q-label"><strong>b) [6 marks]</strong> Shreya has this HTML:</span>
+        <div class="example-box">
+          <code>&lt;h1 id="Beeb"&gt;History of the BBC&lt;/h1&gt;</code><br>
+          <code>&lt;li class="model"&gt;Micro Computer Model A&lt;/li&gt;</code><br><br>
+          Write the complete CSS so that:
+          <ul style="margin:6px 0 0 16px;line-height:1.8;">
+            <li><strong>id Beeb</strong> — font-family: <em>times</em>, colour: <em>green</em></li>
+            <li><strong>class model</strong> — font-family: <em>arial</em>, colour: <em>red</em></li>
+          </ul>
+        </div>
+        <textarea class="code-ta" id="css1" rows="9" spellcheck="false" placeholder="/* your CSS */"></textarea>
+        <div class="q-hint" id="css-hint-1"></div>
+      </div>
+    </div>
+    <div class="row"><button class="ac-btn" onclick="checkCSS()">Check answers</button></div>
+    <div class="feedback" id="fb-4"></div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════ -->
+  <!-- Task 6 — Write HTML                                  -->
+  <!-- ════════════════════════════════════════════════════ -->
+  <div class="panel" id="panel-5">
+    <div class="goal">🎯 Write HTML to produce the described webpage sections. Assume the code sits inside existing <code>&lt;body&gt;</code> tags.</div>
+    <div class="card">
+      <h2>Write HTML from Description</h2>
+
+      <!-- Q1 — with worked example at the side -->
+      <div class="q-card" id="html5-0">
+        <span class="q-label" style="margin-bottom:12px;display:block;"><strong>a) [3 marks]</strong> Write HTML to produce this extract:</span>
+        <div class="example-box" style="margin-bottom:12px;">
+          Upcoming productions:<br>
+          &nbsp;&nbsp;1. Macbeth<br>
+          &nbsp;&nbsp;2. Blood Brothers<br>
+          &nbsp;&nbsp;3. An Inspector Calls<br>
+          <u>Book tickets</u>
+          <div style="font-size:0.78rem;margin-top:6px;color:var(--muted)">
+            &ldquo;Book tickets&rdquo; is a hyperlink to <code>bookings.html</code>
+          </div>
+        </div>
+        <div class="split-q">
+          <div>
+            <textarea class="code-ta" id="html0" rows="7" spellcheck="false" placeholder="&lt;!-- your HTML --&gt;"></textarea>
+            <div class="q-hint" id="html-hint-0"></div>
+          </div>
+          <div class="worked-eg">
+            <span class="worked-eg-title">Worked example</span>
+            <p>To produce a heading, unordered list, and a link to another page:</p>
+            <pre>&lt;h2&gt;Today's Specials&lt;/h2&gt;
+&lt;ul&gt;
+  &lt;li&gt;Soup of the day&lt;/li&gt;
+  &lt;li&gt;Fresh pasta&lt;/li&gt;
+&lt;/ul&gt;
+&lt;a href="menu.html"&gt;Full menu&lt;/a&gt;</pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- Q2 — no worked example -->
+      <div class="q-card" id="html5-1">
+        <span class="q-label"><strong>b) [5 marks]</strong> Write HTML to produce this extract:</span>
+        <div class="example-box">
+          <strong>Features</strong> &nbsp;<em>(as a heading tag)</em><br>
+          The new OCR Smart Watch:<br>
+          &nbsp;&nbsp;1. Uses the CB2 RISC processor for long battery life<br>
+          &nbsp;&nbsp;2. Stores up to 20hrs of music<br>
+          &nbsp;&nbsp;3. Tracks fitness<br>
+          <u>Download The Factsheet</u>
+          <div style="font-size:0.78rem;margin-top:6px;color:var(--muted)">
+            &ldquo;Download The Factsheet&rdquo; links to <code>factsheet.pdf</code> stored in the same folder
+          </div>
+        </div>
+        <textarea class="code-ta" id="html1" rows="10" spellcheck="false" placeholder="&lt;!-- your HTML --&gt;"></textarea>
+        <div class="q-hint" id="html-hint-1"></div>
+      </div>
+    </div>
+    <div class="row"><button class="ac-btn" onclick="checkHTML()">Check answers</button></div>
+    <div class="feedback" id="fb-5"></div>
+  </div>
+</main>
+
+<div class="ac-toast" id="toast"></div>
+
+<script>
+  const ACTIVITY_TITLE = 'HTML & CSS';
+  const TASK_COUNT = 6;
+  const completed = new Array(TASK_COUNT).fill(false);
+
+  // ── Tab switching ──────────────────────────────────────
+  document.getElementById('tab-bar').addEventListener('click', e => {
+    const btn = e.target.closest('.tab-btn');
+    if (!btn) return;
+    const idx = +btn.dataset.idx;
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('panel-' + idx).classList.add('active');
+  });
+
+  // ── MCQ: highlight selected option ────────────────────
+  document.querySelectorAll('.mc-opts').forEach(group => {
+    group.addEventListener('change', () => {
+      group.querySelectorAll('.mc-opt').forEach(o => {
+        o.classList.toggle('selected', o.querySelector('input').checked);
+      });
+    });
+  });
+
+  function getRadio(name) {
+    const el = document.querySelector(`input[name="${name}"]:checked`);
+    return el ? el.value : null;
+  }
+
+  // ── Per-question green/red highlight ──────────────────
+  function markQ(id, ok) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.classList.toggle('ok', ok);
+    el.classList.toggle('err', !ok);
+  }
+
+  function showHint(id, text) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = text || '';
+    el.classList.toggle('show', !!text);
+  }
+
+  // ── Progress / grade ───────────────────────────────────
+  function updateProgress() {
+    const pct = Math.round(completed.filter(Boolean).length / TASK_COUNT * 100);
+    document.getElementById('prog-fill').style.width = pct + '%';
+    document.getElementById('prog-pct').textContent = pct + '%';
+  }
+
+  function markDone(idx, type) {
+    if (completed[idx]) return;
+    completed[idx] = true;
+    document.querySelector('.tab-btn[data-idx="' + idx + '"]').classList.add('done-' + type);
+    updateProgress();
+    const pct = Math.round(completed.filter(Boolean).length / TASK_COUNT * 100);
+    window.Classroom?.submitGrade(pct, ACTIVITY_TITLE);
+    if (completed.every(Boolean)) {
+      document.getElementById('done-banner').classList.add('show');
+      window.ActivityUI?.launchCelebration();
+    }
+  }
+
+  function scoreFeedback(fbId, correct, total) {
+    const fb = document.getElementById(fbId);
+    const pct = Math.round(correct / total * 100);
+    if (pct === 100) {
+      fb.textContent = '✅ Perfect — all correct!';
+      fb.className = 'feedback correct';
+    } else if (correct > 0) {
+      fb.textContent = `⚠️ ${correct}/${total} correct — check the highlighted questions.`;
+      fb.className = 'feedback wrong';
+    } else {
+      fb.textContent = `❌ None correct yet — check the highlighted questions.`;
+      fb.className = 'feedback wrong';
+    }
+    return pct;
+  }
+
+  // ════════════════════════════════════════════════════════
+  // Task 1 — Concepts
+  // ════════════════════════════════════════════════════════
+  const conceptKey = ['b', 'a', 'b', 'b'];
+
+  function checkConcepts() {
+    if (window.Classroom?.verifyAuth() === false) return;
+    let correct = 0;
+    ['c0q0','c0q1','c0q2','c0q3'].forEach((name, i) => {
+      const ok = getRadio(name) === conceptKey[i];
+      if (ok) correct++;
+      markQ('c0-' + i, ok);
+    });
+    const pct = scoreFeedback('fb-0', correct, 4);
+    markDone(0, pct >= 80 ? 'green' : 'gold');
+  }
+
+  // ════════════════════════════════════════════════════════
+  // Task 2 — HTML Tags
+  // ════════════════════════════════════════════════════════
+  const tagKey = ['ul', 'ol', 'li', 'href', 'src', 'submit'];
+
+  function checkTags() {
+    if (window.Classroom?.verifyAuth() === false) return;
+    let correct = 0;
+    tagKey.forEach((ans, i) => {
+      const ok = (document.getElementById('t1q' + i)?.value || '') === ans;
+      if (ok) correct++;
+      markQ('t1-' + i, ok);
+    });
+    const pct = scoreFeedback('fb-1', correct, 6);
+    markDone(1, pct >= 80 ? 'green' : 'gold');
+  }
+
+  // ════════════════════════════════════════════════════════
+  // Task 3 — Class vs ID
+  // ════════════════════════════════════════════════════════
+  const ciKey = ['b', 'c', 'd', 'c'];
+
+  function checkClassID() {
+    if (window.Classroom?.verifyAuth() === false) return;
+    let correct = 0;
+    ['ci2q0','ci2q1','ci2q2','ci2q3'].forEach((name, i) => {
+      const ok = getRadio(name) === ciKey[i];
+      if (ok) correct++;
+      markQ('ci2-' + i, ok);
+    });
+    const pct = scoreFeedback('fb-2', correct, 4);
+    markDone(2, pct >= 80 ? 'green' : 'gold');
+  }
+
+  // ════════════════════════════════════════════════════════
+  // Task 4 — Fill the Blanks
+  // ════════════════════════════════════════════════════════
+  const blankChecks = [
+    v => v.toLowerCase() === '<ul>',                          // opening list tag
+    v => v.toLowerCase() === '</ul>',                         // closing list tag
+    v => v.toLowerCase() === 'href',                          // anchor attribute
+    v => v.toLowerCase() === 'login',                         // paragraph text
+    v => v.toLowerCase() === 'text' || v.toLowerCase() === 'password',  // input type
+    v => v.toLowerCase() === 'submit',                        // submit type
+  ];
+  const blankHints = ['<ul>', '</ul>', 'href', 'Login', 'text or password', 'submit'];
+
+  function checkBlanks() {
+    if (window.Classroom?.verifyAuth() === false) return;
+    let correct = 0;
+    const hints = [];
+    blankChecks.forEach((check, i) => {
+      const val = (document.getElementById('bl' + i)?.value || '').trim();
+      const ok = check(val);
+      if (ok) correct++;
+      const el = document.getElementById('bl' + i);
+      if (el) { el.classList.toggle('ok', ok); el.classList.toggle('err', !ok); }
+      if (!ok) hints.push(`Gap ${i + 1}: ${blankHints[i]}`);
+    });
+    const fb = document.getElementById('fb-3');
+    const pct = Math.round(correct / 6 * 100);
+    if (correct === 6) {
+      fb.textContent = '✅ All blanks correct!';
+      fb.className = 'feedback correct';
+    } else {
+      fb.textContent = `⚠️ ${correct}/6 correct. Incorrect: ${hints.join(' | ')}`;
+      fb.className = 'feedback wrong';
+    }
+    markDone(3, pct >= 80 ? 'green' : 'gold');
+  }
+
+  // ════════════════════════════════════════════════════════
+  // Task 5 — Write CSS
+  // ════════════════════════════════════════════════════════
+  function normCss(s) {
+    return s.toLowerCase()
+      .replace(/\s+/g, ' ')
+      .replace(/\s*:\s*/g, ':')
+      .replace(/\s*\{\s*/g, '{')
+      .replace(/\s*\}\s*/g, '}')
+      .replace(/\s*;\s*/g, ';');
+  }
+
+  function hasCssPair(norm, prop, vals) {
+    return vals.some(v => norm.includes(prop + ':' + v.toLowerCase()));
+  }
+
+  function verifyCSSRule(code, selector, requirements) {
+    const n = normCss(code);
+    if (!n.includes(selector.toLowerCase())) {
+      return 'Use selector: ' + selector + ' { ... }';
+    }
+    for (const [prop, vals] of requirements) {
+      if (!hasCssPair(n, prop, vals)) {
+        return 'Check: ' + prop + ': ' + vals[0];
+      }
+    }
+    return null; // OK
+  }
+
+  function checkCSS() {
+    if (window.Classroom?.verifyAuth() === false) return;
+
+    const css0 = document.getElementById('css0').value;
+    const css1 = document.getElementById('css1').value;
+
+    const results = [
+      verifyCSSRule(css0, 'h1', [
+        ['color',            ['white','#ffffff','#fff']],
+        ['background-color', ['red','#ff0000','#f00']],
+      ]),
+      // Q2: must contain both #Beeb and .model rules
+      (() => {
+        const n = normCss(css1);
+        if (!n.includes('#beeb')) return 'Use selector: #Beeb { ... }';
+        if (!hasCssPair(n, 'color', ['green','#008000','#00ff00','#0f0'])) return '#Beeb — check: color: green';
+        if (!hasCssPair(n, 'font-family', ['times','"times"',"'times'",'times new roman','"times new roman"',"'times new roman'"])) return '#Beeb — check: font-family: times';
+        if (!n.includes('.model')) return 'Use selector: .model { ... }';
+        if (!hasCssPair(n, 'color', ['red','#ff0000','#f00'])) return '.model — check: color: red';
+        if (!hasCssPair(n, 'font-family', ['arial','"arial"',"'arial'"])) return '.model — check: font-family: arial';
+        return null;
+      })(),
+    ];
+
+    let correct = 0;
+    results.forEach((hint, i) => {
+      const ok = hint === null;
+      if (ok) correct++;
+      markQ('css4-' + i, ok);
+      showHint('css-hint-' + i, ok ? '' : hint);
+    });
+
+    const fb = document.getElementById('fb-4');
+    const pct = Math.round(correct / 2 * 100);
+    if (correct === 2) {
+      fb.textContent = '✅ Both CSS rules correct!';
+      fb.className = 'feedback correct';
+    } else {
+      fb.textContent = `⚠️ ${correct}/2 correct — see hints under the red rules.`;
+      fb.className = 'feedback wrong';
+    }
+    markDone(4, pct >= 80 ? 'green' : 'gold');
+  }
+
+  // ════════════════════════════════════════════════════════
+  // Task 6 — Write HTML
+  // ════════════════════════════════════════════════════════
+  function normHTML(s) {
+    return s.toLowerCase().replace(/\s+/g, ' ');
+  }
+
+  function verifyHTMLContains(input, checks) {
+    const n = normHTML(input);
+    const missing = checks.filter(c => !n.includes(c.toLowerCase()));
+    return missing.length ? 'Missing: ' + missing.join(', ') : null;
+  }
+
+  function checkHTML() {
+    if (window.Classroom?.verifyAuth() === false) return;
+
+    const results = [
+      verifyHTMLContains(document.getElementById('html0').value, [
+        '<ol>', '<li>', '</ol>', 'href="bookings.html"', 'book tickets',
+      ]),
+      verifyHTMLContains(document.getElementById('html1').value, [
+        '<h', 'features', '<ol>', '<li>', 'href="factsheet.pdf"', 'download',
+      ]),
+    ];
+
+    let correct = 0;
+    results.forEach((hint, i) => {
+      const ok = hint === null;
+      if (ok) correct++;
+      markQ('html5-' + i, ok);
+      showHint('html-hint-' + i, ok ? '' : hint);
+    });
+
+    const fb = document.getElementById('fb-5');
+    const pct = Math.round(correct / 2 * 100);
+    if (correct === 2) {
+      fb.textContent = '✅ Both HTML sections correct!';
+      fb.className = 'feedback correct';
+    } else {
+      fb.textContent = `⚠️ ${correct}/2 correct — see hints under the red sections.`;
+      fb.className = 'feedback wrong';
+    }
+    markDone(5, pct >= 80 ? 'green' : 'gold');
+  }
+</script>
+
+<script src="../../activity-ui.js"></script>
+<script src="../../classroom.js"></script>
+</body>
+</html>
