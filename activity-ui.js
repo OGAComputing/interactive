@@ -4,6 +4,8 @@
   const MIN_CELEBRATION_MS = 10000;
   const TARGET_FRAME_MS = 1000 / 60;
   let celebrationShown = false;
+  let _goForGoldShown = false;
+  let _scoreBadge = null;
 
   function dispatch(name, detail) {
     window.dispatchEvent(new CustomEvent(name, { detail }));
@@ -11,6 +13,103 @@
 
   function prefersReducedMotion() {
     return !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  }
+
+  function setScore(pct) {
+    const p = Math.round(Number(pct));
+    if (!_scoreBadge) {
+      _scoreBadge = document.createElement('div');
+      _scoreBadge.id = 'activity-ui-score';
+      _scoreBadge.style.cssText = 'position:fixed;bottom:18px;left:18px;z-index:9997;padding:6px 14px;border-radius:999px;font:700 0.82rem/1.4 system-ui,sans-serif;pointer-events:none;opacity:0;transform:translateY(6px);transition:opacity .3s,transform .3s,background .4s,color .4s,box-shadow .4s;';
+      document.body.appendChild(_scoreBadge);
+      requestAnimationFrame(() => {
+        _scoreBadge.style.opacity = '1';
+        _scoreBadge.style.transform = 'translateY(0)';
+      });
+    }
+    if (p >= 100) {
+      _scoreBadge.style.background = 'linear-gradient(135deg,#f59e0b,#fbbf24)';
+      _scoreBadge.style.color = '#111';
+      _scoreBadge.style.boxShadow = '0 4px 18px rgba(251,191,36,.4),0 2px 8px rgba(0,0,0,.3)';
+      _scoreBadge.innerHTML = '&#11088; ' + p + '% &mdash; Gold!';
+    } else if (p >= 80) {
+      _scoreBadge.style.background = '#166534';
+      _scoreBadge.style.color = '#bbf7d0';
+      _scoreBadge.style.boxShadow = '0 4px 18px rgba(34,197,94,.3),0 2px 8px rgba(0,0,0,.3)';
+      _scoreBadge.innerHTML = '&#129001; ' + p + '% <span style="font-size:0.74rem;opacity:.8">&mdash; Go for Gold! &#11088;</span>';
+    } else {
+      _scoreBadge.style.background = '#1e293b';
+      _scoreBadge.style.color = '#94a3b8';
+      _scoreBadge.style.boxShadow = '0 4px 16px rgba(0,0,0,.35)';
+      _scoreBadge.textContent = 'Score: ' + p + '%';
+    }
+  }
+
+  function showGoForGold(options = {}) {
+    if (_goForGoldShown && !options.force) return false;
+    if (prefersReducedMotion()) {
+      _goForGoldShown = true;
+      return false;
+    }
+    _goForGoldShown = true;
+
+    const canvas = makeCanvas('activity-ui-go-for-gold');
+    const ctx = canvas.getContext('2d');
+    const start = performance.now();
+    const gColors = ['#22c55e','#4ade80','#86efac','#bbf7d0','#fff','#a7f3d0','#34d399'];
+    const pieces = Array.from({ length: 70 }, () => ({
+      x: Math.random() * window.innerWidth,
+      y: -10 - Math.random() * window.innerHeight * 0.2,
+      vx: -1.5 + Math.random() * 3,
+      vy: 1.5 + Math.random() * 3,
+      size: 4 + Math.random() * 6,
+      spin: Math.random() * Math.PI,
+      color: gColors[Math.floor(Math.random() * gColors.length)]
+    }));
+    const GDUR = 7000;
+    let gLast = start;
+    function drawGreen() {
+      const delta = celebrationFrameDelta(gLast);
+      gLast = performance.now();
+      const elapsed = performance.now() - start;
+      const firing = elapsed < GDUR - 1200;
+      resizeCanvas(canvas, ctx);
+      ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+      pieces.forEach(p => {
+        p.x += p.vx * delta; p.y += p.vy * delta; p.vy += 0.03 * delta; p.spin += 0.1 * delta;
+        if (firing && p.y > window.innerHeight + 20) { p.x = Math.random() * window.innerWidth; p.y = -10; p.vy = 1.5 + Math.random() * 3; }
+        const alpha = firing ? 0.85 : Math.max(0, 0.85 * (1 - (elapsed - (GDUR - 1200)) / 1200));
+        ctx.save(); ctx.globalAlpha = alpha; ctx.translate(p.x, p.y); ctx.rotate(p.spin);
+        ctx.fillStyle = p.color; ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6); ctx.restore();
+      });
+      if (elapsed < GDUR) requestAnimationFrame(drawGreen); else canvas.remove();
+    }
+    drawGreen();
+
+    const modal = document.createElement('div');
+    modal.className = 'activity-ui-go-for-gold-modal';
+    modal.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.82);z-index:10000;background:linear-gradient(150deg,#14532d 0%,#166534 60%,#15803d 100%);border:2px solid #4ade80;border-radius:18px;padding:30px 38px 24px;text-align:center;color:#fff;font-family:system-ui,sans-serif;box-shadow:0 0 80px rgba(34,197,94,.35),0 24px 64px rgba(0,0,0,.55);max-width:440px;width:calc(100% - 48px);opacity:0;transition:transform .55s cubic-bezier(.16,1.3,.3,1),opacity .25s;cursor:pointer;pointer-events:auto;';
+    modal.innerHTML = '<div style="font-size:3rem;margin-bottom:8px;filter:drop-shadow(0 0 14px #4ade80)">&#129001;</div>'
+      + '<div style="font-size:1.5rem;font-weight:900;margin-bottom:10px;text-shadow:0 2px 10px rgba(0,0,0,.4);letter-spacing:-.01em">You\'ve gone Green! &#127881;</div>'
+      + '<div style="font-size:0.9rem;color:#bbf7d0;line-height:1.65;margin-bottom:16px">All tasks complete &mdash; great work!<br>To earn <strong style="color:#fbbf24">Gold &#11088;</strong>, reset any task and answer it correctly <strong style="color:#4ade80">first time</strong>.</div>'
+      + '<div style="font-size:0.72rem;color:#86efac;opacity:.7">Click anywhere to dismiss</div>';
+    document.body.appendChild(modal);
+    requestAnimationFrame(() => {
+      modal.style.opacity = '1';
+      modal.style.transform = 'translate(-50%,-50%) scale(1) rotate(1deg)';
+    });
+    setTimeout(() => { modal.style.transform = 'translate(-50%,-50%) scale(1) rotate(0deg)'; }, 600);
+
+    function dismiss() {
+      modal.style.opacity = '0';
+      modal.style.transform = 'translate(-50%,-58%) scale(0.9)';
+      setTimeout(() => modal.remove(), 350);
+    }
+    const autoTimer = setTimeout(dismiss, 8000);
+    modal.addEventListener('click', () => { clearTimeout(autoTimer); dismiss(); }, { once: true });
+
+    dispatch('activity-ui:go-for-gold', {});
+    return true;
   }
 
   function makeCanvas(className) {
@@ -31,6 +130,9 @@
   }
 
   function launchCelebration(options = {}) {
+    if (options.percent !== undefined && Number(options.percent) < 100) {
+      return showGoForGold(options);
+    }
     if (celebrationShown && !options.force) return false;
     if (prefersReducedMotion()) return false;
 
@@ -58,6 +160,7 @@
 
   function resetCelebration() {
     celebrationShown = false;
+    _goForGoldShown = false;
   }
 
   function showToast(message, type = '', options = {}) {
@@ -986,6 +1089,8 @@
   window.ActivityUI = {
     launchCelebration,
     showToast,
-    resetCelebration
+    resetCelebration,
+    setScore,
+    showGoForGold
   };
 })();

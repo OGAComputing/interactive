@@ -87,6 +87,17 @@ color:  blue
   .tab-btn.done-green { background: var(--green); border-color: var(--green);   color: #fff; }
   .tab-btn.done-gold  { background: var(--gold);  border-color: var(--gold);    color: #111; }
 
+  /* ── Glow overlay ────────────────────────────────────── */
+
+  #glow-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none; z-index: 0; opacity: 0;
+    transition: opacity 1.8s ease;
+  }
+  #glow-overlay.gold  { background: radial-gradient(ellipse at 50% 55%, rgba(251,191,36,.24) 0%, transparent 65%); }
+  #glow-overlay.green { background: radial-gradient(ellipse at 50% 55%, rgba(16,185,129,.20) 0%, transparent 65%); }
+  #glow-overlay.show  { opacity: 1; }
+
   /* ── Panels ──────────────────────────────────────────── */
 
   .panel {
@@ -296,6 +307,7 @@ color:  blue
 <div id="done-banner" class="ac-banner gold">
   🏆 All tasks complete — excellent work!
 </div>
+<div id="glow-overlay"></div>
 
 <!-- Sticky header -->
 <header>
@@ -334,6 +346,7 @@ color:  blue
 
     <div class="row">
       <button class="ac-btn" onclick="checkTask(0)">Check answer</button>
+      <button class="ac-btn-secondary" id="reset-0" onclick="resetTask(0)" style="display:none;font-size:0.78rem;">&#8634; Try for Gold</button>
     </div>
     <div class="feedback" id="feedback-0"></div>
   </div>
@@ -354,6 +367,7 @@ color:  blue
 
     <div class="row">
       <button class="ac-btn" onclick="checkTask(1)">Check answer</button>
+      <button class="ac-btn-secondary" id="reset-1" onclick="resetTask(1)" style="display:none;font-size:0.78rem;">&#8634; Try for Gold</button>
     </div>
     <div class="feedback" id="feedback-1"></div>
   </div>
@@ -365,8 +379,9 @@ color:  blue
 <script>
   // ── State ──────────────────────────────────────────────
   const ACTIVITY_TITLE = 'Activity Title';        // keep in sync with the ACTIVITY title above
-  const TASK_COUNT = 2;                          // update if you add/remove tasks
-  const completed  = new Array(TASK_COUNT).fill(false);
+  const TASK_COUNT   = 2;                          // update if you add/remove tasks
+  const completed    = new Array(TASK_COUNT).fill(false);
+  const firstAttempt = new Array(TASK_COUNT).fill(true);
 
   // ── Tab switching ──────────────────────────────────────
   document.getElementById('tab-bar').addEventListener('click', e => {
@@ -393,46 +408,82 @@ color:  blue
     if (isCorrect) {
       feedback.textContent = '✅ Correct!';
       feedback.className   = 'feedback correct';
-      markDone(idx, 'gold');
+      markDone(idx);
     } else {
+      firstAttempt[idx] = false;
       feedback.textContent = '❌ Not quite — try again.';
       feedback.className   = 'feedback wrong';
     }
   }
 
   // ── Mark a task done ───────────────────────────────────
-  // type: 'green' (full marks) | 'gold' (completed)
-  function markDone(idx, type = 'gold') {
+  function markDone(idx) {
     if (completed[idx]) return;
     completed[idx] = true;
 
+    const isGold = firstAttempt[idx];
     const tab = document.querySelector('.tab-btn[data-idx="' + idx + '"]');
-    if (tab) tab.classList.add('done-' + type);
+    if (tab) tab.classList.add('done-' + (isGold ? 'gold' : 'green'));
 
-    updateProgress();
+    const resetBtn = document.getElementById('reset-' + idx);
+    if (resetBtn) resetBtn.style.display = isGold ? 'none' : '';
 
-    // Submit grade (and trigger work evidence upload) after every task, not
-    // just at the end — so evidence is always current as the student progresses.
-    const pct = Math.round(completed.filter(Boolean).length / TASK_COUNT * 100);
+    const done     = completed.filter(Boolean).length;
+    const mastered = completed.filter((c, i) => c && firstAttempt[i]).length;
+    const pct      = Math.round((done / TASK_COUNT * 80) + (mastered / TASK_COUNT * 20));
+    updateProgress(pct);
+    window.ActivityUI?.setScore(pct);
     window.Classroom?.submitGrade(pct, ACTIVITY_TITLE);
 
-    if (completed.every(Boolean)) {
-      allComplete();
-    }
+    if (completed.every(Boolean)) allComplete();
+  }
+
+  // ── Reset a task so the student can try for Gold ───────
+  function resetTask(idx) {
+    completed[idx]    = false;
+    firstAttempt[idx] = true;
+
+    const tab = document.querySelector('.tab-btn[data-idx="' + idx + '"]');
+    if (tab) { tab.classList.remove('done-gold', 'done-green'); }
+    const fb = document.getElementById('feedback-' + idx);
+    fb.textContent = ''; fb.className = 'feedback';
+    document.getElementById('reset-' + idx).style.display = 'none';
+    setAnswerState('q-' + idx, true);
+
+    document.getElementById('done-banner').classList.remove('show', 'gold', 'green');
+    const glow = document.getElementById('glow-overlay');
+    if (glow) glow.classList.remove('show', 'gold', 'green');
+    window.ActivityUI?.resetCelebration();
+
+    const done     = completed.filter(Boolean).length;
+    const mastered = completed.filter((c, i) => c && firstAttempt[i]).length;
+    const pct      = Math.round((done / TASK_COUNT * 80) + (mastered / TASK_COUNT * 20));
+    updateProgress(pct);
+    window.ActivityUI?.setScore(pct);
+    window.Classroom?.submitGrade(pct, ACTIVITY_TITLE);
   }
 
   // ── Progress bar ───────────────────────────────────────
-  function updateProgress() {
-    const pct = Math.round(completed.filter(Boolean).length / TASK_COUNT * 100);
+  function updateProgress(pct) {
+    if (pct === undefined) {
+      const done     = completed.filter(Boolean).length;
+      const mastered = completed.filter((c, i) => c && firstAttempt[i]).length;
+      pct = Math.round((done / TASK_COUNT * 80) + (mastered / TASK_COUNT * 20));
+    }
     document.getElementById('progress-fill').style.width = pct + '%';
     document.getElementById('progress-pct').textContent  = pct + '%';
   }
 
   // ── All tasks complete ─────────────────────────────────
   function allComplete() {
-    document.getElementById('done-banner').classList.add('show');
-    window.ActivityUI?.launchCelebration();
-    // Grade (100%) already submitted via markDone — no extra call needed.
+    const allGold = firstAttempt.every(Boolean);
+    const tier    = allGold ? 'gold' : 'green';
+    document.getElementById('done-banner').classList.add('show', tier);
+    const glow = document.getElementById('glow-overlay');
+    if (glow) glow.classList.add(tier, 'show');
+    const mastered = firstAttempt.filter(Boolean).length;
+    const pct = Math.round(80 + (mastered / TASK_COUNT * 20));
+    window.ActivityUI?.launchCelebration({ percent: pct });
   }
 
   // ── Toast helper ───────────────────────────────────────

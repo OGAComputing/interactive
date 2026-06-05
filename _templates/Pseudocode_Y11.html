@@ -182,6 +182,16 @@ color:  blue
     margin-top: 3px;
   }
 
+  /* ── Glow overlay ────────────────────────────────────── */
+
+  #glow-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none; z-index: 0; opacity: 0;
+    transition: opacity 1.8s ease;
+  }
+  #glow-overlay.gold { background: radial-gradient(ellipse at 50% 55%, rgba(251,191,36,.24) 0%, transparent 65%); }
+  #glow-overlay.show { opacity: 1; }
+
   /* ── Row layout helper ───────────────────────────────── */
 
   .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 14px; }
@@ -202,6 +212,7 @@ color:  blue
 <div id="done-banner" class="ac-banner gold">
   All tasks complete — excellent work!
 </div>
+<div id="glow-overlay"></div>
 
 <!-- Sticky header -->
 <header>
@@ -447,33 +458,36 @@ for (let idx = 0; idx < TASK_COUNT; idx++) {
 }
 
 // ── Mark a task done ───────────────────────────────────
-// type: 'green' (full marks) | 'gold' (partially correct / completed)
-function markDone(idx, type = 'gold') {
+// Pseudocode tasks are code tasks: always gold when the output is correct.
+function markDone(idx) {
   if (completed[idx]) return;
   completed[idx] = true;
 
   const tab = document.querySelector('.tab-btn[data-idx="' + idx + '"]');
-  if (tab) tab.classList.add('done-' + type);
-
-  updateProgress();
+  if (tab) tab.classList.add('done-gold');
 
   const pct = Math.round(completed.filter(Boolean).length / TASK_COUNT * 100);
+  updateProgress(pct);
+  window.ActivityUI?.setScore(pct);
   window.Classroom?.submitGrade(pct, ACTIVITY_TITLE);
 
   if (completed.every(Boolean)) allComplete();
 }
 
 // ── Progress bar ───────────────────────────────────────
-function updateProgress() {
-  const pct = Math.round(completed.filter(Boolean).length / TASK_COUNT * 100);
+function updateProgress(pct) {
+  if (pct === undefined) pct = Math.round(completed.filter(Boolean).length / TASK_COUNT * 100);
   document.getElementById('progress-fill').style.width = pct + '%';
   document.getElementById('progress-pct').textContent  = pct + '%';
 }
 
 // ── All tasks complete ─────────────────────────────────
+// Code tasks are always gold — skip the green/gold distinction entirely.
 function allComplete() {
-  document.getElementById('done-banner').classList.add('show');
-  window.ActivityUI?.launchCelebration();
+  document.getElementById('done-banner').classList.add('show', 'gold');
+  const glow = document.getElementById('glow-overlay');
+  if (glow) glow.classList.add('gold', 'show');
+  window.ActivityUI?.launchCelebration({ percent: 100 });
 }
 
 // Highlight the specific answer/checker block that needs attention.

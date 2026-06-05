@@ -86,6 +86,8 @@
   const AUTH_HEARTBEAT_INTERVAL_MS = 60 * 1000;
   const AUTH_RENEWAL_MARGIN_MS     = 15 * 60 * 1000;
 
+  let _lastGradePercent = null;
+
   let pendingClassroomSyncTimer = null;
   let pendingClassroomSyncPayload = null;
   let hasFlushedClassroomSync = false;
@@ -1592,6 +1594,8 @@
      * @param {string} activityName  Logged to console for debugging
      */
     async submitGrade(gradePercent, activityName) {
+      _lastGradePercent = gradePercent;
+      if (window.ActivityUI?.setScore) window.ActivityUI.setScore(gradePercent);
       if (!accessToken) return;
       if (isAssessment() && !(await checkAuthHealth('Google sign-in could not be verified while saving. Assessment paused until you sign in again.'))) return;
       scheduleClassroomSync(activityName, gradePercent);
@@ -1680,10 +1684,28 @@
     }
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', bootstrap);
-  } else {
+  function _wrapActivityUICelebration() {
+    if (!window.ActivityUI || window.ActivityUI._celebrationWrapped) return;
+    const orig = window.ActivityUI.launchCelebration;
+    window.ActivityUI.launchCelebration = function (options) {
+      if (options === undefined) options = {};
+      if (options.percent === undefined && _lastGradePercent !== null) {
+        options = Object.assign({}, options, { percent: _lastGradePercent });
+      }
+      return orig.call(window.ActivityUI, options);
+    };
+    window.ActivityUI._celebrationWrapped = true;
+  }
+
+  function _init() {
+    _wrapActivityUICelebration();
     bootstrap();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', _init);
+  } else {
+    _init();
   }
 
 }());
