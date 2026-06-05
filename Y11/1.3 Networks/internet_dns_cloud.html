@@ -157,7 +157,7 @@ color:  blue
 </head>
 <body>
 
-<div id="done-banner" class="ac-banner">🏆 All 8 tasks complete — excellent work!</div>
+<div id="done-banner" class="ac-banner gold">🏆 All 8 tasks complete — excellent work!</div>
 <div id="glow-overlay"></div>
 
 <header>
@@ -222,6 +222,7 @@ color:  blue
     <div class="row">
       <button class="ac-btn" onclick="checkP0()">Check answers</button>
       <button class="ac-btn-secondary" onclick="resetP0()">Shuffle &amp; reset</button>
+      <button class="ac-btn-secondary" id="reset-0" onclick="resetForGold(0)" style="display:none;font-size:0.78rem;">&#8634; Try for Gold</button>
     </div>
     <div class="feedback" id="feedback-0"></div>
   </div>
@@ -250,6 +251,7 @@ color:  blue
     <div class="row">
       <button class="ac-btn" onclick="checkCloudAD()">Check classification</button>
       <button class="ac-btn-secondary" onclick="resetCloudAD()">Reset</button>
+      <button class="ac-btn-secondary" id="reset-1" onclick="resetForGold(1)" style="display:none;font-size:0.78rem;">&#8634; Try for Gold</button>
     </div>
     <div class="feedback" id="feedback-1"></div>
   </div>
@@ -268,6 +270,7 @@ color:  blue
     <div class="row">
       <button class="ac-btn" onclick="checkSeq()">Check order</button>
       <button class="ac-btn-secondary" onclick="resetSeq()">Shuffle again</button>
+      <button class="ac-btn-secondary" id="reset-2" onclick="resetForGold(2)" style="display:none;font-size:0.78rem;">&#8634; Try for Gold</button>
     </div>
     <div class="feedback" id="feedback-2"></div>
   </div>
@@ -297,6 +300,7 @@ color:  blue
     <div class="row">
       <button class="ac-btn" onclick="checkCloudBlanks()">Check answers</button>
       <button class="ac-btn-secondary" onclick="resetCloudBlanks()">Shuffle &amp; reset</button>
+      <button class="ac-btn-secondary" id="reset-3" onclick="resetForGold(3)" style="display:none;font-size:0.78rem;">&#8634; Try for Gold</button>
     </div>
     <div class="feedback" id="feedback-3"></div>
   </div>
@@ -333,6 +337,7 @@ color:  blue
     <div class="row">
       <button class="ac-btn" onclick="checkClassify()">Check classification</button>
       <button class="ac-btn-secondary" onclick="resetClassify()">Reset</button>
+      <button class="ac-btn-secondary" id="reset-4" onclick="resetForGold(4)" style="display:none;font-size:0.78rem;">&#8634; Try for Gold</button>
     </div>
     <div class="feedback" id="feedback-4"></div>
   </div>
@@ -362,6 +367,7 @@ color:  blue
     <div class="row">
       <button class="ac-btn" onclick="checkCloud()">Check answers</button>
       <button class="ac-btn-secondary" onclick="resetCloud()">Shuffle &amp; reset</button>
+      <button class="ac-btn-secondary" id="reset-5" onclick="resetForGold(5)" style="display:none;font-size:0.78rem;">&#8634; Try for Gold</button>
     </div>
     <div class="feedback" id="feedback-5"></div>
   </div>
@@ -391,6 +397,7 @@ color:  blue
     <div class="row">
       <button class="ac-btn" onclick="checkBlanks()">Check answers</button>
       <button class="ac-btn-secondary" onclick="resetBlanks()">Shuffle &amp; reset</button>
+      <button class="ac-btn-secondary" id="reset-6" onclick="resetForGold(6)" style="display:none;font-size:0.78rem;">&#8634; Try for Gold</button>
     </div>
     <div class="feedback" id="feedback-6"></div>
   </div>
@@ -413,6 +420,7 @@ color:  blue
     <div class="row">
       <button class="ac-btn" onclick="checkPM()">Submit marking</button>
       <button class="ac-btn-secondary" onclick="resetPM()">Reset</button>
+      <button class="ac-btn-secondary" id="reset-7" onclick="resetForGold(7)" style="display:none;font-size:0.78rem;">&#8634; Try for Gold</button>
     </div>
     <div class="feedback" id="feedback-7"></div>
   </div>
@@ -440,9 +448,11 @@ document.getElementById('tab-bar').addEventListener('click', e => {
 
 // ── Progress ──────────────────────────────────────────────────────────────────
 function updateProgress() {
-  const done = completed.filter(Boolean).length;
-  document.getElementById('progress-fill').style.width = (done / TASK_COUNT * 100) + '%';
-  document.getElementById('progress-pct').textContent = done + ' / ' + TASK_COUNT;
+  const done     = completed.filter(Boolean).length;
+  const mastered = completed.filter((c, i) => c && firstAttempt[i]).length;
+  const pct      = Math.round((done / TASK_COUNT * 80) + (mastered / TASK_COUNT * 20));
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-pct').textContent  = pct + '%';
 }
 
 function markDone(idx, type) {
@@ -450,72 +460,28 @@ function markDone(idx, type) {
   completed[idx] = true;
   const btn = document.querySelector('.tab-btn[data-idx="' + idx + '"]');
   if (btn) { btn.classList.remove('done-green', 'done-gold'); btn.classList.add('done-' + type); }
+  const resetBtn = document.getElementById('reset-' + idx);
+  if (resetBtn) resetBtn.style.display = (type === 'gold') ? 'none' : '';
   updateProgress();
   const done     = completed.filter(Boolean).length;
   const mastered = completed.filter((c, i) => c && firstAttempt[i]).length;
   const pct      = Math.round((done / TASK_COUNT * 80) + (mastered / TASK_COUNT * 20));
+  window.ActivityUI?.setScore(pct);
   window.Classroom?.submitGrade(pct, 'The Internet, DNS & the Cloud');
   if (completed.every(Boolean)) allDone();
 }
 
 function allDone() {
-  const allGold = firstAttempt.every(Boolean);
-  const type    = allGold ? 'gold' : 'green';
+  const allGold  = firstAttempt.every(Boolean);
+  const type     = allGold ? 'gold' : 'green';
+  const mastered = firstAttempt.filter(Boolean).length;
+  const pct      = Math.round(80 + (mastered / TASK_COUNT * 20));
   document.getElementById('done-banner').classList.add('show', type);
-  window.ActivityUI?.launchCelebration();
   document.getElementById('glow-overlay').classList.add(type, 'show');
+  window.ActivityUI?.launchCelebration({ percent: pct });
 }
 
-function launchConfetti(allGold) {
-  const canvas = document.createElement('canvas');
-  canvas.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999;';
-  document.body.appendChild(canvas);
-  const ctx = canvas.getContext('2d');
-  canvas.width = innerWidth; canvas.height = innerHeight;
-
-  const palette = allGold
-    ? ['#fbbf24','#fde68a','#f59e0b','#fcd34d','#ffffff','#fffbeb','#f8c500']
-    : ['#10b981','#6ee7b7','#34d399','#a7f3d0','#ffffff','#ecfdf5','#059669'];
-
-  function make() {
-    return {
-      x: Math.random() * canvas.width, y: -12,
-      vx: (Math.random() - .5) * 3.5,
-      vy: Math.random() * 3 + 2,
-      w:  Math.random() * 11 + 5, h: Math.random() * 5 + 3,
-      rot: Math.random() * Math.PI * 2, rs: (Math.random() - .5) * .16,
-      col: palette[Math.floor(Math.random() * palette.length)],
-      op: 1, wave: Math.random() * Math.PI * 2, wa: Math.random() * 1.5 + .5
-    };
-  }
-
-  let pieces = Array.from({length: 120}, make);
-  let t = 0;
-
-  (function tick() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    t++;
-    if (t < 200 && t % 7 === 0) for (let i = 0; i < 6; i++) pieces.push(make());
-    pieces = pieces.filter(p => p.op > 0.02 && p.y < canvas.height + 20);
-    pieces.forEach(p => {
-      p.wave += .04; p.x += p.vx + Math.sin(p.wave) * p.wa; p.y += p.vy; p.rot += p.rs;
-      if (t > 220) p.op = Math.max(0, p.op - .014);
-      ctx.save(); ctx.globalAlpha = p.op; ctx.fillStyle = p.col;
-      ctx.translate(p.x, p.y); ctx.rotate(p.rot);
-      ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
-      ctx.restore();
-    });
-    if (t < 350 || pieces.length > 0) requestAnimationFrame(tick);
-    else canvas.remove();
-  })();
-}
-
-function showToast(msg, type) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.className = 'ac-toast show' + (type ? ' ' + type : '');
-  setTimeout(() => t.classList.remove('show'), 3500);
-}
+const showToast = (msg, type = '') => window.ActivityUI?.showToast(msg, type);
 
 // ═════════════════════════════════════════════════════════════════════════════
 // PANEL 0 — Foundations (3 MCQs)
@@ -1354,6 +1320,32 @@ function resetBlanks() {
   shuffleOpts('opts-4mc');
   document.getElementById('feedback-6').textContent = '';
   document.getElementById('feedback-6').className = 'feedback';
+}
+
+// ── Try for Gold reset ────────────────────────────────────────────────────────
+const PANEL_RESETS = [resetP0, resetCloudAD, resetSeq, resetCloudBlanks, resetClassify, resetCloud, resetBlanks, resetPM];
+
+function resetForGold(idx) {
+  completed[idx]    = false;
+  firstAttempt[idx] = true;
+
+  const tab = document.querySelector('.tab-btn[data-idx="' + idx + '"]');
+  if (tab) tab.classList.remove('done-gold', 'done-green');
+  const resetBtn = document.getElementById('reset-' + idx);
+  if (resetBtn) resetBtn.style.display = 'none';
+
+  document.getElementById('done-banner').classList.remove('show', 'gold', 'green');
+  document.getElementById('glow-overlay').classList.remove('show', 'gold', 'green');
+  window.ActivityUI?.resetCelebration?.();
+
+  PANEL_RESETS[idx]?.();
+
+  updateProgress();
+  const done     = completed.filter(Boolean).length;
+  const mastered = completed.filter((c, i) => c && firstAttempt[i]).length;
+  const pct      = Math.round((done / TASK_COUNT * 80) + (mastered / TASK_COUNT * 20));
+  window.ActivityUI?.setScore(pct);
+  window.Classroom?.submitGrade(pct, 'The Internet, DNS & the Cloud');
 }
 
 // ═════════════════════════════════════════════════════════════════════════════

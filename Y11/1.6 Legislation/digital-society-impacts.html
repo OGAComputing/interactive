@@ -74,8 +74,8 @@ header p  { font-size: .8rem; color: var(--muted); margin-top: 2px; }
 .tab-btn:hover { color: var(--accent); }
 .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
 .tab-btn .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--surface-mid); flex-shrink: 0; }
-.tab-btn.done .dot      { background: var(--green); }
-.tab-btn.gold-done .dot { background: var(--gold); }
+.tab-btn.done-green .dot { background: var(--green); }
+.tab-btn.done-gold .dot  { background: var(--gold); }
 
 /* ── MAIN ── */
 main { max-width: 880px; margin: 0 auto; padding: 26px 18px 80px; }
@@ -118,12 +118,15 @@ main { max-width: 880px; margin: 0 auto; padding: 26px 18px 80px; }
 .feedback.err  { background: var(--red-bg);   color: var(--red);   border-left: 3px solid var(--red); }
 .feedback.warn { background: var(--gold-bg);  color: var(--gold);  border-left: 3px solid var(--gold); }
 
-/* ── CONFETTI ── */
-@keyframes confFall {
-  0%   { transform: translateY(-20px) rotate(0deg);   opacity: 1; }
-  100% { transform: translateY(110vh)  rotate(720deg); opacity: 0; }
+/* ── Glow overlay ── */
+#glow-overlay {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  pointer-events: none; z-index: 0; opacity: 0;
+  transition: opacity 1.8s ease;
 }
-.conf { position: fixed; top: 0; width: 10px; height: 14px; border-radius: 2px; z-index: 9999; pointer-events: none; }
+#glow-overlay.gold  { background: radial-gradient(ellipse at 50% 55%, rgba(251,191,36,.24) 0%, transparent 65%); }
+#glow-overlay.green { background: radial-gradient(ellipse at 50% 55%, rgba(16,185,129,.20) 0%, transparent 65%); }
+#glow-overlay.show  { opacity: 1; }
 
 /* ═══════════════════════════════════════════════════════
    TAB 0 — ISSUE CLASSIFIER
@@ -540,6 +543,7 @@ main { max-width: 880px; margin: 0 auto; padding: 26px 18px 80px; }
 </main>
 
 <div class="ac-banner gold" id="completionBanner">🎉 Activity complete!</div>
+<div id="glow-overlay"></div>
 
 <script>
 // ════════════════════════════════════════════════════════════════
@@ -567,45 +571,40 @@ function updateScore() {
   state.tabScores.forEach(s => { if (s !== null) total += s; });
 
   document.getElementById('totalScore').textContent = total + ' / ' + totalMax;
-  document.getElementById('progressFill').style.width = (total / totalMax * 100) + '%';
+
+  const answered = state.tabScores.filter(s => s !== null).length;
+  const mastered = state.tabScores.filter((s, i) => s !== null && s / state.tabMax[i] >= 0.8).length;
+  const pct = Math.round((answered / 6 * 80) + (mastered / 6 * 20));
+
+  document.getElementById('progressFill').style.width = pct + '%';
 
   document.querySelectorAll('.tab-btn').forEach((b, i) => {
-    b.classList.remove('done', 'gold-done');
+    b.classList.remove('done', 'done-green', 'done-gold', 'gold-done');
     if (state.tabScores[i] !== null) {
-      b.classList.add(state.tabScores[i] / state.tabMax[i] >= 0.8 ? 'gold-done' : 'done');
+      b.classList.add(state.tabScores[i] / state.tabMax[i] >= 0.8 ? 'done-gold' : 'done-green');
     }
   });
 
-  const answered = state.tabScores.filter(s => s !== null).length;
   if (answered > 0) {
-    const pct = Math.round(total / totalMax * 100);
     window.Classroom?.submitGrade(pct, 'Impacts of Digital Technology on Society');
   }
 
   if (answered === 6) {
     const banner = document.getElementById('completionBanner');
-    const pct = Math.round(total / totalMax * 100);
-    if (total === totalMax) {
+    const allGold = mastered === 6;
+    const tier = allGold ? 'gold' : 'green';
+    banner.classList.remove('gold', 'green');
+    banner.classList.add('show', tier);
+    if (allGold && total === totalMax) {
       banner.textContent = '🥇 Perfect Score! Outstanding work!';
-      window.ActivityUI?.launchCelebration();
+    } else if (allGold) {
+      banner.textContent = '🏆 Excellent — all tasks mastered!';
     } else {
       banner.textContent = `🎉 All tasks complete! Score: ${total}/${totalMax} (${pct}%)`;
     }
-    banner.classList.add('show');
-  }
-}
-
-// ════════════════════════════════════════════════════════════════
-// CONFETTI
-// ════════════════════════════════════════════════════════════════
-function fireConfetti() {
-  const colours = ['#818cf8', '#fb923c', '#22d3ee', '#4ade80', '#f87171', '#fbbf24'];
-  for (let i = 0; i < 90; i++) {
-    const el = document.createElement('div');
-    el.className = 'conf';
-    el.style.cssText = `left:${Math.random() * 100}vw;background:${colours[Math.random() * colours.length | 0]};animation:confFall ${1.5 + Math.random() * 2}s ${Math.random() * 0.8}s linear forwards;`;
-    document.body.appendChild(el);
-    setTimeout(() => el.remove(), 4500);
+    const glow = document.getElementById('glow-overlay');
+    if (glow) { glow.classList.remove('gold', 'green'); glow.classList.add(tier, 'show'); }
+    window.ActivityUI?.launchCelebration({ percent: pct });
   }
 }
 

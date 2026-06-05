@@ -316,6 +316,16 @@ color:  blue
   }
   .circuit-dot.active { border-color: var(--accent); background: transparent; }
   .circuit-dot.done   { border-color: var(--green); background: var(--green); }
+
+  /* ── Glow overlay ── */
+  #glow-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none; z-index: 0; opacity: 0;
+    transition: opacity 1.8s ease;
+  }
+  #glow-overlay.gold  { background: radial-gradient(ellipse at 50% 55%, rgba(251,191,36,.24) 0%, transparent 65%); }
+  #glow-overlay.green { background: radial-gradient(ellipse at 50% 55%, rgba(16,185,129,.20) 0%, transparent 65%); }
+  #glow-overlay.show  { opacity: 1; }
 </style>
 </head>
 
@@ -325,6 +335,7 @@ color:  blue
 <div id="done-banner" class="ac-banner gold">
   🏆 All tasks complete — excellent work!
 </div>
+<div id="glow-overlay"></div>
 
 <!-- Sticky header -->
 <header>
@@ -442,6 +453,7 @@ color:  blue
 
     <div class="row">
       <button class="ac-btn" onclick="checkTask(0)">Check answers</button>
+      <button class="ac-btn-secondary" id="reset-0" onclick="resetTask(0)" style="display:none;font-size:0.78rem;">&#8634; Try for Gold</button>
     </div>
     <div class="feedback" id="feedback-0"></div>
   </div>
@@ -516,6 +528,7 @@ color:  blue
 
     <div class="row">
       <button class="ac-btn" onclick="checkTask(1)">Check answers</button>
+      <button class="ac-btn-secondary" id="reset-1" onclick="resetTask(1)" style="display:none;font-size:0.78rem;">&#8634; Try for Gold</button>
     </div>
     <div class="feedback" id="feedback-1"></div>
   </div>
@@ -610,6 +623,7 @@ color:  blue
 
     <div class="row">
       <button class="ac-btn" onclick="checkTask(4)">Check answers</button>
+      <button class="ac-btn-secondary" id="reset-4" onclick="resetTask(4)" style="display:none;font-size:0.78rem;">&#8634; Try for Gold</button>
     </div>
     <div class="feedback" id="feedback-4"></div>
   </div>
@@ -724,6 +738,7 @@ color:  blue
 
     <div class="row">
       <button class="ac-btn" onclick="checkTask(5)">Check answers</button>
+      <button class="ac-btn-secondary" id="reset-5" onclick="resetTask(5)" style="display:none;font-size:0.78rem;">&#8634; Try for Gold</button>
     </div>
     <div class="feedback" id="feedback-5"></div>
   </div>
@@ -737,6 +752,7 @@ color:  blue
   const TASK_COUNT    = 6;
   const ACTIVITY_TITLE = 'Boolean Logic';
   const completed     = new Array(TASK_COUNT).fill(false);
+  const firstAttempt  = new Array(TASK_COUNT).fill(true);
 
   // ── Tab switching ──────────────────────────────────────────
   document.getElementById('tab-bar').addEventListener('click', e => {
@@ -819,8 +835,9 @@ color:  blue
     if (ok) {
       fb.textContent = complete ? '✅ Correct!' : '✅ Correct for this circuit. Complete the remaining circuits to finish the task.';
       fb.className   = 'feedback correct';
-      if (complete) markDone(idx, 'gold');
+      if (complete) markDone(idx);
     } else {
+      firstAttempt[idx] = false;
       fb.textContent = '❌ Not quite — check the highlighted answers and try again.';
       fb.className   = 'feedback wrong';
     }
@@ -1514,28 +1531,119 @@ color:  blue
   }
 
   // ── Mark a task done ───────────────────────────────────────
-  function markDone(idx, type = 'gold') {
+  function markDone(idx) {
     if (completed[idx]) return;
     completed[idx] = true;
+
+    const isGold = firstAttempt[idx];
     const tab = document.querySelector('.tab-btn[data-idx="' + idx + '"]');
-    if (tab) tab.classList.add('done-' + type);
-    updateProgress();
-    const pct = Math.round(completed.filter(Boolean).length / TASK_COUNT * 100);
+    if (tab) tab.classList.add('done-' + (isGold ? 'gold' : 'green'));
+
+    const resetBtn = document.getElementById('reset-' + idx);
+    if (resetBtn) resetBtn.style.display = isGold ? 'none' : '';
+
+    const done     = completed.filter(Boolean).length;
+    const mastered = completed.filter((c, i) => c && firstAttempt[i]).length;
+    const pct      = Math.round((done / TASK_COUNT * 80) + (mastered / TASK_COUNT * 20));
+    updateProgress(pct);
+    window.ActivityUI?.setScore(pct);
     window.Classroom?.submitGrade(pct, ACTIVITY_TITLE);
+
     if (completed.every(Boolean)) allComplete();
   }
 
+  // ── Reset a task so the student can try for Gold ───────────
+  function resetTask(idx) {
+    completed[idx]    = false;
+    firstAttempt[idx] = true;
+
+    const tab = document.querySelector('.tab-btn[data-idx="' + idx + '"]');
+    if (tab) tab.classList.remove('done-gold', 'done-green');
+    const fb = document.getElementById('feedback-' + idx);
+    fb.textContent = ''; fb.className = 'feedback';
+    const resetBtn = document.getElementById('reset-' + idx);
+    if (resetBtn) resetBtn.style.display = 'none';
+
+    if (idx === 0) {
+      ['a', 'b', 'c'].forEach(k => {
+        const card = document.getElementById('gc-' + k);
+        if (card) {
+          card.dataset.value = '';
+          card.classList.remove('is-correct', 'is-wrong');
+          card.querySelector('.gate-choice-label')?.remove();
+        }
+        const input = document.getElementById('sel-' + k + '-input');
+        if (input) input.value = '';
+      });
+    } else if (idx === 1) {
+      ['and-00','and-01','and-10','and-11','or-00','or-01','or-10','or-11','not-0','not-1'].forEach(id => {
+        const cell = document.getElementById(id);
+        if (!cell) return;
+        cell.classList.remove('cell-correct', 'cell-wrong');
+        const btn = cell.querySelector('.binary-toggle');
+        if (btn) { btn.dataset.value = ''; btn.textContent = '—'; }
+        const inp = cell.querySelector('.binary-answer-input');
+        if (inp) inp.value = '';
+      });
+    } else if (idx === 4) {
+      for (let i = 0; i < 8; i++) {
+        const cell = document.getElementById('t4-' + i);
+        if (!cell) continue;
+        cell.classList.remove('cell-correct', 'cell-wrong');
+        const btn = cell.querySelector('.binary-toggle');
+        if (btn) { btn.dataset.value = ''; btn.textContent = '—'; }
+        const inp = cell.querySelector('.binary-answer-input');
+        if (inp) inp.value = '';
+      }
+    } else if (idx === 5) {
+      for (let i = 0; i < 8; i++) {
+        const cell = document.getElementById('t5-' + i);
+        if (!cell) continue;
+        cell.classList.remove('cell-correct', 'cell-wrong');
+        const btn = cell.querySelector('.binary-toggle');
+        if (btn) { btn.dataset.value = ''; btn.textContent = '—'; }
+        const inp = cell.querySelector('.binary-answer-input');
+        if (inp) inp.value = '';
+      }
+      const sel = document.getElementById('t5-rows');
+      if (sel) sel.value = '';
+      document.getElementById('qc-t5b')?.classList.remove('is-correct', 'is-wrong');
+    }
+
+    document.getElementById('done-banner').classList.remove('show', 'gold', 'green');
+    const glow = document.getElementById('glow-overlay');
+    if (glow) glow.classList.remove('show', 'gold', 'green');
+    window.ActivityUI?.resetCelebration();
+
+    const done     = completed.filter(Boolean).length;
+    const mastered = completed.filter((c, i) => c && firstAttempt[i]).length;
+    const pct      = Math.round((done / TASK_COUNT * 80) + (mastered / TASK_COUNT * 20));
+    updateProgress(pct);
+    window.ActivityUI?.setScore(pct);
+    window.Classroom?.submitGrade(pct, ACTIVITY_TITLE);
+  }
+
   // ── Progress bar ───────────────────────────────────────────
-  function updateProgress() {
-    const pct = Math.round(completed.filter(Boolean).length / TASK_COUNT * 100);
+  function updateProgress(pct) {
+    if (pct === undefined) {
+      const done     = completed.filter(Boolean).length;
+      const mastered = completed.filter((c, i) => c && firstAttempt[i]).length;
+      pct = Math.round((done / TASK_COUNT * 80) + (mastered / TASK_COUNT * 20));
+    }
     document.getElementById('progress-fill').style.width = pct + '%';
     document.getElementById('progress-pct').textContent  = pct + '%';
   }
 
   // ── All tasks complete ─────────────────────────────────────
   function allComplete() {
-    document.getElementById('done-banner').classList.add('show');
-    window.ActivityUI?.launchCelebration();
+    const allGold = firstAttempt.every(Boolean);
+    const tier    = allGold ? 'gold' : 'green';
+    document.getElementById('done-banner').classList.add('show', tier);
+    const glow = document.getElementById('glow-overlay');
+    if (glow) glow.classList.add(tier, 'show');
+    const mastered = firstAttempt.filter(Boolean).length;
+    const pct = Math.round(80 + (mastered / TASK_COUNT * 20));
+    window.ActivityUI?.launchCelebration({ percent: pct });
   }
 
   const showToast = (msg, type = '') => window.ActivityUI?.showToast(msg, type);

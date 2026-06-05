@@ -74,40 +74,33 @@ header p {
 .tab-bar {
   background: var(--surface);
   border-bottom: 2px solid var(--surface-mid);
-  overflow-x: auto;
-  white-space: nowrap;
-  scrollbar-width: none;
+  padding: 10px 16px;
   position: sticky;
   top: 72px;
   z-index: 150;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
 }
-.tab-bar::-webkit-scrollbar { display: none; }
 .tab-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 12px 18px;
-  border: none;
-  background: none;
-  cursor: pointer;
-  font-family: var(--font-body);
-  font-size: .88rem;
+  padding: 8px 16px;
+  border: 2px solid var(--surface-mid);
+  border-radius: 20px;
+  background: var(--surface);
   color: var(--muted);
-  border-bottom: 3px solid transparent;
-  margin-bottom: -2px;
-  transition: color .2s, border-color .2s;
+  font-family: var(--font-body);
+  font-size: .82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .2s;
+  user-select: none;
   white-space: nowrap;
 }
-.tab-btn:hover { color: var(--accent); }
-.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
-.tab-btn .dot {
-  width: 8px; height: 8px;
-  border-radius: 50%;
-  background: var(--surface-mid);
-  flex-shrink: 0;
-}
-.tab-btn.done .dot { background: var(--green); }
-.tab-btn.gold-done .dot { background: var(--gold); }
+.tab-btn:hover { border-color: var(--accent); color: var(--text); }
+.tab-btn.active    { background: var(--accent); border-color: var(--accent); color: var(--text-inv); }
+.tab-btn.done-green { background: var(--green); border-color: var(--green); color: #fff; }
+.tab-btn.done-gold  { background: var(--gold);  border-color: var(--gold);  color: #111; }
 
 /* ── MAIN ── */
 main { max-width: 860px; margin: 0 auto; padding: 28px 20px 80px; }
@@ -167,6 +160,16 @@ main { max-width: 860px; margin: 0 auto; padding: 28px 20px 80px; }
 .feedback.warn { background: var(--gold-bg); color: var(--gold); border-left: 3px solid var(--gold); }
 
 /* ── COMPLETION BANNER: uses .ac-banner from shared.css ── */
+
+/* ── GLOW OVERLAY ── */
+#glow-overlay {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  pointer-events: none; z-index: 0; opacity: 0;
+  transition: opacity 1.8s ease;
+}
+#glow-overlay.gold  { background: radial-gradient(ellipse at 50% 55%, rgba(251,191,36,.24) 0%, transparent 65%); }
+#glow-overlay.green { background: radial-gradient(ellipse at 50% 55%, rgba(16,185,129,.20) 0%, transparent 65%); }
+#glow-overlay.show  { opacity: 1; }
 
 /* ── EX 1: MATCH DRAG ── */
 .match-grid {
@@ -521,12 +524,6 @@ main { max-width: 860px; margin: 0 auto; padding: 28px 20px 80px; }
   .ni-card { grid-template-columns: 1fr; }
   .ni-answer-wrap { min-width: unset; }
 }
-/* ── CONFETTI ── */
-@keyframes confFall {
-  0%  { transform: translateY(-20px) rotate(0deg); opacity: 1; }
-  100%{ transform: translateY(110vh) rotate(720deg); opacity: 0; }
-}
-.conf { position: fixed; top: 0; width: 10px; height: 14px; border-radius: 2px; z-index: 1000; pointer-events: none; }
 
 /* ── SUMMARY ── */
 .summary-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 20px; }
@@ -558,17 +555,17 @@ main { max-width: 860px; margin: 0 auto; padding: 28px 20px 80px; }
       <div class="score-val" id="totalScore">0 / 0</div>
     </div>
   </div>
-  <div class="ac-progress-bar"><div class="ac-progress-fill" id="progressFill"></div></div>
+  <div class="ac-progress-bar"><div class="ac-progress-fill" id="progress-fill"></div></div>
 </header>
 
-<nav class="tab-bar" id="tabBar">
-  <button class="tab-btn active" data-tab="0" onclick="switchTab(0)"><span class="dot"></span> Match Threats</button>
-  <button class="tab-btn" data-tab="1" onclick="switchTab(1)"><span class="dot"></span> Prevention Methods</button>
-  <button class="tab-btn" data-tab="2" onclick="switchTab(2)"><span class="dot"></span> True or False?</button>
-  <button class="tab-btn" data-tab="3" onclick="switchTab(3)"><span class="dot"></span> Name It!</button>
-  <button class="tab-btn" data-tab="4" onclick="switchTab(4)"><span class="dot"></span> Gap Fill</button>
-  <button class="tab-btn" data-tab="5" onclick="switchTab(5)"><span class="dot"></span> Classify Scenarios</button>
-  <button class="tab-btn" data-tab="6" onclick="switchTab(6)"><span class="dot"></span> Exam Practice</button>
+<nav class="tab-bar" id="tab-bar">
+  <button class="tab-btn active" data-tab="0" onclick="switchTab(0)">Match Threats</button>
+  <button class="tab-btn" data-tab="1" onclick="switchTab(1)">Prevention Methods</button>
+  <button class="tab-btn" data-tab="2" onclick="switchTab(2)">True or False?</button>
+  <button class="tab-btn" data-tab="3" onclick="switchTab(3)">Name It!</button>
+  <button class="tab-btn" data-tab="4" onclick="switchTab(4)">Gap Fill</button>
+  <button class="tab-btn" data-tab="5" onclick="switchTab(5)">Classify Scenarios</button>
+  <button class="tab-btn" data-tab="6" onclick="switchTab(6)">Exam Practice</button>
 </nav>
 
 <main>
@@ -703,7 +700,8 @@ main { max-width: 860px; margin: 0 auto; padding: 28px 20px 80px; }
 
 </main>
 
-<div class="ac-banner gold" id="completionBanner">🎉 Activity Complete!</div>
+<div id="done-banner" class="ac-banner gold">🎉 Activity Complete!</div>
+<div id="glow-overlay"></div>
 
 <script>
 // ═══════════════════════════════════════════════════════════════
@@ -731,46 +729,42 @@ function switchTab(i) {
 function updateScore() {
   let total = 0;
   let answered = 0;
+  let perfect = 0;
   state.tabScores.forEach((s, i) => {
-    if (s !== null) { total += s; answered++; }
+    if (s !== null) {
+      total += s;
+      answered++;
+      if (s === state.tabMax[i]) perfect++;
+    }
   });
+  const pct = Math.round((total / totalMax * 80) + (perfect / 7 * 20));
+
   document.getElementById('totalScore').textContent = total + ' / ' + totalMax;
-  document.getElementById('progressFill').style.width = (total / totalMax * 100) + '%';
-  // update dots
+  document.getElementById('progress-fill').style.width = pct + '%';
+
   document.querySelectorAll('.tab-btn').forEach((b, i) => {
     if (state.tabScores[i] !== null) {
-      const perfect = state.tabScores[i] === state.tabMax[i];
-      b.classList.toggle('gold-done', perfect);
-      b.classList.toggle('done', !perfect);
+      const isPerfect = state.tabScores[i] === state.tabMax[i];
+      b.classList.remove('done-gold', 'done-green');
+      b.classList.add(isPerfect ? 'done-gold' : 'done-green');
     }
   });
+
+  window.ActivityUI?.setScore(pct);
+  window.Classroom?.submitGrade(pct, 'Cybersecurity — Threats & Prevention');
+
   if (answered === 7) {
-    const banner = document.getElementById('completionBanner');
-    banner.classList.add('show');
-    if (total === totalMax) {
-      banner.textContent = '🥇 Perfect Score! Outstanding work!';
-      window.ActivityUI?.launchCelebration();
-      window.Classroom?.submitGrade(100, 'Cybersecurity — Threats & Prevention');
-    } else {
-      banner.textContent = '🎉 Activity Complete! Score: ' + total + '/' + totalMax;
-      window.Classroom?.submitGrade(Math.round(total / totalMax * 100), 'Cybersecurity — Threats & Prevention');
-    }
+    const allPerfect = total === totalMax;
+    const tier   = allPerfect ? 'gold' : 'green';
+    const banner = document.getElementById('done-banner');
+    banner.textContent = allPerfect ? '🥇 Perfect Score! Outstanding work!' : '🎉 Activity Complete! Score: ' + total + '/' + totalMax;
+    banner.classList.add('show', tier);
+    const glow = document.getElementById('glow-overlay');
+    if (glow) glow.classList.add(tier, 'show');
+    window.ActivityUI?.launchCelebration({ percent: pct });
   }
 }
 
-// ═══════════════════════════════════════════════════════════════
-// CONFETTI
-// ═══════════════════════════════════════════════════════════════
-function fireConfetti() {
-  const colours = ['#b91c1c','#d97706','#15803d','#1d4ed8','#7c3aed','#ec4899'];
-  for (let i = 0; i < 80; i++) {
-    const el = document.createElement('div');
-    el.className = 'conf';
-    el.style.cssText = `left:${Math.random()*100}vw;background:${colours[Math.random()*colours.length|0]};animation:confFall ${1.5+Math.random()*2}s ${Math.random()*0.8}s linear forwards;`;
-    document.body.appendChild(el);
-    setTimeout(() => el.remove(), 4000);
-  }
-}
 
 // ═══════════════════════════════════════════════════════════════
 // ═══ EX 1: MATCH THREATS ═══════════════════════════════════════
@@ -1650,6 +1644,7 @@ buildNameIt();
 updateScore();
 </script>
 
+<div class="ac-toast" id="toast"></div>
 <script src="../../activity-ui.js"></script>
 <!-- Google Classroom integration (no-op when no ?courseId= param) -->
 <script src="../../classroom.js"></script>

@@ -1,30 +1,26 @@
 <!DOCTYPE html>
+<html lang="en">
+<head>
 <!-- ACTIVITY
 title:  Legislation Activities
-lesson: Year 11 — Legislation
 type:   Practice
 stars:  3
 desc:   3 drag-and-drop gap-fill exercises covering key legislation terms, DPA responsibilities, and scenario application
 color:  orange
 -->
-<html lang="en">
-<head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Legislation Activities | OCR GCSE Computer Science</title>
 <link rel="stylesheet" href="../../shared.css">
 <style>
-  body {
-    font-family: 'Segoe UI', sans-serif;
-    background: #0f1b2d;
-    color: #e2e8f0;
-    padding: 0 20px 60px;
-    min-height: 100vh;
-  }
-  .sticky-progress {
+  body { padding: 0 20px 60px; }
+
+  /* ── Sticky progress header ──────────────────────────── */
+  header {
     position: sticky; top: 0; z-index: 100;
     margin: 0 -20px 28px; padding: 12px 20px;
-    background: #1e2f45; border-bottom: 2px solid #334155;
+    background: var(--surface);
+    border-bottom: 2px solid var(--surface-mid);
     box-shadow: 0 2px 12px rgba(0,0,0,0.32);
   }
   .header-progress {
@@ -32,140 +28,159 @@ color:  orange
     max-width: 880px; margin: 0 auto;
   }
   .score-pct {
-    font-family: Consolas, "Courier New", monospace;
-    font-size: 0.82rem; color: #38bdf8; white-space: nowrap;
+    font-family: var(--font-head, Consolas, monospace);
+    font-size: 0.82rem; color: var(--accent); white-space: nowrap;
   }
-  h1 { text-align: center; font-size: 1.45rem; color: #7dd3fc; margin-bottom: 4px; }
-  .subtitle { text-align: center; font-size: 0.82rem; color: #94a3b8; margin-bottom: 30px; }
 
-  /* ── TAB NAV ── */
+  /* ── Glow overlay ────────────────────────────────────── */
+  #glow-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none; z-index: 0; opacity: 0;
+    transition: opacity 1.8s ease;
+  }
+  #glow-overlay.gold  { background: radial-gradient(ellipse at 50% 55%, rgba(251,191,36,.24) 0%, transparent 65%); }
+  #glow-overlay.green { background: radial-gradient(ellipse at 50% 55%, rgba(16,185,129,.20) 0%, transparent 65%); }
+  #glow-overlay.show  { opacity: 1; }
+
+  /* ── Page title ──────────────────────────────────────── */
+  h1 { text-align: center; font-size: 1.45rem; color: var(--accent-light); margin-bottom: 4px; }
+  .subtitle { text-align: center; font-size: 0.82rem; color: var(--muted); margin-bottom: 30px; }
+
+  /* ── Pill tab bar ────────────────────────────────────── */
   .tabs {
     display: flex; gap: 6px; justify-content: center;
     margin-bottom: 28px; flex-wrap: wrap;
   }
   .tab-btn {
-    padding: 8px 20px; border: 2px solid #334155;
-    border-radius: 20px; background: #1e2f45;
-    color: #94a3b8; font-size: 0.85rem; font-weight: 600;
+    padding: 8px 20px;
+    border: 2px solid var(--surface-mid);
+    border-radius: 20px;
+    background: var(--surface);
+    color: var(--muted);
+    font-family: var(--font-body);
+    font-size: 0.85rem; font-weight: 600;
     cursor: pointer; transition: all 0.2s;
   }
-  .tab-btn.active { background: #0ea5e9; border-color: #0ea5e9; color: white; }
-  .tab-btn:hover:not(.active) { border-color: #38bdf8; color: #e2e8f0; }
-  .tab-btn.done-gold { background: #f59e0b !important; color: #000 !important; }
-  .tab-btn.done-green { background: #22c55e !important; color: #fff !important; }
+  .tab-btn.active       { background: var(--accent);       border-color: var(--accent);       color: var(--text-inv); }
+  .tab-btn:hover:not(.active) { border-color: var(--accent); color: var(--text); }
+  .tab-btn.done-gold    { background: var(--gold)  !important; border-color: var(--gold)  !important; color: #111 !important; }
+  .tab-btn.done-green   { background: var(--green) !important; border-color: var(--green) !important; color: #fff !important; }
   .tab-panel { display: none; }
   .tab-panel.active { display: block; }
 
-  /* ── SHARED LAYOUT ── */
+  /* ── Shared layout ───────────────────────────────────── */
   .max-w { max-width: 880px; margin: 0 auto; }
   .section {
-    background: #1e2f45; border-left: 4px solid #38bdf8;
+    background: var(--surface);
+    border-left: 4px solid var(--accent);
     border-radius: 8px; padding: 18px 22px; margin-bottom: 22px;
   }
   .section h2 {
-    font-size: 0.9rem; color: #38bdf8; margin-bottom: 14px;
+    font-size: 0.9rem; color: var(--accent); margin-bottom: 14px;
     text-transform: uppercase; letter-spacing: 0.8px;
   }
   .sentence {
     font-size: 0.88rem; line-height: 2.4rem;
-    margin-bottom: 4px; color: #cbd5e1;
+    margin-bottom: 4px; color: var(--text);
   }
 
-  /* ── WORD BANK (draggable tiles) ── */
+  /* ── Word bank ───────────────────────────────────────── */
   .word-bank {
-    background: #162032; border: 1px dashed #334155;
+    background: var(--bg);
+    border: 1px dashed var(--surface-mid);
     border-radius: 8px; padding: 14px 18px; margin-bottom: 22px;
   }
   .word-bank h3 {
-    font-size: 0.72rem; color: #64748b; text-transform: uppercase;
-    letter-spacing: 1px; margin-bottom: 10px;
+    font-size: 0.72rem; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px;
   }
   .word-bank .tiles { display: flex; flex-wrap: wrap; gap: 8px; min-height: 36px; }
   .tile {
-    background: #1e3a5f; border: 1.5px solid #38bdf8;
+    background: var(--surface-mid);
+    border: 1.5px solid var(--accent);
     border-radius: 5px; padding: 4px 14px;
-    font-size: 0.83rem; color: #7dd3fc;
-    cursor: grab; user-select: none;
-    transition: background 0.15s, opacity 0.2s;
+    font-size: 0.83rem; color: var(--accent-light);
+    cursor: grab; user-select: none; transition: background 0.15s, opacity 0.2s;
   }
-  .tile:hover { background: #1e4a7a; }
+  .tile:hover { background: var(--surface-dim); }
   .tile.dragging { opacity: 0.35; }
   .tile.used { opacity: 0.3; pointer-events: none; }
 
-  /* ── DROP ZONES (inline blanks) ── */
+  /* ── Drop zones ──────────────────────────────────────── */
   .drop-zone {
     display: inline-block; min-width: 110px; height: 28px;
-    border-bottom: 2px solid #38bdf8; vertical-align: middle;
-    border-radius: 3px; padding: 0 8px; font-size: 0.85rem;
-    color: #f0f9ff; text-align: center; line-height: 26px;
-    background: #0f1b2d; cursor: pointer; transition: all 0.2s;
-    position: relative;
+    border-bottom: 2px solid var(--accent);
+    vertical-align: middle; border-radius: 3px;
+    padding: 0 8px; font-size: 0.85rem;
+    color: var(--text); text-align: center; line-height: 26px;
+    background: var(--bg); cursor: pointer; transition: all 0.2s;
   }
-  .drop-zone.drag-over { background: #1e4a7a; border-color: #7dd3fc; border-style: dashed; }
-  .drop-zone.correct { border-color: #4ade80; background: #052e16; color: #86efac; }
-  .drop-zone.incorrect { border-color: #f87171; background: #2d0a0a; color: #fca5a5; }
-  .drop-zone.filled { border-style: solid; }
+  .drop-zone.drag-over { background: var(--surface-dim); border-color: var(--accent-light); border-style: dashed; }
+  .drop-zone.correct   { border-color: var(--green); background: var(--green-bg); color: var(--green); }
+  .drop-zone.incorrect { border-color: var(--red);   background: var(--red-bg);   color: var(--red);   }
+  .drop-zone.filled    { border-style: solid; }
 
-  /* ── CONTROLS ── */
+  /* ── Controls ────────────────────────────────────────── */
   .controls {
     display: flex; gap: 10px; justify-content: center;
     margin-top: 24px; flex-wrap: wrap;
   }
-  .controls button {
-    padding: 10px 24px; border: none; border-radius: 6px;
-    font-size: 0.88rem; font-weight: 600; cursor: pointer;
-    transition: opacity 0.2s, transform 0.1s;
-  }
-  .controls button:hover { opacity: 0.85; transform: translateY(-1px); }
-  .btn-check { background: #0ea5e9; color: white; }
-  .btn-reveal { background: #64748b; color: white; }
-  .btn-reset { background: #1e2f45; color: #94a3b8; border: 1px solid #334155 !important; }
   .score-box {
     text-align: center; margin-top: 16px;
-    font-size: 1rem; font-weight: 700; color: #7dd3fc; min-height: 1.4rem;
+    font-size: 1rem; font-weight: 700; color: var(--accent-light); min-height: 1.4rem;
   }
 
-  /* ── SCENARIO TABLE (Ex 3) ── */
+  /* ── Scenario table (Ex 3) ───────────────────────────── */
   .scenario-intro {
-    font-size: 0.85rem; color: #94a3b8; margin-bottom: 18px; line-height: 1.6;
+    font-size: 0.85rem; color: var(--muted); margin-bottom: 18px; line-height: 1.6;
   }
   table.scenario-table {
     width: 100%; border-collapse: collapse; font-size: 0.85rem;
   }
   table.scenario-table th {
-    background: #0f1b2d; color: #38bdf8; padding: 10px 12px;
-    border: 1px solid #334155; text-align: left; font-size: 0.8rem;
+    background: var(--bg); color: var(--accent); padding: 10px 12px;
+    border: 1px solid var(--surface-mid); text-align: left; font-size: 0.8rem;
     text-transform: uppercase; letter-spacing: 0.5px;
   }
   table.scenario-table td {
-    border: 1px solid #334155; padding: 10px 12px;
-    vertical-align: middle; color: #cbd5e1; line-height: 1.4;
+    border: 1px solid var(--surface-mid); padding: 10px 12px;
+    vertical-align: middle; color: var(--text); line-height: 1.4;
   }
-  table.scenario-table tr:nth-child(even) td { background: #162032; }
+  table.scenario-table tr:nth-child(even) td { background: var(--bg); }
+
   .act-drop {
     display: block; min-width: 100px; min-height: 30px;
-    border: 2px dashed #334155; border-radius: 5px;
-    padding: 4px 10px; font-size: 0.8rem; color: #7dd3fc;
+    border: 2px dashed var(--surface-mid);
+    border-radius: 5px; padding: 4px 10px;
+    font-size: 0.8rem; color: var(--accent-light);
     text-align: center; line-height: 22px;
     transition: all 0.2s; cursor: pointer;
   }
-  .act-drop.drag-over { border-color: #7dd3fc; background: #1e4a7a; }
-  .act-drop.correct { border-color: #4ade80; background: #052e16; color: #86efac; border-style: solid; }
-  .act-drop.incorrect { border-color: #f87171; background: #2d0a0a; color: #fca5a5; border-style: solid; }
-  .act-drop.filled { border-style: solid; border-color: #38bdf8; }
+  .act-drop.drag-over { border-color: var(--accent-light); background: var(--surface-dim); }
+  .act-drop.correct   { border-color: var(--green); background: var(--green-bg); color: var(--green); border-style: solid; }
+  .act-drop.incorrect { border-color: var(--red);   background: var(--red-bg);   color: var(--red);   border-style: solid; }
+  .act-drop.filled    { border-style: solid; border-color: var(--accent); }
+
   .act-tiles { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
   .act-tile {
-    background: #1e3a5f; border: 1.5px solid #38bdf8;
+    background: var(--surface-mid);
+    border: 1.5px solid var(--accent);
     border-radius: 5px; padding: 5px 14px;
-    font-size: 0.82rem; color: #7dd3fc;
+    font-size: 0.82rem; color: var(--accent-light);
     cursor: grab; user-select: none; transition: all 0.15s;
   }
-  .act-tile:hover { background: #1e4a7a; }
+  .act-tile:hover { background: var(--surface-dim); }
   .act-tile.dragging { opacity: 0.3; }
 </style>
 </head>
+
 <body>
-<header class="sticky-progress">
+
+<!-- Completion banner -->
+<div id="done-banner" class="ac-banner gold">🏆 Excellent! All exercises mastered!</div>
+<div id="glow-overlay"></div>
+
+<header>
   <div class="header-progress">
     <div class="ac-progress-bar" style="flex:1;">
       <div class="ac-progress-fill" id="progress-fill"></div>
@@ -178,9 +193,9 @@ color:  orange
 <p class="subtitle">OCR GCSE Computer Science &nbsp;·&nbsp; Year 11</p>
 
 <div class="tabs">
-  <button class="tab-btn active" data-tab="ex1" onclick="switchTab('ex1')">Exercise 1 — Key Terms</button>
-  <button class="tab-btn" data-tab="ex2" onclick="switchTab('ex2')">Exercise 2 — DPA Responsibilities</button>
-  <button class="tab-btn" data-tab="ex3" onclick="switchTab('ex3')">Exercise 3 — Scenarios</button>
+  <button class="tab-btn active" data-tab="ex1" onclick="switchTab('ex1', this)">Exercise 1 — Key Terms</button>
+  <button class="tab-btn" data-tab="ex2" onclick="switchTab('ex2', this)">Exercise 2 — DPA Responsibilities</button>
+  <button class="tab-btn" data-tab="ex3" onclick="switchTab('ex3', this)">Exercise 3 — Scenarios</button>
 </div>
 
 <!-- ═══════════════════════════════════════════════════
@@ -224,9 +239,9 @@ color:  orange
   </div>
 
   <div class="controls">
-    <button class="btn-check" onclick="checkEx('ex1')">✅ Check Answers</button>
-    <button class="btn-reveal" onclick="revealEx('ex1')">👁 Reveal All</button>
-    <button class="btn-reset" onclick="resetEx('ex1')">🔄 Reset</button>
+    <button class="ac-btn" onclick="checkEx('ex1')">✅ Check Answers</button>
+    <button class="ac-btn-secondary" onclick="revealEx('ex1')">👁 Reveal All</button>
+    <button class="ac-btn-secondary" onclick="resetEx('ex1')">🔄 Reset</button>
   </div>
   <div class="score-box" id="score-ex1"></div>
 
@@ -263,9 +278,9 @@ color:  orange
   </div>
 
   <div class="controls">
-    <button class="btn-check" onclick="checkEx('ex2')">✅ Check Answers</button>
-    <button class="btn-reveal" onclick="revealEx('ex2')">👁 Reveal All</button>
-    <button class="btn-reset" onclick="resetEx('ex2')">🔄 Reset</button>
+    <button class="ac-btn" onclick="checkEx('ex2')">✅ Check Answers</button>
+    <button class="ac-btn-secondary" onclick="revealEx('ex2')">👁 Reveal All</button>
+    <button class="ac-btn-secondary" onclick="resetEx('ex2')">🔄 Reset</button>
   </div>
   <div class="score-box" id="score-ex2"></div>
 
@@ -335,34 +350,33 @@ color:  orange
   </div>
 
   <div class="controls">
-    <button class="btn-check" onclick="checkEx3()">✅ Check Answers</button>
-    <button class="btn-reveal" onclick="revealEx3()">👁 Reveal All</button>
-    <button class="btn-reset" onclick="resetEx3()">🔄 Reset</button>
+    <button class="ac-btn" onclick="checkEx3()">✅ Check Answers</button>
+    <button class="ac-btn-secondary" onclick="revealEx3()">👁 Reveal All</button>
+    <button class="ac-btn-secondary" onclick="resetEx3()">🔄 Reset</button>
   </div>
   <div class="score-box" id="score-ex3"></div>
 
 </div>
 </div>
 
+<!-- Toast for Classroom feedback -->
+<div class="ac-toast" id="toast"></div>
+
 <!-- ═══════════ SCRIPT ═══════════ -->
 <script>
-// ── localStorage key ──
 const LS_KEY = 'legislation_fillinblanks_y11_v1';
 const TASK_COUNT = 3;
 const ACTIVITY_TITLE = 'Legislation Activities';
 
-// ── Per-exercise everWrong tracking ──
 let ex1EverWrong = false, ex2EverWrong = false, ex3EverWrong = false;
 
-// ── Tab switching ──
-function switchTab(id) {
+function switchTab(id, btn) {
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.getElementById(id).classList.add('active');
-  event.target.classList.add('active');
+  btn.classList.add('active');
 }
 
-// ── Word bank data ──
 const words1 = [
   '2018','personal','controller','processor','accuracy','purpose','impartially',
   '1990','hacking','authorisation','criminal','ten','prison','modification',
@@ -374,7 +388,6 @@ const words2 = [
   'request','Access','inform','staff'
 ];
 
-// ── Build word banks ──
 function buildBank(words, bankId, containerId) {
   const container = document.getElementById(containerId);
   container.innerHTML = '';
@@ -404,7 +417,6 @@ function addTileDrag(tile) {
   tile.addEventListener('dragend', () => tile.classList.remove('dragging'));
 }
 
-// ── Drop zones ──
 function initDropZones(selector) {
   document.querySelectorAll(selector).forEach(zone => {
     zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
@@ -447,36 +459,38 @@ function liveCheck(zone) {
   if (cur === ans) zone.classList.add('correct');
 }
 
-// ── Mark tab done-gold or done-green ──
-function markTab(n, everWrong) {
-  const btn = document.querySelector(`.tab-btn[data-tab="${n}"]`);
+function markTab(tabId, everWrong) {
+  const btn = document.querySelector(`.tab-btn[data-tab="${tabId}"]`);
   if (!btn) return;
-  const wasDone = btn.classList.contains('done-gold') || btn.classList.contains('done-green');
   btn.classList.remove('done', 'done-gold', 'done-green');
   btn.classList.add(everWrong ? 'done-green' : 'done-gold');
   const pct = updateProgress();
-  if (!wasDone) {
-    window.Classroom?.submitGrade(pct, ACTIVITY_TITLE);
-  }
+  window.Classroom?.submitGrade(pct, ACTIVITY_TITLE);
+  checkAllComplete();
 }
 
 function updateProgress() {
-  const goldCount = document.querySelectorAll('.tab-btn.done-gold').length;
-  const doneCount = goldCount + document.querySelectorAll('.tab-btn.done-green').length;
+  const goldCount  = document.querySelectorAll('.tab-btn.done-gold').length;
+  const doneCount  = goldCount + document.querySelectorAll('.tab-btn.done-green').length;
   const pct = Math.round((doneCount / TASK_COUNT * 80) + (goldCount / TASK_COUNT * 20));
   document.getElementById('progress-fill').style.width = pct + '%';
-  document.getElementById('progress-pct').textContent = pct + '%';
+  document.getElementById('progress-pct').textContent  = pct + '%';
   return pct;
 }
 
-// ── Check if all exercises are done-gold (trigger celebration) ──
-function checkAllGold() {
+function checkAllComplete() {
   const goldCount = document.querySelectorAll('.tab-btn.done-gold').length;
   const doneCount = goldCount + document.querySelectorAll('.tab-btn.done-green').length;
-  if (goldCount === 3) showCelebration();
+  if (doneCount < TASK_COUNT) return;
+  const tier   = goldCount === TASK_COUNT ? 'gold' : 'green';
+  const banner = document.getElementById('done-banner');
+  banner.classList.remove('gold', 'green');
+  banner.classList.add('show', tier);
+  const glow = document.getElementById('glow-overlay');
+  if (glow) { glow.classList.remove('gold', 'green'); glow.classList.add(tier, 'show'); }
+  window.ActivityUI?.launchCelebration({ percent: updateProgress() });
 }
 
-// ── Check / Reveal / Reset for Ex1 & Ex2 ──
 function checkEx(exId) {
   if (window.Classroom?.verifyAuth() === false) return;
   const panel = document.getElementById(exId);
@@ -484,7 +498,7 @@ function checkEx(exId) {
   let correct = 0, attempted = 0;
   zones.forEach(z => {
     const cur = (z.dataset.current || '').trim().toLowerCase();
-    const ans = (z.dataset.answer || '').trim().toLowerCase();
+    const ans = (z.dataset.answer  || '').trim().toLowerCase();
     z.classList.remove('correct','incorrect');
     if (!cur) return;
     attempted++;
@@ -500,20 +514,16 @@ function checkEx(exId) {
     scoreEl.textContent = 'Drag some words onto the blanks first!';
   } else {
     scoreEl.textContent = 'Score: ' + correct + ' / ' + zones.length + ' correct';
-    // Check if all blanks are correct
-    const allCorrect = correct === zones.length;
-    if (allCorrect) {
-      const exNum = exId.replace('ex', '');
+    if (correct === zones.length) {
       const everWrong = exId === 'ex1' ? ex1EverWrong : ex2EverWrong;
       markTab(exId, everWrong);
-      checkAllGold();
     }
   }
   saveState();
 }
 
 function revealEx(exId) {
-  const panel = document.getElementById(exId);
+  const panel  = document.getElementById(exId);
   const bankId = exId === 'ex1' ? '1' : '2';
   panel.querySelectorAll('.drop-zone').forEach(z => {
     const prev = z.dataset.current;
@@ -532,7 +542,7 @@ function revealEx(exId) {
 }
 
 function resetEx(exId) {
-  const panel = document.getElementById(exId);
+  const panel  = document.getElementById(exId);
   const bankId = exId === 'ex1' ? '1' : '2';
   panel.querySelectorAll('.drop-zone').forEach(z => {
     z.textContent = '';
@@ -542,7 +552,6 @@ function resetEx(exId) {
   buildBank(bankId === '1' ? words1 : words2, bankId, 'tiles' + bankId);
   initDropZones('#' + exId + ' .drop-zone');
   document.getElementById('score-' + exId).textContent = '';
-  // Reset everWrong and tab state for this exercise
   if (exId === 'ex1') ex1EverWrong = false;
   if (exId === 'ex2') ex2EverWrong = false;
   const btn = document.querySelector(`.tab-btn[data-tab="${exId}"]`);
@@ -551,14 +560,12 @@ function resetEx(exId) {
   saveState();
 }
 
-// ── Exercise 3 — Act matching ──
 const actLabels = [
   'Data Protection Act 2018',
   'Computer Misuse Act 1990',
   'Copyright, Designs and Patents Act 1988'
 ];
 
-// Three permanent tiles — always available, can be reused across all six rows
 function buildActTiles() {
   const container = document.getElementById('act-tiles');
   container.innerHTML = '';
@@ -588,7 +595,6 @@ function initActDrops() {
       e.preventDefault();
       zone.classList.remove('drag-over');
       if (!dragWord) return;
-      // Just stamp the label into this zone — tiles are never consumed
       zone.textContent = dragWord;
       zone.dataset.current = dragWord;
       zone.classList.add('filled');
@@ -596,7 +602,6 @@ function initActDrops() {
       liveCheckAct(zone);
       dragWord = null; dragTile = null;
     });
-    // Click a filled zone to clear it
     zone.addEventListener('click', () => {
       if (!zone.dataset.current) return;
       zone.textContent = '';
@@ -609,7 +614,7 @@ function initActDrops() {
 
 function liveCheckAct(zone) {
   const cur = (zone.dataset.current || '').trim().toLowerCase();
-  const ans = (zone.dataset.answer || '').trim().toLowerCase();
+  const ans = (zone.dataset.answer  || '').trim().toLowerCase();
   zone.classList.remove('correct','incorrect');
   if (cur && cur === ans) zone.classList.add('correct');
   checkAllCorrectEx3();
@@ -619,21 +624,20 @@ function checkAllCorrectEx3() {
   if (window.Classroom?.verifyAuth() === false) return;
   const zones = [...document.querySelectorAll('.act-drop')];
   const total = zones.length;
-  const allFilled = zones.every(z => z.dataset.current && z.dataset.current.trim() !== '');
+  const allFilled  = zones.every(z => z.dataset.current && z.dataset.current.trim() !== '');
   const allCorrect = zones.every(z => {
     const cur = (z.dataset.current || '').trim().toLowerCase();
-    const ans = (z.dataset.answer || '').trim().toLowerCase();
+    const ans = (z.dataset.answer  || '').trim().toLowerCase();
     return cur === ans;
   });
-  const panel = document.getElementById('ex3');
+  const panel   = document.getElementById('ex3');
   const section = panel.querySelector('.section');
   if (allCorrect && total > 0 && allFilled) {
     section.style.transition = 'background 0.8s ease';
-    section.style.background = '#052e16';
-    section.style.borderLeftColor = '#4ade80';
+    section.style.background = 'color-mix(in srgb, var(--green) 10%, var(--surface))';
+    section.style.borderLeftColor = 'var(--green)';
     document.getElementById('score-ex3').textContent = '🎉 All correct! Well done!';
     markTab('ex3', ex3EverWrong);
-    checkAllGold();
     saveState();
   } else {
     section.style.background = '';
@@ -650,15 +654,12 @@ function checkEx3() {
   let correct = 0, attempted = 0;
   zones.forEach(z => {
     const cur = (z.dataset.current || '').trim().toLowerCase();
-    const ans = (z.dataset.answer || '').trim().toLowerCase();
+    const ans = (z.dataset.answer  || '').trim().toLowerCase();
     z.classList.remove('correct','incorrect');
     if (!cur) return;
     attempted++;
     if (cur === ans) { z.classList.add('correct'); correct++; }
-    else {
-      z.classList.add('incorrect');
-      ex3EverWrong = true;
-    }
+    else { z.classList.add('incorrect'); ex3EverWrong = true; }
   });
   const scoreEl = document.getElementById('score-ex3');
   if (attempted === 0) {
@@ -682,9 +683,9 @@ function revealEx3() {
 }
 
 function resetEx3() {
-  const panel = document.getElementById('ex3');
+  const panel   = document.getElementById('ex3');
   const section = panel.querySelector('.section');
-  section.style.background = '';
+  section.style.background      = '';
   section.style.borderLeftColor = '';
   document.querySelectorAll('.act-drop').forEach(z => {
     z.textContent = '';
@@ -696,163 +697,34 @@ function resetEx3() {
   const btn = document.querySelector('.tab-btn[data-tab="ex3"]');
   if (btn) btn.classList.remove('done', 'done-gold', 'done-green');
   updateProgress();
-  stopFireworks();
   saveState();
 }
 
-// ══════════════════════════════
-// FIREWORKS (original — used internally by showCelebration)
-// ══════════════════════════════
-let fwCanvas, fwCtx, fwParticles, fwAnimId, fwActive = false;
-
-function launchFireworks() {
-  if (fwActive) return;
-  fwActive = true;
-
-  fwCanvas = document.createElement('canvas');
-  fwCanvas.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999;';
-  document.body.appendChild(fwCanvas);
-  fwCanvas.width = window.innerWidth;
-  fwCanvas.height = window.innerHeight;
-  fwCtx = fwCanvas.getContext('2d');
-  fwParticles = [];
-
-  const colours = ['#7dd3fc','#4ade80','#fbbf24','#f472b6','#a78bfa','#fb923c'];
-  let bursts = 0;
-  const maxBursts = 18;
-
-  function burst() {
-    if (bursts >= maxBursts) return;
-    bursts++;
-    const x = Math.random() * fwCanvas.width;
-    const y = Math.random() * fwCanvas.height * 0.65 + 40;
-    const colour = colours[Math.floor(Math.random() * colours.length)];
-    const count = 60 + Math.floor(Math.random() * 40);
-    for (let i = 0; i < count; i++) {
-      const angle = (Math.PI * 2 / count) * i;
-      const speed = 2 + Math.random() * 5;
-      fwParticles.push({
-        x, y,
-        vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed,
-        alpha: 1,
-        colour,
-        size: 3 + Math.random() * 3,
-        gravity: 0.08 + Math.random() * 0.05
-      });
-    }
-    if (bursts < maxBursts) {
-      setTimeout(burst, 300 + Math.random() * 400);
-    }
-  }
-
-  burst(); burst(); burst();
-
-  function animate() {
-    fwCtx.clearRect(0, 0, fwCanvas.width, fwCanvas.height);
-    fwParticles = fwParticles.filter(p => p.alpha > 0.02);
-    fwParticles.forEach(p => {
-      p.x += p.vx;
-      p.y += p.vy;
-      p.vy += p.gravity;
-      p.vx *= 0.98;
-      p.alpha -= 0.012;
-      fwCtx.globalAlpha = Math.max(0, p.alpha);
-      fwCtx.fillStyle = p.colour;
-      fwCtx.beginPath();
-      fwCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-      fwCtx.fill();
-    });
-    fwCtx.globalAlpha = 1;
-    if (fwParticles.length > 0 || bursts < maxBursts) {
-      fwAnimId = requestAnimationFrame(animate);
-    } else {
-      stopFireworks();
-    }
-  }
-  animate();
-}
-
-function stopFireworks() {
-  fwActive = false;
-  if (fwAnimId) cancelAnimationFrame(fwAnimId);
-  if (fwCanvas && fwCanvas.parentNode) fwCanvas.parentNode.removeChild(fwCanvas);
-  fwCanvas = null;
-}
-
-// ══════════════════════════════
-// CELEBRATION — gold banner + fireworks (all exercises mastered)
-// ══════════════════════════════
-function showCelebration() {
-  // Gold banner
-  let banner = document.getElementById('gold-banner');
-  if (!banner) {
-    banner = document.createElement('div');
-    banner.id = 'gold-banner';
-    banner.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#f59e0b;color:#000;padding:16px 32px;border-radius:12px;font-size:1.3rem;font-weight:700;z-index:10000;box-shadow:0 4px 20px rgba(0,0,0,0.3);';
-    banner.textContent = '🏆 Excellent! All exercises mastered!';
-    document.body.appendChild(banner);
-  }
-  banner.style.display = 'block';
-  window.ActivityUI?.launchCelebration();
-}
-
-// ══════════════════════════════
-// SAVE / LOAD STATE
-// ══════════════════════════════
 function saveState() {
   const state = {
-    ex1EverWrong,
-    ex2EverWrong,
-    ex3EverWrong,
-    // Tab classes
+    ex1EverWrong, ex2EverWrong, ex3EverWrong,
     tabs: {},
-    // Ex1 blanks: array of { answer, current } in document order
     ex1Blanks: [],
-    // Ex2 blanks
     ex2Blanks: [],
-    // Ex3 act-drops
-    ex3Drops: []
+    ex3Drops:  []
   };
-
-  // Tab button classes
   document.querySelectorAll('.tab-btn[data-tab]').forEach(btn => {
     const tab = btn.dataset.tab;
     state.tabs[tab] = {
-      doneGold: btn.classList.contains('done-gold'),
+      doneGold:  btn.classList.contains('done-gold'),
       doneGreen: btn.classList.contains('done-green')
     };
   });
-
-  // Ex1 blanks
   document.querySelectorAll('#ex1 .drop-zone').forEach(z => {
-    state.ex1Blanks.push({
-      answer: z.dataset.answer,
-      current: z.dataset.current || ''
-    });
+    state.ex1Blanks.push({ answer: z.dataset.answer, current: z.dataset.current || '' });
   });
-
-  // Ex2 blanks
   document.querySelectorAll('#ex2 .drop-zone').forEach(z => {
-    state.ex2Blanks.push({
-      answer: z.dataset.answer,
-      current: z.dataset.current || ''
-    });
+    state.ex2Blanks.push({ answer: z.dataset.answer, current: z.dataset.current || '' });
   });
-
-  // Ex3 drops
   document.querySelectorAll('.act-drop').forEach(z => {
-    state.ex3Drops.push({
-      answer: z.dataset.answer,
-      current: z.dataset.current || ''
-    });
+    state.ex3Drops.push({ answer: z.dataset.answer, current: z.dataset.current || '' });
   });
-
-  try {
-    localStorage.setItem(LS_KEY, JSON.stringify(state));
-  } catch (e) {
-    // localStorage unavailable — silently skip
-  }
+  try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch(e) {}
 }
 
 function loadState() {
@@ -861,16 +733,12 @@ function loadState() {
     const raw = localStorage.getItem(LS_KEY);
     if (!raw) return;
     state = JSON.parse(raw);
-  } catch (e) {
-    return;
-  }
+  } catch(e) { return; }
 
-  // Restore everWrong flags
   if (typeof state.ex1EverWrong === 'boolean') ex1EverWrong = state.ex1EverWrong;
   if (typeof state.ex2EverWrong === 'boolean') ex2EverWrong = state.ex2EverWrong;
   if (typeof state.ex3EverWrong === 'boolean') ex3EverWrong = state.ex3EverWrong;
 
-  // Restore Ex1 blanks
   if (Array.isArray(state.ex1Blanks)) {
     const zones = [...document.querySelectorAll('#ex1 .drop-zone')];
     state.ex1Blanks.forEach((saved, i) => {
@@ -879,18 +747,14 @@ function loadState() {
       z.textContent = saved.current;
       z.dataset.current = saved.current;
       z.classList.add('filled');
-      // Mark corresponding tile as used
       document.querySelectorAll('#tiles1 .tile').forEach(t => {
         if (t.dataset.word === saved.current) t.classList.add('used');
       });
-      // Restore correct/incorrect visual
-      const cur = saved.current.trim().toLowerCase();
-      const ans = (z.dataset.answer || '').trim().toLowerCase();
-      if (cur === ans) z.classList.add('correct');
+      if (saved.current.trim().toLowerCase() === (z.dataset.answer || '').trim().toLowerCase())
+        z.classList.add('correct');
     });
   }
 
-  // Restore Ex2 blanks
   if (Array.isArray(state.ex2Blanks)) {
     const zones = [...document.querySelectorAll('#ex2 .drop-zone')];
     state.ex2Blanks.forEach((saved, i) => {
@@ -902,13 +766,11 @@ function loadState() {
       document.querySelectorAll('#tiles2 .tile').forEach(t => {
         if (t.dataset.word === saved.current) t.classList.add('used');
       });
-      const cur = saved.current.trim().toLowerCase();
-      const ans = (z.dataset.answer || '').trim().toLowerCase();
-      if (cur === ans) z.classList.add('correct');
+      if (saved.current.trim().toLowerCase() === (z.dataset.answer || '').trim().toLowerCase())
+        z.classList.add('correct');
     });
   }
 
-  // Restore Ex3 drops
   if (Array.isArray(state.ex3Drops)) {
     const zones = [...document.querySelectorAll('.act-drop')];
     state.ex3Drops.forEach((saved, i) => {
@@ -917,31 +779,27 @@ function loadState() {
       z.textContent = saved.current;
       z.dataset.current = saved.current;
       z.classList.add('filled');
-      const cur = saved.current.trim().toLowerCase();
-      const ans = (z.dataset.answer || '').trim().toLowerCase();
-      if (cur === ans) z.classList.add('correct');
+      if (saved.current.trim().toLowerCase() === (z.dataset.answer || '').trim().toLowerCase())
+        z.classList.add('correct');
     });
   }
 
-  // Restore tab button classes
   if (state.tabs) {
     document.querySelectorAll('.tab-btn[data-tab]').forEach(btn => {
       const tab = btn.dataset.tab;
       const tabState = state.tabs[tab];
       if (!tabState) return;
       btn.classList.remove('done', 'done-gold', 'done-green');
-      if (tabState.doneGold) btn.classList.add('done-gold');
+      if (tabState.doneGold)  btn.classList.add('done-gold');
       else if (tabState.doneGreen) btn.classList.add('done-green');
     });
   }
   updateProgress();
 
-  // If all tabs are done-gold, show celebration
-  const allDoneGold = document.querySelectorAll('.tab-btn.done-gold').length === 3;
-  if (allDoneGold) showCelebration();
+  const allDoneGold = document.querySelectorAll('.tab-btn.done-gold').length === TASK_COUNT;
+  if (allDoneGold) checkAllComplete();
 }
 
-// ── Initialise ──
 document.addEventListener('DOMContentLoaded', function() {
   buildBank(words1, '1', 'tiles1');
   buildBank(words2, '2', 'tiles2');

@@ -23,28 +23,20 @@ color:  purple
   --red:#DC2626; --red-l:#FCA5A5;
   --white:#F1F5F9; --grey:#64748B; --grey-l:#94A3B8;
 }
-@keyframes pulse-green { 0%,100%{background:#065f46} 50%{background:#059669} }
-@keyframes pulse-gold  { 0%,100%{background:#92400e} 50%{background:#d97706} }
-@keyframes shake       { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-5px)} 60%{transform:translateX(5px)} }
+@keyframes shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-5px)} 60%{transform:translateX(5px)} }
 
 body {
   background:var(--bg); color:var(--white); font-family:'DM Sans',sans-serif;
-  min-height:100vh; padding:0 20px 60px; transition:background 1.4s ease;
+  min-height:100vh; padding:0 20px 60px;
 }
-body.complete-green { animation:pulse-green 2.5s ease-in-out infinite; }
-body.complete-gold  { animation:pulse-gold  2.5s ease-in-out infinite; }
 
-#fwCanvas { position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:999; }
-
-.completion-banner {
-  position:fixed; top:0; left:0; right:0; padding:22px 20px; text-align:center;
-  font-family:'Space Mono',monospace; font-size:20px; letter-spacing:2px; font-weight:700;
-  transform:translateY(-110%); transition:transform .55s cubic-bezier(.34,1.56,.64,1);
-  z-index:1000; display:none;
+#glow-overlay {
+  position:fixed; top:0; left:0; width:100%; height:100%;
+  pointer-events:none; z-index:0; opacity:0; transition:opacity 1.8s ease;
 }
-.completion-banner.show        { transform:translateY(0); display:block; }
-.completion-banner.green-banner{ background:#047857; border-bottom:4px solid #6ee7b7; color:#fff; }
-.completion-banner.gold-banner { background:#b45309; border-bottom:4px solid #fde68a; color:#fff; }
+#glow-overlay.gold  { background:radial-gradient(ellipse at 50% 55%, rgba(251,191,36,.24) 0%, transparent 65%); }
+#glow-overlay.green { background:radial-gradient(ellipse at 50% 55%, rgba(16,185,129,.20) 0%, transparent 65%); }
+#glow-overlay.show  { opacity:1; }
 
 .sticky-progress {
   position:sticky; top:0; z-index:100;
@@ -333,8 +325,8 @@ h2 { font-size:26px; font-weight:700; text-align:center; color:var(--white); mar
 </head>
 <body>
 
-<canvas id="fwCanvas"></canvas>
-<div class="completion-banner" id="completionBanner"></div>
+<div id="done-banner" class="ac-banner">🏆 All exercises complete — well done!</div>
+<div id="glow-overlay"></div>
 
 <header class="sticky-progress">
   <div class="header-progress">
@@ -529,55 +521,6 @@ h2 { font-size:26px; font-weight:700; text-align:center; color:var(--white); mar
 
 <script>
 // ─────────────────────────────────────────────────────────────
-// FIREWORKS
-// ─────────────────────────────────────────────────────────────
-const fwCanvas = document.getElementById('fwCanvas');
-const fwCtx    = fwCanvas.getContext('2d');
-let fwParticles = [], fwRunning = false, fwStart = 0;
-const FW_DUR = 8000;
-function resizeFW() { fwCanvas.width = innerWidth; fwCanvas.height = innerHeight; }
-addEventListener('resize', resizeFW); resizeFW();
-function rndFWCol(gold) {
-  if (gold) { const h=[35,42,48,55][Math.floor(Math.random()*4)]; return `hsl(${h},100%,${55+Math.random()*15}%)`; }
-  const h=[0,30,55,120,180,200,260,300,330]; return `hsl(${h[Math.floor(Math.random()*h.length)]},100%,65%)`;
-}
-let fwGold = false;
-function launchFW() {
-  const x=.15*fwCanvas.width+Math.random()*.7*fwCanvas.width, ty=fwCanvas.height*(.08+Math.random()*.45);
-  const col=rndFWCol(fwGold), n=70+Math.floor(Math.random()*70);
-  for (let i=0;i<n;i++) {
-    const angle=(Math.PI*2/n)*i+(Math.random()-.5)*.4, speed=1.5+Math.random()*5.5;
-    fwParticles.push({x,y:ty,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,alpha:1,col,r:1.5+Math.random()*2.5,decay:.011+Math.random()*.009,trail:[]});
-  }
-}
-function fwFrame(ts) {
-  if (!fwRunning) return;
-  const elapsed = ts - fwStart;
-  fwCtx.fillStyle='rgba(0,0,0,0.16)'; fwCtx.fillRect(0,0,fwCanvas.width,fwCanvas.height);
-  if (elapsed < FW_DUR && Math.random() < .045) launchFW();
-  fwParticles = fwParticles.filter(p => p.alpha > .02);
-  fwParticles.forEach(p => {
-    p.trail.push({x:p.x,y:p.y,a:p.alpha}); if (p.trail.length>7) p.trail.shift();
-    p.x+=p.vx; p.y+=p.vy; p.vy+=.07; p.vx*=.98; p.vy*=.98; p.alpha-=p.decay;
-    p.trail.forEach((t,i) => {
-      const a=t.a*(i/p.trail.length)*.35;
-      fwCtx.beginPath(); fwCtx.arc(t.x,t.y,p.r*(i/p.trail.length)*.6,0,Math.PI*2);
-      fwCtx.fillStyle=p.col.replace('hsl','hsla').replace(')',','+a+')'); fwCtx.fill();
-    });
-    fwCtx.beginPath(); fwCtx.arc(p.x,p.y,p.r,0,Math.PI*2);
-    fwCtx.fillStyle=p.col.replace('hsl','hsla').replace(')',','+p.alpha+')'); fwCtx.fill();
-  });
-  if (elapsed<FW_DUR||fwParticles.length>0) requestAnimationFrame(fwFrame);
-  else { fwRunning=false; fwCtx.clearRect(0,0,fwCanvas.width,fwCanvas.height); }
-}
-function startFW(gold) {
-  fwGold=gold; if (fwRunning) return;
-  fwRunning=true; fwParticles=[]; fwStart=performance.now();
-  for (let i=0;i<6;i++) setTimeout(launchFW, i*150);
-  requestAnimationFrame(fwFrame);
-}
-
-// ─────────────────────────────────────────────────────────────
 // COMPLETION — mastery-aware 0-80 / 80-100 scoring
 // ─────────────────────────────────────────────────────────────
 const TASK_COUNT = 6;
@@ -605,24 +548,24 @@ function updateProgress() {
 }
 
 function triggerCompletion(perfect) {
-  const body = document.body, banner = document.getElementById('completionBanner');
-  body.classList.remove('complete-green','complete-gold');
-  banner.classList.remove('green-banner','gold-banner');
-  if (perfect) {
-    body.classList.add('complete-gold'); banner.classList.add('gold-banner');
-    banner.textContent = '🌟  Superstar — perfect on all six exercises!  🌟';
-    window.ActivityUI?.launchCelebration();
-  } else {
-    body.classList.add('complete-green'); banner.classList.add('green-banner');
-    banner.textContent = '🎉  All six exercises complete — great work!  🎉';
-    window.ActivityUI?.launchCelebration();
-  }
-  banner.style.display = 'block'; banner.classList.add('show');
+  const tier   = perfect ? 'gold' : 'green';
+  const banner = document.getElementById('done-banner');
+  banner.textContent = perfect
+    ? '🌟 Superstar — perfect on all six exercises!'
+    : '🎉 All six exercises complete — great work!';
+  banner.classList.add('show', tier);
+  const glow = document.getElementById('glow-overlay');
+  if (glow) glow.classList.add(tier, 'show');
+  const masterCount = tabPerf.filter(Boolean).length;
+  const pct = Math.round(80 + (masterCount / TASK_COUNT * 20));
+  window.ActivityUI?.launchCelebration({ percent: pct });
 }
 
 function cancelCompletion() {
-  document.body.classList.remove('complete-green','complete-gold');
-  document.getElementById('completionBanner').classList.remove('show');
+  const banner = document.getElementById('done-banner');
+  banner.classList.remove('show', 'gold', 'green');
+  const glow = document.getElementById('glow-overlay');
+  if (glow) glow.classList.remove('show', 'gold', 'green');
   window.ActivityUI?.resetCelebration();
 }
 

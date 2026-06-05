@@ -20,18 +20,9 @@ color:  purple
     --purple-light: #a855f7;
     --purple-pale: #f3e8ff;
     --orange: #f97316;
-    --gold: #fbbf24;
-    --green: #16a34a;
     --green-pale: #dcfce7;
     --correct: #15803d;
     --incorrect: #b91c1c;
-    --bg: #f8f7fc;
-    --card: #ffffff;
-    --text: #1e1b2e;
-    --muted: #6b7280;
-    --border: #e5e7eb;
-    --font-head: 'Trebuchet MS', sans-serif;
-    --font-body: 'Calibri', 'Segoe UI', sans-serif;
   }
 
   body {
@@ -80,19 +71,6 @@ color:  purple
   }
   .stars { color: var(--gold); font-size: 1rem; letter-spacing: 2px; }
   .progress-wrap { padding: 0 24px 10px; }
-  .progress-bar-bg {
-    background: rgba(255,255,255,0.15);
-    border-radius: 999px;
-    height: 6px;
-    overflow: hidden;
-  }
-  .progress-bar-fill {
-    background: linear-gradient(90deg, var(--purple-light), var(--orange));
-    height: 100%;
-    border-radius: 999px;
-    width: 0%;
-    transition: width 0.5s ease;
-  }
   .progress-label {
     color: rgba(255,255,255,0.6);
     font-size: 0.75rem;
@@ -324,49 +302,7 @@ color:  purple
     margin-top: 16px;
     flex-wrap: wrap;
   }
-  button.btn {
-    font-family: var(--font-head);
-    font-size: 0.85rem;
-    font-weight: 700;
-    padding: 10px 22px;
-    border-radius: 8px;
-    border: none;
-    cursor: pointer;
-    transition: transform 0.1s, box-shadow 0.1s;
-  }
-  button.btn:hover { transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
-  button.btn-primary { background: var(--purple); color: white; }
-  button.btn-secondary { background: white; color: var(--purple); border: 2px solid var(--purple); }
-  button.btn-orange { background: var(--orange); color: white; }
-  button.btn-small {
-    font-size: 0.75rem;
-    padding: 6px 14px;
-  }
 
-  /* ── FEEDBACK TOAST ── */
-  .toast {
-    position: fixed;
-    bottom: 24px;
-    right: 24px;
-    background: var(--navy);
-    color: white;
-    padding: 12px 20px;
-    border-radius: 10px;
-    font-family: var(--font-head);
-    font-size: 0.9rem;
-    font-weight: 600;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
-    opacity: 0;
-    transform: translateY(20px);
-    transition: opacity 0.3s, transform 0.3s;
-    pointer-events: none;
-    z-index: 999;
-    max-width: 320px;
-  }
-  .toast.show { opacity: 1; transform: translateY(0); }
-  .toast.success { border-left: 4px solid var(--green); }
-  .toast.error { border-left: 4px solid #ef4444; }
-  .toast.info { border-left: 4px solid var(--gold); }
 
   /* ── DEMOTE BUTTON ── */
   .demote-btn {
@@ -387,15 +323,6 @@ color:  purple
     z-index: 10;
   }
   .demote-btn:hover { background: var(--purple); }
-
-  /* ── CELEBRATION ── */
-  #confetti-canvas {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    pointer-events: none;
-    z-index: 9999;
-  }
 
   /* ── ANIMATIONS ── */
   @keyframes pop {
@@ -513,12 +440,18 @@ color:  purple
   .score-item.purple .score-num { color: var(--purple-light); }
 
   /* Buttons */
-  button.btn-secondary { background: #1e2f45; color: var(--purple-light); border-color: var(--purple-light); }
-  button.btn-secondary:hover { background: #1a0f2e; }
+  button.ac-btn-secondary { background: #1e2f45; color: var(--purple-light); border-color: var(--purple-light); }
+  button.ac-btn-secondary:hover { background: #1a0f2e; }
 
-  /* Toast */
-  .toast { background: #1e2f45; }
-  .toast.success { border-left-color: #6ee7b7; }
+  /* Glow overlay */
+  #glow-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none; z-index: 0; opacity: 0;
+    transition: opacity 1.8s ease;
+  }
+  #glow-overlay.gold  { background: radial-gradient(ellipse at 50% 55%, rgba(251,191,36,.24) 0%, transparent 65%); }
+  #glow-overlay.green { background: radial-gradient(ellipse at 50% 55%, rgba(16,185,129,.20) 0%, transparent 65%); }
+  #glow-overlay.show  { opacity: 1; }
 
   /* Connector labels */
   .conn-label { color: #94a3b8; }
@@ -553,7 +486,9 @@ color:  purple
 </head>
 <body>
 
-<canvas id="confetti-canvas"></canvas>
+<!-- Completion banner -->
+<div id="done-banner" class="ac-banner gold">🏆 All correct — outstanding work!</div>
+<div id="glow-overlay"></div>
 
 <header>
   <div class="header-inner">
@@ -563,7 +498,7 @@ color:  purple
   </div>
   <div class="progress-wrap">
     <div class="progress-label" id="progress-label">0 / 21 correct</div>
-    <div class="progress-bar-bg"><div class="progress-bar-fill" id="progress-bar"></div></div>
+    <div class="ac-progress-bar"><div class="ac-progress-fill" id="progress-bar"></div></div>
   </div>
 </header>
 
@@ -644,16 +579,16 @@ color:  purple
       </div>
 
       <div class="actions">
-        <button class="btn btn-primary" onclick="checkAll()">✓ Check All</button>
-        <button class="btn btn-secondary" onclick="resetActivity()">↺ Reset</button>
-        <button class="btn btn-orange btn-small" onclick="revealAll()">👁 Reveal Answers</button>
+        <button class="ac-btn" onclick="checkAll()">✓ Check All</button>
+        <button class="ac-btn-secondary" onclick="resetActivity()">↺ Reset</button>
+        <button class="ac-btn-secondary" onclick="revealAll()">👁 Reveal Answers</button>
       </div>
     </div>
 
   </div>
 </main>
 
-<div class="toast" id="toast"></div>
+<div class="ac-toast" id="toast"></div>
 
 <script>
 // ─────────────────────────────────────────
@@ -980,6 +915,7 @@ function findMatchingNode(val) {
 }
 
 function handleDrop(e, nodeId) {
+  if (window.Classroom?.verifyAuth() === false) return;
   const val = e.dataTransfer.getData('text/plain');
   const node = NODES.find(n => n.id === nodeId);
   const s = state[nodeId];
@@ -1063,6 +999,7 @@ function checkInput(nodeId) {
   if (!inp || s.correct) return;
   const val = inp.value.trim();
   if (!val) return;
+  if (window.Classroom?.verifyAuth() === false) return;
   s.attempts++;
   s.value = val;
   const isCorrect = isAnswerAccepted(val, node);
@@ -1267,6 +1204,9 @@ function resetActivity() {
   firstAttemptAllCorrect = true;
   if (currentLevel === 3) { level3Score = 0; startL3Timer(); }
   document.body.classList.remove('all-correct','perfect');
+  document.getElementById('done-banner').classList.remove('show', 'gold', 'green');
+  const glow = document.getElementById('glow-overlay');
+  if (glow) glow.classList.remove('show', 'gold', 'green');
   buildMindMap();
   document.querySelectorAll('.dz-icon').forEach(el => {
     el.style.display = (currentLevel === 1) ? '' : 'none';
@@ -1395,73 +1335,26 @@ function updateScoreboard() {
 // ═══════════════════════════════════════════════
 
 function celebrate() {
-  if (firstAttemptAllCorrect && !l3DemoteUsed) {
+  const isGold = firstAttemptAllCorrect && !l3DemoteUsed;
+  const tier   = isGold ? 'gold' : 'green';
+  const pct    = calcScore();
+
+  const banner = document.getElementById('done-banner');
+  if (banner) { banner.classList.remove('gold', 'green'); banner.classList.add('show', tier); }
+  const glow = document.getElementById('glow-overlay');
+  if (glow)   { glow.classList.remove('gold', 'green');   glow.classList.add(tier, 'show');   }
+
+  if (isGold) {
     document.body.classList.add('perfect');
     window.ActivityUI?.showToast('🏆 Perfect — all correct, no hints needed!', 'success');
-    window.ActivityUI?.launchCelebration();
   } else if (l3DemoteUsed) {
     document.body.classList.add('all-correct');
     window.ActivityUI?.showToast('✅ All correct! Try without the ↩ button next time for full marks.', 'success');
-    window.ActivityUI?.launchCelebration();
   } else {
     document.body.classList.add('all-correct');
     window.ActivityUI?.showToast('✅ All correct! Great work.', 'success');
-    window.ActivityUI?.launchCelebration();
   }
-}
-
-function launchConfetti(gold = true) {
-  const canvas = document.getElementById('confetti-canvas');
-  const ctx = canvas.getContext('2d');
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-
-  const colors = gold
-    ? ['#fbbf24','#f97316','#fef08a','#ffffff','#a855f7']
-    : ['#16a34a','#4ade80','#86efac','#ffffff','#0f1b2d'];
-
-  const particles = Array.from({length: 120}, () => ({
-    x: Math.random() * canvas.width,
-    y: -20,
-    vx: (Math.random() - 0.5) * 4,
-    vy: Math.random() * 4 + 2,
-    size: Math.random() * 8 + 4,
-    color: colors[Math.floor(Math.random() * colors.length)],
-    rot: Math.random() * 360,
-    rotV: (Math.random() - 0.5) * 8,
-  }));
-
-  let frame = 0;
-  function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    particles.forEach(p => {
-      ctx.save();
-      ctx.translate(p.x, p.y);
-      ctx.rotate(p.rot * Math.PI / 180);
-      ctx.fillStyle = p.color;
-      ctx.fillRect(-p.size/2, -p.size/2, p.size, p.size * 0.5);
-      ctx.restore();
-      p.x += p.vx; p.y += p.vy;
-      p.rot += p.rotV; p.vy += 0.05;
-    });
-    frame++;
-    if (frame < 180) requestAnimationFrame(draw);
-    else ctx.clearRect(0, 0, canvas.width, canvas.height);
-  }
-  draw();
-}
-
-// ═══════════════════════════════════════════════
-//  TOAST
-// ═══════════════════════════════════════════════
-
-let toastTimer;
-function showToast(msg, type = 'info') {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.className = 'toast show ' + type;
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+  window.ActivityUI?.launchCelebration({ percent: pct });
 }
 
 // ═══════════════════════════════════════════════

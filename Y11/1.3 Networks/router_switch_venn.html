@@ -1,23 +1,20 @@
 <!DOCTYPE html>
+<html lang="en">
+<head>
 <!-- ACTIVITY
 title:  Router vs Switch
-lesson: Year 11 — Network Hardware
 type:   Practice
 stars:  2
 desc:   Drag-and-drop Venn diagram sorting router-only, switch-only, and shared features of network devices
 color:  red
 -->
-<html lang="en">
-<head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Router vs Switch — Venn Diagram</title>
 <link rel="stylesheet" href="../../shared.css">
 <style>
   :root {
-    --navy:    #0d1b2e;
-    --navy2:   #132238;
-    --navy3:   #1c3050;
+    /* Venn-specific palette — do not use shared.css token names here */
     --teal:    #2ec4b6;
     --teal2:   #1a9e92;
     --router:  #ff6b6b;
@@ -26,22 +23,26 @@ color:  red
     --switch2: #3a78d8;
     --both:    #56d97e;
     --both2:   #35b85a;
-    --gold:    #ffd166;
-    --text:    #ddeeff;
-    --muted:   #6a8aaa;
   }
 
   body {
-    font-family: 'Nunito', sans-serif;
-    background: var(--navy);
+    font-family: var(--font-body);
+    background: var(--bg);
     color: var(--text);
     min-height: 100vh;
     padding: 0 16px 40px;
     overflow-x: hidden;
   }
 
-  body.bg-gold { background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); }
-  body.bg-green { background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); }
+  /* ── Completion glow overlay ── */
+  #glow-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none; z-index: 0; opacity: 0;
+    transition: opacity 1.8s ease;
+  }
+  #glow-overlay.gold  { background: radial-gradient(ellipse at 50% 55%, rgba(251,191,36,.24) 0%, transparent 65%); }
+  #glow-overlay.green { background: radial-gradient(ellipse at 50% 55%, rgba(16,185,129,.20) 0%, transparent 65%); }
+  #glow-overlay.show  { opacity: 1; }
 
   /* Subtle grid background */
   body::before {
@@ -61,7 +62,7 @@ color:  red
   .sticky-progress {
     position: sticky; top: 0; z-index: 100;
     margin: 0 -16px 20px; padding: 12px 16px;
-    background: var(--navy2); border-bottom: 2px solid var(--navy3);
+    background: var(--surface); border-bottom: 2px solid var(--surface-mid);
     box-shadow: 0 2px 12px rgba(0,0,0,.32);
   }
   .header-progress { display: flex; align-items: center; gap: 10px; max-width: 800px; margin: 0 auto; }
@@ -84,8 +85,8 @@ color:  red
 
   /* Card Bank */
   #bank-section {
-    background: var(--navy2);
-    border: 2px solid var(--navy3);
+    background: var(--surface);
+    border: 2px solid var(--surface-mid);
     border-radius: 14px;
     padding: 14px;
     margin-bottom: 18px;
@@ -106,7 +107,7 @@ color:  red
 
   /* Cards */
   .card {
-    background: var(--navy3);
+    background: var(--surface-mid);
     border: 2px solid #2e4a6a;
     border-radius: 8px;
     padding: 7px 11px;
@@ -230,27 +231,11 @@ color:  red
     gap: 10px;
     margin-bottom: 16px;
   }
-  .btn {
-    padding: 10px 24px;
-    border-radius: 10px;
-    border: none;
-    font-family: 'Nunito', sans-serif;
-    font-size: 0.82rem;
-    font-weight: 800;
-    cursor: pointer;
-    transition: transform 0.12s, box-shadow 0.12s, filter 0.12s;
-    letter-spacing: 0.3px;
-  }
-  .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,0.35); }
-  .btn:active { transform: translateY(0); }
-  .btn-check  { background: linear-gradient(135deg, var(--both), var(--both2));   color: #0d2818; }
-  .btn-reveal { background: linear-gradient(135deg, var(--gold), #e0a020);        color: #2a1800; }
-  .btn-reset  { background: linear-gradient(135deg, var(--teal), var(--teal2));   color: #0d2a28; }
 
   /* Feedback panel */
   #feedback {
-    background: var(--navy2);
-    border: 2px solid var(--navy3);
+    background: var(--surface);
+    border: 2px solid var(--surface-mid);
     border-radius: 12px;
     padding: 14px 18px;
     font-size: 0.78rem;
@@ -264,51 +249,6 @@ color:  red
   .fb-wrong-item { color: #ffaaaa; }
   .fb-wrong-item strong { color: var(--gold); }
 
-  /* Success overlay */
-  #success-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    z-index: 100;
-    pointer-events: none;
-  }
-  #success-overlay.show { display: block; }
-
-  /* Confetti canvas */
-  #confetti-canvas {
-    position: fixed;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    z-index: 101;
-  }
-
-  /* Big success message */
-  #success-msg {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%) scale(0);
-    background: linear-gradient(135deg, #0d2818, #0d3828);
-    border: 3px solid var(--both);
-    border-radius: 20px;
-    padding: 30px 50px;
-    text-align: center;
-    z-index: 102;
-    pointer-events: none;
-    animation: none;
-    box-shadow: 0 0 60px rgba(86,217,126,0.4);
-  }
-  #success-msg.show {
-    animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-  }
-  @keyframes popIn {
-    to { transform: translate(-50%, -50%) scale(1); }
-  }
-  #success-msg h2 { font-size: 2rem; color: var(--both); margin-bottom: 6px; }
-  #success-msg p  { font-size: 1rem; color: var(--gold); font-weight: 700; }
-
   /* Zones go green on all-correct */
   .all-correct #zone-router { background: rgba(86,217,126,0.08) !important; border-color: var(--both) !important; }
   .all-correct #zone-both   { background: rgba(86,217,126,0.08) !important; border-left-color: var(--both) !important; border-right-color: var(--both) !important; }
@@ -316,6 +256,9 @@ color:  red
 </style>
 </head>
 <body>
+
+<div id="done-banner" class="ac-banner gold"></div>
+<div id="glow-overlay"></div>
 
 <div class="sticky-progress">
   <div class="header-progress">
@@ -351,23 +294,15 @@ color:  red
   </div>
 
   <div class="btn-row">
-    <button class="btn btn-check"  id="btn-check">✅ Check Answers</button>
-    <button class="btn btn-reveal" id="btn-reveal">💡 Reveal Answers</button>
-    <button class="btn btn-reset"  id="btn-reset">🔄 Reset</button>
+    <button class="ac-btn"           id="btn-check">✅ Check Answers</button>
+    <button class="ac-btn-secondary" id="btn-reveal">💡 Reveal Answers</button>
+    <button class="ac-btn-secondary" id="btn-reset">🔄 Reset</button>
   </div>
 
   <div id="feedback"></div>
 </div>
 
-<!-- Success celebration -->
-<div id="success-overlay">
-  <canvas id="confetti-canvas"></canvas>
-  <div id="success-msg">
-    <h2>🎉 Perfect!</h2>
-    <p>10 / 10 — Full marks!</p>
-  </div>
-</div>
-
+<div class="ac-toast" id="toast"></div>
 <script>
 /* ── Data ───────────────────────────────────────────────── */
 const CARDS = [
@@ -481,9 +416,10 @@ function init() {
     fwCtx.clearRect(0, 0, fwCanvas.width, fwCanvas.height);
   }
 
-  // Remove body background classes
-  document.body.classList.remove('bg-gold', 'bg-green');
   updateProgress(false);
+  document.getElementById('done-banner').classList.remove('show', 'gold', 'green');
+  document.getElementById('glow-overlay').classList.remove('show', 'gold', 'green');
+  window.ActivityUI?.resetCelebration?.();
 
   // Clear zones
   ['zone-router','zone-both','zone-switch'].forEach(id => {
@@ -543,8 +479,8 @@ function checkAnswers() {
     fb.className = 'show';
     fb.innerHTML = `<p class="fb-score">🎯 Score: ${correct}/${CARDS.length}</p><p class="fb-perfect">✨ Outstanding! Every card is in the right place!</p>`;
     document.getElementById('venn-zones').classList.add('all-correct');
-    updateProgress(true);
-    window.Classroom?.submitGrade(!everWrong ? 100 : 80, 'Router vs Switch');
+    const tier = !everWrong ? 'gold' : 'green';
+    updateProgress(tier);
     if (!everWrong) showGoldCelebration();
     else showGreenResult();
   } else {
@@ -562,10 +498,12 @@ function checkAnswers() {
 }
 
 /* ── Reveal answers ─────────────────────────────────────── */
-function updateProgress(done) {
-  const pct = done ? 100 : 0;
+function updateProgress(tier) {
+  // tier: false = not done, 'gold' = first attempt perfect, 'green' = had errors
+  const pct = tier === 'gold' ? 100 : tier === 'green' ? 80 : 0;
   document.getElementById('progress-fill').style.width = pct + '%';
-  document.getElementById('progress-pct').textContent = pct + '%';
+  document.getElementById('progress-pct').textContent  = pct + '%';
+  window.ActivityUI?.setScore(pct);
 }
 
 function revealAnswers() {
@@ -587,40 +525,20 @@ function revealAnswers() {
 
 /* ── Gold celebration ───────────────────────────────────── */
 function showGoldCelebration() {
-  document.body.classList.remove('bg-green');
-  document.body.classList.add('bg-gold');
-
-  let banner = document.getElementById('result-banner');
-  if (!banner) {
-    banner = document.createElement('div');
-    banner.id = 'result-banner';
-    banner.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);padding:16px 32px;border-radius:12px;font-size:1.3rem;font-weight:700;z-index:10000;box-shadow:0 4px 20px rgba(0,0,0,0.3);';
-    document.body.appendChild(banner);
-  }
-  banner.style.background = '#f59e0b';
-  banner.style.color = '#000';
+  const banner = document.getElementById('done-banner');
   banner.textContent = '🏆 Perfect first time! Outstanding!';
-  banner.style.display = 'block';
-
-  window.ActivityUI?.launchCelebration();
+  banner.classList.add('show', 'gold');
+  document.getElementById('glow-overlay').classList.add('gold', 'show');
+  window.ActivityUI?.launchCelebration({ percent: 100 });
 }
 
 /* ── Green result ───────────────────────────────────────── */
 function showGreenResult() {
-  document.body.classList.remove('bg-gold');
-  document.body.classList.add('bg-green');
-
-  let banner = document.getElementById('result-banner');
-  if (!banner) {
-    banner = document.createElement('div');
-    banner.id = 'result-banner';
-    banner.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);padding:16px 32px;border-radius:12px;font-size:1.3rem;font-weight:700;z-index:10000;box-shadow:0 4px 20px rgba(0,0,0,0.3);';
-    document.body.appendChild(banner);
-  }
-  banner.style.background = '#22c55e';
-  banner.style.color = '#fff';
+  const banner = document.getElementById('done-banner');
   banner.textContent = '✓ All correct! Well done!';
-  banner.style.display = 'block';
+  banner.classList.add('show', 'green');
+  document.getElementById('glow-overlay').classList.add('green', 'show');
+  window.ActivityUI?.launchCelebration({ percent: 80 });
 }
 
 /* ── Save state ─────────────────────────────────────────── */
@@ -646,23 +564,11 @@ function saveState() {
 
   const isComplete = document.getElementById('venn-zones').classList.contains('all-correct');
 
-  const banner = document.getElementById('result-banner');
-  const bannerVisible = banner && banner.style.display !== 'none';
-  const bannerContent = banner ? banner.textContent : '';
-  const bannerBg = banner ? banner.style.background : '';
-  const bannerColor = banner ? banner.style.color : '';
-
   const state = {
     everWrong,
     cardZones,
     cardClasses,
     isComplete,
-    bodyBgGold: document.body.classList.contains('bg-gold'),
-    bodyBgGreen: document.body.classList.contains('bg-green'),
-    bannerVisible: bannerVisible || false,
-    bannerContent,
-    bannerBg,
-    bannerColor,
   };
 
   try {
@@ -716,26 +622,11 @@ function loadState() {
   if (state.isComplete) {
     document.getElementById('venn-zones').classList.add('all-correct');
   }
-  updateProgress(!!state.isComplete);
-
-  // Restore body background
-  document.body.classList.remove('bg-gold', 'bg-green');
-  if (state.bodyBgGold)  document.body.classList.add('bg-gold');
-  if (state.bodyBgGreen) document.body.classList.add('bg-green');
-
-  // Restore banner
-  if (state.bannerVisible && state.bannerContent) {
-    let banner = document.getElementById('result-banner');
-    if (!banner) {
-      banner = document.createElement('div');
-      banner.id = 'result-banner';
-      banner.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);padding:16px 32px;border-radius:12px;font-size:1.3rem;font-weight:700;z-index:10000;box-shadow:0 4px 20px rgba(0,0,0,0.3);';
-      document.body.appendChild(banner);
-    }
-    banner.style.background = state.bannerBg || '';
-    banner.style.color = state.bannerColor || '';
-    banner.textContent = state.bannerContent;
-    banner.style.display = 'block';
+  if (state.isComplete) {
+    const tier = state.everWrong ? 'green' : 'gold';
+    updateProgress(tier);
+    if (!state.everWrong) showGoldCelebration();
+    else showGreenResult();
   }
 
   return true;
@@ -745,85 +636,6 @@ function loadState() {
 document.getElementById('btn-check').addEventListener('click', checkAnswers);
 document.getElementById('btn-reveal').addEventListener('click', revealAnswers);
 document.getElementById('btn-reset').addEventListener('click', init);
-
-/* ══════════════════════════════════════════════════════════
-   CONFETTI / FIREWORKS
-   ══════════════════════════════════════════════════════════ */
-let confettiAnimId = null;
-const canvas = document.getElementById('confetti-canvas');
-const ctx = canvas.getContext('2d');
-let particles = [];
-
-const COLORS = ['#56d97e','#2ec4b6','#ffd166','#ff6b6b','#5b9cf6','#c77dff','#ffffff'];
-
-class Particle {
-  constructor() { this.reset(true); }
-  reset(initial) {
-    this.x = Math.random() * canvas.width;
-    this.y = initial ? Math.random() * canvas.height - canvas.height : -10;
-    this.r = Math.random() * 7 + 4;
-    this.color = COLORS[Math.floor(Math.random() * COLORS.length)];
-    this.vx = (Math.random() - 0.5) * 4;
-    this.vy = Math.random() * 3 + 2;
-    this.spin = (Math.random() - 0.5) * 0.2;
-    this.angle = Math.random() * Math.PI * 2;
-    this.shape = Math.random() > 0.5 ? 'rect' : 'circle';
-    this.alpha = 1;
-    this.decay = Math.random() * 0.005 + 0.003;
-  }
-  update() {
-    this.x += this.vx;
-    this.vy += 0.05;
-    this.y += this.vy;
-    this.angle += this.spin;
-    this.alpha -= this.decay;
-  }
-  draw() {
-    ctx.save();
-    ctx.globalAlpha = Math.max(0, this.alpha);
-    ctx.translate(this.x, this.y);
-    ctx.rotate(this.angle);
-    ctx.fillStyle = this.color;
-    if (this.shape === 'rect') {
-      ctx.fillRect(-this.r, -this.r / 2, this.r * 2, this.r);
-    } else {
-      ctx.beginPath();
-      ctx.arc(0, 0, this.r / 2, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    ctx.restore();
-  }
-}
-
-function showFireworks() {
-  canvas.width  = window.innerWidth;
-  canvas.height = window.innerHeight;
-  particles = Array.from({ length: 180 }, () => new Particle());
-  document.getElementById('success-overlay').classList.add('show');
-  document.getElementById('success-msg').classList.add('show');
-  animateConfetti();
-  setTimeout(stopConfetti, 4500);
-}
-
-function animateConfetti() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  particles.forEach(p => {
-    p.update();
-    if (p.y > canvas.height || p.alpha <= 0) p.reset(false);
-    p.draw();
-  });
-  confettiAnimId = requestAnimationFrame(animateConfetti);
-}
-
-function stopConfetti() {
-  if (confettiAnimId) { cancelAnimationFrame(confettiAnimId); confettiAnimId = null; }
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  document.getElementById('success-overlay').classList.remove('show');
-  document.getElementById('success-msg').classList.remove('show');
-}
-
-// Dismiss fireworks on click
-document.getElementById('success-overlay').addEventListener('click', stopConfetti);
 
 /* ══════════════════════════════════════════════════════════
    TOUCH DRAG & DROP (mobile support)
