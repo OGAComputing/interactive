@@ -1067,6 +1067,28 @@ color:  amber
   }
 
   function initDragDrop() {
+    let scrollState = 0;
+    let scrollRAF = null;
+
+    function scrollLoop() {
+      if (scrollState !== 0) {
+        window.scrollBy(0, scrollState * 10);
+        scrollRAF = requestAnimationFrame(scrollLoop);
+      }
+    }
+
+    document.addEventListener('dragover', e => {
+      if (!draggingChip) return;
+      const y = e.clientY;
+      const h = window.innerHeight;
+      const newState = y < 80 ? -1 : y > h - 80 ? 1 : 0;
+      if (newState !== scrollState) {
+        scrollState = newState;
+        cancelAnimationFrame(scrollRAF);
+        if (scrollState !== 0) scrollRAF = requestAnimationFrame(scrollLoop);
+      }
+    });
+
     document.querySelectorAll('.drag-chip').forEach(chip => {
       chip.addEventListener('dragstart', e => {
         draggingChip = chip;
@@ -1077,6 +1099,8 @@ color:  amber
       chip.addEventListener('dragend', () => {
         chip.classList.remove('dragging');
         draggingChip = null;
+        scrollState = 0;
+        cancelAnimationFrame(scrollRAF);
       });
     });
 
