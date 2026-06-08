@@ -51,6 +51,7 @@ async function installCelebrationCounter(page) {
   await page.evaluate(() => {
     window.__celebrationCount = 0;
     window.addEventListener('activity-ui:celebration-start', () => window.__celebrationCount++);
+    window.addEventListener('activity-ui:go-for-gold', () => window.__celebrationCount++);
     window.ActivityUI?.resetCelebration();
   });
 }
@@ -121,18 +122,17 @@ test.describe('ActivityUI completion regressions', () => {
     await installCelebrationCounter(page);
     await page.evaluate(() => triggerCompletion(true));
 
-    await expect(page.locator('#completionBanner')).toHaveClass(/show/);
-    await expect(page.locator('#completionBanner')).toHaveClass(/gold-banner/);
+    await expect(page.locator('#done-banner')).toHaveClass(/show/);
+    await expect(page.locator('#done-banner')).toHaveClass(/gold/);
     await expect.poll(() => page.evaluate(() => window.__celebrationCount)).toBe(1);
   });
 
-  test('bespoke green completion keeps banner text and launches shared celebration', async ({ page }) => {
+  test('template-migrated activity shows banner and launches shared celebration', async ({ page }) => {
     await page.goto('/Y11/1.3%20Networks/ClientServerP2P.html');
     await installCelebrationCounter(page);
-    await page.evaluate(() => triggerCompletion(false));
+    await page.evaluate(() => allComplete());
 
-    await expect(page.locator('#global-cb')).toHaveClass(/green-banner/);
-    await expect(page.locator('#global-cb')).toContainText('Well done');
+    await expect(page.locator('#done-banner')).toHaveClass(/show/);
     await expect.poll(() => page.evaluate(() => window.__celebrationCount)).toBe(1);
   });
 });

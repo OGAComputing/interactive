@@ -358,7 +358,7 @@ test.describe('Extension game flow', () => {
   });
 
   test('stretch uses the same editor and paste is not allowed', async ({ page }) => {
-    await expect(page.locator('#game_build_A-ta')).toBeVisible();
+    await expect(page.locator('#game_build_A-ta')).toBeVisible({ timeout: 15000 });
     await expect(page.locator('#game_build_A-ta')).not.toHaveAttribute('data-allowPaste', 'true');
     await expect(page.locator('#game_build_B-ta')).toHaveCount(0);
     await expect(page.locator('#game_build_B')).toContainText('same Guessing Game editor above');

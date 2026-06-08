@@ -14,6 +14,8 @@ test.describe('ActivityUI shared helpers', () => {
     await expect.poll(() => page.evaluate(() => Object.keys(window.ActivityUI || {}).sort())).toEqual([
       'launchCelebration',
       'resetCelebration',
+      'setScore',
+      'showGoForGold',
       'showToast'
     ]);
   });
