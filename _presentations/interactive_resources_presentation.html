@@ -1,0 +1,1573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interactive HTML Resources — OGA Computing</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink:      #0d0f14;
+    --paper:    #f4f1eb;
+    --red:      #d63f2e;
+    --orange:   #e8773a;
+    --teal:     #1a7a6e;
+    --slate:    #2c3e50;
+    --mid:      #a0a9b8;
+    --rule:     #ccc8be;
+    --code-bg:  #181c24;
+    --code-fg:  #e8dcc8;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; scroll-snap-type: y mandatory; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--ink);
+    color: var(--paper);
+    overflow-x: hidden;
+  }
+
+  /* ── SLIDE SYSTEM ── */
+  .slide {
+    min-height: 100vh;
+    scroll-snap-align: start;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 5vw 7vw;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* ── NAV DOTS ── */
+  #nav-dots {
+    position: fixed;
+    right: 2rem;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    z-index: 100;
+  }
+  .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: rgba(244,241,235,0.25);
+    cursor: pointer;
+    transition: background 0.3s, transform 0.3s;
+  }
+  .dot.active { background: var(--red); transform: scale(1.4); }
+
+  /* ── SLIDE COUNTER ── */
+  .slide-num {
+    position: absolute;
+    bottom: 2rem;
+    right: 3rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--mid);
+    letter-spacing: 0.15em;
+  }
+
+  /* ══════════════════════════════════════════
+     SLIDE 1 — TITLE
+  ══════════════════════════════════════════ */
+  #s1 {
+    background: var(--ink);
+    justify-content: flex-end;
+    padding-bottom: 8vh;
+  }
+  #s1::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 50% at 80% 30%, rgba(214,63,46,0.12) 0%, transparent 70%),
+      radial-gradient(ellipse 40% 60% at 10% 70%, rgba(26,122,110,0.08) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  /* Large ruled lines behind title */
+  .rule-lines {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  .rule-lines span {
+    position: absolute;
+    left: 0; right: 0;
+    height: 1px;
+    background: rgba(244,241,235,0.04);
+  }
+
+  .eyebrow {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.88rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--red);
+    margin-bottom: 1.5rem;
+    opacity: 0;
+    animation: fadeUp 0.6s 0.2s forwards;
+  }
+
+  .s1-title {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(3rem, 8vw, 7rem);
+    font-weight: 800;
+    line-height: 0.95;
+    letter-spacing: -0.03em;
+    color: var(--paper);
+    opacity: 0;
+    animation: fadeUp 0.7s 0.35s forwards;
+  }
+  .s1-title em {
+    font-style: normal;
+    color: var(--red);
+  }
+
+  .s1-sub {
+    margin-top: 2.5rem;
+    max-width: 52ch;
+    font-size: 1.05rem;
+    font-weight: 300;
+    color: rgba(244,241,235,0.6);
+    line-height: 1.65;
+    opacity: 0;
+    animation: fadeUp 0.7s 0.55s forwards;
+  }
+
+  .s1-meta {
+    margin-top: 3.5rem;
+    display: flex;
+    align-items: center;
+    gap: 2.5rem;
+    opacity: 0;
+    animation: fadeUp 0.7s 0.75s forwards;
+  }
+  .s1-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.88rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--mid);
+    border: 1px solid rgba(244,241,235,0.25);
+    padding: 0.4rem 0.85rem;
+    border-radius: 2px;
+  }
+
+  .big-number {
+    position: absolute;
+    right: 6vw;
+    bottom: 6vh;
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(12rem, 22vw, 20rem);
+    font-weight: 800;
+    line-height: 1;
+    color: rgba(244,241,235,0.03);
+    pointer-events: none;
+    user-select: none;
+  }
+
+  /* ══════════════════════════════════════════
+     SLIDE 2 — VS GOOGLE
+  ══════════════════════════════════════════ */
+  #s2 { background: var(--paper); color: var(--ink); }
+  #s2::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--red) 0%, var(--orange) 100%);
+  }
+
+  .section-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.82rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--mid);
+    margin-bottom: 1rem;
+  }
+
+  .s2-heading {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: clamp(1.8rem, 4vw, 3rem);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    margin-bottom: 3rem;
+    color: var(--ink);
+    max-width: 28ch;
+  }
+
+  .compare-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px;
+    background: var(--rule);
+  }
+
+  .compare-col {
+    background: var(--paper);
+    padding: 2rem 2.5rem;
+  }
+  .compare-col.new-way {
+    background: var(--ink);
+    color: var(--paper);
+  }
+
+  .col-head {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.92rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--rule);
+  }
+  .compare-col.new-way .col-head {
+    color: var(--red);
+    border-bottom-color: rgba(244,241,235,0.12);
+  }
+  .compare-col:not(.new-way) .col-head { color: var(--mid); }
+
+  .compare-item {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.1rem;
+    font-size: 1.1rem;
+    line-height: 1.5;
+    font-weight: 400;
+  }
+  .compare-item .mark {
+    flex-shrink: 0;
+    font-weight: 600;
+    font-size: 1rem;
+    margin-top: 0.15rem;
+  }
+  .compare-col:not(.new-way) .mark { color: #888; }
+  .compare-col.new-way .mark { color: #4db6a5; }
+
+  .feedback-callout {
+    margin-top: 2.5rem;
+    padding: 1.2rem 1.5rem;
+    background: rgba(214,63,46,0.08);
+    border-left: 3px solid var(--red);
+    font-size: 0.92rem;
+    line-height: 1.6;
+    color: var(--ink);
+    font-weight: 400;
+  }
+  .feedback-callout strong { color: var(--red); }
+
+  /* ══════════════════════════════════════════
+     SLIDE 3 — ASSESSMENTS & CLASSROOM
+  ══════════════════════════════════════════ */
+  #s3 { background: var(--ink); }
+  #s3::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 50% 70% at 100% 50%, rgba(26,122,110,0.1) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  .s3-heading {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(1.8rem, 4vw, 3rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.05;
+    margin-bottom: 3rem;
+    max-width: 26ch;
+  }
+  .s3-heading span { color: #3ec9b5; }
+
+  .feature-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5px;
+    background: rgba(244,241,235,0.08);
+    margin-bottom: 2.5rem;
+  }
+
+  .feature-cell {
+    background: #12161f;
+    padding: 2rem;
+    position: relative;
+  }
+
+  .feat-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 2.5rem;
+    font-weight: 400;
+    color: rgba(244,241,235,0.06);
+    position: absolute;
+    top: 1rem; right: 1.2rem;
+    line-height: 1;
+  }
+
+  .feat-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin-bottom: 0.6rem;
+    color: var(--paper);
+  }
+  .feat-title .accent { color: var(--orange); }
+
+  .feat-body {
+    font-size: 0.88rem;
+    font-weight: 300;
+    line-height: 1.6;
+    color: rgba(244,241,235,0.55);
+  }
+
+  .stat-row {
+    display: flex;
+    gap: 0;
+    border: 1px solid rgba(244,241,235,0.1);
+  }
+  .stat-cell {
+    flex: 1;
+    padding: 1.2rem 1.5rem;
+    border-right: 1px solid rgba(244,241,235,0.1);
+  }
+  .stat-cell:last-child { border-right: none; }
+  .stat-val {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--red);
+    line-height: 1;
+    margin-bottom: 0.3rem;
+  }
+  .stat-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.8rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--mid);
+  }
+
+  /* ══════════════════════════════════════════
+     SLIDE 4 — SRT
+  ══════════════════════════════════════════ */
+  #s4 { background: #0e1218; }
+
+  .s4-layout {
+    display: grid;
+    grid-template-columns: 1fr 1.4fr;
+    gap: 4vw;
+    align-items: start;
+  }
+
+  .s4-left {}
+
+  .s4-heading {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    margin-bottom: 1.2rem;
+  }
+  .s4-heading .red { color: var(--red); }
+
+  .s4-desc {
+    font-size: 1.05rem;
+    font-weight: 300;
+    line-height: 1.7;
+    color: rgba(244,241,235,0.85);
+    margin-bottom: 2.5rem;
+  }
+
+  .srt-points { list-style: none; }
+  .srt-points li {
+    display: flex;
+    gap: 1rem;
+    padding: 0.9rem 0;
+    border-bottom: 1px solid rgba(244,241,235,0.1);
+    font-size: 1.1rem;
+    font-weight: 400;
+    line-height: 1.55;
+    color: rgba(244,241,235,0.92);
+  }
+  .srt-points li::before {
+    content: '→';
+    color: var(--red);
+    flex-shrink: 0;
+    font-weight: 600;
+    margin-top: 0.05rem;
+  }
+
+  /* Flow diagram */
+  .flow {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .flow-step {
+    display: grid;
+    grid-template-columns: 2.5rem 1fr;
+    gap: 1.2rem;
+    align-items: start;
+    position: relative;
+  }
+
+  .flow-step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: 1.25rem;
+    top: 2.5rem;
+    bottom: -1.6rem;
+    width: 1px;
+    background: rgba(244,241,235,0.1);
+  }
+
+  .flow-icon {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 1;
+  }
+
+  .flow-content {
+    padding: 0.2rem 0 2.4rem;
+  }
+  .flow-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 1.05rem;
+    margin-bottom: 0.35rem;
+  }
+  .flow-body {
+    font-size: 0.95rem;
+    font-weight: 300;
+    line-height: 1.55;
+    color: rgba(244,241,235,0.78);
+  }
+
+  /* ══════════════════════════════════════════
+     SLIDE 5 — SHOWCASE HEADER
+  ══════════════════════════════════════════ */
+  #s5 {
+    background: var(--paper);
+    color: var(--ink);
+    justify-content: center;
+    padding: 4vw 7vw;
+  }
+  #s5::before {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--teal), var(--red));
+  }
+
+  .showcase-intro-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.82rem;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--mid);
+    margin-bottom: 1.2rem;
+  }
+
+  .showcase-intro-heading {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(2rem, 5vw, 4.5rem);
+    font-weight: 800;
+    line-height: 0.95;
+    letter-spacing: -0.03em;
+    max-width: 16ch;
+    margin-bottom: 2.5rem;
+  }
+  .showcase-intro-heading span { color: var(--red); }
+
+  .showcase-cards-preview {
+    display: flex;
+    gap: 0.8rem;
+    flex-wrap: wrap;
+  }
+  .preview-chip {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.85rem;
+    letter-spacing: 0.1em;
+    padding: 0.5rem 1rem;
+    border: 1.5px solid var(--ink);
+    color: var(--ink);
+    border-radius: 2px;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: background 0.2s, color 0.2s;
+  }
+  .preview-chip .chip-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+  }
+
+  .showcase-note {
+    margin-top: 3rem;
+    padding: 1.2rem 1.5rem;
+    border: 1px solid var(--rule);
+    max-width: 60ch;
+    font-size: 0.88rem;
+    font-weight: 300;
+    line-height: 1.6;
+    color: var(--slate);
+  }
+  .showcase-note strong { font-weight: 600; color: var(--ink); }
+
+  /* ══════════════════════════════════════════
+     SLIDES 6–10 — INDIVIDUAL SHOWCASES
+  ══════════════════════════════════════════ */
+  .showcase-slide {
+    background: var(--ink);
+    padding: 4vw 7vw;
+    min-height: 100vh;
+    scroll-snap-align: start;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .showcase-layout {
+    display: grid;
+    grid-template-columns: 1fr 1.1fr;
+    gap: 4vw;
+    align-items: start;
+  }
+
+  .showcase-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.8rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+  }
+  .showcase-tag .tag-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+  }
+
+  .showcase-title {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    margin-bottom: 0.8rem;
+  }
+
+  .showcase-meta {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.82rem;
+    letter-spacing: 0.12em;
+    color: var(--mid);
+    margin-bottom: 1.8rem;
+    text-transform: uppercase;
+  }
+
+  .showcase-desc {
+    font-size: 1.05rem;
+    font-weight: 400;
+    line-height: 1.7;
+    color: rgba(244,241,235,0.88);
+    margin-bottom: 1.8rem;
+    max-width: 44ch;
+  }
+
+  .feature-list { list-style: none; margin-bottom: 2rem; }
+  .feature-list li {
+    padding: 0.7rem 0;
+    border-bottom: 1px solid rgba(244,241,235,0.1);
+    font-size: 1.05rem;
+    font-weight: 400;
+    color: rgba(244,241,235,0.92);
+    display: flex;
+    gap: 0.8rem;
+    align-items: baseline;
+  }
+  .feature-list li::before {
+    content: '—';
+    color: var(--mid);
+    flex-shrink: 0;
+    font-size: 0.75rem;
+  }
+
+  .launch-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    background: var(--paper);
+    color: var(--ink);
+    text-decoration: none;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.85rem;
+    letter-spacing: 0.05em;
+    padding: 0.85rem 1.5rem;
+    transition: background 0.2s, color 0.2s, transform 0.15s;
+  }
+  .launch-link:hover {
+    background: var(--red);
+    color: #fff;
+    transform: translateX(3px);
+  }
+  .launch-link svg { transition: transform 0.15s; }
+  .launch-link:hover svg { transform: translateX(3px); }
+
+  /* Screen mockup */
+  .screen-mock {
+    border: 1.5px solid rgba(244,241,235,0.12);
+    border-radius: 4px;
+    overflow: hidden;
+    background: #0c1018;
+  }
+  .screen-bar {
+    background: #1a1f2b;
+    padding: 0.6rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border-bottom: 1px solid rgba(244,241,235,0.06);
+  }
+  .screen-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+  }
+  .screen-url {
+    margin-left: 0.5rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.62rem;
+    color: var(--mid);
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .screen-body {
+    padding: 1.5rem;
+    min-height: 280px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+  }
+
+  /* PRIMM mockup elements */
+  .primm-step {
+    display: flex;
+    gap: 0.8rem;
+    align-items: flex-start;
+  }
+  .primm-letter {
+    width: 1.8rem; height: 1.8rem;
+    border-radius: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+  }
+  .primm-text {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.78rem;
+    line-height: 1.4;
+    color: rgba(244,241,235,0.75);
+    padding-top: 0.3rem;
+  }
+  .code-snippet {
+    background: #1e2535;
+    border-radius: 2px;
+    padding: 0.6rem 0.8rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    color: #b8d4f8;
+    line-height: 1.6;
+    margin-top: 0.3rem;
+  }
+  .code-snippet .kw { color: #f9826c; }
+  .code-snippet .fn { color: #79c0ff; }
+  .code-snippet .str { color: #a5d6a7; }
+  .code-snippet .cm { color: #6b7280; }
+  .predict-box {
+    background: rgba(214,63,46,0.1);
+    border: 1px dashed rgba(214,63,46,0.4);
+    border-radius: 2px;
+    padding: 0.5rem 0.8rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    color: rgba(214,63,46,0.8);
+  }
+  .feedback-ok {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(26,122,110,0.15);
+    border: 1px solid rgba(26,122,110,0.3);
+    border-radius: 2px;
+    padding: 0.4rem 0.8rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    color: #4db6a5;
+  }
+
+  /* Network topology mockup */
+  .topo-area {
+    background: #131720;
+    border: 1px dashed rgba(244,241,235,0.08);
+    border-radius: 2px;
+    padding: 1rem;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+    min-height: 140px;
+  }
+  .device-box {
+    background: #1e2535;
+    border-radius: 2px;
+    padding: 0.6rem;
+    text-align: center;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.62rem;
+    color: rgba(244,241,235,0.6);
+    cursor: default;
+    border: 1px solid rgba(244,241,235,0.06);
+  }
+  .device-icon { font-size: 1.2rem; display: block; margin-bottom: 0.3rem; }
+  .topo-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--mid);
+    text-align: center;
+    margin-top: 0.5rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  /* Image representation mockup */
+  .pixel-grid {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 2px;
+    margin-bottom: 0.8rem;
+  }
+  .pixel {
+    aspect-ratio: 1;
+    border-radius: 1px;
+  }
+  .img-calc {
+    background: #1e2535;
+    border-radius: 2px;
+    padding: 0.7rem 0.9rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    color: rgba(244,241,235,0.6);
+    line-height: 1.7;
+  }
+  .img-calc .val { color: #79c0ff; }
+
+  /* CrimDB mockup */
+  .db-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+  }
+  .db-table th {
+    background: rgba(214,63,46,0.2);
+    color: var(--red);
+    padding: 0.4rem 0.6rem;
+    text-align: left;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border-bottom: 1px solid rgba(214,63,46,0.3);
+  }
+  .db-table td {
+    padding: 0.4rem 0.6rem;
+    color: rgba(244,241,235,0.65);
+    border-bottom: 1px solid rgba(244,241,235,0.05);
+  }
+  .db-table tr.highlight td { background: rgba(26,122,110,0.12); color: var(--paper); }
+  .db-query {
+    background: #1e2535;
+    border-radius: 2px;
+    padding: 0.6rem 0.8rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    color: #79c0ff;
+    line-height: 1.6;
+    margin-bottom: 0.6rem;
+  }
+  .db-query .sql-kw { color: #f9826c; }
+  .db-query .sql-val { color: #a5d6a7; }
+
+  /* Assessment mockup */
+  .q-block {
+    background: #1a1f2b;
+    border-radius: 2px;
+    padding: 0.8rem 1rem;
+    margin-bottom: 0.5rem;
+    border-left: 2px solid transparent;
+  }
+  .q-block.correct { border-left-color: #4db6a5; }
+  .q-block.wrong   { border-left-color: var(--red); }
+  .q-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--mid);
+    margin-bottom: 0.3rem;
+  }
+  .q-text {
+    font-size: 0.78rem;
+    color: rgba(244,241,235,0.75);
+    margin-bottom: 0.5rem;
+    line-height: 1.4;
+  }
+  .q-score {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+  }
+  .score-badge {
+    padding: 0.15rem 0.5rem;
+    border-radius: 2px;
+    font-weight: 500;
+  }
+  .score-badge.ok { background: rgba(26,122,110,0.2); color: #4db6a5; }
+  .score-badge.fail { background: rgba(214,63,46,0.15); color: var(--red); }
+  .classroom-badge {
+    margin-top: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    background: rgba(66,133,244,0.12);
+    border: 1px solid rgba(66,133,244,0.25);
+    border-radius: 2px;
+    padding: 0.5rem 0.8rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem;
+    color: #7ab3f4;
+  }
+
+  /* ══════════════════════════════════════════
+     SLIDE 11 — SUMMARY
+  ══════════════════════════════════════════ */
+  #s-summary {
+    background: var(--paper);
+    color: var(--ink);
+    scroll-snap-align: start;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 5vw 7vw;
+    position: relative;
+    overflow: hidden;
+  }
+  #s-summary::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--teal) 0%, var(--red) 100%);
+  }
+
+  .summary-heading {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(2rem, 5vw, 4rem);
+    font-weight: 800;
+    line-height: 0.95;
+    letter-spacing: -0.03em;
+    margin-bottom: 3rem;
+  }
+  .summary-heading span { color: var(--red); }
+
+  .pillars {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5px;
+    background: var(--rule);
+    margin-bottom: 2.5rem;
+  }
+  .pillar {
+    background: var(--paper);
+    padding: 1.8rem 2rem;
+  }
+  .pillar-head {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.92rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--mid);
+    margin-bottom: 1.2rem;
+    padding-bottom: 0.8rem;
+    border-bottom: 2px solid var(--rule);
+  }
+  .pillar:nth-child(1) .pillar-head { border-color: var(--red); }
+  .pillar:nth-child(2) .pillar-head { border-color: var(--teal); }
+  .pillar:nth-child(3) .pillar-head { border-color: var(--orange); }
+
+  .pillar-list { list-style: none; }
+  .pillar-list li {
+    font-size: 1.05rem;
+    font-weight: 400;
+    line-height: 1.5;
+    padding: 0.55rem 0;
+    border-bottom: 1px solid var(--rule);
+    color: var(--slate);
+    display: flex;
+    gap: 0.6rem;
+  }
+  .pillar-list li:last-child { border-bottom: none; }
+  .pillar-list li::before {
+    content: '·';
+    color: var(--mid);
+    flex-shrink: 0;
+    font-size: 1.2rem;
+    line-height: 1.2;
+  }
+
+  .github-footer {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--mid);
+    letter-spacing: 0.1em;
+  }
+  .github-footer a {
+    color: var(--red);
+    text-decoration: none;
+    font-weight: 500;
+  }
+  .github-footer a:hover { text-decoration: underline; }
+
+  /* ══════════════════════════════════════════
+     ANIMATIONS
+  ══════════════════════════════════════════ */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .reveal {
+    opacity: 0;
+    transform: translateY(18px);
+    transition: opacity 0.55s ease, transform 0.55s ease;
+  }
+  .reveal.visible {
+    opacity: 1;
+    transform: none;
+  }
+  .reveal-delay-1 { transition-delay: 0.1s; }
+  .reveal-delay-2 { transition-delay: 0.2s; }
+  .reveal-delay-3 { transition-delay: 0.3s; }
+  .reveal-delay-4 { transition-delay: 0.4s; }
+
+  /* Keyboard hint */
+  .key-hint {
+    position: fixed;
+    bottom: 1.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.15em;
+    color: rgba(244,241,235,0.2);
+    z-index: 100;
+    pointer-events: none;
+    transition: opacity 0.5s;
+  }
+</style>
+</head>
+<body>
+
+<!-- Nav dots -->
+<nav id="nav-dots" aria-label="Slide navigation"></nav>
+<div class="key-hint" id="key-hint">SCROLL OR USE ARROW KEYS TO NAVIGATE</div>
+
+<!-- ═══════════════════════════════════
+     SLIDE 1 — TITLE
+═══════════════════════════════════ -->
+<section class="slide" id="s1" data-slide="1">
+  <div class="rule-lines" aria-hidden="true">
+    <span style="top:18%"></span><span style="top:36%"></span>
+    <span style="top:54%"></span><span style="top:72%"></span><span style="top:90%"></span>
+  </div>
+  <div class="eyebrow">OGA Computing — Interactive Resources</div>
+  <h1 class="s1-title">Interactive<br><em>HTML</em><br>Resources</h1>
+  <div class="s1-meta">
+    <span class="s1-tag">Y8 · Y9 · Y11 · Y13</span>
+    <span class="s1-tag">OCR GCSE &amp; A-Level</span>
+    <span class="s1-tag">Google Classroom</span>
+    <span class="s1-tag">Pyodide</span>
+  </div>
+  <div class="big-number" aria-hidden="true">HTML</div>
+  <div class="slide-num">01 / 11</div>
+</section>
+
+<!-- ═══════════════════════════════════
+     SLIDE 2 — VS GOOGLE
+═══════════════════════════════════ -->
+<section class="slide" id="s2" data-slide="2">
+  <div class="section-label reveal">The Problem</div>
+  <h2 class="s2-heading reveal reveal-delay-1">Why not Google&nbsp;Slides&nbsp;&amp; Docs?</h2>
+  <div class="compare-grid reveal reveal-delay-2">
+    <div class="compare-col">
+      <div class="col-head">Before — Google Slides / Docs</div>
+      <div class="compare-item"><span class="mark">✗</span>No automated marking</div>
+      <div class="compare-item"><span class="mark">✗</span>No immediate feedback</div>
+      <div class="compare-item"><span class="mark">✗</span>Students don't know if they're right</div>
+    </div>
+    <div class="compare-col new-way">
+      <div class="col-head">Now — Interactive HTML Files</div>
+      <div class="compare-item"><span class="mark">✓</span>Instant feedback on every answer</div>
+      <div class="compare-item"><span class="mark">✓</span>Self-marking — zero teacher effort</div>
+      <div class="compare-item"><span class="mark">✓</span>Marks pushed to Google Classroom</div>
+    </div>
+  </div>
+  <div class="slide-num">02 / 11</div>
+</section>
+
+<!-- ═══════════════════════════════════
+     SLIDE 3 — ASSESSMENTS & CLASSROOM
+═══════════════════════════════════ -->
+<section class="slide" id="s3" data-slide="3">
+  <h2 class="s3-heading reveal">Richer assessments.<br><span>Automatic marking.</span><br>Real data.</h2>
+  <div class="feature-grid reveal reveal-delay-1">
+    <div class="feature-cell">
+      <span class="feat-num" aria-hidden="true">01</span>
+      <div class="feat-title">Feature-<span class="accent">rich</span> question types</div>
+    </div>
+    <div class="feature-cell">
+      <span class="feat-num" aria-hidden="true">02</span>
+      <div class="feat-title">Self-marking,<span class="accent"> zero overhead</span></div>
+    </div>
+    <div class="feature-cell">
+      <span class="feat-num" aria-hidden="true">03</span>
+      <div class="feat-title">Google Classroom<span class="accent"> integration</span></div>
+    </div>
+    <div class="feature-cell">
+      <span class="feat-num" aria-hidden="true">04</span>
+      <div class="feat-title">Closing the<span class="accent"> feedback gap</span></div>
+    </div>
+  </div>
+  <div class="stat-row reveal reveal-delay-2">
+    <div class="stat-cell"><div class="stat-val">100%</div><div class="stat-label">Self-marked</div></div>
+    <div class="stat-cell"><div class="stat-val">0 hrs</div><div class="stat-label">Teacher marking time</div></div>
+    <div class="stat-cell"><div class="stat-val">Live</div><div class="stat-label">Classroom grade sync</div></div>
+    <div class="stat-cell"><div class="stat-val">Every lesson</div><div class="stat-label">Tracked performance</div></div>
+  </div>
+  <div class="slide-num">03 / 11</div>
+</section>
+
+<!-- ═══════════════════════════════════
+     SLIDE 4 — SRT
+═══════════════════════════════════ -->
+<section class="slide" id="s4" data-slide="4">
+  <div class="s4-layout">
+    <div class="s4-left">
+      <div class="section-label reveal">Student Response Time</div>
+      <h2 class="s4-heading reveal reveal-delay-1">Personalised revision <span class="red">after every assessment</span></h2>
+      <ul class="srt-points reveal reveal-delay-3">
+        <li>Weak areas identified from stored score data</li>
+        <li>Personalised targeted exercises, or extension for high scorers</li>
+        <li>Replaces "revise everything" with specific next steps</li>
+      </ul>
+    </div>
+    <div class="flow reveal reveal-delay-2">
+      <div class="flow-step">
+        <div class="flow-icon" style="background:rgba(214,63,46,0.15);color:var(--red)">1</div>
+        <div class="flow-content">
+          <div class="flow-title">Assessment completed</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-icon" style="background:rgba(232,119,58,0.15);color:var(--orange)">2</div>
+        <div class="flow-content">
+          <div class="flow-title">Scores analysed</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-icon" style="background:rgba(26,122,110,0.15);color:#4db6a5">3</div>
+        <div class="flow-content">
+          <div class="flow-title">Weak areas identified</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-icon" style="background:rgba(26,122,110,0.25);color:#4db6a5">4</div>
+        <div class="flow-content">
+          <div class="flow-title">Targeted exercises suggested</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-icon" style="background:rgba(244,241,235,0.08);color:var(--paper)">5</div>
+        <div class="flow-content">
+          <div class="flow-title">Student improves</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="slide-num">04 / 11</div>
+</section>
+
+<!-- ═══════════════════════════════════
+     SLIDE 5 — SHOWCASE INTRO
+═══════════════════════════════════ -->
+<section class="slide" id="s5" data-slide="5">
+  <div class="showcase-intro-label reveal">The Library</div>
+  <h2 class="showcase-intro-heading reveal reveal-delay-1"><span id="resource-counter">0</span> resources,<br>live <span>right now</span></h2>
+  <div class="showcase-cards-preview reveal reveal-delay-2">
+    <span class="preview-chip"><span class="chip-dot" style="background:#a78bfa"></span>Y8 · PRIMM For Loops &amp; Turtle</span>
+    <span class="preview-chip"><span class="chip-dot" style="background:#fb923c"></span>Y8 · Python Assessment</span>
+    <span class="preview-chip"><span class="chip-dot" style="background:#34d399"></span>Y9 · Criminal Database Investigation</span>
+    <span class="preview-chip"><span class="chip-dot" style="background:#22d3ee"></span>Y11 · Network Topology Builder</span>
+    <span class="preview-chip"><span class="chip-dot" style="background:#60a5fa"></span>Y11 · Data Representation: Images</span>
+  </div>
+  <div class="slide-num">05 / 11</div>
+</section>
+
+<!-- ═══════════════════════════════════
+     SLIDE 6 — PRIMM FOR LOOPS & TURTLE
+═══════════════════════════════════ -->
+<section class="showcase-slide" id="s6" data-slide="6">
+  <div class="showcase-layout">
+    <div>
+      <div class="showcase-tag reveal"><span class="tag-dot" style="background:#a78bfa"></span><span style="color:#a78bfa">Year 8 · Python · PRIMM</span></div>
+      <h2 class="showcase-title reveal reveal-delay-1">For Loops &amp; Turtle<br>PRIMM Practice</h2>
+      <div class="showcase-meta reveal reveal-delay-1">Y8 / Python / L3_Turtle_And_Loops — ⭐⭐⭐⭐</div>
+      <p class="showcase-desc reveal reveal-delay-2">PRIMM methodology — real Python turtle graphics running in the browser via Pyodide.</p>
+      <ul class="feature-list reveal reveal-delay-2">
+        <li>Predict → Run → Investigate → Modify → Make</li>
+        <li>Live turtle graphics rendered in the browser</li>
+        <li>Auto-marked at every stage</li>
+      </ul>
+      <a class="launch-link reveal reveal-delay-3" href="https://ogacomputing.github.io/interactive/Y8/Python/L3_Turtle_And_Loops/1_For_Loop_Turtle_Challenges.html" target="_blank" rel="noopener">
+        Open resource
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M7 2l5 5-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+    </div>
+    <div class="screen-mock reveal reveal-delay-2">
+      <div class="screen-bar">
+        <span class="screen-dot" style="background:#f47068"></span>
+        <span class="screen-dot" style="background:#f9c74f"></span>
+        <span class="screen-dot" style="background:#52b788"></span>
+        <span class="screen-url">ogacomputing.github.io/interactive/Y8/Python/L3_Turtle_And_Loops/1_For_Loop_Turtle_Challenges.html</span>
+      </div>
+      <div class="screen-body">
+        <div class="primm-step">
+          <div class="primm-letter" style="background:#3b1f6e;color:#a78bfa">P</div>
+          <div class="primm-text">
+            <strong style="color:var(--paper)">Predict</strong> — what shape will this draw?
+            <div class="code-snippet"><span class="kw">import</span> turtle<br>t = turtle.<span class="fn">Turtle</span>()<br><span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(<span class="num" style="color:#fab387">4</span>):<br>&nbsp;&nbsp;t.<span class="fn">forward</span>(<span class="num" style="color:#fab387">100</span>)<br>&nbsp;&nbsp;t.<span class="fn">right</span>(<span class="num" style="color:#fab387">90</span>)</div>
+            <div class="predict-box">Your prediction: ___________</div>
+          </div>
+        </div>
+        <div class="primm-step">
+          <div class="primm-letter" style="background:#1a3a5e;color:#60a5fa">R</div>
+          <div class="primm-text">
+            <strong style="color:var(--paper)">Run</strong> — execute in browser
+            <div class="feedback-ok">✓&nbsp; A square is drawn</div>
+          </div>
+        </div>
+        <div class="primm-step">
+          <div class="primm-letter" style="background:#1a3a2a;color:#52b788">M</div>
+          <div class="primm-text">
+            <strong style="color:var(--paper)">Make</strong> — draw a regular hexagon
+            <div class="code-snippet"><span class="cm"># Change the loop so it draws a hexagon</span><br><span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(  ):<br>&nbsp;&nbsp;t.<span class="fn">forward</span>(<span class="num" style="color:#fab387">100</span>)<br>&nbsp;&nbsp;t.<span class="fn">right</span>(  )<span style="color:#6b7280">&nbsp;▌</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="slide-num">06 / 11</div>
+</section>
+
+<!-- ═══════════════════════════════════
+     SLIDE 7 — ASSESSMENT
+═══════════════════════════════════ -->
+<section class="showcase-slide" id="s7" data-slide="7">
+  <div class="showcase-layout">
+    <div>
+      <div class="showcase-tag reveal"><span class="tag-dot" style="background:#fb923c"></span><span style="color:#fb923c">Year 8 · Python · Assessment</span></div>
+      <h2 class="showcase-title reveal reveal-delay-1">Year 8 Python<br>Assessment</h2>
+      <div class="showcase-meta reveal reveal-delay-1">Y8 / Python / L5_Assessment — ⭐⭐⭐⭐</div>
+      <p class="showcase-desc reveal reveal-delay-2">45-minute end-of-unit assessment — auto-marked, synced to Google Classroom.</p>
+      <ul class="feature-list reveal reveal-delay-2">
+        <li>Timed 45 minutes — errors, casting, loops, functions</li>
+        <li>Marked instantly on submission</li>
+        <li>Grade synced to Classroom; SRT file directs revision</li>
+      </ul>
+      <a class="launch-link reveal reveal-delay-3" href="https://ogacomputing.github.io/interactive/Y8/Python/L5_Assessment/1_Python_Assessment.html" target="_blank" rel="noopener">
+        Open resource
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M7 2l5 5-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+    </div>
+    <div class="screen-mock reveal reveal-delay-2">
+      <div class="screen-bar">
+        <span class="screen-dot" style="background:#f47068"></span>
+        <span class="screen-dot" style="background:#f9c74f"></span>
+        <span class="screen-dot" style="background:#52b788"></span>
+        <span class="screen-url">ogacomputing.github.io/interactive/Y8/Python/L5_Assessment/1_Python_Assessment.html</span>
+      </div>
+      <div class="screen-body">
+        <div class="q-block correct">
+          <div class="q-label">Question 2 · Casting</div>
+          <div class="q-text">Write a line of code to convert the string "42" to an integer.</div>
+          <div class="q-score"><span class="score-badge ok">✓ 2/2</span><span style="font-size:0.65rem;color:var(--mid)">int("42")</span></div>
+        </div>
+        <div class="q-block wrong">
+          <div class="q-label">Question 5 · Functions</div>
+          <div class="q-text">Define a function called <code style="color:#f9c74f">square</code> that returns a number multiplied by itself.</div>
+          <div class="q-score"><span class="score-badge fail">✗ 0/2</span><span style="font-size:0.65rem;color:var(--mid)">return n*n expected</span></div>
+        </div>
+        <div class="classroom-badge">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="#4285F4"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/></svg>
+          Marks submitted to Google Classroom · 14/20 recorded
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="slide-num">07 / 11</div>
+</section>
+
+<!-- ═══════════════════════════════════
+     SLIDE 8 — CRIMDB
+═══════════════════════════════════ -->
+<section class="showcase-slide" id="s8" data-slide="8">
+  <div class="showcase-layout">
+    <div>
+      <div class="showcase-tag reveal"><span class="tag-dot" style="background:#34d399"></span><span style="color:#34d399">Year 9 · Databases</span></div>
+      <h2 class="showcase-title reveal reveal-delay-1">Criminal Database<br>Investigation</h2>
+      <div class="showcase-meta reveal reveal-delay-1">Y9 / Databases — ⭐⭐⭐</div>
+      <p class="showcase-desc reveal reveal-delay-2">Solve a missing persons case using real database techniques.</p>
+      <ul class="feature-list reveal reveal-delay-2">
+        <li>Students are detectives, not just learners</li>
+        <li>Primary keys, foreign keys, cross-table queries</li>
+        <li>Self-marking throughout</li>
+      </ul>
+      <a class="launch-link reveal reveal-delay-3" href="https://ogacomputing.github.io/interactive/Y9/Databases/Criminal_Database_Investigation.html" target="_blank" rel="noopener">
+        Open resource
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M7 2l5 5-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+    </div>
+    <div class="screen-mock reveal reveal-delay-2">
+      <div class="screen-bar">
+        <span class="screen-dot" style="background:#f47068"></span>
+        <span class="screen-dot" style="background:#f9c74f"></span>
+        <span class="screen-dot" style="background:#52b788"></span>
+        <span class="screen-url">ogacomputing.github.io/interactive/Y9/Databases/Criminal_Database_Investigation.html</span>
+      </div>
+      <div class="screen-body">
+        <div class="db-query"><span class="sql-kw">SELECT</span> * <span class="sql-kw">FROM</span> Suspects<br><span class="sql-kw">WHERE</span> HairColour = <span class="sql-val">"Brown"</span><br><span class="sql-kw">AND</span> LastSeenArea = <span class="sql-val">"Leeds"</span></div>
+        <table class="db-table">
+          <thead>
+            <tr><th>SuspectID</th><th>Name</th><th>HairColour</th><th>LastSeen</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>S004</td><td>J. Hartley</td><td>Brown</td><td>Leeds</td></tr>
+            <tr class="highlight"><td>S011</td><td>M. Ravenscroft</td><td>Brown</td><td>Leeds</td></tr>
+            <tr><td>S019</td><td>P. Thornton</td><td>Brown</td><td>Leeds</td></tr>
+          </tbody>
+        </table>
+        <div style="margin-top:0.8rem;font-family:'DM Mono',monospace;font-size:0.68rem;color:var(--mid)">3 records returned · <span style="color:#34d399">Cross-reference with Witnesses table →</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="slide-num">08 / 11</div>
+</section>
+
+<!-- ═══════════════════════════════════
+     SLIDE 9 — NETWORK TOPOLOGY BUILDER
+═══════════════════════════════════ -->
+<section class="showcase-slide" id="s9" data-slide="9">
+  <div class="showcase-layout">
+    <div>
+      <div class="showcase-tag reveal"><span class="tag-dot" style="background:#22d3ee"></span><span style="color:#22d3ee">Year 11 · 1.3 Networks</span></div>
+      <h2 class="showcase-title reveal reveal-delay-1">Network Topology<br>Builder</h2>
+      <div class="showcase-meta reveal reveal-delay-1">Y11 / 1.3 Networks — ⭐⭐⭐</div>
+      <p class="showcase-desc reveal reveal-delay-2">Drag-and-drop topology builder — bus, star and ring.</p>
+      <ul class="feature-list reveal reveal-delay-2">
+        <li>Drag-and-drop device placement</li>
+        <li>Auto-evaluated against correct layout</li>
+        <li>Advantage/disadvantage matching</li>
+        <li>Green → Gold scoring: complete for green, 80%+ for gold mastery</li>
+      </ul>
+      <a class="launch-link reveal reveal-delay-3" href="https://ogacomputing.github.io/interactive/Y11/1.3%20Networks/network_topology_builder.html" target="_blank" rel="noopener">
+        Open resource
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M7 2l5 5-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+    </div>
+    <div class="screen-mock reveal reveal-delay-2">
+      <div class="screen-bar">
+        <span class="screen-dot" style="background:#f47068"></span>
+        <span class="screen-dot" style="background:#f9c74f"></span>
+        <span class="screen-dot" style="background:#52b788"></span>
+        <span class="screen-url">ogacomputing.github.io/interactive/Y11/1.3 Networks/network_topology_builder.html</span>
+      </div>
+      <div class="screen-body">
+        <div style="font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--mid);margin-bottom:0.5rem;text-transform:uppercase;letter-spacing:0.12em">Build a Star Topology — drag devices into position</div>
+        <div class="topo-area">
+          <div class="device-box"><span class="device-icon">💻</span>PC 1</div>
+          <div class="device-box" style="border-color:rgba(34,211,238,0.3);background:#1a2a30"><span class="device-icon">🔀</span>Switch</div>
+          <div class="device-box"><span class="device-icon">💻</span>PC 2</div>
+          <div class="device-box"><span class="device-icon">🖨️</span>Printer</div>
+          <div class="device-box" style="background:#131720;border-style:dashed"><span class="device-icon">+</span>Drop here</div>
+          <div class="device-box"><span class="device-icon">💻</span>PC 3</div>
+        </div>
+        <div class="topo-label">Star topology · 4/5 devices placed correctly</div>
+        <div style="margin-top:0.8rem;display:flex;gap:0.5rem">
+          <div style="flex:1;background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.3);border-radius:2px;padding:0.4rem 0.6rem;font-family:'DM Mono',monospace;font-size:0.65rem;color:#4ade80;text-align:center">🟢 Green<br><span style="opacity:0.7">completed</span></div>
+          <div style="flex:1;background:rgba(234,179,8,0.12);border:1px solid rgba(234,179,8,0.3);border-radius:2px;padding:0.4rem 0.6rem;font-family:'DM Mono',monospace;font-size:0.65rem;color:#facc15;text-align:center">🥇 Gold<br><span style="opacity:0.7">80%+ mastery</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="slide-num">09 / 11</div>
+</section>
+
+<!-- ═══════════════════════════════════
+     SLIDE 10 — DATA REPRESENTATION: IMAGES
+═══════════════════════════════════ -->
+<section class="showcase-slide" id="s10" data-slide="10">
+  <div class="showcase-layout">
+    <div>
+      <div class="showcase-tag reveal"><span class="tag-dot" style="background:#60a5fa"></span><span style="color:#60a5fa">Year 11 · 1.2 Data Representation</span></div>
+      <h2 class="showcase-title reveal reveal-delay-1">Data Representation:<br>Images</h2>
+      <div class="showcase-meta reveal reveal-delay-1">Y11 / 1.2 Data Representation — ⭐⭐⭐⭐</div>
+      <p class="showcase-desc reveal reveal-delay-2">Pixels, resolution, file size, compression — OCR J277 1.2.</p>
+      <ul class="feature-list reveal reveal-delay-2">
+        <li>Pixel grid decoding from binary</li>
+        <li>Live file size calculator</li>
+        <li>Compression and quality trade-offs</li>
+        <li>Green → Gold scoring: complete for green, 80%+ for gold mastery</li>
+      </ul>
+      <a class="launch-link reveal reveal-delay-3" href="https://ogacomputing.github.io/interactive/Y11/1.2%20Data%20Representation/Images.html" target="_blank" rel="noopener">
+        Open resource
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M7 2l5 5-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+    </div>
+    <div class="screen-mock reveal reveal-delay-2">
+      <div class="screen-bar">
+        <span class="screen-dot" style="background:#f47068"></span>
+        <span class="screen-dot" style="background:#f9c74f"></span>
+        <span class="screen-dot" style="background:#52b788"></span>
+        <span class="screen-url">ogacomputing.github.io/interactive/Y11/1.2 Data Representation/Images.html</span>
+      </div>
+      <div class="screen-body">
+        <div style="font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--mid);margin-bottom:0.6rem;text-transform:uppercase;letter-spacing:0.12em">Decode this 8×4 pixel image (1-bit colour)</div>
+        <div class="pixel-grid" style="grid-template-columns:repeat(8,1fr);margin-bottom:0.8rem">
+          <div class="pixel" style="background:#f4f1eb"></div><div class="pixel" style="background:#0d0f14"></div><div class="pixel" style="background:#f4f1eb"></div><div class="pixel" style="background:#0d0f14"></div><div class="pixel" style="background:#f4f1eb"></div><div class="pixel" style="background:#0d0f14"></div><div class="pixel" style="background:#f4f1eb"></div><div class="pixel" style="background:#0d0f14"></div>
+          <div class="pixel" style="background:#0d0f14"></div><div class="pixel" style="background:#f4f1eb"></div><div class="pixel" style="background:#f4f1eb"></div><div class="pixel" style="background:#f4f1eb"></div><div class="pixel" style="background:#f4f1eb"></div><div class="pixel" style="background:#f4f1eb"></div><div class="pixel" style="background:#f4f1eb"></div><div class="pixel" style="background:#0d0f14"></div>
+          <div class="pixel" style="background:#0d0f14"></div><div class="pixel" style="background:#f4f1eb"></div><div class="pixel" style="background:#0d0f14"></div><div class="pixel" style="background:#f4f1eb"></div><div class="pixel" style="background:#f4f1eb"></div><div class="pixel" style="background:#f4f1eb"></div><div class="pixel" style="background:#f4f1eb"></div><div class="pixel" style="background:#0d0f14"></div>
+          <div class="pixel" style="background:#f4f1eb"></div><div class="pixel" style="background:#0d0f14"></div><div class="pixel" style="background:#f4f1eb"></div><div class="pixel" style="background:#0d0f14"></div><div class="pixel" style="background:#f4f1eb"></div><div class="pixel" style="background:#0d0f14"></div><div class="pixel" style="background:#f4f1eb"></div><div class="pixel" style="background:#0d0f14"></div>
+        </div>
+        <div class="img-calc">
+          File size = width × height × colour depth ÷ 8<br>
+          = <span class="val">8</span> × <span class="val">4</span> × <span class="val">1</span> ÷ 8 = <span class="val">4 bytes</span><br>
+          <span style="color:var(--mid)">Metadata adds: <span class="val">+54 bytes</span> (header)</span>
+        </div>
+        <div style="margin-top:0.5rem;display:flex;gap:0.5rem">
+          <div style="flex:1;background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.3);border-radius:2px;padding:0.4rem 0.6rem;font-family:'DM Mono',monospace;font-size:0.65rem;color:#4ade80;text-align:center">🟢 Green<br><span style="opacity:0.7">completed</span></div>
+          <div style="flex:1;background:rgba(234,179,8,0.12);border:1px solid rgba(234,179,8,0.3);border-radius:2px;padding:0.4rem 0.6rem;font-family:'DM Mono',monospace;font-size:0.65rem;color:#facc15;text-align:center">🥇 Gold<br><span style="opacity:0.7">80%+ mastery</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="slide-num">10 / 11</div>
+</section>
+
+<!-- ═══════════════════════════════════
+     SLIDE 11 — BEYOND COMPUTING
+═══════════════════════════════════ -->
+<section class="showcase-slide" id="s11" data-slide="11">
+  <div class="showcase-layout">
+    <div>
+      <div class="showcase-tag reveal"><span class="tag-dot" style="background:#f59e0b"></span><span style="color:#f59e0b">Religious Studies · Year 11</span></div>
+      <h2 class="showcase-title reveal reveal-delay-1">Not just<br>Computing</h2>
+      <div class="showcase-meta reveal reveal-delay-1">RS / Christianity in the USA — ⭐⭐⭐⭐</div>
+      <p class="showcase-desc reveal reveal-delay-2">The framework isn't subject-specific. Any teacher can build a self-marking, Classroom-integrated activity from the same template.</p>
+      <ul class="feature-list reveal reveal-delay-2">
+        <li>Any subject, any year group</li>
+        <li>Self-marking with instant feedback</li>
+        <li>Same Google Classroom sync — zero overhead</li>
+      </ul>
+      <a class="launch-link reveal reveal-delay-3" href="https://ogacomputing.github.io/interactive/RS/Christianity_USA/Fundamentalism_Creation_Assessment.html" target="_blank" rel="noopener">
+        Open resource
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M7 2l5 5-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+    </div>
+    <div class="screen-mock reveal reveal-delay-2">
+      <div class="screen-bar">
+        <span class="screen-dot" style="background:#f47068"></span>
+        <span class="screen-dot" style="background:#f9c74f"></span>
+        <span class="screen-dot" style="background:#52b788"></span>
+        <span class="screen-url">ogacomputing.github.io/interactive/RS/Christianity_USA/Fundamentalism_Creation_Assessment.html</span>
+      </div>
+      <div class="screen-body" style="background:#f5edd8;gap:0.6rem">
+        <div style="font-family:'DM Mono',monospace;font-size:0.65rem;color:#7c4f35;text-transform:uppercase;letter-spacing:0.12em;margin-bottom:0.3rem">Section 1 of 6 · 8 marks</div>
+        <div style="background:rgba(247,240,222,0.9);border:1px solid rgba(124,28,46,0.15);border-radius:4px;padding:0.8rem 1rem">
+          <p style="font-size:0.78rem;color:#1a0e0b;margin-bottom:0.6rem;line-height:1.5"><strong>1.</strong> Which Christian denomination practises <em>believers' baptism</em> by full immersion?</p>
+          <div style="display:flex;flex-direction:column;gap:0.3rem">
+            <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.72rem;color:#3a2218;cursor:pointer"><input type="radio" name="mock-q1" style="accent-color:#7c1c2e"> Roman Catholic</label>
+            <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.72rem;color:#3a2218;cursor:pointer"><input type="radio" name="mock-q1" checked style="accent-color:#7c1c2e"> Baptist</label>
+            <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.72rem;color:#3a2218;cursor:pointer"><input type="radio" name="mock-q1" style="accent-color:#7c1c2e"> Methodist</label>
+          </div>
+          <div style="margin-top:0.5rem;display:flex;align-items:center;gap:0.5rem;font-family:'DM Mono',monospace;font-size:0.65rem;color:#265840;background:rgba(38,88,64,0.1);border:1px solid rgba(38,88,64,0.25);border-radius:2px;padding:0.3rem 0.6rem">✓ Correct</div>
+        </div>
+        <div style="background:rgba(247,240,222,0.9);border:1px solid rgba(124,28,46,0.15);border-radius:4px;padding:0.8rem 1rem">
+          <p style="font-size:0.78rem;color:#1a0e0b;margin-bottom:0.6rem;line-height:1.5"><strong>2.</strong> Which religion believes in <em>karma</em>, <em>reincarnation</em> and <em>moksha</em>?</p>
+          <div style="display:flex;flex-direction:column;gap:0.3rem">
+            <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.72rem;color:#3a2218;cursor:pointer"><input type="radio" name="mock-q2" checked style="accent-color:#7c1c2e"> Judaism</label>
+            <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.72rem;color:#3a2218;cursor:pointer"><input type="radio" name="mock-q2" style="accent-color:#7c1c2e"> Hinduism</label>
+          </div>
+          <div style="margin-top:0.5rem;display:flex;align-items:center;gap:0.5rem;font-family:'DM Mono',monospace;font-size:0.65rem;color:#b02820;background:rgba(176,40,32,0.08);border:1px solid rgba(176,40,32,0.25);border-radius:2px;padding:0.3rem 0.6rem">✗ Hinduism — karma and reincarnation are Hindu concepts</div>
+        </div>
+        <div style="margin-top:0.3rem;font-family:'DM Mono',monospace;font-size:0.65rem;color:#7c4f35;text-align:right">1 / 2 correct so far</div>
+      </div>
+    </div>
+  </div>
+  <div class="slide-num">11 / 11</div>
+</section>
+
+<!-- ═══════════════════════════════════
+     SLIDE SUMMARY
+═══════════════════════════════════ -->
+<section id="s-summary" data-slide="12">
+  <div class="section-label reveal">Summary</div>
+  <h2 class="summary-heading reveal reveal-delay-1">Why this<br><span>matters</span></h2>
+  <div class="pillars reveal reveal-delay-2">
+    <div class="pillar">
+      <div class="pillar-head">For Teachers</div>
+      <ul class="pillar-list">
+        <li>Zero marking — grades sync live to Google Classroom</li>
+        <li>More engaged classrooms, less dead time</li>
+        <li>More teaching, less admin</li>
+      </ul>
+    </div>
+    <div class="pillar">
+      <div class="pillar-head">For Students</div>
+      <ul class="pillar-list">
+        <li>Run real code in the browser — see it work instantly</li>
+        <li>Right or wrong feedback immediately, not days later</li>
+        <li>Actual challenges to solve, not blank docs to fill in</li>
+      </ul>
+    </div>
+  </div>
+  <div class="github-footer reveal reveal-delay-3">
+    <span>github.com/OGAComputing/interactive</span>
+    <span>·</span>
+    <a href="https://ogacomputing.github.io/interactive/" target="_blank">ogacomputing.github.io/interactive</a>
+  </div>
+</section>
+
+<script>
+  // ── NAV DOTS
+  const slides = Array.from(document.querySelectorAll('[data-slide]'));
+  const dotsEl = document.getElementById('nav-dots');
+
+  slides.forEach((sl, i) => {
+    const d = document.createElement('button');
+    d.className = 'dot';
+    d.setAttribute('aria-label', `Go to slide ${i + 1}`);
+    d.addEventListener('click', () => sl.scrollIntoView({ behavior: 'smooth' }));
+    dotsEl.appendChild(d);
+  });
+
+  // ── INTERSECTION OBSERVER for scroll-snap active state & reveal animations
+  const dots = Array.from(dotsEl.querySelectorAll('.dot'));
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const idx = slides.indexOf(entry.target);
+        dots.forEach((d, i) => d.classList.toggle('active', i === idx));
+
+        // Trigger reveals inside this slide
+        entry.target.querySelectorAll('.reveal').forEach(el => {
+          el.classList.add('visible');
+        });
+
+        // Count-up animation for resource counter on slide 5
+        if (entry.target.id === 's5') {
+          const el = document.getElementById('resource-counter');
+          if (el && el.textContent === '0') {
+            const target = 42, duration = 1200;
+            const start = performance.now();
+            const tick = now => {
+              const t = Math.min((now - start) / duration, 1);
+              const ease = t < 0.5 ? 2*t*t : -1 + (4 - 2*t) * t;
+              el.textContent = Math.round(ease * target);
+              if (t < 1) requestAnimationFrame(tick);
+              else el.textContent = target;
+            };
+            requestAnimationFrame(tick);
+          }
+        }
+      }
+    });
+  }, { threshold: 0.4 });
+
+  slides.forEach(sl => observer.observe(sl));
+
+  // ── KEYBOARD NAVIGATION
+  document.addEventListener('keydown', e => {
+    const current = slides.findIndex(sl => {
+      const rect = sl.getBoundingClientRect();
+      return rect.top >= -100 && rect.top < window.innerHeight / 2;
+    });
+    if (e.key === 'ArrowDown' || e.key === 'PageDown') {
+      e.preventDefault();
+      if (current < slides.length - 1) slides[current + 1].scrollIntoView({ behavior: 'smooth' });
+    }
+    if (e.key === 'ArrowUp' || e.key === 'PageUp') {
+      e.preventDefault();
+      if (current > 0) slides[current - 1].scrollIntoView({ behavior: 'smooth' });
+    }
+  });
+
+  // Hide key hint after first scroll
+  let hinted = false;
+  window.addEventListener('scroll', () => {
+    if (!hinted) {
+      document.getElementById('key-hint').style.opacity = '0';
+      hinted = true;
+    }
+  }, { once: true });
+</script>
+</body>
+</html>
