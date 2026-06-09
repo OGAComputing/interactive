@@ -366,10 +366,26 @@
     clientId: '379663437881-iukh6qnkq8jmqtqko3qog0n6ohuhemmq.apps.googleusercontent.com',
     // Drive + Script scopes combined so the teacher signs in once and "Search my Drive"
     // can reuse the same token without triggering a second popup/redirect.
-    scopes: 'https://www.googleapis.com/auth/classroom.courses.readonly https://www.googleapis.com/auth/classroom.coursework.me https://www.googleapis.com/auth/classroom.coursework.students https://www.googleapis.com/auth/classroom.topics https://www.googleapis.com/auth/drive.metadata.readonly https://www.googleapis.com/auth/script.deployments'
+    scopes: 'https://www.googleapis.com/auth/classroom.courses.readonly https://www.googleapis.com/auth/classroom.coursework.me https://www.googleapis.com/auth/classroom.coursework.students https://www.googleapis.com/auth/classroom.topics https://www.googleapis.com/auth/drive.metadata.readonly https://www.googleapis.com/auth/script.deployments https://www.googleapis.com/auth/userinfo.email'
   };
 
   let accessToken = null;
+  let userEmail = '';
+  let isOGAMember = false;
+  const OGA_DOMAIN = '@grange.outwood.com';
+
+  async function resolveUserIdentity() {
+    try {
+      const res  = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: { 'Authorization': `Bearer ${accessToken}` }
+      });
+      const data = await res.json();
+      userEmail   = (data.email || '').toLowerCase();
+      isOGAMember = userEmail.endsWith(OGA_DOMAIN);
+    } catch (_) {
+      isOGAMember = false;
+    }
+  }
 
   // ── Redirect-based sign-in (no popup) ───────────────────
   // Navigates the whole page to Google's consent screen.
@@ -391,7 +407,7 @@
   function requestPermission() { signInViaRedirect(); }
 
   // Called after successful sign-in (from redirect or session restore).
-  function onSignInSuccess(data) {
+  async function onSignInSuccess(data) {
     accessToken = data.access_token;
     // Persist token for the rest of this browser session (survives page reloads).
     try { sessionStorage.setItem('oga_hub_token', JSON.stringify(data)); } catch (_) {}
@@ -400,10 +416,20 @@
     document.getElementById('teacher-status').textContent = '';
     document.getElementById('course-combobox').style.display = 'inline-block';
     document.body.classList.add('teacher-mode');
+
+    await resolveUserIdentity();
+
     fetchCourses();
-    const storedProxy = localStorage.getItem('oga_proxy_url');
-    if (!storedProxy) {
-      showNoProxyOptions();
+    if (isOGAMember) {
+      const storedProxy = localStorage.getItem('oga_proxy_url');
+      if (!storedProxy) showNoProxyOptions();
+    } else {
+      const storedProxy = localStorage.getItem('oga_proxy_url');
+      if (!storedProxy) {
+        document.getElementById('teacher-status').innerHTML =
+          '✅ Signed in. Grade sync is coming soon for your school — assignments will work now without it.';
+      }
+      // If a proxy is already stored, grade sync works normally — no message needed.
     }
   }
 
@@ -680,17 +706,20 @@
 
     // ── Pre-flight proxy check ────────────────────────────────────────────────
     if (!proxyUrl) {
-      const proceed = await assignModalConfirm(
-        '⚠️ Grade sync not configured',
-        `Students' scores won't be recorded in Classroom without a grade proxy.<br><br>
-        Run the one-time setup first: <a href="_teacher/setup.html" target="_blank">Proxy setup page →</a><br><br>
-        Assign without grade sync anyway?`,
-        [
-          { label: 'Cancel',       primary: false, value: false },
-          { label: 'Assign anyway', primary: true,  value: true  }
-        ]
-      );
-      if (!proceed) { restoreBtn(); return; }
+      if (isOGAMember) {
+        const proceed = await assignModalConfirm(
+          '⚠️ Grade sync not configured',
+          `Students' scores won't be recorded in Classroom without a grade proxy.<br><br>
+          Run the one-time setup first: <a href="_teacher/setup.html" target="_blank">Proxy setup page →</a><br><br>
+          Assign without grade sync anyway?`,
+          [
+            { label: 'Cancel',       primary: false, value: false },
+            { label: 'Assign anyway', primary: true,  value: true  }
+          ]
+        );
+        if (!proceed) { restoreBtn(); return; }
+      }
+      // Non-OGA teachers: grade sync not yet available — proceed without it.
     } else {
       let health = await checkProxyHealth(proxyUrl);
 
@@ -766,10 +795,12 @@
     });
 
     if (res.ok) {
-      showAssignModal(
-        '✅ Assigned!',
-        `"${title}" has been published to your class${proxyUrl ? ' with automatic grade sync enabled' : ' (no grade sync — proxy not configured)'}.`
-      );
+      const syncNote = proxyUrl
+        ? ' with automatic grade sync enabled'
+        : isOGAMember
+          ? ' (no grade sync — proxy not configured)'
+          : ' (grade sync coming soon for your school)';
+      showAssignModal('✅ Assigned!', `"${title}" has been published to your class${syncNote}.`);
     } else {
       console.error('Assignment creation failed:', await res.text());
       showAssignModal('❌ Assignment failed', 'Could not create the assignment. Check the browser console for details.');
