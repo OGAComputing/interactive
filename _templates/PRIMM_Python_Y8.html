@@ -239,6 +239,19 @@ color:  purple
     color: #22c55e; font-style: italic; font-weight: 700;
   }
 
+  /* ── WORD BANK (click-to-place) — available for Predict questions ── */
+  .wb-pool { display: flex; flex-wrap: wrap; gap: 0.4rem; padding: 0.5rem 0.7rem; background: #ede0ff; border: 1.5px dashed #b89fe0; border-radius: 8px; min-height: 40px; margin-bottom: 0.5rem; }
+  .wb-answer { display: flex; flex-wrap: wrap; gap: 0.35rem; padding: 0.45rem 0.7rem; background: white; border: 1.5px solid #d1c4f0; border-radius: 8px; min-height: 42px; align-items: center; margin-bottom: 0.5rem; }
+  .wb-answer.is-right { border-color: var(--green); background: #f0fdf4; }
+  .wb-answer.is-wrong { border-color: var(--red); background: #fff5f5; }
+  .wb-chip { display: inline-flex; align-items: center; padding: 0.28rem 0.65rem; background: var(--purple-light); color: white; border-radius: 5px; cursor: pointer; font-size: 0.84rem; font-weight: 700; user-select: none; transition: all 0.15s; }
+  .wb-chip:hover { background: var(--stage-p); transform: translateY(-1px); }
+  .wb-chip.used { opacity: 0.28; cursor: default; pointer-events: none; }
+  .wb-placed { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.28rem 0.6rem; background: #2d1060; color: #cdd6f4; border-radius: 5px; cursor: pointer; font-size: 0.84rem; font-family: 'Courier New', monospace; }
+  .wb-placed:hover { background: var(--red); color: white; }
+  .wb-empty-hint { color: var(--muted); font-style: italic; font-size: 0.8rem; align-self: center; }
+  .wb-label { font-size: 0.73rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 700; margin-bottom: 0.3rem; }
+
   @media (max-width: 600px) {
     .site-header { flex-wrap: wrap; } .header-code { display: none; } .stage-panel { padding: 1rem; }
   }
@@ -314,29 +327,42 @@ color:  purple
   </div>
 
   <!--
-    FILL IN ⑤: Predict questions — aim for 3–4 total, mixing MCQ and free-text.
-    Questions are shown ONE AT A TIME. Each card has its own "Check answer" button;
-    after checking, the student sees feedback, then clicks "Next question →" to
-    reveal the next card. The last question's "Next" calls showPredictReviewButton().
+    FILL IN ⑤: Predict questions — aim for 3–4 total.
+    Mix question types: use at most one or two free-text boxes; prefer MCQ, True/False,
+    or word-bank for the rest. Questions are shown ONE AT A TIME — each card has its
+    own "Check answer" button; after checking, the student sees feedback then clicks
+    "Next question →" to reveal the next card.
 
-    MCQ QUESTION pattern:
-      • name= on the radio group must match an entry in RADIO_GROUPS in the JS
-      • value= on each option must match the key used in P_CORRECT in the JS
-      • id the card as qcard_<name>, the feedback div as fb_<name>
-      • Keep all option texts roughly the same length — do not let the correct
-        answer be systematically longer than the others
-      • Check button calls: checkPredictMCQ('p_mcq1', 'qcard_p_mcq2')
-        (second arg = id of the NEXT card to reveal)
-      • Next button calls: nextPredictQ('qcard_p_mcq2')
+    ── QUESTION TYPES ──────────────────────────────────────────────────────────
 
-    FREE-TEXT QUESTION pattern (typically the last question):
-      • id= on the input must match an entry in TEXT_FIELDS in the JS
-      • id the card as qcard_<id>
-      • Check button calls: checkPredictText()
-      • Next button calls: showPredictReviewButton()
+    MCQ (4 options):
+      • name= must match an entry in RADIO_GROUPS; value= must match P_CORRECT key
+      • id: qcard_<name>, feedback: fb_<name>
+      • Keep all option texts roughly the same length
+      • Check: checkPredictMCQ('p_mcq1', 'qcard_p_mcq2')
+      • Next:  nextPredictQ('qcard_p_mcq2')
 
-    Rename p_mcq1 / p_mcq2 / p_text1 throughout to something meaningful,
-    e.g. p_which_line, p_output, p_what_error — and update the JS to match.
+    TRUE/FALSE (2-option MCQ — same pattern, just 2 radio options):
+      • Use when the question has a binary correct/incorrect answer
+      • Same radio-opts markup, same checkPredictMCQ/nextPredictQ calls
+
+    WORD BANK (click-to-place — good for "what is the output?" questions):
+      • Uses .wb-pool + .wb-answer markup (CSS already included above)
+      • Add a const WB_<id>_WORDS array + wbState object in the JS
+      • Render function: wbRender(); Place/remove: wbPlace(word) / wbRemove(idx)
+      • Check: a custom checkWordBank() function (see 1_Strings_PRIMM.html for
+        a complete worked example — search for "wbP3")
+      • Do NOT add word-bank ids to TEXT_FIELDS; save placed[] in state manually
+
+    FREE-TEXT (single-line input — use sparingly):
+      • id= must match an entry in TEXT_FIELDS
+      • Check: checkPredictText()
+      • Next:  showPredictReviewButton() (or nextPredictQ() if more questions follow)
+
+    ── DESIGN RULE ─────────────────────────────────────────────────────────────
+    Target: 1 MCQ + 1 True/False + 1 word-bank OR free-text per Predict section.
+    Never use free-text for questions with a single objectively correct answer —
+    that is what MCQ and word-bank are for.
   -->
 
   <!-- MCQ question 1 — visible immediately -->
@@ -472,9 +498,33 @@ color:  purple
     ║  or any instruction that implies starting fresh.                      ║
     ╚═══════════════════════════════════════════════════════════════════════╝
 
+    ── QUESTION TYPES FOR INVESTIGATE STEPS ────────────────────────────────
+
+    Mix question types — avoid making every step a free-text box.
+    Target: 2 text + 1 MCQ + 1 True/False across 4 steps.
+
+    TEXT (textarea):
+      • For open observations ("What changed?", "Why does this happen?")
+      • Add validate(v) to I_FIELDS with keyword checks where useful
+      • Set type:'text' (or omit — text is the default)
+
+    MCQ (4-option radio inside the step card):
+      • Use when the answer is one of a small set of concrete values
+        (e.g. "how many lines?", "which value is stored?")
+      • Add radio-opts markup with name="iN_group" onchange="saveState()"
+      • Add a feedback div: <div class="mcq-fb" id="fb_iN"></div>
+      • In I_FIELDS set type:'mcq', radioName:'iN_group',
+        correctValue:'option_X', passMsg:'…', failMsg:'…',
+        and validate() { const c = document.querySelector(...):checked;
+          if (!c) return 'Select…'; if (c.value!==X) return failMsg; return null; }
+      • Add the radio group name to RADIO_GROUPS so it is saved/restored
+
+    TRUE/FALSE (2-option radio — same MCQ pattern, 2 options):
+      • Use for binary yes/no questions ("Does it still work?")
+      • Same type:'mcq' setup with only 2 radio options
+
     Add/remove cards to match STEP_COUNT_I in the JS.
     The LAST step's button must call tryCompleteInvestigate() instead of nextStep().
-    Add per-step keyword validators in I_FIELDS in the JS.
   -->
   <div id="i_steps">
 
@@ -847,9 +897,15 @@ const P_FAIL_MSG = {
 // ═══════════════════════════════════════════════════════
 
 const I_FIELDS = [
-  // needsNewLine: set true when the step asks students to add a new line of code —
+  // type:'text' (default) — textarea answer with a validate(v) function.
+  // type:'mcq' — radio-group answer; add radioName, correctValue, passMsg, failMsg,
+  //   and a validate() (no arg) that queries the radio and returns null if correct.
+  //   Remove the field id from TEXT_FIELDS and add radioName to RADIO_GROUPS.
+  //
+  // needsNewLine: set true when the step asks students to ADD a new line of code —
   // the editor will auto-append a newline and position the cursor there on transition.
-  { id:'i1', cardId:'qcard_i1', needsNewLine: false, validate(v) {
+
+  { id:'i1', cardId:'qcard_i1', type:'text', needsNewLine: false, validate(v) {
     if (v.length < 4)  return 'Describe what happened — even a few words is fine.';
     if (isNonsense(v)) return "That doesn't look like a real answer.";
     // FILL IN: add a keyword check to guide the student if needed, e.g.:
@@ -857,17 +913,31 @@ const I_FIELDS = [
     //   return 'FILL IN: hint about what the student should have noticed.';
     return null;
   }},
-  { id:'i2', cardId:'qcard_i2', needsNewLine: false, validate(v) {
+
+  // Example MCQ step (replace i2 textarea with MCQ):
+  // { id:'i2', cardId:'qcard_i2', type:'mcq', radioName:'i2_mcq', correctValue:'option_b',
+  //   needsNewLine: false,
+  //   passMsg: 'Correct — FILL IN explanation.',
+  //   failMsg: 'Not quite — FILL IN hint.',
+  //   validate() {
+  //     const c = document.querySelector('input[name="i2_mcq"]:checked');
+  //     if (!c) return 'Select an answer before checking.';
+  //     if (c.value !== 'option_b') return 'FILL IN hint.';
+  //     return null;
+  //   },
+  // },
+
+  { id:'i2', cardId:'qcard_i2', type:'text', needsNewLine: false, validate(v) {
     if (v.length < 4)  return 'Describe what happened.';
     if (isNonsense(v)) return "That doesn't look like a real answer.";
     return null;
   }},
-  { id:'i3', cardId:'qcard_i3', needsNewLine: false, validate(v) {
+  { id:'i3', cardId:'qcard_i3', type:'text', needsNewLine: false, validate(v) {
     if (v.length < 4)  return 'Describe what happened.';
     if (isNonsense(v)) return "That doesn't look like a real answer.";
     return null;
   }},
-  { id:'i4', cardId:'qcard_i4', needsNewLine: false, validate(v) {
+  { id:'i4', cardId:'qcard_i4', type:'text', needsNewLine: false, validate(v) {
     if (v.length < 4)  return 'Describe what you observed.';
     if (isNonsense(v)) return "That doesn't look like a real answer.";
     return null;
@@ -894,7 +964,7 @@ let attemptCounts = state.attemptCounts || {};
 let iStepRan = state.iStepRan || {};
 let predictReviewTimer = null;
 let firstRunShown = false;
-const PREDICT_REVIEW_DELAY_MS = 10000;
+const PREDICT_REVIEW_DELAY_MS = 3000;
 
 const STAGES = ['P','R','I','M1','M2'];
 
@@ -1355,16 +1425,55 @@ function nextStep(stage, n) {
   if (stage !== 'I') return;
   const field = I_FIELDS[n - 1];
   if (!field) return;
-  const val  = (document.getElementById(field.id)?.value || '').trim();
   const card = document.getElementById(field.cardId);
-  const msg  = field.validate(val);
-  if (msg) {
+
+  const code    = document.getElementById('i_editor')?.value || '';
+  const codeMsg = I_CODE_CHECKS[n - 1]?.(code);
+  if (codeMsg) {
     card.classList.add('error');
     card.classList.remove('is-right');
-    fieldHint(card, msg);
-    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    recordIAttempt(n);
+    fieldHint(card, 'Make the code change first: ' + codeMsg);
+    document.getElementById('i_editor')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     return;
+  }
+
+  if (field.type === 'mcq') {
+    const chosen = document.querySelector(`input[name="${field.radioName}"]:checked`);
+    if (!chosen) {
+      card.classList.add('error');
+      fieldHint(card, 'Select an answer before checking — even a guess is fine.');
+      return;
+    }
+    const ok = chosen.value === field.correctValue;
+    document.querySelectorAll(`input[name="${field.radioName}"]`).forEach(r => {
+      const opt = r.closest('.radio-opt');
+      opt.classList.remove('correct', 'wrong');
+      if (r.value === field.correctValue) opt.classList.add('correct');
+      else if (r.value === chosen.value && !ok) opt.classList.add('wrong');
+    });
+    const fb = document.getElementById('fb_' + field.id);
+    if (fb) {
+      fb.className = 'mcq-fb ' + (ok ? 'pass' : 'fail');
+      fb.textContent = (ok ? '✔ ' : '✘ ') + (ok ? field.passMsg : field.failMsg);
+    }
+    if (!ok) {
+      card.classList.add('error');
+      card.classList.remove('is-right');
+      fieldHint(card, '');
+      card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      recordIAttempt(n);
+      return;
+    }
+  } else {
+    const msg = field.validate((document.getElementById(field.id)?.value || '').trim());
+    if (msg) {
+      card.classList.add('error');
+      card.classList.remove('is-right');
+      fieldHint(card, msg);
+      card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      recordIAttempt(n);
+      return;
+    }
   }
   card.classList.remove('error');
   card.classList.add('is-right');
@@ -1399,9 +1508,20 @@ function tryCompleteInvestigate() {
   let firstError = null;
 
   I_FIELDS.forEach(f => {
-    const val  = (document.getElementById(f.id)?.value || '').trim();
     const card = document.getElementById(f.cardId);
-    const msg  = f.validate(val);
+    let msg;
+    if (f.type === 'mcq') {
+      msg = f.validate();
+      if (msg) {
+        const chosen = document.querySelector(`input[name="${f.radioName}"]:checked`);
+        if (chosen && chosen.value !== f.correctValue) {
+          const fb = document.getElementById('fb_' + f.id);
+          if (fb) { fb.className = 'mcq-fb fail'; fb.textContent = '✘ ' + f.failMsg; }
+        }
+      }
+    } else {
+      msg = f.validate((document.getElementById(f.id)?.value || '').trim());
+    }
     if (msg) {
       card?.classList.add('error');
       card?.classList.remove('is-right');

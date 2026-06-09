@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- ACTIVITY
+title:  Variables — Formatted Print PRIMM Practice
+type:   PRIMM
+stars:  4
+desc:   Predict, Run, Investigate, Modify and Make: combining variables with print() for formatted output
+color:  purple
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PRIMM Practice · Variables: Formatted Print · Year 8</title>
+<link rel="stylesheet" href="../../../shared.css">
+<style>
+  :root {
+    --navy:         #0f1f3d;
+    --purple:       #5b2d8e;
+    --purple-light: #7c3fbf;
+    --purple-pale:  #ede0ff;
+    --teal:         #00b4a0;
+    --amber:        #f5a623;
+    --white:        #ffffff;
+    --off-white:    #f8f6ff;
+    --text:         #1a1a2e;
+    --muted:        #6b7280;
+    --code-bg:      #1e1e2e;
+    --code-text:    #cdd6f4;
+    --green:        #22c55e;
+    --green-bg:     #dcfce7;
+    --red:          #ef4444;
+    --red-bg:       #fee2e2;
+    --stage-p:      #7c3fbf;
+    --stage-r:      #0891b2;
+    --stage-i:      #059669;
+    --stage-m1:     #d97706;
+    --stage-m2:     #dc2626;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Trebuchet MS','Calibri',sans-serif; background: var(--navy); color: var(--text); min-height: 100vh; }
+  .site-header {
+    background: linear-gradient(135deg,#1a0a2e 0%,#2d1060 50%,#0f1f3d 100%);
+    padding: 1.5rem 2rem 1rem; border-bottom: 3px solid var(--purple-light);
+    display: flex; align-items: center; gap: 1.5rem;
+  }
+  .header-icon { font-family: 'Courier New',monospace; font-size: 1.9rem; font-weight: 900; color: var(--purple-pale); line-height: 1; letter-spacing: -0.03em; }
+  .header-text h1 { font-size: 1.5rem; color: var(--white); font-weight: 700; letter-spacing: -0.02em; }
+  .header-text p  { color: #b4a0e0; font-size: 0.85rem; margin-top: 0.2rem; }
+  .header-code {
+    background: var(--code-bg); border: 1px solid #3d2d5e; border-radius: 8px;
+    padding: 0.6rem 1rem; font-family: 'Courier New',monospace; font-size: 0.78rem;
+    color: var(--code-text); margin-left: auto; line-height: 1.9;
+  }
+  .kw  { color: #cba6f7; }
+  .fn  { color: #89b4fa; }
+  .st  { color: #a6e3a1; }
+  .num { color: #fab387; }
+  .var { color: #cba6f7; }
+  .primm-nav { display: flex; background: #0a0a1a; border-bottom: 2px solid #2d1060; overflow-x: auto; }
+  .primm-nav button {
+    flex: 1; min-width: 90px; padding: 0.85rem 0.5rem; border: none; background: transparent;
+    cursor: pointer; font-family: 'Trebuchet MS',sans-serif; font-size: 0.8rem; font-weight: 700;
+    color: #6b5a90; display: flex; flex-direction: column; align-items: center; gap: 0.3rem;
+    transition: all 0.2s; border-bottom: 3px solid transparent; position: relative;
+  }
+  .primm-nav button .stage-letter {
+    width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center;
+    justify-content: center; font-size: 1rem; font-weight: 900; background: #1a1040;
+    color: #5a4880; transition: all 0.2s; position: relative;
+  }
+  .primm-nav button .stage-name { font-size: 0.7rem; letter-spacing: 0.05em; text-transform: uppercase; }
+  .primm-nav button.active { color: var(--white); }
+  .primm-nav button[data-stage="P"].active  { border-bottom-color: var(--stage-p); }
+  .primm-nav button[data-stage="P"].active  .stage-letter { background: var(--stage-p); color: white; }
+  .primm-nav button[data-stage="R"].active  { border-bottom-color: var(--stage-r); }
+  .primm-nav button[data-stage="R"].active  .stage-letter { background: var(--stage-r); color: white; }
+  .primm-nav button[data-stage="I"].active  { border-bottom-color: var(--stage-i); }
+  .primm-nav button[data-stage="I"].active  .stage-letter { background: var(--stage-i); color: white; }
+  .primm-nav button[data-stage="M1"].active { border-bottom-color: var(--stage-m1); }
+  .primm-nav button[data-stage="M1"].active .stage-letter { background: var(--stage-m1); color: white; }
+  .primm-nav button[data-stage="M2"].active { border-bottom-color: var(--stage-m2); }
+  .primm-nav button[data-stage="M2"].active .stage-letter { background: var(--stage-m2); color: white; }
+  .primm-nav button.done .stage-letter::after {
+    content: '✓'; position: absolute; font-size: 0.55rem; top: -2px; right: -2px;
+    background: var(--green); color: white; width: 14px; height: 14px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .stage-panel { display: none; padding: 1.5rem 2rem 3rem; max-width: 900px; margin: 0 auto; }
+  .stage-panel.active { display: block; }
+  .stage-header {
+    display: flex; align-items: center; gap: 1rem;
+    margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid #2d1060;
+  }
+  .stage-badge { width: 52px; height: 52px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; font-weight: 900; color: white; flex-shrink: 0; }
+  .badge-P  { background: var(--stage-p); }
+  .badge-R  { background: var(--stage-r); }
+  .badge-I  { background: var(--stage-i); }
+  .badge-M1 { background: var(--stage-m1); }
+  .badge-M2 { background: var(--stage-m2); }
+  .stage-header-text h2 { color: var(--white); font-size: 1.3rem; }
+  .stage-header-text p  { color: #b4a0e0; font-size: 0.85rem; margin-top: 0.2rem; }
+  .annotated-code {
+    background: var(--code-bg); border: 1px solid #3d2d5e; border-radius: 10px;
+    padding: 1.2rem 1.5rem; font-family: 'Courier New',monospace;
+    font-size: 0.88rem; line-height: 2; color: var(--code-text); margin-bottom: 1.2rem;
+  }
+  .ann-row { display: grid; grid-template-columns: 1.6rem 1fr auto; align-items: center; gap: 0.5rem 1rem; }
+  .ann-label { font-family: 'Trebuchet MS',sans-serif; font-size: 0.72rem; color: #f38ba8; font-style: italic; text-align: right; white-space: nowrap; }
+  .line-num  { color: #585b70; text-align: right; user-select: none; font-size: 0.8rem; }
+  .q-card {
+    background: var(--off-white); border-radius: 10px; padding: 1rem 1.2rem;
+    margin-bottom: 1rem; border-left: 4px solid var(--purple-light); transition: border-left-color 0.2s, background 0.2s;
+  }
+  .q-card.error, .q-card.is-wrong { border-left-color: var(--red); background: #fff5f5; }
+  .q-label { display: block; font-weight: 700; color: var(--navy); margin-bottom: 0.6rem; font-size: 0.9rem; }
+  .q-num { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: var(--purple-light); color: white; font-size: 0.75rem; margin-right: 0.4rem; flex-shrink: 0; vertical-align: middle; }
+  .q-card input[type=text], .q-card textarea {
+    width: 100%; padding: 0.6rem 0.8rem; border: 1.5px solid #d1c4f0; border-radius: 6px;
+    font-family: 'Trebuchet MS',sans-serif; font-size: 0.88rem; resize: vertical;
+    background: white; color: var(--text); transition: border-color 0.2s;
+  }
+  .q-card input[type=text]:focus, .q-card textarea:focus { outline: none; border-color: var(--purple-light); }
+  .q-card textarea { min-height: 65px; }
+  .q-card.error input[type=text], .q-card.error textarea,
+  .q-card.is-wrong input[type=text], .q-card.is-wrong textarea { border-color: var(--red); }
+  .radio-opts { display: flex; flex-direction: column; gap: 0.4rem; }
+  .radio-opt {
+    display: flex; align-items: center; gap: 0.6rem; padding: 0.5rem 0.8rem;
+    border-radius: 6px; border: 1.5px solid #d1c4f0; background: white; cursor: pointer; transition: all 0.15s;
+  }
+  .radio-opt:hover { border-color: var(--purple-light); background: #f0e8ff; }
+  .radio-opt input[type=radio] { accent-color: var(--purple); width: 15px; height: 15px; flex-shrink: 0; }
+  .radio-opt span { font-size: 0.88rem; color: var(--text); }
+  .radio-opt.correct { border-color: #22c55e !important; background: #f0fdf4 !important; }
+  .radio-opt.wrong   { border-color: var(--red) !important; background: #fff5f5 !important; }
+  .mcq-fb { font-size: 0.82rem; font-weight: 600; margin-top: 0.5rem; padding: 0.4rem 0.7rem; border-radius: 5px; display: none; }
+  .mcq-fb.pass { display: block; color: #166534; background: var(--green-bg); border: 1px solid #86efac; }
+  .mcq-fb.fail { display: block; color: #991b1b; background: var(--red-bg);   border: 1px solid #fca5a5; }
+  .predict-warning {
+    background: #fff3cd; border: 1.5px solid #ffc107; border-radius: 8px;
+    padding: 0.7rem 1rem; font-size: 0.85rem; color: #664d03; font-weight: 600;
+    margin-top: 0.8rem; display: none; align-items: center; gap: 0.5rem;
+  }
+  .code-checker { margin-bottom: 1.2rem; }
+  .checker-textarea { background: #0d0d1a; color: #cdd6f4; font-family: 'Courier New',monospace; font-size: 0.88rem; line-height: 1.7; padding: 0.8rem 1rem; border: none; outline: none; min-height: 200px; }
+  .checker-footer { padding: 0.6rem 1rem; display: flex; align-items: center; gap: 0.8rem; background: #0d0d1a; border-top: 1px solid #2d1060; flex-wrap: wrap; }
+  .btn { padding: 0.5rem 1.2rem; border-radius: 6px; border: none; cursor: pointer; font-family: 'Trebuchet MS',sans-serif; font-weight: 700; font-size: 0.82rem; transition: all 0.2s; display: inline-flex; align-items: center; gap: 0.4rem; }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(1); }
+  .btn-check { background: var(--purple-light); color: white; } .btn-check:hover { background: var(--stage-p); }
+  .btn-next  { background: var(--teal); color: var(--navy); font-weight: 800; } .btn-next:hover { background: #009e8c; }
+  .btn-reset { background: #2d1060; color: #b4a0e0; font-size: 0.78rem; } .btn-reset:hover { background: #3d2070; }
+  .btn-skip { background: transparent; color: var(--muted); border: 1px dashed #3d3d5a; font-size: 0.75rem; font-style: italic; } .btn-skip:hover { background: #1a0a2e; color: #f87171; border-color: var(--red); border-style: solid; }
+  .primm-nav button.skipped .stage-letter { background: var(--red) !important; color: white !important; }
+  .feedback { padding: 0.6rem 0.9rem; border-radius: 6px; font-size: 0.82rem; font-weight: 600; flex: 1; min-width: 0; }
+  .feedback.pass   { background: var(--green-bg); color: #166534; border: 1px solid #86efac; }
+  .feedback.fail   { background: var(--red-bg);   color: #991b1b; border: 1px solid #fca5a5; }
+  .feedback.hidden  { display: none; }
+  .feedback.loading { background: #1a1040; color: #b4a0e0; border: 1px solid #3d2d5e; }
+  .py-status { font-size: 0.7rem; letter-spacing: 0.07em; padding: 0.2rem 1.5rem; background: #070710; color: #3d3560; text-align: right; }
+  .info-box { background: #1a1040; border: 1px solid #3d2d5e; border-radius: 8px; padding: 0.8rem 1rem; margin-bottom: 1rem; font-size: 0.85rem; color: #b4a0e0; display: flex; gap: 0.5rem; }
+  .info-box .icon { font-size: 1.1rem; flex-shrink: 0; }
+  .hint-box { background: #1c0a3e; border-left: 3px solid var(--amber); border-radius: 0 6px 6px 0; padding: 0.6rem 0.9rem; font-size: 0.82rem; color: #f5d88a; margin-bottom: 0.8rem; font-style: italic; }
+  .modify-task { background: var(--off-white); border-radius: 10px; padding: 0.9rem 1.2rem; margin-bottom: 0.5rem; border-left: 4px solid var(--stage-m1); display: flex; gap: 1rem; align-items: flex-start; }
+  .modify-task.ext { border-left-color: var(--stage-m2); }
+  .modify-task .stars { font-size: 1rem; flex-shrink: 0; min-width: 52px; }
+  .modify-task .task-text { font-size: 0.87rem; color: var(--text); line-height: 1.55; }
+  .modify-task .task-text strong { color: var(--purple); }
+  .req-list { list-style: none; margin: 1rem 0; }
+  .req-list li { display: flex; align-items: flex-start; gap: 0.6rem; background: var(--off-white); border: 1.5px solid #d1c4f0; border-radius: 8px; padding: 0.7rem 1rem; margin-bottom: 0.5rem; font-size: 0.87rem; color: var(--text); line-height: 1.5; }
+  .req-list li.ext { border-color: var(--amber); }
+  .section-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); font-weight: 700; margin-bottom: 0.4rem; margin-top: 1.2rem; }
+  .completion-banner { background: linear-gradient(135deg,#1a4a2e,#0d2d1a); border: 2px solid var(--green); border-radius: 12px; padding: 1.5rem; text-align: center; color: var(--green); margin-top: 2rem; display: none; }
+  .completion-banner h3 { font-size: 1.3rem; margin-bottom: 0.5rem; }
+  .completion-banner p  { color: #86efac; font-size: 0.88rem; }
+  .progress-strip { height: 8px; background: #1a1040; position: sticky; top: 0; z-index: 10; }
+  .progress-fill  { height: 100%; background: linear-gradient(90deg,var(--purple),var(--teal)); transition: width 0.5s ease; }
+  .step-hidden { display: none !important; }
+  @media (max-width: 600px) {
+    .site-header { flex-wrap: wrap; } .header-code { display: none; } .stage-panel { padding: 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div style="font-size:2.8rem;line-height:1">💬</div>
+
+  <div class="header-text">
+    <h1>PRIMM Practice</h1>
+    <p>Variables: Formatted Print &nbsp;·&nbsp; Python Programming &nbsp;·&nbsp; Year 8</p>
+  </div>
+
+  <pre class="header-code"><span class="var">name</span> = <span class="st">"Riley"</span>
+<span class="var">mood</span> = <span class="st">"Happy"</span>
+<span class="fn">print</span>(<span class="st">"You are"</span>, <span class="var">name</span>,
+      <span class="st">"feeling"</span>, <span class="var">mood</span>)</pre>
+</header>
+
+<div class="progress-strip"><div class="progress-fill" id="progressFill" style="width:20%"></div></div>
+<div class="py-status" id="pyStatus" style="display:none">Python runtime: <span id="pyStatusText">loading…</span></div>
+
+<nav class="primm-nav">
+  <button data-stage="P"  class="active" onclick="showStage('P')"><span class="stage-letter">P</span><span class="stage-name">Predict</span></button>
+  <button data-stage="R"  onclick="showStage('R')"><span class="stage-letter">R</span><span class="stage-name">Run</span></button>
+  <button data-stage="I"  onclick="showStage('I')"><span class="stage-letter">I</span><span class="stage-name">Investigate</span></button>
+  <button data-stage="M1" onclick="showStage('M1')"><span class="stage-letter">M</span><span class="stage-name">Modify</span></button>
+  <button data-stage="M2" onclick="showStage('M2')"><span class="stage-letter">M</span><span class="stage-name">Make</span></button>
+</nav>
+
+
+<!-- ════ P — PREDICT ════ -->
+<section class="stage-panel active" id="stage-P">
+  <div class="stage-header">
+    <div class="stage-badge badge-P">P</div>
+    <div class="stage-header-text">
+      <h2>Predict</h2>
+      <p>Study the code carefully. Answer every question, even if it's a guess.</p>
+    </div>
+  </div>
+
+  <div class="info-box">
+    <span class="icon">💡</span>
+    <span>Read the code below <strong>but don't run it yet</strong>. Look carefully at how variables and strings are mixed together inside the print() call.</span>
+  </div>
+
+  <div class="annotated-code">
+    <div class="ann-row"><span class="line-num">1</span><span><span class="var">name</span> = <span class="st">"Riley"</span></span><span class="ann-label">string variable</span></div>
+    <div class="ann-row"><span class="line-num">2</span><span><span class="var">mood</span> = <span class="st">"Happy"</span></span><span class="ann-label">another string variable</span></div>
+    <div class="ann-row"><span class="line-num">3</span><span><span class="fn">print</span>(<span class="st">"You are"</span>, <span class="var">name</span>, <span class="st">"and you are feeling"</span>, <span class="var">mood</span>)</span><span class="ann-label">mixes strings and variables</span></div>
+  </div>
+
+  <div class="q-card" id="qcard_p_mcq1">
+    <label class="q-label"><span class="q-num">1</span> What will line 3 print?</label>
+    <div class="radio-opts" id="ropts_p_mcq1">
+      <label class="radio-opt"><input type="radio" name="p_mcq1" value="option_a" onchange="saveState()"> <span>You are name and you are feeling mood</span></label>
+      <label class="radio-opt"><input type="radio" name="p_mcq1" value="option_b" onchange="saveState()"> <span>You are "Riley" and you are feeling "Happy"</span></label>
+      <label class="radio-opt"><input type="radio" name="p_mcq1" value="option_c" onchange="saveState()"> <span>You are Riley and you are feeling Happy</span></label>
+      <label class="radio-opt"><input type="radio" name="p_mcq1" value="option_d" onchange="saveState()"> <span>An error — you cannot mix strings and variables in one print()</span></label>
+    </div>
+    <div class="mcq-fb" id="fb_p_mcq1"></div>
+  </div>
+
+  <div class="q-card" id="qcard_p_mcq2">
+    <label class="q-label"><span class="q-num">2</span> Why does Python replace <code style="background:#ede0ff;padding:0 3px;border-radius:3px">name</code> and <code style="background:#ede0ff;padding:0 3px;border-radius:3px">mood</code> with their values in the output?</label>
+    <div class="radio-opts" id="ropts_p_mcq2">
+      <label class="radio-opt"><input type="radio" name="p_mcq2" value="option_a" onchange="saveState()"> <span>Because Python translates variable names into English words automatically</span></label>
+      <label class="radio-opt"><input type="radio" name="p_mcq2" value="option_b" onchange="saveState()"> <span>Because name and mood are variables — Python looks up and uses their stored values</span></label>
+      <label class="radio-opt"><input type="radio" name="p_mcq2" value="option_c" onchange="saveState()"> <span>Because the comma before each variable triggers a special display mode in Python</span></label>
+      <label class="radio-opt"><input type="radio" name="p_mcq2" value="option_d" onchange="saveState()"> <span>Because variables without speech marks are always treated as the word "Hello"</span></label>
+    </div>
+    <div class="mcq-fb" id="fb_p_mcq2"></div>
+  </div>
+
+  <div class="q-card" id="qcard_p_text1">
+    <label class="q-label"><span class="q-num">3</span> If line 2 was changed to <code style="background:#ede0ff;padding:0 3px;border-radius:3px">mood = "Excited"</code>, what would the full output line be?</label>
+    <input type="text" id="p_text1" placeholder="Type the full output line here…" oninput="saveState(); clearPredictError('qcard_p_text1')">
+    <div class="hint-box" style="margin-top:0.6rem">Hint: only the value of mood changes — everything else in the print() stays the same.</div>
+    <div class="mcq-fb" id="fb_p_text1"></div>
+  </div>
+
+  <div class="predict-warning" id="predictWarning">
+    ⚠️ Please answer every question above — even a guess is fine!
+  </div>
+
+  <button class="btn btn-check" id="btn_check_predict" onclick="tryCompletePredict()" style="margin-top:1rem">
+    ✓ Check predictions
+  </button>
+  <button class="btn btn-next step-hidden" id="btn_goto_r" onclick="reviewedGoToRun()" style="margin-top:1rem">
+    ✓ Reviewed — go to Run →
+  </button>
+</section>
+
+
+<!-- ════ R — RUN ════ -->
+<section class="stage-panel" id="stage-R">
+  <div class="stage-header">
+    <div class="stage-badge badge-R">R</div>
+    <div class="stage-header-text">
+      <h2>Run</h2>
+      <p>Run the code and compare the output with your predictions.</p>
+    </div>
+  </div>
+
+  <div class="info-box">
+    <span class="icon">🖥️</span>
+    <span>Use the <strong>Run code</strong> button to see the program in action. Notice how the output sentence combines the fixed text strings with the values from each variable.</span>
+  </div>
+
+  <div class="code-checker">
+    <textarea class="checker-textarea" id="r_editor" data-title="Python Editor"></textarea>
+    <div class="checker-footer">
+      <button class="btn btn-check" onclick="runCodeInEditor('r_editor', 'r_fb_run', [])">▶ Run code</button>
+      <div class="feedback loading hidden" id="r_fb_run"></div>
+    </div>
+  </div>
+
+  <div class="hint-box">💡 When you put a variable name inside print() <em>without</em> speech marks, Python looks up its stored value and uses that. Commas separate each item — Python adds a space between them automatically.</div>
+
+  <div class="q-card" id="qcard_r1">
+    <label class="q-label"><span class="q-num">1</span> Describe what you saw in the output. How does Python combine the fixed strings with the variable values — and did anything surprise you?</label>
+    <textarea id="r1" placeholder="Write what appeared in the output panel…" oninput="saveState(); clearRunError('qcard_r1')"></textarea>
+  </div>
+
+  <button class="btn btn-check" id="btn_check_run" onclick="tryCompleteRun()" style="margin-top:1rem">
+    ⚡ Check response
+  </button>
+  <button class="btn btn-next step-hidden" id="btn_goto_i" onclick="completeStage('R')" style="margin-top:1rem">
+    ✓ go to Investigate →
+  </button>
+</section>
+
+
+<!-- ════ I — INVESTIGATE ════ -->
+<section class="stage-panel" id="stage-I">
+  <div class="stage-header">
+    <div class="stage-badge badge-I">I</div>
+    <div class="stage-header-text">
+      <h2>Investigate</h2>
+      <p>Make each change in the editor below. Keep your changes — each step builds on the last.</p>
+    </div>
+  </div>
+
+  <div class="ac-progress-bar" style="height: 8px; margin-bottom: 10px;">
+    <div class="ac-progress-fill" id="progress-fill-I" style="width: 0%; background: var(--stage-i);"></div>
+  </div>
+
+  <div id="i_steps">
+
+    <div class="q-card" id="qcard_i1" style="border-left-color:var(--stage-i)">
+      <label class="q-label"><span class="q-num" style="background:var(--stage-i)">1</span>
+        In the editor below, change <code style="background:#ede0ff;padding:0 3px;border-radius:3px">mood = "Happy"</code>
+        to <code style="background:#ede0ff;padding:0 3px;border-radius:3px">mood = "Excited"</code>.
+        Run it. What changes in the output and why?
+      </label>
+      <textarea id="i1" placeholder="Describe what changed…" oninput="saveState()"></textarea>
+      <button class="btn btn-next" style="margin-top:10px" onclick="nextStep('I', 1)">Next Investigation →</button>
+      <button class="btn btn-skip" id="btn_skip_i1" style="margin-top:6px;display:none" onclick="skipStep('I')">Move on without completing →</button>
+    </div>
+
+    <div class="q-card step-hidden" id="qcard_i2" style="border-left-color:var(--stage-i)">
+      <label class="q-label"><span class="q-num" style="background:var(--stage-i)">2</span>
+        Keep step 1. Also change <code style="background:#ede0ff;padding:0 3px;border-radius:3px">name = "Riley"</code>
+        to your own first name. Run it. What part of the output changed?
+      </label>
+      <textarea id="i2" placeholder="Describe what happened…" oninput="saveState()"></textarea>
+      <button class="btn btn-next" style="margin-top:10px" onclick="nextStep('I', 2)">Next Investigation →</button>
+      <button class="btn btn-skip" id="btn_skip_i2" style="margin-top:6px;display:none" onclick="skipStep('I')">Move on without completing →</button>
+    </div>
+
+    <div class="q-card step-hidden" id="qcard_i3" style="border-left-color:var(--stage-i)">
+      <label class="q-label"><span class="q-num" style="background:var(--stage-i)">3</span>
+        Keep all your changes. Add <code style="background:#ede0ff;padding:0 3px;border-radius:3px">age = 13</code>
+        on a new line before the print(). Then extend the print() to include the age:
+        <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print("You are", name, "and you are feeling", mood, "and you are", age, "years old")</code>.
+        Run it. What is the full output now?
+      </label>
+      <textarea id="i3" placeholder="Write the full output line…" oninput="saveState()"></textarea>
+      <button class="btn btn-next" style="margin-top:10px" onclick="nextStep('I', 3)">Next Investigation →</button>
+      <button class="btn btn-skip" id="btn_skip_i3" style="margin-top:6px;display:none" onclick="skipStep('I')">Move on without completing →</button>
+    </div>
+
+    <div class="q-card step-hidden" id="qcard_i4" style="border-left-color:var(--stage-i)">
+      <label class="q-label"><span class="q-num" style="background:var(--stage-i)">4</span>
+        Keep all changes. Add <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print("name")</code>
+        (with speech marks around name) on a new line. Run it.
+        How does <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print("name")</code> differ from
+        <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print(name)</code> — and why?
+      </label>
+      <textarea id="i4" placeholder="Describe the difference and explain why…" oninput="saveState()"></textarea>
+      <button class="btn btn-next" style="margin-top:10px" onclick="tryCompleteInvestigate()">Finish Investigation →</button>
+      <button class="btn btn-skip" id="btn_skip_i4" style="margin-top:6px;display:none" onclick="skipStep('I')">Move on without completing →</button>
+    </div>
+
+  </div>
+
+  <div class="code-checker" style="margin-top:1rem">
+    <textarea class="checker-textarea" id="i_editor" data-title="Python Editor" oninput="saveState()"></textarea>
+    <div class="checker-footer">
+      <button class="btn btn-check" onclick="runCodeInEditor('i_editor', 'i_fb_run', [])">▶ Run code</button>
+      <button class="btn btn-reset" onclick="resetInvestigateEditor()">↺ Reset to original</button>
+      <div class="feedback loading hidden" id="i_fb_run"></div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ════ M1 — MODIFY ════ -->
+<section class="stage-panel" id="stage-M1">
+  <div class="stage-header">
+    <div class="stage-badge badge-M1">M</div>
+    <div class="stage-header-text">
+      <h2>Modify</h2>
+      <p>Each modification builds on the last — keep adding to your code in the editor below.</p>
+    </div>
+  </div>
+
+  <div class="ac-progress-bar" style="height: 8px; margin-bottom: 10px;">
+    <div class="ac-progress-fill" id="progress-fill-M1" style="width: 0%; background: var(--stage-m1);"></div>
+  </div>
+
+  <div id="m1_steps">
+
+    <div id="m1_step_1">
+      <div class="section-label">★ Modification 1 — Use your own details</div>
+      <div class="modify-task">
+        <span class="stars">★</span>
+        <div class="task-text">
+          Change the <strong>name</strong> variable to your own name, and the <strong>mood</strong>
+          variable to how you are actually feeling right now. Run it.
+          The output sentence should now describe <em>you</em>, not Riley.
+        </div>
+      </div>
+    </div>
+
+    <div id="m1_step_2" class="step-hidden">
+      <div class="section-label">★★ Modification 2 — Add age to the sentence</div>
+      <div class="modify-task">
+        <span class="stars">★★</span>
+        <div class="task-text">
+          Keep mod 1. Create an <strong>age</strong> variable with your actual age (as a number,
+          no speech marks). Update the print() sentence so it reads something like:
+          <em>"You are [NAME], aged [AGE] and feeling [MOOD]"</em>.
+        </div>
+      </div>
+    </div>
+
+    <div id="m1_step_3" class="step-hidden">
+      <div class="section-label">★★ Modification 3 — Add a second sentence</div>
+      <div class="modify-task">
+        <span class="stars">★★</span>
+        <div class="task-text">
+          Keep mods 1–2. Create a <strong>subject</strong> variable for your favourite school subject.
+          Add a <strong>second print() statement</strong> that uses it — something like:
+          <em>"My favourite subject is [SUBJECT]"</em>.
+        </div>
+      </div>
+    </div>
+
+    <div id="m1_step_4" class="step-hidden">
+      <div class="section-label">★★★ Modification 4 — Add a third sentence</div>
+      <div class="modify-task">
+        <span class="stars">★★★</span>
+        <div class="task-text">
+          Keep mods 1–3. Create a <strong>city</strong> variable for your nearest city.
+          Add a <strong>third print() statement</strong> that uses it — something like:
+          <em>"I live near [CITY]"</em>.
+          Your program should now produce three formatted sentences about you.
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="code-checker">
+    <textarea class="checker-textarea" id="m1_editor" data-title="Python Editor" oninput="saveState()"></textarea>
+    <div class="checker-footer">
+      <button class="btn btn-check" id="btn_check_m1" onclick="checkMod()">⚡ Check modification 1</button>
+      <div class="feedback hidden" id="fb_m1"></div>
+    </div>
+  </div>
+
+  <button class="btn btn-skip" id="btn_skip_m1" onclick="skipStep('M1')" style="margin-top:0.5rem;display:none">Skip this task →</button>
+  <button class="btn btn-next step-hidden" id="btn_goto_m2" onclick="completeStage('M1')" style="margin-top:1rem">
+    ✓ All modifications done — go to Make →
+  </button>
+</section>
+
+
+<!-- ════ M2 — MAKE ════ -->
+<section class="stage-panel" id="stage-M2">
+  <div class="stage-header">
+    <div class="stage-badge badge-M2">M</div>
+    <div class="stage-header-text">
+      <h2>Make</h2>
+      <p>Build a <strong>personal profile program</strong> from scratch.</p>
+    </div>
+  </div>
+
+  <div class="ac-progress-bar" style="height: 8px; margin-bottom: 10px;">
+    <div class="ac-progress-fill" id="progress-fill-M2" style="width: 0%; background: var(--stage-m2);"></div>
+  </div>
+
+  <div class="info-box">
+    <span class="icon">🔨</span>
+    <span>Write a program (in the editor below — don't copy from above) that stores six facts about a person as variables and prints at least two sentences using them. <strong>All criteria below must be met.</strong></span>
+  </div>
+
+  <div class="section-label">What your program must do</div>
+
+  <ul class="req-list">
+    <li><span>1</span> Create <strong>at least 6 variables</strong> describing a person — e.g. name, age, favouriteFood, pet, city, sport.</li>
+    <li><span>2</span> Print at least <strong>two sentences</strong> using these variables.</li>
+    <li><span>3</span> Each sentence must <strong>mix string text and variables</strong> using commas inside print().</li>
+    <li><span>4</span> Each sentence must use <strong>at least 2 different variables</strong>.</li>
+    <li><span>5</span> The program runs without any errors.</li>
+  </ul>
+
+  <div class="code-checker">
+    <textarea class="checker-textarea" id="m2_editor" data-title="Personal Profile Program" style="min-height:320px" oninput="saveState()"></textarea>
+    <div class="checker-footer">
+      <button class="btn btn-check" id="btn_check_m2" onclick="checkMake()">⚡ Check program</button>
+      <div class="feedback hidden" id="fb_m2"></div>
+    </div>
+  </div>
+
+  <div id="m2_ext_task" class="step-hidden" style="margin-top:2rem">
+    <div class="section-label">★★★★ Extension — Three sentences</div>
+    <div class="modify-task ext">
+      <span class="stars">★★★★</span>
+      <div class="task-text">
+        Extend your program to output a <strong>third sentence</strong> using different variables.
+        Make sure you have at least one <strong>number variable</strong> (age, score, etc.)
+        and use it somewhere in the output — for example, include it in a calculation or mention
+        it in a sentence.
+      </div>
+    </div>
+  </div>
+
+  <div class="completion-banner" id="completionBanner">
+    <div style="font-size:2.5rem;margin-bottom:0.5rem">🏆</div>
+    <h3>PRIMM Complete!</h3>
+    <p>You've worked through all five stages for Variables: Formatted Print. Excellent work — show your teacher!</p>
+  </div>
+</section>
+
+<div class="ac-toast" id="toast"></div>
+
+<script src="../../../activity-ui.js"></script>
+<script src="../../../classroom.js"></script>
+
+<script type="module">
+import { normalise, has, MOD_CHECKS, MOD_INPUTS, validateMake, validateExt } from './checkers_formatted.js';
+import { runPython, preload } from '../../../pyodide-runner.js';
+import { setupEditors, clearSyntaxHint, setEditorOutput, refreshEditor } from '../../../code-editor.js';
+
+const STORAGE_KEY    = 'primm_l0_variables_formatted';
+const ACTIVITY_TITLE = 'Variables — Formatted Print PRIMM Practice';
+const STARTER_CODE   = `name = "Riley"
+mood = "Happy"
+print("You are", name, "and you are feeling", mood)`;
+
+const STEP_COUNT_I  = 4;
+const STEP_COUNT_M1 = 4;
+
+const TEXT_FIELDS = [
+  'p_text1',
+  'r_editor', 'r1',
+  'i_editor', 'i1', 'i2', 'i3', 'i4',
+  'm1_editor', 'm2_editor',
+];
+const RADIO_GROUPS = ['p_mcq1', 'p_mcq2'];
+
+const P_CORRECT = {
+  p_mcq1: 'option_c',
+  p_mcq2: 'option_b',
+};
+const P_PASS_MSG = {
+  p_mcq1: 'Correct — Python looks up the stored value of each variable and inserts it into the output. Speech marks are not shown.',
+  p_mcq2: 'Correct — when a name appears without speech marks in a print(), Python treats it as a variable and looks up its stored value.',
+};
+const P_FAIL_MSG = {
+  p_mcq1: 'Not quite — Python replaces each variable name with its stored value. The speech marks around "Riley" and "Happy" are not shown in the output.',
+  p_mcq2: 'Not quite — the commas separate each item in the print(). When Python sees a word without speech marks, it treats it as a variable and retrieves its value.',
+};
+
+const I_FIELDS = [
+  { id:'i1', cardId:'qcard_i1', validate(v) {
+    if (v.length < 4)  return 'Describe what changed and why — which word in the output changed?';
+    if (isNonsense(v)) return "That doesn't look like a real answer.";
+    if (!/excited|mood|chang|variable|value|stored/i.test(v))
+      return 'Hint: the word "Happy" changed to "Excited" — this happened because you changed the value stored in the mood variable.';
+    return null;
+  }},
+  { id:'i2', cardId:'qcard_i2', validate(v) {
+    if (v.length < 4)  return 'Describe which part of the output changed when you changed the name variable.';
+    if (isNonsense(v)) return "That doesn't look like a real answer.";
+    return null;
+  }},
+  { id:'i3', cardId:'qcard_i3', validate(v) {
+    if (v.length < 4)  return 'Write out the full output line — what did the program print?';
+    if (isNonsense(v)) return "That doesn't look like a real answer.";
+    if (!/year|old|age|13|14|15|12/i.test(v))
+      return 'Hint: the output should include your name, your mood, and "X years old" — write the whole sentence.';
+    return null;
+  }},
+  { id:'i4', cardId:'qcard_i4', validate(v) {
+    if (v.length < 4)  return 'Describe the difference between print("name") and print(name).';
+    if (isNonsense(v)) return "That doesn't look like a real answer.";
+    if (!/string|speech|text|word|variable|value|actual/i.test(v))
+      return 'Hint: print("name") displays the literal text "name". print(name) displays whatever value is stored inside the variable called name. Can you explain why they differ?';
+    return null;
+  }},
+];
+
+let state = {};
+try { state = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch(e) {}
+
+let currentStage    = state.currentStage    || 'P';
+let completedStages = state.completedStages || [];
+let passedChecks    = state.passedChecks    || {};
+let stepI  = state.stepI  || 1;
+let stepM1 = state.stepM1 || 1;
+let skippedStages = state.skippedStages || [];
+let attemptCounts = state.attemptCounts || {};
+let predictReviewTimer = null;
+const PREDICT_REVIEW_DELAY_MS = 10000;
+const STAGES = ['P','R','I','M1','M2'];
+
+function saveState() {
+  TEXT_FIELDS.forEach(id => { const el = document.getElementById(id); if (el) state[id] = el.value; });
+  RADIO_GROUPS.forEach(name => { const c = document.querySelector(`input[name="${name}"]:checked`); if (c) state['radio_' + name] = c.value; });
+  state.currentStage = currentStage; state.completedStages = completedStages; state.passedChecks = passedChecks;
+  state.stepI = stepI; state.stepM1 = stepM1; state.skippedStages = skippedStages; state.attemptCounts = attemptCounts;
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
+}
+
+function restoreInputs() {
+  TEXT_FIELDS.forEach(id => { const el = document.getElementById(id); if (el && state[id] !== undefined) el.value = state[id]; });
+  RADIO_GROUPS.forEach(name => {
+    const val = state['radio_' + name];
+    if (val) { const r = document.querySelector(`input[name="${name}"][value="${CSS.escape(val)}"]`) || document.querySelector(`input[name="${name}"][value="${val}"]`); if (r) r.checked = true; }
+  });
+}
+
+function updateGranularProgress() {
+  const iFill = document.getElementById('progress-fill-I'); if (iFill) iFill.style.width = Math.round(((stepI - 1) / STEP_COUNT_I) * 100) + '%';
+  const m1Fill = document.getElementById('progress-fill-M1'); if (m1Fill) m1Fill.style.width = Math.round(((stepM1 - 1) / STEP_COUNT_M1) * 100) + '%';
+  const m2Fill = document.getElementById('progress-fill-M2'); if (m2Fill) { let p = 0; if (passedChecks['m2_make']) p += 50; if (passedChecks['m2_ext']) p += 50; m2Fill.style.width = p + '%'; }
+}
+
+function updateStepVisibility() {
+  for (let i = 1; i <= STEP_COUNT_I; i++) document.getElementById('qcard_i' + i)?.classList.toggle('step-hidden', i !== stepI);
+  for (let i = 1; i <= STEP_COUNT_M1; i++) document.getElementById('m1_step_' + i)?.classList.toggle('step-hidden', i !== stepM1);
+  const m1Btn = document.getElementById('btn_check_m1'); if (m1Btn) m1Btn.textContent = stepM1 === STEP_COUNT_M1 ? '⚡ Check final modification' : '⚡ Check modification ' + stepM1;
+  const skipM1Btn = document.getElementById('btn_skip_m1'); if (skipM1Btn) skipM1Btn.style.display = (attemptCounts['m1_' + stepM1] || 0) >= 3 ? '' : 'none';
+  document.getElementById('btn_goto_m2')?.classList.toggle('step-hidden', !passedChecks['m1_code' + STEP_COUNT_M1]);
+  document.getElementById('m2_ext_task')?.classList.toggle('step-hidden', !passedChecks['m2_make']);
+  const m2Btn = document.getElementById('btn_check_m2'); if (m2Btn) { m2Btn.textContent = passedChecks['m2_make'] ? '⚡ Mark extension complete' : '⚡ Check program'; m2Btn.onclick = passedChecks['m2_make'] ? checkExt : checkMake; }
+  updateGranularProgress();
+}
+
+function calcScore() {
+  let s = 0; if (completedStages.includes('P')) s += 5; if (completedStages.includes('R')) s += 5; if (completedStages.includes('I')) s += 5;
+  for (let i = 1; i <= STEP_COUNT_M1; i++) { if (passedChecks['m1_code' + i]) s += 10; }
+  if (passedChecks['m2_make']) s += 25; if (passedChecks['m2_ext']) s += 20; return Math.min(100, s);
+}
+
+function submitScore() { const score = calcScore(); window.ActivityUI?.setScore(score); window.Classroom?.submitGrade(score, ACTIVITY_TITLE); if (score >= 100) window.ActivityUI?.launchCelebration({ percent: 100 }); }
+
+function showStage(s, persist = true) {
+  document.querySelectorAll('.stage-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.primm-nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('stage-' + s).classList.add('active');
+  document.querySelector(`[data-stage="${s}"]`).classList.add('active');
+  currentStage = s;
+  if (s === 'R') { const ta = document.getElementById('r_editor'); if (!ta.value) ta.value = STARTER_CODE; refreshEditor(ta); }
+  if (s === 'I') { const ta = document.getElementById('i_editor'); if (!ta.value) ta.value = STARTER_CODE; refreshEditor(ta); }
+  if (s === 'M1') { const ta = document.getElementById('m1_editor'); if (!ta.value) ta.value = document.getElementById('i_editor')?.value || STARTER_CODE; refreshEditor(ta); }
+  if (s === 'M2') { refreshEditor(document.getElementById('m2_editor')); }
+  updateStepVisibility(); if (persist) saveState();
+}
+
+function updateNav() { completedStages.forEach(s => { const btn = document.querySelector(`[data-stage="${s}"]`); if (btn) btn.classList.add('done'); }); }
+function updateProgress() { const idx = STAGES.indexOf(currentStage); document.getElementById('progressFill').style.width = Math.max(20, Math.round(((idx + 1) / STAGES.length) * 100)) + '%'; }
+
+function completeStage(s) {
+  if (window.Classroom?.verifyAuth() === false) return;
+  if (!completedStages.includes(s)) completedStages.push(s); updateNav();
+  const nextIdx = STAGES.indexOf(s) + 1;
+  if (nextIdx < STAGES.length) { showStage(STAGES[nextIdx]); updateProgress(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+  saveState(); submitScore();
+}
+
+function showPredictReviewButton(startDelay = true) {
+  const checkBtn = document.getElementById('btn_check_predict'); const gotoBtn = document.getElementById('btn_goto_r');
+  if (checkBtn) checkBtn.classList.add('step-hidden'); if (!gotoBtn) return;
+  gotoBtn.classList.remove('step-hidden');
+  if (startDelay) { state.predictReviewReadyAt = Date.now() + PREDICT_REVIEW_DELAY_MS; saveState(); }
+  const readyAt = completedStages.includes('P') ? 0 : (Number(state.predictReviewReadyAt) || Date.now());
+  updatePredictReviewTimer(readyAt);
+}
+
+function updatePredictReviewTimer(readyAt) {
+  const gotoBtn = document.getElementById('btn_goto_r'); if (!gotoBtn) return;
+  if (predictReviewTimer) clearTimeout(predictReviewTimer);
+  const remaining = Math.max(0, Math.ceil((readyAt - Date.now()) / 1000));
+  if (remaining > 0) { gotoBtn.disabled = true; gotoBtn.textContent = `✓ Reviewed — go to Run (${remaining}s)`; predictReviewTimer = setTimeout(() => updatePredictReviewTimer(readyAt), 250); return; }
+  gotoBtn.disabled = false; gotoBtn.textContent = '✓ Reviewed — go to Run →'; state.predictReviewReadyAt = 0; saveState();
+}
+
+function reviewedGoToRun() { const gotoBtn = document.getElementById('btn_goto_r'); if (gotoBtn?.disabled) return; completeStage('P'); }
+
+function setPyStatus(st) {
+  const bar = document.getElementById('pyStatus'); const text = document.getElementById('pyStatusText'); if (!bar || !text) return;
+  if (st === 'loading') { bar.style.display = 'block'; text.textContent = 'loading…'; text.style.color = '#f9e2af'; }
+  else if (st === 'ready') { text.textContent = 'ready ✓'; text.style.color = '#a6e3a1'; setTimeout(() => { bar.style.display = 'none'; }, 3000); }
+  else { text.textContent = 'unavailable'; text.style.color = '#f38ba8'; }
+}
+
+async function runCodeInEditor(editorId, statusElId, inputs = []) {
+  if (window.Classroom?.verifyAuth() === false) return;
+  const editorEl = document.getElementById(editorId); const statusEl = document.getElementById(statusElId); const code = editorEl?.value || '';
+  if (statusEl) { statusEl.classList.remove('hidden','fail','pass'); statusEl.classList.add('loading'); statusEl.textContent = '⏳ Running…'; }
+  const result = await runPython(code, { inputs }); setEditorOutput(editorEl, result.output, !result.ok); clearSyntaxHint(editorEl);
+  if (statusEl) { statusEl.classList.remove('loading'); if (result.ok) { statusEl.classList.add('pass'); statusEl.textContent = '✅ Code ran successfully.'; } else { statusEl.classList.add('fail'); statusEl.textContent = '❌ ' + result.output.split('\n').pop(); } }
+}
+
+function resetInvestigateEditor() { const ta = document.getElementById('i_editor'); ta.value = STARTER_CODE; refreshEditor(ta); saveState(); }
+
+function isNonsense(text) {
+  const t = text.trim().replace(/\s+/g, ' '); if (t.length < 3) return true;
+  const counts = {}; for (const c of t) counts[c] = (counts[c] || 0) + 1;
+  if (Math.max(...Object.values(counts)) / t.length > 0.65) return true;
+  const lower = t.toLowerCase();
+  if (['asdf','qwer','zxcv','hjkl','1234'].some(r => lower.split(r).length > 2)) return true;
+  const LAZY = /^(i\s*d\s*k|i\s*don'?t\s*know|don'?t\s*know|dunno|dont\s*know|no\s*idea|not\s*sure|\?+|nope|nah|lol|yeah|yep|ok|okay|fine|hmm+|meh|same|nothing|none|n\/a|na|pass|skip|bruh|lmao|haha|hehe|wtf|idek|idk)$/i;
+  if (LAZY.test(lower)) return true;
+  const letters = lower.replace(/[^a-z]/g, ''); if (letters.length >= 4 && !/[aeiou]/.test(letters)) return true;
+  return false;
+}
+
+function fieldHint(card, msg) {
+  let el = card.querySelector('.field-hint');
+  if (!el) { el = document.createElement('div'); el.className = 'field-hint'; el.style.cssText = 'font-size:0.8rem;color:#dc2626;margin-top:0.4rem;font-style:italic'; card.appendChild(el); }
+  el.textContent = msg ? '⚠️ ' + msg : '';
+}
+
+function applyMCQFeedback(name, correct) {
+  const chosen = document.querySelector(`input[name="${name}"]:checked`); if (!chosen) return false;
+  const val = chosen.value; const isCorrect = val === correct;
+  document.querySelectorAll(`input[name="${name}"]`).forEach(r => {
+    const opt = r.closest('.radio-opt'); opt.classList.remove('correct','wrong');
+    if (r.value === correct) opt.classList.add('correct');
+    else if (r.value === val && !isCorrect) opt.classList.add('wrong');
+  });
+  const fb = document.getElementById('fb_' + name);
+  if (fb) { fb.className = 'mcq-fb ' + (isCorrect ? 'pass' : 'fail'); fb.textContent = (isCorrect ? '✔ ' : '✘ ') + (isCorrect ? P_PASS_MSG[name] : P_FAIL_MSG[name]); }
+  return true;
+}
+
+function clearPredictError(cardId) { document.getElementById(cardId)?.classList.remove('error'); }
+
+function tryCompletePredict() {
+  if (window.Classroom?.verifyAuth() === false) return;
+  let allAttempted = true; let firstError = null;
+  RADIO_GROUPS.forEach(name => {
+    const attempted = applyMCQFeedback(name, P_CORRECT[name]);
+    if (!attempted) { allAttempted = false; const card = document.getElementById('qcard_' + name); if (card) { card.classList.add('error'); if (!firstError) firstError = card; } }
+    else { document.getElementById('qcard_' + name)?.classList.remove('error'); }
+  });
+
+  const raw = (document.getElementById('p_text1')?.value || '').trim().toLowerCase().replace(/[.!?]$/, '');
+  const p_text1_card = document.getElementById('qcard_p_text1');
+  if (raw.length < 1) {
+    allAttempted = false; p_text1_card?.classList.add('error'); if (!firstError) firstError = p_text1_card;
+  } else {
+    p_text1_card?.classList.remove('error');
+    const ok = raw.includes('riley') && raw.includes('excited');
+    const fb = document.getElementById('fb_p_text1');
+    if (fb) {
+      fb.className = 'mcq-fb ' + (ok ? 'pass' : 'fail');
+      fb.textContent = ok
+        ? '✔ Correct — only the mood changes from "Happy" to "Excited"; the name and the fixed text stay the same.'
+        : '✘ Not quite — only mood changed (from "Happy" to "Excited"), so the output should still say "Riley" but now say "Excited" instead of "Happy".';
+    }
+  }
+
+  const warning = document.getElementById('predictWarning');
+  if (!allAttempted) { warning.style.display = 'flex'; firstError?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+  else { warning.style.display = 'none'; showPredictReviewButton(); document.getElementById('btn_goto_r')?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+}
+
+function clearRunError(cardId) { document.getElementById(cardId)?.classList.remove('error'); }
+
+function tryCompleteRun() {
+  if (window.Classroom?.verifyAuth() === false) return;
+  let allOk = true; let firstError = null;
+  const r1val = (document.getElementById('r1')?.value || '').trim(); const r1card = document.getElementById('qcard_r1');
+  let r1msg = null;
+  if (r1val.length < 5) r1msg = 'Describe what you saw and how Python combined the parts.';
+  else if (isNonsense(r1val)) r1msg = "That doesn't look like a real answer.";
+  if (r1msg) { allOk = false; r1card?.classList.add('error'); fieldHint(r1card, r1msg); if (!firstError) firstError = r1card; }
+  else { r1card?.classList.remove('error'); fieldHint(r1card, ''); }
+  if (allOk) { document.getElementById('btn_check_run').classList.add('step-hidden'); document.getElementById('btn_goto_i').classList.remove('step-hidden'); clearSyntaxHint(document.getElementById('r_editor')); submitScore(); }
+  else { firstError?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+}
+
+function nextStep(stage, n) {
+  if (stage !== 'I') return; const field = I_FIELDS[n - 1]; if (!field) return;
+  const val = (document.getElementById(field.id)?.value || '').trim(); const card = document.getElementById(field.cardId); const msg = field.validate(val);
+  if (msg) { card.classList.add('error'); fieldHint(card, msg); card.scrollIntoView({ behavior: 'smooth', block: 'center' }); recordIAttempt(n); return; }
+  card.classList.remove('error'); fieldHint(card, ''); stepI = n + 1; updateStepVisibility(); saveState();
+  document.getElementById('i_editor')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function tryCompleteInvestigate() {
+  if (window.Classroom?.verifyAuth() === false) return;
+  let allOk = true; let firstError = null;
+  I_FIELDS.forEach(f => {
+    const val = (document.getElementById(f.id)?.value || '').trim(); const card = document.getElementById(f.cardId); const msg = f.validate(val);
+    if (msg) { card?.classList.add('error'); fieldHint(card, msg); allOk = false; if (!firstError) firstError = card; }
+    else { card?.classList.remove('error'); fieldHint(card, ''); }
+  });
+  if (allOk) { completeStage('I'); } else { recordIAttempt(stepI); firstError?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+}
+
+async function checkMod() {
+  if (window.Classroom?.verifyAuth() === false) return;
+  const raw = document.getElementById('m1_editor')?.value || ''; const fbEl = document.getElementById('fb_m1');
+  const checkKey = 'mod' + stepM1; const checkId = 'm1_code' + stepM1;
+  if (!fbEl) return; fbEl.classList.remove('hidden');
+  if (raw.trim().length < 10) { fbEl.className = 'feedback fail'; fbEl.textContent = '⚠️ Write some code first.'; return; }
+  const structural = MOD_CHECKS[checkKey](raw);
+  if (!structural.pass) { fbEl.className = 'feedback fail'; fbEl.textContent = structural.msg; recordM1Attempt(); return; }
+  fbEl.className = 'feedback loading'; fbEl.textContent = '⏳ Checking…';
+  const run = await runPython(raw, { inputs: [] });
+  if (!run.ok) { fbEl.className = 'feedback fail'; fbEl.textContent = '❌ Error: ' + run.output; recordM1Attempt(); return; }
+  fbEl.className = 'feedback pass'; fbEl.textContent = structural.msg;
+  setEditorOutput(document.getElementById('m1_editor'), run.output, false); clearSyntaxHint(document.getElementById('m1_editor'));
+  passedChecks[checkId] = true;
+  if (stepM1 < STEP_COUNT_M1) { setTimeout(() => { stepM1++; fbEl.classList.add('hidden'); updateStepVisibility(); saveState(); }, 1500); }
+  saveState(); submitScore();
+}
+
+async function checkMake() {
+  if (window.Classroom?.verifyAuth() === false) return;
+  const raw = document.getElementById('m2_editor')?.value || ''; const fbEl = document.getElementById('fb_m2'); fbEl.classList.remove('hidden');
+  const structural = validateMake(raw);
+  if (!structural.pass) { fbEl.className = 'feedback fail'; fbEl.textContent = structural.msg; return; }
+  fbEl.className = 'feedback loading'; fbEl.textContent = '⏳ Checking…';
+  const run = await runPython(raw, { inputs: [] });
+  if (!run.ok) { fbEl.className = 'feedback fail'; fbEl.textContent = '❌ Your program has an error: ' + run.output; return; }
+  if (run.output.trim().length < 5) { fbEl.className = 'feedback fail'; fbEl.textContent = '❌ Your program ran but produced no output — check your print() calls.'; return; }
+  fbEl.className = 'feedback pass'; fbEl.textContent = structural.msg;
+  setEditorOutput(document.getElementById('m2_editor'), run.output, false);
+  passedChecks['m2_make'] = true; updateStepVisibility(); saveState(); submitScore();
+  if (!completedStages.includes('M2')) { completedStages.push('M2'); updateNav(); saveState(); }
+  showCompletion();
+}
+
+async function checkExt() {
+  if (window.Classroom?.verifyAuth() === false) return;
+  const raw = document.getElementById('m2_editor')?.value || ''; const fbEl = document.getElementById('fb_m2'); fbEl.classList.remove('hidden');
+  const structural = validateExt(raw);
+  if (!structural.pass) { fbEl.className = 'feedback fail'; fbEl.textContent = structural.msg; return; }
+  fbEl.className = 'feedback loading'; fbEl.textContent = '⏳ Checking…';
+  const run = await runPython(raw, { inputs: [] });
+  if (!run.ok) { fbEl.className = 'feedback fail'; fbEl.textContent = '❌ Your program has an error: ' + run.output; return; }
+  fbEl.className = 'feedback pass'; fbEl.textContent = structural.msg;
+  setEditorOutput(document.getElementById('m2_editor'), run.output, false);
+  passedChecks['m2_ext'] = true; updateStepVisibility(); saveState(); submitScore();
+}
+
+function showCompletion() { const banner = document.getElementById('completionBanner'); banner.style.display = 'block'; banner.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+function markStageSkipped(stage) { if (!skippedStages.includes(stage)) skippedStages.push(stage); const btn = document.querySelector(`[data-stage="${stage}"]`); if (btn) btn.classList.add('skipped'); saveState(); }
+function skipStep(stage) {
+  markStageSkipped(stage);
+  if (stage === 'I') { if (stepI < STEP_COUNT_I) { stepI++; updateStepVisibility(); saveState(); } else { completeStage('I'); } }
+  else if (stage === 'M1') { if (stepM1 < STEP_COUNT_M1) { stepM1++; updateStepVisibility(); saveState(); } else { completeStage('M1'); } }
+}
+function recordIAttempt(n) { const key = 'i' + n; attemptCounts[key] = (attemptCounts[key] || 0) + 1; if (attemptCounts[key] >= 3) { const btn = document.getElementById('btn_skip_i' + n); if (btn) btn.style.display = ''; } saveState(); }
+function recordM1Attempt() { const key = 'm1_' + stepM1; attemptCounts[key] = (attemptCounts[key] || 0) + 1; if (attemptCounts[key] >= 3) { const btn = document.getElementById('btn_skip_m1'); if (btn) btn.style.display = ''; } saveState(); }
+
+Object.assign(window, { showStage, saveState, clearPredictError, tryCompletePredict, reviewedGoToRun, clearRunError, tryCompleteRun, tryCompleteInvestigate, nextStep, checkMod, completeStage, checkMake, checkExt, runCodeInEditor, resetInvestigateEditor, skipStep });
+
+window.addEventListener('DOMContentLoaded', () => {
+  restoreInputs(); setupEditors(); showStage(currentStage, false); updateNav(); updateProgress();
+  setPyStatus('loading'); preload().then(() => setPyStatus('ready')).catch(() => setPyStatus('error'));
+
+  if (completedStages.includes('P') || Number(state.predictReviewReadyAt) > 0) {
+    RADIO_GROUPS.forEach(name => applyMCQFeedback(name, P_CORRECT[name]));
+    showPredictReviewButton(false);
+    const raw = (document.getElementById('p_text1')?.value || '').trim().toLowerCase().replace(/[.!?]$/, '');
+    if (raw.length > 0) {
+      const ok = raw.includes('riley') && raw.includes('excited');
+      const fb = document.getElementById('fb_p_text1');
+      if (fb) { fb.className = 'mcq-fb ' + (ok ? 'pass' : 'fail'); fb.textContent = ok ? '✔ Correct — name stays "Riley", mood changes to "Excited".' : '✘ Not quite — the output should still say Riley but now say Excited instead of Happy.'; }
+    }
+  }
+
+  if (passedChecks['m2_make']) { const fb = document.getElementById('fb_m2'); if (fb) { fb.classList.remove('hidden'); fb.className = 'feedback pass'; fb.textContent = '✅ Main program complete.'; } }
+  if (completedStages.includes('M2')) showCompletion();
+  skippedStages.forEach(s => { const btn = document.querySelector(`[data-stage="${s}"]`); if (btn) btn.classList.add('skipped'); });
+  for (let i = 1; i <= STEP_COUNT_I; i++) { if ((attemptCounts['i' + i] || 0) >= 3) { const btn = document.getElementById('btn_skip_i' + i); if (btn) btn.style.display = ''; } }
+  updateStepVisibility();
+});
+</script>
+</body>
+</html>

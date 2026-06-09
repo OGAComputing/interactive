@@ -209,6 +209,47 @@ color:  purple
 
   .step-hidden { display: none !important; }
 
+  /* ── Q-CARD CORRECT STATE ── */
+  @keyframes success-pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
+    40%  { box-shadow: 0 0 0 8px rgba(34,197,94,0.45); }
+    70%  { box-shadow: 0 0 0 14px rgba(34,197,94,0.18); }
+    100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
+  }
+  .q-card.is-right { border-left-color: var(--green) !important; background: #f0fdf4; animation: success-pulse 0.8s ease forwards; }
+  .q-card.is-right input[type=text], .q-card.is-right textarea { border-color: var(--green); }
+
+  /* ── FEEDBACK ENTRANCE ── */
+  @keyframes feedback-enter {
+    from { opacity: 0; transform: translateY(-4px) scale(0.97); }
+    to   { opacity: 1; transform: none; }
+  }
+  .feedback.pass { animation: feedback-enter 0.35s ease; }
+
+  /* ── OUTPUT SPOTLIGHT (first run in Run stage) ── */
+  @keyframes output-spotlight-fade {
+    0%, 60% { box-shadow: 0 0 0 3px #22c55e, 0 0 22px rgba(34,197,94,0.45); }
+    100%     { box-shadow: none; }
+  }
+  .output-panel.spotlight { animation: output-spotlight-fade 5s ease forwards; border-radius: 4px; }
+  .output-panel.spotlight .output-header::after {
+    content: ' ← output appears here';
+    color: #22c55e; font-style: italic; font-weight: 700;
+  }
+
+  /* ── WORD BANK (click-to-place) ── */
+  .wb-pool { display: flex; flex-wrap: wrap; gap: 0.4rem; padding: 0.5rem 0.7rem; background: #ede0ff; border: 1.5px dashed #b89fe0; border-radius: 8px; min-height: 40px; margin-bottom: 0.5rem; }
+  .wb-answer { display: flex; flex-wrap: wrap; gap: 0.35rem; padding: 0.45rem 0.7rem; background: white; border: 1.5px solid #d1c4f0; border-radius: 8px; min-height: 42px; align-items: center; margin-bottom: 0.5rem; }
+  .wb-answer.is-right { border-color: var(--green); background: #f0fdf4; }
+  .wb-answer.is-wrong { border-color: var(--red); background: #fff5f5; }
+  .wb-chip { display: inline-flex; align-items: center; padding: 0.28rem 0.65rem; background: var(--purple-light); color: white; border-radius: 5px; cursor: pointer; font-size: 0.84rem; font-weight: 700; user-select: none; transition: all 0.15s; }
+  .wb-chip:hover { background: var(--stage-p); transform: translateY(-1px); }
+  .wb-chip.used { opacity: 0.28; cursor: default; pointer-events: none; }
+  .wb-placed { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.28rem 0.6rem; background: #2d1060; color: #cdd6f4; border-radius: 5px; cursor: pointer; font-size: 0.84rem; font-family: 'Courier New', monospace; }
+  .wb-placed:hover { background: var(--red); color: white; }
+  .wb-empty-hint { color: var(--muted); font-style: italic; font-size: 0.8rem; align-self: center; }
+  .wb-label { font-size: 0.73rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 700; margin-bottom: 0.3rem; }
+
   @media (max-width: 600px) {
     .site-header { flex-wrap: wrap; } .header-code { display: none; } .stage-panel { padding: 1rem; }
   }
@@ -264,7 +305,7 @@ color:  purple
     <div class="ann-row"><span class="line-num">3</span><span><span class="fn">print</span>(<span class="st">"This is fun!"</span>)</span><span class="ann-label">third line of output</span></div>
   </div>
 
-  <!-- MCQ question 1 -->
+  <!-- MCQ question 1 — visible immediately -->
   <div class="q-card" id="qcard_p_mcq1">
     <label class="q-label"><span class="q-num">1</span> How many lines of output will this program produce when it runs?</label>
     <div class="radio-opts" id="ropts_p_mcq1">
@@ -274,35 +315,42 @@ color:  purple
       <label class="radio-opt"><input type="radio" name="p_mcq1" value="option_d" onchange="saveState()"> <span>It will show an error — print needs a number</span></label>
     </div>
     <div class="mcq-fb" id="fb_p_mcq1"></div>
+    <div style="margin-top:0.8rem;display:flex;gap:0.6rem;flex-wrap:wrap;align-items:center">
+      <button class="btn btn-check" id="btn_check_p_mcq1" onclick="checkPredictMCQ('p_mcq1', 'qcard_p_mcq2')">✓ Check answer</button>
+      <button class="btn btn-next step-hidden" id="btn_next_p_mcq1" onclick="nextPredictQ('qcard_p_mcq2')">Next question →</button>
+    </div>
   </div>
 
-  <!-- MCQ question 2 -->
-  <div class="q-card" id="qcard_p_mcq2">
-    <label class="q-label"><span class="q-num">2</span> What do the speech marks (" ") do inside a print() command?</label>
+  <!-- True/False question 2 — revealed after Q1 is answered -->
+  <div class="q-card step-hidden" id="qcard_p_mcq2">
+    <label class="q-label"><span class="q-num">2</span> True or false: Python displays the speech marks <code style="background:#ede0ff;padding:0 3px;border-radius:3px">" "</code> as part of the output.</label>
     <div class="radio-opts" id="ropts_p_mcq2">
-      <label class="radio-opt"><input type="radio" name="p_mcq2" value="option_a" onchange="saveState()"> <span>They tell Python to display the text inside them exactly as written</span></label>
-      <label class="radio-opt"><input type="radio" name="p_mcq2" value="option_b" onchange="saveState()"> <span>They make the text appear in bold in the output window</span></label>
-      <label class="radio-opt"><input type="radio" name="p_mcq2" value="option_c" onchange="saveState()"> <span>They tell Python to calculate the text as a maths sum</span></label>
-      <label class="radio-opt"><input type="radio" name="p_mcq2" value="option_d" onchange="saveState()"> <span>They save the text into the computer's memory permanently</span></label>
+      <label class="radio-opt"><input type="radio" name="p_mcq2" value="option_a" onchange="saveState()"> <span>True — the speech marks are printed on screen along with the text</span></label>
+      <label class="radio-opt"><input type="radio" name="p_mcq2" value="option_b" onchange="saveState()"> <span>False — only the text inside the marks appears in the output</span></label>
     </div>
     <div class="mcq-fb" id="fb_p_mcq2"></div>
+    <div style="margin-top:0.8rem;display:flex;gap:0.6rem;flex-wrap:wrap;align-items:center">
+      <button class="btn btn-check" id="btn_check_p_mcq2" onclick="checkPredictMCQ('p_mcq2', 'qcard_p_wb3')">✓ Check answer</button>
+      <button class="btn btn-next step-hidden" id="btn_next_p_mcq2" onclick="nextPredictQ('qcard_p_wb3')">Next question →</button>
+    </div>
   </div>
 
-  <!-- Free-text question -->
-  <div class="q-card" id="qcard_p_text1">
-    <label class="q-label"><span class="q-num">3</span> What will Python display when it runs line 2 of the code?</label>
-    <input type="text" id="p_text1" placeholder="Type the exact output here…" oninput="saveState(); clearPredictError('qcard_p_text1')">
-    <div class="hint-box" style="margin-top:0.6rem">Hint: Look at the text inside the speech marks on line 2 — Python will display it exactly.</div>
-    <div class="mcq-fb" id="fb_p_text1"></div>
+  <!-- Word-bank question 3 — revealed after Q2 is answered -->
+  <div class="q-card step-hidden" id="qcard_p_wb3">
+    <label class="q-label"><span class="q-num">3</span> <strong>Line 2 only</strong> — build the exact text Python displays when it runs this specific line:
+      <div style="font-family:'Courier New',monospace;font-size:0.85rem;background:#1e1e2e;color:#cdd6f4;padding:0.45rem 0.9rem;border-radius:6px;margin:0.5rem 0 0.3rem;border-left:3px solid var(--stage-i);display:inline-block;width:100%"><span style="color:#585b70;margin-right:0.9rem">2</span><span style="color:#89b4fa">print</span>(<span style="color:#a6e3a1">"I am learning Python."</span>)</div>
+      Click words from the bank to build what appears on screen — click a placed word to remove it.
+    </label>
+    <div class="wb-label">Word bank — click to place</div>
+    <div class="wb-pool" id="wb_p3_pool"></div>
+    <div class="wb-label" style="margin-top:0.4rem">Your answer</div>
+    <div class="wb-answer" id="wb_p3_answer"><span class="wb-empty-hint">Click words above to build the output…</span></div>
+    <div class="mcq-fb" id="fb_p_wb3"></div>
+    <div style="margin-top:0.8rem;display:flex;gap:0.6rem;flex-wrap:wrap;align-items:center">
+      <button class="btn btn-check" id="btn_check_p_wb3" onclick="checkWordBankPredict()">✓ Check answer</button>
+    </div>
   </div>
 
-  <div class="predict-warning" id="predictWarning">
-    ⚠️ Please answer every question above — even a guess is fine!
-  </div>
-
-  <button class="btn btn-check" id="btn_check_predict" onclick="tryCompletePredict()" style="margin-top:1rem">
-    ✓ Check predictions
-  </button>
   <button class="btn btn-next step-hidden" id="btn_goto_r" onclick="reviewedGoToRun()" style="margin-top:1rem">
     ✓ Reviewed — go to Run →
   </button>
@@ -344,9 +392,6 @@ color:  purple
   <button class="btn btn-check" id="btn_check_run" onclick="tryCompleteRun()" style="margin-top:1rem">
     ⚡ Check response
   </button>
-  <button class="btn btn-next step-hidden" id="btn_goto_i" onclick="completeStage('R')" style="margin-top:1rem">
-    ✓ go to Investigate →
-  </button>
 </section>
 
 
@@ -375,45 +420,70 @@ color:  purple
         Run it. What changed in the output?
       </label>
       <textarea id="i1" placeholder="Describe what changed…" oninput="saveState()"></textarea>
-      <button class="btn btn-next" style="margin-top:10px" onclick="nextStep('I', 1)">Next Investigation →</button>
+      <button class="btn btn-next" id="btn_check_i1" style="margin-top:10px" onclick="nextStep('I', 1)" disabled>✓ Check answer</button>
       <button class="btn btn-skip" id="btn_skip_i1" style="margin-top:6px;display:none" onclick="skipStep('I')">Move on without completing →</button>
     </div>
 
     <div class="q-card step-hidden" id="qcard_i2" style="border-left-color:var(--stage-i)">
       <label class="q-label"><span class="q-num" style="background:var(--stage-i)">2</span>
-        Keep your step 1 change. Now also <strong>add a 4th print() line</strong> that displays your name.
-        Run it. What happened — how many lines of output are there now?
+        Make these changes in the editor:
+        <ul style="margin:0.5rem 0 0 1.2rem;line-height:2">
+          <li><strong>Add a 4th <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print()</code> line</strong> that displays your name.</li>
+          <li>Run your code.</li>
+        </ul>
+        How many lines of output are there now?
       </label>
-      <textarea id="i2" placeholder="Describe what happened…" oninput="saveState()"></textarea>
-      <button class="btn btn-next" style="margin-top:10px" onclick="nextStep('I', 2)">Next Investigation →</button>
+      <div class="radio-opts" id="ropts_i2_mcq" style="margin-top:0.5rem">
+        <label class="radio-opt"><input type="radio" name="i2_mcq" value="option_a" onchange="saveState()"> <span>3 lines — the same as before</span></label>
+        <label class="radio-opt"><input type="radio" name="i2_mcq" value="option_b" onchange="saveState()"> <span>4 lines — one for each print() call</span></label>
+        <label class="radio-opt"><input type="radio" name="i2_mcq" value="option_c" onchange="saveState()"> <span>5 lines — Python adds an extra spacing line</span></label>
+        <label class="radio-opt"><input type="radio" name="i2_mcq" value="option_d" onchange="saveState()"> <span>More than 5 lines — print() doubles up automatically</span></label>
+      </div>
+      <div class="mcq-fb" id="fb_i2"></div>
+      <button class="btn btn-next" id="btn_check_i2" style="margin-top:10px" onclick="nextStep('I', 2)" disabled>✓ Check answer</button>
       <button class="btn btn-skip" id="btn_skip_i2" style="margin-top:6px;display:none" onclick="skipStep('I')">Move on without completing →</button>
     </div>
 
     <div class="q-card step-hidden" id="qcard_i3" style="border-left-color:var(--stage-i)">
       <label class="q-label"><span class="q-num" style="background:var(--stage-i)">3</span>
-        Keep all your changes. On one line, swap the double quotes <code style="background:#ede0ff;padding:0 3px;border-radius:3px">" "</code>
-        for single quotes <code style="background:#ede0ff;padding:0 3px;border-radius:3px">' '</code>
-        (e.g. <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print('My name')</code>).
-        Run it. Does the program still work?
+        Make these changes in the editor:
+        <ul style="margin:0.5rem 0 0 1.2rem;line-height:2">
+          <li>On one line, swap the double quotes <code style="background:#ede0ff;padding:0 3px;border-radius:3px">" "</code> for single quotes <code style="background:#ede0ff;padding:0 3px;border-radius:3px">' '</code> (e.g. <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print('My name')</code>).</li>
+          <li>Run your code.</li>
+        </ul>
+        Does the program still work with single quotes?
       </label>
-      <textarea id="i3" placeholder="Describe what changed…" oninput="saveState()"></textarea>
-      <button class="btn btn-next" style="margin-top:10px" onclick="nextStep('I', 3)">Next Investigation →</button>
+      <div class="radio-opts" id="ropts_i3_tf" style="margin-top:0.5rem">
+        <label class="radio-opt"><input type="radio" name="i3_tf" value="option_a" onchange="saveState()"> <span>Yes — Python accepts both single and double quotes, no error</span></label>
+        <label class="radio-opt"><input type="radio" name="i3_tf" value="option_b" onchange="saveState()"> <span>No — Python only accepts double quotes and gives an error</span></label>
+      </div>
+      <div class="mcq-fb" id="fb_i3"></div>
+      <button class="btn btn-next" id="btn_check_i3" style="margin-top:10px" onclick="nextStep('I', 3)" disabled>✓ Check answer</button>
       <button class="btn btn-skip" id="btn_skip_i3" style="margin-top:6px;display:none" onclick="skipStep('I')">Move on without completing →</button>
     </div>
 
     <div class="q-card step-hidden" id="qcard_i4" style="border-left-color:var(--stage-i)">
       <label class="q-label"><span class="q-num" style="background:var(--stage-i)">4</span>
-        Keep all your changes. Add <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print()</code>
-        with completely empty brackets at the very end. Run it. What does Python display for an empty print()?
+        Make these changes in the editor:
+        <ul style="margin:0.5rem 0 0 1.2rem;line-height:2">
+          <li>Insert <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print()</code> with empty brackets <strong>between two of your existing lines</strong> — not at the end.</li>
+          <li>Run your code.</li>
+        </ul>
+        What appears between those two lines in the output?
       </label>
       <textarea id="i4" placeholder="Describe what you found…" oninput="saveState()"></textarea>
-      <button class="btn btn-next" style="margin-top:10px" onclick="tryCompleteInvestigate()">Finish Investigation →</button>
+      <button class="btn btn-next" id="btn_check_i4" style="margin-top:10px" onclick="tryCompleteInvestigate()" disabled>✓ Check answer</button>
       <button class="btn btn-skip" id="btn_skip_i4" style="margin-top:6px;display:none" onclick="skipStep('I')">Move on without completing →</button>
     </div>
 
   </div>
 
-  <div class="code-checker" style="margin-top:1rem">
+  <div class="info-box" style="margin-top:1rem">
+    <span class="icon">💾</span>
+    <span>Your code is <strong>preserved between steps</strong> — keep building on what you have. Use <strong>↺ Reset</strong> only if you want to start the investigation from scratch.</span>
+  </div>
+
+  <div class="code-checker" style="margin-top:0.5rem">
     <textarea class="checker-textarea" id="i_editor" data-title="Python Editor" oninput="saveState()"></textarea>
     <div class="checker-footer">
       <button class="btn btn-check" onclick="runCodeInEditor('i_editor', 'i_fb_run', [])">▶ Run code</button>
@@ -443,50 +513,46 @@ color:  purple
   <div id="m1_steps">
 
     <div id="m1_step_1">
-      <div class="section-label">★ Modification 1 — Personalise the output</div>
+      <div class="section-label">★ Modification 1 — Clean up and personalise</div>
       <div class="modify-task">
         <span class="stars">★</span>
         <div class="task-text">
-          Change the text in <strong>all three</strong> print() lines so that your program displays:
-          your <strong>name</strong>, your <strong>year group</strong>, and your <strong>school name</strong> — one on each line.
-          Run it to check.
+          Your editor still has the experimental code from the investigation. Tidy it up:
+          <ul style="margin:0.5rem 0 0 1.2rem;line-height:2">
+            <li>Delete the blank <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print()</code> line (the one with empty brackets).</li>
+            <li>Change <strong>every</strong> remaining <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print()</code> line so it displays something personal — your <strong>name</strong>, <strong>year group</strong>, <strong>school name</strong>, and <strong>favourite subject</strong>.</li>
+            <li>Make sure none of the original starter text remains.</li>
+            <li>Run your code to check.</li>
+          </ul>
         </div>
       </div>
     </div>
 
     <div id="m1_step_2" class="step-hidden">
-      <div class="section-label">★★ Modification 2 — Add more lines</div>
+      <div class="section-label">★★ Modification 2 — Build up to five lines</div>
       <div class="modify-task">
         <span class="stars">★★</span>
         <div class="task-text">
-          Keep your three personalised lines. Now <strong>add two more print() statements</strong>
-          so your program prints <strong>five things in total</strong> — add whatever you like
-          (your favourite subject, a hobby, today's date…).
+          Keep everything from modification 1.
+          <ul style="margin:0.5rem 0 0 1.2rem;line-height:2">
+            <li>Add more <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print()</code> statements until you have <strong>five text lines in total</strong>.</li>
+            <li>Add whatever you like — favourite subject, a hobby, today's date…</li>
+            <li>Run your code to check you see five lines of output.</li>
+          </ul>
         </div>
       </div>
     </div>
 
     <div id="m1_step_3" class="step-hidden">
-      <div class="section-label">★★ Modification 3 — Add blank lines</div>
+      <div class="section-label">★★ Modification 3 — Add a blank line</div>
       <div class="modify-task">
         <span class="stars">★★</span>
         <div class="task-text">
-          Keep all five lines. Now add <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print()</code>
-          with <strong>empty brackets</strong> somewhere between your lines to create a blank
-          line in the output. Run it to see the gap appear.
-        </div>
-      </div>
-    </div>
-
-    <div id="m1_step_4" class="step-hidden">
-      <div class="section-label">★★★ Modification 4 — Single-line print</div>
-      <div class="modify-task">
-        <span class="stars">★★★</span>
-        <div class="task-text">
-          Keep all your changes. Add <strong>one more print() at the bottom</strong> that uses
-          <strong>commas</strong> to display all five of your items on a single line —
-          e.g. <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print("Alice", "Bob", "Carol")</code>.
-          How does Python separate them in the output?
+          Keep all five lines from modification 2.
+          <ul style="margin:0.5rem 0 0 1.2rem;line-height:2">
+            <li>Insert <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print()</code> with <strong>empty brackets</strong> somewhere <strong>between</strong> two of your lines to create a visual gap in the output.</li>
+            <li>Run your code to see the blank line appear between your text.</li>
+          </ul>
         </div>
       </div>
     </div>
@@ -524,20 +590,28 @@ color:  purple
     <div class="ac-progress-fill" id="progress-fill-M2" style="width: 0%; background: var(--stage-m2);"></div>
   </div>
 
-  <div class="info-box">
-    <span class="icon">🔨</span>
-    <span>Write a new program (in the editor below — don't copy from above) that displays your name and the names of four friends. <strong>All success criteria below must be met</strong> before you click Check.</span>
+  <div class="completion-banner" id="completionBanner">
+    <div style="font-size:2.5rem;margin-bottom:0.5rem">🏆</div>
+    <h3>PRIMM Complete!</h3>
+    <p>You've worked through all five stages for Output: Strings. Excellent work!</p>
   </div>
 
-  <div class="section-label">What your program must do</div>
+  <div id="m2_task_block">
+    <div class="info-box">
+      <span class="icon">🔨</span>
+      <span id="m2_task_text">Write a new program (in the editor below — don't copy from above) that displays your name and the names of three friends. <strong>All success criteria below must be met</strong> before you click Check.</span>
+    </div>
 
-  <ul class="req-list">
-    <li><span>1</span> Print <strong>five names</strong> in total — yours and four friends'.</li>
-    <li><span>2</span> Each name appears on its <strong>own separate line</strong>.</li>
-    <li><span>3</span> The names are in <strong>alphabetical order</strong> (A → Z).</li>
-    <li><span>4</span> Every name is a non-empty string (no blank lines used as names).</li>
-    <li><span>5</span> The program runs without any errors.</li>
-  </ul>
+    <div class="section-label" id="m2_req_label">What your program must do</div>
+
+    <ul class="req-list" id="m2_req_list">
+      <li><span>1</span> Print <strong>four names</strong> in total — yours and three friends'.</li>
+      <li><span>2</span> Each name appears on its <strong>own separate line</strong>.</li>
+      <li><span>3</span> The names are in <strong>alphabetical order</strong> (A → Z).</li>
+      <li><span>4</span> Every name is a non-empty string (no blank lines used as names).</li>
+      <li><span>5</span> The program runs without any errors.</li>
+    </ul>
+  </div>
 
   <div class="code-checker">
     <textarea class="checker-textarea" id="m2_editor" data-title="Name List Program" style="min-height:280px" oninput="saveState()"></textarea>
@@ -545,26 +619,6 @@ color:  purple
       <button class="btn btn-check" id="btn_check_m2" onclick="checkMake()">⚡ Check program</button>
       <div class="feedback hidden" id="fb_m2"></div>
     </div>
-  </div>
-
-  <div id="m2_ext_task" class="step-hidden" style="margin-top:2rem">
-    <div class="section-label">★★★★ Extension — Multi-line print</div>
-    <div class="modify-task ext">
-      <span class="stars">★★★★</span>
-      <div class="task-text">
-        Now display all five names using a <strong>single print() statement</strong>.
-        Use <code style="background:#ede0ff;padding:0 3px;border-radius:3px">\n</code>
-        inside the string to create line breaks — e.g.
-        <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print("Alice\nBob\nCarol")</code>.
-        Replace all five of your separate print() calls with one.
-      </div>
-    </div>
-  </div>
-
-  <div class="completion-banner" id="completionBanner">
-    <div style="font-size:2.5rem;margin-bottom:0.5rem">🏆</div>
-    <h3>PRIMM Complete!</h3>
-    <p>You've worked through all five stages for Output: Strings. Excellent work — show your teacher!</p>
   </div>
 </section>
 
@@ -585,50 +639,82 @@ print("I am learning Python.")
 print("This is fun!")`;
 
 const STEP_COUNT_I  = 4;
-const STEP_COUNT_M1 = 4;
+const STEP_COUNT_M1 = 3;
 
 const TEXT_FIELDS = [
-  'p_text1',
   'r_editor', 'r1',
-  'i_editor', 'i1', 'i2', 'i3', 'i4',
+  'i_editor', 'i1', 'i4',
   'm1_editor', 'm2_editor',
 ];
-const RADIO_GROUPS = ['p_mcq1', 'p_mcq2'];
+const RADIO_GROUPS = ['p_mcq1', 'p_mcq2', 'i2_mcq', 'i3_tf'];
 
 const P_CORRECT = {
   p_mcq1: 'option_c',
-  p_mcq2: 'option_a',
+  p_mcq2: 'option_b',
 };
 const P_PASS_MSG = {
   p_mcq1: 'Correct — each print() call produces exactly one line of output, so three calls give three lines.',
-  p_mcq2: 'Correct — speech marks create a string: Python displays the text inside them exactly as written.',
+  p_mcq2: 'Correct — Python never prints the speech marks themselves, only the text inside them.',
 };
 const P_FAIL_MSG = {
   p_mcq1: 'Not quite — count the number of print() calls. Each one produces exactly one line of output.',
-  p_mcq2: 'Not quite — the speech marks mark the text as a string, telling Python to display it as-is.',
+  p_mcq2: 'Not quite — run the program and look at the output. Do any speech marks appear on screen?',
 };
 
+const I_CODE_CHECKS = [
+  function(code) {
+    if (/\bprint\s*\(\s*["']Hello,\s*World!["']\s*\)/.test(code))
+      return 'The original "Hello, World!" is still there — change that text to your own greeting first.';
+    return null;
+  },
+  function(code) {
+    const count = (code.match(/\bprint\s*\(/g) || []).length;
+    if (count < 4) return 'Only ' + count + ' print() call' + (count === 1 ? '' : 's') + ' found — add a 4th print() line to your code.';
+    return null;
+  },
+  function(code) {
+    if (!/\bprint\s*\(\s*'/.test(code))
+      return "No single-quoted print() found — change one line to use single quotes, e.g. print('Hi there').";
+    return null;
+  },
+  function(code) {
+    if (!/\bprint\s*\(\s*\)/.test(code))
+      return 'No empty print() found — add print() with nothing inside the brackets.';
+    return null;
+  },
+];
+
 const I_FIELDS = [
-  { id:'i1', cardId:'qcard_i1', validate(v) {
+  { id:'i1', cardId:'qcard_i1', type:'text', needsNewLine: false, validate(v) {
     if (v.length < 4)  return 'Describe what changed in the output — even a few words is fine.';
     if (isNonsense(v)) return "That doesn't look like a real answer.";
     return null;
   }},
-  { id:'i2', cardId:'qcard_i2', validate(v) {
-    if (v.length < 4)  return 'Describe what happened — how many lines are there now?';
-    if (isNonsense(v)) return "That doesn't look like a real answer.";
-    return null;
-  }},
-  { id:'i3', cardId:'qcard_i3', validate(v) {
-    if (v.length < 4)  return 'Describe what happened when you used single quotes.';
-    if (isNonsense(v)) return "That doesn't look like a real answer.";
-    return null;
-  }},
-  { id:'i4', cardId:'qcard_i4', validate(v) {
-    if (v.length < 4)  return 'Describe what an empty print() displays.';
+  { id:'i2', cardId:'qcard_i2', type:'mcq', radioName:'i2_mcq', correctValue:'option_b', needsNewLine: true,
+    passMsg: 'Correct — four print() calls give four lines of output.',
+    failMsg: 'Not quite — count the print() calls in your code. Each one produces exactly one line.',
+    validate() {
+      const chosen = document.querySelector('input[name="i2_mcq"]:checked');
+      if (!chosen) return 'Select an answer before checking.';
+      if (chosen.value !== 'option_b') return 'Not quite — count the print() calls. Each gives exactly one line of output.';
+      return null;
+    },
+  },
+  { id:'i3', cardId:'qcard_i3', type:'mcq', radioName:'i3_tf', correctValue:'option_a', needsNewLine: false,
+    passMsg: 'Correct — Python accepts both single and double quotes around strings.',
+    failMsg: 'Run the code with single quotes and look carefully — do you get an error, or normal output?',
+    validate() {
+      const chosen = document.querySelector('input[name="i3_tf"]:checked');
+      if (!chosen) return 'Select an answer before checking.';
+      if (chosen.value !== 'option_a') return 'Run the code with single quotes and check — does Python give an error?';
+      return null;
+    },
+  },
+  { id:'i4', cardId:'qcard_i4', type:'text', needsNewLine: true, validate(v) {
+    if (v.length < 4)  return 'Describe what appeared between the two lines — even a few words is fine.';
     if (isNonsense(v)) return "That doesn't look like a real answer.";
     if (!/blank|empty|nothing|new.?line|space|gap/i.test(v))
-      return 'Hint: what does print() with nothing inside it show in the output? Is it truly nothing, or something else?';
+      return 'Hint: look between the two lines in the output. Is there a gap, a blank line, or nothing at all?';
     return null;
   }},
 ];
@@ -641,12 +727,15 @@ try { state = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch(e) 
 let currentStage    = state.currentStage    || 'P';
 let completedStages = state.completedStages || [];
 let passedChecks    = state.passedChecks    || {};
+let predictStep     = state.predictStep     || 1;
 let stepI  = state.stepI  || 1;
 let stepM1 = state.stepM1 || 1;
 let skippedStages = state.skippedStages || [];
 let attemptCounts = state.attemptCounts || {};
+let iStepRan = state.iStepRan || {};
 let predictReviewTimer = null;
-const PREDICT_REVIEW_DELAY_MS = 10000;
+let firstRunShown = false;
+const PREDICT_REVIEW_DELAY_MS = 3000;
 
 const STAGES = ['P','R','I','M1','M2'];
 
@@ -659,13 +748,16 @@ function saveState() {
     const checked = document.querySelector(`input[name="${name}"]:checked`);
     if (checked) state['radio_' + name] = checked.value;
   });
+  state.wb_p3_placed    = wbP3.placed.slice();
   state.currentStage    = currentStage;
   state.completedStages = completedStages;
   state.passedChecks    = passedChecks;
+  state.predictStep     = predictStep;
   state.stepI  = stepI;
   state.stepM1 = stepM1;
   state.skippedStages = skippedStages;
   state.attemptCounts = attemptCounts;
+  state.iStepRan = iStepRan;
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
 }
 
@@ -703,6 +795,8 @@ function updateGranularProgress() {
 function updateStepVisibility() {
   for (let i = 1; i <= STEP_COUNT_I; i++) {
     document.getElementById('qcard_i' + i)?.classList.toggle('step-hidden', i !== stepI);
+    const checkBtn = document.getElementById('btn_check_i' + i);
+    if (checkBtn) checkBtn.disabled = !iStepRan[i];
   }
   for (let i = 1; i <= STEP_COUNT_M1; i++) {
     document.getElementById('m1_step_' + i)?.classList.toggle('step-hidden', i !== stepM1);
@@ -716,11 +810,15 @@ function updateStepVisibility() {
   if (skipM1Btn) skipM1Btn.style.display = (attemptCounts['m1_' + stepM1] || 0) >= 3 ? '' : 'none';
 
   document.getElementById('btn_goto_m2')?.classList.toggle('step-hidden', !passedChecks['m1_code' + STEP_COUNT_M1]);
-  document.getElementById('m2_ext_task')?.classList.toggle('step-hidden', !passedChecks['m2_make']);
+
+  if (passedChecks['m2_make']) {
+    showCompletion();
+    showExtensionTask();
+  }
 
   const m2Btn = document.getElementById('btn_check_m2');
   if (m2Btn) {
-    m2Btn.textContent = passedChecks['m2_make'] ? '⚡ Mark extension complete' : '⚡ Check program';
+    m2Btn.textContent = passedChecks['m2_make'] ? '⚡ Check extension' : '⚡ Check program';
     m2Btn.onclick = passedChecks['m2_make'] ? checkExt : checkMake;
   }
   updateGranularProgress();
@@ -744,6 +842,16 @@ function submitScore() {
   window.ActivityUI?.setScore(score);
   window.Classroom?.submitGrade(score, ACTIVITY_TITLE);
   if (score >= 100) window.ActivityUI?.launchCelebration({ percent: 100 });
+}
+
+function setAnswerState(target, ok) {
+  const el = typeof target === 'string' ? document.getElementById(target) : target;
+  const block = el?.closest('.q-card, .modify-task, .req-list li, .code-checker');
+  if (block) {
+    block.classList.toggle('is-wrong', !ok);
+    block.classList.toggle('is-right', ok);
+    if (ok) window.ActivityUI?.miniCelebration(block);
+  }
 }
 
 function showStage(s, persist = true) {
@@ -803,15 +911,14 @@ function completeStage(s) {
 }
 
 function showPredictReviewButton(startDelay = true) {
-  const checkBtn = document.getElementById('btn_check_predict');
   const gotoBtn = document.getElementById('btn_goto_r');
-  if (checkBtn) checkBtn.classList.add('step-hidden');
   if (!gotoBtn) return;
 
   gotoBtn.classList.remove('step-hidden');
   if (startDelay) {
     state.predictReviewReadyAt = Date.now() + PREDICT_REVIEW_DELAY_MS;
     saveState();
+    setTimeout(() => gotoBtn.scrollIntoView({ behavior: 'smooth', block: 'center' }), 150);
   }
 
   const readyAt = completedStages.includes('P') ? 0 : (Number(state.predictReviewReadyAt) || Date.now());
@@ -857,6 +964,15 @@ function setPyStatus(st) {
   }
 }
 
+function spotlightOutput(editorId) {
+  const ta = document.getElementById(editorId);
+  if (!ta) return;
+  const panel = ta.closest('.editor-wrap')?.querySelector('.output-panel');
+  if (!panel || panel.classList.contains('spotlight')) return;
+  panel.classList.add('spotlight');
+  setTimeout(() => panel.classList.remove('spotlight'), 5500);
+}
+
 async function runCodeInEditor(editorId, statusElId, inputs = []) {
   if (window.Classroom?.verifyAuth() === false) return;
   const editorEl = document.getElementById(editorId);
@@ -870,6 +986,19 @@ async function runCodeInEditor(editorId, statusElId, inputs = []) {
   const result = await runPython(code, { inputs });
   setEditorOutput(editorEl, result.output, !result.ok);
   clearSyntaxHint(editorEl);
+
+  if (editorId === 'r_editor' && !firstRunShown) {
+    firstRunShown = true;
+    setTimeout(() => spotlightOutput(editorId), 150);
+  }
+
+  if (editorId === 'i_editor') {
+    iStepRan[stepI] = true;
+    const checkBtn = document.getElementById('btn_check_i' + stepI);
+    if (checkBtn) checkBtn.disabled = false;
+    saveState();
+  }
+
   if (statusEl) {
     statusEl.classList.remove('loading');
     if (result.ok) {
@@ -885,6 +1014,17 @@ async function runCodeInEditor(editorId, statusElId, inputs = []) {
 function resetInvestigateEditor() {
   const ta = document.getElementById('i_editor');
   ta.value = STARTER_CODE;
+  refreshEditor(ta);
+  saveState();
+}
+
+function insertNewLine(editorId) {
+  const ta = document.getElementById(editorId);
+  if (!ta) return;
+  const val = ta.value;
+  ta.value = val.endsWith('\n') ? val : val + '\n';
+  ta.focus();
+  ta.setSelectionRange(ta.value.length, ta.value.length);
   refreshEditor(ta);
   saveState();
 }
@@ -915,6 +1055,86 @@ function fieldHint(card, msg) {
   el.textContent = msg ? '⚠️ ' + msg : '';
 }
 
+// ── Word bank (Predict Q3) ────────────────────────────
+const WB_P3_WORDS = ['Hello,', 'I', 'am', 'learning', 'Python.', 'World!'];
+const wbP3 = { placed: [], poolOrder: null };
+
+function wbP3Render() {
+  const pool = document.getElementById('wb_p3_pool');
+  const ans  = document.getElementById('wb_p3_answer');
+  if (!pool || !ans) return;
+  if (!wbP3.poolOrder) {
+    wbP3.poolOrder = WB_P3_WORDS.slice();
+    for (let i = wbP3.poolOrder.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [wbP3.poolOrder[i], wbP3.poolOrder[j]] = [wbP3.poolOrder[j], wbP3.poolOrder[i]];
+    }
+  }
+  pool.innerHTML = wbP3.poolOrder.map(w =>
+    `<span class="wb-chip${wbP3.placed.includes(w) ? ' used' : ''}" onclick="wbP3Place('${w}')">${w}</span>`
+  ).join('');
+  if (wbP3.placed.length === 0) {
+    ans.innerHTML = '<span class="wb-empty-hint">Click words above to build the output…</span>';
+  } else {
+    ans.innerHTML = wbP3.placed.map((w, i) =>
+      `<span class="wb-placed" onclick="wbP3Remove(${i})">${w}&nbsp;✕</span>`
+    ).join('');
+  }
+}
+
+function wbP3Place(word) {
+  if (!wbP3.placed.includes(word)) { wbP3.placed.push(word); wbP3Render(); saveState(); }
+}
+
+function wbP3Remove(idx) {
+  wbP3.placed.splice(idx, 1);
+  document.getElementById('wb_p3_answer')?.classList.remove('is-right', 'is-wrong');
+  const fb = document.getElementById('fb_p_wb3');
+  if (fb) { fb.className = 'mcq-fb'; fb.style.display = 'none'; }
+  wbP3Render();
+  saveState();
+}
+
+function checkWordBankPredict() {
+  if (window.Classroom?.verifyAuth() === false) return;
+  const card = document.getElementById('qcard_p_wb3');
+  const ans  = document.getElementById('wb_p3_answer');
+  const fb   = document.getElementById('fb_p_wb3');
+  if (wbP3.placed.length === 0) {
+    card?.classList.add('error');
+    fieldHint(card, 'Place at least one word before checking — even a guess is fine.');
+    return;
+  }
+  card?.classList.remove('error');
+  fieldHint(card, '');
+  const hasLine1Words = wbP3.placed.some(w => w === 'Hello,' || w === 'World!');
+  if (hasLine1Words) {
+    const ans = document.getElementById('wb_p3_answer');
+    const fb  = document.getElementById('fb_p_wb3');
+    if (ans) { ans.classList.remove('is-right'); ans.classList.add('is-wrong'); }
+    if (fb) {
+      fb.className = 'mcq-fb fail';
+      fb.textContent = '✘ Those words are from line 1 ("Hello, World!") — the question asks about line 2. Remove "Hello," and "World!" and use the words from line 2 instead.';
+    }
+    return;
+  }
+  const ok = wbP3.placed.join(' ') === 'I am learning Python.';
+  if (ans) { ans.classList.toggle('is-right', ok); ans.classList.toggle('is-wrong', !ok); }
+  if (fb) {
+    fb.className = 'mcq-fb ' + (ok ? 'pass' : 'fail');
+    fb.textContent = ok
+      ? '✔ Correct — Python displays the text inside the speech marks exactly as written.'
+      : '✘ Not quite — Python shows exactly what is inside the speech marks on line 2. Try re-ordering the words.';
+  }
+  if (ok) {
+    window.ActivityUI?.miniCelebration(card);
+    document.getElementById('btn_check_p_wb3')?.classList.add('step-hidden');
+    predictStep = Math.max(predictStep, 4);
+    saveState();
+    showPredictReviewButton();
+  }
+}
+
 function applyMCQFeedback(name, correct) {
   const chosen = document.querySelector(`input[name="${name}"]:checked`);
   if (!chosen) return false;
@@ -938,50 +1158,32 @@ function clearPredictError(cardId) {
   document.getElementById(cardId)?.classList.remove('error');
 }
 
-function tryCompletePredict() {
+function checkPredictMCQ(name, nextCardId) {
   if (window.Classroom?.verifyAuth() === false) return;
-  let allAttempted = true;
-  let firstError = null;
-
-  RADIO_GROUPS.forEach(name => {
-    const attempted = applyMCQFeedback(name, P_CORRECT[name]);
-    if (!attempted) {
-      allAttempted = false;
-      const card = document.getElementById('qcard_' + name);
-      if (card) { card.classList.add('error'); if (!firstError) firstError = card; }
-    } else {
-      document.getElementById('qcard_' + name)?.classList.remove('error');
-    }
-  });
-
-  const p_text1_val  = (document.getElementById('p_text1')?.value || '').trim().toLowerCase().replace(/[.!?]$/, '');
-  const p_text1_card = document.getElementById('qcard_p_text1');
-  if (p_text1_val.length < 1) {
-    allAttempted = false;
-    p_text1_card?.classList.add('error');
-    if (!firstError) firstError = p_text1_card;
-  } else {
-    p_text1_card?.classList.remove('error');
-    const ok = p_text1_val === 'i am learning python';
-    const fb = document.getElementById('fb_p_text1');
-    if (fb) {
-      fb.className = 'mcq-fb ' + (ok ? 'pass' : 'fail');
-      fb.textContent = ok
-        ? '✔ Correct — Python displays the text inside the speech marks exactly as written.'
-        : '✘ Not quite — Python displays exactly what is inside the speech marks on line 2. Check your spelling and capitalisation.';
-    }
+  const attempted = applyMCQFeedback(name, P_CORRECT[name]);
+  const card = document.getElementById('qcard_' + name);
+  if (!attempted) {
+    card?.classList.add('error');
+    fieldHint(card, 'Select an option before checking — even a guess is fine.');
+    return;
   }
-
-  const warning = document.getElementById('predictWarning');
-  if (!allAttempted) {
-    warning.style.display = 'flex';
-    firstError?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  } else {
-    warning.style.display = 'none';
-    showPredictReviewButton();
-    document.getElementById('btn_goto_r')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }
+  card?.classList.remove('error');
+  fieldHint(card, '');
+  if (document.querySelector(`input[name="${name}"]:checked`)?.value === P_CORRECT[name])
+    window.ActivityUI?.miniCelebration(card);
+  document.getElementById('btn_check_' + name)?.classList.add('step-hidden');
+  document.getElementById('btn_next_' + name)?.classList.remove('step-hidden');
+  saveState();
 }
+
+function nextPredictQ(nextCardId) {
+  predictStep++;
+  saveState();
+  const nextCard = document.getElementById(nextCardId);
+  nextCard?.classList.remove('step-hidden');
+  nextCard?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
 
 function clearRunError(cardId) {
   document.getElementById(cardId)?.classList.remove('error');
@@ -998,18 +1200,25 @@ function tryCompleteRun() {
   if (r1val.length < 5)       r1msg = 'Describe what you saw — even a few words is fine.';
   else if (isNonsense(r1val)) r1msg = "That doesn't look like a real answer — give it another try.";
   if (r1msg) {
-    allOk = false; r1card?.classList.add('error');
+    allOk = false;
+    r1card?.classList.add('error');
+    r1card?.classList.remove('is-right');
     fieldHint(r1card, r1msg);
     if (!firstError) firstError = r1card;
   } else {
-    r1card?.classList.remove('error'); fieldHint(r1card, '');
+    r1card?.classList.remove('error');
+    r1card?.classList.add('is-right');
+    fieldHint(r1card, '');
+    window.ActivityUI?.miniCelebration(r1card);
   }
 
   if (allOk) {
-    document.getElementById('btn_check_run').classList.add('step-hidden');
-    document.getElementById('btn_goto_i').classList.remove('step-hidden');
+    const btn = document.getElementById('btn_check_run');
+    if (btn) { btn.disabled = true; btn.textContent = '✅ Moving to Investigate…'; }
     clearSyntaxHint(document.getElementById('r_editor'));
+    window.ActivityUI?.showToast('✅ Great — moving to Investigate!');
     submitScore();
+    setTimeout(() => completeStage('R'), 1500);
   } else {
     firstError?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
@@ -1019,43 +1228,136 @@ function nextStep(stage, n) {
   if (stage !== 'I') return;
   const field = I_FIELDS[n - 1];
   if (!field) return;
-  const val  = (document.getElementById(field.id)?.value || '').trim();
   const card = document.getElementById(field.cardId);
-  const msg  = field.validate(val);
-  if (msg) {
+
+  const code    = document.getElementById('i_editor')?.value || '';
+  const codeMsg = I_CODE_CHECKS[n - 1]?.(code);
+  if (codeMsg) {
     card.classList.add('error');
-    fieldHint(card, msg);
-    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    recordIAttempt(n);
+    card.classList.remove('is-right');
+    fieldHint(card, 'Make the code change first: ' + codeMsg);
+    document.getElementById('i_editor')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     return;
   }
+
+  if (field.type === 'mcq') {
+    const chosen = document.querySelector(`input[name="${field.radioName}"]:checked`);
+    if (!chosen) {
+      card.classList.add('error');
+      fieldHint(card, 'Select an answer before checking — even a guess is fine.');
+      return;
+    }
+    const ok = chosen.value === field.correctValue;
+    document.querySelectorAll(`input[name="${field.radioName}"]`).forEach(r => {
+      const opt = r.closest('.radio-opt');
+      opt.classList.remove('correct', 'wrong');
+      if (r.value === field.correctValue) opt.classList.add('correct');
+      else if (r.value === chosen.value && !ok) opt.classList.add('wrong');
+    });
+    const fb = document.getElementById('fb_' + field.id);
+    if (fb) {
+      fb.className = 'mcq-fb ' + (ok ? 'pass' : 'fail');
+      fb.textContent = (ok ? '✔ ' : '✘ ') + (ok ? field.passMsg : field.failMsg);
+    }
+    if (!ok) {
+      card.classList.add('error');
+      card.classList.remove('is-right');
+      fieldHint(card, '');
+      card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      recordIAttempt(n);
+      return;
+    }
+  } else {
+    const msg = field.validate((document.getElementById(field.id)?.value || '').trim());
+    if (msg) {
+      card.classList.add('error');
+      card.classList.remove('is-right');
+      fieldHint(card, msg);
+      card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      recordIAttempt(n);
+      return;
+    }
+  }
   card.classList.remove('error');
+  card.classList.add('is-right');
   fieldHint(card, '');
-  stepI = n + 1;
-  updateStepVisibility();
-  saveState();
-  document.getElementById('i_editor')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  window.ActivityUI?.miniCelebration(card);
+  const btn = card.querySelector('.btn-next');
+  if (btn) { btn.disabled = true; btn.textContent = '✅ Moving on…'; }
+  window.ActivityUI?.showToast('✅ Good observation! On to the next change…');
+  setTimeout(() => {
+    card.classList.remove('is-right');
+    stepI = n + 1;
+    const nextField = I_FIELDS[stepI - 1];
+    updateStepVisibility();
+    saveState();
+    if (nextField?.needsNewLine) {
+      const ta = document.getElementById('i_editor');
+      if (ta) {
+        if (!ta.value.endsWith('\n')) ta.value += '\n';
+        ta.focus();
+        ta.setSelectionRange(ta.value.length, ta.value.length);
+        refreshEditor(ta);
+        saveState();
+      }
+    }
+    document.getElementById('i_editor')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 1500);
 }
 
 function tryCompleteInvestigate() {
   if (window.Classroom?.verifyAuth() === false) return;
+
+  const code     = document.getElementById('i_editor')?.value || '';
+  const codeMsg  = I_CODE_CHECKS[STEP_COUNT_I - 1]?.(code);
+  const lastCard = document.getElementById('qcard_i' + STEP_COUNT_I);
+  if (codeMsg) {
+    lastCard?.classList.add('error');
+    fieldHint(lastCard, 'Make the code change first: ' + codeMsg);
+    document.getElementById('i_editor')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    return;
+  }
+
   let allOk = true;
   let firstError = null;
 
   I_FIELDS.forEach(f => {
-    const val  = (document.getElementById(f.id)?.value || '').trim();
     const card = document.getElementById(f.cardId);
-    const msg  = f.validate(val);
+    let msg;
+    if (f.type === 'mcq') {
+      msg = f.validate();
+      if (msg) {
+        const chosen = document.querySelector(`input[name="${f.radioName}"]:checked`);
+        if (chosen && chosen.value !== f.correctValue) {
+          const fb = document.getElementById('fb_' + f.id);
+          if (fb) { fb.className = 'mcq-fb fail'; fb.textContent = '✘ ' + f.failMsg; }
+        }
+      }
+    } else {
+      msg = f.validate((document.getElementById(f.id)?.value || '').trim());
+    }
     if (msg) {
-      card?.classList.add('error'); fieldHint(card, msg);
+      card?.classList.add('error');
+      card?.classList.remove('is-right');
+      fieldHint(card, msg);
       allOk = false; if (!firstError) firstError = card;
     } else {
-      card?.classList.remove('error'); fieldHint(card, '');
+      card?.classList.remove('error');
+      card?.classList.add('is-right');
+      fieldHint(card, '');
     }
   });
 
-  if (allOk) { completeStage('I'); }
-  else { recordIAttempt(stepI); firstError?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+  if (allOk) {
+    const lastBtn = lastCard?.querySelector('.btn-next');
+    if (lastBtn) { lastBtn.disabled = true; lastBtn.textContent = '✅ Investigation complete! Moving on…'; }
+    window.ActivityUI?.miniCelebration(lastCard);
+    window.ActivityUI?.showToast('🎉 Investigation complete! Moving to Modify…');
+    setTimeout(() => completeStage('I'), 1500);
+  } else {
+    recordIAttempt(stepI);
+    firstError?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
 }
 
 async function checkMod() {
@@ -1084,6 +1386,8 @@ async function checkMod() {
   setEditorOutput(document.getElementById('m1_editor'), run.output, false);
   clearSyntaxHint(document.getElementById('m1_editor'));
   passedChecks[checkId] = true;
+  window.ActivityUI?.miniCelebration(fbEl);
+  window.ActivityUI?.showToast('✅ Modification ' + stepM1 + ' complete!');
   if (stepM1 < STEP_COUNT_M1) {
     setTimeout(() => {
       stepM1++;
@@ -1091,6 +1395,8 @@ async function checkMod() {
       updateStepVisibility();
       saveState();
     }, 1500);
+  } else {
+    updateStepVisibility();
   }
   saveState();
   submitScore();
@@ -1119,10 +1425,12 @@ async function checkMake() {
   fbEl.textContent = structural.msg;
   setEditorOutput(document.getElementById('m2_editor'), run.output, false);
   passedChecks['m2_make'] = true;
+  window.ActivityUI?.miniCelebration(fbEl);
   updateStepVisibility();
   saveState(); submitScore();
   if (!completedStages.includes('M2')) { completedStages.push('M2'); updateNav(); saveState(); }
-  showCompletion();
+  showCompletion(true);
+  showExtensionTask();
 }
 
 async function checkExt() {
@@ -1143,14 +1451,33 @@ async function checkExt() {
   fbEl.className = 'feedback pass'; fbEl.textContent = structural.msg;
   setEditorOutput(document.getElementById('m2_editor'), run.output, false);
   passedChecks['m2_ext'] = true;
+  window.ActivityUI?.miniCelebration(fbEl);
+  window.ActivityUI?.showToast('🌟 Extension complete! Outstanding!');
   updateStepVisibility();
   saveState(); submitScore();
 }
 
-function showCompletion() {
+function showCompletion(scroll = false) {
   const banner = document.getElementById('completionBanner');
   banner.style.display = 'block';
-  banner.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  if (scroll) banner.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function showExtensionTask() {
+  const taskText = document.getElementById('m2_task_text');
+  const reqLabel = document.getElementById('m2_req_label');
+  const reqList  = document.getElementById('m2_req_list');
+  if (!taskText) return;
+  taskText.innerHTML = `
+    <strong>★★★★ Extension — now try this before showing your teacher.</strong><br>
+    Display all four names using a <strong>single print() statement</strong>.
+    Use <code style="background:#ede0ff;padding:0 3px;border-radius:3px">\\n</code>
+    inside the string to create line breaks — e.g.
+    <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print("Alice\\nBob\\nCarol")</code>.
+    Replace your four separate print() calls with one, then click Check again.`;
+  taskText.closest('.info-box').querySelector('.icon').textContent = '★';
+  if (reqLabel) reqLabel.style.display = 'none';
+  if (reqList)  reqList.style.display  = 'none';
 }
 
 function markStageSkipped(stage) {
@@ -1193,13 +1520,14 @@ function recordM1Attempt() {
 
 Object.assign(window, {
   showStage, saveState,
-  clearPredictError, tryCompletePredict,
+  clearPredictError, checkPredictMCQ, nextPredictQ,
+  checkWordBankPredict, wbP3Place, wbP3Remove,
   reviewedGoToRun,
   clearRunError, tryCompleteRun,
   tryCompleteInvestigate, nextStep,
   checkMod, completeStage,
   checkMake, checkExt,
-  runCodeInEditor, resetInvestigateEditor,
+  runCodeInEditor, resetInvestigateEditor, insertNewLine,
   skipStep,
 });
 
@@ -1213,21 +1541,43 @@ window.addEventListener('DOMContentLoaded', () => {
   setPyStatus('loading');
   preload().then(() => setPyStatus('ready')).catch(() => setPyStatus('error'));
 
-  if (completedStages.includes('P') || Number(state.predictReviewReadyAt) > 0) {
-    RADIO_GROUPS.forEach(name => applyMCQFeedback(name, P_CORRECT[name]));
-    showPredictReviewButton(false);
+  // Restore predict sequential question visibility
+  if (predictStep >= 2) document.getElementById('qcard_p_mcq2')?.classList.remove('step-hidden');
+  if (predictStep >= 3) document.getElementById('qcard_p_wb3')?.classList.remove('step-hidden');
 
-    const p_text1_val = (document.getElementById('p_text1')?.value || '').trim().toLowerCase().replace(/[.!?]$/, '');
-    if (p_text1_val.length > 0) {
-      const ok = p_text1_val === 'i am learning python';
-      const fb = document.getElementById('fb_p_text1');
+  // Re-apply MCQ feedback and hide check/next buttons for already-answered questions
+  if (predictStep >= 2 && state['radio_p_mcq1']) {
+    applyMCQFeedback('p_mcq1', P_CORRECT['p_mcq1']);
+    document.getElementById('btn_check_p_mcq1')?.classList.add('step-hidden');
+    document.getElementById('btn_next_p_mcq1')?.classList.add('step-hidden');
+  }
+  if (predictStep >= 3 && state['radio_p_mcq2']) {
+    applyMCQFeedback('p_mcq2', P_CORRECT['p_mcq2']);
+    document.getElementById('btn_check_p_mcq2')?.classList.add('step-hidden');
+    document.getElementById('btn_next_p_mcq2')?.classList.add('step-hidden');
+  }
+
+  // Restore word bank state and re-show result if already checked
+  if (state.wb_p3_placed) wbP3.placed = state.wb_p3_placed;
+  wbP3Render();
+  if (predictStep >= 4) {
+    const ans = document.getElementById('wb_p3_answer');
+    const fb  = document.getElementById('fb_p_wb3');
+    if (wbP3.placed.length > 0) {
+      const ok = wbP3.placed.join(' ') === 'I am learning Python.';
+      if (ans) { ans.classList.toggle('is-right', ok); ans.classList.toggle('is-wrong', !ok); }
       if (fb) {
         fb.className = 'mcq-fb ' + (ok ? 'pass' : 'fail');
         fb.textContent = ok
           ? '✔ Correct — Python displays the text inside the speech marks exactly as written.'
-          : '✘ Not quite — Python displays exactly what is inside the speech marks on line 2.';
+          : '✘ Not quite — try re-ordering the words.';
       }
     }
+    document.getElementById('btn_check_p_wb3')?.classList.add('step-hidden');
+  }
+
+  if (predictStep >= 4 || completedStages.includes('P') || Number(state.predictReviewReadyAt) > 0) {
+    showPredictReviewButton(false);
   }
 
   if (passedChecks['m2_make']) {
