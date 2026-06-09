@@ -1086,8 +1086,66 @@
     draw();
   }
 
+  // ── Mini celebration ─────────────────────────────────
+  // A short (~1.5 s) burst of green stars and gold sparks anchored near an
+  // element. Much smaller than launchCelebration — used for per-step wins.
+  function miniCelebration(element) {
+    if (prefersReducedMotion()) return;
+    const canvas = makeCanvas('activity-ui-mini');
+    const ctx = canvas.getContext('2d');
+
+    // Anchor to the top-centre of the supplied element, or viewport centre.
+    let cx = window.innerWidth / 2;
+    let cy = window.innerHeight * 0.38;
+    if (element) {
+      const r = element.getBoundingClientRect();
+      cx = r.left + r.width / 2;
+      cy = r.top + r.height * 0.25;
+    }
+
+    const colors = ['#22c55e', '#4ade80', '#86efac', '#facc15', '#fde68a', '#a3e635'];
+    // Two small bursts: one centred, one slightly offset for variety.
+    let particles = makeBurst(cx, cy, 22, colors, {
+      minSpeed: 2.2, maxSpeed: 7.5,
+      minSize: 2, maxSize: 4.5,
+      life: 140,
+      shapes: ['star', 'star', 'dot', 'flare']
+    });
+    particles.push(...makeBurst(
+      cx + (Math.random() - 0.5) * 50, cy - 12,
+      14, colors,
+      { minSpeed: 1.6, maxSpeed: 5, minSize: 1.5, maxSize: 3.5, life: 110, shapes: ['star', 'dot'] }
+    ));
+
+    let lastTime = performance.now();
+    function draw() {
+      const delta = celebrationFrameDelta(lastTime);
+      lastTime = performance.now();
+      resizeCanvas(canvas, ctx);
+      ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+      particles = particles.filter(p => p.life > 0);
+      particles.forEach(p => {
+        p.x += p.vx * delta;
+        p.y += p.vy * delta;
+        p.vy += 0.045 * delta;
+        p.life -= delta;
+        p.spin += p.spinSpeed * delta;
+        ctx.globalAlpha = Math.max(p.life / p.maxLife, 0);
+        ctx.shadowColor = p.color;
+        ctx.shadowBlur = p.shape === 'star' ? 9 : 4;
+        drawSpark(ctx, p);
+        ctx.shadowBlur = 0;
+      });
+      ctx.globalAlpha = 1;
+      if (hasLiveParticles(particles)) requestAnimationFrame(draw);
+      else canvas.remove();
+    }
+    draw();
+  }
+
   window.ActivityUI = {
     launchCelebration,
+    miniCelebration,
     showToast,
     resetCelebration,
     setScore,

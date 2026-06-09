@@ -211,6 +211,34 @@ color:  purple
 
   .step-hidden { display: none !important; }
 
+  /* ── Q-CARD CORRECT STATE ── */
+  @keyframes success-pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
+    40%  { box-shadow: 0 0 0 8px rgba(34,197,94,0.45); }
+    70%  { box-shadow: 0 0 0 14px rgba(34,197,94,0.18); }
+    100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
+  }
+  .q-card.is-right { border-left-color: var(--green) !important; background: #f0fdf4; animation: success-pulse 0.8s ease forwards; }
+  .q-card.is-right input[type=text], .q-card.is-right textarea { border-color: var(--green); }
+
+  /* ── FEEDBACK ENTRANCE ── */
+  @keyframes feedback-enter {
+    from { opacity: 0; transform: translateY(-4px) scale(0.97); }
+    to   { opacity: 1; transform: none; }
+  }
+  .feedback.pass { animation: feedback-enter 0.35s ease; }
+
+  /* ── OUTPUT SPOTLIGHT (first run in Run stage) ── */
+  @keyframes output-spotlight-fade {
+    0%, 60% { box-shadow: 0 0 0 3px #22c55e, 0 0 22px rgba(34,197,94,0.45); }
+    100%     { box-shadow: none; }
+  }
+  .output-panel.spotlight { animation: output-spotlight-fade 5s ease forwards; border-radius: 4px; }
+  .output-panel.spotlight .output-header::after {
+    content: ' ← output appears here';
+    color: #22c55e; font-style: italic; font-weight: 700;
+  }
+
   @media (max-width: 600px) {
     .site-header { flex-wrap: wrap; } .header-code { display: none; } .stage-panel { padding: 1rem; }
   }
@@ -287,6 +315,9 @@ color:  purple
 
   <!--
     FILL IN ⑤: Predict questions — aim for 3–4 total, mixing MCQ and free-text.
+    Questions are shown ONE AT A TIME. Each card has its own "Check answer" button;
+    after checking, the student sees feedback, then clicks "Next question →" to
+    reveal the next card. The last question's "Next" calls showPredictReviewButton().
 
     MCQ QUESTION pattern:
       • name= on the radio group must match an entry in RADIO_GROUPS in the JS
@@ -294,16 +325,21 @@ color:  purple
       • id the card as qcard_<name>, the feedback div as fb_<name>
       • Keep all option texts roughly the same length — do not let the correct
         answer be systematically longer than the others
+      • Check button calls: checkPredictMCQ('p_mcq1', 'qcard_p_mcq2')
+        (second arg = id of the NEXT card to reveal)
+      • Next button calls: nextPredictQ('qcard_p_mcq2')
 
-    FREE-TEXT QUESTION pattern:
+    FREE-TEXT QUESTION pattern (typically the last question):
       • id= on the input must match an entry in TEXT_FIELDS in the JS
       • id the card as qcard_<id>
+      • Check button calls: checkPredictText()
+      • Next button calls: showPredictReviewButton()
 
     Rename p_mcq1 / p_mcq2 / p_text1 throughout to something meaningful,
     e.g. p_which_line, p_output, p_what_error — and update the JS to match.
   -->
 
-  <!-- MCQ question 1 -->
+  <!-- MCQ question 1 — visible immediately -->
   <div class="q-card" id="qcard_p_mcq1">
     <label class="q-label"><span class="q-num">1</span> FILL IN: Question text?</label>
     <div class="radio-opts" id="ropts_p_mcq1">
@@ -313,10 +349,14 @@ color:  purple
       <label class="radio-opt"><input type="radio" name="p_mcq1" value="option_d" onchange="saveState()"> <span>FILL IN: Option D</span></label>
     </div>
     <div class="mcq-fb" id="fb_p_mcq1"></div>
+    <div style="margin-top:0.8rem;display:flex;gap:0.6rem;flex-wrap:wrap;align-items:center">
+      <button class="btn btn-check" id="btn_check_p_mcq1" onclick="checkPredictMCQ('p_mcq1', 'qcard_p_mcq2')">✓ Check answer</button>
+      <button class="btn btn-next step-hidden" id="btn_next_p_mcq1" onclick="nextPredictQ('qcard_p_mcq2')">Next question →</button>
+    </div>
   </div>
 
-  <!-- MCQ question 2 -->
-  <div class="q-card" id="qcard_p_mcq2">
+  <!-- MCQ question 2 — revealed after Q1 is answered -->
+  <div class="q-card step-hidden" id="qcard_p_mcq2">
     <label class="q-label"><span class="q-num">2</span> FILL IN: Question text?</label>
     <div class="radio-opts" id="ropts_p_mcq2">
       <label class="radio-opt"><input type="radio" name="p_mcq2" value="option_a" onchange="saveState()"> <span>FILL IN: Option A (correct)</span></label>
@@ -324,24 +364,25 @@ color:  purple
       <label class="radio-opt"><input type="radio" name="p_mcq2" value="option_c" onchange="saveState()"> <span>FILL IN: Option C</span></label>
     </div>
     <div class="mcq-fb" id="fb_p_mcq2"></div>
+    <div style="margin-top:0.8rem;display:flex;gap:0.6rem;flex-wrap:wrap;align-items:center">
+      <button class="btn btn-check" id="btn_check_p_mcq2" onclick="checkPredictMCQ('p_mcq2', 'qcard_p_text1')">✓ Check answer</button>
+      <button class="btn btn-next step-hidden" id="btn_next_p_mcq2" onclick="nextPredictQ('qcard_p_text1')">Next question →</button>
+    </div>
   </div>
 
-  <!-- Free-text question -->
-  <div class="q-card" id="qcard_p_text1">
+  <!-- Free-text question — revealed after Q2 is answered -->
+  <div class="q-card step-hidden" id="qcard_p_text1">
     <label class="q-label"><span class="q-num">3</span> FILL IN: Question asking for exact output or a typed answer?</label>
     <input type="text" id="p_text1" placeholder="Type your answer here…" oninput="saveState(); clearPredictError('qcard_p_text1')">
     <!-- Optional: add a hint box pointing at the relevant line -->
     <div class="hint-box" style="margin-top:0.6rem">Hint: FILL IN: brief pointer to the relevant line(s) of code.</div>
     <div class="mcq-fb" id="fb_p_text1"></div>
+    <div style="margin-top:0.8rem;display:flex;gap:0.6rem;flex-wrap:wrap;align-items:center">
+      <button class="btn btn-check" id="btn_check_p_text1" onclick="checkPredictText()">✓ Check answer</button>
+      <button class="btn btn-next step-hidden" id="btn_next_p_text1" onclick="showPredictReviewButton()">See results &amp; continue →</button>
+    </div>
   </div>
 
-  <div class="predict-warning" id="predictWarning">
-    ⚠️ Please answer every question above — even a guess is fine!
-  </div>
-
-  <button class="btn btn-check" id="btn_check_predict" onclick="tryCompletePredict()" style="margin-top:1rem">
-    ✓ Check predictions
-  </button>
   <button class="btn btn-next step-hidden" id="btn_goto_r" onclick="reviewedGoToRun()" style="margin-top:1rem">
     ✓ Reviewed — go to Run →
   </button>
@@ -396,9 +437,6 @@ color:  purple
   <button class="btn btn-check" id="btn_check_run" onclick="tryCompleteRun()" style="margin-top:1rem">
     ⚡ Check response
   </button>
-  <button class="btn btn-next step-hidden" id="btn_goto_i" onclick="completeStage('R')" style="margin-top:1rem">
-    ✓ go to Investigate →
-  </button>
 </section>
 
 
@@ -444,44 +482,57 @@ color:  purple
       <label class="q-label"><span class="q-num" style="background:var(--stage-i)">1</span>
         FILL IN: "Change <code style="background:#ede0ff;padding:0 3px;border-radius:3px">X</code>
         to <code style="background:#ede0ff;padding:0 3px;border-radius:3px">Y</code>
-        in the editor above. Run it. What changes in the output?"
+        in the editor below. Run it. What changes in the output?"
       </label>
       <textarea id="i1" placeholder="Describe what changed…" oninput="saveState()"></textarea>
-      <button class="btn btn-next" style="margin-top:10px" onclick="nextStep('I', 1)">Next Investigation →</button>
+      <button class="btn btn-next" id="btn_check_i1" style="margin-top:10px" onclick="nextStep('I', 1)" disabled>✓ Check answer</button>
       <button class="btn btn-skip" id="btn_skip_i1" style="margin-top:6px;display:none" onclick="skipStep('I')">Move on without completing →</button>
     </div>
 
     <div class="q-card step-hidden" id="qcard_i2" style="border-left-color:var(--stage-i)">
       <label class="q-label"><span class="q-num" style="background:var(--stage-i)">2</span>
-        FILL IN: "Keep your step 1 change. Now also
-        <strong>add/change</strong> <code style="background:#ede0ff;padding:0 3px;border-radius:3px">Z</code>.
-        Run it. What do you see?"
+        <!--
+          FILL IN: Multi-step instructions use a bullet list; students never retype earlier work.
+          If this step asks students to add a new line of code, set needsNewLine: true in I_FIELDS
+          for this step — the editor will automatically insert a newline and position the cursor there.
+        -->
+        Make these changes in the editor:
+        <ul style="margin:0.5rem 0 0 1.2rem;line-height:2">
+          <li>FILL IN: <strong>Add/change</strong> <code style="background:#ede0ff;padding:0 3px;border-radius:3px">Z</code>.</li>
+          <li>Run your code.</li>
+        </ul>
+        FILL IN: What do you observe?
       </label>
       <textarea id="i2" placeholder="Describe what happened…" oninput="saveState()"></textarea>
-      <button class="btn btn-next" style="margin-top:10px" onclick="nextStep('I', 2)">Next Investigation →</button>
+      <button class="btn btn-next" id="btn_check_i2" style="margin-top:10px" onclick="nextStep('I', 2)" disabled>✓ Check answer</button>
       <button class="btn btn-skip" id="btn_skip_i2" style="margin-top:6px;display:none" onclick="skipStep('I')">Move on without completing →</button>
     </div>
 
     <div class="q-card step-hidden" id="qcard_i3" style="border-left-color:var(--stage-i)">
       <label class="q-label"><span class="q-num" style="background:var(--stage-i)">3</span>
-        FILL IN: "Keep all your changes. Now also try
-        <code style="background:#ede0ff;padding:0 3px;border-radius:3px">W</code>.
-        Run it. What happens and why?"
+        Make these changes in the editor:
+        <ul style="margin:0.5rem 0 0 1.2rem;line-height:2">
+          <li>FILL IN: Try <code style="background:#ede0ff;padding:0 3px;border-radius:3px">W</code>.</li>
+          <li>Run your code.</li>
+        </ul>
+        FILL IN: What happens and why?
       </label>
       <textarea id="i3" placeholder="Describe what changed…" oninput="saveState()"></textarea>
-      <button class="btn btn-next" style="margin-top:10px" onclick="nextStep('I', 3)">Next Investigation →</button>
+      <button class="btn btn-next" id="btn_check_i3" style="margin-top:10px" onclick="nextStep('I', 3)" disabled>✓ Check answer</button>
       <button class="btn btn-skip" id="btn_skip_i3" style="margin-top:6px;display:none" onclick="skipStep('I')">Move on without completing →</button>
     </div>
 
     <div class="q-card step-hidden" id="qcard_i4" style="border-left-color:var(--stage-i)">
       <label class="q-label"><span class="q-num" style="background:var(--stage-i)">4</span>
-        FILL IN: "Keep all your changes. Now add
-        <code style="background:#ede0ff;padding:0 3px;border-radius:3px">something new</code>.
-        Run it. What do you observe?"
+        Make these changes in the editor:
+        <ul style="margin:0.5rem 0 0 1.2rem;line-height:2">
+          <li>FILL IN: Add <code style="background:#ede0ff;padding:0 3px;border-radius:3px">something new</code>.</li>
+          <li>Run your code.</li>
+        </ul>
+        FILL IN: What do you observe?
       </label>
-      <textarea id="i4" placeholder="Describe what you found…" oninput="saveState()"></textarea>
       <!-- Last step → tryCompleteInvestigate(), not nextStep() -->
-      <button class="btn btn-next" style="margin-top:10px" onclick="tryCompleteInvestigate()">Finish Investigation →</button>
+      <button class="btn btn-next" id="btn_check_i4" style="margin-top:10px" onclick="tryCompleteInvestigate()" disabled>✓ Check answer</button>
       <button class="btn btn-skip" id="btn_skip_i4" style="margin-top:6px;display:none" onclick="skipStep('I')">Move on without completing →</button>
     </div>
 
@@ -496,8 +547,14 @@ color:  purple
     -->
   </div>
 
+  <!-- Info box: reminds students their code is preserved between steps -->
+  <div class="info-box" style="margin-top:1rem">
+    <span class="icon">💾</span>
+    <span>Your code is <strong>preserved between steps</strong> — keep building on what you have. Use <strong>↺ Reset</strong> only if you want to start the investigation from scratch.</span>
+  </div>
+
   <!-- Shared editor — persists across all Investigate steps. Students accumulate changes here. -->
-  <div class="code-checker" style="margin-top:1rem">
+  <div class="code-checker" style="margin-top:0.5rem">
     <textarea class="checker-textarea" id="i_editor" data-title="Python Editor" oninput="saveState()"></textarea>
     <div class="checker-footer">
       <!-- FILL IN ⑩: Mock inputs matching the current state of the code in the editor. -->
@@ -790,7 +847,9 @@ const P_FAIL_MSG = {
 // ═══════════════════════════════════════════════════════
 
 const I_FIELDS = [
-  { id:'i1', cardId:'qcard_i1', validate(v) {
+  // needsNewLine: set true when the step asks students to add a new line of code —
+  // the editor will auto-append a newline and position the cursor there on transition.
+  { id:'i1', cardId:'qcard_i1', needsNewLine: false, validate(v) {
     if (v.length < 4)  return 'Describe what happened — even a few words is fine.';
     if (isNonsense(v)) return "That doesn't look like a real answer.";
     // FILL IN: add a keyword check to guide the student if needed, e.g.:
@@ -798,17 +857,17 @@ const I_FIELDS = [
     //   return 'FILL IN: hint about what the student should have noticed.';
     return null;
   }},
-  { id:'i2', cardId:'qcard_i2', validate(v) {
+  { id:'i2', cardId:'qcard_i2', needsNewLine: false, validate(v) {
     if (v.length < 4)  return 'Describe what happened.';
     if (isNonsense(v)) return "That doesn't look like a real answer.";
     return null;
   }},
-  { id:'i3', cardId:'qcard_i3', validate(v) {
+  { id:'i3', cardId:'qcard_i3', needsNewLine: false, validate(v) {
     if (v.length < 4)  return 'Describe what happened.';
     if (isNonsense(v)) return "That doesn't look like a real answer.";
     return null;
   }},
-  { id:'i4', cardId:'qcard_i4', validate(v) {
+  { id:'i4', cardId:'qcard_i4', needsNewLine: false, validate(v) {
     if (v.length < 4)  return 'Describe what you observed.';
     if (isNonsense(v)) return "That doesn't look like a real answer.";
     return null;
@@ -827,11 +886,14 @@ try { state = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch(e) 
 let currentStage    = state.currentStage    || 'P';
 let completedStages = state.completedStages || [];
 let passedChecks    = state.passedChecks    || {};
+let predictStep     = state.predictStep     || 1;
 let stepI  = state.stepI  || 1;
 let stepM1 = state.stepM1 || 1;
 let skippedStages = state.skippedStages || [];
 let attemptCounts = state.attemptCounts || {};
+let iStepRan = state.iStepRan || {};
 let predictReviewTimer = null;
+let firstRunShown = false;
 const PREDICT_REVIEW_DELAY_MS = 10000;
 
 const STAGES = ['P','R','I','M1','M2'];
@@ -850,10 +912,12 @@ function saveState() {
   state.currentStage    = currentStage;
   state.completedStages = completedStages;
   state.passedChecks    = passedChecks;
+  state.predictStep = predictStep;
   state.stepI  = stepI;
   state.stepM1 = stepM1;
   state.skippedStages = skippedStages;
   state.attemptCounts = attemptCounts;
+  state.iStepRan = iStepRan;
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
 }
 
@@ -895,6 +959,8 @@ function updateGranularProgress() {
 function updateStepVisibility() {
   for (let i = 1; i <= STEP_COUNT_I; i++) {
     document.getElementById('qcard_i' + i)?.classList.toggle('step-hidden', i !== stepI);
+    const checkBtn = document.getElementById('btn_check_i' + i);
+    if (checkBtn) checkBtn.disabled = !iStepRan[i];
   }
   for (let i = 1; i <= STEP_COUNT_M1; i++) {
     document.getElementById('m1_step_' + i)?.classList.toggle('step-hidden', i !== stepM1);
@@ -944,7 +1010,11 @@ function submitScore() {
 function setAnswerState(target, ok) {
   const el = typeof target === 'string' ? document.getElementById(target) : target;
   const block = el?.closest('.q-card, .modify-task, .req-list li, .code-checker');
-  if (block) block.classList.toggle('is-wrong', !ok);
+  if (block) {
+    block.classList.toggle('is-wrong', !ok);
+    block.classList.toggle('is-right', ok);
+    if (ok) window.ActivityUI?.miniCelebration(block);
+  }
 }
 
 // ── Nav ───────────────────────────────────────────────
@@ -1006,9 +1076,7 @@ function completeStage(s) {
 }
 
 function showPredictReviewButton(startDelay = true) {
-  const checkBtn = document.getElementById('btn_check_predict');
   const gotoBtn = document.getElementById('btn_goto_r');
-  if (checkBtn) checkBtn.classList.add('step-hidden');
   if (!gotoBtn) return;
 
   gotoBtn.classList.remove('step-hidden');
@@ -1077,6 +1145,19 @@ async function runCodeInEditor(editorId, statusElId, inputs = []) {
   const result = await runPython(code, { inputs });
   setEditorOutput(editorEl, result.output, !result.ok);
   clearSyntaxHint(editorEl);
+
+  if (editorId === 'r_editor' && !firstRunShown) {
+    firstRunShown = true;
+    setTimeout(() => spotlightOutput(editorId), 150);
+  }
+
+  if (editorId === 'i_editor') {
+    iStepRan[stepI] = true;
+    const checkBtn = document.getElementById('btn_check_i' + stepI);
+    if (checkBtn) checkBtn.disabled = false;
+    saveState();
+  }
+
   if (statusEl) {
     statusEl.classList.remove('loading');
     if (result.ok) {
@@ -1094,6 +1175,26 @@ function resetInvestigateEditor() {
   ta.value = STARTER_CODE;
   refreshEditor(ta);
   saveState();
+}
+
+function insertNewLine(editorId) {
+  const ta = document.getElementById(editorId);
+  if (!ta) return;
+  const val = ta.value;
+  ta.value = val.endsWith('\n') ? val : val + '\n';
+  ta.focus();
+  ta.setSelectionRange(ta.value.length, ta.value.length);
+  refreshEditor(ta);
+  saveState();
+}
+
+function spotlightOutput(editorId) {
+  const ta = document.getElementById(editorId);
+  if (!ta) return;
+  const panel = ta.closest('.editor-wrap')?.querySelector('.output-panel');
+  if (!panel || panel.classList.contains('spotlight')) return;
+  panel.classList.add('spotlight');
+  setTimeout(() => panel.classList.remove('spotlight'), 5500);
 }
 
 // ── Nonsense guard (do not modify) ───────────────────
@@ -1124,7 +1225,7 @@ function fieldHint(card, msg) {
   el.textContent = msg ? '⚠️ ' + msg : '';
 }
 
-// ── Predict ───────────────────────────────────────────
+// ── Predict (per-question flow) ───────────────────────────────────────────
 
 function applyMCQFeedback(name, correct) {
   const chosen = document.querySelector(`input[name="${name}"]:checked`);
@@ -1149,54 +1250,62 @@ function clearPredictError(cardId) {
   document.getElementById(cardId)?.classList.remove('error');
 }
 
-function tryCompletePredict() {
+// Check one MCQ: show feedback, then reveal the "Next →" button.
+function checkPredictMCQ(name, nextCardId) {
   if (window.Classroom?.verifyAuth() === false) return;
-  let allAttempted = true;
-  let firstError = null;
+  const attempted = applyMCQFeedback(name, P_CORRECT[name]);
+  const card = document.getElementById('qcard_' + name);
+  if (!attempted) {
+    card?.classList.add('error');
+    fieldHint(card, 'Select an option before checking — even a guess is fine.');
+    return;
+  }
+  card?.classList.remove('error');
+  fieldHint(card, '');
+  document.getElementById('btn_check_' + name)?.classList.add('step-hidden');
+  document.getElementById('btn_next_' + name)?.classList.remove('step-hidden');
+  saveState();
+}
 
-  RADIO_GROUPS.forEach(name => {
-    const attempted = applyMCQFeedback(name, P_CORRECT[name]);
-    if (!attempted) {
-      allAttempted = false;
-      const card = document.getElementById('qcard_' + name);
-      if (card) { card.classList.add('error'); if (!firstError) firstError = card; }
-    } else {
-      document.getElementById('qcard_' + name)?.classList.remove('error');
-    }
-  });
+// Reveal the next predict question card.
+function nextPredictQ(nextCardId) {
+  predictStep++;
+  saveState();
+  const nextCard = document.getElementById(nextCardId);
+  nextCard?.classList.remove('step-hidden');
+  nextCard?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
 
-  // ── FILL IN ⑥: Free-text question check ─────────────────────────────────
-  // Duplicate this block for each free-text question. Adjust the id, cardId,
-  // correct-match logic, and feedback strings to suit your question.
-  const p_text1_val  = (document.getElementById('p_text1')?.value || '').trim().toLowerCase();
-  const p_text1_card = document.getElementById('qcard_p_text1');
-  if (p_text1_val.length < 1) {
-    allAttempted = false;
-    p_text1_card?.classList.add('error');
-    if (!firstError) firstError = p_text1_card;
-  } else {
-    p_text1_card?.classList.remove('error');
-    // FILL IN: replace with the exact expected answer (lowercased)
-    const ok = p_text1_val === 'fill in correct answer';
-    const fb = document.getElementById('fb_p_text1');
-    if (fb) {
-      fb.className = 'mcq-fb ' + (ok ? 'pass' : 'fail');
-      fb.textContent = ok
-        ? '✔ Correct — FILL IN: explanation.'
-        : '✘ Not quite — FILL IN: hint pointing toward the right answer.';
-    }
+// Check the free-text predict question: show feedback, then reveal "See results →".
+function checkPredictText() {
+  if (window.Classroom?.verifyAuth() === false) return;
+  const val  = (document.getElementById('p_text1')?.value || '').trim().toLowerCase();
+  const card = document.getElementById('qcard_p_text1');
+  if (val.length < 1) {
+    card?.classList.add('error');
+    fieldHint(card, 'Type something before checking — even a guess is fine.');
+    return;
+  }
+  card?.classList.remove('error');
+  fieldHint(card, '');
+
+  // ── FILL IN ⑥: Free-text feedback ───────────────────────────────────────
+  // Replace 'fill in correct answer' with the expected answer (lowercased).
+  // Update the pass/fail messages to match your question.
+  const ok = val === 'fill in correct answer';
+  const fb = document.getElementById('fb_p_text1');
+  if (fb) {
+    fb.className = 'mcq-fb ' + (ok ? 'pass' : 'fail');
+    fb.textContent = ok
+      ? '✔ Correct — FILL IN: explanation.'
+      : '✘ Not quite — FILL IN: hint pointing toward the right answer.';
   }
   // ── End free-text block ──────────────────────────────────────────────────
 
-  const warning = document.getElementById('predictWarning');
-  if (!allAttempted) {
-    warning.style.display = 'flex';
-    firstError?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  } else {
-    warning.style.display = 'none';
-    showPredictReviewButton();
-    document.getElementById('btn_goto_r')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }
+  document.getElementById('btn_check_p_text1')?.classList.add('step-hidden');
+  document.getElementById('btn_next_p_text1')?.classList.remove('step-hidden');
+  predictStep = Math.max(predictStep, 4);
+  saveState();
 }
 
 // ── Run ───────────────────────────────────────────────
@@ -1216,18 +1325,25 @@ function tryCompleteRun() {
   if (r1val.length < 5)       r1msg = 'Describe what you saw — even a few words is fine.';
   else if (isNonsense(r1val)) r1msg = "That doesn't look like a real answer — give it another try.";
   if (r1msg) {
-    allOk = false; r1card?.classList.add('error');
+    allOk = false;
+    r1card?.classList.add('error');
+    r1card?.classList.remove('is-right');
     fieldHint(r1card, r1msg);
     if (!firstError) firstError = r1card;
   } else {
-    r1card?.classList.remove('error'); fieldHint(r1card, '');
+    r1card?.classList.remove('error');
+    r1card?.classList.add('is-right');
+    fieldHint(r1card, '');
+    window.ActivityUI?.miniCelebration(r1card);
   }
 
   if (allOk) {
-    document.getElementById('btn_check_run').classList.add('step-hidden');
-    document.getElementById('btn_goto_i').classList.remove('step-hidden');
+    const btn = document.getElementById('btn_check_run');
+    if (btn) { btn.disabled = true; btn.textContent = '✅ Moving to Investigate…'; }
     clearSyntaxHint(document.getElementById('r_editor'));
+    window.ActivityUI?.showToast('✅ Great — moving to Investigate!');
     submitScore();
+    setTimeout(() => completeStage('R'), 1500);
   } else {
     firstError?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
@@ -1244,18 +1360,37 @@ function nextStep(stage, n) {
   const msg  = field.validate(val);
   if (msg) {
     card.classList.add('error');
+    card.classList.remove('is-right');
     fieldHint(card, msg);
     card.scrollIntoView({ behavior: 'smooth', block: 'center' });
     recordIAttempt(n);
     return;
   }
   card.classList.remove('error');
+  card.classList.add('is-right');
   fieldHint(card, '');
-  stepI = n + 1;
-  updateStepVisibility();
-  saveState();
-  // Scroll to editor so the student is ready to make the next change.
-  document.getElementById('i_editor')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  window.ActivityUI?.miniCelebration(card);
+  const btn = card.querySelector('.btn-next');
+  if (btn) { btn.disabled = true; btn.textContent = '✅ Moving on…'; }
+  window.ActivityUI?.showToast('✅ Good observation! On to the next change…');
+  setTimeout(() => {
+    card.classList.remove('is-right');
+    stepI = n + 1;
+    const nextField = I_FIELDS[stepI - 1];
+    updateStepVisibility();
+    saveState();
+    if (nextField?.needsNewLine) {
+      const ta = document.getElementById('i_editor');
+      if (ta) {
+        if (!ta.value.endsWith('\n')) ta.value += '\n';
+        ta.focus();
+        ta.setSelectionRange(ta.value.length, ta.value.length);
+        refreshEditor(ta);
+        saveState();
+      }
+    }
+    document.getElementById('i_editor')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 1500);
 }
 
 function tryCompleteInvestigate() {
@@ -1268,15 +1403,28 @@ function tryCompleteInvestigate() {
     const card = document.getElementById(f.cardId);
     const msg  = f.validate(val);
     if (msg) {
-      card?.classList.add('error'); fieldHint(card, msg);
+      card?.classList.add('error');
+      card?.classList.remove('is-right');
+      fieldHint(card, msg);
       allOk = false; if (!firstError) firstError = card;
     } else {
-      card?.classList.remove('error'); fieldHint(card, '');
+      card?.classList.remove('error');
+      card?.classList.add('is-right');
+      fieldHint(card, '');
     }
   });
 
-  if (allOk) { completeStage('I'); }
-  else { recordIAttempt(stepI); firstError?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+  if (allOk) {
+    const lastCard = document.getElementById('qcard_i' + STEP_COUNT_I);
+    const lastBtn  = lastCard?.querySelector('.btn-next');
+    if (lastBtn) { lastBtn.disabled = true; lastBtn.textContent = '✅ Investigation complete! Moving on…'; }
+    window.ActivityUI?.miniCelebration(lastCard);
+    window.ActivityUI?.showToast('🎉 Investigation complete! Moving to Modify…');
+    setTimeout(() => completeStage('I'), 1500);
+  } else {
+    recordIAttempt(stepI);
+    firstError?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
 }
 
 // ── Modify ────────────────────────────────────────────
@@ -1307,6 +1455,8 @@ async function checkMod() {
   setEditorOutput(document.getElementById('m1_editor'), run.output, false);
   clearSyntaxHint(document.getElementById('m1_editor'));
   passedChecks[checkId] = true;
+  window.ActivityUI?.miniCelebration(fbEl);
+  window.ActivityUI?.showToast('✅ Modification ' + stepM1 + ' complete!');
   if (stepM1 < STEP_COUNT_M1) {
     setTimeout(() => {
       stepM1++;
@@ -1347,6 +1497,8 @@ async function checkMake() {
   fbEl.textContent = structural.msg;
   setEditorOutput(document.getElementById('m2_editor'), run.output, false);
   passedChecks['m2_make'] = true;
+  window.ActivityUI?.miniCelebration(fbEl);
+  window.ActivityUI?.showToast('🏆 Program complete! Excellent work!');
   updateStepVisibility();
   saveState(); submitScore();
   if (!completedStages.includes('M2')) { completedStages.push('M2'); updateNav(); saveState(); }
@@ -1372,6 +1524,8 @@ async function checkExt() {
   fbEl.className = 'feedback pass'; fbEl.textContent = structural.msg;
   setEditorOutput(document.getElementById('m2_editor'), run.output, false);
   passedChecks['m2_ext'] = true;
+  window.ActivityUI?.miniCelebration(fbEl);
+  window.ActivityUI?.showToast('🌟 Extension complete! Outstanding!');
   updateStepVisibility();
   saveState(); submitScore();
 }
@@ -1426,13 +1580,13 @@ function recordM1Attempt() {
 
 Object.assign(window, {
   showStage, saveState,
-  clearPredictError, tryCompletePredict,
+  clearPredictError, checkPredictMCQ, nextPredictQ, checkPredictText,
   reviewedGoToRun,
   clearRunError, tryCompleteRun,
   tryCompleteInvestigate, nextStep,
   checkMod, completeStage,
   checkMake, checkExt,
-  runCodeInEditor, resetInvestigateEditor,
+  runCodeInEditor, resetInvestigateEditor, insertNewLine,
   skipStep,
 });
 
@@ -1448,22 +1602,41 @@ window.addEventListener('DOMContentLoaded', () => {
   setPyStatus('loading');
   preload().then(() => setPyStatus('ready')).catch(() => setPyStatus('error'));
 
-  // Restore Predict MCQ feedback if Predict was already completed.
-  if (completedStages.includes('P') || Number(state.predictReviewReadyAt) > 0) {
-    RADIO_GROUPS.forEach(name => applyMCQFeedback(name, P_CORRECT[name]));
-    showPredictReviewButton(false);
+  // Restore predict sequential question visibility and per-question button states.
+  // predictStep: 1=Q1 visible, 2=Q2 revealed, 3=Q3 revealed, 4=review shown.
+  if (predictStep >= 2) document.getElementById('qcard_p_mcq2')?.classList.remove('step-hidden');
+  if (predictStep >= 3) document.getElementById('qcard_p_text1')?.classList.remove('step-hidden');
 
-    // FILL IN ⑨: Re-show free-text feedback on reload.
-    // Copy this block for each free-text question, matching the ok logic in tryCompletePredict().
+  // For already-answered questions, re-apply feedback and hide check/next buttons.
+  if (predictStep >= 2 && state['radio_p_mcq1']) {
+    applyMCQFeedback('p_mcq1', P_CORRECT['p_mcq1']);
+    document.getElementById('btn_check_p_mcq1')?.classList.add('step-hidden');
+    document.getElementById('btn_next_p_mcq1')?.classList.add('step-hidden');
+  }
+  if (predictStep >= 3 && state['radio_p_mcq2']) {
+    applyMCQFeedback('p_mcq2', P_CORRECT['p_mcq2']);
+    document.getElementById('btn_check_p_mcq2')?.classList.add('step-hidden');
+    document.getElementById('btn_next_p_mcq2')?.classList.add('step-hidden');
+  }
+
+  // FILL IN ⑨: Re-show free-text feedback on reload.
+  // Match the ok logic used in checkPredictText() above.
+  if (predictStep >= 4) {
     const p_text1_val = (document.getElementById('p_text1')?.value || '').trim().toLowerCase();
     if (p_text1_val.length > 0) {
-      const ok = p_text1_val === 'fill in correct answer'; // FILL IN: same condition as above
+      const ok = p_text1_val === 'fill in correct answer'; // FILL IN: same condition as checkPredictText
       const fb = document.getElementById('fb_p_text1');
       if (fb) {
         fb.className = 'mcq-fb ' + (ok ? 'pass' : 'fail');
         fb.textContent = ok ? '✔ Correct — FILL IN.' : '✘ Not quite — FILL IN.';
       }
     }
+    document.getElementById('btn_check_p_text1')?.classList.add('step-hidden');
+    document.getElementById('btn_next_p_text1')?.classList.add('step-hidden');
+  }
+
+  if (predictStep >= 4 || completedStages.includes('P') || Number(state.predictReviewReadyAt) > 0) {
+    showPredictReviewButton(false);
   }
 
   if (passedChecks['m2_make']) {
