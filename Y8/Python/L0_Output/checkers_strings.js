@@ -64,3 +64,45 @@ export function validateExt(raw) {
     return { pass: false, msg: '❌ Use \\n inside one print() to display all five names without separate print() calls.' };
   return { pass: true, msg: '✅ Extension complete — all four names in a single print() using \\n. Excellent!' };
 }
+
+export function validateVpMod1(raw) {
+  if (raw.trim().length < 20)
+    return { pass: false, msg: '⚠️ Write some code first.' };
+  if (!/\bname\s*=\s*["'][^"']+["']/.test(raw))
+    return { pass: false, msg: '❌ Keep the name variable — just change its value to your own name (keep the speech marks).' };
+  if (/\bname\s*=\s*["']Alice["']/i.test(raw))
+    return { pass: false, msg: '❌ Change the value of name from "Alice" to your own name.' };
+  if (!/\bschool\s*=\s*["'][^"']+["']/.test(raw))
+    return { pass: false, msg: '❌ Keep the school variable — change its value to your own school name.' };
+  if (/\bschool\s*=\s*["']Grange Academy["']/i.test(raw))
+    return { pass: false, msg: '❌ Change "Grange Academy" to your own school name.' };
+  if (!/\bprint\s*\(\s*name\s*\)/.test(raw))
+    return { pass: false, msg: '❌ Keep print(name) — only change the variable values, not the print lines.' };
+  if (!/\bprint\s*\(\s*school\s*\)/.test(raw))
+    return { pass: false, msg: '❌ Keep print(school) — only change the variable values, not the print lines.' };
+  return { pass: true, msg: '✅ Your own values are printing! Notice you only changed the assignment lines — the print lines stayed the same.' };
+}
+
+export function validateVpMod2(raw) {
+  const r1 = validateVpMod1(raw);
+  if (!r1.pass) return r1;
+  if (!/\bsubject\s*=\s*["'][^"']+["']/.test(raw))
+    return { pass: false, msg: '❌ Add a variable called subject and set it to your favourite school subject (in speech marks).' };
+  if (!/\bprint\s*\(\s*subject\s*\)/.test(raw))
+    return { pass: false, msg: '❌ Add print(subject) to display your subject variable.' };
+  return { pass: true, msg: '✅ Three variables, all printing. Ready for the challenge!' };
+}
+
+export function validateVpChallenge(raw) {
+  if (raw.trim().length < 20)
+    return { pass: false, msg: '⚠️ Write your name badge program first.' };
+  const varCount = (raw.match(/\b[a-zA-Z_]\w*\s*=\s*["'][^"'\n]+["']/g) || []).length;
+  if (varCount < 3)
+    return { pass: false, msg: `❌ Create at least 3 string variables — you have ${varCount} so far.` };
+  if (!has(raw, '+'))
+    return { pass: false, msg: '❌ Use + to join strings and variables in at least one print line — try: print("Name: " + first_name).' };
+  const printCount = (raw.match(/\bprint\s*\(/g) || []).length;
+  if (printCount < 2)
+    return { pass: false, msg: '❌ Print at least 2 lines of your name badge.' };
+  return { pass: true, msg: "✅ Name badge complete — you've previewed variables and string concatenation. You'll fly through the next lesson!" };
+}

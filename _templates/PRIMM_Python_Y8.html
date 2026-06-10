@@ -405,7 +405,7 @@ color:  purple
     <div class="mcq-fb" id="fb_p_text1"></div>
     <div style="margin-top:0.8rem;display:flex;gap:0.6rem;flex-wrap:wrap;align-items:center">
       <button class="btn btn-check" id="btn_check_p_text1" onclick="checkPredictText()">✓ Check answer</button>
-      <button class="btn btn-next step-hidden" id="btn_next_p_text1" onclick="showPredictReviewButton()">See results &amp; continue →</button>
+      <button class="btn btn-next step-hidden" id="btn_next_p_text1" onclick="nextPredictToReview()">See results &amp; continue →</button>
     </div>
   </div>
 
@@ -1339,11 +1339,21 @@ function checkPredictMCQ(name, nextCardId) {
 
 // Reveal the next predict question card.
 function nextPredictQ(nextCardId) {
+  ['qcard_p_mcq1', 'qcard_p_mcq2', 'qcard_p_text1'].forEach(id =>
+    document.getElementById(id)?.classList.add('step-hidden'));
   predictStep++;
   saveState();
   const nextCard = document.getElementById(nextCardId);
   nextCard?.classList.remove('step-hidden');
-  nextCard?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  nextCard?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function nextPredictToReview() {
+  ['qcard_p_mcq1', 'qcard_p_mcq2', 'qcard_p_text1'].forEach(id =>
+    document.getElementById(id)?.classList.add('step-hidden'));
+  predictStep = Math.max(predictStep, 4);
+  saveState();
+  showPredictReviewButton();
 }
 
 // Check the free-text predict question: show feedback, then reveal "See results →".
@@ -1374,7 +1384,6 @@ function checkPredictText() {
 
   document.getElementById('btn_check_p_text1')?.classList.add('step-hidden');
   document.getElementById('btn_next_p_text1')?.classList.remove('step-hidden');
-  predictStep = Math.max(predictStep, 4);
   saveState();
 }
 
@@ -1700,7 +1709,7 @@ function recordM1Attempt() {
 
 Object.assign(window, {
   showStage, saveState,
-  clearPredictError, checkPredictMCQ, nextPredictQ, checkPredictText,
+  clearPredictError, checkPredictMCQ, nextPredictQ, nextPredictToReview, checkPredictText,
   reviewedGoToRun,
   clearRunError, tryCompleteRun,
   tryCompleteInvestigate, nextStep,
@@ -1722,37 +1731,16 @@ window.addEventListener('DOMContentLoaded', () => {
   setPyStatus('loading');
   preload().then(() => setPyStatus('ready')).catch(() => setPyStatus('error'));
 
-  // Restore predict sequential question visibility and per-question button states.
-  // predictStep: 1=Q1 visible, 2=Q2 revealed, 3=Q3 revealed, 4=review shown.
-  if (predictStep >= 2) document.getElementById('qcard_p_mcq2')?.classList.remove('step-hidden');
-  if (predictStep >= 3) document.getElementById('qcard_p_text1')?.classList.remove('step-hidden');
-
-  // For already-answered questions, re-apply feedback and hide check/next buttons.
-  if (predictStep >= 2 && state['radio_p_mcq1']) {
-    applyMCQFeedback('p_mcq1', P_CORRECT['p_mcq1']);
-    document.getElementById('btn_check_p_mcq1')?.classList.add('step-hidden');
-    document.getElementById('btn_next_p_mcq1')?.classList.add('step-hidden');
-  }
-  if (predictStep >= 3 && state['radio_p_mcq2']) {
-    applyMCQFeedback('p_mcq2', P_CORRECT['p_mcq2']);
-    document.getElementById('btn_check_p_mcq2')?.classList.add('step-hidden');
-    document.getElementById('btn_next_p_mcq2')?.classList.add('step-hidden');
-  }
-
-  // FILL IN ⑨: Re-show free-text feedback on reload.
-  // Match the ok logic used in checkPredictText() above.
-  if (predictStep >= 4) {
-    const p_text1_val = (document.getElementById('p_text1')?.value || '').trim().toLowerCase();
-    if (p_text1_val.length > 0) {
-      const ok = p_text1_val === 'fill in correct answer'; // FILL IN: same condition as checkPredictText
-      const fb = document.getElementById('fb_p_text1');
-      if (fb) {
-        fb.className = 'mcq-fb ' + (ok ? 'pass' : 'fail');
-        fb.textContent = ok ? '✔ Correct — FILL IN.' : '✘ Not quite — FILL IN.';
-      }
-    }
-    document.getElementById('btn_check_p_text1')?.classList.add('step-hidden');
-    document.getElementById('btn_next_p_text1')?.classList.add('step-hidden');
+  // Show only the current predict question card (one at a time, like Investigate).
+  // predictStep: 1=Q1 visible, 2=Q2 shown, 3=Q3 shown, 4=review button shown.
+  if (predictStep === 2) {
+    document.getElementById('qcard_p_mcq1')?.classList.add('step-hidden');
+    document.getElementById('qcard_p_mcq2')?.classList.remove('step-hidden');
+  } else if (predictStep === 3) {
+    document.getElementById('qcard_p_mcq1')?.classList.add('step-hidden');
+    document.getElementById('qcard_p_text1')?.classList.remove('step-hidden');
+  } else if (predictStep >= 4) {
+    document.getElementById('qcard_p_mcq1')?.classList.add('step-hidden');
   }
 
   if (predictStep >= 4 || completedStages.includes('P') || Number(state.predictReviewReadyAt) > 0) {
