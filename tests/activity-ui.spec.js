@@ -13,6 +13,7 @@ test.describe('ActivityUI shared helpers', () => {
     await loadActivityUI(page);
     await expect.poll(() => page.evaluate(() => Object.keys(window.ActivityUI || {}).sort())).toEqual([
       'launchCelebration',
+      'miniCelebration',
       'resetCelebration',
       'setScore',
       'showGoForGold',
