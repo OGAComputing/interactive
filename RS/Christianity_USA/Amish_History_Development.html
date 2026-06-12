@@ -953,6 +953,17 @@ color:  amber
     <div class="feedback" id="feedback-6"></div>
   </section>
 
+  <!-- Evidence capture — hidden textareas populated by captureEvidence() on task completion.
+       classroom.js scrapes these via data-title + el.value, same as any textarea. -->
+  <div aria-hidden="true" style="display:none" id="ev-container">
+    <textarea id="ev-0" data-title="Task 1 — Fill the Gaps"></textarea>
+    <textarea id="ev-1" data-title="Task 2 — Key Terms Match"></textarea>
+    <!-- ev-2 omitted: Origins MCQ radio buttons already captured by the scraper -->
+    <textarea id="ev-3" data-title="Task 4 — Daily Life Sort"></textarea>
+    <textarea id="ev-4" data-title="Task 5 — True / False"></textarea>
+    <textarea id="ev-5" data-title="Task 6 — Community Test"></textarea>
+    <textarea id="ev-6" data-title="Task 7 — Build the Explanation"></textarea>
+  </div>
 </main>
 
 <div class="ac-toast" id="toast"></div>
@@ -1299,12 +1310,90 @@ color:  amber
     updateProgress();
   }
 
+  function captureEvidence(idx) {
+    const ta = document.getElementById('ev-' + idx);
+    if (!ta) return;
+    const lines = [];
+
+    if (idx === 0) {
+      [['gap-ana','Origins — 16th-century movement'],
+       ['gap-jak','Origins — leader who caused the split'],
+       ['gap-per','America — reason for leaving Europe'],
+       ['gap-am', 'America — destination'],
+       ['gap-ord','Community rules — name of the code'],
+       ['gap-pri','Community rules — sin to avoid'],
+       ['gap-adu','Baptism — type practised'],
+       ['gap-rum','Baptism — trial period name'],
+      ].forEach(([id, hint]) => {
+        const slot = document.getElementById(id);
+        const chip = slot?.firstElementChild;
+        lines.push(hint + ': ' + (chip ? '"' + chip.textContent.trim() + '"' : '(empty)'));
+      });
+
+    } else if (idx === 1) {
+      document.querySelectorAll('#match-term-col .match-term').forEach(term => {
+        const def = document.querySelector('#match-def-col .match-def[data-match="' + term.dataset.match + '"]');
+        lines.push(term.textContent.trim() + ' → ' + (def ? def.textContent.trim() : '(unmatched)'));
+      });
+
+    } else if (idx === 3) {
+      [['zone-belief',  'Beliefs & Worship'],
+       ['zone-family',  'Family & Education'],
+       ['zone-tech',    'Technology & Transport'],
+       ['zone-clothing','Clothing & Appearance'],
+      ].forEach(([id, label]) => {
+        const chips = [...document.getElementById(id).querySelectorAll('.drag-chip')]
+          .map(c => c.textContent.trim());
+        lines.push(label + ': ' + (chips.length ? chips.join('; ') : '(empty)'));
+      });
+
+    } else if (idx === 4) {
+      document.querySelectorAll('.tf-row').forEach(row => {
+        const n    = row.id.replace('tf-', '');
+        const stmt = (row.querySelector('.tf-statement')?.textContent || '')
+                       .replace(/^[A-Z]/, '').trim();
+        const sel  = row.dataset.selected || '—';
+        const fix  = document.getElementById('tf-fix-' + n);
+        const corr = fix?.value
+          ? '; correction: "' + (fix.options[fix.selectedIndex]?.text || fix.value) + '"'
+          : '';
+        lines.push('"' + stmt.substring(0, 90) + (stmt.length > 90 ? '…' : '') + '"');
+        lines.push('  → ' + sel + corr);
+      });
+
+    } else if (idx === 5) {
+      document.querySelectorAll('#verdict-container .verdict-item').forEach(item => {
+        const name  = item.querySelector('.vc-name')?.textContent.trim() || '';
+        const state = item.querySelector('.verdict-stamp')?.dataset.state || 'unset';
+        lines.push(name + ': ' + state.toUpperCase());
+      });
+
+    } else if (idx === 6) {
+      [['ans-ana','grew out of'],
+       ['ans-am', 'moved to'],
+       ['ans-per','after facing'],
+       ['ans-ord','guided by'],
+       ['ans-hum','promote'],
+       ['ans-adu','before choosing'],
+       ['ans-rum','go through'],
+       ['ans-tech','limit'],
+       ['ans-com','protect … ties'],
+      ].forEach(([id, hint]) => {
+        const chip = document.getElementById(id)?.firstElementChild;
+        lines.push('[' + hint + ']: ' + (chip ? '"' + chip.textContent.trim() + '"' : '(empty)'));
+      });
+    }
+
+    ta.value = lines.join('\n');
+  }
+
   function markDone(idx, type = 'gold') {
     if (completed[idx]) return;
     completed[idx] = true;
     const tab = document.querySelector('.tab-btn[data-idx="' + (idx + 1) + '"]');
     if (tab) { tab.classList.remove('done-green','done-gold'); tab.classList.add('done-' + type); }
     updateProgress();
+    captureEvidence(idx);
     const pct = Math.round(completed.filter(Boolean).length / TASK_COUNT * 100);
     window.Classroom?.submitGrade(pct, ACTIVITY_TITLE);
     if (completed.every(Boolean)) allComplete();
