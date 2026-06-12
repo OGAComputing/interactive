@@ -874,6 +874,21 @@
       });
     });
 
+    // 3. Select elements — chosen option (e.g. correction dropdowns in T/F activities)
+    document.querySelectorAll('select').forEach(el => {
+      if (seenInputs.has(el) || isHidden(el)) return;
+      if (!el.value) return;
+      seenInputs.add(el);
+      const optEl = el.options[el.selectedIndex];
+      const value = optEl ? (optEl.text || el.value).trim() : el.value;
+      results.push({
+        label    : findLabel(el) || 'Selection',
+        value,
+        type     : 'choice',
+        feedback : findFeedback(el)
+      });
+    });
+
     return results;
   }
 
