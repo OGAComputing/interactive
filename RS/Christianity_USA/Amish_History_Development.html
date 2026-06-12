@@ -310,51 +310,90 @@ color:  amber
   .mcq-list { display: grid; gap: 12px; }
   .choice-col { display: flex; flex-direction: column; gap: 7px; margin-top: 10px; }
 
-  /* ── Verdict grid — the unique Community Test exercise ── */
-  .verdict-table { width: 100%; border-collapse: collapse; }
-  .verdict-table th {
-    font-family: "Palatino Linotype", Palatino, Georgia, serif; font-size: 0.82rem;
-    font-weight: 800; letter-spacing: 0.08em; padding: 10px 12px; text-transform: uppercase;
-    border-bottom: 2px solid rgba(12,6,2,0.28);
-  }
-  .verdict-table th:first-child {
-    background: linear-gradient(to bottom, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.04) 50%, transparent 100%), linear-gradient(135deg, rgba(42,28,14,0.78), rgba(28,18,8,0.84));
-    color: rgba(228,212,188,0.98); text-align: left;
-  }
-  .verdict-table th:nth-child(2) { background: linear-gradient(135deg, rgba(38,88,64,0.70), rgba(22,58,38,0.80)); color: rgba(180,230,200,0.98); text-align: center; }
-  .verdict-table th:nth-child(3) { background: linear-gradient(135deg, rgba(156,110,8,0.65), rgba(110,75,4,0.78)); color: rgba(255,235,160,0.98); text-align: center; }
-  .verdict-table th:nth-child(4) { background: linear-gradient(135deg, rgba(112,20,36,0.75), rgba(80,14,26,0.85)); color: rgba(255,210,195,0.98); text-align: center; }
+  /* ── Click-to-match (panel 2 — Key Terms) ── */
+  .match-grid { display: grid; gap: 10px; grid-template-columns: minmax(0,1fr) minmax(0,1.7fr); }
+  .match-col { display: flex; flex-direction: column; gap: 7px; }
 
-  .verdict-row { border-bottom: 1px solid rgba(124,28,46,0.10); }
-  .verdict-row:last-child { border-bottom: none; }
-  .verdict-row td { padding: 11px 12px; vertical-align: middle; }
-  .verdict-row td:first-child { color: var(--rs-ink); line-height: 1.6; font-size: 0.93rem; }
-  .verdict-row td:not(:first-child) { text-align: center; }
+  .match-term, .match-def {
+    background: rgba(247,240,222,0.88); border: 1.5px solid rgba(124,28,46,0.16); border-radius: 7px;
+    color: var(--rs-ink); cursor: pointer; font-size: 0.90rem; line-height: 1.55;
+    padding: 10px 14px; transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+    user-select: none;
+  }
+  .match-term { font-weight: 700; font-family: "Palatino Linotype", Palatino, Georgia, serif; font-size: 0.95rem; }
 
-  .verdict-btn {
-    background: rgba(247,240,222,0.88); border: 1.5px solid rgba(124,28,46,0.18); border-radius: 7px;
-    color: var(--rs-muted); cursor: pointer; font: inherit; font-size: 0.82rem; font-weight: 700;
-    padding: 8px 16px; transition: all 0.15s; width: 100%; max-width: 120px;
+  .match-term:hover:not(.matched):not(.wrong-flash),
+  .match-def:hover:not(.matched):not(.wrong-flash) { border-color: var(--rs-burgundy); background: rgba(248,241,223,1); }
+
+  .match-term.selected,
+  .match-def.selected { background: rgba(156,110,8,0.13); border-color: var(--rs-gold); box-shadow: 0 0 0 3px rgba(156,110,8,0.15); }
+
+  .match-term.matched,
+  .match-def.matched {
+    background: rgba(38,88,64,0.10); border-color: var(--rs-green); color: var(--green-dark);
+    cursor: default; pointer-events: none;
   }
-  .verdict-btn:hover { border-color: var(--rs-burgundy); background: rgba(248,241,223,1); color: var(--rs-burgundy); }
-  .verdict-btn[data-val="allowed"].selected { background: rgba(38,88,64,0.14); border-color: var(--rs-green); color: var(--green-dark); font-weight: 900; }
-  .verdict-btn[data-val="limited"].selected { background: rgba(156,110,8,0.14); border-color: var(--rs-gold); color: var(--rs-gold); font-weight: 900; }
-  .verdict-btn[data-val="avoided"].selected { background: rgba(176,40,32,0.12); border-color: var(--red); color: var(--red); font-weight: 900; }
-  .verdict-row.correct td:first-child { background: rgba(38,88,64,0.07); border-radius: 4px; }
-  .verdict-row.wrong   td:first-child { background: rgba(176,40,32,0.07); border-radius: 4px; }
-  .verdict-explanation {
-    color: var(--rs-muted); font-size: 0.82rem; font-style: italic; line-height: 1.5; margin-top: 3px; display: none;
+
+  .match-term.wrong-flash,
+  .match-def.wrong-flash { background: rgba(176,40,32,0.10); border-color: var(--red); animation: ac-shake 0.35s ease; }
+
+  .match-hint {
+    align-items: center; color: var(--rs-muted); display: flex; font-size: 0.82rem;
+    font-style: italic; gap: 6px; justify-content: center; margin-top: 10px;
   }
-  .verdict-row.correct .verdict-explanation { display: block; color: var(--green-dark); }
+
+  /* ── Rubber-stamp cycling (panel 6 — Community Test) ── */
+  .verdict-grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
+
+  .verdict-item {
+    background: rgba(248,241,223,0.98); border: 1.5px solid rgba(124,28,46,0.16); border-radius: 8px;
+    box-shadow: 0 2px 12px rgba(70,30,5,0.09); display: flex; flex-direction: column;
+    gap: 4px; padding: 14px 14px 12px; position: relative; transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .verdict-item.correct { border-color: var(--rs-green); box-shadow: 0 0 0 2px rgba(38,88,64,0.15); }
+  .verdict-item.wrong   { border-color: var(--red); box-shadow: 0 0 0 2px rgba(176,40,32,0.15); }
+
+  .vc-name { color: var(--rs-burgundy); font-family: "Palatino Linotype", Palatino, Georgia, serif; font-size: 0.97rem; font-weight: 800; margin-bottom: 2px; }
+  .vc-desc { color: var(--rs-muted); flex: 1; font-size: 0.84rem; line-height: 1.55; }
+
+  .verdict-stamp {
+    align-self: stretch; background: transparent;
+    border: 2.5px solid rgba(124,28,46,0.20); border-radius: 5px;
+    color: var(--rs-muted); cursor: pointer;
+    font-family: "Palatino Linotype", Palatino, Georgia, serif;
+    font-size: 0.82rem; font-weight: 900; letter-spacing: 0.16em;
+    margin-top: 10px; padding: 9px 10px;
+    text-transform: uppercase; transform: rotate(-3deg);
+    transition: transform 0.15s ease, border-color 0.15s, background 0.15s, color 0.15s, box-shadow 0.15s;
+    user-select: none; width: 100%;
+  }
+  .verdict-stamp:hover { border-color: var(--rs-burgundy); color: var(--rs-burgundy); transform: rotate(-3deg) scale(1.04); }
+
+  .verdict-stamp[data-state="allowed"] {
+    background: rgba(38,88,64,0.09); border-color: var(--rs-green); color: var(--green-dark);
+    box-shadow: 2px 2px 0 rgba(38,88,64,0.22); transform: rotate(-3deg);
+  }
+  .verdict-stamp[data-state="limited"] {
+    background: rgba(156,110,8,0.10); border-color: var(--rs-gold); color: var(--rs-gold);
+    box-shadow: 2px 2px 0 rgba(156,110,8,0.20); transform: rotate(-2deg);
+  }
+  .verdict-stamp[data-state="avoided"] {
+    background: rgba(176,40,32,0.09); border-color: var(--red); color: var(--red);
+    box-shadow: 2px 2px 0 rgba(176,40,32,0.20); transform: rotate(-4deg);
+  }
+  .verdict-stamp.stamp-press { transform: rotate(-3deg) scale(0.92) !important; }
+
+  .verdict-reason { color: var(--green-dark); display: none; font-size: 0.80rem; font-style: italic; line-height: 1.45; margin-top: 6px; }
+  .verdict-item.correct .verdict-reason { display: block; }
 
   .feedback { font-family: "Palatino Linotype", Palatino, Georgia, serif; font-size: 0.96rem; font-style: italic; font-weight: 700; letter-spacing: 0.02em; min-height: 1.6em; margin-top: 12px; }
   .feedback.correct { color: var(--rs-green); }
   .feedback.wrong { animation: ac-shake 0.35s ease; color: var(--red); }
 
-  @media (max-width: 760px) {
+  @media (max-width: 620px) {
     .tab-btn { flex: 1 1 150px; }
     .tf-row { grid-template-columns: 1fr; }
-    .verdict-btn { max-width: none; padding: 7px 8px; font-size: 0.76rem; }
+    .match-grid { grid-template-columns: 1fr; }
   }
 </style>
 </head>
@@ -501,7 +540,7 @@ color:  amber
 
   <!-- ═══ PANEL 2 — Key Terms (task 1) ═══ -->
   <section class="panel" id="panel-2">
-    <div class="goal">Build the vocabulary needed to understand the Amish community.</div>
+    <div class="goal">Match each key term to its definition by clicking a term, then clicking its matching definition.</div>
     <details class="knowledge-box">
       <summary>Knowledge</summary>
       <div class="knowledge-content">
@@ -518,33 +557,34 @@ color:  amber
       </div>
     </details>
     <div class="card">
-      <h2><span class="icon" aria-hidden="true">Aa</span>Drag the definition</h2>
-      <p class="hint">Drag one definition to each key term. Two definitions in the bank are distractors — leave them behind.</p>
-      <div class="drag-bank" id="term-bank" data-randomize-children>
-        <span class="drag-chip" draggable="true" data-answer="t-ana">16th century movement teaching only adult believers should be baptised</span>
-        <span class="drag-chip" draggable="true" data-answer="t-jak">Swiss-born leader who split from the Mennonites to found the Amish movement</span>
-        <span class="drag-chip" draggable="true" data-answer="t-ord">Unwritten community rules promoting humility, simplicity and obedience</span>
-        <span class="drag-chip" draggable="true" data-answer="t-rum">A period when teenagers experience outside life before choosing baptism</span>
-        <span class="drag-chip" draggable="true" data-answer="t-pla">A simple lifestyle kept free of pride, excess and modern luxury</span>
-        <span class="drag-chip" draggable="true" data-answer="t-adu">Baptism that happens only when a person freely chooses faith</span>
-        <span class="drag-chip" draggable="true" data-answer="t-per">Being treated unfairly because of your beliefs</span>
-        <span class="drag-chip" draggable="true" data-answer="t-sep">Keeping apart from mainstream society to protect community values</span>
-        <span class="drag-chip" draggable="true" data-answer="wrong-w1">A health code forbidding alcohol, tobacco and coffee</span>
-        <span class="drag-chip" draggable="true" data-answer="wrong-w2">A sacred text believed to restore the original Christian faith</span>
+      <h2><span class="icon" aria-hidden="true">Aa</span>Match the key terms</h2>
+      <p class="hint">Click a term on the left, then click its correct definition on the right. Correct pairs lock green — keep going until all eight are matched.</p>
+      <div class="match-grid">
+        <div class="match-col" id="match-term-col">
+          <div class="match-term" data-match="t-ana" onclick="selectMatchItem(this,'term')">Anabaptist</div>
+          <div class="match-term" data-match="t-jak" onclick="selectMatchItem(this,'term')">Jakob Ammann</div>
+          <div class="match-term" data-match="t-ord" onclick="selectMatchItem(this,'term')">Ordnung</div>
+          <div class="match-term" data-match="t-rum" onclick="selectMatchItem(this,'term')">Rumspringa</div>
+          <div class="match-term" data-match="t-pla" onclick="selectMatchItem(this,'term')">Plain living</div>
+          <div class="match-term" data-match="t-adu" onclick="selectMatchItem(this,'term')">Adult baptism</div>
+          <div class="match-term" data-match="t-per" onclick="selectMatchItem(this,'term')">Persecution</div>
+          <div class="match-term" data-match="t-sep" onclick="selectMatchItem(this,'term')">Separation</div>
+        </div>
+        <div class="match-col" id="match-def-col" data-randomize-children>
+          <div class="match-def" data-match="t-ana" onclick="selectMatchItem(this,'def')">16th century movement teaching only adult believers should be baptised</div>
+          <div class="match-def" data-match="t-jak" onclick="selectMatchItem(this,'def')">Swiss-born leader who split from the Mennonites to found the Amish movement</div>
+          <div class="match-def" data-match="t-ord" onclick="selectMatchItem(this,'def')">Unwritten community rules promoting humility, simplicity and obedience</div>
+          <div class="match-def" data-match="t-rum" onclick="selectMatchItem(this,'def')">A period when teenagers experience outside life before choosing baptism</div>
+          <div class="match-def" data-match="t-pla" onclick="selectMatchItem(this,'def')">A simple lifestyle kept free of pride, excess and modern luxury</div>
+          <div class="match-def" data-match="t-adu" onclick="selectMatchItem(this,'def')">Baptism that happens only when a person freely chooses their faith</div>
+          <div class="match-def" data-match="t-per" onclick="selectMatchItem(this,'def')">Being treated unfairly or harshly because of your beliefs</div>
+          <div class="match-def" data-match="t-sep" onclick="selectMatchItem(this,'def')">Keeping apart from mainstream society to protect community values and faith</div>
+        </div>
       </div>
-      <div class="task-grid" data-randomize-children>
-        <div class="question-card" id="q1-0"><p><strong>Anabaptist</strong></p><div class="drop-slot" id="term-ana" data-accept="t-ana"></div></div>
-        <div class="question-card" id="q1-1"><p><strong>Jakob Ammann</strong></p><div class="drop-slot" id="term-jak" data-accept="t-jak"></div></div>
-        <div class="question-card" id="q1-2"><p><strong>Ordnung</strong></p><div class="drop-slot" id="term-ord" data-accept="t-ord"></div></div>
-        <div class="question-card" id="q1-3"><p><strong>Rumspringa</strong></p><div class="drop-slot" id="term-rum" data-accept="t-rum"></div></div>
-        <div class="question-card" id="q1-4"><p><strong>Plain living</strong></p><div class="drop-slot" id="term-pla" data-accept="t-pla"></div></div>
-        <div class="question-card" id="q1-5"><p><strong>Adult baptism</strong></p><div class="drop-slot" id="term-adu" data-accept="t-adu"></div></div>
-        <div class="question-card" id="q1-6"><p><strong>Persecution</strong></p><div class="drop-slot" id="term-per" data-accept="t-per"></div></div>
-        <div class="question-card" id="q1-7"><p><strong>Separation</strong></p><div class="drop-slot" id="term-sep" data-accept="t-sep"></div></div>
-      </div>
+      <p class="match-hint" id="match-progress">0 / 8 matched</p>
     </div>
     <div class="row">
-      <button class="ac-btn" onclick="checkTask(1)">Check key terms</button>
+      <button class="ac-btn" onclick="checkTask(1)">Check matches</button>
       <button class="ac-btn-secondary" onclick="resetTask(1)">Reset</button>
     </div>
     <div class="feedback" id="feedback-1"></div>
@@ -777,7 +817,7 @@ color:  amber
 
   <!-- ═══ PANEL 6 — Community Test (task 5) — Unique Exercise ═══ -->
   <section class="panel" id="panel-6">
-    <div class="goal">The Amish assess every technology or practice by asking: does this strengthen or weaken our community? Use what you have learned to decide their verdict.</div>
+    <div class="goal">The Amish assess every technology or practice by asking: does this strengthen or weaken our community? Stamp each card with the Amish verdict.</div>
     <details class="knowledge-box">
       <summary>Knowledge</summary>
       <div class="knowledge-content">
@@ -786,100 +826,66 @@ color:  amber
     </details>
     <div class="card">
       <h2><span class="icon" aria-hidden="true">⚙️</span>Community verdict</h2>
-      <p class="hint">For each item, choose the Amish community's likely verdict. Use the knowledge above to help you.</p>
-      <table class="verdict-table">
-        <thead>
-          <tr>
-            <th>Technology or practice</th>
-            <th>✓ Allowed</th>
-            <th>~ Limited</th>
-            <th>✗ Avoided</th>
-          </tr>
-        </thead>
-        <tbody id="verdict-container">
+      <p class="hint">Click the stamp on each card to cycle through verdicts — <strong>✓ Allowed</strong>, <strong>~ Limited</strong> or <strong>✗ Avoided</strong> — then check your answers.</p>
+      <div class="verdict-grid" id="verdict-container">
 
-          <tr class="verdict-row" id="vd-0" data-answer="avoided">
-            <td>
-              <strong>Cars</strong>
-              <div class="verdict-explanation">Cars let people travel far away easily and encourage independence from the local community.</div>
-            </td>
-            <td><button class="verdict-btn" data-val="allowed" onclick="selectVerdict(0,'allowed')">✓ Allowed</button></td>
-            <td><button class="verdict-btn" data-val="limited" onclick="selectVerdict(0,'limited')">~ Limited</button></td>
-            <td><button class="verdict-btn" data-val="avoided" onclick="selectVerdict(0,'avoided')">✗ Avoided</button></td>
-          </tr>
+        <div class="verdict-item" id="vd-0" data-answer="avoided">
+          <div class="vc-name">Cars</div>
+          <div class="vc-desc">Personal vehicles that allow fast, independent travel away from the community.</div>
+          <button class="verdict-stamp" data-state="unset" onclick="cycleVerdict(0)">— tap to stamp —</button>
+          <div class="verdict-reason">Cars let people travel far away easily and encourage independence from the local community.</div>
+        </div>
 
-          <tr class="verdict-row" id="vd-1" data-answer="avoided">
-            <td>
-              <strong>Television</strong>
-              <div class="verdict-explanation">Television brings outside culture and entertainment into the home, which may influence Amish values.</div>
-            </td>
-            <td><button class="verdict-btn" data-val="allowed" onclick="selectVerdict(1,'allowed')">✓ Allowed</button></td>
-            <td><button class="verdict-btn" data-val="limited" onclick="selectVerdict(1,'limited')">~ Limited</button></td>
-            <td><button class="verdict-btn" data-val="avoided" onclick="selectVerdict(1,'avoided')">✗ Avoided</button></td>
-          </tr>
+        <div class="verdict-item" id="vd-1" data-answer="avoided">
+          <div class="vc-name">Television</div>
+          <div class="vc-desc">A screen that brings entertainment and outside culture directly into the home.</div>
+          <button class="verdict-stamp" data-state="unset" onclick="cycleVerdict(1)">— tap to stamp —</button>
+          <div class="verdict-reason">Television brings outside culture into the home, which may weaken Amish values and community focus.</div>
+        </div>
 
-          <tr class="verdict-row" id="vd-2" data-answer="allowed">
-            <td>
-              <strong>Horse and buggy travel</strong>
-              <div class="verdict-explanation">Horse and buggy keeps travel slow, local and community-focused — it does not encourage leaving or individualism.</div>
-            </td>
-            <td><button class="verdict-btn" data-val="allowed" onclick="selectVerdict(2,'allowed')">✓ Allowed</button></td>
-            <td><button class="verdict-btn" data-val="limited" onclick="selectVerdict(2,'limited')">~ Limited</button></td>
-            <td><button class="verdict-btn" data-val="avoided" onclick="selectVerdict(2,'avoided')">✗ Avoided</button></td>
-          </tr>
+        <div class="verdict-item" id="vd-2" data-answer="allowed">
+          <div class="vc-name">Horse and buggy travel</div>
+          <div class="vc-desc">The traditional Amish vehicle — slow, local, and shared within the community.</div>
+          <button class="verdict-stamp" data-state="unset" onclick="cycleVerdict(2)">— tap to stamp —</button>
+          <div class="verdict-reason">Horse and buggy keeps travel slow, local and community-focused — it does not encourage individualism.</div>
+        </div>
 
-          <tr class="verdict-row" id="vd-3" data-answer="limited">
-            <td>
-              <strong>Mobile phones</strong>
-              <div class="verdict-explanation">Some communities allow phones for business purposes but keep them outside the home to protect family and community life.</div>
-            </td>
-            <td><button class="verdict-btn" data-val="allowed" onclick="selectVerdict(3,'allowed')">✓ Allowed</button></td>
-            <td><button class="verdict-btn" data-val="limited" onclick="selectVerdict(3,'limited')">~ Limited</button></td>
-            <td><button class="verdict-btn" data-val="avoided" onclick="selectVerdict(3,'avoided')">✗ Avoided</button></td>
-          </tr>
+        <div class="verdict-item" id="vd-3" data-answer="limited">
+          <div class="vc-name">Mobile phones</div>
+          <div class="vc-desc">Portable communication devices — potentially useful for work, but connecting to the outside world.</div>
+          <button class="verdict-stamp" data-state="unset" onclick="cycleVerdict(3)">— tap to stamp —</button>
+          <div class="verdict-reason">Some communities allow phones for business only, kept outside the home to protect family life.</div>
+        </div>
 
-          <tr class="verdict-row" id="vd-4" data-answer="avoided">
-            <td>
-              <strong>Electricity from public power lines</strong>
-              <div class="verdict-explanation">Being connected to the power grid creates reliance on the outside world and modern technology.</div>
-            </td>
-            <td><button class="verdict-btn" data-val="allowed" onclick="selectVerdict(4,'allowed')">✓ Allowed</button></td>
-            <td><button class="verdict-btn" data-val="limited" onclick="selectVerdict(4,'limited')">~ Limited</button></td>
-            <td><button class="verdict-btn" data-val="avoided" onclick="selectVerdict(4,'avoided')">✗ Avoided</button></td>
-          </tr>
+        <div class="verdict-item" id="vd-4" data-answer="avoided">
+          <div class="vc-name">Electricity from power lines</div>
+          <div class="vc-desc">Connecting homes to the public electrical grid for light, heat and appliances.</div>
+          <button class="verdict-stamp" data-state="unset" onclick="cycleVerdict(4)">— tap to stamp —</button>
+          <div class="verdict-reason">Being connected to the grid creates dependence on the outside world and brings in modern technology.</div>
+        </div>
 
-          <tr class="verdict-row" id="vd-5" data-answer="limited">
-            <td>
-              <strong>Tractors for farming</strong>
-              <div class="verdict-explanation">Farming is valued as honest community work, but tractors may need steel wheels (not rubber) to keep the work slower and community-focused.</div>
-            </td>
-            <td><button class="verdict-btn" data-val="allowed" onclick="selectVerdict(5,'allowed')">✓ Allowed</button></td>
-            <td><button class="verdict-btn" data-val="limited" onclick="selectVerdict(5,'limited')">~ Limited</button></td>
-            <td><button class="verdict-btn" data-val="avoided" onclick="selectVerdict(5,'avoided')">✗ Avoided</button></td>
-          </tr>
+        <div class="verdict-item" id="vd-5" data-answer="limited">
+          <div class="vc-name">Tractors for farming</div>
+          <div class="vc-desc">Mechanical farm machinery that can replace horse-drawn equipment and speed up harvests.</div>
+          <button class="verdict-stamp" data-state="unset" onclick="cycleVerdict(5)">— tap to stamp —</button>
+          <div class="verdict-reason">Farming is valued community work, but tractors may need steel wheels to keep the pace slow and community-focused.</div>
+        </div>
 
-          <tr class="verdict-row" id="vd-6" data-answer="allowed">
-            <td>
-              <strong>Barn raising (the whole community builds together)</strong>
-              <div class="verdict-explanation">Barn raising shows strong community cooperation and mutual support — it actively strengthens bonds.</div>
-            </td>
-            <td><button class="verdict-btn" data-val="allowed" onclick="selectVerdict(6,'allowed')">✓ Allowed</button></td>
-            <td><button class="verdict-btn" data-val="limited" onclick="selectVerdict(6,'limited')">~ Limited</button></td>
-            <td><button class="verdict-btn" data-val="avoided" onclick="selectVerdict(6,'avoided')">✗ Avoided</button></td>
-          </tr>
+        <div class="verdict-item" id="vd-6" data-answer="allowed">
+          <div class="vc-name">Barn raising</div>
+          <div class="vc-desc">When the whole community gathers to build a neighbour's barn together in a single day.</div>
+          <button class="verdict-stamp" data-state="unset" onclick="cycleVerdict(6)">— tap to stamp —</button>
+          <div class="verdict-reason">Barn raising shows strong community cooperation and mutual support — it actively strengthens bonds.</div>
+        </div>
 
-          <tr class="verdict-row" id="vd-7" data-answer="allowed">
-            <td>
-              <strong>Plain, uniform clothing</strong>
-              <div class="verdict-explanation">Plain dress avoids pride and competition over fashion, and the uniformity signals equal commitment to community over self.</div>
-            </td>
-            <td><button class="verdict-btn" data-val="allowed" onclick="selectVerdict(7,'allowed')">✓ Allowed</button></td>
-            <td><button class="verdict-btn" data-val="limited" onclick="selectVerdict(7,'limited')">~ Limited</button></td>
-            <td><button class="verdict-btn" data-val="avoided" onclick="selectVerdict(7,'avoided')">✗ Avoided</button></td>
-          </tr>
+        <div class="verdict-item" id="vd-7" data-answer="allowed">
+          <div class="vc-name">Plain, uniform clothing</div>
+          <div class="vc-desc">Simple, identical dress that avoids fashion, decoration and personal display.</div>
+          <button class="verdict-stamp" data-state="unset" onclick="cycleVerdict(7)">— tap to stamp —</button>
+          <div class="verdict-reason">Plain dress avoids pride and competition; uniformity signals equal commitment to community over self.</div>
+        </div>
 
-        </tbody>
-      </table>
+      </div>
     </div>
     <div class="row">
       <button class="ac-btn" onclick="checkTask(5)">Check community test</button>
@@ -954,6 +960,9 @@ color:  amber
   const completed = new Array(TASK_COUNT).fill(false);
   const tabEverWrong = new Array(TASK_COUNT).fill(false);
   let draggingChip = null;
+  let matchSelectedTerm = null;
+  let matchSelectedDef = null;
+  let matchPairs = 0;
 
   document.getElementById('tab-bar').addEventListener('click', e => {
     const tab = e.target.closest('.tab-btn');
@@ -1047,11 +1056,55 @@ color:  amber
     row.classList.remove('correct', 'wrong');
   }
 
-  function selectVerdict(idx, value) {
-    const row = document.getElementById('vd-' + idx);
-    row.dataset.selected = value;
-    row.querySelectorAll('.verdict-btn').forEach(btn => btn.classList.toggle('selected', btn.dataset.val === value));
-    row.classList.remove('correct', 'wrong');
+  function selectMatchItem(el, type) {
+    if (el.classList.contains('matched')) return;
+
+    if (type === 'term') {
+      if (matchSelectedTerm) matchSelectedTerm.classList.remove('selected');
+      if (matchSelectedTerm === el) { matchSelectedTerm = null; return; }
+      matchSelectedTerm = el;
+      el.classList.add('selected');
+    } else {
+      if (matchSelectedDef) matchSelectedDef.classList.remove('selected');
+      if (matchSelectedDef === el) { matchSelectedDef = null; return; }
+      matchSelectedDef = el;
+      el.classList.add('selected');
+    }
+
+    if (!matchSelectedTerm || !matchSelectedDef) return;
+
+    const term = matchSelectedTerm;
+    const def  = matchSelectedDef;
+    matchSelectedTerm = null;
+    matchSelectedDef  = null;
+
+    if (term.dataset.match === def.dataset.match) {
+      term.classList.remove('selected'); term.classList.add('matched');
+      def.classList.remove('selected');  def.classList.add('matched');
+      matchPairs++;
+      document.getElementById('match-progress').textContent = matchPairs + ' / 8 matched';
+    } else {
+      term.classList.add('wrong-flash');
+      def.classList.add('wrong-flash');
+      setTimeout(() => {
+        term.classList.remove('selected', 'wrong-flash');
+        def.classList.remove('selected', 'wrong-flash');
+      }, 600);
+    }
+  }
+
+  function cycleVerdict(idx) {
+    const item = document.getElementById('vd-' + idx);
+    const stamp = item.querySelector('.verdict-stamp');
+    const states = ['unset', 'allowed', 'limited', 'avoided'];
+    const labels = { unset: '— tap to stamp —', allowed: '✓ ALLOWED', limited: '~ LIMITED', avoided: '✗ AVOIDED' };
+    const cur = stamp.dataset.state;
+    const next = states[(states.indexOf(cur) + 1) % states.length];
+    stamp.dataset.state = next;
+    stamp.textContent = labels[next];
+    item.classList.remove('correct', 'wrong');
+    stamp.classList.add('stamp-press');
+    setTimeout(() => stamp.classList.remove('stamp-press'), 150);
   }
 
   function checkTask(idx) {
@@ -1087,10 +1140,10 @@ color:  amber
   }
 
   function checkKeyTerms() {
-    const ok = checkDropSlots(['term-ana','term-jak','term-ord','term-rum','term-pla','term-adu','term-per','term-sep']);
+    const ok = matchPairs === 8;
     return { ok, message: ok
       ? 'Good work — you have the key vocabulary for this lesson.'
-      : 'Some definitions are in the wrong boxes. Check the highlighted cards.' };
+      : 'Not all terms matched yet — keep clicking to find the remaining pairs.' };
   }
 
   function checkOrigins() {
@@ -1140,15 +1193,16 @@ color:  amber
 
   function checkCommunityTest() {
     let ok = true;
-    document.querySelectorAll('#verdict-container .verdict-row').forEach(row => {
-      const rowOk = row.dataset.selected === row.dataset.answer;
-      ok = ok && rowOk;
-      row.classList.toggle('correct', rowOk);
-      row.classList.toggle('wrong', !rowOk);
+    document.querySelectorAll('#verdict-container .verdict-item').forEach(item => {
+      const stamp = item.querySelector('.verdict-stamp');
+      const itemOk = stamp.dataset.state === item.dataset.answer;
+      ok = ok && itemOk;
+      item.classList.toggle('correct', itemOk);
+      item.classList.toggle('wrong', !itemOk);
     });
     return { ok, message: ok
       ? 'Correct — you understand how the Amish evaluate technology using community values.'
-      : 'Review the highlighted rows — some verdicts need adjusting.' };
+      : 'Review the highlighted cards — some stamps need changing.' };
   }
 
   function checkExplanation() {
@@ -1202,10 +1256,10 @@ color:  amber
       panel.querySelectorAll('.drop-slot .drag-chip').forEach(chip => { chip.classList.remove('correct','wrong'); bank.appendChild(chip); });
       panel.querySelectorAll('.drop-slot').forEach(s => s.classList.remove('is-wrong'));
     } else if (idx === 1) {
-      const bank = document.getElementById('term-bank');
-      panel.querySelectorAll('.drop-slot .drag-chip').forEach(chip => { chip.classList.remove('correct','wrong'); bank.appendChild(chip); });
-      panel.querySelectorAll('.drop-slot').forEach(s => s.classList.remove('is-wrong'));
-      panel.querySelectorAll('.question-card').forEach(c => c.classList.remove('is-correct','is-wrong'));
+      panel.querySelectorAll('.match-term, .match-def').forEach(el => el.classList.remove('selected','matched','wrong-flash'));
+      matchSelectedTerm = null; matchSelectedDef = null; matchPairs = 0;
+      document.getElementById('match-progress').textContent = '0 / 8 matched';
+      shuffleChildren(document.getElementById('match-def-col'));
     } else if (idx === 2) {
       panel.querySelectorAll('input[type="radio"]').forEach(r => r.checked = false);
       panel.querySelectorAll('.question-card').forEach(c => c.classList.remove('is-correct','is-wrong'));
@@ -1223,10 +1277,11 @@ color:  amber
         if (fix) { fix.style.display = 'none'; fix.value = ''; }
       });
     } else if (idx === 5) {
-      document.querySelectorAll('#verdict-container .verdict-row').forEach(row => {
-        delete row.dataset.selected;
-        row.querySelectorAll('.verdict-btn').forEach(btn => btn.classList.remove('selected'));
-        row.classList.remove('correct','wrong');
+      document.querySelectorAll('#verdict-container .verdict-item').forEach(item => {
+        item.classList.remove('correct', 'wrong');
+        const stamp = item.querySelector('.verdict-stamp');
+        stamp.dataset.state = 'unset';
+        stamp.textContent = '— tap to stamp —';
       });
     } else if (idx === 6) {
       const bank = document.getElementById('answer-bank');
