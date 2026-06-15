@@ -36,7 +36,7 @@
     const body = document.body;
     if (!body.dataset.year)  body.dataset.year  = parts[yIdx].replace('Y', '');
     if (!body.dataset.topic) {
-      const raw = parts[yIdx + 1] || '';
+      const raw = decodeURIComponent(parts[yIdx + 1] || '');
       body.dataset.topic = raw
         .replace(/^[\d.&\s]+/, '')          // strip "1.3 ", "1.2.4 & 2.2.1 ", etc.
         .replace(/\b\w/g, c => c.toUpperCase()) // capitalise each word
