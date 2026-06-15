@@ -1,0 +1,1254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- ACTIVITY
+title:  Stacks & Queues — Exam Practice
+type:   Challenge
+stars:  4
+desc:   A-level (H446) stacks and queues — sort, complete and order the theory, then code push, pop, enqueue and dequeue in the OCR pseudocode IDE with mark-scheme feedback.
+color:  green
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stacks &amp; Queues — Exam Practice — Year 13</title>
+
+<link rel="stylesheet" href="../../shared.css">
+
+<style>
+  /* ── Sticky header ───────────────────────────────────── */
+  header {
+    background: var(--surface);
+    border-bottom: 2px solid var(--surface-mid);
+    padding: 12px 20px;
+    position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.35);
+  }
+  .header-progress { display: flex; align-items: center; gap: 10px; }
+
+  /* ── Page body ───────────────────────────────────────── */
+  .page-wrap { padding: 28px 16px 60px; }
+  .page-title { font-size: 1.35rem; font-weight: 700; text-align: center; color: var(--accent-light); margin-bottom: 4px; }
+  .page-subtitle { text-align: center; font-size: 0.82rem; color: var(--muted); margin-bottom: 28px; }
+
+  /* ── Pill tab bar ────────────────────────────────────── */
+  .tabs { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-bottom: 28px; }
+  .tab-btn {
+    padding: 7px 16px;
+    border: 2px solid var(--surface-mid);
+    border-radius: 20px;
+    background: var(--surface);
+    color: var(--muted);
+    font-family: var(--font-body);
+    font-size: 0.8rem; font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s, color 0.2s;
+    user-select: none;
+  }
+  .tab-btn:hover:not(.active) { border-color: var(--accent); color: var(--text); }
+  .tab-btn.active     { background: var(--accent); border-color: var(--accent); color: var(--text-inv); }
+  .tab-btn.done-green { background: var(--green);  border-color: var(--green);  color: #fff; }
+  .tab-btn.done-gold  { background: var(--gold);   border-color: var(--gold);   color: #111; }
+
+  /* ── Panels ──────────────────────────────────────────── */
+  .panel { display: none; max-width: 880px; margin: 0 auto; animation: ac-fade-in 0.2s ease; }
+  .panel.active { display: block; }
+
+  /* ── Section / scenario card ─────────────────────────── */
+  .card { background: var(--surface); border-left: 4px solid var(--accent); border-radius: 8px; padding: 18px 22px; margin-bottom: 22px; }
+  .card h2 { font-size: 0.82rem; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 12px; }
+  .card p { color: var(--text); font-size: 0.9rem; line-height: 1.7; margin-bottom: 10px; }
+  .card p:last-child { margin-bottom: 0; }
+  .card ul { margin: 6px 0 0 1.2em; color: var(--text); font-size: 0.9rem; line-height: 1.8; }
+  .card code { background: var(--code-bg, #0a0c18); color: var(--code-text, #c7d2fe); padding: 1px 6px; border-radius: 4px; font-family: var(--font-mono, monospace); font-size: 0.85em; }
+
+  /* ── Goal banner ─────────────────────────────────────── */
+  .goal { background: var(--surface); border-left: 4px solid var(--accent); border-radius: 0 8px 8px 0; padding: 10px 16px; font-size: 0.9rem; font-weight: 600; color: var(--text); margin-bottom: 20px; }
+
+  /* ── Code checker ────────────────────────────────────── */
+  .code-checker { background: var(--surface); border-radius: 12px; border: 2px solid var(--surface-mid); overflow: hidden; margin-bottom: 14px; }
+  .checker-footer { display: flex; gap: 10px; padding: 10px 14px; background: var(--surface-mid); border-top: 1px solid var(--surface-dim); flex-wrap: wrap; align-items: center; }
+  .checker-footer .ac-btn-secondary { font-size: 0.78rem; padding: 5px 14px; }
+  .checker-footer .ac-btn           { font-size: 0.78rem; padding: 5px 14px; }
+
+  /* ── Mark scheme card ────────────────────────────────── */
+  .markscheme { background: var(--surface); border: 2px solid var(--surface-mid); border-radius: 8px; padding: 14px 18px; margin-bottom: 22px; }
+  .ms-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .ms-header h3 { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); }
+  .ms-total { font-size: 0.72rem; font-family: var(--font-head, monospace); color: var(--muted); letter-spacing: 0.06em; }
+  .ms-list { list-style: none; margin: 0 0 10px; padding: 0; display: flex; flex-direction: column; gap: 5px; }
+  .ms-row { display: flex; align-items: flex-start; gap: 10px; padding: 5px 8px; border-radius: 6px; font-size: 0.87rem; transition: background 0.15s; }
+  .ms-tick { font-size: 1rem; width: 1.3em; text-align: center; color: var(--muted); flex-shrink: 0; margin-top: 0.05em; }
+  .ms-text { flex: 1; color: var(--text); line-height: 1.5; }
+  .ms-marks { font-size: 0.7rem; font-family: var(--font-head, monospace); color: var(--muted); white-space: nowrap; margin-top: 0.2em; flex-shrink: 0; }
+  .ms-row.pass { background: rgba(52,211,153,0.08); }
+  .ms-row.pass .ms-tick  { color: var(--green); }
+  .ms-row.pass .ms-text  { color: var(--green); }
+  .ms-row.pass .ms-marks { color: var(--green); }
+  .ms-row.fail { background: rgba(248,113,113,0.06); }
+  .ms-row.fail .ms-tick  { color: var(--red); }
+  .ms-row.fail .ms-text  { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--red); }
+  .ms-divider { border: none; border-top: 1px solid var(--surface-mid); margin: 8px 0; }
+  .ms-score { font-size: 0.88rem; font-weight: 700; color: var(--accent); text-align: right; }
+  .ms-score.full { color: var(--green); }
+
+  /* ── Progress percentage ─────────────────────────────── */
+  .score-pct { font-family: var(--font-head, monospace); font-size: 0.8rem; color: var(--accent); }
+
+  /* ── Interactive task controls / score ───────────────── */
+  .controls { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin: 4px 0 6px; }
+  .task-score { font-size: 0.85rem; font-weight: 700; color: var(--accent-light); min-height: 1.3rem; }
+  .task-score.full { color: var(--green); }
+
+  /* ── Q1 sort: bank + two bins ────────────────────────── */
+  .bank {
+    background: var(--bg);
+    border: 1px dashed var(--surface-mid);
+    border-radius: 8px; padding: 12px 14px; margin-bottom: 18px;
+    min-height: 52px;
+    display: flex; flex-wrap: wrap; gap: 8px; align-content: flex-start;
+  }
+  .bank-label { width: 100%; font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 2px; }
+  .bins { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 560px){ .bins { grid-template-columns: 1fr; } }
+  .bin {
+    background: var(--surface);
+    border: 2px solid var(--surface-mid);
+    border-radius: 10px; padding: 10px 12px 14px; min-height: 130px;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .bin.drag-over { border-color: var(--accent); background: var(--surface-dim); }
+  .bin h3 { font-size: 0.85rem; font-weight: 700; color: var(--accent-light); text-align: center; padding: 4px 0 8px; border-bottom: 1px solid var(--surface-mid); }
+  .bin .bin-drop { display: flex; flex-direction: column; gap: 8px; flex: 1; }
+
+  .sortcard {
+    background: var(--surface-mid);
+    border: 1.5px solid var(--accent);
+    border-radius: 6px; padding: 7px 12px;
+    font-size: 0.82rem; color: var(--text);
+    cursor: grab; user-select: none;
+    transition: background 0.15s, border-color 0.15s, opacity 0.2s;
+  }
+  .sortcard:hover { background: var(--surface-dim); }
+  .sortcard.dragging { opacity: 0.4; }
+  .sortcard.correct  { border-color: var(--green); background: var(--green-bg); color: var(--green); }
+  .sortcard.incorrect{ border-color: var(--red);   background: var(--red-bg);   color: var(--red);   }
+
+  /* ── Q2 fill: pseudocode skeleton with gaps ──────────── */
+  .code-skel {
+    background: var(--code-bg, #0a0c18);
+    border: 2px solid var(--surface-mid);
+    border-radius: 10px; padding: 16px 18px; margin-bottom: 18px;
+    font-family: var(--font-mono, monospace); font-size: 0.9rem;
+    line-height: 2.4; color: var(--code-text, #c7d2fe); white-space: pre-wrap;
+  }
+  .gap {
+    display: inline-block; min-width: 96px; height: 26px;
+    border-bottom: 2px solid var(--accent);
+    border-radius: 3px; padding: 0 8px; margin: 0 2px;
+    background: rgba(255,255,255,0.04);
+    color: var(--text); text-align: center; line-height: 24px;
+    font-size: 0.82rem; cursor: pointer; vertical-align: middle;
+    transition: all 0.18s;
+  }
+  .gap.drag-over { background: var(--surface-dim); border-color: var(--accent-light); border-style: dashed; }
+  .gap.selected-target { box-shadow: 0 0 0 2px var(--accent); }
+  .gap.correct   { border-color: var(--green); background: var(--green-bg); color: var(--green); border-style: solid; }
+  .gap.incorrect { border-color: var(--red);   background: var(--red-bg);   color: var(--red);   border-style: solid; }
+
+  .tile {
+    background: var(--surface-mid);
+    border: 1.5px solid var(--accent);
+    border-radius: 5px; padding: 5px 14px;
+    font-family: var(--font-mono, monospace);
+    font-size: 0.82rem; color: var(--accent-light);
+    cursor: grab; user-select: none; transition: all 0.15s;
+  }
+  .tile:hover { background: var(--surface-dim); }
+  .tile.dragging { opacity: 0.35; }
+  .tile.selected { box-shadow: 0 0 0 2px var(--accent-light); background: var(--surface-dim); }
+  .tile.used { opacity: 0.3; pointer-events: none; }
+
+  /* ── Q3 order: reorderable steps ─────────────────────── */
+  .order-list { list-style: none; margin: 0 0 14px; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+  .order-item {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--surface); border: 2px solid var(--surface-mid);
+    border-radius: 8px; padding: 8px 10px;
+  }
+  .order-item.correct   { border-color: var(--green); background: var(--green-bg); }
+  .order-item.incorrect { border-color: var(--red);   background: var(--red-bg);   }
+  .order-text { flex: 1; font-size: 0.86rem; color: var(--text); line-height: 1.4; }
+  .order-num { font-family: var(--font-head, monospace); font-size: 0.8rem; color: var(--muted); width: 1.4em; text-align: center; flex-shrink: 0; }
+  .order-btns { display: flex; flex-direction: column; gap: 3px; flex-shrink: 0; }
+  .order-btns button {
+    width: 28px; height: 20px; line-height: 1;
+    border: 1px solid var(--surface-mid); border-radius: 4px;
+    background: var(--surface-mid); color: var(--accent-light);
+    cursor: pointer; font-size: 0.7rem;
+  }
+  .order-btns button:hover { background: var(--surface-dim); }
+  .order-btns button:disabled { opacity: 0.3; cursor: default; }
+</style>
+</head>
+
+<body data-year="13" data-topic="Algorithms">
+<!--
+  This folder name has a numeric prefix ("2.3.1. algorithms"), so classroom.js
+  cannot auto-match the topic accent rule. data-year / data-topic are therefore
+  set explicitly here to apply the Year 13 Algorithms (green) theme from
+  shared.css. Explicit attributes take precedence over the auto-derived ones.
+-->
+
+<!-- Completion banner -->
+<div id="done-banner" class="ac-banner gold">Full marks — outstanding work on stacks &amp; queues!</div>
+
+<!-- Sticky header -->
+<header>
+  <div class="header-progress">
+    <div class="ac-progress-bar" style="flex:1;">
+      <div class="ac-progress-fill" id="progress-fill"></div>
+    </div>
+    <span class="score-pct" id="progress-pct">0 / 41</span>
+  </div>
+</header>
+
+<div class="page-wrap">
+  <h2 class="page-title">Stacks &amp; Queues — Exam Practice</h2>
+  <p class="page-subtitle">OCR A-level (H446) · Data structures · 41 marks total</p>
+
+  <!-- Tab bar -->
+  <div class="tabs" id="tab-bar">
+    <button class="tab-btn active" data-idx="0">Q1 · 8m</button>
+    <button class="tab-btn"        data-idx="1">Q2 · 4m</button>
+    <button class="tab-btn"        data-idx="2">Q3 · 5m</button>
+    <button class="tab-btn"        data-idx="3">Q4 · push · 4m</button>
+    <button class="tab-btn"        data-idx="4">Q5 · pop · 6m</button>
+    <button class="tab-btn"        data-idx="5">Q6 · enqueue · 4m</button>
+    <button class="tab-btn"        data-idx="6">Q7 · dequeue · 5m</button>
+    <button class="tab-btn"        data-idx="7">Q8 · reverse · 5m</button>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       Q1 — Stack vs Queue (sort) — 8 marks
+       ══════════════════════════════════════════════════════════ -->
+  <div class="panel active" id="panel-0">
+    <div class="goal">Sort each statement into the structure it describes — a stack or a queue.</div>
+
+    <div class="card">
+      <h2>Identify the difference</h2>
+      <p>A stack and a queue are both abstract data structures, but they add and remove data in different ways. Drag each card into the correct column. On a touch screen, tap a card to move it between the bank, the Stack column and the Queue column.</p>
+    </div>
+
+    <div class="bank" id="bank-0" data-zone="bank">
+      <span class="bank-label">Unsorted cards</span>
+    </div>
+
+    <div class="bins">
+      <div class="bin" data-bin="stack">
+        <h3>📚 Stack</h3>
+        <div class="bin-drop" data-zone="stack"></div>
+      </div>
+      <div class="bin" data-bin="queue">
+        <h3>🎟️ Queue</h3>
+        <div class="bin-drop" data-zone="queue"></div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button class="ac-btn" id="check-0" type="button">Check answers</button>
+      <button class="ac-btn-secondary" id="reset-0" type="button">Reset</button>
+    </div>
+    <div class="task-score" id="score-0"></div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       Q2 — Complete push() (fill the gaps) — 4 marks
+       ══════════════════════════════════════════════════════════ -->
+  <div class="panel" id="panel-1">
+    <div class="goal">Complete the <code>push()</code> function by dragging the correct value into each gap.</div>
+
+    <div class="card">
+      <h2>Scenario</h2>
+      <p>A stack is stored in a 0-based array called <code>theStack</code> with 20 elements. The variable <code>pointer</code> holds the index of the item currently on top of the stack.</p>
+      <p>The function <code>push()</code> stores its parameter in the next free space if the stack is not full. It returns <code>true</code> if the value is stored, or <code>false</code> if the stack is full.</p>
+      <p style="color:var(--muted); font-size:0.83rem;">Drag a tile from the word bank into each gap, or tap a tile and then tap a gap. Some tiles are not used.</p>
+    </div>
+
+    <div class="bank" id="bank-1" data-zone="tilebank">
+      <span class="bank-label">Word bank — drag a value into each gap</span>
+    </div>
+
+    <div class="code-skel" id="skel-1">function push(data)
+  if pointer == <span class="gap" data-gap="0"></span> then
+    return false
+  else
+    pointer = <span class="gap" data-gap="1"></span>
+    theStack[pointer] = <span class="gap" data-gap="2"></span>
+    return <span class="gap" data-gap="3"></span>
+  endif
+endfunction</div>
+
+    <div class="controls">
+      <button class="ac-btn" id="check-1" type="button">Check answers</button>
+      <button class="ac-btn-secondary" id="reset-1" type="button">Reset</button>
+    </div>
+    <div class="task-score" id="score-1"></div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       Q3 — Order the pop() steps — 5 marks
+       ══════════════════════════════════════════════════════════ -->
+  <div class="panel" id="panel-2">
+    <div class="goal">Put the steps of the <code>pop()</code> algorithm into the correct order.</div>
+
+    <div class="card">
+      <h2>Scenario</h2>
+      <p>The same stack is stored in <code>theStack</code> with the top item at index <code>pointer</code>. A <code>pointer</code> value of <code>-1</code> means the stack is empty.</p>
+      <p>The function <code>pop()</code> should return the item from the top of the stack and update the pointer. Use the up/down buttons to put the five steps into the correct running order.</p>
+    </div>
+
+    <ol class="order-list" id="order-2"></ol>
+
+    <div class="controls">
+      <button class="ac-btn" id="check-2" type="button">Check order</button>
+      <button class="ac-btn-secondary" id="reset-2" type="button">Shuffle</button>
+    </div>
+    <div class="task-score" id="score-2"></div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       Q4 — Code push() — 4 marks
+       ══════════════════════════════════════════════════════════ -->
+  <div class="panel" id="panel-3">
+    <div class="goal">Write the <code>push()</code> function in OCR pseudocode.</div>
+
+    <div class="card">
+      <h2>Scenario</h2>
+      <p>The stack is stored in a 0-based array <code>theStack</code> with 20 elements. <code>pointer</code> holds the index of the top item; <code>-1</code> means the stack is empty, so the last valid index is <code>19</code>. Both are already declared for you.</p>
+      <h2 style="margin-top:14px;">Your function must:</h2>
+      <ul>
+        <li>Be a function called <code>push</code> that takes one parameter <code>data</code></li>
+        <li>Return <code>false</code> if the stack is already full</li>
+        <li>Otherwise move the pointer on, store <code>data</code> at the top of the stack, and return <code>true</code></li>
+      </ul>
+      <p style="margin-top:10px; color:var(--muted); font-size:0.83rem;">Press Run to check your function compiles and to test its behaviour against the mark scheme.</p>
+    </div>
+
+    <div class="code-checker" id="checker-3">
+      <div class="checker-header">
+        <span class="checker-dot dot-r"></span>
+        <span class="checker-dot dot-y"></span>
+        <span class="checker-dot dot-g"></span>
+        <span>Q4 — Complete the push() function</span>
+      </div>
+      <textarea class="pseudocode-textarea" id="editor-3" spellcheck="false"
+                autocomplete="off" autocapitalize="off">// theStack (20-element array) and pointer (-1 = empty) already exist.
+// Complete the push(data) function below.
+
+function push(data)
+
+endfunction
+</textarea>
+      <div class="checker-footer">
+        <button class="ac-btn" id="run-3" type="button">Run ▶</button>
+        <button class="ac-btn-secondary" id="clear-3" type="button">Clear</button>
+        <span id="run-status-3" style="font-size:0.75rem;color:var(--muted);"></span>
+      </div>
+    </div>
+
+    <div class="markscheme" id="ms-3">
+      <div class="ms-header"><h3>Mark Scheme</h3><span class="ms-total">4 marks available</span></div>
+      <ul class="ms-list" id="ms-list-3">
+        <li class="ms-row" data-bp="0"><span class="ms-tick">○</span><span class="ms-text">Checks whether the stack is full by comparing the pointer with the last index (19)</span><span class="ms-marks">1 mark</span></li>
+        <li class="ms-row" data-bp="1"><span class="ms-tick">○</span><span class="ms-text">Moves the pointer on before storing (<code>pointer = pointer + 1</code>)</span><span class="ms-marks">1 mark</span></li>
+        <li class="ms-row" data-bp="2"><span class="ms-tick">○</span><span class="ms-text">Stores <code>data</code> at <code>theStack[pointer]</code></span><span class="ms-marks">1 mark</span></li>
+        <li class="ms-row" data-bp="3"><span class="ms-tick">○</span><span class="ms-text">Returns <code>true</code> when stored and <code>false</code> when the stack is full</span><span class="ms-marks">1 mark</span></li>
+      </ul>
+      <hr class="ms-divider">
+      <div class="ms-score" id="ms-score-3">— / 4 marks</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       Q5 — Code pop() — 6 marks
+       ══════════════════════════════════════════════════════════ -->
+  <div class="panel" id="panel-4">
+    <div class="goal">Write the <code>pop()</code> function in OCR pseudocode.</div>
+
+    <div class="card">
+      <h2>Scenario</h2>
+      <p>The stack is stored in <code>theStack</code> with the top item at index <code>pointer</code>. A <code>pointer</code> value of <code>-1</code> means the stack is empty. Both are already declared for you.</p>
+      <h2 style="margin-top:14px;">Your function must:</h2>
+      <ul>
+        <li>Be a function called <code>pop</code> (it takes no parameters)</li>
+        <li>Return <code>false</code> if the stack is empty</li>
+        <li>Otherwise return the item from the top of the stack and update the pointer</li>
+        <li>Make sure repeated pops work — the pointer must be updated in the right order</li>
+      </ul>
+      <p style="margin-top:10px; color:var(--muted); font-size:0.83rem;">Press Run to test your function. The behaviour test pushes two items, then pops three times.</p>
+    </div>
+
+    <div class="code-checker" id="checker-4">
+      <div class="checker-header">
+        <span class="checker-dot dot-r"></span>
+        <span class="checker-dot dot-y"></span>
+        <span class="checker-dot dot-g"></span>
+        <span>Q5 — Write the pop() function</span>
+      </div>
+      <textarea class="pseudocode-textarea" id="editor-4" spellcheck="false"
+                autocomplete="off" autocapitalize="off">// theStack and pointer (-1 = empty) already exist.
+// Write the pop() function below.
+
+function pop()
+
+endfunction
+</textarea>
+      <div class="checker-footer">
+        <button class="ac-btn" id="run-4" type="button">Run ▶</button>
+        <button class="ac-btn-secondary" id="clear-4" type="button">Clear</button>
+        <span id="run-status-4" style="font-size:0.75rem;color:var(--muted);"></span>
+      </div>
+    </div>
+
+    <div class="markscheme" id="ms-4">
+      <div class="ms-header"><h3>Mark Scheme</h3><span class="ms-total">6 marks available</span></div>
+      <ul class="ms-list" id="ms-list-4">
+        <li class="ms-row" data-bp="0"><span class="ms-tick">○</span><span class="ms-text">Defines the function <code>pop()</code></span><span class="ms-marks">1 mark</span></li>
+        <li class="ms-row" data-bp="1"><span class="ms-tick">○</span><span class="ms-text">Checks whether the stack is empty (<code>pointer == -1</code> or <code>pointer &lt; 0</code>)</span><span class="ms-marks">1 mark</span></li>
+        <li class="ms-row" data-bp="2"><span class="ms-tick">○</span><span class="ms-text">Returns <code>false</code> when the stack is empty</span><span class="ms-marks">1 mark</span></li>
+        <li class="ms-row" data-bp="3"><span class="ms-tick">○</span><span class="ms-text">Decrements the pointer (<code>pointer = pointer - 1</code>)</span><span class="ms-marks">1 mark</span></li>
+        <li class="ms-row" data-bp="4"><span class="ms-tick">○</span><span class="ms-text">Returns the item from the top of the stack</span><span class="ms-marks">1 mark</span></li>
+        <li class="ms-row" data-bp="5"><span class="ms-tick">○</span><span class="ms-text">Updates the pointer in the correct order, so repeated pops work</span><span class="ms-marks">1 mark</span></li>
+      </ul>
+      <hr class="ms-divider">
+      <div class="ms-score" id="ms-score-4">— / 6 marks</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       Q6 — Code enqueue() — 4 marks
+       ══════════════════════════════════════════════════════════ -->
+  <div class="panel" id="panel-5">
+    <div class="goal">Write the <code>enqueue()</code> function in OCR pseudocode.</div>
+
+    <div class="card">
+      <h2>Scenario</h2>
+      <p>A queue is stored in an array called <code>queue</code> with 5 elements. <code>tailPointer</code> holds the index of the next free space (it starts at 0). The queue is full when <code>tailPointer</code> reaches <code>queue.length</code>. <code>queue</code>, <code>headPointer</code> and <code>tailPointer</code> are already declared for you.</p>
+      <h2 style="margin-top:14px;">Your function must:</h2>
+      <ul>
+        <li>Be a function called <code>enqueue</code> that takes one parameter <code>item</code></li>
+        <li>Return <code>false</code> if the queue is full</li>
+        <li>Otherwise store <code>item</code> at the tail, move <code>tailPointer</code> on, and return <code>true</code></li>
+      </ul>
+      <p style="margin-top:10px; color:var(--muted); font-size:0.83rem;">Press Run to test your function against the mark scheme.</p>
+    </div>
+
+    <div class="code-checker" id="checker-5">
+      <div class="checker-header">
+        <span class="checker-dot dot-r"></span>
+        <span class="checker-dot dot-y"></span>
+        <span class="checker-dot dot-g"></span>
+        <span>Q6 — Write the enqueue() function</span>
+      </div>
+      <textarea class="pseudocode-textarea" id="editor-5" spellcheck="false"
+                autocomplete="off" autocapitalize="off">// queue (5-element array), headPointer and tailPointer (next free space, starts at 0)
+// already exist. Write the enqueue(item) function below.
+
+function enqueue(item)
+
+endfunction
+</textarea>
+      <div class="checker-footer">
+        <button class="ac-btn" id="run-5" type="button">Run ▶</button>
+        <button class="ac-btn-secondary" id="clear-5" type="button">Clear</button>
+        <span id="run-status-5" style="font-size:0.75rem;color:var(--muted);"></span>
+      </div>
+    </div>
+
+    <div class="markscheme" id="ms-5">
+      <div class="ms-header"><h3>Mark Scheme</h3><span class="ms-total">4 marks available</span></div>
+      <ul class="ms-list" id="ms-list-5">
+        <li class="ms-row" data-bp="0"><span class="ms-tick">○</span><span class="ms-text">Checks whether the queue is full (<code>tailPointer &gt;= queue.length</code>)</span><span class="ms-marks">1 mark</span></li>
+        <li class="ms-row" data-bp="1"><span class="ms-tick">○</span><span class="ms-text">Stores <code>item</code> at <code>queue[tailPointer]</code></span><span class="ms-marks">1 mark</span></li>
+        <li class="ms-row" data-bp="2"><span class="ms-tick">○</span><span class="ms-text">Moves <code>tailPointer</code> on (<code>tailPointer = tailPointer + 1</code>)</span><span class="ms-marks">1 mark</span></li>
+        <li class="ms-row" data-bp="3"><span class="ms-tick">○</span><span class="ms-text">Returns <code>true</code> when stored and <code>false</code> when the queue is full</span><span class="ms-marks">1 mark</span></li>
+      </ul>
+      <hr class="ms-divider">
+      <div class="ms-score" id="ms-score-5">— / 4 marks</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       Q7 — Code dequeue() — 5 marks
+       ══════════════════════════════════════════════════════════ -->
+  <div class="panel" id="panel-6">
+    <div class="goal">Write the <code>dequeue()</code> function in OCR pseudocode.</div>
+
+    <div class="card">
+      <h2>Scenario</h2>
+      <p>The same queue is stored in <code>queue</code>. <code>headPointer</code> holds the index of the first item; <code>tailPointer</code> holds the index of the next free space. When <code>headPointer</code> equals <code>tailPointer</code> the queue is empty.</p>
+      <h2 style="margin-top:14px;">Your function must:</h2>
+      <ul>
+        <li>Be a function called <code>dequeue</code> with no parameter</li>
+        <li>Return the string <code>"EMPTY"</code> if the queue is empty</li>
+        <li>Otherwise return the first item and move <code>headPointer</code> on</li>
+      </ul>
+      <p style="margin-top:10px; color:var(--muted); font-size:0.83rem;">Press Run to test your function. The behaviour test enqueues two items, then dequeues three times.</p>
+    </div>
+
+    <div class="code-checker" id="checker-6">
+      <div class="checker-header">
+        <span class="checker-dot dot-r"></span>
+        <span class="checker-dot dot-y"></span>
+        <span class="checker-dot dot-g"></span>
+        <span>Q7 — Write the dequeue() function</span>
+      </div>
+      <textarea class="pseudocode-textarea" id="editor-6" spellcheck="false"
+                autocomplete="off" autocapitalize="off">// queue, headPointer (first item) and tailPointer (next free space) already exist.
+// The queue is empty when headPointer == tailPointer.
+// Write the dequeue() function below.
+
+function dequeue()
+
+endfunction
+</textarea>
+      <div class="checker-footer">
+        <button class="ac-btn" id="run-6" type="button">Run ▶</button>
+        <button class="ac-btn-secondary" id="clear-6" type="button">Clear</button>
+        <span id="run-status-6" style="font-size:0.75rem;color:var(--muted);"></span>
+      </div>
+    </div>
+
+    <div class="markscheme" id="ms-6">
+      <div class="ms-header"><h3>Mark Scheme</h3><span class="ms-total">5 marks available</span></div>
+      <ul class="ms-list" id="ms-list-6">
+        <li class="ms-row" data-bp="0"><span class="ms-tick">○</span><span class="ms-text">Defines <code>dequeue()</code> with no parameter</span><span class="ms-marks">1 mark</span></li>
+        <li class="ms-row" data-bp="1"><span class="ms-tick">○</span><span class="ms-text">Checks whether the queue is empty (<code>headPointer == tailPointer</code>)</span><span class="ms-marks">1 mark</span></li>
+        <li class="ms-row" data-bp="2"><span class="ms-tick">○</span><span class="ms-text">Returns <code>"EMPTY"</code> when the queue is empty</span><span class="ms-marks">1 mark</span></li>
+        <li class="ms-row" data-bp="3"><span class="ms-tick">○</span><span class="ms-text">Reads <code>queue[headPointer]</code> and moves <code>headPointer</code> on</span><span class="ms-marks">1 mark</span></li>
+        <li class="ms-row" data-bp="4"><span class="ms-tick">○</span><span class="ms-text">Returns the items in the correct (first-in-first-out) order</span><span class="ms-marks">1 mark</span></li>
+      </ul>
+      <hr class="ms-divider">
+      <div class="ms-score" id="ms-score-6">— / 5 marks</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       Q8 — Reverse using a stack (main program) — 5 marks
+       ══════════════════════════════════════════════════════════ -->
+  <div class="panel" id="panel-7">
+    <div class="goal">Write a main program that uses the stack to reverse 10 characters.</div>
+
+    <div class="card">
+      <h2>Scenario</h2>
+      <p>The <code>push()</code> and <code>pop()</code> functions have already been written for you and work on <code>theStack</code> (you do not see their code).</p>
+      <p>A program reverses a set of data using the stack. The main program takes <strong>10 characters</strong>, one at a time, as input from the user and uses <code>push()</code> to insert each one onto the stack. Once all 10 characters have been pushed, the program uses <code>pop()</code> to output all 10 characters.</p>
+      <h2 style="margin-top:14px;">Your program must:</h2>
+      <ul>
+        <li>Loop to take 10 characters, one at a time, from the user</li>
+        <li>Call <code>push()</code> with each character as it is entered</li>
+        <li>Then loop to call <code>pop()</code> and output each of the 10 characters</li>
+      </ul>
+      <p style="margin-top:10px; color:var(--muted); font-size:0.83rem;">When you press Run, the test enters the characters a, b, c … j in that order. A correct program outputs them reversed: j, i, h … a.</p>
+    </div>
+
+    <div class="code-checker" id="checker-7">
+      <div class="checker-header">
+        <span class="checker-dot dot-r"></span>
+        <span class="checker-dot dot-y"></span>
+        <span class="checker-dot dot-g"></span>
+        <span>Q8 — Write the main program</span>
+      </div>
+      <textarea class="pseudocode-textarea" id="editor-7" spellcheck="false"
+                autocomplete="off" autocapitalize="off">// push() and pop() are already written for you — they work on theStack.
+// Write the MAIN PROGRAM below:
+//   - take 10 characters, one at a time, and push each one
+//   - then pop and output all 10 characters
+
+</textarea>
+      <div class="checker-footer">
+        <button class="ac-btn" id="run-7" type="button">Run ▶</button>
+        <button class="ac-btn-secondary" id="clear-7" type="button">Clear</button>
+        <span id="run-status-7" style="font-size:0.75rem;color:var(--muted);"></span>
+      </div>
+    </div>
+
+    <div class="markscheme" id="ms-7">
+      <div class="ms-header"><h3>Mark Scheme</h3><span class="ms-total">5 marks available</span></div>
+      <ul class="ms-list" id="ms-list-7">
+        <li class="ms-row" data-bp="0"><span class="ms-tick">○</span><span class="ms-text">Uses a loop to take the characters as input</span><span class="ms-marks">1 mark</span></li>
+        <li class="ms-row" data-bp="1"><span class="ms-tick">○</span><span class="ms-text">Calls <code>push()</code> with each character entered</span><span class="ms-marks">1 mark</span></li>
+        <li class="ms-row" data-bp="2"><span class="ms-tick">○</span><span class="ms-text">Uses a loop to call <code>pop()</code> for each item</span><span class="ms-marks">1 mark</span></li>
+        <li class="ms-row" data-bp="3"><span class="ms-tick">○</span><span class="ms-text">Outputs the characters popped from the stack</span><span class="ms-marks">1 mark</span></li>
+        <li class="ms-row" data-bp="4"><span class="ms-tick">○</span><span class="ms-text">Outputs the characters in the correct (reversed) order</span><span class="ms-marks">1 mark</span></li>
+      </ul>
+      <hr class="ms-divider">
+      <div class="ms-score" id="ms-score-7">— / 5 marks</div>
+    </div>
+  </div>
+
+</div><!-- /.page-wrap -->
+
+<div class="ac-toast" id="toast"></div>
+
+<script type="module">
+import { setupEditors, runPseudocode, clearSyntaxHint, refreshEditor } from '../../pseudocode-editor.js';
+import { preload } from '../../pyodide-runner.js';
+
+// ── Constants ─────────────────────────────────────────────────
+const TASK_COUNT     = 8;
+const TASK_MAX       = [8, 4, 5, 4, 6, 4, 5, 5];
+const TOTAL_MARKS    = TASK_MAX.reduce((a, b) => a + b, 0);   // 41
+const ACTIVITY_TITLE = 'Stacks & Queues — Exam Practice';
+const STORE_NS = location.pathname;
+
+// ── Shared state ──────────────────────────────────────────────
+const taskEarned = new Array(TASK_COUNT).fill(0);
+
+// ── Helpers ───────────────────────────────────────────────────
+function normSrc(raw) {
+  return raw.replace(/\/\/[^\n]*/g, ' ').replace(/\s+/g, ' ').toLowerCase().trim();
+}
+function outHas(run, ...needles) {
+  if (!run || !run.ok || !run.output) return false;
+  const o = run.output.toLowerCase();
+  return needles.every(n => o.includes(n.toLowerCase()));
+}
+// Every character of `chars` appears somewhere in the output.
+function allPresent(run, chars) {
+  if (!run || !run.ok || !run.output) return false;
+  const o = run.output.toLowerCase();
+  return chars.split('').every(c => o.includes(c));
+}
+// `seq` appears as an ordered subsequence in the output (robust to prompts/labels).
+function inOrder(run, seq) {
+  if (!run || !run.ok || !run.output) return false;
+  const o = run.output.toLowerCase();
+  let p = 0;
+  for (const c of o) { if (c === seq[p]) p++; if (p === seq.length) return true; }
+  return false;
+}
+const $ = id => document.getElementById(id);
+
+// ══════════════════════════════════════════════════════════════
+//  Q1 — SORT (stack vs queue)
+// ══════════════════════════════════════════════════════════════
+const SORT_CARDS = [
+  { id: 's1', cat: 'stack', text: 'LIFO — Last In, First Out' },
+  { id: 's2', cat: 'stack', text: 'Uses push and pop operations' },
+  { id: 's3', cat: 'stack', text: 'Needs only one pointer (the top)' },
+  { id: 's4', cat: 'stack', text: 'Items are added and removed at the same end' },
+  { id: 'q1', cat: 'queue', text: 'FIFO — First In, First Out' },
+  { id: 'q2', cat: 'queue', text: 'Uses enqueue and dequeue operations' },
+  { id: 'q3', cat: 'queue', text: 'Needs two pointers (head and tail)' },
+  { id: 'q4', cat: 'queue', text: 'Items are added at one end and removed at the other' },
+];
+
+function buildSort() {
+  const bank = $('bank-0');
+  // shuffle into the bank
+  const order = [...SORT_CARDS].sort(() => Math.random() - 0.5);
+  order.forEach(c => {
+    const el = document.createElement('div');
+    el.className = 'sortcard';
+    el.draggable = true;
+    el.dataset.id = c.id;
+    el.dataset.cat = c.cat;
+    el.textContent = c.text;
+    bank.appendChild(el);
+  });
+}
+
+let dragSortEl = null;
+function wireSort() {
+  const panel = $('panel-0');
+  panel.addEventListener('dragstart', e => {
+    const card = e.target.closest('.sortcard');
+    if (!card) return;
+    dragSortEl = card;
+    card.classList.add('dragging');
+  });
+  panel.addEventListener('dragend', e => {
+    const card = e.target.closest('.sortcard');
+    if (card) card.classList.remove('dragging');
+    dragSortEl = null;
+  });
+  panel.querySelectorAll('[data-zone]').forEach(zone => {
+    zone.addEventListener('dragover', e => { e.preventDefault(); zone.closest('.bin')?.classList.add('drag-over'); });
+    zone.addEventListener('dragleave', () => zone.closest('.bin')?.classList.remove('drag-over'));
+    zone.addEventListener('drop', e => {
+      e.preventDefault();
+      zone.closest('.bin')?.classList.remove('drag-over');
+      if (dragSortEl) { zone.appendChild(dragSortEl); clearSortMarks(); saveSort(); }
+    });
+  });
+  // tap fallback: cycle bank → stack → queue → bank
+  panel.addEventListener('click', e => {
+    const card = e.target.closest('.sortcard');
+    if (!card) return;
+    const zones = ['bank', 'stack', 'queue'];
+    const cur = card.parentElement.dataset.zone;
+    const next = zones[(zones.indexOf(cur) + 1) % zones.length];
+    const target = next === 'bank' ? $('bank-0') : panel.querySelector(`.bin-drop[data-zone="${next}"]`);
+    target.appendChild(card);
+    clearSortMarks(); saveSort();
+  });
+}
+function clearSortMarks() {
+  $('panel-0').querySelectorAll('.sortcard').forEach(c => c.classList.remove('correct', 'incorrect'));
+}
+function checkSort() {
+  let earned = 0;
+  $('panel-0').querySelectorAll('.sortcard').forEach(card => {
+    const zone = card.parentElement.dataset.zone;
+    card.classList.remove('correct', 'incorrect');
+    if (zone === 'stack' || zone === 'queue') {
+      if (zone === card.dataset.cat) { card.classList.add('correct'); earned++; }
+      else card.classList.add('incorrect');
+    }
+  });
+  setScore(0, earned);
+  recordMarks(0, earned);
+}
+function saveSort() {
+  const placement = {};
+  $('panel-0').querySelectorAll('.sortcard').forEach(c => { placement[c.dataset.id] = c.parentElement.dataset.zone; });
+  try { localStorage.setItem(STORE_NS + ':sort', JSON.stringify(placement)); } catch (_) {}
+}
+function restoreSort() {
+  let placement;
+  try { placement = JSON.parse(localStorage.getItem(STORE_NS + ':sort') || 'null'); } catch (_) { placement = null; }
+  if (!placement) return;
+  const panel = $('panel-0');
+  Object.entries(placement).forEach(([id, zone]) => {
+    const card = panel.querySelector(`.sortcard[data-id="${id}"]`);
+    if (!card) return;
+    const target = zone === 'bank' ? $('bank-0') : panel.querySelector(`.bin-drop[data-zone="${zone}"]`);
+    if (target) target.appendChild(card);
+  });
+}
+
+// ══════════════════════════════════════════════════════════════
+//  Q2 — FILL the gaps in push()
+// ══════════════════════════════════════════════════════════════
+const FILL_TILES   = ['19', '20', 'pointer + 1', 'pointer - 1', 'data', 'true', 'false'];
+const FILL_ANSWERS = ['19', 'pointer + 1', 'data', 'true'];   // gaps 0..3
+
+function buildFill() {
+  const bank = $('bank-1');
+  [...FILL_TILES].sort(() => Math.random() - 0.5).forEach(val => {
+    const el = document.createElement('span');
+    el.className = 'tile';
+    el.draggable = true;
+    el.dataset.val = val;
+    el.textContent = val;
+    bank.appendChild(el);
+  });
+}
+
+let dragTile = null, selectedTile = null;
+function wireFill() {
+  const panel = $('panel-1');
+
+  panel.addEventListener('dragstart', e => {
+    const tile = e.target.closest('.tile');
+    if (!tile || tile.classList.contains('used')) return;
+    dragTile = tile; tile.classList.add('dragging');
+  });
+  panel.addEventListener('dragend', e => {
+    e.target.closest('.tile')?.classList.remove('dragging');
+    dragTile = null;
+  });
+  panel.querySelectorAll('.gap').forEach(gap => {
+    gap.addEventListener('dragover', e => { e.preventDefault(); gap.classList.add('drag-over'); });
+    gap.addEventListener('dragleave', () => gap.classList.remove('drag-over'));
+    gap.addEventListener('drop', e => {
+      e.preventDefault(); gap.classList.remove('drag-over');
+      if (dragTile) placeTile(gap, dragTile);
+    });
+  });
+
+  // tap fallback: select a tile, then tap a gap; tap a filled gap to clear it
+  panel.addEventListener('click', e => {
+    const tile = e.target.closest('.tile');
+    const gap  = e.target.closest('.gap');
+    if (tile && !tile.classList.contains('used')) {
+      if (selectedTile === tile) { tile.classList.remove('selected'); selectedTile = null; }
+      else {
+        selectedTile?.classList.remove('selected');
+        selectedTile = tile; tile.classList.add('selected');
+      }
+      return;
+    }
+    if (gap) {
+      if (gap.dataset.val && !selectedTile) { clearGap(gap); return; }   // tap filled gap → clear
+      if (selectedTile) placeTile(gap, selectedTile);
+    }
+  });
+}
+function placeTile(gap, tile) {
+  clearGap(gap);                       // return any existing tile to the bank
+  gap.textContent = tile.dataset.val;
+  gap.dataset.val = tile.dataset.val;
+  gap.dataset.tileId = tile.dataset.val;
+  tile.classList.add('used');
+  tile.classList.remove('selected');
+  selectedTile = null;
+  gap.classList.remove('correct', 'incorrect');
+  saveFill();
+}
+function clearGap(gap) {
+  if (!gap.dataset.val) return;
+  // free the matching used tile back in the bank
+  const tile = [...$('bank-1').querySelectorAll('.tile.used')].find(t => t.dataset.val === gap.dataset.val);
+  if (tile) tile.classList.remove('used');
+  gap.textContent = '';
+  delete gap.dataset.val;
+  gap.classList.remove('correct', 'incorrect');
+  saveFill();
+}
+function checkFill() {
+  let earned = 0;
+  $('panel-1').querySelectorAll('.gap').forEach(gap => {
+    const idx = +gap.dataset.gap;
+    gap.classList.remove('correct', 'incorrect');
+    if ((gap.dataset.val || '') === FILL_ANSWERS[idx]) { gap.classList.add('correct'); earned++; }
+    else gap.classList.add('incorrect');
+  });
+  setScore(1, earned);
+  recordMarks(1, earned);
+}
+function saveFill() {
+  const vals = [...$('panel-1').querySelectorAll('.gap')].map(g => g.dataset.val || '');
+  try { localStorage.setItem(STORE_NS + ':fill', JSON.stringify(vals)); } catch (_) {}
+}
+function restoreFill() {
+  let vals;
+  try { vals = JSON.parse(localStorage.getItem(STORE_NS + ':fill') || 'null'); } catch (_) { vals = null; }
+  if (!vals) return;
+  $('panel-1').querySelectorAll('.gap').forEach(gap => {
+    const v = vals[+gap.dataset.gap];
+    if (!v) return;
+    const tile = [...$('bank-1').querySelectorAll('.tile')].find(t => t.dataset.val === v && !t.classList.contains('used'));
+    if (tile) placeTile(gap, tile);
+  });
+}
+
+// ══════════════════════════════════════════════════════════════
+//  Q3 — ORDER the pop() steps
+// ══════════════════════════════════════════════════════════════
+const ORDER_STEPS = [
+  { id: 0, text: 'Check whether the stack is empty (is pointer == -1?)' },
+  { id: 1, text: 'If the stack is empty, return "false" and stop' },
+  { id: 2, text: 'Copy the top item theStack[pointer] into a temporary variable' },
+  { id: 3, text: 'Decrement the pointer by 1' },
+  { id: 4, text: 'Return the temporary variable' },
+];
+
+function buildOrder(saved) {
+  const list = $('order-2');
+  list.innerHTML = '';
+  let seq = saved;
+  if (!seq) {
+    seq = ORDER_STEPS.map(s => s.id);
+    do { seq.sort(() => Math.random() - 0.5); } while (seq.every((v, i) => v === i));
+  }
+  seq.forEach(stepId => {
+    const step = ORDER_STEPS[stepId];
+    const li = document.createElement('li');
+    li.className = 'order-item';
+    li.dataset.id = stepId;
+    li.innerHTML =
+      `<span class="order-num"></span>` +
+      `<span class="order-text">${step.text}</span>` +
+      `<span class="order-btns">` +
+        `<button type="button" data-dir="up" aria-label="Move up">▲</button>` +
+        `<button type="button" data-dir="down" aria-label="Move down">▼</button>` +
+      `</span>`;
+    list.appendChild(li);
+  });
+  renumberOrder();
+}
+function renumberOrder() {
+  const items = [...$('order-2').children];
+  items.forEach((li, i) => {
+    li.querySelector('.order-num').textContent = (i + 1) + '.';
+    li.querySelector('[data-dir="up"]').disabled = (i === 0);
+    li.querySelector('[data-dir="down"]').disabled = (i === items.length - 1);
+  });
+}
+function wireOrder() {
+  $('order-2').addEventListener('click', e => {
+    const btn = e.target.closest('button[data-dir]');
+    if (!btn) return;
+    const li = btn.closest('.order-item');
+    li.classList.remove('correct', 'incorrect');
+    if (btn.dataset.dir === 'up' && li.previousElementSibling) {
+      li.parentElement.insertBefore(li, li.previousElementSibling);
+    } else if (btn.dataset.dir === 'down' && li.nextElementSibling) {
+      li.parentElement.insertBefore(li.nextElementSibling, li);
+    }
+    [...$('order-2').children].forEach(c => c.classList.remove('correct', 'incorrect'));
+    renumberOrder();
+    saveOrder();
+  });
+}
+function checkOrder() {
+  let earned = 0;
+  [...$('order-2').children].forEach((li, i) => {
+    li.classList.remove('correct', 'incorrect');
+    if (+li.dataset.id === i) { li.classList.add('correct'); earned++; }
+    else li.classList.add('incorrect');
+  });
+  setScore(2, earned);
+  recordMarks(2, earned);
+}
+function saveOrder() {
+  const seq = [...$('order-2').children].map(li => +li.dataset.id);
+  try { localStorage.setItem(STORE_NS + ':order', JSON.stringify(seq)); } catch (_) {}
+}
+
+// ══════════════════════════════════════════════════════════════
+//  Q4–Q7 — CODE tasks (push, pop, enqueue, dequeue)
+// ══════════════════════════════════════════════════════════════
+const DEFAULT_CODE = {
+  3: $('editor-3').value,
+  4: $('editor-4').value,
+  5: $('editor-5').value,
+  6: $('editor-6').value,
+  7: $('editor-7').value,
+};
+
+// Per-task run harness: declarations (preamble) + student function (with a
+// `global …` line injected so the function can update the module-level
+// pointers) + a driver that exercises the function and prints readable results.
+const CODE = {
+  3: {
+    globals: 'theStack, pointer',
+    preamble: 'array theStack[20]\npointer = -1\n',
+    driver:
+      '\nprint("push(\'a\') returns " + push("a"))' +
+      '\nprint("push(\'b\') returns " + push("b"))' +
+      '\nprint("top item is " + theStack[1])' +
+      '\nprint("pointer is " + pointer)' +
+      '\npointer = 19' +
+      '\nprint("when the stack is full, push returns " + push("z"))',
+    criteria: [
+      { check: ({ src }) => /(pointer|toppointer)\s*(==|=|>=|>|<|<=|!=)\s*19/.test(src) || /length\s*-\s*1/.test(src) },
+      { check: ({ src }) => /pointer\s*=\s*pointer\s*\+\s*1/.test(src) || /pointer\s*\+=\s*1/.test(src) },
+      { check: ({ src }) => /thestack\s*\[\s*pointer\s*\]\s*=\s*data/.test(src) },
+      { check: ({ run }) => outHas(run, "push('a') returns true", 'full, push returns false') },
+    ],
+  },
+  4: {
+    globals: 'theStack, pointer',
+    preamble: 'array theStack[20]\npointer = -1\ntheStack[0] = "x"\ntheStack[1] = "y"\npointer = 1\n',
+    driver:
+      '\nprint("first pop returns " + pop())' +
+      '\nprint("second pop returns " + pop())' +
+      '\nprint("popping the empty stack returns " + pop())' +
+      '\nprint("pointer is now " + pointer)',
+    criteria: [
+      { check: ({ src }) => /function\s+pop\s*\(/.test(src) },
+      { check: ({ src }) => /pointer\s*(==|=|<=|<)\s*-?\s*1/.test(src) || /pointer\s*<\s*0/.test(src) },
+      { check: ({ run }) => outHas(run, 'empty stack returns false') },
+      { check: ({ src }) => /pointer\s*=\s*pointer\s*-\s*1/.test(src) || /pointer\s*-=\s*1/.test(src) },
+      { check: ({ run }) => outHas(run, 'first pop returns y') },
+      { check: ({ run }) => outHas(run, 'second pop returns x', 'empty stack returns false') },
+    ],
+  },
+  5: {
+    globals: 'queue, headPointer, tailPointer',
+    preamble: 'array queue[5]\nheadPointer = 0\ntailPointer = 0\n',
+    driver:
+      '\nprint("enqueue(\'p\') returns " + enqueue("p"))' +
+      '\nprint("enqueue(\'q\') returns " + enqueue("q"))' +
+      '\nprint("front item is " + queue[0])' +
+      '\nprint("tailPointer is " + tailPointer)' +
+      '\ntailPointer = 5' +
+      '\nprint("when the queue is full, enqueue returns " + enqueue("z"))',
+    criteria: [
+      { check: ({ src }) => /tailpointer\s*(>=|==|>|=)\s*(queue\.length|5|len)/.test(src) },
+      { check: ({ src }) => /queue\s*\[\s*tailpointer\s*\]\s*=\s*item/.test(src) },
+      { check: ({ src }) => /tailpointer\s*=\s*tailpointer\s*\+\s*1/.test(src) || /tailpointer\s*\+=\s*1/.test(src) },
+      { check: ({ run }) => outHas(run, "enqueue('p') returns true", 'full, enqueue returns false') },
+    ],
+  },
+  6: {
+    globals: 'queue, headPointer, tailPointer',
+    preamble: 'array queue[5]\nheadPointer = 0\ntailPointer = 0\nqueue[0] = "p"\nqueue[1] = "q"\ntailPointer = 2\n',
+    driver:
+      '\nprint("first dequeue returns " + dequeue())' +
+      '\nprint("second dequeue returns " + dequeue())' +
+      '\nprint("dequeue on the empty queue returns " + dequeue())' +
+      '\nprint("headPointer is now " + headPointer)',
+    criteria: [
+      { check: ({ src }) => /function\s+dequeue\s*\(\s*\)/.test(src) },
+      { check: ({ src }) => /headpointer\s*(==|=|!=)\s*tailpointer/.test(src) },
+      { check: ({ run }) => outHas(run, 'empty queue returns empty') },
+      { check: ({ src }) => /queue\s*\[\s*headpointer\s*\]/.test(src) && (/headpointer\s*=\s*headpointer\s*\+\s*1/.test(src) || /headpointer\s*\+=\s*1/.test(src)) },
+      { check: ({ run }) => outHas(run, 'first dequeue returns p', 'second dequeue returns q') },
+    ],
+  },
+  // Q8 — main program. push()/pop() are provided (hidden, already carrying their
+  // own `global` lines); the student writes the top-level program and we feed the
+  // 10 characters a..j as input. A correct program outputs them reversed (j..a).
+  7: {
+    isMain: true,
+    inputs: ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'],
+    hidden:
+      'array theStack[20]\npointer = -1\n' +
+      'function push(data)\n  global theStack, pointer\n  if pointer == 19 then\n    return false\n  else\n    pointer = pointer + 1\n    theStack[pointer] = data\n    return true\n  endif\nendfunction\n' +
+      'function pop()\n  global theStack, pointer\n  if pointer == -1 then\n    return false\n  else\n    item = theStack[pointer]\n    pointer = pointer - 1\n    return item\n  endif\nendfunction\n',
+    criteria: [
+      { check: ({ src }) => /\b(for|while)\b[\s\S]*\binput\b/.test(src) },
+      { check: ({ src }) => /\bpush\s*\(/.test(src) },
+      { check: ({ src }) => /\b(for|while)\b[\s\S]*\bpop\s*\(/.test(src) },
+      { check: ({ run }) => allPresent(run, 'abcdefghij') },
+      { check: ({ run }) => inOrder(run, 'jihgfedcba') },
+    ],
+  },
+};
+
+// Insert a `global …` line after the student's function/procedure header so
+// the transpiled Python can rebind the module-level pointer variables.
+function injectGlobals(src, names) {
+  return src.replace(/^([ \t]*(?:function|procedure)\s+\w+\s*\([^)]*\)[ \t]*)$/mi, `$1\n  global ${names}`);
+}
+
+async function handleRunCode(idx, editorEl, runBtn, statusEl) {
+  const cfg = CODE[idx];
+  runBtn.disabled = true;
+  statusEl.textContent = 'Running…';
+
+  const studentCode = editorEl.value;
+  // Q8 is a top-level program; Q4–Q7 are single functions whose header we
+  // inject a `global …` line into so the transpiled Python can rebind pointers.
+  const hasFn = cfg.isMain
+    ? true
+    : /^[ \t]*(?:function|procedure)\s+\w+\s*\(/mi.test(studentCode);
+  let assembled, runOpts = {};
+  if (cfg.isMain) {
+    assembled = cfg.hidden + studentCode;
+    runOpts = { inputs: cfg.inputs };
+  } else {
+    assembled = hasFn
+      ? cfg.preamble + injectGlobals(studentCode, cfg.globals) + cfg.driver
+      : cfg.preamble + studentCode;   // no function yet → just check it parses
+  }
+
+  editorEl.value = assembled;
+  const r = await runPseudocode(editorEl, runOpts);
+  editorEl.value = studentCode;
+  refreshEditor(editorEl);
+  clearSyntaxHint(editorEl);
+
+  statusEl.textContent = '';
+  runBtn.disabled = false;
+
+  const run = { ok: r.ok, output: r.output || '' };
+  showCodeOutput(editorEl, run);
+
+  if (!run.ok) {
+    window.ActivityUI?.showToast('Your pseudocode has an error — fix it, then Run again.', 'warn');
+  } else if (!cfg.isMain && !hasFn) {
+    window.ActivityUI?.showToast('Write your function between the function … endfunction lines.', 'warn');
+  }
+
+  const src = normSrc(studentCode);
+  let earned = 0;
+  const passed = cfg.criteria.map(c => {
+    let ok = false;
+    try { ok = !!c.check({ src, run }); } catch (_) { ok = false; }
+    if (ok) earned++;
+    return ok;
+  });
+
+  applyMarkscheme(idx, passed, earned, TASK_MAX[idx]);
+  try { localStorage.setItem(STORE_NS + ':ms' + idx, JSON.stringify({ earned, passed })); } catch (_) {}
+  recordMarks(idx, earned);
+}
+
+function showCodeOutput(editorEl, run) {
+  const panel = editorEl.closest('.editor-wrap')?.querySelector('.output-panel');
+  if (!panel) return;
+  panel.classList.toggle('error', !run.ok);
+  const content = panel.querySelector('.output-content');
+  const inputRow = panel.querySelector('.output-input-row');
+  if (inputRow) inputRow.hidden = true;
+  if (!content) return;
+  const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const body = run.ok ? (run.output || '(no output)') : `⚠ ${run.output || 'Error — check your pseudocode'}`;
+  const color = run.ok ? '#5eead4' : '#ff6b6b';
+  content.innerHTML = `<span style="color:${color}">${esc(body)}</span>`;
+}
+
+// ── Code mark scheme DOM ──────────────────────────────────────
+function applyMarkscheme(idx, passed, earned, maxMarks) {
+  const rows = $('ms-list-' + idx).querySelectorAll('.ms-row');
+  rows.forEach((row, i) => {
+    const tick = row.querySelector('.ms-tick');
+    row.classList.remove('pass', 'fail');
+    if (passed[i]) { row.classList.add('pass'); tick.textContent = '✓'; }
+    else           { row.classList.add('fail'); tick.textContent = '✗'; }
+  });
+  const scoreEl = $('ms-score-' + idx);
+  scoreEl.textContent = earned + ' / ' + maxMarks + ' marks';
+  scoreEl.classList.toggle('full', earned === maxMarks);
+}
+function resetMarkscheme(idx) {
+  $('ms-list-' + idx).querySelectorAll('.ms-row').forEach(row => {
+    row.classList.remove('pass', 'fail');
+    row.querySelector('.ms-tick').textContent = '○';
+  });
+  const scoreEl = $('ms-score-' + idx);
+  scoreEl.textContent = '— / ' + TASK_MAX[idx] + ' marks';
+  scoreEl.classList.remove('full');
+}
+
+// ══════════════════════════════════════════════════════════════
+//  Shared scoring / progress
+// ══════════════════════════════════════════════════════════════
+function setScore(idx, earned) {
+  const el = $('score-' + idx);
+  if (!el) return;
+  el.textContent = earned + ' / ' + TASK_MAX[idx] + ' correct';
+  el.classList.toggle('full', earned === TASK_MAX[idx]);
+}
+
+function recordMarks(idx, earned) {
+  taskEarned[idx] = earned;
+  if (idx <= 2) { try { localStorage.setItem(STORE_NS + ':task' + idx, String(earned)); } catch (_) {} }
+  updateTabState(idx, earned, TASK_MAX[idx]);
+  updateProgress();
+
+  const totalEarned = taskEarned.reduce((s, v) => s + v, 0);
+  window.Classroom?.submitGrade(Math.round(totalEarned / TOTAL_MARKS * 100), ACTIVITY_TITLE);
+  if (totalEarned === TOTAL_MARKS) allComplete();
+}
+
+function updateTabState(idx, earned, maxMarks) {
+  const tab = document.querySelector('.tab-btn[data-idx="' + idx + '"]');
+  if (!tab) return;
+  tab.classList.remove('done-green', 'done-gold');
+  if (earned === maxMarks)      tab.classList.add('done-green');
+  else if (earned > 0)          tab.classList.add('done-gold');
+}
+
+function updateProgress() {
+  const totalEarned = taskEarned.reduce((s, v) => s + v, 0);
+  $('progress-fill').style.width = Math.round(totalEarned / TOTAL_MARKS * 100) + '%';
+  $('progress-pct').textContent = totalEarned + ' / ' + TOTAL_MARKS;
+}
+
+function allComplete() {
+  $('done-banner').classList.add('show');
+  window.ActivityUI?.launchCelebration();
+}
+
+// ══════════════════════════════════════════════════════════════
+//  Boot
+// ══════════════════════════════════════════════════════════════
+
+// Interactive tasks
+buildSort();  restoreSort();  wireSort();
+buildFill();  restoreFill();  wireFill();
+let savedOrder = null;
+try { savedOrder = JSON.parse(localStorage.getItem(STORE_NS + ':order') || 'null'); } catch (_) {}
+buildOrder(savedOrder); wireOrder();
+
+$('check-0').addEventListener('click', checkSort);
+$('reset-0').addEventListener('click', () => {
+  $('panel-0').querySelectorAll('.sortcard').forEach(c => $('bank-0').appendChild(c));
+  clearSortMarks(); setScore(0, 0); saveSort();
+});
+$('check-1').addEventListener('click', checkFill);
+$('reset-1').addEventListener('click', () => {
+  $('panel-1').querySelectorAll('.gap').forEach(clearGap);
+  setScore(1, 0);
+});
+$('check-2').addEventListener('click', checkOrder);
+$('reset-2').addEventListener('click', () => { buildOrder(null); setScore(2, 0); saveOrder(); });
+
+// Code editors
+for (const i of [3, 4, 5, 6, 7]) {
+  const saved = localStorage.getItem(STORE_NS + ':e' + i);
+  if (saved !== null) $('editor-' + i).value = saved;
+}
+setupEditors('.pseudocode-textarea');
+preload();
+
+// Restore saved marks (code + interactive feedback re-applied on check only)
+for (let i = 0; i < TASK_COUNT; i++) {
+  const raw = localStorage.getItem(STORE_NS + ':ms' + i);
+  if (!raw) continue;
+  try {
+    const { earned, passed } = JSON.parse(raw);
+    taskEarned[i] = earned;
+    if (i >= 3) applyMarkscheme(i, passed, earned, TASK_MAX[i]);
+    updateTabState(i, earned, TASK_MAX[i]);
+  } catch (_) {}
+}
+// restore interactive earned counts from their own saved marks
+for (const i of [0, 1, 2]) {
+  const raw = localStorage.getItem(STORE_NS + ':task' + i);
+  if (raw === null) continue;
+  const earned = +raw;
+  taskEarned[i] = earned;
+  setScore(i, earned);
+  updateTabState(i, earned, TASK_MAX[i]);
+}
+updateProgress();
+
+// Tab switching
+$('tab-bar').addEventListener('click', e => {
+  const tab = e.target.closest('.tab-btn');
+  if (!tab) return;
+  const idx = +tab.dataset.idx;
+  document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  tab.classList.add('active');
+  $('panel-' + idx).classList.add('active');
+  if (idx >= 3) refreshEditor($('editor-' + idx));
+});
+
+// Code run / clear wiring
+for (const idx of [3, 4, 5, 6, 7]) {
+  const runBtn   = $('run-' + idx);
+  const clearBtn = $('clear-' + idx);
+  const statusEl = $('run-status-' + idx);
+  const editorEl = $('editor-' + idx);
+
+  runBtn.addEventListener('click', () => handleRunCode(idx, editorEl, runBtn, statusEl));
+
+  clearBtn.addEventListener('click', () => {
+    editorEl.value = DEFAULT_CODE[idx] ?? '';
+    editorEl.dispatchEvent(new Event('input'));
+    refreshEditor(editorEl);
+    resetMarkscheme(idx);
+    taskEarned[idx] = 0;
+    updateTabState(idx, 0, TASK_MAX[idx]);
+    updateProgress();
+    try {
+      localStorage.removeItem(STORE_NS + ':e' + idx);
+      localStorage.removeItem(STORE_NS + ':ms' + idx);
+    } catch (_) {}
+  });
+
+  let saveTimer;
+  editorEl.addEventListener('input', () => {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+      try { localStorage.setItem(STORE_NS + ':e' + idx, editorEl.value); } catch (_) {}
+    }, 500);
+  });
+}
+
+window.showToast = (msg, type = '') => window.ActivityUI?.showToast(msg, type);
+</script>
+
+<script src="../../activity-ui.js"></script>
+<!-- Google Classroom integration (no-op when no ?courseId= param) -->
+<script src="../../classroom.js"></script>
+</body>
+</html>
