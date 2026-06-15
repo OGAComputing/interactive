@@ -27,13 +27,21 @@
  */
 // Derive data-year and data-topic from the URL path if not already set.
 // Path segments: …/Y11/Legislation/file.html or …/Y11/Legislation/L1_Name/file.html
+// Folder names with GCSE spec prefixes (e.g. "1.3 Networks", "1.2.4 & 2.2.1 OOP") are
+// normalised: strip leading section number, capitalise each word, replace spaces with _.
 (function () {
   const parts = location.pathname.split('/');
   const yIdx  = parts.findIndex(p => /^Y\d+$/.test(p));
   if (yIdx >= 0) {
     const body = document.body;
     if (!body.dataset.year)  body.dataset.year  = parts[yIdx].replace('Y', '');
-    if (!body.dataset.topic) body.dataset.topic = parts[yIdx + 1] || '';
+    if (!body.dataset.topic) {
+      const raw = parts[yIdx + 1] || '';
+      body.dataset.topic = raw
+        .replace(/^[\d.&\s]+/, '')          // strip "1.3 ", "1.2.4 & 2.2.1 ", etc.
+        .replace(/\b\w/g, c => c.toUpperCase()) // capitalise each word
+        .replace(/\s+/g, '_');              // spaces → underscores
+    }
   }
 })();
 
