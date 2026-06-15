@@ -1527,6 +1527,27 @@ color:  amber
     </div>
     <div class="feedback" id="feedback-5"></div>
   </section>
+
+  <!--
+    EVIDENCE CAPTURE — for Google Classroom work-evidence digests
+    ─────────────────────────────────────────────────────────────
+    classroom.js scrapes inputs, textareas, and radio buttons automatically.
+    Custom interactions (drag-and-drop, T/F buttons, click-to-match, <select>)
+    need their state serialised into a hidden textarea so the scraper can see it.
+
+    Add one <textarea id="ev-N"> per task that uses custom interactions.
+    Skip tasks where radio buttons are the only answer element (MCQ tabs),
+    because the scraper already captures those.
+
+    Example:
+      <textarea id="ev-0" data-title="Task 1 — Fill the Gaps"></textarea>
+      <textarea id="ev-3" data-title="Task 4 — Sort the Practices"></textarea>
+
+    Then implement captureEvidence(idx) below and call it from markDone.
+  -->
+  <div aria-hidden="true" style="display:none" id="ev-container">
+    <!-- TODO: add <textarea id="ev-N" data-title="Task N+1 — ..."> for each custom-interaction task -->
+  </div>
 </main>
 
 <div class="ac-toast" id="toast"></div>
@@ -1849,6 +1870,33 @@ color:  amber
     if (block) block.classList.toggle('is-wrong', !ok);
   }
 
+  // TODO: Implement captureEvidence for each task that uses custom interactions
+  // (drag-and-drop, T/F buttons, click-to-match, <select>). Radio-button MCQ tabs
+  // are already captured by the scraper and do not need an ev-N textarea.
+  //
+  // Pattern:
+  //   function captureEvidence(idx) {
+  //     const ta = document.getElementById('ev-' + idx);
+  //     if (!ta) return;
+  //     const lines = [];
+  //     if (idx === 0) {
+  //       // e.g. drag-to-slot fill gaps:
+  //       [['slot-id', 'Hint label'], ...].forEach(([id, hint]) => {
+  //         const chip = document.getElementById(id)?.firstElementChild;
+  //         lines.push(hint + ': ' + (chip ? '"' + chip.textContent.trim() + '"' : '(empty)'));
+  //       });
+  //     } else if (idx === 3) {
+  //       // e.g. sort into drop-zones:
+  //       [['zone-id', 'Zone label'], ...].forEach(([id, label]) => {
+  //         const chips = [...document.getElementById(id).querySelectorAll('.drag-chip')]
+  //           .map(c => c.textContent.trim());
+  //         lines.push(label + ': ' + (chips.length ? chips.join('; ') : '(empty)'));
+  //       });
+  //     }
+  //     ta.value = lines.join('\n');
+  //   }
+  function captureEvidence(idx) { /* TODO: implement per task */ }
+
   function markDone(idx, type = 'gold') {
     if (completed[idx]) return;
     completed[idx] = true;
@@ -1860,6 +1908,7 @@ color:  amber
     }
 
     updateProgress();
+    captureEvidence(idx);
 
     const pct = Math.round(completed.filter(Boolean).length / TASK_COUNT * 100);
     window.Classroom?.submitGrade(pct, ACTIVITY_TITLE);
