@@ -16,124 +16,204 @@ color:  purple
 <link rel="stylesheet" href="../../../shared.css">
 <style>
   :root {
-    --navy:         #0f1f3d;
-    --purple:       #5b2d8e;
-    --purple-light: #7c3fbf;
-    --purple-pale:  #ede0ff;
-    --teal:         #00b4a0;
-    --amber:        #f5a623;
+    /* ── core palette — neon arcade on deep space.
+         Variable NAMES are referenced by inline styles + JS; keep them all. ── */
+    --navy:         #0a0420;   /* deep base; also dark text on light cards / teal buttons */
+    --purple:       #8b2fe0;
+    --purple-light: #a85cff;
+    --purple-pale:  #ecd9ff;
+    --teal:         #2ff3e0;
+    --amber:        #ffb020;
     --white:        #ffffff;
-    --off-white:    #f8f6ff;
-    --text:         #1a1a2e;
-    --muted:        #6b7280;
-    --code-bg:      #1e1e2e;
-    --code-text:    #cdd6f4;
-    --green:        #22c55e;
-    --green-bg:     #dcfce7;
-    --red:          #ef4444;
-    --red-bg:       #fee2e2;
-    --stage-p:      #7c3fbf;
-    --stage-r:      #0891b2;
-    --stage-i:      #059669;
-    --stage-m1:     #d97706;
-    --stage-m2:     #dc2626;
+    --off-white:    #f4f1fb;   /* light "data card" surface */
+    --text:         #15102b;
+    --muted:        #6b6390;
+    --code-bg:      #0c0a22;
+    --code-text:    #d6e0ff;
+    --green:        #2bd96b;
+    --green-bg:     #e6fff0;
+    --red:          #ff4d6d;
+    --red-bg:       #ffeef1;
+    --stage-p:      #8b2fe0;   /* Predict  — violet */
+    --stage-r:      #16b6d6;   /* Run      — cyan   */
+    --stage-i:      #14b85f;   /* Investigate — lime */
+    --stage-m1:     #e8870b;   /* Modify   — amber  */
+    --stage-m2:     #ff3d8b;   /* Make     — hot pink */
+    --font-body:    'Trebuchet MS','Segoe UI',system-ui,sans-serif;
+    --font-mono:    'Consolas','SFMono-Regular','Courier New',monospace;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Trebuchet MS','Calibri',sans-serif; background: var(--navy); color: var(--text); min-height: 100vh; }
+  body {
+    font-family: var(--font-body); background: #07021a; color: var(--text);
+    min-height: 100vh; position: relative; overflow-x: hidden;
+  }
+  /* Atmospheric nebula glow behind everything */
+  body::before {
+    content: ''; position: fixed; inset: 0; z-index: -2;
+    background:
+      radial-gradient(circle at 12% 18%, rgba(139,47,224,0.30), transparent 42%),
+      radial-gradient(circle at 88% 12%, rgba(47,243,224,0.20), transparent 40%),
+      radial-gradient(circle at 78% 90%, rgba(255,61,139,0.22), transparent 45%),
+      linear-gradient(160deg, #0b0530 0%, #07021a 55%, #0a0228 100%);
+  }
+  /* Faint pixel grid, fading toward the bottom */
+  body::after {
+    content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    background-image:
+      linear-gradient(rgba(124,99,210,0.07) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(124,99,210,0.07) 1px, transparent 1px);
+    background-size: 44px 44px;
+    -webkit-mask-image: radial-gradient(ellipse at 50% 0%, #000 35%, transparent 85%);
+            mask-image: radial-gradient(ellipse at 50% 0%, #000 35%, transparent 85%);
+  }
 
   /* ── HEADER ── */
   .site-header {
-    background: linear-gradient(135deg,#1a0a2e 0%,#2d1060 50%,#0f1f3d 100%);
-    padding: 1.5rem 2rem 1rem; border-bottom: 3px solid var(--purple-light);
-    display: flex; align-items: center; gap: 1.5rem;
+    position: relative; z-index: 1;
+    background: linear-gradient(135deg, rgba(26,10,46,0.88) 0%, rgba(45,16,96,0.72) 50%, rgba(15,10,46,0.88) 100%);
+    -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+    padding: 0.95rem 2rem 0.8rem; border-bottom: 2px solid transparent;
+    border-image: linear-gradient(90deg, var(--purple), var(--teal), var(--stage-m2)) 1;
+    box-shadow: 0 6px 30px rgba(0,0,0,0.45);
+    display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap;
   }
-  .header-icon { font-family: 'Courier New',monospace; font-size: 1.9rem; font-weight: 900; color: var(--purple-pale); line-height: 1; letter-spacing: -0.03em; }
-  .header-text h1 { font-size: 1.5rem; color: var(--white); font-weight: 700; letter-spacing: -0.02em; }
-  .header-text p  { color: #b4a0e0; font-size: 0.85rem; margin-top: 0.2rem; }
+  .header-icon {
+    font-family: var(--font-mono); font-size: 1.35rem; font-weight: 900;
+    color: #fff; line-height: 1; letter-spacing: -0.02em;
+    padding: 0.4rem 0.65rem; border-radius: 11px;
+    background: linear-gradient(145deg, var(--purple-light), var(--stage-m2));
+    box-shadow: 0 0 18px rgba(168,92,255,0.7), inset 0 1px 0 rgba(255,255,255,0.35);
+  }
+  .header-text h1 {
+    font-family: var(--font-mono); font-size: 1.25rem; color: #fff; font-weight: 800;
+    letter-spacing: 0.02em; text-transform: uppercase;
+    text-shadow: 0 0 8px rgba(47,243,224,0.7), 0 0 22px rgba(168,92,255,0.5);
+  }
+  .header-text p  {
+    color: #c9b8ff; font-size: 0.74rem; margin-top: 0.2rem;
+    font-family: var(--font-mono); letter-spacing: 0.05em;
+  }
   .header-code {
-    background: var(--code-bg); border: 1px solid #3d2d5e; border-radius: 8px;
-    padding: 0.6rem 1rem; font-family: 'Courier New',monospace; font-size: 0.78rem;
-    color: var(--code-text); margin-left: auto; line-height: 1.9;
+    position: relative; background: var(--code-bg); border: 1px solid rgba(124,99,210,0.45);
+    border-radius: 10px; padding: 0.55rem 0.9rem 0.45rem; font-family: var(--font-mono);
+    font-size: 0.74rem; color: var(--code-text); margin-left: auto; line-height: 1.65;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5), inset 0 0 22px rgba(47,243,224,0.06);
   }
-  .kw  { color: #cba6f7; }
-  .fn  { color: #89b4fa; }
-  .st  { color: #a6e3a1; }
-  .num { color: #fab387; }
+  /* terminal-window "traffic lights" */
+  .header-code::before {
+    content: '●'; position: absolute; top: 0.35rem; left: 0.7rem;
+    font-size: 0.5rem; color: #ff5f57;
+    text-shadow: 0.9em 0 0 #febc2e, 1.8em 0 0 #28c840;
+  }
+  .kw  { color: #c792ea; }
+  .fn  { color: #82aaff; }
+  .st  { color: #c3e88d; }
+  .num { color: #ffb86c; }
 
-  /* ── NAV ── */
-  .primm-nav { display: flex; background: #0a0a1a; border-bottom: 2px solid #2d1060; overflow-x: auto; }
+  /* ── NAV (quest-level track) ── */
+  .primm-nav {
+    position: relative; z-index: 1; display: flex; overflow-x: auto;
+    background: rgba(8,5,24,0.72); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+    border-bottom: 1px solid rgba(124,99,210,0.3);
+  }
   .primm-nav button {
-    flex: 1; min-width: 90px; padding: 0.85rem 0.5rem; border: none; background: transparent;
-    cursor: pointer; font-family: 'Trebuchet MS',sans-serif; font-size: 0.8rem; font-weight: 700;
+    flex: 1; min-width: 96px; padding: 0.55rem 0.5rem 0.5rem; border: none; background: transparent;
+    cursor: pointer; font-family: var(--font-mono); font-size: 0.8rem; font-weight: 700;
     color: #6b5a90; display: flex; flex-direction: column; align-items: center; gap: 0.3rem;
-    transition: all 0.2s; border-bottom: 3px solid transparent; position: relative;
+    transition: color 0.2s; border-bottom: 3px solid transparent; position: relative;
   }
+  /* connecting track line behind the level nodes */
+  .primm-nav button::before {
+    content: ''; position: absolute; top: calc(0.55rem + 15px); left: 0; right: 0; height: 2px;
+    background: rgba(124,99,210,0.25); z-index: 0;
+  }
+  .primm-nav button:first-child::before { left: 50%; }
+  .primm-nav button:last-child::before  { right: 50%; }
   .primm-nav button .stage-letter {
-    width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center;
-    justify-content: center; font-size: 1rem; font-weight: 900; background: #1a1040;
-    color: #5a4880; transition: all 0.2s; position: relative;
+    width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center;
+    justify-content: center; font-family: var(--font-mono); font-size: 0.95rem; font-weight: 900;
+    background: #18103c; color: #6b5a90; transition: all 0.25s; position: relative; z-index: 1;
+    border: 2px solid rgba(124,99,210,0.35);
   }
-  .primm-nav button .stage-name { font-size: 0.7rem; letter-spacing: 0.05em; text-transform: uppercase; }
-  .primm-nav button.active { color: var(--white); }
+  .primm-nav button .stage-name { font-size: 0.62rem; letter-spacing: 0.07em; text-transform: uppercase; position: relative; z-index: 1; }
+  .primm-nav button:hover { color: #b9a7e8; }
+  .primm-nav button:hover .stage-letter { border-color: var(--purple-light); }
+  .primm-nav button.active { color: #fff; }
+  .primm-nav button.active .stage-letter { color: #fff; animation: node-pulse 2s ease-in-out infinite; }
   .primm-nav button[data-stage="P"].active  { border-bottom-color: var(--stage-p); }
-  .primm-nav button[data-stage="P"].active  .stage-letter { background: var(--stage-p); color: white; }
+  .primm-nav button[data-stage="P"].active  .stage-letter { background: var(--stage-p); border-color: var(--stage-p); box-shadow: 0 0 18px var(--stage-p); }
   .primm-nav button[data-stage="R"].active  { border-bottom-color: var(--stage-r); }
-  .primm-nav button[data-stage="R"].active  .stage-letter { background: var(--stage-r); color: white; }
+  .primm-nav button[data-stage="R"].active  .stage-letter { background: var(--stage-r); border-color: var(--stage-r); box-shadow: 0 0 18px var(--stage-r); }
   .primm-nav button[data-stage="I"].active  { border-bottom-color: var(--stage-i); }
-  .primm-nav button[data-stage="I"].active  .stage-letter { background: var(--stage-i); color: white; }
+  .primm-nav button[data-stage="I"].active  .stage-letter { background: var(--stage-i); border-color: var(--stage-i); box-shadow: 0 0 18px var(--stage-i); }
   .primm-nav button[data-stage="M1"].active { border-bottom-color: var(--stage-m1); }
-  .primm-nav button[data-stage="M1"].active .stage-letter { background: var(--stage-m1); color: white; }
+  .primm-nav button[data-stage="M1"].active .stage-letter { background: var(--stage-m1); border-color: var(--stage-m1); box-shadow: 0 0 18px var(--stage-m1); }
   .primm-nav button[data-stage="M2"].active { border-bottom-color: var(--stage-m2); }
-  .primm-nav button[data-stage="M2"].active .stage-letter { background: var(--stage-m2); color: white; }
+  .primm-nav button[data-stage="M2"].active .stage-letter { background: var(--stage-m2); border-color: var(--stage-m2); box-shadow: 0 0 18px var(--stage-m2); }
   .primm-nav button.done .stage-letter::after {
-    content: '✓'; position: absolute; font-size: 0.55rem; top: -2px; right: -2px;
-    background: var(--green); color: white; width: 14px; height: 14px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
+    content: '✓'; position: absolute; font-size: 0.6rem; top: -3px; right: -3px;
+    background: var(--green); color: #05210f; width: 16px; height: 16px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; font-weight: 900;
+    box-shadow: 0 0 8px var(--green); z-index: 2;
   }
 
   /* ── PANELS ── */
-  .stage-panel { display: none; padding: 1.5rem 2rem 3rem; max-width: 900px; margin: 0 auto; }
-  .stage-panel.active { display: block; }
+  .stage-panel { display: none; padding: 1.8rem 2rem 3rem; max-width: 920px; margin: 0 auto; position: relative; z-index: 1; }
+  .stage-panel.active { display: block; animation: panel-in 0.45s cubic-bezier(.2,.7,.3,1); }
 
   /* ── STAGE HEADER ── */
   .stage-header {
     display: flex; align-items: center; gap: 1rem;
-    margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid #2d1060;
+    margin-bottom: 1.6rem; padding-bottom: 1.1rem; border-bottom: 1px solid rgba(124,99,210,0.3);
   }
-  .stage-badge { width: 52px; height: 52px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; font-weight: 900; color: white; flex-shrink: 0; }
-  .badge-P  { background: var(--stage-p); }
-  .badge-R  { background: var(--stage-r); }
-  .badge-I  { background: var(--stage-i); }
-  .badge-M1 { background: var(--stage-m1); }
-  .badge-M2 { background: var(--stage-m2); }
-  .stage-header-text h2 { color: var(--white); font-size: 1.3rem; }
-  .stage-header-text p  { color: #b4a0e0; font-size: 0.85rem; margin-top: 0.2rem; }
+  .stage-badge {
+    width: 56px; height: 56px; border-radius: 16px; display: flex; align-items: center;
+    justify-content: center; font-family: var(--font-mono); font-size: 1.7rem; font-weight: 900;
+    color: #fff; flex-shrink: 0; box-shadow: inset 0 1px 0 rgba(255,255,255,0.25);
+  }
+  .badge-P  { background: linear-gradient(145deg, var(--stage-p), #6a1fd0); box-shadow: 0 0 20px rgba(139,47,224,0.55); }
+  .badge-R  { background: linear-gradient(145deg, var(--stage-r), #0a7fa0); box-shadow: 0 0 20px rgba(22,182,214,0.5); }
+  .badge-I  { background: linear-gradient(145deg, var(--stage-i), #0a8a45); box-shadow: 0 0 20px rgba(20,184,95,0.5); }
+  .badge-M1 { background: linear-gradient(145deg, var(--stage-m1), #b56500); box-shadow: 0 0 20px rgba(232,135,11,0.5); }
+  .badge-M2 { background: linear-gradient(145deg, var(--stage-m2), #c41f6b); box-shadow: 0 0 20px rgba(255,61,139,0.5); }
+  .stage-header-text h2 { font-family: var(--font-mono); color: #fff; font-size: 1.35rem; text-transform: uppercase; letter-spacing: 0.03em; text-shadow: 0 0 10px rgba(139,47,224,0.45); }
+  .stage-header-text p  { color: #b9a7e8; font-size: 0.85rem; margin-top: 0.25rem; }
 
   /* ── CODE BLOCKS ── */
   .annotated-code {
-    background: var(--code-bg); border: 1px solid #3d2d5e; border-radius: 10px;
-    padding: 1.2rem 1.5rem; font-family: 'Courier New',monospace;
+    background: var(--code-bg); border: 1px solid rgba(124,99,210,0.4); border-radius: 12px;
+    padding: 1.2rem 1.5rem; font-family: var(--font-mono);
     font-size: 0.88rem; line-height: 2; color: var(--code-text); margin-bottom: 1.2rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4), inset 0 0 30px rgba(47,243,224,0.05);
   }
   .ann-row { display: grid; grid-template-columns: 1.6rem 1fr auto; align-items: center; gap: 0.5rem 1rem; }
-  .ann-label { font-family: 'Trebuchet MS',sans-serif; font-size: 0.72rem; color: #f38ba8; font-style: italic; text-align: right; white-space: nowrap; }
-  .line-num  { color: #585b70; text-align: right; user-select: none; font-size: 0.8rem; }
+  .ann-label { font-family: var(--font-body); font-size: 0.72rem; color: #ff7eb6; font-style: italic; text-align: right; white-space: nowrap; }
+  .line-num  { color: #4a4570; text-align: right; user-select: none; font-size: 0.8rem; }
 
-  /* ── Q-CARDS ── */
+  /* ── Q-CARDS (light "data cards" with neon edge) ── */
   .q-card {
-    background: var(--off-white); border-radius: 10px; padding: 1rem 1.2rem;
-    margin-bottom: 1rem; border-left: 4px solid var(--purple-light); transition: border-left-color 0.2s, background 0.2s;
+    background: var(--off-white); border-radius: 12px; padding: 1.1rem 1.3rem;
+    margin-bottom: 1rem; border-left: 4px solid var(--purple-light);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    transition: border-left-color 0.2s, background 0.2s, transform 0.2s, box-shadow 0.2s;
   }
+  .q-card:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(0,0,0,0.4); }
   .q-card.error,
-  .q-card.is-wrong { border-left-color: var(--red); background: #fff5f5; }
-  .q-label { display: block; font-weight: 700; color: var(--navy); margin-bottom: 0.6rem; font-size: 0.9rem; }
-  .q-num { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: var(--purple-light); color: white; font-size: 0.75rem; margin-right: 0.4rem; flex-shrink: 0; vertical-align: middle; }
-  .q-card input[type=text], .q-card textarea {
-    width: 100%; padding: 0.6rem 0.8rem; border: 1.5px solid #d1c4f0; border-radius: 6px;
-    font-family: 'Trebuchet MS',sans-serif; font-size: 0.88rem; resize: vertical;
-    background: white; color: var(--text); transition: border-color 0.2s;
+  .q-card.is-wrong { border-left-color: var(--red); background: #fff0f3; }
+  .q-label { display: block; font-weight: 700; color: var(--navy); margin-bottom: 0.6rem; font-size: 0.92rem; }
+  .q-num { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 7px; background: var(--purple-light); color: white; font-family: var(--font-mono); font-weight: 800; font-size: 0.78rem; margin-right: 0.45rem; flex-shrink: 0; vertical-align: middle; }
+  /* inline code chips — override the template's hard-coded pale-purple inline style */
+  .q-label code, .task-text code {
+    background: rgba(168,92,255,0.16) !important; color: #6a1fd0 !important;
+    font-family: var(--font-mono); padding: 0.05rem 0.35rem !important;
+    border-radius: 5px !important; font-size: 0.85em;
   }
-  .q-card input[type=text]:focus, .q-card textarea:focus { outline: none; border-color: var(--purple-light); }
+  .q-card input[type=text], .q-card textarea {
+    width: 100%; padding: 0.65rem 0.85rem; border: 1.5px solid #d6c9f2; border-radius: 8px;
+    font-family: var(--font-body); font-size: 0.9rem; resize: vertical;
+    background: white; color: var(--text); transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .q-card input[type=text]:focus, .q-card textarea:focus { outline: none; border-color: var(--purple-light); box-shadow: 0 0 0 3px rgba(168,92,255,0.18); }
   .q-card textarea { min-height: 65px; }
   .q-card.error input[type=text],
   .q-card.error textarea,
@@ -143,82 +223,103 @@ color:  purple
   /* ── MCQ inside q-card ── */
   .radio-opts { display: flex; flex-direction: column; gap: 0.4rem; }
   .radio-opt {
-    display: flex; align-items: center; gap: 0.6rem; padding: 0.5rem 0.8rem;
-    border-radius: 6px; border: 1.5px solid #d1c4f0; background: white; cursor: pointer; transition: all 0.15s;
+    display: flex; align-items: center; gap: 0.6rem; padding: 0.55rem 0.85rem;
+    border-radius: 8px; border: 1.5px solid #d6c9f2; background: white; cursor: pointer; transition: all 0.15s;
   }
-  .radio-opt:hover { border-color: var(--purple-light); background: #f0e8ff; }
+  .radio-opt:hover { border-color: var(--purple-light); background: #f3ecff; transform: translateX(2px); }
   .radio-opt input[type=radio] { accent-color: var(--purple); width: 15px; height: 15px; flex-shrink: 0; }
   .radio-opt span { font-size: 0.88rem; color: var(--text); }
-  .radio-opt.correct { border-color: #22c55e !important; background: #f0fdf4 !important; }
-  .radio-opt.wrong   { border-color: var(--red) !important; background: #fff5f5 !important; }
-  .mcq-fb { font-size: 0.82rem; font-weight: 600; margin-top: 0.5rem; padding: 0.4rem 0.7rem; border-radius: 5px; display: none; }
-  .mcq-fb.pass { display: block; color: #166534; background: var(--green-bg); border: 1px solid #86efac; }
-  .mcq-fb.fail { display: block; color: #991b1b; background: var(--red-bg);   border: 1px solid #fca5a5; }
+  .radio-opt.correct { border-color: var(--green) !important; background: #effdf3 !important; }
+  .radio-opt.wrong   { border-color: var(--red) !important; background: #fff0f3 !important; }
+  .mcq-fb { font-size: 0.82rem; font-weight: 600; margin-top: 0.5rem; padding: 0.45rem 0.75rem; border-radius: 6px; display: none; }
+  .mcq-fb.pass { display: block; color: #0a7a3c; background: var(--green-bg); border: 1px solid #8bf0b3; }
+  .mcq-fb.fail { display: block; color: #c11f43; background: var(--red-bg);   border: 1px solid #ffb3c1; }
 
   /* ── PREDICT WARNING ── */
   .predict-warning {
-    background: #fff3cd; border: 1.5px solid #ffc107; border-radius: 8px;
-    padding: 0.7rem 1rem; font-size: 0.85rem; color: #664d03; font-weight: 600;
+    background: rgba(255,176,32,0.12); border: 1.5px solid var(--amber); border-radius: 8px;
+    padding: 0.7rem 1rem; font-size: 0.85rem; color: #ffcf6b; font-weight: 600;
     margin-top: 0.8rem; display: none; align-items: center; gap: 0.5rem;
   }
 
-  /* ── CODE CHECKER ── */
-  .code-checker { margin-bottom: 1.2rem; }
-  .checker-textarea { background: #0d0d1a; color: #cdd6f4; font-family: 'Courier New',monospace; font-size: 0.88rem; line-height: 1.7; padding: 0.8rem 1rem; border: none; outline: none; min-height: 200px; }
-  .checker-footer { padding: 0.6rem 1rem; display: flex; align-items: center; gap: 0.8rem; background: #0d0d1a; border-top: 1px solid #2d1060; flex-wrap: wrap; }
+  /* ── CODE CHECKER (terminal) ── */
+  .code-checker { margin-bottom: 1.2rem; border-radius: 12px; overflow: hidden; border: 1px solid rgba(124,99,210,0.4); box-shadow: 0 10px 30px rgba(0,0,0,0.45); }
+  .checker-textarea { display: block; width: 100%; background: #0a081c; color: var(--code-text); font-family: var(--font-mono); font-size: 0.9rem; line-height: 1.7; padding: 0.9rem 1.1rem; border: none; outline: none; min-height: 200px; }
+  .checker-footer { padding: 0.7rem 1rem; display: flex; align-items: center; gap: 0.8rem; background: #0a081c; border-top: 1px solid rgba(47,243,224,0.25); flex-wrap: wrap; }
 
-  /* ── BUTTONS ── */
-  .btn { padding: 0.5rem 1.2rem; border-radius: 6px; border: none; cursor: pointer; font-family: 'Trebuchet MS',sans-serif; font-weight: 700; font-size: 0.82rem; transition: all 0.2s; display: inline-flex; align-items: center; gap: 0.4rem; }
-  .btn:disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(1); }
-  .btn-check { background: var(--purple-light); color: white; } .btn-check:hover { background: var(--stage-p); }
-  .btn-next  { background: var(--teal); color: var(--navy); font-weight: 800; } .btn-next:hover { background: #009e8c; }
-  .btn-reset { background: #2d1060; color: #b4a0e0; font-size: 0.78rem; } .btn-reset:hover { background: #3d2070; }
-  .btn-skip { background: transparent; color: var(--muted); border: 1px dashed #3d3d5a; font-size: 0.75rem; font-style: italic; } .btn-skip:hover { background: #1a0a2e; color: #f87171; border-color: var(--red); border-style: solid; }
-  .primm-nav button.skipped .stage-letter { background: var(--red) !important; color: white !important; }
+  /* ── BUTTONS (arcade, with press physics) ── */
+  .btn { padding: 0.6rem 1.3rem; border-radius: 9px; border: none; cursor: pointer; font-family: var(--font-mono); font-weight: 800; font-size: 0.82rem; letter-spacing: 0.03em; text-transform: uppercase; transition: transform 0.1s, box-shadow 0.18s, filter 0.18s; display: inline-flex; align-items: center; gap: 0.45rem; }
+  .btn:active { transform: translateY(2px); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(0.7); transform: none; }
+  .btn-check { background: linear-gradient(145deg, var(--purple-light), var(--purple)); color: #fff; box-shadow: 0 4px 0 #5e1fb0, 0 6px 16px rgba(168,92,255,0.4); }
+  .btn-check:hover { filter: brightness(1.08); } .btn-check:active { box-shadow: 0 1px 0 #5e1fb0, 0 3px 10px rgba(168,92,255,0.4); }
+  .btn-next  { background: linear-gradient(145deg, var(--teal), #18c4b6); color: #062a27; box-shadow: 0 4px 0 #0f8f86, 0 6px 16px rgba(47,243,224,0.4); }
+  .btn-next:hover { filter: brightness(1.06); } .btn-next:active { box-shadow: 0 1px 0 #0f8f86, 0 3px 10px rgba(47,243,224,0.4); }
+  .btn-reset { background: #221248; color: #c9b8ff; font-size: 0.78rem; box-shadow: 0 3px 0 #160c30; } .btn-reset:hover { background: #2c1858; }
+  .btn-skip { background: transparent; color: var(--muted); border: 1px dashed #4a3d6a; font-size: 0.75rem; font-style: italic; text-transform: none; box-shadow: none; } .btn-skip:hover { background: rgba(255,77,109,0.08); color: #ff7088; border-color: var(--red); border-style: solid; }
+
+  /* ── STEP NAVIGATION (Back / Forward through answered questions) ── */
+  .step-nav { display: flex; justify-content: space-between; gap: 0.6rem; margin: 0.2rem 0 1.1rem; }
+  .btn-back, .btn-fwd { background: #221248; color: #c9b8ff; font-size: 0.78rem; box-shadow: 0 3px 0 #160c30; }
+  .btn-back:hover, .btn-fwd:hover { background: #2c1858; }
+  /* keep buttons in place (so Back stays left, Forward stays right) but hidden when unavailable */
+  .btn-back[disabled], .btn-fwd[disabled] { visibility: hidden; opacity: 0; box-shadow: none; }
+  /* a revisited (already-answered) question is shown read-only-ish with a subtle marker */
+  .q-card.revisiting { opacity: 0.96; }
+  .revisit-note { font-size: 0.78rem; color: #b9a7e8; font-style: italic; margin-top: 0.6rem; display: none; }
+  .q-card.revisiting .revisit-note { display: block; }
+  .primm-nav button.skipped .stage-letter { background: var(--red) !important; color: white !important; border-color: var(--red) !important; box-shadow: 0 0 12px var(--red); }
 
   /* ── FEEDBACK ── */
-  .feedback { padding: 0.6rem 0.9rem; border-radius: 6px; font-size: 0.82rem; font-weight: 600; flex: 1; min-width: 0; }
-  .feedback.pass   { background: var(--green-bg); color: #166534; border: 1px solid #86efac; }
-  .feedback.fail   { background: var(--red-bg);   color: #991b1b; border: 1px solid #fca5a5; }
+  .feedback { padding: 0.6rem 0.95rem; border-radius: 8px; font-size: 0.82rem; font-weight: 700; flex: 1; min-width: 0; font-family: var(--font-body); }
+  .feedback.pass   { background: var(--green-bg); color: #0a7a3c; border: 1px solid #8bf0b3; }
+  .feedback.fail   { background: var(--red-bg);   color: #c11f43; border: 1px solid #ffb3c1; }
   .feedback.hidden  { display: none; }
-  .feedback.loading { background: #1a1040; color: #b4a0e0; border: 1px solid #3d2d5e; }
-  .py-status { font-size: 0.7rem; letter-spacing: 0.07em; padding: 0.2rem 1.5rem; background: #070710; color: #3d3560; text-align: right; }
+  .feedback.loading { background: #18103c; color: #c9b8ff; border: 1px solid rgba(124,99,210,0.4); }
+  .py-status { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.07em; padding: 0.25rem 1.5rem; background: #060414; color: #4a4570; text-align: right; position: relative; z-index: 1; }
 
   /* ── INFO / HINT ── */
-  .info-box { background: #1a1040; border: 1px solid #3d2d5e; border-radius: 8px; padding: 0.8rem 1rem; margin-bottom: 1rem; font-size: 0.85rem; color: #b4a0e0; display: flex; gap: 0.5rem; }
-  .info-box .icon { font-size: 1.1rem; flex-shrink: 0; }
-  .hint-box { background: #1c0a3e; border-left: 3px solid var(--amber); border-radius: 0 6px 6px 0; padding: 0.6rem 0.9rem; font-size: 0.82rem; color: #f5d88a; margin-bottom: 0.8rem; font-style: italic; }
+  .info-box { background: rgba(124,99,210,0.12); border: 1px solid rgba(124,99,210,0.4); border-radius: 10px; padding: 0.85rem 1.1rem; margin-bottom: 1rem; font-size: 0.86rem; color: #c9b8ff; display: flex; gap: 0.6rem; }
+  .info-box .icon { font-size: 1.15rem; flex-shrink: 0; }
+  .hint-box { background: rgba(255,176,32,0.1); border-left: 3px solid var(--amber); border-radius: 0 8px 8px 0; padding: 0.65rem 0.95rem; font-size: 0.83rem; color: #ffd98a; margin-bottom: 0.8rem; font-style: italic; }
 
   /* ── MODIFY TASKS ── */
-  .modify-task { background: var(--off-white); border-radius: 10px; padding: 0.9rem 1.2rem; margin-bottom: 0.5rem; border-left: 4px solid var(--stage-m1); display: flex; gap: 1rem; align-items: flex-start; }
+  .modify-task { background: var(--off-white); border-radius: 12px; padding: 1rem 1.3rem; margin-bottom: 0.5rem; border-left: 4px solid var(--stage-m1); box-shadow: 0 6px 20px rgba(0,0,0,0.3); display: flex; gap: 1rem; align-items: flex-start; }
   .modify-task.ext { border-left-color: var(--stage-m2); }
-  .modify-task .stars { font-size: 1rem; flex-shrink: 0; min-width: 52px; }
-  .modify-task .task-text { font-size: 0.87rem; color: var(--text); line-height: 1.55; }
+  .modify-task .stars { font-size: 1rem; flex-shrink: 0; min-width: 52px; color: var(--amber); text-shadow: 0 0 8px rgba(255,176,32,0.6); }
+  .modify-task .task-text { font-size: 0.89rem; color: var(--text); line-height: 1.55; }
   .modify-task .task-text strong { color: var(--purple); }
 
   /* ── REQUIREMENTS LIST ── */
   .req-list { list-style: none; margin: 1rem 0; }
-  .req-list li { display: flex; align-items: flex-start; gap: 0.6rem; background: var(--off-white); border: 1.5px solid #d1c4f0; border-radius: 8px; padding: 0.7rem 1rem; margin-bottom: 0.5rem; font-size: 0.87rem; color: var(--text); line-height: 1.5; }
+  .req-list li { display: flex; align-items: flex-start; gap: 0.6rem; background: var(--off-white); border: 1.5px solid #d6c9f2; border-radius: 10px; padding: 0.75rem 1rem; margin-bottom: 0.5rem; font-size: 0.88rem; color: var(--text); line-height: 1.5; box-shadow: 0 4px 14px rgba(0,0,0,0.22); }
+  .req-list li > span:first-child { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 6px; background: var(--stage-m2); color: #fff; font-family: var(--font-mono); font-weight: 800; font-size: 0.75rem; flex-shrink: 0; }
   .req-list li.ext { border-color: var(--amber); }
+  .req-list li.ext > span:first-child { background: var(--amber); color: #3a2600; }
 
   /* ── MISC ── */
-  .section-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); font-weight: 700; margin-bottom: 0.4rem; margin-top: 1.2rem; }
-  .completion-banner { background: linear-gradient(135deg,#1a4a2e,#0d2d1a); border: 2px solid var(--green); border-radius: 12px; padding: 1.5rem; text-align: center; color: var(--green); margin-top: 2rem; display: none; }
-  .completion-banner h3 { font-size: 1.3rem; margin-bottom: 0.5rem; }
-  .completion-banner p  { color: #86efac; font-size: 0.88rem; }
-  .progress-strip { height: 8px; background: #1a1040; position: sticky; top: 0; z-index: 10; }
-  .progress-fill  { height: 100%; background: linear-gradient(90deg,var(--purple),var(--teal)); transition: width 0.5s ease; }
+  .section-label { font-family: var(--font-mono); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.12em; color: #9a8cc8; font-weight: 700; margin-bottom: 0.45rem; margin-top: 1.3rem; }
+  .completion-banner { background: linear-gradient(145deg, rgba(20,184,95,0.18), rgba(10,40,26,0.6)); border: 2px solid var(--green); border-radius: 16px; padding: 1.8rem; text-align: center; color: var(--green); margin-top: 2rem; display: none; box-shadow: 0 0 40px rgba(43,217,107,0.35); }
+  .completion-banner h3 { font-family: var(--font-mono); font-size: 1.4rem; margin-bottom: 0.5rem; text-transform: uppercase; text-shadow: 0 0 14px rgba(43,217,107,0.6); }
+  .completion-banner p  { color: #a7f3c8; font-size: 0.9rem; }
+  .progress-strip { height: 10px; background: #0a081c; position: sticky; top: 0; z-index: 10; box-shadow: inset 0 0 8px rgba(0,0,0,0.6); }
+  .progress-fill  { height: 100%; background: linear-gradient(90deg, var(--purple), var(--teal), var(--stage-m2)); background-size: 200% 100%; transition: width 0.5s ease; box-shadow: 0 0 12px rgba(47,243,224,0.6); animation: xp-shimmer 3s linear infinite; }
 
   .step-hidden { display: none !important; }
 
+  /* ── NEW ARCADE ANIMATIONS ── */
+  @keyframes node-pulse { 0%, 100% { transform: scale(1.08); } 50% { transform: scale(1.18); } }
+  @keyframes panel-in   { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+  @keyframes xp-shimmer { from { background-position: 0 0; } to { background-position: 200% 0; } }
+
   /* ── Q-CARD CORRECT STATE ── */
   @keyframes success-pulse {
-    0%   { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
-    40%  { box-shadow: 0 0 0 8px rgba(34,197,94,0.45); }
-    70%  { box-shadow: 0 0 0 14px rgba(34,197,94,0.18); }
-    100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
+    0%   { box-shadow: 0 0 0 0 rgba(43,217,107,0); }
+    40%  { box-shadow: 0 0 0 8px rgba(43,217,107,0.45); }
+    70%  { box-shadow: 0 0 0 14px rgba(43,217,107,0.18); }
+    100% { box-shadow: 0 0 0 0 rgba(43,217,107,0); }
   }
-  .q-card.is-right { border-left-color: var(--green) !important; background: #f0fdf4; animation: success-pulse 0.8s ease forwards; }
+  .q-card.is-right { border-left-color: var(--green) !important; background: #effdf3; animation: success-pulse 0.8s ease forwards; }
   .q-card.is-right input[type=text], .q-card.is-right textarea { border-color: var(--green); }
 
   /* ── FEEDBACK ENTRANCE ── */
@@ -240,20 +341,27 @@ color:  purple
   }
 
   /* ── WORD BANK (click-to-place) — available for Predict questions ── */
-  .wb-pool { display: flex; flex-wrap: wrap; gap: 0.4rem; padding: 0.5rem 0.7rem; background: #ede0ff; border: 1.5px dashed #b89fe0; border-radius: 8px; min-height: 40px; margin-bottom: 0.5rem; }
-  .wb-answer { display: flex; flex-wrap: wrap; gap: 0.35rem; padding: 0.45rem 0.7rem; background: white; border: 1.5px solid #d1c4f0; border-radius: 8px; min-height: 42px; align-items: center; margin-bottom: 0.5rem; }
-  .wb-answer.is-right { border-color: var(--green); background: #f0fdf4; }
-  .wb-answer.is-wrong { border-color: var(--red); background: #fff5f5; }
-  .wb-chip { display: inline-flex; align-items: center; padding: 0.28rem 0.65rem; background: var(--purple-light); color: white; border-radius: 5px; cursor: pointer; font-size: 0.84rem; font-weight: 700; user-select: none; transition: all 0.15s; }
-  .wb-chip:hover { background: var(--stage-p); transform: translateY(-1px); }
-  .wb-chip.used { opacity: 0.28; cursor: default; pointer-events: none; }
-  .wb-placed { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.28rem 0.6rem; background: #2d1060; color: #cdd6f4; border-radius: 5px; cursor: pointer; font-size: 0.84rem; font-family: 'Courier New', monospace; }
+  .wb-pool { display: flex; flex-wrap: wrap; gap: 0.4rem; padding: 0.55rem 0.75rem; background: rgba(168,92,255,0.12); border: 1.5px dashed var(--purple-light); border-radius: 10px; min-height: 40px; margin-bottom: 0.5rem; }
+  .wb-answer { display: flex; flex-wrap: wrap; gap: 0.35rem; padding: 0.45rem 0.7rem; background: white; border: 1.5px solid #d6c9f2; border-radius: 10px; min-height: 42px; align-items: center; margin-bottom: 0.5rem; }
+  .wb-answer.is-right { border-color: var(--green); background: #effdf3; }
+  .wb-answer.is-wrong { border-color: var(--red); background: #fff0f3; }
+  .wb-chip { display: inline-flex; align-items: center; padding: 0.3rem 0.7rem; background: linear-gradient(145deg, var(--purple-light), var(--purple)); color: white; border-radius: 7px; cursor: pointer; font-size: 0.84rem; font-weight: 700; user-select: none; transition: all 0.15s; box-shadow: 0 2px 8px rgba(168,92,255,0.4); }
+  .wb-chip:hover { transform: translateY(-2px); filter: brightness(1.1); }
+  .wb-chip.used { opacity: 0.28; cursor: default; pointer-events: none; box-shadow: none; }
+  .wb-placed { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.3rem 0.65rem; background: #221248; color: var(--code-text); border-radius: 7px; cursor: pointer; font-size: 0.84rem; font-family: var(--font-mono); }
   .wb-placed:hover { background: var(--red); color: white; }
   .wb-empty-hint { color: var(--muted); font-style: italic; font-size: 0.8rem; align-self: center; }
-  .wb-label { font-size: 0.73rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 700; margin-bottom: 0.3rem; }
+  .wb-label { font-family: var(--font-mono); font-size: 0.73rem; text-transform: uppercase; letter-spacing: 0.08em; color: #9a8cc8; font-weight: 700; margin-bottom: 0.3rem; }
+
+  /* ── ACCESSIBILITY: respect reduced-motion ── */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; }
+    .stage-panel.active { animation: none; }
+  }
 
   @media (max-width: 600px) {
-    .site-header { flex-wrap: wrap; } .header-code { display: none; } .stage-panel { padding: 1rem; }
+    .site-header { flex-wrap: wrap; } .header-code { display: none; }
+    .stage-panel { padding: 1rem; } .primm-nav button { min-width: 74px; }
   }
 </style>
 </head>
@@ -330,21 +438,32 @@ color:  purple
     FILL IN ⑤: Predict questions — aim for 3–4 total.
     Mix question types: use at most one or two free-text boxes; prefer MCQ, True/False,
     or word-bank for the rest. Questions are shown ONE AT A TIME — each card has its
-    own "Check answer" button; after checking, the student sees feedback then clicks
-    "Next question →" to reveal the next card.
+    own "Check answer" button. After checking, the student sees the feedback and then
+    the activity AUTO-ADVANCES to the next card (after a short delay, so the feedback
+    is read). A "← Back / Forward →" bar below the cards lets students revisit any
+    question they have already answered (their answer and feedback are re-shown).
+    This one-question-at-a-time + back/forward pattern is the SAME
+    across Predict, Investigate, and Modify — keep it consistent.
+    Predict advances automatically ONLY when the answer is correct; a wrong answer
+    shows a manual "Continue →" button so the student can read the feedback at their
+    own pace. (Handled by showPredictContinue() — no per-question wiring needed.)
 
     ── QUESTION TYPES ──────────────────────────────────────────────────────────
+
+    Card order is fixed by PREDICT_CARDS / PREDICT_NAMES in the JS (qcard_p_mcq1,
+    qcard_p_mcq2, qcard_p_text1). To add/remove a Predict question, update those two
+    arrays — the one-at-a-time flow, auto-advance and Back/Forward all follow them.
 
     MCQ (4 options):
       • name= must match an entry in RADIO_GROUPS; value= must match P_CORRECT key
       • id: qcard_<name>, feedback: fb_<name>
       • Keep all option texts roughly the same length
-      • Check: checkPredictMCQ('p_mcq1', 'qcard_p_mcq2')
-      • Next:  nextPredictQ('qcard_p_mcq2')
+      • Check button only: checkPredictMCQ('p_mcq1')  — auto-advances if correct,
+        otherwise shows a manual "Continue →"
 
     TRUE/FALSE (2-option MCQ — same pattern, just 2 radio options):
       • Use when the question has a binary correct/incorrect answer
-      • Same radio-opts markup, same checkPredictMCQ/nextPredictQ calls
+      • Same radio-opts markup, same checkPredictMCQ('<name>') call
 
     WORD BANK (click-to-place — good for "what is the output?" questions):
       • Uses .wb-pool + .wb-answer markup (CSS already included above)
@@ -356,8 +475,9 @@ color:  purple
 
     FREE-TEXT (single-line input — use sparingly):
       • id= must match an entry in TEXT_FIELDS
-      • Check: checkPredictText()
-      • Next:  showPredictReviewButton() (or nextPredictQ() if more questions follow)
+      • Check button only: checkPredictText()  — auto-advances if correct,
+        otherwise shows a manual "Continue →"
+      • On the last Predict card, advancing reaches the "✓ Reviewed — go to Run" screen
 
     ── DESIGN RULE ─────────────────────────────────────────────────────────────
     Target: 1 MCQ + 1 True/False + 1 word-bank OR free-text per Predict section.
@@ -376,9 +496,9 @@ color:  purple
     </div>
     <div class="mcq-fb" id="fb_p_mcq1"></div>
     <div style="margin-top:0.8rem;display:flex;gap:0.6rem;flex-wrap:wrap;align-items:center">
-      <button class="btn btn-check" id="btn_check_p_mcq1" onclick="checkPredictMCQ('p_mcq1', 'qcard_p_mcq2')">✓ Check answer</button>
-      <button class="btn btn-next step-hidden" id="btn_next_p_mcq1" onclick="nextPredictQ('qcard_p_mcq2')">Next question →</button>
+      <button class="btn btn-check" id="btn_check_p_mcq1" onclick="checkPredictMCQ('p_mcq1')">✓ Check answer</button>
     </div>
+    <div class="revisit-note">You've already answered this — use <strong>Forward →</strong> to return to where you were.</div>
   </div>
 
   <!-- MCQ question 2 — revealed after Q1 is answered -->
@@ -391,9 +511,9 @@ color:  purple
     </div>
     <div class="mcq-fb" id="fb_p_mcq2"></div>
     <div style="margin-top:0.8rem;display:flex;gap:0.6rem;flex-wrap:wrap;align-items:center">
-      <button class="btn btn-check" id="btn_check_p_mcq2" onclick="checkPredictMCQ('p_mcq2', 'qcard_p_text1')">✓ Check answer</button>
-      <button class="btn btn-next step-hidden" id="btn_next_p_mcq2" onclick="nextPredictQ('qcard_p_text1')">Next question →</button>
+      <button class="btn btn-check" id="btn_check_p_mcq2" onclick="checkPredictMCQ('p_mcq2')">✓ Check answer</button>
     </div>
+    <div class="revisit-note">You've already answered this — use <strong>Forward →</strong> to return to where you were.</div>
   </div>
 
   <!-- Free-text question — revealed after Q2 is answered -->
@@ -405,8 +525,14 @@ color:  purple
     <div class="mcq-fb" id="fb_p_text1"></div>
     <div style="margin-top:0.8rem;display:flex;gap:0.6rem;flex-wrap:wrap;align-items:center">
       <button class="btn btn-check" id="btn_check_p_text1" onclick="checkPredictText()">✓ Check answer</button>
-      <button class="btn btn-next step-hidden" id="btn_next_p_text1" onclick="nextPredictToReview()">See results &amp; continue →</button>
     </div>
+    <div class="revisit-note">You've already answered this — use <strong>Forward →</strong> to return to where you were.</div>
+  </div>
+
+  <!-- Back / Forward through answered Predict questions (one question on screen at a time) -->
+  <div class="step-nav" id="stepnav-P">
+    <button class="btn btn-back" id="btn_back_P" onclick="goBack('P')" disabled>← Back</button>
+    <button class="btn btn-fwd"  id="btn_fwd_P"  onclick="goForward('P')" disabled>Forward →</button>
   </div>
 
   <button class="btn btn-next step-hidden" id="btn_goto_r" onclick="reviewedGoToRun()" style="margin-top:1rem">
@@ -432,13 +558,19 @@ color:  purple
     If the program uses input(), name the mock values that will be used.
     If it uses no input(), remove the "test inputs" clause.
   -->
+  <!--
+    LINEAR FLOW: instruction (this info box) → editor (with Run) → answer + Check button.
+    Everything reads straight down, so the student never scrolls back up. The same
+    instruction → editor → answer order is used in Investigate. Keep it consistent.
+  -->
   <div class="info-box">
     <span class="icon">🖥️</span>
-    <span>Use the <strong>Run code</strong> button to see the program in action.
+    <span>Use the <strong>▶ Run code</strong> button below to see the program in action.
     <!-- e.g. "The program will run with the test inputs Alice and 13." -->
-    Compare the output with your predictions.</span>
+    Compare the output with your predictions, then describe what you saw at the bottom.</span>
   </div>
 
+  <!-- ① Editor (with Run) -->
   <div class="code-checker">
     <textarea class="checker-textarea" id="r_editor" data-title="Python Editor"></textarea>
     <div class="checker-footer">
@@ -455,14 +587,14 @@ color:  purple
   <!-- FILL IN ⑧: Key concept hint shown after running. -->
   <div class="hint-box">💡 FILL IN: The most important thing to notice about the output or the code structure.</div>
 
+  <!-- ② Answer + Check button, directly below the editor -->
   <div class="q-card" id="qcard_r1">
     <label class="q-label"><span class="q-num">1</span> Describe what output you saw when you ran the program. Did anything surprise you compared with your predictions?</label>
     <textarea id="r1" placeholder="Write what appeared in the output panel…" oninput="saveState(); clearRunError('qcard_r1')"></textarea>
+    <button class="btn btn-check" id="btn_check_run" onclick="tryCompleteRun()" style="margin-top:0.8rem">
+      ⚡ Check response
+    </button>
   </div>
-
-  <button class="btn btn-check" id="btn_check_run" onclick="tryCompleteRun()" style="margin-top:1rem">
-    ⚡ Check response
-  </button>
 </section>
 
 
@@ -474,7 +606,7 @@ color:  purple
     <div class="stage-badge badge-I">I</div>
     <div class="stage-header-text">
       <h2>Investigate</h2>
-      <p>Make each change in the editor below and record what happens. Keep your changes as you go — each step builds on the last.</p>
+      <p>Read each step, make the change in the editor, run it, then record what happens in the answer box below. Keep your changes as you go — each step builds on the last.</p>
     </div>
   </div>
 
@@ -508,10 +640,11 @@ color:  purple
       • Add validate(v) to I_FIELDS with keyword checks where useful
       • Set type:'text' (or omit — text is the default)
 
-    MCQ (4-option radio inside the step card):
+    MCQ (4-option radio inside the ANSWER card, below the editor):
       • Use when the answer is one of a small set of concrete values
         (e.g. "how many lines?", "which value is stored?")
-      • Add radio-opts markup with name="iN_group" onchange="saveState()"
+      • Put radio-opts markup (name="iN_group" onchange="saveState()") in the answer
+        card qcard_iN (below the editor) — NOT in the prompt card up top
       • Add a feedback div: <div class="mcq-fb" id="fb_iN"></div>
       • In I_FIELDS set type:'mcq', radioName:'iN_group',
         correctValue:'option_X', passMsg:'…', failMsg:'…',
@@ -526,20 +659,19 @@ color:  purple
     Add/remove cards to match STEP_COUNT_I in the JS.
     The LAST step's button must call tryCompleteInvestigate() instead of nextStep().
   -->
+  <!-- ① INSTRUCTION (prompt) cards — top. The matching answer box for each step is
+       rendered below the editor in #i_answers. Both are toggled together per step. -->
   <div id="i_steps">
 
-    <div class="q-card" id="qcard_i1" style="border-left-color:var(--stage-i)">
+    <div class="q-card" id="qcard_i1_prompt" style="border-left-color:var(--stage-i)">
       <label class="q-label"><span class="q-num" style="background:var(--stage-i)">1</span>
         FILL IN: "Change <code style="background:#ede0ff;padding:0 3px;border-radius:3px">X</code>
         to <code style="background:#ede0ff;padding:0 3px;border-radius:3px">Y</code>
         in the editor below. Run it. What changes in the output?"
       </label>
-      <textarea id="i1" placeholder="Describe what changed…" oninput="saveState()"></textarea>
-      <button class="btn btn-next" id="btn_check_i1" style="margin-top:10px" onclick="nextStep('I', 1)" disabled>✓ Check answer</button>
-      <button class="btn btn-skip" id="btn_skip_i1" style="margin-top:6px;display:none" onclick="skipStep('I')">Move on without completing →</button>
     </div>
 
-    <div class="q-card step-hidden" id="qcard_i2" style="border-left-color:var(--stage-i)">
+    <div class="q-card step-hidden" id="qcard_i2_prompt" style="border-left-color:var(--stage-i)">
       <label class="q-label"><span class="q-num" style="background:var(--stage-i)">2</span>
         <!--
           FILL IN: Multi-step instructions use a bullet list; students never retype earlier work.
@@ -553,12 +685,9 @@ color:  purple
         </ul>
         FILL IN: What do you observe?
       </label>
-      <textarea id="i2" placeholder="Describe what happened…" oninput="saveState()"></textarea>
-      <button class="btn btn-next" id="btn_check_i2" style="margin-top:10px" onclick="nextStep('I', 2)" disabled>✓ Check answer</button>
-      <button class="btn btn-skip" id="btn_skip_i2" style="margin-top:6px;display:none" onclick="skipStep('I')">Move on without completing →</button>
     </div>
 
-    <div class="q-card step-hidden" id="qcard_i3" style="border-left-color:var(--stage-i)">
+    <div class="q-card step-hidden" id="qcard_i3_prompt" style="border-left-color:var(--stage-i)">
       <label class="q-label"><span class="q-num" style="background:var(--stage-i)">3</span>
         Make these changes in the editor:
         <ul style="margin:0.5rem 0 0 1.2rem;line-height:2">
@@ -567,12 +696,9 @@ color:  purple
         </ul>
         FILL IN: What happens and why?
       </label>
-      <textarea id="i3" placeholder="Describe what changed…" oninput="saveState()"></textarea>
-      <button class="btn btn-next" id="btn_check_i3" style="margin-top:10px" onclick="nextStep('I', 3)" disabled>✓ Check answer</button>
-      <button class="btn btn-skip" id="btn_skip_i3" style="margin-top:6px;display:none" onclick="skipStep('I')">Move on without completing →</button>
     </div>
 
-    <div class="q-card step-hidden" id="qcard_i4" style="border-left-color:var(--stage-i)">
+    <div class="q-card step-hidden" id="qcard_i4_prompt" style="border-left-color:var(--stage-i)">
       <label class="q-label"><span class="q-num" style="background:var(--stage-i)">4</span>
         Make these changes in the editor:
         <ul style="margin:0.5rem 0 0 1.2rem;line-height:2">
@@ -581,29 +707,15 @@ color:  purple
         </ul>
         FILL IN: What do you observe?
       </label>
-      <!-- Last step → tryCompleteInvestigate(), not nextStep() -->
-      <button class="btn btn-next" id="btn_check_i4" style="margin-top:10px" onclick="tryCompleteInvestigate()" disabled>✓ Check answer</button>
-      <button class="btn btn-skip" id="btn_skip_i4" style="margin-top:6px;display:none" onclick="skipStep('I')">Move on without completing →</button>
     </div>
-
-    <!--
-      To add a 5th step:
-        1. Copy a card above, set id="qcard_i5", textarea id="i5"
-        2. Change the previous last step's button back to nextStep('I', 4)
-        3. New step 5 button calls tryCompleteInvestigate()
-        4. Add 'i5' to TEXT_FIELDS in the JS
-        5. Add a 5th entry to I_FIELDS in the JS
-        6. Set STEP_COUNT_I = 5
-    -->
   </div>
 
-  <!-- Info box: reminds students their code is preserved between steps -->
-  <div class="info-box" style="margin-top:1rem">
+  <!-- ② Info box + shared editor (with Run). Students accumulate changes here across steps. -->
+  <div class="info-box" style="margin-top:0.5rem">
     <span class="icon">💾</span>
     <span>Your code is <strong>preserved between steps</strong> — keep building on what you have. Use <strong>↺ Reset</strong> only if you want to start the investigation from scratch.</span>
   </div>
 
-  <!-- Shared editor — persists across all Investigate steps. Students accumulate changes here. -->
   <div class="code-checker" style="margin-top:0.5rem">
     <textarea class="checker-textarea" id="i_editor" data-title="Python Editor" oninput="saveState()"></textarea>
     <div class="checker-footer">
@@ -612,6 +724,58 @@ color:  purple
       <button class="btn btn-reset" onclick="resetInvestigateEditor()">↺ Reset to original</button>
       <div class="feedback loading hidden" id="i_fb_run"></div>
     </div>
+  </div>
+
+  <!-- ③ ANSWER cards — directly below the editor (one per step, toggled with its prompt).
+       For an MCQ/True-False step, put the radio-opts + <div class="mcq-fb" id="fb_iN"> here
+       (inside the answer card), not in the prompt card above. -->
+  <div id="i_answers">
+
+    <div class="q-card" id="qcard_i1" style="border-left-color:var(--stage-i)">
+      <label class="q-label" style="font-size:0.84rem;color:var(--muted)">✍️ Your answer — step 1</label>
+      <textarea id="i1" placeholder="Describe what changed…" oninput="saveState()"></textarea>
+      <button class="btn btn-next" id="btn_check_i1" style="margin-top:10px" onclick="nextStep('I', 1)" disabled>✓ Check answer</button>
+      <button class="btn btn-skip" id="btn_skip_i1" style="margin-top:6px;display:none" onclick="skipStep('I')">Move on without completing →</button>
+    </div>
+
+    <div class="q-card step-hidden" id="qcard_i2" style="border-left-color:var(--stage-i)">
+      <label class="q-label" style="font-size:0.84rem;color:var(--muted)">✍️ Your answer — step 2</label>
+      <textarea id="i2" placeholder="Describe what happened…" oninput="saveState()"></textarea>
+      <button class="btn btn-next" id="btn_check_i2" style="margin-top:10px" onclick="nextStep('I', 2)" disabled>✓ Check answer</button>
+      <button class="btn btn-skip" id="btn_skip_i2" style="margin-top:6px;display:none" onclick="skipStep('I')">Move on without completing →</button>
+    </div>
+
+    <div class="q-card step-hidden" id="qcard_i3" style="border-left-color:var(--stage-i)">
+      <label class="q-label" style="font-size:0.84rem;color:var(--muted)">✍️ Your answer — step 3</label>
+      <textarea id="i3" placeholder="Describe what changed…" oninput="saveState()"></textarea>
+      <button class="btn btn-next" id="btn_check_i3" style="margin-top:10px" onclick="nextStep('I', 3)" disabled>✓ Check answer</button>
+      <button class="btn btn-skip" id="btn_skip_i3" style="margin-top:6px;display:none" onclick="skipStep('I')">Move on without completing →</button>
+    </div>
+
+    <div class="q-card step-hidden" id="qcard_i4" style="border-left-color:var(--stage-i)">
+      <label class="q-label" style="font-size:0.84rem;color:var(--muted)">✍️ Your answer — step 4</label>
+      <textarea id="i4" placeholder="Describe what you observed…" oninput="saveState()"></textarea>
+      <!-- Last step → tryCompleteInvestigate(), not nextStep() -->
+      <button class="btn btn-next" id="btn_check_i4" style="margin-top:10px" onclick="tryCompleteInvestigate()" disabled>✓ Check answer</button>
+      <button class="btn btn-skip" id="btn_skip_i4" style="margin-top:6px;display:none" onclick="skipStep('I')">Move on without completing →</button>
+    </div>
+
+    <!--
+      To add a 5th step:
+        1. Add a prompt card id="qcard_i5_prompt" in #i_steps above, and an answer card
+           id="qcard_i5" (textarea id="i5") here in #i_answers
+        2. Change the previous last step's button back to nextStep('I', 4)
+        3. New step 5 button calls tryCompleteInvestigate()
+        4. Add 'i5' to TEXT_FIELDS in the JS
+        5. Add a 5th entry to I_FIELDS in the JS
+        6. Set STEP_COUNT_I = 5
+    -->
+  </div>
+
+  <!-- ④ Back / Forward through completed Investigate steps (same pattern as Predict). -->
+  <div class="step-nav" id="stepnav-I">
+    <button class="btn btn-back" id="btn_back_I" onclick="goBack('I')" disabled>← Back</button>
+    <button class="btn btn-fwd"  id="btn_fwd_I"  onclick="goForward('I')" disabled>Forward →</button>
   </div>
 </section>
 
@@ -703,6 +867,12 @@ color:  purple
         2. Add MOD_CHECKS.mod5 (and optionally MOD_INPUTS.mod5) in checkers.js
         3. Set STEP_COUNT_M1 = 5 in the JS
     -->
+  </div>
+
+  <!-- Back / Forward through completed modifications (same pattern as Predict / Investigate). -->
+  <div class="step-nav" id="stepnav-M1">
+    <button class="btn btn-back" id="btn_back_M1" onclick="goBack('M1')" disabled>← Back</button>
+    <button class="btn btn-fwd"  id="btn_fwd_M1"  onclick="goForward('M1')" disabled>Forward →</button>
   </div>
 
   <!-- Shared editor — carries state from Investigate and across all Modify steps. -->
@@ -947,6 +1117,25 @@ const I_FIELDS = [
 
 
 // ═══════════════════════════════════════════════════════
+//  FILL IN ⑤b — Investigate code-change gates (OPTIONAL but must exist)
+//  One function per Investigate step (same order/length as I_FIELDS).
+//  Each receives the current editor code and returns an error string if the
+//  student hasn't yet made the required change (so "Check answer" reminds them
+//  to edit the code first), or null to allow the step to be checked.
+//  Return null from every entry if a step needs no code gate.
+//  See Y8/Python/L0_Output/1_Strings_PRIMM.html for worked examples.
+// ═══════════════════════════════════════════════════════
+
+const I_CODE_CHECKS = [
+  function(code) { /* FILL IN: e.g. if (!/new_value/.test(code)) return 'Make the change first…'; */ return null; },
+  function(code) { return null; },
+  function(code) { return null; },
+  function(code) { return null; },
+  // Add a 5th entry if STEP_COUNT_I = 5.
+];
+
+
+// ═══════════════════════════════════════════════════════
 //  STATE  — no changes needed below this line
 // ═══════════════════════════════════════════════════════
 
@@ -959,12 +1148,22 @@ let passedChecks    = state.passedChecks    || {};
 let predictStep     = state.predictStep     || 1;
 let stepI  = state.stepI  || 1;
 let stepM1 = state.stepM1 || 1;
+// Furthest question/step the student has unlocked in each stage — drives the Forward → button.
+let maxPredictStep = state.maxPredictStep || predictStep;
+let maxStepI       = state.maxStepI       || stepI;
+let maxStepM1      = state.maxStepM1      || stepM1;
 let skippedStages = state.skippedStages || [];
 let attemptCounts = state.attemptCounts || {};
 let iStepRan = state.iStepRan || {};
 let predictReviewTimer = null;
 let firstRunShown = false;
 const PREDICT_REVIEW_DELAY_MS = 3000;
+// One consistent auto-advance delay across Predict / Investigate / Modify so the
+// student sees the feedback before the next question appears.
+const AUTO_ADVANCE_MS = 1500;
+const PREDICT_CARDS = ['qcard_p_mcq1', 'qcard_p_mcq2', 'qcard_p_text1'];
+const PREDICT_NAMES = ['p_mcq1', 'p_mcq2', 'p_text1'];
+const PREDICT_TOTAL = PREDICT_CARDS.length;
 
 const STAGES = ['P','R','I','M1','M2'];
 
@@ -985,6 +1184,9 @@ function saveState() {
   state.predictStep = predictStep;
   state.stepI  = stepI;
   state.stepM1 = stepM1;
+  state.maxPredictStep = maxPredictStep;
+  state.maxStepI       = maxStepI;
+  state.maxStepM1      = maxStepM1;
   state.skippedStages = skippedStages;
   state.attemptCounts = attemptCounts;
   state.iStepRan = iStepRan;
@@ -1028,12 +1230,22 @@ function updateGranularProgress() {
 
 function updateStepVisibility() {
   for (let i = 1; i <= STEP_COUNT_I; i++) {
-    document.getElementById('qcard_i' + i)?.classList.toggle('step-hidden', i !== stepI);
+    const active = i === stepI;
+    // a step's instruction (prompt, top) and answer (below the editor) are toggled together
+    const revisiting = active && stepI < maxStepI;   // stepped back to a completed step
+    const prompt = document.getElementById('qcard_i' + i + '_prompt');
+    const ans    = document.getElementById('qcard_i' + i);
+    prompt?.classList.toggle('step-hidden', !active);
+    prompt?.classList.toggle('revisiting', revisiting);
+    ans?.classList.toggle('step-hidden', !active);
+    ans?.classList.toggle('revisiting', revisiting);
     const checkBtn = document.getElementById('btn_check_i' + i);
     if (checkBtn) checkBtn.disabled = !iStepRan[i];
   }
   for (let i = 1; i <= STEP_COUNT_M1; i++) {
-    document.getElementById('m1_step_' + i)?.classList.toggle('step-hidden', i !== stepM1);
+    const step = document.getElementById('m1_step_' + i);
+    step?.classList.toggle('step-hidden', i !== stepM1);
+    step?.classList.toggle('revisiting', i === stepM1 && stepM1 < maxStepM1);
   }
 
   const m1Btn = document.getElementById('btn_check_m1');
@@ -1051,7 +1263,49 @@ function updateStepVisibility() {
     m2Btn.textContent = passedChecks['m2_make'] ? '⚡ Mark extension complete' : '⚡ Check program';
     m2Btn.onclick = passedChecks['m2_make'] ? checkExt : checkMake;
   }
+  renderStepNav('I');
+  renderStepNav('M1');
   updateGranularProgress();
+}
+
+// ── Back / Forward navigation (one question on screen at a time) ───────────
+// Shared by Predict, Investigate and Modify so the flow is identical everywhere.
+
+function renderStepNav(stage) {
+  const step = stage === 'P' ? predictStep : stage === 'I' ? stepI : stepM1;
+  const max  = stage === 'P' ? maxPredictStep : stage === 'I' ? maxStepI : maxStepM1;
+  const back = document.getElementById('btn_back_' + stage);
+  const fwd  = document.getElementById('btn_fwd_' + stage);
+  const canBack = step > 1, canFwd = step < max;
+  if (back) back.disabled = !canBack;
+  if (fwd)  fwd.disabled  = !canFwd;
+  // hide the whole bar while there is nowhere to go (e.g. the very first question)
+  const bar = document.getElementById('stepnav-' + stage);
+  if (bar) bar.style.display = (canBack || canFwd) ? '' : 'none';
+}
+
+function goBack(stage) {
+  if (stage === 'P') {
+    if (predictStep > 1) { predictStep--; renderPredict(); saveState(); }
+  } else if (stage === 'I') {
+    if (stepI > 1) { stepI--; updateStepVisibility(); saveState(); scrollToActive('qcard_i' + stepI + '_prompt'); }
+  } else if (stage === 'M1') {
+    if (stepM1 > 1) { stepM1--; updateStepVisibility(); saveState(); scrollToActive('m1_step_' + stepM1); }
+  }
+}
+
+function goForward(stage) {
+  if (stage === 'P') {
+    if (predictStep < maxPredictStep) { predictStep++; renderPredict(); saveState(); }
+  } else if (stage === 'I') {
+    if (stepI < maxStepI) { stepI++; updateStepVisibility(); saveState(); scrollToActive('qcard_i' + stepI + '_prompt'); }
+  } else if (stage === 'M1') {
+    if (stepM1 < maxStepM1) { stepM1++; updateStepVisibility(); saveState(); scrollToActive('m1_step_' + stepM1); }
+  }
+}
+
+function scrollToActive(id) {
+  document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 // ── Score  P=5 R=5 I=5, each mod=10, Make=25, Ext=20 → max 100 ──
@@ -1320,8 +1574,63 @@ function clearPredictError(cardId) {
   document.getElementById(cardId)?.classList.remove('error');
 }
 
-// Check one MCQ: show feedback, then reveal the "Next →" button.
-function checkPredictMCQ(name, nextCardId) {
+// Re-display the feedback for an already-answered Predict card (used on render / Back).
+function showPredictFeedback(idx) {
+  const name = PREDICT_NAMES[idx];
+  if (name === 'p_text1') evaluatePredictText();
+  else applyMCQFeedback(name, P_CORRECT[name]);
+}
+
+// Show the Predict question at position `predictStep` (1-based). predictStep > TOTAL = review screen.
+function renderPredict() {
+  predictStep = Math.min(Math.max(predictStep, 1), PREDICT_TOTAL + 1);
+  const reviewing = predictStep > PREDICT_TOTAL;
+  document.querySelectorAll('.predict-continue').forEach(b => b.remove());  // clear any transient manual-continue buttons
+
+  PREDICT_CARDS.forEach((id, i) => {
+    const card = document.getElementById(id);
+    const isActive   = !reviewing && i === predictStep - 1;
+    const revisiting = isActive && predictStep < maxPredictStep;   // stepped back to an answered card
+    card?.classList.toggle('step-hidden', !isActive);
+    card?.classList.toggle('revisiting', revisiting);
+    // the "Check answer" button only appears on the frontier question (newest, not yet answered)
+    const cb = document.getElementById('btn_check_' + PREDICT_NAMES[i]);
+    if (cb) cb.classList.toggle('step-hidden', !(isActive && predictStep >= maxPredictStep));
+    if (revisiting) showPredictFeedback(i);   // re-show the answer + feedback they saw before
+  });
+
+  if (reviewing) showPredictReviewButton(false);
+  else document.getElementById('btn_goto_r')?.classList.add('step-hidden');
+
+  renderStepNav('P');
+  if (!reviewing) scrollToActive(PREDICT_CARDS[predictStep - 1]);
+}
+
+// Advance to the next Predict question — or the review screen — after the feedback has been seen.
+function advancePredict() {
+  const firstTimeReview = predictStep === PREDICT_TOTAL;
+  predictStep = Math.min(predictStep + 1, PREDICT_TOTAL + 1);
+  maxPredictStep = Math.max(maxPredictStep, predictStep);
+  saveState();
+  renderPredict();
+  if (firstTimeReview && !completedStages.includes('P')) showPredictReviewButton(true);
+}
+
+// When a Predict answer is WRONG we don't auto-advance — the student reads the
+// feedback at their own pace and clicks this button to move on. Forward → still works too.
+function showPredictContinue(card) {
+  if (!card || card.querySelector('.predict-continue')) return;
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'btn btn-next predict-continue';
+  btn.style.marginTop = '0.8rem';
+  btn.textContent = 'Continue →';
+  btn.addEventListener('click', () => { btn.remove(); advancePredict(); });
+  card.appendChild(btn);
+}
+
+// Check one MCQ: show feedback. Correct → auto-advance; wrong → manual Continue.
+function checkPredictMCQ(name) {
   if (window.Classroom?.verifyAuth() === false) return;
   const attempted = applyMCQFeedback(name, P_CORRECT[name]);
   const card = document.getElementById('qcard_' + name);
@@ -1333,42 +1642,17 @@ function checkPredictMCQ(name, nextCardId) {
   card?.classList.remove('error');
   fieldHint(card, '');
   document.getElementById('btn_check_' + name)?.classList.add('step-hidden');
-  document.getElementById('btn_next_' + name)?.classList.remove('step-hidden');
+  maxPredictStep = Math.max(maxPredictStep, predictStep + 1);  // unlock Forward immediately
   saveState();
+  if (document.querySelector(`input[name="${name}"]:checked`)?.value === P_CORRECT[name])
+    setTimeout(advancePredict, AUTO_ADVANCE_MS);
+  else
+    showPredictContinue(card);
 }
 
-// Reveal the next predict question card.
-function nextPredictQ(nextCardId) {
-  ['qcard_p_mcq1', 'qcard_p_mcq2', 'qcard_p_text1'].forEach(id =>
-    document.getElementById(id)?.classList.add('step-hidden'));
-  predictStep++;
-  saveState();
-  const nextCard = document.getElementById(nextCardId);
-  nextCard?.classList.remove('step-hidden');
-  nextCard?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
-
-function nextPredictToReview() {
-  ['qcard_p_mcq1', 'qcard_p_mcq2', 'qcard_p_text1'].forEach(id =>
-    document.getElementById(id)?.classList.add('step-hidden'));
-  predictStep = Math.max(predictStep, 4);
-  saveState();
-  showPredictReviewButton();
-}
-
-// Check the free-text predict question: show feedback, then reveal "See results →".
-function checkPredictText() {
-  if (window.Classroom?.verifyAuth() === false) return;
-  const val  = (document.getElementById('p_text1')?.value || '').trim().toLowerCase();
-  const card = document.getElementById('qcard_p_text1');
-  if (val.length < 1) {
-    card?.classList.add('error');
-    fieldHint(card, 'Type something before checking — even a guess is fine.');
-    return;
-  }
-  card?.classList.remove('error');
-  fieldHint(card, '');
-
+// Compute + render the free-text feedback. Returns true if the typed answer matched.
+function evaluatePredictText() {
+  const val = (document.getElementById('p_text1')?.value || '').trim().toLowerCase();
   // ── FILL IN ⑥: Free-text feedback ───────────────────────────────────────
   // Replace 'fill in correct answer' with the expected answer (lowercased).
   // Update the pass/fail messages to match your question.
@@ -1381,10 +1665,27 @@ function checkPredictText() {
       : '✘ Not quite — FILL IN: hint pointing toward the right answer.';
   }
   // ── End free-text block ──────────────────────────────────────────────────
+  return ok;
+}
 
+// Check the free-text predict question: show feedback, then AUTO-ADVANCE to the review screen.
+function checkPredictText() {
+  if (window.Classroom?.verifyAuth() === false) return;
+  const val  = (document.getElementById('p_text1')?.value || '').trim();
+  const card = document.getElementById('qcard_p_text1');
+  if (val.length < 1) {
+    card?.classList.add('error');
+    fieldHint(card, 'Type something before checking — even a guess is fine.');
+    return;
+  }
+  card?.classList.remove('error');
+  fieldHint(card, '');
+  const ok = evaluatePredictText();
   document.getElementById('btn_check_p_text1')?.classList.add('step-hidden');
-  document.getElementById('btn_next_p_text1')?.classList.remove('step-hidden');
+  maxPredictStep = Math.max(maxPredictStep, predictStep + 1);
   saveState();
+  if (ok) setTimeout(advancePredict, AUTO_ADVANCE_MS);
+  else showPredictContinue(card);
 }
 
 // ── Run ───────────────────────────────────────────────
@@ -1494,6 +1795,7 @@ function nextStep(stage, n) {
   setTimeout(() => {
     card.classList.remove('is-right');
     stepI = n + 1;
+    maxStepI = Math.max(maxStepI, stepI);
     const nextField = I_FIELDS[stepI - 1];
     updateStepVisibility();
     saveState();
@@ -1506,9 +1808,12 @@ function nextStep(stage, n) {
         refreshEditor(ta);
         saveState();
       }
+      // focusing the editor already brings it into view (cursor is waiting there)
+    } else {
+      // show the next instruction first (editor sits just below it)
+      document.getElementById('qcard_i' + stepI + '_prompt')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
-    document.getElementById('i_editor')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }, 1500);
+  }, AUTO_ADVANCE_MS);
 }
 
 function tryCompleteInvestigate() {
@@ -1589,10 +1894,13 @@ async function checkMod() {
   if (stepM1 < STEP_COUNT_M1) {
     setTimeout(() => {
       stepM1++;
+      maxStepM1 = Math.max(maxStepM1, stepM1);
       fbEl.classList.add('hidden');
       updateStepVisibility();
       saveState();
-    }, 1500);
+      // Scroll back up to the next modification's prompt so it isn't missed.
+      scrollToActive('m1_step_' + stepM1);
+    }, AUTO_ADVANCE_MS);
   }
   saveState();
   submitScore();
@@ -1677,10 +1985,10 @@ function markStageSkipped(stage) {
 function skipStep(stage) {
   markStageSkipped(stage);
   if (stage === 'I') {
-    if (stepI < STEP_COUNT_I) { stepI++; updateStepVisibility(); saveState(); }
+    if (stepI < STEP_COUNT_I) { stepI++; maxStepI = Math.max(maxStepI, stepI); updateStepVisibility(); saveState(); }
     else { completeStage('I'); }
   } else if (stage === 'M1') {
-    if (stepM1 < STEP_COUNT_M1) { stepM1++; updateStepVisibility(); saveState(); }
+    if (stepM1 < STEP_COUNT_M1) { stepM1++; maxStepM1 = Math.max(maxStepM1, stepM1); updateStepVisibility(); saveState(); }
     else { completeStage('M1'); }
   }
 }
@@ -1709,14 +2017,14 @@ function recordM1Attempt() {
 
 Object.assign(window, {
   showStage, saveState,
-  clearPredictError, checkPredictMCQ, nextPredictQ, nextPredictToReview, checkPredictText,
+  clearPredictError, checkPredictMCQ, checkPredictText, advancePredict,
   reviewedGoToRun,
   clearRunError, tryCompleteRun,
   tryCompleteInvestigate, nextStep,
   checkMod, completeStage,
   checkMake, checkExt,
   runCodeInEditor, resetInvestigateEditor, insertNewLine,
-  skipStep,
+  skipStep, goBack, goForward,
 });
 
 // ── Init ──────────────────────────────────────────────
@@ -1731,21 +2039,11 @@ window.addEventListener('DOMContentLoaded', () => {
   setPyStatus('loading');
   preload().then(() => setPyStatus('ready')).catch(() => setPyStatus('error'));
 
-  // Show only the current predict question card (one at a time, like Investigate).
-  // predictStep: 1=Q1 visible, 2=Q2 shown, 3=Q3 shown, 4=review button shown.
-  if (predictStep === 2) {
-    document.getElementById('qcard_p_mcq1')?.classList.add('step-hidden');
-    document.getElementById('qcard_p_mcq2')?.classList.remove('step-hidden');
-  } else if (predictStep === 3) {
-    document.getElementById('qcard_p_mcq1')?.classList.add('step-hidden');
-    document.getElementById('qcard_p_text1')?.classList.remove('step-hidden');
-  } else if (predictStep >= 4) {
-    document.getElementById('qcard_p_mcq1')?.classList.add('step-hidden');
-  }
-
-  if (predictStep >= 4 || completedStages.includes('P') || Number(state.predictReviewReadyAt) > 0) {
-    showPredictReviewButton(false);
-  }
+  // Predict: render the one-question-at-a-time flow. renderPredict() shows the current
+  // card (or the review screen when predictStep > total) and wires the Back/Forward bar.
+  if (completedStages.includes('P')) predictStep = Math.max(predictStep, PREDICT_TOTAL + 1);
+  maxPredictStep = Math.max(maxPredictStep, predictStep);
+  renderPredict();
 
   if (passedChecks['m2_make']) {
     const fb = document.getElementById('fb_m2');
