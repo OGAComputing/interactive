@@ -262,7 +262,7 @@ function _injectStyles() {
     :where(.error-helper .eh-head) { display: flex; align-items: center; gap: 0.5rem; color: #ffd98a; font-weight: 700; margin-bottom: 0.5rem; }
     :where(.error-helper .eh-icon) { font-size: 1.1rem; flex-shrink: 0; }
     :where(.error-helper .eh-plain) { margin-bottom: 0.65rem; }
-    :where(.error-helper .eh-title) { color: #ffcf6b; font-weight: 700; }
+    :where(.error-helper .eh-term) { font-family: 'Courier New', monospace; color: #ffcf6b; font-weight: 700; }
     :where(.error-helper .eh-plain strong) { color: #fff; }
     :where(.error-helper .eh-recipe-label) { font-size: 0.64rem; text-transform: uppercase; letter-spacing: 0.09em; color: #ffcf6b; font-weight: 700; margin-bottom: 0.25rem; }
     :where(.error-helper .eh-recipe) { margin: 0 0 0 1.1rem; line-height: 1.75; }
@@ -308,14 +308,19 @@ function _boldify(plain) {
   return _escapeHTML(plain).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
 }
 
-function _errHelperEnabled(ta) {
-  return _errHintsOn.has(ta) || (ta.hasAttribute && ta.hasAttribute('data-error-hints'));
+// Reduce a raw Python/Pyodide error to the bare phrase the student sees, so the
+// help can quote it back to them (e.g. "unterminated string literal").
+function _cleanErrorTerm(raw) {
+  if (!raw) return '';
+  const line = String(raw).split('\n').map(l => l.trim()).filter(Boolean).pop() || '';
+  return line
+    .replace(/^[A-Za-z]*Error:\s*/, '')                              // drop "SyntaxError:" etc.
+    .replace(/\s*\((?:detected at |<[^>]*>,\s*)?line\s*\d+\)\s*$/i, '') // drop "(detected at line 1)"
+    .trim();
 }
 
-// True when the live syntax-hint strip (which carries its own "Get help" button)
-// is on screen — used to avoid an auto-popup duplicating that on-demand affordance.
-function _hintVisible(ta) {
-  return !!_hintMap.get(ta)?.classList.contains('visible');
+function _errHelperEnabled(ta) {
+  return _errHintsOn.has(ta) || (ta.hasAttribute && ta.hasAttribute('data-error-hints'));
 }
 
 function _getErrHelper(ta) {
@@ -340,11 +345,14 @@ function _scheduleErrHelper(ta, rawError) {
 function _showErrHelper(ta, rawError) {
   const el = _getErrHelper(ta);
   if (!el) return;
+  // Quote the actual error back to the student, then translate it.
+  const term = _cleanErrorTerm(rawError);
   const hint = explainPythonError(rawError);
-  const hintHTML = hint
-    ? '<p class="eh-plain"><span class="eh-title">' + _escapeHTML(hint.title) + ':</span> '
-      + _boldify(hint.plain) + '</p>'
-    : '';
+  const lead = term ? '<span class="eh-term">“' + _escapeHTML(term) + '”</span> means ' : '';
+  const meaning = hint
+    ? _boldify(hint.plain)
+    : 'an error happened on that line — read it out loud and compare it carefully with what you meant to write.';
+  const hintHTML = '<p class="eh-plain">' + lead + meaning + '</p>';
   el.innerHTML =
     '<div class="eh-head"><span class="eh-icon">🛠️</span>'
     + '<span>Stuck on this error? An error is information, not failure.</span></div>'
@@ -514,9 +522,9 @@ export function setEditorOutput(ta, text, isError = false) {
   const inputRow = panel.querySelector('.output-input-row');
   if (inputRow) inputRow.hidden = true;
   if (_errHelperEnabled(ta)) {
-    // Auto-reveal only for errors with no syntax-hint to click (i.e. run-time
-    // errors). Syntax errors already expose a "Get help" button on the hint.
-    if (isError) { if (!_hintVisible(ta)) _scheduleErrHelper(ta, text); }
+    // A failed run always offers help (after the short read-the-error delay);
+    // the syntax-hint's "Get help" button is just a faster, pre-run path to it.
+    if (isError) _scheduleErrHelper(ta, text);
     else _hideErrHelper(ta);
   }
 }
@@ -626,7 +634,7 @@ export async function runCode(ta, { inputs = null } = {}) {
     if (hasHistory) {
       panel.classList.add('error');
       content.textContent += '\n' + msg;
-      if (_errHelperEnabled(ta) && !_hintVisible(ta)) _scheduleErrHelper(ta, msg);
+      if (_errHelperEnabled(ta)) _scheduleErrHelper(ta, msg);
     } else {
       setEditorOutput(ta, msg, true);
     }

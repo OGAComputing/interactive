@@ -19,73 +19,72 @@
 
 // Ordered most-specific → most-general. The catch-all SyntaxError entry MUST
 // stay last so the precise messages win.
+// `plain` is written as a "means …" clause so a caller can echo the raw Python
+// error and append the translation, e.g.
+//   "unterminated string literal" means you are missing a speech mark.
+// The key takeaway is wrapped in **double asterisks** for the caller to embolden.
 const HINTS = [
   {
     id: 'unterminated-string',
     match: /unterminated string literal|EOL while scanning string literal/i,
     title: 'Missing a speech mark',
-    plain: 'This means **you are missing one of the pair of speech marks** " ". ' +
-           'Every piece of text needs a speech mark at the start AND the end — ' +
-           'check the line Python points to and add the missing one back.',
+    plain: 'you are **missing one of the pair of speech marks** " " — every piece of ' +
+           'text needs a speech mark at the start and the end.',
   },
   {
     id: 'unclosed-bracket',
     match: /'\(' was never closed|unexpected EOF while parsing|expected '\)'|'\)' was never closed/i,
     title: 'Missing a bracket',
-    plain: 'This means **you are missing a closing bracket** ). ' +
-           'Every ( you open needs a ) to close it — count your brackets on that line.',
+    plain: 'you are **missing a closing bracket** ) — every ( you open needs a ) to close it.',
   },
   {
     id: 'missing-colon',
     match: /expected ':'/i,
     title: 'Missing a colon',
-    plain: 'This means you are **missing a colon : at the end of the line**. ' +
-           'Lines that start with if, elif, else, for or while must end with a colon.',
+    plain: 'you are **missing a colon :** at the end of the line — if, elif, else, for ' +
+           'and while lines all end with a colon.',
   },
   {
     id: 'expected-indent',
     match: /IndentationError:\s*expected an indented block/i,
     title: 'Needs indenting',
-    plain: 'This means the line underneath **needs to be indented (pushed in with Tab)**. ' +
-           'The code inside an if or a loop has to be moved in from the left.',
+    plain: 'the line underneath **needs to be indented** (pushed in with Tab) — the code ' +
+           'inside an if or a loop moves in from the left.',
   },
   {
     id: 'unexpected-indent',
     match: /IndentationError:\s*unexpected indent|unexpected indent/i,
     title: 'Too much indenting',
-    plain: 'This means there is **an extra space or Tab at the start of the line**. ' +
-           'Line up the start of the line with the others above it.',
+    plain: 'there is **an extra space or Tab at the start of the line** — line it up with ' +
+           'the lines above it.',
   },
   {
     id: 'print-parens',
     match: /Missing parentheses in call to '?print'?/i,
     title: 'print needs brackets',
-    plain: 'This means print **needs brackets () around what you want to show**, ' +
-           'like print("Hello") — not print "Hello".',
+    plain: 'print **needs brackets () around what you want to show**, like print("Hello").',
   },
   {
     id: 'name-error',
     match: /NameError:\s*name .* is not defined/i,
     title: "Python doesn't recognise a word",
-    plain: 'Python found a word it does not recognise. Usually this means **text is ' +
-           'missing its speech marks " "**, or a name has been spelled differently ' +
-           'from where you made it.',
+    plain: 'Python **does not recognise a word** — usually the text is **missing its ' +
+           'speech marks " "**, or a name is spelled differently from where you made it.',
   },
   {
     id: 'type-concat',
     match: /can only concatenate str|unsupported operand type\(s\)/i,
     title: 'Mixing text and numbers',
-    plain: 'This means you tried to **add text and a number together with +**. ' +
-           'Put numbers inside speech marks to join them as text, e.g. "Age: " + "12".',
+    plain: 'you tried to **add text and a number together with +** — put numbers inside ' +
+           'speech marks to join them as text, e.g. "Age: " + "12".',
   },
   {
     // Catch-all — keep LAST.
     id: 'invalid-syntax',
     match: /invalid syntax|SyntaxError/i,
     title: 'Python cannot read a line',
-    plain: 'There is a **small typo Python cannot read** on that line. ' +
-           'Read the line Python points to out loud and compare it carefully with ' +
-           'what you meant to write.',
+    plain: 'there is a **small typo Python cannot read** on that line — read it out loud ' +
+           'and compare it carefully with what you meant to write.',
   },
 ];
 
@@ -93,6 +92,7 @@ const HINTS = [
  * Map a raw Python / Pyodide error message to a friendly explanation.
  * @param {string} rawError - The full error output or its last line.
  * @returns {{id: string, title: string, plain: string} | null}
+ *   `plain` is a "means …" clause (see HINTS above); null when nothing matches.
  */
 export function explainPythonError(rawError) {
   if (!rawError) return null;

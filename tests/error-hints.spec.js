@@ -32,7 +32,41 @@ test('syntax error: "Get help" on the hint opens the friendly explanation + reci
   await helpBtn.click();
   await expect(helper).toBeVisible();
   await expect(helper).toContainText('Debugging Recipe');
+  // It quotes the actual Python error back, then translates it.
+  await expect(helper.locator('.eh-term')).toContainText('unterminated string literal');
+  await expect(helper.locator('.eh-plain')).toContainText('means');
   await expect(helper.locator('.eh-plain strong')).toContainText('missing one of the pair of speech marks');
+});
+
+test('syntax error: pressing Run also reveals the help (no button click needed)', async ({ page }) => {
+  await gotoRunEditor(page);
+
+  await page.locator('#r_editor').fill('print("This is fun!)');
+  await page.locator('#stage-R .checker-footer button:has-text("Run code")').click();
+
+  // Help auto-appears after the short read-the-error delay, even for syntax errors.
+  const helper = page.locator('#stage-R .error-helper');
+  await expect(helper).toBeVisible({ timeout: 30000 });
+  await expect(helper.locator('.eh-term')).toContainText('unterminated string literal');
+});
+
+test('help reappears on Run after Get help, fix, then re-break (regression)', async ({ page }) => {
+  await gotoRunEditor(page);
+  const helper = page.locator('#stage-R .error-helper');
+
+  // 1) break → Get help opens the window
+  await page.locator('#r_editor').fill('print("This is fun!)');
+  await page.locator('#stage-R .syntax-hint .syntax-hint-help').click();
+  await expect(helper).toBeVisible({ timeout: 30000 });
+
+  // 2) fix → window closes
+  await page.locator('#r_editor').fill('print("This is fun!")');
+  await expect(helper).toBeHidden({ timeout: 30000 });
+
+  // 3) re-break and Run → help must come back (previously suppressed)
+  await page.locator('#r_editor').fill('print("This is fun!)');
+  await page.locator('#stage-R .checker-footer button:has-text("Run code")').click();
+  await expect(helper).toBeVisible({ timeout: 30000 });
 });
 
 test('fixing the syntax error closes the hint and the help window', async ({ page }) => {

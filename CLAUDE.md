@@ -79,14 +79,20 @@ These files are allowed exceptions to the self-contained rule because:
 ### Just-in-time error help (`errorHints`)
 
 `setupEditors(selector, { errorHints: true })` makes the shared editor offer a
-Year-8-friendly explanation plus the four-step **Debugging Recipe** (plain-English text
-from `python-error-hints.js`). Two reveal paths:
+Year-8-friendly explanation plus the four-step **Debugging Recipe**. The help window
+**quotes the actual Python error back and translates it** — e.g. *“unterminated string
+literal” means you are **missing a speech mark*** — with the plain-English "means …"
+clauses coming from `python-error-hints.js` (the key takeaway is emboldened). Errors not
+in the library still get the quoted term + the generic recipe.
 
-- **Syntax errors** — the live syntax-hint strip gains a **💡 Get help** button; the
-  help window opens on demand (instantly, before any run). Fixing the syntax closes it.
-- **Run-time errors** (e.g. `NameError`, `TypeError`) — these have no syntax-hint, so the
-  help window auto-reveals ~3s after the failed run. The popup is suppressed when a
-  syntax-hint (with its own Get help button) is already showing, to avoid duplication.
+Two reveal paths, both opening the same single window:
+
+- **💡 Get help button** on the live syntax-hint strip — opens it on demand, instantly,
+  before any run (syntax errors only, since that's what static analysis can see).
+- **Failed run** — any failed run auto-reveals the help ~3s later (the delay lets the
+  student read the raw error first). This covers run-time errors (`NameError`,
+  `TypeError`) that have no syntax-hint, and reliably re-opens help if the window was
+  dismissed. Fixing the code (clean syntax or a successful run) closes the window.
 
 It is **opt-in** — editors set up without the flag behave exactly as before. A single
 textarea can also opt in with a `data-error-hints` attribute. The PRIMM Y8 template
