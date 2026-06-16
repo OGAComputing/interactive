@@ -68,13 +68,24 @@ These files are intentionally shared across activities via relative paths (`../.
 | `activity-ui.js` | Shared `window.ActivityUI` helpers for completion celebrations, reduced-motion-safe animation, and `.ac-toast` feedback | Activities that use shared completion/toast behaviour |
 | `pseudocode-transpiler.js` | OCR pseudocode → Python transpiler (`transpile`, `mapErrorLine`) | `pseudocode-editor.js` (indirect) |
 | `pseudocode-editor.js` | Editor widget — highlighting, syntax hints, run/output panel (`setupEditors`, `runPseudocode`, …) | Pseudocode activities (import via `../../pseudocode-editor.js` or `../../../pseudocode-editor.js`) |
-| `python-error-hints.js` | Maps a raw Python/Pyodide error to a Year-8-friendly explanation (`explainPythonError(rawError)` → `{id, title, plain}`; `plain` marks its bold takeaway with `**…**`) | Python activities that show just-in-time error help |
+| `python-error-hints.js` | Maps a raw Python/Pyodide error to a Year-8-friendly explanation (`explainPythonError(rawError)` → `{id, title, plain}`; `plain` marks its bold takeaway with `**…**`). Consumed by `code-editor.js`, not imported by activities directly | Enabled per editor via `setupEditors(selector, { errorHints: true })` |
 
 These files are allowed exceptions to the self-contained rule because:
 - Activities are always accessed through the hub or GitHub Pages, never as isolated downloads
 - Presentation/UI files (`shared.css`, `classroom.js`, `activity-ui.js`) degrade gracefully when absent
 - The pseudocode files (`pseudocode-editor.js`, `pseudocode-transpiler.js`) are only required by pseudocode activities; non-pseudocode activities do not reference them
-- `python-error-hints.js` is a presentation-free logic library only required by Python activities that opt into friendly error help; others do not reference it
+- `python-error-hints.js` is a presentation-free logic library imported only by `code-editor.js`; activities never reference it directly
+
+### Just-in-time error help (`errorHints`)
+
+`setupEditors(selector, { errorHints: true })` makes the shared editor show a
+Year-8-friendly explanation plus the four-step **Debugging Recipe** directly below an
+editor a few seconds after a run fails (the plain-English text comes from
+`python-error-hints.js`; the callout hides automatically on the next successful run).
+It is **opt-in** — editors set up without the flag behave exactly as before. A single
+textarea can also opt in with a `data-error-hints` attribute. The PRIMM Y8 template
+enables it by default. Leave it **off for assessments**, where scaffolding the fix
+would undermine the task.
 
 **Do not reference any other external files** from activity HTML — no CDN URLs, no third-party libraries.
 
