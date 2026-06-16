@@ -565,6 +565,20 @@ color:  purple
     <div class="ac-progress-fill" id="progress-fill-I" style="width: 0%; background: var(--stage-i);"></div>
   </div>
 
+  <!-- Debugging recipe — stays visible through Investigate; used when the planted bug appears in step 4. -->
+  <div class="info-box" id="debugRecipe" style="background:rgba(255,176,32,0.1);border-color:var(--amber);align-items:flex-start">
+    <span class="icon">🛠️</span>
+    <div>
+      <strong style="color:#ffd98a">Debugging Recipe — an error is information, not failure</strong>
+      <ol style="margin:0.4rem 0 0 1.1rem;line-height:1.9;color:#ffe6b0;font-size:0.84rem">
+        <li>Read the <strong>last line</strong> of the error — it names what went wrong.</li>
+        <li>Find the <strong>line number</strong> Python points to.</li>
+        <li>Read <strong>that line</strong> out loud.</li>
+        <li>Compare it with what you <strong>meant</strong> to write — spot the difference.</li>
+      </ol>
+    </div>
+  </div>
+
   <!-- ① INSTRUCTION (prompt) cards — top. Matching answer card for each step is below the editor. -->
   <div id="i_steps">
 
@@ -600,6 +614,18 @@ color:  purple
 
     <div class="q-card step-hidden" id="qcard_i4_prompt" style="border-left-color:var(--stage-i)">
       <label class="q-label"><span class="q-num" style="background:var(--stage-i)">4</span>
+        Now let's meet an <strong>error</strong> on purpose — every programmer does, all the time.
+        <ul style="margin:0.5rem 0 0 1.2rem;line-height:2">
+          <li><strong>Delete one of the double quotation marks</strong> <code style="background:#ede0ff;padding:0 3px;border-radius:3px">"</code> from any line — e.g. change <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print("This is fun!")</code> to <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print("This is fun!)</code>.</li>
+          <li>Run it. Python stops with a red <strong>SyntaxError</strong>.</li>
+          <li>Use the <strong>Debugging Recipe</strong> at the top to read it — then <strong>put the missing quote back</strong> and run again to fix it.</li>
+        </ul>
+        In the box below, write <strong>what the error said</strong> and <strong>which line number</strong> Python pointed to.
+      </label>
+    </div>
+
+    <div class="q-card step-hidden" id="qcard_i5_prompt" style="border-left-color:var(--stage-i)">
+      <label class="q-label"><span class="q-num" style="background:var(--stage-i)">5</span>
         Make these changes in the editor:
         <ul style="margin:0.5rem 0 0 1.2rem;line-height:2">
           <li>Insert <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print()</code> with empty brackets <strong>between two of your existing lines</strong> — not at the end.</li>
@@ -661,10 +687,17 @@ color:  purple
     </div>
 
     <div class="q-card step-hidden" id="qcard_i4" style="border-left-color:var(--stage-i)">
-      <label class="q-label" style="font-size:0.84rem;color:var(--muted)">✍️ Your answer — step 4</label>
-      <textarea id="i4" placeholder="Describe what you found…" oninput="saveState()"></textarea>
-      <button class="btn btn-next" id="btn_check_i4" style="margin-top:10px" onclick="tryCompleteInvestigate()" disabled>✓ Check answer</button>
+      <label class="q-label" style="font-size:0.84rem;color:var(--muted)">✍️ Your answer — step 4 (read the error)</label>
+      <textarea id="i4" placeholder="e.g. It said SyntaxError and pointed to line 3…" oninput="saveState()"></textarea>
+      <button class="btn btn-next" id="btn_check_i4" style="margin-top:10px" onclick="nextStep('I', 4)" disabled>✓ Check answer</button>
       <button class="btn btn-skip" id="btn_skip_i4" style="margin-top:6px;display:none" onclick="skipStep('I')">Move on without completing →</button>
+    </div>
+
+    <div class="q-card step-hidden" id="qcard_i5" style="border-left-color:var(--stage-i)">
+      <label class="q-label" style="font-size:0.84rem;color:var(--muted)">✍️ Your answer — step 5</label>
+      <textarea id="i5" placeholder="Describe what you found…" oninput="saveState()"></textarea>
+      <button class="btn btn-next" id="btn_check_i5" style="margin-top:10px" onclick="tryCompleteInvestigate()" disabled>✓ Check answer</button>
+      <button class="btn btn-skip" id="btn_skip_i5" style="margin-top:6px;display:none" onclick="skipStep('I')">Move on without completing →</button>
     </div>
 
   </div>
@@ -736,6 +769,22 @@ color:  purple
             <li>Insert <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print()</code> with <strong>empty brackets</strong> somewhere <strong>between</strong> two of your lines to create a visual gap in the output.</li>
             <li>Run your code to see the blank line appear between your text.</li>
           </ul>
+        </div>
+      </div>
+    </div>
+
+    <div id="m1_step_4" class="step-hidden">
+      <div class="section-label">★★★ Modification 4 — Does the order matter?</div>
+      <div class="modify-task ext">
+        <span class="stars">★★★</span>
+        <div class="task-text">
+          Keep everything from modification 3.
+          <ul style="margin:0.5rem 0 0 1.2rem;line-height:2">
+            <li><strong>Predict first</strong> (before you run): if you swap two of your <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print()</code> lines, what will change in the output?</li>
+            <li><strong>Swap the order</strong> of any two of your <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print()</code> lines.</li>
+            <li>Run it and compare with your prediction.</li>
+          </ul>
+          The output order should change to match the new line order — Python always runs your code <strong>top to bottom</strong>.
         </div>
       </div>
     </div>
@@ -993,12 +1042,12 @@ print("This is fun!")`;
 
 const VP_STARTER_CODE = `name = "Alice"\nschool = "Grange Academy"\nprint(name)\nprint(school)`;
 
-const STEP_COUNT_I  = 4;
-const STEP_COUNT_M1 = 3;
+const STEP_COUNT_I  = 5;
+const STEP_COUNT_M1 = 4;
 
 const TEXT_FIELDS = [
   'r_editor', 'r1',
-  'i_editor', 'i1', 'i4',
+  'i_editor', 'i1', 'i4', 'i5',
   'm1_editor', 'm2_editor',
   'vp_editor', 'vp_try_answer', 'vp_m_editor', 'vp_challenge_editor',
 ];
@@ -1034,6 +1083,12 @@ const I_CODE_CHECKS = [
     return null;
   },
   function(code) {
+    // step 4 — planted bug: a missing double-quote. Must be re-balanced before moving on so Modify inherits working code.
+    if ((code.match(/"/g) || []).length % 2 !== 0)
+      return 'There is still an unmatched " — Python stops with a SyntaxError. Put the missing quotation mark back so the code runs, then check.';
+    return null;
+  },
+  function(code) {
     if (!/\bprint\s*\(\s*\)/.test(code))
       return 'No empty print() found — add print() with nothing inside the brackets.';
     return null;
@@ -1066,7 +1121,14 @@ const I_FIELDS = [
       return null;
     },
   },
-  { id:'i4', cardId:'qcard_i4', type:'text', needsNewLine: true, validate(v) {
+  { id:'i4', cardId:'qcard_i4', type:'text', needsNewLine: false, validate(v) {
+    if (v.length < 4)  return 'Write what the error said — even a few words is fine.';
+    if (isNonsense(v)) return "That doesn't look like a real answer.";
+    if (!/error|syntax|line|quot|mark|missing|invalid/i.test(v))
+      return 'Use the Debugging Recipe: name the error (it was a SyntaxError) and the line number Python pointed to.';
+    return null;
+  }},
+  { id:'i5', cardId:'qcard_i5', type:'text', needsNewLine: true, validate(v) {
     if (v.length < 4)  return 'Describe what appeared between the two lines — even a few words is fine.';
     if (isNonsense(v)) return "That doesn't look like a real answer.";
     if (!/blank|empty|nothing|new.?line|space|gap/i.test(v))

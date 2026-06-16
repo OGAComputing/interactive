@@ -40,6 +40,11 @@ export const MOD_CHECKS = {
       return { pass: false, msg: '❌ Add at least one print() with empty brackets to create a blank line in the output.' };
     return { pass: true, msg: '✅ Empty print() found — that creates a blank line in the output!' };
   },
+  mod4(raw) {
+    if (countPrints(raw) < 5)
+      return { pass: false, msg: '❌ Keep all your print() lines — just change the ORDER of two of them, don\'t delete any.' };
+    return { pass: true, msg: '✅ Reordered! The output order changed to match the new line order — Python always runs top to bottom.' };
+  },
 };
 
 export const MOD_INPUTS = {};
