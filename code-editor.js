@@ -18,6 +18,7 @@
 // window.saveState() is called after Tab/Shift-Tab if the activity exposes it.
 
 import { analyzeCode, runPython } from './pyodide-runner.js';
+import { explainPythonError } from './python-error-hints.js';
 
 // ── Styles injected once per page ─────────────────────────────────────────────
 // :where() gives these zero specificity so any local .checker-textarea rule
@@ -224,6 +225,34 @@ function _injectStyles() {
     .editor-container.loading .highlight-layer {
       visibility: hidden;
     }
+
+    /* Just-in-time error helper (opt-in via setupEditors(..., {errorHints:true})).
+       Zero-specificity :where() so an activity can re-theme it locally. */
+    :where(.error-helper) {
+      background: rgba(255,176,32,0.1);
+      border: 1.5px solid #f9b020;
+      border-radius: 10px;
+      padding: 0.85rem 1.05rem;
+      margin: 0.55rem 0 0.2rem;
+      color: #ffe6b0;
+      font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+      font-size: 0.85rem;
+      line-height: 1.5;
+      animation: _eh-in 0.4s ease;
+    }
+    :where(.error-helper[hidden]) { display: none; }
+    :where(.error-helper .eh-head) { display: flex; align-items: center; gap: 0.5rem; color: #ffd98a; font-weight: 700; margin-bottom: 0.5rem; }
+    :where(.error-helper .eh-icon) { font-size: 1.1rem; flex-shrink: 0; }
+    :where(.error-helper .eh-plain) { margin-bottom: 0.65rem; }
+    :where(.error-helper .eh-title) { color: #ffcf6b; font-weight: 700; }
+    :where(.error-helper .eh-plain strong) { color: #fff; }
+    :where(.error-helper .eh-recipe-label) { font-size: 0.64rem; text-transform: uppercase; letter-spacing: 0.09em; color: #ffcf6b; font-weight: 700; margin-bottom: 0.25rem; }
+    :where(.error-helper .eh-recipe) { margin: 0 0 0 1.1rem; line-height: 1.75; }
+    :where(.error-helper .eh-recipe strong) { color: #ffd98a; }
+    @keyframes _eh-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+    @media (prefers-reduced-motion: reduce) {
+      :where(.error-helper) { animation: none; }
+    }
   `;
   document.head.appendChild(s);
 }
@@ -238,6 +267,75 @@ const _lastVal = new Map(); // textarea → last processed string
 const _pyTimers = new Map(); // textarea → debounce for heavy pyodide tasks
 const _hintTimers = new Map(); // textarea → debounce for syntax hint visibility
 const _uiTimers = new Map(); // textarea → debounce for fast UI tasks
+
+// ── Just-in-time error helper state ─────────────────────────────────────────────
+const _errHintsOn   = new Set(); // textareas opted into friendly error help
+const _errHelperMap = new Map(); // textarea → .error-helper element
+const _errHelperTmr = new Map(); // textarea → pending reveal timeout
+const _ERR_HELPER_DELAY = 3000;  // ms — let the student read the raw error first
+const _ERR_RECIPE_STEPS = [
+  'Read the <strong>last line</strong> of the error — it names what went wrong.',
+  'Find the <strong>line number</strong> Python points to.',
+  'Read <strong>that line</strong> out loud.',
+  'Compare it with what you <strong>meant</strong> to write — spot the difference.',
+];
+
+function _escapeHTML(s) {
+  return String(s).replace(/[&<>"']/g, c =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+// Render a python-error-hints `plain` string: HTML-escape, then **…** → <strong>.
+function _boldify(plain) {
+  return _escapeHTML(plain).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+}
+
+function _errHelperEnabled(ta) {
+  return _errHintsOn.has(ta) || (ta.hasAttribute && ta.hasAttribute('data-error-hints'));
+}
+
+function _getErrHelper(ta) {
+  let el = _errHelperMap.get(ta);
+  if (el) return el;
+  // Sits after the syntax-hint so it spans the full editor width, below the output.
+  const anchor = _hintMap.get(ta) || _outputMap.get(ta);
+  if (!anchor) return null;
+  el = document.createElement('div');
+  el.className = 'error-helper';
+  el.hidden = true;
+  anchor.insertAdjacentElement('afterend', el);
+  _errHelperMap.set(ta, el);
+  return el;
+}
+
+function _scheduleErrHelper(ta, rawError) {
+  clearTimeout(_errHelperTmr.get(ta));
+  _errHelperTmr.set(ta, setTimeout(() => _showErrHelper(ta, rawError), _ERR_HELPER_DELAY));
+}
+
+function _showErrHelper(ta, rawError) {
+  const el = _getErrHelper(ta);
+  if (!el) return;
+  const hint = explainPythonError(rawError);
+  const hintHTML = hint
+    ? '<p class="eh-plain"><span class="eh-title">' + _escapeHTML(hint.title) + ':</span> '
+      + _boldify(hint.plain) + '</p>'
+    : '';
+  el.innerHTML =
+    '<div class="eh-head"><span class="eh-icon">🛠️</span>'
+    + '<span>Stuck on this error? An error is information, not failure.</span></div>'
+    + hintHTML
+    + '<div class="eh-recipe-label">Debugging Recipe</div>'
+    + '<ol class="eh-recipe">' + _ERR_RECIPE_STEPS.map(s => '<li>' + s + '</li>').join('') + '</ol>';
+  el.hidden = false;
+}
+
+function _hideErrHelper(ta) {
+  clearTimeout(_errHelperTmr.get(ta));
+  _errHelperTmr.delete(ta);
+  const el = _errHelperMap.get(ta);
+  if (el) el.hidden = true;
+}
 
 const _EDITOR_CLIPBOARD_TYPE = 'application/x-interactive-code-editor';
 
@@ -369,6 +467,10 @@ export function setEditorOutput(ta, text, isError = false) {
   if (content) content.textContent = text || '';
   const inputRow = panel.querySelector('.output-input-row');
   if (inputRow) inputRow.hidden = true;
+  if (_errHelperEnabled(ta)) {
+    if (isError) _scheduleErrHelper(ta, text);
+    else _hideErrHelper(ta);
+  }
 }
 
 // ── Interactive input collection ──────────────────────────────────────────────
@@ -467,6 +569,7 @@ export async function runCode(ta, { inputs = null } = {}) {
     if (hasHistory) {
       panel.classList.remove('error');
       content.textContent += out;
+      if (_errHelperEnabled(ta)) _hideErrHelper(ta);
     } else {
       setEditorOutput(ta, out);
     }
@@ -475,6 +578,7 @@ export async function runCode(ta, { inputs = null } = {}) {
     if (hasHistory) {
       panel.classList.add('error');
       content.textContent += '\n' + msg;
+      if (_errHelperEnabled(ta)) _scheduleErrHelper(ta, msg);
     } else {
       setEditorOutput(ta, msg, true);
     }
@@ -489,13 +593,20 @@ export async function runCode(ta, { inputs = null } = {}) {
  *   - wires auto-resize, live syntax checking, and Tab indentation
  *
  * Call once in DOMContentLoaded after restoring any saved state.
+ *
+ * @param {string} selector - CSS selector for the textareas to upgrade.
+ * @param {{errorHints?: boolean}} [opts] - Pass `{errorHints: true}` to show a
+ *   just-in-time, Year-8-friendly explanation + Debugging Recipe below an editor
+ *   a few seconds after a run fails. (A per-editor `data-error-hints` attribute
+ *   opts a single textarea in regardless of this flag.)
  */
-export function setupEditors(selector = '.checker-textarea') {
+export function setupEditors(selector = '.checker-textarea', opts = {}) {
   _injectStyles();
 
   document.querySelectorAll(selector).forEach(ta => {
     if (ta.dataset.editorInitialized) return;
     ta.dataset.editorInitialized = "true";
+    if (opts.errorHints) _errHintsOn.add(ta);
 
     // ── Build DOM structure ────────────────────────────────────────────────
     const wrap = document.createElement('div');

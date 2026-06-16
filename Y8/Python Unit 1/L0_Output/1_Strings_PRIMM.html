@@ -281,6 +281,23 @@ color:  purple
   .info-box .icon { font-size: 1.15rem; flex-shrink: 0; }
   .hint-box { background: rgba(255,176,32,0.1); border-left: 3px solid var(--amber); border-radius: 0 8px 8px 0; padding: 0.65rem 0.95rem; font-size: 0.83rem; color: #ffd98a; margin-bottom: 0.8rem; font-style: italic; }
 
+  /* ── JUST-IN-TIME ERROR HELPER (appears below the editor on a failed run) ── */
+  .error-helper {
+    background: rgba(255,176,32,0.1); border: 1.5px solid var(--amber);
+    border-radius: 10px; padding: 0.9rem 1.1rem; margin: 0.2rem 0 1.2rem;
+    color: #ffe6b0; font-size: 0.85rem;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+  }
+  .error-helper[hidden] { display: none; }
+  .error-helper .eh-head { display: flex; align-items: center; gap: 0.5rem; color: #ffd98a; margin-bottom: 0.5rem; }
+  .error-helper .eh-icon { font-size: 1.15rem; flex-shrink: 0; }
+  .error-helper .eh-plain { line-height: 1.55; margin-bottom: 0.7rem; }
+  .error-helper .eh-title { color: #ffcf6b; font-weight: 700; }
+  .error-helper .eh-plain strong { color: #fff; }
+  .error-helper .eh-recipe-label { font-family: var(--font-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.1em; color: #ffcf6b; font-weight: 700; margin-bottom: 0.25rem; }
+  .error-helper .eh-recipe { margin: 0 0 0 1.1rem; line-height: 1.85; }
+  .error-helper .eh-recipe strong { color: #ffd98a; }
+
   /* ── MODIFY TASKS ── */
   .modify-task { background: var(--off-white); border-radius: 12px; padding: 1rem 1.3rem; margin-bottom: 0.5rem; border-left: 4px solid var(--stage-m1); box-shadow: 0 6px 20px rgba(0,0,0,0.3); display: flex; gap: 1rem; align-items: flex-start; }
   .modify-task.ext { border-left-color: var(--stage-m2); }
@@ -565,8 +582,8 @@ color:  purple
     <div class="ac-progress-fill" id="progress-fill-I" style="width: 0%; background: var(--stage-i);"></div>
   </div>
 
-  <!-- Debugging recipe — stays visible through Investigate; used when the planted bug appears in step 4. -->
-  <div class="info-box" id="debugRecipe" style="background:rgba(255,176,32,0.1);border-color:var(--amber);align-items:flex-start">
+  <!-- Debugging recipe — hidden until the student introduces the error at step 4 (showing it earlier confuses students, since steps 1-3 have no errors). Once unlocked it stays visible. -->
+  <div class="info-box step-hidden" id="debugRecipe" style="background:rgba(255,176,32,0.1);border-color:var(--amber);align-items:flex-start">
     <span class="icon">🛠️</span>
     <div>
       <strong style="color:#ffd98a">Debugging Recipe — an error is information, not failure</strong>
@@ -586,7 +603,7 @@ color:  purple
       <label class="q-label"><span class="q-num" style="background:var(--stage-i)">1</span>
         In the editor below, change <code style="background:#ede0ff;padding:0 3px;border-radius:3px">"Hello, World!"</code>
         to your own greeting (e.g. <code style="background:#ede0ff;padding:0 3px;border-radius:3px">"Hi there!"</code>).
-        Run it. What changed in the output?
+        Run it.
       </label>
     </div>
 
@@ -597,7 +614,6 @@ color:  purple
           <li><strong>Add a 4th <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print()</code> line</strong> that displays your name.</li>
           <li>Run your code.</li>
         </ul>
-        How many lines of output are there now?
       </label>
     </div>
 
@@ -608,7 +624,6 @@ color:  purple
           <li>On one line, swap the double quotes <code style="background:#ede0ff;padding:0 3px;border-radius:3px">" "</code> for single quotes <code style="background:#ede0ff;padding:0 3px;border-radius:3px">' '</code> (e.g. <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print('My name')</code>).</li>
           <li>Run your code.</li>
         </ul>
-        Does the program still work with single quotes?
       </label>
     </div>
 
@@ -620,7 +635,6 @@ color:  purple
           <li>Run it. Python stops with a red <strong>SyntaxError</strong>.</li>
           <li>Use the <strong>Debugging Recipe</strong> at the top to read it — then <strong>put the missing quote back</strong> and run again to fix it.</li>
         </ul>
-        In the box below, write <strong>what the error said</strong> and <strong>which line number</strong> Python pointed to.
       </label>
     </div>
 
@@ -631,7 +645,6 @@ color:  purple
           <li>Insert <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print()</code> with empty brackets <strong>between two of your existing lines</strong> — not at the end.</li>
           <li>Run your code.</li>
         </ul>
-        What appears between those two lines in the output?
       </label>
     </div>
 
@@ -656,14 +669,16 @@ color:  purple
   <div id="i_answers">
 
     <div class="q-card" id="qcard_i1" style="border-left-color:var(--stage-i)">
-      <label class="q-label" style="font-size:0.84rem;color:var(--muted)">✍️ Your answer — step 1</label>
+      <div style="font-size:0.84rem;color:var(--muted);margin-bottom:0.4rem">✍️ Your answer — step 1</div>
+      <label class="q-label">What changed in the output?</label>
       <textarea id="i1" placeholder="Describe what changed…" oninput="saveState()"></textarea>
       <button class="btn btn-next" id="btn_check_i1" style="margin-top:10px" onclick="nextStep('I', 1)" disabled>✓ Check answer</button>
       <button class="btn btn-skip" id="btn_skip_i1" style="margin-top:6px;display:none" onclick="skipStep('I')">Move on without completing →</button>
     </div>
 
     <div class="q-card step-hidden" id="qcard_i2" style="border-left-color:var(--stage-i)">
-      <label class="q-label" style="font-size:0.84rem;color:var(--muted)">✍️ Your answer — step 2</label>
+      <div style="font-size:0.84rem;color:var(--muted);margin-bottom:0.4rem">✍️ Your answer — step 2</div>
+      <label class="q-label">How many lines of output are there now?</label>
       <div class="radio-opts" id="ropts_i2_mcq" style="margin-top:0.5rem">
         <label class="radio-opt"><input type="radio" name="i2_mcq" value="option_a" onchange="saveState()"> <span>3 lines — the same as before</span></label>
         <label class="radio-opt"><input type="radio" name="i2_mcq" value="option_b" onchange="saveState()"> <span>4 lines — one for each print() call</span></label>
@@ -676,7 +691,8 @@ color:  purple
     </div>
 
     <div class="q-card step-hidden" id="qcard_i3" style="border-left-color:var(--stage-i)">
-      <label class="q-label" style="font-size:0.84rem;color:var(--muted)">✍️ Your answer — step 3</label>
+      <div style="font-size:0.84rem;color:var(--muted);margin-bottom:0.4rem">✍️ Your answer — step 3</div>
+      <label class="q-label">Does the program still work with single quotes?</label>
       <div class="radio-opts" id="ropts_i3_tf" style="margin-top:0.5rem">
         <label class="radio-opt"><input type="radio" name="i3_tf" value="option_a" onchange="saveState()"> <span>Yes — Python accepts both single and double quotes, no error</span></label>
         <label class="radio-opt"><input type="radio" name="i3_tf" value="option_b" onchange="saveState()"> <span>No — Python only accepts double quotes and gives an error</span></label>
@@ -687,14 +703,16 @@ color:  purple
     </div>
 
     <div class="q-card step-hidden" id="qcard_i4" style="border-left-color:var(--stage-i)">
-      <label class="q-label" style="font-size:0.84rem;color:var(--muted)">✍️ Your answer — step 4 (read the error)</label>
+      <div style="font-size:0.84rem;color:var(--muted);margin-bottom:0.4rem">✍️ Your answer — step 4 (read the error)</div>
+      <label class="q-label">Write <strong>what the error said</strong> and <strong>which line number</strong> Python pointed to.</label>
       <textarea id="i4" placeholder="e.g. It said SyntaxError and pointed to line 3…" oninput="saveState()"></textarea>
       <button class="btn btn-next" id="btn_check_i4" style="margin-top:10px" onclick="nextStep('I', 4)" disabled>✓ Check answer</button>
       <button class="btn btn-skip" id="btn_skip_i4" style="margin-top:6px;display:none" onclick="skipStep('I')">Move on without completing →</button>
     </div>
 
     <div class="q-card step-hidden" id="qcard_i5" style="border-left-color:var(--stage-i)">
-      <label class="q-label" style="font-size:0.84rem;color:var(--muted)">✍️ Your answer — step 5</label>
+      <div style="font-size:0.84rem;color:var(--muted);margin-bottom:0.4rem">✍️ Your answer — step 5</div>
+      <label class="q-label">What appears between those two lines in the output?</label>
       <textarea id="i5" placeholder="Describe what you found…" oninput="saveState()"></textarea>
       <button class="btn btn-next" id="btn_check_i5" style="margin-top:10px" onclick="tryCompleteInvestigate()" disabled>✓ Check answer</button>
       <button class="btn btn-skip" id="btn_skip_i5" style="margin-top:6px;display:none" onclick="skipStep('I')">Move on without completing →</button>
@@ -1242,6 +1260,19 @@ function updateStepVisibility() {
     ans?.classList.toggle('revisiting', revisiting);
     const checkBtn = document.getElementById('btn_check_i' + i);
     if (checkBtn) checkBtn.disabled = !iStepRan[i];
+  }
+  // The Debugging Recipe is only relevant once the student meets an error (step 4).
+  // Reveal it when they reach step 4 and keep it visible thereafter (incl. stepping back).
+  const recipe = document.getElementById('debugRecipe');
+  if (recipe) {
+    const unlock = maxStepI >= 4;
+    if (unlock && recipe.classList.contains('step-hidden')) {
+      recipe.classList.remove('step-hidden');
+      recipe.style.animation = 'ac-fade-in 0.45s ease';   // one-time entrance so it's noticed
+    } else if (!unlock) {
+      recipe.classList.add('step-hidden');
+      recipe.style.animation = '';
+    }
   }
   for (let i = 1; i <= STEP_COUNT_M1; i++) {
     const step = document.getElementById('m1_step_' + i);
