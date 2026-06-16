@@ -42,8 +42,13 @@ export const MOD_CHECKS = {
   },
   mod4(raw) {
     if (countPrints(raw) < 5)
-      return { pass: false, msg: '❌ Keep all your print() lines — just change the ORDER of two of them, don\'t delete any.' };
-    return { pass: true, msg: '✅ Reordered! The output order changed to match the new line order — Python always runs top to bottom.' };
+      return { pass: false, msg: '❌ Keep all your print() lines — just change their ORDER, don\'t delete any.' };
+    // The empty print() (the blank line) must now be the FIRST print in the program,
+    // so the output starts with a blank line. This forces a real reorder.
+    const firstPrint = raw.match(/print\s*\([^)]*\)/);
+    if (!firstPrint || !/^print\s*\(\s*(["']\s*["'])?\s*\)$/.test(firstPrint[0]))
+      return { pass: false, msg: '❌ Move your empty print() to the very top so it runs FIRST — the first print() line of your program should have empty brackets.' };
+    return { pass: true, msg: '✅ The blank line now prints first! Moving it changed the output — Python always runs top to bottom.' };
   },
 };
 

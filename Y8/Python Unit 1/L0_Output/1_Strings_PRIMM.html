@@ -771,11 +771,11 @@ color:  purple
         <div class="task-text">
           Keep everything from modification 3.
           <ul style="margin:0.5rem 0 0 1.2rem;line-height:2">
-            <li><strong>Predict first</strong> (before you run): if you swap two of your <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print()</code> lines, what will change in the output?</li>
-            <li><strong>Swap the order</strong> of any two of your <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print()</code> lines.</li>
-            <li>Run it and compare with your prediction.</li>
+            <li><strong>Predict first</strong> (before you run): right now your blank line sits in the middle. What will the output look like if you move your empty <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print()</code> to the <strong>very top</strong>?</li>
+            <li><strong>Move your empty</strong> <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print()</code> so it is the <strong>first line</strong> of your program.</li>
+            <li>Run it and compare with your prediction — the output should now <strong>start</strong> with a blank line.</li>
           </ul>
-          The output order should change to match the new line order — Python always runs your code <strong>top to bottom</strong>.
+          The blank line moved because Python always runs your code <strong>top to bottom</strong> — the order of your lines is the order of your output.
         </div>
       </div>
     </div>
@@ -1115,14 +1115,17 @@ const I_FIELDS = [
   { id:'i4', cardId:'qcard_i4', type:'text', needsNewLine: false, validate(v) {
     if (v.length < 4)  return 'Write what the error said — even a few words is fine.';
     if (isNonsense(v)) return "That doesn't look like a real answer.";
-    if (!/error|syntax|line|quot|mark|missing|invalid/i.test(v))
+    if (!/error|syntax|line|quot|mark|missing|invalid|unterminated|literal|string|speechmark/i.test(v))
       return 'Use the Debugging Recipe: name the error (it was a SyntaxError) and the line number Python pointed to.';
     return null;
   }},
   { id:'i5', cardId:'qcard_i5', type:'text', needsNewLine: true, validate(v) {
     if (v.length < 4)  return 'Describe what appeared between the two lines — even a few words is fine.';
-    if (isNonsense(v)) return "That doesn't look like a real answer.";
-    if (!/blank|empty|nothing|new.?line|space|gap/i.test(v))
+    // "nothing"/"none" is the correct answer here (the blank line), so an on-topic
+    // answer is accepted even though isNonsense() treats those words as lazy elsewhere.
+    const onTopic = /blank|empty|nothing|new.?line|space|gap/i.test(v);
+    if (!onTopic && isNonsense(v)) return "That doesn't look like a real answer.";
+    if (!onTopic)
       return 'Hint: look between the two lines in the output. Is there a gap, a blank line, or nothing at all?';
     return null;
   }},
