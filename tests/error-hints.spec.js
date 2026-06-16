@@ -3,6 +3,10 @@ import { test, expect } from '@playwright/test';
 // Exercises the opt-in just-in-time error helper wired through the shared editor
 // (code-editor.js + python-error-hints.js). Uses the Run-stage editor of the
 // Unit 1 L0 Strings PRIMM activity, which enables { errorHints: true }.
+//
+// Two reveal paths:
+//   • Syntax errors  → a "Get help" button on the live syntax-hint (on demand).
+//   • Run-time errors → auto-popup ~3s after a failed run (no syntax-hint exists).
 const ACTIVITY = '/Y8/Python%20Unit%201/L0_Output/1_Strings_PRIMM.html';
 
 async function gotoRunEditor(page) {
@@ -12,43 +16,62 @@ async function gotoRunEditor(page) {
   await expect(container).not.toHaveClass(/loading/, { timeout: 30000 });
 }
 
-test('shows a friendly hint + recipe below the editor after a failed run', async ({ page }) => {
+test('syntax error: "Get help" on the hint opens the friendly explanation + recipe', async ({ page }) => {
   await gotoRunEditor(page);
 
-  // Introduce the classic Year-8 error: a missing closing speech mark.
+  // Missing closing speech mark — caught by static analysis before any run.
   await page.locator('#r_editor').fill('print("This is fun!)');
-  await page.locator('#stage-R .checker-footer button:has-text("Run code")').click();
 
-  // The raw error appears immediately; the helper is deliberately delayed ~3s.
+  const helpBtn = page.locator('#stage-R .syntax-hint .syntax-hint-help');
+  await expect(helpBtn).toBeVisible({ timeout: 30000 });
+
+  // Help window stays closed until the student asks for it.
   const helper = page.locator('#stage-R .error-helper');
-  await expect(helper).toBeVisible({ timeout: 30000 });
-  await expect(helper).toContainText('speech marks');
+  await expect(helper).toBeHidden();
+
+  await helpBtn.click();
+  await expect(helper).toBeVisible();
   await expect(helper).toContainText('Debugging Recipe');
-  // The key takeaway is emphasised within the plain-English line.
   await expect(helper.locator('.eh-plain strong')).toContainText('missing one of the pair of speech marks');
 });
 
-test('hides the helper once the error is fixed', async ({ page }) => {
+test('fixing the syntax error closes the hint and the help window', async ({ page }) => {
   await gotoRunEditor(page);
 
   await page.locator('#r_editor').fill('print("This is fun!)');
-  await page.locator('#stage-R .checker-footer button:has-text("Run code")').click();
-  await expect(page.locator('#stage-R .error-helper')).toBeVisible({ timeout: 30000 });
+  const helpBtn = page.locator('#stage-R .syntax-hint .syntax-hint-help');
+  await expect(helpBtn).toBeVisible({ timeout: 30000 });
+  await helpBtn.click();
+  await expect(page.locator('#stage-R .error-helper')).toBeVisible();
 
-  // Fix it and re-run — the helper should disappear.
   await page.locator('#r_editor').fill('print("This is fun!")');
-  await page.locator('#stage-R .checker-footer button:has-text("Run code")').click();
-  await expect(page.locator('#stage-R .error-helper')).toBeHidden({ timeout: 30000 });
+  await expect(page.locator('#stage-R .syntax-hint')).toBeHidden({ timeout: 30000 });
+  await expect(page.locator('#stage-R .error-helper')).toBeHidden();
 });
 
-test('does not appear for code that runs cleanly', async ({ page }) => {
+test('run-time error (NameError) auto-reveals the help window after the failed run', async ({ page }) => {
+  await gotoRunEditor(page);
+
+  // Valid syntax (no syntax-hint), but fails at run-time with NameError.
+  await page.locator('#r_editor').fill('print(mystery)');
+  await expect(page.locator('#stage-R .syntax-hint')).toBeHidden();
+
+  await page.locator('#stage-R .checker-footer button:has-text("Run code")').click();
+
+  const helper = page.locator('#stage-R .error-helper');
+  await expect(helper).toBeVisible({ timeout: 30000 });
+  await expect(helper).toContainText('recognise');
+  await expect(helper).toContainText('Debugging Recipe');
+});
+
+test('clean code shows no hint and no help window', async ({ page }) => {
   await gotoRunEditor(page);
 
   await page.locator('#r_editor').fill('print("Hello, World!")');
   await page.locator('#stage-R .checker-footer button:has-text("Run code")').click();
   await expect(page.locator('#stage-R .py-status, #r_fb_run')).toBeVisible({ timeout: 30000 });
 
-  // Give the (would-be) delayed helper longer than its reveal delay to be sure.
-  await page.waitForTimeout(4000);
+  await page.waitForTimeout(4000); // longer than the auto-reveal delay
   await expect(page.locator('#stage-R .error-helper')).toBeHidden();
+  await expect(page.locator('#stage-R .syntax-hint')).toBeHidden();
 });

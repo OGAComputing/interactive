@@ -135,8 +135,26 @@ function _injectStyles() {
       word-break: break-word;
     }
     :where(.syntax-hint.visible) {
-      display: block;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
     }
+    :where(.syntax-hint-msg) { white-space: pre-wrap; word-break: break-word; }
+    :where(.syntax-hint-help) {
+      flex-shrink: 0;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 0.74rem;
+      font-weight: 700;
+      color: #1a1206;
+      background: #f9b020;
+      border: none;
+      border-radius: 6px;
+      padding: 0.3rem 0.7rem;
+      white-space: nowrap;
+    }
+    :where(.syntax-hint-help:hover) { background: #ffc44d; }
     :where(.output-panel) {
       flex: 1;
       background: #070710;
@@ -294,6 +312,12 @@ function _errHelperEnabled(ta) {
   return _errHintsOn.has(ta) || (ta.hasAttribute && ta.hasAttribute('data-error-hints'));
 }
 
+// True when the live syntax-hint strip (which carries its own "Get help" button)
+// is on screen — used to avoid an auto-popup duplicating that on-demand affordance.
+function _hintVisible(ta) {
+  return !!_hintMap.get(ta)?.classList.contains('visible');
+}
+
 function _getErrHelper(ta) {
   let el = _errHelperMap.get(ta);
   if (el) return el;
@@ -335,6 +359,15 @@ function _hideErrHelper(ta) {
   _errHelperTmr.delete(ta);
   const el = _errHelperMap.get(ta);
   if (el) el.hidden = true;
+}
+
+// Close an already-open help window without cancelling a pending run-driven
+// reveal — used when live analysis sees the syntax is clean again (the student
+// may have just fixed a syntax error, but a run-time error popup for the same
+// valid code should still be allowed to appear).
+function _dismissOpenErrHelper(ta) {
+  const el = _errHelperMap.get(ta);
+  if (el && !el.hidden) el.hidden = true;
 }
 
 const _EDITOR_CLIPBOARD_TYPE = 'application/x-interactive-code-editor';
@@ -425,8 +458,21 @@ async function _runHeavyTasks(ta) {
     
     if (result.ok || ta.value.trim().length < 5) {
       hint.classList.remove('visible');
+      // Syntax is clean again — close an open help window, but don't cancel a
+      // pending run-time-error popup for this (now valid) code.
+      if (_errHelperEnabled(ta)) _dismissOpenErrHelper(ta);
     } else {
-      hint.textContent = '⚠ ' + result.msg + (result.line ? ` — line ${result.line}` : '');
+      const label = '⚠ ' + result.msg + (result.line ? ` — line ${result.line}` : '');
+      if (_errHelperEnabled(ta)) {
+        // Offer an on-demand "Get help" button that opens the friendly explanation.
+        hint.innerHTML = '<span class="syntax-hint-msg"></span>' +
+          '<button type="button" class="syntax-hint-help">💡 Get help</button>';
+        hint.querySelector('.syntax-hint-msg').textContent = label;
+        const raw = result.msg;
+        hint.querySelector('.syntax-hint-help').onclick = () => _showErrHelper(ta, raw);
+      } else {
+        hint.textContent = label;
+      }
       hint.classList.add('visible');
     }
   }, 800));
@@ -468,7 +514,9 @@ export function setEditorOutput(ta, text, isError = false) {
   const inputRow = panel.querySelector('.output-input-row');
   if (inputRow) inputRow.hidden = true;
   if (_errHelperEnabled(ta)) {
-    if (isError) _scheduleErrHelper(ta, text);
+    // Auto-reveal only for errors with no syntax-hint to click (i.e. run-time
+    // errors). Syntax errors already expose a "Get help" button on the hint.
+    if (isError) { if (!_hintVisible(ta)) _scheduleErrHelper(ta, text); }
     else _hideErrHelper(ta);
   }
 }
@@ -578,7 +626,7 @@ export async function runCode(ta, { inputs = null } = {}) {
     if (hasHistory) {
       panel.classList.add('error');
       content.textContent += '\n' + msg;
-      if (_errHelperEnabled(ta)) _scheduleErrHelper(ta, msg);
+      if (_errHelperEnabled(ta) && !_hintVisible(ta)) _scheduleErrHelper(ta, msg);
     } else {
       setEditorOutput(ta, msg, true);
     }

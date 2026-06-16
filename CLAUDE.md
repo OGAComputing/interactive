@@ -78,10 +78,16 @@ These files are allowed exceptions to the self-contained rule because:
 
 ### Just-in-time error help (`errorHints`)
 
-`setupEditors(selector, { errorHints: true })` makes the shared editor show a
-Year-8-friendly explanation plus the four-step **Debugging Recipe** directly below an
-editor a few seconds after a run fails (the plain-English text comes from
-`python-error-hints.js`; the callout hides automatically on the next successful run).
+`setupEditors(selector, { errorHints: true })` makes the shared editor offer a
+Year-8-friendly explanation plus the four-step **Debugging Recipe** (plain-English text
+from `python-error-hints.js`). Two reveal paths:
+
+- **Syntax errors** — the live syntax-hint strip gains a **💡 Get help** button; the
+  help window opens on demand (instantly, before any run). Fixing the syntax closes it.
+- **Run-time errors** (e.g. `NameError`, `TypeError`) — these have no syntax-hint, so the
+  help window auto-reveals ~3s after the failed run. The popup is suppressed when a
+  syntax-hint (with its own Get help button) is already showing, to avoid duplication.
+
 It is **opt-in** — editors set up without the flag behave exactly as before. A single
 textarea can also opt in with a `data-error-hints` attribute. The PRIMM Y8 template
 enables it by default. Leave it **off for assessments**, where scaffolding the fix
