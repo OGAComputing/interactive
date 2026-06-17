@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 import { mockSignedOut, mockAsStudent, mockAsTeacher, mockAsStudentReusedPost, mockAsTeacherReusedPost } from './helpers/mockClassroom.js';
 
 // Any activity that loads classroom.js works as a host page; Functions is used here.
-const HOST = '/Y8/Python/L4_Functions/1_Functions.html';
+const HOST = '/Y8/Python Unit 2/L4_Functions/1_Functions.html';
 const COURSE_ID = 'test-course-123';
 const ACTIVITY_URL = `http://127.0.0.1:3001${HOST}`;
 const AUTH_TIMEOUT = 15000;

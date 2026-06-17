@@ -4,7 +4,7 @@ import {
   expectCompletionBanner, expectActiveStage, expectDoneStage,
 } from './helpers/activityHelpers.js';
 
-const ACTIVITY = '/Y8/Python/L4_Functions/1_Functions.html';
+const ACTIVITY = '/Y8/Python Unit 2/L4_Functions/1_Functions.html';
 
 // ─── Shared helpers ───────────────────────────────────────────────────────────
 

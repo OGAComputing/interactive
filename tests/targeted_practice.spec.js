@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-const ACTIVITY = '/Y8/Python/L6_Targeted_Practice/1_Targeted_Practice.html';
+const ACTIVITY = '/Y8/Python Unit 2/L6_Targeted_Practice/1_Targeted_Practice.html';
 
 // Register a page init script that seeds localStorage before the page loads.
 // Call this BEFORE page.goto(). Each test's `page` fixture is fresh so
