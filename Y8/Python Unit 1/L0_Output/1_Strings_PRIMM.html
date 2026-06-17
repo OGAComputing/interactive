@@ -1925,6 +1925,9 @@ async function checkMod() {
   const checkKey = 'mod' + stepM1;
   const checkId  = 'm1_code' + stepM1;
   if (!fbEl) return;
+  // Already passed this modification — ignore repeat clicks so the celebration
+  // and auto-advance can't be re-triggered (stops fireworks spam on the last step).
+  if (passedChecks[checkId]) return;
   fbEl.classList.remove('hidden');
   if (raw.trim().length < 10) {
     fbEl.className = 'feedback fail'; fbEl.textContent = '⚠️ Write some code first.'; return;
@@ -1957,7 +1960,11 @@ async function checkMod() {
       scrollToActive('m1_step_' + stepM1);
     }, AUTO_ADVANCE_MS);
   } else {
+    // Final modification done — lock the button and move to Make automatically.
+    const m1Btn = document.getElementById('btn_check_m1');
+    if (m1Btn) { m1Btn.disabled = true; m1Btn.textContent = '✅ All modifications done — moving to Make…'; }
     updateStepVisibility();
+    setTimeout(() => completeStage('M1'), AUTO_ADVANCE_MS);
   }
   saveState();
   submitScore();
@@ -2190,9 +2197,9 @@ function showExtensionTask() {
   taskText.innerHTML = `
     <strong>★★★★ Extension — now try this before showing your teacher.</strong><br>
     Display all four names using a <strong>single print() statement</strong>.
-    Use <code style="background:#ede0ff;padding:0 3px;border-radius:3px">\\n</code>
+    Use <code style="background:#ede0ff;color:#4c1d95;padding:0 3px;border-radius:3px">\\n</code>
     inside the string to create line breaks — e.g.
-    <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print("Alice\\nBob\\nCarol")</code>.
+    <code style="background:#ede0ff;color:#4c1d95;padding:0 3px;border-radius:3px">print("Alice\\nBob\\nCarol")</code>.
     Replace your four separate print() calls with one, then click Check again.`;
   taskText.closest('.info-box').querySelector('.icon').textContent = '★';
   if (reqLabel) reqLabel.style.display = 'none';
