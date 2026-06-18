@@ -877,32 +877,24 @@ greeting <span class="kw">=</span> <span class="st">"Hello "</span>
     <div class="ac-progress-fill" id="progress-fill-M2" style="width: 0%; background: var(--stage-m2);"></div>
   </div>
 
-  <div class="info-box">
-    <span class="icon">🍽️</span>
-    <span>The school canteen needs a quick program to display a student's lunch order. Write a program that <strong>asks what the student wants to eat and drink</strong>, then prints their order back to them. <strong>All success criteria below must be met</strong> before you check your code. (When you check, the program is tested with the food <code style="background:#2d1060;padding:0 4px;border-radius:3px">pasta</code> and drink <code style="background:#2d1060;padding:0 4px;border-radius:3px">juice</code>.)</span>
-  </div>
-
-  <div class="section-label">What your program must do</div>
-
-  <ul class="req-list">
-    <li><span>1</span> Use <strong>input()</strong> to ask what the student wants to eat — store the answer in a variable.</li>
-    <li><span>2</span> Use a <strong>second input()</strong> to ask what they want to drink — store it in another variable.</li>
-    <li><span>3</span> Use <code style="background:#ede0ff;padding:0 3px;border-radius:3px">+</code> in at least one <strong>print()</strong> to join your variable(s) into a sentence.</li>
-    <li><span>4</span> Print an order summary that <strong>shows both</strong> the food and the drink.</li>
-  </ul>
-
-  <div class="code-checker">
-    <textarea class="checker-textarea" id="m2_editor" data-title="Canteen order printer" style="min-height:320px" oninput="saveState()"></textarea>
-    <div class="checker-footer">
-      <button class="btn btn-check" onclick="runCodeInEditor('m2_editor', 'm2_fb_run')">▶ Run code</button>
-      <button class="btn btn-check" id="btn_check_m2" onclick="checkMake()">⚡ Check program</button>
-      <div class="feedback hidden" id="m2_fb_run"></div>
-      <div class="feedback hidden" id="fb_m2"></div>
+  <div id="m2_make_task">
+    <div class="info-box">
+      <span class="icon">🍽️</span>
+      <span>The school canteen needs a quick program to display a student's lunch order. Write a program that <strong>asks what the student wants to eat and drink</strong>, then prints their order back to them. <strong>All success criteria below must be met</strong> before you check your code. (When you check, the program is tested with the food <code style="background:#2d1060;padding:0 4px;border-radius:3px">pasta</code> and drink <code style="background:#2d1060;padding:0 4px;border-radius:3px">juice</code>.)</span>
     </div>
+
+    <div class="section-label">What your program must do</div>
+
+    <ul class="req-list">
+      <li><span>1</span> Use <strong>input()</strong> to ask what the student wants to eat — store the answer in a variable.</li>
+      <li><span>2</span> Use a <strong>second input()</strong> to ask what they want to drink — store it in another variable.</li>
+      <li><span>3</span> Use <code style="background:#ede0ff;padding:0 3px;border-radius:3px">+</code> in at least one <strong>print()</strong> to join your variable(s) into a sentence.</li>
+      <li><span>4</span> Print an order summary that <strong>shows both</strong> the food and the drink.</li>
+    </ul>
   </div>
 
-  <!-- Extension task — revealed automatically after Make passes. -->
-  <div id="m2_ext_task" class="step-hidden" style="margin-top:2rem">
+  <!-- Extension task — replaces the task description above after Make passes. -->
+  <div id="m2_ext_task" class="step-hidden">
     <div class="section-label">★★★★ Extension — design your own program</div>
     <div class="modify-task ext">
       <span class="stars">★★★★</span>
@@ -914,6 +906,16 @@ greeting <span class="kw">=</span> <span class="st">"Hello "</span>
           <li>In at least one <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print()</code>, join <strong>two or more</strong> of your answers together in the same sentence</li>
         </ul>
       </div>
+    </div>
+  </div>
+
+  <div class="code-checker">
+    <textarea class="checker-textarea" id="m2_editor" data-title="Canteen order printer" style="min-height:320px" oninput="saveState()"></textarea>
+    <div class="checker-footer">
+      <button class="btn btn-check" onclick="runCodeInEditor('m2_editor', 'm2_fb_run')">▶ Run code</button>
+      <button class="btn btn-check" id="btn_check_m2" onclick="checkMake()">⚡ Check program</button>
+      <div class="feedback hidden" id="m2_fb_run"></div>
+      <div class="feedback hidden" id="fb_m2"></div>
     </div>
   </div>
 
@@ -1213,11 +1215,12 @@ function updateStepVisibility() {
   if (skipM1Btn) skipM1Btn.style.display = (attemptCounts['m1_' + stepM1] || 0) >= 3 ? '' : 'none';
 
   document.getElementById('btn_goto_m2')?.classList.toggle('step-hidden', !passedChecks['m1_code' + STEP_COUNT_M1]);
+  document.getElementById('m2_make_task')?.classList.toggle('step-hidden', !!passedChecks['m2_make']);
   document.getElementById('m2_ext_task')?.classList.toggle('step-hidden', !passedChecks['m2_make']);
 
   const m2Btn = document.getElementById('btn_check_m2');
   if (m2Btn) {
-    m2Btn.textContent = passedChecks['m2_make'] ? '⚡ Mark extension complete' : '⚡ Check program';
+    m2Btn.textContent = passedChecks['m2_make'] ? '⚡ Check extension' : '⚡ Check program';
     m2Btn.onclick = passedChecks['m2_make'] ? checkExt : checkMake;
   }
   renderStepNav('I');
@@ -1727,8 +1730,8 @@ function nextStep(stage, n) {
       }
       // focusing the editor already brings it into view (cursor is waiting there)
     } else {
-      // show the next instruction first (editor sits just below it)
-      document.getElementById('qcard_i' + stepI + '_prompt')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      // Defer scroll one tick so layout settles after element hide/show
+      setTimeout(() => document.getElementById('qcard_i' + stepI + '_prompt')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0);
     }
   }, AUTO_ADVANCE_MS);
 }
@@ -1850,11 +1853,10 @@ async function checkMake() {
   setEditorOutput(document.getElementById('m2_editor'), run.output, false);
   passedChecks['m2_make'] = true;
   window.ActivityUI?.miniCelebration(fbEl);
-  window.ActivityUI?.showToast('🏆 Program complete! Excellent work!');
+  window.ActivityUI?.showToast('✅ Make complete! Now tackle the extension!');
   updateStepVisibility();
   saveState(); submitScore();
-  if (!completedStages.includes('M2')) { completedStages.push('M2'); updateNav(); saveState(); }
-  showCompletion();
+  setTimeout(() => document.getElementById('m2_ext_task')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
 }
 
 async function checkExt() {
@@ -1878,7 +1880,9 @@ async function checkExt() {
   passedChecks['m2_ext'] = true;
   window.ActivityUI?.miniCelebration(fbEl);
   window.ActivityUI?.showToast('🌟 Extension complete! Outstanding!');
+  if (!completedStages.includes('M2')) { completedStages.push('M2'); updateNav(); saveState(); }
   updateStepVisibility();
+  showCompletion();
   saveState(); submitScore();
 }
 
@@ -1965,7 +1969,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const fb = document.getElementById('fb_m2');
     if (fb) { fb.classList.remove('hidden'); fb.className = 'feedback pass'; fb.textContent = '✅ Main program complete.'; }
   }
-  if (completedStages.includes('M2')) showCompletion();
+  if (passedChecks['m2_ext']) showCompletion();
 
   skippedStages.forEach(s => {
     const btn = document.querySelector(`[data-stage="${s}"]`);

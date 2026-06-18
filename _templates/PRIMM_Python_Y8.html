@@ -919,39 +919,32 @@ color:  purple
   </div>
 
   <!-- FILL IN ⑬: What the student needs to build and how many criteria there are. -->
-  <div class="info-box">
-    <span class="icon">🔨</span>
-    <span>FILL IN: Describe the program in one sentence. <strong>All success criteria below must be met</strong> before you paste your code.</span>
-  </div>
-
-  <div class="section-label">What your program must do</div>
-
-  <!--
-    FILL IN ⑭: Success criteria list.
-    Each <li> maps directly to one check in validateMake() in checkers.js.
-    Keep this list in sync with the checker — if you add a criterion here,
-    add a corresponding check there. Add class="ext" for the extension criterion.
-  -->
-  <ul class="req-list">
-    <li><span>1</span> FILL IN: Requirement 1 — e.g. "Define a <strong>show_menu()</strong> function that prints a numbered list."</li>
-    <li><span>2</span> FILL IN: Requirement 2.</li>
-    <li><span>3</span> FILL IN: Requirement 3.</li>
-    <li><span>4</span> FILL IN: Requirement 4.</li>
-    <li><span>5</span> FILL IN: Requirement 5.</li>
-    <!-- Add or remove items. Each must have a matching check in validateMake(). -->
-  </ul>
-
-  <div class="code-checker">
-    <!-- FILL IN ⑮: Replace with the actual project name for the editor title. -->
-    <textarea class="checker-textarea" id="m2_editor" data-title="FILL IN: project name" style="min-height:320px" oninput="saveState()"></textarea>
-    <div class="checker-footer">
-      <button class="btn btn-check" id="btn_check_m2" onclick="checkMake()">⚡ Check program</button>
-      <div class="feedback hidden" id="fb_m2"></div>
+  <div id="m2_make_task">
+    <div class="info-box">
+      <span class="icon">🔨</span>
+      <span>FILL IN: Describe the program in one sentence. <strong>All success criteria below must be met</strong> before you paste your code.</span>
     </div>
+
+    <div class="section-label">What your program must do</div>
+
+    <!--
+      FILL IN ⑭: Success criteria list.
+      Each <li> maps directly to one check in validateMake() in checkers.js.
+      Keep this list in sync with the checker — if you add a criterion here,
+      add a corresponding check there. Add class="ext" for the extension criterion.
+    -->
+    <ul class="req-list">
+      <li><span>1</span> FILL IN: Requirement 1 — e.g. "Define a <strong>show_menu()</strong> function that prints a numbered list."</li>
+      <li><span>2</span> FILL IN: Requirement 2.</li>
+      <li><span>3</span> FILL IN: Requirement 3.</li>
+      <li><span>4</span> FILL IN: Requirement 4.</li>
+      <li><span>5</span> FILL IN: Requirement 5.</li>
+      <!-- Add or remove items. Each must have a matching check in validateMake(). -->
+    </ul>
   </div>
 
-  <!-- Extension task — revealed automatically after Make passes. -->
-  <div id="m2_ext_task" class="step-hidden" style="margin-top:2rem">
+  <!-- Extension task — replaces the task description above after Make passes. -->
+  <div id="m2_ext_task" class="step-hidden">
     <div class="section-label">★★★★ Extension — FILL IN: extension label</div>
     <div class="modify-task ext">
       <span class="stars">★★★★</span>
@@ -959,6 +952,15 @@ color:  purple
         FILL IN: Extension challenge description. Should add a meaningful feature
         on top of the Make program — e.g. a loop, validation, or extra output.
       </div>
+    </div>
+  </div>
+
+  <div class="code-checker">
+    <!-- FILL IN ⑮: Replace with the actual project name for the editor title. -->
+    <textarea class="checker-textarea" id="m2_editor" data-title="FILL IN: project name" style="min-height:320px" oninput="saveState()"></textarea>
+    <div class="checker-footer">
+      <button class="btn btn-check" id="btn_check_m2" onclick="checkMake()">⚡ Check program</button>
+      <div class="feedback hidden" id="fb_m2"></div>
     </div>
   </div>
 
@@ -1264,11 +1266,12 @@ function updateStepVisibility() {
   if (skipM1Btn) skipM1Btn.style.display = (attemptCounts['m1_' + stepM1] || 0) >= 3 ? '' : 'none';
 
   document.getElementById('btn_goto_m2')?.classList.toggle('step-hidden', !passedChecks['m1_code' + STEP_COUNT_M1]);
+  document.getElementById('m2_make_task')?.classList.toggle('step-hidden', !!passedChecks['m2_make']);
   document.getElementById('m2_ext_task')?.classList.toggle('step-hidden', !passedChecks['m2_make']);
 
   const m2Btn = document.getElementById('btn_check_m2');
   if (m2Btn) {
-    m2Btn.textContent = passedChecks['m2_make'] ? '⚡ Mark extension complete' : '⚡ Check program';
+    m2Btn.textContent = passedChecks['m2_make'] ? '⚡ Check extension' : '⚡ Check program';
     m2Btn.onclick = passedChecks['m2_make'] ? checkExt : checkMake;
   }
   renderStepNav('I');
@@ -1908,11 +1911,10 @@ async function checkMake() {
   setEditorOutput(document.getElementById('m2_editor'), run.output, false);
   passedChecks['m2_make'] = true;
   window.ActivityUI?.miniCelebration(fbEl);
-  window.ActivityUI?.showToast('🏆 Program complete! Excellent work!');
+  window.ActivityUI?.showToast('✅ Make complete! Now tackle the extension!');
   updateStepVisibility();
   saveState(); submitScore();
-  if (!completedStages.includes('M2')) { completedStages.push('M2'); updateNav(); saveState(); }
-  showCompletion();
+  setTimeout(() => document.getElementById('m2_ext_task')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
 }
 
 async function checkExt() {
@@ -1936,7 +1938,9 @@ async function checkExt() {
   passedChecks['m2_ext'] = true;
   window.ActivityUI?.miniCelebration(fbEl);
   window.ActivityUI?.showToast('🌟 Extension complete! Outstanding!');
+  if (!completedStages.includes('M2')) { completedStages.push('M2'); updateNav(); saveState(); }
   updateStepVisibility();
+  showCompletion();
   saveState(); submitScore();
 }
 
@@ -2023,7 +2027,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const fb = document.getElementById('fb_m2');
     if (fb) { fb.classList.remove('hidden'); fb.className = 'feedback pass'; fb.textContent = '✅ Main program complete.'; }
   }
-  if (completedStages.includes('M2')) showCompletion();
+  if (passedChecks['m2_ext']) showCompletion();
 
   skippedStages.forEach(s => {
     const btn = document.querySelector(`[data-stage="${s}"]`);
