@@ -70,7 +70,7 @@ const HINTS = [
     title: "Python doesn't recognise a word",
     plain: 'Python **does not recognise a word** — usually the text is **missing its ' +
            'speech marks " "**, **a variable name is spelled differently** from where ' +
-           'you created it, or **the variable hasn\'t been given a value yet**.',
+           'you created it, or **the variable hasn\'t been given created yet**.',
   },
   {
     id: 'type-concat',
