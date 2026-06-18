@@ -280,7 +280,8 @@ color:  purple
   /* ── INFO / HINT ── */
   .info-box { background: rgba(124,99,210,0.12); border: 1px solid rgba(124,99,210,0.4); border-radius: 10px; padding: 0.85rem 1.1rem; margin-bottom: 1rem; font-size: 0.86rem; color: #c9b8ff; display: flex; gap: 0.6rem; }
   .info-box .icon { font-size: 1.15rem; flex-shrink: 0; }
-  .hint-box { background: rgba(255,176,32,0.1); border-left: 3px solid var(--amber); border-radius: 0 8px 8px 0; padding: 0.65rem 0.95rem; font-size: 0.83rem; color: #ffd98a; margin-bottom: 0.8rem; font-style: italic; }
+  .hint-box { background: rgba(255,176,32,0.18); border-left: 3px solid var(--amber); border-radius: 0 8px 8px 0; padding: 0.65rem 0.95rem; font-size: 0.83rem; color: #ffd280; margin-bottom: 0.8rem; font-style: italic; }
+  .q-card .hint-box { background: rgba(255,176,32,0.15); color: #7a4f00; }
 
   /* ── MODIFY TASKS ── */
   .modify-task { background: var(--off-white); border-radius: 12px; padding: 1rem 1.3rem; margin-bottom: 0.5rem; border-left: 4px solid var(--stage-m1); box-shadow: 0 6px 20px rgba(0,0,0,0.3); display: flex; gap: 1rem; align-items: flex-start; }
@@ -457,7 +458,7 @@ greeting <span class="kw">=</span> <span class="st">"Hello "</span>
       • id= must match an entry in TEXT_FIELDS
       • Check button only: checkPredictText()  — auto-advances if correct,
         otherwise shows a manual "Continue →"
-      • On the last Predict card, advancing reaches the "✓ Reviewed — go to Run" screen
+      • On the last Predict card, answering correctly (or clicking Continue →) advances directly to Run
 
     ── DESIGN RULE ─────────────────────────────────────────────────────────────
     Target: 1 MCQ + 1 True/False + 1 word-bank OR free-text per Predict section.
@@ -470,7 +471,7 @@ greeting <span class="kw">=</span> <span class="st">"Hello "</span>
     <label class="q-label"><span class="q-num">1</span> Look at line 1: <code style="background:#ede0ff;padding:0 3px;border-radius:3px">name = "Sam"</code>. What does this line do?</label>
     <div class="radio-opts" id="ropts_p_mcq1">
       <label class="radio-opt"><input type="radio" name="p_mcq1" value="option_a" onchange="saveState()"> <span>Stores the value "Sam" inside a box (a variable) called name</span></label>
-      <label class="radio-opt"><input type="radio" name="p_mcq1" value="option_b" onchange="saveState()"> <span>Checks whether the box called name is already equal to "Sam"</span></label>
+      <label class="radio-opt"><input type="radio" name="p_mcq1" value="option_b" onchange="saveState()"> <span>Checks whether the variable called name is already equal to "Sam"</span></label>
       <label class="radio-opt"><input type="radio" name="p_mcq1" value="option_c" onchange="saveState()"> <span>Prints the word "Sam" straight onto the screen for the user</span></label>
       <label class="radio-opt"><input type="radio" name="p_mcq1" value="option_d" onchange="saveState()"> <span>Creates a brand-new command called name that can be run</span></label>
     </div>
@@ -499,7 +500,7 @@ greeting <span class="kw">=</span> <span class="st">"Hello "</span>
   <div class="q-card step-hidden" id="qcard_p_text1">
     <label class="q-label"><span class="q-num">3</span> Type the <strong>exact text</strong> the program displays on screen when it runs.</label>
     <input type="text" id="p_text1" placeholder="Type your answer here…" oninput="saveState(); clearPredictError('qcard_p_text1')">
-    <div class="hint-box" style="margin-top:0.6rem">Hint: line 3 joins the <code style="background:#2d1060;padding:0 4px;border-radius:3px">greeting</code> box (<code style="background:#2d1060;padding:0 4px;border-radius:3px">"Hello "</code> — notice the space at the end) onto the <code style="background:#2d1060;padding:0 4px;border-radius:3px">name</code> box (<code style="background:#2d1060;padding:0 4px;border-radius:3px">"Sam"</code>).</div>
+    <div class="hint-box" style="margin-top:0.6rem">Hint: line 3 joins the <code style="background:#ede0ff;color:#3a1d6e;padding:0 4px;border-radius:3px">greeting</code> variable (<code style="background:#ede0ff;color:#3a1d6e;padding:0 4px;border-radius:3px">"Hello "</code> — notice the space at the end) onto the <code style="background:#ede0ff;color:#3a1d6e;padding:0 4px;border-radius:3px">name</code> variable (<code style="background:#ede0ff;color:#3a1d6e;padding:0 4px;border-radius:3px">"Sam"</code>).</div>
     <div class="mcq-fb" id="fb_p_text1"></div>
     <div style="margin-top:0.8rem;display:flex;gap:0.6rem;flex-wrap:wrap;align-items:center">
       <button class="btn btn-check" id="btn_check_p_text1" onclick="checkPredictText()">✓ Check answer</button>
@@ -512,10 +513,6 @@ greeting <span class="kw">=</span> <span class="st">"Hello "</span>
     <button class="btn btn-back" id="btn_back_P" onclick="goBack('P')" disabled>← Back</button>
     <button class="btn btn-fwd"  id="btn_fwd_P"  onclick="goForward('P')" disabled>Forward →</button>
   </div>
-
-  <button class="btn btn-next step-hidden" id="btn_goto_r" onclick="reviewedGoToRun()" style="margin-top:1rem">
-    ✓ Reviewed — go to Run →
-  </button>
 </section>
 
 
@@ -545,7 +542,7 @@ greeting <span class="kw">=</span> <span class="st">"Hello "</span>
     </div>
   </div>
 
-  <div class="hint-box">💡 Python shows whatever is <strong>inside the boxes</strong>, not the words <code style="background:#2d1060;padding:0 4px;border-radius:3px">name</code> or <code style="background:#2d1060;padding:0 4px;border-radius:3px">greeting</code>. Because <code style="background:#2d1060;padding:0 4px;border-radius:3px">greeting</code> holds <code style="background:#2d1060;padding:0 4px;border-radius:3px">"Hello "</code> (with a trailing space), the joined output is one tidy line: <code style="background:#2d1060;padding:0 4px;border-radius:3px">Hello Sam</code>.</div>
+  <div class="hint-box">💡 Python prints the <strong>value stored in each variable</strong>, not the variable's name. Look carefully at what each variable holds — including any spaces inside the quotes.</div>
 
   <!-- ② Answer + Check button, directly below the editor -->
   <div class="q-card" id="qcard_r1">
@@ -633,7 +630,7 @@ greeting <span class="kw">=</span> <span class="st">"Hello "</span>
 
     <div class="q-card" id="qcard_i1_prompt" style="border-left-color:var(--stage-i)">
       <label class="q-label"><span class="q-num" style="background:var(--stage-i)">1</span>
-        In the editor below, change line 1 so the <code style="background:#ede0ff;padding:0 3px;border-radius:3px">name</code> box holds <strong>your own name</strong> instead of <code style="background:#ede0ff;padding:0 3px;border-radius:3px">"Sam"</code> — e.g. <code style="background:#ede0ff;padding:0 3px;border-radius:3px">name = "Priya"</code>. Keep the speech marks. Then <strong>Run</strong> it.
+        In the editor below, change line 1 so the <code style="background:#ede0ff;padding:0 3px;border-radius:3px">name</code> variable holds <strong>your own name</strong> instead of <code style="background:#ede0ff;padding:0 3px;border-radius:3px">"Sam"</code> — e.g. <code style="background:#ede0ff;padding:0 3px;border-radius:3px">name = "Priya"</code>. Keep the speech marks. Then <strong>Run</strong> it.
         <!-- INSTRUCTIONS ONLY here — the question itself lives in the answer card below the editor. -->
       </label>
     </div>
@@ -642,7 +639,7 @@ greeting <span class="kw">=</span> <span class="st">"Hello "</span>
       <label class="q-label"><span class="q-num" style="background:var(--stage-i)">2</span>
         Make these changes in the editor:
         <ul style="margin:0.5rem 0 0 1.2rem;line-height:2">
-          <li>Change <strong>only line 2</strong> so the <code style="background:#ede0ff;padding:0 3px;border-radius:3px">greeting</code> box holds <code style="background:#ede0ff;padding:0 3px;border-radius:3px">"Hi there, "</code> instead of <code style="background:#ede0ff;padding:0 3px;border-radius:3px">"Hello "</code>. <strong>Do not touch line 3.</strong></li>
+          <li>Change <strong>only line 2</strong> so the <code style="background:#ede0ff;padding:0 3px;border-radius:3px">greeting</code> variable holds <code style="background:#ede0ff;padding:0 3px;border-radius:3px">"Hi there, "</code> instead of <code style="background:#ede0ff;padding:0 3px;border-radius:3px">"Hello "</code>. <strong>Do not touch line 3.</strong></li>
           <li>Run your code.</li>
         </ul>
         <!-- INSTRUCTIONS ONLY — the MCQ lives in the answer card below the editor. -->
@@ -653,7 +650,7 @@ greeting <span class="kw">=</span> <span class="st">"Hello "</span>
       <label class="q-label"><span class="q-num" style="background:var(--stage-i)">3</span>
         Now let's meet an <strong>error</strong> on purpose — every programmer does, all the time.
         <ul style="margin:0.5rem 0 0 1.2rem;line-height:2">
-          <li><strong>Add a new last line:</strong> <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print(nickname)</code> — a box you have <em>never created</em>.</li>
+          <li><strong>Add a new last line:</strong> <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print(nickname)</code> — a variable you have <em>never created</em>.</li>
           <li>Run it. Python stops with a red <strong>NameError</strong>.</li>
           <li>A warning appears <strong>below the editor</strong> — click its <strong>💡 Get help</strong> button for a plain-English hint and the Debugging Recipe. Then <strong>delete that line again</strong> and run once more to fix it.</li>
         </ul>
@@ -666,7 +663,7 @@ greeting <span class="kw">=</span> <span class="st">"Hello "</span>
         Time to make it <strong>interactive</strong>:
         <ul style="margin:0.5rem 0 0 1.2rem;line-height:2">
           <li>Change line 1 from <code style="background:#ede0ff;padding:0 3px;border-radius:3px">name = "your name"</code> to <code style="background:#ede0ff;padding:0 3px;border-radius:3px">name = input("What is your name? ")</code>.</li>
-          <li>Run your code. (We'll type a test name in for you so it doesn't get stuck waiting.)</li>
+          <li>Run your code. <strong>A prompt will appear in the output panel</strong> — type your name and press Enter to see the result.</li>
         </ul>
         <!-- INSTRUCTIONS ONLY — put the question ("Where does the value come from now?") in the answer card below. -->
       </label>
@@ -683,7 +680,7 @@ greeting <span class="kw">=</span> <span class="st">"Hello "</span>
     <textarea class="checker-textarea" id="i_editor" data-title="Python Editor" oninput="saveState()"></textarea>
     <div class="checker-footer">
       <!-- Step 4 introduces input(); the queued test name is ignored by the earlier steps that have no input(). -->
-      <button class="btn btn-check" onclick="runCodeInEditor('i_editor', 'i_fb_run', ['Alex'])">▶ Run code</button>
+      <button class="btn btn-check" onclick="runCodeInEditor('i_editor', 'i_fb_run')">▶ Run code</button>
       <button class="btn btn-reset" onclick="resetInvestigateEditor()">↺ Reset to original</button>
       <div class="feedback loading hidden" id="i_fb_run"></div>
     </div>
@@ -696,7 +693,7 @@ greeting <span class="kw">=</span> <span class="st">"Hello "</span>
 
     <div class="q-card" id="qcard_i1" style="border-left-color:var(--stage-i)">
       <div style="font-size:0.84rem;color:var(--muted);margin-bottom:0.4rem">✍️ Your answer — step 1</div>
-      <label class="q-label">What changed in the output, and why? (Think about what is now inside the <code style="background:#ede0ff;padding:0 3px;border-radius:3px">name</code> box.)</label>
+      <label class="q-label">What changed in the output, and why? (Think about what is now inside the <code style="background:#ede0ff;padding:0 3px;border-radius:3px">name</code> variable.)</label>
       <textarea id="i1" placeholder="Describe what changed and why…" oninput="saveState()"></textarea>
       <button class="btn btn-next" id="btn_check_i1" style="margin-top:10px" onclick="nextStep('I', 1)" disabled>✓ Check answer</button>
       <button class="btn btn-skip" id="btn_skip_i1" style="margin-top:6px;display:none" onclick="skipStep('I')">Move on without completing →</button>
@@ -704,9 +701,9 @@ greeting <span class="kw">=</span> <span class="st">"Hello "</span>
 
     <div class="q-card step-hidden" id="qcard_i2" style="border-left-color:var(--stage-i)">
       <div style="font-size:0.84rem;color:var(--muted);margin-bottom:0.4rem">✍️ Your answer — step 2</div>
-      <label class="q-label">You changed <strong>only line 2</strong> (the greeting box), not line 3 (the print). Why did the output still change?</label>
+      <label class="q-label">You changed <strong>only line 2</strong> (the greeting variable), not line 3 (the print). Why did the output still change?</label>
       <div class="radio-opts" id="ropts_i2_mcq" style="margin-top:0.5rem">
-        <label class="radio-opt"><input type="radio" name="i2_mcq" value="option_a" onchange="saveState()"> <span>print(greeting + name) just shows whatever is in the greeting box, so changing that box changed the line</span></label>
+        <label class="radio-opt"><input type="radio" name="i2_mcq" value="option_a" onchange="saveState()"> <span>print(greeting + name) just shows whatever is in the greeting variable, so changing that variable changed the output</span></label>
         <label class="radio-opt"><input type="radio" name="i2_mcq" value="option_b" onchange="saveState()"> <span>Python automatically rewrites all of the other lines whenever you change any single line of code</span></label>
         <label class="radio-opt"><input type="radio" name="i2_mcq" value="option_c" onchange="saveState()"> <span>The print line secretly copied the new wording out of line 2 and into itself for you</span></label>
         <label class="radio-opt"><input type="radio" name="i2_mcq" value="option_d" onchange="saveState()"> <span>It did not really change at all — the output is exactly the same as it was before</span></label>
@@ -718,7 +715,7 @@ greeting <span class="kw">=</span> <span class="st">"Hello "</span>
 
     <div class="q-card step-hidden" id="qcard_i3" style="border-left-color:var(--stage-i)">
       <div style="font-size:0.84rem;color:var(--muted);margin-bottom:0.4rem">✍️ Your answer — step 3</div>
-      <label class="q-label">What did Python's error message say, and why did it happen? (You used a box that was never created.)</label>
+      <label class="q-label">What did Python's error message say, and why did it happen? (You used a variable that was never created.)</label>
       <textarea id="i3" placeholder="Write what the NameError said and why…" oninput="saveState()"></textarea>
       <button class="btn btn-next" id="btn_check_i3" style="margin-top:10px" onclick="nextStep('I', 3)" disabled>✓ Check answer</button>
       <button class="btn btn-skip" id="btn_skip_i3" style="margin-top:6px;display:none" onclick="skipStep('I')">Move on without completing →</button>
@@ -726,7 +723,7 @@ greeting <span class="kw">=</span> <span class="st">"Hello "</span>
 
     <div class="q-card step-hidden" id="qcard_i4" style="border-left-color:var(--stage-i)">
       <div style="font-size:0.84rem;color:var(--muted);margin-bottom:0.4rem">✍️ Your answer — step 4</div>
-      <label class="q-label">How is this different from before? Where does the value in the <code style="background:#ede0ff;padding:0 3px;border-radius:3px">name</code> box come from now?</label>
+      <label class="q-label">How is this different from before? Where does the value in the <code style="background:#ede0ff;padding:0 3px;border-radius:3px">name</code> variable come from now?</label>
       <textarea id="i4" placeholder="Explain where the value comes from now…" oninput="saveState()"></textarea>
       <!-- Last step → tryCompleteInvestigate(), not nextStep() -->
       <button class="btn btn-next" id="btn_check_i4" style="margin-top:10px" onclick="tryCompleteInvestigate()" disabled>✓ Check answer</button>
@@ -797,7 +794,7 @@ greeting <span class="kw">=</span> <span class="st">"Hello "</span>
       <div class="modify-task">
         <span class="stars">★</span>
         <div class="task-text">
-          Your code now ends with <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print(greeting + name)</code>. Make that line join <strong>more than two pieces</strong> by adding another bit of text with <code style="background:#ede0ff;padding:0 3px;border-radius:3px">+</code> — for example <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print(greeting + name + "! Welcome.")</code>. You should use <code style="background:#ede0ff;padding:0 3px;border-radius:3px">+</code> at least <strong>twice</strong> in that print, with the <code style="background:#ede0ff;padding:0 3px;border-radius:3px">name</code> box in the middle.
+          Your code now ends with <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print(greeting + name)</code>. Make that line join <strong>more than two pieces</strong> by adding another bit of text with <code style="background:#ede0ff;padding:0 3px;border-radius:3px">+</code> — for example <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print(greeting + name + "! Welcome.")</code>. You should use <code style="background:#ede0ff;padding:0 3px;border-radius:3px">+</code> at least <strong>twice</strong> in that print, with the <code style="background:#ede0ff;padding:0 3px;border-radius:3px">name</code> variable in the middle.
         </div>
       </div>
     </div>
@@ -807,17 +804,17 @@ greeting <span class="kw">=</span> <span class="st">"Hello "</span>
       <div class="modify-task">
         <span class="stars">★★</span>
         <div class="task-text">
-          Keep mod 1. Now <strong>ask a second question</strong> with a new <code style="background:#ede0ff;padding:0 3px;border-radius:3px">input()</code>, storing the answer in a <strong>new box</strong> — for example <code style="background:#ede0ff;padding:0 3px;border-radius:3px">colour = input("Favourite colour? ")</code>. Add a <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print()</code> that shows it, joined to some text with <code style="background:#ede0ff;padding:0 3px;border-radius:3px">+</code>. Your program should now have <strong>two</strong> <code style="background:#ede0ff;padding:0 3px;border-radius:3px">input()</code> lines.
+          Keep mod 1. Now <strong>ask a second question</strong> with a new <code style="background:#ede0ff;padding:0 3px;border-radius:3px">input()</code>, storing the answer in a <strong>new variable</strong>. Add a <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print()</code> that shows it, joined to some text with <code style="background:#ede0ff;padding:0 3px;border-radius:3px">+</code>. Your program should now have <strong>two</strong> <code style="background:#ede0ff;padding:0 3px;border-radius:3px">input()</code> lines.
         </div>
       </div>
     </div>
 
     <div id="m1_step_3" class="step-hidden">
-      <div class="section-label">★★ Modification 3 — use the box again</div>
+      <div class="section-label">★★ Modification 3 — use the variable again</div>
       <div class="modify-task">
         <span class="stars">★★</span>
         <div class="task-text">
-          Keep mods 1–2. A box can be used as many times as you like. Use the <code style="background:#ede0ff;padding:0 3px;border-radius:3px">name</code> box in <strong>two different</strong> <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print()</code> lines — for example greet them near the top <em>and</em> say goodbye by name at the very end: <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print("Bye " + name + "!")</code>.
+          Keep mods 1–2. A variable can be used as many times as you like. Use the <code style="background:#ede0ff;padding:0 3px;border-radius:3px">name</code> variable in <strong>two different</strong> <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print()</code> lines.
         </div>
       </div>
     </div>
@@ -827,7 +824,7 @@ greeting <span class="kw">=</span> <span class="st">"Hello "</span>
       <div class="modify-task">
         <span class="stars">★★★</span>
         <div class="task-text">
-          Keep mods 1–3. For the finale, write a <strong>single</strong> <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print()</code> that joins <strong>both</strong> of your <code style="background:#ede0ff;padding:0 3px;border-radius:3px">input()</code> boxes together inside one sentence using <code style="background:#ede0ff;padding:0 3px;border-radius:3px">+</code> — for example <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print(name + " likes " + colour)</code>.
+          Keep mods 1–3. For the finale, write a <strong>single</strong> <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print()</code> that joins <strong>both</strong> of your <code style="background:#ede0ff;padding:0 3px;border-radius:3px">input()</code> boxes together inside one sentence using <code style="background:#ede0ff;padding:0 3px;border-radius:3px">+</code>.
         </div>
       </div>
     </div>
@@ -850,7 +847,9 @@ greeting <span class="kw">=</span> <span class="st">"Hello "</span>
   <div class="code-checker">
     <textarea class="checker-textarea" id="m1_editor" data-title="Python Editor" oninput="saveState()"></textarea>
     <div class="checker-footer">
+      <button class="btn btn-check" onclick="runCodeInEditor('m1_editor', 'm1_fb_run')">▶ Run code</button>
       <button class="btn btn-check" id="btn_check_m1" onclick="checkMod()">⚡ Check modification 1</button>
+      <div class="feedback hidden" id="m1_fb_run"></div>
       <div class="feedback hidden" id="fb_m1"></div>
     </div>
   </div>
@@ -870,7 +869,7 @@ greeting <span class="kw">=</span> <span class="st">"Hello "</span>
     <div class="stage-badge badge-M2">M</div>
     <div class="stage-header-text">
       <h2>Make</h2>
-      <p>Build a <strong>personal greeter</strong> from scratch.</p>
+      <p>Build a <strong>canteen order printer</strong> from scratch.</p>
     </div>
   </div>
 
@@ -879,34 +878,41 @@ greeting <span class="kw">=</span> <span class="st">"Hello "</span>
   </div>
 
   <div class="info-box">
-    <span class="icon">🔨</span>
-    <span>Write a program that <strong>asks the user some questions and then greets them</strong> using their answers. <strong>All success criteria below must be met</strong> before you check your code. (When you check, the program is tested with the answers <code style="background:#2d1060;padding:0 4px;border-radius:3px">Alex</code> and <code style="background:#2d1060;padding:0 4px;border-radius:3px">12</code>.)</span>
+    <span class="icon">🍽️</span>
+    <span>The school canteen needs a quick program to display a student's lunch order. Write a program that <strong>asks what the student wants to eat and drink</strong>, then prints their order back to them. <strong>All success criteria below must be met</strong> before you check your code. (When you check, the program is tested with the food <code style="background:#2d1060;padding:0 4px;border-radius:3px">pasta</code> and drink <code style="background:#2d1060;padding:0 4px;border-radius:3px">juice</code>.)</span>
   </div>
 
   <div class="section-label">What your program must do</div>
 
   <ul class="req-list">
-    <li><span>1</span> Use <strong>input()</strong> to ask for the user's name and store it in a box (variable).</li>
-    <li><span>2</span> Use a <strong>second input()</strong> to ask one more thing (e.g. their age or favourite thing) and store it in another box.</li>
-    <li><span>3</span> Use <code style="background:#ede0ff;padding:0 3px;border-radius:3px">+</code> in at least one <strong>print()</strong> to join some text onto a box.</li>
-    <li><span>4</span> Print a <strong>personalised greeting</strong> that includes the user's name.</li>
+    <li><span>1</span> Use <strong>input()</strong> to ask what the student wants to eat — store the answer in a variable.</li>
+    <li><span>2</span> Use a <strong>second input()</strong> to ask what they want to drink — store it in another variable.</li>
+    <li><span>3</span> Use <code style="background:#ede0ff;padding:0 3px;border-radius:3px">+</code> in at least one <strong>print()</strong> to join your variable(s) into a sentence.</li>
+    <li><span>4</span> Print an order summary that <strong>shows both</strong> the food and the drink.</li>
   </ul>
 
   <div class="code-checker">
-    <textarea class="checker-textarea" id="m2_editor" data-title="Personal greeter" style="min-height:320px" oninput="saveState()"></textarea>
+    <textarea class="checker-textarea" id="m2_editor" data-title="Canteen order printer" style="min-height:320px" oninput="saveState()"></textarea>
     <div class="checker-footer">
+      <button class="btn btn-check" onclick="runCodeInEditor('m2_editor', 'm2_fb_run')">▶ Run code</button>
       <button class="btn btn-check" id="btn_check_m2" onclick="checkMake()">⚡ Check program</button>
+      <div class="feedback hidden" id="m2_fb_run"></div>
       <div class="feedback hidden" id="fb_m2"></div>
     </div>
   </div>
 
   <!-- Extension task — revealed automatically after Make passes. -->
   <div id="m2_ext_task" class="step-hidden" style="margin-top:2rem">
-    <div class="section-label">★★★★ Extension — the chatty greeter</div>
+    <div class="section-label">★★★★ Extension — design your own program</div>
     <div class="modify-task ext">
       <span class="stars">★★★★</span>
       <div class="task-text">
-        Make it chattier. Ask a <strong>third</strong> question with <code style="background:#ede0ff;padding:0 3px;border-radius:3px">input()</code>, then build a <strong>single sentence</strong> that joins all three answers together with <code style="background:#ede0ff;padding:0 3px;border-radius:3px">+</code>. Use the user's <strong>name box at least twice</strong> across your output (e.g. greet them at the start and sign off with their name at the end). (Tested with <code style="background:#2d1060;padding:0 4px;border-radius:3px">Alex</code>, <code style="background:#2d1060;padding:0 4px;border-radius:3px">12</code> and <code style="background:#2d1060;padding:0 4px;border-radius:3px">blue</code>.)
+        You have total creative freedom here — pick <strong>any school context</strong> (a homework planner, a club sign-up, a school notice board, a lost-property label, a timetable display…) and build a program from scratch that <strong>collects information and displays it neatly</strong>. Your program must:<br><br>
+        <ul style="margin:0.4rem 0 0 1.1rem;line-height:2">
+          <li>Ask the user at least <strong>3 questions</strong> using <code style="background:#ede0ff;padding:0 3px;border-radius:3px">input()</code></li>
+          <li>Use <code style="background:#ede0ff;padding:0 3px;border-radius:3px">+</code> in at least <strong>two different</strong> <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print()</code> lines</li>
+          <li>In at least one <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print()</code>, join <strong>two or more</strong> of your answers together in the same sentence</li>
+        </ul>
       </div>
     </div>
   </div>
@@ -956,7 +962,7 @@ greeting <span class="kw">=</span> <span class="st">"Hello "</span>
 */
 import { normalise, has, MOD_CHECKS, MOD_INPUTS, validateMake, validateExt } from './checkers.js';
 import { runPython, preload } from '../../../pyodide-runner.js';
-import { setupEditors, clearSyntaxHint, setEditorOutput, refreshEditor } from '../../../code-editor.js';
+import { setupEditors, clearSyntaxHint, setEditorOutput, refreshEditor, runCode } from '../../../code-editor.js';
 
 
 // ═══════════════════════════════════════════════════════
@@ -1008,11 +1014,11 @@ const P_CORRECT = {
   p_mcq2: 'option_b',   // False — with text, + joins the pieces
 };
 const P_PASS_MSG = {
-  p_mcq1: 'Correct — = stores the value on the right into the box (variable) on the left. It is NOT a question about being equal.',
+  p_mcq1: 'Correct — = stores the value on the right into the variable on the left. It is NOT a question about being equal.',
   p_mcq2: 'Correct — with text, + joins (concatenates) the pieces, so you get "Hello Sam", not a number.',
 };
 const P_FAIL_MSG = {
-  p_mcq1: 'Not quite — = does not check, print, or make a command. It stores the value "Sam" into a box called name (read the box right-to-left: value goes into the name).',
+  p_mcq1: 'Not quite — = does not check, print, or make a command. It stores the value "Sam" into a variable called name (read it right-to-left: value goes into the name).',
   p_mcq2: 'Not quite — these are text values, not numbers. With text, + joins the pieces end to end, giving "Hello Sam".',
 };
 
@@ -1042,12 +1048,12 @@ const I_FIELDS = [
   // Step 2 is an MCQ (why the output changed when only the variable changed).
   { id:'i2', cardId:'qcard_i2', type:'mcq', radioName:'i2_mcq', correctValue:'option_a',
     needsNewLine: false,
-    passMsg: 'Exactly — print() shows whatever is in the box right now. Change the box, change the output. The print line never had to change.',
-    failMsg: 'Not quite — Python does not rewrite other lines for you. print(greeting + name) simply shows whatever is currently in the greeting box, so changing that box changed the line.',
+    passMsg: 'Exactly — print() shows whatever is in the variable right now. Change the variable, change the output. The print line never had to change.',
+    failMsg: 'Not quite — Python does not rewrite other lines for you. print(greeting + name) simply shows whatever is currently in the greeting variable, so changing that variable changed the output.',
     validate() {
       const c = document.querySelector('input[name="i2_mcq"]:checked');
       if (!c) return 'Select an answer before checking — even a guess is fine.';
-      if (c.value !== 'option_a') return 'Think about what print() actually shows — the words "greeting", or whatever value is inside the greeting box?';
+      if (c.value !== 'option_a') return 'Think about what print() actually shows — the words "greeting", or whatever value is inside the greeting variable?';
       return null;
     },
   },
@@ -1078,9 +1084,9 @@ const I_FIELDS = [
 
 const I_CODE_CHECKS = [
   // Step 1: name should no longer be "Sam".
-  function(code) { if (/name\s*=\s*["']\s*sam\s*["']/i.test(code)) return 'change the value of the name box from "Sam" to your own name.'; return null; },
+  function(code) { if (/name\s*=\s*["']\s*sam\s*["']/i.test(code)) return 'change the value of the name variable from "Sam" to your own name.'; return null; },
   // Step 2: greeting should no longer be "Hello ".
-  function(code) { if (/greeting\s*=\s*["']\s*hello\s*["']/i.test(code)) return 'change the greeting box on line 2 to "Hi there, ".'; return null; },
+  function(code) { if (/greeting\s*=\s*["']\s*hello\s*["']/i.test(code)) return 'change the greeting variable on line 2 to "Hi there, ".'; return null; },
   // Step 3: the planted-bug line is transient (added then removed) — no gate.
   function(code) { return null; },
   // Step 4: line 1 must now use input().
@@ -1108,9 +1114,7 @@ let maxStepM1      = state.maxStepM1      || stepM1;
 let skippedStages = state.skippedStages || [];
 let attemptCounts = state.attemptCounts || {};
 let iStepRan = state.iStepRan || {};
-let predictReviewTimer = null;
 let firstRunShown = false;
-const PREDICT_REVIEW_DELAY_MS = 3000;
 // One consistent auto-advance delay across Predict / Investigate / Modify so the
 // student sees the feedback before the next question appears.
 const AUTO_ADVANCE_MS = 1500;
@@ -1352,45 +1356,6 @@ function completeStage(s) {
   submitScore();
 }
 
-function showPredictReviewButton(startDelay = true) {
-  const gotoBtn = document.getElementById('btn_goto_r');
-  if (!gotoBtn) return;
-
-  gotoBtn.classList.remove('step-hidden');
-  if (startDelay) {
-    state.predictReviewReadyAt = Date.now() + PREDICT_REVIEW_DELAY_MS;
-    saveState();
-  }
-
-  const readyAt = completedStages.includes('P') ? 0 : (Number(state.predictReviewReadyAt) || Date.now());
-  updatePredictReviewTimer(readyAt);
-}
-
-function updatePredictReviewTimer(readyAt) {
-  const gotoBtn = document.getElementById('btn_goto_r');
-  if (!gotoBtn) return;
-  if (predictReviewTimer) clearTimeout(predictReviewTimer);
-
-  const remaining = Math.max(0, Math.ceil((readyAt - Date.now()) / 1000));
-  if (remaining > 0) {
-    gotoBtn.disabled = true;
-    gotoBtn.textContent = `✓ Reviewed — go to Run (${remaining}s)`;
-    predictReviewTimer = setTimeout(() => updatePredictReviewTimer(readyAt), 250);
-    return;
-  }
-
-  gotoBtn.disabled = false;
-  gotoBtn.textContent = '✓ Reviewed — go to Run →';
-  state.predictReviewReadyAt = 0;
-  saveState();
-}
-
-function reviewedGoToRun() {
-  const gotoBtn = document.getElementById('btn_goto_r');
-  if (gotoBtn?.disabled) return;
-  completeStage('P');
-}
-
 // ── Pyodide status ────────────────────────────────────
 
 function setPyStatus(st) {
@@ -1409,18 +1374,16 @@ function setPyStatus(st) {
 
 // ── Run helper ────────────────────────────────────────
 
-async function runCodeInEditor(editorId, statusElId, inputs = []) {
+async function runCodeInEditor(editorId, statusElId, inputs = null) {
   if (window.Classroom?.verifyAuth() === false) return;
   const editorEl = document.getElementById(editorId);
   const statusEl = document.getElementById(statusElId);
-  const code = editorEl?.value || '';
   if (statusEl) {
     statusEl.classList.remove('hidden', 'fail', 'pass');
     statusEl.classList.add('loading');
     statusEl.textContent = '⏳ Running…';
   }
-  const result = await runPython(code, { inputs });
-  setEditorOutput(editorEl, result.output, !result.ok);
+  const result = await runCode(editorEl, { inputs });
   clearSyntaxHint(editorEl);
 
   if (editorId === 'r_editor' && !firstRunShown) {
@@ -1534,15 +1497,14 @@ function showPredictFeedback(idx) {
   else applyMCQFeedback(name, P_CORRECT[name]);
 }
 
-// Show the Predict question at position `predictStep` (1-based). predictStep > TOTAL = review screen.
+// Show the Predict question at position `predictStep` (1-based).
 function renderPredict() {
-  predictStep = Math.min(Math.max(predictStep, 1), PREDICT_TOTAL + 1);
-  const reviewing = predictStep > PREDICT_TOTAL;
+  predictStep = Math.min(Math.max(predictStep, 1), PREDICT_TOTAL);
   document.querySelectorAll('.predict-continue').forEach(b => b.remove());  // clear any transient manual-continue buttons
 
   PREDICT_CARDS.forEach((id, i) => {
     const card = document.getElementById(id);
-    const isActive   = !reviewing && i === predictStep - 1;
+    const isActive   = i === predictStep - 1;
     const revisiting = isActive && predictStep < maxPredictStep;   // stepped back to an answered card
     card?.classList.toggle('step-hidden', !isActive);
     card?.classList.toggle('revisiting', revisiting);
@@ -1552,21 +1514,22 @@ function renderPredict() {
     if (revisiting) showPredictFeedback(i);   // re-show the answer + feedback they saw before
   });
 
-  if (reviewing) showPredictReviewButton(false);
-  else document.getElementById('btn_goto_r')?.classList.add('step-hidden');
-
   renderStepNav('P');
-  if (!reviewing) scrollToActive(PREDICT_CARDS[predictStep - 1]);
+  scrollToActive(PREDICT_CARDS[predictStep - 1]);
 }
 
-// Advance to the next Predict question — or the review screen — after the feedback has been seen.
+// Advance to the next Predict question, or complete the Predict stage on the last question.
 function advancePredict() {
-  const firstTimeReview = predictStep === PREDICT_TOTAL;
-  predictStep = Math.min(predictStep + 1, PREDICT_TOTAL + 1);
+  if (predictStep === PREDICT_TOTAL && !completedStages.includes('P')) {
+    maxPredictStep = Math.max(maxPredictStep, predictStep);
+    saveState();
+    completeStage('P');
+    return;
+  }
+  predictStep = Math.min(predictStep + 1, PREDICT_TOTAL);
   maxPredictStep = Math.max(maxPredictStep, predictStep);
   saveState();
   renderPredict();
-  if (firstTimeReview && !completedStages.includes('P')) showPredictReviewButton(true);
 }
 
 // When a Predict answer is WRONG we don't auto-advance — the student reads the
@@ -1594,6 +1557,8 @@ function checkPredictMCQ(name) {
   }
   card?.classList.remove('error');
   fieldHint(card, '');
+  if (document.querySelector(`input[name="${name}"]:checked`)?.value === P_CORRECT[name])
+    window.ActivityUI?.miniCelebration(card);
   document.getElementById('btn_check_' + name)?.classList.add('step-hidden');
   maxPredictStep = Math.max(maxPredictStep, predictStep + 1);  // unlock Forward immediately
   saveState();
@@ -1613,8 +1578,8 @@ function evaluatePredictText() {
   if (fb) {
     fb.className = 'mcq-fb ' + (ok ? 'pass' : 'fail');
     fb.textContent = ok
-      ? '✔ Correct — "Hello " joined to "Sam" gives Hello Sam. The space sits inside the greeting box, so there is exactly one space.'
-      : '✘ Not quite — join the two boxes exactly: "Hello " (with its trailing space) + "Sam" = Hello Sam. Python does not show the boxes\' names or the speech marks.';
+      ? '✔ Correct — "Hello " joined to "Sam" gives Hello Sam. The space is inside the greeting variable, so there is exactly one space.'
+      : '✘ Not quite — join the two variables exactly: "Hello " (with its trailing space) + "Sam" = Hello Sam. Python does not show the variables\' names or the speech marks.';
   }
   return ok;
 }
@@ -1632,6 +1597,7 @@ function checkPredictText() {
   card?.classList.remove('error');
   fieldHint(card, '');
   const ok = evaluatePredictText();
+  if (ok) window.ActivityUI?.miniCelebration(card);
   document.getElementById('btn_check_p_text1')?.classList.add('step-hidden');
   maxPredictStep = Math.max(maxPredictStep, predictStep + 1);
   saveState();
@@ -1869,8 +1835,8 @@ async function checkMake() {
     fbEl.className = 'feedback fail'; fbEl.textContent = structural.msg; return;
   }
   fbEl.className = 'feedback loading'; fbEl.textContent = '⏳ Checking…';
-  // Two input() calls expected (name, then a second question). Extra answers are harmless.
-  const run = await runPython(raw, { inputs: ['Alex', '12'] });
+  // Two input() calls expected (food, then drink). Extra answers are harmless.
+  const run = await runPython(raw, { inputs: ['pasta', 'juice'] });
   if (!run.ok) {
     fbEl.className = 'feedback fail';
     fbEl.textContent = '❌ Your program has an error: ' + run.output; return;
@@ -1901,8 +1867,8 @@ async function checkExt() {
     fbEl.className = 'feedback fail'; fbEl.textContent = structural.msg; return;
   }
   fbEl.className = 'feedback loading'; fbEl.textContent = '⏳ Checking…';
-  // Three input() calls expected in the extension (name, second question, third question).
-  const run = await runPython(raw, { inputs: ['Alex', '12', 'blue'] });
+  // Three input() calls minimum expected in the extension. Extra answers are harmless.
+  const run = await runPython(raw, { inputs: ['pasta', 'juice', 'Monday'] });
   if (!run.ok) {
     fbEl.className = 'feedback fail';
     fbEl.textContent = '❌ Your program has an error: ' + run.output; return;
@@ -1967,7 +1933,6 @@ function recordM1Attempt() {
 Object.assign(window, {
   showStage, saveState,
   clearPredictError, checkPredictMCQ, checkPredictText, advancePredict,
-  reviewedGoToRun,
   clearRunError, tryCompleteRun,
   tryCompleteInvestigate, nextStep,
   checkMod, completeStage,

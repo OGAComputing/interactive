@@ -209,6 +209,49 @@ function _injectStyles() {
       min-width: 4ch;
     }
 
+    /* ── Interactive input spotlight ──────────────────────────────────── */
+    @keyframes _isp-pulse {
+      0%, 100% { box-shadow: 0 0 0 2px rgba(255,176,32,0.55), 0 0 18px rgba(255,176,32,0.30); }
+      50%       { box-shadow: 0 0 0 4px rgba(255,176,32,0.90), 0 0 30px rgba(255,176,32,0.60); }
+    }
+    @keyframes _isp-blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
+    :where(.output-panel.waiting-for-input) {
+      animation: _isp-pulse 1.4s ease-in-out infinite;
+      border-radius: 6px;
+    }
+    :where(.output-panel.waiting-for-input .output-header) { color: #ffd080; }
+    :where(.output-panel.waiting-for-input .output-header::after) {
+      content: ' ⌨  type here ↓';
+      color: #ffb020;
+      font-style: italic;
+      font-weight: 700;
+    }
+    :where(.output-panel.waiting-for-input .output-input-row) {
+      border-top: 1px solid rgba(255,176,32,0.45);
+      margin-top: 0.4rem;
+      padding-top: 0.35rem;
+    }
+    :where(.output-panel.waiting-for-input .output-prompt-label) { color: #ffd080; }
+    :where(.output-panel.waiting-for-input .output-input-field) {
+      caret-color: #ffb020;
+      border-bottom: 2px solid rgba(255,176,32,0.8);
+    }
+    :where(.input-type-hint) {
+      color: #ffb020;
+      font-family: 'Courier New', monospace;
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      text-align: center;
+      margin: 0.3rem 0 0.15rem;
+      animation: _isp-blink 1.2s ease-in-out infinite;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      :where(.output-panel.waiting-for-input) { animation: none; box-shadow: 0 0 0 3px #ffb020; }
+      :where(.input-type-hint) { animation: none; }
+    }
+
     @media (max-width: 768px) {
       :where(.editor-wrap) {
         flex-direction: column;
@@ -520,7 +563,7 @@ export function setEditorOutput(ta, text, isError = false) {
   const content = panel.querySelector('.output-content');
   if (content) content.textContent = text || '';
   const inputRow = panel.querySelector('.output-input-row');
-  if (inputRow) inputRow.hidden = true;
+  if (inputRow) inputRow.style.display = 'none';
   if (_errHelperEnabled(ta)) {
     // A failed run always offers help (after the short read-the-error delay);
     // the syntax-hint's "Get help" button is just a faster, pre-run path to it.
@@ -564,14 +607,17 @@ function _collectInputs(ta, prompts) {
     function finish() {
       if (done) return;
       done = true;
-      inputRow.hidden = true;
+      inputRow.style.display = 'none';
+      promptLabel.textContent = '';
+      inputField.value = '';
+      panel.classList.remove('waiting-for-input');
+      panel.querySelector('.input-type-hint')?.remove();
       inputField.removeEventListener('keydown', onKey);
       _inputAbort.delete(ta);
       resolve(collected);
     }
 
     function advance(val) {
-      content.textContent += prompts[idx] + val + '\n';
       collected.push(val);
       idx++;
       if (idx >= prompts.length) {
@@ -579,6 +625,7 @@ function _collectInputs(ta, prompts) {
       } else {
         promptLabel.textContent = prompts[idx];
         inputField.value = '';
+        inputField.focus();
       }
     }
 
@@ -590,8 +637,14 @@ function _collectInputs(ta, prompts) {
     inputField.addEventListener('keydown', onKey);
     promptLabel.textContent = prompts[0];
     inputField.value = '';
-    inputRow.hidden = false;
+    panel.classList.add('waiting-for-input');
+    const typeHint = document.createElement('p');
+    typeHint.className = 'input-type-hint';
+    typeHint.textContent = '⌨  type your answer and press Enter';
+    inputRow.insertAdjacentElement('beforebegin', typeHint);
+    inputRow.style.display = 'flex';
     inputField.focus();
+    panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   });
 }
 
@@ -705,7 +758,7 @@ export function setupEditors(selector = '.checker-textarea', opts = {}) {
     output.innerHTML =
       '<div class="output-header">Python Shell Output</div>' +
       '<div class="output-content"></div>' +
-      '<div class="output-input-row" hidden>' +
+      '<div class="output-input-row" style="display:none">' +
         '<span class="output-prompt-label"></span>' +
         '<input class="output-input-field" type="text" autocomplete="off" spellcheck="false">' +
       '</div>';

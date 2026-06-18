@@ -2,12 +2,12 @@ import { test, expect } from '@playwright/test';
 
 // Exercises the opt-in just-in-time error helper wired through the shared editor
 // (code-editor.js + python-error-hints.js). Uses the Run-stage editor of the
-// Unit 1 L0 Strings PRIMM activity, which enables { errorHints: true }.
+// Unit 1 L1 Strings PRIMM activity, which enables { errorHints: true }.
 //
 // Two reveal paths:
 //   • Syntax errors  → a "Get help" button on the live syntax-hint (on demand).
 //   • Run-time errors → auto-popup ~3s after a failed run (no syntax-hint exists).
-const ACTIVITY = '/Y8/Python%20Unit%201/L0_Output/1_Strings_PRIMM.html';
+const ACTIVITY = '/Y8/Python%20Unit%201/L1_Output/1_Strings_PRIMM.html';
 
 async function gotoRunEditor(page) {
   await page.goto(ACTIVITY);

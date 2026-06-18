@@ -100,9 +100,18 @@ export async function runPython(code, { inputs = [] } = {}) {
   _pyodide.setStderr({ batched: () => {} }); // errors surface via exception
 
   // Inject input() mock when test values are supplied.
+  // Echo the prompt + the "typed" value to stdout so the output matches a real
+  // terminal: `name = input("What is your name? ")` with value "Nick" shows the
+  // line `What is your name? Nick`, then later print()s follow.
   // Fallback '0' (not '') so exhausted inputs don't produce a str that breaks arithmetic.
   const preamble = inputs.length
-    ? `import builtins as _b\n_q = iter(${JSON.stringify(inputs)})\n_b.input = lambda *_: next(_q, '0')\n`
+    ? `import builtins as _b, sys as _sys\n` +
+      `_q = iter(${JSON.stringify(inputs)})\n` +
+      `def _mock_input(prompt=''):\n` +
+      `    _v = next(_q, '0')\n` +
+      `    _sys.stdout.write(str(prompt) + str(_v) + '\\n')\n` +
+      `    return _v\n` +
+      `_b.input = _mock_input\n`
     : '';
 
   try {

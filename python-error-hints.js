@@ -69,7 +69,8 @@ const HINTS = [
     match: /NameError:\s*name .* is not defined/i,
     title: "Python doesn't recognise a word",
     plain: 'Python **does not recognise a word** — usually the text is **missing its ' +
-           'speech marks " "**, or a name is spelled differently from where you made it.',
+           'speech marks " "**, **a variable name is spelled differently** from where ' +
+           'you created it, or **the variable hasn\'t been given a value yet**.',
   },
   {
     id: 'type-concat',

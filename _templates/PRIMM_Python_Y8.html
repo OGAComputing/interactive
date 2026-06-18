@@ -282,6 +282,7 @@ color:  purple
   .info-box { background: rgba(124,99,210,0.12); border: 1px solid rgba(124,99,210,0.4); border-radius: 10px; padding: 0.85rem 1.1rem; margin-bottom: 1rem; font-size: 0.86rem; color: #c9b8ff; display: flex; gap: 0.6rem; }
   .info-box .icon { font-size: 1.15rem; flex-shrink: 0; }
   .hint-box { background: rgba(255,176,32,0.1); border-left: 3px solid var(--amber); border-radius: 0 8px 8px 0; padding: 0.65rem 0.95rem; font-size: 0.83rem; color: #ffd98a; margin-bottom: 0.8rem; font-style: italic; }
+  .q-card .hint-box { background: rgba(255,176,32,0.15); color: #7a4f00; }
 
   /* ── MODIFY TASKS ── */
   .modify-task { background: var(--off-white); border-radius: 12px; padding: 1rem 1.3rem; margin-bottom: 0.5rem; border-left: 4px solid var(--stage-m1); box-shadow: 0 6px 20px rgba(0,0,0,0.3); display: flex; gap: 1rem; align-items: flex-start; }
@@ -477,7 +478,7 @@ color:  purple
       • id= must match an entry in TEXT_FIELDS
       • Check button only: checkPredictText()  — auto-advances if correct,
         otherwise shows a manual "Continue →"
-      • On the last Predict card, advancing reaches the "✓ Reviewed — go to Run" screen
+      • On the last Predict card, answering correctly (or clicking Continue →) advances directly to Run
 
     ── DESIGN RULE ─────────────────────────────────────────────────────────────
     Target: 1 MCQ + 1 True/False + 1 word-bank OR free-text per Predict section.
@@ -534,10 +535,6 @@ color:  purple
     <button class="btn btn-back" id="btn_back_P" onclick="goBack('P')" disabled>← Back</button>
     <button class="btn btn-fwd"  id="btn_fwd_P"  onclick="goForward('P')" disabled>Forward →</button>
   </div>
-
-  <button class="btn btn-next step-hidden" id="btn_goto_r" onclick="reviewedGoToRun()" style="margin-top:1rem">
-    ✓ Reviewed — go to Run →
-  </button>
 </section>
 
 
@@ -1168,9 +1165,7 @@ let maxStepM1      = state.maxStepM1      || stepM1;
 let skippedStages = state.skippedStages || [];
 let attemptCounts = state.attemptCounts || {};
 let iStepRan = state.iStepRan || {};
-let predictReviewTimer = null;
 let firstRunShown = false;
-const PREDICT_REVIEW_DELAY_MS = 3000;
 // One consistent auto-advance delay across Predict / Investigate / Modify so the
 // student sees the feedback before the next question appears.
 const AUTO_ADVANCE_MS = 1500;
@@ -1412,44 +1407,6 @@ function completeStage(s) {
   submitScore();
 }
 
-function showPredictReviewButton(startDelay = true) {
-  const gotoBtn = document.getElementById('btn_goto_r');
-  if (!gotoBtn) return;
-
-  gotoBtn.classList.remove('step-hidden');
-  if (startDelay) {
-    state.predictReviewReadyAt = Date.now() + PREDICT_REVIEW_DELAY_MS;
-    saveState();
-  }
-
-  const readyAt = completedStages.includes('P') ? 0 : (Number(state.predictReviewReadyAt) || Date.now());
-  updatePredictReviewTimer(readyAt);
-}
-
-function updatePredictReviewTimer(readyAt) {
-  const gotoBtn = document.getElementById('btn_goto_r');
-  if (!gotoBtn) return;
-  if (predictReviewTimer) clearTimeout(predictReviewTimer);
-
-  const remaining = Math.max(0, Math.ceil((readyAt - Date.now()) / 1000));
-  if (remaining > 0) {
-    gotoBtn.disabled = true;
-    gotoBtn.textContent = `✓ Reviewed — go to Run (${remaining}s)`;
-    predictReviewTimer = setTimeout(() => updatePredictReviewTimer(readyAt), 250);
-    return;
-  }
-
-  gotoBtn.disabled = false;
-  gotoBtn.textContent = '✓ Reviewed — go to Run →';
-  state.predictReviewReadyAt = 0;
-  saveState();
-}
-
-function reviewedGoToRun() {
-  const gotoBtn = document.getElementById('btn_goto_r');
-  if (gotoBtn?.disabled) return;
-  completeStage('P');
-}
 
 // ── Pyodide status ────────────────────────────────────
 
@@ -1594,15 +1551,14 @@ function showPredictFeedback(idx) {
   else applyMCQFeedback(name, P_CORRECT[name]);
 }
 
-// Show the Predict question at position `predictStep` (1-based). predictStep > TOTAL = review screen.
+// Show the Predict question at position `predictStep` (1-based).
 function renderPredict() {
-  predictStep = Math.min(Math.max(predictStep, 1), PREDICT_TOTAL + 1);
-  const reviewing = predictStep > PREDICT_TOTAL;
+  predictStep = Math.min(Math.max(predictStep, 1), PREDICT_TOTAL);
   document.querySelectorAll('.predict-continue').forEach(b => b.remove());  // clear any transient manual-continue buttons
 
   PREDICT_CARDS.forEach((id, i) => {
     const card = document.getElementById(id);
-    const isActive   = !reviewing && i === predictStep - 1;
+    const isActive   = i === predictStep - 1;
     const revisiting = isActive && predictStep < maxPredictStep;   // stepped back to an answered card
     card?.classList.toggle('step-hidden', !isActive);
     card?.classList.toggle('revisiting', revisiting);
@@ -1612,21 +1568,22 @@ function renderPredict() {
     if (revisiting) showPredictFeedback(i);   // re-show the answer + feedback they saw before
   });
 
-  if (reviewing) showPredictReviewButton(false);
-  else document.getElementById('btn_goto_r')?.classList.add('step-hidden');
-
   renderStepNav('P');
-  if (!reviewing) scrollToActive(PREDICT_CARDS[predictStep - 1]);
+  scrollToActive(PREDICT_CARDS[predictStep - 1]);
 }
 
-// Advance to the next Predict question — or the review screen — after the feedback has been seen.
+// Advance to the next Predict question, or complete the Predict stage on the last question.
 function advancePredict() {
-  const firstTimeReview = predictStep === PREDICT_TOTAL;
-  predictStep = Math.min(predictStep + 1, PREDICT_TOTAL + 1);
+  if (predictStep === PREDICT_TOTAL && !completedStages.includes('P')) {
+    maxPredictStep = Math.max(maxPredictStep, predictStep);
+    saveState();
+    completeStage('P');
+    return;
+  }
+  predictStep = Math.min(predictStep + 1, PREDICT_TOTAL);
   maxPredictStep = Math.max(maxPredictStep, predictStep);
   saveState();
   renderPredict();
-  if (firstTimeReview && !completedStages.includes('P')) showPredictReviewButton(true);
 }
 
 // When a Predict answer is WRONG we don't auto-advance — the student reads the
@@ -1654,6 +1611,8 @@ function checkPredictMCQ(name) {
   }
   card?.classList.remove('error');
   fieldHint(card, '');
+  if (document.querySelector(`input[name="${name}"]:checked`)?.value === P_CORRECT[name])
+    window.ActivityUI?.miniCelebration(card);
   document.getElementById('btn_check_' + name)?.classList.add('step-hidden');
   maxPredictStep = Math.max(maxPredictStep, predictStep + 1);  // unlock Forward immediately
   saveState();
@@ -1694,6 +1653,7 @@ function checkPredictText() {
   card?.classList.remove('error');
   fieldHint(card, '');
   const ok = evaluatePredictText();
+  if (ok) window.ActivityUI?.miniCelebration(card);
   document.getElementById('btn_check_p_text1')?.classList.add('step-hidden');
   maxPredictStep = Math.max(maxPredictStep, predictStep + 1);
   saveState();
@@ -2031,7 +1991,6 @@ function recordM1Attempt() {
 Object.assign(window, {
   showStage, saveState,
   clearPredictError, checkPredictMCQ, checkPredictText, advancePredict,
-  reviewedGoToRun,
   clearRunError, tryCompleteRun,
   tryCompleteInvestigate, nextStep,
   checkMod, completeStage,
