@@ -53,7 +53,16 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      # Check out the current tip of main, NOT the commit that triggered
+      # this run. The build-manifest workflow rebuilds activities.json /
+      # meta.json into a separate [skip ci] commit that lands ~15s after
+      # the push; the test job takes several minutes, so by the time this
+      # deploy job runs that commit is already on main. Pinning to the
+      # trigger SHA (the default) would publish the *previous* manifest and
+      # leave the site permanently one activity behind.
       - uses: actions/checkout@v4
+        with:
+          ref: main
 
       - uses: actions/configure-pages@v4
 
