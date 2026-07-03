@@ -10,6 +10,14 @@ on:
       - 'meta.json'
   pull_request:
 
+# Serialise deployments to the single github-pages environment. Rapid
+# successive pushes previously launched overlapping deploys that knocked
+# each other out (actions/deploy-pages failing). Queue them instead of
+# cancelling, so an in-flight deploy always finishes cleanly.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
 jobs:
   test:
     runs-on: ubuntu-latest
