@@ -18,10 +18,11 @@ function countPrints(raw) {
 
 export const MOD_CHECKS = {
   mod1(raw) {
-    if (countPrints(raw) < 3)
-      return { pass: false, msg: '❌ Keep at least 3 print() calls — one for your name, year group, and school name.' };
-    if (/\bprint\s*\(\s*\)/.test(raw))
-      return { pass: false, msg: '❌ Delete the blank print() line first (the one with empty brackets from the investigation).' };
+    // Count only prints that actually output text — an empty print() left over from
+    // the investigation is fine here (Modification 3 uses one deliberately).
+    const textPrints = countPrints(raw) - (raw.match(/\bprint\s*\(\s*\)/g) || []).length;
+    if (textPrints < 3)
+      return { pass: false, msg: '❌ Keep at least 3 print() calls that show text — one for your name, year group, and school name.' };
     if (/hello,\s*world/i.test(raw))
       return { pass: false, msg: '❌ Change "Hello, World!" to your own text — the original starter text is still there.' };
     if (/i am learning python/i.test(raw))
@@ -31,8 +32,11 @@ export const MOD_CHECKS = {
     return { pass: true, msg: '✅ Looking good — all your print() lines now show your own text!' };
   },
   mod2(raw) {
-    if (countPrints(raw) < 5)
-      return { pass: false, msg: `❌ You need at least 5 print() calls — you have ${countPrints(raw)}. Add ${5 - countPrints(raw)} more.` };
+    // Five lines of *text* — an empty print() carried over from the investigation
+    // doesn't count towards the five (it has no text).
+    const textPrints = countPrints(raw) - (raw.match(/\bprint\s*\(\s*\)/g) || []).length;
+    if (textPrints < 5)
+      return { pass: false, msg: `❌ You need at least 5 print() calls that show text — you have ${textPrints}. Add ${5 - textPrints} more.` };
     return { pass: true, msg: '✅ Five print() calls found — your program prints five things!' };
   },
   mod3(raw) {
