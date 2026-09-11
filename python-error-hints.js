@@ -59,6 +59,20 @@ const HINTS = [
     fix: 'Line it up with the lines above it.',
   },
   {
+    id: 'unindent-mismatch',
+    match: /IndentationError:\s*unindent does not match any outer indentation level|unindent does not match/i,
+    title: "Indenting doesn't line up",
+    plain: 'this line is indented **less than any line above it**, so Python cannot tell which block it belongs to.',
+    fix: "Line it up exactly with the start of an if, for, while or function line above it.",
+  },
+  {
+    id: 'tab-error',
+    match: /TabError|inconsistent use of tabs and spaces/i,
+    title: 'Mixed Tabs and Spaces',
+    plain: 'this code mixes **Tabs and spaces** for indenting, and Python cannot tell they are the same.',
+    fix: 'Select the indented lines and re-indent them using only Tab (or only spaces), not a mix.',
+  },
+  {
     id: 'print-parens',
     match: /Missing parentheses in call to '?print'?/i,
     title: 'print needs brackets',
@@ -67,11 +81,12 @@ const HINTS = [
   },
   {
     id: 'name-error',
-    match: /NameError:\s*name .* is not defined/i,
+    match: /NameError:\s*name '([^']*)' is not defined/i,
     title: "Python doesn't recognise a word",
-    plain: 'that word may be **missing speech marks**, or is a typo'
-           + ' for a variable name.',
-    fix: 'Check the spelling matches, and that you created the variable before using it.',
+    plain: (m) => `Python has never heard of **${m[1]}** — either it's a typo`
+                  + ' for a variable name, or it should be text in speech marks.',
+    fix: (m) => `Check "${m[1]}" is spelled exactly like where you created the variable, `
+                + `or wrap it in speech marks if you meant it as text, e.g. "${m[1]}".`,
   },
   {
     id: 'type-concat',
@@ -100,8 +115,14 @@ export function explainPythonError(rawError) {
   if (!rawError) return null;
   const text = String(rawError);
   for (const hint of HINTS) {
-    if (hint.match.test(text)) {
-      return { id: hint.id, title: hint.title, plain: hint.plain, fix: hint.fix };
+    const m = hint.match.exec(text);
+    if (m) {
+      return {
+        id: hint.id,
+        title: hint.title,
+        plain: typeof hint.plain === 'function' ? hint.plain(m) : hint.plain,
+        fix: typeof hint.fix === 'function' ? hint.fix(m) : hint.fix,
+      };
     }
   }
   return null;

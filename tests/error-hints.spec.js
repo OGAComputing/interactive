@@ -88,6 +88,23 @@ test('fixing the syntax error closes the hint and the help window', async ({ pag
   await expect(page.locator('#stage-R .error-helper')).toBeHidden();
 });
 
+test('syntax error (IndentationError): Get help gives the specific indent hint, not a generic one', async ({ page }) => {
+  await gotoRunEditor(page);
+
+  // Missing indent after a colon — caught by static analysis before any run.
+  await page.locator('#r_editor').fill('if True:\nprint("hi")');
+
+  const helpBtn = page.locator('#stage-R .syntax-hint .syntax-hint-help');
+  await expect(helpBtn).toBeVisible({ timeout: 30000 });
+
+  const helper = page.locator('#stage-R .error-helper');
+  await helpBtn.click();
+  await expect(helper).toBeVisible();
+  await expect(helper.locator('.eh-head')).toContainText('IndentationError');
+  // Must hit the specific "expected-indent" hint, not the generic fallback.
+  await expect(helper.locator('.eh-plain strong')).toContainText('needs to be indented');
+});
+
 test('run-time error (NameError): Get help shows the type, line and a short fix', async ({ page }) => {
   await gotoRunEditor(page);
 

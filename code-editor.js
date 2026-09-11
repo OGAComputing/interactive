@@ -561,7 +561,9 @@ async function _runHeavyTasks(ta) {
         hint.innerHTML = '<span class="syntax-hint-msg"></span>' +
           '<button type="button" class="syntax-hint-help">💡 Get help</button>';
         hint.querySelector('.syntax-hint-msg').textContent = label;
-        const raw = result.msg;
+        // Re-attach the exception class (e.g. "IndentationError: ") that ast.parse's
+        // e.msg strips off, so python-error-hints' class-specific patterns can match.
+        const raw = (result.type ? result.type + ': ' : '') + result.msg;
         hint.querySelector('.syntax-hint-help').onclick = () => _showErrHelper(ta, raw, result.line, result.type);
       } else {
         hint.textContent = label;
@@ -647,9 +649,7 @@ function _collectInputs(ta, prompts) {
     let idx = 0;
     let done = false;
 
-    function finish() {
-      if (done) return;
-      done = true;
+    function cleanup() {
       inputRow.style.display = 'none';
       promptLabel.textContent = '';
       inputField.value = '';
@@ -657,7 +657,27 @@ function _collectInputs(ta, prompts) {
       panel.querySelector('.input-type-hint')?.remove();
       inputField.removeEventListener('keydown', onKey);
       _inputAbort.delete(ta);
+    }
+
+    function finish() {
+      if (done) return;
+      done = true;
+      cleanup();
       resolve(collected);
+    }
+
+    // Called when a newer Run click preempts this still-waiting collection.
+    // Resolving with `null` (rather than the partial `collected` array) tells
+    // runCode() this attempt was superseded, so it must NOT go on to execute
+    // the program with an incomplete/empty inputs list — that was leaving
+    // Python's mocked input() unset and letting two runPythonAsync() calls
+    // race on the single shared interpreter (surfacing as a raw Pyodide
+    // "I/O error" from the real input(), or a corrupted "str is not callable").
+    function cancel() {
+      if (done) return;
+      done = true;
+      cleanup();
+      resolve(null);
     }
 
     function advance(val) {
@@ -676,7 +696,7 @@ function _collectInputs(ta, prompts) {
       if (e.key === 'Enter') { e.preventDefault(); advance(inputField.value); }
     }
 
-    _inputAbort.set(ta, finish);
+    _inputAbort.set(ta, cancel);
     inputField.addEventListener('keydown', onKey);
     promptLabel.textContent = prompts[0];
     inputField.value = '';
@@ -709,6 +729,13 @@ export async function runCode(ta, { inputs = null } = {}) {
     const prompts = _extractPythonPrompts(ta.value);
     resolvedInputs = prompts.length > 0 ? await _collectInputs(ta, prompts) : [];
   }
+
+  // A later Run click preempted this run while it was still waiting for the
+  // student to answer an earlier prompt — bail out without touching Python or
+  // the DOM. The newer run owns the output panel now; letting this one carry
+  // on would execute the program with no (or stale) input() mocking while the
+  // other run is doing the same on the one shared Pyodide interpreter.
+  if (resolvedInputs === null) return { ok: true, output: '', cancelled: true };
 
   const r = await runPython(ta.value, { inputs: resolvedInputs });
 

@@ -13,6 +13,8 @@ const CASES = [
   ["  File \"<exec>\", line 1\nSyntaxError: expected ':'", 'missing-colon', 'colon'],
   ['IndentationError: expected an indented block', 'expected-indent', 'indented'],
   ['IndentationError: unexpected indent', 'unexpected-indent', 'extra space'],
+  ['IndentationError: unindent does not match any outer indentation level', 'unindent-mismatch', 'less than'],
+  ['TabError: inconsistent use of tabs and spaces in indentation', 'tab-error', 'tabs and spaces'],
   ["SyntaxError: Missing parentheses in call to 'print'", 'print-parens', 'brackets'],
   ["NameError: name 'fun' is not defined", 'name-error', 'speech marks'],
   ['TypeError: can only concatenate str (not "int") to str', 'type-concat', 'number'],
@@ -29,6 +31,12 @@ describe('explainPythonError', () => {
     // The bold takeaway is marked with ** ** and contains the key phrase.
     expect(hint.plain).toContain('**');
     expect(hint.plain.toLowerCase()).toContain(takeaway.toLowerCase());
+  });
+
+  test('NameError quotes the actual undefined name', () => {
+    const hint = explainPythonError("NameError: name 'nickname' is not defined");
+    expect(hint.plain).toContain('nickname');
+    expect(hint.fix).toContain('nickname');
   });
 
   test('specific messages win over the SyntaxError catch-all', () => {

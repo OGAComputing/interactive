@@ -1,9 +1,9 @@
 <!-- ACTIVITY
-title:  Data Types & Casting — PRIMM Practice
+title:  Input — PRIMM Practice
 type:   PRIMM
 lesson: Lesson 3
 stars:  3
-desc:   Predict, Run, Investigate, Modify and Make with data types, int()/float() casting and arithmetic
+desc:   Predict, Run, Investigate, Modify and Make with input(), storing answers in variables and joining text with +
 color:  purple
 -->
 <!DOCTYPE html>
@@ -11,7 +11,7 @@ color:  purple
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PRIMM Practice · Data Types &amp; Casting · Year 8</title>
+<title>PRIMM Practice · Input · Year 8</title>
 <link rel="stylesheet" href="../../../shared.css">
 <style>
   :root {
@@ -42,9 +42,10 @@ color:  purple
     --font-mono:    'Consolas','SFMono-Regular','Courier New',monospace;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { overflow-x: hidden; }
   body {
     font-family: var(--font-body); background: #07021a; color: var(--text);
-    min-height: 100vh; position: relative; overflow-x: hidden;
+    min-height: 100vh; position: relative;
   }
   /* Atmospheric nebula glow behind everything */
   body::before {
@@ -311,6 +312,11 @@ color:  purple
   .completion-banner p  { color: #a7f3c8; font-size: 0.9rem; }
   .progress-strip { height: 10px; background: #0a081c; position: sticky; top: 0; z-index: 10; box-shadow: inset 0 0 8px rgba(0,0,0,0.6); }
   .progress-fill  { height: 100%; background: linear-gradient(90deg, var(--purple), var(--teal), var(--stage-m2)); background-size: 200% 100%; transition: width 0.5s ease; box-shadow: 0 0 12px rgba(47,243,224,0.6); animation: xp-shimmer 3s linear infinite; }
+  /* Flags to the student (and a teacher glancing at the screen) that no progress has
+     been made on the current stage for a while — see STUCK_THRESHOLDS_MS in the JS. */
+  .progress-fill.stuck { background: var(--amber); animation: stuck-pulse 1.6s ease-in-out infinite; }
+  /* One-off red flash when a stage gets marked skipped (see markStageSkipped in the JS). */
+  .progress-fill.skip-flash { animation: skip-flash 1s ease-in-out; }
 
   .step-hidden { display: none !important; }
 
@@ -318,6 +324,11 @@ color:  purple
   @keyframes node-pulse { 0%, 100% { transform: scale(1.08); } 50% { transform: scale(1.18); } }
   @keyframes panel-in   { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
   @keyframes xp-shimmer { from { background-position: 0 0; } to { background-position: 200% 0; } }
+  @keyframes stuck-pulse { 0%, 100% { box-shadow: 0 0 8px rgba(255,176,32,0.6); } 50% { box-shadow: 0 0 20px rgba(255,176,32,1); } }
+  @keyframes skip-flash {
+    0%, 100% { background: linear-gradient(90deg, var(--purple), var(--teal), var(--stage-m2)); box-shadow: 0 0 12px rgba(47,243,224,0.6); }
+    20%, 60% { background: var(--red); box-shadow: 0 0 22px var(--red); }
+  }
 
   /* ── Q-CARD CORRECT STATE ── */
   @keyframes success-pulse {
@@ -402,16 +413,16 @@ color:  purple
 <body>
 
 <header class="site-header">
-  <div class="header-icon">int()</div>
+  <div class="header-icon">=</div>
 
   <div class="header-text">
     <h1>PRIMM Practice</h1>
-    <p>Data Types &amp; Casting &nbsp;·&nbsp; Python Programming &nbsp;·&nbsp; Year 8</p>
+    <p>Input &nbsp;·&nbsp; Python Programming &nbsp;·&nbsp; Year 8</p>
   </div>
 
-  <pre class="header-code">age <span class="kw">=</span> <span class="fn">input</span>(<span class="st">"Age? "</span>)
-age <span class="kw">=</span> <span class="fn">int</span>(age)
-<span class="fn">print</span>(age <span class="kw">+</span> <span class="num">1</span>)</pre>
+  <pre class="header-code">name <span class="kw">=</span> <span class="fn">input</span>(<span class="st">"Your name? "</span>)
+greeting <span class="kw">=</span> <span class="st">"Hello "</span>
+<span class="fn">print</span>(greeting <span class="kw">+</span> name)</pre>
 </header>
 
 <div class="progress-strip"><div class="progress-fill" id="progressFill" style="width:20%"></div></div>
@@ -444,13 +455,9 @@ age <span class="kw">=</span> <span class="fn">int</span>(age)
   </div>
 
   <div class="annotated-code">
-    <div class="ann-row"><span class="line-num">1</span><span>a <span class="kw">=</span> <span class="st">"5"</span></span><span class="ann-label">store the TEXT "5" (with quotes) in a</span></div>
-    <div class="ann-row"><span class="line-num">2</span><span>b <span class="kw">=</span> <span class="st">"5"</span></span><span class="ann-label">store the TEXT "5" (with quotes) in b</span></div>
-    <div class="ann-row"><span class="line-num">3</span><span><span class="fn">print</span>(a <span class="kw">+</span> b)</span><span class="ann-label">join two pieces of text together</span></div>
-    <div class="ann-row"><span class="line-num">4</span><span>&nbsp;</span><span></span></div>
-    <div class="ann-row"><span class="line-num">5</span><span>c <span class="kw">=</span> <span class="num">5</span></span><span class="ann-label">store the NUMBER 5 (no quotes) in c</span></div>
-    <div class="ann-row"><span class="line-num">6</span><span>d <span class="kw">=</span> <span class="num">5</span></span><span class="ann-label">store the NUMBER 5 (no quotes) in d</span></div>
-    <div class="ann-row"><span class="line-num">7</span><span><span class="fn">print</span>(c <span class="kw">+</span> d)</span><span class="ann-label">add two numbers together</span></div>
+    <div class="ann-row"><span class="line-num">1</span><span>name <span class="kw">=</span> <span class="fn">input</span>(<span class="st">"What is your name? "</span>)</span><span class="ann-label">pause, wait for typing, store the answer in name</span></div>
+    <div class="ann-row"><span class="line-num">2</span><span>greeting <span class="kw">=</span> <span class="st">"Hello "</span></span><span class="ann-label">store "Hello " in a box called greeting</span></div>
+    <div class="ann-row"><span class="line-num">3</span><span><span class="fn">print</span>(greeting <span class="kw">+</span> name)</span><span class="ann-label">join the two boxes and show the result</span></div>
   </div>
 
   <!--
@@ -506,12 +513,12 @@ age <span class="kw">=</span> <span class="fn">int</span>(age)
 
   <!-- MCQ question 1 — visible immediately -->
   <div class="q-card" id="qcard_p_mcq1">
-    <label class="q-label"><span class="q-num">1</span> Look at lines 1–3. <code style="background:#ede0ff;padding:0 3px;border-radius:3px">a</code> and <code style="background:#ede0ff;padding:0 3px;border-radius:3px">b</code> both hold the TEXT <code style="background:#ede0ff;padding:0 3px;border-radius:3px">"5"</code> (with quotes). What will <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print(a + b)</code> show?</label>
+    <label class="q-label"><span class="q-num">1</span> Look at line 1: <code style="background:#ede0ff;padding:0 3px;border-radius:3px">name = input("What is your name? ")</code>. What does this line do when the program runs?</label>
     <div class="radio-opts" id="ropts_p_mcq1">
-      <label class="radio-opt"><input type="radio" name="p_mcq1" value="option_a" onchange="saveState()"> <span>55 — Python joins the two pieces of text end to end</span></label>
-      <label class="radio-opt"><input type="radio" name="p_mcq1" value="option_b" onchange="saveState()"> <span>10 — Python adds the two values together like numbers</span></label>
-      <label class="radio-opt"><input type="radio" name="p_mcq1" value="option_c" onchange="saveState()"> <span>5 5 — Python shows both values with a space in between</span></label>
-      <label class="radio-opt"><input type="radio" name="p_mcq1" value="option_d" onchange="saveState()"> <span>An error — Python cannot join two pieces of text together</span></label>
+      <label class="radio-opt"><input type="radio" name="p_mcq1" value="option_a" onchange="saveState()"> <span>Pauses the program, waits for the user to type something, then stores it in the name variable</span></label>
+      <label class="radio-opt"><input type="radio" name="p_mcq1" value="option_b" onchange="saveState()"> <span>Immediately stores the text "What is your name?" into the name variable</span></label>
+      <label class="radio-opt"><input type="radio" name="p_mcq1" value="option_c" onchange="saveState()"> <span>Prints "What is your name?" to the screen and carries straight on to line 2</span></label>
+      <label class="radio-opt"><input type="radio" name="p_mcq1" value="option_d" onchange="saveState()"> <span>Checks whether a variable called name has already been created</span></label>
     </div>
     <div class="mcq-fb" id="fb_p_mcq1"></div>
     <div style="margin-top:0.8rem;display:flex;gap:0.6rem;flex-wrap:wrap;align-items:center">
@@ -522,10 +529,10 @@ age <span class="kw">=</span> <span class="fn">int</span>(age)
 
   <!-- True/False question 2 — revealed after Q1 is answered -->
   <div class="q-card step-hidden" id="qcard_p_mcq2">
-    <label class="q-label"><span class="q-num">2</span> True or false: on lines 5–7, <code style="background:#ede0ff;padding:0 3px;border-radius:3px">c</code> and <code style="background:#ede0ff;padding:0 3px;border-radius:3px">d</code> are written WITHOUT quotes, so <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print(c + d)</code> will show 10.</label>
+    <label class="q-label"><span class="q-num">2</span> True or false: the text inside the brackets — <code style="background:#ede0ff;padding:0 3px;border-radius:3px">"What is your name? "</code> — gets stored in the <code style="background:#ede0ff;padding:0 3px;border-radius:3px">name</code> variable along with whatever the user types.</label>
     <div class="radio-opts" id="ropts_p_mcq2">
-      <label class="radio-opt"><input type="radio" name="p_mcq2" value="option_a" onchange="saveState()"> <span>True — without quotes, Python treats c and d as real numbers, so + adds them</span></label>
-      <label class="radio-opt"><input type="radio" name="p_mcq2" value="option_b" onchange="saveState()"> <span>False — Python always joins values with + no matter how they were written</span></label>
+      <label class="radio-opt"><input type="radio" name="p_mcq2" value="option_a" onchange="saveState()"> <span>True — both the prompt text and the typed answer end up stored together</span></label>
+      <label class="radio-opt"><input type="radio" name="p_mcq2" value="option_b" onchange="saveState()"> <span>False — the text in the brackets is just a message; only what the user types is stored</span></label>
     </div>
     <div class="mcq-fb" id="fb_p_mcq2"></div>
     <div style="margin-top:0.8rem;display:flex;gap:0.6rem;flex-wrap:wrap;align-items:center">
@@ -536,9 +543,9 @@ age <span class="kw">=</span> <span class="fn">int</span>(age)
 
   <!-- Free-text question — revealed after Q2 is answered -->
   <div class="q-card step-hidden" id="qcard_p_text1">
-    <label class="q-label"><span class="q-num">3</span> Now imagine TWO NEW lines are added after line 7: <code style="background:#ede0ff;padding:0 3px;border-radius:3px">x = input("Number 1: ")</code> and <code style="background:#ede0ff;padding:0 3px;border-radius:3px">y = input("Number 2: ")</code>, followed by <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print(x + y)</code>. If the user types <strong>3</strong> then <strong>4</strong>, type the <strong>exact text</strong> Python will print.</label>
+    <label class="q-label"><span class="q-num">3</span> If someone types <strong>Aisha</strong> when the program asks for their name, what will it <strong>print</strong>, exactly?</label>
     <input type="text" id="p_text1" placeholder="Type your answer here…" oninput="saveState(); clearPredictError('qcard_p_text1')">
-    <div class="hint-box" style="margin-top:0.6rem">Hint: <code style="background:#ede0ff;color:#3a1d6e;padding:0 4px;border-radius:3px">input()</code> always hands back TEXT, even if the user types digits — just like <code style="background:#ede0ff;color:#3a1d6e;padding:0 4px;border-radius:3px">a</code> and <code style="background:#ede0ff;color:#3a1d6e;padding:0 4px;border-radius:3px">b</code> above.</div>
+    <div class="hint-box" style="margin-top:0.6rem">Hint: whatever gets typed is stored in <code style="background:#ede0ff;color:#3a1d6e;padding:0 4px;border-radius:3px">name</code>, exactly as if you had written <code style="background:#ede0ff;color:#3a1d6e;padding:0 4px;border-radius:3px">name = "Aisha"</code>. Line 3 still joins <code style="background:#ede0ff;color:#3a1d6e;padding:0 4px;border-radius:3px">greeting</code> (<code style="background:#ede0ff;color:#3a1d6e;padding:0 4px;border-radius:3px">"Hello "</code>) onto it exactly as before.</div>
     <div class="mcq-fb" id="fb_p_text1"></div>
     <div style="margin-top:0.8rem;display:flex;gap:0.6rem;flex-wrap:wrap;align-items:center">
       <button class="btn btn-check" id="btn_check_p_text1" onclick="checkPredictText()">✓ Check answer</button>
@@ -568,23 +575,24 @@ age <span class="kw">=</span> <span class="fn">int</span>(age)
 
   <div class="info-box">
     <span class="icon">🖥️</span>
-    <span>Use the <strong>▶ Run code</strong> button below to see the program in action. This program has no <code style="background:#2d1060;padding:0 4px;border-radius:3px">input()</code> yet, so it runs straight through. Compare the output with your prediction, then describe what you saw at the bottom.</span>
+    <span>Use the <strong>▶ Run code</strong> button below. This program <strong>pauses</strong> at the <code style="background:#2d1060;padding:0 4px;border-radius:3px">input()</code> line and waits for you — type your name into the box that appears in the output panel and press Enter. Compare what happens with your prediction, then describe it at the bottom.</span>
   </div>
 
-  <!-- ① Editor (with Run) -->
+  <!-- ① Editor (with Run) — real interactive input, not mocked: this is the first time
+       students see a program pause and wait for them, so it must be a genuine pause. -->
   <div class="code-checker">
     <textarea class="checker-textarea" id="r_editor" data-title="Python Editor"></textarea>
     <div class="checker-footer">
-      <button class="btn btn-check" onclick="runCodeInEditor('r_editor', 'r_fb_run', [])">▶ Run code</button>
+      <button class="btn btn-check" onclick="runCodeInEditor('r_editor', 'r_fb_run')">▶ Run code</button>
       <div class="feedback loading hidden" id="r_fb_run"></div>
     </div>
   </div>
 
-  <div class="hint-box">💡 Quotes are the giveaway: <strong>with</strong> quotes it's TEXT (a string) and + joins pieces together; <strong>without</strong> quotes it's a NUMBER and + adds them up.</div>
+  <div class="hint-box">💡 Python prints the <strong>value stored in each variable</strong>, not the variable's name. Look carefully at what each variable holds — including any spaces inside the quotes.</div>
 
   <!-- ② Answer + Check button, directly below the editor -->
   <div class="q-card" id="qcard_r1">
-    <label class="q-label"><span class="q-num">1</span> Describe what output you saw when you ran the program. Did anything surprise you compared with your predictions?</label>
+    <label class="q-label"><span class="q-num">1</span> Describe what happened when you ran the program — what did you see before you typed anything, and what appeared after? Did anything surprise you compared with your predictions?</label>
     <textarea id="r1" placeholder="Write what appeared in the output panel…" oninput="saveState(); clearRunError('qcard_r1')"></textarea>
     <button class="btn btn-check" id="btn_check_run" onclick="tryCompleteRun()" style="margin-top:0.8rem">
       ⚡ Check response
@@ -633,16 +641,10 @@ age <span class="kw">=</span> <span class="fn">int</span>(age)
     ║  the answer box. Applies to Modify steps too.                         ║
     ╚═══════════════════════════════════════════════════════════════════════╝
 
-    ╔══ THE STANDARD BUG PAIR — steps 3 & 4 ═════════════════════════════════╗
-    ║  Steps 3–4 are the standard "fix a bug" pair (see _templates/          ║
-    ║  PRIMM_Python_Y8.html): step 3 plants print("Total: " + 5) for a       ║
-    ║  guided TypeError encounter (fixed with str()); step 4 is "😈 Break   ║
-    ║  it" self-practice on the same bug, repeated 2–3 times unaided.        ║
-    ╚═══════════════════════════════════════════════════════════════════════╝
-
-    ── QUESTION TYPES FOR INVESTIGATE STEPS (steps 1–2, before the bug pair) ──
+    ── QUESTION TYPES FOR INVESTIGATE STEPS ────────────────────────────────
 
     Mix question types — avoid making every step a free-text box.
+    Target: 2 text + 1 MCQ + 1 True/False across 4 steps.
 
     TEXT (textarea):
       • For open observations ("What changed?", "Why does this happen?")
@@ -674,39 +676,35 @@ age <span class="kw">=</span> <span class="fn">int</span>(age)
 
     <div class="q-card" id="qcard_i1_prompt" style="border-left-color:var(--stage-i)">
       <label class="q-label"><span class="q-num" style="background:var(--stage-i)">1</span>
-        In the editor below, change line 1 from <code style="background:#ede0ff;padding:0 3px;border-radius:3px">a = "5"</code> to <code style="background:#ede0ff;padding:0 3px;border-radius:3px">a = input("Enter first number: ")</code>. Leave <code style="background:#ede0ff;padding:0 3px;border-radius:3px">b</code> exactly as it is. Then <strong>Run</strong> it and type <strong>5</strong> when asked.
+        In the editor below, change the <strong>message</strong> inside <code style="background:#ede0ff;padding:0 3px;border-radius:3px">input(...)</code> on line 1 to something different — e.g. <code style="background:#ede0ff;padding:0 3px;border-radius:3px">name = input("Enter your name: ")</code>. Keep everything else the same. Then <strong>Run</strong> it and type your name.
         <!-- INSTRUCTIONS ONLY here — the question itself lives in the answer card below the editor. -->
       </label>
     </div>
 
     <div class="q-card step-hidden" id="qcard_i2_prompt" style="border-left-color:var(--stage-i)">
       <label class="q-label"><span class="q-num" style="background:var(--stage-i)">2</span>
-        Keep your step 1 change. Now:
-        <ul style="margin:0.5rem 0 0 1.2rem;line-height:2">
-          <li>Change <strong>line 2</strong> from <code style="background:#ede0ff;padding:0 3px;border-radius:3px">b = "5"</code> to <code style="background:#ede0ff;padding:0 3px;border-radius:3px">b = input("Enter second number: ")</code>.</li>
-          <li>Run your code and type <strong>5</strong>, then <strong>3</strong>, when asked — you'll see <strong>53</strong>, not 8.</li>
-          <li>Now <strong>fix both</strong>: wrap line 1 in <code style="background:#ede0ff;padding:0 3px;border-radius:3px">int()</code> — <code style="background:#ede0ff;padding:0 3px;border-radius:3px">a = int(input("Enter first number: "))</code> — and wrap line 2 the same way — <code style="background:#ede0ff;padding:0 3px;border-radius:3px">b = int(input("Enter second number: "))</code>.</li>
-          <li>Run it again (type 5, then 3) to check <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print(a + b)</code> now shows a real sum, 8.</li>
-        </ul>
-        <!-- INSTRUCTIONS ONLY — the MCQ (about the "53" moment, before you cast) lives in the answer card below the editor. -->
+        Don't change any code this time. Run your program again, but when it asks for your name, <strong>press Enter without typing anything</strong>. See what happens.
+        <!-- INSTRUCTIONS ONLY — put the question ("what got stored when you left it blank?") in the answer card below. -->
       </label>
     </div>
 
     <!--
       STANDARD BUG PAIR — steps 3 (guided) and 4 (self-practice) are ALWAYS the last
       two Investigate steps (see _templates/PRIMM_Python_Y8.html). IBUG_LINE here is
-      print("Total: " + 5) — mixing text and a number the OTHER way round from a/b
-      above, fixed with str() instead of int(), to show casting works both directions.
+      print(fullname) — a variable that was never created (only `name` was, via
+      input()), giving a NameError. There is no "fixed" version of the line to edit
+      towards; the fix is simply deleting it, so this activity's IBUG_LINE has no
+      matching IBUG_FIXED_LINE.
     -->
     <div class="q-card step-hidden" id="qcard_i3_prompt" style="border-left-color:var(--stage-i)">
       <label class="q-label"><span class="q-num" style="background:var(--stage-i)">3</span>
-        Now let's <strong>meet an error</strong> on purpose — every programmer does, all the time, and it is not a disaster.
+        Now let's <strong>meet an error</strong> — every programmer does, all the time, and it is not a disaster.
         <ul style="margin:0.5rem 0 0 1.2rem;line-height:2">
-          <li>We've added <strong>one broken line</strong> to your code for you — it's <strong>line <span id="ibug_line">the last line</span></strong>:
-            <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print("Total: " + 5)</code>. It mixes TEXT ("Total: ") with a NUMBER (5) using <code style="background:#ede0ff;padding:0 3px;border-radius:3px">+</code>.</li>
-          <li>Press <strong>▶ Run code</strong>. Python stops with a red <strong>TypeError</strong> — that's expected.</li>
+          <li>Under the editor, press <strong>😈 Break it</strong> — it adds <strong>one broken line</strong> to your code and runs it: it's <strong>line <span id="ibug_line">the last line</span></strong>:
+            <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print(fullname)</code> — a variable you have <em>never created</em> (you created <code style="background:#ede0ff;padding:0 3px;border-radius:3px">name</code>, not <code style="background:#ede0ff;padding:0 3px;border-radius:3px">fullname</code>).</li>
+          <li>Python stops with a red <strong>NameError</strong> — that's expected.</li>
           <li>Read the message, then click <strong>💡 Get help</strong> below the editor for a plain-English hint and the Debugging Recipe.</li>
-          <li><strong>Fix it:</strong> wrap the 5 in <code style="background:#ede0ff;padding:0 3px;border-radius:3px">str()</code> so it becomes TEXT too — <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print("Total: " + str(5))</code> — then Run again until it works.</li>
+          <li><strong>Fix it:</strong> delete that broken line completely, then press <strong>▶ Run code</strong> again until it works.</li>
         </ul>
         <!-- INSTRUCTIONS ONLY — put the "what was Python complaining about?" MCQ in the answer card below. -->
       </label>
@@ -716,8 +714,8 @@ age <span class="kw">=</span> <span class="fn">int</span>(age)
       <label class="q-label"><span class="q-num" style="background:var(--stage-i)">4</span>
         Last one — practise spotting and fixing this error quickly, on your own.
         <ul style="margin:0.5rem 0 0 1.2rem;line-height:2">
-          <li>Under the editor, press <strong>😈 Break it</strong> — it reintroduces the same broken line and runs the code, so you can watch the <strong>TypeError</strong> appear.</li>
-          <li><strong>Fix it yourself:</strong> wrap the number in <code style="background:#ede0ff;padding:0 3px;border-radius:3px">str()</code> again, without being told.</li>
+          <li>Under the editor, press <strong>😈 Break it</strong> — it reintroduces the same broken line and runs the code, so you can watch the <strong>NameError</strong> appear.</li>
+          <li><strong>Fix it yourself:</strong> delete the broken line again, without being told.</li>
           <li>Press <strong>▶ Run code</strong> above to check it worked, then press <strong>😈 Break it</strong> again and repeat — do this <strong>two or three times</strong>.</li>
         </ul>
         <!-- INSTRUCTIONS ONLY — put the reflection MCQ in the answer card below. -->
@@ -725,16 +723,12 @@ age <span class="kw">=</span> <span class="fn">int</span>(age)
     </div>
   </div>
 
-  <!-- ② Info box + shared editor (with Run). Students accumulate changes here across steps. -->
-  <div class="info-box" style="margin-top:0.5rem">
-    <span class="icon">💾</span>
-    <span>Your code is <strong>preserved between steps</strong> — keep building on what you have. Use <strong>↺ Reset</strong> only if you want to start the investigation from scratch.</span>
-  </div>
-
+  <!-- ② Shared editor (with Run). Students accumulate changes here across steps. -->
   <div class="code-checker" style="margin-top:0.5rem">
     <textarea class="checker-textarea" id="i_editor" data-title="Python Editor" oninput="saveState()"></textarea>
     <div class="checker-footer">
-      <!-- Step 4 introduces input(); the queued test name is ignored by the earlier steps that have no input(). -->
+      <!-- Real interactive input() throughout Investigate — no mocked inputs array, so
+           students genuinely type their answers (including leaving them blank in step 3). -->
       <button class="btn btn-check" onclick="runCodeInEditor('i_editor', 'i_fb_run')">▶ Run code</button>
       <button class="btn btn-reset" onclick="resetInvestigateEditor()">↺ Reset to original</button>
       <div class="feedback loading hidden" id="i_fb_run"></div>
@@ -748,35 +742,38 @@ age <span class="kw">=</span> <span class="fn">int</span>(age)
 
     <div class="q-card" id="qcard_i1" style="border-left-color:var(--stage-i)">
       <div style="font-size:0.84rem;color:var(--muted);margin-bottom:0.4rem">✍️ Your answer — step 1</div>
-      <label class="q-label">Even though <code style="background:#ede0ff;padding:0 3px;border-radius:3px">a</code> now comes from <code style="background:#ede0ff;padding:0 3px;border-radius:3px">input()</code>, <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print(a + b)</code> still JOINS instead of adding. Why?</label>
-      <textarea id="i1" placeholder="Explain why it still joins the two values…" oninput="saveState()"></textarea>
+      <label class="q-label">You changed the <strong>message</strong> inside <code style="background:#ede0ff;padding:0 3px;border-radius:3px">input(...)</code>. Did that change what ends up stored in the <code style="background:#ede0ff;padding:0 3px;border-radius:3px">name</code> variable? Why or why not?</label>
+      <textarea id="i1" placeholder="Explain what the message inside input() actually does…" oninput="saveState()"></textarea>
       <button class="btn btn-next" id="btn_check_i1" style="margin-top:10px" onclick="nextStep('I', 1)" disabled>✓ Check answer</button>
       <button class="btn btn-skip" id="btn_skip_i1" style="margin-top:6px;display:none" onclick="skipStep('I')">Move on without completing →</button>
     </div>
 
     <div class="q-card step-hidden" id="qcard_i2" style="border-left-color:var(--stage-i)">
       <div style="font-size:0.84rem;color:var(--muted);margin-bottom:0.4rem">✍️ Your answer — step 2</div>
-      <label class="q-label">Before you cast a and b with int(), you typed <strong>5</strong> then <strong>3</strong>. What did <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print(a + b)</code> show at that point?</label>
+      <label class="q-label">True or false: pressing Enter without typing anything makes Python stop with an error, because <code style="background:#ede0ff;padding:0 3px;border-radius:3px">name</code> has no value.</label>
       <div class="radio-opts" id="ropts_i2_mcq" style="margin-top:0.5rem">
-        <label class="radio-opt"><input type="radio" name="i2_mcq" value="option_a" onchange="saveState()"> <span>53 — input() always returns text, so + joins "5" and "3" end to end</span></label>
-        <label class="radio-opt"><input type="radio" name="i2_mcq" value="option_b" onchange="saveState()"> <span>8 — Python is smart enough to add up typed numbers automatically</span></label>
-        <label class="radio-opt"><input type="radio" name="i2_mcq" value="option_c" onchange="saveState()"> <span>An error, because a and b were never given a proper value</span></label>
-        <label class="radio-opt"><input type="radio" name="i2_mcq" value="option_d" onchange="saveState()"> <span>Nothing is printed at all — the program stops silently</span></label>
+        <label class="radio-opt"><input type="radio" name="i2_mcq" value="option_a" onchange="saveState()"> <span>True — Python cannot continue without something typed in</span></label>
+        <label class="radio-opt"><input type="radio" name="i2_mcq" value="option_b" onchange="saveState()"> <span>False — Python happily stores an empty string "" and carries on, no error</span></label>
       </div>
       <div class="mcq-fb" id="fb_i2"></div>
       <button class="btn btn-next" id="btn_check_i2" style="margin-top:10px" onclick="nextStep('I', 2)" disabled>✓ Check answer</button>
       <button class="btn btn-skip" id="btn_skip_i2" style="margin-top:6px;display:none" onclick="skipStep('I')">Move on without completing →</button>
     </div>
 
-    <!-- Guided bug encounter — step 3 answer is a comprehension MCQ about the error message. -->
+    <!-- Guided bug encounter — step 3 answer is a comprehension MCQ about the error message.
+         Uses the SAME breakItDemo() button as step 4's self-practice card below. -->
     <div class="q-card step-hidden" id="qcard_i3" style="border-left-color:var(--stage-i)">
       <div style="font-size:0.84rem;color:var(--muted);margin-bottom:0.4rem">✍️ Your answer — step 3 (read the error)</div>
+      <div style="display:flex;gap:0.6rem;flex-wrap:wrap;margin-bottom:0.7rem;align-items:center">
+        <button class="btn btn-check" type="button" onclick="breakItDemo()">😈 Break it</button>
+        <span style="font-size:0.82rem;color:var(--muted);font-style:italic">adds the broken line above and runs it — then read the error below</span>
+      </div>
       <label class="q-label">You ran the broken line and read the error. <strong>What was Python complaining about?</strong></label>
       <div class="radio-opts" id="ropts_i3_mcq" style="margin-top:0.5rem">
         <label class="radio-opt"><input type="radio" name="i3_mcq" value="option_a" onchange="saveState()"> <span>The word print was spelled wrong on that line</span></label>
-        <label class="radio-opt"><input type="radio" name="i3_mcq" value="option_b" onchange="saveState()"> <span>You cannot join a piece of TEXT and a NUMBER with + unless you cast one of them</span></label>
+        <label class="radio-opt"><input type="radio" name="i3_mcq" value="option_b" onchange="saveState()"> <span>A variable called fullname was used but never created</span></label>
         <label class="radio-opt"><input type="radio" name="i3_mcq" value="option_c" onchange="saveState()"> <span>There were too many round brackets on that line</span></label>
-        <label class="radio-opt"><input type="radio" name="i3_mcq" value="option_d" onchange="saveState()"> <span>Python did not recognise one of the words used</span></label>
+        <label class="radio-opt"><input type="radio" name="i3_mcq" value="option_d" onchange="saveState()"> <span>Python ran out of memory part-way through the program</span></label>
       </div>
       <div class="mcq-fb" id="fb_i3"></div>
       <button class="btn btn-next" id="btn_check_i3" style="margin-top:10px" onclick="nextStep('I', 3)" disabled>✓ Check answer</button>
@@ -791,10 +788,10 @@ age <span class="kw">=</span> <span class="fn">int</span>(age)
         <button class="btn btn-check" type="button" onclick="breakItDemo()">😈 Break it</button>
         <span style="font-size:0.82rem;color:var(--muted);font-style:italic">then fix the line yourself and press ▶ Run code above</span>
       </div>
-      <label class="q-label">Each time you fixed the missing str() and ran the code again, what happened?</label>
+      <label class="q-label">Each time you deleted the broken line and ran the code again, what happened?</label>
       <div class="radio-opts" id="ropts_i4_mcq" style="margin-top:0.5rem">
         <label class="radio-opt"><input type="radio" name="i4_mcq" value="option_a" onchange="saveState()"> <span>Python quietly fixed the code and ran it anyway</span></label>
-        <label class="radio-opt"><input type="radio" name="i4_mcq" value="option_b" onchange="saveState()"> <span>The same TypeError appeared, and fixing it cleared it</span></label>
+        <label class="radio-opt"><input type="radio" name="i4_mcq" value="option_b" onchange="saveState()"> <span>The same NameError appeared, and deleting the line cleared it</span></label>
         <label class="radio-opt"><input type="radio" name="i4_mcq" value="option_c" onchange="saveState()"> <span>The program ran but showed no output on the screen</span></label>
         <label class="radio-opt"><input type="radio" name="i4_mcq" value="option_d" onchange="saveState()"> <span>A brand new, different error came up on each attempt</span></label>
       </div>
@@ -803,17 +800,6 @@ age <span class="kw">=</span> <span class="fn">int</span>(age)
       <button class="btn btn-next" id="btn_check_i4" style="margin-top:10px" onclick="tryCompleteInvestigate()" disabled>✓ Check answer</button>
       <button class="btn btn-skip" id="btn_skip_i4" style="margin-top:6px;display:none" onclick="skipStep('I')">Move on without completing →</button>
     </div>
-
-    <!--
-      To add a 5th step:
-        1. Add a prompt card id="qcard_i5_prompt" in #i_steps above, and an answer card
-           id="qcard_i5" (textarea id="i5") here in #i_answers
-        2. Change the previous last step's button back to nextStep('I', 4)
-        3. New step 5 button calls tryCompleteInvestigate()
-        4. Add 'i5' to TEXT_FIELDS in the JS
-        5. Add a 5th entry to I_FIELDS in the JS
-        6. Set STEP_COUNT_I = 5
-    -->
   </div>
 
   <!-- ④ Back / Forward through completed Investigate steps (same pattern as Predict). -->
@@ -864,51 +850,54 @@ age <span class="kw">=</span> <span class="fn">int</span>(age)
   <div id="m1_steps">
 
     <div id="m1_step_1">
-      <div class="section-label">★ Modification 1 — subtract</div>
+      <div class="section-label">★ Modification 1 — a new question</div>
       <div class="modify-task">
         <span class="stars">★</span>
         <div class="task-text">
-          Your <code style="background:#ede0ff;padding:0 3px;border-radius:3px">a</code> and <code style="background:#ede0ff;padding:0 3px;border-radius:3px">b</code> are now real numbers. Add a <strong>third print()</strong> that shows the DIFFERENCE between them: <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print(a - b)</code>.
+          Ask <strong>one new question</strong> with <code style="background:#ede0ff;padding:0 3px;border-radius:3px">input()</code> — e.g. <code style="background:#ede0ff;padding:0 3px;border-radius:3px">subject = input("Favourite subject? ")</code>. Then add a <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print()</code> that shows <strong>just that answer, on its own</strong> — no <code style="background:#ede0ff;padding:0 3px;border-radius:3px">+</code> needed yet.
         </div>
       </div>
     </div>
 
     <div id="m1_step_2" class="step-hidden">
-      <div class="section-label">★★ Modification 2 — a third number</div>
+      <div class="section-label">★ Modification 2 — a second question</div>
       <div class="modify-task">
-        <span class="stars">★★</span>
+        <span class="stars">★</span>
         <div class="task-text">
-          Keep mod 1. Now ask for a <strong>third number</strong>, casting it in <strong>one line</strong> — e.g. <code style="background:#ede0ff;padding:0 3px;border-radius:3px">e = int(input("Enter third number: "))</code>. Add a <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print()</code> that adds <strong>all three</strong> numbers together: <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print(a + b + e)</code>.
+          Keep mod 1. Ask <strong>another new question</strong> with a new <code style="background:#ede0ff;padding:0 3px;border-radius:3px">input()</code>, and <strong>print that answer too</strong> — again, just print it on its own. Your program should now ask (and print) <strong>two</strong> new questions in addition to the name question you started with.
         </div>
       </div>
     </div>
 
     <div id="m1_step_3" class="step-hidden">
-      <div class="section-label">★★ Modification 3 — find the average</div>
+      <div class="section-label">★★ Modification 3 — join with +</div>
       <div class="modify-task">
         <span class="stars">★★</span>
         <div class="task-text">
-          Keep mods 1–2. Use <code style="background:#ede0ff;padding:0 3px;border-radius:3px">/</code> to print the AVERAGE of your three numbers — e.g. <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print((a + b + e) / 3)</code>.
+          Keep mods 1–2. Pick one of your new answers and write a <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print()</code> that joins it with <strong>some extra text</strong> using <code style="background:#ede0ff;padding:0 3px;border-radius:3px">+</code> at least <strong>twice</strong> — e.g. <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print("Your favourite subject is " + subject + "!")</code>.
         </div>
       </div>
     </div>
 
     <div id="m1_step_4" class="step-hidden">
-      <div class="section-label">★★★ Modification 4 — a decimal number</div>
+      <div class="section-label">★★ Modification 4 — reuse an answer</div>
       <div class="modify-task">
-        <span class="stars">★★★</span>
+        <span class="stars">★★</span>
         <div class="task-text">
-          Keep mods 1–3. For the finale, ask for a <strong>decimal number</strong> using <code style="background:#ede0ff;padding:0 3px;border-radius:3px">float()</code> instead of <code style="background:#ede0ff;padding:0 3px;border-radius:3px">int()</code> — e.g. <code style="background:#ede0ff;padding:0 3px;border-radius:3px">f = float(input("Enter a decimal number: "))</code>. Print the total of <strong>all your numbers</strong> added together, including this new one.
+          Keep mods 1–3. An answer stored in a variable can be used as many times as you like. Pick <strong>any one</strong> of your answers and use it in <strong>two different</strong> <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print()</code> lines.
         </div>
       </div>
     </div>
 
-    <!--
-      To add a 5th modification:
-        1. Copy a step div above, set id="m1_step_5", class="step-hidden"
-        2. Add MOD_CHECKS.mod5 (and optionally MOD_INPUTS.mod5) in checkers.js
-        3. Set STEP_COUNT_M1 = 5 in the JS
-    -->
+    <div id="m1_step_5" class="step-hidden">
+      <div class="section-label">★★★ Modification 5 — one sentence from two boxes</div>
+      <div class="modify-task">
+        <span class="stars">★★★</span>
+        <div class="task-text">
+          Keep mods 1–4. For the finale, write a <strong>single</strong> <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print()</code> that joins <strong>two different</strong> <code style="background:#ede0ff;padding:0 3px;border-radius:3px">input()</code> answers together inside one sentence using <code style="background:#ede0ff;padding:0 3px;border-radius:3px">+</code>.
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Back / Forward through completed modifications (same pattern as Predict / Investigate). -->
@@ -943,7 +932,7 @@ age <span class="kw">=</span> <span class="fn">int</span>(age)
     <div class="stage-badge badge-M2">M</div>
     <div class="stage-header-text">
       <h2>Make</h2>
-      <p>Build a <strong>two-number calculator</strong> from scratch.</p>
+      <p>Build an <strong>interactive greeting</strong> from scratch.</p>
     </div>
   </div>
 
@@ -953,38 +942,37 @@ age <span class="kw">=</span> <span class="fn">int</span>(age)
 
   <div id="m2_make_task">
     <div class="info-box">
-      <span class="icon">🧮</span>
-      <span>Write a program that <strong>asks the user for two numbers</strong> and works something out from them. <strong>All success criteria below must be met</strong> before you check your code. (When you check, the program is tested with the numbers <code style="background:#2d1060;padding:0 4px;border-radius:3px">8</code> and <code style="background:#2d1060;padding:0 4px;border-radius:3px">2</code>.)</span>
+      <span class="icon">👋</span>
+      <span>Build a short, <strong>interactive greeting</strong> program from scratch. Ask the user <strong>three questions</strong> with <code style="background:#2d1060;padding:0 4px;border-radius:3px">input()</code> and print their answers back to them. <strong>All success criteria below must be met</strong> before you check your code.</span>
     </div>
 
     <div class="section-label">What your program must do</div>
 
     <ul class="req-list">
-      <li><span>1</span> Use <strong>input()</strong> twice to ask for two numbers — store each answer in its own variable.</li>
-      <li><span>2</span> Cast <strong>both</strong> numbers with <code style="background:#ede0ff;padding:0 3px;border-radius:3px">int()</code> so Python treats them as real numbers, not text.</li>
-      <li><span>3</span> Print the <strong>SUM</strong> of the two numbers using <code style="background:#ede0ff;padding:0 3px;border-radius:3px">+</code>.</li>
-      <li><span>4</span> Print at least <strong>one more calculation</strong> using the same two numbers — try <code style="background:#ede0ff;padding:0 3px;border-radius:3px">-</code>, <code style="background:#ede0ff;padding:0 3px;border-radius:3px">*</code> or <code style="background:#ede0ff;padding:0 3px;border-radius:3px">/</code>.</li>
+      <li><span>1</span> Use <strong>input()</strong> at least <strong>three times</strong> to ask three different questions, each stored in its own variable.</li>
+      <li><span>2</span> Use <code style="background:#ede0ff;padding:0 3px;border-radius:3px">+</code> in at least one <strong>print()</strong> to join an answer into a sentence.</li>
+      <li><span>3</span> Print all <strong>three</strong> answers somewhere in the output.</li>
     </ul>
   </div>
 
   <!-- Extension task — replaces the task description above after Make passes. -->
   <div id="m2_ext_task" class="step-hidden">
-    <div class="section-label">★★★★ Extension — design your own calculator</div>
+    <div class="section-label">★★★★ Extension — design your own program</div>
     <div class="modify-task ext">
       <span class="stars">★★★★</span>
       <div class="task-text">
-        You have total creative freedom here — pick <strong>any real-world calculation</strong> (a shopping total, a pizza-slices-per-person splitter, a distance-and-speed problem, a shape's area…) and build a program from scratch. Your program must:<br><br>
+        You have total creative freedom here — pick <strong>any school context</strong> (a homework planner, a club sign-up, a school notice board, a lost-property label, a timetable display…) and build a program from scratch that <strong>collects information and displays it neatly</strong>. Your program must:<br><br>
         <ul style="margin:0.4rem 0 0 1.1rem;line-height:2">
-          <li>Ask for at least <strong>3 numbers</strong> using <code style="background:#ede0ff;padding:0 3px;border-radius:3px">input()</code>, casting each with <code style="background:#ede0ff;padding:0 3px;border-radius:3px">int()</code> or <code style="background:#ede0ff;padding:0 3px;border-radius:3px">float()</code></li>
-          <li>Use at least <strong>two different</strong> arithmetic operators (from <code style="background:#ede0ff;padding:0 3px;border-radius:3px">+ - * /</code>) across your <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print()</code> lines</li>
-          <li>In at least one <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print()</code>, combine <strong>all three</strong> numbers together in a single calculation</li>
+          <li>Ask the user at least <strong>4 questions</strong> using <code style="background:#ede0ff;padding:0 3px;border-radius:3px">input()</code></li>
+          <li>Use <code style="background:#ede0ff;padding:0 3px;border-radius:3px">+</code> in at least <strong>two different</strong> <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print()</code> lines</li>
+          <li>In at least one <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print()</code>, join <strong>two or more</strong> of your answers together in the same sentence</li>
         </ul>
       </div>
     </div>
   </div>
 
   <div class="code-checker">
-    <textarea class="checker-textarea" id="m2_editor" data-title="Number calculator" style="min-height:320px" oninput="saveState()"></textarea>
+    <textarea class="checker-textarea" id="m2_editor" data-title="Interactive greeting" style="min-height:320px" oninput="saveState()"></textarea>
     <div class="checker-footer">
       <button class="btn btn-check" onclick="runCodeInEditor('m2_editor', 'm2_fb_run')">▶ Run code</button>
       <button class="btn btn-check" id="btn_check_m2" onclick="checkMake()">⚡ Check program</button>
@@ -996,7 +984,7 @@ age <span class="kw">=</span> <span class="fn">int</span>(age)
   <div class="completion-banner" id="completionBanner">
     <div style="font-size:2.5rem;margin-bottom:0.5rem">🏆</div>
     <h3>PRIMM Complete!</h3>
-    <p>You've worked through all five stages for data types &amp; casting. Excellent work — show your teacher!</p>
+    <p>You've worked through all five stages for input. Excellent work — show your teacher!</p>
   </div>
 </section>
 
@@ -1046,15 +1034,11 @@ import { setupEditors, clearSyntaxHint, setEditorOutput, refreshEditor, runCode 
 //  These three constants are the only JS values that differ between activities.
 // ═══════════════════════════════════════════════════════
 
-const STORAGE_KEY    = 'primm_l3_data_types_casting';        // unique per activity
-const ACTIVITY_TITLE = 'Data Types & Casting — PRIMM Practice';  // must match <!-- ACTIVITY title: --> above
-const STARTER_CODE   = `a = "5"
-b = "5"
-print(a + b)
-
-c = 5
-d = 5
-print(c + d)`;
+const STORAGE_KEY    = 'primm_l3_input';        // unique per activity
+const ACTIVITY_TITLE = 'Input — PRIMM Practice';  // must match <!-- ACTIVITY title: --> above
+const STARTER_CODE   = `name = input("What is your name? ")
+greeting = "Hello "
+print(greeting + name)`;
 
 
 // ═══════════════════════════════════════════════════════
@@ -1064,20 +1048,21 @@ print(c + d)`;
 // ═══════════════════════════════════════════════════════
 
 const STEP_COUNT_I  = 4;   // must equal the number of qcard_i1…qcard_iN cards
-const STEP_COUNT_M1 = 4;   // must equal the number of m1_step_1…m1_step_N divs
+const STEP_COUNT_M1 = 5;   // must equal the number of m1_step_1…m1_step_N divs
 
 
 // ═══════════════════════════════════════════════════════
-//  FILL IN ②b — The standard "fix a bug" pair (ALWAYS the last two Investigate steps)
-//  Step 3 = guided encounter (bug planted for the student). Step 4 = "😈 Break it"
-//  self-practice (same bug, repeated 2–3 times, unaided). Mixing TEXT and a NUMBER
-//  the opposite way round from steps 1–2 (str() instead of int()) — same misconception,
-//  cast in the other direction.
+//  The standard "fix a bug" pair (ALWAYS the last two Investigate steps)
+//  See _templates/PRIMM_Python_Y8.html FILL IN ②b for the full explanation.
+//  IBUG_LINE here is print(fullname) — a variable that was never created
+//  (only `name` was, via input()), giving a NameError. There is no edited
+//  "fixed" version of the line (unlike the missing-quote / missing-str()
+//  bugs in other lessons) — the fix is simply deleting it, so this activity
+//  has no IBUG_FIXED_LINE.
 // ═══════════════════════════════════════════════════════
 
-const IBUG_LINE       = 'print("Total: " + 5)';        // deliberately broken
-const IBUG_FIXED_LINE = 'print("Total: " + str(5))';   // the corrected version
-const BUG_STEP = STEP_COUNT_I - 1;   // guided encounter is always second-to-last; break-it is always last
+const IBUG_LINE = 'print(fullname)';   // deliberately broken — never-created variable
+const BUG_STEP = STEP_COUNT_I - 1;     // guided encounter is always second-to-last; break-it is always last
 
 
 // ═══════════════════════════════════════════════════════
@@ -1089,7 +1074,7 @@ const BUG_STEP = STEP_COUNT_I - 1;   // guided encounter is always second-to-las
 const TEXT_FIELDS = [
   'p_text1',                              // Predict free-text question(s)
   'r_editor', 'r1',                       // Run stage
-  'i_editor', 'i1',                      // Investigate free-text steps — i2/i3/i4 are MCQs
+  'i_editor', 'i1',                      // Investigate text answers (i2/i3/i4 are MCQs)
   'm1_editor', 'm2_editor',              // Modify + Make editors
 ];
 const RADIO_GROUPS = ['p_mcq1', 'p_mcq2', 'i2_mcq', 'i3_mcq', 'i4_mcq'];  // Predict + Investigate radio group name= values
@@ -1103,16 +1088,16 @@ const RADIO_GROUPS = ['p_mcq1', 'p_mcq2', 'i2_mcq', 'i3_mcq', 'i4_mcq'];  // Pre
 // ═══════════════════════════════════════════════════════
 
 const P_CORRECT = {
-  p_mcq1: 'option_a',   // 55 — text is joined, not added
-  p_mcq2: 'option_a',   // True — without quotes, c and d are real numbers
+  p_mcq1: 'option_a',   // "Pauses, waits for typing, then stores it in name"
+  p_mcq2: 'option_b',   // False — the prompt text is just a message, not stored
 };
 const P_PASS_MSG = {
-  p_mcq1: 'Correct — a and b hold TEXT (because of the quotes), so + joins them end to end: "5" + "5" = "55".',
-  p_mcq2: 'Correct — without quotes, Python treats c and d as real numbers, so + adds them up: 5 + 5 = 10.',
+  p_mcq1: 'Correct — input() pauses the program and waits. Whatever the user types becomes the value stored in name.',
+  p_mcq2: 'Correct — the text inside the brackets is only a message shown to the user; only what they TYPE gets stored.',
 };
 const P_FAIL_MSG = {
-  p_mcq1: 'Not quite — look at the quotes on lines 1–2. a and b hold TEXT, not numbers, so + joins the two pieces together rather than adding them: "5" + "5" = "55".',
-  p_mcq2: 'Not quite — c and d have no quotation marks, so Python stores them as real numbers. With numbers, + adds them up: 5 + 5 = 10.',
+  p_mcq1: 'Not quite — input() does not store its own message, print anything early, or check for existing variables. It pauses and waits for the user to type, then stores that in name.',
+  p_mcq2: 'Not quite — the prompt text ("What is your name? ") is just a message shown on screen. Only what the user actually types ends up stored in name.',
 };
 
 
@@ -1133,45 +1118,46 @@ const I_FIELDS = [
   // the editor will auto-append a newline and position the cursor there on transition.
 
   { id:'i1', cardId:'qcard_i1', type:'text', needsNewLine: false, validate(v) {
-    if (v.length < 4)  return 'Explain why it still joins the two values — even a few words is fine.';
+    if (v.length < 4)  return 'Describe what happened — even a few words is fine.';
     if (isNonsense(v)) return "That doesn't look like a real answer.";
     return null;
   }},
 
-  // Step 2 is an MCQ (the "surprise" — input() always returns text, so + still joins).
-  { id:'i2', cardId:'qcard_i2', type:'mcq', radioName:'i2_mcq', correctValue:'option_a',
+  // Step 2 is a True/False MCQ (blank input gives an empty string, not an error).
+  { id:'i2', cardId:'qcard_i2', type:'mcq', radioName:'i2_mcq', correctValue:'option_b',
     needsNewLine: false,
-    passMsg: 'Exactly — input() always hands back TEXT, so + joins "5" and "3" end to end, giving 53, not 8.',
-    failMsg: 'Not quite — input() always returns text, even when the user types digits. So + joins "5" and "3" together, giving 53 — not the sum, 8.',
+    passMsg: 'Exactly — input() happily stores an empty string "" when nothing is typed. No error at all.',
+    failMsg: 'Not quite — try it again and read the output carefully. Did the program actually stop, or did it carry on with an empty answer?',
     validate() {
       const c = document.querySelector('input[name="i2_mcq"]:checked');
       if (!c) return 'Select an answer before checking — even a guess is fine.';
-      if (c.value !== 'option_a') return 'Think about what input() actually returns — a number, or text that only looks like a number?';
+      if (c.value !== 'option_b') return 'Think about what actually happened when you pressed Enter — did the program stop, or carry on?';
       return null;
     },
   },
 
-  // ── THE STANDARD BUG PAIR (do not remove — see FILL IN ②b above) ──────────
-  // Step 3 — guided: the student reads the error and identifies the mismatch.
+  // ── THE STANDARD BUG PAIR (do not remove — see IBUG_LINE/BUG_STEP above) ──
+  // Step 3 — guided: the student reads the error and identifies what Python
+  // was complaining about.
   { id:'i3', cardId:'qcard_i3', type:'mcq', radioName:'i3_mcq', correctValue:'option_b', needsNewLine: false,
-    passMsg: 'Exactly — Python will not silently join text and a number together; one of them has to be cast first.',
-    failMsg: 'Read the error and the line it points to again — look at what "Total: " and 5 actually are.',
+    passMsg: 'Exactly — fullname was never created with an = sign, so Python has no idea what it refers to.',
+    failMsg: 'Read the error and the line it points to again — which name has Python never seen before?',
     validate() {
       const c = document.querySelector('input[name="i3_mcq"]:checked');
       if (!c) return 'Select an answer before checking — even a guess is fine.';
-      if (c.value !== 'option_b') return 'Not quite — read the error message again. What TWO different kinds of value is + trying to join?';
+      if (c.value !== 'option_b') return 'Not quite — read the error message again. Which variable has never been created?';
       return null;
     },
   },
   // Step 4 — self-practice: after repeating the break/fix cycle 2–3 times with
   // "😈 Break it", the student reflects on the pattern (errors are transient and normal).
   { id:'i4', cardId:'qcard_i4', type:'mcq', radioName:'i4_mcq', correctValue:'option_b', needsNewLine: false,
-    passMsg: 'Right — the same TypeError every time, and it went away the moment you added str().',
-    failMsg: 'Look again — each time the number was left uncast Python stopped with the same TypeError, and adding str() cleared it instantly.',
+    passMsg: 'Right — the same NameError every time, and it went away the moment you deleted the line.',
+    failMsg: 'Look again — each time the broken line was present Python stopped with the same error, and deleting it cleared it instantly.',
     validate() {
       const c = document.querySelector('input[name="i4_mcq"]:checked');
       if (!c) return 'Select an answer before checking — even a guess is fine.';
-      if (c.value !== 'option_b') return 'Not quite — think about what happened each time the number was left uncast.';
+      if (c.value !== 'option_b') return 'Not quite — think about what happened each time the broken line was present.';
       return null;
     },
   },
@@ -1190,14 +1176,20 @@ const I_FIELDS = [
 // ═══════════════════════════════════════════════════════
 
 const I_CODE_CHECKS = [
-  // Step 1: a should no longer be the literal "5" — it must come from input().
-  function(code) { if (/\ba\s*=\s*["']\s*5\s*["']/.test(code)) return 'change line 1 so a is set with input("Enter first number: ").'; return null; },
-  // Step 2: both a and b must end up cast with int(input(...)) — covers the "53" moment and the fix.
-  function(code) { if (!/\ba\s*=\s*int\s*\(\s*input\s*\(/.test(code) || !/\bb\s*=\s*int\s*\(\s*input\s*\(/.test(code)) return 'wrap both a and b in int(input(...)) as shown above.'; return null; },
-  // Standard bug pair — both gates just require the line to currently read
-  // IBUG_FIXED_LINE (i.e. not still broken, and not reverted to something else).
-  function(code) { if (!code.includes(IBUG_FIXED_LINE)) return 'fix the broken line so it reads exactly as shown above.'; return null; },
-  function(code) { if (!code.includes(IBUG_FIXED_LINE)) return 'press ▶ Run code after fixing the line you just broke.'; return null; },
+  // Step 1: the prompt message inside input() should no longer be the original.
+  function(code) { if (/input\s*\(\s*["']\s*what is your name\?\s*["']/i.test(code)) return 'change the message inside input(...) on line 1 to something different.'; return null; },
+  // Step 2: no code change required — same code, run again and leave the answer blank.
+  function(code) { return null; },
+  // Standard bug pair — the gate normally requires the planted line to be
+  // gone (deleted, not merely edited — there is no "fixed" version to check
+  // for). Some students "fix" it a different, equally valid way instead:
+  // renaming the existing `name` variable to `fullname` throughout the code
+  // (including its assignment line), which makes `fullname` a real variable
+  // and the print(fullname) line run without error. Treat that as fixed
+  // too — only block when `print(fullname)` is present AND fullname was
+  // never actually assigned anywhere else in the code.
+  function(code) { if (code.includes(IBUG_LINE) && !/\bfullname\s*=[^=]/.test(code)) return 'delete the broken print(fullname) line so your code runs cleanly again.'; return null; },
+  function(code) { if (code.includes(IBUG_LINE) && !/\bfullname\s*=[^=]/.test(code)) return 'press ▶ Run code after deleting the line you just broke.'; return null; },
 ];
 
 
@@ -1218,6 +1210,15 @@ let stepM1 = state.stepM1 || 1;
 let maxPredictStep = state.maxPredictStep || predictStep;
 let maxStepI       = state.maxStepI       || stepI;
 let maxStepM1      = state.maxStepM1      || stepM1;
+// Per-step code snapshots for the shared i_editor/m1_editor textareas — captured
+// when a step's check passes, so Back/Forward can show the code as it stood for
+// that answer rather than whatever the student has since typed further on.
+// iCodeDraft/m1CodeDraft hold the in-progress (not yet checked) frontier code so
+// stepping away and back doesn't lose unsaved edits.
+let iCodeSnapshots  = state.iCodeSnapshots  || {};
+let iCodeDraft      = state.iCodeDraft;
+let m1CodeSnapshots = state.m1CodeSnapshots || {};
+let m1CodeDraft     = state.m1CodeDraft;
 let skippedStages = state.skippedStages || [];
 let attemptCounts = state.attemptCounts || {};
 let iStepRan = state.iStepRan || {};
@@ -1230,6 +1231,23 @@ const PREDICT_NAMES = ['p_mcq1', 'p_mcq2', 'p_text1'];
 const PREDICT_TOTAL = PREDICT_CARDS.length;
 
 const STAGES = ['P','R','I','M1','M2'];
+
+// ── "Stuck" indicator ──────────────────────────────────
+// If a student sits on the same stage without progressing past the thresholds
+// below, the top progress bar turns amber (see .progress-fill.stuck) as a quiet
+// nudge to ask for help. M2 (Make) has no threshold — open-ended build time is
+// expected there, so it is deliberately absent from this map.
+const STUCK_THRESHOLDS_MS = { P: 5 * 60 * 1000, R: 5 * 60 * 1000, I: 5 * 60 * 1000, M1: 10 * 60 * 1000 };
+let stageEnteredAt = Date.now();
+
+function checkStuck() {
+  const fill = document.getElementById('progressFill');
+  if (!fill) return;
+  const threshold = STUCK_THRESHOLDS_MS[currentStage];
+  const stuck = !!threshold && (Date.now() - stageEnteredAt) >= threshold;
+  fill.classList.toggle('stuck', stuck);
+  fill.title = stuck ? 'Been a while on this step — ask your teacher if you’re stuck.' : '';
+}
 
 // ── Save / restore ────────────────────────────────────
 
@@ -1254,6 +1272,10 @@ function saveState() {
   state.skippedStages = skippedStages;
   state.attemptCounts = attemptCounts;
   state.iStepRan = iStepRan;
+  state.iCodeSnapshots  = iCodeSnapshots;
+  state.iCodeDraft      = iCodeDraft;
+  state.m1CodeSnapshots = m1CodeSnapshots;
+  state.m1CodeDraft     = m1CodeDraft;
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
 }
 
@@ -1293,10 +1315,11 @@ function updateGranularProgress() {
 // ── Step visibility ───────────────────────────────────
 
 function updateStepVisibility() {
+  const iRevisiting = stepI < maxStepI;   // stepped back to a completed step
   for (let i = 1; i <= STEP_COUNT_I; i++) {
     const active = i === stepI;
     // a step's instruction (prompt, top) and answer (below the editor) are toggled together
-    const revisiting = active && stepI < maxStepI;   // stepped back to a completed step
+    const revisiting = active && iRevisiting;
     const prompt = document.getElementById('qcard_i' + i + '_prompt');
     const ans    = document.getElementById('qcard_i' + i);
     prompt?.classList.toggle('step-hidden', !active);
@@ -1306,12 +1329,20 @@ function updateStepVisibility() {
     const checkBtn = document.getElementById('btn_check_i' + i);
     if (checkBtn) checkBtn.disabled = !iStepRan[i];
   }
-  maybePlantBugLine();   // standard bug pair — idempotent, safe to call on every render
+  // The editor is shared across all Investigate steps — lock it to read-only while
+  // looking back at an already-completed step, since edits there would be silently
+  // discarded the moment the student moves on again (see restoreCodeForStep).
+  const iEditor = document.getElementById('i_editor');
+  if (iEditor) iEditor.readOnly = iRevisiting;
+  syncBugLineLabel();   // standard bug pair — keep the "line N" label current, no planting
+  const m1Revisiting = stepM1 < maxStepM1;
   for (let i = 1; i <= STEP_COUNT_M1; i++) {
     const step = document.getElementById('m1_step_' + i);
     step?.classList.toggle('step-hidden', i !== stepM1);
-    step?.classList.toggle('revisiting', i === stepM1 && stepM1 < maxStepM1);
+    step?.classList.toggle('revisiting', i === stepM1 && m1Revisiting);
   }
+  const m1Editor = document.getElementById('m1_editor');
+  if (m1Editor) m1Editor.readOnly = m1Revisiting;
 
   const m1Btn = document.getElementById('btn_check_m1');
   if (m1Btn) m1Btn.textContent = stepM1 === STEP_COUNT_M1
@@ -1350,13 +1381,44 @@ function renderStepNav(stage) {
   if (bar) bar.style.display = (canBack || canFwd) ? '' : 'none';
 }
 
+// Before stepping away from the current frontier (in-progress, not-yet-checked)
+// step, stash its live code so Forward can bring it back exactly as left.
+// Completed steps already have a locked snapshot (taken when their check passed)
+// and are never overwritten by this.
+function snapshotFrontierIfNeeded(stage) {
+  if (stage === 'I' && stepI === maxStepI && iCodeSnapshots[stepI] === undefined) {
+    iCodeDraft = document.getElementById('i_editor')?.value;
+  } else if (stage === 'M1' && stepM1 === maxStepM1 && m1CodeSnapshots[stepM1] === undefined) {
+    m1CodeDraft = document.getElementById('m1_editor')?.value;
+  }
+}
+
+// Load the shared editor with the code as it stood for `step` — its locked
+// snapshot if the step has been completed, or the stashed frontier draft if it's
+// the in-progress step. Leaves the editor untouched if neither exists yet (first
+// time arriving at a step via normal forward progress, not Back/Forward).
+function restoreCodeForStep(stage, step) {
+  const isI = stage === 'I';
+  const ta = document.getElementById(isI ? 'i_editor' : 'm1_editor');
+  if (!ta) return;
+  const snapshots = isI ? iCodeSnapshots : m1CodeSnapshots;
+  const draft     = isI ? iCodeDraft     : m1CodeDraft;
+  const maxStep   = isI ? maxStepI       : maxStepM1;
+  let code;
+  if (snapshots[step] !== undefined) code = snapshots[step];
+  else if (step === maxStep && draft !== undefined) code = draft;
+  else return;
+  ta.value = code;
+  refreshEditor(ta);
+}
+
 function goBack(stage) {
   if (stage === 'P') {
     if (predictStep > 1) { predictStep--; renderPredict(); saveState(); }
   } else if (stage === 'I') {
-    if (stepI > 1) { stepI--; updateStepVisibility(); saveState(); scrollToActive('qcard_i' + stepI + '_prompt'); }
+    if (stepI > 1) { snapshotFrontierIfNeeded('I'); stepI--; restoreCodeForStep('I', stepI); updateStepVisibility(); saveState(); scrollToActive('qcard_i' + stepI + '_prompt'); }
   } else if (stage === 'M1') {
-    if (stepM1 > 1) { stepM1--; updateStepVisibility(); saveState(); scrollToActive('m1_step_' + stepM1); }
+    if (stepM1 > 1) { snapshotFrontierIfNeeded('M1'); stepM1--; restoreCodeForStep('M1', stepM1); updateStepVisibility(); saveState(); scrollToActive('m1_step_' + stepM1); }
   }
 }
 
@@ -1364,9 +1426,9 @@ function goForward(stage) {
   if (stage === 'P') {
     if (predictStep < maxPredictStep) { predictStep++; renderPredict(); saveState(); }
   } else if (stage === 'I') {
-    if (stepI < maxStepI) { stepI++; updateStepVisibility(); saveState(); scrollToActive('qcard_i' + stepI + '_prompt'); }
+    if (stepI < maxStepI) { stepI++; restoreCodeForStep('I', stepI); updateStepVisibility(); saveState(); scrollToActive('qcard_i' + stepI + '_prompt'); }
   } else if (stage === 'M1') {
-    if (stepM1 < maxStepM1) { stepM1++; updateStepVisibility(); saveState(); scrollToActive('m1_step_' + stepM1); }
+    if (stepM1 < maxStepM1) { stepM1++; restoreCodeForStep('M1', stepM1); updateStepVisibility(); saveState(); scrollToActive('m1_step_' + stepM1); }
   }
 }
 
@@ -1414,6 +1476,8 @@ function showStage(s, persist = true) {
   document.getElementById('stage-' + s).classList.add('active');
   document.querySelector(`[data-stage="${s}"]`).classList.add('active');
   currentStage = s;
+  stageEnteredAt = Date.now();
+  checkStuck();
 
   if (s === 'R') {
     const ta = document.getElementById('r_editor');
@@ -1493,6 +1557,7 @@ async function runCodeInEditor(editorId, statusElId, inputs = null) {
     statusEl.textContent = '⏳ Running…';
   }
   const result = await runCode(editorEl, { inputs });
+  if (result.cancelled) return; // a later Run click superseded this one — it already owns the UI
   clearSyntaxHint(editorEl);
 
   if (editorId === 'r_editor' && !firstRunShown) {
@@ -1522,59 +1587,47 @@ async function runCodeInEditor(editorId, statusElId, inputs = null) {
 function resetInvestigateEditor() {
   const ta = document.getElementById('i_editor');
   ta.value = STARTER_CODE;
-  state.iBugPlanted = false;
+  iCodeDraft = undefined;
   refreshEditor(ta);
   saveState();
-  if (stepI === BUG_STEP) maybePlantBugLine();   // BUG_STEP always starts from a broken line
+  // No auto-replant here — BUG_STEP now starts clean; the student presses
+  // "😈 Break it" again themselves, same as after any other reset.
 }
 
-// ── Standard "fix a bug" pair (see FILL IN ②b) ─────────────────────────────
+// ── Standard "fix a bug" pair ──────────────────────────────────────────────
 //
-// BUG_STEP plants ONE broken line automatically so the student meets a real error
-// without having to sabotage their own code. It is removed again once they have
-// fixed it and moved on (see nextStep / skipStep / tryCompleteInvestigate).
-// Idempotent — safe to call from updateStepVisibility on every render.
-function maybePlantBugLine() {
-  const lineSpan = document.getElementById('ibug_line');
-  if (state.iBugPlanted && state.iBugPlantedLineNo && lineSpan)
-    lineSpan.textContent = String(state.iBugPlantedLineNo);
-  if (stepI !== BUG_STEP || state.iBugPlanted || maxStepI > BUG_STEP) return;
-  const ta = document.getElementById('i_editor');
-  if (!ta) return;
-  const body = ta.value.replace(/\s+$/, '');
-  ta.value = body + '\n' + IBUG_LINE + '\n';
-  state.iBugPlanted = true;
-  state.iBugPlantedLineNo = body.split('\n').length + 1;
-  if (lineSpan) lineSpan.textContent = String(state.iBugPlantedLineNo);
-  refreshEditor(ta);
-  saveState();
-}
-
-// The final Investigate step — "😈 Break it" reintroduces the SAME bug on demand so
-// the student can practise spotting and fixing it unaided, 2–3 times in a row. It
-// toggles between IBUG_LINE and IBUG_FIXED_LINE so repeated clicks never pile up
-// duplicate lines. Safe to mash.
+// "😈 Break it" is used at BOTH the guided step (BUG_STEP — student presses it
+// once, with the line and error explained to them) and the final self-practice
+// step (same button, pressed unaided 2–3 times to practise spotting and deleting
+// the line). Safe to mash — it only re-adds the line if it isn't there.
 function breakItDemo() {
   const ta = document.getElementById('i_editor');
   if (!ta) return;
-  if (ta.value.includes(IBUG_FIXED_LINE)) {
-    ta.value = ta.value.replace(IBUG_FIXED_LINE, IBUG_LINE);
-  } else if (!ta.value.includes(IBUG_LINE)) {
+  const lineSpan = document.getElementById('ibug_line');
+  if (!ta.value.includes(IBUG_LINE)) {
     const body = ta.value.replace(/\s+$/, '');
     ta.value = body + '\n' + IBUG_LINE + '\n';
+    state.iBugPlantedLineNo = body.split('\n').length + 1;
+    if (lineSpan) lineSpan.textContent = String(state.iBugPlantedLineNo);
+    saveState();
   }
   refreshEditor(ta);
-  runCodeInEditor('i_editor', 'i_fb_run');   // no explicit inputs — auto-collect any live input() prompts interactively
+  runCodeInEditor('i_editor', 'i_fb_run', []);
 }
 
-// Remove the auto-planted/broken-or-fixed demo line once the bug pair has done its
-// job (student advanced past it or skipped it), so Modify inherits clean code.
+// Keeps the "line N" label in the BUG_STEP prompt showing the right number when
+// the student steps Back/Forward to revisit it — never plants or removes anything.
+function syncBugLineLabel() {
+  const lineSpan = document.getElementById('ibug_line');
+  if (lineSpan && state.iBugPlantedLineNo) lineSpan.textContent = String(state.iBugPlantedLineNo);
+}
+
+// Remove the auto-planted broken line once the bug pair has done its job (student
+// advanced past it or skipped it), so Modify inherits clean code.
 function stripPlantedBugLine() {
   const ta = document.getElementById('i_editor');
   if (!ta) return;
-  ta.value = ta.value.split('\n')
-    .filter(l => l.trim() !== IBUG_FIXED_LINE && l.trim() !== IBUG_LINE)
-    .join('\n');
+  ta.value = ta.value.split('\n').filter(l => l.trim() !== IBUG_LINE).join('\n');
   refreshEditor(ta);
 }
 
@@ -1731,16 +1784,16 @@ function checkPredictMCQ(name) {
 
 // Compute + render the free-text feedback. Returns true if the typed answer matched.
 function evaluatePredictText() {
-  // Expected output is "34" — input() returns text, so + joins "3" and "4" together.
+  // Expected output is "Hello Aisha". Be forgiving of stray quotes and extra spaces.
   const val = (document.getElementById('p_text1')?.value || '')
     .trim().toLowerCase().replace(/["']/g, '').replace(/\s+/g, ' ');
-  const ok = val === '34';
+  const ok = val === 'hello aisha';
   const fb = document.getElementById('fb_p_text1');
   if (fb) {
     fb.className = 'mcq-fb ' + (ok ? 'pass' : 'fail');
     fb.textContent = ok
-      ? '✔ Correct — this is the surprise! input() always returns TEXT, even though the user typed digits, so + joins "3" and "4" together to give 34, not 7.'
-      : '✘ Not quite — input() always hands back TEXT, even when the user types a number. So x + y joins "3" and "4" together, giving 34 — not the sum, 7.';
+      ? '✔ Correct — whatever gets typed is stored in name, so "Hello " joined to "Aisha" gives Hello Aisha.'
+      : '✘ Not quite — whatever the user types is stored in name exactly as typed, then joined onto "Hello ": "Hello " (with its trailing space) + "Aisha" = Hello Aisha. Python does not show the variables\' names or the speech marks.';
   }
   return ok;
 }
@@ -1889,6 +1942,9 @@ function nextStep(stage, n) {
   card.classList.add('is-right');
   fieldHint(card, '');
   window.ActivityUI?.miniCelebration(card);
+  // Lock in the code as it stood for this answer, so Back/Forward can restore it later.
+  iCodeSnapshots[n] = code;
+  iCodeDraft = undefined;
   const btn = card.querySelector('.btn-next');
   if (btn) { btn.disabled = true; btn.textContent = '✅ Moving on…'; }
   window.ActivityUI?.showToast('✅ Good observation! On to the next change…');
@@ -1965,8 +2021,9 @@ function tryCompleteInvestigate() {
   });
 
   if (allOk) {
+    iCodeSnapshots[STEP_COUNT_I] = code;
+    iCodeDraft = undefined;
     stripPlantedBugLine();   // break-it demo line must not carry into Modify
-    const lastCard = document.getElementById('qcard_i' + STEP_COUNT_I);
     const lastBtn  = lastCard?.querySelector('.btn-next');
     if (lastBtn) { lastBtn.disabled = true; lastBtn.textContent = '✅ Investigation complete! Moving on…'; }
     window.ActivityUI?.miniCelebration(lastCard);
@@ -2006,6 +2063,9 @@ async function checkMod() {
   setEditorOutput(document.getElementById('m1_editor'), run.output, false);
   clearSyntaxHint(document.getElementById('m1_editor'));
   passedChecks[checkId] = true;
+  // Lock in the code as it stood for this modification, so Back/Forward can restore it later.
+  m1CodeSnapshots[stepM1] = raw;
+  m1CodeDraft = undefined;
   window.ActivityUI?.miniCelebration(fbEl);
   window.ActivityUI?.showToast('✅ Modification ' + stepM1 + ' complete!');
   if (stepM1 < STEP_COUNT_M1) {
@@ -2035,8 +2095,8 @@ async function checkMake() {
     fbEl.className = 'feedback fail'; fbEl.textContent = structural.msg; return;
   }
   fbEl.className = 'feedback loading'; fbEl.textContent = '⏳ Checking…';
-  // Two input() calls expected (first number, then second). Extra answers are harmless.
-  const run = await runPython(raw, { inputs: ['8', '2'] });
+  // Three input() calls expected. Extra answers are harmless.
+  const run = await runPython(raw, { inputs: ['Alex', 'Maths', 'blue'] });
   if (!run.ok) {
     fbEl.className = 'feedback fail';
     fbEl.textContent = '❌ Your program has an error: ' + run.output; return;
@@ -2066,8 +2126,8 @@ async function checkExt() {
     fbEl.className = 'feedback fail'; fbEl.textContent = structural.msg; return;
   }
   fbEl.className = 'feedback loading'; fbEl.textContent = '⏳ Checking…';
-  // Three input() calls minimum expected in the extension. Extra answers are harmless.
-  const run = await runPython(raw, { inputs: ['10', '4', '2'] });
+  // Four input() calls minimum expected in the extension. Extra answers are harmless.
+  const run = await runPython(raw, { inputs: ['Alex', 'Maths', 'blue', '13'] });
   if (!run.ok) {
     fbEl.className = 'feedback fail';
     fbEl.textContent = '❌ Your program has an error: ' + run.output; return;
@@ -2095,17 +2155,28 @@ function markStageSkipped(stage) {
   if (!skippedStages.includes(stage)) skippedStages.push(stage);
   const btn = document.querySelector(`[data-stage="${stage}"]`);
   if (btn) btn.classList.add('skipped');
+  flashSkip();
   saveState();
+}
+
+// One-off red flash on the top progress bar — the remove/reflow/add dance lets
+// it re-trigger even if a flash from an earlier skip is still on the element.
+function flashSkip() {
+  const fill = document.getElementById('progressFill');
+  if (!fill) return;
+  fill.classList.remove('skip-flash');
+  void fill.offsetWidth;
+  fill.classList.add('skip-flash');
 }
 
 function skipStep(stage) {
   markStageSkipped(stage);
   if (stage === 'I') {
     if (stepI === BUG_STEP || stepI === STEP_COUNT_I) stripPlantedBugLine();   // don't carry the broken line forward
-    if (stepI < STEP_COUNT_I) { stepI++; maxStepI = Math.max(maxStepI, stepI); updateStepVisibility(); saveState(); }
+    if (stepI < STEP_COUNT_I) { stepI++; maxStepI = Math.max(maxStepI, stepI); updateStepVisibility(); saveState(); scrollToActive('qcard_i' + stepI + '_prompt'); }
     else { completeStage('I'); }
   } else if (stage === 'M1') {
-    if (stepM1 < STEP_COUNT_M1) { stepM1++; maxStepM1 = Math.max(maxStepM1, stepM1); updateStepVisibility(); saveState(); }
+    if (stepM1 < STEP_COUNT_M1) { stepM1++; maxStepM1 = Math.max(maxStepM1, stepM1); updateStepVisibility(); saveState(); scrollToActive('m1_step_' + stepM1); }
     else { completeStage('M1'); }
   }
 }
@@ -2153,6 +2224,7 @@ window.addEventListener('DOMContentLoaded', () => {
   showStage(currentStage, false);
   updateNav();
   updateProgress();
+  setInterval(checkStuck, 15000);
 
   setPyStatus('loading');
   preload().then(() => setPyStatus('ready')).catch(() => setPyStatus('error'));

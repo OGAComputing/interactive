@@ -43,9 +43,10 @@ color:  purple
     --font-mono:    'Consolas','SFMono-Regular','Courier New',monospace;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { overflow-x: hidden; }
   body {
     font-family: var(--font-body); background: #07021a; color: var(--text);
-    min-height: 100vh; position: relative; overflow-x: hidden;
+    min-height: 100vh; position: relative;
   }
   /* Atmospheric nebula glow behind everything */
   body::before {
@@ -312,6 +313,11 @@ color:  purple
   .completion-banner p  { color: #a7f3c8; font-size: 0.9rem; }
   .progress-strip { height: 10px; background: #0a081c; position: sticky; top: 0; z-index: 10; box-shadow: inset 0 0 8px rgba(0,0,0,0.6); }
   .progress-fill  { height: 100%; background: linear-gradient(90deg, var(--purple), var(--teal), var(--stage-m2)); background-size: 200% 100%; transition: width 0.5s ease; box-shadow: 0 0 12px rgba(47,243,224,0.6); animation: xp-shimmer 3s linear infinite; }
+  /* Flags to the student (and a teacher glancing at the screen) that no progress has
+     been made on the current stage for a while — see STUCK_THRESHOLDS_MS in the JS. */
+  .progress-fill.stuck { background: var(--amber); animation: stuck-pulse 1.6s ease-in-out infinite; }
+  /* One-off red flash when a stage gets marked skipped (see markStageSkipped in the JS). */
+  .progress-fill.skip-flash { animation: skip-flash 1s ease-in-out; }
 
   .step-hidden { display: none !important; }
 
@@ -319,6 +325,11 @@ color:  purple
   @keyframes node-pulse { 0%, 100% { transform: scale(1.08); } 50% { transform: scale(1.18); } }
   @keyframes panel-in   { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
   @keyframes xp-shimmer { from { background-position: 0 0; } to { background-position: 200% 0; } }
+  @keyframes stuck-pulse { 0%, 100% { box-shadow: 0 0 8px rgba(255,176,32,0.6); } 50% { box-shadow: 0 0 20px rgba(255,176,32,1); } }
+  @keyframes skip-flash {
+    0%, 100% { background: linear-gradient(90deg, var(--purple), var(--teal), var(--stage-m2)); box-shadow: 0 0 12px rgba(47,243,224,0.6); }
+    20%, 60% { background: var(--red); box-shadow: 0 0 22px var(--red); }
+  }
 
   /* ── Q-CARD CORRECT STATE ── */
   @keyframes success-pulse {
@@ -674,11 +685,13 @@ color:  purple
     ║  (concept exploration); steps 3–4 are the STANDARD "fix a bug" pair   ║
     ║  and ship pre-written as MCQs — you only need to fill in IBUG_LINE /  ║
     ║  IBUG_FIXED_LINE and the option text in the JS (see FILL IN ②b).      ║
-    ║  Step 3 = guided encounter (bug planted for them). Step 4 = "😈 Break ║
-    ║  it" self-practice (repeated 2–3 times, unaided). This pair must      ║
-    ║  always be the FINAL TWO steps — if you add more concept steps,       ║
-    ║  insert them before this pair and renumber (see the HTML comment      ║
-    ║  just above the bug-pair cards for the exact renumbering checklist).  ║
+    ║  Step 3 = guided encounter — student presses "😈 Break it" to add the ║
+    ║  bug themselves, with the line/error explained. Step 4 = the same     ║
+    ║  "😈 Break it" button again, self-practice (repeated 2–3 times,       ║
+    ║  unaided). This pair must always be the FINAL TWO steps — if you add  ║
+    ║  more concept steps, insert them before this pair and renumber (see   ║
+    ║  the HTML comment just above the bug-pair cards for the exact         ║
+    ║  renumbering checklist).                                              ║
     ╚═══════════════════════════════════════════════════════════════════════╝
 
     ── QUESTION TYPES FOR INVESTIGATE STEPS (steps BEFORE the bug pair) ────
@@ -752,11 +765,11 @@ color:  purple
       <label class="q-label"><span class="q-num" style="background:var(--stage-i)">3</span>
         Now let's <strong>meet an error</strong> — every programmer does, all the time, and it is not a disaster.
         <ul style="margin:0.5rem 0 0 1.2rem;line-height:2">
-          <li>We've added <strong>one broken line</strong> to your code for you — it's <strong>line <span id="ibug_line">the last line</span></strong>:
+          <li>Under the editor, press <strong>😈 Break it</strong> — it adds <strong>one broken line</strong> to your code and runs it for you: it's <strong>line <span id="ibug_line">the last line</span></strong>:
             <code style="background:#ede0ff;padding:0 3px;border-radius:3px">FILL IN: show IBUG_LINE here</code>. FILL IN: name the exact mistake in plain English.</li>
-          <li>Press <strong>▶ Run code</strong>. Python stops with a red <strong>FILL IN: error type, e.g. SyntaxError / TypeError</strong> — that's expected.</li>
+          <li>Python stops with a red <strong>FILL IN: error type, e.g. SyntaxError / TypeError</strong> — that's expected.</li>
           <li>Read the message, then click <strong>💡 Get help</strong> below the editor for a plain-English hint and the Debugging Recipe.</li>
-          <li><strong>Fix it:</strong> FILL IN: describe the exact fix (it must turn the line into IBUG_FIXED_LINE), then Run again until it works.</li>
+          <li><strong>Fix it:</strong> FILL IN: describe the exact fix (it must turn the line into IBUG_FIXED_LINE), then press <strong>▶ Run code</strong> again until it works.</li>
         </ul>
         <!-- INSTRUCTIONS ONLY — put the "what was Python complaining about?" MCQ in the answer card below. -->
       </label>
@@ -775,12 +788,7 @@ color:  purple
     </div>
   </div>
 
-  <!-- ② Info box + shared editor (with Run). Students accumulate changes here across steps. -->
-  <div class="info-box" style="margin-top:0.5rem">
-    <span class="icon">💾</span>
-    <span>Your code is <strong>preserved between steps</strong> — keep building on what you have. Use <strong>↺ Reset</strong> only if you want to start the investigation from scratch.</span>
-  </div>
-
+  <!-- ② Shared editor (with Run). Students accumulate changes here across steps. -->
   <div class="code-checker" style="margin-top:0.5rem">
     <textarea class="checker-textarea" id="i_editor" data-title="Python Editor" oninput="saveState()"></textarea>
     <div class="checker-footer">
@@ -812,9 +820,14 @@ color:  purple
       <button class="btn btn-skip" id="btn_skip_i2" style="margin-top:6px;display:none" onclick="skipStep('I')">Move on without completing →</button>
     </div>
 
-    <!-- Guided bug encounter — step 3 answer is a comprehension MCQ about the error message. -->
+    <!-- Guided bug encounter — step 3 answer is a comprehension MCQ about the error message.
+         Uses the SAME breakItDemo() button as step 4's self-practice card below. -->
     <div class="q-card step-hidden" id="qcard_i3" style="border-left-color:var(--stage-i)">
       <div style="font-size:0.84rem;color:var(--muted);margin-bottom:0.4rem">✍️ Your answer — step 3 (read the error)</div>
+      <div style="display:flex;gap:0.6rem;flex-wrap:wrap;margin-bottom:0.7rem;align-items:center">
+        <button class="btn btn-check" type="button" onclick="breakItDemo()">😈 Break it</button>
+        <span style="font-size:0.82rem;color:var(--muted);font-style:italic">adds the broken line above and runs it — then read the error below</span>
+      </div>
       <label class="q-label">You ran the broken line and read the error. <strong>What was Python complaining about?</strong></label>
       <div class="radio-opts" id="ropts_i3_mcq" style="margin-top:0.5rem">
         <label class="radio-opt"><input type="radio" name="i3_mcq" value="option_a" onchange="saveState()"> <span>FILL IN: a plausible wrong answer</span></label>
@@ -1119,10 +1132,11 @@ const STEP_COUNT_M1 = 4;   // must equal the number of m1_step_1…m1_step_N div
 
 // ═══════════════════════════════════════════════════════
 //  FILL IN ②b — The standard "fix a bug" pair (ALWAYS the last two Investigate steps)
-//  Every PRIMM activity plants a real, safe error for the student to meet and fix
-//  TWICE: once GUIDED (BUG_STEP, with the exact line and error named for them), then
-//  once SELF-PRACTICE (the final step, "😈 Break it" — same bug, no hand-holding,
-//  repeated 2–3 times). This is standard across every activity, not optional.
+//  Every PRIMM activity has the student press "😈 Break it" to meet a real, safe
+//  error and fix it TWICE: once GUIDED (BUG_STEP, with the line and error named for
+//  them), then once SELF-PRACTICE (the final step, same "😈 Break it" button, no
+//  hand-holding, repeated 2–3 times). This is standard across every activity, not
+//  optional — both steps use the SAME breakItDemo() function (see below).
 //
 //  IBUG_LINE / IBUG_FIXED_LINE must be a SINGLE extra line that can be appended to
 //  the end of the student's current code without touching anything else they wrote,
@@ -1295,6 +1309,15 @@ let stepM1 = state.stepM1 || 1;
 let maxPredictStep = state.maxPredictStep || predictStep;
 let maxStepI       = state.maxStepI       || stepI;
 let maxStepM1      = state.maxStepM1      || stepM1;
+// Per-step code snapshots for the shared i_editor/m1_editor textareas — captured
+// when a step's check passes, so Back/Forward can show the code as it stood for
+// that answer rather than whatever the student has since typed further on.
+// iCodeDraft/m1CodeDraft hold the in-progress (not yet checked) frontier code so
+// stepping away and back doesn't lose unsaved edits.
+let iCodeSnapshots  = state.iCodeSnapshots  || {};
+let iCodeDraft      = state.iCodeDraft;
+let m1CodeSnapshots = state.m1CodeSnapshots || {};
+let m1CodeDraft     = state.m1CodeDraft;
 let skippedStages = state.skippedStages || [];
 let attemptCounts = state.attemptCounts || {};
 let iStepRan = state.iStepRan || {};
@@ -1307,6 +1330,23 @@ const PREDICT_NAMES = ['p_mcq1', 'p_mcq2', 'p_text1'];
 const PREDICT_TOTAL = PREDICT_CARDS.length;
 
 const STAGES = ['P','R','I','M1','M2'];
+
+// ── "Stuck" indicator ──────────────────────────────────
+// If a student sits on the same stage without progressing past the thresholds
+// below, the top progress bar turns amber (see .progress-fill.stuck) as a quiet
+// nudge to ask for help. M2 (Make) has no threshold — open-ended build time is
+// expected there, so it is deliberately absent from this map.
+const STUCK_THRESHOLDS_MS = { P: 5 * 60 * 1000, R: 5 * 60 * 1000, I: 5 * 60 * 1000, M1: 10 * 60 * 1000 };
+let stageEnteredAt = Date.now();
+
+function checkStuck() {
+  const fill = document.getElementById('progressFill');
+  if (!fill) return;
+  const threshold = STUCK_THRESHOLDS_MS[currentStage];
+  const stuck = !!threshold && (Date.now() - stageEnteredAt) >= threshold;
+  fill.classList.toggle('stuck', stuck);
+  fill.title = stuck ? 'Been a while on this step — ask your teacher if you’re stuck.' : '';
+}
 
 // ── Save / restore ────────────────────────────────────
 
@@ -1331,6 +1371,10 @@ function saveState() {
   state.skippedStages = skippedStages;
   state.attemptCounts = attemptCounts;
   state.iStepRan = iStepRan;
+  state.iCodeSnapshots  = iCodeSnapshots;
+  state.iCodeDraft      = iCodeDraft;
+  state.m1CodeSnapshots = m1CodeSnapshots;
+  state.m1CodeDraft     = m1CodeDraft;
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
 }
 
@@ -1370,10 +1414,11 @@ function updateGranularProgress() {
 // ── Step visibility ───────────────────────────────────
 
 function updateStepVisibility() {
+  const iRevisiting = stepI < maxStepI;   // stepped back to a completed step
   for (let i = 1; i <= STEP_COUNT_I; i++) {
     const active = i === stepI;
     // a step's instruction (prompt, top) and answer (below the editor) are toggled together
-    const revisiting = active && stepI < maxStepI;   // stepped back to a completed step
+    const revisiting = active && iRevisiting;
     const prompt = document.getElementById('qcard_i' + i + '_prompt');
     const ans    = document.getElementById('qcard_i' + i);
     prompt?.classList.toggle('step-hidden', !active);
@@ -1383,12 +1428,20 @@ function updateStepVisibility() {
     const checkBtn = document.getElementById('btn_check_i' + i);
     if (checkBtn) checkBtn.disabled = !iStepRan[i];
   }
-  maybePlantBugLine();   // standard bug pair — idempotent, safe to call on every render
+  // The editor is shared across all Investigate steps — lock it to read-only while
+  // looking back at an already-completed step, since edits there would be silently
+  // discarded the moment the student moves on again (see restoreCodeForStep).
+  const iEditor = document.getElementById('i_editor');
+  if (iEditor) iEditor.readOnly = iRevisiting;
+  syncBugLineLabel();   // standard bug pair — keep the "line N" label current, no planting
+  const m1Revisiting = stepM1 < maxStepM1;
   for (let i = 1; i <= STEP_COUNT_M1; i++) {
     const step = document.getElementById('m1_step_' + i);
     step?.classList.toggle('step-hidden', i !== stepM1);
-    step?.classList.toggle('revisiting', i === stepM1 && stepM1 < maxStepM1);
+    step?.classList.toggle('revisiting', i === stepM1 && m1Revisiting);
   }
+  const m1Editor = document.getElementById('m1_editor');
+  if (m1Editor) m1Editor.readOnly = m1Revisiting;
 
   const m1Btn = document.getElementById('btn_check_m1');
   if (m1Btn) m1Btn.textContent = stepM1 === STEP_COUNT_M1
@@ -1427,13 +1480,44 @@ function renderStepNav(stage) {
   if (bar) bar.style.display = (canBack || canFwd) ? '' : 'none';
 }
 
+// Before stepping away from the current frontier (in-progress, not-yet-checked)
+// step, stash its live code so Forward can bring it back exactly as left.
+// Completed steps already have a locked snapshot (taken when their check passed)
+// and are never overwritten by this.
+function snapshotFrontierIfNeeded(stage) {
+  if (stage === 'I' && stepI === maxStepI && iCodeSnapshots[stepI] === undefined) {
+    iCodeDraft = document.getElementById('i_editor')?.value;
+  } else if (stage === 'M1' && stepM1 === maxStepM1 && m1CodeSnapshots[stepM1] === undefined) {
+    m1CodeDraft = document.getElementById('m1_editor')?.value;
+  }
+}
+
+// Load the shared editor with the code as it stood for `step` — its locked
+// snapshot if the step has been completed, or the stashed frontier draft if it's
+// the in-progress step. Leaves the editor untouched if neither exists yet (first
+// time arriving at a step via normal forward progress, not Back/Forward).
+function restoreCodeForStep(stage, step) {
+  const isI = stage === 'I';
+  const ta = document.getElementById(isI ? 'i_editor' : 'm1_editor');
+  if (!ta) return;
+  const snapshots = isI ? iCodeSnapshots : m1CodeSnapshots;
+  const draft     = isI ? iCodeDraft     : m1CodeDraft;
+  const maxStep   = isI ? maxStepI       : maxStepM1;
+  let code;
+  if (snapshots[step] !== undefined) code = snapshots[step];
+  else if (step === maxStep && draft !== undefined) code = draft;
+  else return;
+  ta.value = code;
+  refreshEditor(ta);
+}
+
 function goBack(stage) {
   if (stage === 'P') {
     if (predictStep > 1) { predictStep--; renderPredict(); saveState(); }
   } else if (stage === 'I') {
-    if (stepI > 1) { stepI--; updateStepVisibility(); saveState(); scrollToActive('qcard_i' + stepI + '_prompt'); }
+    if (stepI > 1) { snapshotFrontierIfNeeded('I'); stepI--; restoreCodeForStep('I', stepI); updateStepVisibility(); saveState(); scrollToActive('qcard_i' + stepI + '_prompt'); }
   } else if (stage === 'M1') {
-    if (stepM1 > 1) { stepM1--; updateStepVisibility(); saveState(); scrollToActive('m1_step_' + stepM1); }
+    if (stepM1 > 1) { snapshotFrontierIfNeeded('M1'); stepM1--; restoreCodeForStep('M1', stepM1); updateStepVisibility(); saveState(); scrollToActive('m1_step_' + stepM1); }
   }
 }
 
@@ -1441,9 +1525,9 @@ function goForward(stage) {
   if (stage === 'P') {
     if (predictStep < maxPredictStep) { predictStep++; renderPredict(); saveState(); }
   } else if (stage === 'I') {
-    if (stepI < maxStepI) { stepI++; updateStepVisibility(); saveState(); scrollToActive('qcard_i' + stepI + '_prompt'); }
+    if (stepI < maxStepI) { stepI++; restoreCodeForStep('I', stepI); updateStepVisibility(); saveState(); scrollToActive('qcard_i' + stepI + '_prompt'); }
   } else if (stage === 'M1') {
-    if (stepM1 < maxStepM1) { stepM1++; updateStepVisibility(); saveState(); scrollToActive('m1_step_' + stepM1); }
+    if (stepM1 < maxStepM1) { stepM1++; restoreCodeForStep('M1', stepM1); updateStepVisibility(); saveState(); scrollToActive('m1_step_' + stepM1); }
   }
 }
 
@@ -1491,6 +1575,8 @@ function showStage(s, persist = true) {
   document.getElementById('stage-' + s).classList.add('active');
   document.querySelector(`[data-stage="${s}"]`).classList.add('active');
   currentStage = s;
+  stageEnteredAt = Date.now();
+  checkStuck();
 
   if (s === 'R') {
     const ta = document.getElementById('r_editor');
@@ -1602,38 +1688,21 @@ async function runCodeInEditor(editorId, statusElId, inputs = []) {
 function resetInvestigateEditor() {
   const ta = document.getElementById('i_editor');
   ta.value = STARTER_CODE;
-  state.iBugPlanted = false;
+  iCodeDraft = undefined;
   refreshEditor(ta);
   saveState();
-  if (stepI === BUG_STEP) maybePlantBugLine();   // BUG_STEP always starts from a broken line
+  // No auto-replant here — BUG_STEP now starts clean; the student presses
+  // "😈 Break it" again themselves, same as after any other reset.
 }
 
 // ── Standard "fix a bug" pair (see FILL IN ②b) ─────────────────────────────
 //
-// BUG_STEP plants ONE broken line automatically so the student meets a real error
-// without having to sabotage their own code. It is removed again once they have
-// fixed it and moved on (see nextStep / skipStep / tryCompleteInvestigate).
-// Idempotent — safe to call from updateStepVisibility on every render.
-function maybePlantBugLine() {
-  const lineSpan = document.getElementById('ibug_line');
-  if (state.iBugPlanted && state.iBugPlantedLineNo && lineSpan)
-    lineSpan.textContent = String(state.iBugPlantedLineNo);
-  if (stepI !== BUG_STEP || state.iBugPlanted || maxStepI > BUG_STEP) return;
-  const ta = document.getElementById('i_editor');
-  if (!ta) return;
-  const body = ta.value.replace(/\s+$/, '');
-  ta.value = body + '\n' + IBUG_LINE + '\n';
-  state.iBugPlanted = true;
-  state.iBugPlantedLineNo = body.split('\n').length + 1;
-  if (lineSpan) lineSpan.textContent = String(state.iBugPlantedLineNo);
-  refreshEditor(ta);
-  saveState();
-}
-
-// The final Investigate step — "😈 Break it" reintroduces the SAME bug on demand so
-// the student can practise spotting and fixing it unaided, 2–3 times in a row. It
-// toggles between IBUG_LINE and IBUG_FIXED_LINE so repeated clicks never pile up
-// duplicate lines. Safe to mash.
+// "😈 Break it" is used at BOTH the guided step (BUG_STEP — student presses it
+// once, with the line and error explained to them) and the final self-practice
+// step (same button, pressed unaided 2–3 times). Toggles between IBUG_LINE and
+// IBUG_FIXED_LINE so repeated clicks never pile up duplicate lines — safe to mash.
+// The planted-or-fixed line is removed again once the pair is done (see
+// stripPlantedBugLine, called from nextStep / skipStep / tryCompleteInvestigate).
 //
 // FILL IN: the trailing [] below means "run with no inputs at all", which only
 // works if IBUG_LINE needs none. If your lesson has already introduced input() and
@@ -1644,14 +1713,25 @@ function maybePlantBugLine() {
 function breakItDemo() {
   const ta = document.getElementById('i_editor');
   if (!ta) return;
+  const lineSpan = document.getElementById('ibug_line');
   if (ta.value.includes(IBUG_FIXED_LINE)) {
     ta.value = ta.value.replace(IBUG_FIXED_LINE, IBUG_LINE);
   } else if (!ta.value.includes(IBUG_LINE)) {
     const body = ta.value.replace(/\s+$/, '');
     ta.value = body + '\n' + IBUG_LINE + '\n';
+    state.iBugPlantedLineNo = body.split('\n').length + 1;
+    if (lineSpan) lineSpan.textContent = String(state.iBugPlantedLineNo);
+    saveState();
   }
   refreshEditor(ta);
   runCodeInEditor('i_editor', 'i_fb_run', []);
+}
+
+// Keeps the "line N" label in the step-3 prompt showing the right number when the
+// student steps Back/Forward to revisit it — never plants or removes anything.
+function syncBugLineLabel() {
+  const lineSpan = document.getElementById('ibug_line');
+  if (lineSpan && state.iBugPlantedLineNo) lineSpan.textContent = String(state.iBugPlantedLineNo);
 }
 
 // Remove the auto-planted/broken-or-fixed demo line once the bug pair has done its
@@ -1978,6 +2058,9 @@ function nextStep(stage, n) {
   card.classList.add('is-right');
   fieldHint(card, '');
   window.ActivityUI?.miniCelebration(card);
+  // Lock in the code as it stood for this answer, so Back/Forward can restore it later.
+  iCodeSnapshots[n] = code;
+  iCodeDraft = undefined;
   const btn = card.querySelector('.btn-next');
   if (btn) { btn.disabled = true; btn.textContent = '✅ Moving on…'; }
   window.ActivityUI?.showToast('✅ Good observation! On to the next change…');
@@ -2054,6 +2137,8 @@ function tryCompleteInvestigate() {
   });
 
   if (allOk) {
+    iCodeSnapshots[STEP_COUNT_I] = code;
+    iCodeDraft = undefined;
     stripPlantedBugLine();   // break-it demo line must not carry into Modify
     const lastBtn  = lastCard?.querySelector('.btn-next');
     if (lastBtn) { lastBtn.disabled = true; lastBtn.textContent = '✅ Investigation complete! Moving on…'; }
@@ -2094,6 +2179,9 @@ async function checkMod() {
   setEditorOutput(document.getElementById('m1_editor'), run.output, false);
   clearSyntaxHint(document.getElementById('m1_editor'));
   passedChecks[checkId] = true;
+  // Lock in the code as it stood for this modification, so Back/Forward can restore it later.
+  m1CodeSnapshots[stepM1] = raw;
+  m1CodeDraft = undefined;
   window.ActivityUI?.miniCelebration(fbEl);
   window.ActivityUI?.showToast('✅ Modification ' + stepM1 + ' complete!');
   if (stepM1 < STEP_COUNT_M1) {
@@ -2185,17 +2273,28 @@ function markStageSkipped(stage) {
   if (!skippedStages.includes(stage)) skippedStages.push(stage);
   const btn = document.querySelector(`[data-stage="${stage}"]`);
   if (btn) btn.classList.add('skipped');
+  flashSkip();
   saveState();
+}
+
+// One-off red flash on the top progress bar — the remove/reflow/add dance lets
+// it re-trigger even if a flash from an earlier skip is still on the element.
+function flashSkip() {
+  const fill = document.getElementById('progressFill');
+  if (!fill) return;
+  fill.classList.remove('skip-flash');
+  void fill.offsetWidth;
+  fill.classList.add('skip-flash');
 }
 
 function skipStep(stage) {
   markStageSkipped(stage);
   if (stage === 'I') {
     if (stepI === BUG_STEP || stepI === STEP_COUNT_I) stripPlantedBugLine();   // don't carry the broken line forward
-    if (stepI < STEP_COUNT_I) { stepI++; maxStepI = Math.max(maxStepI, stepI); updateStepVisibility(); saveState(); }
+    if (stepI < STEP_COUNT_I) { stepI++; maxStepI = Math.max(maxStepI, stepI); updateStepVisibility(); saveState(); scrollToActive('qcard_i' + stepI + '_prompt'); }
     else { completeStage('I'); }
   } else if (stage === 'M1') {
-    if (stepM1 < STEP_COUNT_M1) { stepM1++; maxStepM1 = Math.max(maxStepM1, stepM1); updateStepVisibility(); saveState(); }
+    if (stepM1 < STEP_COUNT_M1) { stepM1++; maxStepM1 = Math.max(maxStepM1, stepM1); updateStepVisibility(); saveState(); scrollToActive('m1_step_' + stepM1); }
     else { completeStage('M1'); }
   }
 }
@@ -2243,6 +2342,7 @@ window.addEventListener('DOMContentLoaded', () => {
   showStage(currentStage, false);
   updateNav();
   updateProgress();
+  setInterval(checkStuck, 15000);
 
   setPyStatus('loading');
   preload().then(() => setPyStatus('ready')).catch(() => setPyStatus('error'));

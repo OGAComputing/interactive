@@ -714,11 +714,11 @@ greeting <span class="kw">=</span> <span class="st">"Hello "</span>
       <label class="q-label"><span class="q-num" style="background:var(--stage-i)">4</span>
         Now let's <strong>meet an error</strong> — every programmer does, all the time, and it is not a disaster.
         <ul style="margin:0.5rem 0 0 1.2rem;line-height:2">
-          <li>We've added <strong>one broken line</strong> to your code for you — it's <strong>line <span id="ibug_line">the last line</span></strong>:
+          <li>Under the editor, press <strong>😈 Break it</strong> — it adds <strong>one broken line</strong> to your code and runs it: it's <strong>line <span id="ibug_line">the last line</span></strong>:
             <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print(nickname)</code> — a variable you have <em>never created</em>.</li>
-          <li>Press <strong>▶ Run code</strong>. Python stops with a red <strong>NameError</strong> — that's expected.</li>
+          <li>Python stops with a red <strong>NameError</strong> — that's expected.</li>
           <li>Read the message, then click <strong>💡 Get help</strong> below the editor for a plain-English hint and the Debugging Recipe.</li>
-          <li><strong>Fix it:</strong> delete that broken line completely, then Run again until it works.</li>
+          <li><strong>Fix it:</strong> delete that broken line completely, then press <strong>▶ Run code</strong> again until it works.</li>
         </ul>
         <!-- INSTRUCTIONS ONLY — put the "what was Python complaining about?" MCQ in the answer card below. -->
       </label>
@@ -737,12 +737,7 @@ greeting <span class="kw">=</span> <span class="st">"Hello "</span>
     </div>
   </div>
 
-  <!-- ② Info box + shared editor (with Run). Students accumulate changes here across steps. -->
-  <div class="info-box" style="margin-top:0.5rem">
-    <span class="icon">💾</span>
-    <span>Your code is <strong>preserved between steps</strong> — keep building on what you have. Use <strong>↺ Reset</strong> only if you want to start the investigation from scratch.</span>
-  </div>
-
+  <!-- ② Shared editor (with Run). Students accumulate changes here across steps. -->
   <div class="code-checker" style="margin-top:0.5rem">
     <textarea class="checker-textarea" id="i_editor" data-title="Python Editor" oninput="saveState()"></textarea>
     <div class="checker-footer">
@@ -788,9 +783,14 @@ greeting <span class="kw">=</span> <span class="st">"Hello "</span>
       <button class="btn btn-skip" id="btn_skip_i3" style="margin-top:6px;display:none" onclick="skipStep('I')">Move on without completing →</button>
     </div>
 
-    <!-- Guided bug encounter — step 4 answer is a comprehension MCQ about the error message. -->
+    <!-- Guided bug encounter — step 4 answer is a comprehension MCQ about the error message.
+         Uses the SAME breakItDemo() button as step 5's self-practice card below. -->
     <div class="q-card step-hidden" id="qcard_i4" style="border-left-color:var(--stage-i)">
       <div style="font-size:0.84rem;color:var(--muted);margin-bottom:0.4rem">✍️ Your answer — step 4 (read the error)</div>
+      <div style="display:flex;gap:0.6rem;flex-wrap:wrap;margin-bottom:0.7rem;align-items:center">
+        <button class="btn btn-check" type="button" onclick="breakItDemo()">😈 Break it</button>
+        <span style="font-size:0.82rem;color:var(--muted);font-style:italic">adds the broken line above and runs it — then read the error below</span>
+      </div>
       <label class="q-label">You ran the broken line and read the error. <strong>What was Python complaining about?</strong></label>
       <div class="radio-opts" id="ropts_i4_mcq" style="margin-top:0.5rem">
         <label class="radio-opt"><input type="radio" name="i4_mcq" value="option_a" onchange="saveState()"> <span>The word print was spelled wrong on that line</span></label>
@@ -1370,7 +1370,7 @@ function updateStepVisibility() {
   // discarded the moment the student moves on again (see restoreCodeForStep).
   const iEditor = document.getElementById('i_editor');
   if (iEditor) iEditor.readOnly = iRevisiting;
-  maybePlantBugLine();   // standard bug pair — idempotent, safe to call on every render
+  syncBugLineLabel();   // standard bug pair — keep the "line N" label current, no planting
   const m1Revisiting = stepM1 < maxStepM1;
   for (let i = 1; i <= STEP_COUNT_M1; i++) {
     const step = document.getElementById('m1_step_' + i);
@@ -1623,47 +1623,39 @@ async function runCodeInEditor(editorId, statusElId, inputs = null) {
 function resetInvestigateEditor() {
   const ta = document.getElementById('i_editor');
   ta.value = STARTER_CODE;
-  state.iBugPlanted = false;
   iCodeDraft = undefined;
   refreshEditor(ta);
   saveState();
-  if (stepI === BUG_STEP) maybePlantBugLine();   // BUG_STEP always starts from a broken line
+  // No auto-replant here — BUG_STEP now starts clean; the student presses
+  // "😈 Break it" again themselves, same as after any other reset.
 }
 
 // ── Standard "fix a bug" pair ──────────────────────────────────────────────
 //
-// BUG_STEP plants ONE broken line automatically so the student meets a real error
-// without having to sabotage their own code. It is removed again once they have
-// fixed it and moved on (see nextStep / skipStep / tryCompleteInvestigate).
-// Idempotent — safe to call from updateStepVisibility on every render.
-function maybePlantBugLine() {
-  const lineSpan = document.getElementById('ibug_line');
-  if (state.iBugPlanted && state.iBugPlantedLineNo && lineSpan)
-    lineSpan.textContent = String(state.iBugPlantedLineNo);
-  if (stepI !== BUG_STEP || state.iBugPlanted || maxStepI > BUG_STEP) return;
-  const ta = document.getElementById('i_editor');
-  if (!ta) return;
-  const body = ta.value.replace(/\s+$/, '');
-  ta.value = body + '\n' + IBUG_LINE + '\n';
-  state.iBugPlanted = true;
-  state.iBugPlantedLineNo = body.split('\n').length + 1;
-  if (lineSpan) lineSpan.textContent = String(state.iBugPlantedLineNo);
-  refreshEditor(ta);
-  saveState();
-}
-
-// The final Investigate step — "😈 Break it" reintroduces the SAME bug on demand so
-// the student can practise spotting and fixing it (by deleting the line) unaided,
-// 2–3 times in a row. Safe to mash — it only re-adds the line if it isn't there.
+// "😈 Break it" is used at BOTH the guided step (BUG_STEP — student presses it
+// once, with the line and error explained to them) and the final self-practice
+// step (same button, pressed unaided 2–3 times to practise spotting and deleting
+// the line). Safe to mash — it only re-adds the line if it isn't there.
 function breakItDemo() {
   const ta = document.getElementById('i_editor');
   if (!ta) return;
+  const lineSpan = document.getElementById('ibug_line');
   if (!ta.value.includes(IBUG_LINE)) {
     const body = ta.value.replace(/\s+$/, '');
     ta.value = body + '\n' + IBUG_LINE + '\n';
+    state.iBugPlantedLineNo = body.split('\n').length + 1;
+    if (lineSpan) lineSpan.textContent = String(state.iBugPlantedLineNo);
+    saveState();
   }
   refreshEditor(ta);
   runCodeInEditor('i_editor', 'i_fb_run', []);
+}
+
+// Keeps the "line N" label in the BUG_STEP prompt showing the right number when
+// the student steps Back/Forward to revisit it — never plants or removes anything.
+function syncBugLineLabel() {
+  const lineSpan = document.getElementById('ibug_line');
+  if (lineSpan && state.iBugPlantedLineNo) lineSpan.textContent = String(state.iBugPlantedLineNo);
 }
 
 // Remove the auto-planted broken line once the bug pair has done its job (student
