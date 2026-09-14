@@ -21,7 +21,7 @@ export function has(code, pattern) {
 // ── shared helpers ───────────────────────────────────────────────────────────
 
 // Distinct variable names assigned a string literal, e.g. pet = "Rex". Includes
-// name/greeting (the two variables introduced in Predict/Investigate) as well as
+// name/greeting (the two variables introduced in Predict/Run) as well as
 // any new ones a student adds — callers filter those out where "new" matters.
 function stringVarAssigns(raw) {
   const s = normalise(raw);
@@ -72,9 +72,9 @@ export const MOD_CHECKS = {
     return { pass: true, msg: '✅ Two new variables, both stored and printed!' };
   },
 
-  // Mod 3 — reassign ONE OF THE STUDENT'S OWN new variables (not name — that was
-  // already reassigned in Investigate, so carried-over code would auto-pass a
-  // name-based check here) a second time, with a second print of it after that.
+  // Mod 3 — reassign ONE OF THE STUDENT'S OWN new variables (not name/greeting —
+  // this step is about practising reassignment on a variable they made themselves)
+  // a second time, with a second print of it after that.
   mod3(raw) {
     const s = normalise(raw);
     const args = printArgs(raw);
