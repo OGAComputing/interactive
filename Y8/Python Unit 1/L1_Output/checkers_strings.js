@@ -16,72 +16,147 @@ function countPrints(raw) {
   return (raw.match(/\bprint\s*\(/g) || []).length;
 }
 
+// Each mod is a list of independent, individually-detected `reqs` — one per
+// bullet point shown in the task card (the bullet TEXT lives in the HTML, not
+// here — reqs only carry the pass/fail logic). The UI ticks/crosses each
+// bullet on every Check click (see renderReqResults() in the activity's inline
+// script). `pass` (all reqs true) and `hint` (the first failing req's message,
+// shown in the feedback box) are derived automatically — see evalMod() below.
+
 export const MOD_CHECKS = {
-  mod1(raw) {
-    // Count only prints that actually output text — an empty print() left over from
-    // the investigation is fine here (Modification 3 uses one deliberately).
-    const textPrints = countPrints(raw) - (raw.match(/\bprint\s*\(\s*\)/g) || []).length;
-    if (textPrints < 3)
-      return { pass: false, msg: '❌ Keep at least 3 print() calls that show text — one for your name, year group, and school name.' };
-    if (/hello,\s*world/i.test(raw))
-      return { pass: false, msg: '❌ Change "Hello, World!" to your own text — the original starter text is still there.' };
-    if (/i am learning python/i.test(raw))
-      return { pass: false, msg: '❌ Change "I am learning Python." to something about you — the original text is still there.' };
-    if (/this is fun/i.test(raw))
-      return { pass: false, msg: '❌ Change "This is fun!" to something about you — the original text is still there.' };
-    return { pass: true, msg: '✅ Looking good — all your print() lines now show your own text!' };
+  // Mod 1 — every line personalised, no starter text left over.
+  mod1: {
+    reqs: [
+      {
+        hint: '❌ Keep at least 3 print() calls that show text — one for your name, year group, and school name.',
+        test(raw) {
+          // Count only prints that actually output text — an empty print() left over from
+          // the investigation is fine here (Modification 3 uses one deliberately).
+          const textPrints = countPrints(raw) - (raw.match(/\bprint\s*\(\s*\)/g) || []).length;
+          return textPrints >= 3;
+        },
+      },
+      {
+        hint: '❌ Change ALL the original starter text — "Hello, World!", "I am learning Python." and "This is fun!" should all be gone.',
+        test(raw) {
+          return !/hello,\s*world/i.test(raw) && !/i am learning python/i.test(raw) && !/this is fun/i.test(raw);
+        },
+      },
+    ],
+    passMsg: '✅ Looking good — all your print() lines now show your own text!',
   },
-  mod2(raw) {
-    // Five lines of *text* — an empty print() carried over from the investigation
-    // doesn't count towards the five (it has no text).
-    const textPrints = countPrints(raw) - (raw.match(/\bprint\s*\(\s*\)/g) || []).length;
-    if (textPrints < 5)
-      return { pass: false, msg: `❌ You need at least 5 print() calls that show text — you have ${textPrints}. Add ${5 - textPrints} more.` };
-    return { pass: true, msg: '✅ Five print() calls found — your program prints five things!' };
+
+  // Mod 2 — build up to five lines of text.
+  mod2: {
+    reqs: [
+      {
+        hint: '❌ You need at least 5 print() calls that show text — keep adding until you reach 5.',
+        test(raw) {
+          // Five lines of *text* — an empty print() carried over from the investigation
+          // doesn't count towards the five (it has no text).
+          const textPrints = countPrints(raw) - (raw.match(/\bprint\s*\(\s*\)/g) || []).length;
+          return textPrints >= 5;
+        },
+      },
+    ],
+    passMsg: '✅ Five print() calls found — your program prints five things!',
   },
-  mod3(raw) {
-    if (!has(raw, /print\s*\(\s*\)/) && !has(raw, /print\s*\(\s*["']\s*["']\s*\)/))
-      return { pass: false, msg: '❌ Add at least one print() with empty brackets to create a blank line in the output.' };
-    return { pass: true, msg: '✅ Empty print() found — that creates a blank line in the output!' };
+
+  // Mod 3 — a blank line via an empty print().
+  mod3: {
+    reqs: [
+      {
+        hint: '❌ Add at least one print() with empty brackets to create a blank line in the output.',
+        test: raw => has(raw, /print\s*\(\s*\)/) || has(raw, /print\s*\(\s*["']\s*["']\s*\)/),
+      },
+    ],
+    passMsg: '✅ Empty print() found — that creates a blank line in the output!',
   },
-  mod4(raw) {
-    if (countPrints(raw) < 5)
-      return { pass: false, msg: '❌ Keep all your print() lines — just change their ORDER, don\'t delete any.' };
-    // The empty print() (the blank line) must now be the FIRST print in the program,
-    // so the output starts with a blank line. This forces a real reorder.
-    const firstPrint = raw.match(/print\s*\([^)]*\)/);
-    if (!firstPrint || !/^print\s*\(\s*(["']\s*["'])?\s*\)$/.test(firstPrint[0]))
-      return { pass: false, msg: '❌ Move your empty print() to the very top so it runs FIRST — the first print() line of your program should have empty brackets.' };
-    return { pass: true, msg: '✅ The blank line now prints first! Moving it changed the output — Python always runs top to bottom.' };
+
+  // Mod 4 — reorder: move the empty print() to the very top.
+  mod4: {
+    reqs: [
+      {
+        hint: '❌ Keep all your print() lines — just change their ORDER, don\'t delete any.',
+        test: raw => countPrints(raw) >= 5,
+      },
+      {
+        hint: '❌ Move your empty print() to the very top so it runs FIRST — the first print() line of your program should have empty brackets.',
+        test(raw) {
+          // The empty print() (the blank line) must now be the FIRST print in the program,
+          // so the output starts with a blank line. This forces a real reorder.
+          const firstPrint = raw.match(/print\s*\([^)]*\)/);
+          return !!firstPrint && /^print\s*\(\s*(["']\s*["'])?\s*\)$/.test(firstPrint[0]);
+        },
+      },
+    ],
+    passMsg: '✅ The blank line now prints first! Moving it changed the output — Python always runs top to bottom.',
   },
 };
 
-export const MOD_INPUTS = {};
-
-export function validateMake(raw) {
-  if (raw.trim().length < 10)
-    return { pass: false, msg: '⚠️ Write your program first, then click Check.' };
-  const printCount = countPrints(raw);
-  if (printCount < 4)
-    return { pass: false, msg: `❌ You need at least 4 print() calls — one for each name. You have ${printCount}.` };
-  const strings = raw.match(/["'][^"'\n]+["']/g) || [];
-  const nonEmpty = strings.filter(s => s.length > 2);
-  if (nonEmpty.length < 4)
-    return { pass: false, msg: '❌ Make sure each print() contains a name (non-empty text in speech marks).' };
-  return { pass: true, msg: '✅ Four names printed — great work! Did you sort them alphabetically?' };
+// Runs every req for a given mod against `raw`, returning per-bullet results
+// plus the overall pass/hint the check button needs.
+export function evalMod(checkKey, raw) {
+  const check = MOD_CHECKS[checkKey];
+  const results = check.reqs.map(r => !!r.test(raw));
+  const pass = results.every(Boolean);
+  const hint = pass ? check.passMsg : check.reqs[results.findIndex(r => !r)].hint;
+  return { results, pass, msg: hint };
 }
 
-export function validateExt(raw) {
-  if (raw.trim().length < 10)
-    return { pass: false, msg: '⚠️ Paste your extended program above first.' };
-  const printCount = countPrints(raw);
-  if (printCount > 1)
-    return { pass: false, msg: `❌ Use a SINGLE print() statement — you currently have ${printCount}. Combine all four names into one print() using \\n.` };
-  if (printCount < 1)
-    return { pass: false, msg: '❌ Add one print() statement containing all four names.' };
-  if (!has(raw, /\\n/))
-    return { pass: false, msg: '❌ Use \\n inside your print() to display all four names on separate lines.' };
-  return { pass: true, msg: '✅ Extension complete — all four names in a single print() using \\n. Excellent!' };
+export const MOD_INPUTS = {};
+
+// ── Make ────────────────────────────────────────────────────────────────────
+// A name-list program: four names, each a real (non-empty) piece of text.
+// "Own line" and "alphabetical order" are encouraged in the task text but were
+// never structurally tested — that stays true here (see evalMake below).
+
+export const MAKE_CHECK = {
+  reqs: [
+    {
+      hint: '❌ Print at least four things — one for you and three friends.',
+      test: raw => countPrints(raw) >= 4,
+    },
+    {
+      hint: '❌ Make sure each name is real, non-empty text in speech marks — no blank print() used as a name.',
+      test(raw) {
+        const strings = raw.match(/["'][^"'\n]+["']/g) || [];
+        return strings.filter(s => s.length > 2).length >= 4;
+      },
+    },
+  ],
+  passMsg: '✅ Four names printed — great work! Did you sort them alphabetically?',
+};
+
+export function evalMake(raw) {
+  const results = MAKE_CHECK.reqs.map(r => !!r.test(raw));
+  const pass = results.every(Boolean);
+  const hint = pass ? MAKE_CHECK.passMsg : MAKE_CHECK.reqs[results.findIndex(r => !r)].hint;
+  return { results, pass, msg: hint };
+}
+
+// ── Extension ─────────────────────────────────────────────────────────────────
+// Combine the four names into a single print() using \n line breaks.
+
+export const EXT_CHECK = {
+  reqs: [
+    {
+      hint: '❌ Combine everything into a SINGLE print() statement — replace your separate print() calls with one.',
+      test: raw => countPrints(raw) === 1,
+    },
+    {
+      hint: '❌ Use \\n inside your print() to display all four names on separate lines.',
+      test: raw => has(raw, /\\n/),
+    },
+  ],
+  passMsg: '✅ Extension complete — all four names in a single print() using \\n. Excellent!',
+};
+
+export function evalExt(raw) {
+  const results = EXT_CHECK.reqs.map(r => !!r.test(raw));
+  const pass = results.every(Boolean);
+  const hint = pass ? EXT_CHECK.passMsg : EXT_CHECK.reqs[results.findIndex(r => !r)].hint;
+  return { results, pass, msg: hint };
 }
 
 export function validateMake2(raw) {

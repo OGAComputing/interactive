@@ -41,6 +41,14 @@ function newInputVars(raw) {
   return inputVars(raw).filter(v => v !== 'name');
 }
 
+// subject was only ever the worked example's variable NAME (mod1's e.g. line) — reject it
+// if it's the ONLY new input variable a student has added, so everyone picks their own topic
+// rather than copy-pasting the example and just changing the prompt text.
+function onlyCopiedSubject(raw) {
+  const vars = newInputVars(raw);
+  return vars.length > 0 && vars.every(v => v.toLowerCase() === 'subject');
+}
+
 // The argument text of every print( ... ) call, with strings already blanked to "".
 function printArgs(raw) {
   const s = normalise(raw);
@@ -55,56 +63,122 @@ const word = (v) => new RegExp('\\b' + v + '\\b');
 const plusCount = (s) => (s.match(/\+/g) || []).length;
 
 // ── Modify checks ─────────────────────────────────────────────────────────────
+//
+// Each mod is a list of independent, individually-detected `reqs` — one per
+// bullet point shown in the task card (the bullet TEXT lives in the HTML, not
+// here — reqs only carry the pass/fail logic). The UI ticks/crosses each
+// bullet on every Check click (see renderReqResults() in the activity's inline
+// script). `pass` (all reqs true) and `hint` (the first failing req's message,
+// shown in the feedback box) are derived automatically — see evalMod() below.
 
 export const MOD_CHECKS = {
   // Mod 1 — one new question, printed on its own (no + required).
-  mod1(raw) {
-    const vars = newInputVars(raw);
-    const args = printArgs(raw);
-    const ok = vars.length >= 1 && args.some(a => vars.some(v => word(v).test(a)));
-    if (!ok)
-      return { pass: false, msg: '❌ Ask one new question with input() and print the answer — print(subject) is enough, no + needed yet.' };
-    return { pass: true, msg: '✅ Nice — a new question, asked and printed.' };
+  mod1: {
+    reqs: [
+      {
+        hint: '❌ Ask one new question with input() — pick your own topic and give the variable your own name.',
+        test(raw) {
+          const vars = newInputVars(raw);
+          if (vars.length < 1) return false;
+          return !onlyCopiedSubject(raw);
+        },
+      },
+      {
+        hint: '❌ Print the answer to your new question — print(subject) is enough, no + needed yet.',
+        test(raw) {
+          const vars = newInputVars(raw);
+          return printArgs(raw).some(a => vars.some(v => word(v).test(a)));
+        },
+      },
+    ],
+    passMsg: '✅ Nice — a new question, asked and printed.',
   },
 
   // Mod 2 — a second new question, also printed.
-  mod2(raw) {
-    const vars = newInputVars(raw);
-    const args = printArgs(raw);
-    const shown = vars.filter(v => args.some(a => word(v).test(a)));
-    if (shown.length < 2)
-      return { pass: false, msg: `❌ Ask a SECOND new question and print it too — you have ${shown.length} new answer(s) printed so far, you need 2.` };
-    return { pass: true, msg: '✅ Two new questions, both asked and printed!' };
+  mod2: {
+    reqs: [
+      {
+        hint: '❌ Ask a SECOND new question with input(), storing it in a new variable.',
+        test: raw => newInputVars(raw).length >= 2,
+      },
+      {
+        hint: '❌ Print your second new answer too — you need two new answers printed in total.',
+        test(raw) {
+          const vars = newInputVars(raw);
+          const args = printArgs(raw);
+          return vars.filter(v => args.some(a => word(v).test(a))).length >= 2;
+        },
+      },
+    ],
+    passMsg: '✅ Two new questions, both asked and printed!',
   },
 
   // Mod 3 — join an answer with extra text: a print using + at least twice.
-  mod3(raw) {
-    const vars = inputVars(raw);
-    const ok = printArgs(raw).some(a => plusCount(a) >= 2 && vars.some(v => word(v).test(a)));
-    if (!ok)
-      return { pass: false, msg: '❌ Write a print() that joins one of your answers with extra text using + at least twice — e.g. print("Your favourite subject is " + subject + "!").' };
-    return { pass: true, msg: '✅ Nice — your print() now joins more than two pieces together with +.' };
+  mod3: {
+    reqs: [
+      {
+        hint: '❌ Use one of your answers inside a print().',
+        test(raw) {
+          const vars = inputVars(raw);
+          return printArgs(raw).some(a => vars.some(v => word(v).test(a)));
+        },
+      },
+      {
+        hint: '❌ Join it with extra text using + at least twice — e.g. print("Your favourite subject is " + subject + "!").',
+        test(raw) {
+          const vars = inputVars(raw);
+          return printArgs(raw).some(a => plusCount(a) >= 2 && vars.some(v => word(v).test(a)));
+        },
+      },
+    ],
+    passMsg: '✅ Nice — your print() now joins more than two pieces together with +.',
   },
 
   // Mod 4 — reuse: the SAME answer appears in two different print() lines.
-  mod4(raw) {
-    const args = printArgs(raw);
-    const reused = inputVars(raw).some(v => args.filter(a => word(v).test(a)).length >= 2);
-    if (!reused)
-      return { pass: false, msg: '❌ Use the SAME answer in TWO different print() lines — print it more than once in different places in your program.' };
-    return { pass: true, msg: '✅ You used one answer in two places — a variable can be reused as many times as you like!' };
+  mod4: {
+    reqs: [
+      {
+        hint: '❌ Use the SAME answer in TWO different print() lines — print it more than once in different places in your program.',
+        test(raw) {
+          const args = printArgs(raw);
+          return inputVars(raw).some(v => args.filter(a => word(v).test(a)).length >= 2);
+        },
+      },
+    ],
+    passMsg: '✅ You used one answer in two places — a variable can be reused as many times as you like!',
   },
 
   // Mod 5 — combine: ONE print() that joins two different input variables with +.
-  mod5(raw) {
-    const args = printArgs(raw);
-    const vars = inputVars(raw);
-    const combined = args.some(a => plusCount(a) >= 1 && vars.filter(v => word(v).test(a)).length >= 2);
-    if (!combined)
-      return { pass: false, msg: '❌ Write ONE print() that joins TWO of your different answers together in a single sentence using +.' };
-    return { pass: true, msg: '✅ Brilliant — one sentence built from two different answers. That is the heart of programming with input!' };
+  mod5: {
+    reqs: [
+      {
+        hint: '❌ Use TWO different answers inside the SAME print().',
+        test(raw) {
+          const vars = inputVars(raw);
+          return printArgs(raw).some(a => vars.filter(v => word(v).test(a)).length >= 2);
+        },
+      },
+      {
+        hint: '❌ Join those two answers together with + so they read as one sentence.',
+        test(raw) {
+          const vars = inputVars(raw);
+          return printArgs(raw).some(a => plusCount(a) >= 1 && vars.filter(v => word(v).test(a)).length >= 2);
+        },
+      },
+    ],
+    passMsg: '✅ Brilliant — one sentence built from two different answers. That is the heart of programming with input!',
   },
 };
+
+// Runs every req for a given mod against `raw`, returning per-bullet results
+// plus the overall pass/hint the check button needs.
+export function evalMod(checkKey, raw) {
+  const check = MOD_CHECKS[checkKey];
+  const results = check.reqs.map(r => !!r.test(raw));
+  const pass = results.every(Boolean);
+  const hint = pass ? check.passMsg : check.reqs[results.findIndex(r => !r)].hint;
+  return { results, pass, msg: hint };
+}
 
 // Mock inputs fed to runPython() for each Modify check (extra answers are harmless).
 export const MOD_INPUTS = {
@@ -118,41 +192,71 @@ export const MOD_INPUTS = {
 // ── Make ────────────────────────────────────────────────────────────────────
 // Interactive greeting — three questions, tested with Alex / Maths / blue.
 
-export function validateMake(raw) {
-  if (raw.trim().length < 15)
-    return { pass: false, msg: '⚠️ Write your program first, then click Check.' };
-  const n = inputCount(raw);
-  if (n < 3)
-    return { pass: false, msg: `❌ Use input() at least THREE times to ask three different questions — you have ${n} so far.` };
-  const args = printArgs(raw);
-  if (args.length < 2)
-    return { pass: false, msg: '❌ Print at least two lines — an interactive greeting needs more than one line of output.' };
-  const vars = inputVars(raw);
-  const joinsBox = args.some(a => plusCount(a) >= 1 && vars.some(v => word(v).test(a)));
-  if (!joinsBox)
-    return { pass: false, msg: '❌ Use + in a print() to join an answer into a sentence — e.g. print("Hi " + name + "!").' };
-  const allThreeShown = vars.filter(v => args.some(a => word(v).test(a))).length >= 3;
-  if (!allThreeShown)
-    return { pass: false, msg: '❌ Make sure all three of your answers appear somewhere in a print().' };
-  return { pass: true, msg: '✅ Greeting printed — your program asks three questions and displays them all. Excellent work!' };
+export const MAKE_CHECK = {
+  reqs: [
+    {
+      hint: '❌ Use input() at least THREE times to ask three different questions — check your count.',
+      test: raw => inputCount(raw) >= 3,
+    },
+    {
+      hint: '❌ Use + in a print() to join an answer into a sentence — e.g. print("Hi " + name + "!").',
+      test(raw) {
+        const vars = inputVars(raw);
+        return printArgs(raw).some(a => plusCount(a) >= 1 && vars.some(v => word(v).test(a)));
+      },
+    },
+    {
+      hint: '❌ Print at least two lines, and make sure all three of your answers appear somewhere in a print().',
+      test(raw) {
+        const args = printArgs(raw);
+        const vars = inputVars(raw);
+        const allThreeShown = vars.filter(v => args.some(a => word(v).test(a))).length >= 3;
+        return args.length >= 2 && allThreeShown;
+      },
+    },
+  ],
+  passMsg: '✅ Greeting printed — your program asks three questions and displays them all. Excellent work!',
+};
+
+export function evalMake(raw) {
+  const results = MAKE_CHECK.reqs.map(r => !!r.test(raw));
+  const pass = results.every(Boolean);
+  const hint = pass ? MAKE_CHECK.passMsg : MAKE_CHECK.reqs[results.findIndex(r => !r)].hint;
+  return { results, pass, msg: hint };
 }
 
 // ── Extension ─────────────────────────────────────────────────────────────────
 // Open-ended: any school-themed program with 4+ inputs and structured output.
 
-export function validateExt(raw) {
-  if (raw.trim().length < 15)
-    return { pass: false, msg: '⚠️ Write your program above first, then click Check.' };
-  const n = inputCount(raw);
-  if (n < 4)
-    return { pass: false, msg: `❌ The extension needs at least 4 input() questions — you have ${n} so far.` };
-  const args = printArgs(raw);
-  const vars = inputVars(raw);
-  const joiningPrints = args.filter(a => plusCount(a) >= 1 && vars.some(v => word(v).test(a))).length;
-  if (joiningPrints < 2)
-    return { pass: false, msg: `❌ Use + in at least two different print() lines — you have ${joiningPrints} so far.` };
-  const combined = args.some(a => plusCount(a) >= 1 && vars.filter(v => word(v).test(a)).length >= 2);
-  if (!combined)
-    return { pass: false, msg: '❌ In at least one print(), join two or more of your answers together in the same sentence using +.' };
-  return { pass: true, msg: '✅ Brilliant — four questions, structured output, and multiple answers joined together. A proper program!' };
+export const EXT_CHECK = {
+  reqs: [
+    {
+      hint: '❌ The extension needs at least 4 input() questions — check your count.',
+      test: raw => inputCount(raw) >= 4,
+    },
+    {
+      hint: '❌ Use + in at least two different print() lines.',
+      test(raw) {
+        const args = printArgs(raw);
+        const vars = inputVars(raw);
+        return args.filter(a => plusCount(a) >= 1 && vars.some(v => word(v).test(a))).length >= 2;
+      },
+    },
+    {
+      hint: '❌ In at least one print(), join two or more of your answers together in the same sentence using +.',
+      test(raw) {
+        const args = printArgs(raw);
+        const vars = inputVars(raw);
+        return args.some(a => plusCount(a) >= 1 && vars.filter(v => word(v).test(a)).length >= 2);
+      },
+    },
+  ],
+  passMsg: '✅ Brilliant — four questions, structured output, and multiple answers joined together. A proper program!',
+};
+
+export function evalExt(raw) {
+  const results = EXT_CHECK.reqs.map(r => !!r.test(raw));
+  const pass = results.every(Boolean);
+  const hint = pass ? EXT_CHECK.passMsg : EXT_CHECK.reqs[results.findIndex(r => !r)].hint;
+  return { results, pass, msg: hint };
 }

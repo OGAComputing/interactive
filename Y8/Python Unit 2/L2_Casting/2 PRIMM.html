@@ -159,7 +159,7 @@ color:  purple
   }
 
   /* ── CODE CHECKER ── */
-  .code-checker { margin-bottom: 1.2rem; }
+  .code-checker { margin: 0 -1.5rem 1.2rem; }
   .checker-header {
     background: #1a1040; padding: 0.6rem 1rem; display: flex; align-items: center;
     gap: 0.5rem; font-size: 0.8rem; color: #b4a0e0; font-family: 'Trebuchet MS','Calibri',sans-serif;
@@ -192,6 +192,10 @@ color:  purple
   .info-box { background: #1a1040; border: 1px solid #3d2d5e; border-radius: 8px; padding: 0.8rem 1rem; margin-bottom: 1rem; font-size: 0.85rem; color: #b4a0e0; display: flex; gap: 0.5rem; }
   .info-box .icon { font-size: 1.1rem; flex-shrink: 0; }
   .hint-box { background: #1c0a3e; border-left: 3px solid var(--amber); border-radius: 0 6px 6px 0; padding: 0.6rem 0.9rem; font-size: 0.82rem; color: #f5d88a; margin-bottom: 0.8rem; font-style: italic; }
+  /* .hint-box defaults to light-amber-on-dark, styled for the dark page background —
+     but q-card/modify-task use the light --off-white surface, where that pairing is
+     hard to read. Override to dark-amber-on-light wherever a hint-box sits inside one. */
+  .q-card .hint-box, .modify-task .hint-box { background: rgba(245,166,35,0.15); color: #7a4f00; }
 
   /* ── MODIFY TASKS ── */
   .modify-task { background: var(--off-white); border-radius: 10px; padding: 0.9rem 1.2rem; margin-bottom: 0.5rem; border-left: 4px solid var(--stage-m1); display: flex; gap: 1rem; align-items: flex-start; }
@@ -215,13 +219,19 @@ color:  purple
   /* ── REQUIREMENTS LIST ── */
   .req-list { list-style: none; margin: 1rem 0; }
   .req-list li { display: flex; align-items: flex-start; gap: 0.6rem; background: var(--off-white); border: 1.5px solid #d1c4f0; border-radius: 8px; padding: 0.7rem 1rem; margin-bottom: 0.5rem; font-size: 0.87rem; color: var(--text); line-height: 1.5; }
+  .req-list li > span:first-child { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 6px; background: var(--purple-light); color: #fff; font-weight: 800; font-size: 0.75rem; flex-shrink: 0; }
+  .req-list li .req-text { flex: 1; }
+  .req-list li.req-pass { border-color: var(--green); background: var(--green-bg); }
+  .req-list li.req-pass > span:first-child { background: var(--green); color: #052e14; }
+  .req-list li.req-fail { border-color: var(--red); background: var(--red-bg); }
+  .req-list li.req-fail > span:first-child { background: var(--red); color: #fff; }
 
   /* ── MISC ── */
   .section-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); font-weight: 700; margin-bottom: 0.4rem; margin-top: 1.2rem; }
   .completion-banner { background: linear-gradient(135deg,#1a4a2e,#0d2d1a); border: 2px solid var(--green); border-radius: 12px; padding: 1.5rem; text-align: center; color: var(--green); margin-top: 2rem; display: none; }
   .completion-banner h3 { font-size: 1.3rem; margin-bottom: 0.5rem; }
   .completion-banner p  { color: #86efac; font-size: 0.88rem; }
-  .progress-strip { height: 8px; background: #1a1040; position: sticky; top: 0; z-index: 10; }
+  .progress-strip { height: 8px; background: #1a1040; position: sticky; top: var(--cr-banner-h, 0px); z-index: 10; }
   .progress-fill  { height: 100%; background: linear-gradient(90deg,var(--purple),var(--teal)); transition: width 0.5s ease; }
 
   .step-hidden { display: none !important; }
@@ -231,6 +241,7 @@ color:  purple
 
   @media (max-width: 600px) {
     .site-header { flex-wrap: wrap; } .header-code { display: none; } .stage-panel { padding: 1rem; }
+    .code-checker { margin-left: 0; margin-right: 0; }
     .challenge-grid { grid-template-columns: 1fr; }
     .ann-row { grid-template-columns: 1.6rem 1fr; }
     .ann-label { display: none; }
@@ -482,7 +493,12 @@ color:  purple
       <div class="section-label">★ Modification 1 — Change the greeting</div>
       <div class="modify-task">
         <span class="stars">★</span>
-        <div class="task-text">Change the greeting on line 4 to say <strong>"Nice to meet you, [name]!"</strong> instead of "Hello, [name]!". Keep everything else the same.</div>
+        <div class="task-text">
+          <ul class="req-list" id="req_m1_1">
+            <li><span>1</span><span class="req-text">Change the greeting on line 4 to say <strong>"Nice to meet you, [name]!"</strong> instead of "Hello, [name]!".</span></li>
+            <li><span>2</span><span class="req-text">Keep everything else the same — the age input should still use <strong>int()</strong>.</span></li>
+          </ul>
+        </div>
       </div>
     </div>
 
@@ -491,8 +507,10 @@ color:  purple
       <div class="modify-task">
         <span class="stars">★★</span>
         <div class="task-text">
-          Change line 2 to ask for the user's <strong>birth year</strong> instead of their age. Calculate their age using <code>age = <span id="mod2Year">2026</span> - year</code>. Then update the second <code>print()</code> to show their calculated <strong>age</strong> instead — for example: <code>"You are " + str(age) + " years old."</code><br>
-          Remember: birth year is still a number, so it still needs <strong>int()</strong>.
+          <ul class="req-list" id="req_m1_2">
+            <li><span>1</span><span class="req-text">Change line 2 to ask for the user's <strong>birth year</strong> instead of their age (still using <strong>int()</strong>), and calculate their age using <code>age = <span id="mod2Year">2026</span> - year</code>.</span></li>
+            <li><span>2</span><span class="req-text">Update the second <code>print()</code> to show their calculated <strong>age</strong> instead — for example: <code>"You are " + str(age) + " years old."</code></span></li>
+          </ul>
         </div>
       </div>
     </div>
@@ -501,7 +519,12 @@ color:  purple
       <div class="section-label">★★ Modification 3 — Add a height input</div>
       <div class="modify-task">
         <span class="stars">★★</span>
-        <div class="task-text">Add a new input that asks for the user's <strong>height in cm</strong>. Convert it to metres by dividing by 100 and print it. Use <strong>float()</strong> because the height might be a decimal (e.g. 165.5 cm).</div>
+        <div class="task-text">
+          <ul class="req-list" id="req_m1_3">
+            <li><span>1</span><span class="req-text">Add a new input that asks for the user's <strong>height in cm</strong>, using <strong>float()</strong> because the height might be a decimal (e.g. 165.5 cm).</span></li>
+            <li><span>2</span><span class="req-text">Convert it to metres by dividing by 100 and print it.</span></li>
+          </ul>
+        </div>
       </div>
     </div>
 
@@ -510,9 +533,10 @@ color:  purple
       <div class="modify-task">
         <span class="stars">★★★</span>
         <div class="task-text">
-          Ask for a <strong>favourite number</strong>. Then add a single <code>print()</code> that combines name, age and favourite number in one message — for example:<br>
-          <code style="background:#ede0ff;padding:0 4px;border-radius:3px;font-size:0.83rem">Alice is 13 and their favourite number is 7</code><br>
-          Use <strong>str()</strong> or commas in print() to join the values.
+          <ul class="req-list" id="req_m1_4">
+            <li><span>1</span><span class="req-text">Ask for a <strong>favourite number</strong> too, so you now have four inputs in total (name, birth year, height and favourite number).</span></li>
+            <li><span>2</span><span class="req-text">Add a single <code>print()</code> that combines name, age and favourite number in one message — for example: <code style="background:#ede0ff;padding:0 4px;border-radius:3px;font-size:0.83rem">Alice is 13 and their favourite number is 7</code>. Use <strong>str()</strong> or commas in print() to join the values.</span></li>
+          </ul>
         </div>
       </div>
     </div>
@@ -573,10 +597,13 @@ color:  purple
     </div>
   </div>
 
-  <div class="info-box">
-    <span class="icon">✅</span>
-    <span>Your program <strong>must</strong> use: <code>input()</code> + <code>int()</code> or <code>float()</code> + a calculation + <code>print()</code></span>
-  </div>
+  <div class="section-label">What your program must do</div>
+  <ul class="req-list" id="req_m2_make">
+    <li><span>1</span><span class="req-text">Call <code>input()</code> to ask the user for something.</span></li>
+    <li><span>2</span><span class="req-text">Use <code>int()</code> or <code>float()</code> to convert a number input.</span></li>
+    <li><span>3</span><span class="req-text">Include a calculation, e.g. <code>* 9 / 5 + 32</code> or <code>price * quantity</code>.</span></li>
+    <li><span>4</span><span class="req-text">Use <code>print()</code> to show the result.</span></li>
+  </ul>
 
   <div class="code-checker">
     <div class="checker-header">
@@ -595,7 +622,9 @@ color:  purple
     <div class="modify-task ext">
       <span class="stars">★★★★</span>
       <div class="task-text">
-        Ask for <strong>two numbers</strong>. Print their <strong>sum, difference, product and division</strong> on separate lines. Use int() or float() for both inputs.
+        <ul class="req-list" id="req_m2_ext">
+          <li><span>1</span><span class="req-text">Ask for <strong>two numbers</strong> (using int() or float()), then print their <strong>sum, difference, product and division</strong> — all four operations, one per line.</span></li>
+        </ul>
       </div>
     </div>
   </div>
@@ -614,7 +643,7 @@ color:  purple
 <script src="../../../classroom.js"></script>
 
 <script type="module">
-import { normalise, has, MOD_CHECKS, MOD_INPUTS, validateMake, validateExt } from './checkers.js';
+import { normalise, has, MOD_CHECKS, MOD_INPUTS, evalMod, evalMake, evalExt } from './checkers.js';
 import { runPython, preload } from '../../../pyodide-runner.js';
 import { setupEditors, clearSyntaxHint, setEditorOutput, refreshEditor } from '../../../code-editor.js';
 
@@ -706,6 +735,9 @@ function updateStepVisibility() {
   }
   for (let i = 1; i <= 4; i++) {
     document.getElementById('m1_step_' + i)?.classList.toggle('step-hidden', i !== stepM1);
+    // Passed steps show all bullets ticked; a not-yet-attempted step starts neutral.
+    const passed = !!passedChecks['m1_code' + i];
+    renderReqResults(document.getElementById('req_m1_' + i), passed ? MOD_CHECKS['mod' + i].reqs.map(() => true) : null);
   }
   const m1Btn = document.getElementById('btn_check_m1');
   if (m1Btn) m1Btn.textContent = stepM1 === 4 ? '⚡ Check final modification' : '⚡ Check modification ' + stepM1;
@@ -714,6 +746,8 @@ function updateStepVisibility() {
 
   document.getElementById('btn_goto_m2')?.classList.toggle('step-hidden', !passedChecks['m1_code4']);
   document.getElementById('m2_ext_task')?.classList.toggle('step-hidden', !passedChecks['m2_make']);
+  renderReqResults(document.getElementById('req_m2_make'), passedChecks['m2_make'] ? [true, true, true, true] : null);
+  renderReqResults(document.getElementById('req_m2_ext'), passedChecks['m2_ext'] ? [true] : null);
   const m2Btn = document.getElementById('btn_check_m2');
   if (m2Btn) {
     m2Btn.textContent = passedChecks['m2_make'] ? '⚡ Mark extension complete' : '⚡ Check program';
@@ -1105,6 +1139,20 @@ function tryCompleteInvestigate() {
 // ═══════════════════════════════════════════════════════
 //  MODIFY
 // ═══════════════════════════════════════════════════════
+
+// Ticks/crosses each <li> in a req-list to match `results` (one boolean per
+// bullet, in order). Pass null to reset a list back to its neutral numbered state.
+function renderReqResults(listEl, results) {
+  if (!listEl) return;
+  [...listEl.children].forEach((li, i) => {
+    const icon = li.querySelector(':scope > span:first-child');
+    const ok = results ? results[i] : undefined;
+    li.classList.toggle('req-pass', ok === true);
+    li.classList.toggle('req-fail', ok === false);
+    if (icon) icon.textContent = ok === true ? '✓' : ok === false ? '✗' : String(i + 1);
+  });
+}
+
 async function checkMod() {
   if (window.Classroom?.verifyAuth() === false) return;
 
@@ -1112,6 +1160,7 @@ async function checkMod() {
   const fbEl  = document.getElementById('fb_m1');
   const checkKey = 'mod' + stepM1;
   const checkId  = 'm1_code' + stepM1;
+  const reqListEl = document.getElementById('req_m1_' + stepM1);
 
   if (!fbEl) return;
   fbEl.classList.remove('hidden');
@@ -1121,7 +1170,8 @@ async function checkMod() {
     return;
   }
 
-  const structural = MOD_CHECKS[checkKey](raw);
+  const structural = evalMod(checkKey, raw);
+  renderReqResults(reqListEl, structural.results);
   if (!structural.pass) {
     fbEl.className = 'feedback fail';
     fbEl.textContent = structural.msg;
@@ -1154,6 +1204,12 @@ async function checkMod() {
       updateStepVisibility();
       saveState();
     }, 1500);
+  } else {
+    // Final modification done — lock the button and move to Make automatically.
+    const m1Btn = document.getElementById('btn_check_m1');
+    if (m1Btn) { m1Btn.disabled = true; m1Btn.textContent = '✅ All modifications done — moving to Make…'; }
+    updateStepVisibility();
+    setTimeout(() => completeStage('M1'), 1500);
   }
   saveState();
   submitScore();
@@ -1169,7 +1225,8 @@ async function checkMake() {
   const fbEl = document.getElementById('fb_m2');
   fbEl.classList.remove('hidden');
 
-  const structural = validateMake(raw);
+  const structural = evalMake(raw);
+  renderReqResults(document.getElementById('req_m2_make'), structural.results);
   if (!structural.pass) {
     fbEl.className = 'feedback fail';
     fbEl.textContent = structural.msg;
@@ -1209,7 +1266,8 @@ async function checkExt() {
   const fbEl = document.getElementById('fb_m2');
   fbEl.classList.remove('hidden');
 
-  const structural = validateExt(raw);
+  const structural = evalExt(raw);
+  renderReqResults(document.getElementById('req_m2_ext'), structural.results);
   if (!structural.pass) {
     fbEl.className = 'feedback fail';
     fbEl.textContent = structural.msg;

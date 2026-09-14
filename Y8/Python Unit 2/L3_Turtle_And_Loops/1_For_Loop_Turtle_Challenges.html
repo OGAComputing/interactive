@@ -106,7 +106,7 @@ color:  purple
   .predict-warning { background: #fff3cd; border: 1.5px solid #ffc107; border-radius: 8px; padding: 0.7rem 1rem; font-size: 0.85rem; color: #664d03; font-weight: 600; margin-top: 0.8rem; display: none; align-items: center; gap: 0.5rem; }
 
   /* CODE CHECKER */
-  .code-checker { margin-bottom: 1.2rem; }
+  .code-checker { margin: 0 -1.5rem 1.2rem; }
   .checker-textarea { width: 100%; background: #0d0d1a; color: #cdd6f4; font-family: 'Courier New',monospace; font-size: 0.88rem; line-height: 1.7; padding: 0.8rem 1rem; border: none; outline: none; resize: vertical; min-height: 100px; }
   .checker-footer { padding: 0.6rem 1rem; display: flex; align-items: center; gap: 0.8rem; background: #0d0d1a; border-top: 1px solid #2d1060; flex-wrap: wrap; }
 
@@ -136,6 +136,19 @@ color:  purple
   .modify-task .task-text { font-size: 0.87rem; color: var(--text); line-height: 1.5; }
   .modify-task .task-text strong { color: var(--purple); }
 
+  /* REQUIREMENTS LIST — one <li> per testable requirement inside a task */
+  .req-list { list-style: none; margin: 1rem 0; }
+  .req-list li { display: flex; align-items: flex-start; gap: 0.6rem; background: var(--off-white); border: 1.5px solid rgba(217,119,6,0.3); border-radius: 10px; padding: 0.75rem 1rem; margin-bottom: 0.5rem; font-size: 0.88rem; color: var(--text); line-height: 1.5; box-shadow: 0 4px 14px rgba(0,0,0,0.22); }
+  .req-list li > span:first-child { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 6px; background: var(--stage-m1); color: #fff; font-family: 'Courier New',monospace; font-weight: 800; font-size: 0.75rem; flex-shrink: 0; }
+  /* the description is a SECOND span so <strong> inside it flows as normal inline
+     text — without this wrapper, li's flex layout treats every inline element as
+     its own flex item and breaks the sentence apart visually */
+  .req-list li .req-text { flex: 1; }
+  .req-list li.req-pass { border-color: var(--green); background: #effdf3; }
+  .req-list li.req-pass > span:first-child { background: var(--green); color: #05210f; }
+  .req-list li.req-fail { border-color: var(--red); background: #fff5f5; }
+  .req-list li.req-fail > span:first-child { background: var(--red); color: #fff; }
+
   /* MUST-USE */
   .must-use-bar { background: #1a1040; border: 1px solid #4a2d80; border-radius: 8px; padding: 0.6rem 1rem; font-size: 0.82rem; color: #b4a0e0; margin-bottom: 0.8rem; }
   .must-use-bar strong { color: var(--amber); }
@@ -146,7 +159,7 @@ color:  purple
   .completion-banner { background: linear-gradient(135deg,#1a4a2e,#0d2d1a); border: 2px solid var(--green); border-radius: 12px; padding: 1.5rem; text-align: center; color: var(--green); margin-top: 2rem; display: none; }
   .completion-banner h3 { font-size: 1.3rem; margin-bottom: 0.5rem; }
   .completion-banner p  { color: #86efac; font-size: 0.88rem; }
-  .progress-strip { height: 8px; background: #1a1040; position: sticky; top: 0; z-index: 10; }
+  .progress-strip { height: 8px; background: #1a1040; position: sticky; top: var(--cr-banner-h, 0px); z-index: 10; }
   .progress-fill  { height: 100%; background: linear-gradient(90deg,var(--purple),var(--teal)); transition: width 0.5s ease; }
 
   /* TURTLE MODAL */
@@ -167,6 +180,7 @@ color:  purple
 
   @media (max-width: 600px) {
     .site-header { flex-wrap: wrap; } .header-code { display: none; } .stage-panel { padding: 1rem; }
+    .code-checker { margin-left: 0; margin-right: 0; }
   }
 </style>
 </head>
@@ -398,27 +412,60 @@ color:  purple
   <div id="m1_steps">
     <div id="m1_step_1">
       <div class="section-label">★ Task 1 — Triangle</div>
-      <div class="modify-task"><span class="stars">★</span><div class="task-text">Change to <strong>range(3)</strong> and turn <strong>120°</strong> to draw a triangle.</div></div>
+      <div class="modify-task"><span class="stars">★</span><div class="task-text">
+        <ul class="req-list" id="req_m1_1">
+          <li><span>1</span><span class="req-text">Change to <strong>range(3)</strong> so the loop repeats 3 times.</span></li>
+          <li><span>2</span><span class="req-text">Turn <strong>120°</strong> each time to draw a triangle.</span></li>
+        </ul>
+      </div></div>
     </div>
     <div id="m1_step_2" class="step-hidden">
       <div class="section-label">★★ Task 2 — Hexagon</div>
-      <div class="modify-task"><span class="stars">★★</span><div class="task-text">Keep your triangle code and change it so the turtle draws a <strong>regular hexagon</strong>. Use the hint above to work out what the loop and turn should be.</div></div>
+      <div class="modify-task"><span class="stars">★★</span><div class="task-text">
+        <ul class="req-list" id="req_m1_2">
+          <li><span>1</span><span class="req-text">Keep your triangle code and change the loop so the turtle draws a <strong>regular hexagon</strong> (6 sides). Use the hint above to work out the repeats.</span></li>
+          <li><span>2</span><span class="req-text">Use the hint above to work out the correct turn angle for a hexagon.</span></li>
+        </ul>
+      </div></div>
     </div>
     <div id="m1_step_3" class="step-hidden">
       <div class="section-label">★★ Task 3 — Colour and pen size</div>
-      <div class="modify-task"><span class="stars">★★</span><div class="task-text">Keep your hexagon. Add <strong>t.pencolor("red")</strong> and <strong>t.pensize(3)</strong> before the loop to colour it.</div></div>
+      <div class="modify-task"><span class="stars">★★</span><div class="task-text">
+        <ul class="req-list" id="req_m1_3">
+          <li><span>1</span><span class="req-text">Keep your hexagon. Add <strong>t.pencolor("red")</strong> before the loop to colour it.</span></li>
+          <li><span>2</span><span class="req-text">Add <strong>t.pensize(3)</strong> before the loop too, to make the line thicker.</span></li>
+        </ul>
+      </div></div>
     </div>
     <div id="m1_step_4" class="step-hidden">
       <div class="section-label">★★★ Task 4 — Pentagon</div>
-      <div class="modify-task" style="border-left-color:#dc2626"><span class="stars">★★★</span><div class="task-text">Keep your colour and pen size. Change your code so it draws a <strong>coloured regular pentagon</strong>. Work out the number of repeats and the turn angle yourself.</div></div>
+      <div class="modify-task" style="border-left-color:#dc2626"><span class="stars">★★★</span><div class="task-text">
+        <ul class="req-list" id="req_m1_4">
+          <li><span>1</span><span class="req-text">Keep your colour and pen size. Use a loop that repeats the correct number of times for a regular pentagon (5 sides).</span></li>
+          <li><span>2</span><span class="req-text">Turn by the correct angle for a regular pentagon — use 360 ÷ number of sides. Work it out yourself.</span></li>
+        </ul>
+      </div></div>
     </div>
     <div id="m1_step_5" class="step-hidden">
       <div class="section-label">★★★★ Task 5 — Green octagon</div>
-      <div class="modify-task"><span class="stars">★★★★</span><div class="task-text">Now draw a <strong>green octagon</strong>. You should only need to adapt the polygon code you already have.</div></div>
+      <div class="modify-task"><span class="stars">★★★★</span><div class="task-text">
+        <ul class="req-list" id="req_m1_5">
+          <li><span>1</span><span class="req-text">Make the turtle draw in <strong>green</strong>. You should only need to adapt the polygon code you already have.</span></li>
+          <li><span>2</span><span class="req-text">Use a loop that repeats the correct number of times for an octagon (8 sides).</span></li>
+          <li><span>3</span><span class="req-text">Turn by the correct angle for an octagon — use 360 ÷ number of sides.</span></li>
+        </ul>
+      </div></div>
     </div>
     <div id="m1_step_6" class="step-hidden">
       <div class="section-label">★★★★ Task 6 — Growing pattern</div>
-      <div class="modify-task"><span class="stars">★★★★</span><div class="task-text">Turn your octagon into a growing pattern. Try <strong>range(60)</strong> or more, keep the octagon turn, and change the distance to something like <strong><code>t.forward(i + 5)</code></strong>. This starts much smaller than your octagon side length, so the pattern stays on screen while it grows.</div></div>
+      <div class="modify-task"><span class="stars">★★★★</span><div class="task-text">
+        <ul class="req-list" id="req_m1_6">
+          <li><span>1</span><span class="req-text">Turn your octagon into a growing pattern. Try <strong>range(60)</strong> or more, so the loop repeats lots of times.</span></li>
+          <li><span>2</span><span class="req-text">Change the distance to grow with <strong>addition</strong>, something like <code>t.forward(i + 5)</code>.</span></li>
+          <li><span>3</span><span class="req-text">Use addition only — don't multiply the distance.</span></li>
+          <li><span>4</span><span class="req-text">Keep the starting distance small (5 or less added to i) so the pattern stays on screen while it grows.</span></li>
+        </ul>
+      </div></div>
     </div>
   </div>
 
@@ -463,7 +510,13 @@ color:  purple
       <div class="section-label">Challenge 1 of 3 — Colour Burst 🎨</div>
       <div class="modify-task" style="border-left-color:var(--stage-m2)">
         <span class="stars">🎨</span>
-        <div class="task-text">Ask for a colour with <strong>input()</strong>. Draw a square using that colour.<br><em>Hint: You can use input() directly inside the t.pencolor() brackets.</em></div>
+        <div class="task-text">
+          <ul class="req-list" id="req_m2_1">
+            <li><span>1</span><span class="req-text">Ask for a colour with <strong>input()</strong>.</span></li>
+            <li><span>2</span><span class="req-text">Use that colour with <strong>t.pencolor()</strong> — you can use input() directly inside its brackets.</span></li>
+            <li><span>3</span><span class="req-text">Draw a <strong>square</strong> (range(4)) using that colour.</span></li>
+          </ul>
+        </div>
       </div>
     </div>
 
@@ -472,7 +525,12 @@ color:  purple
       <div class="section-label">Challenge 2 of 3 — Shape Chooser 📐</div>
       <div class="modify-task" style="border-left-color:var(--stage-m2)">
         <span class="stars">📐</span>
-        <div class="task-text">Draw a triangle, square and pentagon one after another. Use <strong>t.penup()</strong> / <strong>t.pendown()</strong> to move between them.</div>
+        <div class="task-text">
+          <ul class="req-list" id="req_m2_2">
+            <li><span>1</span><span class="req-text">Draw a <strong>triangle, square and pentagon</strong> one after another — each needs its own loop, so 3 loops in total.</span></li>
+            <li><span>2</span><span class="req-text">Use <strong>t.penup()</strong> / <strong>t.pendown()</strong> to move between them without drawing a connecting line.</span></li>
+          </ul>
+        </div>
       </div>
     </div>
 
@@ -481,7 +539,15 @@ color:  purple
       <div class="section-label">Challenge 3 of 3 — Additive pattern 🌀</div>
       <div class="modify-task" style="border-left-color:var(--stage-m2)">
         <span class="stars">🌀</span>
-        <div class="task-text">Create your own growing turtle pattern from scratch. Use a loop with <strong>at least 60 repeats</strong>, make the distance grow with <strong>addition</strong> such as <code>t.forward(i + 5)</code>, and keep the starting distance small so the pattern stays on screen. Choose a turn angle that makes an interesting pattern.</div>
+        <div class="task-text">
+          <ul class="req-list" id="req_m2_3">
+            <li><span>1</span><span class="req-text">Create your own growing turtle pattern from scratch. Use a loop with <strong>at least 60 repeats</strong>.</span></li>
+            <li><span>2</span><span class="req-text">Make the distance grow with <strong>addition</strong> such as <code>t.forward(i + 5)</code>.</span></li>
+            <li><span>3</span><span class="req-text">Use addition only — don't multiply the distance.</span></li>
+            <li><span>4</span><span class="req-text">Keep the starting distance small (15 or less added to i) so the pattern stays on screen.</span></li>
+            <li><span>5</span><span class="req-text">Choose a turn angle inside the loop that makes an interesting pattern.</span></li>
+          </ul>
+        </div>
       </div>
     </div>
   </div>
@@ -657,6 +723,8 @@ function updateStepVisibility() {
 
   for(let i=1; i<=M1_TASK_COUNT; i++) {
     document.getElementById('m1_step_'+i)?.classList.toggle('step-hidden', i !== stepM1);
+    const m1Passed = !!passedChecks['m1_code' + i];
+    renderReqResults(document.getElementById('req_m1_' + i), m1Passed ? CHECKS['mod' + i].reqs.map(() => true) : null);
   }
   const m1Btn = document.getElementById('btn_check_m1');
   if (m1Btn) m1Btn.textContent = '▶ Run and Check Task ' + stepM1;
@@ -666,6 +734,8 @@ function updateStepVisibility() {
 
   for(let i=1; i<=3; i++) {
     document.getElementById('m2_step_'+i)?.classList.toggle('step-hidden', i !== stepM2);
+    const m2Passed = !!passedChecks['m2_code' + i];
+    renderReqResults(document.getElementById('req_m2_' + i), m2Passed ? CHECKS['make' + i].reqs.map(() => true) : null);
   }
   const m2Btn = document.getElementById('btn_check_m2');
   if (m2Btn) m2Btn.textContent = '▶ Run and Check Challenge ' + stepM2;
@@ -1062,104 +1132,131 @@ function has(code, pattern) {
 
 const CHECKS = {
 
-  mod1(raw) {
-    const c = normalise(raw);
-    if (!has(c, /for\s+\w+\s+in\s+range\s*\(\s*3\s*\)/))
-      return { pass:false, msg:'❌ Check your range() — a triangle needs 3 sides, so use range(3).' };
-    if (!has(c, /\.\s*left\s*\(\s*120\s*\)/) && !has(c, /\.\s*right\s*\(\s*240\s*\)/))
-      return { pass:false, msg:'❌ Check the turn angle — a triangle turns 120° each time.' };
-    return { pass:true, msg:'✅ Correct — range(3) and 120° draws a triangle!' };
+  mod1: {
+    reqs: [
+      { hint: '❌ Check your range() — a triangle needs 3 sides, so use range(3).',
+        test: raw => has(normalise(raw), /for\s+\w+\s+in\s+range\s*\(\s*3\s*\)/) },
+      { hint: '❌ Check the turn angle — a triangle turns 120° each time.',
+        test: raw => { const c = normalise(raw); return has(c, /\.\s*left\s*\(\s*120\s*\)/) || has(c, /\.\s*right\s*\(\s*240\s*\)/); } },
+    ],
+    passMsg: '✅ Correct — range(3) and 120° draws a triangle!',
   },
 
-  mod2(raw) {
-    const c = normalise(raw);
-    if (!has(c, /for\s+\w+\s+in\s+range\s*\(\s*6\s*\)/))
-      return { pass:false, msg:'❌ Check how many sides a hexagon has, then update the loop to match.' };
-    if (!has(c, /\.\s*left\s*\(\s*60\s*\)/) && !has(c, /\.\s*right\s*\(\s*300\s*\)/))
-      return { pass:false, msg:'❌ Check the turn angle. Use 360 ÷ number of sides.' };
-    return { pass:true, msg:'✅ Perfect — your loop and turn angle draw a hexagon!' };
+  mod2: {
+    reqs: [
+      { hint: '❌ Check how many sides a hexagon has, then update the loop to match.',
+        test: raw => has(normalise(raw), /for\s+\w+\s+in\s+range\s*\(\s*6\s*\)/) },
+      { hint: '❌ Check the turn angle. Use 360 ÷ number of sides.',
+        test: raw => { const c = normalise(raw); return has(c, /\.\s*left\s*\(\s*60\s*\)/) || has(c, /\.\s*right\s*\(\s*300\s*\)/); } },
+    ],
+    passMsg: '✅ Perfect — your loop and turn angle draw a hexagon!',
   },
 
-  mod3(raw) {
-    const c = normalise(raw);
-    if (!has(c, /\.\s*pencolor\s*\(/))
-      return { pass:false, msg:'❌ Add t.pencolor("red") before the loop.' };
-    if (!has(c, /\.\s*pensize\s*\(\s*3\s*\)/))
-      return { pass:false, msg:'❌ Add t.pensize(3) before the loop too.' };
-    return { pass:true, msg:'✅ Nice — pencolor and pensize are set!' };
+  mod3: {
+    reqs: [
+      { hint: '❌ Add t.pencolor("red") before the loop.',
+        test: raw => has(normalise(raw), /\.\s*pencolor\s*\(/) },
+      { hint: '❌ Add t.pensize(3) before the loop too.',
+        test: raw => has(normalise(raw), /\.\s*pensize\s*\(\s*3\s*\)/) },
+    ],
+    passMsg: '✅ Nice — pencolor and pensize are set!',
   },
 
-  mod4(raw) {
-    const c = normalise(raw);
-    if (!has(c, /for\s+\w+\s+in\s+range\s*\(\s*5\s*\)/))
-      return { pass:false, msg:'❌ Check how many sides a pentagon has, then update the loop to match.' };
-    if (!has(c, /\.\s*left\s*\(\s*72\s*\)/) && !has(c, /\.\s*right\s*\(\s*288\s*\)/))
-      return { pass:false, msg:'❌ Check the turn angle. Use the polygon angle hint above.' };
-    return { pass:true, msg:'✅ Excellent — a coloured pentagon!' };
+  mod4: {
+    reqs: [
+      { hint: '❌ Check how many sides a pentagon has, then update the loop to match.',
+        test: raw => has(normalise(raw), /for\s+\w+\s+in\s+range\s*\(\s*5\s*\)/) },
+      { hint: '❌ Check the turn angle. Use the polygon angle hint above.',
+        test: raw => { const c = normalise(raw); return has(c, /\.\s*left\s*\(\s*72\s*\)/) || has(c, /\.\s*right\s*\(\s*288\s*\)/); } },
+    ],
+    passMsg: '✅ Excellent — a coloured pentagon!',
   },
 
-  mod5(raw) {
-    const c = normalise(raw);
-    const rawLower = raw.toLowerCase();
-    if (!has(rawLower, /\.\s*pencolor\s*\(\s*["']green["']\s*\)/) && !has(rawLower, /\.\s*color\s*\(\s*["']green["']\s*\)/))
-      return { pass:false, msg:'❌ Make sure the turtle is drawing in green.' };
-    if (!has(c, /for\s+\w+\s+in\s+range\s*\(\s*8\s*\)/))
-      return { pass:false, msg:'❌ Check how many sides an octagon has, then update the loop to match.' };
-    if (!has(c, /\.\s*left\s*\(\s*45\s*\)/) && !has(c, /\.\s*right\s*\(\s*315\s*\)/))
-      return { pass:false, msg:'❌ Check the octagon turn angle using 360 ÷ number of sides.' };
-    return { pass:true, msg:'✅ Great — a green octagon!' };
+  mod5: {
+    reqs: [
+      { hint: '❌ Make sure the turtle is drawing in green.',
+        test: raw => { const rawLower = raw.toLowerCase(); return has(rawLower, /\.\s*pencolor\s*\(\s*["']green["']\s*\)/) || has(rawLower, /\.\s*color\s*\(\s*["']green["']\s*\)/); } },
+      { hint: '❌ Check how many sides an octagon has, then update the loop to match.',
+        test: raw => has(normalise(raw), /for\s+\w+\s+in\s+range\s*\(\s*8\s*\)/) },
+      { hint: '❌ Check the octagon turn angle using 360 ÷ number of sides.',
+        test: raw => { const c = normalise(raw); return has(c, /\.\s*left\s*\(\s*45\s*\)/) || has(c, /\.\s*right\s*\(\s*315\s*\)/); } },
+    ],
+    passMsg: '✅ Great — a green octagon!',
   },
 
-  mod6(raw) {
-    const c = normalise(raw);
-    const loopMatch = c.match(/for\s+\w+\s+in\s+range\s*\(\s*(\d+)\s*\)/);
-    if (!loopMatch || parseInt(loopMatch[1], 10) < 50)
-      return { pass:false, msg:'❌ Make the loop run many more times, for example range(60), so the pattern can build up.' };
-    if (!has(c, /\.\s*forward\s*\(\s*[^)]*\bi\b[^)]*\+/) && !has(c, /\.\s*forward\s*\(\s*[^)]*\+[^)]*\bi\b/))
-      return { pass:false, msg:'❌ Use addition with the loop variable inside forward(), not multiplication.' };
-    if (has(c, /\.\s*forward\s*\(\s*[^)]*\*/))
-      return { pass:false, msg:'❌ This final pattern should grow using addition, not multiplication.' };
-    const distanceMatch = c.match(/\.\s*forward\s*\(\s*(?:\bi\b\s*\+\s*(\d+)|(\d+)\s*\+\s*\bi\b)/);
-    const startingDistance = distanceMatch ? parseInt(distanceMatch[1] || distanceMatch[2], 10) : null;
-    if (startingDistance !== null && startingDistance > 15)
-      return { pass:false, msg:'❌ Reduce the starting distance so it stays on screen. Try a small number such as i + 5.' };
-    return { pass:true, msg:'✅ Lovely — an additive growing pattern with lots of repeats!' };
+  mod6: {
+    reqs: [
+      { hint: '❌ Make the loop run many more times, for example range(60), so the pattern can build up.',
+        test: raw => { const c = normalise(raw); const m = c.match(/for\s+\w+\s+in\s+range\s*\(\s*(\d+)\s*\)/); return !!m && parseInt(m[1], 10) >= 50; } },
+      { hint: '❌ Use addition with the loop variable inside forward(), not multiplication.',
+        test: raw => { const c = normalise(raw); return has(c, /\.\s*forward\s*\(\s*[^)]*\bi\b[^)]*\+/) || has(c, /\.\s*forward\s*\(\s*[^)]*\+[^)]*\bi\b/); } },
+      { hint: '❌ This final pattern should grow using addition, not multiplication.',
+        test: raw => !has(normalise(raw), /\.\s*forward\s*\(\s*[^)]*\*/) },
+      { hint: '❌ Reduce the starting distance so it stays on screen. Try a small number such as i + 5.',
+        test: raw => { const c = normalise(raw); const dm = c.match(/\.\s*forward\s*\(\s*(?:\bi\b\s*\+\s*(\d+)|(\d+)\s*\+\s*\bi\b)/); const sd = dm ? parseInt(dm[1] || dm[2], 10) : null; return !(sd !== null && sd > 15); } },
+    ],
+    passMsg: '✅ Lovely — an additive growing pattern with lots of repeats!',
   },
 
-  make1(raw) {
-    const c = normalise(raw);
-    if (!has(c, 'input(')) return { pass:false, msg:'❌ Still need to use input() for the colour.' };
-    if (!has(c, /\.\s*pencolor\s*\(/)) return { pass:false, msg:'❌ Use t.pencolor() with the input.' };
-    if (!has(c, /range\s*\(\s*4\s*\)/)) return { pass:false, msg:'❌ Draw a square using range(4).' };
-    return { pass:true, msg:'✅ Great — input() gets the colour and the loop draws the square!' };
+  make1: {
+    reqs: [
+      { hint: '❌ Still need to use input() for the colour.',
+        test: raw => has(normalise(raw), 'input(') },
+      { hint: '❌ Use t.pencolor() with the input.',
+        test: raw => has(normalise(raw), /\.\s*pencolor\s*\(/) },
+      { hint: '❌ Draw a square using range(4).',
+        test: raw => has(normalise(raw), /range\s*\(\s*4\s*\)/) },
+    ],
+    passMsg: '✅ Great — input() gets the colour and the loop draws the square!',
   },
 
-  make2(raw) {
-    const c = normalise(raw);
-    const loops = (c.match(/for\s+\w+\s+in\s+range\s*\(/g) || []).length;
-    if (loops < 3) return { pass:false, msg:'❌ Use separate loops for triangle, square and pentagon (need 3 loops).' };
-    if (!has(c, /\.\s*penup\s*\(\s*\)/)) return { pass:false, msg:'❌ Use penup() / pendown() to move between shapes.' };
-    return { pass:true, msg:'✅ Multiple shapes with penup/pendown — well done!' };
+  make2: {
+    reqs: [
+      { hint: '❌ Use separate loops for triangle, square and pentagon (need 3 loops).',
+        test: raw => { const c = normalise(raw); const loops = (c.match(/for\s+\w+\s+in\s+range\s*\(/g) || []).length; return loops >= 3; } },
+      { hint: '❌ Use penup() / pendown() to move between shapes.',
+        test: raw => has(normalise(raw), /\.\s*penup\s*\(\s*\)/) },
+    ],
+    passMsg: '✅ Multiple shapes with penup/pendown — well done!',
   },
 
-  make3(raw) {
-    const c = normalise(raw);
-    const loopMatch = c.match(/for\s+\w+\s+in\s+range\s*\(\s*(\d+)\s*\)/);
-    if (!loopMatch || parseInt(loopMatch[1], 10) < 60)
-      return { pass:false, msg:'❌ Use at least 60 repeats so the growing pattern has time to build.' };
-    if (!has(c, /\.\s*forward\s*\(\s*[^)]*\bi\b[^)]*\+/) && !has(c, /\.\s*forward\s*\(\s*[^)]*\+[^)]*\bi\b/))
-      return { pass:false, msg:'❌ Make the distance grow using addition with i, for example t.forward(i + 5).' };
-    if (has(c, /\.\s*forward\s*\(\s*[^)]*\*/))
-      return { pass:false, msg:'❌ This challenge should use additive growth, not multiplication.' };
-    const distanceMatch = c.match(/\.\s*forward\s*\(\s*(?:\bi\b\s*\+\s*(\d+)|(\d+)\s*\+\s*\bi\b)/);
-    const startingDistance = distanceMatch ? parseInt(distanceMatch[1] || distanceMatch[2], 10) : null;
-    if (startingDistance !== null && startingDistance > 15)
-      return { pass:false, msg:'❌ Reduce the starting distance so the pattern stays on screen. Try i + 5 or i + 10.' };
-    if (!has(c, /\.\s*left\s*\(\s*\d+/) && !has(c, /\.\s*right\s*\(\s*\d+/))
-      return { pass:false, msg:'❌ Add a turn inside the loop so the turtle makes a pattern, not just a line.' };
-    return { pass:true, msg:'✅ Additive growing pattern complete — looks great!' };
+  make3: {
+    reqs: [
+      { hint: '❌ Use at least 60 repeats so the growing pattern has time to build.',
+        test: raw => { const c = normalise(raw); const m = c.match(/for\s+\w+\s+in\s+range\s*\(\s*(\d+)\s*\)/); return !!m && parseInt(m[1], 10) >= 60; } },
+      { hint: '❌ Make the distance grow using addition with i, for example t.forward(i + 5).',
+        test: raw => { const c = normalise(raw); return has(c, /\.\s*forward\s*\(\s*[^)]*\bi\b[^)]*\+/) || has(c, /\.\s*forward\s*\(\s*[^)]*\+[^)]*\bi\b/); } },
+      { hint: '❌ This challenge should use additive growth, not multiplication.',
+        test: raw => !has(normalise(raw), /\.\s*forward\s*\(\s*[^)]*\*/) },
+      { hint: '❌ Reduce the starting distance so the pattern stays on screen. Try i + 5 or i + 10.',
+        test: raw => { const c = normalise(raw); const dm = c.match(/\.\s*forward\s*\(\s*(?:\bi\b\s*\+\s*(\d+)|(\d+)\s*\+\s*\bi\b)/); const sd = dm ? parseInt(dm[1] || dm[2], 10) : null; return !(sd !== null && sd > 15); } },
+      { hint: '❌ Add a turn inside the loop so the turtle makes a pattern, not just a line.',
+        test: raw => { const c = normalise(raw); return has(c, /\.\s*left\s*\(\s*\d+/) || has(c, /\.\s*right\s*\(\s*\d+/); } },
+    ],
+    passMsg: '✅ Additive growing pattern complete — looks great!',
   },
 };
+
+function evalCheck(key, raw) {
+  const check = CHECKS[key];
+  const results = check.reqs.map(r => !!r.test(raw));
+  const pass = results.every(Boolean);
+  const hint = pass ? check.passMsg : check.reqs[results.findIndex(r => !r)].hint;
+  return { results, pass, msg: hint };
+}
+
+// Ticks/crosses each <li> in a req-list to match `results` (one boolean per
+// bullet, in order). Pass null to reset a list back to its neutral numbered state.
+function renderReqResults(listEl, results) {
+  if (!listEl) return;
+  [...listEl.children].forEach((li, i) => {
+    const icon = li.querySelector(':scope > span:first-child');
+    const ok = results ? results[i] : undefined;
+    li.classList.toggle('req-pass', ok === true);
+    li.classList.toggle('req-fail', ok === false);
+    if (icon) icon.textContent = ok === true ? '✓' : ok === false ? '✗' : String(i + 1);
+  });
+}
 
 function runAndCheckMod() {
   const raw = document.getElementById('m1_editor').value || '';
@@ -1172,7 +1269,8 @@ function runAndCheckMod() {
     return;
   }
 
-  const result = CHECKS['mod' + stepM1](raw);
+  const result = evalCheck('mod' + stepM1, raw);
+  renderReqResults(document.getElementById('req_m1_' + stepM1), result.results);
   fbEl.className = result.pass ? 'feedback pass' : 'feedback fail';
   fbEl.textContent = result.msg;
 
@@ -1180,6 +1278,7 @@ function runAndCheckMod() {
   openTurtleFromChecker('m1_editor', 'Modify Task ' + stepM1);
 
   if (result.pass) {
+    passedChecks['m1_code' + stepM1] = true;
     if (stepM1 < M1_TASK_COUNT) {
       setTimeout(() => {
         stepM1++;
@@ -1210,13 +1309,15 @@ function runAndCheckMake() {
     return;
   }
 
-  const result = CHECKS['make' + stepM2](raw);
+  const result = evalCheck('make' + stepM2, raw);
+  renderReqResults(document.getElementById('req_m2_' + stepM2), result.results);
   fbEl.className = result.pass ? 'feedback pass' : 'feedback fail';
   fbEl.textContent = result.msg;
 
   openTurtleFromChecker('m2_editor', 'Make Challenge ' + stepM2);
 
   if (result.pass) {
+    passedChecks['m2_code' + stepM2] = true;
     if (stepM2 < 3) {
       setTimeout(() => {
         stepM2++;

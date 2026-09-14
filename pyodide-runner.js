@@ -177,7 +177,9 @@ def _py_analyze(code):
                                     'bool', 'list', 'dict', 'set', 'tuple', 'type',
                                     'abs', 'round', 'max', 'min', 'sorted', 'enumerate', 'zip']: cls = "tok-builtin"
             else:
-                cls = {tokenize.STRING: "tok-str", tokenize.NUMBER: "tok-num",
+                cls = {tokenize.STRING: "tok-str", tokenize.FSTRING_START: "tok-str",
+                       tokenize.FSTRING_MIDDLE: "tok-str", tokenize.FSTRING_END: "tok-str",
+                       tokenize.NUMBER: "tok-num",
                        tokenize.COMMENT: "tok-comment", tokenize.OP: "tok-op"}.get(tok.type, "tok-default")
             if cls == "tok-default": tokens_html.append(val)
             else: tokens_html.append(f'<span class="{cls}">{val}</span>')

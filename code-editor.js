@@ -79,6 +79,7 @@ function _injectStyles() {
       position: relative;
       flex: 1;
       display: block;
+      overflow: hidden;
     }
     /* Higher specificity to ensure text remains hidden even if themes set colors */
     .editor-container .checker-textarea {
@@ -97,13 +98,21 @@ function _injectStyles() {
       border: none;
       outline: none;
       resize: none;
-      overflow: hidden;
+      overflow-x: auto;
+      overflow-y: hidden;
       min-height: 200px;
       white-space: pre;
+      scrollbar-width: thin;
+      scrollbar-color: #3d2d5e #0d0d1a;
     }
+    .checker-textarea::-webkit-scrollbar { height: 8px; }
+    .checker-textarea::-webkit-scrollbar-track { background: #0d0d1a; }
+    .checker-textarea::-webkit-scrollbar-thumb { background: #3d2d5e; border-radius: 4px; }
     :where(.highlight-layer) {
       position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
+      top: 0; left: 0; bottom: 0;
+      min-width: 100%; width: max-content;
+      box-sizing: border-box;
       padding: .8rem 1rem;
       font-family: 'Courier New', 'Consolas', monospace;
       font-size: .88rem;
@@ -863,6 +872,14 @@ export function setupEditors(selector = '.checker-textarea', opts = {}) {
 
     ta.addEventListener('input', () => {
       _debouncedCheck(ta);
+    });
+
+    ta.addEventListener('scroll', () => {
+      // overflow-y:hidden hides the scrollbar but doesn't prevent scrollTop drifting.
+      // A non-zero scrollTop shifts the cursor mapping vs the highlight layer, causing
+      // clicks to land one line above the visual text. Reset it immediately.
+      if (ta.scrollTop !== 0) ta.scrollTop = 0;
+      hl.style.transform = `translateX(-${ta.scrollLeft}px)`;
     });
 
     ta.addEventListener('focus', () => {

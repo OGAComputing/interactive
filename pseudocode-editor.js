@@ -85,7 +85,12 @@ function _injectStyles() {
       overflow-y: hidden;
       min-height: 200px;
       white-space: pre;
+      scrollbar-width: thin;
+      scrollbar-color: #3d2d5e #0d0d1a;
     }
+    .pseudocode-textarea::-webkit-scrollbar { height: 8px; }
+    .pseudocode-textarea::-webkit-scrollbar-track { background: #0d0d1a; }
+    .pseudocode-textarea::-webkit-scrollbar-thumb { background: #3d2d5e; border-radius: 4px; }
     :where(.highlight-layer) {
       position: absolute;
       top: 0; left: 0; bottom: 0;

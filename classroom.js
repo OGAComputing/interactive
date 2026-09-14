@@ -252,6 +252,22 @@
       document.body.appendChild(banner);
     }
 
+    // Publish the banner's rendered height as a CSS var so an activity's own
+    // sticky headers (e.g. a PRIMM progress strip) can offset below it with
+    // `top: var(--cr-banner-h, 0px)` instead of overlapping it once scrolled —
+    // both would otherwise sit at top:0 and fight for the same space. The
+    // height changes (text reflow on narrow screens, sign-in state, flashing
+    // reminder), so keep it live with a ResizeObserver rather than a one-off read.
+    const syncBannerHeight = () => {
+      document.documentElement.style.setProperty('--cr-banner-h', banner.offsetHeight + 'px');
+    };
+    syncBannerHeight();
+    if (window.ResizeObserver) {
+      new ResizeObserver(syncBannerHeight).observe(banner);
+    } else {
+      window.addEventListener('resize', syncBannerHeight);
+    }
+
     const toast = document.createElement('div');
     toast.id = 'classroom-toast';
     document.body.appendChild(toast);

@@ -249,7 +249,7 @@ color:  purple
   }
 
   /* ── CODE CHECKER (terminal) ── */
-  .code-checker { margin-bottom: 1.2rem; border-radius: 12px; overflow: hidden; border: 1px solid rgba(124,99,210,0.4); box-shadow: 0 10px 30px rgba(0,0,0,0.45); }
+  .code-checker { margin: 0 -1.5rem 1.2rem; border-radius: 12px; overflow: hidden; border: 1px solid rgba(124,99,210,0.4); box-shadow: 0 10px 30px rgba(0,0,0,0.45); }
   .checker-textarea { display: block; width: 100%; background: #0a081c; color: var(--code-text); font-family: var(--font-mono); font-size: 0.9rem; line-height: 1.7; padding: 0.9rem 1.1rem; border: none; outline: none; min-height: 200px; }
   .checker-footer { padding: 0.7rem 1rem; display: flex; align-items: center; gap: 0.8rem; background: #0a081c; border-top: 1px solid rgba(47,243,224,0.25); flex-wrap: wrap; }
 
@@ -300,15 +300,23 @@ color:  purple
   .req-list { list-style: none; margin: 1rem 0; }
   .req-list li { display: flex; align-items: flex-start; gap: 0.6rem; background: var(--off-white); border: 1.5px solid #d6c9f2; border-radius: 10px; padding: 0.75rem 1rem; margin-bottom: 0.5rem; font-size: 0.88rem; color: var(--text); line-height: 1.5; box-shadow: 0 4px 14px rgba(0,0,0,0.22); }
   .req-list li > span:first-child { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 6px; background: var(--stage-m2); color: #fff; font-family: var(--font-mono); font-weight: 800; font-size: 0.75rem; flex-shrink: 0; }
+  /* the description is a SECOND span so <strong>/<code> inside it flow as normal
+     inline text — without this wrapper, li's flex layout treats every inline
+     element as its own flex item and breaks the sentence apart visually */
+  .req-list li .req-text { flex: 1; }
   .req-list li.ext { border-color: var(--amber); }
   .req-list li.ext > span:first-child { background: var(--amber); color: #3a2600; }
+  .req-list li.req-pass { border-color: var(--green); background: #effdf3; }
+  .req-list li.req-pass > span:first-child { background: var(--green); color: #05210f; }
+  .req-list li.req-fail { border-color: var(--red); background: #fff5f5; }
+  .req-list li.req-fail > span:first-child { background: var(--red); color: #fff; }
 
   /* ── MISC ── */
   .section-label { font-family: var(--font-mono); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.12em; color: #9a8cc8; font-weight: 700; margin-bottom: 0.45rem; margin-top: 1.3rem; }
   .completion-banner { background: linear-gradient(145deg, rgba(20,184,95,0.18), rgba(10,40,26,0.6)); border: 2px solid var(--green); border-radius: 16px; padding: 1.8rem; text-align: center; color: var(--green); margin-top: 2rem; display: none; box-shadow: 0 0 40px rgba(43,217,107,0.35); }
   .completion-banner h3 { font-family: var(--font-mono); font-size: 1.4rem; margin-bottom: 0.5rem; text-transform: uppercase; text-shadow: 0 0 14px rgba(43,217,107,0.6); }
   .completion-banner p  { color: #a7f3c8; font-size: 0.9rem; }
-  .progress-strip { height: 10px; background: #0a081c; position: sticky; top: 0; z-index: 10; box-shadow: inset 0 0 8px rgba(0,0,0,0.6); }
+  .progress-strip { height: 10px; background: #0a081c; position: sticky; top: var(--cr-banner-h, 0px); z-index: 10; box-shadow: inset 0 0 8px rgba(0,0,0,0.6); }
   .progress-fill  { height: 100%; background: linear-gradient(90deg, var(--purple), var(--teal), var(--stage-m2)); background-size: 200% 100%; transition: width 0.5s ease; box-shadow: 0 0 12px rgba(47,243,224,0.6); animation: xp-shimmer 3s linear infinite; }
   /* Flags to the student (and a teacher glancing at the screen) that no progress has
      been made on the current stage for a while — see STUCK_THRESHOLDS_MS in the JS. */
@@ -438,6 +446,7 @@ color:  purple
   @media (max-width: 600px) {
     .site-header { flex-wrap: wrap; } .header-code { display: none; }
     .stage-panel { padding: 1rem; } .primm-nav button { min-width: 74px; }
+    .code-checker { margin-left: 0; margin-right: 0; }
   }
 </style>
 </head>
@@ -806,10 +815,9 @@ color:  purple
         <span class="stars">★</span>
         <div class="task-text">
           Your editor still has the code from the investigation. Turn it into a program that describes <strong>you</strong>:
-          <ul style="margin:0.5rem 0 0 1.2rem;line-height:2">
-            <li>Change <strong>every</strong> line of text so it displays something personal — your <strong>name</strong>, <strong>year group</strong>, <strong>school name</strong>, and <strong>favourite subject</strong>.</li>
-            <li>Make sure <strong>none of the original starter text</strong> is left (&ldquo;Hello, World!&rdquo;, &ldquo;I am learning Python.&rdquo;, &ldquo;This is fun!&rdquo;).</li>
-            <li>Run your code to check.</li>
+          <ul class="req-list" id="req_m1_1">
+            <li><span>1</span><span class="req-text">Change <strong>every</strong> line of text so it displays something personal — your <strong>name</strong>, <strong>year group</strong>, <strong>school name</strong>, and <strong>favourite subject</strong>.</span></li>
+            <li><span>2</span><span class="req-text">Make sure <strong>none of the original starter text</strong> is left (&ldquo;Hello, World!&rdquo;, &ldquo;I am learning Python.&rdquo;, &ldquo;This is fun!&rdquo;).</span></li>
           </ul>
           <span style="color:var(--muted)">Any empty <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print()</code> line from the investigation can stay — you&rsquo;ll use a blank line properly in Modification 3.</span>
         </div>
@@ -821,11 +829,9 @@ color:  purple
       <div class="modify-task">
         <span class="stars">★★</span>
         <div class="task-text">
-          Keep everything from modification 1.
-          <ul style="margin:0.5rem 0 0 1.2rem;line-height:2">
-            <li>Add more <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print()</code> statements until you have <strong>five text lines in total</strong>.</li>
-            <li>Add whatever you like — favourite subject, a hobby, today's date…</li>
-            <li>Run your code to check you see five lines of output.</li>
+          Keep your code so far.
+          <ul class="req-list" id="req_m1_2">
+            <li><span>1</span><span class="req-text">Add more <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print()</code> statements until you have <strong>five text lines in total</strong> — add whatever you like (favourite subject, a hobby, today's date…).</span></li>
           </ul>
         </div>
       </div>
@@ -836,10 +842,9 @@ color:  purple
       <div class="modify-task">
         <span class="stars">★★</span>
         <div class="task-text">
-          Keep all five lines from modification 2.
-          <ul style="margin:0.5rem 0 0 1.2rem;line-height:2">
-            <li>Insert <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print()</code> with <strong>empty brackets</strong> somewhere <strong>between</strong> two of your lines to create a visual gap in the output.</li>
-            <li>Run your code to see the blank line appear between your text.</li>
+          Keep your code so far — all five lines from before.
+          <ul class="req-list" id="req_m1_3">
+            <li><span>1</span><span class="req-text">Insert <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print()</code> with <strong>empty brackets</strong> somewhere <strong>between</strong> two of your lines to create a visual gap in the output.</span></li>
           </ul>
         </div>
       </div>
@@ -850,11 +855,11 @@ color:  purple
       <div class="modify-task ext">
         <span class="stars">★★★</span>
         <div class="task-text">
-          Keep everything from modification 3.
-          <ul style="margin:0.5rem 0 0 1.2rem;line-height:2">
-            <li><strong>Predict first</strong> (before you run): right now your blank line sits in the middle. What will the output look like if you move your empty <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print()</code> to the <strong>very top</strong>?</li>
-            <li><strong>Move your empty</strong> <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print()</code> so it is the <strong>first line</strong> of your program.</li>
-            <li>Run it and compare with your prediction — the output should now <strong>start</strong> with a blank line.</li>
+          Keep your code so far.
+          <p style="margin:0.6rem 0;color:var(--muted);font-style:italic">💭 <strong>Predict first</strong> (before you run): right now your blank line sits in the middle. What will the output look like if you move your empty <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print()</code> to the <strong>very top</strong>?</p>
+          <ul class="req-list" id="req_m1_4">
+            <li><span>1</span><span class="req-text">Keep all your <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print()</code> lines — just change their <strong>ORDER</strong>, don't delete any.</span></li>
+            <li><span>2</span><span class="req-text"><strong>Move your empty</strong> <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print()</code> so it is the <strong>first line</strong> of your program — the output should now <strong>start</strong> with a blank line.</span></li>
           </ul>
           The blank line moved because Python always runs your code <strong>top to bottom</strong> — the order of your lines is the order of your output.
         </div>
@@ -872,7 +877,7 @@ color:  purple
   <div class="code-checker">
     <textarea class="checker-textarea" id="m1_editor" data-title="Python Editor" oninput="saveState()"></textarea>
     <div class="checker-footer">
-      <button class="btn btn-check" id="btn_check_m1" onclick="checkMod()">⚡ Check modification 1</button>
+      <button class="btn btn-check" id="btn_check_m1" onclick="checkMod()">▶ Run &amp; check modification 1</button>
       <div class="feedback hidden" id="fb_m1"></div>
     </div>
   </div>
@@ -909,24 +914,21 @@ color:  purple
   <div id="m2_task_block">
     <div class="info-box">
       <span class="icon">🔨</span>
-      <span id="m2_task_text">Write a new program (in the editor below — don't copy from above) that displays your name and the names of three friends. <strong>All success criteria below must be met</strong> before you click Check.</span>
+      <span id="m2_task_text">Write a new program (in the editor below — don't copy from above) that displays your name and the names of three friends, each on its own line, in alphabetical order (A → Z). <strong>All success criteria below must be met</strong> before you click Check.</span>
     </div>
 
     <div class="section-label" id="m2_req_label">What your program must do</div>
 
     <ul class="req-list" id="m2_req_list">
-      <li><span>1</span> Print <strong>four names</strong> in total — yours and three friends'.</li>
-      <li><span>2</span> Each name appears on its <strong>own separate line</strong>.</li>
-      <li><span>3</span> The names are in <strong>alphabetical order</strong> (A → Z).</li>
-      <li><span>4</span> Every name is a non-empty string (no blank lines used as names).</li>
-      <li><span>5</span> The program runs without any errors.</li>
+      <li><span>1</span><span class="req-text">Print <strong>four names</strong> in total — yours and three friends'.</span></li>
+      <li><span>2</span><span class="req-text">Every name is <strong>real, non-empty text</strong> — no blank print() used as a name.</span></li>
     </ul>
   </div>
 
   <div class="code-checker">
     <textarea class="checker-textarea" id="m2_editor" data-title="Name List Program" style="min-height:280px" oninput="saveState()"></textarea>
     <div class="checker-footer">
-      <button class="btn btn-check" id="btn_check_m2" onclick="checkMake()">⚡ Check program</button>
+      <button class="btn btn-check" id="btn_check_m2" onclick="checkMake()">▶ Run &amp; check program</button>
       <div class="feedback hidden" id="fb_m2"></div>
     </div>
   </div>
@@ -1152,7 +1154,7 @@ Goodbye"""</span>)</pre>
 <script src="../../../classroom.js"></script>
 
 <script type="module">
-import { normalise, has, MOD_CHECKS, MOD_INPUTS, validateMake, validateExt, validateMake2, validateTripleQuote, validateVpMod1, validateVpMod2, validateVpChallenge } from './checkers_strings.js';
+import { normalise, has, MOD_CHECKS, evalMod, MOD_INPUTS, MAKE_CHECK, evalMake, EXT_CHECK, evalExt, validateMake2, validateTripleQuote, validateVpMod1, validateVpMod2, validateVpChallenge } from './checkers_strings.js';
 import { runPython, preload } from '../../../pyodide-runner.js';
 import { setupEditors, clearSyntaxHint, setEditorOutput, refreshEditor } from '../../../code-editor.js';
 
@@ -1442,14 +1444,18 @@ function updateStepVisibility() {
     const step = document.getElementById('m1_step_' + i);
     step?.classList.toggle('step-hidden', i !== stepM1);
     step?.classList.toggle('revisiting', i === stepM1 && m1Revisiting);
+    // Passed steps show all bullets ticked; the not-yet-attempted current step
+    // (or one reached via Forward before being checked) starts neutral.
+    const passed = !!passedChecks['m1_code' + i];
+    renderReqResults(document.getElementById('req_m1_' + i), passed ? MOD_CHECKS['mod' + i].reqs.map(() => true) : null);
   }
   const m1Editor = document.getElementById('m1_editor');
   if (m1Editor) m1Editor.readOnly = m1Revisiting;
 
   const m1Btn = document.getElementById('btn_check_m1');
   if (m1Btn) m1Btn.textContent = stepM1 === STEP_COUNT_M1
-    ? '⚡ Check final modification'
-    : '⚡ Check modification ' + stepM1;
+    ? '▶ Run & check final modification'
+    : '▶ Run & check modification ' + stepM1;
   const skipM1Btn = document.getElementById('btn_skip_m1');
   if (skipM1Btn) skipM1Btn.style.display = (attemptCounts['m1_' + stepM1] || 0) >= 3 ? '' : 'none';
 
@@ -1462,8 +1468,8 @@ function updateStepVisibility() {
   const m2Btn = document.getElementById('btn_check_m2');
   if (m2Btn) {
     if (passedChecks['m2_ext'])       { m2Btn.textContent = '⚡ Check second program'; m2Btn.onclick = checkMake2; }
-    else if (passedChecks['m2_make']) { m2Btn.textContent = '⚡ Check extension';       m2Btn.onclick = checkExt; }
-    else                               { m2Btn.textContent = '⚡ Check program';         m2Btn.onclick = checkMake; }
+    else if (passedChecks['m2_make']) { m2Btn.textContent = '▶ Run & check extension'; m2Btn.onclick = checkExt; }
+    else                               { m2Btn.textContent = '▶ Run & check program';  m2Btn.onclick = checkMake; }
   }
   renderStepNav('I');
   renderStepNav('M1');
@@ -2248,12 +2254,27 @@ function tryCompleteInvestigate() {
   }
 }
 
+// Ticks/crosses each <li> in a req-list to match `results` (one boolean per
+// bullet, in order). Pass null to reset a list back to its neutral numbered state
+// (used when a step is not-yet-attempted, e.g. after Back/Forward navigation).
+function renderReqResults(listEl, results) {
+  if (!listEl) return;
+  [...listEl.children].forEach((li, i) => {
+    const icon = li.querySelector(':scope > span:first-child');
+    const ok = results ? results[i] : undefined;
+    li.classList.toggle('req-pass', ok === true);
+    li.classList.toggle('req-fail', ok === false);
+    if (icon) icon.textContent = ok === true ? '✓' : ok === false ? '✗' : String(i + 1);
+  });
+}
+
 async function checkMod() {
   if (window.Classroom?.verifyAuth() === false) return;
   const raw    = document.getElementById('m1_editor')?.value || '';
   const fbEl   = document.getElementById('fb_m1');
   const checkKey = 'mod' + stepM1;
   const checkId  = 'm1_code' + stepM1;
+  const reqListEl = document.getElementById('req_m1_' + stepM1);
   if (!fbEl) return;
   // Already passed this modification — ignore repeat clicks so the celebration
   // and auto-advance can't be re-triggered (stops fireworks spam on the last step).
@@ -2262,7 +2283,8 @@ async function checkMod() {
   if (raw.trim().length < 10) {
     fbEl.className = 'feedback fail'; fbEl.textContent = '⚠️ Write some code first.'; return;
   }
-  const structural = MOD_CHECKS[checkKey](raw);
+  const structural = evalMod(checkKey, raw);
+  renderReqResults(reqListEl, structural.results);
   if (!structural.pass) {
     fbEl.className = 'feedback fail'; fbEl.textContent = structural.msg; recordM1Attempt(); return;
   }
@@ -2307,8 +2329,13 @@ async function checkMake() {
   if (window.Classroom?.verifyAuth() === false) return;
   const raw  = document.getElementById('m2_editor')?.value || '';
   const fbEl = document.getElementById('fb_m2');
+  const reqListEl = document.getElementById('m2_req_list');
   fbEl.classList.remove('hidden');
-  const structural = validateMake(raw);
+  if (raw.trim().length < 10) {
+    fbEl.className = 'feedback fail'; fbEl.textContent = '⚠️ Write your program first, then click Check.'; return;
+  }
+  const structural = evalMake(raw);
+  renderReqResults(reqListEl, structural.results);
   if (!structural.pass) {
     fbEl.className = 'feedback fail'; fbEl.textContent = structural.msg; return;
   }
@@ -2337,8 +2364,13 @@ async function checkExt() {
   if (window.Classroom?.verifyAuth() === false) return;
   const raw  = document.getElementById('m2_editor')?.value || '';
   const fbEl = document.getElementById('fb_m2');
+  const reqListEl = document.getElementById('req_m2_ext');
   fbEl.classList.remove('hidden');
-  const structural = validateExt(raw);
+  if (raw.trim().length < 10) {
+    fbEl.className = 'feedback fail'; fbEl.textContent = '⚠️ Paste your extended program above first.'; return;
+  }
+  const structural = evalExt(raw);
+  renderReqResults(reqListEl, structural.results);
   if (!structural.pass) {
     fbEl.className = 'feedback fail'; fbEl.textContent = structural.msg; return;
   }
@@ -2617,11 +2649,14 @@ function showExtensionTask() {
   if (!taskText) return;
   taskText.innerHTML = `
     <strong>★★★★ Extension — now try this before showing your teacher.</strong><br>
-    Display all four names using a <strong>single print() statement</strong>.
-    Use <code style="background:#ede0ff;color:#4c1d95;padding:0 3px;border-radius:3px">\\n</code>
+    Display all four names using a <strong>single</strong> print() statement, using
+    <code style="background:#ede0ff;color:#4c1d95;padding:0 3px;border-radius:3px">\\n</code>
     inside the string to create line breaks — e.g.
     <code style="background:#ede0ff;color:#4c1d95;padding:0 3px;border-radius:3px">print("Alice\\nBob\\nCarol")</code>.
-    Replace your four separate print() calls with one, then click Check again.`;
+    <ul class="req-list" id="req_m2_ext" style="margin-top:0.8rem">
+      <li><span>1</span><span class="req-text">Combine your four names into <strong>one single</strong> print() statement — no separate print() calls for each name.</span></li>
+      <li><span>2</span><span class="req-text">Use <code style="background:#ede0ff;color:#4c1d95;padding:0 3px;border-radius:3px">\\n</code> inside the string to create a line break between each name.</span></li>
+    </ul>`;
   taskText.closest('.info-box').querySelector('.icon').textContent = '★';
   if (reqLabel) reqLabel.style.display = 'none';
   if (reqList)  reqList.style.display  = 'none';
