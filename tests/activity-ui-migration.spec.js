@@ -75,7 +75,11 @@ test.describe('ActivityUI migration coverage', () => {
       const scriptMatch = html.match(/<script src="([^"]*activity-ui\.js)"><\/script>/);
       expect(scriptMatch?.[1]).toBeTruthy();
 
-      await page.goto('/index.html');
+      // Navigate to a static, script-free same-origin page first so setContent()
+      // below isn't racing index.html's own async manifest fetch (which touches
+      // DOM nodes that setContent tears down, throwing on whichever page happens
+      // to still have that fetch in flight).
+      await page.goto('/activities.json');
       await page.setContent(`<!doctype html><base href="${template.base}"><script src="${scriptMatch[1]}"></script>`, { waitUntil: 'load' });
       await expectActivityUiScriptResolves(page, request);
       await expect.poll(() => page.evaluate(() => Boolean(window.ActivityUI))).toBe(true);

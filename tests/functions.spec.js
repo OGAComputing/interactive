@@ -339,7 +339,8 @@ test.describe('Make stage', () => {
 
   test('warns on empty submission', async ({ page }) => {
     await page.locator('#btn_check_m2').click();
-    await expect(page.locator('#fb_m2')).toContainText('Paste your program');
+    await expect(page.locator('#fb_m2')).toHaveClass(/fail/);
+    await expect(page.locator('#fb_m2')).toContainText('show_menu()');
   });
 
   test('valid program shows pass feedback and completion banner', async ({ page }) => {
