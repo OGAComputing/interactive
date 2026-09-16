@@ -187,13 +187,13 @@ export function validateTripleQuote(raw) {
 export function validateVpMod1(raw) {
   if (raw.trim().length < 20)
     return { pass: false, msg: '⚠️ Write some code first.' };
-  if (!/\bname\s*=\s*["'][^"']+["']/.test(raw))
+  if (!/\bname\s*=\s*\(?\s*["'][^"']+["']/.test(raw))
     return { pass: false, msg: '❌ Keep the name variable — just change its value to your own name (keep the speech marks).' };
-  if (/\bname\s*=\s*["']Alice["']/i.test(raw))
+  if (/\bname\s*=\s*\(?\s*["']Alice["']/i.test(raw))
     return { pass: false, msg: '❌ Change the value of name from "Alice" to your own name.' };
-  if (!/\bschool\s*=\s*["'][^"']+["']/.test(raw))
+  if (!/\bschool\s*=\s*\(?\s*["'][^"']+["']/.test(raw))
     return { pass: false, msg: '❌ Keep the school variable — change its value to your own school name.' };
-  if (/\bschool\s*=\s*["']Grange Academy["']/i.test(raw))
+  if (/\bschool\s*=\s*\(?\s*["']Grange Academy["']/i.test(raw))
     return { pass: false, msg: '❌ Change "Grange Academy" to your own school name.' };
   if (!/\bprint\s*\(\s*name\s*\)/.test(raw))
     return { pass: false, msg: '❌ Keep print(name) — only change the variable values, not the print lines.' };
@@ -205,7 +205,7 @@ export function validateVpMod1(raw) {
 export function validateVpMod2(raw) {
   const r1 = validateVpMod1(raw);
   if (!r1.pass) return r1;
-  if (!/\bsubject\s*=\s*["'][^"']+["']/.test(raw))
+  if (!/\bsubject\s*=\s*\(?\s*["'][^"']+["']/.test(raw))
     return { pass: false, msg: '❌ Add a variable called subject and set it to your favourite school subject (in speech marks).' };
   if (!/\bprint\s*\(\s*subject\s*\)/.test(raw))
     return { pass: false, msg: '❌ Add print(subject) to display your subject variable.' };
@@ -215,7 +215,7 @@ export function validateVpMod2(raw) {
 export function validateVpChallenge(raw) {
   if (raw.trim().length < 20)
     return { pass: false, msg: '⚠️ Write your name badge program first.' };
-  const varCount = (raw.match(/\b[a-zA-Z_]\w*\s*=\s*["'][^"'\n]+["']/g) || []).length;
+  const varCount = (raw.match(/\b[a-zA-Z_]\w*\s*=\s*\(?\s*["'][^"'\n]+["']/g) || []).length;
   if (varCount < 3)
     return { pass: false, msg: `❌ Create at least 3 string variables — you have ${varCount} so far.` };
   if (!has(raw, '+'))

@@ -329,6 +329,8 @@ color:  purple
   .progress-fill.stuck { background: var(--amber); animation: stuck-pulse 1.6s ease-in-out infinite; }
   /* One-off red flash when a stage gets marked skipped (see markStageSkipped in the JS). */
   .progress-fill.skip-flash { animation: skip-flash 1s ease-in-out; }
+  /* Persists as long as ANY skipped exercise is still unresolved (see updateSkipIndicator in the JS). */
+  .progress-fill.skip-pending { background: var(--red); box-shadow: 0 0 14px var(--red); }
 
   .step-hidden { display: none !important; }
 
@@ -692,25 +694,24 @@ color:  purple
     ║  the answer box. Applies to Modify steps too.                         ║
     ╚═══════════════════════════════════════════════════════════════════════╝
 
-    ╔══ THE STANDARD BUG PAIR — steps 3 & 4 below are ALREADY WRITTEN ══════╗
-    ║  In the default 4-step layout, steps 1–2 are yours to fill in freely  ║
-    ║  (concept exploration); steps 3–4 are the STANDARD "fix a bug" pair   ║
-    ║  and ship pre-written as MCQs — you only need to fill in IBUG_LINE /  ║
+    ╔══ THE STANDARD BUG STEP — step 3 below is ALREADY WRITTEN ════════════╗
+    ║  In the default 3-step layout, steps 1–2 are yours to fill in freely  ║
+    ║  (concept exploration); step 3 is the STANDARD "fix a bug" step and   ║
+    ║  ships pre-written as an MCQ — you only need to fill in IBUG_LINE /   ║
     ║  IBUG_FIXED_LINE and the option text in the JS (see FILL IN ②b).      ║
     ║  Step 3 = guided encounter — student presses "😈 Break it" to add the ║
-    ║  bug themselves, with the line/error explained. Step 4 = the same     ║
-    ║  "😈 Break it" button again, self-practice (repeated 2–3 times,       ║
-    ║  unaided). This pair must always be the FINAL TWO steps — if you add  ║
-    ║  more concept steps, insert them before this pair and renumber (see   ║
-    ║  the HTML comment just above the bug-pair cards for the exact         ║
-    ║  renumbering checklist).                                              ║
+    ║  bug, with the line/error explained, then fixes it themselves. Its    ║
+    ║  Check button completes Investigate (tryCompleteInvestigate()), so    ║
+    ║  this step must always be the FINAL one — if you add more concept     ║
+    ║  steps, insert them before it and renumber (see the HTML comment      ║
+    ║  just above the bug-step card for the exact renumbering checklist).   ║
     ╚═══════════════════════════════════════════════════════════════════════╝
 
-    ── QUESTION TYPES FOR INVESTIGATE STEPS (steps BEFORE the bug pair) ────
+    ── QUESTION TYPES FOR INVESTIGATE STEPS (steps BEFORE the bug step) ────
 
     Mix question types — avoid making every step a free-text box.
     Target: at least 1 text + 1 MCQ or True/False across your concept steps
-    (steps 1–2 by default), on top of the two standard bug-pair MCQs.
+    (steps 1–2 by default), on top of the standard bug-step MCQ.
 
     TEXT (textarea):
       • For open observations ("What changed?", "Why does this happen?")
@@ -766,12 +767,12 @@ color:  purple
     </div>
 
     <!--
-      STANDARD BUG PAIR — steps 3 (guided) and 4 (self-practice) are ALWAYS the last
-      two Investigate steps in every activity. See the "THE STANDARD BUG PAIR" note
-      further down (near I_FIELDS) for the full explanation and the JS you must fill
-      in (IBUG_LINE / IBUG_FIXED_LINE). If you add extra concept steps, insert them
-      BEFORE this pair and renumber qcard_i3.../qcard_i4... up to match — this pair
-      must stay the final two steps.
+      STANDARD BUG STEP — the guided bug encounter is ALWAYS the last Investigate
+      step in every activity. See the "THE STANDARD BUG STEP" note further down
+      (near I_FIELDS) for the full explanation and the JS you must fill in
+      (IBUG_LINE / IBUG_FIXED_LINE). If you add extra concept steps, insert them
+      BEFORE this step and renumber qcard_i3... up to match — this step must stay
+      the final one, and its Check button must call tryCompleteInvestigate().
     -->
     <div class="q-card step-hidden" id="qcard_i3_prompt" style="border-left-color:var(--stage-i)">
       <label class="q-label"><span class="q-num" style="background:var(--stage-i)">3</span>
@@ -784,18 +785,6 @@ color:  purple
           <li><strong>Fix it:</strong> FILL IN: describe the exact fix (it must turn the line into IBUG_FIXED_LINE), then press <strong>▶ Run code</strong> again until it works.</li>
         </ul>
         <!-- INSTRUCTIONS ONLY — put the "what was Python complaining about?" MCQ in the answer card below. -->
-      </label>
-    </div>
-
-    <div class="q-card step-hidden" id="qcard_i4_prompt" style="border-left-color:var(--stage-i)">
-      <label class="q-label"><span class="q-num" style="background:var(--stage-i)">4</span>
-        Last one — practise spotting and fixing this error quickly, on your own.
-        <ul style="margin:0.5rem 0 0 1.2rem;line-height:2">
-          <li>Under the editor, press <strong>😈 Break it</strong> — it reintroduces the same broken line and runs the code, so you can watch the error appear.</li>
-          <li><strong>Fix it yourself:</strong> make the same fix as step 3, without being told again.</li>
-          <li>Press <strong>▶ Run code</strong> above to check it worked, then press <strong>😈 Break it</strong> again and repeat — do this <strong>two or three times</strong>.</li>
-        </ul>
-        <!-- INSTRUCTIONS ONLY — put the reflection MCQ ("what happened each time?") in the answer card below. -->
       </label>
     </div>
   </div>
@@ -832,8 +821,8 @@ color:  purple
       <button class="btn btn-skip" id="btn_skip_i2" style="margin-top:6px;display:none" onclick="skipStep('I')">Move on without completing →</button>
     </div>
 
-    <!-- Guided bug encounter — step 3 answer is a comprehension MCQ about the error message.
-         Uses the SAME breakItDemo() button as step 4's self-practice card below. -->
+    <!-- Guided bug encounter — step 3 (the last step) answer is a comprehension MCQ
+         about the error message, and the step's Check button completes Investigate. -->
     <div class="q-card step-hidden" id="qcard_i3" style="border-left-color:var(--stage-i)">
       <div style="font-size:0.84rem;color:var(--muted);margin-bottom:0.4rem">✍️ Your answer — step 3 (read the error)</div>
       <div style="display:flex;gap:0.6rem;flex-wrap:wrap;margin-bottom:0.7rem;align-items:center">
@@ -848,44 +837,24 @@ color:  purple
         <label class="radio-opt"><input type="radio" name="i3_mcq" value="option_d" onchange="saveState()"> <span>FILL IN: a plausible wrong answer</span></label>
       </div>
       <div class="mcq-fb" id="fb_i3"></div>
-      <button class="btn btn-next" id="btn_check_i3" style="margin-top:10px" onclick="nextStep('I', 3)" disabled>✓ Check answer</button>
+      <!-- Last step → tryCompleteInvestigate(), not nextStep() -->
+      <button class="btn btn-next" id="btn_check_i3" style="margin-top:10px" onclick="tryCompleteInvestigate()" disabled>✓ Check answer</button>
       <button class="btn btn-skip" id="btn_skip_i3" style="margin-top:6px;display:none" onclick="skipStep('I')">Move on without completing →</button>
     </div>
 
-    <!-- Self-practice "Break it" — always the LAST step. Reflection MCQ: errors are
-         transient and normal — the same one keeps appearing, and fixing it clears it. -->
-    <div class="q-card step-hidden" id="qcard_i4" style="border-left-color:var(--stage-i)">
-      <div style="font-size:0.84rem;color:var(--muted);margin-bottom:0.4rem">✍️ Your answer — step 4 (errors come and go)</div>
-      <div style="display:flex;gap:0.6rem;flex-wrap:wrap;margin-bottom:0.7rem;align-items:center">
-        <button class="btn btn-check" type="button" onclick="breakItDemo()">😈 Break it</button>
-        <span style="font-size:0.82rem;color:var(--muted);font-style:italic">then fix the line yourself and press ▶ Run code above</span>
-      </div>
-      <label class="q-label">Each time you fixed it and ran the code again, what happened?</label>
-      <div class="radio-opts" id="ropts_i4_mcq" style="margin-top:0.5rem">
-        <label class="radio-opt"><input type="radio" name="i4_mcq" value="option_a" onchange="saveState()"> <span>FILL IN: a plausible wrong answer</span></label>
-        <label class="radio-opt"><input type="radio" name="i4_mcq" value="option_b" onchange="saveState()"> <span>FILL IN: the CORRECT answer — the same error appeared, and fixing it cleared it</span></label>
-        <label class="radio-opt"><input type="radio" name="i4_mcq" value="option_c" onchange="saveState()"> <span>FILL IN: a plausible wrong answer</span></label>
-        <label class="radio-opt"><input type="radio" name="i4_mcq" value="option_d" onchange="saveState()"> <span>FILL IN: a plausible wrong answer</span></label>
-      </div>
-      <div class="mcq-fb" id="fb_i4"></div>
-      <!-- Last step → tryCompleteInvestigate(), not nextStep() -->
-      <button class="btn btn-next" id="btn_check_i4" style="margin-top:10px" onclick="tryCompleteInvestigate()" disabled>✓ Check answer</button>
-      <button class="btn btn-skip" id="btn_skip_i4" style="margin-top:6px;display:none" onclick="skipStep('I')">Move on without completing →</button>
-    </div>
-
     <!--
-      To add a step BEFORE the standard bug pair (e.g. a 5th concept step, keeping the
-      bug pair as steps 5 and 6):
+      To add a step BEFORE the standard bug step (e.g. a 4th concept step, keeping the
+      bug step as step 4):
         1. Add a new prompt card id="qcard_i3_prompt" in #i_steps above (shifting the
-           guided-bug prompt to qcard_i4_prompt and break-it to qcard_i5_prompt), and
-           a matching answer card here in #i_answers.
+           guided-bug prompt to qcard_i4_prompt), and a matching answer card here in
+           #i_answers.
         2. Renumber every qcard_iN / btn_check_iN / btn_skip_iN id, radio name=, and
-           the visible step number, so the bug pair is ALWAYS the final two steps.
+           the visible step number, so the bug step is ALWAYS the final one.
         3. Update every nextStep('I', N) call to match the new numbering; the LAST
            card's button must still call tryCompleteInvestigate().
         4. Update TEXT_FIELDS / RADIO_GROUPS, I_FIELDS, and I_CODE_CHECKS in the JS
            to match the new step count and positions.
-        5. Set STEP_COUNT_I to the new total, and BUG_STEP = STEP_COUNT_I - 1.
+        5. Set STEP_COUNT_I to the new total.
     -->
   </div>
 
@@ -1193,17 +1162,16 @@ print("Hello!")`;
 //  Everything else (progress bars, button labels, loops) updates automatically.
 // ═══════════════════════════════════════════════════════
 
-const STEP_COUNT_I  = 4;   // must equal the number of qcard_i1…qcard_iN cards
+const STEP_COUNT_I  = 3;   // must equal the number of qcard_i1…qcard_iN cards
 const STEP_COUNT_M1 = 4;   // must equal the number of m1_step_1…m1_step_N divs
 
 
 // ═══════════════════════════════════════════════════════
-//  FILL IN ②b — The standard "fix a bug" pair (ALWAYS the last two Investigate steps)
+//  FILL IN ②b — The standard "fix a bug" step (ALWAYS the last Investigate step)
 //  Every PRIMM activity has the student press "😈 Break it" to meet a real, safe
-//  error and fix it TWICE: once GUIDED (BUG_STEP, with the line and error named for
-//  them), then once SELF-PRACTICE (the final step, same "😈 Break it" button, no
-//  hand-holding, repeated 2–3 times). This is standard across every activity, not
-//  optional — both steps use the SAME breakItDemo() function (see below).
+//  error, guided (the line and error named for them), then fix it themselves — the
+//  step's Check button ends the Investigate stage. This is standard across every
+//  activity, not optional.
 //
 //  IBUG_LINE / IBUG_FIXED_LINE must be a SINGLE extra line that can be appended to
 //  the end of the student's current code without touching anything else they wrote,
@@ -1216,7 +1184,6 @@ const STEP_COUNT_M1 = 4;   // must equal the number of m1_step_1…m1_step_N div
 
 const IBUG_LINE       = 'FILL IN: e.g. print("Debugging is normal!)';   // deliberately broken
 const IBUG_FIXED_LINE = 'FILL IN: e.g. print("Debugging is normal!")';  // the corrected version
-const BUG_STEP = STEP_COUNT_I - 1;   // guided encounter is always second-to-last; break-it is always last
 
 
 // ═══════════════════════════════════════════════════════
@@ -1228,10 +1195,10 @@ const BUG_STEP = STEP_COUNT_I - 1;   // guided encounter is always second-to-las
 const TEXT_FIELDS = [
   'p_text1',                              // Predict free-text question(s)
   'r_editor', 'r1',                       // Run stage
-  'i_editor', 'i1', 'i2',                // Investigate free-text steps — i3/i4 are the bug-pair MCQs
+  'i_editor', 'i1', 'i2',                // Investigate free-text steps — i3 is the bug-step MCQ
   'm1_editor', 'm2_editor',              // Modify + Make editors
 ];
-const RADIO_GROUPS = ['p_mcq1', 'p_mcq2', 'i3_mcq', 'i4_mcq'];  // Predict + the standard bug-pair MCQs
+const RADIO_GROUPS = ['p_mcq1', 'p_mcq2', 'i3_mcq'];  // Predict + the standard bug-step MCQ
 
 
 // ═══════════════════════════════════════════════════════
@@ -1299,9 +1266,9 @@ const I_FIELDS = [
     return null;
   }},
 
-  // ── THE STANDARD BUG PAIR (do not remove — see FILL IN ②b above) ──────────
-  // Step 3 — guided: the student reads the (already-fixed-by-them) error and
-  // identifies what Python was complaining about.
+  // ── THE STANDARD BUG STEP (do not remove — see FILL IN ②b above) ──────────
+  // Step 3 (last step) — guided: the student reads the error, identifies what
+  // Python was complaining about, then fixes it themselves.
   { id:'i3', cardId:'qcard_i3', type:'mcq', radioName:'i3_mcq', correctValue:'option_b', needsNewLine: false,
     passMsg: 'Exactly — FILL IN explanation of the error in plain English.',
     failMsg: 'Read the error and the line it points to again — FILL IN a nudge toward the real cause.',
@@ -1312,22 +1279,10 @@ const I_FIELDS = [
       return null;
     },
   },
-  // Step 4 — self-practice: after repeating the break/fix cycle 2–3 times with
-  // "😈 Break it", the student reflects on the pattern (errors are transient and normal).
-  { id:'i4', cardId:'qcard_i4', type:'mcq', radioName:'i4_mcq', correctValue:'option_b', needsNewLine: false,
-    passMsg: 'Right — the same error every time, and it went away the moment you fixed it.',
-    failMsg: 'Look again — each time the bug was present Python stopped with the same error, and fixing it cleared it instantly.',
-    validate() {
-      const c = document.querySelector('input[name="i4_mcq"]:checked');
-      if (!c) return 'Select an answer before checking — even a guess is fine.';
-      if (c.value !== 'option_b') return 'Not quite — think about what happened each time the bug was present.';
-      return null;
-    },
-  },
-  // ── End standard bug pair ───────────────────────────────────────────────────
+  // ── End standard bug step ───────────────────────────────────────────────────
 
-  // Add a step here (BEFORE the bug pair above) if STEP_COUNT_I > 4 — see the
-  // "To add a step BEFORE the standard bug pair" comment in the HTML above.
+  // Add a step here (BEFORE the bug step above) if STEP_COUNT_I > 3 — see the
+  // "To add a step BEFORE the standard bug step" comment in the HTML above.
 ];
 
 
@@ -1350,12 +1305,11 @@ const I_FIELDS = [
 const I_CODE_CHECKS = [
   function(code) { /* FILL IN: e.g. if (!/new_value/.test(code)) return 'Make the change first…'; */ return null; },
   function(code) { return null; },
-  // Standard bug pair — both gates just require the line to currently read
+  // Standard bug step — the gate just requires the line to currently read
   // IBUG_FIXED_LINE (i.e. not still broken, and not reverted to something else).
   // No per-activity changes needed here; do not remove.
   function(code) { if (!code.includes(IBUG_FIXED_LINE)) return 'fix the broken line so it reads exactly as shown above.'; return null; },
-  function(code) { if (!code.includes(IBUG_FIXED_LINE)) return 'press ▶ Run code after fixing the line you just broke.'; return null; },
-  // Add a 5th entry (BEFORE the bug pair's two entries above) if STEP_COUNT_I > 4.
+  // Add a 4th entry (BEFORE the bug step's entry above) if STEP_COUNT_I > 3.
 ];
 
 
@@ -1386,6 +1340,12 @@ let iCodeDraft      = state.iCodeDraft;
 let m1CodeSnapshots = state.m1CodeSnapshots || {};
 let m1CodeDraft     = state.m1CodeDraft;
 let skippedStages = state.skippedStages || [];
+// Per-question skip tracking (keyed the same way as attemptCounts: 'i'+n, 'm1_'+n,
+// 'm2ext_'+n). A key is added when that specific question is skipped and removed the
+// moment it's later passed — unlike skippedStages (which is stage-level and sticky
+// for the nav dot), this drives whether a skipped question's editor is unlocked for
+// a reattempt and whether the top progress bar shows its persistent "unresolved" red.
+let skippedSteps = state.skippedSteps || {};
 let attemptCounts = state.attemptCounts || {};
 let iStepRan = state.iStepRan || {};
 let firstRunShown = false;
@@ -1436,6 +1396,7 @@ function saveState() {
   state.maxStepI       = maxStepI;
   state.maxStepM1      = maxStepM1;
   state.skippedStages = skippedStages;
+  state.skippedSteps = skippedSteps;
   state.attemptCounts = attemptCounts;
   state.iStepRan = iStepRan;
   state.iCodeSnapshots  = iCodeSnapshots;
@@ -1496,11 +1457,13 @@ function updateStepVisibility() {
     if (checkBtn) checkBtn.disabled = !iStepRan[i];
   }
   // The editor is shared across all Investigate steps — lock it to read-only while
-  // looking back at an already-completed step, since edits there would be silently
-  // discarded the moment the student moves on again (see restoreCodeForStep).
+  // looking back at an already-PASSED step, since edits there would be silently
+  // discarded the moment the student moves on again (see restoreCodeForStep). A
+  // skipped step has no snapshot, so it stays editable — the student can still
+  // reattempt it rather than being locked out for good.
   const iEditor = document.getElementById('i_editor');
-  if (iEditor) iEditor.readOnly = iRevisiting;
-  syncBugLineLabel();   // standard bug pair — keep the "line N" label current, no planting
+  if (iEditor) iEditor.readOnly = iRevisiting && iCodeSnapshots[stepI] !== undefined;
+  syncBugLineLabel();   // standard bug step — keep the "line N" label current, no planting
   const m1Revisiting = stepM1 < maxStepM1;
   for (let i = 1; i <= STEP_COUNT_M1; i++) {
     const step = document.getElementById('m1_step_' + i);
@@ -1512,7 +1475,9 @@ function updateStepVisibility() {
     renderReqResults(document.getElementById('req_m1_' + i), passed ? MOD_CHECKS['mod' + i].reqs.map(() => true) : null);
   }
   const m1Editor = document.getElementById('m1_editor');
-  if (m1Editor) m1Editor.readOnly = m1Revisiting;
+  // Same rule as Investigate: only lock the editor when stepping back to a step that
+  // was genuinely PASSED, not one that was skipped — a skipped step must stay editable.
+  if (m1Editor) m1Editor.readOnly = m1Revisiting && !!passedChecks['m1_code' + stepM1];
 
   const m1Btn = document.getElementById('btn_check_m1');
   if (m1Btn) m1Btn.textContent = stepM1 === STEP_COUNT_M1
@@ -1535,6 +1500,16 @@ function updateStepVisibility() {
   renderStepNav('I');
   renderStepNav('M1');
   updateGranularProgress();
+  updateSkipIndicator();
+}
+
+// Top progress bar stays red for as long as ANY skipped question hasn't since been
+// passed (skippedSteps entries are removed the moment their question is passed —
+// see nextStep/tryCompleteInvestigate/checkMod/checkExtStep), then reverts to normal.
+function updateSkipIndicator() {
+  const fill = document.getElementById('progressFill');
+  if (!fill) return;
+  fill.classList.toggle('skip-pending', Object.keys(skippedSteps).length > 0);
 }
 
 // ── Back / Forward navigation (one question on screen at a time) ───────────
@@ -1663,8 +1638,9 @@ function showStage(s, persist = true) {
   }
   if (s === 'M1') {
     const ta = document.getElementById('m1_editor');
-    // Seed from Investigate editor so accumulated changes carry forward automatically.
-    if (!ta.value) ta.value = document.getElementById('i_editor')?.value || STARTER_CODE;
+    // Start Modify from the original Predict/Run code, not the accumulated
+    // Investigate code — the Modify tasks build back up from there themselves.
+    if (!ta.value) ta.value = STARTER_CODE;
     refreshEditor(ta);
   }
   if (s === 'M2') {
@@ -1764,23 +1740,23 @@ function resetInvestigateEditor() {
   iCodeDraft = undefined;
   refreshEditor(ta);
   saveState();
-  // No auto-replant here — BUG_STEP now starts clean; the student presses
-  // "😈 Break it" again themselves, same as after any other reset.
+  // No auto-replant here — the Investigate editor starts clean; the student
+  // presses "😈 Break it" again themselves, same as after any other reset.
 }
 
-// ── Standard "fix a bug" pair (see FILL IN ②b) ─────────────────────────────
+// ── Standard "fix a bug" step (see FILL IN ②b) ─────────────────────────────
 //
-// "😈 Break it" is used at BOTH the guided step (BUG_STEP — student presses it
-// once, with the line and error explained to them) and the final self-practice
-// step (same button, pressed unaided 2–3 times). Toggles between IBUG_LINE and
-// IBUG_FIXED_LINE so repeated clicks never pile up duplicate lines — safe to mash.
-// The planted-or-fixed line is removed again once the pair is done (see
-// stripPlantedBugLine, called from nextStep / skipStep / tryCompleteInvestigate).
+// "😈 Break it" is used at the guided bug step — the student presses it once,
+// with the line and error explained to them, then fixes it themselves. Toggles
+// between IBUG_LINE and IBUG_FIXED_LINE so repeated clicks never pile up
+// duplicate lines — safe to mash. The planted-or-fixed line is removed again
+// once the step is done (see stripPlantedBugLine, called from skipStep /
+// tryCompleteInvestigate).
 //
 // FILL IN: the trailing [] below means "run with no inputs at all", which only
 // works if IBUG_LINE needs none. If your lesson has already introduced input() and
-// the accumulated code in i_editor calls it (e.g. Investigate steps before BUG_STEP
-// added input() lines), replace [] with the SAME mock-input array the step's own
+// the accumulated code in i_editor calls it (e.g. earlier Investigate steps added
+// input() lines), replace [] with the SAME mock-input array the step's own
 // "▶ Run code" button uses at this point — otherwise those input() calls will run
 // dry and error before the student ever sees the intended bug.
 function breakItDemo() {
@@ -1807,7 +1783,7 @@ function syncBugLineLabel() {
   if (lineSpan && state.iBugPlantedLineNo) lineSpan.textContent = String(state.iBugPlantedLineNo);
 }
 
-// Remove the auto-planted/broken-or-fixed demo line once the bug pair has done its
+// Remove the auto-planted/broken-or-fixed demo line once the bug step has done its
 // job (student advanced past it or skipped it), so Modify inherits clean code.
 function stripPlantedBugLine() {
   const ta = document.getElementById('i_editor');
@@ -2134,6 +2110,7 @@ function nextStep(stage, n) {
   // Lock in the code as it stood for this answer, so Back/Forward can restore it later.
   iCodeSnapshots[n] = code;
   iCodeDraft = undefined;
+  delete skippedSteps['i' + n];
   const btn = card.querySelector('.btn-next');
   if (btn) { btn.disabled = true; btn.textContent = '✅ Moving on…'; }
   window.ActivityUI?.showToast('✅ Good observation! On to the next change…');
@@ -2141,7 +2118,6 @@ function nextStep(stage, n) {
     card.classList.remove('is-right');
     stepI = n + 1;
     maxStepI = Math.max(maxStepI, stepI);
-    if (n === BUG_STEP) stripPlantedBugLine();   // guided bug has served its purpose
     const nextField = I_FIELDS[stepI - 1];
     updateStepVisibility();
     saveState();
@@ -2212,6 +2188,7 @@ function tryCompleteInvestigate() {
   if (allOk) {
     iCodeSnapshots[STEP_COUNT_I] = code;
     iCodeDraft = undefined;
+    delete skippedSteps['i' + STEP_COUNT_I];
     stripPlantedBugLine();   // break-it demo line must not carry into Modify
     const lastBtn  = lastCard?.querySelector('.btn-next');
     if (lastBtn) { lastBtn.disabled = true; lastBtn.textContent = '✅ Investigation complete! Moving on…'; }
@@ -2269,6 +2246,7 @@ async function checkMod() {
   setEditorOutput(document.getElementById('m1_editor'), run.output, false);
   clearSyntaxHint(document.getElementById('m1_editor'));
   passedChecks[checkId] = true;
+  delete skippedSteps['m1_' + stepM1];
   // Lock in the code as it stood for this modification, so Back/Forward can restore it later.
   m1CodeSnapshots[stepM1] = raw;
   m1CodeDraft = undefined;
@@ -2388,10 +2366,12 @@ function flashSkip() {
 function skipStep(stage) {
   markStageSkipped(stage);
   if (stage === 'I') {
-    if (stepI === BUG_STEP || stepI === STEP_COUNT_I) stripPlantedBugLine();   // don't carry the broken line forward
+    skippedSteps['i' + stepI] = true;
+    if (stepI === STEP_COUNT_I) stripPlantedBugLine();   // don't carry the broken line forward
     if (stepI < STEP_COUNT_I) { stepI++; maxStepI = Math.max(maxStepI, stepI); updateStepVisibility(); saveState(); scrollToActive('qcard_i' + stepI + '_prompt'); }
     else { completeStage('I'); }
   } else if (stage === 'M1') {
+    skippedSteps['m1_' + stepM1] = true;
     if (stepM1 < STEP_COUNT_M1) { stepM1++; maxStepM1 = Math.max(maxStepM1, stepM1); updateStepVisibility(); saveState(); scrollToActive('m1_step_' + stepM1); }
     else { completeStage('M1'); }
   }

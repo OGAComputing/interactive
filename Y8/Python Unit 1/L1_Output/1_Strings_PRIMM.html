@@ -323,6 +323,8 @@ color:  purple
   .progress-fill.stuck { background: var(--amber); animation: stuck-pulse 1.6s ease-in-out infinite; }
   /* One-off red flash when a stage gets marked skipped (see markStageSkipped in the JS). */
   .progress-fill.skip-flash { animation: skip-flash 1s ease-in-out; }
+  /* Persists as long as ANY skipped exercise is still unresolved (see updateSkipIndicator in the JS). */
+  .progress-fill.skip-pending { background: var(--red); box-shadow: 0 0 14px var(--red); }
 
   .step-hidden { display: none !important; }
 
@@ -677,17 +679,6 @@ color:  purple
       </label>
     </div>
 
-    <div class="q-card step-hidden" id="qcard_i6_prompt" style="border-left-color:var(--stage-i)">
-      <label class="q-label"><span class="q-num" style="background:var(--stage-i)">6</span>
-        Last one — practise spotting and fixing this error quickly, on your own.
-        <ul style="margin:0.5rem 0 0 1.2rem;line-height:2">
-          <li>Under the editor, press <strong>😈 Break it</strong> — it removes one quotation mark for you and runs the code, so you can watch the <strong>SyntaxError</strong> appear.</li>
-          <li><strong>Fix it yourself:</strong> look at the line Python points to and add the missing closing speech mark <code style="background:#ede0ff;padding:0 3px;border-radius:3px">"</code> at the end of the text.</li>
-          <li>Press <strong>▶ Run code</strong> above to check it worked, then press <strong>😈 Break it</strong> again and repeat — do this <strong>two or three times</strong>.</li>
-        </ul>
-      </label>
-    </div>
-
   </div>
 
   <!-- ② Shared editor (with Run). Students accumulate changes here across steps. -->
@@ -759,26 +750,9 @@ color:  purple
       <div style="font-size:0.84rem;color:var(--muted);margin-bottom:0.4rem">✍️ Your answer — step 5</div>
       <label class="q-label">What appears between those two lines in the output?</label>
       <textarea id="i5" placeholder="Describe what you found…" oninput="saveState()"></textarea>
-      <button class="btn btn-next" id="btn_check_i5" style="margin-top:10px" onclick="nextStep('I', 5)" disabled>✓ Check answer</button>
+      <!-- Last step → tryCompleteInvestigate(), not nextStep() -->
+      <button class="btn btn-next" id="btn_check_i5" style="margin-top:10px" onclick="tryCompleteInvestigate()" disabled>✓ Check answer</button>
       <button class="btn btn-skip" id="btn_skip_i5" style="margin-top:6px;display:none" onclick="skipStep('I')">Move on without completing →</button>
-    </div>
-
-    <div class="q-card step-hidden" id="qcard_i6" style="border-left-color:var(--stage-i)">
-      <div style="font-size:0.84rem;color:var(--muted);margin-bottom:0.4rem">✍️ Your answer — step 6 (errors come and go)</div>
-      <div style="display:flex;gap:0.6rem;flex-wrap:wrap;margin-bottom:0.7rem;align-items:center">
-        <button class="btn btn-check" type="button" onclick="breakItDemo()">😈 Break it</button>
-        <span style="font-size:0.82rem;color:var(--muted);font-style:italic">then fix the line yourself and press ▶ Run code above</span>
-      </div>
-      <label class="q-label">Each time you fixed the missing quotation mark and ran the code again, what happened?</label>
-      <div class="radio-opts" id="ropts_i6_mcq" style="margin-top:0.5rem">
-        <label class="radio-opt"><input type="radio" name="i6_mcq" value="option_a" onchange="saveState()"> <span>Python quietly fixed the code and ran it anyway</span></label>
-        <label class="radio-opt"><input type="radio" name="i6_mcq" value="option_b" onchange="saveState()"> <span>The same SyntaxError appeared, and fixing it cleared it</span></label>
-        <label class="radio-opt"><input type="radio" name="i6_mcq" value="option_c" onchange="saveState()"> <span>The program ran but showed no output on the screen</span></label>
-        <label class="radio-opt"><input type="radio" name="i6_mcq" value="option_d" onchange="saveState()"> <span>A brand new, different error came up on each attempt</span></label>
-      </div>
-      <div class="mcq-fb" id="fb_i6"></div>
-      <button class="btn btn-next" id="btn_check_i6" style="margin-top:10px" onclick="tryCompleteInvestigate()" disabled>✓ Check answer</button>
-      <button class="btn btn-skip" id="btn_skip_i6" style="margin-top:6px;display:none" onclick="skipStep('I')">Move on without completing →</button>
     </div>
 
   </div>
@@ -1172,7 +1146,7 @@ const TQ_STARTER_CODE = `print("""Hello\nWorld\nGoodbye""")`;
 const I4_BUG_LINE   = 'print("Debugging is normal!)';
 const I4_FIXED_LINE  = 'print("Debugging is normal!")';
 
-const STEP_COUNT_I  = 6;
+const STEP_COUNT_I  = 5;
 const STEP_COUNT_M1 = 4;
 
 const TEXT_FIELDS = [
@@ -1182,7 +1156,7 @@ const TEXT_FIELDS = [
   'tq_editor',
   'vp_editor', 'vp_try_answer', 'vp_m_editor', 'vp_challenge_editor',
 ];
-const RADIO_GROUPS = ['p_mcq1', 'p_mcq2', 'i2_mcq', 'i3_tf', 'i4_mcq', 'i6_mcq', 'tq_mcq', 'vp_mcq1', 'vp_mcq2'];
+const RADIO_GROUPS = ['p_mcq1', 'p_mcq2', 'i2_mcq', 'i3_tf', 'i4_mcq', 'tq_mcq', 'vp_mcq1', 'vp_mcq2'];
 
 const P_CORRECT = {
   p_mcq1: 'option_c',
@@ -1225,12 +1199,6 @@ const I_CODE_CHECKS = [
   function(code) {
     if (!/\bprint\s*\(\s*\)/.test(code))
       return 'No empty print() found — add print() with nothing inside the brackets.';
-    return null;
-  },
-  function(code) {
-    // step 6 — the Break it demo. They must fix the line themselves before checking.
-    if ((code.match(/"/g) || []).length % 2 !== 0)
-      return 'Add the missing closing " to the line you broke, so the program runs cleanly again, then check.';
     return null;
   },
 ];
@@ -1281,16 +1249,6 @@ const I_FIELDS = [
       return 'Hint: look between the two lines in the output. Is there a gap, a blank line, or nothing at all?';
     return null;
   }},
-  { id:'i6', cardId:'qcard_i6', type:'mcq', radioName:'i6_mcq', correctValue:'option_b', needsNewLine: false,
-    passMsg: 'Right — the same SyntaxError every time, and it went away the moment you put the quote back.',
-    failMsg: 'Look again — each time the quote was missing Python stopped with the same SyntaxError, and fixing it cleared it instantly.',
-    validate() {
-      const chosen = document.querySelector('input[name="i6_mcq"]:checked');
-      if (!chosen) return 'Select an answer before checking — even a guess is fine.';
-      if (chosen.value !== 'option_b') return 'Not quite — think about what happened each time the quotation mark was missing.';
-      return null;
-    },
-  },
 ];
 
 // ── STATE ─────────────────────────────────────────────
@@ -1318,6 +1276,12 @@ let iCodeDraft      = state.iCodeDraft;
 let m1CodeSnapshots = state.m1CodeSnapshots || {};
 let m1CodeDraft     = state.m1CodeDraft;
 let skippedStages = state.skippedStages || [];
+// Per-question skip tracking (keyed the same way as attemptCounts: 'i'+n, 'm1_'+n,
+// 'm2ext_'+n). A key is added when that specific question is skipped and removed the
+// moment it's later passed — unlike skippedStages (which is stage-level and sticky
+// for the nav dot), this drives whether a skipped question's editor is unlocked for
+// a reattempt and whether the top progress bar shows its persistent "unresolved" red.
+let skippedSteps = state.skippedSteps || {};
 let attemptCounts = state.attemptCounts || {};
 let iStepRan = state.iStepRan || {};
 let vpStep    = state.vpStep    || 1;
@@ -1372,6 +1336,7 @@ function saveState() {
   state.maxStepI       = maxStepI;
   state.maxStepM1      = maxStepM1;
   state.skippedStages = skippedStages;
+  state.skippedSteps = skippedSteps;
   state.attemptCounts = attemptCounts;
   state.iStepRan = iStepRan;
   state.iCodeSnapshots  = iCodeSnapshots;
@@ -1432,10 +1397,12 @@ function updateStepVisibility() {
     if (checkBtn) checkBtn.disabled = !iStepRan[i];
   }
   // The editor is shared across all Investigate steps — lock it to read-only while
-  // looking back at an already-completed step, since edits there would be silently
-  // discarded the moment the student moves on again (see restoreCodeForStep).
+  // looking back at an already-PASSED step, since edits there would be silently
+  // discarded the moment the student moves on again (see restoreCodeForStep). A
+  // skipped step has no snapshot, so it stays editable — the student can still
+  // reattempt it rather than being locked out for good.
   const iEditor = document.getElementById('i_editor');
-  if (iEditor) iEditor.readOnly = iRevisiting;
+  if (iEditor) iEditor.readOnly = iRevisiting && iCodeSnapshots[stepI] !== undefined;
   syncI4LineLabel();
   // (The Debugging Recipe now appears automatically in the error helper below the
   // editor a few seconds after a failed run — no top-of-stage box to toggle.)
@@ -1450,7 +1417,9 @@ function updateStepVisibility() {
     renderReqResults(document.getElementById('req_m1_' + i), passed ? MOD_CHECKS['mod' + i].reqs.map(() => true) : null);
   }
   const m1Editor = document.getElementById('m1_editor');
-  if (m1Editor) m1Editor.readOnly = m1Revisiting;
+  // Same rule as Investigate: only lock the editor when stepping back to a step that
+  // was genuinely PASSED, not one that was skipped — a skipped step must stay editable.
+  if (m1Editor) m1Editor.readOnly = m1Revisiting && !!passedChecks['m1_code' + stepM1];
 
   const m1Btn = document.getElementById('btn_check_m1');
   if (m1Btn) m1Btn.textContent = stepM1 === STEP_COUNT_M1
@@ -1474,6 +1443,16 @@ function updateStepVisibility() {
   renderStepNav('I');
   renderStepNav('M1');
   updateGranularProgress();
+  updateSkipIndicator();
+}
+
+// Top progress bar stays red for as long as ANY skipped question hasn't since been
+// passed (skippedSteps entries are removed the moment their question is passed —
+// see nextStep/tryCompleteInvestigate/checkMod/checkExtStep), then reverts to normal.
+function updateSkipIndicator() {
+  const fill = document.getElementById('progressFill');
+  if (!fill) return;
+  fill.classList.toggle('skip-pending', Object.keys(skippedSteps).length > 0);
 }
 
 // ── Back / Forward navigation (one question on screen at a time) ───────────
@@ -1601,7 +1580,9 @@ function showStage(s, persist = true) {
   }
   if (s === 'M1') {
     const ta = document.getElementById('m1_editor');
-    if (!ta.value) ta.value = document.getElementById('i_editor')?.value || STARTER_CODE;
+    // Start Modify from the original Predict/Run code, not the accumulated
+    // Investigate code — the Modify tasks build back up from there themselves.
+    if (!ta.value) ta.value = STARTER_CODE;
     refreshEditor(ta);
   }
   if (s === 'M2') {
@@ -1789,23 +1770,6 @@ function breakItStep4() {
 function syncI4LineLabel() {
   const lineSpan = document.getElementById('i4_line');
   if (lineSpan && state.i4PlantedLineNo) lineSpan.textContent = String(state.i4PlantedLineNo);
-}
-
-// Investigate step 6 — "Break it" removes one quotation mark for the student and
-// runs, so they meet the SyntaxError instantly; the student then fixes it
-// themselves in the editor (no auto-restore button) and presses Run to confirm.
-// Pressing Break it again while the code is still broken just re-runs it — it
-// never removes a second quote — so it's safe to mash.
-function breakItDemo() {
-  const ta = document.getElementById('i_editor');
-  if (!ta) return;
-  const balanced = (ta.value.match(/"/g) || []).length % 2 === 0;
-  if (balanced) {
-    if (!/"([^"\n]*)"/.test(ta.value)) return;              // nothing left to break
-    ta.value = ta.value.replace(/"([^"\n]*)"/, '"$1');       // drop one closing quote
-    refreshEditor(ta);
-  }
-  runCodeInEditor('i_editor', 'i_fb_run', []);
 }
 
 // Remove the step-4 auto-planted line once it has done its job (student advanced
@@ -2161,6 +2125,7 @@ function nextStep(stage, n) {
   // Lock in the code as it stood for this answer, so Back/Forward can restore it later.
   iCodeSnapshots[n] = code;
   iCodeDraft = undefined;
+  delete skippedSteps['i' + n];
   const btn = card.querySelector('.btn-next');
   if (btn) { btn.disabled = true; btn.textContent = '✅ Moving on…'; }
   window.ActivityUI?.showToast('✅ Good observation! On to the next change…');
@@ -2243,6 +2208,7 @@ function tryCompleteInvestigate() {
   if (allOk) {
     iCodeSnapshots[STEP_COUNT_I] = code;
     iCodeDraft = undefined;
+    delete skippedSteps['i' + STEP_COUNT_I];
     const lastBtn = lastCard?.querySelector('.btn-next');
     if (lastBtn) { lastBtn.disabled = true; lastBtn.textContent = '✅ Investigation complete! Moving on…'; }
     window.ActivityUI?.miniCelebration(lastCard);
@@ -2299,6 +2265,7 @@ async function checkMod() {
   setEditorOutput(document.getElementById('m1_editor'), run.output, false);
   clearSyntaxHint(document.getElementById('m1_editor'));
   passedChecks[checkId] = true;
+  delete skippedSteps['m1_' + stepM1];
   // Lock in the code as it stood for this modification, so Back/Forward can restore it later.
   m1CodeSnapshots[stepM1] = raw;
   m1CodeDraft = undefined;
@@ -2683,10 +2650,12 @@ function flashSkip() {
 function skipStep(stage) {
   markStageSkipped(stage);
   if (stage === 'I') {
+    skippedSteps['i' + stepI] = true;
     if (stepI === 4) stripPlantedI4Line();   // don't carry the broken line forward
     if (stepI < STEP_COUNT_I) { stepI++; maxStepI = Math.max(maxStepI, stepI); updateStepVisibility(); saveState(); scrollToActive('qcard_i' + stepI + '_prompt'); }
     else { completeStage('I'); }
   } else if (stage === 'M1') {
+    skippedSteps['m1_' + stepM1] = true;
     if (stepM1 < STEP_COUNT_M1) { stepM1++; maxStepM1 = Math.max(maxStepM1, stepM1); updateStepVisibility(); saveState(); scrollToActive('m1_step_' + stepM1); }
     else { completeStage('M1'); }
   }
@@ -2722,7 +2691,7 @@ Object.assign(window, {
   checkMod, completeStage,
   checkMake, checkExt,
   checkTqMcq, checkTripleQuote,
-  runCodeInEditor, resetInvestigateEditor, insertNewLine, breakItDemo, breakItStep4,
+  runCodeInEditor, resetInvestigateEditor, insertNewLine, breakItStep4,
   skipStep, goBack, goForward,
   checkVpMcq1, checkVpMcq2, nextVpStep, checkVpTry, checkVpMod, checkVpChallenge,
 });
