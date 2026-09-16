@@ -25,7 +25,8 @@ export function has(code, pattern) {
 // any new ones a student adds — callers filter those out where "new" matters.
 function stringVarAssigns(raw) {
   const s = normalise(raw);
-  const re = /\b([A-Za-z_]\w*)\s*=\s*["']/g;
+  // \(?  — tolerate a student wrapping the literal in parens, e.g. name = ("Jordan")
+  const re = /\b([A-Za-z_]\w*)\s*=\s*\(?\s*["']/g;
   const out = [];
   let m;
   while ((m = re.exec(s))) out.push(m[1]);
@@ -71,7 +72,7 @@ const stripComments = (code) => code.replace(/#[^\n]*/g, '');
 // { name: 'pet', value: 'Rex' }. Only used to catch a copied worked example.
 function stringLiteralAssignPairs(raw) {
   const s = stripComments(raw);
-  const re = /\b([A-Za-z_]\w*)\s*=\s*["']([^"'\n]*)["']/g;
+  const re = /\b([A-Za-z_]\w*)\s*=\s*\(?\s*["']([^"'\n]*)["']/g;
   const out = [];
   let m;
   while ((m = re.exec(s))) out.push({ name: m[1], value: m[2] });
@@ -157,7 +158,7 @@ export const MOD_CHECKS = {
         hint: '❌ Pick one of your own new variables (not name) and give it a new value further down the program.',
         test(raw) {
           const s = normalise(raw);
-          return newVars(raw).some(v => (s.match(new RegExp('\\b' + v + '\\s*=\\s*["\']', 'g')) || []).length >= 2);
+          return newVars(raw).some(v => (s.match(new RegExp('\\b' + v + '\\s*=\\s*\\(?\\s*["\']', 'g')) || []).length >= 2);
         },
       },
       {
@@ -166,7 +167,7 @@ export const MOD_CHECKS = {
           const s = normalise(raw);
           const args = printArgs(raw);
           return newVars(raw).some(v => {
-            const assigns = (s.match(new RegExp('\\b' + v + '\\s*=\\s*["\']', 'g')) || []).length;
+            const assigns = (s.match(new RegExp('\\b' + v + '\\s*=\\s*\\(?\\s*["\']', 'g')) || []).length;
             const shown = args.filter(a => word(v).test(a)).length;
             return assigns >= 2 && shown >= 2;
           });

@@ -99,13 +99,28 @@ export async function runPython(code, { inputs = [] } = {}) {
   _pyodide.setStdout({ batched: s => out.push(s) });
   _pyodide.setStderr({ batched: () => {} }); // errors surface via exception
 
+  // The interpreter's global namespace persists between runs (later calls,
+  // e.g. getWrittenFiles(), rely on that to read back what the last run set).
+  // But that means a student's mistake can otherwise leak forever: if code
+  // shadows a builtin (`print = "Jordan"`), every later run keeps seeing that
+  // string instead of the real print() — "stuck" until the page is reloaded.
+  // Reset any previously-shadowed builtin names before running, and always
+  // restore the real input() before deciding whether to re-mock it below.
+  const resetPreamble =
+    `import builtins as _b\n` +
+    `if not hasattr(_b, '_orig_input'): _b._orig_input = _b.input\n` +
+    `_b.input = _b._orig_input\n` +
+    `for _n in list(globals()):\n` +
+    `    if hasattr(_b, _n) and globals()[_n] is not getattr(_b, _n):\n` +
+    `        globals()[_n] = getattr(_b, _n)\n`;
+
   // Inject input() mock when test values are supplied.
   // Echo the prompt + the "typed" value to stdout so the output matches a real
   // terminal: `name = input("What is your name? ")` with value "Nick" shows the
   // line `What is your name? Nick`, then later print()s follow.
   // Fallback '0' (not '') so exhausted inputs don't produce a str that breaks arithmetic.
-  const preamble = inputs.length
-    ? `import builtins as _b, sys as _sys\n` +
+  const inputsPreamble = inputs.length
+    ? `import sys as _sys\n` +
       `_q = iter(${JSON.stringify(inputs)})\n` +
       `def _mock_input(prompt=''):\n` +
       `    _v = next(_q, '0')\n` +
@@ -113,9 +128,10 @@ export async function runPython(code, { inputs = [] } = {}) {
       `    return _v\n` +
       `_b.input = _mock_input\n`
     : '';
+  const preamble = resetPreamble + inputsPreamble;
   // Line numbers in the traceback are relative to preamble + code — shift them
   // back by the (invisible-to-the-student) preamble length before reporting.
-  const preambleLines = preamble ? preamble.split('\n').length - 1 : 0;
+  const preambleLines = preamble.split('\n').length - 1;
 
   try {
     await _pyodide.runPythonAsync(preamble + code);

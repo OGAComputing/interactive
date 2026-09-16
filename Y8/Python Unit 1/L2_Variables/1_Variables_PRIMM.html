@@ -325,6 +325,8 @@ color:  purple
   .progress-fill.stuck { background: var(--amber); animation: stuck-pulse 1.6s ease-in-out infinite; }
   /* One-off red flash when a stage gets marked skipped (see markStageSkipped in the JS). */
   .progress-fill.skip-flash { animation: skip-flash 1s ease-in-out; }
+  /* Persists as long as ANY skipped exercise is still unresolved (see updateSkipIndicator in the JS). */
+  .progress-fill.skip-pending { background: var(--red); box-shadow: 0 0 14px var(--red); }
 
   .step-hidden { display: none !important; }
 
@@ -1327,6 +1329,12 @@ let m1CodeDraft        = state.m1CodeDraft;
 let m2ExtCodeSnapshots = state.m2ExtCodeSnapshots || {};
 let m2ExtCodeDraft     = state.m2ExtCodeDraft;
 let skippedStages = state.skippedStages || [];
+// Per-question skip tracking (keyed the same way as attemptCounts: 'i'+n, 'm1_'+n,
+// 'm2ext_'+n). A key is added when that specific question is skipped and removed the
+// moment it's later passed — unlike skippedStages (which is stage-level and sticky
+// for the nav dot), this drives whether a skipped question's editor is unlocked for
+// a reattempt and whether the top progress bar shows its persistent "unresolved" red.
+let skippedSteps = state.skippedSteps || {};
 let attemptCounts = state.attemptCounts || {};
 let iStepRan = state.iStepRan || {};
 let firstRunShown = false;
@@ -1379,6 +1387,7 @@ function saveState() {
   state.maxStepM1      = maxStepM1;
   state.maxStepM2Ext   = maxStepM2Ext;
   state.skippedStages = skippedStages;
+  state.skippedSteps = skippedSteps;
   state.attemptCounts = attemptCounts;
   state.iStepRan = iStepRan;
   state.iCodeSnapshots     = iCodeSnapshots;
@@ -1443,10 +1452,12 @@ function updateStepVisibility() {
     if (checkBtn) checkBtn.disabled = !iStepRan[i];
   }
   // The editor is shared across all Investigate steps — lock it to read-only while
-  // looking back at an already-completed step, since edits there would be silently
-  // discarded the moment the student moves on again (see restoreCodeForStep).
+  // looking back at an already-PASSED step, since edits there would be silently
+  // discarded the moment the student moves on again (see restoreCodeForStep). A
+  // skipped step has no snapshot, so it stays editable — the student can still
+  // reattempt it rather than being locked out for good.
   const iEditor = document.getElementById('i_editor');
-  if (iEditor) iEditor.readOnly = iRevisiting;
+  if (iEditor) iEditor.readOnly = iRevisiting && iCodeSnapshots[stepI] !== undefined;
   syncBugLineLabel();   // standard bug pair — keep the "line N" label current, no planting
   const m1Revisiting = stepM1 < maxStepM1;
   for (let i = 1; i <= STEP_COUNT_M1; i++) {
@@ -1459,7 +1470,9 @@ function updateStepVisibility() {
     renderReqResults(document.getElementById('req_m1_' + i), passed ? MOD_CHECKS['mod' + i].reqs.map(() => true) : null);
   }
   const m1Editor = document.getElementById('m1_editor');
-  if (m1Editor) m1Editor.readOnly = m1Revisiting;
+  // Same rule as Investigate: only lock the editor when stepping back to a step that
+  // was genuinely PASSED, not one that was skipped — a skipped step must stay editable.
+  if (m1Editor) m1Editor.readOnly = m1Revisiting && !!passedChecks['m1_code' + stepM1];
 
   const m1Btn = document.getElementById('btn_check_m1');
   if (m1Btn) m1Btn.textContent = stepM1 === STEP_COUNT_M1
@@ -1481,7 +1494,7 @@ function updateStepVisibility() {
     renderReqResults(document.getElementById('req_m2ext_' + i), extPassed ? EXT_CHECKS['ext' + i].reqs.map(() => true) : null);
   }
   const m2Editor = document.getElementById('m2_editor');
-  if (m2Editor) m2Editor.readOnly = !!passedChecks['m2_make'] && m2ExtRevisiting;
+  if (m2Editor) m2Editor.readOnly = !!passedChecks['m2_make'] && m2ExtRevisiting && !!passedChecks['m2ext_code' + stepM2Ext];
 
   const m2Btn = document.getElementById('btn_check_m2');
   if (m2Btn) {
@@ -1510,6 +1523,16 @@ function updateStepVisibility() {
   renderStepNav('M1');
   renderStepNav('M2EXT');
   updateGranularProgress();
+  updateSkipIndicator();
+}
+
+// Top progress bar stays red for as long as ANY skipped question hasn't since been
+// passed (skippedSteps entries are removed the moment their question is passed —
+// see nextStep/tryCompleteInvestigate/checkMod/checkExtStep), then reverts to normal.
+function updateSkipIndicator() {
+  const fill = document.getElementById('progressFill');
+  if (!fill) return;
+  fill.classList.toggle('skip-pending', Object.keys(skippedSteps).length > 0);
 }
 
 // ── Back / Forward navigation (one question on screen at a time) ───────────
@@ -2104,6 +2127,7 @@ function nextStep(stage, n) {
   // Lock in the code as it stood for this answer, so Back/Forward can restore it later.
   iCodeSnapshots[n] = code;
   iCodeDraft = undefined;
+  delete skippedSteps['i' + n];
   const btn = card.querySelector('.btn-next');
   if (btn) { btn.disabled = true; btn.textContent = '✅ Moving on…'; }
   window.ActivityUI?.showToast('✅ Good observation! On to the next change…');
@@ -2181,6 +2205,7 @@ function tryCompleteInvestigate() {
   if (allOk) {
     iCodeSnapshots[STEP_COUNT_I] = code;
     iCodeDraft = undefined;
+    delete skippedSteps['i' + STEP_COUNT_I];
     stripPlantedBugLine();   // break-it demo line must not carry into Modify
     const lastBtn  = lastCard?.querySelector('.btn-next');
     if (lastBtn) { lastBtn.disabled = true; lastBtn.textContent = '✅ Investigation complete! Moving on…'; }
@@ -2238,6 +2263,7 @@ async function checkMod() {
   setEditorOutput(editorEl, run.output, false);
   clearSyntaxHint(editorEl);
   passedChecks[checkId] = true;
+  delete skippedSteps['m1_' + stepM1];
   // Lock in the code as it stood for this modification, so Back/Forward can restore it later.
   m1CodeSnapshots[stepM1] = raw;
   m1CodeDraft = undefined;
@@ -2330,6 +2356,7 @@ async function checkExtStep() {
   setEditorOutput(document.getElementById('m2_editor'), run.output, false);
   clearSyntaxHint(document.getElementById('m2_editor'));
   passedChecks[checkId] = true;
+  delete skippedSteps['m2ext_' + stepM2Ext];
   m2ExtCodeSnapshots[stepM2Ext] = raw;
   m2ExtCodeDraft = undefined;
   window.ActivityUI?.miniCelebration(fbEl);
@@ -2447,13 +2474,16 @@ function flashSkip() {
 function skipStep(stage) {
   markStageSkipped(stage === 'M2EXT' ? 'M2' : stage);
   if (stage === 'I') {
+    skippedSteps['i' + stepI] = true;
     if (stepI === STEP_COUNT_I) stripPlantedBugLine();   // don't carry the broken line forward
     if (stepI < STEP_COUNT_I) { stepI++; maxStepI = Math.max(maxStepI, stepI); updateStepVisibility(); saveState(); scrollToActive('qcard_i' + stepI + '_prompt'); }
     else { completeStage('I'); }
   } else if (stage === 'M1') {
+    skippedSteps['m1_' + stepM1] = true;
     if (stepM1 < STEP_COUNT_M1) { stepM1++; maxStepM1 = Math.max(maxStepM1, stepM1); updateStepVisibility(); saveState(); scrollToActive('m1_step_' + stepM1); }
     else { completeStage('M1'); }
   } else if (stage === 'M2EXT') {
+    skippedSteps['m2ext_' + stepM2Ext] = true;
     if (stepM2Ext < STEP_COUNT_M2EXT) {
       stepM2Ext++; maxStepM2Ext = Math.max(maxStepM2Ext, stepM2Ext); updateStepVisibility(); saveState(); scrollToActive('m2ext_step_' + stepM2Ext);
     } else {
