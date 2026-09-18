@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- ACTIVITY
+title:  Python Sandbox
+type:   Practice
+stars:  1
+desc:   A free-play space to write and run any Python code — nothing here is marked.
+color:  cyan
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Python Sandbox — Year 8</title>
+
+<!-- Shared reset, year-group palette, and ac-* utilities -->
+<link rel="stylesheet" href="../../shared.css">
+
+<style>
+  html, body { height: 100%; }
+  body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  /* ── Header ──────────────────────────────────────────── */
+  header {
+    background: var(--surface);
+    border-bottom: 2px solid var(--surface-mid);
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.4);
+    position: sticky; top: 0; z-index: 100;
+  }
+  header h1 {
+    font-family: var(--font-head);
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+  }
+  .header-pill {
+    font-size: 0.65rem;
+    color: var(--muted);
+    border: 1px solid var(--surface-mid);
+    padding: 2px 8px;
+    border-radius: 99px;
+    white-space: nowrap;
+  }
+  .header-gap { flex: 1; }
+  header select {
+    background: var(--surface-mid);
+    color: var(--text);
+    border: 1px solid var(--surface-dim);
+    padding: 5px 8px;
+    font-size: 0.78rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: var(--font-body);
+    max-width: 200px;
+  }
+
+  /* ── Main layout ─────────────────────────────────────── */
+  .page-wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 16px;
+    gap: 12px;
+    min-height: 0;
+    max-width: 1100px;
+    width: 100%;
+    margin: 0 auto;
+    box-sizing: border-box;
+  }
+
+  .intro {
+    background: var(--surface);
+    border-left: 4px solid var(--accent);
+    padding: 10px 14px;
+    border-radius: 0 6px 6px 0;
+    font-size: 0.88rem;
+    color: var(--text);
+  }
+
+  /* Editor wrapper */
+  #codeWrap {
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  #codeWrap .checker-textarea {
+    min-height: 380px;
+  }
+  #codeWrap .highlight-layer {
+    min-height: 380px;
+  }
+
+  .btn-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .btn-row .hint {
+    font-size: 0.78rem;
+    color: var(--muted);
+  }
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>🧪 Python Sandbox</h1>
+  <span class="header-pill">unmarked</span>
+  <span class="header-gap"></span>
+  <select id="sampleSel" aria-label="Load a starter snippet">
+    <option value="">Load a starter…</option>
+  </select>
+  <button id="clearBtn" class="ac-btn-secondary" type="button">Clear</button>
+  <button id="runBtn" class="ac-btn" type="button" disabled>Loading…</button>
+</header>
+
+<main class="page-wrap">
+
+  <p class="intro">🎯 This is just a space to experiment — write any Python code you like and press <strong>Run</strong> to try it out. Nothing here is checked or marked, so there's no wrong answer. Your code is saved automatically in this browser.</p>
+
+  <div id="codeWrap">
+    <textarea class="checker-textarea" id="sandboxEditor" data-title="Python Editor" spellcheck="false"
+              autocomplete="off" autocapitalize="off" placeholder="# Write any Python code here and press Run…">print("Hello, world!")</textarea>
+  </div>
+
+  <div class="btn-row">
+    <span class="hint">💡 Try the "Load a starter…" menu above for some ideas, or just start typing.</span>
+  </div>
+
+</main>
+
+<script type="module">
+import { setupEditors, runCode, clearSyntaxHint, setEditorOutput } from '../../code-editor.js';
+import { preload } from '../../pyodide-runner.js';
+
+const editor    = document.getElementById('sandboxEditor');
+const runBtn    = document.getElementById('runBtn');
+const clearBtn  = document.getElementById('clearBtn');
+const sampleSel = document.getElementById('sampleSel');
+
+// ── Starter snippets ─────────────────────────────────────────────────────
+const SAMPLES = [
+  ['Hello, world', `print("Hello, world!")`],
+  ['Variables & maths', `name = "Ada"
+age = 12
+print("Hi " + name + ", next year you'll be " + str(age + 1))`],
+  ['If / else', `age = int(input("How old are you? "))
+if age >= 13:
+    print("You're a teenager!")
+else:
+    print("Not a teenager yet.")`],
+  ['For loop', `for i in range(1, 6):
+    print("Count:", i)`],
+  ['While loop', `total = 0
+n = int(input("Add up to what number? "))
+i = 1
+while i <= n:
+    total = total + i
+    i = i + 1
+print("Total:", total)`],
+  ['Lists', `fruits = ["apple", "banana", "cherry"]
+for fruit in fruits:
+    print(fruit.upper())
+print("There are", len(fruits), "fruits")`],
+  ['Guess the number', `import random
+secret = random.randint(1, 10)
+guess = int(input("Guess a number 1-10: "))
+if guess == secret:
+    print("Correct!")
+else:
+    print("Nope — it was", secret)`],
+  ['Functions', `def square(n):
+    return n * n
+
+for i in range(1, 6):
+    print(i, "squared is", square(i))`],
+];
+
+for (const [label] of SAMPLES) {
+  const opt = document.createElement('option');
+  opt.textContent = label;
+  sampleSel.appendChild(opt);
+}
+sampleSel.addEventListener('change', () => {
+  const idx = sampleSel.selectedIndex - 1;
+  if (idx < 0) return;
+  editor.value = SAMPLES[idx][1];
+  sampleSel.selectedIndex = 0;
+  editor.dispatchEvent(new Event('input', { bubbles: true }));
+  clearSyntaxHint(editor);
+  scheduleSave();
+});
+
+// ── Autosave to localStorage ────────────────────────────────────────────
+const STORAGE_KEY = 'y8-python-sandbox-code-v1';
+let saveTimer = null;
+
+function saveState() {
+  try { localStorage.setItem(STORAGE_KEY, editor.value); }
+  catch { /* storage unavailable — autosave is best-effort */ }
+}
+function scheduleSave() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveState, 400);
+}
+
+try {
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (saved) editor.value = saved;
+} catch { /* ignore */ }
+
+editor.addEventListener('input', scheduleSave);
+
+// ── Editor setup ─────────────────────────────────────────────────────────
+setupEditors('#sandboxEditor', { errorHints: true });
+
+// ── Pyodide load ─────────────────────────────────────────────────────────
+preload().then(() => {
+  runBtn.disabled = false;
+  runBtn.textContent = 'Run ▶';
+}).catch(err => {
+  runBtn.textContent = 'Pyodide failed';
+  runBtn.title = String(err);
+});
+
+// ── Run / Clear ──────────────────────────────────────────────────────────
+runBtn.addEventListener('click', async () => {
+  runBtn.disabled = true;
+  const prevLabel = runBtn.textContent;
+  runBtn.textContent = 'Running…';
+  await runCode(editor);
+  runBtn.disabled = false;
+  runBtn.textContent = prevLabel === 'Running…' ? 'Run ▶' : prevLabel;
+});
+
+clearBtn.addEventListener('click', () => {
+  editor.value = '';
+  editor.dispatchEvent(new Event('input', { bubbles: true }));
+  clearSyntaxHint(editor);
+  setEditorOutput(editor, '');
+  scheduleSave();
+  editor.focus();
+});
+</script>
+
+<script src="../../activity-ui.js"></script>
+<!-- Google Classroom integration (no-op when no ?courseId= param); also sets data-year/data-topic theming -->
+<script src="../../classroom.js"></script>
+</body>
+</html>
