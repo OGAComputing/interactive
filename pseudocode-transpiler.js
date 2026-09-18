@@ -31,6 +31,13 @@ def _psc_len(x): return len(x)
 class _PscStr(str):
     def __add__(self, other): return _PscStr(str(self) + str(other))
     def __radd__(self, other): return _PscStr(str(other) + str(self))
+    # OCR pseudocode has no strict typing: a mark scheme never penalises comparing
+    # a word (e.g. a sentinel like "stop") against a number, so treat that as
+    # simply false instead of raising — a real exam wouldn't crash on it either.
+    def __lt__(self, other): return False if isinstance(other, (int, float)) else str.__lt__(self, other)
+    def __le__(self, other): return False if isinstance(other, (int, float)) else str.__le__(self, other)
+    def __gt__(self, other): return False if isinstance(other, (int, float)) else str.__gt__(self, other)
+    def __ge__(self, other): return False if isinstance(other, (int, float)) else str.__ge__(self, other)
 def _psc_substr(s, start, count): return _PscStr(s[start:start + count])
 def _psc_left(s, n): return _PscStr(s[:n])
 def _psc_right(s, n): return _PscStr(s[-n:]) if n > 0 else _PscStr('')
@@ -67,7 +74,7 @@ def _psc_input(prompt=''):
     except (ValueError, TypeError): pass
     try: return float(v)
     except (ValueError, TypeError): pass
-    return v
+    return _PscStr(v)
 real = float
 _psc_ticks = 0
 def _psc_tick():
