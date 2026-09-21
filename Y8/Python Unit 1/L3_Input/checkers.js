@@ -124,7 +124,7 @@ export const MOD_CHECKS = {
         },
       },
       {
-        hint: '❌ Join it with extra text using + at least twice — e.g. print("Your favourite subject is " + subject + "!").',
+        hint: '❌ Use + at least twice inside ONE print() — join your answer to text on both sides, e.g. print("Your favourite subject is " + subject + "!").',
         test(raw) {
           const vars = inputVars(raw);
           return printArgs(raw).some(a => plusCount(a) >= 2 && vars.some(v => word(v).test(a)));

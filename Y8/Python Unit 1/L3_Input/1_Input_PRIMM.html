@@ -215,6 +215,10 @@ color:  purple
     font-family: var(--font-mono); padding: 0.05rem 0.35rem !important;
     border-radius: 5px !important; font-size: 0.85em;
   }
+  /* A quoted line of code must never wrap mid-line — it moves to the next line as one
+     unit instead. Short chips like input(...) or + have no spaces, so this never
+     changes them. */
+  .q-label code, .task-text code, .req-text code, .hint-box code { white-space: nowrap; }
   .q-card input[type=text], .q-card textarea {
     width: 100%; padding: 0.65rem 0.85rem; border: 1.5px solid #d6c9f2; border-radius: 8px;
     font-family: var(--font-body); font-size: 0.9rem; resize: vertical;
@@ -701,21 +705,20 @@ greeting <span class="kw">=</span> <span class="st">"Hello "</span>
 
     <!--
       STANDARD BUG STEP — the guided bug encounter is ALWAYS the last Investigate
-      step (see _templates/PRIMM_Python_Y8.html). IBUG_LINE here is print(fullname)
-      — a variable that was never created (only `name` was, via input()), giving a
-      NameError. There is no "fixed" version of the line to edit towards; the fix
-      is simply deleting it, so this activity's IBUG_LINE has no matching
-      IBUG_FIXED_LINE.
+      step (see _templates/PRIMM_Python_Y8.html). Break it edits the last line in
+      place: IBUG_FIXED_LINE print(greeting + name) becomes IBUG_LINE
+      print(greeting + fullname) — a variable that was never created (only `name`
+      was, via input()), giving a NameError. The fix is changing fullname back to name.
     -->
     <div class="q-card step-hidden" id="qcard_i3_prompt" style="border-left-color:var(--stage-i)">
       <label class="q-label"><span class="q-num" style="background:var(--stage-i)">3</span>
         Now let's <strong>meet an error</strong> — every programmer does, all the time, and it is not a disaster.
         <ul style="margin:0.5rem 0 0 1.2rem;line-height:2">
-          <li>Under the editor, press <strong>😈 Break it</strong> — it adds <strong>one broken line</strong> to your code and runs it: it's <strong>line <span id="ibug_line">the last line</span></strong>:
-            <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print(fullname)</code> — a variable you have <em>never created</em> (you created <code style="background:#ede0ff;padding:0 3px;border-radius:3px">name</code>, not <code style="background:#ede0ff;padding:0 3px;border-radius:3px">fullname</code>).</li>
+          <li>Under the editor, press <strong>😈 Break it</strong> — it changes <strong>one word</strong> in your code, then runs it. Type your name when it asks. <strong>Line <span id="ibug_line">3</span></strong> now reads
+            <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print(greeting + fullname)</code> — but you <em>never created</em> a variable called <code style="background:#ede0ff;padding:0 3px;border-radius:3px">fullname</code> (you created <code style="background:#ede0ff;padding:0 3px;border-radius:3px">name</code>).</li>
           <li>Python stops with a red <strong>NameError</strong> — that's expected.</li>
           <li>Read the message, then click <strong>💡 Get help</strong> below the editor for a plain-English hint and the Debugging Recipe.</li>
-          <li><strong>Fix it:</strong> delete that broken line completely, then press <strong>▶ Run code</strong> again until it works.</li>
+          <li><strong>Fix it:</strong> change <code style="background:#ede0ff;padding:0 3px;border-radius:3px">fullname</code> back to <code style="background:#ede0ff;padding:0 3px;border-radius:3px">name</code> on that line, then press <strong>▶ Run code</strong> again until it works.</li>
         </ul>
         <!-- INSTRUCTIONS ONLY — put the "what was Python complaining about?" MCQ in the answer card below. -->
       </label>
@@ -765,7 +768,7 @@ greeting <span class="kw">=</span> <span class="st">"Hello "</span>
       <div style="font-size:0.84rem;color:var(--muted);margin-bottom:0.4rem">✍️ Your answer — step 3 (read the error)</div>
       <div style="display:flex;gap:0.6rem;flex-wrap:wrap;margin-bottom:0.7rem;align-items:center">
         <button class="btn btn-check" type="button" onclick="breakItDemo()">😈 Break it</button>
-        <span style="font-size:0.82rem;color:var(--muted);font-style:italic">adds the broken line above and runs it — then read the error below</span>
+        <span style="font-size:0.82rem;color:var(--muted);font-style:italic">changes the last line and runs it — type your name, then read the error below</span>
       </div>
       <label class="q-label">You ran the broken line and read the error. <strong>What was Python complaining about?</strong></label>
       <div class="radio-opts" id="ropts_i3_mcq" style="margin-top:0.5rem">
@@ -864,7 +867,7 @@ greeting <span class="kw">=</span> <span class="st">"Hello "</span>
         <div class="task-text">
           <ul class="req-list" id="req_m1_3">
             <li><span>1</span><span class="req-text">Keep your code so far. Pick one of your new answers and use it inside a <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print()</code>.</span></li>
-            <li><span>2</span><span class="req-text">Join it with <strong>extra text</strong> using <code style="background:#ede0ff;padding:0 3px;border-radius:3px">+</code> at least <strong>twice</strong> — e.g. <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print("Your favourite subject is " + subject + "!")</code>.</span></li>
+            <li><span>2</span><span class="req-text">Join it with <strong>extra text</strong> using <code style="background:#ede0ff;padding:0 3px;border-radius:3px">+</code> at least <strong>twice</strong> <strong>in the same print()</strong> — so it has three pieces, e.g. <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print("Your favourite subject is " + subject + "!")</code>.</span></li>
           </ul>
         </div>
       </div>
@@ -1047,14 +1050,13 @@ const STEP_COUNT_M1 = 5;   // must equal the number of m1_step_1…m1_step_N div
 // ═══════════════════════════════════════════════════════
 //  The standard "fix a bug" step (ALWAYS the last Investigate step)
 //  See _templates/PRIMM_Python_Y8.html FILL IN ②b for the full explanation.
-//  IBUG_LINE here is print(fullname) — a variable that was never created
-//  (only `name` was, via input()), giving a NameError. There is no edited
-//  "fixed" version of the line (unlike the missing-quote / missing-str()
-//  bugs in other lessons) — the fix is simply deleting it, so this activity
-//  has no IBUG_FIXED_LINE.
+//  Break it edits the last line of the starter code in place: name becomes
+//  fullname — a variable that was never created (only `name` was, via input()),
+//  giving a NameError. The student fixes it by changing fullname back to name.
 // ═══════════════════════════════════════════════════════
 
-const IBUG_LINE = 'print(fullname)';   // deliberately broken — never-created variable
+const IBUG_LINE       = 'print(greeting + fullname)';   // deliberately broken — never-created variable
+const IBUG_FIXED_LINE = 'print(greeting + name)';       // the corrected version
 
 
 // ═══════════════════════════════════════════════════════
@@ -1160,15 +1162,13 @@ const I_CODE_CHECKS = [
   function(code) { if (/input\s*\(\s*["']\s*what is your name\?\s*["']/i.test(code)) return 'change the message inside input(...) on line 1 to something different.'; return null; },
   // Step 2: no code change required — same code, run again and leave the answer blank.
   function(code) { return null; },
-  // Standard bug step — the gate normally requires the planted line to be
-  // gone (deleted, not merely edited — there is no "fixed" version to check
-  // for). Some students "fix" it a different, equally valid way instead:
-  // renaming the existing `name` variable to `fullname` throughout the code
-  // (including its assignment line), which makes `fullname` a real variable
-  // and the print(fullname) line run without error. Treat that as fixed
-  // too — only block when `print(fullname)` is present AND fullname was
-  // never actually assigned anywhere else in the code.
-  function(code) { if (code.includes(IBUG_LINE) && !/\bfullname\s*=[^=]/.test(code)) return 'delete the broken print(fullname) line so your code runs cleanly again.'; return null; },
+  // Standard bug step — the gate requires the broken line to be gone. Some
+  // students "fix" it a different, equally valid way instead: renaming the
+  // existing `name` variable to `fullname` on the input() line, which makes
+  // `fullname` a real variable so print(greeting + fullname) runs without error.
+  // Treat that as fixed too — only block when the broken line is still present
+  // AND fullname was never actually assigned anywhere else in the code.
+  function(code) { if (code.includes(IBUG_LINE) && !/\bfullname\s*=[^=]/.test(code)) return 'change fullname back to name on the last line so your code runs cleanly again.'; return null; },
 ];
 
 
@@ -1604,21 +1604,29 @@ function resetInvestigateEditor() {
 // ── Standard "fix a bug" step ───────────────────────────────────────────────
 //
 // "😈 Break it" is used at the guided bug step — the student presses it once,
-// with the line and error explained to them, then fixes it themselves. Safe
-// to mash — it only re-adds the line if it isn't there.
+// with the line and error explained to them, then fixes it themselves. It edits
+// the existing print line in place (name → fullname) rather than adding a new
+// one. Safe to mash — it only breaks the line if it isn't already broken.
 function breakItDemo() {
   const ta = document.getElementById('i_editor');
   if (!ta) return;
   const lineSpan = document.getElementById('ibug_line');
   if (!ta.value.includes(IBUG_LINE)) {
-    const body = ta.value.replace(/\s+$/, '');
-    ta.value = body + '\n' + IBUG_LINE + '\n';
-    state.iBugPlantedLineNo = body.split('\n').length + 1;
+    if (ta.value.includes(IBUG_FIXED_LINE)) {
+      ta.value = ta.value.replace(IBUG_FIXED_LINE, IBUG_LINE);
+    } else {
+      // The student has reworded the print line, so there's nothing to edit in
+      // place — fall back to adding the broken line at the end.
+      ta.value = ta.value.replace(/\s+$/, '') + '\n' + IBUG_LINE + '\n';
+    }
+    state.iBugPlantedLineNo = ta.value.split('\n').findIndex(l => l.includes(IBUG_LINE)) + 1;
     if (lineSpan) lineSpan.textContent = String(state.iBugPlantedLineNo);
     saveState();
   }
   refreshEditor(ta);
-  runCodeInEditor('i_editor', 'i_fb_run', []);
+  // Interactive (null): the code calls input(), so the student types their name
+  // and then meets the NameError — an empty [] here would fail on input() first.
+  runCodeInEditor('i_editor', 'i_fb_run');
 }
 
 // Keeps the "line N" label in the bug-step prompt showing the right number when
@@ -1628,12 +1636,12 @@ function syncBugLineLabel() {
   if (lineSpan && state.iBugPlantedLineNo) lineSpan.textContent = String(state.iBugPlantedLineNo);
 }
 
-// Remove the auto-planted broken line once the bug step has done its job (student
-// advanced past it or skipped it), so Modify inherits clean code.
-function stripPlantedBugLine() {
+// Put the corrected line back if the bug step is left (skipped) while the line is
+// still broken, so nothing downstream inherits a NameError. A no-op once fixed.
+function restoreBugLine() {
   const ta = document.getElementById('i_editor');
-  if (!ta) return;
-  ta.value = ta.value.split('\n').filter(l => l.trim() !== IBUG_LINE).join('\n');
+  if (!ta || /\bfullname\s*=[^=]/.test(ta.value)) return;   // renamed the variable instead — already valid
+  ta.value = ta.value.split('\n').map(l => l.trim() === IBUG_LINE ? IBUG_FIXED_LINE : l).join('\n');
   refreshEditor(ta);
 }
 
@@ -1890,6 +1898,25 @@ function flashInstruction(n) {
   flashInstruction._t = setTimeout(() => prompt.classList.remove('needs-attention'), 4200);
 }
 
+// Highlights an Investigate MCQ's options and shows its pass/fail message for the
+// chosen radio. Shared by nextStep() and tryCompleteInvestigate() so a wrong
+// answer's red feedback is always replaced once the student answers correctly.
+function showInvestigateMCQFeedback(field, chosen) {
+  const ok = chosen.value === field.correctValue;
+  document.querySelectorAll(`input[name="${field.radioName}"]`).forEach(r => {
+    const opt = r.closest('.radio-opt');
+    opt.classList.remove('correct', 'wrong');
+    if (r.value === field.correctValue) opt.classList.add('correct');
+    else if (r.value === chosen.value && !ok) opt.classList.add('wrong');
+  });
+  const fb = document.getElementById('fb_' + field.id);
+  if (fb) {
+    fb.className = 'mcq-fb ' + (ok ? 'pass' : 'fail');
+    fb.textContent = (ok ? '✔ ' : '✘ ') + (ok ? field.passMsg : field.failMsg);
+  }
+  return ok;
+}
+
 function nextStep(stage, n) {
   if (stage !== 'I') return;
   const field = I_FIELDS[n - 1];
@@ -1913,18 +1940,7 @@ function nextStep(stage, n) {
       fieldHint(card, 'Select an answer before checking — even a guess is fine.');
       return;
     }
-    const ok = chosen.value === field.correctValue;
-    document.querySelectorAll(`input[name="${field.radioName}"]`).forEach(r => {
-      const opt = r.closest('.radio-opt');
-      opt.classList.remove('correct', 'wrong');
-      if (r.value === field.correctValue) opt.classList.add('correct');
-      else if (r.value === chosen.value && !ok) opt.classList.add('wrong');
-    });
-    const fb = document.getElementById('fb_' + field.id);
-    if (fb) {
-      fb.className = 'mcq-fb ' + (ok ? 'pass' : 'fail');
-      fb.textContent = (ok ? '✔ ' : '✘ ') + (ok ? field.passMsg : field.failMsg);
-    }
+    const ok = showInvestigateMCQFeedback(field, chosen);
     if (!ok) {
       card.classList.add('error');
       card.classList.remove('is-right');
@@ -2004,13 +2020,8 @@ function tryCompleteInvestigate() {
     let msg;
     if (f.type === 'mcq') {
       msg = f.validate();
-      if (msg) {
-        const chosen = document.querySelector(`input[name="${f.radioName}"]:checked`);
-        if (chosen && chosen.value !== f.correctValue) {
-          const fb = document.getElementById('fb_' + f.id);
-          if (fb) { fb.className = 'mcq-fb fail'; fb.textContent = '✘ ' + f.failMsg; }
-        }
-      }
+      const chosen = document.querySelector(`input[name="${f.radioName}"]:checked`);
+      if (chosen) showInvestigateMCQFeedback(f, chosen);   // also clears an earlier ✘ once corrected
     } else {
       msg = f.validate((document.getElementById(f.id)?.value || '').trim());
     }
@@ -2030,7 +2041,6 @@ function tryCompleteInvestigate() {
     iCodeSnapshots[STEP_COUNT_I] = code;
     iCodeDraft = undefined;
     delete skippedSteps['i' + STEP_COUNT_I];
-    stripPlantedBugLine();   // break-it demo line must not carry into Modify
     const lastBtn  = lastCard?.querySelector('.btn-next');
     if (lastBtn) { lastBtn.disabled = true; lastBtn.textContent = '✅ Investigation complete! Moving on…'; }
     window.ActivityUI?.miniCelebration(lastCard);
@@ -2223,7 +2233,7 @@ function skipStep(stage) {
   markStageSkipped(stage);
   if (stage === 'I') {
     skippedSteps['i' + stepI] = true;
-    if (stepI === STEP_COUNT_I) stripPlantedBugLine();   // don't carry the broken line forward
+    if (stepI === STEP_COUNT_I) restoreBugLine();   // don't carry the broken line forward
     if (stepI < STEP_COUNT_I) { stepI++; maxStepI = Math.max(maxStepI, stepI); updateStepVisibility(); saveState(); scrollToActive('qcard_i' + stepI + '_prompt'); }
     else { completeStage('I'); }
   } else if (stage === 'M1') {
