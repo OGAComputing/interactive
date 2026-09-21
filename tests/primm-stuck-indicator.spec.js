@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 // Exercises the top progress-bar's "stuck" and "skipped" signals shared by
 // PRIMM_Python_Y8-based activities:
 //   • #progressFill turns amber once a student has sat on the same stage past
-//     its threshold (P/R/I = 5 min, M1 = 10 min); M2 (Make) is exempt. Uses
+//     its threshold (P/R/I = 8 min, M1 = 10 min); M2 (Make) is exempt. Uses
 //     Playwright's clock API to fast-forward real time so the 15s polling
 //     interval and Date.now() both advance, without reaching into the page's
 //     module-scoped internals.
@@ -17,12 +17,12 @@ async function gotoActivity(page) {
   await expect(page.locator('#progressFill')).toBeVisible();
 }
 
-test('stuck indicator appears on Predict after 5 minutes with no progress', async ({ page }) => {
+test('stuck indicator appears on Predict after 8 minutes with no progress', async ({ page }) => {
   await gotoActivity(page);
   const fill = page.locator('#progressFill');
   await expect(fill).not.toHaveClass(/stuck/);
 
-  await page.clock.fastForward('05:01');
+  await page.clock.fastForward('08:01');
   await expect(fill).toHaveClass(/stuck/);
 });
 
@@ -30,22 +30,22 @@ test('changing stage resets the stuck timer', async ({ page }) => {
   await gotoActivity(page);
   const fill = page.locator('#progressFill');
 
-  await page.clock.fastForward('06:00');
+  await page.clock.fastForward('08:01');
   await expect(fill).toHaveClass(/stuck/);
 
   await page.locator('[data-stage="R"]').click();
   await expect(fill).not.toHaveClass(/stuck/);
 });
 
-test('Modify (M1) only flags stuck after 10 minutes, not 5', async ({ page }) => {
+test('Modify (M1) only flags stuck after 10 minutes, not 8', async ({ page }) => {
   await gotoActivity(page);
   const fill = page.locator('#progressFill');
 
   await page.locator('[data-stage="M1"]').click();
-  await page.clock.fastForward('06:00');
+  await page.clock.fastForward('08:30');
   await expect(fill).not.toHaveClass(/stuck/);
 
-  await page.clock.fastForward('04:01');
+  await page.clock.fastForward('01:31');
   await expect(fill).toHaveClass(/stuck/);
 });
 

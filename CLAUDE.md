@@ -15,6 +15,7 @@ Interactive Computing Education Platform — a static web hub serving self-conta
 - **`shared.css`** — Shared reset, year-group colour tokens, topic accent overrides, and `ac-*` utility classes. Used by new activities built from templates; existing activities are not required to adopt it.
 - **`classroom.js`** — Shared Google Classroom integration. Referenced by activities via `../../classroom.js` (or `../../../classroom.js` if the activity is in a lesson subfolder).
 - **`activity-ui.js`** — Shared completion celebrations and toast helper. Referenced by activities via `../../activity-ui.js` (or `../../../activity-ui.js` if the activity is in a lesson subfolder).
+- **`error-reporter.js`** — Shows unexpected page errors (uncaught JS errors, unhandled rejections, failed script/style loads, Pyodide load failure) in a footer panel at the bottom of the page, since the dev console isn't available on student computers. Load it as a plain `<script>` **before** `activity-ui.js`. Currently used by the PRIMM Y8 template and the Y8 Python Unit 1 activities; opt-in per activity.
 - **`pseudocode-transpiler.js`** — OCR pseudocode → Python transpiler. Exports `transpile(src)` and `mapErrorLine(map, pyLine)`. Covers the procedural subset, file I/O, and the OCR class/inheritance subset.
 - **`pseudocode-editor.js`** — Editor widget for OCR pseudocode activities (fork of `code-editor.js`). Targets `.pseudocode-textarea`. Exports `setupEditors`, `clearSyntaxHint`, `setEditorOutput`, `refreshEditor`, `setFiles`, `getWrittenFiles`, `runPseudocode`.
 - **`_templates/`** — Activity starter templates (excluded from manifest). Copy `Y8.html`, `Y9.html`, `Y11.html`, or `Pseudocode_Y11.html` as the basis for a new activity.
@@ -66,13 +67,14 @@ These files are intentionally shared across activities via relative paths (`../.
 | `shared.css` | CSS reset, year-group themes (`data-year`), topic accent overrides (`data-topic`), `ac-*` utility classes | New activities (from templates) |
 | `classroom.js` | Google Classroom sign-in, grade submission, teacher mode | Any activity that includes it |
 | `activity-ui.js` | Shared `window.ActivityUI` helpers for completion celebrations, reduced-motion-safe animation, and `.ac-toast` feedback | Activities that use shared completion/toast behaviour |
+| `error-reporter.js` | Collects unexpected page errors and prints them (with a "Copy report" button) in a footer panel; exposes `window.ErrorReporter.report(source, err)` for errors an activity catches itself. Does **not** report mistakes in student Python — those stay in the editor output panel | Opt-in: PRIMM Y8 template, Y8 Python Unit 1 |
 | `pseudocode-transpiler.js` | OCR pseudocode → Python transpiler (`transpile`, `mapErrorLine`) | `pseudocode-editor.js` (indirect) |
 | `pseudocode-editor.js` | Editor widget — highlighting, syntax hints, run/output panel (`setupEditors`, `runPseudocode`, …) | Pseudocode activities (import via `../../pseudocode-editor.js` or `../../../pseudocode-editor.js`) |
 | `python-error-hints.js` | Maps a raw Python/Pyodide error to a short Year-8-friendly explanation (`explainPythonError(rawError)` → `{id, title, plain, fix}`; `plain`/`fix` are each one short clause, bold takeaway marked with `**…**`). Consumed by `code-editor.js`, not imported by activities directly | Enabled per editor via `setupEditors(selector, { errorHints: true })` |
 
 These files are allowed exceptions to the self-contained rule because:
 - Activities are always accessed through the hub or GitHub Pages, never as isolated downloads
-- Presentation/UI files (`shared.css`, `classroom.js`, `activity-ui.js`) degrade gracefully when absent
+- Presentation/UI files (`shared.css`, `classroom.js`, `activity-ui.js`, `error-reporter.js`) degrade gracefully when absent (call it as `window.ErrorReporter?.report(...)`)
 - The pseudocode files (`pseudocode-editor.js`, `pseudocode-transpiler.js`) are only required by pseudocode activities; non-pseudocode activities do not reference them
 - `python-error-hints.js` is a presentation-free logic library imported only by `code-editor.js`; activities never reference it directly
 
@@ -171,7 +173,7 @@ The transpiler covers the OCR GCSE procedural subset:
 ## Key Conventions
 
 - **Self-contained logic**: Every activity's HTML structure, questions, and JS remain inline — no external game logic
-- **Shared files**: `shared.css`, `classroom.js`, `activity-ui.js`, and (for pseudocode activities) `pseudocode-editor.js` are the only permitted relative-path dependencies
+- **Shared files**: `shared.css`, `classroom.js`, `activity-ui.js`, `error-reporter.js`, and (for pseudocode activities) `pseudocode-editor.js` are the only permitted relative-path dependencies
 - **Vanilla JS only**: No frameworks or libraries; direct DOM manipulation
 - **Files/folders starting with `_`** are excluded from the manifest (use `_drafts/` for WIP, `_templates/` for starters)
 - **Folder structure determines metadata**: `Y8/` → "Year 8", topic folder names become topic labels, `L<n>_Name` folders become lesson subheadings

@@ -1088,6 +1088,8 @@ color:  purple
 <!-- Toast for Classroom feedback -->
 <div class="ac-toast" id="toast"></div>
 
+<!-- Shows any unexpected page error at the bottom of the page (no dev console on student PCs). Keep this first. -->
+<script src="../../../error-reporter.js"></script>
 <script src="../../../activity-ui.js"></script>
 <!-- Google Classroom integration -->
 <script src="../../../classroom.js"></script>
@@ -1363,7 +1365,7 @@ const STAGES = ['P','R','I','M1','M2'];
 // below, the top progress bar turns amber (see .progress-fill.stuck) as a quiet
 // nudge to ask for help. M2 (Make) has no threshold — open-ended build time is
 // expected there, so it is deliberately absent from this map.
-const STUCK_THRESHOLDS_MS = { P: 5 * 60 * 1000, R: 5 * 60 * 1000, I: 5 * 60 * 1000, M1: 10 * 60 * 1000 };
+const STUCK_THRESHOLDS_MS = { P: 8 * 60 * 1000, R: 8 * 60 * 1000, I: 8 * 60 * 1000, M1: 10 * 60 * 1000 };
 let stageEnteredAt = Date.now();
 
 function checkStuck() {
@@ -2424,7 +2426,10 @@ window.addEventListener('DOMContentLoaded', () => {
   setInterval(checkStuck, 15000);
 
   setPyStatus('loading');
-  preload().then(() => setPyStatus('ready')).catch(() => setPyStatus('error'));
+  preload().then(() => setPyStatus('ready')).catch(err => {
+    setPyStatus('error');
+    window.ErrorReporter?.report('Python engine failed to load', err);
+  });
 
   // Predict: render the one-question-at-a-time flow. renderPredict() shows the current
   // card (or the review screen when predictStep > total) and wires the Back/Forward bar.

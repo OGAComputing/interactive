@@ -529,6 +529,7 @@ async function _runHeavyTasks(ta) {
     result = await analyzeCode(val);
   } catch (err) {
     console.warn("Analysis failed for editor:", err);
+    window.ErrorReporter?.report('Code editor analysis failed', err);
     _containerMap.get(ta)?.classList.remove('loading');
     return;
   }
