@@ -243,32 +243,39 @@ export function evalMake(raw) {
 }
 
 // ── Extension ─────────────────────────────────────────────────────────────────
-// Open-ended: any school-themed program with 4+ inputs and structured output.
+// Open-ended: the student picks their own genre (player card, mad-libs story, postcard,
+// chatbot, …) — the checks only confirm the SHAPE, never the theme or the layout. Nothing
+// here cares how many print() lines there are or whether output comes before, between or
+// after the questions, so a one-line mad-libs story and an interleaved chatbot both pass.
 
 export const EXT_CHECK = {
   reqs: [
     {
-      hint: '❌ The extension needs at least 4 input() questions — check your count.',
-      test: raw => inputCount(raw) >= 4,
+      hint: '❌ Ask at least FIVE questions with input(), each stored in its own variable — check you have five different variable names.',
+      test: raw => inputVars(raw).length >= 5,
     },
     {
-      hint: '❌ Use + in at least two different print() lines.',
+      hint: '❌ Use every answer — one of your variables is never printed. Show it in a print(), or delete that question.',
       test(raw) {
-        const args = printArgs(raw);
         const vars = inputVars(raw);
-        return args.filter(a => plusCount(a) >= 1 && vars.some(v => word(v).test(a))).length >= 2;
+        const args = printArgs(raw);
+        return vars.length > 0 && vars.every(v => args.some(a => word(v).test(a)));
       },
     },
     {
-      hint: '❌ In at least one print(), join two or more of your answers together in the same sentence using +.',
+      // Strings are blanked to "" / '' by normalise(), so a leftover pair of quotes in the
+      // print() argument means the student added some words of their own around the answers.
+      hint: '❌ In at least one print(), use + to join two or more of your answers together with some words of your own — e.g. print(name + " has a pet called " + pet).',
       test(raw) {
-        const args = printArgs(raw);
         const vars = inputVars(raw);
-        return args.some(a => plusCount(a) >= 1 && vars.filter(v => word(v).test(a)).length >= 2);
+        return printArgs(raw).some(a =>
+          plusCount(a) >= 1 &&
+          /""|''/.test(a) &&
+          vars.filter(v => word(v).test(a)).length >= 2);
       },
     },
   ],
-  passMsg: '✅ Brilliant — four questions, structured output, and multiple answers joined together. A proper program!',
+  passMsg: '✅ Brilliant — five questions, every answer used, and a sentence built from more than one of them. That is a real program with your own design!',
 };
 
 export function evalExt(raw) {

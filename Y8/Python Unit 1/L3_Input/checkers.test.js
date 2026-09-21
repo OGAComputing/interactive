@@ -90,13 +90,134 @@ describe('evalMod', () => {
 // ─── Extension ───────────────────────────────────────────────────────────────
 
 describe('evalExt', () => {
-  test('passes with four inputs and joined output on two lines', () => {
+  // Five questions with sensible variable names, reused by several tests below.
+  const ask5 = [
+    'name = input("Player name? ")',
+    'game = input("Favourite game? ")',
+    'score = input("Best score? ")',
+    'team = input("Team name? ")',
+    'motto = input("Your motto? ")',
+  ];
+
+  test('passes a multi-line player card that prints every answer', () => {
     const r = evalExt(code([
-      'a = input("Name? ")', 'b = input("Form? ")', 'c = input("Club? ")', 'd = input("Day? ")',
-      'print(a + " is in " + b)',
-      'print(c + " meets on " + d)',
+      ...ask5,
+      'print("==== PLAYER CARD ====")',
+      'print("Name: " + name)',
+      'print(name + " plays " + game + " for " + team)',
+      'print("Best score: " + score)',
+      'print("Motto: " + motto)',
+    ]));
+    expect(r.results).toEqual([true, true, true]);
+    expect(r.pass).toBe(true);
+  });
+
+  test('passes a mad-libs story built in ONE print() (no particular line count required)', () => {
+    const r = evalExt(code([
+      'hero = input("A name? ")',
+      'place = input("A place? ")',
+      'animal = input("An animal? ")',
+      'food = input("A food? ")',
+      'adj = input("An adjective? ")',
+      'print(hero + " went to " + place + " and met a " + adj + " " + animal + " who loved " + food + ".")',
     ]));
     expect(r.pass).toBe(true);
+  });
+
+  test('passes a chatbot that prints between the questions', () => {
+    const r = evalExt(code([
+      'print("Hi, I am Botty!")',
+      'name = input("What is your name? ")',
+      'print("Nice to meet you, " + name)',
+      'hobby = input("What do you do for fun? ")',
+      'print(hobby + " sounds great!")',
+      'pet = input("Do you have a pet? ")',
+      'print("Tell " + pet + " I said hi")',
+      'food = input("Favourite food? ")',
+      'print("Yum, " + food)',
+      'day = input("Best day of the week? ")',
+      'print(name + " loves " + day)',
+    ]));
+    expect(r.pass).toBe(true);
+  });
+
+  test('is not tied to any variable names', () => {
+    const r = evalExt(code([
+      'a = input("1? ")', 'b = input("2? ")', 'c = input("3? ")', 'd = input("4? ")', 'e = input("5? ")',
+      'print(a + b + " and " + c + d + e)',
+    ]));
+    expect(r.pass).toBe(true);
+  });
+
+  test('fails with only four questions', () => {
+    const r = evalExt(code([
+      'a = input("1? ")', 'b = input("2? ")', 'c = input("3? ")', 'd = input("4? ")',
+      'print(a + " and " + b + " and " + c + " and " + d)',
+    ]));
+    expect(r.results).toEqual([false, true, true]);
+    expect(r.pass).toBe(false);
+  });
+
+  test('five input() calls that reuse one variable name only count once', () => {
+    const r = evalExt(code([
+      'x = input("1? ")', 'x = input("2? ")', 'x = input("3? ")', 'x = input("4? ")', 'x = input("5? ")',
+      'print("You said " + x + "!")',
+    ]));
+    expect(r.results[0]).toBe(false);
+  });
+
+  test('fails when one answer is never printed', () => {
+    const r = evalExt(code([
+      ...ask5,
+      'print(name + " plays " + game + " for " + team)',
+      'print("Best score: " + score)',
+      // motto is asked but never used
+    ]));
+    expect(r.results).toEqual([true, false, true]);
+    expect(r.pass).toBe(false);
+  });
+
+  test('a variable name that only appears inside a string does not count as printed', () => {
+    const r = evalExt(code([
+      ...ask5,
+      'print(name + " plays " + game + " for " + team)',
+      'print("Best score: " + score)',
+      'print("motto")',
+    ]));
+    expect(r.results[1]).toBe(false);
+  });
+
+  test('fails when no print() joins two answers with own words', () => {
+    const r = evalExt(code([
+      ...ask5,
+      'print(name)', 'print(game)', 'print(score)', 'print(team)', 'print(motto)',
+    ]));
+    expect(r.results).toEqual([true, true, false]);
+  });
+
+  test('joining two answers with + but no words of your own does not pass the third check', () => {
+    const r = evalExt(code([
+      ...ask5,
+      'print(name + game + score + team + motto)',
+    ]));
+    expect(r.results).toEqual([true, true, false]);
+  });
+
+  test('single-quoted strings count as words of your own', () => {
+    const r = evalExt(code([
+      ...ask5,
+      "print(name + ' plays ' + game + team + score + motto)",
+    ]));
+    expect(r.pass).toBe(true);
+  });
+
+  test('commented-out questions do not count', () => {
+    const r = evalExt(code([
+      ...ask5.slice(0, 4),
+      '# motto = input("Your motto? ")',
+      'print(name + " plays " + game + " for " + team + score)',
+    ]));
+    expect(r.results[0]).toBe(false);
   });
 });
 
