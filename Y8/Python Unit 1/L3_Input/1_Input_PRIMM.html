@@ -1005,11 +1005,8 @@ greeting <span class="kw">=</span> <span class="st">"Hello "</span>
   ║  evalMod(checkKey, raw) → { results: bool[], pass: bool, msg: string }     ║
   ║    — runs every req, used by checkMod() to tick/cross each bullet          ║
   ║                                                                              ║
-  ║  MOD_INPUTS = {                                                              ║
-  ║    mod1: ['Alice', '13'],   // mock inputs fed to runPython() for step 1   ║
-  ║    mod2: ['Alice', '13'],   // omit a key entirely if no input() needed    ║
-  ║    ...                                                                       ║
-  ║  }                                                                           ║
+  ║  (No MOD_INPUTS: this activity runs Modify/Make/Extension checks              ║
+  ║   interactively via runCode() — students type their own answers.)           ║
   ║                                                                              ║
   ║  MAKE_CHECK = { reqs: […], passMsg }   // checks the Make program          ║
   ║  evalMake(raw) → { results, pass, msg }                                    ║
@@ -1020,8 +1017,8 @@ greeting <span class="kw">=</span> <span class="st">"Hello "</span>
   ║  example of this {reqs, passMsg} + evalX() shape.                          ║
   ╚══════════════════════════════════════════════════════════════════════════════╝
 */
-import { normalise, has, MOD_CHECKS, evalMod, MOD_INPUTS, MAKE_CHECK, evalMake, EXT_CHECK, evalExt } from './checkers.js';
-import { runPython, preload } from '../../../pyodide-runner.js';
+import { normalise, has, MOD_CHECKS, evalMod, MAKE_CHECK, evalMake, EXT_CHECK, evalExt, nonQuestionPrompts, QUESTION_TIP } from './checkers.js';
+import { preload } from '../../../pyodide-runner.js';
 import { setupEditors, clearSyntaxHint, setEditorOutput, refreshEditor, runCode } from '../../../code-editor.js';
 
 
@@ -2047,6 +2044,14 @@ function tryCompleteInvestigate() {
 
 // ── Modify ────────────────────────────────────────────
 
+// Shown while the student is answering their program's questions during a check.
+const INPUT_WAIT_MSG = '⌨ Answer your program’s questions in the output panel below — questions on the left, your answers on the right.';
+
+// Advisory only — never blocks a pass. Appends a nudge when an input() prompt isn't a question.
+function withQuestionTip(msg, raw) {
+  return nonQuestionPrompts(raw).length ? msg + ' ' + QUESTION_TIP : msg;
+}
+
 // Ticks/crosses each <li> in a req-list to match `results` (one boolean per
 // bullet, in order). Pass null to reset a list back to its neutral numbered state
 // (used when a step is not-yet-attempted, e.g. after Back/Forward navigation).
@@ -2079,16 +2084,17 @@ async function checkMod() {
   if (!structural.pass) {
     fbEl.className = 'feedback fail'; fbEl.textContent = structural.msg; recordM1Attempt(); return;
   }
-  fbEl.className = 'feedback loading'; fbEl.textContent = '⏳ Checking…';
-  const inputs = MOD_INPUTS?.[checkKey] || [];
-  const run = await runPython(raw, { inputs });
+  // Run interactively: the student answers their OWN questions in the output panel
+  // (no canned answers — they'd make no sense against prompts the student wrote).
+  fbEl.className = 'feedback loading'; fbEl.textContent = INPUT_WAIT_MSG;
+  const run = await runCode(editorEl);
+  if (run.cancelled) return; // a later Check click superseded this one
   if (!run.ok) {
     fbEl.className = 'feedback fail'; fbEl.textContent = '❌ Error: ' + run.output; recordM1Attempt(); return;
   }
   fbEl.className = 'feedback pass';
-  fbEl.textContent = structural.msg;
-  setEditorOutput(document.getElementById('m1_editor'), run.output, false);
-  clearSyntaxHint(document.getElementById('m1_editor'));
+  fbEl.textContent = withQuestionTip(structural.msg, raw);
+  clearSyntaxHint(editorEl);
   passedChecks[checkId] = true;
   delete skippedSteps['m1_' + stepM1];
   // Lock in the code as it stood for this modification, so Back/Forward can restore it later.
@@ -2134,9 +2140,9 @@ async function checkMake() {
   if (!structural.pass) {
     fbEl.className = 'feedback fail'; fbEl.textContent = structural.msg; return;
   }
-  fbEl.className = 'feedback loading'; fbEl.textContent = '⏳ Checking…';
-  // Three input() calls expected. Extra answers are harmless.
-  const run = await runPython(raw, { inputs: ['Alex', 'Maths', 'blue'] });
+  fbEl.className = 'feedback loading'; fbEl.textContent = INPUT_WAIT_MSG;
+  const run = await runCode(editorEl);
+  if (run.cancelled) return; // a later Check click superseded this one
   if (!run.ok) {
     fbEl.className = 'feedback fail';
     fbEl.textContent = '❌ Your program has an error: ' + run.output; return;
@@ -2146,8 +2152,7 @@ async function checkMake() {
     fbEl.textContent = '❌ Your program ran but produced no output — check your print() calls.'; return;
   }
   fbEl.className = 'feedback pass';
-  fbEl.textContent = structural.msg;
-  setEditorOutput(editorEl, run.output, false);
+  fbEl.textContent = withQuestionTip(structural.msg, raw);
   passedChecks['m2_make'] = true;
   window.ActivityUI?.miniCelebration(fbEl);
   window.ActivityUI?.showToast('✅ Make complete! Now tackle the extension!');
@@ -2171,15 +2176,14 @@ async function checkExt() {
   if (!structural.pass) {
     fbEl.className = 'feedback fail'; fbEl.textContent = structural.msg; return;
   }
-  fbEl.className = 'feedback loading'; fbEl.textContent = '⏳ Checking…';
-  // Four input() calls minimum expected in the extension. Extra answers are harmless.
-  const run = await runPython(raw, { inputs: ['Alex', 'Maths', 'blue', '13'] });
+  fbEl.className = 'feedback loading'; fbEl.textContent = INPUT_WAIT_MSG;
+  const run = await runCode(editorEl);
+  if (run.cancelled) return; // a later Check click superseded this one
   if (!run.ok) {
     fbEl.className = 'feedback fail';
     fbEl.textContent = '❌ Your program has an error: ' + run.output; return;
   }
-  fbEl.className = 'feedback pass'; fbEl.textContent = structural.msg;
-  setEditorOutput(editorEl, run.output, false);
+  fbEl.className = 'feedback pass'; fbEl.textContent = withQuestionTip(structural.msg, raw);
   passedChecks['m2_ext'] = true;
   window.ActivityUI?.miniCelebration(fbEl);
   window.ActivityUI?.showToast('🌟 Extension complete! Outstanding!');

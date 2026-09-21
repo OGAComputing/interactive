@@ -180,14 +180,30 @@ export function evalMod(checkKey, raw) {
   return { results, pass, msg: hint };
 }
 
-// Mock inputs fed to runPython() for each Modify check (extra answers are harmless).
-export const MOD_INPUTS = {
-  mod1: ['Alex', 'Maths', 'blue', '12'],
-  mod2: ['Alex', 'Maths', 'blue', '12'],
-  mod3: ['Alex', 'Maths', 'blue', '12'],
-  mod4: ['Alex', 'Maths', 'blue', '12'],
-  mod5: ['Alex', 'Maths', 'blue', '12'],
-};
+// There are deliberately NO mock inputs (no MOD_INPUTS): every question here is one the
+// student wrote themselves, so canned answers like "Maths" make no sense against their
+// prompts. Modify / Make / Extension checks all run the code interactively instead —
+// the student types their own answers in the output panel (see runCode in the HTML).
+
+// input() prompts that don't end in "?" (trailing spaces are ignored).
+// Purely advisory — a prompt like "Enter your name: " is perfectly valid Python, so this
+// never fails a check; the HTML appends it to the pass message as a gentle nudge that the
+// left-hand side of the output panel is the QUESTION and the right-hand side is the answer.
+// Only looks at literal-string prompts; comments are stripped first.
+export function nonQuestionPrompts(raw) {
+  const code = raw.replace(/#[^\n]*/g, '');
+  const re = /\binput\s*\(\s*(?:"([^"\n]*)"|'([^'\n]*)')/g;
+  const out = [];
+  let m;
+  while ((m = re.exec(code))) {
+    const text = (m[1] ?? m[2]).trim();
+    if (!text.endsWith('?')) out.push(text);
+  }
+  return out;
+}
+
+export const QUESTION_TIP =
+  '💡 Tip: the text inside input() is the question your user sees on the left — end it with a ? so it reads as a question.';
 
 // ── Make ────────────────────────────────────────────────────────────────────
 // Interactive greeting — three questions, tested with Alex / Maths / blue.
@@ -206,12 +222,13 @@ export const MAKE_CHECK = {
       },
     },
     {
-      hint: '❌ Print at least two lines, and make sure all three of your answers appear somewhere in a print().',
+      // Matches the task card's bullet 3 exactly: all three answers printed. One print()
+      // or several are both fine — the card never asks for a particular number of lines.
+      hint: '❌ Print all three of your answers — each one needs to appear somewhere in a print().',
       test(raw) {
         const args = printArgs(raw);
         const vars = inputVars(raw);
-        const allThreeShown = vars.filter(v => args.some(a => word(v).test(a))).length >= 3;
-        return args.length >= 2 && allThreeShown;
+        return vars.filter(v => args.some(a => word(v).test(a))).length >= 3;
       },
     },
   ],
