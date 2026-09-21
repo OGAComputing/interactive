@@ -1753,12 +1753,10 @@ function resetInvestigateEditor() {
 // once the step is done (see stripPlantedBugLine, called from skipStep /
 // tryCompleteInvestigate).
 //
-// FILL IN: the trailing [] below means "run with no inputs at all", which only
-// works if IBUG_LINE needs none. If your lesson has already introduced input() and
-// the accumulated code in i_editor calls it (e.g. earlier Investigate steps added
-// input() lines), replace [] with the SAME mock-input array the step's own
-// "▶ Run code" button uses at this point — otherwise those input() calls will run
-// dry and error before the student ever sees the intended bug.
+// No inputs are passed, so the run auto-collects any input() prompts interactively
+// (the student types their answers, then meets the intended bug). Do NOT pass []:
+// that means "run with no inputs at all", so if the accumulated code in i_editor
+// calls input() the student sees a raw "OSError: I/O error" instead of the bug.
 function breakItDemo() {
   const ta = document.getElementById('i_editor');
   if (!ta) return;
@@ -1773,7 +1771,7 @@ function breakItDemo() {
     saveState();
   }
   refreshEditor(ta);
-  runCodeInEditor('i_editor', 'i_fb_run', []);
+  runCodeInEditor('i_editor', 'i_fb_run');
 }
 
 // Keeps the "line N" label in the step-3 prompt showing the right number when the
@@ -2049,6 +2047,25 @@ function flashInstruction(n) {
   flashInstruction._t = setTimeout(() => prompt.classList.remove('needs-attention'), 4200);
 }
 
+// Highlights an Investigate MCQ's options and shows its pass/fail message for the
+// chosen radio. Shared by nextStep() and tryCompleteInvestigate() so a wrong
+// answer's red feedback is always replaced once the student answers correctly.
+function showInvestigateMCQFeedback(field, chosen) {
+  const ok = chosen.value === field.correctValue;
+  document.querySelectorAll(`input[name="${field.radioName}"]`).forEach(r => {
+    const opt = r.closest('.radio-opt');
+    opt.classList.remove('correct', 'wrong');
+    if (r.value === field.correctValue) opt.classList.add('correct');
+    else if (r.value === chosen.value && !ok) opt.classList.add('wrong');
+  });
+  const fb = document.getElementById('fb_' + field.id);
+  if (fb) {
+    fb.className = 'mcq-fb ' + (ok ? 'pass' : 'fail');
+    fb.textContent = (ok ? '✔ ' : '✘ ') + (ok ? field.passMsg : field.failMsg);
+  }
+  return ok;
+}
+
 function nextStep(stage, n) {
   if (stage !== 'I') return;
   const field = I_FIELDS[n - 1];
@@ -2072,18 +2089,7 @@ function nextStep(stage, n) {
       fieldHint(card, 'Select an answer before checking — even a guess is fine.');
       return;
     }
-    const ok = chosen.value === field.correctValue;
-    document.querySelectorAll(`input[name="${field.radioName}"]`).forEach(r => {
-      const opt = r.closest('.radio-opt');
-      opt.classList.remove('correct', 'wrong');
-      if (r.value === field.correctValue) opt.classList.add('correct');
-      else if (r.value === chosen.value && !ok) opt.classList.add('wrong');
-    });
-    const fb = document.getElementById('fb_' + field.id);
-    if (fb) {
-      fb.className = 'mcq-fb ' + (ok ? 'pass' : 'fail');
-      fb.textContent = (ok ? '✔ ' : '✘ ') + (ok ? field.passMsg : field.failMsg);
-    }
+    const ok = showInvestigateMCQFeedback(field, chosen);
     if (!ok) {
       card.classList.add('error');
       card.classList.remove('is-right');
@@ -2163,13 +2169,8 @@ function tryCompleteInvestigate() {
     let msg;
     if (f.type === 'mcq') {
       msg = f.validate();
-      if (msg) {
-        const chosen = document.querySelector(`input[name="${f.radioName}"]:checked`);
-        if (chosen && chosen.value !== f.correctValue) {
-          const fb = document.getElementById('fb_' + f.id);
-          if (fb) { fb.className = 'mcq-fb fail'; fb.textContent = '✘ ' + f.failMsg; }
-        }
-      }
+      const chosen = document.querySelector(`input[name="${f.radioName}"]:checked`);
+      if (chosen) showInvestigateMCQFeedback(f, chosen);   // also clears an earlier ✘ once corrected
     } else {
       msg = f.validate((document.getElementById(f.id)?.value || '').trim());
     }
