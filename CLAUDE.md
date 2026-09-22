@@ -121,6 +121,7 @@ Topic values map to accent colour overrides. Current supported topics:
 
 | Year | Topics |
 |------|--------|
+| 7    | Digital_Skills |
 | 8    | Python |
 | 9    | Hardware_Networks, Algorithms, Cybersecurity, Databases |
 | 11   | Networks, NetworkHardware, Legislation, System_Software, Algorithms, Security |

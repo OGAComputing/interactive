@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- ACTIVITY
+title:  Format This! Keyboard Shortcut Mission
+type:   Practice
+stars:  3
+desc:   20 hands-on keyboard-shortcut tasks — bold, cut, copy, undo and more. Keyboard only, no toolbar clicking!
+color:  amber
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Format This! Keyboard Shortcut Mission — Year 7 Digital Skills</title>
+
+<!-- Shared reset, year-group palette, and ac-* utilities -->
+<link rel="stylesheet" href="../../shared.css">
+
+<!-- Google Fonts — playful Year 7 pairing (see shared.css [data-year="7"] block) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
+
+<style>
+  /* ── Activity header ─────────────────────────────────── */
+
+  .header {
+    background: linear-gradient(155deg, var(--surface) 0%, var(--surface-mid) 100%);
+    padding: 20px 28px 16px;
+    border-bottom: 4px solid var(--accent);
+  }
+  .header-title {
+    font-family: var(--font-head);
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--text-inv);
+    letter-spacing: -0.01em;
+  }
+  .header-sub {
+    font-size: 0.86rem;
+    font-weight: 700;
+    color: #FFEDD5;
+    margin-top: 3px;
+  }
+  .header-rule {
+    display: inline-block;
+    margin-top: 8px;
+    font-size: 0.78rem;
+    color: #FFEDD5;
+    background: rgba(0,0,0,0.18);
+    border-radius: 999px;
+    padding: 4px 12px;
+    font-weight: 700;
+  }
+
+  /* ── Overall progress ─────────────────────────────────── */
+
+  .overall-wrap {
+    max-width: 760px;
+    margin: 14px auto 0;
+    padding: 0 4px;
+  }
+  .overall-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 5px;
+  }
+  .overall-label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: rgba(255,255,255,0.92);
+  }
+  .overall-count {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #FFEDD5;
+  }
+  .header .ac-progress-bar { background: rgba(0,0,0,0.22); }
+
+  /* ── Glow overlay ──────────────────────────────────────── */
+
+  #glow-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none; z-index: 0; opacity: 0;
+    transition: opacity 1.8s ease;
+  }
+  #glow-overlay.gold  { background: radial-gradient(ellipse at 50% 55%, rgba(251,191,36,.26) 0%, transparent 65%); }
+  #glow-overlay.green { background: radial-gradient(ellipse at 50% 55%, rgba(34,197,94,.22) 0%, transparent 65%); }
+  #glow-overlay.show  { opacity: 1; }
+
+  /* ── Tab bar (pill style — Year 7) ────────────────────── */
+
+  .tab-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 16px 20px;
+    max-width: 760px;
+    margin: 0 auto;
+  }
+  .tab-pill {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 16px;
+    border: 2px solid var(--border, #FED7AA);
+    border-radius: 999px;
+    background: #fff;
+    color: var(--text);
+    font-family: var(--font-head);
+    font-size: 0.86rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.1s;
+    box-shadow: 0 2px 0 rgba(124,45,18,0.12);
+  }
+  .tab-pill:hover:not(.locked)   { border-color: var(--accent); transform: translateY(-1px); }
+  .tab-pill:active:not(.locked)  { transform: translateY(0); }
+  .tab-pill.active       { background: var(--accent); border-color: var(--accent); color: #fff; box-shadow: 0 2px 0 var(--accent-dark); }
+  .tab-pill.tab-complete { background: var(--gold); border-color: var(--amber-dark); color: #4A2600; box-shadow: 0 2px 0 var(--amber-dark); }
+  .tab-pill.tab-complete.active { background: var(--gold); color: #4A2600; }
+  .tab-pill.locked {
+    background: var(--muted, #B45309);
+    background: #F1E4D4;
+    border-color: #E7D2B0;
+    color: #A88A63;
+    cursor: not-allowed;
+    opacity: 0.85;
+  }
+  .tab-frac {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    font-weight: 700;
+    opacity: 0.85;
+  }
+
+  /* ── Panels ──────────────────────────────────────────── */
+
+  .panel {
+    display: none;
+    padding: 4px 20px 52px;
+    max-width: 760px;
+    margin: 0 auto;
+  }
+  .panel.active { display: block; }
+
+  .tab-intro {
+    background: #fff;
+    border-left: 5px solid var(--accent);
+    border-radius: 0 12px 12px 0;
+    padding: 12px 16px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 18px;
+    box-shadow: 0 2px 8px rgba(124,45,18,0.06);
+  }
+  .tab-intro strong { color: var(--surface); }
+
+  /* ── Task card ───────────────────────────────────────── */
+
+  .task-card {
+    background: #fff;
+    border: 2px solid var(--border, #FED7AA);
+    border-radius: 18px;
+    padding: 16px 18px 14px;
+    margin-bottom: 16px;
+    box-shadow: 0 3px 0 rgba(124,45,18,0.08);
+    transition: border-color 0.25s, box-shadow 0.25s;
+  }
+  .task-card.done {
+    border-color: var(--green);
+    box-shadow: 0 3px 0 rgba(21,128,61,0.18);
+  }
+  .task-card.done.gold {
+    border-color: var(--gold);
+    box-shadow: 0 3px 0 rgba(180,131,7,0.22);
+  }
+
+  .task-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 4px;
+  }
+  .task-badge {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-head);
+    font-size: 0.92rem;
+    font-weight: 800;
+    color: #fff;
+    background: var(--accent);
+    flex-shrink: 0;
+  }
+  .task-card.done .task-badge { background: var(--green); }
+  .task-card.done.gold .task-badge { background: var(--gold); color: #4A2600; }
+
+  .task-title-wrap { flex: 1; min-width: 0; }
+  .task-title {
+    font-family: var(--font-head);
+    font-size: 1.02rem;
+    font-weight: 700;
+    color: var(--surface);
+  }
+  .task-keys {
+    display: flex;
+    gap: 5px;
+    margin-top: 3px;
+    flex-wrap: wrap;
+  }
+  kbd {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--text);
+    background: #FFF7ED;
+    border: 1px solid var(--border, #FED7AA);
+    border-bottom: 2.5px solid #D7A26B;
+    border-radius: 5px;
+    padding: 1px 7px;
+    line-height: 1.5;
+  }
+  .key-plus { font-size: 0.72rem; color: var(--muted); font-weight: 700; }
+
+  .status-chip {
+    flex-shrink: 0;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: #F1F0F0;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .task-card.done .status-chip { background: var(--green-bg); color: var(--green-dark); }
+  .task-card.done.gold .status-chip { background: var(--gold-bg); color: #92610A; }
+
+  .task-goal {
+    background: var(--amber-bg, #FFF1E6);
+    border-left: 4px solid var(--accent);
+    padding: 9px 12px;
+    border-radius: 0 8px 8px 0;
+    font-size: 0.86rem;
+    font-weight: 600;
+    color: var(--text);
+    margin: 10px 0 12px;
+    line-height: 1.45;
+  }
+  .task-goal code {
+    background: rgba(0,0,0,0.06);
+    border-radius: 4px;
+    padding: 0 4px;
+  }
+
+  /* ── The "document" box ───────────────────────────────── */
+
+  .doc-box {
+    font-family: 'Calibri', 'Segoe UI', sans-serif;
+    font-size: 1.02rem;
+    line-height: 1.6;
+    color: #1a1a1a;
+    background: #fff;
+    border: 1.5px solid var(--border, #FED7AA);
+    border-radius: 10px;
+    padding: 12px 14px;
+    min-height: 2.6em;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+    outline: none;
+    white-space: pre-wrap;
+  }
+  .doc-box:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-light);
+  }
+  .doc-box[contenteditable="false"] {
+    background: var(--green-bg);
+    border-color: var(--green);
+    color: #14532D;
+    cursor: default;
+  }
+  .doc-box:empty::before {
+    content: attr(data-placeholder);
+    color: #B0958A;
+    font-style: italic;
+  }
+
+  .task-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 10px;
+    min-height: 1.6em;
+  }
+  .feedback {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--green-dark);
+  }
+  .feedback.gold { color: #92610A; }
+  .reset-btn { font-size: 0.76rem !important; padding: 6px 14px !important; }
+
+  /* ── Locked-tab helper text (shown briefly via toast) ── */
+
+  @media (max-width: 480px) {
+    .header-title { font-size: 1.32rem; }
+    .task-badge { width: 30px; height: 30px; font-size: 0.8rem; }
+  }
+</style>
+</head>
+
+<body>
+
+<!-- Completion banner — shown when all 20 tasks finished -->
+<div id="done-banner" class="ac-banner gold">
+  🏆 Mission Complete — every keyboard shortcut mastered!
+</div>
+<div id="glow-overlay"></div>
+
+<!-- Activity header -->
+<div class="header">
+  <div class="header-title">🎯 Format This! Keyboard Shortcut Mission</div>
+  <div class="header-sub">Year 7 Digital Skills — Welcome to Outwood!</div>
+  <div class="header-rule">⌨️ Keyboard only — there are no Bold / Italic / Underline buttons to click!</div>
+
+  <div class="overall-wrap">
+    <div class="overall-row">
+      <span class="overall-label">Mission progress</span>
+      <span class="overall-count" id="overall-count">0 / 20</span>
+    </div>
+    <div class="ac-progress-bar"><div class="ac-progress-fill" id="overall-fill"></div></div>
+  </div>
+</div>
+
+<!-- Tab bar -->
+<div class="tab-bar" id="tab-bar">
+  <button class="tab-pill active" data-tab="0">🚀 Foundations <span class="tab-frac" id="frac-0">0/6</span></button>
+  <button class="tab-pill locked" data-tab="1">🔒 Editing Power <span class="tab-frac" id="frac-1">0/6</span></button>
+  <button class="tab-pill locked" data-tab="2">🔒 Combining Shortcuts <span class="tab-frac" id="frac-2">0/5</span></button>
+  <button class="tab-pill locked" data-tab="3">🔒 Mastery Challenge <span class="tab-frac" id="frac-3">0/3</span></button>
+</div>
+
+<!-- Panels — task cards are rendered into these by script -->
+<div class="panel active" id="panel-0">
+  <div class="tab-intro">🚀 <strong>Foundations</strong> — six essential shortcuts every computer user needs. Complete all six to unlock the next mission.</div>
+  <div id="tasks-0"></div>
+</div>
+<div class="panel" id="panel-1">
+  <div class="tab-intro">⚡ <strong>Editing Power</strong> — copying, cutting, undoing and fixing typos without touching the mouse.</div>
+  <div id="tasks-1"></div>
+</div>
+<div class="panel" id="panel-2">
+  <div class="tab-intro">🧩 <strong>Combining Shortcuts</strong> — now use two or three shortcuts together on the same document.</div>
+  <div id="tasks-2"></div>
+</div>
+<div class="panel" id="panel-3">
+  <div class="tab-intro">🏆 <strong>Mastery Challenge</strong> — the ultimate test. Combine everything you've learned to complete your mission.</div>
+  <div id="tasks-3"></div>
+</div>
+
+<!-- Toast for unlocks / Classroom feedback -->
+<div class="ac-toast" id="toast"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  const ACTIVITY_TITLE = 'Format This! Keyboard Shortcut Mission';
+
+  // ══════════════════════════════════════════════════════════
+  // Utilities
+  // ══════════════════════════════════════════════════════════
+
+  const ALIASES = { 'ctrl+shift+z': 'ctrl+y' };
+
+  function comboFromEvent(e) {
+    const parts = [];
+    if (e.ctrlKey || e.metaKey) parts.push('ctrl');
+    if (e.shiftKey) parts.push('shift');
+    if (e.altKey) parts.push('alt');
+    const key = e.key.toLowerCase();
+    if (['control', 'shift', 'alt', 'meta'].includes(key)) return null; // modifier alone
+    parts.push(key);
+    const combo = parts.join('+');
+    return ALIASES[combo] || combo;
+  }
+
+  // Shortcuts whose presence inside a task box that doesn't call for them
+  // counts as a "wrong shortcut" fumble for gold/green scoring. Deliberately
+  // excludes Home/End/Delete/Backspace/Shift+End — those are legitimate
+  // cursor/navigation aids that many tasks need regardless of which specific
+  // shortcut is being taught (e.g. pressing End to position the cursor
+  // before a Copy+Paste task), so pressing them is never a "wrong guess".
+  const FUMBLE_VOCAB = new Set([
+    'ctrl+b', 'ctrl+i', 'ctrl+u', 'ctrl+a', 'ctrl+c', 'ctrl+v', 'ctrl+x', 'ctrl+z', 'ctrl+y'
+  ]);
+
+  // Shortcuts that would be disruptive if the browser handled them natively
+  // (closing the tab, opening print/save dialogs) while a student experiments.
+  const GUARD_COMBOS = new Set(['ctrl+p', 'ctrl+s', 'ctrl+w', 'ctrl+n', 'ctrl+t', 'ctrl+shift+t']);
+  document.addEventListener('keydown', e => {
+    const combo = comboFromEvent(e);
+    if (combo && GUARD_COMBOS.has(combo)) e.preventDefault();
+  });
+
+  function plainText(box) {
+    return box.innerText.replace(/ /g, ' ').replace(/[ \t]+\n/g, '\n').trim();
+  }
+  function normSpace(s) { return s.replace(/\s+/g, ' ').trim(); }
+
+  function styleCoverage(box, predicate) {
+    let total = 0, covered = 0;
+    const walker = document.createTreeWalker(box, NodeFilter.SHOW_TEXT);
+    let node;
+    while ((node = walker.nextNode())) {
+      const len = node.textContent.replace(/\s/g, '').length;
+      if (!len) continue;
+      total += len;
+      if (predicate(getComputedStyle(node.parentElement))) covered += len;
+    }
+    return total ? covered / total : 0;
+  }
+  const isBold      = box => styleCoverage(box, s => parseInt(s.fontWeight, 10) >= 700) > 0.6;
+  const isItalic     = box => styleCoverage(box, s => s.fontStyle === 'italic') > 0.6;
+  const isUnderline = box => styleCoverage(box, s => s.textDecorationLine.includes('underline')) > 0.6;
+
+  function hasRequiredCombos(pressedSet, groups) {
+    return groups.every(group => group.some(c => pressedSet.has(c)));
+  }
+
+  function linesOf(box) {
+    return plainText(box).split('\n').map(normSpace).filter(Boolean);
+  }
+
+  // ══════════════════════════════════════════════════════════
+  // Task definitions
+  // ══════════════════════════════════════════════════════════
+
+  const TASKS = [
+    // ── Tab 0 — Foundations ──────────────────────────────
+    {
+      tab: 0, title: 'Bold a Sentence', keys: ['Ctrl', 'B'],
+      goal: 'Click inside the box, select the whole sentence, then press <kbd>Ctrl</kbd>+<kbd>B</kbd> to make it bold.',
+      text: 'Wetherby is a market town in West Yorkshire.',
+      requiredGroups: [['ctrl+b']],
+      validate: box => isBold(box) && normSpace(plainText(box)) === 'Wetherby is a market town in West Yorkshire.'
+    },
+    {
+      tab: 0, title: 'Italicise a Sentence', keys: ['Ctrl', 'I'],
+      goal: 'Select the whole sentence and press <kbd>Ctrl</kbd>+<kbd>I</kbd> to italicise it.',
+      text: 'A keyboard is an input device used to send information to a computer.',
+      requiredGroups: [['ctrl+i']],
+      validate: box => isItalic(box) && normSpace(plainText(box)) === 'A keyboard is an input device used to send information to a computer.'
+    },
+    {
+      tab: 0, title: 'Underline a Sentence', keys: ['Ctrl', 'U'],
+      goal: 'Select the whole sentence and press <kbd>Ctrl</kbd>+<kbd>U</kbd> to underline it.',
+      text: 'A computer processes data to produce information.',
+      requiredGroups: [['ctrl+u']],
+      validate: box => isUnderline(box) && normSpace(plainText(box)) === 'A computer processes data to produce information.'
+    },
+    {
+      tab: 0, title: 'Select Everything at Once', keys: ['Ctrl', 'A'],
+      goal: 'Click anywhere in the box, then press <kbd>Ctrl</kbd>+<kbd>A</kbd> to select every word at once. Let go without pressing anything else.',
+      text: 'Well done for reaching Outwood — this whole sentence needs selecting in one go!',
+      requiredGroups: [['ctrl+a']],
+      validate: (box, flags) => !!flags.sawFullSelection
+    },
+    {
+      tab: 0, title: 'Jump to the Start', keys: ['Home'],
+      goal: 'Click in the box, press <kbd>Home</kbd> to jump to the very start of the line, then type <code>START </code> (with a space after it). Capital letters don’t matter.',
+      text: 'needs a beginning to make sense.',
+      requiredGroups: [],
+      validate: box => plainText(box).toLowerCase() === 'start needs a beginning to make sense.'
+    },
+    {
+      tab: 0, title: 'Jump to the End', keys: ['End'],
+      goal: 'Click in the box, press <kbd>End</kbd> to jump to the very end of the line, then type <code> FINISH</code> (with a space before it). Capital letters don’t matter.',
+      text: 'This sentence needs an ending',
+      requiredGroups: [],
+      validate: box => plainText(box).toLowerCase() === 'this sentence needs an ending finish'
+    },
+
+    // ── Tab 1 — Editing Power ────────────────────────────
+    {
+      tab: 1, title: 'Duplicate a Sentence', keys: ['Ctrl+C', 'then', 'Ctrl+V'],
+      goal: 'Select the whole sentence, copy it (<kbd>Ctrl</kbd>+<kbd>C</kbd>), click at the very end and press <kbd>Enter</kbd>, then paste (<kbd>Ctrl</kbd>+<kbd>V</kbd>) to make a copy underneath.',
+      text: 'Practice makes progress.',
+      requiredGroups: [['ctrl+c'], ['ctrl+v']],
+      validate: box => linesOf(box).filter(l => l === 'Practice makes progress.').length >= 2
+    },
+    {
+      tab: 1, title: 'Cut the Odd One Out', keys: ['Ctrl', 'X'],
+      goal: 'One of these sentences doesn’t belong in a Computing lesson! Select it and press <kbd>Ctrl</kbd>+<kbd>X</kbd> to cut it out completely.',
+      textLines: ['Computers store data using binary.', 'My favourite pizza topping is pepperoni.', 'A byte is made up of eight bits.'],
+      requiredGroups: [['ctrl+x']],
+      validate: box => {
+        const t = plainText(box).toLowerCase();
+        return !t.includes('pizza') && t.includes('binary') && t.includes('eight bits');
+      }
+    },
+    {
+      tab: 1, title: 'Undo & Redo', keys: ['Ctrl+Z', 'then', 'Ctrl+Y'],
+      goal: 'Click in the box and type the word <code>mistake</code>. Press <kbd>Ctrl</kbd>+<kbd>Z</kbd> to undo it and watch it disappear — then press <kbd>Ctrl</kbd>+<kbd>Y</kbd> to redo it and bring it back.',
+      text: '',
+      placeholder: 'Type here…',
+      requiredGroups: [['ctrl+z'], ['ctrl+y']],
+      validate: (box, flags) => !!(flags.typed && flags.undone && flags.redone && plainText(box).toLowerCase().includes('mistake'))
+    },
+    {
+      tab: 1, title: 'Delete Forward', keys: ['Delete'],
+      goal: 'Click just before the second “an” and press <kbd>Delete</kbd> to remove the duplicated word so the sentence reads correctly.',
+      text: 'This sentence has an an extra word.',
+      requiredGroups: [['delete']],
+      validate: box => normSpace(plainText(box)) === 'This sentence has an extra word.'
+    },
+    {
+      tab: 1, title: 'Backspace a Typo', keys: ['Backspace'],
+      goal: 'Click just after the extra “e” in “sentencee” and press <kbd>Backspace</kbd> to delete it.',
+      text: 'This sentencee has a typo.',
+      requiredGroups: [['backspace']],
+      validate: box => normSpace(plainText(box)) === 'This sentence has a typo.'
+    },
+    {
+      tab: 1, title: 'Select & Clear to the End', keys: ['Shift+End', 'then', 'Delete'],
+      goal: 'Click right after “this part”, press <kbd>Shift</kbd>+<kbd>End</kbd> to select to the end of the line, then press <kbd>Delete</kbd> (or <kbd>Backspace</kbd>) to remove it.',
+      text: 'Keep this part but not this bit at the end.',
+      requiredGroups: [['shift+end'], ['delete', 'backspace']],
+      validate: box => {
+        const t = plainText(box);
+        return t.startsWith('Keep this part') && !t.toLowerCase().includes('not this bit') && t.length < 'Keep this part but not this bit at the end.'.length;
+      }
+    },
+
+    // ── Tab 2 — Combining Shortcuts ──────────────────────
+    {
+      tab: 2, title: 'Bold + Italic Together', keys: ['Ctrl+B', '+', 'Ctrl+I'],
+      goal: 'Select the whole sentence and apply <strong>both</strong> <kbd>Ctrl</kbd>+<kbd>B</kbd> and <kbd>Ctrl</kbd>+<kbd>I</kbd> to it.',
+      text: 'This mission briefing is top secret.',
+      requiredGroups: [['ctrl+b'], ['ctrl+i']],
+      validate: box => isBold(box) && isItalic(box) && normSpace(plainText(box)) === 'This mission briefing is top secret.'
+    },
+    {
+      tab: 2, title: 'Bold + Underline Together', keys: ['Ctrl+B', '+', 'Ctrl+U'],
+      goal: 'Select the whole sentence and apply <strong>both</strong> <kbd>Ctrl</kbd>+<kbd>B</kbd> and <kbd>Ctrl</kbd>+<kbd>U</kbd> to it.',
+      text: 'Remember your login password is private.',
+      requiredGroups: [['ctrl+b'], ['ctrl+u']],
+      validate: box => isBold(box) && isUnderline(box) && normSpace(plainText(box)) === 'Remember your login password is private.'
+    },
+    {
+      tab: 2, title: 'Italic + Underline Together', keys: ['Ctrl+I', '+', 'Ctrl+U'],
+      goal: 'Select the whole sentence and apply <strong>both</strong> <kbd>Ctrl</kbd>+<kbd>I</kbd> and <kbd>Ctrl</kbd>+<kbd>U</kbd> to it.',
+      text: 'Always log off when you leave a computer.',
+      requiredGroups: [['ctrl+i'], ['ctrl+u']],
+      validate: box => isItalic(box) && isUnderline(box) && normSpace(plainText(box)) === 'Always log off when you leave a computer.'
+    },
+    {
+      tab: 2, title: 'Duplicate a Whole Paragraph', keys: ['Ctrl+A', '+', 'Ctrl+C', '+', 'Ctrl+V'],
+      goal: 'Select everything (<kbd>Ctrl</kbd>+<kbd>A</kbd>), copy it (<kbd>Ctrl</kbd>+<kbd>C</kbd>), click at the end and press <kbd>Enter</kbd>, then paste (<kbd>Ctrl</kbd>+<kbd>V</kbd>) to duplicate the whole line underneath.',
+      text: 'Outwood Academy has excellent computing facilities.',
+      requiredGroups: [['ctrl+a'], ['ctrl+c'], ['ctrl+v']],
+      validate: (box, flags) => {
+        if (!flags.sawFullSelection) return false;
+        return linesOf(box).filter(l => l === 'Outwood Academy has excellent computing facilities.').length >= 2;
+      }
+    },
+    {
+      tab: 2, title: 'Start AND End', keys: ['Home', '+', 'End'],
+      goal: 'Use <kbd>Home</kbd> to jump to the start and type <code>START </code>, then use <kbd>End</kbd> to jump to the end and type <code> FINISH</code>. Capital letters don’t matter.',
+      text: 'needs both a beginning and an ending',
+      requiredGroups: [],
+      validate: box => plainText(box).toLowerCase() === 'start needs both a beginning and an ending finish'
+    },
+
+    // ── Tab 3 — Mastery Challenge ─────────────────────────
+    {
+      tab: 3, title: 'Sign Your Mission', keys: ['Ctrl+A', '+', 'Ctrl+B', '+', 'Ctrl+I', '+', 'Ctrl+U'],
+      goal: 'Type your full name in the box below. Then press <kbd>Ctrl</kbd>+<kbd>A</kbd> to select it all, and apply <strong>Bold, Italic AND Underline</strong> together — your mission signature!',
+      text: '',
+      placeholder: 'Type your name here…',
+      requiredGroups: [['ctrl+a'], ['ctrl+b'], ['ctrl+i'], ['ctrl+u']],
+      validate: (box, flags) => {
+        if (!flags.sawFullSelection) return false;
+        const t = plainText(box).trim();
+        return t.length >= 2 && isBold(box) && isItalic(box) && isUnderline(box);
+      }
+    },
+    {
+      tab: 3, title: 'Reorder the List', keys: ['Ctrl+X', 'then', 'Ctrl+V'],
+      goal: '“Feed the cat.” should come first! Select that whole line and cut it (<kbd>Ctrl</kbd>+<kbd>X</kbd>), then click at the very start of the box and paste it (<kbd>Ctrl</kbd>+<kbd>V</kbd>) to move it to the top.',
+      textLines: ['Put the kettle on.', 'Feed the cat.', 'Walk to school.'],
+      requiredGroups: [['ctrl+x'], ['ctrl+v']],
+      validate: box => {
+        const lines = linesOf(box).map(l => l.toLowerCase());
+        if (!lines.length) return false;
+        const all = plainText(box).toLowerCase();
+        const catCount = (all.match(/feed the cat/g) || []).length;
+        return lines[0].includes('feed the cat') && catCount === 1 && all.includes('kettle') && all.includes('walk to school');
+      }
+    },
+    {
+      tab: 3, title: 'Mission Complete!', keys: ['Ctrl+A', '+', 'Ctrl+B', '+', 'Ctrl+I', '+', 'Ctrl+U'],
+      goal: 'This is it — press <kbd>Ctrl</kbd>+<kbd>A</kbd> to select the whole sentence, then apply <strong>Bold, Italic AND Underline</strong> together to complete your mission.',
+      text: 'Mission accomplished! You have mastered every keyboard shortcut in this challenge.',
+      requiredGroups: [['ctrl+a'], ['ctrl+b'], ['ctrl+i'], ['ctrl+u']],
+      validate: (box, flags) => {
+        if (!flags.sawFullSelection) return false;
+        return isBold(box) && isItalic(box) && isUnderline(box) &&
+          normSpace(plainText(box)) === 'Mission accomplished! You have mastered every keyboard shortcut in this challenge.';
+      }
+    }
+  ];
+
+  const TASK_COUNT   = TASKS.length; // 20
+  const TAB_COUNT    = 4;
+  const completed    = new Array(TASK_COUNT).fill(false);
+  const firstAttempt = new Array(TASK_COUNT).fill(true);
+  const state        = TASKS.map(() => ({ pressed: new Set(), flags: {}, box: null }));
+
+  // ══════════════════════════════════════════════════════════
+  // Render task cards from TASKS data
+  // ══════════════════════════════════════════════════════════
+
+  function renderTasks() {
+    for (let tab = 0; tab < TAB_COUNT; tab++) {
+      const container = document.getElementById('tasks-' + tab);
+      TASKS.forEach((t, i) => {
+        if (t.tab !== tab) return;
+
+        const card = document.createElement('div');
+        card.className = 'task-card';
+        card.id = 'task-' + i;
+
+        const initialHtml = buildInitialHtml(t);
+
+        card.innerHTML =
+          '<div class="task-head">' +
+            '<div class="task-badge">' + (i + 1) + '</div>' +
+            '<div class="task-title-wrap">' +
+              '<div class="task-title">' + escapeHtml(t.title) + '</div>' +
+              '<div class="task-keys">' + t.keys.map(k => (k === '+' || k === 'then') ? '<span class="key-plus">' + k + '</span>' : '<kbd>' + k + '</kbd>').join('') + '</div>' +
+            '</div>' +
+            '<div class="status-chip" id="status-' + i + '">⌨️ waiting</div>' +
+          '</div>' +
+          '<div class="task-goal">🎯 ' + t.goal + '</div>' +
+          '<div class="doc-box" id="box-' + i + '" contenteditable="true" role="textbox" ' +
+            'aria-multiline="' + (t.textLines ? 'true' : 'false') + '" aria-label="' + escapeHtml(t.title) + ' practice text" ' +
+            'spellcheck="false"' + (t.placeholder ? ' data-placeholder="' + escapeHtml(t.placeholder) + '"' : '') + '>' +
+            initialHtml +
+          '</div>' +
+          '<div class="task-foot">' +
+            '<span class="feedback" id="feedback-' + i + '"></span>' +
+            '<button class="ac-btn-secondary reset-btn" id="reset-' + i + '" style="display:none" onclick="window.__format_this_reset(' + i + ')">&#8634; Reset task</button>' +
+          '</div>';
+
+        container.appendChild(card);
+
+        const box = card.querySelector('#box-' + i);
+        state[i].box = box;
+        wireBox(i, box, t);
+      });
+    }
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+
+  // Multi-line tasks always wrap each line in its own <div> (matches how
+  // Chrome represents lines in a contenteditable). Single-line tasks are
+  // also wrapped in one <div> so pressing Enter later behaves predictably —
+  // except truly-empty starting boxes, which must stay empty for the
+  // :empty CSS placeholder to show.
+  function buildInitialHtml(t) {
+    if (t.textLines) return t.textLines.map(l => '<div>' + escapeHtml(l) + '</div>').join('');
+    if (t.text) return '<div>' + escapeHtml(t.text) + '</div>';
+    return '';
+  }
+
+  // ══════════════════════════════════════════════════════════
+  // Wire up a task's contenteditable box
+  // ══════════════════════════════════════════════════════════
+
+  function wireBox(i, box, t) {
+    const st = state[i];
+    const requiredFlat = t.requiredGroups.flat();
+    const needsSelectAll = requiredFlat.includes('ctrl+a');
+
+    box.addEventListener('keydown', e => {
+      if (completed[i]) return;
+      const combo = comboFromEvent(e);
+      if (!combo) return;
+      st.pressed.add(combo);
+      if (FUMBLE_VOCAB.has(combo) && !requiredFlat.includes(combo)) {
+        firstAttempt[i] = false;
+      }
+      if (needsSelectAll && combo === 'ctrl+a') {
+        setTimeout(() => {
+          const sel = window.getSelection();
+          if (!sel || !box.contains(sel.anchorNode)) return;
+          const selLen = normSpace(sel.toString()).length;
+          const totalLen = normSpace(box.textContent).length;
+          if (totalLen > 0 && selLen >= totalLen * 0.9) {
+            st.flags.sawFullSelection = true;
+            checkTask(i);
+          }
+        }, 0);
+      }
+      // Home / End / Delete / Backspace don't fire useful input events — re-check after the browser applies them.
+      setTimeout(() => checkTask(i), 0);
+    });
+
+    box.addEventListener('input', e => {
+      if (completed[i]) return;
+      const it = e.inputType || '';
+      if (it === 'historyUndo') st.flags.undone = true;
+      if (it === 'historyRedo') st.flags.redone = true;
+      if (plainText(box).toLowerCase().includes('mistake')) st.flags.typed = true;
+      checkTask(i);
+    });
+
+    box.addEventListener('cut', () => { if (!completed[i]) setTimeout(() => checkTask(i), 0); });
+    box.addEventListener('paste', () => { if (!completed[i]) setTimeout(() => checkTask(i), 0); });
+  }
+
+  function checkTask(i) {
+    if (completed[i]) return;
+    const t = TASKS[i];
+    const st = state[i];
+    if (!hasRequiredCombos(st.pressed, t.requiredGroups)) return;
+    if (t.validate(st.box, st.flags)) markDone(i);
+  }
+
+  // ══════════════════════════════════════════════════════════
+  // Completion handling
+  // ══════════════════════════════════════════════════════════
+
+  function markDone(i) {
+    if (completed[i]) return;
+    completed[i] = true;
+
+    const gold = firstAttempt[i];
+    const card = document.getElementById('task-' + i);
+    card.classList.add('done');
+    if (gold) card.classList.add('gold');
+
+    const box = state[i].box;
+    box.setAttribute('contenteditable', 'false');
+
+    const status = document.getElementById('status-' + i);
+    status.textContent = gold ? '🌟 first try!' : '✅ done';
+
+    const feedback = document.getElementById('feedback-' + i);
+    feedback.textContent = gold ? 'Gold! Nailed it first time.' : 'Nice work!';
+    feedback.className = 'feedback' + (gold ? ' gold' : '');
+
+    if (!gold) document.getElementById('reset-' + i).style.display = '';
+
+    window.ActivityUI?.miniCelebration(card);
+    updateTabProgress(TASKS[i].tab);
+    updateOverall();
+
+    if (completed.every(Boolean)) allComplete();
+  }
+
+  function resetTask(i) {
+    const t = TASKS[i];
+    const box = state[i].box;
+
+    completed[i] = false;
+    firstAttempt[i] = true;
+    state[i].pressed = new Set();
+    state[i].flags = {};
+
+    box.innerHTML = buildInitialHtml(t);
+    box.setAttribute('contenteditable', 'true');
+
+    const card = document.getElementById('task-' + i);
+    card.classList.remove('done', 'gold');
+
+    document.getElementById('status-' + i).textContent = '⌨️ waiting';
+    const feedback = document.getElementById('feedback-' + i);
+    feedback.textContent = '';
+    feedback.className = 'feedback';
+    document.getElementById('reset-' + i).style.display = 'none';
+
+    document.getElementById('done-banner').classList.remove('show', 'gold', 'green');
+    document.getElementById('glow-overlay').classList.remove('show', 'gold', 'green');
+    window.ActivityUI?.resetCelebration();
+
+    updateTabProgress(t.tab);
+    updateOverall();
+  }
+  window.__format_this_reset = resetTask;
+
+  function tabTasks(tab) { return TASKS.map((t, i) => ({ t, i })).filter(x => x.t.tab === tab); }
+
+  function updateTabProgress(tab) {
+    const tasks = tabTasks(tab);
+    const done = tasks.filter(x => completed[x.i]).length;
+    document.getElementById('frac-' + tab).textContent = done + '/' + tasks.length;
+
+    const pill = document.querySelector('.tab-pill[data-tab="' + tab + '"]');
+    if (done === tasks.length) {
+      pill.classList.add('tab-complete');
+      if (tab + 1 < TAB_COUNT) unlockTab(tab + 1);
+    }
+  }
+
+  function unlockTab(tab) {
+    const pill = document.querySelector('.tab-pill[data-tab="' + tab + '"]');
+    if (!pill.classList.contains('locked')) return; // already unlocked
+    pill.classList.remove('locked');
+    const label = ['', '⚡ Editing Power', '🧩 Combining Shortcuts', '🏆 Mastery Challenge'][tab];
+    pill.innerHTML = escapeHtml(label) + ' <span class="tab-frac" id="frac-' + tab + '">' +
+      document.getElementById('frac-' + tab).textContent + '</span>';
+
+    showToast('🔓 ' + label + ' unlocked!', '');
+    setTimeout(() => switchTab(tab), 1500);
+  }
+
+  function updateOverall() {
+    const done = completed.filter(Boolean).length;
+    const mastered = completed.filter((c, i) => c && firstAttempt[i]).length;
+    const pct = Math.round((done / TASK_COUNT * 80) + (mastered / TASK_COUNT * 20));
+
+    document.getElementById('overall-count').textContent = done + ' / ' + TASK_COUNT;
+    document.getElementById('overall-fill').style.width = Math.round(done / TASK_COUNT * 100) + '%';
+
+    window.ActivityUI?.setScore(pct);
+    window.Classroom?.submitGrade(pct, ACTIVITY_TITLE);
+  }
+
+  function allComplete() {
+    const allGold = firstAttempt.every(Boolean);
+    const tier = allGold ? 'gold' : 'green';
+    document.getElementById('done-banner').classList.add('show', tier);
+    document.getElementById('glow-overlay').classList.add(tier, 'show');
+    const mastered = firstAttempt.filter(Boolean).length;
+    const pct = Math.round(80 + (mastered / TASK_COUNT * 20));
+    window.ActivityUI?.launchCelebration({ percent: pct });
+  }
+
+  // ══════════════════════════════════════════════════════════
+  // Tab switching
+  // ══════════════════════════════════════════════════════════
+
+  function switchTab(tab) {
+    document.querySelectorAll('.tab-pill').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelector('.tab-pill[data-tab="' + tab + '"]').classList.add('active');
+    document.getElementById('panel-' + tab).classList.add('active');
+  }
+
+  document.getElementById('tab-bar').addEventListener('click', e => {
+    const pill = e.target.closest('.tab-pill');
+    if (!pill) return;
+    if (pill.classList.contains('locked')) {
+      showToast('🔒 Finish the previous mission stage first!', 'warn');
+      return;
+    }
+    switchTab(+pill.dataset.tab);
+  });
+
+  function showToast(msg, type) { window.ActivityUI?.showToast(msg, type || ''); }
+
+  // ══════════════════════════════════════════════════════════
+  // Init
+  // ══════════════════════════════════════════════════════════
+
+  renderTasks();
+})();
+</script>
+
+<script src="../../activity-ui.js"></script>
+<!-- Google Classroom integration (no-op when no ?courseId= param) -->
+<script src="../../classroom.js"></script>
+</body>
+</html>
