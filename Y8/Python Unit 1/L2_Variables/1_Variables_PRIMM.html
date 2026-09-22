@@ -265,6 +265,12 @@ color:  purple
   .btn-reset { background: #221248; color: #c9b8ff; font-size: 0.78rem; box-shadow: 0 3px 0 #160c30; } .btn-reset:hover { background: #2c1858; }
   .btn-skip { background: transparent; color: var(--muted); border: 1px dashed #4a3d6a; font-size: 0.75rem; font-style: italic; text-transform: none; box-shadow: none; } .btn-skip:hover { background: rgba(255,77,109,0.08); color: #ff7088; border-color: var(--red); border-style: solid; }
 
+  /* Teacher-password gate that opens when a student clicks "Skip this task" (see openSkipGate in the JS). */
+  .skip-gate { display: none; align-items: center; gap: 0.6rem; flex-wrap: wrap; margin-top: 0.5rem; padding: 0.6rem 0.8rem; border: 1px dashed var(--red); border-radius: 9px; background: rgba(255,77,109,0.06); }
+  .skip-gate.open { display: flex; }
+  .skip-gate label { font-size: 0.78rem; color: var(--muted); }
+  .skip-gate input { font-family: var(--font-mono, monospace); font-size: 0.85rem; padding: 0.4rem 0.6rem; border-radius: 6px; border: 1px solid #4a3d6a; background: #0a081c; color: var(--code-text); }
+  .skip-gate-err { font-size: 0.78rem; color: #ff7088; }
   /* ── STEP NAVIGATION (Back / Forward through answered questions) ── */
   .step-nav { display: flex; justify-content: space-between; gap: 0.6rem; margin: 0.2rem 0 1.1rem; }
   .btn-back, .btn-fwd { background: #221248; color: #c9b8ff; font-size: 0.78rem; box-shadow: 0 3px 0 #160c30; }
@@ -931,11 +937,22 @@ greeting <span class="kw">=</span> <span class="st">"Hello "</span>
     <textarea class="checker-textarea" id="m1_editor" data-title="Python Editor" oninput="saveState()"></textarea>
     <div class="checker-footer">
       <button class="btn btn-check" id="btn_check_m1" onclick="checkMod()">▶ Run &amp; check modification 1</button>
+      <button class="btn btn-reset" id="btn_reset_m1" onclick="resetModifyEditor()">↺ Reset to original</button>
       <div class="feedback hidden" id="fb_m1"></div>
     </div>
   </div>
 
-  <button class="btn btn-skip" id="btn_skip_m1" onclick="skipStep('M1')" style="margin-top:0.5rem;display:none">Skip this task →</button>
+  <!-- Skipping needs the teacher password (SKIP_PASSWORD in the JS). Revealed after 3 failed attempts. -->
+  <div id="m1_skip_wrap" style="margin-top:0.5rem;display:none">
+    <button class="btn btn-skip" id="btn_skip_m1" onclick="openSkipGate()">Skip this task →</button>
+    <div class="skip-gate" id="skip_gate_m1">
+      <label for="skip_pw_m1">Teacher password:</label>
+      <input type="password" id="skip_pw_m1" autocomplete="off" onkeydown="if (event.key === 'Enter') confirmSkipM1()">
+      <button class="btn btn-reset" onclick="confirmSkipM1()">Skip</button>
+      <button class="btn btn-reset" onclick="closeSkipGate()">Cancel</button>
+      <span class="skip-gate-err" id="skip_gate_err" role="alert"></span>
+    </div>
+  </div>
   <button class="btn btn-next step-hidden" id="btn_goto_m2" onclick="completeStage('M1')" style="margin-top:1rem">
     ✓ All modifications done — go to Make →
   </button>
@@ -1480,8 +1497,17 @@ function updateStepVisibility() {
   if (m1Btn) m1Btn.textContent = stepM1 === STEP_COUNT_M1
     ? '▶ Run & check final modification'
     : '▶ Run & check modification ' + stepM1;
-  const skipM1Btn = document.getElementById('btn_skip_m1');
-  if (skipM1Btn) skipM1Btn.style.display = (attemptCounts['m1_' + stepM1] || 0) >= 3 ? '' : 'none';
+  const resetM1Btn = document.getElementById('btn_reset_m1');
+  if (resetM1Btn) {
+    // Nothing to reset while looking back at a passed step (its editor is read-only).
+    resetM1Btn.disabled = !!document.getElementById('m1_editor')?.readOnly;
+    resetM1Btn.title = stepM1 === 1
+      ? 'Put the editor back to the original starting code'
+      : 'Put the editor back to how it was when you finished the previous modification';
+  }
+  closeSkipGate();   // the step just changed (or was refreshed) — never leave a half-open gate behind
+  const skipM1Wrap = document.getElementById('m1_skip_wrap');
+  if (skipM1Wrap) skipM1Wrap.style.display = (attemptCounts['m1_' + stepM1] || 0) >= 3 ? '' : 'none';
 
   document.getElementById('btn_goto_m2')?.classList.toggle('step-hidden', !passedChecks['m1_code' + STEP_COUNT_M1]);
   document.getElementById('m2_make_task')?.classList.toggle('step-hidden', !!passedChecks['m2_make']);
@@ -2254,14 +2280,17 @@ async function checkMod() {
   }
   const structural = evalMod(checkKey, raw);
   renderReqResults(reqListEl, structural.results);
-  if (!structural.pass) {
-    fbEl.className = 'feedback fail'; fbEl.textContent = structural.msg; recordM1Attempt(); return;
-  }
+  // Run BEFORE checking the structural (regex) requirements — a genuine Python
+  // error is a bigger problem than an unmet bullet point, and the structural
+  // checks never execute the code so they can't see it.
   fbEl.className = 'feedback loading'; fbEl.textContent = '⏳ Running your code…';
   const inputs = MOD_INPUTS?.[checkKey] || [];
   const run = await runPython(raw, { inputs });
   if (!run.ok) {
     fbEl.className = 'feedback fail'; fbEl.textContent = '❌ Error: ' + run.output; recordM1Attempt(); return;
+  }
+  if (!structural.pass) {
+    fbEl.className = 'feedback fail'; fbEl.textContent = structural.msg; recordM1Attempt(); return;
   }
   fbEl.className = 'feedback pass';
   fbEl.textContent = structural.msg;
@@ -2304,15 +2333,17 @@ async function checkMake() {
   fbEl.classList.remove('hidden');
   const structural = evalMake(raw);
   renderReqResults(document.getElementById('req_m2_make'), structural.results);
-  if (!structural.pass) {
-    fbEl.className = 'feedback fail'; fbEl.textContent = structural.msg; return;
-  }
+  // Run BEFORE checking the structural (regex) requirements — see the comment
+  // in checkMod() above for why a real error must outrank a formative hint.
   fbEl.className = 'feedback loading'; fbEl.textContent = '⏳ Checking…';
   // No input() in this lesson — the program runs straight through.
   const run = await runPython(raw, { inputs: [] });
   if (!run.ok) {
     fbEl.className = 'feedback fail';
     fbEl.textContent = '❌ Your program has an error: ' + run.output; return;
+  }
+  if (!structural.pass) {
+    fbEl.className = 'feedback fail'; fbEl.textContent = structural.msg; return;
   }
   if (run.output.trim().length < 5) {
     fbEl.className = 'feedback fail';
@@ -2347,14 +2378,16 @@ async function checkExtStep() {
   }
   const structural = evalExt(checkKey, raw);
   renderReqResults(reqListEl, structural.results);
-  if (!structural.pass) {
-    fbEl.className = 'feedback fail'; fbEl.textContent = structural.msg; recordM2ExtAttempt(); return;
-  }
+  // Run BEFORE checking the structural (regex) requirements — see the comment
+  // in checkMod() above for why a real error must outrank a formative hint.
   fbEl.className = 'feedback loading'; fbEl.textContent = '⏳ Checking…';
   const inputs = EXT_INPUTS?.[checkKey] || [];
   const run = await runPython(raw, { inputs });
   if (!run.ok) {
     fbEl.className = 'feedback fail'; fbEl.textContent = '❌ Your program has an error: ' + run.output; recordM2ExtAttempt(); return;
+  }
+  if (!structural.pass) {
+    fbEl.className = 'feedback fail'; fbEl.textContent = structural.msg; recordM2ExtAttempt(); return;
   }
   fbEl.className = 'feedback pass';
   fbEl.textContent = structural.msg;
@@ -2405,13 +2438,15 @@ async function checkBonus1() {
     fbEl.className = 'feedback fail'; fbEl.textContent = '⚠️ Write some code first.'; return;
   }
   const structural = BONUS_CHECKS.bonus1(raw);
-  if (!structural.pass) {
-    fbEl.className = 'feedback fail'; fbEl.textContent = structural.msg; return;
-  }
+  // Run BEFORE checking the structural (regex) requirements — see the comment
+  // in checkMod() above for why a real error must outrank a formative hint.
   fbEl.className = 'feedback loading'; fbEl.textContent = '⏳ Checking…';
   const run = await runPython(raw, { inputs: BONUS_INPUTS.bonus1 || [] });
   if (!run.ok) {
     fbEl.className = 'feedback fail'; fbEl.textContent = '❌ Your program has an error: ' + run.output; return;
+  }
+  if (!structural.pass) {
+    fbEl.className = 'feedback fail'; fbEl.textContent = structural.msg; return;
   }
   fbEl.className = 'feedback pass'; fbEl.textContent = structural.msg;
   setEditorOutput(document.getElementById('m2_bonus_editor'), run.output, false);
@@ -2432,13 +2467,15 @@ async function checkBonus2() {
     fbEl.className = 'feedback fail'; fbEl.textContent = '⚠️ Write some code first.'; return;
   }
   const structural = BONUS_CHECKS.bonus2(raw);
-  if (!structural.pass) {
-    fbEl.className = 'feedback fail'; fbEl.textContent = structural.msg; return;
-  }
+  // Run BEFORE checking the structural (regex) requirements — see the comment
+  // in checkMod() above for why a real error must outrank a formative hint.
   fbEl.className = 'feedback loading'; fbEl.textContent = '⏳ Checking…';
   const run = await runPython(raw, { inputs: BONUS_INPUTS.bonus2 || [] });
   if (!run.ok) {
     fbEl.className = 'feedback fail'; fbEl.textContent = '❌ Your program has an error: ' + run.output; return;
+  }
+  if (!structural.pass) {
+    fbEl.className = 'feedback fail'; fbEl.textContent = structural.msg; return;
   }
   fbEl.className = 'feedback pass'; fbEl.textContent = structural.msg;
   setEditorOutput(document.getElementById('m2_bonus_editor'), run.output, false);
@@ -2500,6 +2537,63 @@ function skipStep(stage) {
   }
 }
 
+// ── Modify: password-gated skip ───────────────────────
+// Students can't skip a Modify task themselves — the button only opens a password
+// box, and skipStep('M1') runs once a teacher has typed the password.
+const SKIP_PASSWORD = 'outwood';
+
+function openSkipGate() {
+  const gate = document.getElementById('skip_gate_m1');
+  if (!gate) return;
+  gate.classList.add('open');
+  document.getElementById('skip_pw_m1')?.focus();
+}
+
+function closeSkipGate() {
+  document.getElementById('skip_gate_m1')?.classList.remove('open');
+  const pw = document.getElementById('skip_pw_m1');
+  if (pw) pw.value = '';
+  const err = document.getElementById('skip_gate_err');
+  if (err) err.textContent = '';
+}
+
+function confirmSkipM1() {
+  const pw = document.getElementById('skip_pw_m1');
+  if (!pw) return;
+  if (pw.value.trim().toLowerCase() !== SKIP_PASSWORD) {
+    const err = document.getElementById('skip_gate_err');
+    if (err) err.textContent = 'Incorrect password — ask your teacher.';
+    pw.select();
+    return;
+  }
+  closeSkipGate();
+  skipStep('M1');
+}
+
+// ── Modify: reset editor ──────────────────────────────
+// Where this modification's code started: the snapshot taken when the nearest
+// earlier modification passed (the code the student carried into this task), or
+// the original starting code for Modification 1 / if nothing earlier was passed.
+function m1BaselineCode(step) {
+  for (let k = step - 1; k >= 1; k--) {
+    if (m1CodeSnapshots[k] !== undefined) return m1CodeSnapshots[k];
+  }
+  return STARTER_CODE;
+}
+
+function resetModifyEditor() {
+  const ta = document.getElementById('m1_editor');
+  if (!ta || ta.readOnly) return;
+  ta.value = m1BaselineCode(stepM1);
+  if (stepM1 === maxStepM1) m1CodeDraft = undefined;
+  clearSyntaxHint(ta);
+  refreshEditor(ta);
+  // Wipe the last check's result for this task — it described the code that was just discarded.
+  document.getElementById('fb_m1')?.classList.add('hidden');
+  if (!passedChecks['m1_code' + stepM1]) renderReqResults(document.getElementById('req_m1_' + stepM1), null);
+  saveState();
+}
+
 function recordIAttempt(n) {
   const key = 'i' + n;
   attemptCounts[key] = (attemptCounts[key] || 0) + 1;
@@ -2514,8 +2608,8 @@ function recordM1Attempt() {
   const key = 'm1_' + stepM1;
   attemptCounts[key] = (attemptCounts[key] || 0) + 1;
   if (attemptCounts[key] >= 3) {
-    const btn = document.getElementById('btn_skip_m1');
-    if (btn) btn.style.display = '';
+    const wrap = document.getElementById('m1_skip_wrap');
+    if (wrap) wrap.style.display = '';
   }
   saveState();
 }
@@ -2531,6 +2625,7 @@ Object.assign(window, {
   checkMake, checkExtStep, checkBonus1, checkBonus2,
   runCodeInEditor, resetInvestigateEditor, insertNewLine, breakItDemo,
   skipStep, goBack, goForward,
+  openSkipGate, closeSkipGate, confirmSkipM1, resetModifyEditor,
 });
 
 // ── Init ──────────────────────────────────────────────

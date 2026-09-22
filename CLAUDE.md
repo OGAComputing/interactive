@@ -105,6 +105,10 @@ textarea can also opt in with a `data-error-hints` attribute. The PRIMM Y8 templ
 enables it by default. Leave it **off for assessments**, where scaffolding the fix
 would undermine the task.
 
+### PRIMM Modify: teacher-gated skip and reset (Y8 PRIMM activities)
+
+The Modify stage's "Skip this task →" button (shown after 3 failed attempts) only opens a password box — a teacher types `outwood` (`SKIP_PASSWORD` in the JS) to actually skip via `skipStep('M1')`. The Modify editor also has a **↺ Reset to original** button (`resetModifyEditor`): Modification 1 restores the starting code, and later modifications restore the code snapshot taken when the previous modification passed (falling back to the starting code). It is disabled while revisiting an already-passed step. Both live in `_templates/PRIMM_Python_Y8.html`; the Investigate "Move on without completing" buttons are not gated.
+
 **Do not reference any other external files** from activity HTML — no CDN URLs, no third-party libraries.
 
 ## Year-Group Themes (shared.css)
