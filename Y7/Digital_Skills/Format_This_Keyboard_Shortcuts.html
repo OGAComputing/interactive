@@ -225,6 +225,22 @@ color:  amber
   }
   .key-plus { font-size: 0.72rem; color: var(--muted); font-weight: 700; }
 
+  .reset-icon-btn {
+    flex-shrink: 0;
+    width: 26px; height: 26px;
+    display: flex; align-items: center; justify-content: center;
+    border: 1.5px solid var(--border, #FED7AA);
+    border-radius: 50%;
+    background: #fff;
+    color: var(--muted);
+    font-size: 0.92rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s, transform 0.1s;
+  }
+  .reset-icon-btn:hover  { border-color: var(--accent); color: var(--accent); }
+  .reset-icon-btn:active { transform: rotate(-45deg); }
+
   .status-chip {
     flex-shrink: 0;
     font-size: 0.72rem;
@@ -301,7 +317,6 @@ color:  amber
     color: var(--green-dark);
   }
   .feedback.gold { color: #92610A; }
-  .reset-btn { font-size: 0.76rem !important; padding: 6px 14px !important; }
 
   /* ── Locked-tab helper text (shown briefly via toast) ── */
 
@@ -341,6 +356,7 @@ color:  amber
   <button class="tab-pill locked" data-tab="1">🔒 Editing Power <span class="tab-frac" id="frac-1">0/6</span></button>
   <button class="tab-pill locked" data-tab="2">🔒 Combining Shortcuts <span class="tab-frac" id="frac-2">0/5</span></button>
   <button class="tab-pill locked" data-tab="3">🔒 Mastery Challenge <span class="tab-frac" id="frac-3">0/3</span></button>
+  <button class="tab-pill locked" data-tab="4">🔒 Bonus: Style It Your Way</button>
 </div>
 
 <!-- Panels — task cards are rendered into these by script -->
@@ -359,6 +375,25 @@ color:  amber
 <div class="panel" id="panel-3">
   <div class="tab-intro">🏆 <strong>Mastery Challenge</strong> — the ultimate test. Combine everything you've learned to complete your mission.</div>
   <div id="tasks-3"></div>
+</div>
+<div class="panel" id="panel-4">
+  <div class="tab-intro">🎨 <strong>Bonus Mission</strong> — no rules this time. Use anything you've learned to make a real paragraph look great.</div>
+  <div class="task-card" id="bonus-card">
+    <div class="task-head">
+      <div class="task-badge">★</div>
+      <div class="task-title-wrap">
+        <div class="task-title">Style It Your Way</div>
+        <div class="task-keys"><span class="key-plus">any shortcuts you like</span></div>
+      </div>
+      <button type="button" class="reset-icon-btn" title="Reset this task" aria-label="Reset this task" onclick="window.__format_this_bonus_reset()">&#8634;</button>
+    </div>
+    <div class="task-goal">🎯 There's no single right answer here. Format the paragraph below to make it clearer and easier to read — bold the important words, italicise extra detail, underline key terms. Mix and match whatever shortcuts you like.</div>
+    <div class="doc-box" id="bonus-box" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Bonus formatting paragraph" spellcheck="false"><div>Learning to use keyboard shortcuts confidently is one of the most useful skills you will pick up at secondary school.</div><div>Shortcuts like copy, paste, cut and undo are used every day by web designers, games developers, journalists and almost anyone who works with a computer.</div><div>The more you practise, the faster and more natural it will feel, until you barely have to think about which keys to press.</div></div>
+    <div class="task-foot">
+      <span class="feedback" id="bonus-feedback"></span>
+      <button class="ac-btn" onclick="window.__format_this_bonus_done()">✅ I'm happy with it!</button>
+    </div>
+  </div>
 </div>
 
 <!-- Toast for unlocks / Classroom feedback -->
@@ -471,14 +506,14 @@ color:  amber
     },
     {
       tab: 0, title: 'Jump to the Start', keys: ['Home'],
-      goal: 'Click in the box, press <kbd>Home</kbd> to jump to the very start of the line, then type <code>START </code> (with a space after it). Capital letters don’t matter.',
+      goal: 'Click in the box, press <kbd>Home</kbd> to jump to the very start of the line, then type <code>START </code> (with a space after it).',
       text: 'needs a beginning to make sense.',
       requiredGroups: [],
       validate: box => plainText(box).toLowerCase() === 'start needs a beginning to make sense.'
     },
     {
       tab: 0, title: 'Jump to the End', keys: ['End'],
-      goal: 'Click in the box, press <kbd>End</kbd> to jump to the very end of the line, then type <code> FINISH</code> (with a space before it). Capital letters don’t matter.',
+      goal: 'Click in the box, press <kbd>End</kbd> to jump to the very end of the line, then type <code> FINISH</code> (with a space before it).',
       text: 'This sentence needs an ending',
       requiredGroups: [],
       validate: box => plainText(box).toLowerCase() === 'this sentence needs an ending finish'
@@ -569,7 +604,7 @@ color:  amber
     },
     {
       tab: 2, title: 'Start AND End', keys: ['Home', '+', 'End'],
-      goal: 'Use <kbd>Home</kbd> to jump to the start and type <code>START </code>, then use <kbd>End</kbd> to jump to the end and type <code> FINISH</code>. Capital letters don’t matter.',
+      goal: 'Use <kbd>Home</kbd> to jump to the start and type <code>START </code>, then use <kbd>End</kbd> to jump to the end and type <code> FINISH</code>.',
       text: 'needs both a beginning and an ending',
       requiredGroups: [],
       validate: box => plainText(box).toLowerCase() === 'start needs both a beginning and an ending finish'
@@ -615,7 +650,8 @@ color:  amber
   ];
 
   const TASK_COUNT   = TASKS.length; // 20
-  const TAB_COUNT    = 4;
+  const TAB_COUNT    = 4;  // tabs generated from TASKS (Foundations…Mastery Challenge)
+  const TOTAL_TABS   = 5;  // + the open-ended Bonus tab, unlocked once Mastery Challenge is done
   const completed    = new Array(TASK_COUNT).fill(false);
   const firstAttempt = new Array(TASK_COUNT).fill(true);
   const state        = TASKS.map(() => ({ pressed: new Set(), flags: {}, box: null }));
@@ -644,6 +680,7 @@ color:  amber
               '<div class="task-keys">' + t.keys.map(k => (k === '+' || k === 'then') ? '<span class="key-plus">' + k + '</span>' : '<kbd>' + k + '</kbd>').join('') + '</div>' +
             '</div>' +
             '<div class="status-chip" id="status-' + i + '">⌨️ waiting</div>' +
+            '<button type="button" class="reset-icon-btn" title="Reset this task" aria-label="Reset this task" onclick="window.__format_this_reset(' + i + ')">&#8634;</button>' +
           '</div>' +
           '<div class="task-goal">🎯 ' + t.goal + '</div>' +
           '<div class="doc-box" id="box-' + i + '" contenteditable="true" role="textbox" ' +
@@ -653,7 +690,6 @@ color:  amber
           '</div>' +
           '<div class="task-foot">' +
             '<span class="feedback" id="feedback-' + i + '"></span>' +
-            '<button class="ac-btn-secondary reset-btn" id="reset-' + i + '" style="display:none" onclick="window.__format_this_reset(' + i + ')">&#8634; Reset task</button>' +
           '</div>';
 
         container.appendChild(card);
@@ -757,8 +793,6 @@ color:  amber
     feedback.textContent = gold ? 'Gold! Nailed it first time.' : 'Nice work!';
     feedback.className = 'feedback' + (gold ? ' gold' : '');
 
-    if (!gold) document.getElementById('reset-' + i).style.display = '';
-
     window.ActivityUI?.miniCelebration(card);
     updateTabProgress(TASKS[i].tab);
     updateOverall();
@@ -785,7 +819,6 @@ color:  amber
     const feedback = document.getElementById('feedback-' + i);
     feedback.textContent = '';
     feedback.className = 'feedback';
-    document.getElementById('reset-' + i).style.display = 'none';
 
     document.getElementById('done-banner').classList.remove('show', 'gold', 'green');
     document.getElementById('glow-overlay').classList.remove('show', 'gold', 'green');
@@ -806,7 +839,7 @@ color:  amber
     const pill = document.querySelector('.tab-pill[data-tab="' + tab + '"]');
     if (done === tasks.length) {
       pill.classList.add('tab-complete');
-      if (tab + 1 < TAB_COUNT) unlockTab(tab + 1);
+      if (tab + 1 < TOTAL_TABS) unlockTab(tab + 1);
     }
   }
 
@@ -814,9 +847,9 @@ color:  amber
     const pill = document.querySelector('.tab-pill[data-tab="' + tab + '"]');
     if (!pill.classList.contains('locked')) return; // already unlocked
     pill.classList.remove('locked');
-    const label = ['', '⚡ Editing Power', '🧩 Combining Shortcuts', '🏆 Mastery Challenge'][tab];
-    pill.innerHTML = escapeHtml(label) + ' <span class="tab-frac" id="frac-' + tab + '">' +
-      document.getElementById('frac-' + tab).textContent + '</span>';
+    const label = ['', '⚡ Editing Power', '🧩 Combining Shortcuts', '🏆 Mastery Challenge', '🎨 Bonus: Style It Your Way'][tab];
+    const frac = document.getElementById('frac-' + tab);
+    pill.innerHTML = escapeHtml(label) + (frac ? ' <span class="tab-frac" id="frac-' + tab + '">' + frac.textContent + '</span>' : '');
 
     showToast('🔓 ' + label + ' unlocked!', '');
     setTimeout(() => switchTab(tab), 1500);
@@ -866,6 +899,31 @@ color:  amber
   });
 
   function showToast(msg, type) { window.ActivityUI?.showToast(msg, type || ''); }
+
+  // ══════════════════════════════════════════════════════════
+  // Bonus mission — open-ended, not part of the 20-task score.
+  // Self-marked by the student; no shortcut or wording is enforced.
+  // ══════════════════════════════════════════════════════════
+
+  const bonusBox = document.getElementById('bonus-box');
+  const bonusInitialHtml = bonusBox.innerHTML;
+
+  window.__format_this_bonus_done = function () {
+    document.getElementById('bonus-card').classList.add('done');
+    const feedback = document.getElementById('bonus-feedback');
+    feedback.textContent = 'Nice work — saved!';
+    feedback.className = 'feedback';
+    window.ActivityUI?.miniCelebration(document.getElementById('bonus-card'));
+    window.Classroom?.submitGrade(100, ACTIVITY_TITLE);
+  };
+
+  window.__format_this_bonus_reset = function () {
+    bonusBox.innerHTML = bonusInitialHtml;
+    document.getElementById('bonus-card').classList.remove('done');
+    const feedback = document.getElementById('bonus-feedback');
+    feedback.textContent = '';
+    feedback.className = 'feedback';
+  };
 
   // ══════════════════════════════════════════════════════════
   // Init
