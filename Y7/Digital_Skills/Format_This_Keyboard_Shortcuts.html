@@ -253,6 +253,14 @@ color:  amber
   }
   .task-card.done .status-chip { background: var(--green-bg); color: var(--green-dark); }
   .task-card.done.gold .status-chip { background: var(--gold-bg); color: #92610A; }
+  .status-chip.copied { background: var(--accent-light); color: var(--accent-dark); }
+
+  @keyframes copy-flash {
+    0%   { box-shadow: 0 0 0 0 rgba(37,99,235,0.45); }
+    40%  { box-shadow: 0 0 0 7px rgba(37,99,235,0.22); }
+    100% { box-shadow: 0 0 0 0 rgba(37,99,235,0); }
+  }
+  .doc-box.copy-flash { animation: copy-flash 1s ease; }
 
   .task-goal {
     background: var(--amber-bg, #FFF1E6);
@@ -301,6 +309,36 @@ color:  amber
     content: attr(data-placeholder);
     color: #B0958A;
     font-style: italic;
+  }
+
+  /* ── Match-the-target preview ─────────────────────────── */
+
+  .match-label {
+    font-family: var(--font-head);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 10px 0 5px;
+  }
+  .match-preview {
+    font-family: 'Calibri', 'Segoe UI', sans-serif;
+    font-size: 1.02rem;
+    line-height: 1.6;
+    color: #1a1a1a;
+    background: var(--amber-bg, #FFF1E6);
+    border: 1.5px dashed var(--muted, #B45309);
+    border-radius: 10px;
+    padding: 12px 14px;
+  }
+  .del-preview {
+    text-decoration: line-through;
+    text-decoration-color: var(--red);
+    color: var(--red);
+    background: var(--red-bg);
+    border-radius: 3px;
+    padding: 0 2px;
   }
 
   .task-foot {
@@ -356,7 +394,8 @@ color:  amber
   <button class="tab-pill locked" data-tab="1">🔒 Editing Power <span class="tab-frac" id="frac-1">0/6</span></button>
   <button class="tab-pill locked" data-tab="2">🔒 Combining Shortcuts <span class="tab-frac" id="frac-2">0/5</span></button>
   <button class="tab-pill locked" data-tab="3">🔒 Mastery Challenge <span class="tab-frac" id="frac-3">0/3</span></button>
-  <button class="tab-pill locked" data-tab="4">🔒 Bonus: Style It Your Way</button>
+  <button class="tab-pill locked" data-tab="4">🔒 Match the Target <span class="tab-frac" id="frac-4">0/3</span></button>
+  <button class="tab-pill locked" data-tab="5">🔒 Bonus: Style It Your Way</button>
 </div>
 
 <!-- Panels — task cards are rendered into these by script -->
@@ -377,6 +416,64 @@ color:  amber
   <div id="tasks-3"></div>
 </div>
 <div class="panel" id="panel-4">
+  <div class="tab-intro">🖼️ <strong>Match the Target</strong> — you're shown what the finished text should look like. Use whatever shortcuts get you there.</div>
+
+  <div class="task-card" id="match-0">
+    <div class="task-head">
+      <div class="task-badge">A</div>
+      <div class="task-title-wrap">
+        <div class="task-title">Match the Formatting</div>
+        <div class="task-keys"><span class="key-plus">bold, italic &amp; underline</span></div>
+      </div>
+      <div class="status-chip" id="match-status-0">⌨️ waiting</div>
+      <button type="button" class="reset-icon-btn" title="Reset this task" aria-label="Reset this task" onclick="window.__format_this_match_reset(0)">&#8634;</button>
+    </div>
+    <div class="task-goal">🎯 Format the words below to match the target exactly. Only the three highlighted words should change — everything else stays plain.</div>
+    <div class="match-label">🖼️ Target</div>
+    <div class="match-preview">The <b>quick</b> fox jumped over the <i>lazy</i> dog while the sun was setting <u>slowly</u>.</div>
+    <div class="match-label">✏️ Your version</div>
+    <div class="doc-box" id="match-box-0" contenteditable="true" role="textbox" aria-multiline="false" aria-label="Match the Formatting practice text" spellcheck="false">The quick fox jumped over the lazy dog while the sun was setting slowly.</div>
+    <div class="task-foot"><span class="feedback" id="match-feedback-0"></span></div>
+  </div>
+
+  <div class="task-card" id="match-1">
+    <div class="task-head">
+      <div class="task-badge">B</div>
+      <div class="task-title-wrap">
+        <div class="task-title">Match by Deleting</div>
+        <div class="task-keys"><span class="key-plus">delete &amp; backspace</span></div>
+      </div>
+      <div class="status-chip" id="match-status-1">⌨️ waiting</div>
+      <button type="button" class="reset-icon-btn" title="Reset this task" aria-label="Reset this task" onclick="window.__format_this_match_reset(1)">&#8634;</button>
+    </div>
+    <div class="task-goal">🎯 The target has had some unnecessary words removed — the crossed-out words below show what needs to go. Delete just those words so your version matches.</div>
+    <div class="match-label">🖼️ Target</div>
+    <div class="match-preview">This sentence has some <span class="del-preview">really</span> extra <span class="del-preview">totally</span> unnecessary words that we <span class="del-preview">honestly</span> need to delete.</div>
+    <div class="match-label">✏️ Your version</div>
+    <div class="doc-box" id="match-box-1" contenteditable="true" role="textbox" aria-multiline="false" aria-label="Match by Deleting practice text" spellcheck="false">This sentence has some really extra totally unnecessary words that we honestly need to delete.</div>
+    <div class="task-foot"><span class="feedback" id="match-feedback-1"></span></div>
+  </div>
+
+  <div class="task-card" id="match-2">
+    <div class="task-head">
+      <div class="task-badge">C</div>
+      <div class="task-title-wrap">
+        <div class="task-title">Match Everything</div>
+        <div class="task-keys"><span class="key-plus">delete + bold + underline</span></div>
+      </div>
+      <div class="status-chip" id="match-status-2">⌨️ waiting</div>
+      <button type="button" class="reset-icon-btn" title="Reset this task" aria-label="Reset this task" onclick="window.__format_this_match_reset(2)">&#8634;</button>
+    </div>
+    <div class="task-goal">🎯 This one combines everything — delete the crossed-out words, then format the highlighted parts to match the target.</div>
+    <div class="match-label">🖼️ Target</div>
+    <div class="match-preview">Remember to <span class="del-preview">always</span> save your work <b>regularly</b> before you <span class="del-preview">actually</span> <u>close the computer down</u>.</div>
+    <div class="match-label">✏️ Your version</div>
+    <div class="doc-box" id="match-box-2" contenteditable="true" role="textbox" aria-multiline="false" aria-label="Match Everything practice text" spellcheck="false">Remember to always save your work regularly before you actually close the computer down.</div>
+    <div class="task-foot"><span class="feedback" id="match-feedback-2"></span></div>
+  </div>
+</div>
+
+<div class="panel" id="panel-5">
   <div class="tab-intro">🎨 <strong>Bonus Mission</strong> — no rules this time. Use anything you've learned to make a real paragraph look great.</div>
   <div class="task-card" id="bonus-card">
     <div class="task-head">
@@ -458,9 +555,38 @@ color:  amber
     }
     return total ? covered / total : 0;
   }
-  const isBold      = box => styleCoverage(box, s => parseInt(s.fontWeight, 10) >= 700) > 0.6;
-  const isItalic     = box => styleCoverage(box, s => s.fontStyle === 'italic') > 0.6;
-  const isUnderline = box => styleCoverage(box, s => s.textDecorationLine.includes('underline')) > 0.6;
+  const boldPredicate      = s => parseInt(s.fontWeight, 10) >= 700;
+  const italicPredicate    = s => s.fontStyle === 'italic';
+  const underlinePredicate = s => s.textDecorationLine.includes('underline');
+  const isBold      = box => styleCoverage(box, boldPredicate) > 0.6;
+  const isItalic    = box => styleCoverage(box, italicPredicate) > 0.6;
+  const isUnderline = box => styleCoverage(box, underlinePredicate) > 0.6;
+
+  // Style-coverage scoped to a single word/phrase within the box, addressed
+  // by character offsets into box.textContent (raw concatenation of text
+  // nodes — unlike innerText, this has no synthetic newlines, so offsets
+  // stay aligned with a plain TreeWalker text-node walk).
+  function styleCoverageInRange(box, start, end, predicate) {
+    let pos = 0, total = 0, covered = 0;
+    const walker = document.createTreeWalker(box, NodeFilter.SHOW_TEXT);
+    let node;
+    while ((node = walker.nextNode())) {
+      const len = node.textContent.length;
+      const nodeStart = pos, nodeEnd = pos + len;
+      pos = nodeEnd;
+      const overlapStart = Math.max(start, nodeStart);
+      const overlapEnd = Math.min(end, nodeEnd);
+      if (overlapEnd <= overlapStart) continue;
+      total += overlapEnd - overlapStart;
+      if (predicate(getComputedStyle(node.parentElement))) covered += overlapEnd - overlapStart;
+    }
+    return total ? covered / total : 0;
+  }
+  function wordHasStyle(box, word, predicate) {
+    const idx = box.textContent.indexOf(word);
+    if (idx === -1) return false;
+    return styleCoverageInRange(box, idx, idx + word.length, predicate) > 0.6;
+  }
 
   function hasRequiredCombos(pressedSet, groups) {
     return groups.every(group => group.some(c => pressedSet.has(c)));
@@ -522,7 +648,7 @@ color:  amber
     // ── Tab 1 — Editing Power ────────────────────────────
     {
       tab: 1, title: 'Duplicate a Sentence', keys: ['Ctrl+C', 'then', 'Ctrl+V'],
-      goal: 'Select the whole sentence, copy it (<kbd>Ctrl</kbd>+<kbd>C</kbd>), click at the very end and press <kbd>Enter</kbd>, then paste (<kbd>Ctrl</kbd>+<kbd>V</kbd>) to make a copy underneath.',
+      goal: 'Select the whole sentence, copy it (<kbd>Ctrl</kbd>+<kbd>C</kbd>), click at the very end and press <kbd>↵ Return</kbd>, then paste (<kbd>Ctrl</kbd>+<kbd>V</kbd>) to make a copy underneath.',
       text: 'Practice makes progress.',
       requiredGroups: [['ctrl+c'], ['ctrl+v']],
       validate: box => linesOf(box).filter(l => l === 'Practice makes progress.').length >= 2
@@ -560,8 +686,8 @@ color:  amber
       validate: box => normSpace(plainText(box)) === 'This sentence has a typo.'
     },
     {
-      tab: 1, title: 'Select & Clear to the End', keys: ['Shift+End', 'then', 'Delete'],
-      goal: 'Click right after “this part”, press <kbd>Shift</kbd>+<kbd>End</kbd> to select to the end of the line, then press <kbd>Delete</kbd> (or <kbd>Backspace</kbd>) to remove it.',
+      tab: 1, title: 'Select & Clear to the End', keys: ['⇧ Shift+End', 'then', 'Delete'],
+      goal: 'Click right after “this part”, press <kbd>⇧ Shift</kbd>+<kbd>End</kbd> to select to the end of the line, then press <kbd>Delete</kbd> (or <kbd>Backspace</kbd>) to remove it.',
       text: 'Keep this part but not this bit at the end.',
       requiredGroups: [['shift+end'], ['delete', 'backspace']],
       validate: box => {
@@ -594,7 +720,7 @@ color:  amber
     },
     {
       tab: 2, title: 'Duplicate a Whole Paragraph', keys: ['Ctrl+A', '+', 'Ctrl+C', '+', 'Ctrl+V'],
-      goal: 'Select everything (<kbd>Ctrl</kbd>+<kbd>A</kbd>), copy it (<kbd>Ctrl</kbd>+<kbd>C</kbd>), click at the end and press <kbd>Enter</kbd>, then paste (<kbd>Ctrl</kbd>+<kbd>V</kbd>) to duplicate the whole line underneath.',
+      goal: 'Select everything (<kbd>Ctrl</kbd>+<kbd>A</kbd>), copy it (<kbd>Ctrl</kbd>+<kbd>C</kbd>), click at the end and press <kbd>↵ Return</kbd>, then paste (<kbd>Ctrl</kbd>+<kbd>V</kbd>) to duplicate the whole line underneath.',
       text: 'Outwood Academy has excellent computing facilities.',
       requiredGroups: [['ctrl+a'], ['ctrl+c'], ['ctrl+v']],
       validate: (box, flags) => {
@@ -649,12 +775,48 @@ color:  amber
     }
   ];
 
+  // ══════════════════════════════════════════════════════════
+  // "Match the Target" — show the finished result, let the student
+  // get there however they like. Not part of the 20-task score;
+  // no fixed key sequence is required, only the end state.
+  // ══════════════════════════════════════════════════════════
+
+  const MATCH_TASKS = [
+    {
+      // A — word-level formatting precision
+      validate: box => {
+        const t = normSpace(box.textContent);
+        if (t !== 'The quick fox jumped over the lazy dog while the sun was setting slowly.') return false;
+        return wordHasStyle(box, 'quick', boldPredicate) && !wordHasStyle(box, 'quick', italicPredicate) && !wordHasStyle(box, 'quick', underlinePredicate)
+          && wordHasStyle(box, 'lazy', italicPredicate) && !wordHasStyle(box, 'lazy', boldPredicate) && !wordHasStyle(box, 'lazy', underlinePredicate)
+          && wordHasStyle(box, 'slowly', underlinePredicate) && !wordHasStyle(box, 'slowly', boldPredicate) && !wordHasStyle(box, 'slowly', italicPredicate)
+          && !wordHasStyle(box, 'jumped', boldPredicate) && !wordHasStyle(box, 'jumped', italicPredicate) && !wordHasStyle(box, 'jumped', underlinePredicate);
+      }
+    },
+    {
+      // B — precise word-level deletion
+      validate: box => normSpace(box.textContent) === 'This sentence has some extra unnecessary words that we need to delete.'
+    },
+    {
+      // C — deletion combined with word/phrase formatting
+      validate: box => {
+        const t = normSpace(box.textContent);
+        if (t !== 'Remember to save your work regularly before you close the computer down.') return false;
+        return wordHasStyle(box, 'regularly', boldPredicate) && !wordHasStyle(box, 'regularly', underlinePredicate) && !wordHasStyle(box, 'regularly', italicPredicate)
+          && wordHasStyle(box, 'close the computer down', underlinePredicate) && !wordHasStyle(box, 'close the computer down', boldPredicate)
+          && !wordHasStyle(box, 'work', boldPredicate) && !wordHasStyle(box, 'work', underlinePredicate) && !wordHasStyle(box, 'work', italicPredicate);
+      }
+    }
+  ];
+  const matchCompleted = [false, false, false];
+  const matchBoxes = [];
+
   const TASK_COUNT   = TASKS.length; // 20
   const TAB_COUNT    = 4;  // tabs generated from TASKS (Foundations…Mastery Challenge)
-  const TOTAL_TABS   = 5;  // + the open-ended Bonus tab, unlocked once Mastery Challenge is done
+  const TOTAL_TABS   = 6;  // + Match the Target (3 exercises) + the open-ended Bonus tab
   const completed    = new Array(TASK_COUNT).fill(false);
   const firstAttempt = new Array(TASK_COUNT).fill(true);
-  const state        = TASKS.map(() => ({ pressed: new Set(), flags: {}, box: null }));
+  const state        = TASKS.map(() => ({ pressed: new Set(), flags: {}, box: null, copyTimer: null }));
 
   // ══════════════════════════════════════════════════════════
   // Render task cards from TASKS data
@@ -760,6 +922,33 @@ color:  amber
 
     box.addEventListener('cut', () => { if (!completed[i]) setTimeout(() => checkTask(i), 0); });
     box.addEventListener('paste', () => { if (!completed[i]) setTimeout(() => checkTask(i), 0); });
+
+    // Copying gives no visible change on its own, which leaves students
+    // unsure whether Ctrl+C actually did anything — flash a temporary
+    // "copied" confirmation without marking the task complete.
+    if (requiredFlat.includes('ctrl+c')) {
+      box.addEventListener('copy', () => { if (!completed[i]) flashCopied(i, box); });
+    }
+  }
+
+  function flashCopied(i, box) {
+    const st = state[i];
+    const status = document.getElementById('status-' + i);
+    clearTimeout(st.copyTimer);
+
+    status.textContent = '📋 copied!';
+    status.classList.add('copied');
+    box.classList.remove('copy-flash');
+    void box.offsetWidth; // restart the animation if triggered again quickly
+    box.classList.add('copy-flash');
+
+    st.copyTimer = setTimeout(() => {
+      box.classList.remove('copy-flash');
+      if (!completed[i]) {
+        status.textContent = '⌨️ waiting';
+        status.classList.remove('copied');
+      }
+    }, 1600);
   }
 
   function checkTask(i) {
@@ -786,8 +975,10 @@ color:  amber
     const box = state[i].box;
     box.setAttribute('contenteditable', 'false');
 
+    clearTimeout(state[i].copyTimer);
     const status = document.getElementById('status-' + i);
     status.textContent = gold ? '🌟 first try!' : '✅ done';
+    status.classList.remove('copied');
 
     const feedback = document.getElementById('feedback-' + i);
     feedback.textContent = gold ? 'Gold! Nailed it first time.' : 'Nice work!';
@@ -808,14 +999,18 @@ color:  amber
     firstAttempt[i] = true;
     state[i].pressed = new Set();
     state[i].flags = {};
+    clearTimeout(state[i].copyTimer);
 
     box.innerHTML = buildInitialHtml(t);
     box.setAttribute('contenteditable', 'true');
+    box.classList.remove('copy-flash');
 
     const card = document.getElementById('task-' + i);
     card.classList.remove('done', 'gold');
 
-    document.getElementById('status-' + i).textContent = '⌨️ waiting';
+    const status = document.getElementById('status-' + i);
+    status.textContent = '⌨️ waiting';
+    status.classList.remove('copied');
     const feedback = document.getElementById('feedback-' + i);
     feedback.textContent = '';
     feedback.className = 'feedback';
@@ -847,7 +1042,7 @@ color:  amber
     const pill = document.querySelector('.tab-pill[data-tab="' + tab + '"]');
     if (!pill.classList.contains('locked')) return; // already unlocked
     pill.classList.remove('locked');
-    const label = ['', '⚡ Editing Power', '🧩 Combining Shortcuts', '🏆 Mastery Challenge', '🎨 Bonus: Style It Your Way'][tab];
+    const label = ['', '⚡ Editing Power', '🧩 Combining Shortcuts', '🏆 Mastery Challenge', '🖼️ Match the Target', '🎨 Bonus: Style It Your Way'][tab];
     const frac = document.getElementById('frac-' + tab);
     pill.innerHTML = escapeHtml(label) + (frac ? ' <span class="tab-frac" id="frac-' + tab + '">' + frac.textContent + '</span>' : '');
 
@@ -899,6 +1094,64 @@ color:  amber
   });
 
   function showToast(msg, type) { window.ActivityUI?.showToast(msg, type || ''); }
+
+  // ══════════════════════════════════════════════════════════
+  // Match the Target — end-state matching, no fixed key sequence.
+  // Not part of the 20-task score; completing all 3 unlocks Bonus.
+  // ══════════════════════════════════════════════════════════
+
+  const matchInitialText = MATCH_TASKS.map((t, idx) => document.getElementById('match-box-' + idx).textContent);
+
+  MATCH_TASKS.forEach((t, idx) => {
+    const box = document.getElementById('match-box-' + idx);
+    matchBoxes[idx] = box;
+    const check = () => { if (!matchCompleted[idx]) setTimeout(() => checkMatch(idx), 0); };
+    box.addEventListener('keydown', check);
+    box.addEventListener('input', check);
+    box.addEventListener('cut', check);
+    box.addEventListener('paste', check);
+  });
+
+  function checkMatch(idx) {
+    if (matchCompleted[idx]) return;
+    if (!MATCH_TASKS[idx].validate(matchBoxes[idx])) return;
+    matchCompleted[idx] = true;
+
+    const card = document.getElementById('match-' + idx);
+    card.classList.add('done');
+    matchBoxes[idx].setAttribute('contenteditable', 'false');
+    document.getElementById('match-status-' + idx).textContent = '✅ matched!';
+    const feedback = document.getElementById('match-feedback-' + idx);
+    feedback.textContent = 'Nice work — that matches!';
+    feedback.className = 'feedback';
+
+    window.ActivityUI?.miniCelebration(card);
+    updateMatchProgress();
+    updateOverall(); // refresh the Classroom evidence snapshot; doesn't change the 20-task %
+  }
+
+  function updateMatchProgress() {
+    const done = matchCompleted.filter(Boolean).length;
+    document.getElementById('frac-4').textContent = done + '/3';
+    if (done === MATCH_TASKS.length) {
+      document.querySelector('.tab-pill[data-tab="4"]').classList.add('tab-complete');
+      unlockTab(5);
+    }
+  }
+
+  window.__format_this_match_reset = function (idx) {
+    matchCompleted[idx] = false;
+    const box = matchBoxes[idx];
+    box.textContent = matchInitialText[idx];
+    box.setAttribute('contenteditable', 'true');
+
+    const card = document.getElementById('match-' + idx);
+    card.classList.remove('done');
+    document.getElementById('match-status-' + idx).textContent = '⌨️ waiting';
+    const feedback = document.getElementById('match-feedback-' + idx);
+    feedback.textContent = '';
+    feedback.className = 'feedback';
+  };
 
   // ══════════════════════════════════════════════════════════
   // Bonus mission — open-ended, not part of the 20-task score.
