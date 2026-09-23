@@ -141,6 +141,24 @@ describe('.length and .substring receiver walking', () => {
     const studentLine = out.split('\n').find(l => l.includes('x ='));
     expect(studentLine).not.toContain('_psc_len');
   });
+
+  test('.length nested inside .substring arguments: word.substring(1, word.length - 1)', () => {
+    const src = 'word = "PYTHON"\nprint(word.substring(1, word.length - 1))';
+    const out = py(src);
+    const studentLine = out.split('\n').find(l => l.startsWith('print('));
+    expect(studentLine).toBe('print(_psc_substr(word, 1, _psc_len(word) - 1))');
+    expect(errs(src)).toEqual([]);
+  });
+
+  test('.length nested inside .left/.right arguments', () => {
+    const leftSrc = 'word = "PYTHON"\nprint(word.left(word.length - 2))';
+    const leftOut = py(leftSrc).split('\n').find(l => l.startsWith('print('));
+    expect(leftOut).toBe('print(_psc_left(word, _psc_len(word) - 2))');
+
+    const rightSrc = 'word = "PYTHON"\nprint(word.right(word.length - 2))';
+    const rightOut = py(rightSrc).split('\n').find(l => l.startsWith('print('));
+    expect(rightOut).toBe('print(_psc_right(word, _psc_len(word) - 2))');
+  });
 });
 
 // ── File I/O ──────────────────────────────────────────────────────────────────

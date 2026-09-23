@@ -173,10 +173,22 @@ function segment(line) {
 // ── String-method rewriter (receiver-walking) ─────────────────────────────────
 // Replaces .length and .substring() on any receiver expression (including
 // chained calls and subscript expressions), routing through _psc_len/_psc_substr.
-function _rewriteStringMethods(code) {
-  const reps = [];
+//
+// Run as three sequential passes — .length, then .left/.right, then .substring —
+// rather than one combined batch. A call's arguments can themselves contain an
+// earlier construct (e.g. `word.substring(1, word.length - 1)`): resolving
+// .length first means .substring's argument-scanning sees already-rewritten,
+// paren-balanced text, instead of two reps computed against the same original
+// offsets whose replacement spans overlap and corrupt each other.
+function _applyReps(code, reps) {
+  reps.sort((a, b) => b.start - a.start);
+  let s = code;
+  for (const r of reps) s = s.slice(0, r.start) + r.replacement + s.slice(r.end);
+  return s;
+}
 
-  // .length (not followed by '(')
+function _rewriteLength(code) {
+  const reps = [];
   const lenRe = /\.length\b(?!\()/g;
   let m;
   while ((m = lenRe.exec(code)) !== null) {
@@ -186,10 +198,14 @@ function _rewriteStringMethods(code) {
     if (!receiver.trim()) continue;
     reps.push({ start: recStart, end: dotPos + m[0].length, replacement: `_psc_len(${receiver})` });
   }
+  return _applyReps(code, reps);
+}
 
-  // .left( and .right(
+function _rewriteLeftRight(code) {
+  const reps = [];
   for (const [mName, pyFn] of [['left', '_psc_left'], ['right', '_psc_right']]) {
     const lrRe = new RegExp(`\\.${mName}\\s*\\(`, 'g');
+    let m;
     while ((m = lrRe.exec(code)) !== null) {
       const dotPos = m.index;
       const openParen = code.indexOf('(', dotPos + 1);
@@ -203,9 +219,13 @@ function _rewriteStringMethods(code) {
       reps.push({ start: recStart, end: closeParen + 1, replacement: `${pyFn}(${receiver}, ${arg})` });
     }
   }
+  return _applyReps(code, reps);
+}
 
-  // .substring( or .subString(
+function _rewriteSubstring(code) {
+  const reps = [];
   const subRe = /\.[sS]ubstring\s*\(/g;
+  let m;
   while ((m = subRe.exec(code)) !== null) {
     const dotPos = m.index;
     const openParen = code.indexOf('(', dotPos + 1);
@@ -223,11 +243,14 @@ function _rewriteStringMethods(code) {
       replacement: `_psc_substr(${receiver}, ${args[0].trim()}, ${args[1].trim()})`,
     });
   }
+  return _applyReps(code, reps);
+}
 
-  reps.sort((a, b) => b.start - a.start);
-  let s = code;
-  for (const r of reps) s = s.slice(0, r.start) + r.replacement + s.slice(r.end);
-  return s;
+function _rewriteStringMethods(code) {
+  code = _rewriteLength(code);
+  code = _rewriteLeftRight(code);
+  code = _rewriteSubstring(code);
+  return code;
 }
 
 function _rewriteOopConstructs(code) {
