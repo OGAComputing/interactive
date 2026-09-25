@@ -215,6 +215,10 @@ color:  purple
     font-family: var(--font-mono); padding: 0.05rem 0.35rem !important;
     border-radius: 5px !important; font-size: 0.85em;
   }
+  /* A quoted line of code must never wrap mid-line — it moves to the next line as one
+     unit instead. Short chips like input(...) or + have no spaces, so this never
+     changes them. */
+  .q-label code, .task-text code, .req-text code, .hint-box code { white-space: nowrap; }
   .q-card input[type=text], .q-card textarea {
     width: 100%; padding: 0.65rem 0.85rem; border: 1.5px solid #d6c9f2; border-radius: 8px;
     font-family: var(--font-body); font-size: 0.9rem; resize: vertical;
@@ -304,6 +308,19 @@ color:  purple
   .modify-task .task-text { font-size: 0.89rem; color: var(--text); line-height: 1.55; }
   .modify-task .task-text strong { color: var(--purple); }
 
+  /* ── EXTENSION CHALLENGES — idea chooser, optional level-ups, worked examples ── */
+  .modify-task.ext .task-text { flex: 1; min-width: 0; }
+  .ext-sub { font-family: var(--font-mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: #5b5380; font-weight: 700; margin: 1rem 0 0.4rem; }
+  .idea-list { list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.45rem; margin: 0.5rem 0 0.2rem; }
+  .idea-list li { background: #fff; border: 1.5px dashed #d6c9f2; border-radius: 9px; padding: 0.5rem 0.75rem; font-size: 0.83rem; line-height: 1.45; color: var(--text); }
+  .levelups { margin: 0 0 0 1.15rem; font-size: 0.83rem; line-height: 1.6; color: #4a4270; }
+  .ext-preview { display: inline-block; font-family: var(--font-mono); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; background: #fff1d6; color: #8a5a00; border: 1px solid #f2c46b; border-radius: 999px; padding: 0.1rem 0.55rem; margin-bottom: 0.5rem; }
+  .ext-example { background: var(--code-bg, #0d0b1f); color: var(--code-text, #e8e3ff); font-family: var(--font-mono); font-size: 0.82rem; line-height: 1.6; border-radius: 8px; padding: 0.7rem 0.9rem; margin: 0.5rem 0 0.3rem; overflow-x: auto; white-space: pre; }
+  .ext-example .kw { color: #ff7edb; } .ext-example .fn { color: #7ee8fa; } .ext-example .st { color: #b5f07a; } .ext-example .num { color: #ffb86b; } .ext-example .cm { color: #8a84b0; font-style: italic; }
+  .ext-table { border-collapse: collapse; font-size: 0.82rem; margin: 0.4rem 0; }
+  .ext-table td { border: 1px solid #e0d6f5; padding: 0.2rem 0.6rem; }
+  .ext-table td:first-child { font-family: var(--font-mono); font-weight: 700; text-align: center; }
+
   /* ── REQUIREMENTS LIST ── */
   .req-list { list-style: none; margin: 1rem 0; }
   .req-list li { display: flex; align-items: flex-start; gap: 0.6rem; background: var(--off-white); border: 1.5px solid #d6c9f2; border-radius: 10px; padding: 0.75rem 1rem; margin-bottom: 0.5rem; font-size: 0.88rem; color: var(--text); line-height: 1.5; box-shadow: 0 4px 14px rgba(0,0,0,0.22); }
@@ -331,6 +348,8 @@ color:  purple
   .progress-fill.stuck { background: var(--amber); animation: stuck-pulse 1.6s ease-in-out infinite; }
   /* One-off red flash when a stage gets marked skipped (see markStageSkipped in the JS). */
   .progress-fill.skip-flash { animation: skip-flash 1s ease-in-out; }
+  /* Persists as long as ANY skipped exercise is still unresolved (see updateSkipIndicator in the JS). */
+  .progress-fill.skip-pending { background: var(--red); box-shadow: 0 0 14px var(--red); }
 
   .step-hidden { display: none !important; }
 
@@ -465,6 +484,11 @@ age <span class="kw">=</span> <span class="fn">int</span>(age)
   </div>
 
   <div class="info-box">
+    <span class="icon">🔁</span>
+    <span><strong>Last lesson</strong> you used <code style="background:#ede0ff;padding:0 3px;border-radius:3px">input()</code> to ask questions and store the answers in variables. Today's question: <strong>what happens when the answers are numbers?</strong> First, a puzzle about quotes.</span>
+  </div>
+
+  <div class="info-box">
     <span class="icon">💡</span>
     <span>Read the code below <strong>but don't run it yet</strong>. Making predictions (even wrong ones) helps you learn more when you run it.</span>
   </div>
@@ -562,7 +586,7 @@ age <span class="kw">=</span> <span class="fn">int</span>(age)
 
   <!-- Free-text question — revealed after Q2 is answered -->
   <div class="q-card step-hidden" id="qcard_p_text1">
-    <label class="q-label"><span class="q-num">3</span> Now imagine TWO NEW lines are added after line 7: <code style="background:#ede0ff;padding:0 3px;border-radius:3px">x = input("Number 1: ")</code> and <code style="background:#ede0ff;padding:0 3px;border-radius:3px">y = input("Number 2: ")</code>, followed by <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print(x + y)</code>. If the user types <strong>3</strong> then <strong>4</strong>, type the <strong>exact text</strong> Python will print.</label>
+    <label class="q-label"><span class="q-num">3</span> Now imagine THREE NEW lines are added after line 7: <code style="background:#ede0ff;padding:0 3px;border-radius:3px">x = input("Number 1: ")</code>, <code style="background:#ede0ff;padding:0 3px;border-radius:3px">y = input("Number 2: ")</code> and <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print(x + y)</code>. If the user types <strong>3</strong> then <strong>4</strong>, type the <strong>exact text</strong> Python will print.</label>
     <input type="text" id="p_text1" placeholder="Type your answer here…" oninput="saveState(); clearPredictError('qcard_p_text1')">
     <div class="hint-box" style="margin-top:0.6rem">Hint: <code style="background:#ede0ff;color:#3a1d6e;padding:0 4px;border-radius:3px">input()</code> always hands back TEXT, even if the user types digits — just like <code style="background:#ede0ff;color:#3a1d6e;padding:0 4px;border-radius:3px">a</code> and <code style="background:#ede0ff;color:#3a1d6e;padding:0 4px;border-radius:3px">b</code> above.</div>
     <div class="mcq-fb" id="fb_p_text1"></div>
@@ -862,6 +886,11 @@ age <span class="kw">=</span> <span class="fn">int</span>(age)
     </div>
   </div>
 
+  <div class="info-box">
+    <span class="icon">🧪</span>
+    <span>When you press <strong>Run &amp; check</strong>, your program is tested like a real programmer would: the questions are answered <strong>automatically</strong> with the test numbers <strong>9, 5, 7 and 2.5</strong> (in that order), and the checker looks at the answers your program prints. Want to try it with <strong>your own</strong> numbers first? Press <strong>▶ Run code</strong> and type them in yourself.</span>
+  </div>
+
   <div class="ac-progress-bar" style="height: 8px; margin-bottom: 10px;">
     <div class="ac-progress-fill" id="progress-fill-M1" style="width: 0%; background: var(--stage-m1);"></div>
   </div>
@@ -898,7 +927,7 @@ age <span class="kw">=</span> <span class="fn">int</span>(age)
         <span class="stars">★</span>
         <div class="task-text">
           <ul class="req-list" id="req_m1_1">
-            <li><span>1</span><span class="req-text">Your <code style="background:#ede0ff;padding:0 3px;border-radius:3px">a</code> and <code style="background:#ede0ff;padding:0 3px;border-radius:3px">b</code> are now real numbers. Add a <strong>third print()</strong> that shows the difference between them: <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print(a - b)</code>.</span></li>
+            <li><span>1</span><span class="req-text">Your <code style="background:#ede0ff;padding:0 3px;border-radius:3px">a</code> and <code style="background:#ede0ff;padding:0 3px;border-radius:3px">b</code> are now real numbers. Add a <strong>third print()</strong> that shows the difference between them, e.g. <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print(a - b)</code>.</span></li>
           </ul>
         </div>
       </div>
@@ -910,7 +939,7 @@ age <span class="kw">=</span> <span class="fn">int</span>(age)
         <span class="stars">★★</span>
         <div class="task-text">
           <ul class="req-list" id="req_m1_2">
-            <li><span>1</span><span class="req-text">Keep your code so far. Ask for a <strong>third number</strong>, casting it in <strong>one line</strong> — e.g. <code style="background:#ede0ff;padding:0 3px;border-radius:3px">e = int(input("Enter third number: "))</code>.</span></li>
+            <li><span>1</span><span class="req-text">Keep your code so far. Ask for a <strong>third number</strong> and cast it with <code style="background:#ede0ff;padding:0 3px;border-radius:3px">int()</code> — the quickest way is in <strong>one line</strong>, e.g. <code style="background:#ede0ff;padding:0 3px;border-radius:3px">e = int(input("Enter third number: "))</code>.</span></li>
             <li><span>2</span><span class="req-text">Add a <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print()</code> that adds <strong>all three</strong> numbers together — e.g. <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print(a + b + e)</code>.</span></li>
           </ul>
         </div>
@@ -960,6 +989,7 @@ age <span class="kw">=</span> <span class="fn">int</span>(age)
   <div class="code-checker">
     <textarea class="checker-textarea" id="m1_editor" data-title="Python Editor" oninput="saveState()"></textarea>
     <div class="checker-footer">
+      <button class="btn btn-reset" id="btn_run_m1" onclick="runCodeInEditor('m1_editor', null)">▶ Run code</button>
       <button class="btn btn-check" id="btn_check_m1" onclick="checkMod()">▶ Run &amp; check modification 1</button>
       <button class="btn btn-reset" id="btn_reset_m1" onclick="resetModifyEditor()">↺ Reset to original</button>
       <div class="feedback hidden" id="fb_m1"></div>
@@ -1015,25 +1045,154 @@ age <span class="kw">=</span> <span class="fn">int</span>(age)
     </ul>
   </div>
 
-  <!-- Extension task — replaces the task description above after Make passes. -->
+  <!-- Extension challenges — replace the Make task description once Make passes.
+       Five challenges in ONE editor, each building on the last (like Modify). 1–2 stretch
+       casting/arithmetic; 3–5 are a gentle PREVIEW of Lesson 5 (selection): comparisons
+       give True/False → if → if/else. Only challenge 1 counts towards the grade — the
+       rest are for fast finishers. Checks: EXT_CHECKS.extN in checkers.js. -->
   <div id="m2_ext_task" class="step-hidden">
-    <div class="section-label">★★★★ Extension — design your own calculator</div>
-    <div class="modify-task ext">
-      <span class="stars">★★★★</span>
-      <div class="task-text">
-        You have total creative freedom here — pick <strong>any real-world calculation</strong> (a shopping total, a pizza-slices-per-person splitter, a distance-and-speed problem, a shape's area…) and build a program from scratch. Your program must:
-        <ul class="req-list" id="req_m2_ext" style="margin-top:0.8rem">
-          <li><span>1</span><span class="req-text">Ask for at least <strong>3 numbers</strong> using <code style="background:#ede0ff;padding:0 3px;border-radius:3px">input()</code>, casting each with <code style="background:#ede0ff;padding:0 3px;border-radius:3px">int()</code> or <code style="background:#ede0ff;padding:0 3px;border-radius:3px">float()</code>.</span></li>
-          <li><span>2</span><span class="req-text">Use at least <strong>two different</strong> arithmetic operators (from <code style="background:#ede0ff;padding:0 3px;border-radius:3px">+ - * /</code>) across your <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print()</code> lines.</span></li>
-          <li><span>3</span><span class="req-text">In at least one <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print()</code>, combine <strong>all three</strong> numbers together in a single calculation.</span></li>
-        </ul>
+
+    <div id="ext_step_1">
+      <div class="section-label">★★★★ Extension 1 of 5 — design your own calculator</div>
+      <div class="modify-task ext">
+        <span class="stars">★★★★</span>
+        <div class="task-text">
+          <p style="margin-bottom:0.3rem">Now <strong>you're the designer</strong>. Build a calculator for something <strong>real</strong> — pick one idea or invent your own. (Build on your Make program or start fresh in the editor below.)</p>
+          <ul class="idea-list">
+            <li>🍕 <strong>Pizza splitter</strong> — pizzas, slices per pizza, people… how many slices each?</li>
+            <li>🛒 <strong>Shopping total</strong> — prices and quantities of three items, then the bill.</li>
+            <li>🎮 <strong>Game score</strong> — points per coin, coins collected, bonus… final score?</li>
+            <li>📐 <strong>Box volume</strong> — length × width × height.</li>
+            <li>🚲 <strong>Journey planner</strong> — distance, speed, stops… how long will it take?</li>
+            <li>✨ <strong>Your own idea</strong> — pocket money saver, recipe scaler, sports stats…</li>
+          </ul>
+          <div class="ext-sub">Your program must</div>
+          <ul class="req-list" id="req_ext_1">
+            <li class="ext"><span>1</span><span class="req-text">Ask for at least <strong>3 numbers</strong> using <code>input()</code>, casting each with <code>int()</code> or <code>float()</code>.</span></li>
+            <li class="ext"><span>2</span><span class="req-text">Use at least <strong>two different</strong> arithmetic operators from <code>+ - * /</code>.</span></li>
+            <li class="ext"><span>3</span><span class="req-text">Combine <strong>all three</strong> numbers in a single calculation.</span></li>
+          </ul>
+          <div class="ext-sub">Level-ups — optional, not checked</div>
+          <ul class="levelups">
+            <li>Use <code>float()</code> for anything that could be a decimal, like a price.</li>
+            <li>Print a <strong>title</strong> line so the user knows what your calculator does.</li>
+          </ul>
+        </div>
       </div>
+    </div>
+
+    <div id="ext_step_2" class="step-hidden">
+      <div class="section-label">★★★★ Extension 2 of 5 — answers that read like sentences</div>
+      <div class="modify-task ext">
+        <span class="stars">★★★★</span>
+        <div class="task-text">
+          <p>Right now your answers probably appear on their own, like <code>42</code>. Real apps say <em>what</em> the number means. Remember the <code>TypeError</code> from Investigate? You can't join text and a number with <code>+</code> — so cast the number <strong>back into text</strong> with <code>str()</code>:</p>
+<pre class="ext-example">total <span class="kw">=</span> a <span class="kw">+</span> b <span class="kw">+</span> c
+<span class="fn">print</span>(<span class="st">"Your total is "</span> <span class="kw">+</span> <span class="fn">str</span>(total))</pre>
+          <div class="ext-sub">Keep your calculator, and</div>
+          <ul class="req-list" id="req_ext_2">
+            <li class="ext"><span>1</span><span class="req-text">Store the answer to a calculation in its <strong>own variable</strong>, e.g. <code>total = a + b + c</code>.</span></li>
+            <li class="ext"><span>2</span><span class="req-text">Print it <strong>inside a sentence</strong>, joining your own words to it with <code>+</code> and <code>str()</code>.</span></li>
+          </ul>
+          <div class="ext-sub">Level-ups — optional, not checked</div>
+          <ul class="levelups">
+            <li>Try <code>round(answer, 2)</code> to cut a long decimal down to 2 places.</li>
+            <li>Give every answer its own sentence.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div id="ext_step_3" class="step-hidden">
+      <div class="section-label">★★★★ Extension 3 of 5 — questions with a True/False answer</div>
+      <div class="modify-task ext">
+        <span class="stars">★★★★</span>
+        <div class="task-text">
+          <span class="ext-preview">👀 Sneak peek at next lesson</span>
+          <p>Python can compare two values. A comparison is a <strong>question with a yes/no answer</strong> — Python answers <code>True</code> or <code>False</code>:</p>
+<pre class="ext-example"><span class="fn">print</span>(total <span class="kw">&gt;</span> <span class="num">100</span>)    <span class="cm"># is total bigger than 100?  → True or False</span>
+<span class="fn">print</span>(a <span class="kw">==</span> b)         <span class="cm"># is a EQUAL TO b?           → True or False</span></pre>
+          <table class="ext-table">
+            <tr><td>&gt;</td><td>bigger than</td><td>&lt;</td><td>smaller than</td></tr>
+            <tr><td>&gt;=</td><td>bigger than or equal to</td><td>&lt;=</td><td>smaller than or equal to</td></tr>
+            <tr><td>==</td><td>equal to <em>(two = signs!)</em></td><td>!=</td><td>not equal to</td></tr>
+          </table>
+          <p style="font-size:0.82rem;margin-top:0.3rem">⚠️ One <code>=</code> <strong>stores</strong> a value in a box. Two <code>==</code> <strong>asks</strong> "are these equal?"</p>
+          <div class="ext-sub">Keep your calculator, and</div>
+          <ul class="req-list" id="req_ext_3">
+            <li class="ext"><span>1</span><span class="req-text">Print a comparison that uses one of your numbers, e.g. <code>print(total &gt; 100)</code>.</span></li>
+            <li class="ext"><span>2</span><span class="req-text">Print a second comparison that uses <code>==</code>.</span></li>
+          </ul>
+          <div class="ext-sub">Level-up — optional, not checked</div>
+          <ul class="levelups">
+            <li><strong>Predict</strong> whether each line will say True or False <em>before</em> you run it — then run it with numbers that flip the answer.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div id="ext_step_4" class="step-hidden">
+      <div class="section-label">★★★★ Extension 4 of 5 — your program makes a decision</div>
+      <div class="modify-task ext">
+        <span class="stars">★★★★</span>
+        <div class="task-text">
+          <span class="ext-preview">👀 Sneak peek at next lesson</span>
+          <p>An <code>if</code> uses a True/False question to decide whether to run some code. The <strong>indented</strong> line underneath only runs when the answer is <code>True</code>:</p>
+<pre class="ext-example">score <span class="kw">=</span> <span class="fn">int</span>(<span class="fn">input</span>(<span class="st">"What did you score? "</span>))
+<span class="kw">if</span> score <span class="kw">&gt;</span> <span class="num">50</span>:
+    <span class="fn">print</span>(<span class="st">"Well done — you passed!"</span>)    <span class="cm"># only runs if score &gt; 50 is True</span>
+<span class="fn">print</span>(<span class="st">"Thanks for playing."</span>)           <span class="cm"># not indented — always runs</span></pre>
+          <p style="font-size:0.82rem">Two things Python is fussy about: the <strong>colon</strong> <code>:</code> at the end of the <code>if</code> line, and the <strong>indent</strong> (press <kbd>Tab</kbd>) on the line underneath.</p>
+          <div class="ext-sub">Keep your calculator, and</div>
+          <ul class="req-list" id="req_ext_4">
+            <li class="ext"><span>1</span><span class="req-text">Add an <code>if</code> line that asks a question about one of your answers, ending in a colon, e.g. <code>if total &gt; 100:</code></span></li>
+            <li class="ext"><span>2</span><span class="req-text">Indent a <code>print()</code> underneath it with a message, e.g. <code>print("That's a big order!")</code>.</span></li>
+          </ul>
+          <div class="ext-sub">Level-up — optional, not checked</div>
+          <ul class="levelups">
+            <li>Run it <strong>twice</strong>: once with numbers that make the question True, once with numbers that make it False. What changes?</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div id="ext_step_5" class="step-hidden">
+      <div class="section-label">★★★★ Extension 5 of 5 — one of two paths</div>
+      <div class="modify-task ext">
+        <span class="stars">★★★★</span>
+        <div class="task-text">
+          <span class="ext-preview">👀 Sneak peek at next lesson</span>
+          <p>Add <code>else:</code> and your program <strong>always</strong> picks exactly one of two paths — the <code>if</code> block when the answer is True, the <code>else</code> block when it's False:</p>
+<pre class="ext-example"><span class="kw">if</span> score <span class="kw">&gt;</span> <span class="num">50</span>:
+    <span class="fn">print</span>(<span class="st">"Well done — you passed!"</span>)
+<span class="kw">else</span>:
+    <span class="fn">print</span>(<span class="st">"Not this time — have another go."</span>)</pre>
+          <p style="font-size:0.82rem"><code>else:</code> lines up <strong>exactly</strong> with the word <code>if</code> (no indent), and has its own colon.</p>
+          <div class="ext-sub">Keep your calculator, and</div>
+          <ul class="req-list" id="req_ext_5">
+            <li class="ext"><span>1</span><span class="req-text">Add <code>else:</code> under your <code>if</code> block, lined up with the <code>if</code>.</span></li>
+            <li class="ext"><span>2</span><span class="req-text">Indent a <code>print()</code> under the <code>else:</code> with a different message.</span></li>
+          </ul>
+          <div class="ext-sub">Level-ups — optional, not checked</div>
+          <ul class="levelups">
+            <li>Test <strong>both</strong> paths — run it once for each message.</li>
+            <li>Change <code>&gt;</code> to <code>&gt;=</code>. Which number now gives a different answer?</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Back / Forward through completed challenges (same pattern as Modify). -->
+    <div class="step-nav" id="stepnav-EXT">
+      <button class="btn btn-back" id="btn_back_EXT" onclick="goBack('EXT')" disabled>← Back</button>
+      <button class="btn btn-fwd"  id="btn_fwd_EXT"  onclick="goForward('EXT')" disabled>Forward →</button>
     </div>
   </div>
 
   <div class="code-checker">
     <textarea class="checker-textarea" id="m2_editor" data-title="Number calculator" style="min-height:320px" oninput="saveState()"></textarea>
     <div class="checker-footer">
+      <button class="btn btn-reset" id="btn_run_m2" onclick="runCodeInEditor('m2_editor', null)">▶ Run code</button>
       <button class="btn btn-check" id="btn_check_m2" onclick="checkMake()">▶ Run &amp; check program</button>
       <div class="feedback hidden" id="fb_m2"></div>
     </div>
@@ -1043,6 +1202,7 @@ age <span class="kw">=</span> <span class="fn">int</span>(age)
     <div style="font-size:2.5rem;margin-bottom:0.5rem">🏆</div>
     <h3>PRIMM Complete!</h3>
     <p>You've worked through all five stages for data types &amp; casting. Excellent work — show your teacher!</p>
+    <p style="margin-top:0.4rem">Got time left? Keep going with the <strong>bonus challenges</strong> above — the last three give you a sneak peek at next lesson.</p>
   </div>
 </section>
 
@@ -1073,22 +1233,22 @@ age <span class="kw">=</span> <span class="fn">int</span>(age)
   ║  evalMod(checkKey, raw) → { results: bool[], pass: bool, msg: string }     ║
   ║    — runs every req, used by checkMod() to tick/cross each bullet          ║
   ║                                                                              ║
-  ║  MOD_INPUTS = {                                                              ║
-  ║    mod1: ['Alice', '13'],   // mock inputs fed to runPython() for step 1   ║
-  ║    mod2: ['Alice', '13'],   // omit a key entirely if no input() needed    ║
-  ║    ...                                                                       ║
-  ║  }                                                                           ║
+  ║  MOD_INPUTS = { mod1: ['9', '5', …], … }  // TEST NUMBERS typed in for    ║
+  ║    each Modify check — reqs see the program's OUTPUT, so arithmetic is      ║
+  ║    confirmed from the answers printed, not one way of writing the code.    ║
+  ║  MAKE_INPUTS = ['8', '2']                 // same idea for Make            ║
   ║                                                                              ║
   ║  MAKE_CHECK = { reqs: […], passMsg }   // same shape, for the Make program ║
-  ║  evalMake(raw) → { results, pass, msg }                                    ║
-  ║  EXT_CHECK  = { reqs: […], passMsg }   // same shape, for the Extension    ║
-  ║  evalExt(raw)  → { results, pass, msg }                                    ║
+  ║  evalMake(raw, output) → { results, pass, msg }                            ║
+  ║  EXT_CHECKS = { ext1: {reqs, passMsg}, … ext5 }  // extension challenges   ║
+  ║  evalExt(checkKey, raw) → { results, pass, msg }  (run interactively)      ║
   ║                                                                              ║
-  ║  See Y8/Python/L4_Functions/checkers.js for a complete reference example.  ║
+  ║  See Y8/Python Unit 1/L2_Variables/checkers.js for a complete reference    ║
+  ║  example of this {reqs, passMsg} + evalX() shape.                          ║
   ╚══════════════════════════════════════════════════════════════════════════════╝
 */
-import { normalise, has, MOD_CHECKS, evalMod, MOD_INPUTS, MAKE_CHECK, evalMake, EXT_CHECK, evalExt } from './checkers.js';
-import { runPython, preload } from '../../../pyodide-runner.js';
+import { normalise, has, MOD_CHECKS, evalMod, MOD_INPUTS, MOD_TEST_NOTE, MAKE_CHECK, MAKE_INPUTS, evalMake, EXT_CHECKS, EXT_STEP_COUNT, evalExt } from './checkers.js';
+import { preload } from '../../../pyodide-runner.js';
 import { setupEditors, clearSyntaxHint, setEditorOutput, refreshEditor, runCode } from '../../../code-editor.js';
 
 
@@ -1244,8 +1404,13 @@ const I_FIELDS = [
 const I_CODE_CHECKS = [
   // Step 1: a should no longer be the literal "5" — it must come from input().
   function(code) { if (/\ba\s*=\s*["']\s*5\s*["']/.test(code)) return 'change line 1 so a is set with input("Enter first number: ").'; return null; },
-  // Step 2: both a and b must end up cast with int(input(...)) — covers the "53" moment and the fix.
-  function(code) { if (!/\ba\s*=\s*int\s*\(\s*input\s*\(/.test(code) || !/\bb\s*=\s*int\s*\(\s*input\s*\(/.test(code)) return 'wrap both a and b in int(input(...)) as shown above.'; return null; },
+  // Step 2: both a and b must end up cast — covers the "53" moment and the fix. Any valid
+  // casting style passes: a = int(input(...)), a later a = int(a), or float() instead.
+  function(code) {
+    const cast = v => new RegExp('\\b' + v + '\\s*=\\s*(?:int|float)\\s*\\(').test(code);
+    if (!cast('a') || !cast('b')) return 'wrap both a and b in int(input(...)) as shown above.';
+    return null;
+  },
   // Standard bug pair — both gates just require the line to currently read
   // IBUG_FIXED_LINE (i.e. not still broken, and not reverted to something else).
   function(code) { if (!code.includes(IBUG_FIXED_LINE)) return 'fix the broken line so it reads exactly as shown above.'; return null; },
@@ -1280,6 +1445,17 @@ let iCodeDraft      = state.iCodeDraft;
 let m1CodeSnapshots = state.m1CodeSnapshots || {};
 let m1CodeDraft     = state.m1CodeDraft;
 let skippedStages = state.skippedStages || [];
+// Per-question skip tracking (keyed the same way as attemptCounts: 'i'+n, 'm1_'+n).
+// A key is added when that specific question is skipped and removed the moment it's
+// later passed — unlike skippedStages (which is stage-level and sticky for the nav
+// dot), this drives whether a skipped question's editor is unlocked for a reattempt
+// and whether the top progress bar shows its persistent "unresolved" red.
+let skippedSteps = state.skippedSteps || {};
+// Extension challenges — current / furthest unlocked (drives Forward →).
+// Progress saved before the extension became five challenges: old 'm2_ext' = challenge 1.
+if (passedChecks['m2_ext'] && !passedChecks['m2_ext1']) { passedChecks['m2_ext1'] = true; state.extStep = Math.max(state.extStep || 1, 2); }
+let extStep    = state.extStep    || 1;
+let maxExtStep = state.maxExtStep || extStep;
 let attemptCounts = state.attemptCounts || {};
 let iStepRan = state.iStepRan || {};
 let firstRunShown = false;
@@ -1330,6 +1506,9 @@ function saveState() {
   state.maxStepI       = maxStepI;
   state.maxStepM1      = maxStepM1;
   state.skippedStages = skippedStages;
+  state.skippedSteps = skippedSteps;
+  state.extStep    = extStep;
+  state.maxExtStep = maxExtStep;
   state.attemptCounts = attemptCounts;
   state.iStepRan = iStepRan;
   state.iCodeSnapshots  = iCodeSnapshots;
@@ -1367,8 +1546,8 @@ function updateGranularProgress() {
   if (m2Fill) {
     let pct = 0;
     if (passedChecks['m2_make']) pct += 50;
-    if (passedChecks['m2_ext'])  pct += 50;
-    m2Fill.style.width = pct + '%';
+    for (let i = 1; i <= EXT_STEP_COUNT; i++) if (passedChecks['m2_ext' + i]) pct += 50 / EXT_STEP_COUNT;
+    m2Fill.style.width = Math.round(pct) + '%';
   }
 }
 
@@ -1390,10 +1569,12 @@ function updateStepVisibility() {
     if (checkBtn) checkBtn.disabled = !iStepRan[i];
   }
   // The editor is shared across all Investigate steps — lock it to read-only while
-  // looking back at an already-completed step, since edits there would be silently
-  // discarded the moment the student moves on again (see restoreCodeForStep).
+  // looking back at an already-PASSED step, since edits there would be silently
+  // discarded the moment the student moves on again (see restoreCodeForStep). A
+  // skipped step has no snapshot, so it stays editable — the student can still
+  // reattempt it rather than being locked out for good.
   const iEditor = document.getElementById('i_editor');
-  if (iEditor) iEditor.readOnly = iRevisiting;
+  if (iEditor) iEditor.readOnly = iRevisiting && iCodeSnapshots[stepI] !== undefined;
   syncBugLineLabel();   // standard bug pair — keep the "line N" label current, no planting
   const m1Revisiting = stepM1 < maxStepM1;
   for (let i = 1; i <= STEP_COUNT_M1; i++) {
@@ -1405,8 +1586,10 @@ function updateStepVisibility() {
     const passed = !!passedChecks['m1_code' + i];
     renderReqResults(document.getElementById('req_m1_' + i), passed ? MOD_CHECKS['mod' + i].reqs.map(() => true) : null);
   }
+  // Same rule as Investigate: only lock the editor when stepping back to a step that
+  // was genuinely PASSED, not one that was skipped — a skipped step must stay editable.
   const m1Editor = document.getElementById('m1_editor');
-  if (m1Editor) m1Editor.readOnly = m1Revisiting;
+  if (m1Editor) m1Editor.readOnly = m1Revisiting && !!passedChecks['m1_code' + stepM1];
 
   const m1Btn = document.getElementById('btn_check_m1');
   if (m1Btn) m1Btn.textContent = stepM1 === STEP_COUNT_M1
@@ -1415,7 +1598,7 @@ function updateStepVisibility() {
   const resetM1Btn = document.getElementById('btn_reset_m1');
   if (resetM1Btn) {
     // Nothing to reset while looking back at a passed step (its editor is read-only).
-    resetM1Btn.disabled = !!document.getElementById('m1_editor')?.readOnly;
+    resetM1Btn.disabled = !!m1Editor?.readOnly;
     resetM1Btn.title = stepM1 === 1
       ? 'Put the editor back to the original starting code'
       : 'Put the editor back to how it was when you finished the previous modification';
@@ -1428,24 +1611,45 @@ function updateStepVisibility() {
   document.getElementById('m2_make_task')?.classList.toggle('step-hidden', !!passedChecks['m2_make']);
   document.getElementById('m2_ext_task')?.classList.toggle('step-hidden', !passedChecks['m2_make']);
   renderReqResults(document.getElementById('req_m2_make'), passedChecks['m2_make'] ? MAKE_CHECK.reqs.map(() => true) : null);
-  renderReqResults(document.getElementById('req_m2_ext'), passedChecks['m2_ext'] ? EXT_CHECK.reqs.map(() => true) : null);
+  for (let i = 1; i <= EXT_STEP_COUNT; i++) {
+    document.getElementById('ext_step_' + i)?.classList.toggle('step-hidden', i !== extStep);
+    document.getElementById('ext_step_' + i)?.classList.toggle('revisiting', i === extStep && extStep < maxExtStep);
+    renderReqResults(document.getElementById('req_ext_' + i), passedChecks['m2_ext' + i] ? EXT_CHECKS['ext' + i].reqs.map(() => true) : null);
+  }
 
   const m2Btn = document.getElementById('btn_check_m2');
   if (m2Btn) {
-    m2Btn.textContent = passedChecks['m2_make'] ? '▶ Run & check extension' : '▶ Run & check program';
+    const allExtDone = !!passedChecks['m2_ext' + EXT_STEP_COUNT];
     m2Btn.onclick = passedChecks['m2_make'] ? checkExt : checkMake;
+    // The Check button only acts on the frontier challenge — looking back is read-only.
+    m2Btn.disabled = !!passedChecks['m2_make'] && (extStep < maxExtStep || allExtDone);
+    m2Btn.textContent = !passedChecks['m2_make'] ? '▶ Run & check program'
+      : allExtDone ? '🏆 All extension challenges complete'
+      : extStep < maxExtStep ? 'Use Forward → to return to your current challenge'
+      : '▶ Run & check extension ' + extStep;
   }
   renderStepNav('I');
   renderStepNav('M1');
+  renderStepNav('EXT');
   updateGranularProgress();
+  updateSkipIndicator();
+}
+
+// Top progress bar stays red for as long as ANY skipped question hasn't since been
+// passed (skippedSteps entries are removed the moment their question is passed —
+// see nextStep/tryCompleteInvestigate/checkMod), then reverts to normal.
+function updateSkipIndicator() {
+  const fill = document.getElementById('progressFill');
+  if (!fill) return;
+  fill.classList.toggle('skip-pending', Object.keys(skippedSteps).length > 0);
 }
 
 // ── Back / Forward navigation (one question on screen at a time) ───────────
 // Shared by Predict, Investigate and Modify so the flow is identical everywhere.
 
 function renderStepNav(stage) {
-  const step = stage === 'P' ? predictStep : stage === 'I' ? stepI : stepM1;
-  const max  = stage === 'P' ? maxPredictStep : stage === 'I' ? maxStepI : maxStepM1;
+  const step = stage === 'P' ? predictStep : stage === 'I' ? stepI : stage === 'EXT' ? extStep : stepM1;
+  const max  = stage === 'P' ? maxPredictStep : stage === 'I' ? maxStepI : stage === 'EXT' ? maxExtStep : maxStepM1;
   const back = document.getElementById('btn_back_' + stage);
   const fwd  = document.getElementById('btn_fwd_' + stage);
   const canBack = step > 1, canFwd = step < max;
@@ -1494,6 +1698,9 @@ function goBack(stage) {
     if (stepI > 1) { snapshotFrontierIfNeeded('I'); stepI--; restoreCodeForStep('I', stepI); updateStepVisibility(); saveState(); scrollToActive('qcard_i' + stepI + '_prompt'); }
   } else if (stage === 'M1') {
     if (stepM1 > 1) { snapshotFrontierIfNeeded('M1'); stepM1--; restoreCodeForStep('M1', stepM1); updateStepVisibility(); saveState(); scrollToActive('m1_step_' + stepM1); }
+  } else if (stage === 'EXT') {
+    // Challenges share one editor and build on each other, so only the brief changes.
+    if (extStep > 1) { extStep--; document.getElementById('fb_m2')?.classList.add('hidden'); updateStepVisibility(); saveState(); scrollToActive('ext_step_' + extStep); }
   }
 }
 
@@ -1504,6 +1711,8 @@ function goForward(stage) {
     if (stepI < maxStepI) { stepI++; restoreCodeForStep('I', stepI); updateStepVisibility(); saveState(); scrollToActive('qcard_i' + stepI + '_prompt'); }
   } else if (stage === 'M1') {
     if (stepM1 < maxStepM1) { stepM1++; restoreCodeForStep('M1', stepM1); updateStepVisibility(); saveState(); scrollToActive('m1_step_' + stepM1); }
+  } else if (stage === 'EXT') {
+    if (extStep < maxExtStep) { extStep++; document.getElementById('fb_m2')?.classList.add('hidden'); updateStepVisibility(); saveState(); scrollToActive('ext_step_' + extStep); }
   }
 }
 
@@ -1635,6 +1844,7 @@ async function runCodeInEditor(editorId, statusElId, inputs = null) {
     statusEl.textContent = '⏳ Running…';
   }
   const result = await runCode(editorEl, { inputs });
+  if (result.cancelled) return; // a later Run click superseded this one — it already owns the UI
   clearSyntaxHint(editorEl);
 
   if (editorId === 'r_editor' && !firstRunShown) {
@@ -2031,6 +2241,7 @@ function nextStep(stage, n) {
   card.classList.add('is-right');
   fieldHint(card, '');
   window.ActivityUI?.miniCelebration(card);
+  delete skippedSteps['i' + n];
   // Lock in the code as it stood for this answer, so Back/Forward can restore it later.
   iCodeSnapshots[n] = code;
   iCodeDraft = undefined;
@@ -2105,6 +2316,7 @@ function tryCompleteInvestigate() {
   });
 
   if (allOk) {
+    delete skippedSteps['i' + STEP_COUNT_I];
     iCodeSnapshots[STEP_COUNT_I] = code;
     iCodeDraft = undefined;
     stripPlantedBugLine();   // break-it demo line must not carry into Modify
@@ -2149,25 +2361,26 @@ async function checkMod() {
   if (raw.trim().length < 10) {
     fbEl.className = 'feedback fail'; fbEl.textContent = '⚠️ Write some code first.'; return;
   }
-  const structural = evalMod(checkKey, raw);
-  renderReqResults(reqListEl, structural.results);
-  // Run BEFORE checking the structural (regex) requirements — a genuine Python
-  // error is a bigger problem than an unmet bullet point, and the structural
-  // checks never execute the code so they can't see it.
-  fbEl.className = 'feedback loading'; fbEl.textContent = '⏳ Running your code…';
-  const inputs = MOD_INPUTS?.[checkKey] || [];
-  const run = await runPython(raw, { inputs });
+  // Run FIRST — a genuine Python error (e.g. the TypeError from an uncast number) is a
+  // bigger problem than an unmet bullet point. The program is answered automatically
+  // with the test numbers, and the reqs then check the answers it actually printed.
+  fbEl.className = 'feedback loading'; fbEl.textContent = '⏳ Testing your code with ' + MOD_TEST_NOTE + '…';
+  const run = await runCode(editorEl, { inputs: MOD_INPUTS[checkKey] || [] });
+  if (run.cancelled) return; // a later Check click superseded this one
   if (!run.ok) {
+    renderReqResults(reqListEl, null);
     fbEl.className = 'feedback fail'; fbEl.textContent = '❌ Error: ' + run.output; recordM1Attempt(); return;
   }
+  const structural = evalMod(checkKey, raw, run.output);
+  renderReqResults(reqListEl, structural.results);
   if (!structural.pass) {
     fbEl.className = 'feedback fail'; fbEl.textContent = structural.msg; recordM1Attempt(); return;
   }
   fbEl.className = 'feedback pass';
   fbEl.textContent = structural.msg;
-  setEditorOutput(document.getElementById('m1_editor'), run.output, false);
-  clearSyntaxHint(document.getElementById('m1_editor'));
+  clearSyntaxHint(editorEl);
   passedChecks[checkId] = true;
+  delete skippedSteps['m1_' + stepM1];
   // Lock in the code as it stood for this modification, so Back/Forward can restore it later.
   m1CodeSnapshots[stepM1] = raw;
   m1CodeDraft = undefined;
@@ -2198,20 +2411,26 @@ async function checkMod() {
 
 async function checkMake() {
   if (window.Classroom?.verifyAuth() === false) return;
-  const raw  = document.getElementById('m2_editor')?.value || '';
+  const editorEl = document.getElementById('m2_editor');
+  const raw  = editorEl?.value || '';
   const fbEl = document.getElementById('fb_m2');
+  const reqListEl = document.getElementById('req_m2_make');
   fbEl.classList.remove('hidden');
-  const structural = evalMake(raw);
-  renderReqResults(document.getElementById('req_m2_make'), structural.results);
-  // Run BEFORE checking the structural (regex) requirements — see the comment
-  // in checkMod() above for why a real error must outrank a formative hint.
-  fbEl.className = 'feedback loading'; fbEl.textContent = '⏳ Checking…';
-  // Two input() calls expected (first number, then second). Extra answers are harmless.
-  const run = await runPython(raw, { inputs: ['8', '2'] });
+  if (raw.trim().length < 15) {
+    fbEl.className = 'feedback fail'; fbEl.textContent = '⚠️ Write your program first, then click Check.'; return;
+  }
+  // Run FIRST — see the comment in checkMod() above for why a real error must outrank
+  // a formative hint. Two input() calls expected (8, then 2); extra answers are harmless.
+  fbEl.className = 'feedback loading'; fbEl.textContent = '⏳ Testing your program with the numbers 8 and 2…';
+  const run = await runCode(editorEl, { inputs: MAKE_INPUTS });
+  if (run.cancelled) return; // a later Check click superseded this one
   if (!run.ok) {
+    renderReqResults(reqListEl, null);
     fbEl.className = 'feedback fail';
     fbEl.textContent = '❌ Your program has an error: ' + run.output; return;
   }
+  const structural = evalMake(raw, run.output);
+  renderReqResults(reqListEl, structural.results);
   if (!structural.pass) {
     fbEl.className = 'feedback fail'; fbEl.textContent = structural.msg; return;
   }
@@ -2221,7 +2440,6 @@ async function checkMake() {
   }
   fbEl.className = 'feedback pass';
   fbEl.textContent = structural.msg;
-  setEditorOutput(document.getElementById('m2_editor'), run.output, false);
   passedChecks['m2_make'] = true;
   window.ActivityUI?.miniCelebration(fbEl);
   window.ActivityUI?.showToast('✅ Make complete! Now tackle the extension!');
@@ -2230,33 +2448,60 @@ async function checkMake() {
   setTimeout(() => document.getElementById('m2_ext_task')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
 }
 
+// Shown while the student is answering their program's questions during a check.
+const INPUT_WAIT_MSG = '⌨ Answer your program’s questions in the output panel below — pick any numbers you like.';
+
 async function checkExt() {
   if (window.Classroom?.verifyAuth() === false) return;
-  const raw  = document.getElementById('m2_editor')?.value || '';
+  const n        = extStep;
+  const editorEl = document.getElementById('m2_editor');
+  const raw  = editorEl?.value || '';
   const fbEl = document.getElementById('fb_m2');
+  const reqListEl = document.getElementById('req_ext_' + n);
   fbEl.classList.remove('hidden');
-  const structural = evalExt(raw);
-  renderReqResults(document.getElementById('req_m2_ext'), structural.results);
-  // Run BEFORE checking the structural (regex) requirements — see the comment
-  // in checkMod() above for why a real error must outrank a formative hint.
-  fbEl.className = 'feedback loading'; fbEl.textContent = '⏳ Checking…';
-  // Three input() calls minimum expected in the extension. Extra answers are harmless.
-  const run = await runPython(raw, { inputs: ['10', '4', '2'] });
+  if (raw.trim().length < 15) {
+    fbEl.className = 'feedback fail'; fbEl.textContent = '⚠️ Write your program above first, then click Check.'; return;
+  }
+  // Run FIRST (see checkMod). The student designed their own questions, so there are no
+  // test numbers — they answer them in the output panel themselves.
+  fbEl.className = 'feedback loading'; fbEl.textContent = INPUT_WAIT_MSG;
+  const run = await runCode(editorEl);
+  if (run.cancelled) return; // a later Check click superseded this one
   if (!run.ok) {
+    renderReqResults(reqListEl, null);
     fbEl.className = 'feedback fail';
     fbEl.textContent = '❌ Your program has an error: ' + run.output; return;
   }
+  const structural = evalExt('ext' + n, raw);
+  renderReqResults(reqListEl, structural.results);
   if (!structural.pass) {
     fbEl.className = 'feedback fail'; fbEl.textContent = structural.msg; return;
   }
   fbEl.className = 'feedback pass'; fbEl.textContent = structural.msg;
-  setEditorOutput(document.getElementById('m2_editor'), run.output, false);
-  passedChecks['m2_ext'] = true;
+  passedChecks['m2_ext' + n] = true;
   window.ActivityUI?.miniCelebration(fbEl);
-  window.ActivityUI?.showToast('🌟 Extension complete! Outstanding!');
-  if (!completedStages.includes('M2')) { completedStages.push('M2'); updateNav(); saveState(); }
+
+  if (n === 1) {
+    // Challenge 1 completes the activity (and the grade); 2–5 are bonus challenges.
+    passedChecks['m2_ext'] = true;
+    if (!completedStages.includes('M2')) { completedStages.push('M2'); updateNav(); }
+    showCompletion();
+  }
+  if (n < EXT_STEP_COUNT) {
+    window.ActivityUI?.showToast(n === 1 ? '🌟 Activity complete! Bonus challenges unlocked…' : '🌟 Challenge ' + n + ' complete!');
+    setTimeout(() => {
+      extStep = n + 1;
+      maxExtStep = Math.max(maxExtStep, extStep);
+      fbEl.classList.add('hidden');
+      updateStepVisibility();
+      saveState();
+      scrollToActive('ext_step_' + extStep);
+    }, AUTO_ADVANCE_MS * 2);   // longer pause: the student reads a new worked example next
+  } else {
+    window.ActivityUI?.showToast('🏆 Every challenge complete — you\'re ready for next lesson!');
+    window.ActivityUI?.launchCelebration({ percent: 100 });
+  }
   updateStepVisibility();
-  showCompletion();
   saveState(); submitScore();
 }
 
@@ -2289,10 +2534,12 @@ function flashSkip() {
 function skipStep(stage) {
   markStageSkipped(stage);
   if (stage === 'I') {
+    skippedSteps['i' + stepI] = true;
     if (stepI === BUG_STEP || stepI === STEP_COUNT_I) stripPlantedBugLine();   // don't carry the broken line forward
     if (stepI < STEP_COUNT_I) { stepI++; maxStepI = Math.max(maxStepI, stepI); updateStepVisibility(); saveState(); scrollToActive('qcard_i' + stepI + '_prompt'); }
     else { completeStage('I'); }
   } else if (stage === 'M1') {
+    skippedSteps['m1_' + stepM1] = true;
     if (stepM1 < STEP_COUNT_M1) { stepM1++; maxStepM1 = Math.max(maxStepM1, stepM1); updateStepVisibility(); saveState(); scrollToActive('m1_step_' + stepM1); }
     else { completeStage('M1'); }
   }
