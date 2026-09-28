@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest';
-import { evalMod, evalMake, evalExt, nonQuestionPrompts } from './checkers.js';
+import { evalMod, evalMake, evalExt, nonQuestionPrompts, evalInv, isBugFixed, IBUG_LINE, IBUG_FIXED_LINE } from './checkers.js';
 
 const code = (lines) => lines.join('\n');
 
@@ -243,5 +243,38 @@ describe('nonQuestionPrompts', () => {
       'print(a + b + c)',
     ]));
     expect(r.pass).toBe(true);
+  });
+});
+
+// ─── Investigate ─────────────────────────────────────────────────────────────
+
+describe('evalInv', () => {
+  const ran = (src, ok = true) => ({ code: src, ok });
+  const STARTER = ['name = input("What is your name? ")', 'greeting = "Hello "', IBUG_FIXED_LINE];
+  const STEP1 = ['name = input("Enter your name: ")', ...STARTER.slice(1)];
+
+  test('step 1: the input() message must change', () => {
+    expect(evalInv(1, code(STARTER)).pass).toBe(false);
+    expect(evalInv(1, code(STEP1)).pass).toBe(true);
+    expect(evalInv(1, code(STARTER.slice(1))).pass).toBe(false);   // deleted line 1
+  });
+
+  test('step 2 has no code change, so it always passes', () => {
+    expect(evalInv(2, code(STEP1))).toEqual({ results: [], pass: true, msg: null });
+  });
+
+  test('step 3: broken, fixed, renamed and deleted', () => {
+    const broken = code([...STEP1.slice(0, 2), IBUG_LINE]);
+    const fixed = code(STEP1);
+    expect(evalInv(3, fixed, { lastRun: ran(fixed) }).results).toEqual([false, false]);   // Break it not pressed
+    expect(evalInv(3, broken, { breaks: 1, lastRun: ran(broken, false) }).results).toEqual([true, false]);
+    expect(evalInv(3, fixed, { breaks: 1, lastRun: ran(fixed) }).pass).toBe(true);
+    const renamed = code(['fullname = input("Enter your name: ")', 'greeting = "Hello "', IBUG_LINE]);
+    expect(isBugFixed(renamed)).toBe(true);
+    expect(evalInv(3, renamed, { breaks: 1, lastRun: ran(renamed) }).pass).toBe(true);
+    const deleted = code(STEP1.slice(0, 2));
+    const r = evalInv(3, deleted, { breaks: 1, lastRun: ran(deleted) });
+    expect(r.pass).toBe(false);
+    expect(r.msg).toMatch(/don't delete it/);
   });
 });

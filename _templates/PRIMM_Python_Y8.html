@@ -322,6 +322,15 @@ color:  purple
   .req-list li.req-pass > span:first-child { background: var(--green); color: #05210f; }
   .req-list li.req-fail { border-color: var(--red); background: #fff5f5; }
   .req-list li.req-fail > span:first-child { background: var(--red); color: #fff; }
+  /* Investigate prompts: ticked code-change bullets, with plain "then run it" notes between them */
+  #i_steps .req-list { margin: 0.6rem 0 0.2rem; }
+  #i_steps .req-list li { box-shadow: none; background: white; }
+  #i_steps .req-list li > span:first-child { background: var(--stage-i); }
+  #i_steps .req-list li.req-pass { background: #effdf3; }
+  #i_steps .req-list li.req-pass > span:first-child { background: var(--green); }
+  #i_steps .req-list li.req-fail { background: #fff5f5; }
+  #i_steps .req-list li.req-fail > span:first-child { background: var(--red); }
+  #i_steps .req-list li.req-note { background: none; border: none; padding: 0.1rem 0.2rem 0.5rem 2.2rem; display: block; }
 
   /* ── MISC ── */
   .section-label { font-family: var(--font-mono); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.12em; color: #9a8cc8; font-weight: 700; margin-bottom: 0.45rem; margin-top: 1.3rem; }
@@ -704,7 +713,7 @@ color:  purple
     ║  In the default 3-step layout, steps 1–2 are yours to fill in freely  ║
     ║  (concept exploration); step 3 is the STANDARD "fix a bug" step and   ║
     ║  ships pre-written as an MCQ — you only need to fill in IBUG_LINE /   ║
-    ║  IBUG_FIXED_LINE and the option text in the JS (see FILL IN ②b).      ║
+    ║  IBUG_FIXED_LINE in checkers.js and the option text (see FILL IN ②b). ║
     ║  Step 3 = guided encounter — student presses "😈 Break it" to add the ║
     ║  bug, with the line/error explained, then fixes it themselves. Its    ║
     ║  Check button completes Investigate (tryCompleteInvestigate()), so    ║
@@ -747,61 +756,66 @@ color:  purple
        rendered below the editor in #i_answers. Both are toggled together per step. -->
   <div id="i_steps">
 
+    <!-- TICK-LISTS: every instruction that needs a CODE CHANGE is a numbered <li> in the
+         step's <ul class="req-list" id="req_i_N">, checked by INV_CHECKS.invN in
+         checkers.js (one req per numbered <li>, same order). They tick live as the
+         student types/runs, cross on Check, and ALL must pass before that step's answer
+         is accepted. "Run your code" / "type 5 when asked" go in <li class="req-note">
+         lines, which are never ticked. A step with NO code change has no req-list and no
+         INV_CHECKS entry — it is never gated (see L3_Input step 2). -->
     <div class="q-card" id="qcard_i1_prompt" style="border-left-color:var(--stage-i)">
-      <label class="q-label"><span class="q-num" style="background:var(--stage-i)">1</span>
-        FILL IN: "Change <code style="background:#ede0ff;padding:0 3px;border-radius:3px">X</code>
-        to <code style="background:#ede0ff;padding:0 3px;border-radius:3px">Y</code>
-        in the editor below. Run it."
-        <!-- INSTRUCTIONS ONLY here — the question itself lives in the answer card below the editor. -->
-      </label>
+      <label class="q-label"><span class="q-num" style="background:var(--stage-i)">1</span> In the editor below:</label>
+      <ul class="req-list" id="req_i_1">
+        <li><span>1</span><span class="req-text">FILL IN: Change <code style="background:#ede0ff;padding:0 3px;border-radius:3px">X</code> to <code style="background:#ede0ff;padding:0 3px;border-radius:3px">Y</code>.</span></li>
+        <li class="req-note">Then press <strong>▶ Run code</strong>.</li>
+      </ul>
+      <!-- INSTRUCTIONS ONLY here — the question itself lives in the answer card below the editor. -->
     </div>
 
     <div class="q-card step-hidden" id="qcard_i2_prompt" style="border-left-color:var(--stage-i)">
-      <label class="q-label"><span class="q-num" style="background:var(--stage-i)">2</span>
-        <!--
-          FILL IN: Multi-step instructions use a bullet list; students never retype earlier work.
-          If this step asks students to add a new line of code, set needsNewLine: true in I_FIELDS
-          for this step — the editor will automatically insert a newline and position the cursor there.
-        -->
-        Make these changes in the editor:
-        <ul style="margin:0.5rem 0 0 1.2rem;line-height:2">
-          <li>FILL IN: <strong>Add/change</strong> <code style="background:#ede0ff;padding:0 3px;border-radius:3px">Z</code>.</li>
-          <li>Run your code.</li>
-        </ul>
-        <!-- INSTRUCTIONS ONLY — put the question ("What do you observe?") in the answer card below. -->
-      </label>
+      <!--
+        FILL IN: one numbered <li> per code change; students never retype earlier work.
+        If this step asks students to add a new line of code, set needsNewLine: true in I_FIELDS
+        for this step — the editor will automatically insert a newline and position the cursor there.
+      -->
+      <label class="q-label"><span class="q-num" style="background:var(--stage-i)">2</span> Keep your step 1 change. Now:</label>
+      <ul class="req-list" id="req_i_2">
+        <li><span>1</span><span class="req-text">FILL IN: <strong>Add/change</strong> <code style="background:#ede0ff;padding:0 3px;border-radius:3px">Z</code>.</span></li>
+        <li class="req-note">Run your code.</li>
+      </ul>
+      <!-- INSTRUCTIONS ONLY — put the question ("What do you observe?") in the answer card below. -->
     </div>
 
     <!--
       STANDARD BUG STEP — the guided bug encounter is ALWAYS the last Investigate
       step in every activity. See the "THE STANDARD BUG STEP" note further down
-      (near I_FIELDS) for the full explanation and the JS you must fill in
-      (IBUG_LINE / IBUG_FIXED_LINE). If you add extra concept steps, insert them
-      BEFORE this step and renumber qcard_i3... up to match — this step must stay
-      the final one, and its Check button must call tryCompleteInvestigate().
+      (near I_FIELDS) for the full explanation and what checkers.js must export
+      (IBUG_LINE / IBUG_FIXED_LINE / isBugFixed …). If you add extra concept steps,
+      insert them BEFORE this step and renumber qcard_i3... and req_i_3 up to match —
+      this step must stay the final one, and its Check button must call
+      tryCompleteInvestigate(). Its "Fix it" tick only counts while the FIXED line is
+      present, so a student who deletes the broken line instead of fixing it never
+      gets the tick (unless deleting IS the fix — see L2_Variables).
     -->
     <div class="q-card step-hidden" id="qcard_i3_prompt" style="border-left-color:var(--stage-i)">
-      <label class="q-label"><span class="q-num" style="background:var(--stage-i)">3</span>
-        Now let's <strong>meet an error</strong> — every programmer does, all the time, and it is not a disaster.
-        <ul style="margin:0.5rem 0 0 1.2rem;line-height:2">
-          <li>Under the editor, press <strong>😈 Break it</strong> — it adds <strong>one broken line</strong> to your code and runs it for you: it's <strong>line <span id="ibug_line">the last line</span></strong>:
-            <code style="background:#ede0ff;padding:0 3px;border-radius:3px">FILL IN: show IBUG_LINE here</code>. FILL IN: name the exact mistake in plain English.</li>
-          <li>Python stops with a red <strong>FILL IN: error type, e.g. SyntaxError / TypeError</strong> — that's expected.</li>
-          <li>Read the message, then click <strong>💡 Get help</strong> below the editor for a plain-English hint and the Debugging Recipe.</li>
-          <li><strong>Fix it:</strong> FILL IN: describe the exact fix (it must turn the line into IBUG_FIXED_LINE), then press <strong>▶ Run code</strong> again until it works.</li>
-        </ul>
-        <!-- INSTRUCTIONS ONLY — put the "what was Python complaining about?" MCQ in the answer card below. -->
-      </label>
+      <label class="q-label"><span class="q-num" style="background:var(--stage-i)">3</span> Now let's <strong>meet an error</strong> — every programmer does, all the time, and it is not a disaster.</label>
+      <ul class="req-list" id="req_i_3">
+        <li><span>1</span><span class="req-text">Under the editor, press <strong>😈 Break it</strong> — it adds <strong>one broken line</strong> to your code and runs it for you: it's <strong>line <span id="ibug_line">the last line</span></strong>,
+          <code style="background:#ede0ff;padding:0 3px;border-radius:3px">FILL IN: show IBUG_LINE here</code>. FILL IN: name the exact mistake in plain English.</span></li>
+        <li class="req-note">Python stops with a red <strong>FILL IN: error type, e.g. SyntaxError / TypeError</strong> — that's expected. Read the message, then click <strong>💡 Get help</strong> below the editor for a plain-English hint.</li>
+        <li><span>2</span><span class="req-text"><strong>Fix it</strong> (don't delete it!): FILL IN: describe the exact fix (it must turn the line into IBUG_FIXED_LINE), then press <strong>▶ Run code</strong> again until it works.</span></li>
+      </ul>
+      <!-- INSTRUCTIONS ONLY — put the "what was Python complaining about?" MCQ in the answer card below. -->
     </div>
   </div>
 
   <!-- ② Shared editor (with Run). Students accumulate changes here across steps. -->
   <div class="code-checker" style="margin-top:0.5rem">
-    <textarea class="checker-textarea" id="i_editor" data-title="Python Editor" oninput="saveState()"></textarea>
+    <textarea class="checker-textarea" id="i_editor" data-title="Python Editor" oninput="saveState(); refreshInvTicks()"></textarea>
     <div class="checker-footer">
       <!-- FILL IN ⑩: Mock inputs matching the current state of the code in the editor. -->
       <button class="btn btn-check" onclick="runCodeInEditor('i_editor', 'i_fb_run', [/* 'input1' */])">▶ Run code</button>
-      <button class="btn btn-reset" onclick="resetInvestigateEditor()">↺ Reset to original</button>
+      <button class="btn btn-reset" id="btn_reset_i" onclick="resetInvestigateEditor()">↺ Reset to original</button>
       <div class="feedback loading hidden" id="i_fb_run"></div>
     </div>
   </div>
@@ -816,7 +830,6 @@ color:  purple
       <label class="q-label">FILL IN: What changes in the output?</label>
       <textarea id="i1" placeholder="Describe what changed…" oninput="saveState()"></textarea>
       <button class="btn btn-next" id="btn_check_i1" style="margin-top:10px" onclick="nextStep('I', 1)" disabled>✓ Check answer</button>
-      <button class="btn btn-skip" id="btn_skip_i1" style="margin-top:6px;display:none" onclick="skipStep('I')">Move on without completing →</button>
     </div>
 
     <div class="q-card step-hidden" id="qcard_i2" style="border-left-color:var(--stage-i)">
@@ -824,7 +837,6 @@ color:  purple
       <label class="q-label">FILL IN: What do you observe?</label>
       <textarea id="i2" placeholder="Describe what happened…" oninput="saveState()"></textarea>
       <button class="btn btn-next" id="btn_check_i2" style="margin-top:10px" onclick="nextStep('I', 2)" disabled>✓ Check answer</button>
-      <button class="btn btn-skip" id="btn_skip_i2" style="margin-top:6px;display:none" onclick="skipStep('I')">Move on without completing →</button>
     </div>
 
     <!-- Guided bug encounter — step 3 (the last step) answer is a comprehension MCQ
@@ -845,7 +857,6 @@ color:  purple
       <div class="mcq-fb" id="fb_i3"></div>
       <!-- Last step → tryCompleteInvestigate(), not nextStep() -->
       <button class="btn btn-next" id="btn_check_i3" style="margin-top:10px" onclick="tryCompleteInvestigate()" disabled>✓ Check answer</button>
-      <button class="btn btn-skip" id="btn_skip_i3" style="margin-top:6px;display:none" onclick="skipStep('I')">Move on without completing →</button>
     </div>
 
     <!--
@@ -858,10 +869,23 @@ color:  purple
            the visible step number, so the bug step is ALWAYS the final one.
         3. Update every nextStep('I', N) call to match the new numbering; the LAST
            card's button must still call tryCompleteInvestigate().
-        4. Update TEXT_FIELDS / RADIO_GROUPS, I_FIELDS, and I_CODE_CHECKS in the JS
-           to match the new step count and positions.
+        4. Update TEXT_FIELDS / RADIO_GROUPS and I_FIELDS in the JS, and INV_CHECKS in
+           checkers.js (plus every req_i_N list id), to match the new step count and positions.
         5. Set STEP_COUNT_I to the new total.
     -->
+  </div>
+
+  <!-- Skipping needs the teacher password (SKIP_PASSWORD in the JS), same as Modify.
+       Revealed after 3 failed checks on the current step. -->
+  <div id="i_skip_wrap" style="margin-top:0.5rem;display:none">
+    <button class="btn btn-skip" onclick="openSkipGate('i')">Skip this step →</button>
+    <div class="skip-gate" id="skip_gate_i">
+      <label for="skip_pw_i">Teacher password:</label>
+      <input type="password" id="skip_pw_i" autocomplete="off" onkeydown="if (event.key === 'Enter') confirmSkip('i')">
+      <button class="btn btn-reset" onclick="confirmSkip('i')">Skip</button>
+      <button class="btn btn-reset" onclick="closeSkipGate('i')">Cancel</button>
+      <span class="skip-gate-err" id="skip_gate_err_i" role="alert"></span>
+    </div>
   </div>
 
   <!-- ④ Back / Forward through completed Investigate steps (same pattern as Predict). -->
@@ -1009,13 +1033,13 @@ color:  purple
 
   <!-- Skipping needs the teacher password (SKIP_PASSWORD in the JS). Revealed after 3 failed attempts. -->
   <div id="m1_skip_wrap" style="margin-top:0.5rem;display:none">
-    <button class="btn btn-skip" id="btn_skip_m1" onclick="openSkipGate()">Skip this task →</button>
+    <button class="btn btn-skip" id="btn_skip_m1" onclick="openSkipGate('m1')">Skip this task →</button>
     <div class="skip-gate" id="skip_gate_m1">
       <label for="skip_pw_m1">Teacher password:</label>
-      <input type="password" id="skip_pw_m1" autocomplete="off" onkeydown="if (event.key === 'Enter') confirmSkipM1()">
-      <button class="btn btn-reset" onclick="confirmSkipM1()">Skip</button>
-      <button class="btn btn-reset" onclick="closeSkipGate()">Cancel</button>
-      <span class="skip-gate-err" id="skip_gate_err" role="alert"></span>
+      <input type="password" id="skip_pw_m1" autocomplete="off" onkeydown="if (event.key === 'Enter') confirmSkip('m1')">
+      <button class="btn btn-reset" onclick="confirmSkip('m1')">Skip</button>
+      <button class="btn btn-reset" onclick="closeSkipGate('m1')">Cancel</button>
+      <span class="skip-gate-err" id="skip_gate_err_m1" role="alert"></span>
     </div>
   </div>
   <button class="btn btn-next step-hidden" id="btn_goto_m2" onclick="completeStage('M1')" style="margin-top:1rem">
@@ -1155,10 +1179,27 @@ color:  purple
   ║  EXT_CHECK  = { reqs: […], passMsg }   // one req per Extension <li>       ║
   ║  evalExt(raw)  → { results, pass, msg }                                    ║
   ║                                                                              ║
-  ║  See Y8/Python Unit 1/L2_Variables/checkers.js for a complete reference.   ║
+  ║  INVESTIGATE (tick-lists on each prompt card, gating each step's Check):   ║
+  ║  INV_CHECKS = {                                                              ║
+  ║    inv1: { reqs: [{ hint, test(raw, ctx) → bool }, …] },  // one per       ║
+  ║    …                                  // numbered <li> in #req_i_N          ║
+  ║  }                                    // (omit a step with no code change) ║
+  ║  evalInv(n, raw, ctx) → { results, pass, msg }                              ║
+  ║    ctx = { breaks, fixes, lastRun: { code, ok } } — Break it presses and   ║
+  ║    break→fix→run cycles at this step, and the last Investigate Run. A     ║
+  ║    hint may be a function (raw, ctx) → string.                              ║
+  ║  IBUG_LINE, IBUG_FIXED_LINE          the bug step's broken / fixed line    ║
+  ║  isBugFixed(raw)    the code no longer has the bug AND still has the fix   ║
+  ║                     (false if the line was simply deleted, unless deleting ║
+  ║                     IS the fix)                                             ║
+  ║  isBugPairLine(line)  a Break it demo line (stripped when the step ends)   ║
+  ║                                                                              ║
+  ║  See Y8/Python Unit 1/L4_Data_Types_Casting/checkers.js (+ checkers.test.js)║
+  ║  for a complete reference, including the Investigate checks.               ║
   ╚══════════════════════════════════════════════════════════════════════════════╝
 */
-import { normalise, has, MOD_CHECKS, MOD_INPUTS, evalMod, MAKE_CHECK, evalMake, EXT_CHECK, evalExt } from './checkers.js';
+import { normalise, has, MOD_CHECKS, MOD_INPUTS, evalMod, MAKE_CHECK, evalMake, EXT_CHECK, evalExt,
+         evalInv, isBugFixed, isBugPairLine, IBUG_LINE, IBUG_FIXED_LINE } from './checkers.js';
 import { runPython, preload } from '../../../pyodide-runner.js';
 import { setupEditors, clearSyntaxHint, setEditorOutput, refreshEditor } from '../../../code-editor.js';
 
@@ -1197,12 +1238,14 @@ const STEP_COUNT_M1 = 4;   // must equal the number of m1_step_1…m1_step_N div
 //  and must need NO input() — the goal is a predictable, deterministic error every
 //  time. Pick a bug that demonstrates the ACTUAL misconception this lesson teaches
 //  (a missing quote, a bad cast, an off-by-one index …), not a generic typo.
-//  See Y8/Python/L1_Output/1_Strings_PRIMM.html (a missing closing quote) for the
-//  worked reference example.
+//  See Y8/Python Unit 1/L1_Output (a missing closing quote) for the worked
+//  reference example.
+//
+//  IBUG_LINE / IBUG_FIXED_LINE live in checkers.js (with isBugFixed / isBugPairLine),
+//  so the step's tick-list and the Break it button agree on them, e.g.
+//    export const IBUG_LINE       = 'print("Debugging is normal!)';   // deliberately broken
+//    export const IBUG_FIXED_LINE = 'print("Debugging is normal!")';  // the corrected version
 // ═══════════════════════════════════════════════════════
-
-const IBUG_LINE       = 'FILL IN: e.g. print("Debugging is normal!)';   // deliberately broken
-const IBUG_FIXED_LINE = 'FILL IN: e.g. print("Debugging is normal!")';  // the corrected version
 
 
 // ═══════════════════════════════════════════════════════
@@ -1306,30 +1349,13 @@ const I_FIELDS = [
 
 
 // ═══════════════════════════════════════════════════════
-//  FILL IN ⑤b — Investigate code-change gates (OPTIONAL but must exist)
-//  One function per Investigate step (same order/length as I_FIELDS).
-//  Each receives the current editor code and returns an error string if the
-//  student hasn't yet made the required change (so "Check answer" reminds them
-//  to edit the code first), or null to allow the step to be checked.
-//  Return null from every entry if a step needs no code gate.
-//
-//  This gate is wired in for EVERY step automatically — nextStep() checks it
-//  for steps 1..N-1 and tryCompleteInvestigate() checks it for the final step
-//  — so a step whose gate fails always shows the bobbing-arrow callout on the
-//  instruction card (flashInstruction()) before the answer is even validated.
-//  No extra wiring is needed per activity; just fill in the functions here.
-//  See Y8/Python/L1_Output/1_Strings_PRIMM.html for worked examples.
+//  FILL IN ⑤b — Investigate code-change ticks
+//  Each prompt card's numbered <li>s (#req_i_N) are checked by INV_CHECKS.invN in
+//  checkers.js — ticked live as the student edits/runs, crossed on Check, and ALL
+//  must pass before that step's answer is accepted (see invGate()). A step with no
+//  code change (no #req_i_N list / no INV_CHECKS entry) is never gated.
 // ═══════════════════════════════════════════════════════
 
-const I_CODE_CHECKS = [
-  function(code) { /* FILL IN: e.g. if (!/new_value/.test(code)) return 'Make the change first…'; */ return null; },
-  function(code) { return null; },
-  // Standard bug step — the gate just requires the line to currently read
-  // IBUG_FIXED_LINE (i.e. not still broken, and not reverted to something else).
-  // No per-activity changes needed here; do not remove.
-  function(code) { if (!code.includes(IBUG_FIXED_LINE)) return 'fix the broken line so it reads exactly as shown above.'; return null; },
-  // Add a 4th entry (BEFORE the bug step's entry above) if STEP_COUNT_I > 3.
-];
 
 
 // ═══════════════════════════════════════════════════════
@@ -1367,6 +1393,13 @@ let skippedStages = state.skippedStages || [];
 let skippedSteps = state.skippedSteps || {};
 let attemptCounts = state.attemptCounts || {};
 let iStepRan = state.iStepRan || {};
+// Break it / fix-it progress per Investigate step: { breaks, fixes, pending } — a "fix"
+// counts only when a Break it is followed by a successful run of genuinely fixed code
+// (isBugFixed in checkers.js), so deleting a line that should be fixed never counts.
+let iBugProgress = state.iBugProgress || {};
+// The last Run of the Investigate editor — lets "fix it, then run it" ticks confirm the
+// student ran the code as it stands now.
+let iLastRun = state.iLastRun || null;
 let firstRunShown = false;
 // One consistent auto-advance delay across Predict / Investigate / Modify so the
 // student sees the feedback before the next question appears.
@@ -1418,6 +1451,8 @@ function saveState() {
   state.skippedSteps = skippedSteps;
   state.attemptCounts = attemptCounts;
   state.iStepRan = iStepRan;
+  state.iBugProgress = iBugProgress;
+  state.iLastRun = iLastRun;
   state.iCodeSnapshots  = iCodeSnapshots;
   state.iCodeDraft      = iCodeDraft;
   state.m1CodeSnapshots = m1CodeSnapshots;
@@ -1482,6 +1517,21 @@ function updateStepVisibility() {
   // reattempt it rather than being locked out for good.
   const iEditor = document.getElementById('i_editor');
   if (iEditor) iEditor.readOnly = iRevisiting && iCodeSnapshots[stepI] !== undefined;
+  // Passed steps show every code-change ticked; the current step shows live ticks only
+  // (crosses appear when Check is pressed); other steps start neutral.
+  for (let i = 1; i <= STEP_COUNT_I; i++) {
+    renderInvReqs(i, iCodeSnapshots[i] !== undefined ? 'passed' : i === stepI ? 'soft' : 'neutral');
+  }
+  const resetIBtn = document.getElementById('btn_reset_i');
+  if (resetIBtn) {
+    resetIBtn.disabled = !!iEditor?.readOnly;   // nothing to reset while looking back at a passed step
+    resetIBtn.title = stepI === 1
+      ? 'Put the editor back to the original starting code'
+      : 'Put the editor back to how it was when you finished step ' + (stepI - 1);
+  }
+  closeSkipGate('i');
+  const skipIWrap = document.getElementById('i_skip_wrap');
+  if (skipIWrap) skipIWrap.style.display = !iEditor?.readOnly && (attemptCounts['i' + stepI] || 0) >= 3 ? '' : 'none';
   syncBugLineLabel();   // standard bug step — keep the "line N" label current, no planting
   const m1Revisiting = stepM1 < maxStepM1;
   for (let i = 1; i <= STEP_COUNT_M1; i++) {
@@ -1510,7 +1560,7 @@ function updateStepVisibility() {
       ? 'Put the editor back to the original starting code'
       : 'Put the editor back to how it was when you finished the previous modification';
   }
-  closeSkipGate();   // the step just changed (or was refreshed) — never leave a half-open gate behind
+  closeSkipGate('m1');   // the step just changed (or was refreshed) — never leave a half-open gate behind
   const skipM1Wrap = document.getElementById('m1_skip_wrap');
   if (skipM1Wrap) skipM1Wrap.style.display = (attemptCounts['m1_' + stepM1] || 0) >= 3 ? '' : 'none';
 
@@ -1734,6 +1784,7 @@ async function runCodeInEditor(editorId, statusElId, inputs = []) {
     statusEl.classList.add('loading');
     statusEl.textContent = '⏳ Running…';
   }
+  const codeRun = editorEl?.value || '';
   const result = await runPython(code, { inputs });
   setEditorOutput(editorEl, result.output, !result.ok, result.line);
   clearSyntaxHint(editorEl);
@@ -1745,8 +1796,13 @@ async function runCodeInEditor(editorId, statusElId, inputs = []) {
 
   if (editorId === 'i_editor') {
     iStepRan[stepI] = true;
+    iLastRun = { code: codeRun, ok: !!result.ok };
+    // A Break it followed by a clean run of fixed code = one break/fix cycle.
+    const bp = invBugProgress(stepI);
+    if (bp.pending && result.ok && isBugFixed(codeRun)) { bp.fixes++; bp.pending = false; }
     const checkBtn = document.getElementById('btn_check_i' + stepI);
     if (checkBtn) checkBtn.disabled = false;
+    refreshInvTicks();
     saveState();
   }
 
@@ -1762,14 +1818,67 @@ async function runCodeInEditor(editorId, statusElId, inputs = []) {
   }
 }
 
+// Where this step's code started: the snapshot taken when the nearest earlier step
+// passed (minus any Break it demo line), or the original starting code for step 1 /
+// if nothing earlier was passed. Resetting to this — not always STARTER_CODE — means
+// a reset never throws away the work from earlier steps.
+function iBaselineCode(step) {
+  for (let k = step - 1; k >= 1; k--) {
+    if (iCodeSnapshots[k] !== undefined) return iCodeSnapshots[k].split('\n').filter(l => !isBugPairLine(l)).join('\n');
+  }
+  return STARTER_CODE;
+}
+
 function resetInvestigateEditor() {
   const ta = document.getElementById('i_editor');
-  ta.value = STARTER_CODE;
-  iCodeDraft = undefined;
+  if (!ta || ta.readOnly) return;
+  ta.value = iBaselineCode(stepI);
+  if (stepI === maxStepI) iCodeDraft = undefined;
+  clearSyntaxHint(ta);
   refreshEditor(ta);
+  renderInvReqs(stepI, 'soft');
   saveState();
-  // No auto-replant here — the Investigate editor starts clean; the student
-  // presses "😈 Break it" again themselves, same as after any other reset.
+  // No auto-replant here — the student presses "😈 Break it" again themselves.
+}
+
+// ── Investigate code-change ticks (INV_CHECKS in checkers.js) ─────────────────
+
+function invBugProgress(n) {
+  return iBugProgress[n] || (iBugProgress[n] = { breaks: 0, fixes: 0, pending: false });
+}
+
+// Evaluate step n's code-change bullets against the live editor and draw them.
+// mode: 'full' ticks + crosses (on Check) · 'soft' ticks only, unmet bullets stay
+// neutral (while editing/running) · 'passed' all ticked · 'neutral' all plain.
+function renderInvReqs(n, mode) {
+  const list = document.getElementById('req_i_' + n);
+  if (!list) return null;
+  if (mode === 'neutral' || mode === 'passed') {
+    const count = list.querySelectorAll(':scope > li:not(.req-note)').length;
+    renderReqResults(list, mode === 'passed' ? Array(count).fill(true) : null);
+    return null;
+  }
+  const r = evalInv(n, document.getElementById('i_editor')?.value || '', { ...invBugProgress(n), lastRun: iLastRun });
+  renderReqResults(list, mode === 'full' ? r.results : r.results.map(ok => ok || undefined));
+  return r;
+}
+
+// Live ticks while typing — only on the step being worked on (a passed step stays all-ticked).
+function refreshInvTicks() {
+  if (currentStage === 'I' && iCodeSnapshots[stepI] === undefined) renderInvReqs(stepI, 'soft');
+}
+
+// Gate for Check answer: every code-change bullet on step n must be met. Shows crosses,
+// the first unmet bullet's hint, and points the student back at the instructions.
+function invGate(n, card) {
+  const r = renderInvReqs(n, 'full');
+  if (!r || r.pass) return true;
+  card?.classList.add('error');
+  card?.classList.remove('is-right');
+  fieldHint(card, 'Finish the code changes first: ' + r.msg);
+  flashInstruction(n);
+  recordIAttempt(n);
+  return false;
 }
 
 // ── Standard "fix a bug" step (see FILL IN ②b) ─────────────────────────────
@@ -1787,7 +1896,7 @@ function resetInvestigateEditor() {
 // calls input() the student sees a raw "OSError: I/O error" instead of the bug.
 function breakItDemo() {
   const ta = document.getElementById('i_editor');
-  if (!ta) return;
+  if (!ta || ta.readOnly) return;   // looking back at a passed step
   const lineSpan = document.getElementById('ibug_line');
   if (ta.value.includes(IBUG_FIXED_LINE)) {
     ta.value = ta.value.replace(IBUG_FIXED_LINE, IBUG_LINE);
@@ -1798,6 +1907,10 @@ function breakItDemo() {
     if (lineSpan) lineSpan.textContent = String(state.iBugPlantedLineNo);
     saveState();
   }
+  const bp = invBugProgress(stepI);
+  bp.breaks++;
+  bp.pending = true;   // the next successful run of fixed code counts as a fix
+  saveState();
   refreshEditor(ta);
   runCodeInEditor('i_editor', 'i_fb_run');
 }
@@ -1815,7 +1928,7 @@ function stripPlantedBugLine() {
   const ta = document.getElementById('i_editor');
   if (!ta) return;
   ta.value = ta.value.split('\n')
-    .filter(l => l.trim() !== IBUG_FIXED_LINE && l.trim() !== IBUG_LINE)
+    .filter(l => !isBugPairLine(l))
     .join('\n');
   refreshEditor(ta);
 }
@@ -2064,7 +2177,7 @@ function flashInstruction(n) {
     note.className = 'ig-callout';
     note.setAttribute('role', 'status');
     note.innerHTML = '<span class="ig-callout-arrows" aria-hidden="true">➜➜➜</span>' +
-      '<span>Do this step first — make the change described here in the editor below, then press Check.</span>';
+      '<span>Do this step first — make each numbered change in the editor below until it ticks ✓, then press Check.</span>';
     prompt.insertBefore(note, prompt.firstChild);
   }
   prompt.classList.remove('needs-attention');
@@ -2100,15 +2213,8 @@ function nextStep(stage, n) {
   if (!field) return;
   const card = document.getElementById(field.cardId);
 
-  const code    = document.getElementById('i_editor')?.value || '';
-  const codeMsg = I_CODE_CHECKS[n - 1]?.(code);
-  if (codeMsg) {
-    card.classList.add('error');
-    card.classList.remove('is-right');
-    fieldHint(card, 'Make the code change first: ' + codeMsg);
-    flashInstruction(n);
-    return;
-  }
+  const code = document.getElementById('i_editor')?.value || '';
+  if (!invGate(n, card)) return;
 
   if (field.type === 'mcq') {
     const chosen = document.querySelector(`input[name="${field.radioName}"]:checked`);
@@ -2175,19 +2281,10 @@ function nextStep(stage, n) {
 function tryCompleteInvestigate() {
   if (window.Classroom?.verifyAuth() === false) return;
 
-  // Same code-change gate as nextStep() — the LAST Investigate step is checked
-  // here instead, so it needs its own I_CODE_CHECKS lookup + flashInstruction
-  // call to stay consistent with every earlier step.
+  // Same code-change gate as nextStep() — the LAST Investigate step is checked here instead.
   const code     = document.getElementById('i_editor')?.value || '';
-  const codeMsg  = I_CODE_CHECKS[STEP_COUNT_I - 1]?.(code);
   const lastCard = document.getElementById('qcard_i' + STEP_COUNT_I);
-  if (codeMsg) {
-    lastCard?.classList.add('error');
-    lastCard?.classList.remove('is-right');
-    fieldHint(lastCard, 'Make the code change first: ' + codeMsg);
-    flashInstruction(STEP_COUNT_I);
-    return;
-  }
+  if (!invGate(STEP_COUNT_I, lastCard)) return;
 
   let allOk = true;
   let firstError = null;
@@ -2237,7 +2334,8 @@ function tryCompleteInvestigate() {
 // (used when a step is not-yet-attempted, e.g. after Back/Forward navigation).
 function renderReqResults(listEl, results) {
   if (!listEl) return;
-  [...listEl.children].forEach((li, i) => {
+  // .req-note lines are plain instructions between bullets — never ticked or numbered
+  [...listEl.children].filter(li => !li.classList.contains('req-note')).forEach((li, i) => {
     const icon = li.querySelector(':scope > span:first-child');
     const ok = results ? results[i] : undefined;
     li.classList.toggle('req-pass', ok === true);
@@ -2414,37 +2512,38 @@ function skipStep(stage) {
   }
 }
 
-// ── Modify: password-gated skip ───────────────────────
-// Students can't skip a Modify task themselves — the button only opens a password
-// box, and skipStep('M1') runs once a teacher has typed the password.
+// ── Password-gated skip (Investigate + Modify) ───────
+// Students can't skip an Investigate step or Modify task themselves — the button only
+// opens a password box, and skipStep() runs once a teacher has typed the password.
+// key is 'i' (Investigate) or 'm1' (Modify) — the suffix on the gate's element ids.
 const SKIP_PASSWORD = 'outwood';
 
-function openSkipGate() {
-  const gate = document.getElementById('skip_gate_m1');
+function openSkipGate(key) {
+  const gate = document.getElementById('skip_gate_' + key);
   if (!gate) return;
   gate.classList.add('open');
-  document.getElementById('skip_pw_m1')?.focus();
+  document.getElementById('skip_pw_' + key)?.focus();
 }
 
-function closeSkipGate() {
-  document.getElementById('skip_gate_m1')?.classList.remove('open');
-  const pw = document.getElementById('skip_pw_m1');
+function closeSkipGate(key) {
+  document.getElementById('skip_gate_' + key)?.classList.remove('open');
+  const pw = document.getElementById('skip_pw_' + key);
   if (pw) pw.value = '';
-  const err = document.getElementById('skip_gate_err');
+  const err = document.getElementById('skip_gate_err_' + key);
   if (err) err.textContent = '';
 }
 
-function confirmSkipM1() {
-  const pw = document.getElementById('skip_pw_m1');
+function confirmSkip(key) {
+  const pw = document.getElementById('skip_pw_' + key);
   if (!pw) return;
   if (pw.value.trim().toLowerCase() !== SKIP_PASSWORD) {
-    const err = document.getElementById('skip_gate_err');
+    const err = document.getElementById('skip_gate_err_' + key);
     if (err) err.textContent = 'Incorrect password — ask your teacher.';
     pw.select();
     return;
   }
-  closeSkipGate();
-  skipStep('M1');
+  closeSkipGate(key);
+  skipStep(key === 'i' ? 'I' : 'M1');
 }
 
 // ── Modify: reset editor ──────────────────────────────
@@ -2474,9 +2573,9 @@ function resetModifyEditor() {
 function recordIAttempt(n) {
   const key = 'i' + n;
   attemptCounts[key] = (attemptCounts[key] || 0) + 1;
-  if (attemptCounts[key] >= 3) {
-    const btn = document.getElementById('btn_skip_i' + n);
-    if (btn) btn.style.display = '';
+  if (attemptCounts[key] >= 3 && n === stepI) {
+    const wrap = document.getElementById('i_skip_wrap');
+    if (wrap) wrap.style.display = '';
   }
   saveState();
 }
@@ -2502,7 +2601,7 @@ Object.assign(window, {
   checkMake, checkExt,
   runCodeInEditor, resetInvestigateEditor, insertNewLine, breakItDemo,
   skipStep, goBack, goForward,
-  openSkipGate, closeSkipGate, confirmSkipM1, resetModifyEditor,
+  openSkipGate, closeSkipGate, confirmSkip, resetModifyEditor, refreshInvTicks,
 });
 
 // ── Init ──────────────────────────────────────────────
@@ -2540,12 +2639,6 @@ window.addEventListener('DOMContentLoaded', () => {
     if (btn) btn.classList.add('skipped');
   });
 
-  for (let i = 1; i <= STEP_COUNT_I; i++) {
-    if ((attemptCounts['i' + i] || 0) >= 3) {
-      const btn = document.getElementById('btn_skip_i' + i);
-      if (btn) btn.style.display = '';
-    }
-  }
 
   updateStepVisibility();
 });

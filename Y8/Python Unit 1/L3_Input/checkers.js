@@ -284,3 +284,68 @@ export function evalExt(raw) {
   const hint = pass ? EXT_CHECK.passMsg : EXT_CHECK.reqs[results.findIndex(r => !r)].hint;
   return { results, pass, msg: hint };
 }
+
+// ── Investigate checks ────────────────────────────────────────────────────────
+// One req per CODE-CHANGE bullet in each Investigate prompt card (#req_i_N in the HTML),
+// ticked live and required before that step's "Check answer" will pass. Same shape as
+// L4_Data_Types_Casting/checkers.js. test(raw, ctx) — ctx describes this step so far:
+//   ctx.breaks    "😈 Break it" presses at this step
+//   ctx.fixes     Break it → fixed → successful run cycles at this step
+//   ctx.lastRun   { code, ok } — the last Run of the Investigate editor
+// A hint may be a function (raw, ctx) so it can explain WHY a bullet is crossed.
+
+// Lines compared ignoring spacing and quote style, so print( 'x' ) matches print("x").
+const squashLine = l => l.replace(/\s+/g, '').replace(/'/g, '"');
+const liveLines = raw => raw.split('\n').filter(l => l.trim() && !/^\s*#/.test(l));   // commented-out lines don't count
+const hasLine = (raw, target) => liveLines(raw).some(l => squashLine(l) === squashLine(target));
+// The code as it stands now has been run, without an error.
+const ranAsIs = (raw, ctx) => !!ctx.lastRun?.ok && ctx.lastRun.code.trim() === raw.trim();
+
+// Runs every req for Investigate step n (1-based). A step with no code change has no
+// INV_CHECKS entry and always passes. ctx fields default to "nothing done yet".
+export function evalInv(n, raw, ctx = {}) {
+  const c = { breaks: 0, fixes: 0, lastRun: null, ...ctx };
+  const reqs = INV_CHECKS['inv' + n]?.reqs || [];
+  const results = reqs.map(r => !!r.test(raw, c));
+  const bad = results.findIndex(r => !r);
+  const hint = bad === -1 ? null : reqs[bad].hint;
+  return { results, pass: bad === -1, msg: typeof hint === 'function' ? hint(raw, c) : hint };
+}
+
+// Step 3's bug: Break it turns print(greeting + name) into print(greeting + fullname) — a
+// variable that was never created (NameError). The fix changes fullname back to name (or,
+// equally valid, renames the input() variable to fullname). Deleting the line is NOT a
+// fix — it throws away the greeting — so the fix bullet needs the line to still be there.
+export const IBUG_LINE       = 'print(greeting + fullname)';
+export const IBUG_FIXED_LINE = 'print(greeting + name)';
+export const hasBugLine    = raw => hasLine(raw, IBUG_LINE);
+export const hasFixedLine  = raw => hasLine(raw, IBUG_FIXED_LINE);
+export const isBugPairLine = line => hasLine(line, IBUG_LINE);   // the fixed line is the program's own last line — keep it
+const fullnameMade = raw => /^[ \t]*fullname\s*=(?!=)/m.test(normalise(raw));
+export const isBugFixed    = raw => hasBugLine(raw) ? fullnameMade(raw) : hasFixedLine(raw);
+
+function fixHint(raw, ctx) {
+  if (!ctx.breaks) return 'Press 😈 Break it first to break the last line.';
+  if (hasBugLine(raw) && !fullnameMade(raw)) return 'Fix the broken line: change fullname back to name so it reads print(greeting + name).';
+  if (!isBugFixed(raw)) return 'The last line has gone — don\'t delete it, fix it! Press 😈 Break it to bring it back, then change fullname to name.';
+  return 'Now press ▶ Run code (and type your name) to check your fix works.';
+}
+
+export const INV_CHECKS = {
+  inv1: {
+    reqs: [{
+      hint: 'Change the message inside input(...) on line 1 to something different — e.g. name = input("Enter your name: ").',
+      test: raw => {
+        const m = liveLines(raw).join('\n').match(/^[ \t]*name\s*=\s*input\s*\(\s*(["'])(.*?)\1/m);
+        return !!m && m[2].trim() !== '' && m[2].trim().toLowerCase() !== 'what is your name?';
+      },
+    }],
+  },
+  // inv2 — no code change (run it again and leave the answer blank), so no ticks.
+  inv3: {
+    reqs: [
+      { hint: 'Press 😈 Break it to break the last line.', test: (raw, ctx) => ctx.breaks >= 1 },
+      { hint: fixHint, test: (raw, ctx) => ctx.breaks >= 1 && isBugFixed(raw) && ranAsIs(raw, ctx) },
+    ],
+  },
+};

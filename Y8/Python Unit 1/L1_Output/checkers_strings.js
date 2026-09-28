@@ -225,3 +225,86 @@ export function validateVpChallenge(raw) {
     return { pass: false, msg: '❌ Print at least 2 lines of your name badge.' };
   return { pass: true, msg: "✅ Name badge complete — you've previewed variables and string concatenation. You'll fly through the next lesson!" };
 }
+
+// ── Investigate checks ────────────────────────────────────────────────────────
+// One req per CODE-CHANGE bullet in each Investigate prompt card (#req_i_N in the HTML),
+// ticked live and required before that step's "Check answer" will pass. Same shape as
+// L4_Data_Types_Casting/checkers.js. test(raw, ctx) — ctx describes this step so far:
+//   ctx.breaks    "😈 Break it" presses at this step
+//   ctx.fixes     Break it → fixed → successful run cycles at this step
+//   ctx.lastRun   { code, ok } — the last Run of the Investigate editor
+// A hint may be a function (raw, ctx) so it can explain WHY a bullet is crossed.
+
+// Lines compared ignoring spacing and quote style, so print( 'x' ) matches print("x").
+const squashLine = l => l.replace(/\s+/g, '').replace(/'/g, '"');
+const liveLines = raw => raw.split('\n').filter(l => l.trim() && !/^\s*#/.test(l));   // commented-out lines don't count
+const hasLine = (raw, target) => liveLines(raw).some(l => squashLine(l) === squashLine(target));
+// The code as it stands now has been run, without an error.
+const ranAsIs = (raw, ctx) => !!ctx.lastRun?.ok && ctx.lastRun.code.trim() === raw.trim();
+
+// Runs every req for Investigate step n (1-based). A step with no code change has no
+// INV_CHECKS entry and always passes. ctx fields default to "nothing done yet".
+export function evalInv(n, raw, ctx = {}) {
+  const c = { breaks: 0, fixes: 0, lastRun: null, ...ctx };
+  const reqs = INV_CHECKS['inv' + n]?.reqs || [];
+  const results = reqs.map(r => !!r.test(raw, c));
+  const bad = results.findIndex(r => !r);
+  const hint = bad === -1 ? null : reqs[bad].hint;
+  return { results, pass: bad === -1, msg: typeof hint === 'function' ? hint(raw, c) : hint };
+}
+
+// Step 4's bug: a missing closing speech mark (SyntaxError). The fix ADDS the quote back,
+// so the fix bullet only ticks while the FIXED line is present — deleting the broken
+// line instead of fixing it never counts.
+export const IBUG_LINE       = 'print("Debugging is normal!)';
+export const IBUG_FIXED_LINE = 'print("Debugging is normal!")';
+export const hasBugLine    = raw => hasLine(raw, IBUG_LINE);
+export const hasFixedLine  = raw => hasLine(raw, IBUG_FIXED_LINE);
+export const isBugPairLine = line => hasLine(line, IBUG_LINE) || hasLine(line, IBUG_FIXED_LINE);
+export const isBugFixed    = raw => hasFixedLine(raw) && !hasBugLine(raw);
+
+function fixHint(raw, ctx) {
+  if (!ctx.breaks) return 'Press 😈 Break it first to add the broken line.';
+  if (hasBugLine(raw)) return 'Fix the broken line: add the missing " before the ) so it reads print("Debugging is normal!").';
+  if (!hasFixedLine(raw)) return 'The broken line has gone — don\'t delete it, fix it! Press 😈 Break it to bring it back, then add the missing ".';
+  return 'Now press ▶ Run code to check your fix works.';
+}
+
+const printCalls = raw => (normalise(raw).match(/\bprint\s*\(/g) || []).length;
+const fullPrints = raw => (normalise(raw).match(/\bprint\s*\(\s*[^)\s]/g) || []).length;   // print(…) with something inside
+
+export const INV_CHECKS = {
+  inv1: {
+    reqs: [{
+      hint: 'Change the text "Hello, World!" on line 1 to your own greeting — keep print( ) and the speech marks, e.g. print("Hi there!").',
+      test: raw => printCalls(raw) >= 3 && !/\bprint\s*\(\s*["']Hello,\s*World!["']\s*\)/i.test(liveLines(raw).join('\n')),
+    }],
+  },
+  inv2: {
+    reqs: [{
+      hint: raw => 'Add a 4th print() line that shows your name, e.g. print("Sam") — you have ' + fullPrints(raw) + ' so far.',
+      test: raw => fullPrints(raw) >= 4,
+    }],
+  },
+  inv3: {
+    reqs: [{
+      hint: "Change one line to use single quotes instead of double quotes, e.g. print('Hi there!').",
+      test: raw => liveLines(raw).some(l => /\bprint\s*\(\s*'/.test(l)),
+    }],
+  },
+  inv4: {
+    reqs: [
+      { hint: 'Press 😈 Break it to add the broken line.', test: (raw, ctx) => ctx.breaks >= 1 },
+      { hint: fixHint, test: (raw, ctx) => ctx.breaks >= 1 && isBugFixed(raw) && ranAsIs(raw, ctx) },
+    ],
+  },
+  inv5: {
+    reqs: [{
+      hint: 'Put print() — with nothing inside the brackets — BETWEEN two of your other lines, not at the very end.',
+      test: raw => {
+        const lines = liveLines(raw);   // raw lines — this file's normalise() collapses newlines
+        return lines.some((l, i) => /^\s*print\s*\(\s*\)\s*$/.test(l) && i > 0 && i < lines.length - 1);
+      },
+    }],
+  },
+};

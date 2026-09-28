@@ -105,9 +105,13 @@ textarea can also opt in with a `data-error-hints` attribute. The PRIMM Y8 templ
 enables it by default. Leave it **off for assessments**, where scaffolding the fix
 would undermine the task.
 
-### PRIMM Modify: teacher-gated skip and reset (Y8 PRIMM activities)
+### PRIMM Investigate + Modify: teacher-gated skip and reset (Y8 PRIMM activities)
 
-The Modify stage's "Skip this task →" button (shown after 3 failed attempts) only opens a password box — a teacher types `outwood` (`SKIP_PASSWORD` in the JS) to actually skip via `skipStep('M1')`. The Modify editor also has a **↺ Reset to original** button (`resetModifyEditor`): Modification 1 restores the starting code, and later modifications restore the code snapshot taken when the previous modification passed (falling back to the starting code). It is disabled while revisiting an already-passed step. Both live in `_templates/PRIMM_Python_Y8.html`; the Investigate "Move on without completing" buttons are not gated.
+Both the Investigate and Modify skip buttons ("Skip this step →" / "Skip this task →", shown after 3 failed checks on the current step) only open a password box — a teacher types `outwood` (`SKIP_PASSWORD` in the JS) to actually skip (`confirmSkip('i')` / `confirmSkip('m1')`). Both editors also have a **↺ Reset to original** button (`resetInvestigateEditor` / `resetModifyEditor`): step 1 restores the starting code, and later steps restore the code snapshot taken when the previous step passed (falling back to the starting code), so a reset never throws away earlier steps' work. It is disabled while revisiting an already-passed step. All of this lives in `_templates/PRIMM_Python_Y8.html`.
+
+### PRIMM Investigate: code-change tick-lists (Y8 PRIMM activities)
+
+Every Investigate instruction that needs a code change is a numbered `<li>` in the step's `<ul class="req-list" id="req_i_N">` (plain "run it" lines are `<li class="req-note">`, never ticked). `INV_CHECKS.invN` in the activity's `checkers.js` has one req per numbered `<li>`; they tick live as the student types/runs, cross on Check, and **all must pass before that step's answer is accepted**. A step with no code change has no list and no `INV_CHECKS` entry, so it is never gated. For the Break it step, `isBugFixed(raw)` must require the *fixed* line to be present, so deleting the broken line never counts as fixing it — unless deleting it *is* the fix (L2 Variables). Reference implementation: `Y8/Python Unit 1/L4_Data_Types_Casting/checkers.js` + `checkers.test.js`.
 
 **Do not reference any other external files** from activity HTML — no CDN URLs, no third-party libraries.
 

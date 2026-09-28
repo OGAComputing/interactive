@@ -368,3 +368,85 @@ export const BONUS_INPUTS = {
   bonus1: ['Rex'],
   bonus2: ['Rex', 'Blue'],
 };
+
+// ── Investigate checks ────────────────────────────────────────────────────────
+// One req per CODE-CHANGE bullet in each Investigate prompt card (#req_i_N in the HTML),
+// ticked live and required before that step's "Check answer" will pass. Same shape as
+// L4_Data_Types_Casting/checkers.js. test(raw, ctx) — ctx describes this step so far:
+//   ctx.breaks    "😈 Break it" presses at this step
+//   ctx.fixes     Break it → fixed → successful run cycles at this step
+//   ctx.lastRun   { code, ok } — the last Run of the Investigate editor
+// A hint may be a function (raw, ctx) so it can explain WHY a bullet is crossed.
+
+// Lines compared ignoring spacing and quote style, so print( 'x' ) matches print("x").
+const squashLine = l => l.replace(/\s+/g, '').replace(/'/g, '"');
+const liveLines = raw => raw.split('\n').filter(l => l.trim() && !/^\s*#/.test(l));   // commented-out lines don't count
+const hasLine = (raw, target) => liveLines(raw).some(l => squashLine(l) === squashLine(target));
+// The code as it stands now has been run, without an error.
+const ranAsIs = (raw, ctx) => !!ctx.lastRun?.ok && ctx.lastRun.code.trim() === raw.trim();
+
+// Runs every req for Investigate step n (1-based). A step with no code change has no
+// INV_CHECKS entry and always passes. ctx fields default to "nothing done yet".
+export function evalInv(n, raw, ctx = {}) {
+  const c = { breaks: 0, fixes: 0, lastRun: null, ...ctx };
+  const reqs = INV_CHECKS['inv' + n]?.reqs || [];
+  const results = reqs.map(r => !!r.test(raw, c));
+  const bad = results.findIndex(r => !r);
+  const hint = bad === -1 ? null : reqs[bad].hint;
+  return { results, pass: bad === -1, msg: typeof hint === 'function' ? hint(raw, c) : hint };
+}
+
+// Step 4's bug: print(nickname) — a variable that was never created (NameError). Here
+// the fix IS deleting the line (or, equally valid, creating a nickname variable), so the
+// fix bullet ticks once the code runs cleanly again after Break it was pressed.
+export const IBUG_LINE = 'print(nickname)';
+export const hasBugLine    = raw => hasLine(raw, IBUG_LINE);
+export const isBugPairLine = line => hasLine(line, IBUG_LINE);
+export const isBugFixed    = raw => !hasBugLine(raw) || /^[ \t]*nickname\s*=(?!=)/m.test(normalise(raw));
+
+// Every string value assigned to v, in order: name = "Sam" → ['Sam'].
+const stringValues = (raw, v) => [...liveLines(raw).join('\n')
+  .matchAll(new RegExp('^[ \\t]*' + v + '\\s*=\\s*(["\'])(.*?)\\1', 'gm'))].map(m => m[2]);
+
+export const INV_CHECKS = {
+  inv1: {
+    reqs: [{
+      hint: 'Change line 1 so name holds your own name instead of "Sam" — e.g. name = "Priya". Keep the speech marks.',
+      test: raw => { const v = stringValues(raw, 'name')[0]; return v !== undefined && v.trim() !== '' && v.trim().toLowerCase() !== 'sam'; },
+    }],
+  },
+  inv2: {
+    reqs: [{
+      hint: 'Change line 2 so greeting holds "Hi there, " instead of "Hello ".',
+      test: raw => { const v = stringValues(raw, 'greeting')[0]; return v !== undefined && v.trim() !== '' && v.trim().toLowerCase() !== 'hello'; },
+    }],
+  },
+  inv3: {
+    reqs: [
+      {
+        hint: 'At the very end, add a line that gives name a NEW value — e.g. name = "Jordan".',
+        test: raw => stringValues(raw, 'name').length >= 2,
+      },
+      {
+        hint: 'After that, add print(name) so you can see what name holds now.',
+        test: raw => {
+          const lines = liveLines(normalise(raw));
+          const last = lines.map((l, i) => /^[ \t]*name\s*=(?!=)/.test(l) ? i : -1).filter(i => i >= 0);
+          if (last.length < 2) return false;
+          return lines.slice(last[last.length - 1] + 1).some(l => /\bprint\s*\(.*\bname\b/.test(l));
+        },
+      },
+    ],
+  },
+  inv4: {
+    reqs: [
+      { hint: 'Press 😈 Break it to add the broken line.', test: (raw, ctx) => ctx.breaks >= 1 },
+      {
+        hint: (raw, ctx) => !ctx.breaks ? 'Press 😈 Break it first to add the broken line.'
+          : !isBugFixed(raw) ? 'Delete the broken print(nickname) line, then press ▶ Run code.'
+          : 'Now press ▶ Run code to check your code works again.',
+        test: (raw, ctx) => ctx.breaks >= 1 && isBugFixed(raw) && ranAsIs(raw, ctx),
+      },
+    ],
+  },
+};
