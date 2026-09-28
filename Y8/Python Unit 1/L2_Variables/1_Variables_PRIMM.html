@@ -705,7 +705,7 @@ greeting <span class="kw">=</span> <span class="st">"Hello "</span>
     <div class="q-card" id="qcard_i1_prompt" style="border-left-color:var(--stage-i)">
       <label class="q-label"><span class="q-num" style="background:var(--stage-i)">1</span> In the editor below:</label>
       <ul class="req-list" id="req_i_1">
-        <li><span>1</span><span class="req-text">Change line 1 so the <code style="background:#ede0ff;padding:0 3px;border-radius:3px">name</code> variable holds <strong>your own name</strong> instead of <code style="background:#ede0ff;padding:0 3px;border-radius:3px">&quot;Sam&quot;</code> — e.g. <code style="background:#ede0ff;padding:0 3px;border-radius:3px">name = &quot;Priya&quot;</code>. Keep the speech marks.</span></li>
+        <li><span>1</span><span class="req-text">Change line 1 so the <code style="background:#ede0ff;padding:0 3px;border-radius:3px">name</code> variable holds <strong>your own name</strong> instead of <code style="background:#ede0ff;padding:0 3px;border-radius:3px">&quot;Sam&quot;</code> — e.g. <code style="background:#ede0ff;padding:0 3px;border-radius:3px">name = &quot;Priya&quot;</code>. Keep the speech marks. (If your name <em>is</em> Sam, use a friend's name.)</span></li>
         <li class="req-note">Then <strong>Run</strong> it.</li>
       </ul>
       <!-- INSTRUCTIONS ONLY here — the question itself lives in the answer card below the editor. -->
@@ -1163,7 +1163,7 @@ greeting <span class="kw">=</span> <span class="st">"Hello "</span>
       stays input()-free for everyone who doesn't choose to try the Bonus round.
 */
 import { normalise, has, MOD_CHECKS, evalMod, MOD_INPUTS, MAKE_CHECK, evalMake, EXT_CHECKS, evalExt, EXT_INPUTS, BONUS_CHECKS, BONUS_INPUTS,
-         evalInv, isBugFixed, isBugPairLine } from './checkers.js';
+         evalInv, isBugFixed, isBugPairLine, breakCode } from './checkers.js';
 import { runPython, preload } from '../../../pyodide-runner.js';
 import { setupEditors, clearSyntaxHint, setEditorOutput, refreshEditor, runCode } from '../../../code-editor.js';
 
@@ -1197,10 +1197,9 @@ const STEP_COUNT_M2EXT = 3;   // must equal the number of m2ext_step_1…m2ext_s
 //  IBUG_LINE here is print(nickname) — a variable that was never created,
 //  giving a NameError. There is no edited "fixed" version of the line (unlike
 //  the missing-quote / missing-str() bugs in other lessons) — the fix is simply
-//  deleting it, so this activity has no IBUG_FIXED_LINE.
+//  deleting it, so this activity has no IBUG_FIXED_LINE. IBUG_LINE and
+//  breakCode() live in checkers.js.
 // ═══════════════════════════════════════════════════════
-
-const IBUG_LINE = 'print(nickname)';   // deliberately broken — never-created variable
 
 
 // ═══════════════════════════════════════════════════════
@@ -1866,11 +1865,31 @@ function refreshInvTicks() {
   if (currentStage === 'I' && iCodeSnapshots[stepI] === undefined) renderInvReqs(stepI, 'soft');
 }
 
+// Wipes an Investigate MCQ's ✔/✘ message and option highlights. Called when the code
+// check blocks marking and whenever the student picks a different option, so an earlier
+// wrong answer's ✘ never sits next to a new (possibly correct) choice.
+function clearInvestigateMCQFeedback(field) {
+  if (field?.type !== 'mcq') return;
+  document.querySelectorAll(`input[name="${field.radioName}"]`)
+    .forEach(r => r.closest('.radio-opt')?.classList.remove('correct', 'wrong'));
+  const fb = document.getElementById('fb_' + field.id);
+  if (fb) { fb.className = 'mcq-fb'; fb.textContent = ''; }
+}
+document.addEventListener('change', e => {
+  const field = I_FIELDS.find(f => f.type === 'mcq' && f.radioName === e.target.name);
+  if (!field) return;
+  clearInvestigateMCQFeedback(field);
+  const card = document.getElementById(field.cardId);
+  card?.classList.remove('error');
+  if (card) fieldHint(card, '');
+});
+
 // Gate for Check answer: every code-change bullet on step n must be met. Shows crosses,
 // the first unmet bullet's hint, and points the student back at the instructions.
 function invGate(n, card) {
   const r = renderInvReqs(n, 'full');
   if (!r || r.pass) return true;
+  clearInvestigateMCQFeedback(I_FIELDS[n - 1]);   // the answer wasn't marked this time
   card?.classList.add('error');
   card?.classList.remove('is-right');
   fieldHint(card, 'Finish the code changes first: ' + r.msg);
@@ -1883,18 +1902,15 @@ function invGate(n, card) {
 //
 // "😈 Break it" is used at the guided bug step — the student presses it once,
 // with the line and error explained to them, then fixes it themselves. Safe
-// to mash — it only re-adds the line if it isn't there.
+// to mash — breakCode() (checkers.js) only re-adds the line if a live copy isn't there.
 function breakItDemo() {
   const ta = document.getElementById('i_editor');
   if (!ta || ta.readOnly) return;   // looking back at a passed step
+  const { code, lineNo } = breakCode(ta.value);
+  ta.value = code;
+  state.iBugPlantedLineNo = lineNo;
   const lineSpan = document.getElementById('ibug_line');
-  if (!ta.value.includes(IBUG_LINE)) {
-    const body = ta.value.replace(/\s+$/, '');
-    ta.value = body + '\n' + IBUG_LINE + '\n';
-    state.iBugPlantedLineNo = body.split('\n').length + 1;
-    if (lineSpan) lineSpan.textContent = String(state.iBugPlantedLineNo);
-    saveState();
-  }
+  if (lineSpan) lineSpan.textContent = String(lineNo);
   const bp = invBugProgress(stepI);
   bp.breaks++;
   bp.pending = true;   // the next successful run of fixed code counts as a fix

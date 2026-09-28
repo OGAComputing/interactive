@@ -1158,7 +1158,7 @@ Goodbye"""</span>)</pre>
 
 <script type="module">
 import { normalise, has, MOD_CHECKS, evalMod, MOD_INPUTS, MAKE_CHECK, evalMake, EXT_CHECK, evalExt, validateMake2, validateTripleQuote, validateVpMod1, validateVpMod2, validateVpChallenge,
-         evalInv, isBugFixed, isBugPairLine } from './checkers_strings.js';
+         evalInv, isBugFixed, isBugPairLine, breakCode } from './checkers_strings.js';
 import { runPython, preload } from '../../../pyodide-runner.js';
 import { setupEditors, clearSyntaxHint, setEditorOutput, refreshEditor } from '../../../code-editor.js';
 
@@ -1170,11 +1170,6 @@ print("This is fun!")`;
 
 const VP_STARTER_CODE = `name = "Alice"\nschool = "Grange Academy"\nprint(name)\nprint(school)`;
 const TQ_STARTER_CODE = `print("""Hello\nWorld\nGoodbye""")`;
-
-// Investigate step 4 plants this broken line automatically (missing closing ")
-// so the student meets a real SyntaxError without sabotaging their own code.
-const I4_BUG_LINE   = 'print("Debugging is normal!)';
-const I4_FIXED_LINE  = 'print("Debugging is normal!")';
 
 const STEP_COUNT_I  = 5;
 const STEP_COUNT_M1 = 4;
@@ -1831,11 +1826,31 @@ function refreshInvTicks() {
   if (currentStage === 'I' && iCodeSnapshots[stepI] === undefined) renderInvReqs(stepI, 'soft');
 }
 
+// Wipes an Investigate MCQ's ✔/✘ message and option highlights. Called when the code
+// check blocks marking and whenever the student picks a different option, so an earlier
+// wrong answer's ✘ never sits next to a new (possibly correct) choice.
+function clearInvestigateMCQFeedback(field) {
+  if (field?.type !== 'mcq') return;
+  document.querySelectorAll(`input[name="${field.radioName}"]`)
+    .forEach(r => r.closest('.radio-opt')?.classList.remove('correct', 'wrong'));
+  const fb = document.getElementById('fb_' + field.id);
+  if (fb) { fb.className = 'mcq-fb'; fb.textContent = ''; }
+}
+document.addEventListener('change', e => {
+  const field = I_FIELDS.find(f => f.type === 'mcq' && f.radioName === e.target.name);
+  if (!field) return;
+  clearInvestigateMCQFeedback(field);
+  const card = document.getElementById(field.cardId);
+  card?.classList.remove('error');
+  if (card) fieldHint(card, '');
+});
+
 // Gate for Check answer: every code-change bullet on step n must be met. Shows crosses,
 // the first unmet bullet's hint, and points the student back at the instructions.
 function invGate(n, card) {
   const r = renderInvReqs(n, 'full');
   if (!r || r.pass) return true;
+  clearInvestigateMCQFeedback(I_FIELDS[n - 1]);   // the answer wasn't marked this time
   card?.classList.add('error');
   card?.classList.remove('is-right');
   fieldHint(card, 'Finish the code changes first: ' + r.msg);
@@ -1847,21 +1862,17 @@ function invGate(n, card) {
 // Investigate step 4 — "😈 Break it" adds ONE broken line to the student's code and
 // runs it, so they meet a real SyntaxError without having to sabotage their own
 // code. It is removed again once they have fixed it and moved on (see nextStep).
-// Safe to mash: puts the break back if it's since been fixed to I4_FIXED_LINE,
-// otherwise does nothing once the broken line is already present.
+// Safe to mash: breakCode() (checkers_strings.js) turns the student's version of the
+// line — fixed, or a near-miss like print("Debugging is normal!)") — back into the
+// broken line, and does nothing once the broken line is already present.
 function breakItStep4() {
   const ta = document.getElementById('i_editor');
   if (!ta || ta.readOnly) return;   // looking back at a passed step
+  const { code, lineNo } = breakCode(ta.value);
+  ta.value = code;
+  state.i4PlantedLineNo = lineNo;
   const lineSpan = document.getElementById('i4_line');
-  if (ta.value.includes(I4_FIXED_LINE)) {
-    ta.value = ta.value.replace(I4_FIXED_LINE, I4_BUG_LINE);
-  } else if (!ta.value.includes(I4_BUG_LINE)) {
-    const body = ta.value.replace(/\s+$/, '');
-    ta.value = body + '\n' + I4_BUG_LINE + '\n';
-    state.i4PlantedLineNo = body.split('\n').length + 1;
-    if (lineSpan) lineSpan.textContent = String(state.i4PlantedLineNo);
-    saveState();
-  }
+  if (lineSpan) lineSpan.textContent = String(lineNo);
   const bp = invBugProgress(stepI);
   bp.breaks++;
   bp.pending = true;   // the next successful run of fixed code counts as a fix

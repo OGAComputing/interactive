@@ -1083,7 +1083,7 @@ greeting <span class="kw">=</span> <span class="st">"Hello "</span>
   ╚══════════════════════════════════════════════════════════════════════════════╝
 */
 import { normalise, has, MOD_CHECKS, evalMod, MAKE_CHECK, evalMake, EXT_CHECK, evalExt, nonQuestionPrompts, QUESTION_TIP,
-         evalInv, isBugFixed, isBugPairLine } from './checkers.js';
+         evalInv, isBugFixed, isBugPairLine, breakCode, restoreCode } from './checkers.js';
 import { preload } from '../../../pyodide-runner.js';
 import { setupEditors, clearSyntaxHint, setEditorOutput, refreshEditor, runCode } from '../../../code-editor.js';
 
@@ -1116,10 +1116,8 @@ const STEP_COUNT_M1 = 5;   // must equal the number of m1_step_1…m1_step_N div
 //  Break it edits the last line of the starter code in place: name becomes
 //  fullname — a variable that was never created (only `name` was, via input()),
 //  giving a NameError. The student fixes it by changing fullname back to name.
+//  IBUG_LINE / IBUG_FIXED_LINE, breakCode() and restoreCode() live in checkers.js.
 // ═══════════════════════════════════════════════════════
-
-const IBUG_LINE       = 'print(greeting + fullname)';   // deliberately broken — never-created variable
-const IBUG_FIXED_LINE = 'print(greeting + name)';       // the corrected version
 
 
 // ═══════════════════════════════════════════════════════
@@ -1728,11 +1726,31 @@ function refreshInvTicks() {
   if (currentStage === 'I' && iCodeSnapshots[stepI] === undefined) renderInvReqs(stepI, 'soft');
 }
 
+// Wipes an Investigate MCQ's ✔/✘ message and option highlights. Called when the code
+// check blocks marking and whenever the student picks a different option, so an earlier
+// wrong answer's ✘ never sits next to a new (possibly correct) choice.
+function clearInvestigateMCQFeedback(field) {
+  if (field?.type !== 'mcq') return;
+  document.querySelectorAll(`input[name="${field.radioName}"]`)
+    .forEach(r => r.closest('.radio-opt')?.classList.remove('correct', 'wrong'));
+  const fb = document.getElementById('fb_' + field.id);
+  if (fb) { fb.className = 'mcq-fb'; fb.textContent = ''; }
+}
+document.addEventListener('change', e => {
+  const field = I_FIELDS.find(f => f.type === 'mcq' && f.radioName === e.target.name);
+  if (!field) return;
+  clearInvestigateMCQFeedback(field);
+  const card = document.getElementById(field.cardId);
+  card?.classList.remove('error');
+  if (card) fieldHint(card, '');
+});
+
 // Gate for Check answer: every code-change bullet on step n must be met. Shows crosses,
 // the first unmet bullet's hint, and points the student back at the instructions.
 function invGate(n, card) {
   const r = renderInvReqs(n, 'full');
   if (!r || r.pass) return true;
+  clearInvestigateMCQFeedback(I_FIELDS[n - 1]);   // the answer wasn't marked this time
   card?.classList.add('error');
   card?.classList.remove('is-right');
   fieldHint(card, 'Finish the code changes first: ' + r.msg);
@@ -1746,23 +1764,16 @@ function invGate(n, card) {
 // "😈 Break it" is used at the guided bug step — the student presses it once,
 // with the line and error explained to them, then fixes it themselves. It edits
 // the existing print line in place (name → fullname) rather than adding a new
-// one. Safe to mash — it only breaks the line if it isn't already broken.
+// one, even if the student reworded it. Safe to mash — breakCode() (checkers.js)
+// only breaks the line if it isn't already broken.
 function breakItDemo() {
   const ta = document.getElementById('i_editor');
   if (!ta || ta.readOnly) return;   // looking back at a passed step
+  const { code, lineNo } = breakCode(ta.value);
+  ta.value = code;
+  state.iBugPlantedLineNo = lineNo;
   const lineSpan = document.getElementById('ibug_line');
-  if (!ta.value.includes(IBUG_LINE)) {
-    if (ta.value.includes(IBUG_FIXED_LINE)) {
-      ta.value = ta.value.replace(IBUG_FIXED_LINE, IBUG_LINE);
-    } else {
-      // The student has reworded the print line, so there's nothing to edit in
-      // place — fall back to adding the broken line at the end.
-      ta.value = ta.value.replace(/\s+$/, '') + '\n' + IBUG_LINE + '\n';
-    }
-    state.iBugPlantedLineNo = ta.value.split('\n').findIndex(l => l.includes(IBUG_LINE)) + 1;
-    if (lineSpan) lineSpan.textContent = String(state.iBugPlantedLineNo);
-    saveState();
-  }
+  if (lineSpan) lineSpan.textContent = String(lineNo);
   const bp = invBugProgress(stepI);
   bp.breaks++;
   bp.pending = true;   // the next successful run of fixed code counts as a fix
@@ -1784,8 +1795,8 @@ function syncBugLineLabel() {
 // still broken, so nothing downstream inherits a NameError. A no-op once fixed.
 function restoreBugLine() {
   const ta = document.getElementById('i_editor');
-  if (!ta || /\bfullname\s*=[^=]/.test(ta.value)) return;   // renamed the variable instead — already valid
-  ta.value = ta.value.split('\n').map(l => l.trim() === IBUG_LINE ? IBUG_FIXED_LINE : l).join('\n');
+  if (!ta) return;
+  ta.value = restoreCode(ta.value);   // no-op if fullname was made a real variable instead
   refreshEditor(ta);
 }
 

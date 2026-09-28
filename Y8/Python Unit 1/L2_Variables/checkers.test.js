@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest';
-import { evalInv, isBugFixed, IBUG_LINE } from './checkers.js';
+import { evalInv, isBugFixed, breakCode, IBUG_LINE } from './checkers.js';
 
 const code = (lines) => lines.join('\n');
 const ran = (src, ok = true) => ({ code: src, ok });
@@ -13,6 +13,9 @@ const STEP3 = [...STEP2, 'name = "Jordan"', 'print(name)'];
 
 describe('evalInv step 1 — your own name', () => {
   test('still "Sam" fails', () => expect(evalInv(1, code(STARTER)).pass).toBe(false));
+  test('the hint tells a student really called Sam what to do', () => {
+    expect(evalInv(1, code(STARTER)).msg).toMatch(/If your name IS Sam/);
+  });
   test('a new name passes', () => expect(evalInv(1, code(STEP1)).pass).toBe(true));
   test('deleting line 1 fails', () => expect(evalInv(1, code(STARTER.slice(1))).pass).toBe(false));
 });
@@ -51,5 +54,23 @@ describe('evalInv step 4 — Break it (NameError)', () => {
     const src = code([...STEP3, 'nickname = "Jo"', IBUG_LINE]);
     expect(isBugFixed(src)).toBe(true);
     expect(evalInv(4, src, { breaks: 1, lastRun: ran(src) }).pass).toBe(true);
+  });
+  test('commenting the line out counts as removing it', () => {
+    const src = code([...STEP3, '# ' + IBUG_LINE]);
+    expect(evalInv(4, src, { breaks: 1, lastRun: ran(src) }).pass).toBe(true);
+  });
+});
+
+describe('breakCode', () => {
+  test('appends the broken line and reports its line number', () => {
+    expect(breakCode(code(STEP3))).toEqual({ code: code([...STEP3, IBUG_LINE]) + '\n', lineNo: STEP3.length + 1 });
+  });
+  test('leaves a live broken line alone (safe to mash)', () => {
+    const broken = code([...STEP3, IBUG_LINE]) + '\n';
+    expect(breakCode(broken).code).toBe(broken);
+  });
+  test('a commented-out copy does not stop Break it adding a live one', () => {
+    const src = code([...STEP3, '# ' + IBUG_LINE]);
+    expect(breakCode(src)).toEqual({ code: code([...STEP3, '# ' + IBUG_LINE, IBUG_LINE]) + '\n', lineNo: STEP3.length + 2 });
   });
 });

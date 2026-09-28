@@ -64,6 +64,56 @@ test('L1: deleting the Break it line instead of fixing it is not accepted', asyn
   await expect(page.locator('#qcard_i4 .field-hint')).toContainText("don't delete it");
 });
 
+const L1_STEP4_FIXED = L1_STEP3 + '\nprint("Debugging is normal!")';
+
+test('L1: an earlier wrong answer\'s ✘ is cleared when the answer changes and the code check blocks', async ({ page }) => {
+  await openAt(page, L1, {
+    currentStage: 'I', completedStages: ['P', 'R'], stepI: 4, maxStepI: 4,
+    iCodeSnapshots: { 1: L1_STEP3, 2: L1_STEP3, 3: L1_STEP3 }, i_editor: L1_STEP3,
+  });
+  await page.click('#qcard_i4 button:has-text("Break it")');
+  await expect(page.locator('#i_fb_run')).toHaveClass(/fail/, { timeout: 30000 });
+  await setCode(page, 'i_editor', L1_STEP4_FIXED);
+  await page.click(runBtn);
+  await expect(page.locator('#i_fb_run')).toHaveClass(/pass/, { timeout: 30000 });
+
+  // Wrong answer while the code is fine → marked wrong.
+  await page.check('input[name="i4_mcq"][value="option_a"]');
+  await page.click('#btn_check_i4');
+  await expect(page.locator('#fb_i4')).toHaveClass(/fail/);
+
+  // Something changes the code in the middle, then the student picks the right answer.
+  await page.click('#qcard_i4 button:has-text("Break it")');
+  await expect(page.locator('#i_fb_run')).toHaveClass(/fail/, { timeout: 30000 });
+  await page.check('input[name="i4_mcq"][value="option_b"]');
+  await expect(page.locator('#fb_i4')).toBeHidden();
+  await expect(page.locator('#qcard_i4 .radio-opt.wrong')).toHaveCount(0);
+
+  // Check is blocked by the code — only the code hint shows, no stale ✘.
+  await page.click('#btn_check_i4');
+  await expect(page.locator('#qcard_i4 .field-hint')).toContainText('Finish the code changes first');
+  await expect(page.locator('#fb_i4')).toBeHidden();
+});
+
+test('L1: quote added after the ) gets a "Nearly!" hint, and Break it restores the broken line', async ({ page }) => {
+  await openAt(page, L1, {
+    currentStage: 'I', completedStages: ['P', 'R'], stepI: 4, maxStepI: 4,
+    iCodeSnapshots: { 1: L1_STEP3, 2: L1_STEP3, 3: L1_STEP3 }, i_editor: L1_STEP3,
+  });
+  await page.click('#qcard_i4 button:has-text("Break it")');
+  await expect(page.locator('#i_fb_run')).toHaveClass(/fail/, { timeout: 30000 });
+  await setCode(page, 'i_editor', L1_STEP3 + '\nprint("Debugging is normal!)")');
+  await page.click(runBtn);
+  await expect(page.locator('#i_fb_run')).toHaveClass(/pass/, { timeout: 30000 });   // it really does run
+  await page.check('input[name="i4_mcq"][value="option_b"]');
+  await page.click('#btn_check_i4');
+  await expect(page.locator('#qcard_i4 .field-hint')).toContainText('Nearly!');
+
+  await page.click('#qcard_i4 button:has-text("Break it")');
+  await expect(page.locator('#i_fb_run')).toHaveClass(/fail/, { timeout: 30000 });
+  await expect(page.locator('#i_editor')).toHaveValue(L1_STEP3 + '\nprint("Debugging is normal!)\n');
+});
+
 // ─── L2 Variables ────────────────────────────────────────────────────────────
 
 const L2_STEP1 = 'name = "Priya"\ngreeting = "Hello "\nprint(greeting + name + ", welcome to Python!")';

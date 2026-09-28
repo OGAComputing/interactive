@@ -294,10 +294,7 @@ export function evalExt(raw) {
 //   ctx.lastRun   { code, ok } — the last Run of the Investigate editor
 // A hint may be a function (raw, ctx) so it can explain WHY a bullet is crossed.
 
-// Lines compared ignoring spacing and quote style, so print( 'x' ) matches print("x").
-const squashLine = l => l.replace(/\s+/g, '').replace(/'/g, '"');
 const liveLines = raw => raw.split('\n').filter(l => l.trim() && !/^\s*#/.test(l));   // commented-out lines don't count
-const hasLine = (raw, target) => liveLines(raw).some(l => squashLine(l) === squashLine(target));
 // The code as it stands now has been run, without an error.
 const ranAsIs = (raw, ctx) => !!ctx.lastRun?.ok && ctx.lastRun.code.trim() === raw.trim();
 
@@ -312,17 +309,45 @@ export function evalInv(n, raw, ctx = {}) {
   return { results, pass: bad === -1, msg: typeof hint === 'function' ? hint(raw, c) : hint };
 }
 
-// Step 3's bug: Break it turns print(greeting + name) into print(greeting + fullname) — a
-// variable that was never created (NameError). The fix changes fullname back to name (or,
-// equally valid, renames the input() variable to fullname). Deleting the line is NOT a
-// fix — it throws away the greeting — so the fix bullet needs the line to still be there.
+// Step 3's bug: Break it swaps the word name for fullname on the student's own print line
+// — print(greeting + name) → print(greeting + fullname), a variable that was never created
+// (NameError). The fix changes fullname back to name (or, equally valid, renames the
+// input() variable to fullname). Any print line using name counts as fixed, so a reworded
+// print(greeting, name) works too. Deleting the line is NOT a fix — it throws away the
+// greeting — so the fix bullet needs a print(… name …) line to still be there.
 export const IBUG_LINE       = 'print(greeting + fullname)';
 export const IBUG_FIXED_LINE = 'print(greeting + name)';
-export const hasBugLine    = raw => hasLine(raw, IBUG_LINE);
-export const hasFixedLine  = raw => hasLine(raw, IBUG_FIXED_LINE);
-export const isBugPairLine = line => hasLine(line, IBUG_LINE);   // the fixed line is the program's own last line — keep it
+// A print line using variable v — the same word inside "quotes" doesn't count.
+const printUses = (line, v) => /^\s*print\s*\(/.test(line) &&
+  new RegExp('\\b' + v + '\\b').test(line.replace(/(["'])(?:(?!\1).)*\1/g, '""'));
+// Swap variable word from → to on a line, leaving text inside "quotes" alone.
+const swapVar = (line, from, to) =>
+  line.replace(new RegExp(`(["'])(?:(?!\\1).)*\\1|\\b${from}\\b`, 'g'), m => m === from ? to : m);
+export const hasBugLine    = raw => liveLines(raw).some(l => printUses(l, 'fullname'));
+export const hasFixedLine  = raw => liveLines(raw).some(l => printUses(l, 'name'));
+export const isBugPairLine = line => printUses(line, 'fullname');   // the fixed line is the program's own last line — keep it
 const fullnameMade = raw => /^[ \t]*fullname\s*=(?!=)/m.test(normalise(raw));
 export const isBugFixed    = raw => hasBugLine(raw) ? fullnameMade(raw) : hasFixedLine(raw);
+
+// "😈 Break it": swaps name → fullname on the LAST print line using name (the greeting
+// line), or appends IBUG_LINE if there is none. An already-broken line is left alone —
+// safe to mash. Returns the new code and the 1-based line number of the broken line.
+export function breakCode(raw) {
+  const body = raw.replace(/\s+$/, '');
+  const lines = body ? body.split('\n') : [];
+  let i = lines.findIndex(l => printUses(l, 'fullname'));
+  if (i === -1) {
+    i = lines.map((l, k) => printUses(l, 'name') ? k : -1).filter(k => k >= 0).pop() ?? -1;
+    if (i !== -1) lines[i] = swapVar(lines[i], 'name', 'fullname');
+    else i = lines.push(IBUG_LINE) - 1;
+  }
+  return { code: lines.join('\n') + '\n', lineNo: i + 1 };
+}
+
+// Undo a Break it that was never fixed (the step was skipped), so nothing downstream
+// inherits a NameError. A no-op once fixed, or if fullname was made a real variable.
+export const restoreCode = raw => fullnameMade(raw) ? raw
+  : raw.split('\n').map(l => printUses(l, 'fullname') ? swapVar(l, 'fullname', 'name') : l).join('\n');
 
 function fixHint(raw, ctx) {
   if (!ctx.breaks) return 'Press 😈 Break it first to break the last line.';

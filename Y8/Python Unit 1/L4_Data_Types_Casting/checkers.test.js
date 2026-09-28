@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest';
-import { evalMod, evalMake, evalExt, evalInv, hasBugLine, hasFixedLine, isBugPairLine, IBUG_LINE, IBUG_FIXED_LINE,
+import { evalMod, evalMake, evalExt, evalInv, breakCode, hasBugLine, hasFixedLine, isBugPairLine, IBUG_LINE, IBUG_FIXED_LINE,
          MOD_INPUTS, MAKE_INPUTS, EXT_STEP_COUNT } from './checkers.js';
 
 const code = (lines) => lines.join('\n');
@@ -135,6 +135,53 @@ describe('evalInv step 4 — self-practice cycles', () => {
     const r = evalInv(4, broken, { breaks: 3, fixes: 2, lastRun: ran(broken, false) });
     expect(r.results).toEqual([true, false]);
     expect(r.msg).toMatch(/Fix the broken line/);
+  });
+});
+
+describe('near-misses that run but dodge str()', () => {
+  for (const line of ['print("Total: " + "5")', 'print("Total: ", 5)']) {
+    test(`${line} gets a str() hint, not "the line has gone"`, () => {
+      const src = withLines(INVESTIGATE_END, line);
+      const r = evalInv(3, src, { breaks: 1, lastRun: ran(src) });
+      expect(r.pass).toBe(false);
+      expect(r.msg).toMatch(/practising str\(\)/);
+      expect(r.msg).not.toMatch(/has gone/);
+    });
+  }
+
+  test('the classroom screenshot code (two fixes, odd spacing) passes step 4', () => {
+    const src = withLines(INVESTIGATE_END, 'print("Total: " +str(5))', 'print("Total: " +str( 5))');
+    expect(evalInv(4, src, { breaks: 2, fixes: 2, lastRun: ran(src) }).pass).toBe(true);
+  });
+});
+
+describe('breakCode', () => {
+  const n = INVESTIGATE_END.length;
+
+  test('appends the broken line when there is none', () => {
+    expect(breakCode(code(INVESTIGATE_END))).toEqual({ code: withLines(INVESTIGATE_END, IBUG_LINE) + '\n', lineNo: n + 1 });
+  });
+
+  test('breaks a fixed line in place, keeping its indent', () => {
+    const { code: out, lineNo } = breakCode(withLines(INVESTIGATE_END, '  print("Total: " +str( 5))'));
+    expect(out.split('\n')[n]).toBe('  ' + IBUG_LINE);
+    expect(lineNo).toBe(n + 1);
+  });
+
+  test('breaks a near-miss line in place instead of adding a second line', () => {
+    const out = breakCode(withLines(INVESTIGATE_END, 'print("Total: " + "5")')).code;
+    expect(out.split('\n')[n]).toBe(IBUG_LINE);
+    expect(out.split('\n').filter(l => /Total/.test(l)).length).toBe(1);
+  });
+
+  test('leaves an already-broken line alone (safe to mash)', () => {
+    const broken = withLines(INVESTIGATE_END, IBUG_LINE) + '\n';
+    expect(breakCode(broken).code).toBe(broken);
+  });
+
+  test('ignores a commented-out Total line', () => {
+    const out = breakCode(withLines(INVESTIGATE_END, '# print("Total: " + str(5))')).code;
+    expect(out.split('\n').slice(-2)).toEqual([IBUG_LINE, '']);
   });
 });
 

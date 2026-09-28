@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest';
-import { evalMod, evalMake, evalExt, nonQuestionPrompts, evalInv, isBugFixed, IBUG_LINE, IBUG_FIXED_LINE } from './checkers.js';
+import { evalMod, evalMake, evalExt, nonQuestionPrompts, evalInv, isBugFixed, breakCode, restoreCode, IBUG_LINE, IBUG_FIXED_LINE } from './checkers.js';
 
 const code = (lines) => lines.join('\n');
 
@@ -276,5 +276,50 @@ describe('evalInv', () => {
     const r = evalInv(3, deleted, { breaks: 1, lastRun: ran(deleted) });
     expect(r.pass).toBe(false);
     expect(r.msg).toMatch(/don't delete it/);
+  });
+
+  test('step 3: any working print line using name counts as fixed', () => {
+    for (const line of ['print(greeting, name)', 'print(greeting + " " + name)', 'print(greeting+name)']) {
+      const src = code([...STEP1.slice(0, 2), line]);
+      expect(evalInv(3, src, { breaks: 1, lastRun: ran(src) }).pass).toBe(true);
+    }
+  });
+
+  test('step 3: the word "name" inside quotes is not the variable', () => {
+    const src = code([...STEP1.slice(0, 2), 'print("Your name is " + fullname)']);
+    expect(isBugFixed(src)).toBe(false);
+  });
+});
+
+describe('breakCode / restoreCode', () => {
+  const STEP1 = ['name = input("Enter your name: ")', 'greeting = "Hello "', IBUG_FIXED_LINE];
+
+  test('swaps name for fullname on the print line, in place', () => {
+    expect(breakCode(code(STEP1))).toEqual({ code: code([...STEP1.slice(0, 2), IBUG_LINE]) + '\n', lineNo: 3 });
+  });
+
+  test('keeps a reworded print line, and leaves words inside quotes alone', () => {
+    const src = code([...STEP1.slice(0, 2), 'print(greeting, "your name is", name)']);
+    expect(breakCode(src).code.split('\n')[2]).toBe('print(greeting, "your name is", fullname)');
+  });
+
+  test('never touches the input() line', () => {
+    expect(breakCode(code(STEP1)).code.split('\n')[0]).toBe(STEP1[0]);
+  });
+
+  test('leaves an already-broken line alone (safe to mash)', () => {
+    const broken = code([...STEP1.slice(0, 2), IBUG_LINE]) + '\n';
+    expect(breakCode(broken).code).toBe(broken);
+  });
+
+  test('appends the broken line if there is no print line using name', () => {
+    expect(breakCode(code(STEP1.slice(0, 2)))).toEqual({ code: code([...STEP1.slice(0, 2), IBUG_LINE]) + '\n', lineNo: 3 });
+  });
+
+  test('restoreCode undoes an unfixed break, but not a fullname variable fix', () => {
+    const src = code([...STEP1.slice(0, 2), 'print(greeting, fullname)']);
+    expect(restoreCode(src)).toBe(code([...STEP1.slice(0, 2), 'print(greeting, name)']));
+    const renamed = code(['fullname = input("Name? ")', 'greeting = "Hello "', IBUG_LINE]);
+    expect(restoreCode(renamed)).toBe(renamed);
   });
 });

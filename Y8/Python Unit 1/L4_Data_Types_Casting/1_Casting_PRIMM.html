@@ -1267,7 +1267,7 @@ age <span class="kw">=</span> <span class="fn">int</span>(age)
   ╚══════════════════════════════════════════════════════════════════════════════╝
 */
 import { normalise, has, MOD_CHECKS, evalMod, MOD_INPUTS, MOD_TEST_NOTE, MAKE_CHECK, MAKE_INPUTS, evalMake, EXT_CHECKS, EXT_STEP_COUNT, evalExt,
-         evalInv, IBUG_LINE, hasBugLine, hasFixedLine, isBugPairLine } from './checkers.js';
+         evalInv, hasBugLine, hasFixedLine, isBugPairLine, breakCode } from './checkers.js';
 import { preload } from '../../../pyodide-runner.js';
 import { setupEditors, clearSyntaxHint, setEditorOutput, refreshEditor, runCode } from '../../../code-editor.js';
 
@@ -1953,11 +1953,31 @@ function refreshInvTicks() {
   if (currentStage === 'I' && iCodeSnapshots[stepI] === undefined) renderInvReqs(stepI, 'soft');
 }
 
+// Wipes an Investigate MCQ's ✔/✘ message and option highlights. Called when the code
+// check blocks marking and whenever the student picks a different option, so an earlier
+// wrong answer's ✘ never sits next to a new (possibly correct) choice.
+function clearInvestigateMCQFeedback(field) {
+  if (field?.type !== 'mcq') return;
+  document.querySelectorAll(`input[name="${field.radioName}"]`)
+    .forEach(r => r.closest('.radio-opt')?.classList.remove('correct', 'wrong'));
+  const fb = document.getElementById('fb_' + field.id);
+  if (fb) { fb.className = 'mcq-fb'; fb.textContent = ''; }
+}
+document.addEventListener('change', e => {
+  const field = I_FIELDS.find(f => f.type === 'mcq' && f.radioName === e.target.name);
+  if (!field) return;
+  clearInvestigateMCQFeedback(field);
+  const card = document.getElementById(field.cardId);
+  card?.classList.remove('error');
+  if (card) fieldHint(card, '');
+});
+
 // Gate for Check answer: every code-change bullet on step n must be met. Shows crosses,
 // the first unmet bullet's hint, and points the student back at the instructions.
 function invGate(n, card) {
   const r = renderInvReqs(n, 'full');
   if (!r || r.pass) return true;
+  clearInvestigateMCQFeedback(I_FIELDS[n - 1]);   // the answer wasn't marked this time
   card?.classList.add('error');
   card?.classList.remove('is-right');
   fieldHint(card, 'Finish the code changes first: ' + r.msg);
@@ -1970,28 +1990,18 @@ function invGate(n, card) {
 //
 // "😈 Break it" is used at BOTH the guided step (BUG_STEP — student presses it
 // once, with the line and error explained to them) and the final self-practice
-// step (same button, pressed unaided 2–3 times). Turns an existing fixed line back
-// into IBUG_LINE (or appends it if absent) so repeated clicks never pile up
+// step (same button, pressed unaided 2–3 times). breakCode() (checkers.js) turns the
+// student's version of the line — fixed, or a near-miss like print("Total: " + "5") —
+// back into IBUG_LINE (or appends it if absent) so repeated clicks never pile up
 // duplicate lines — safe to mash.
 function breakItDemo() {
   const ta = document.getElementById('i_editor');
   if (!ta || ta.readOnly) return;   // looking back at a passed step
+  const { code, lineNo } = breakCode(ta.value);
+  ta.value = code;
+  state.iBugPlantedLineNo = lineNo;
   const lineSpan = document.getElementById('ibug_line');
-  const lines = ta.value.replace(/\s+$/, '').split('\n');
-  const fixedIdx = lines.findIndex(l => hasFixedLine(l));
-  let lineNo = null;
-  if (fixedIdx !== -1) {
-    lines[fixedIdx] = lines[fixedIdx].match(/^\s*/)[0] + IBUG_LINE;
-    lineNo = fixedIdx + 1;
-  } else if (!hasBugLine(ta.value)) {
-    lines.push(IBUG_LINE);
-    lineNo = lines.length;
-  }
-  ta.value = lines.join('\n') + '\n';
-  if (lineNo) {
-    state.iBugPlantedLineNo = lineNo;
-    if (lineSpan) lineSpan.textContent = String(lineNo);
-  }
+  if (lineSpan) lineSpan.textContent = String(lineNo);
   const bp = invBugProgress(stepI);
   bp.breaks++;
   bp.pending = true;   // the next successful run WITH the fixed line counts as a fix

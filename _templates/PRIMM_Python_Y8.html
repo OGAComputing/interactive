@@ -1193,13 +1193,19 @@ color:  purple
   ║                     (false if the line was simply deleted, unless deleting ║
   ║                     IS the fix)                                             ║
   ║  isBugPairLine(line)  a Break it demo line (stripped when the step ends)   ║
+  ║  breakCode(raw) → { code, lineNo }   what 😈 Break it does: turn the       ║
+  ║                     student's version of the line (fixed OR a near-miss)   ║
+  ║                     back into IBUG_LINE in place, append it if absent,     ║
+  ║                     leave an already-broken line alone. Match loosely.     ║
+  ║  Give fixHint a "Nearly!" branch for a line that runs but isn't the fix,   ║
+  ║  so the student is never told the line "has gone" when it's still there.   ║
   ║                                                                              ║
   ║  See Y8/Python Unit 1/L4_Data_Types_Casting/checkers.js (+ checkers.test.js)║
   ║  for a complete reference, including the Investigate checks.               ║
   ╚══════════════════════════════════════════════════════════════════════════════╝
 */
 import { normalise, has, MOD_CHECKS, MOD_INPUTS, evalMod, MAKE_CHECK, evalMake, EXT_CHECK, evalExt,
-         evalInv, isBugFixed, isBugPairLine, IBUG_LINE, IBUG_FIXED_LINE } from './checkers.js';
+         evalInv, isBugFixed, isBugPairLine, breakCode } from './checkers.js';
 import { runPython, preload } from '../../../pyodide-runner.js';
 import { setupEditors, clearSyntaxHint, setEditorOutput, refreshEditor } from '../../../code-editor.js';
 
@@ -1868,11 +1874,31 @@ function refreshInvTicks() {
   if (currentStage === 'I' && iCodeSnapshots[stepI] === undefined) renderInvReqs(stepI, 'soft');
 }
 
+// Wipes an Investigate MCQ's ✔/✘ message and option highlights. Called when the code
+// check blocks marking and whenever the student picks a different option, so an earlier
+// wrong answer's ✘ never sits next to a new (possibly correct) choice.
+function clearInvestigateMCQFeedback(field) {
+  if (field?.type !== 'mcq') return;
+  document.querySelectorAll(`input[name="${field.radioName}"]`)
+    .forEach(r => r.closest('.radio-opt')?.classList.remove('correct', 'wrong'));
+  const fb = document.getElementById('fb_' + field.id);
+  if (fb) { fb.className = 'mcq-fb'; fb.textContent = ''; }
+}
+document.addEventListener('change', e => {
+  const field = I_FIELDS.find(f => f.type === 'mcq' && f.radioName === e.target.name);
+  if (!field) return;
+  clearInvestigateMCQFeedback(field);
+  const card = document.getElementById(field.cardId);
+  card?.classList.remove('error');
+  if (card) fieldHint(card, '');
+});
+
 // Gate for Check answer: every code-change bullet on step n must be met. Shows crosses,
 // the first unmet bullet's hint, and points the student back at the instructions.
 function invGate(n, card) {
   const r = renderInvReqs(n, 'full');
   if (!r || r.pass) return true;
+  clearInvestigateMCQFeedback(I_FIELDS[n - 1]);   // the answer wasn't marked this time
   card?.classList.add('error');
   card?.classList.remove('is-right');
   fieldHint(card, 'Finish the code changes first: ' + r.msg);
@@ -1894,19 +1920,20 @@ function invGate(n, card) {
 // (the student types their answers, then meets the intended bug). Do NOT pass []:
 // that means "run with no inputs at all", so if the accumulated code in i_editor
 // calls input() the student sees a raw "OSError: I/O error" instead of the bug.
+//
+// The line matching lives in breakCode() (checkers.js) so Break it and the tick-list
+// agree on what counts as the broken / fixed line. Match loosely there — an exact
+// text search misses a fix typed with different spacing, and a near-miss that still
+// CONTAINS IBUG_LINE (e.g. print("x)") for a missing-quote bug) would leave Break it
+// doing nothing while the hint tells the student to press it.
 function breakItDemo() {
   const ta = document.getElementById('i_editor');
   if (!ta || ta.readOnly) return;   // looking back at a passed step
+  const { code, lineNo } = breakCode(ta.value);
+  ta.value = code;
+  state.iBugPlantedLineNo = lineNo;
   const lineSpan = document.getElementById('ibug_line');
-  if (ta.value.includes(IBUG_FIXED_LINE)) {
-    ta.value = ta.value.replace(IBUG_FIXED_LINE, IBUG_LINE);
-  } else if (!ta.value.includes(IBUG_LINE)) {
-    const body = ta.value.replace(/\s+$/, '');
-    ta.value = body + '\n' + IBUG_LINE + '\n';
-    state.iBugPlantedLineNo = body.split('\n').length + 1;
-    if (lineSpan) lineSpan.textContent = String(state.iBugPlantedLineNo);
-    saveState();
-  }
+  if (lineSpan) lineSpan.textContent = String(lineNo);
   const bp = invBugProgress(stepI);
   bp.breaks++;
   bp.pending = true;   // the next successful run of fixed code counts as a fix

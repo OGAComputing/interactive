@@ -263,9 +263,30 @@ export const hasFixedLine  = raw => hasLine(raw, IBUG_FIXED_LINE);
 export const isBugPairLine = line => hasLine(line, IBUG_LINE) || hasLine(line, IBUG_FIXED_LINE);
 export const isBugFixed    = raw => hasFixedLine(raw) && !hasBugLine(raw);
 
+// The student's version of the bug line — broken, fixed, or a near-miss that runs but
+// isn't the fix (the " added after the ): print("Debugging is normal!)") prints a stray ).
+const isBugTargetLine = line => !/^\s*#/.test(line) && /\bprint\s*\(.*debugging\s+is\s+normal/i.test(line);
+
+// "😈 Break it": turns the student's version of the line back into IBUG_LINE in place
+// (appending it if there is none) and leaves an already-broken line alone — safe to mash.
+// Returns the new code and the 1-based line number of the broken line.
+export function breakCode(raw) {
+  const body = raw.replace(/\s+$/, '');
+  const lines = body ? body.split('\n') : [];
+  let i = lines.findIndex(l => hasBugLine(l));
+  if (i === -1) {
+    i = lines.findIndex(isBugTargetLine);
+    if (i === -1) i = lines.push('') - 1;
+    lines[i] = lines[i].match(/^\s*/)[0] + IBUG_LINE;
+  }
+  return { code: lines.join('\n') + '\n', lineNo: i + 1 };
+}
+
 function fixHint(raw, ctx) {
   if (!ctx.breaks) return 'Press 😈 Break it first to add the broken line.';
   if (hasBugLine(raw)) return 'Fix the broken line: add the missing " before the ) so it reads print("Debugging is normal!").';
+  if (!hasFixedLine(raw) && liveLines(raw).some(isBugTargetLine))
+    return 'Nearly! That line runs, but it should read exactly print("Debugging is normal!") — the missing " goes straight after the !, before the ).';
   if (!hasFixedLine(raw)) return 'The broken line has gone — don\'t delete it, fix it! Press 😈 Break it to bring it back, then add the missing ".';
   return 'Now press ▶ Run code to check your fix works.';
 }

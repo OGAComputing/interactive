@@ -404,6 +404,16 @@ export const hasBugLine    = raw => hasLine(raw, IBUG_LINE);
 export const isBugPairLine = line => hasLine(line, IBUG_LINE);
 export const isBugFixed    = raw => !hasBugLine(raw) || /^[ \t]*nickname\s*=(?!=)/m.test(normalise(raw));
 
+// "😈 Break it": appends IBUG_LINE unless a live (not commented-out) copy is already
+// there — safe to mash. Returns the new code and the 1-based line number of the line.
+export function breakCode(raw) {
+  const body = raw.replace(/\s+$/, '');
+  const lines = body ? body.split('\n') : [];
+  let i = lines.findIndex(l => hasBugLine(l));
+  if (i === -1) i = lines.push(IBUG_LINE) - 1;
+  return { code: lines.join('\n') + '\n', lineNo: i + 1 };
+}
+
 // Every string value assigned to v, in order: name = "Sam" → ['Sam'].
 const stringValues = (raw, v) => [...liveLines(raw).join('\n')
   .matchAll(new RegExp('^[ \\t]*' + v + '\\s*=\\s*(["\'])(.*?)\\1', 'gm'))].map(m => m[2]);
@@ -411,7 +421,7 @@ const stringValues = (raw, v) => [...liveLines(raw).join('\n')
 export const INV_CHECKS = {
   inv1: {
     reqs: [{
-      hint: 'Change line 1 so name holds your own name instead of "Sam" — e.g. name = "Priya". Keep the speech marks.',
+      hint: 'Change line 1 so name holds your own name instead of "Sam" — e.g. name = "Priya". Keep the speech marks. (If your name IS Sam, use a friend\'s name.)',
       test: raw => { const v = stringValues(raw, 'name')[0]; return v !== undefined && v.trim() !== '' && v.trim().toLowerCase() !== 'sam'; },
     }],
   },

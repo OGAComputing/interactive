@@ -111,6 +111,26 @@ export const hasBugLine   = raw => BUG_RE.test(liveLines(raw));
 export const hasFixedLine = raw => FIXED_RE.test(liveLines(raw));
 export const isBugPairLine = line => BUG_RE.test(line) || FIXED_RE.test(line);
 
+// The student's version of the bug line — broken, fixed, or a working near-miss that
+// dodges str(), e.g. print("Total: " + "5") or print("Total: ", 5).
+const isBugTargetLine = line => !/^\s*#/.test(line) && /\bprint\s*\(.*\btotal\b/i.test(line);
+const hasNearMiss = raw => !hasFixedLine(raw) && raw.split('\n').some(isBugTargetLine);
+
+// "😈 Break it": turns the student's version of the line back into IBUG_LINE in place
+// (appending it if there is none) and leaves an already-broken line alone — safe to mash.
+// Returns the new code and the 1-based line number of the broken line.
+export function breakCode(raw) {
+  const body = raw.replace(/\s+$/, '');
+  const lines = body ? body.split('\n') : [];
+  let i = lines.findIndex(l => hasBugLine(l));
+  if (i === -1) {
+    i = lines.findIndex(isBugTargetLine);
+    if (i === -1) i = lines.push('') - 1;
+    lines[i] = lines[i].match(/^\s*/)[0] + IBUG_LINE;
+  }
+  return { code: lines.join('\n') + '\n', lineNo: i + 1 };
+}
+
 // v gets its value from input() — directly, or already wrapped in int()/float().
 const inputVar = (raw, v) =>
   new RegExp('^[ \\t]*' + v + '\\s*=\\s*(?:(?:int|float)\\s*\\(\\s*)?input\\s*\\(', 'm').test(normalise(raw));
@@ -127,6 +147,7 @@ const fixedAndRun = (raw, ctx) =>
 function fixHint(raw, ctx) {
   if (!ctx.breaks) return 'Press 😈 Break it first to add the broken line.';
   if (hasBugLine(raw)) return 'Fix the broken line: wrap the 5 in str() so it reads print("Total: " + str(5)).';
+  if (hasNearMiss(raw)) return 'That line runs, but this step is practising str() — wrap the 5 in str() so it reads exactly print("Total: " + str(5)).';
   if (!hasFixedLine(raw)) return 'The broken line has gone — don\'t delete it, fix it! Press 😈 Break it to bring it back, then wrap the 5 in str().';
   return 'Now press ▶ Run code to check your fix works.';
 }
