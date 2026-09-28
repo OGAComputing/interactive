@@ -150,6 +150,11 @@ export const MOD_CHECKS = {
 
   // Mod 4 — a NEW decimal number with float(), added into the total. Needs a 4th input()
   // so switching the third number from int() to float() doesn't count as a new number.
+  // The Predict demo's c = 5 / d = 5 lines are never removed, so "all your numbers" is
+  // accepted with or without them:
+  //   a + b + e + f = 23.5   (typed numbers only)
+  //   + c + d       = 33.5   (kept the c/d demo and added it in too)
+  //   28.5 — third number stored in c (overwriting 5), plus d: a + b + c + d + f
   mod4: {
     reqs: [
       {
@@ -157,8 +162,8 @@ export const MOD_CHECKS = {
         test: raw => inputCount(raw) >= 4 && floatCount(raw) >= 1,
       },
       {
-        hint: '❌ Print the total of ALL four numbers added together, including your new decimal one. (Tested with 9, 5, 7 and 2.5, so it should print 23.5.)',
-        test: (raw, out) => printedAny(out, ['23.5']),
+        hint: '❌ Print the total of your four typed-in numbers added together, including your new decimal one — e.g. print(a + b + e + f). (Tested with 9, 5, 7 and 2.5, so it should print 23.5 — or 33.5 if you add c and d in as well.)',
+        test: (raw, out) => printedAny(out, ['23.5', '28.5', '33.5']),
       },
     ],
     passMsg: '✅ Excellent — Python happily adds an int and a float together, giving you a decimal answer.',

@@ -72,6 +72,10 @@ describe('evalMod', () => {
     const good = evalMod('mod4', code([...base, 'f = float(input("Decimal? "))', 'print(a + b + e + f)']),
       out(...BASE_OUT, 'Third? 7', 'Decimal? 2.5', '23.5'));
     expect(good.pass).toBe(true);
+    // Kept the c = 5 / d = 5 demo lines and added them into the total too — also valid.
+    const withCD = evalMod('mod4', code([...base, 'f = float(input("Decimal? "))', 'print(a + b + c + d + e + f)']),
+      out(...BASE_OUT, 'Third? 7', 'Decimal? 2.5', '33.5'));
+    expect(withCD.pass).toBe(true);
     const recast = evalMod('mod4', code([...INVESTIGATE_END, 'e = float(input("Third? "))', 'print(a + b + e)']),
       out(...BASE_OUT, 'Third? 7', '21.0'));
     expect(recast.results[0]).toBe(false);
