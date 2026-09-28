@@ -91,6 +91,107 @@ function evalReqs(check, raw, output) {
   return { results, pass, msg };
 }
 
+// ── Investigate checks ────────────────────────────────────────────────────────
+// One req per CODE-CHANGE bullet in each Investigate prompt card (#req_i_N in the HTML),
+// ticked/crossed live and required before that step's "Check answer" will pass.
+// test(raw, ctx) — ctx describes what the student has done at this step:
+//   ctx.breaks    "😈 Break it" presses at this step
+//   ctx.fixes     break → fix → successful run cycles completed at this step
+//   ctx.lastRun   { code, ok } — the last Run of the Investigate editor (any step)
+// A hint may be a function (raw, ctx) so it can explain WHY a bullet is crossed.
+
+// The standard bug-pair line, broken and fixed. Matched loosely (spacing, quote style) so
+// a correct fix typed as str( 5 ) still counts.
+export const IBUG_LINE       = 'print("Total: " + 5)';
+export const IBUG_FIXED_LINE = 'print("Total: " + str(5))';
+const BUG_RE   = /print\s*\(\s*(["'])Total: \1\s*\+\s*5\s*\)/;
+const FIXED_RE = /print\s*\(\s*(["'])Total: \1\s*\+\s*str\s*\(\s*5\s*\)\s*\)/;
+const liveLines = raw => raw.split('\n').filter(l => !/^\s*#/.test(l)).join('\n');   // commented-out lines don't count
+export const hasBugLine   = raw => BUG_RE.test(liveLines(raw));
+export const hasFixedLine = raw => FIXED_RE.test(liveLines(raw));
+export const isBugPairLine = line => BUG_RE.test(line) || FIXED_RE.test(line);
+
+// v gets its value from input() — directly, or already wrapped in int()/float().
+const inputVar = (raw, v) =>
+  new RegExp('^[ \\t]*' + v + '\\s*=\\s*(?:(?:int|float)\\s*\\(\\s*)?input\\s*\\(', 'm').test(normalise(raw));
+// v is cast to a real number somewhere: a = int(input(…)), a = int(a), or int(a) in a sum.
+const castVar = (raw, v) =>
+  numberVars(raw).includes(v) || new RegExp('\\b(?:int|float)\\s*\\(\\s*' + v + '\\s*\\)').test(normalise(raw));
+
+const fixedAndRun = (raw, ctx) =>
+  hasFixedLine(raw) && !hasBugLine(raw) &&
+  !!ctx.lastRun?.ok && ctx.lastRun.code.trim() === raw.trim();
+
+// Why the "fix it" bullet is crossed — including the student who deletes the broken
+// line instead of fixing it (the fix bullet only ticks while the FIXED line is present).
+function fixHint(raw, ctx) {
+  if (!ctx.breaks) return 'Press 😈 Break it first to add the broken line.';
+  if (hasBugLine(raw)) return 'Fix the broken line: wrap the 5 in str() so it reads print("Total: " + str(5)).';
+  if (!hasFixedLine(raw)) return 'The broken line has gone — don\'t delete it, fix it! Press 😈 Break it to bring it back, then wrap the 5 in str().';
+  return 'Now press ▶ Run code to check your fix works.';
+}
+
+export const INV_CHECKS = {
+  inv1: {
+    reqs: [
+      {
+        hint: raw => /^[ \t]*a\s*=\s*(?:int|float)\s*\(/m.test(normalise(raw))
+          ? 'Just input() for now — no int() yet. Line 1 should read a = input("Enter first number: "). You\'ll add int() in step 2.'
+          : 'Change line 1 so a gets its value from input() — a = input("Enter first number: ").',
+        // plain input() only — casting a here would turn the "still joins" question into a TypeError
+        test: raw => /^[ \t]*a\s*=\s*input\s*\(/m.test(normalise(raw)),
+      },
+    ],
+  },
+  inv2: {
+    reqs: [
+      {
+        hint: 'Change line 2 so b also comes from input() — b = input("Enter second number: ").',
+        test: raw => inputVar(raw, 'b'),
+      },
+      {
+        hint: 'Line 1 should read a = int(input("Enter first number: ")) — a needs to come from input() AND be wrapped in int().',
+        test: raw => inputVar(raw, 'a') && castVar(raw, 'a'),
+      },
+      {
+        hint: 'Wrap line 2 in int() too — b = int(input("Enter second number: ")).',
+        test: raw => inputVar(raw, 'b') && castVar(raw, 'b'),
+      },
+    ],
+  },
+  inv3: {
+    reqs: [
+      { hint: 'Press 😈 Break it to add the broken line.', test: (raw, ctx) => ctx.breaks >= 1 },
+      { hint: fixHint, test: (raw, ctx) => ctx.breaks >= 1 && fixedAndRun(raw, ctx) },
+    ],
+  },
+  inv4: {
+    reqs: [
+      {
+        hint: (raw, ctx) => ctx.breaks ? fixHint(raw, ctx) : 'Press 😈 Break it, then fix the line yourself and ▶ Run code.',
+        test: (raw, ctx) => ctx.fixes >= 1,
+      },
+      {
+        hint: (raw, ctx) => ctx.fixes < 2
+          ? (ctx.breaks > ctx.fixes ? fixHint(raw, ctx) : 'Press 😈 Break it again and fix it one more time.')
+          : fixHint(raw, ctx),
+        // done twice AND left in a working state — a 3rd Break it must be fixed before checking
+        test: (raw, ctx) => ctx.fixes >= 2 && fixedAndRun(raw, ctx),
+      },
+    ],
+  },
+};
+
+// Runs every req for Investigate step n (1-based). ctx fields default to "nothing done".
+export function evalInv(n, raw, ctx = {}) {
+  const c = { breaks: 0, fixes: 0, lastRun: null, ...ctx };
+  const reqs = INV_CHECKS['inv' + n]?.reqs || [];
+  const results = reqs.map(r => !!r.test(raw, c));
+  const bad = results.findIndex(r => !r);
+  const hint = bad === -1 ? null : reqs[bad].hint;
+  return { results, pass: bad === -1, msg: typeof hint === 'function' ? hint(raw, c) : hint };
+}
+
 // ── Modify checks ─────────────────────────────────────────────────────────────
 // Modify starts from the student's Investigate code: a and b cast to real numbers,
 // print(a + b), plus the c = 5 / d = 5 demo from Predict.

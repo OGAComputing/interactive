@@ -1,5 +1,6 @@
 import { describe, test, expect } from 'vitest';
-import { evalMod, evalMake, evalExt, MOD_INPUTS, MAKE_INPUTS, EXT_STEP_COUNT } from './checkers.js';
+import { evalMod, evalMake, evalExt, evalInv, hasBugLine, hasFixedLine, isBugPairLine, IBUG_LINE, IBUG_FIXED_LINE,
+         MOD_INPUTS, MAKE_INPUTS, EXT_STEP_COUNT } from './checkers.js';
 
 const code = (lines) => lines.join('\n');
 
@@ -21,6 +22,129 @@ test('test numbers match the values the checkers expect', () => {
   expect(MOD_INPUTS.mod1).toEqual(['9', '5', '7', '2.5']);
   expect(MAKE_INPUTS).toEqual(['8', '2']);
   expect(EXT_STEP_COUNT).toBe(5);
+});
+
+// ─── Investigate ─────────────────────────────────────────────────────────────
+
+const STARTER = ['a = "5"', 'b = "5"', 'print(a + b)', '', 'c = 5', 'd = 5', 'print(c + d)'];
+const withLines = (base, ...extra) => code([...base, ...extra]);
+const ran = (src, ok = true) => ({ code: src, ok });
+
+describe('evalInv step 1 — a from input()', () => {
+  test('untouched starter code is not accepted', () => {
+    const r = evalInv(1, code(STARTER));
+    expect(r.pass).toBe(false);
+    expect(r.results).toEqual([false]);
+  });
+
+  test('a = input(...) passes, any prompt text', () => {
+    expect(evalInv(1, code(['a = input("Enter first number: ")', ...STARTER.slice(1)])).pass).toBe(true);
+    expect(evalInv(1, code(["a = input('First? ')", ...STARTER.slice(1)])).pass).toBe(true);
+  });
+
+  test('deleting line 1 or casting early is not accepted, with a specific hint for casting', () => {
+    expect(evalInv(1, code(STARTER.slice(1))).pass).toBe(false);
+    const early = evalInv(1, code(['a = int(input("Enter first number: "))', ...STARTER.slice(1)]));
+    expect(early.pass).toBe(false);
+    expect(early.msg).toMatch(/no int\(\) yet/);
+  });
+
+  test('a commented-out input line does not count', () => {
+    expect(evalInv(1, code(['# a = input("x")', ...STARTER])).pass).toBe(false);
+  });
+});
+
+describe('evalInv step 2 — b from input(), both cast', () => {
+  const step1 = ['a = input("Enter first number: ")', ...STARTER.slice(1)];
+
+  test('step 1 code alone ticks nothing', () => {
+    expect(evalInv(2, code(step1)).results).toEqual([false, false, false]);
+  });
+
+  test('b = input() only ticks the first bullet', () => {
+    const src = code(['a = input("Enter first number: ")', 'b = input("Enter second number: ")', ...STARTER.slice(2)]);
+    expect(evalInv(2, src).results).toEqual([true, false, false]);
+  });
+
+  test('both wrapped in int(input()) passes', () => {
+    expect(evalInv(2, code(INVESTIGATE_END)).pass).toBe(true);
+  });
+
+  test('casting on a later line, or with float(), also passes', () => {
+    expect(evalInv(2, code(['a = input("A: ")', 'b = input("B: ")', 'a = int(a)', 'b = int(b)', 'print(a + b)'])).pass).toBe(true);
+    expect(evalInv(2, code(['a = float(input("A: "))', 'b = float(input("B: "))', 'print(a + b)'])).pass).toBe(true);
+  });
+
+  test('a skipped step 1 (a still "5") is caught by the a bullet', () => {
+    const r = evalInv(2, code(['a = int("5")', 'b = int(input("B: "))', 'print(a + b)']));
+    expect(r.results).toEqual([true, false, true]);
+  });
+});
+
+describe('evalInv step 3 — guided Break it', () => {
+  const base = INVESTIGATE_END;
+  const fixed = withLines(base, IBUG_FIXED_LINE);
+  const broken = withLines(base, IBUG_LINE);
+
+  test('nothing ticks before Break it is pressed', () => {
+    expect(evalInv(3, code(base)).results).toEqual([false, false]);
+    expect(evalInv(3, fixed, { lastRun: ran(fixed) }).results).toEqual([false, false]);
+  });
+
+  test('broken line still present: Break it ticks, fix does not', () => {
+    const r = evalInv(3, broken, { breaks: 1, lastRun: ran(broken, false) });
+    expect(r.results).toEqual([true, false]);
+    expect(r.msg).toMatch(/wrap the 5 in str\(\)/);
+  });
+
+  test('fixed and run passes', () => {
+    expect(evalInv(3, fixed, { breaks: 1, lastRun: ran(fixed) }).pass).toBe(true);
+  });
+
+  test('fixed but not yet run does not pass', () => {
+    const r = evalInv(3, fixed, { breaks: 1, lastRun: ran(broken, false) });
+    expect(r.pass).toBe(false);
+    expect(r.msg).toMatch(/Run code/);
+  });
+
+  test('deleting the broken line instead of fixing it does not pass, and says so', () => {
+    const r = evalInv(3, code(base), { breaks: 1, lastRun: ran(code(base)) });
+    expect(r.pass).toBe(false);
+    expect(r.msg).toMatch(/don't delete it/);
+  });
+
+  test('loose spacing / single quotes in the fix still count', () => {
+    const src = withLines(base, "print('Total: ' + str( 5 ))");
+    expect(evalInv(3, src, { breaks: 1, lastRun: ran(src) }).pass).toBe(true);
+  });
+});
+
+describe('evalInv step 4 — self-practice cycles', () => {
+  const fixed = withLines(INVESTIGATE_END, IBUG_FIXED_LINE);
+  const broken = withLines(INVESTIGATE_END, IBUG_LINE);
+
+  test('one cycle ticks only the first bullet', () => {
+    expect(evalInv(4, fixed, { breaks: 1, fixes: 1, lastRun: ran(fixed) }).results).toEqual([true, false]);
+  });
+
+  test('two cycles, left fixed and run, passes', () => {
+    expect(evalInv(4, fixed, { breaks: 2, fixes: 2, lastRun: ran(fixed) }).pass).toBe(true);
+  });
+
+  test('broken again after two cycles must be fixed before checking', () => {
+    const r = evalInv(4, broken, { breaks: 3, fixes: 2, lastRun: ran(broken, false) });
+    expect(r.results).toEqual([true, false]);
+    expect(r.msg).toMatch(/Fix the broken line/);
+  });
+});
+
+test('bug line matchers', () => {
+  expect(hasBugLine(IBUG_LINE)).toBe(true);
+  expect(hasFixedLine(IBUG_LINE)).toBe(false);
+  expect(hasFixedLine(IBUG_FIXED_LINE)).toBe(true);
+  expect(hasBugLine('# ' + IBUG_LINE)).toBe(false);
+  expect(isBugPairLine('  ' + IBUG_FIXED_LINE)).toBe(true);
+  expect(isBugPairLine('print(a + b)')).toBe(false);
 });
 
 // ─── Modify ──────────────────────────────────────────────────────────────────
