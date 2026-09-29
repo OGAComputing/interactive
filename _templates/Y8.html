@@ -168,6 +168,21 @@ color:  teal
     border-color: var(--red);
     background: rgba(220,38,38,.08);
   }
+  .question-card.is-right,
+  .card.is-right {
+    border-color: var(--green);
+    background: rgba(16,185,129,.08);
+    animation: success-pulse 0.8s ease forwards;
+  }
+  @keyframes success-pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(16,185,129,0); }
+    40%  { box-shadow: 0 0 0 8px rgba(16,185,129,.45); }
+    70%  { box-shadow: 0 0 0 14px rgba(16,185,129,.18); }
+    100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .question-card.is-right, .card.is-right { animation: none; }
+  }
 
   /* ── Row layout helper ───────────────────────────────── */
 
@@ -262,13 +277,74 @@ color:  teal
 <!-- Toast for Classroom feedback -->
 <div class="ac-toast" id="toast"></div>
 
+<!-- Shows any unexpected page error at the bottom of the page (no dev console on student PCs). Keep this first. -->
+<!-- NOTE: use ../../../error-reporter.js if this file is inside a lesson subfolder (L1_…/file.html) -->
+<script src="../../error-reporter.js"></script>
+<!-- NOTE: use ../../../activity-ui.js if this file is inside a lesson subfolder (L1_…/file.html) -->
+<script src="../../activity-ui.js"></script>
+<!-- Google Classroom integration (no-op when no ?courseId= param) -->
+<!-- NOTE: use ../../../classroom.js if this file is inside a lesson subfolder (L1_…/file.html) -->
+<script src="../../classroom.js"></script>
+
 <script>
+  // ── Activity identity ──────────────────────────────────
+  const STORAGE_KEY    = 'y8_activity_title';   // unique per activity (saved progress)
+  const ACTIVITY_TITLE = 'Activity Title';      // must match <!-- ACTIVITY title: --> above
+
   // ── State ──────────────────────────────────────────────
   const TASK_COUNT  = 2;                          // update if you add/remove tasks
   const completed   = new Array(TASK_COUNT).fill(false);
   // firstAttempt[i] starts true; set to false on any wrong answer before markDone.
   // Excluded tasks (open-text, code) keep their default true and do not track mistakes.
   const firstAttempt = new Array(TASK_COUNT).fill(true);
+
+  // ── Save / restore ─────────────────────────────────────
+  // Progress survives a page reload. Answer fields are saved by id (text inputs,
+  // textareas, selects) or by name (radio groups) — give every answer field one.
+  function answerFields() {
+    return document.querySelectorAll('.panel input, .panel textarea, .panel select');
+  }
+
+  function saveState() {
+    const answers = {};
+    answerFields().forEach(el => {
+      if (el.type === 'radio') { if (el.checked && el.name) answers['radio_' + el.name] = el.value; }
+      else if (el.type === 'checkbox') { if (el.id) answers[el.id] = el.checked; }
+      else if (el.id) answers[el.id] = el.value;
+    });
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ completed, firstAttempt, answers }));
+    } catch (e) {}
+  }
+
+  function restoreState() {
+    let saved;
+    try { saved = JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch (e) {}
+    if (!saved) return;
+
+    const answers = saved.answers || {};
+    answerFields().forEach(el => {
+      if (el.type === 'radio') el.checked = answers['radio_' + el.name] === el.value;
+      else if (el.type === 'checkbox') { if (el.id in answers) el.checked = !!answers[el.id]; }
+      else if (el.id && answers[el.id] !== undefined) el.value = answers[el.id];
+    });
+
+    for (let i = 0; i < TASK_COUNT; i++) {
+      firstAttempt[i] = saved.firstAttempt?.[i] ?? true;
+      if (!saved.completed?.[i]) continue;
+      completed[i] = true;
+      showDone(i);
+      const fb = document.getElementById('feedback-' + i);
+      if (fb) { fb.textContent = '✅ Correct!'; fb.className = 'feedback correct'; }
+    }
+    // Restore the finished look without re-firing the celebration or a Classroom upload.
+    if (completed.every(Boolean)) showAllDone();
+    window.ActivityUI?.setScore(calcScore());
+  }
+
+  // Save answers as the student types, so nothing is lost on reload.
+  document.addEventListener('input',  e => { if (e.target.closest('.panel')) saveState(); });
+  document.addEventListener('change', e => { if (e.target.closest('.panel')) saveState(); });
 
   // ── Tab switching ──────────────────────────────────────
   document.getElementById('tab-bar').addEventListener('click', e => {
@@ -285,7 +361,8 @@ color:  teal
 
   // ── Check answer ───────────────────────────────────────
   function checkTask(idx) {
-    if (!window.Classroom?.verifyAuth()) return;
+    // `=== false`, not `!…`: if classroom.js is missing, verifyAuth is undefined and must not block the check.
+    if (window.Classroom?.verifyAuth() === false) return;
 
     // TODO: replace this stub with your actual answer-checking logic.
     const isCorrect = true;
@@ -300,14 +377,26 @@ color:  teal
       firstAttempt[idx] = false;   // wrong answer — no longer first-attempt
       feedback.textContent = '❌ Not quite — try again.';
       feedback.className   = 'feedback wrong';
+      saveState();
     }
   }
 
-  // ── Mark a task done ───────────────────────────────────
-  function markDone(idx) {
-    if (completed[idx]) return;
-    completed[idx] = true;
+  // ── Scoring ────────────────────────────────────────────
+  // Mastery scoring: 0–80 for completing tasks, +20 bonus for first-attempt correctness
+  function calcScore() {
+    const done     = completed.filter(Boolean).length;
+    const mastered = completed.filter((c, i) => c && firstAttempt[i]).length;
+    return Math.round((done / TASK_COUNT * 80) + (mastered / TASK_COUNT * 20));
+  }
 
+  function submitScore() {
+    const pct = calcScore();
+    window.ActivityUI?.setScore(pct);
+    window.Classroom?.submitGrade(pct, ACTIVITY_TITLE);
+  }
+
+  // ── Mark a task done ───────────────────────────────────
+  function showDone(idx) {
     const isGold = firstAttempt[idx];
     document.getElementById('dot-' + idx).className = 'pdot ' + (isGold ? 'gold' : 'correct');
 
@@ -317,14 +406,14 @@ color:  teal
     // Reveal "Try for Gold" button only when the task was completed without first-attempt
     const resetBtn = document.getElementById('reset-' + idx);
     if (resetBtn) resetBtn.style.display = isGold ? 'none' : '';
+  }
 
-    // Mastery scoring: 0–80 for completing tasks, +20 bonus for first-attempt correctness
-    const done     = completed.filter(Boolean).length;
-    const mastered = completed.filter((c, i) => c && firstAttempt[i]).length;
-    const pct      = Math.round((done / TASK_COUNT * 80) + (mastered / TASK_COUNT * 20));
-    window.ActivityUI?.setScore(pct);
-    window.Classroom?.submitGrade(pct, 'Activity Title');
-
+  function markDone(idx) {
+    if (completed[idx]) return;
+    completed[idx] = true;
+    showDone(idx);
+    saveState();
+    submitScore();
     if (completed.every(Boolean)) allComplete();
   }
 
@@ -334,10 +423,12 @@ color:  teal
     firstAttempt[idx] = true;
 
     document.getElementById('dot-' + idx).className = 'pdot';
+    const tab = document.querySelector('.tab[data-idx="' + idx + '"]');
+    if (tab) tab.classList.remove('done');
     const fb = document.getElementById('feedback-' + idx);
     fb.textContent = ''; fb.className = 'feedback';
     document.getElementById('reset-' + idx).style.display = 'none';
-    setAnswerState('q-' + idx, true);
+    clearAnswerState('q-' + idx);
 
     // Hide all-done state so it can fire again after the retry
     document.getElementById('done-banner').classList.remove('show', 'gold', 'green');
@@ -345,40 +436,44 @@ color:  teal
     if (glow) glow.classList.remove('show', 'gold', 'green');
     window.ActivityUI?.resetCelebration();
 
-    const done     = completed.filter(Boolean).length;
-    const mastered = completed.filter((c, i) => c && firstAttempt[i]).length;
-    const pct      = Math.round((done / TASK_COUNT * 80) + (mastered / TASK_COUNT * 20));
-    window.ActivityUI?.setScore(pct);
-    window.Classroom?.submitGrade(pct, 'Activity Title');
+    saveState();
+    submitScore();
   }
 
   // ── All tasks complete ─────────────────────────────────
-  function allComplete() {
-    const allGold = firstAttempt.every(Boolean);
-    const tier    = allGold ? 'gold' : 'green';
+  function showAllDone() {
+    const tier = firstAttempt.every(Boolean) ? 'gold' : 'green';
     document.getElementById('done-banner').classList.add('show', tier);
     const glow = document.getElementById('glow-overlay');
     if (glow) glow.classList.add(tier, 'show');
-    const mastered = firstAttempt.filter(Boolean).length;
-    const pct = Math.round(80 + (mastered / TASK_COUNT * 20));
-    window.ActivityUI?.launchCelebration({ percent: pct });
   }
 
-  // ── Toast helper ───────────────────────────────────────
-  // Highlight the specific answer/question block that needs attention.
+  function allComplete() {
+    showAllDone();
+    window.ActivityUI?.launchCelebration({ percent: calcScore() });
+  }
+
+  // ── Per-question highlighting ──────────────────────────
+  // Highlight the specific answer/question block: green + mini-celebration when right, red when wrong.
   function setAnswerState(target, ok) {
     const el = typeof target === 'string' ? document.getElementById(target) : target;
     const block = el?.closest('.question-card, .card, .panel');
-    if (block) block.classList.toggle('is-wrong', !ok);
+    if (!block) return;
+    block.classList.toggle('is-wrong', !ok);
+    block.classList.toggle('is-right', ok && !block.classList.contains('panel'));
+    if (ok) window.ActivityUI?.miniCelebration(block);
   }
 
+  function clearAnswerState(target) {
+    const el = typeof target === 'string' ? document.getElementById(target) : target;
+    el?.closest('.question-card, .card, .panel')?.classList.remove('is-wrong', 'is-right');
+  }
+
+  // ── Toast helper ───────────────────────────────────────
   const launchCelebration = (options) => window.ActivityUI?.launchCelebration(options);
   const showToast = (msg, type = '') => window.ActivityUI?.showToast(msg, type);
-</script>
 
-<script src="../../activity-ui.js"></script>
-<!-- Google Classroom integration (no-op when no ?courseId= param) -->
-<!-- NOTE: use ../../../classroom.js if this file is inside a lesson subfolder (L1_…/file.html) -->
-<script src="../../classroom.js"></script>
+  restoreState();
+</script>
 </body>
 </html>
