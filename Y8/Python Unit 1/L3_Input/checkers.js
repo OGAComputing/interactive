@@ -117,14 +117,14 @@ export const MOD_CHECKS = {
   mod3: {
     reqs: [
       {
-        hint: '❌ Use one of your answers inside a print().',
+        hint: '❌ Use one of your answers inside a print()',
         test(raw) {
           const vars = inputVars(raw);
           return printArgs(raw).some(a => vars.some(v => word(v).test(a)));
         },
       },
       {
-        hint: '❌ Use + at least twice inside ONE print() — join your answer to text on both sides, e.g. print("Your favourite subject is " + subject + "!").',
+        hint: '❌ Use + at least twice inside ONE print() — join your answer to text on both sides, e.g. print("Your favourite subject is " + subject + "!")',
         test(raw) {
           const vars = inputVars(raw);
           return printArgs(raw).some(a => plusCount(a) >= 2 && vars.some(v => word(v).test(a)));
@@ -152,7 +152,7 @@ export const MOD_CHECKS = {
   mod5: {
     reqs: [
       {
-        hint: '❌ Use TWO different answers inside the SAME print().',
+        hint: '❌ Use TWO different answers inside the SAME print()',
         test(raw) {
           const vars = inputVars(raw);
           return printArgs(raw).some(a => vars.filter(v => word(v).test(a)).length >= 2);
@@ -215,7 +215,7 @@ export const MAKE_CHECK = {
       test: raw => inputCount(raw) >= 3,
     },
     {
-      hint: '❌ Use + in a print() to join an answer into a sentence — e.g. print("Hi " + name + "!").',
+      hint: '❌ Use + in a print() to join an answer into a sentence — e.g. print("Hi " + name + "!")',
       test(raw) {
         const vars = inputVars(raw);
         return printArgs(raw).some(a => plusCount(a) >= 1 && vars.some(v => word(v).test(a)));
@@ -224,7 +224,7 @@ export const MAKE_CHECK = {
     {
       // Matches the task card's bullet 3 exactly: all three answers printed. One print()
       // or several are both fine — the card never asks for a particular number of lines.
-      hint: '❌ Print all three of your answers — each one needs to appear somewhere in a print().',
+      hint: '❌ Print all three of your answers — each one needs to appear somewhere in a print()',
       test(raw) {
         const args = printArgs(raw);
         const vars = inputVars(raw);
@@ -265,7 +265,7 @@ export const EXT_CHECK = {
     {
       // Strings are blanked to "" / '' by normalise(), so a leftover pair of quotes in the
       // print() argument means the student added some words of their own around the answers.
-      hint: '❌ In at least one print(), use + to join two or more of your answers together with some words of your own — e.g. print(name + " has a pet called " + pet).',
+      hint: '❌ In at least one print(), use + to join two or more of your answers together with some words of your own — e.g. print(name + " has a pet called " + pet)',
       test(raw) {
         const vars = inputVars(raw);
         return printArgs(raw).some(a =>
@@ -351,7 +351,7 @@ export const restoreCode = raw => fullnameMade(raw) ? raw
 
 function fixHint(raw, ctx) {
   if (!ctx.breaks) return 'Press 😈 Break it first to break the last line.';
-  if (hasBugLine(raw) && !fullnameMade(raw)) return 'Fix the broken line: change fullname back to name so it reads print(greeting + name).';
+  if (hasBugLine(raw) && !fullnameMade(raw)) return 'Fix the broken line: change fullname back to name so it reads print(greeting + name)';
   if (!isBugFixed(raw)) return 'The last line has gone — don\'t delete it, fix it! Press 😈 Break it to bring it back, then change fullname to name.';
   return 'Now press ▶ Run code (and type your name) to check your fix works.';
 }
@@ -359,7 +359,7 @@ function fixHint(raw, ctx) {
 export const INV_CHECKS = {
   inv1: {
     reqs: [{
-      hint: 'Change the message inside input(...) on line 1 to something different — e.g. name = input("Enter your name: ").',
+      hint: 'Change the message inside input(...) on line 1 to something different — e.g. name = input("Enter your name: ")',
       test: raw => {
         const m = liveLines(raw).join('\n').match(/^[ \t]*name\s*=\s*input\s*\(\s*(["'])(.*?)\1/m);
         return !!m && m[2].trim() !== '' && m[2].trim().toLowerCase() !== 'what is your name?';

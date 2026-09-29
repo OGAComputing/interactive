@@ -146,9 +146,9 @@ const fixedAndRun = (raw, ctx) =>
 // line instead of fixing it (the fix bullet only ticks while the FIXED line is present).
 function fixHint(raw, ctx) {
   if (!ctx.breaks) return 'Press 😈 Break it first to add the broken line.';
-  if (hasBugLine(raw)) return 'Fix the broken line: wrap the 5 in str() so it reads print("Total: " + str(5)).';
-  if (hasNearMiss(raw)) return 'That line runs, but this step is practising str() — wrap the 5 in str() so it reads exactly print("Total: " + str(5)).';
-  if (!hasFixedLine(raw)) return 'The broken line has gone — don\'t delete it, fix it! Press 😈 Break it to bring it back, then wrap the 5 in str().';
+  if (hasBugLine(raw)) return 'Fix the broken line: wrap the 5 in str() so it reads print("Total: " + str(5))';
+  if (hasNearMiss(raw)) return 'That line runs, but this step is practising str() — wrap the 5 in str() so it reads exactly print("Total: " + str(5))';
+  if (!hasFixedLine(raw)) return 'The broken line has gone — don\'t delete it, fix it! Press 😈 Break it to bring it back, then wrap the 5 in str()';
   return 'Now press ▶ Run code to check your fix works.';
 }
 
@@ -157,8 +157,8 @@ export const INV_CHECKS = {
     reqs: [
       {
         hint: raw => /^[ \t]*a\s*=\s*(?:int|float)\s*\(/m.test(normalise(raw))
-          ? 'Just input() for now — no int() yet. Line 1 should read a = input("Enter first number: "). You\'ll add int() in step 2.'
-          : 'Change line 1 so a gets its value from input() — a = input("Enter first number: ").',
+          ? 'Just input() for now — no int() yet, you\'ll add that in step 2. Line 1 should read: a = input("Enter first number: ")'
+          : 'Change line 1 so a gets its value from input() — a = input("Enter first number: ")',
         // plain input() only — casting a here would turn the "still joins" question into a TypeError
         test: raw => /^[ \t]*a\s*=\s*input\s*\(/m.test(normalise(raw)),
       },
@@ -167,15 +167,15 @@ export const INV_CHECKS = {
   inv2: {
     reqs: [
       {
-        hint: 'Change line 2 so b also comes from input() — b = input("Enter second number: ").',
+        hint: 'Change line 2 so b also comes from input() — b = input("Enter second number: ")',
         test: raw => inputVar(raw, 'b'),
       },
       {
-        hint: 'Line 1 should read a = int(input("Enter first number: ")) — a needs to come from input() AND be wrapped in int().',
+        hint: 'Line 1 should read a = int(input("Enter first number: ")) — a needs to come from input() AND be wrapped in int()',
         test: raw => inputVar(raw, 'a') && castVar(raw, 'a'),
       },
       {
-        hint: 'Wrap line 2 in int() too — b = int(input("Enter second number: ")).',
+        hint: 'Wrap line 2 in int() too — b = int(input("Enter second number: "))',
         test: raw => inputVar(raw, 'b') && castVar(raw, 'b'),
       },
     ],
@@ -237,7 +237,7 @@ export const MOD_CHECKS = {
   mod1: {
     reqs: [
       {
-        hint: '❌ Add a print() that shows the difference between your two numbers — e.g. print(a - b). (Tested with 9 and 5, so it should print 4.)',
+        hint: '❌ Add a print() that shows the difference between your two numbers (tested with 9 and 5, so it should print 4) — e.g. print(a - b)',
         test: (raw, out) => /-/.test(normalise(raw)) && printedAny(out, ['4', '-4', '4.0', '-4.0']),
       },
     ],
@@ -248,11 +248,11 @@ export const MOD_CHECKS = {
   mod2: {
     reqs: [
       {
-        hint: '❌ Ask for a THIRD number with input() and cast it with int() — e.g. e = int(input("Enter third number: ")).',
+        hint: '❌ Ask for a THIRD number with input() and cast it with int() — e.g. e = int(input("Enter third number: "))',
         test: raw => inputCount(raw) >= 3 && castCount(raw) >= 3,
       },
       {
-        hint: '❌ Add a print() that adds all three numbers together — e.g. print(a + b + e). (Tested with 9, 5 and 7, so it should print 21.)',
+        hint: '❌ Add a print() that adds all three numbers together (tested with 9, 5 and 7, so it should print 21) — e.g. print(a + b + e)',
         test: (raw, out) => printedAny(out, ['21', '21.0']),
       },
     ],
@@ -263,7 +263,7 @@ export const MOD_CHECKS = {
   mod3: {
     reqs: [
       {
-        hint: '❌ Use / to print the average of your three numbers — e.g. print((a + b + e) / 3). Don\'t forget the brackets: Python divides BEFORE it adds. (Tested with 9, 5 and 7, so it should print 7.0.)',
+        hint: '❌ Use / to print the average of your three numbers (tested with 9, 5 and 7, so it should print 7.0). Don\'t forget the brackets, because Python divides BEFORE it adds — e.g. print((a + b + e) / 3)',
         test: (raw, out) => /\//.test(normalise(raw)) && printedAny(out, ['7.0']),
       },
     ],
@@ -280,11 +280,11 @@ export const MOD_CHECKS = {
   mod4: {
     reqs: [
       {
-        hint: '❌ Ask for a NEW decimal number using float() instead of int() — e.g. f = float(input("Enter a decimal number: ")). Don\'t just change your third number\'s cast — add a genuinely new question.',
+        hint: '❌ Ask for a NEW decimal number using float() instead of int(). Don\'t just change your third number\'s cast — add a genuinely new question, e.g. f = float(input("Enter a decimal number: "))',
         test: raw => inputCount(raw) >= 4 && floatCount(raw) >= 1,
       },
       {
-        hint: '❌ Print the total of your four typed-in numbers added together, including your new decimal one — e.g. print(a + b + e + f). (Tested with 9, 5, 7 and 2.5, so it should print 23.5 — or 33.5 if you add c and d in as well.)',
+        hint: '❌ Print the total of your four typed-in numbers added together, including your new decimal one (tested with 9, 5, 7 and 2.5, so it should print 23.5 — or 33.5 if you add c and d in as well), e.g. print(a + b + e + f)',
         test: (raw, out) => printedAny(out, ['23.5', '28.5', '33.5']),
       },
     ],
@@ -309,11 +309,11 @@ export const MAKE_CHECK = {
       test: raw => inputCount(raw) >= 2,
     },
     {
-      hint: '❌ Cast BOTH numbers with int() so Python treats them as numbers, not text — e.g. num1 = int(input("First number: ")).',
+      hint: '❌ Cast BOTH numbers with int() so Python treats them as numbers, not text — e.g. num1 = int(input("First number: "))',
       test: raw => castCount(raw) >= 2,
     },
     {
-      hint: '❌ Print the SUM of your two numbers using + — e.g. print(num1 + num2). (Tested with 8 and 2, so it should print 10 — if you see 82, a number hasn\'t been cast.)',
+      hint: '❌ Print the SUM of your two numbers using + (tested with 8 and 2, so it should print 10 — if you see 82, a number hasn\'t been cast), e.g. print(num1 + num2)',
       test: (raw, out) => /\+/.test(normalise(raw)) && printedAny(out, ['10', '10.0']),
     },
     {
@@ -340,7 +340,7 @@ export const EXT_CHECKS = {
   ext1: {
     reqs: [
       {
-        hint: '❌ Ask for at least 3 numbers with input(), and cast each one with int() or float().',
+        hint: '❌ Ask for at least 3 numbers with input(), and cast each one with int() or float()',
         test: raw => inputCount(raw) >= 3 && castCount(raw) >= 3,
       },
       {
@@ -373,7 +373,7 @@ export const EXT_CHECKS = {
         },
       },
       {
-        hint: '❌ Print that answer inside a sentence: join your own words to it with + and str() — e.g. print("Your total is " + str(total)).',
+        hint: '❌ Print that answer inside a sentence: join your own words to it with + and str() — e.g. print("Your total is " + str(total))',
         test: raw => printArgs(raw).some(a => /\bstr\s*\(/.test(a) && /\+/.test(a) && /""|''/.test(a)),
       },
     ],
@@ -384,11 +384,11 @@ export const EXT_CHECKS = {
   ext3: {
     reqs: [
       {
-        hint: '❌ Print a comparison that uses one of your numbers — e.g. print(total > 100). Python will answer True or False.',
+        hint: '❌ Print a comparison that uses one of your numbers — Python will answer True or False, e.g. print(total > 100)',
         test: raw => printArgs(raw).some(a => COMPARISON.test(a) && /[A-Za-z_]/.test(a.replace(/\b(?:True|False)\b/g, ''))),
       },
       {
-        hint: '❌ Print a second comparison that uses == ("is it equal to?") — e.g. print(a == b).',
+        hint: '❌ Print a second comparison that uses == ("is it equal to?") — e.g. print(a == b)',
         test: raw => printArgs(raw).some(a => /==/.test(a)),
       },
     ],

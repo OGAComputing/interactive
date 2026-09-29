@@ -219,7 +219,7 @@ export function validateVpChallenge(raw) {
   if (varCount < 3)
     return { pass: false, msg: `❌ Create at least 3 string variables — you have ${varCount} so far.` };
   if (!has(raw, '+'))
-    return { pass: false, msg: '❌ Use + to join strings and variables in at least one print line — try: print("Name: " + first_name).' };
+    return { pass: false, msg: '❌ Use + to join strings and variables in at least one print line — try: print("Name: " + first_name)' };
   const printCount = (raw.match(/\bprint\s*\(/g) || []).length;
   if (printCount < 2)
     return { pass: false, msg: '❌ Print at least 2 lines of your name badge.' };
@@ -284,10 +284,10 @@ export function breakCode(raw) {
 
 function fixHint(raw, ctx) {
   if (!ctx.breaks) return 'Press 😈 Break it first to add the broken line.';
-  if (hasBugLine(raw)) return 'Fix the broken line: add the missing " before the ) so it reads print("Debugging is normal!").';
+  if (hasBugLine(raw)) return 'Fix the broken line: add the missing " before the ) so it reads print("Debugging is normal!")';
   if (!hasFixedLine(raw) && liveLines(raw).some(isBugTargetLine))
-    return 'Nearly! That line runs, but it should read exactly print("Debugging is normal!") — the missing " goes straight after the !, before the ).';
-  if (!hasFixedLine(raw)) return 'The broken line has gone — don\'t delete it, fix it! Press 😈 Break it to bring it back, then add the missing ".';
+    return 'Nearly! That line runs, but it should read exactly print("Debugging is normal!") — the missing " goes straight after the !, before the )';
+  if (!hasFixedLine(raw)) return 'The broken line has gone — don\'t delete it, fix it! Press 😈 Break it to bring it back, then add the missing "';
   return 'Now press ▶ Run code to check your fix works.';
 }
 
@@ -297,7 +297,7 @@ const fullPrints = raw => (normalise(raw).match(/\bprint\s*\(\s*[^)\s]/g) || [])
 export const INV_CHECKS = {
   inv1: {
     reqs: [{
-      hint: 'Change the text "Hello, World!" on line 1 to your own greeting — keep print( ) and the speech marks, e.g. print("Hi there!").',
+      hint: 'Change the text "Hello, World!" on line 1 to your own greeting — keep print( ) and the speech marks, e.g. print("Hi there!")',
       test: raw => printCalls(raw) >= 3 && !/\bprint\s*\(\s*["']Hello,\s*World!["']\s*\)/i.test(liveLines(raw).join('\n')),
     }],
   },
@@ -309,7 +309,7 @@ export const INV_CHECKS = {
   },
   inv3: {
     reqs: [{
-      hint: "Change one line to use single quotes instead of double quotes, e.g. print('Hi there!').",
+      hint: "Change one line to use single quotes instead of double quotes, e.g. print('Hi there!')",
       test: raw => liveLines(raw).some(l => /\bprint\s*\(\s*'/.test(l)),
     }],
   },

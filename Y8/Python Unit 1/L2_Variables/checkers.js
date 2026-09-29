@@ -181,14 +181,14 @@ export const MOD_CHECKS = {
   mod4: {
     reqs: [
       {
-        hint: '❌ Use one of your variables inside a print().',
+        hint: '❌ Use one of your variables inside a print()',
         test(raw) {
           const vars = [...new Set(stringVarAssigns(raw))];
           return studentPrintArgs(raw).some(a => vars.some(v => word(v).test(a)));
         },
       },
       {
-        hint: '❌ Join your variable with extra text using + at least twice — e.g. print("My pet is called " + pet + "!").',
+        hint: '❌ Join your variable with extra text using + at least twice — e.g. print("My pet is called " + pet + "!")',
         test(raw) {
           const vars = [...new Set(stringVarAssigns(raw))];
           return studentPrintArgs(raw).some(a => plusCount(a) >= 2 && vars.some(v => word(v).test(a)));
@@ -238,7 +238,7 @@ export const MAKE_CHECK = {
       test(raw) { return [...new Set(stringVarAssigns(raw))].length >= 3; },
     },
     {
-      hint: '❌ Use + in a print() to join a variable into a sentence — e.g. print("Name: " + name).',
+      hint: '❌ Use + in a print() to join a variable into a sentence — e.g. print("Name: " + name)',
       test(raw) {
         const vars = [...new Set(stringVarAssigns(raw))];
         return printArgs(raw).some(a => plusCount(a) >= 1 && vars.some(v => word(v).test(a)));
@@ -270,7 +270,7 @@ export const EXT_CHECKS = {
   ext1: {
     reqs: [
       {
-        hint: '❌ Write ONE print() that joins at least TWO of your variables together with text, using + at least twice — e.g. print("Name: " + name + ", House: " + house).',
+        hint: '❌ Write ONE print() that joins at least TWO of your variables together with text, using + at least twice — e.g. print("Name: " + name + ", House: " + house)',
         test(raw) {
           const vars = [...new Set(stringVarAssigns(raw))];
           return printArgs(raw).some(a => plusCount(a) >= 2 && vars.filter(v => word(v).test(a)).length >= 2);
@@ -284,7 +284,7 @@ export const EXT_CHECKS = {
   ext2: {
     reqs: [
       {
-        hint: '❌ Use an f-string to join at least TWO variables into one line — e.g. print(f"Name: {name}, House: {house}").',
+        hint: '❌ Use an f-string to join at least TWO variables into one line — e.g. print(f"Name: {name}, House: {house}")',
         test(raw) {
           const vars = [...new Set(stringVarAssigns(raw))];
           return fStringLiterals(raw).some(f => vars.filter(v => word(v).test(f)).length >= 2);
@@ -345,7 +345,7 @@ export const BONUS_CHECKS = {
     const args = printArgs(raw);
     const ok = vars.length >= 1 && args.some(a => vars.some(v => word(v).test(a)));
     if (!ok)
-      return { pass: false, msg: '❌ Ask ONE question with input(), store the answer in a new variable, and print that variable — e.g. subject = input("Favourite subject? ") then print(subject).' };
+      return { pass: false, msg: '❌ Ask ONE question with input(), store the answer in a new variable, and print that variable — e.g. subject = input("Favourite subject? ") then print(subject)' };
     return { pass: true, msg: '✅ That is input() in a nutshell — it hands back whatever was typed, ready to store in a variable. You will do a whole lesson on this next!' };
   },
 
@@ -358,7 +358,7 @@ export const BONUS_CHECKS = {
     const joinedPlus = args.some(a => plusCount(a) >= 2 && vars.some(v => word(v).test(a)));
     const joinedF    = fStringLiterals(raw).some(f => vars.some(v => word(v).test(f)));
     if (!joinedPlus && !joinedF)
-      return { pass: false, msg: '❌ Combine one of your answers into a sentence — either with + (e.g. print("You like " + subject + "!")) or an f-string (e.g. print(f"You like {subject}!")).' };
+      return { pass: false, msg: '❌ Combine one of your answers into a sentence — either with + (e.g. print("You like " + subject + "!")) or an f-string (e.g. print(f"You like {subject}!"))' };
     return { pass: true, msg: '🌟 Two questions and a combined sentence — that is the heart of next lesson, and you have already done it!' };
   },
 };
@@ -421,20 +421,20 @@ const stringValues = (raw, v) => [...liveLines(raw).join('\n')
 export const INV_CHECKS = {
   inv1: {
     reqs: [{
-      hint: 'Change line 1 so name holds your own name instead of "Sam" — e.g. name = "Priya". Keep the speech marks. (If your name IS Sam, use a friend\'s name.)',
+      hint: 'Change line 1 so name holds your own name instead of "Sam", keeping the speech marks. (If your name IS Sam, use a friend\'s name.) For example: name = "Priya"',
       test: raw => { const v = stringValues(raw, 'name')[0]; return v !== undefined && v.trim() !== '' && v.trim().toLowerCase() !== 'sam'; },
     }],
   },
   inv2: {
     reqs: [{
-      hint: 'Change line 2 so greeting holds "Hi there, " instead of "Hello ".',
+      hint: 'Change line 2 so greeting holds "Hi there, " instead of "Hello "',
       test: raw => { const v = stringValues(raw, 'greeting')[0]; return v !== undefined && v.trim() !== '' && v.trim().toLowerCase() !== 'hello'; },
     }],
   },
   inv3: {
     reqs: [
       {
-        hint: 'At the very end, add a line that gives name a NEW value — e.g. name = "Jordan".',
+        hint: 'At the very end, add a line that gives name a NEW value — e.g. name = "Jordan"',
         test: raw => stringValues(raw, 'name').length >= 2,
       },
       {
