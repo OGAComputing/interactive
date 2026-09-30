@@ -333,7 +333,10 @@ color:  cyan
       padding: 4px 10px; border: 1px solid var(--border);
       color: var(--text-dim); font-size: .58rem; letter-spacing: .12em;
       text-transform: uppercase; transition: all .35s;
+      background: transparent; font-family: inherit; cursor: pointer;
     }
+    .tsb-item:hover:not(.active) { border-color: var(--cyan-dim); color: var(--text-bright); }
+    .tp-btns { display: flex; gap: 10px; flex-wrap: wrap; }
     .tsb-item.active { border-color: var(--cyan); color: var(--cyan); background: rgba(0,196,224,.07); }
     .tsb-item.done   { border-color: var(--primary-dim); color: var(--primary); background: rgba(0,229,160,.05); }
     .tsb-arrow { color: var(--border); font-size: .8rem; }
@@ -708,18 +711,22 @@ color:  cyan
     <div class="sec-lbl">Stage 1 of 10 — Database Key Concepts</div>
     <div class="stg-title">How Databases Are Structured</div>
     <div class="stg-instr">
-      Click through the concepts below one at a time — the table will highlight each part as you go.
+      Click through the concepts below one at a time — the table will highlight each part as you go. You can click any concept name to jump straight to it.
+    </div>
+
+    <div class="nav-row" id="back-to-label" style="display:none; justify-content:flex-start; border:none; margin:0 0 14px; padding:0">
+      <button class="btn" onclick="gotoStage(2)"><span>RETURN TO LABELLING →</span></button>
     </div>
 
     <!-- Step progress bar -->
     <div class="teach-steps-bar">
-      <div class="tsb-item" id="tsb-1">Table</div>
+      <button class="tsb-item" id="tsb-1" onclick="setTeachStep(1)">Table</button>
       <div class="tsb-arrow">›</div>
-      <div class="tsb-item" id="tsb-2">Record</div>
+      <button class="tsb-item" id="tsb-2" onclick="setTeachStep(2)">Record</button>
       <div class="tsb-arrow">›</div>
-      <div class="tsb-item" id="tsb-3">Field</div>
+      <button class="tsb-item" id="tsb-3" onclick="setTeachStep(3)">Field</button>
       <div class="tsb-arrow">›</div>
-      <div class="tsb-item" id="tsb-4">Primary Key</div>
+      <button class="tsb-item" id="tsb-4" onclick="setTeachStep(4)">Primary Key</button>
     </div>
 
     <!-- Database table — highlights applied progressively by setTeachStep() -->
@@ -788,7 +795,7 @@ color:  cyan
         </div>
         <div class="tp-def">A <strong>record</strong> is one complete horizontal row in a table. It holds every piece of data about a single person or item. Each row is a separate record — the highlighted green row is Maria Burton's.</div>
         <div class="tp-callout tp-callout-green">↑ The green-highlighted row is one RECORD</div>
-        <div><button class="btn" onclick="setTeachStep(3)"><span>NEXT — WHAT IS A FIELD? →</span></button></div>
+        <div class="tp-btns"><button class="btn cyan" onclick="setTeachStep(1)"><span>← BACK</span></button><button class="btn" onclick="setTeachStep(3)"><span>NEXT — WHAT IS A FIELD? →</span></button></div>
       </div>
 
       <!-- Step 3: FIELD -->
@@ -799,7 +806,7 @@ color:  cyan
         </div>
         <div class="tp-def">A <strong>field</strong> is one vertical column in a table. It stores a single category of information across every record. The highlighted amber column is the "Full Name" field — it holds a name for every person in the database.</div>
         <div class="tp-callout tp-callout-amber">↑ The amber-highlighted column is one FIELD</div>
-        <div><button class="btn" onclick="setTeachStep(4)"><span>NEXT — WHAT IS A PRIMARY KEY? →</span></button></div>
+        <div class="tp-btns"><button class="btn cyan" onclick="setTeachStep(2)"><span>← BACK</span></button><button class="btn" onclick="setTeachStep(4)"><span>NEXT — WHAT IS A PRIMARY KEY? →</span></button></div>
       </div>
 
       <!-- Step 4: PRIMARY KEY -->
@@ -810,7 +817,7 @@ color:  cyan
         </div>
         <div class="tp-def">Every record needs a <strong>primary key</strong> — a unique identifier that belongs to that record alone. No two records in the same table can share a primary key. Maria's is <strong style="color:var(--cyan)">P-1042</strong>; it belongs to her and no one else. The glowing cell in the Record ID column is her primary key value.</div>
         <div class="tp-callout tp-callout-cyan">↑ "P-1042" in the Record ID column is the PRIMARY KEY for Maria's record</div>
-        <div><button class="btn" onclick="markDone(0); gotoStage(2)"><span>GOT IT — TEST MY KNOWLEDGE →</span></button></div>
+        <div class="tp-btns"><button class="btn cyan" onclick="setTeachStep(3)"><span>← BACK</span></button><button class="btn" onclick="markDone(0); gotoStage(2)"><span>GOT IT — TEST MY KNOWLEDGE →</span></button></div>
       </div>
 
     </div>
@@ -821,7 +828,11 @@ color:  cyan
     <div class="sec-lbl">Stage 2 of 10 — Identify the Concepts</div>
     <div class="stg-title">Label the Database</div>
     <div class="stg-instr">
-      Drag each term from the bank and drop it onto the correct description. Use the reference table to help you.
+      Drag each term from the bank and drop it onto the correct description. Use the reference table to help you — or go back and review the definitions. Any terms you've already placed will still be here when you return.
+    </div>
+
+    <div class="nav-row" style="justify-content:flex-start; border:none; margin:0 0 16px; padding:0">
+      <button class="btn cyan" onclick="gotoStage(1)"><span>← REVIEW DEFINITIONS</span></button>
     </div>
 
     <!-- Chip bank -->
@@ -1741,6 +1752,7 @@ color:  cyan
     updateProgress(n);
     window.scrollTo({ top: 0, behavior: 'smooth' });
     document.body.classList.toggle('ext-mode', n === 11);
+    if (n === 2) document.getElementById('back-to-label').style.display = 'flex';
     if (n === 10) finishUp();
     if (n === 11) extShowIntro();
   }
