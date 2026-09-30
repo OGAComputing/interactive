@@ -563,6 +563,55 @@ color:  cyan
     }
 
     @media (max-width: 480px) { #case-file { display: none !important; } }
+
+    /* ── MAIN TASK COMPLETE — green-tinted theme so teachers can spot finishers ── */
+    body { transition: background-color 1.2s ease; }
+    body.main-complete {
+      --bg:      #03170f;
+      --bg2:     #062216;
+      --surface: #0a2c1d;
+      --border:  #15573d;
+    }
+    .done-flag {
+      display:none; font-size:.6rem; letter-spacing:.16em; text-transform:uppercase; font-weight:700;
+      color:var(--bg); background:var(--primary); padding:4px 10px; box-shadow:var(--glow-g); white-space:nowrap;
+    }
+    body.main-complete .done-flag { display:inline-block; }
+    body.ext-mode #case-file { display:none !important; }
+
+    /* ── EXTENSION: RAPID RESPONSE UNIT ── */
+    .ext-topbar { display:flex; align-items:center; gap:14px; margin-bottom:14px; flex-wrap:wrap; }
+    .ext-case-no { font-size:.7rem; letter-spacing:.2em; color:var(--cyan); text-shadow:var(--glow-c); }
+    .ext-pips { display:flex; gap:4px; flex:1; }
+    .ext-pip { width:16px; height:6px; background:var(--border); }
+    .ext-pip.done { background:var(--primary); box-shadow:0 0 6px rgba(0,229,160,.5); }
+    .ext-pip.now  { background:var(--cyan); }
+    .ext-timer { font-size:1.6rem; color:var(--text-bright); letter-spacing:.08em; font-variant-numeric:tabular-nums; min-width:110px; text-align:right; }
+    .ext-timer.pen { color:var(--red); text-shadow:var(--glow-r); }
+    .ext-dispatch {
+      border:1px solid rgba(255,168,0,.45); background:rgba(255,168,0,.05);
+      padding:18px 18px 14px; margin-bottom:18px; position:relative;
+      font-size:.98rem; line-height:1.7; color:var(--amber);
+    }
+    .ext-dispatch::before { content:'📻 DISPATCH FROM CONTROL'; position:absolute; top:-9px; left:12px; background:var(--bg); padding:0 7px; font-size:.56rem; letter-spacing:.2em; }
+    .ext-grid { display:grid; grid-template-columns:1fr 1fr; gap:0 18px; }
+    @media(max-width:640px) { .ext-grid { grid-template-columns:1fr; } }
+    .ext-table-wrap { overflow-x:auto; }
+    .ext-table-wrap .db-table th, .ext-table-wrap .db-table td { padding:6px 8px; white-space:nowrap; }
+    .ext-row-wrong td { background:rgba(255,59,59,.12) !important; color:var(--red) !important; }
+    .ext-row-right td { background:rgba(0,229,160,.14) !important; color:var(--primary) !important; }
+    .ext-fb { font-size:.76rem; padding:8px 12px; margin:10px 0; display:none; line-height:1.6; }
+    .ext-fb.ok  { display:block; border-left:2px solid var(--primary); color:var(--primary); background:rgba(0,229,160,.05); }
+    .ext-fb.bad { display:block; border-left:2px solid var(--red); color:var(--red); background:rgba(255,59,59,.05); }
+    .ext-fb code { color:var(--text-bright); }
+    .ext-history { font-size:.76rem; color:var(--text); margin-top:14px; line-height:1.8; }
+    .ext-history strong { color:var(--primary); }
+    .ext-bar-row { display:flex; align-items:center; gap:10px; font-size:.7rem; padding:3px 0; }
+    .ext-bar-lbl { width:52px; color:var(--text-dim); flex-shrink:0; }
+    .ext-bar { flex:1; height:10px; background:rgba(14,49,88,.35); }
+    .ext-bar > div { height:100%; background:var(--cyan); }
+    .ext-bar > div.best { background:var(--amber); }
+    .ext-bar-t { width:60px; text-align:right; color:var(--text-bright); font-variant-numeric:tabular-nums; flex-shrink:0; }
   </style>
 </head>
 <body>
@@ -576,6 +625,7 @@ color:  cyan
       <span>National Criminal Intelligence Platform</span>
     </div>
   </div>
+  <span class="done-flag">✔ Investigation complete</span>
   <div class="db-meta">
     SESSION: <span class="sid">INV-2026-0047</span><br>
     ACCESS: TRAINEE INVESTIGATOR<br>
@@ -1513,6 +1563,95 @@ color:  cyan
       <div class="comp-note">
         You used <strong>field-based searching</strong>, linked records across four tables using shared IDs, and combined three pieces of evidence in a <strong>multi-criteria query</strong> — the core techniques of any relational database.
       </div>
+
+      <div class="nav-row" style="justify-content:center; border:none; margin-top:26px">
+        <button class="btn cyan" onclick="gotoStage(11)"><span>⚡ EXTENSION: RAPID RESPONSE UNIT →</span></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ STAGE 11: EXTENSION — RAPID RESPONSE UNIT ══════ -->
+  <div class="stage" id="stage-11">
+    <div class="sec-lbl">Extension — Rapid Response Unit</div>
+
+    <!-- Intro -->
+    <div id="ext-intro">
+      <div class="stg-title">⚡ Rapid Response Unit</div>
+      <div class="stg-instr">
+        You've cracked the Burton case — now prove you can search <em>fast</em>. Control will radio through <strong>10 descriptions</strong>, one at a time. Each one matches exactly <strong>one person</strong> in <code>tbl_public</code> (400 records).
+        <ul style="margin: 10px 0 0 1.2em; line-height: 2;">
+          <li>Turn the description into search criteria, run the search, then click <strong>IDENTIFY</strong> on the right person.</li>
+          <li>Only the first 15 matches are shown — keep adding criteria until you can see who you need.</li>
+          <li>You are <strong>timed</strong>. Identifying the wrong person adds a <strong>10-second penalty</strong>.</li>
+          <li>Every shift has brand-new cases — play again and try to beat your best time.</li>
+        </ul>
+      </div>
+      <div class="concept">
+        <p>Number fields take <code>&lt;</code>, <code>&gt;</code> or an exact number. Need a range? Combine two conditions with <strong>AND</strong> — e.g. <code>&gt; 29 AND &lt; 40</code> finds someone in their thirties.</p>
+      </div>
+      <div class="ext-history" id="ext-history"></div>
+      <div class="nav-row" style="justify-content:flex-start">
+        <button class="btn" onclick="extStartShift()"><span>START SHIFT →</span></button>
+      </div>
+    </div>
+
+    <!-- Play -->
+    <div id="ext-play" style="display:none">
+      <div class="ext-topbar">
+        <div class="ext-case-no" id="ext-case-no">CASE 1 / 10</div>
+        <div class="ext-pips" id="ext-pips"></div>
+        <div class="ext-timer" id="ext-timer">0:00.0</div>
+      </div>
+
+      <div class="ext-dispatch" id="ext-dispatch"></div>
+
+      <div class="term" data-lbl="QUERY — tbl_public">
+        <div class="term-prompt" id="ext-query">SELECT * FROM tbl_public WHERE …</div>
+        <div class="ext-grid">
+          <div class="t-row"><span class="t-lbl">Gender</span><select class="db-select" id="ext-gender"></select></div>
+          <div class="t-row"><span class="t-lbl">Age</span><input class="db-input ext-num" id="ext-age" type="text" placeholder="e.g. &lt; 30" autocomplete="off"></div>
+          <div class="t-row"><span class="t-lbl">Height (cm)</span><input class="db-input ext-num" id="ext-height" type="text" placeholder="e.g. &gt; 175" autocomplete="off"></div>
+          <div class="t-row"><span class="t-lbl">Hair</span><select class="db-select" id="ext-hair"></select></div>
+          <div class="t-row"><span class="t-lbl">Eyes</span><select class="db-select" id="ext-eyes"></select></div>
+          <div class="t-row"><span class="t-lbl">Postcode Area</span><select class="db-select" id="ext-area"></select></div>
+          <div class="t-row"><span class="t-lbl">Vehicle</span><select class="db-select" id="ext-vehicle"></select></div>
+        </div>
+        <div class="t-row" style="justify-content:flex-end; margin-top:6px">
+          <button class="btn cyan" onclick="extClearForm()"><span>CLEAR</span></button>
+          <button class="btn" onclick="extSearch()"><span>EXECUTE SEARCH</span></button>
+        </div>
+        <div class="db-err" id="ext-err"></div>
+      </div>
+
+      <div class="ext-fb" id="ext-fb"></div>
+
+      <div class="results" id="ext-results">
+        <div class="res-lbl">SEARCH RESULTS — <span class="res-count" id="ext-count">0 records found</span></div>
+        <div class="ext-table-wrap">
+          <table class="db-table">
+            <thead><tr><th>ID</th><th>Name</th><th>Gender</th><th>Age</th><th>Height</th><th>Hair</th><th>Eyes</th><th>Area</th><th>Vehicle</th><th>Action</th></tr></thead>
+            <tbody id="ext-tbody"></tbody>
+          </table>
+        </div>
+        <div class="narrow-nudge" id="ext-nudge" style="display:none"></div>
+      </div>
+    </div>
+
+    <!-- Summary -->
+    <div id="ext-summary" style="display:none">
+      <div class="completion" style="padding-top:10px">
+        <div class="comp-icon">⏱️</div>
+        <div class="comp-title">Shift Complete</div>
+        <div class="comp-sub" id="ext-sum-sub"></div>
+        <div class="findings">
+          <h3>⏱ Time per case</h3>
+          <div id="ext-bars"></div>
+        </div>
+        <div class="comp-note" id="ext-sum-note"></div>
+        <div class="nav-row" style="justify-content:center; border:none">
+          <button class="btn" onclick="extStartShift()"><span>NEW SHIFT — BEAT YOUR TIME →</span></button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -1600,7 +1739,9 @@ color:  cyan
     document.getElementById('stage-' + n).classList.add('active');
     updateProgress(n);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+    document.body.classList.toggle('ext-mode', n === 11);
     if (n === 10) finishUp();
+    if (n === 11) extShowIntro();
   }
 
   // ── Task completion ───────────────────────────────────────────────────────
@@ -2084,6 +2225,7 @@ color:  cyan
   // ── Completion ────────────────────────────────────────────────────────────
   function finishUp() {
     for (let i = 0; i < TASK_COUNT; i++) markDone(i);
+    document.body.classList.add('main-complete');
     setTimeout(() => { window.ActivityUI?.launchCelebration(); }, 500);
   }
 
@@ -2332,6 +2474,361 @@ color:  cyan
     document.getElementById('cctv-card').classList.add('on');
     document.getElementById('nav8').style.display = 'flex';
   }
+
+  // ── Extension: Rapid Response Unit ────────────────────────────────────────
+  // Each shift generates a fresh random tbl_public and 10 descriptions that each
+  // match exactly one record. Later cases need more criteria and use ranges.
+  const EXT_ROUNDS     = 10;
+  const EXT_RECORDS    = 400;
+  const EXT_SHOW_MAX   = 15;
+  const EXT_PENALTY_MS = 10000;
+  const EXT_CRIT_COUNT = [3,3,3,4,4,4,5,5,5,5];   // criteria needed per case — ramps difficulty
+  const EXT_HARD_FROM  = 5;   // cases 6–10 may use ranges ("in their thirties")
+  const EXT_STORE_KEY  = 'crimdb-ext-shifts';
+
+  const EXT_F_NAMES  = ['Amy','Beth','Chloe','Dana','Erin','Faye','Gemma','Hannah','Isla','Jade','Kara','Leah','Megan','Nina','Olivia','Priya','Rachel','Sara','Tara','Zoe'];
+  const EXT_M_NAMES  = ['Adam','Ben','Callum','Dev','Ethan','Finn','Gary','Harvey','Imran','Jack','Kyle','Liam','Mark','Nathan','Owen','Paul','Ryan','Sean','Tom','Zak'];
+  const EXT_SURNAMES = ['Ali','Baker','Clarke','Dixon','Evans','Foster','Gill','Hughes','Irwin','Jones','Khan','Lowe','Moss','Nash','Owens','Patel','Quinn','Reid','Shaw','Todd','Walsh','Young'];
+  const EXT_HAIR     = ['Black','Brown','Blonde','Red','Grey'];
+  const EXT_EYES     = ['Brown','Blue','Green','Hazel'];
+  const EXT_AREAS    = ['TS1','TS2','TS3','TS4','TS5','TS6','TS7','TS8','TS9'];
+  const EXT_VEHICLES = ['Ford','Vauxhall','Toyota','BMW','Nissan','Kia','None'];
+  const EXT_DECADES  = { 20:'twenties', 30:'thirties', 40:'forties', 50:'fifties', 60:'sixties', 70:'seventies' };
+  const EXT_OPENERS  = ['A witness saw', 'CCTV operators are tracking', 'Control needs you to find', 'A caller has reported', 'Officers are looking for'];
+  const EXT_ORDER    = ['hair','eyes','age','height','vehicle','area'];
+
+  let ext = null;
+
+  function extMakeRecords() {
+    const r = Math.random, used = new Set(), recs = [];
+    while (recs.length < EXT_RECORDS) {
+      const id = 'R-' + _int(r, 1000, 9999);
+      if (used.has(id)) continue;
+      used.add(id);
+      const gender = r() < .5 ? 'F' : 'M';
+      const age    = _int(r, 16, 75);
+      recs.push({
+        id, gender, age,
+        name:    _pick(r, gender === 'F' ? EXT_F_NAMES : EXT_M_NAMES) + ' ' + _pick(r, EXT_SURNAMES),
+        height:  gender === 'F' ? _int(r, 150, 182) : _int(r, 160, 198),
+        hair:    age >= 50 && r() < .5 ? 'Grey' : _pick(r, EXT_HAIR.slice(0, 4)),
+        eyes:    _pick(r, EXT_EYES),
+        area:    _pick(r, EXT_AREAS),
+        vehicle: age < 17 ? 'None' : _pick(r, EXT_VEHICLES),
+      });
+    }
+    return recs;
+  }
+
+  const extUnder = v => (Math.floor(v / 5) + 1) * 5;   // nearest multiple of 5 above v
+  const extOver  = v => Math.ceil(v / 5) * 5 - 5;      // nearest multiple of 5 below v
+
+  function extCriterion(key, t, hard) {
+    const r = Math.random;
+    switch (key) {
+      case 'gender':  return { key, test: p => p.gender === t.gender, sql: `gender = '${t.gender}'` };
+      case 'hair':    return { key, test: p => p.hair === t.hair, text: `with ${t.hair.toLowerCase()} hair`, sql: `hair = '${t.hair}'` };
+      case 'eyes':    return { key, test: p => p.eyes === t.eyes, text: `with ${t.eyes.toLowerCase()} eyes`, sql: `eyes = '${t.eyes}'` };
+      case 'area':    return { key, test: p => p.area === t.area, text: `who lives in the ${t.area} area`, sql: `area = '${t.area}'` };
+      case 'vehicle': return { key, test: p => p.vehicle === t.vehicle,
+                               text: t.vehicle === 'None' ? `who doesn't own a car` : `who drives a ${t.vehicle}`,
+                               sql: `vehicle = '${t.vehicle}'` };
+      case 'age': {
+        if (hard && r() < .6) {
+          if (t.age < 20) return { key, test: p => p.age < 20, text: 'who is still a teenager', sql: 'age < 20' };
+          const d = Math.floor(t.age / 10) * 10;
+          return { key, test: p => p.age > d - 1 && p.age < d + 10, text: `in their ${EXT_DECADES[d]}`, sql: `age > ${d - 1} AND age < ${d + 10}` };
+        }
+        if (r() < .5) { const n = extUnder(t.age); return { key, test: p => p.age < n, text: `aged under ${n}`, sql: `age < ${n}` }; }
+        const n = extOver(t.age);
+        return { key, test: p => p.age > n, text: `aged over ${n}`, sql: `age > ${n}` };
+      }
+      case 'height': {
+        const lo = extOver(t.height), hi = extUnder(t.height);
+        const top = hi + 5 * _int(r, 0, 1);
+        if (hard && r() < .6 && lo >= 150 && top <= 195) {
+          return { key, test: p => p.height > lo && p.height < top, text: `taller than ${lo} cm but shorter than ${top} cm`, sql: `height > ${lo} AND height < ${top}` };
+        }
+        if (r() < .5) return { key, test: p => p.height > lo, text: `taller than ${lo} cm`, sql: `height > ${lo}` };
+        return { key, test: p => p.height < hi, text: `shorter than ${hi} cm`, sql: `height < ${hi}` };
+      }
+    }
+  }
+
+  function extDescribe(t, crit) {
+    const noun  = crit.some(c => c.key === 'gender') ? (t.gender === 'F' ? 'a woman' : 'a man') : 'a person';
+    const parts = EXT_ORDER.map(k => crit.find(c => c.key === k)).filter(Boolean).map(c => c.text);
+    const hi = parts.findIndex(p => p.endsWith(' hair'));   // "with red hair" + "with blue eyes" → one clause
+    const ei = parts.findIndex(p => p.endsWith(' eyes'));
+    if (hi >= 0 && ei >= 0) parts.splice(hi, 2, parts[hi] + ' and ' + parts[ei].replace('with ', ''));
+    const list  = parts.length > 1 ? parts.slice(0, -1).join(', ') + ' and ' + parts[parts.length - 1] : (parts[0] || '');
+    return `${_pick(Math.random, EXT_OPENERS)} ${noun}${list ? ' ' + list : ''}.`;
+  }
+
+  // Greedily add criteria about a random target until only they match; keep
+  // trying until the number of criteria needed matches this case's difficulty.
+  function extBuildCase(recs, round, usedIds) {
+    const hard = round >= EXT_HARD_FROM, want = EXT_CRIT_COUNT[round];
+    let best = null;
+    for (let tries = 0; tries < 2000; tries++) {
+      const t = _pick(Math.random, recs);
+      if (usedIds.has(t.id)) continue;
+      const keys = ['gender','age','height','hair','eyes','area','vehicle'];
+      for (let i = keys.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [keys[i], keys[j]] = [keys[j], keys[i]]; }
+      let pool = recs;
+      const crit = [];
+      for (const k of keys) {
+        const c    = extCriterion(k, t, hard);
+        const next = pool.filter(c.test);
+        if (next.length === pool.length) continue;   // adds nothing — leave it out
+        pool = next;
+        crit.push(c);
+        if (pool.length === 1) break;
+      }
+      if (pool.length !== 1) continue;
+      if (!best || Math.abs(crit.length - want) < Math.abs(best.crit.length - want)) best = { target: t, crit };
+      if (crit.length === want) break;
+    }
+    if (!best) return null;
+    usedIds.add(best.target.id);
+    return { ...best, text: extDescribe(best.target, best.crit) };
+  }
+
+  function extFmt(ms) {
+    const tenths = Math.round(ms / 100);
+    const m = Math.floor(tenths / 600), rest = tenths % 600;
+    return `${m}:${String(Math.floor(rest / 10)).padStart(2, '0')}.${rest % 10}`;
+  }
+
+  function extLoadShifts() {
+    try { return JSON.parse(localStorage.getItem(EXT_STORE_KEY)) || []; } catch { return []; }
+  }
+  function extSaveShifts(list) {
+    try { localStorage.setItem(EXT_STORE_KEY, JSON.stringify(list.slice(-20))); } catch {}
+  }
+
+  function extFillSelect(id, values, anyLabel, labels = {}) {
+    document.getElementById(id).innerHTML =
+      `<option value="">— ${anyLabel} —</option>` + values.map(v => `<option value="${v}">${labels[v] || v}</option>`).join('');
+  }
+  extFillSelect('ext-gender',  ['F','M'],     'Any Gender', { F:'Female', M:'Male' });
+  extFillSelect('ext-hair',    EXT_HAIR,      'Any Hair');
+  extFillSelect('ext-eyes',    EXT_EYES,      'Any Eyes');
+  extFillSelect('ext-area',    EXT_AREAS,     'Any Area');
+  extFillSelect('ext-vehicle', EXT_VEHICLES,  'Any Vehicle', { None:'None (no car)' });
+
+  function extShowPanel(which) {
+    ['intro','play','summary'].forEach(p => {
+      document.getElementById('ext-' + p).style.display = p === which ? 'block' : 'none';
+    });
+  }
+
+  function extShowIntro() {
+    if (ext) clearInterval(ext.timerId);
+    const shifts = extLoadShifts();
+    const hist = document.getElementById('ext-history');
+    if (shifts.length) {
+      const best = Math.min(...shifts.map(s => s.total));
+      hist.innerHTML = `Shifts completed: <strong>${shifts.length}</strong> &nbsp;·&nbsp; Best time: <strong>${extFmt(best)}</strong> &nbsp;·&nbsp; Last time: <strong>${extFmt(shifts[shifts.length - 1].total)}</strong>`;
+    } else {
+      hist.innerHTML = '';
+    }
+    extShowPanel('intro');
+  }
+
+  function extStartShift() {
+    const records = extMakeRecords(), used = new Set(), cases = [];
+    for (let i = 0; i < EXT_ROUNDS; i++) {
+      const c = extBuildCase(records, i, used);
+      if (!c) return extStartShift();   // very unlikely — regenerate the whole shift
+      cases.push(c);
+    }
+    if (ext) clearInterval(ext.timerId);
+    ext = { records, cases, idx: 0, times: [], wrong: 0, start: 0, penalty: 0, timerId: null, locked: false };
+    extShowPanel('play');
+    extShowCase();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function extShowCase() {
+    const c = ext.cases[ext.idx];
+    document.getElementById('ext-case-no').textContent = `CASE ${ext.idx + 1} / ${EXT_ROUNDS}`;
+    document.getElementById('ext-pips').innerHTML = ext.cases.map((_, i) =>
+      `<div class="ext-pip${i < ext.idx ? ' done' : i === ext.idx ? ' now' : ''}"></div>`).join('');
+    document.getElementById('ext-dispatch').textContent = c.text;
+    extClearForm();
+    document.getElementById('ext-results').classList.remove('on');
+    document.getElementById('ext-fb').className = 'ext-fb';
+    document.getElementById('ext-query').textContent = 'SELECT * FROM tbl_public WHERE …';
+    ext.start = performance.now();
+    ext.penalty = 0;
+    ext.locked = false;
+    clearInterval(ext.timerId);
+    ext.timerId = setInterval(extTick, 100);
+    extTick();
+  }
+
+  function extTick() {
+    const el = document.getElementById('ext-timer');
+    el.textContent = extFmt(performance.now() - ext.start + ext.penalty);
+    el.classList.toggle('pen', ext.penalty > 0);
+  }
+
+  function extClearForm() {
+    ['ext-gender','ext-age','ext-height','ext-hair','ext-eyes','ext-area','ext-vehicle']
+      .forEach(id => { document.getElementById(id).value = ''; });
+    document.getElementById('ext-err').classList.remove('on');
+  }
+
+  // "< 30", "> 29 AND < 40", "34" → [{op, val}, …]; '' → null; invalid → false
+  function extParseNum(str) {
+    const s = str.trim();
+    if (!s) return null;
+    const re = /(<=|>=|<|>|=)?\s*(\d+)/g;
+    const conds = [];
+    let m;
+    while ((m = re.exec(s))) conds.push({ op: m[1] || '=', val: parseInt(m[2], 10) });
+    const leftover = s.replace(re, '').replace(/\band\b|&|,/gi, '').trim();
+    return conds.length && !leftover ? conds : false;
+  }
+
+  function extNumTest(v, conds) {
+    return conds.every(c =>
+      c.op === '<' ? v < c.val : c.op === '>' ? v > c.val :
+      c.op === '<=' ? v <= c.val : c.op === '>=' ? v >= c.val : v === c.val);
+  }
+
+  function extSearch() {
+    if (!ext || ext.locked) return;
+    const val = id => document.getElementById(id).value;
+    const err = document.getElementById('ext-err');
+    const age = extParseNum(val('ext-age')), height = extParseNum(val('ext-height'));
+    if (age === false || height === false) {
+      err.textContent = `⚠ ${age === false ? 'Age' : 'Height'} needs an operator and a number — e.g.  < 30  or  > 29 AND < 40`;
+      err.classList.add('on'); return;
+    }
+    err.classList.remove('on');
+
+    const eq = { gender: val('ext-gender'), hair: val('ext-hair'), eyes: val('ext-eyes'), area: val('ext-area'), vehicle: val('ext-vehicle') };
+    let rows = ext.records;
+    const parts = [];
+    Object.entries(eq).forEach(([k, v]) => {
+      if (!v) return;
+      rows = rows.filter(p => p[k] === v);
+      parts.push(`${k} = '${v}'`);
+    });
+    if (age)    { rows = rows.filter(p => extNumTest(p.age, age));       age.forEach(c => parts.push(`age ${c.op} ${c.val}`)); }
+    if (height) { rows = rows.filter(p => extNumTest(p.height, height)); height.forEach(c => parts.push(`height ${c.op} ${c.val}`)); }
+    document.getElementById('ext-query').textContent =
+      'SELECT * FROM tbl_public' + (parts.length ? ' WHERE ' + parts.join(' AND ') : '');
+
+    const shown = rows.slice(0, EXT_SHOW_MAX);
+    document.getElementById('ext-tbody').innerHTML = shown.map(p => `
+      <tr>
+        <td class="k">${p.id}</td>
+        <td>${p.name}</td>
+        <td>${p.gender === 'F' ? 'Female' : 'Male'}</td>
+        <td>${p.age}</td>
+        <td>${p.height} cm</td>
+        <td>${p.hair}</td>
+        <td>${p.eyes}</td>
+        <td>${p.area}</td>
+        <td>${p.vehicle === 'None' ? '—' : p.vehicle}</td>
+        <td><button class="btn cyan sm" onclick="extIdentify('${p.id}', this)"><span>IDENTIFY</span></button></td>
+      </tr>`).join('');
+    document.getElementById('ext-count').textContent = rows.length + ' record' + (rows.length !== 1 ? 's' : '') + ' found';
+    document.getElementById('ext-results').classList.add('on');
+
+    const nudge = document.getElementById('ext-nudge');
+    if (rows.length > EXT_SHOW_MAX) {
+      nudge.textContent = `▶ Showing the first ${EXT_SHOW_MAX} of ${rows.length} — add more criteria from the description to narrow it down`;
+      nudge.style.display = 'flex';
+    } else if (rows.length === 0) {
+      nudge.textContent = '▶ Nobody matches — check each condition against the description (is it < or >?)';
+      nudge.style.display = 'flex';
+    } else {
+      nudge.style.display = 'none';
+    }
+  }
+
+  function extIdentify(id, btn) {
+    if (!ext || ext.locked) return;
+    const c   = ext.cases[ext.idx];
+    const row = btn.closest('tr');
+    const fb  = document.getElementById('ext-fb');
+
+    if (id !== c.target.id) {
+      ext.penalty += EXT_PENALTY_MS;
+      ext.wrong++;
+      row.classList.add('ext-row-wrong');
+      btn.disabled = true;
+      fb.innerHTML = `✘ ${id} doesn't match every detail in the description — <strong>+10 second penalty</strong>. Re-read the dispatch and check each field.`;
+      fb.className = 'ext-fb bad';
+      extTick();
+      return;
+    }
+
+    ext.locked = true;
+    clearInterval(ext.timerId);
+    const time = performance.now() - ext.start + ext.penalty;
+    ext.times.push(time);
+    row.classList.add('ext-row-right');
+    const model = c.crit.map(k => k.sql).join(' AND ');
+    fb.innerHTML = `✔ Correct — case closed in <strong>${extFmt(time)}</strong>.<br>One query that finds them: <code>SELECT * FROM tbl_public WHERE ${model}</code>`;
+    fb.className = 'ext-fb ok';
+    extTick();
+
+    setTimeout(() => {
+      ext.idx++;
+      if (ext.idx < EXT_ROUNDS) {
+        extShowCase();
+        document.getElementById('ext-dispatch').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      } else {
+        extShowSummary();
+      }
+    }, 2200);
+  }
+
+  function extShowSummary() {
+    const times  = ext.times;
+    const total  = times.reduce((a, b) => a + b, 0);
+    const fast   = Math.min(...times);
+    const max    = Math.max(...times);
+    const shifts = extLoadShifts();
+    const prevBest = shifts.length ? Math.min(...shifts.map(s => s.total)) : null;
+    shifts.push({ total, wrong: ext.wrong, when: Date.now() });
+    extSaveShifts(shifts);
+
+    document.getElementById('ext-sum-sub').textContent =
+      `TOTAL TIME ${extFmt(total)} · ${ext.wrong} WRONG IDENTIFICATION${ext.wrong === 1 ? '' : 'S'}`;
+
+    document.getElementById('ext-bars').innerHTML = times.map((t, i) => `
+      <div class="ext-bar-row">
+        <span class="ext-bar-lbl">Case ${i + 1}</span>
+        <div class="ext-bar"><div class="${t === fast ? 'best' : ''}" style="width:${Math.max(4, t / max * 100)}%"></div></div>
+        <span class="ext-bar-t">${extFmt(t)}</span>
+      </div>`).join('');
+
+    const avg = a => a.reduce((x, y) => x + y, 0) / a.length;
+    const early = avg(times.slice(0, 3)), late = avg(times.slice(-3));
+    const notes = [];
+    if (late < early) {
+      notes.push(`Your last three cases averaged <strong>${extFmt(late)}</strong> — <strong>${Math.round((1 - late / early) * 100)}% faster</strong> than your first three, even though the later cases were harder.`);
+    } else {
+      notes.push(`Your last three cases averaged <strong>${extFmt(late)}</strong> (first three: ${extFmt(early)}). The later cases need more criteria — try filling in every clue before you search.`);
+    }
+    if (prevBest === null)       notes.push('That\'s your first shift on record — start a new one and try to beat it.');
+    else if (total < prevBest)   notes.push(`🏅 <strong>New personal best!</strong> You beat your previous best of ${extFmt(prevBest)} by ${extFmt(prevBest - total)}.`);
+    else                         notes.push(`Your best shift is <strong>${extFmt(prevBest)}</strong> — you were ${extFmt(total - prevBest)} slower this time. Another go?`);
+    document.getElementById('ext-sum-note').innerHTML = notes.join('<br><br>');
+
+    extShowPanel('summary');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (prevBest === null || total < prevBest) window.ActivityUI?.launchCelebration();
+  }
+
+  document.querySelectorAll('.ext-num').forEach(el =>
+    el.addEventListener('keydown', e => { if (e.key === 'Enter') extSearch(); }));
 
   // ── Reference panel toggle ────────────────────────────────────────────────
   function toggleRef(id) {
