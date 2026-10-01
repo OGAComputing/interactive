@@ -639,7 +639,9 @@ function _extractPythonPrompts(src) {
 
 const _inputAbort = new Map();
 
-function _collectInputs(ta, prompts) {
+// keepContent: leave the output panel's text in place (live runs show the
+// program's output so far above the prompt) instead of clearing it.
+function _collectInputs(ta, prompts, { keepContent = false } = {}) {
   const panel = _outputMap.get(ta);
   if (!panel || prompts.length === 0) return Promise.resolve([]);
 
@@ -652,7 +654,7 @@ function _collectInputs(ta, prompts) {
   const inputField = panel.querySelector('.output-input-field');
 
   panel.classList.remove('error');
-  content.textContent = '';
+  if (!keepContent) content.textContent = '';
 
   return new Promise(resolve => {
     const collected = [];
@@ -721,6 +723,41 @@ function _collectInputs(ta, prompts) {
   });
 }
 
+// Collecting one answer per input() written in the source (above) only works
+// for straight-line code: an input() inside a loop or function can run any
+// number of times. Such programs are run "live" instead — run until input()
+// wants an answer it hasn't got, show the output so far, ask the student,
+// then re-run from the start with the answers so far (runPython's 'ask' mode).
+// The same `random` seed is used for every re-run of one Run click, so e.g. a
+// guessing game's secret number doesn't change between guesses.
+function _needsLiveInput(src) {
+  return /\binput\s*\(/.test(src) && /\b(?:while|for|def)\b/.test(src);
+}
+
+const _liveRuns = new Map(); // ta → token of its newest live run
+
+async function _runLive(ta) {
+  const token = {};
+  _liveRuns.set(ta, token);
+  const seed = Math.floor(Math.random() * 2 ** 31);
+  const answers = [];
+  for (;;) {
+    const r = await runPython(ta.value, { inputs: answers, onInputsExhausted: 'ask', seed });
+    // A newer Run click owns the output panel now.
+    if (_liveRuns.get(ta) !== token) return { ok: true, output: '', cancelled: true };
+    if (!r.needsInput) {
+      _liveRuns.delete(ta);
+      if (r.ok) setEditorOutput(ta, r.output || '(no output)');
+      else setEditorOutput(ta, r.output, true, r.line);
+      return r;
+    }
+    setEditorOutput(ta, r.output);
+    const got = await _collectInputs(ta, [r.prompt], { keepContent: true });
+    if (got === null || _liveRuns.get(ta) !== token) return { ok: true, output: '', cancelled: true };
+    answers.push(got[0]);
+  }
+}
+
 /**
  * Run the Python code in `ta`, collecting any required inputs interactively
  * via the output panel, then display the result.
@@ -734,6 +771,8 @@ function _collectInputs(ta, prompts) {
  * @returns {Promise<{ ok: boolean, output: string }>}
  */
 export async function runCode(ta, { inputs = null } = {}) {
+  if (inputs === null && _needsLiveInput(ta.value)) return _runLive(ta);
+
   let resolvedInputs = inputs;
   if (resolvedInputs === null) {
     const prompts = _extractPythonPrompts(ta.value);

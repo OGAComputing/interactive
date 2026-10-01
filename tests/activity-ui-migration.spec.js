@@ -25,7 +25,8 @@ const templates = [
   { file: '_templates/Y9.html', base: 'http://127.0.0.1:3001/Y9/Hardware_Networks/' },
   { file: '_templates/Y11.html', base: 'http://127.0.0.1:3001/Y11/Networks/' },
   { file: '_templates/Pseudocode_Y11.html', base: 'http://127.0.0.1:3001/Y11/Algorithms/' },
-  { file: '_templates/PRIMM_Python_Y8.html', base: 'http://127.0.0.1:3001/Y8/Python/L1_Template/' }
+  { file: '_templates/PRIMM_Python_Y8.html', base: 'http://127.0.0.1:3001/Y8/Python/L1_Template/' },
+  { file: '_templates/PRIMM_Python_Y9.html', base: 'http://127.0.0.1:3001/Y9/Python/L1_Template/' }
 ];
 
 async function collectPageProblems(page) {

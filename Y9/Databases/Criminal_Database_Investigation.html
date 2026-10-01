@@ -625,11 +625,31 @@ color:  cyan
     .ext-fb code { color:var(--text-bright); }
     .ext-history { font-size:.76rem; color:var(--text); margin-top:14px; line-height:1.8; }
     .ext-history strong { color:var(--primary); }
+    .ext-history .ext-pb { justify-content:flex-start; margin:0 0 8px; }
+    .ext-best-chip {
+      font-size:.62rem; letter-spacing:.14em; color:var(--amber); border:1px solid var(--amber);
+      padding:4px 8px; white-space:nowrap; font-variant-numeric:tabular-nums;
+    }
+    .ext-best-chip strong { font-size:.9rem; letter-spacing:.06em; margin-left:4px; }
+    /* Personal best — the headline number on the summary page */
+    .ext-pb { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin:0 auto 22px; }
+    .ext-pb-cell { border:1px solid var(--border); background:var(--surface); padding:12px 18px; min-width:190px; text-align:center; }
+    .ext-pb-lbl  { font-size:.58rem; letter-spacing:.18em; text-transform:uppercase; color:var(--text-dim); margin-bottom:6px; }
+    .ext-pb-val  { font-size:1.9rem; color:var(--text-bright); letter-spacing:.06em; font-variant-numeric:tabular-nums; }
+    .ext-pb-meta { font-size:.66rem; color:var(--text-dim); margin-top:6px; line-height:1.5; }
+    .ext-pb-cell.best { border:2px solid var(--amber); background:rgba(255,168,0,.07); box-shadow:0 0 18px rgba(255,168,0,.18); }
+    .ext-pb-cell.best .ext-pb-lbl { color:var(--amber); }
+    .ext-pb-cell.best .ext-pb-val { color:var(--amber); font-size:2.4rem; text-shadow:0 0 12px rgba(255,168,0,.45); }
+    .ext-pb-cell.best.new { animation:ext-pb-pulse 1.6s ease-in-out 3; }
+    @keyframes ext-pb-pulse { 50% { box-shadow:0 0 34px rgba(255,168,0,.55); } }
+    @media (prefers-reduced-motion: reduce) { .ext-pb-cell.best.new { animation:none; } }
     .ext-bar-row { display:flex; align-items:center; gap:10px; font-size:.7rem; padding:3px 0; }
     .ext-bar-lbl { width:52px; color:var(--text-dim); flex-shrink:0; }
     .ext-bar { flex:1; height:10px; background:rgba(14,49,88,.35); }
     .ext-bar > div { height:100%; background:var(--cyan); }
-    .ext-bar > div.best { background:var(--amber); }
+    .ext-bar > div.best { background:var(--primary); box-shadow:0 0 6px rgba(0,229,160,.5); }
+    .ext-bar-key { font-size:.62rem; color:var(--text-dim); margin:-4px 0 8px; }
+    .ext-bar-key i { display:inline-block; width:10px; height:8px; background:var(--primary); margin-right:5px; vertical-align:middle; }
     .ext-bar-t { width:60px; text-align:right; color:var(--text-bright); font-variant-numeric:tabular-nums; flex-shrink:0; }
   </style>
 </head>
@@ -1630,6 +1650,7 @@ color:  cyan
         <div class="ext-case-no" id="ext-case-no">CASE 1 / 10</div>
         <div class="ext-pips" id="ext-pips"></div>
         <div class="ext-timer" id="ext-timer">0:00.0</div>
+        <div class="ext-best-chip" id="ext-best-chip" style="display:none"></div>
       </div>
 
       <div class="ext-dispatch" id="ext-dispatch"></div>
@@ -1672,8 +1693,10 @@ color:  cyan
         <div class="comp-icon">⏱️</div>
         <div class="comp-title">Shift Complete</div>
         <div class="comp-sub" id="ext-sum-sub"></div>
+        <div class="ext-pb" id="ext-pb"></div>
         <div class="findings">
           <h3>⏱ Time per case</h3>
+          <div class="ext-bar-key"><i></i>quickest case this shift</div>
           <div id="ext-bars"></div>
         </div>
         <div class="comp-note" id="ext-sum-note"></div>
@@ -1744,7 +1767,9 @@ color:  cyan
   }
 
   // ── Stage 1: step-by-step teaching ───────────────────────────────────────
+  let teachStep = 0;
   function setTeachStep(n) {
+    teachStep = n;
     // Update step bar pills (1–4)
     for (let i = 1; i <= 4; i++) {
       const el = document.getElementById('tsb-' + i);
@@ -1763,7 +1788,9 @@ color:  cyan
   }
 
   // ── Stage navigation ──────────────────────────────────────────────────────
+  let currentStage = 0;
   function gotoStage(n) {
+    currentStage = n;
     document.querySelectorAll('.stage').forEach(s => s.classList.remove('active'));
     document.getElementById('stage-' + n).classList.add('active');
     updateProgress(n);
@@ -2001,6 +2028,7 @@ color:  cyan
     if (nav) nav.style.display = 'none';
     const firstEl = document.getElementById('mcq-' + ids[0]);
     if (firstEl) firstEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    saveProgress();
   }
 
   function checkMCQ(id, btn, correct) {
@@ -2262,7 +2290,7 @@ color:  cyan
   function finishUp() {
     for (let i = 0; i < TASK_COUNT; i++) markDone(i);
     document.body.classList.add('main-complete');
-    setTimeout(() => { window.ActivityUI?.launchCelebration(); }, 500);
+    if (!restoring) setTimeout(() => { window.ActivityUI?.launchCelebration(); }, 500);
   }
 
   // ── Stage 7: device search ────────────────────────────────────────────────
@@ -2521,6 +2549,7 @@ color:  cyan
   const EXT_CRIT_COUNT = [3,3,3,4,4,4,5,5,5,5];   // criteria needed per case — ramps difficulty
   const EXT_HARD_FROM  = 5;   // cases 6–10 may use ranges ("in their thirties")
   const EXT_STORE_KEY  = 'crimdb-ext-shifts';
+  const EXT_BEST_KEY   = 'crimdb-ext-best';
 
   const EXT_F_NAMES  = ['Amy','Beth','Chloe','Dana','Erin','Faye','Gemma','Hannah','Isla','Jade','Kara','Leah','Megan','Nina','Olivia','Priya','Rachel','Sara','Tara','Zoe'];
   const EXT_M_NAMES  = ['Adam','Ben','Callum','Dev','Ethan','Finn','Gary','Harvey','Imran','Jack','Kyle','Liam','Mark','Nathan','Owen','Paul','Ryan','Sean','Tom','Zak'];
@@ -2642,6 +2671,33 @@ color:  cyan
   function extSaveShifts(list) {
     try { localStorage.setItem(EXT_STORE_KEY, JSON.stringify(list.slice(-20))); } catch {}
   }
+  // Personal best (total for all 10 cases) is kept on its own so it's never
+  // trimmed out of the 20-shift history.
+  function extLoadBest() {
+    let best = null;
+    try { best = JSON.parse(localStorage.getItem(EXT_BEST_KEY)); } catch {}
+    extLoadShifts().forEach(s => { if (!best || s.total < best.total) best = s; });
+    return best;
+  }
+  function extSaveBest(best) {
+    try { localStorage.setItem(EXT_BEST_KEY, JSON.stringify(best)); } catch {}
+  }
+  function extWhen(ms) {
+    const d = new Date(ms), hm = d.toTimeString().slice(0, 5);
+    return d.toDateString() === new Date().toDateString() ? `today at ${hm}` : `${d.toLocaleDateString('en-GB')} at ${hm}`;
+  }
+  function extPbCell(best, label, meta, isNew) {
+    return `<div class="ext-pb-cell best${isNew ? ' new' : ''}">
+        <div class="ext-pb-lbl">${label}</div>
+        <div class="ext-pb-val">${extFmt(best.total)}</div>
+        <div class="ext-pb-meta">${meta}</div>
+      </div>`;
+  }
+  function extShowBestChip() {
+    const best = extLoadBest(), chip = document.getElementById('ext-best-chip');
+    chip.style.display = best ? 'block' : 'none';
+    if (best) chip.innerHTML = `🏆 BEST<strong>${extFmt(best.total)}</strong>`;
+  }
 
   function extFillSelect(id, values, anyLabel, labels = {}) {
     document.getElementById(id).innerHTML =
@@ -2661,11 +2717,12 @@ color:  cyan
 
   function extShowIntro() {
     if (ext) clearInterval(ext.timerId);
-    const shifts = extLoadShifts();
+    const shifts = extLoadShifts(), best = extLoadBest();
     const hist = document.getElementById('ext-history');
-    if (shifts.length) {
-      const best = Math.min(...shifts.map(s => s.total));
-      hist.innerHTML = `Shifts completed: <strong>${shifts.length}</strong> &nbsp;·&nbsp; Best time: <strong>${extFmt(best)}</strong> &nbsp;·&nbsp; Last time: <strong>${extFmt(shifts[shifts.length - 1].total)}</strong>`;
+    if (best) {
+      const last = shifts[shifts.length - 1];
+      hist.innerHTML = `<div class="ext-pb">${extPbCell(best, '🏆 Your fastest time — all 10 cases', 'set ' + extWhen(best.when) + ' — can you beat it?')}</div>` +
+        (last ? `Shifts completed: <strong>${shifts.length}</strong> &nbsp;·&nbsp; Last time: <strong>${extFmt(last.total)}</strong>` : '');
     } else {
       hist.innerHTML = '';
     }
@@ -2681,6 +2738,7 @@ color:  cyan
     }
     if (ext) clearInterval(ext.timerId);
     ext = { records, cases, idx: 0, times: [], wrong: 0, start: 0, penalty: 0, timerId: null, locked: false };
+    extShowBestChip();
     extShowPanel('play');
     extShowCase();
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -2831,12 +2889,35 @@ color:  cyan
     const fast   = Math.min(...times);
     const max    = Math.max(...times);
     const shifts = extLoadShifts();
-    const prevBest = shifts.length ? Math.min(...shifts.map(s => s.total)) : null;
-    shifts.push({ total, wrong: ext.wrong, when: Date.now() });
+    const prev   = extLoadBest();
+    const prevBest = prev ? prev.total : null;
+    const shift  = { total, wrong: ext.wrong, when: Date.now() };
+    shifts.push(shift);
     extSaveShifts(shifts);
+    const isNew = prevBest === null || total < prevBest;
+    const best  = isNew ? shift : prev;
+    if (isNew) extSaveBest(shift);
 
     document.getElementById('ext-sum-sub').textContent =
-      `TOTAL TIME ${extFmt(total)} · ${ext.wrong} WRONG IDENTIFICATION${ext.wrong === 1 ? '' : 'S'}`;
+      `${ext.wrong} WRONG IDENTIFICATION${ext.wrong === 1 ? '' : 'S'} · ${shifts.length} SHIFT${shifts.length === 1 ? '' : 'S'} COMPLETED`;
+
+    const pbMeta = prevBest === null ? 'your first shift — now try to beat it'
+                 : isNew ? `beat your old best of ${extFmt(prevBest)} by ${extFmt(prevBest - total)}`
+                 : `set ${extWhen(best.when)} — ${extFmt(total - best.total)} faster than this shift`;
+    document.getElementById('ext-pb').innerHTML = `
+      ${isNew && prevBest !== null ? `
+      <div class="ext-pb-cell">
+        <div class="ext-pb-lbl">Previous best</div>
+        <div class="ext-pb-val">${extFmt(prevBest)}</div>
+        <div class="ext-pb-meta">set ${extWhen(prev.when)}</div>
+      </div>` : isNew ? '' : `
+      <div class="ext-pb-cell">
+        <div class="ext-pb-lbl">This shift — all 10 cases</div>
+        <div class="ext-pb-val">${extFmt(total)}</div>
+        <div class="ext-pb-meta">Keep going — you can beat it</div>
+      </div>`}
+      ${extPbCell(best, isNew && prevBest !== null ? '🏅 New personal best' : '🏆 Your fastest time', pbMeta, isNew && prevBest !== null)}`;
+    extShowBestChip();
 
     document.getElementById('ext-bars').innerHTML = times.map((t, i) => `
       <div class="ext-bar-row">
@@ -2853,9 +2934,6 @@ color:  cyan
     } else {
       notes.push(`Your last three cases averaged <strong>${extFmt(late)}</strong> (first three: ${extFmt(early)}). The later cases need more criteria — try filling in every clue before you search.`);
     }
-    if (prevBest === null)       notes.push('That\'s your first shift on record — start a new one and try to beat it.');
-    else if (total < prevBest)   notes.push(`🏅 <strong>New personal best!</strong> You beat your previous best of ${extFmt(prevBest)} by ${extFmt(prevBest - total)}.`);
-    else                         notes.push(`Your best shift is <strong>${extFmt(prevBest)}</strong> — you were ${extFmt(total - prevBest)} slower this time. Another go?`);
     document.getElementById('ext-sum-note').innerHTML = notes.join('<br><br>');
 
     extShowPanel('summary');
@@ -2893,8 +2971,111 @@ color:  cyan
     chips.forEach(chip => bank.appendChild(chip));
   })();
 
+  // ── Save progress (survives a page refresh) ───────────────────────────────
+  // Saved after every click / typed character, restored on load. The extension's
+  // shift history is stored separately (EXT_STORE_KEY); a shift in progress is
+  // not saved because it's timed.
+  const PROGRESS_KEY = 'crimdb-progress:' + location.pathname;
+  const PROGRESS_INPUTS = ['s1-name','s1-dob','s1-status','s3-name','s3-gender',
+                           's4-platform','s4-followers','s4-age-days','s5-make','s5-type','s5-year',
+                           's6-date','s6-area','s6-time','s6-age'];
+  let restoring = false;
+
+  function saveProgress() {
+    if (restoring) return;
+    const on = id => document.getElementById(id).classList.contains('on');
+    const clueEls = document.getElementById('cf-clues').children;
+    const state = {
+      stage: currentStage,
+      teachStep,
+      completed,
+      backToLabel: document.getElementById('back-to-label').style.display === 'flex',
+      dz: dzState,
+      mcq: Object.keys(mcqAnswered),
+      clues: [..._cluesSeen].map((k, i) => [k, clueEls[i]?.textContent || '']),
+      inputs: Object.fromEntries(PROGRESS_INPUTS.map(id => [id, document.getElementById(id).value])),
+      seen: { mia: miaViewed, assoc: on('ashley-card'), ig: on('ig-found'), device: on('device-card'), cctv: cctvViewed },
+    };
+    try { localStorage.setItem(PROGRESS_KEY, JSON.stringify(state)); } catch {}
+  }
+
+  function restoreProgress() {
+    let s;
+    try { s = JSON.parse(localStorage.getItem(PROGRESS_KEY)); } catch {}
+    if (!s || !s.stage) return;
+    restoring = true;
+    try {
+      (s.completed || []).forEach((v, i) => { if (i < TASK_COUNT) completed[i] = !!v; });
+      (s.clues || []).forEach(([k, text]) => addClue(k, text));
+      document.getElementById('case-file').classList.remove('cf-flash');
+      Object.entries(s.inputs || {}).forEach(([id, v]) => {
+        const el = document.getElementById(id);
+        if (el && v) el.value = v;
+      });
+      if (s.teachStep) setTeachStep(s.teachStep);
+
+      // Stage 2 — drag & drop
+      Object.entries(s.dz || {}).forEach(([zid, term]) => {
+        if (!term || DZ_ANSWERS[zid] !== term) return;
+        dzState[zid] = term;
+        const zone = document.getElementById(zid);
+        zone.textContent = term.toUpperCase();
+        zone.className = 'dz correct';
+        document.getElementById(CHIP_IDS[term])?.classList.add('used');
+      });
+      checkDragComplete();
+
+      // Re-run each search the pupil had typed into, then re-open what they'd found
+      const seen = s.seen || {};
+      const typed = (...ids) => ids.some(id => document.getElementById(id).value.trim());
+      if (s.stage >= 3 && typed('s1-name')) searchPersons();
+      if (seen.mia) viewMia();
+      if (s.stage >= 5 && typed('s3-name', 's3-gender')) searchAssociates();
+      if (seen.assoc) viewAssociate('A-2847');
+      if (s.stage >= 6 && typed('s4-platform', 's4-followers', 's4-age-days')) searchSocialMedia();
+      if (seen.ig) {
+        document.getElementById('ig-found').classList.add('on');
+        document.getElementById('nav6').style.display = 'flex';
+        document.getElementById('h4').style.display = 'none';
+        document.getElementById('s4-narrow-nudge').style.display = 'none';
+      }
+      if (s.stage >= 7 && typed('s5-make', 's5-type')) searchDevices();
+      if (seen.device) viewDevice();
+      if (s.stage >= 8 && typed('s6-date')) searchSightings();
+      if (seen.cctv) viewSighting();
+
+      // Stages 4 & 9 — multiple choice answered correctly
+      (s.mcq || []).forEach(id => {
+        const cfg = MCQ_CFG[id], el = document.getElementById('mcq-' + id);
+        if (!cfg || !el) return;
+        mcqAnswered[id] = true;
+        el.style.display = 'block';
+        el.querySelectorAll('.mcq-opt').forEach(o => {
+          o.disabled = true;
+          if (o.getAttribute('onclick').includes('true')) o.classList.add('correct');
+        });
+        const fb = document.getElementById('fb-' + id);
+        if (fb) { fb.innerHTML = cfg.correct; fb.className = 'mcq-fb correct'; }
+        if (cfg.next) document.getElementById(cfg.next).style.display = 'block';
+        if (cfg.navId) document.getElementById(cfg.navId).style.display = 'flex';
+      });
+
+      gotoStage(s.stage);
+      if (s.backToLabel) document.getElementById('back-to-label').style.display = 'flex';
+      if (s.stage >= 10) document.body.classList.add('main-complete');
+      window.scrollTo(0, 0);
+    } catch (err) {
+      console.error('Could not restore saved progress', err);
+    }
+    restoring = false;
+  }
+
+  ['click', 'input', 'change', 'drop', 'keyup'].forEach(ev =>
+    document.addEventListener(ev, () => setTimeout(saveProgress, 0)));
+
   // ── Init ──────────────────────────────────────────────────────────────────
   updateProgress(0);
+  restoreProgress();
 </script>
 </body>
 </html>

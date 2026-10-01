@@ -1,0 +1,2719 @@
+<!-- ACTIVITY
+title:  FILL IN: e.g. "Lists PRIMM Practice"
+type:   PRIMM
+lesson: FILL IN: e.g. "Lesson 5"
+stars:  5
+desc:   FILL IN: one sentence for the hub card
+color:  blue
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- FILL IN: topic name in both places -->
+<title>PRIMM Practice · TOPIC · Year 9</title>
+<link rel="stylesheet" href="../../../shared.css">
+<style>
+  /* ════════════════════════════════════════════════════════════════════
+     YEAR 9 THEME — "graphite": a calm, grown-up dark mode.
+     Deliberately different from the Year 8 neon arcade — neutral charcoal
+     (no violet nebula, no pixel grid, no glow), cobalt accent, flat buttons,
+     sentence-case headings, and a five-colour PRIMM stripe as the signature.
+
+     Tokens are declared on `body[data-year]` as well as :root so they beat
+     shared.css's [data-year="9"] palette, which classroom.js switches on
+     from the URL path. Variable NAMES match the Y8 PRIMM template because
+     inline styles and the JS reference them — keep them all.
+     ════════════════════════════════════════════════════════════════════ */
+  :root, body[data-year] {
+    color-scheme: dark;
+
+    /* surfaces, darkest → lightest */
+    --canvas:       #15171c;   /* page background */
+    --chrome:       #0e1014;   /* header */
+    --card:         #1e2229;   /* q-cards, modify tasks, nav */
+    --card-raised:  #262b33;   /* req-list items, options, inputs sit here */
+    --card-hover:   #2c323c;
+    --line:         #2f3540;   /* card borders / dividers */
+    --line-strong:  #3d4451;
+
+    --cobalt:       #3b63e0;   /* button fill — white text 5.2:1 */
+    --cobalt-dark:  #2f52c4;
+    --cobalt-text:  #8ea8ff;   /* accent used AS text on dark — 7.1:1 on --card */
+    --cobalt-tint:  rgba(59,99,224,0.16);
+
+    /* legacy names used by inline styles + JS — mapped onto the Y9 palette */
+    --ink:          #e6e8ec;
+    --navy:         var(--ink);
+    --purple:       var(--cobalt);
+    --purple-light: var(--cobalt);
+    --purple-pale:  var(--cobalt-tint);
+    --teal:         #2dd4bf;
+    --white:        #ffffff;
+    --off-white:    var(--card);
+
+    --text:         #e6e8ec;   /* 13:1 on --card */
+    --muted:        #9aa3b2;   /* 6.4:1 on --card */
+    --amber:        #f5a524;
+    --amber-bg:     rgba(245,165,36,0.12);
+    --amber-text:   #fcd28a;
+    --green:        #22c55e;
+    --green-text:   #6ee7a0;
+    --green-bg:     rgba(34,197,94,0.12);
+    --red:          #f0506e;
+    --red-text:     #ff9aad;
+    --red-bg:       rgba(240,80,110,0.12);
+    --code-bg:      #0f1115;
+    --code-text:    #d8dee9;
+
+    /* PRIMM stage colours — filled chips with white text at ≥ 4.5:1 */
+    --stage-p:      #7c3aed;   /* Predict     — violet  */
+    --stage-r:      #0369a1;   /* Run         — ocean   */
+    --stage-i:      #047857;   /* Investigate — emerald */
+    --stage-m1:     #b45309;   /* Modify      — amber   */
+    --stage-m2:     #be123c;   /* Make        — rose    */
+
+    /* shared.css / activity-ui.js tokens */
+    --bg:           var(--canvas);
+    --accent:       var(--cobalt);
+    --accent-dark:  var(--cobalt-dark);
+    --accent-light: var(--cobalt-text);
+    --accent-rgb:   59,99,224;
+    --surface-mid:  #2a2f38;   /* ac-progress-bar track */
+    --text-inv:     #ffffff;
+    --gold:         #f59e0b;
+    --green-dark:   #15803d;
+    --amber-dark:   #b45309;
+
+    --font-body:    'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', Arial, sans-serif;
+    --font-head:    'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', Arial, sans-serif;
+    --font-mono:    'Cascadia Code', 'Consolas', 'SFMono-Regular', 'Courier New', monospace;
+
+    --radius:       12px;
+    --shadow-sm:    0 1px 2px rgba(0,0,0,0.35);
+    --shadow-md:    0 6px 18px rgba(0,0,0,0.35), 0 1px 3px rgba(0,0,0,0.3);
+    --focus-ring:   0 0 0 3px rgba(142,168,255,0.5);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { overflow-x: hidden; }
+  body {
+    font-family: var(--font-body); background-color: var(--canvas); color: var(--text);
+    min-height: 100vh; position: relative; line-height: 1.5;
+    /* faint dot grid — squared-paper feel, never competes with content */
+    background-image: radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1.2px);
+    background-size: 22px 22px;
+  }
+  :focus-visible { outline: none; box-shadow: var(--focus-ring); }
+  strong { color: #fff; }
+
+  /* ── HEADER ── */
+  .site-header {
+    position: relative; z-index: 1; background: var(--chrome); border-bottom: 1px solid var(--line);
+    padding: 1.25rem 2rem 1rem; display: flex; align-items: center; gap: 1.25rem; flex-wrap: wrap;
+  }
+  /* five-colour PRIMM stripe along the top edge — the Y9 signature
+     (top, not bottom, so it never merges with the progress strip below) */
+  .site-header::before {
+    content: ''; position: absolute; left: 0; right: 0; top: 0; height: 5px;
+    background: linear-gradient(90deg,
+      var(--stage-p) 0 20%, var(--stage-r) 20% 40%, var(--stage-i) 40% 60%,
+      var(--stage-m1) 60% 80%, var(--stage-m2) 80% 100%);
+  }
+  .header-icon {
+    font-family: var(--font-mono); font-size: 1.15rem; font-weight: 700;
+    color: #fff; line-height: 1; padding: 0.55rem 0.7rem; border-radius: 10px;
+    background: var(--cobalt); border: 1px solid rgba(255,255,255,0.18);
+  }
+  .header-text h1 { font-family: var(--font-head); font-size: 1.3rem; color: #fff; font-weight: 700; letter-spacing: -0.01em; }
+  .header-text p  { color: var(--muted); font-size: 0.8rem; margin-top: 0.15rem; }
+  .header-code {
+    position: relative; background: var(--card); border: 1px solid var(--line);
+    border-radius: 10px; padding: 0.6rem 0.9rem 0.6rem 1.1rem; font-family: var(--font-mono);
+    font-size: 0.74rem; color: var(--code-text); margin-left: auto; line-height: 1.65;
+    border-left: 3px solid var(--cobalt);
+  }
+  .kw  { color: #c4a7ff; }
+  .fn  { color: #8fb8ff; }
+  .st  { color: #a8e0a0; }
+  .num { color: #ffc27a; }
+
+  /* ── NAV (stepper) ── */
+  .primm-nav {
+    position: relative; z-index: 1; display: flex; overflow-x: auto;
+    background: var(--card); border-bottom: 1px solid var(--line);
+  }
+  .primm-nav button {
+    flex: 1; min-width: 96px; min-height: 64px; padding: 0.6rem 0.5rem 0.55rem; border: none; background: transparent;
+    cursor: pointer; font-family: var(--font-body); font-size: 0.8rem; font-weight: 600;
+    color: var(--muted); display: flex; flex-direction: column; align-items: center; gap: 0.3rem;
+    transition: color 0.2s, background 0.2s; border-bottom: 3px solid transparent; position: relative;
+  }
+  /* connecting line between the step circles */
+  .primm-nav button::before {
+    content: ''; position: absolute; top: calc(0.6rem + 14px); left: 0; right: 0; height: 2px;
+    background: var(--line-strong); z-index: 0;
+  }
+  .primm-nav button:first-child::before { left: 50%; }
+  .primm-nav button:last-child::before  { right: 50%; }
+  .primm-nav button.done::before { background: #1f7a45; }
+  .primm-nav button .stage-letter {
+    width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center;
+    justify-content: center; font-family: var(--font-body); font-size: 0.85rem; font-weight: 700;
+    background: var(--card); color: var(--muted); transition: background 0.2s, color 0.2s, border-color 0.2s;
+    position: relative; z-index: 1; border: 2px solid var(--line-strong);
+  }
+  .primm-nav button .stage-name { font-size: 0.72rem; letter-spacing: 0.02em; position: relative; z-index: 1; }
+  .primm-nav button:hover { color: var(--text); background: var(--card-raised); }
+  .primm-nav button:hover .stage-letter { border-color: var(--muted); }
+  .primm-nav button.active { color: #fff; font-weight: 700; }
+  .primm-nav button.active .stage-letter { color: #fff; }
+  .primm-nav button[data-stage="P"].active  { border-bottom-color: var(--stage-p); }
+  .primm-nav button[data-stage="P"].active  .stage-letter { background: var(--stage-p);  border-color: var(--stage-p); }
+  .primm-nav button[data-stage="R"].active  { border-bottom-color: var(--stage-r); }
+  .primm-nav button[data-stage="R"].active  .stage-letter { background: var(--stage-r);  border-color: var(--stage-r); }
+  .primm-nav button[data-stage="I"].active  { border-bottom-color: var(--stage-i); }
+  .primm-nav button[data-stage="I"].active  .stage-letter { background: var(--stage-i);  border-color: var(--stage-i); }
+  .primm-nav button[data-stage="M1"].active { border-bottom-color: var(--stage-m1); }
+  .primm-nav button[data-stage="M1"].active .stage-letter { background: var(--stage-m1); border-color: var(--stage-m1); }
+  .primm-nav button[data-stage="M2"].active { border-bottom-color: var(--stage-m2); }
+  .primm-nav button[data-stage="M2"].active .stage-letter { background: var(--stage-m2); border-color: var(--stage-m2); }
+  .primm-nav button.done .stage-letter { border-color: var(--green); }
+  .primm-nav button.done .stage-letter::after {
+    content: '✓'; position: absolute; font-size: 0.6rem; top: -5px; right: -6px;
+    background: var(--green); color: #06240f; width: 16px; height: 16px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; font-weight: 800;
+    border: 2px solid var(--card); z-index: 2;
+  }
+
+  /* ── PANELS ── */
+  .stage-panel { display: none; padding: 1.8rem 2rem 3rem; max-width: 920px; margin: 0 auto; position: relative; z-index: 1; }
+  .stage-panel.active { display: block; animation: panel-in 0.3s ease-out; }
+
+  /* ── STAGE HEADER ── */
+  .stage-header {
+    display: flex; align-items: center; gap: 1rem;
+    margin-bottom: 1.5rem; padding-bottom: 1.1rem; border-bottom: 1px solid var(--line);
+  }
+  .stage-badge {
+    width: 52px; height: 52px; border-radius: 12px; display: flex; align-items: center;
+    justify-content: center; font-family: var(--font-body); font-size: 1.55rem; font-weight: 800;
+    color: #fff; flex-shrink: 0;
+  }
+  .badge-P  { background: var(--stage-p); }
+  .badge-R  { background: var(--stage-r); }
+  .badge-I  { background: var(--stage-i); }
+  .badge-M1 { background: var(--stage-m1); }
+  .badge-M2 { background: var(--stage-m2); }
+  .stage-header-text h2 { font-family: var(--font-head); color: #fff; font-size: 1.45rem; font-weight: 700; letter-spacing: -0.01em; }
+  .stage-header-text p  { color: var(--muted); font-size: 0.9rem; margin-top: 0.2rem; }
+
+  /* ── CODE BLOCKS ── */
+  .annotated-code {
+    background: var(--code-bg); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 1.1rem 1.4rem; font-family: var(--font-mono);
+    font-size: 0.88rem; line-height: 2; color: var(--code-text); margin-bottom: 1.2rem;
+    box-shadow: var(--shadow-md);
+  }
+  .ann-row { display: grid; grid-template-columns: 1.6rem 1fr auto; align-items: center; gap: 0.5rem 1rem; }
+  .ann-label {
+    font-family: var(--font-body); font-size: 0.72rem; color: var(--amber-text); text-align: right; white-space: nowrap;
+    background: var(--amber-bg); padding: 0 0.45rem; border-radius: 4px; line-height: 1.6;
+  }
+  .ann-label:empty { background: none; }
+  .line-num  { color: #5c6475; text-align: right; user-select: none; font-size: 0.8rem; }
+
+  /* ── Q-CARDS ── */
+  .q-card {
+    background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 1.1rem 1.3rem; margin-bottom: 1rem; border-left: 4px solid var(--cobalt);
+    box-shadow: var(--shadow-sm);
+    transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+  }
+  .q-card:hover { box-shadow: var(--shadow-md); }
+  .q-card.error,
+  .q-card.is-wrong { border-color: rgba(240,80,110,0.55); border-left-color: var(--red); background: #2a1e25; }
+  .q-label { display: block; font-weight: 600; color: var(--text); margin-bottom: 0.6rem; font-size: 0.95rem; }
+  .q-num { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 6px; background: var(--cobalt); color: white; font-weight: 700; font-size: 0.78rem; margin-right: 0.45rem; flex-shrink: 0; vertical-align: middle; }
+  /* inline code chips in instructions */
+  .q-label code, .task-text code, .req-text code, .info-box code, .hint-box code {
+    background: var(--code-bg); color: var(--cobalt-text); border: 1px solid var(--line-strong);
+    font-family: var(--font-mono); padding: 0.05rem 0.35rem;
+    border-radius: 5px; font-size: 0.86em;
+  }
+  .q-card input[type=text], .q-card textarea {
+    width: 100%; padding: 0.7rem 0.85rem; border: 1.5px solid var(--line-strong); border-radius: 8px;
+    font-family: var(--font-body); font-size: 0.95rem; resize: vertical; min-height: 44px;
+    background: var(--canvas); color: var(--text); transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .q-card input[type=text]::placeholder, .q-card textarea::placeholder { color: #7a8292; }
+  .q-card input[type=text]:focus, .q-card textarea:focus { outline: none; border-color: var(--cobalt-text); box-shadow: var(--focus-ring); }
+  .q-card textarea { min-height: 70px; }
+  .q-card.error input[type=text],
+  .q-card.error textarea,
+  .q-card.is-wrong input[type=text],
+  .q-card.is-wrong textarea { border-color: var(--red); }
+
+  /* ── MCQ inside q-card ── */
+  .radio-opts { display: flex; flex-direction: column; gap: 0.45rem; }
+  .radio-opt {
+    display: flex; align-items: center; gap: 0.65rem; padding: 0.6rem 0.9rem; min-height: 44px;
+    border-radius: 8px; border: 1.5px solid var(--line-strong); background: var(--card-raised); cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .radio-opt:hover { border-color: var(--cobalt-text); background: var(--card-hover); }
+  .radio-opt:has(input:checked) { border-color: var(--cobalt-text); background: var(--cobalt-tint); }
+  .radio-opt input[type=radio] { accent-color: var(--cobalt-text); width: 16px; height: 16px; flex-shrink: 0; }
+  .radio-opt span { font-size: 0.92rem; color: var(--text); }
+  .radio-opt.correct { border-color: var(--green) !important; background: var(--green-bg) !important; }
+  .radio-opt.wrong   { border-color: var(--red) !important; background: var(--red-bg) !important; }
+  .mcq-fb { font-size: 0.86rem; font-weight: 600; margin-top: 0.55rem; padding: 0.5rem 0.8rem; border-radius: 8px; display: none; }
+  .mcq-fb.pass { display: block; color: var(--green-text); background: var(--green-bg); border: 1px solid rgba(34,197,94,0.45); }
+  .mcq-fb.fail { display: block; color: var(--red-text);   background: var(--red-bg);   border: 1px solid rgba(240,80,110,0.45); }
+
+  /* ── PREDICT WARNING ── */
+  .predict-warning {
+    background: var(--amber-bg); border: 1.5px solid var(--amber); border-radius: 8px;
+    padding: 0.7rem 1rem; font-size: 0.88rem; color: var(--amber-text); font-weight: 600;
+    margin-top: 0.8rem; display: none; align-items: center; gap: 0.5rem;
+  }
+
+  /* ── CODE CHECKER (editor) — neutral graphite chrome instead of Y8's purple ── */
+  .code-checker { margin: 0 -1.5rem 1.2rem; border-radius: var(--radius); overflow: hidden; border: 1px solid var(--line-strong); box-shadow: var(--shadow-md); }
+  .code-checker .checker-header { background: var(--card-raised); border: none; border-bottom: 1px solid var(--line); color: var(--muted); font-family: var(--font-body); }
+  .code-checker .checker-header span:last-child { color: var(--code-text); }
+  .code-checker .editor-wrap { background: var(--code-bg); }
+  .code-checker .line-nums { color: #5c6475; border-right-color: var(--line); font-family: var(--font-mono); }
+  .code-checker .checker-textarea { scrollbar-color: var(--line-strong) var(--code-bg); }
+  .code-checker .output-panel { background: #0a0c0f; border-left-color: var(--line); font-family: var(--font-mono); }
+  .code-checker .output-header { color: #7c8496; }
+  .code-checker .output-input-row { border-top-color: var(--line); }
+  .checker-textarea { display: block; width: 100%; background: var(--code-bg); color: var(--code-text); font-family: var(--font-mono); font-size: 0.9rem; line-height: 1.7; padding: 0.9rem 1.1rem; border: none; outline: none; min-height: 200px; }
+  .checker-footer { padding: 0.7rem 1rem; display: flex; align-items: center; gap: 0.7rem; background: var(--card-raised); border-top: 1px solid var(--line); flex-wrap: wrap; }
+  @media (max-width: 768px) { .code-checker .output-panel { border-top-color: var(--line); } }
+
+  /* ── BUTTONS (flat, sentence case, 44px targets) ── */
+  .btn { min-height: 44px; padding: 0.6rem 1.15rem; border-radius: 8px; border: 1px solid transparent; cursor: pointer; font-family: var(--font-body); font-weight: 600; font-size: 0.9rem; transition: background 0.15s, border-color 0.15s, transform 0.1s, color 0.15s; display: inline-flex; align-items: center; gap: 0.45rem; }
+  .btn:active { transform: scale(0.98); }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+  .btn-check { background: var(--cobalt); color: #fff; }
+  .btn-check:hover:not(:disabled) { background: var(--cobalt-dark); }
+  /* "next" = light-on-dark inverse, so it reads as the step forward */
+  .btn-next  { background: #e6e8ec; color: #15171c; }
+  .btn-next:hover:not(:disabled) { background: #fff; }
+  .btn-reset { background: transparent; color: var(--text); border-color: var(--line-strong); font-size: 0.84rem; }
+  .btn-reset:hover:not(:disabled) { background: var(--card-hover); border-color: var(--muted); }
+  .btn-skip { background: transparent; color: var(--muted); border: 1px dashed var(--line-strong); font-size: 0.82rem; font-style: italic; }
+  .btn-skip:hover { background: var(--red-bg); color: var(--red-text); border-color: var(--red); border-style: solid; }
+
+  /* Teacher-password gate that opens when a student clicks "Skip this task" (see openSkipGate in the JS). */
+  .skip-gate { display: none; align-items: center; gap: 0.6rem; flex-wrap: wrap; margin-top: 0.5rem; padding: 0.6rem 0.8rem; border: 1px dashed var(--red); border-radius: 9px; background: var(--red-bg); }
+  .skip-gate.open { display: flex; }
+  .skip-gate label { font-size: 0.84rem; color: var(--text); font-weight: 600; }
+  .skip-gate input { font-family: var(--font-mono); font-size: 0.88rem; min-height: 40px; padding: 0.4rem 0.6rem; border-radius: 6px; border: 1.5px solid var(--line-strong); background: var(--canvas); color: var(--text); }
+  .skip-gate input:focus { outline: none; border-color: var(--cobalt-text); box-shadow: var(--focus-ring); }
+  .skip-gate-err { font-size: 0.84rem; color: var(--red-text); font-weight: 600; }
+  /* ── STEP NAVIGATION (Back / Forward through answered questions) ── */
+  .step-nav { display: flex; justify-content: space-between; gap: 0.6rem; margin: 0.2rem 0 1.1rem; }
+  .btn-back, .btn-fwd { background: var(--card); color: var(--text); border-color: var(--line-strong); font-size: 0.84rem; }
+  .btn-back:hover, .btn-fwd:hover { background: var(--card-hover); border-color: var(--muted); }
+  /* keep buttons in place (so Back stays left, Forward stays right) but hidden when unavailable */
+  .btn-back[disabled], .btn-fwd[disabled] { visibility: hidden; opacity: 0; }
+  /* a revisited (already-answered) question is shown read-only-ish with a subtle marker */
+  .q-card.revisiting { background: #1b1e24; }
+  .revisit-note { font-size: 0.84rem; color: var(--muted); font-style: italic; margin-top: 0.6rem; display: none; }
+  .q-card.revisiting .revisit-note { display: block; }
+  .primm-nav button.skipped .stage-letter { background: var(--red) !important; color: white !important; border-color: var(--red) !important; }
+
+  /* ── FEEDBACK ── */
+  .feedback { padding: 0.6rem 0.95rem; border-radius: 8px; font-size: 0.86rem; font-weight: 600; flex: 1; min-width: 0; font-family: var(--font-body); }
+  .feedback.pass   { background: var(--green-bg); color: var(--green-text); border: 1px solid rgba(34,197,94,0.45); }
+  .feedback.fail   { background: var(--red-bg);   color: var(--red-text);   border: 1px solid rgba(240,80,110,0.45); }
+  .feedback.hidden  { display: none; }
+  .feedback.loading { background: var(--card-hover); color: var(--code-text); border: 1px solid var(--line-strong); }
+  .py-status { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.04em; padding: 0.25rem 1.5rem; background: var(--chrome); color: var(--muted); text-align: right; position: relative; z-index: 1; }
+
+  /* ── INFO / HINT ── */
+  .info-box { background: var(--cobalt-tint); border: 1px solid rgba(142,168,255,0.35); border-radius: 10px; padding: 0.85rem 1.1rem; margin-bottom: 1rem; font-size: 0.9rem; color: #d3ddff; display: flex; gap: 0.6rem; }
+  .info-box .icon { font-size: 1.15rem; flex-shrink: 0; }
+  .hint-box { background: var(--amber-bg); border-left: 3px solid var(--amber); border-radius: 0 8px 8px 0; padding: 0.65rem 0.95rem; font-size: 0.88rem; color: var(--amber-text); margin-bottom: 0.8rem; }
+  .q-card .hint-box, .modify-task .hint-box { background: var(--amber-bg); color: var(--amber-text); }
+
+  /* ── MODIFY TASKS ── */
+  .modify-task { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 1rem 1.3rem; margin-bottom: 0.5rem; border-left: 4px solid var(--stage-m1); box-shadow: var(--shadow-sm); display: flex; gap: 1rem; align-items: flex-start; }
+  .modify-task.ext { border-left-color: var(--stage-m2); }
+  .modify-task .stars { font-size: 1rem; flex-shrink: 0; min-width: 52px; color: var(--amber); letter-spacing: 0.05em; }
+  .modify-task .task-text { font-size: 0.92rem; color: var(--text); line-height: 1.55; flex: 1; }
+
+  /* ── REQUIREMENTS LIST ── */
+  .req-list { list-style: none; margin: 1rem 0; }
+  .req-list li { display: flex; align-items: flex-start; gap: 0.65rem; background: var(--card-raised); border: 1.5px solid var(--line); border-radius: 10px; padding: 0.75rem 1rem; margin-bottom: 0.5rem; font-size: 0.92rem; color: var(--text); line-height: 1.5; }
+  .req-list li > span:first-child { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: #4a5263; color: #fff; font-weight: 700; font-size: 0.75rem; flex-shrink: 0; margin-top: 0.05rem; }
+  /* the description is a SECOND span so <strong>/<code> inside it flow as normal
+     inline text — without this wrapper, li's flex layout treats every inline
+     element as its own flex item and breaks the sentence apart visually */
+  .req-list li .req-text { flex: 1; }
+  .req-list li.ext { border-color: rgba(245,165,36,0.5); }
+  .req-list li.ext > span:first-child { background: var(--amber-dark); }
+  .req-list li.req-pass { border-color: var(--green); background: var(--green-bg); }
+  .req-list li.req-pass > span:first-child { background: var(--green); color: #06240f; }
+  .req-list li.req-fail { border-color: var(--red); background: var(--red-bg); }
+  .req-list li.req-fail > span:first-child { background: var(--red); }
+  /* Investigate prompts: ticked code-change bullets, with plain "then run it" notes between them */
+  #i_steps .req-list { margin: 0.6rem 0 0.2rem; }
+  #i_steps .req-list li > span:first-child { background: var(--stage-i); }
+  #i_steps .req-list li.req-pass > span:first-child { background: var(--green); }
+  #i_steps .req-list li.req-fail > span:first-child { background: var(--red); }
+  #i_steps .req-list li.req-note { background: none; border: none; padding: 0.1rem 0.2rem 0.5rem 2.25rem; display: block; color: var(--muted); }
+
+  /* ── MISC ── */
+  .section-label { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 700; margin-bottom: 0.45rem; margin-top: 1.3rem; }
+  .completion-banner { background: var(--card); border: 1px solid var(--line); border-top: 5px solid var(--green); border-radius: 16px; padding: 1.8rem; text-align: center; color: var(--text); margin-top: 2rem; display: none; box-shadow: var(--shadow-md); }
+  .completion-banner h3 { font-family: var(--font-head); font-size: 1.4rem; margin-bottom: 0.4rem; color: var(--green-text); }
+  .completion-banner p  { color: var(--muted); font-size: 0.95rem; }
+  .progress-strip { height: 10px; background: #22262e; position: sticky; top: var(--cr-banner-h, 0px); z-index: 10; }
+  .progress-fill  { height: 100%; background: var(--cobalt-text); transition: width 0.5s ease; }
+  /* Flags to the student (and a teacher glancing at the screen) that no progress has
+     been made on the current stage for a while — see STUCK_THRESHOLDS_MS in the JS. */
+  .progress-fill.stuck { background: var(--amber); animation: stuck-pulse 1.6s ease-in-out infinite; }
+  /* One-off red flash when a stage gets marked skipped (see markStageSkipped in the JS). */
+  .progress-fill.skip-flash { animation: skip-flash 1s ease-in-out; }
+  /* Persists as long as ANY skipped exercise is still unresolved (see updateSkipIndicator in the JS). */
+  .progress-fill.skip-pending { background: var(--red); }
+
+  .step-hidden { display: none !important; }
+
+  /* ── ANIMATIONS (short, purposeful) ── */
+  @keyframes panel-in   { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  /* the one place Y9 uses glow — it must be visible to a teacher across the room */
+  @keyframes stuck-pulse { 0%, 100% { box-shadow: 0 0 6px rgba(245,165,36,0.5); } 50% { box-shadow: 0 0 18px rgba(245,165,36,0.95); } }
+  @keyframes skip-flash {
+    0%, 100% { background: var(--cobalt-text); }
+    20%, 60% { background: var(--red); }
+  }
+
+  /* ── Q-CARD CORRECT STATE ── */
+  @keyframes success-pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
+    40%  { box-shadow: 0 0 0 6px rgba(34,197,94,0.3); }
+    100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
+  }
+  .q-card.is-right { border-color: rgba(34,197,94,0.5); border-left-color: var(--green) !important; background: #1a2a22; animation: success-pulse 0.8s ease forwards; }
+  .q-card.is-right input[type=text], .q-card.is-right textarea { border-color: var(--green); }
+
+  /* ── FEEDBACK ENTRANCE ── */
+  @keyframes feedback-enter {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: none; }
+  }
+  .feedback.pass { animation: feedback-enter 0.25s ease-out; }
+
+  /* ── OUTPUT SPOTLIGHT (first run in Run stage) ── */
+  @keyframes output-spotlight-fade {
+    0%, 60% { box-shadow: inset 0 0 0 3px #4ade80; }
+    100%     { box-shadow: none; }
+  }
+  .output-panel.spotlight { animation: output-spotlight-fade 5s ease forwards; }
+  .output-panel.spotlight .output-header::after {
+    content: ' ← output appears here';
+    color: #4ade80; font-style: italic; font-weight: 700;
+  }
+
+  /* ── "READ THIS STEP" CALL-OUT — fires when a student presses Check in an
+       Investigate step without having made the code change it describes ── */
+  @keyframes ig-attention-glow {
+    0%, 100% { box-shadow: var(--shadow-sm), 0 0 0 0 rgba(34,197,94,0); }
+    50%      { box-shadow: var(--shadow-sm), 0 0 0 6px rgba(34,197,94,0.3); }
+  }
+  @keyframes ig-arrow-bob {
+    0%, 100% { transform: translateX(-3px); opacity: 0.55; }
+    50%      { transform: translateX(4px);  opacity: 1; }
+  }
+  .q-card.needs-attention {
+    border-left-color: var(--green) !important;
+    animation: ig-attention-glow 1s ease-in-out 4;
+  }
+  .ig-callout {
+    display: flex; align-items: center; gap: 0.6rem;
+    margin-bottom: 0.75rem; padding: 0.55rem 0.9rem;
+    background: var(--green-bg); border: 1.5px solid var(--green);
+    border-radius: 9px; color: var(--green-text); font-weight: 700; font-size: 0.88rem;
+    animation: feedback-enter 0.25s ease-out;
+  }
+  .ig-callout-arrows {
+    font-size: 1.15rem; letter-spacing: 0.1em; color: var(--green-text); flex-shrink: 0;
+    animation: ig-arrow-bob 0.7s ease-in-out infinite;
+  }
+
+  /* ── WORD BANK (click-to-place) — available for Predict questions ── */
+  .wb-pool { display: flex; flex-wrap: wrap; gap: 0.45rem; padding: 0.6rem 0.75rem; background: var(--canvas); border: 1.5px dashed var(--line-strong); border-radius: 10px; min-height: 44px; margin-bottom: 0.5rem; }
+  .wb-answer { display: flex; flex-wrap: wrap; gap: 0.35rem; padding: 0.45rem 0.7rem; background: var(--card-raised); border: 1.5px solid var(--line-strong); border-radius: 10px; min-height: 44px; align-items: center; margin-bottom: 0.5rem; }
+  .wb-answer.is-right { border-color: var(--green); background: var(--green-bg); }
+  .wb-answer.is-wrong { border-color: var(--red); background: var(--red-bg); }
+  .wb-chip { display: inline-flex; align-items: center; min-height: 34px; padding: 0.3rem 0.75rem; background: var(--cobalt-tint); color: var(--cobalt-text); border: 1.5px solid var(--cobalt-text); border-radius: 7px; cursor: pointer; font-size: 0.88rem; font-weight: 600; user-select: none; transition: background 0.15s, color 0.15s; }
+  .wb-chip:hover { background: var(--cobalt); color: #fff; }
+  .wb-chip.used { opacity: 0.3; cursor: default; pointer-events: none; }
+  .wb-placed { display: inline-flex; align-items: center; gap: 0.25rem; min-height: 34px; padding: 0.3rem 0.65rem; background: var(--code-bg); color: var(--code-text); border: 1px solid var(--line-strong); border-radius: 7px; cursor: pointer; font-size: 0.86rem; font-family: var(--font-mono); }
+  .wb-placed:hover { background: var(--red); color: white; }
+  .wb-empty-hint { color: var(--muted); font-style: italic; font-size: 0.84rem; align-self: center; }
+  .wb-label { font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 700; margin-bottom: 0.3rem; }
+
+  /* ── ACCESSIBILITY: respect reduced-motion ── */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; }
+    .stage-panel.active { animation: none; }
+  }
+
+  @media (max-width: 600px) {
+    .site-header { flex-wrap: wrap; padding: 1.1rem 1rem 0.9rem; } .header-code { display: none; }
+    .stage-panel { padding: 1rem; } .primm-nav button { min-width: 70px; }
+    .code-checker { margin-left: 0; margin-right: 0; }
+    .ann-row { grid-template-columns: 1.4rem 1fr; } .ann-label { grid-column: 2; text-align: left; white-space: normal; justify-self: start; }
+  }
+</style>
+</head>
+<body>
+
+<!--
+  WRITING INSTRUCTIONS THAT CONTAIN CODE
+  Students copy code from instructions exactly — including any punctuation
+  after it. Never put a full stop, comma or other punctuation straight after
+  code the student might type (a <code> span, or code inside a checker hint).
+    ✘  Change line 1 to <code>name = "Priya"</code>.
+    ✔  Change line 1 to <code>name = "Priya"</code>
+  A sentence that ends in code simply has no full stop. If more text follows,
+  put it on a new line (<br>) or reword so the code comes last, e.g.
+    ✘  e.g. print(a - b). (Tested with 9 and 5.)
+    ✔  (tested with 9 and 5) — e.g. print(a - b)
+-->
+
+<header class="site-header">
+  <!--
+    FILL IN ①: Header icon — a short keyword, symbol, or emoji representing the topic.
+    For a code keyword (e.g. "def", "input", "for"): use <div class="header-icon">keyword</div>
+    For an emoji: use <div style="font-size:3rem;line-height:1">🐢</div>
+  -->
+  <div class="header-icon">???</div>
+
+  <div class="header-text">
+    <h1>PRIMM Practice</h1>
+    <!-- FILL IN ②: Replace TOPIC with the lesson topic name -->
+    <p>TOPIC &nbsp;·&nbsp; Python Programming &nbsp;·&nbsp; Year 9</p>
+  </div>
+
+  <!--
+    FILL IN ③: A 4–6 line syntax-highlighted snippet of the key concept.
+    Highlight using: <span class="kw"> keywords, <span class="fn"> functions,
+    <span class="st"> strings, <span class="num"> numbers.
+    This is decorative only — it does not need to exactly match STARTER_CODE.
+  -->
+  <pre class="header-code"><span class="kw">keyword</span> <span class="fn">example</span>():
+    <span class="fn">print</span>(<span class="st">"Hello!"</span>)</pre>
+</header>
+
+<div class="progress-strip"><div class="progress-fill" id="progressFill" style="width:20%"></div></div>
+<div class="py-status" id="pyStatus" style="display:none">Python runtime: <span id="pyStatusText">loading…</span></div>
+
+<nav class="primm-nav">
+  <button data-stage="P"  class="active" onclick="showStage('P')"><span class="stage-letter">P</span><span class="stage-name">Predict</span></button>
+  <button data-stage="R"  onclick="showStage('R')"><span class="stage-letter">R</span><span class="stage-name">Run</span></button>
+  <button data-stage="I"  onclick="showStage('I')"><span class="stage-letter">I</span><span class="stage-name">Investigate</span></button>
+  <button data-stage="M1" onclick="showStage('M1')"><span class="stage-letter">M</span><span class="stage-name">Modify</span></button>
+  <button data-stage="M2" onclick="showStage('M2')"><span class="stage-letter">M</span><span class="stage-name">Make</span></button>
+</nav>
+
+
+<!-- ════════════════════════════════════════════════
+     P — PREDICT
+════════════════════════════════════════════════ -->
+<section class="stage-panel active" id="stage-P">
+  <div class="stage-header">
+    <div class="stage-badge badge-P">P</div>
+    <div class="stage-header-text">
+      <h2>Predict</h2>
+      <p>Study the code carefully. Answer every question, even if it's a guess.</p>
+    </div>
+  </div>
+
+  <div class="info-box">
+    <span class="icon">💡</span>
+    <span>Read the code below <strong>but don't run it yet</strong>. Making predictions (even wrong ones) helps you learn more when you run it.</span>
+  </div>
+
+  <!--
+    FILL IN ④: Annotated code block.
+    Each line of code is one .ann-row with three cells:
+      1. Line number (.line-num)
+      2. The code (use .kw / .fn / .st / .num spans for highlighting)
+      3. A short annotation label (.ann-label) — omit the <span> to leave blank
+    Blank lines: <div class="ann-row"><span class="line-num">N</span><span>&nbsp;</span><span></span></div>
+  -->
+  <div class="annotated-code">
+    <div class="ann-row"><span class="line-num">1</span><span><span class="kw">keyword</span> <span class="fn">example</span>()</span><span class="ann-label">FILL IN: annotation</span></div>
+    <div class="ann-row"><span class="line-num">2</span><span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">print</span>(<span class="st">"Hello!"</span>)</span><span class="ann-label">FILL IN: annotation</span></div>
+    <!-- Add more .ann-row divs to match STARTER_CODE line count -->
+  </div>
+
+  <!--
+    FILL IN ⑤: Predict questions — aim for 3–4 total.
+    Mix question types: use at most one or two free-text boxes; prefer MCQ, True/False,
+    or word-bank for the rest. Questions are shown ONE AT A TIME — each card has its
+    own "Check answer" button. After checking, the student sees the feedback and then
+    the activity AUTO-ADVANCES to the next card (after a short delay, so the feedback
+    is read). A "← Back / Forward →" bar below the cards lets students revisit any
+    question they have already answered (their answer and feedback are re-shown).
+    This one-question-at-a-time + back/forward pattern is the SAME
+    across Predict, Investigate, and Modify — keep it consistent.
+    Predict advances automatically ONLY when the answer is correct; a wrong answer
+    shows a manual "Continue →" button so the student can read the feedback at their
+    own pace. (Handled by showPredictContinue() — no per-question wiring needed.)
+
+    ── QUESTION TYPES ──────────────────────────────────────────────────────────
+
+    Card order is fixed by PREDICT_CARDS / PREDICT_NAMES in the JS (qcard_p_mcq1,
+    qcard_p_mcq2, qcard_p_text1). To add/remove a Predict question, update those two
+    arrays — the one-at-a-time flow, auto-advance and Back/Forward all follow them.
+
+    MCQ (4 options):
+      • name= must match an entry in RADIO_GROUPS; value= must match P_CORRECT key
+      • id: qcard_<name>, feedback: fb_<name>
+      • Keep all option texts roughly the same length
+      • Check button only: checkPredictMCQ('p_mcq1')  — auto-advances if correct,
+        otherwise shows a manual "Continue →"
+
+    TRUE/FALSE (2-option MCQ — same pattern, just 2 radio options):
+      • Use when the question has a binary correct/incorrect answer
+      • Same radio-opts markup, same checkPredictMCQ('<name>') call
+
+    WORD BANK (click-to-place — good for "what is the output?" questions):
+      • Uses .wb-pool + .wb-answer markup (CSS already included above)
+      • Add a const WB_<id>_WORDS array + wbState object in the JS
+      • Render function: wbRender(); Place/remove: wbPlace(word) / wbRemove(idx)
+      • Check: a custom checkWordBank() function (see 1_Strings_PRIMM.html for
+        a complete worked example — search for "wbP3")
+      • Do NOT add word-bank ids to TEXT_FIELDS; save placed[] in state manually
+
+    FREE-TEXT (single-line input — use sparingly):
+      • id= must match an entry in TEXT_FIELDS
+      • Check button only: checkPredictText()  — auto-advances if correct,
+        otherwise shows a manual "Continue →"
+      • On the last Predict card, answering correctly (or clicking Continue →) advances directly to Run
+
+    ── DESIGN RULE ─────────────────────────────────────────────────────────────
+    Target: 1 MCQ + 1 True/False + 1 word-bank OR free-text per Predict section.
+    Never use free-text for questions with a single objectively correct answer —
+    that is what MCQ and word-bank are for.
+  -->
+
+  <!-- MCQ question 1 — visible immediately -->
+  <div class="q-card" id="qcard_p_mcq1">
+    <label class="q-label"><span class="q-num">1</span> FILL IN: Question text?</label>
+    <div class="radio-opts" id="ropts_p_mcq1">
+      <label class="radio-opt"><input type="radio" name="p_mcq1" value="option_a" onchange="saveState()"> <span>FILL IN: Option A</span></label>
+      <label class="radio-opt"><input type="radio" name="p_mcq1" value="option_b" onchange="saveState()"> <span>FILL IN: Option B (correct — keep same length as others)</span></label>
+      <label class="radio-opt"><input type="radio" name="p_mcq1" value="option_c" onchange="saveState()"> <span>FILL IN: Option C</span></label>
+      <label class="radio-opt"><input type="radio" name="p_mcq1" value="option_d" onchange="saveState()"> <span>FILL IN: Option D</span></label>
+    </div>
+    <div class="mcq-fb" id="fb_p_mcq1"></div>
+    <div style="margin-top:0.8rem;display:flex;gap:0.6rem;flex-wrap:wrap;align-items:center">
+      <button class="btn btn-check" id="btn_check_p_mcq1" onclick="checkPredictMCQ('p_mcq1')">✓ Check answer</button>
+    </div>
+    <div class="revisit-note">You've already answered this — use <strong>Forward →</strong> to return to where you were.</div>
+  </div>
+
+  <!-- MCQ question 2 — revealed after Q1 is answered -->
+  <div class="q-card step-hidden" id="qcard_p_mcq2">
+    <label class="q-label"><span class="q-num">2</span> FILL IN: Question text?</label>
+    <div class="radio-opts" id="ropts_p_mcq2">
+      <label class="radio-opt"><input type="radio" name="p_mcq2" value="option_a" onchange="saveState()"> <span>FILL IN: Option A (correct)</span></label>
+      <label class="radio-opt"><input type="radio" name="p_mcq2" value="option_b" onchange="saveState()"> <span>FILL IN: Option B</span></label>
+      <label class="radio-opt"><input type="radio" name="p_mcq2" value="option_c" onchange="saveState()"> <span>FILL IN: Option C</span></label>
+    </div>
+    <div class="mcq-fb" id="fb_p_mcq2"></div>
+    <div style="margin-top:0.8rem;display:flex;gap:0.6rem;flex-wrap:wrap;align-items:center">
+      <button class="btn btn-check" id="btn_check_p_mcq2" onclick="checkPredictMCQ('p_mcq2')">✓ Check answer</button>
+    </div>
+    <div class="revisit-note">You've already answered this — use <strong>Forward →</strong> to return to where you were.</div>
+  </div>
+
+  <!-- Free-text question — revealed after Q2 is answered -->
+  <div class="q-card step-hidden" id="qcard_p_text1">
+    <label class="q-label"><span class="q-num">3</span> FILL IN: Question asking for exact output or a typed answer?</label>
+    <input type="text" id="p_text1" placeholder="Type your answer here…" oninput="saveState(); clearPredictError('qcard_p_text1')">
+    <!-- Optional: add a hint box pointing at the relevant line -->
+    <div class="hint-box" style="margin-top:0.6rem">Hint: FILL IN: brief pointer to the relevant line(s) of code.</div>
+    <div class="mcq-fb" id="fb_p_text1"></div>
+    <div style="margin-top:0.8rem;display:flex;gap:0.6rem;flex-wrap:wrap;align-items:center">
+      <button class="btn btn-check" id="btn_check_p_text1" onclick="checkPredictText()">✓ Check answer</button>
+    </div>
+    <div class="revisit-note">You've already answered this — use <strong>Forward →</strong> to return to where you were.</div>
+  </div>
+
+  <!-- Back / Forward through answered Predict questions (one question on screen at a time) -->
+  <div class="step-nav" id="stepnav-P">
+    <button class="btn btn-back" id="btn_back_P" onclick="goBack('P')" disabled>← Back</button>
+    <button class="btn btn-fwd"  id="btn_fwd_P"  onclick="goForward('P')" disabled>Forward →</button>
+  </div>
+</section>
+
+
+<!-- ════════════════════════════════════════════════
+     R — RUN
+════════════════════════════════════════════════ -->
+<section class="stage-panel" id="stage-R">
+  <div class="stage-header">
+    <div class="stage-badge badge-R">R</div>
+    <div class="stage-header-text">
+      <h2>Run</h2>
+      <p>Run the code below and record what actually happens.</p>
+    </div>
+  </div>
+
+  <!--
+    FILL IN ⑥: Describe what will happen when Run code is clicked.
+    If the program uses input(), name the mock values that will be used.
+    If it uses no input(), remove the "test inputs" clause.
+  -->
+  <!--
+    LINEAR FLOW: instruction (this info box) → editor (with Run) → answer + Check button.
+    Everything reads straight down, so the student never scrolls back up. The same
+    instruction → editor → answer order is used in Investigate. Keep it consistent.
+  -->
+  <div class="info-box">
+    <span class="icon">🖥️</span>
+    <span>Use the <strong>▶ Run code</strong> button below to see the program in action.
+    <!-- e.g. "The program will run with the test inputs Alice and 13." -->
+    Compare the output with your predictions, then describe what you saw at the bottom.</span>
+  </div>
+
+  <!-- ① Editor (with Run) -->
+  <div class="code-checker">
+    <textarea class="checker-textarea" id="r_editor" data-title="Python Editor"></textarea>
+    <div class="checker-footer">
+      <!--
+        FILL IN ⑦: Mock inputs for the Run stage.
+        If the program calls input() N times, supply N strings in the array.
+        If no input() is used, leave the array empty: []
+      -->
+      <button class="btn btn-check" onclick="runCodeInEditor('r_editor', 'r_fb_run', [/* 'input1', 'input2' */])">▶ Run code</button>
+      <div class="feedback loading hidden" id="r_fb_run"></div>
+    </div>
+  </div>
+
+  <!-- FILL IN ⑧: Key concept hint shown after running. -->
+  <div class="hint-box">💡 FILL IN: The most important thing to notice about the output or the code structure.</div>
+
+  <!-- ② Answer + Check button, directly below the editor -->
+  <div class="q-card" id="qcard_r1">
+    <label class="q-label"><span class="q-num">1</span> Describe what output you saw when you ran the program. Did anything surprise you compared with your predictions?</label>
+    <textarea id="r1" placeholder="Write what appeared in the output panel…" oninput="saveState(); clearRunError('qcard_r1')"></textarea>
+    <button class="btn btn-check" id="btn_check_run" onclick="tryCompleteRun()" style="margin-top:0.8rem">
+      ⚡ Check response
+    </button>
+  </div>
+</section>
+
+
+<!-- ════════════════════════════════════════════════
+     I — INVESTIGATE
+════════════════════════════════════════════════ -->
+<section class="stage-panel" id="stage-I">
+  <div class="stage-header">
+    <div class="stage-badge badge-I">I</div>
+    <div class="stage-header-text">
+      <h2>Investigate</h2>
+      <p>Read each step, make the change in the editor, run it, then record what happens in the answer box below. Keep your changes as you go — each step builds on the last.</p>
+    </div>
+  </div>
+
+  <div class="ac-progress-bar" style="height: 8px; margin-bottom: 10px;">
+    <div class="ac-progress-fill" id="progress-fill-I" style="width: 0%; background: var(--stage-i);"></div>
+  </div>
+
+  <!--
+    FILL IN ⑨: Investigate step questions.
+
+    ╔══ FLOW RULE — READ BEFORE WRITING STEP INSTRUCTIONS ══════════════════╗
+    ║  Each step tells the student what to CHANGE or ADD to the code that   ║
+    ║  is already in the editor. Students never retype earlier work.        ║
+    ║                                                                       ║
+    ║  Step 1: "Change X to Y. Run it. What happens?"                      ║
+    ║  Step 2: "Keep your step 1 change. Now also add Z. Run it."          ║
+    ║  Step 3: "Keep all your changes. Now try W. Why does that happen?"   ║
+    ║  Step 4: "Keep all your changes. Now add something new."             ║
+    ║                                                                       ║
+    ║  Avoid: "Write the following code", "Start with this program",       ║
+    ║  or any instruction that implies starting fresh.                      ║
+    ╠══ QUESTION PLACEMENT — INSTRUCTIONS ABOVE, QUESTION BELOW ════════════╣
+    ║  The prompt card up top (#i_steps) holds ONLY the instructions to     ║
+    ║  carry out — the change(s) to make plus "Run your code." The actual   ║
+    ║  QUESTION the student answers ("How many lines now?", "What changed?")║
+    ║  goes in the matching answer card below the editor (#i_answers),      ║
+    ║  rendered as a <label class="q-label"> above its input. This keeps    ║
+    ║  the thing-to-do next to the editor and the thing-to-answer next to   ║
+    ║  the answer box. Applies to Modify steps too.                         ║
+    ╚═══════════════════════════════════════════════════════════════════════╝
+
+    ╔══ THE STANDARD BUG STEP — step 3 below is ALREADY WRITTEN ════════════╗
+    ║  In the default 3-step layout, steps 1–2 are yours to fill in freely  ║
+    ║  (concept exploration); step 3 is the STANDARD "fix a bug" step and   ║
+    ║  ships pre-written as an MCQ — you only need to fill in IBUG_LINE /   ║
+    ║  IBUG_FIXED_LINE in checkers.js and the option text (see FILL IN ②b). ║
+    ║  Step 3 = guided encounter — student presses "😈 Break it" to add the ║
+    ║  bug, with the line/error explained, then fixes it themselves. Its    ║
+    ║  Check button completes Investigate (tryCompleteInvestigate()), so    ║
+    ║  this step must always be the FINAL one — if you add more concept     ║
+    ║  steps, insert them before it and renumber (see the HTML comment      ║
+    ║  just above the bug-step card for the exact renumbering checklist).   ║
+    ╚═══════════════════════════════════════════════════════════════════════╝
+
+    ── QUESTION TYPES FOR INVESTIGATE STEPS (steps BEFORE the bug step) ────
+
+    Mix question types — avoid making every step a free-text box.
+    Target: at least 1 text + 1 MCQ or True/False across your concept steps
+    (steps 1–2 by default), on top of the standard bug-step MCQ.
+
+    TEXT (textarea):
+      • For open observations ("What changed?", "Why does this happen?")
+      • Add validate(v) to I_FIELDS with keyword checks where useful
+      • Set type:'text' (or omit — text is the default)
+
+    MCQ (4-option radio inside the ANSWER card, below the editor):
+      • Use when the answer is one of a small set of concrete values
+        (e.g. "how many lines?", "which value is stored?")
+      • Put radio-opts markup (name="iN_group" onchange="saveState()") in the answer
+        card qcard_iN (below the editor) — NOT in the prompt card up top
+      • Add a feedback div: <div class="mcq-fb" id="fb_iN"></div>
+      • In I_FIELDS set type:'mcq', radioName:'iN_group',
+        correctValue:'option_X', passMsg:'…', failMsg:'…',
+        and validate() { const c = document.querySelector(...):checked;
+          if (!c) return 'Select…'; if (c.value!==X) return failMsg; return null; }
+      • Add the radio group name to RADIO_GROUPS so it is saved/restored
+
+    TRUE/FALSE (2-option radio — same MCQ pattern, 2 options):
+      • Use for binary yes/no questions ("Does it still work?")
+      • Same type:'mcq' setup with only 2 radio options
+
+    Add/remove cards to match STEP_COUNT_I in the JS.
+    The LAST step's button must call tryCompleteInvestigate() instead of nextStep().
+  -->
+  <!-- ① INSTRUCTION (prompt) cards — top. The matching answer box for each step is
+       rendered below the editor in #i_answers. Both are toggled together per step. -->
+  <div id="i_steps">
+
+    <!-- TICK-LISTS: every instruction that needs a CODE CHANGE is a numbered <li> in the
+         step's <ul class="req-list" id="req_i_N">, checked by INV_CHECKS.invN in
+         checkers.js (one req per numbered <li>, same order). They tick live as the
+         student types/runs, cross on Check, and ALL must pass before that step's answer
+         is accepted. "Run your code" / "type 5 when asked" go in <li class="req-note">
+         lines, which are never ticked. A step with NO code change has no req-list and no
+         INV_CHECKS entry — it is never gated (see L3_Input step 2). -->
+    <div class="q-card" id="qcard_i1_prompt" style="border-left-color:var(--stage-i)">
+      <label class="q-label"><span class="q-num" style="background:var(--stage-i)">1</span> In the editor below:</label>
+      <ul class="req-list" id="req_i_1">
+        <li><span>1</span><span class="req-text">FILL IN: Change <code>X</code> to <code>Y</code></span></li>
+        <li class="req-note">Then press <strong>▶ Run code</strong>.</li>
+      </ul>
+      <!-- INSTRUCTIONS ONLY here — the question itself lives in the answer card below the editor. -->
+    </div>
+
+    <div class="q-card step-hidden" id="qcard_i2_prompt" style="border-left-color:var(--stage-i)">
+      <!--
+        FILL IN: one numbered <li> per code change; students never retype earlier work.
+        If this step asks students to add a new line of code, set needsNewLine: true in I_FIELDS
+        for this step — the editor will automatically insert a newline and position the cursor there.
+      -->
+      <label class="q-label"><span class="q-num" style="background:var(--stage-i)">2</span> Keep your step 1 change. Now:</label>
+      <ul class="req-list" id="req_i_2">
+        <li><span>1</span><span class="req-text">FILL IN: <strong>Add/change</strong> <code>Z</code></span></li>
+        <li class="req-note">Run your code.</li>
+      </ul>
+      <!-- INSTRUCTIONS ONLY — put the question ("What do you observe?") in the answer card below. -->
+    </div>
+
+    <!--
+      STANDARD BUG STEP — the guided bug encounter is ALWAYS the last Investigate
+      step in every activity. See the "THE STANDARD BUG STEP" note further down
+      (near I_FIELDS) for the full explanation and what checkers.js must export
+      (IBUG_LINE / IBUG_FIXED_LINE / isBugFixed …). If you add extra concept steps,
+      insert them BEFORE this step and renumber qcard_i3... and req_i_3 up to match —
+      this step must stay the final one, and its Check button must call
+      tryCompleteInvestigate(). Its "Fix it" tick only counts while the FIXED line is
+      present, so a student who deletes the broken line instead of fixing it never
+      gets the tick (unless deleting IS the fix — see L2_Variables).
+    -->
+    <div class="q-card step-hidden" id="qcard_i3_prompt" style="border-left-color:var(--stage-i)">
+      <label class="q-label"><span class="q-num" style="background:var(--stage-i)">3</span> Now let's <strong>meet an error</strong> — every programmer does, all the time, and it is not a disaster.</label>
+      <ul class="req-list" id="req_i_3">
+        <li><span>1</span><span class="req-text">Under the editor, press <strong>😈 Break it</strong> — it adds <strong>one broken line</strong> to your code and runs it for you: it's <strong>line <span id="ibug_line">the last line</span></strong>,
+          <code>FILL IN: show IBUG_LINE here</code><br>FILL IN: name the exact mistake in plain English.</span></li>
+        <li class="req-note">Python stops with a red <strong>FILL IN: error type, e.g. SyntaxError / TypeError</strong> — that's expected. Read the message, then click <strong>💡 Get help</strong> below the editor for a plain-English hint.</li>
+        <li><span>2</span><span class="req-text"><strong>Fix it</strong> (don't delete it!): FILL IN: describe the exact fix (it must turn the line into IBUG_FIXED_LINE), then press <strong>▶ Run code</strong> again until it works.</span></li>
+      </ul>
+      <!-- INSTRUCTIONS ONLY — put the "what was Python complaining about?" MCQ in the answer card below. -->
+    </div>
+  </div>
+
+  <!-- ② Shared editor (with Run). Students accumulate changes here across steps. -->
+  <div class="code-checker" style="margin-top:0.5rem">
+    <textarea class="checker-textarea" id="i_editor" data-title="Python Editor" oninput="saveState(); refreshInvTicks()"></textarea>
+    <div class="checker-footer">
+      <!-- FILL IN ⑩: Mock inputs matching the current state of the code in the editor. -->
+      <button class="btn btn-check" onclick="runCodeInEditor('i_editor', 'i_fb_run', [/* 'input1' */])">▶ Run code</button>
+      <button class="btn btn-reset" id="btn_reset_i" onclick="resetInvestigateEditor()">↺ Reset to original</button>
+      <div class="feedback loading hidden" id="i_fb_run"></div>
+    </div>
+  </div>
+
+  <!-- ③ ANSWER cards — directly below the editor (one per step, toggled with its prompt).
+       For an MCQ/True-False step, put the radio-opts + <div class="mcq-fb" id="fb_iN"> here
+       (inside the answer card), not in the prompt card above. -->
+  <div id="i_answers">
+
+    <div class="q-card" id="qcard_i1" style="border-left-color:var(--stage-i)">
+      <div style="font-size:0.84rem;color:var(--muted);margin-bottom:0.4rem">✍️ Your answer — step 1</div>
+      <label class="q-label">FILL IN: What changes in the output?</label>
+      <textarea id="i1" placeholder="Describe what changed…" oninput="saveState()"></textarea>
+      <button class="btn btn-next" id="btn_check_i1" style="margin-top:10px" onclick="nextStep('I', 1)" disabled>✓ Check answer</button>
+    </div>
+
+    <div class="q-card step-hidden" id="qcard_i2" style="border-left-color:var(--stage-i)">
+      <div style="font-size:0.84rem;color:var(--muted);margin-bottom:0.4rem">✍️ Your answer — step 2</div>
+      <label class="q-label">FILL IN: What do you observe?</label>
+      <textarea id="i2" placeholder="Describe what happened…" oninput="saveState()"></textarea>
+      <button class="btn btn-next" id="btn_check_i2" style="margin-top:10px" onclick="nextStep('I', 2)" disabled>✓ Check answer</button>
+    </div>
+
+    <!-- Guided bug encounter — step 3 (the last step) answer is a comprehension MCQ
+         about the error message, and the step's Check button completes Investigate. -->
+    <div class="q-card step-hidden" id="qcard_i3" style="border-left-color:var(--stage-i)">
+      <div style="font-size:0.84rem;color:var(--muted);margin-bottom:0.4rem">✍️ Your answer — step 3 (read the error)</div>
+      <div style="display:flex;gap:0.6rem;flex-wrap:wrap;margin-bottom:0.7rem;align-items:center">
+        <button class="btn btn-check" type="button" onclick="breakItDemo()">😈 Break it</button>
+        <span style="font-size:0.82rem;color:var(--muted);font-style:italic">adds the broken line above and runs it — then read the error below</span>
+      </div>
+      <label class="q-label">You ran the broken line and read the error. <strong>What was Python complaining about?</strong></label>
+      <div class="radio-opts" id="ropts_i3_mcq" style="margin-top:0.5rem">
+        <label class="radio-opt"><input type="radio" name="i3_mcq" value="option_a" onchange="saveState()"> <span>FILL IN: a plausible wrong answer</span></label>
+        <label class="radio-opt"><input type="radio" name="i3_mcq" value="option_b" onchange="saveState()"> <span>FILL IN: the CORRECT description of the bug</span></label>
+        <label class="radio-opt"><input type="radio" name="i3_mcq" value="option_c" onchange="saveState()"> <span>FILL IN: a plausible wrong answer</span></label>
+        <label class="radio-opt"><input type="radio" name="i3_mcq" value="option_d" onchange="saveState()"> <span>FILL IN: a plausible wrong answer</span></label>
+      </div>
+      <div class="mcq-fb" id="fb_i3"></div>
+      <!-- Last step → tryCompleteInvestigate(), not nextStep() -->
+      <button class="btn btn-next" id="btn_check_i3" style="margin-top:10px" onclick="tryCompleteInvestigate()" disabled>✓ Check answer</button>
+    </div>
+
+    <!--
+      To add a step BEFORE the standard bug step (e.g. a 4th concept step, keeping the
+      bug step as step 4):
+        1. Add a new prompt card id="qcard_i3_prompt" in #i_steps above (shifting the
+           guided-bug prompt to qcard_i4_prompt), and a matching answer card here in
+           #i_answers.
+        2. Renumber every qcard_iN / btn_check_iN / btn_skip_iN id, radio name=, and
+           the visible step number, so the bug step is ALWAYS the final one.
+        3. Update every nextStep('I', N) call to match the new numbering; the LAST
+           card's button must still call tryCompleteInvestigate().
+        4. Update TEXT_FIELDS / RADIO_GROUPS and I_FIELDS in the JS, and INV_CHECKS in
+           checkers.js (plus every req_i_N list id), to match the new step count and positions.
+        5. Set STEP_COUNT_I to the new total.
+    -->
+  </div>
+
+  <!-- Skipping needs the teacher password (SKIP_PASSWORD in the JS), same as Modify.
+       Revealed after 3 failed checks on the current step. -->
+  <div id="i_skip_wrap" style="margin-top:0.5rem;display:none">
+    <button class="btn btn-skip" onclick="openSkipGate('i')">Skip this step →</button>
+    <div class="skip-gate" id="skip_gate_i">
+      <label for="skip_pw_i">Teacher password:</label>
+      <input type="password" id="skip_pw_i" autocomplete="off" onkeydown="if (event.key === 'Enter') confirmSkip('i')">
+      <button class="btn btn-reset" onclick="confirmSkip('i')">Skip</button>
+      <button class="btn btn-reset" onclick="closeSkipGate('i')">Cancel</button>
+      <span class="skip-gate-err" id="skip_gate_err_i" role="alert"></span>
+    </div>
+  </div>
+
+  <!-- ④ Back / Forward through completed Investigate steps (same pattern as Predict). -->
+  <div class="step-nav" id="stepnav-I">
+    <button class="btn btn-back" id="btn_back_I" onclick="goBack('I')" disabled>← Back</button>
+    <button class="btn btn-fwd"  id="btn_fwd_I"  onclick="goForward('I')" disabled>Forward →</button>
+  </div>
+</section>
+
+
+<!-- ════════════════════════════════════════════════
+     M1 — MODIFY
+════════════════════════════════════════════════ -->
+<section class="stage-panel" id="stage-M1">
+  <div class="stage-header">
+    <div class="stage-badge badge-M1">M</div>
+    <div class="stage-header-text">
+      <h2>Modify</h2>
+      <p>Each modification builds on the last — keep adding to your code in the editor below.</p>
+    </div>
+  </div>
+
+  <div class="ac-progress-bar" style="height: 8px; margin-bottom: 10px;">
+    <div class="ac-progress-fill" id="progress-fill-M1" style="width: 0%; background: var(--stage-m1);"></div>
+  </div>
+
+  <!--
+    FILL IN ⑪: Modify task cards.
+
+    ╔══ FLOW RULE — READ BEFORE WRITING TASK DESCRIPTIONS ══════════════════╗
+    ║  Each task instructs the student to make an ADDITIONAL change to the  ║
+    ║  code they already have. The editor carries state forward throughout. ║
+    ║                                                                       ║
+    ║  Mod 1: "Do X to your code."                                         ║
+    ║  Mod 2: "Keep your code so far. Now also do Y."                      ║
+    ║  Mod 3: "Keep your code so far. Now do Z."                           ║
+    ║  Mod 4: "Keep your code so far. Now do W." (harder, often ★★★)      ║
+    ║                                                                       ║
+    ║  NEVER reference "mod 1"/"mod 2" by number in student-facing text —   ║
+    ║  say "Keep your code so far" instead of "Keep mods 1–2". Reference    ║
+    ║  what was DONE, not which numbered step it happened in, where it      ║
+    ║  helps the student understand how the code is evolving.               ║
+    ╚═══════════════════════════════════════════════════════════════════════╝
+
+    ╔══ BULLETED REQUIREMENTS — one <li> per independently-checkable thing ═╗
+    ║  Each task's instructions are a <ul class="req-list" id="req_m1_N">   ║
+    ║  — ONE <li> PER REQUIREMENT, not one paragraph. checkMod() ticks/     ║
+    ║  crosses each <li> individually against MOD_CHECKS.modN.reqs[i].test  ║
+    ║  (raw) every time the single "▶ Run & check" button is clicked — so   ║
+    ║  the reqs array in checkers.js must have exactly one entry per <li>,  ║
+    ║  IN THE SAME ORDER. A task with only one testable requirement still   ║
+    ║  gets a single-item list (for a consistent tick/cross UI everywhere). ║
+    ║                                                                       ║
+    ║  ALWAYS wrap each bullet's description in a SECOND span with class    ║
+    ║  "req-text" — e.g. <li><span>1</span><span class="req-text">…</span> ║
+    ║  </li>. Without it, raw text/<strong>/<code> as direct children of    ║
+    ║  <li> (a flex container) become separate flex items and visually      ║
+    ║  break the sentence apart. Keep all <code>/<strong> markup and exact  ║
+    ║  example snippets from the instructions inside that req-text span.    ║
+    ╚═══════════════════════════════════════════════════════════════════════╝
+
+    Stars: ★ easy  ★★ medium  ★★★ hard  ★★★★ extension
+    Add checks to checkers.js: MOD_CHECKS.mod1.reqs, .mod2.reqs, .mod3.reqs, .mod4.reqs …
+    The JS advances automatically after each passing check (1.5 s delay).
+    Add/remove <div id="m1_step_N"> to match STEP_COUNT_M1 in the JS.
+  -->
+  <div id="m1_steps">
+
+    <div id="m1_step_1">
+      <div class="section-label">★ Modification 1 — FILL IN: short label</div>
+      <div class="modify-task">
+        <span class="stars">★</span>
+        <div class="task-text">
+          <ul class="req-list" id="req_m1_1">
+            <li><span>1</span><span class="req-text">FILL IN: first requirement. Use <strong>bold</strong> for key terms
+              and <code>code style</code>
+              for code references.</span></li>
+            <li><span>2</span><span class="req-text">FILL IN: second requirement, if this task has more than one (delete this &lt;li&gt; — and the matching reqs[1] entry — if the task only has one).</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div id="m1_step_2" class="step-hidden">
+      <div class="section-label">★★ Modification 2 — FILL IN: short label</div>
+      <div class="modify-task">
+        <span class="stars">★★</span>
+        <div class="task-text">
+          <ul class="req-list" id="req_m1_2">
+            <li><span>1</span><span class="req-text">FILL IN: Keep your code so far, and … [additive instruction referencing what was done in step 1].</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div id="m1_step_3" class="step-hidden">
+      <div class="section-label">★★ Modification 3 — FILL IN: short label</div>
+      <div class="modify-task">
+        <span class="stars">★★</span>
+        <div class="task-text">
+          <ul class="req-list" id="req_m1_3">
+            <li><span>1</span><span class="req-text">FILL IN: Keep your code so far. Now … [additive instruction].</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div id="m1_step_4" class="step-hidden">
+      <div class="section-label">★★★ Modification 4 — FILL IN: short label</div>
+      <div class="modify-task">
+        <span class="stars">★★★</span>
+        <div class="task-text">
+          <ul class="req-list" id="req_m1_4">
+            <li><span>1</span><span class="req-text">FILL IN: Keep your code so far. Now … [more challenging additive instruction].</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!--
+      To add a 5th modification:
+        1. Copy a step div above, set id="m1_step_5", class="step-hidden", and
+           its req-list id="req_m1_5"
+        2. Add MOD_CHECKS.mod5 = { reqs: […], passMsg } (and optionally
+           MOD_INPUTS.mod5) in checkers.js — one reqs entry per <li>
+        3. Set STEP_COUNT_M1 = 5 in the JS
+    -->
+  </div>
+
+  <!-- Back / Forward through completed modifications (same pattern as Predict / Investigate). -->
+  <div class="step-nav" id="stepnav-M1">
+    <button class="btn btn-back" id="btn_back_M1" onclick="goBack('M1')" disabled>← Back</button>
+    <button class="btn btn-fwd"  id="btn_fwd_M1"  onclick="goForward('M1')" disabled>Forward →</button>
+  </div>
+
+  <!-- Shared editor — carries state from Investigate and across all Modify steps. -->
+  <div class="code-checker">
+    <textarea class="checker-textarea" id="m1_editor" data-title="Python Editor" oninput="saveState()"></textarea>
+    <div class="checker-footer">
+      <button class="btn btn-check" id="btn_check_m1" onclick="checkMod()">⚡ Check modification 1</button>
+      <button class="btn btn-reset" id="btn_reset_m1" onclick="resetModifyEditor()">↺ Reset to original</button>
+      <div class="feedback hidden" id="fb_m1"></div>
+    </div>
+  </div>
+
+  <!-- Skipping needs the teacher password (SKIP_PASSWORD in the JS). Revealed after 3 failed attempts. -->
+  <div id="m1_skip_wrap" style="margin-top:0.5rem;display:none">
+    <button class="btn btn-skip" id="btn_skip_m1" onclick="openSkipGate('m1')">Skip this task →</button>
+    <div class="skip-gate" id="skip_gate_m1">
+      <label for="skip_pw_m1">Teacher password:</label>
+      <input type="password" id="skip_pw_m1" autocomplete="off" onkeydown="if (event.key === 'Enter') confirmSkip('m1')">
+      <button class="btn btn-reset" onclick="confirmSkip('m1')">Skip</button>
+      <button class="btn btn-reset" onclick="closeSkipGate('m1')">Cancel</button>
+      <span class="skip-gate-err" id="skip_gate_err_m1" role="alert"></span>
+    </div>
+  </div>
+  <button class="btn btn-next step-hidden" id="btn_goto_m2" onclick="completeStage('M1')" style="margin-top:1rem">
+    ✓ All modifications done — go to Make →
+  </button>
+</section>
+
+
+<!-- ════════════════════════════════════════════════
+     M2 — MAKE
+════════════════════════════════════════════════ -->
+<section class="stage-panel" id="stage-M2">
+  <div class="stage-header">
+    <div class="stage-badge badge-M2">M</div>
+    <div class="stage-header-text">
+      <h2>Make</h2>
+      <!-- FILL IN ⑫: Name the project the student will build from scratch. -->
+      <p>Build a <strong>FILL IN: project name</strong> from scratch.</p>
+    </div>
+  </div>
+
+  <div class="ac-progress-bar" style="height: 8px; margin-bottom: 10px;">
+    <div class="ac-progress-fill" id="progress-fill-M2" style="width: 0%; background: var(--stage-m2);"></div>
+  </div>
+
+  <!-- FILL IN ⑬: What the student needs to build and how many criteria there are. -->
+  <div id="m2_make_task">
+    <div class="info-box">
+      <span class="icon">🔨</span>
+      <span>FILL IN: Describe the program in one sentence. <strong>All success criteria below must be met</strong> before you paste your code.</span>
+    </div>
+
+    <div class="section-label">What your program must do</div>
+
+    <!--
+      FILL IN ⑭: Success criteria list.
+      Each <li> maps directly to one entry in MAKE_CHECK.reqs in checkers.js,
+      IN THE SAME ORDER — checkMake() ticks/crosses each <li> individually
+      against MAKE_CHECK.reqs[i].test(raw) on every check click. Keep this
+      list in sync with the checker: add a criterion here, add a matching
+      reqs entry there. Wrap each bullet's text in a "req-text" span (see the
+      Modify section's comment above for why). Add class="ext" for a bullet
+      that only matters for the extension criterion.
+    -->
+    <ul class="req-list" id="req_m2_make">
+      <li><span>1</span><span class="req-text">FILL IN: Requirement 1 — e.g. "Define a <strong>show_menu()</strong> function that prints a numbered list."</span></li>
+      <li><span>2</span><span class="req-text">FILL IN: Requirement 2.</span></li>
+      <li><span>3</span><span class="req-text">FILL IN: Requirement 3.</span></li>
+      <li><span>4</span><span class="req-text">FILL IN: Requirement 4.</span></li>
+      <li><span>5</span><span class="req-text">FILL IN: Requirement 5.</span></li>
+      <!-- Add or remove items. Each must have a matching reqs entry in MAKE_CHECK. -->
+    </ul>
+  </div>
+
+  <!-- Extension task — replaces the task description above after Make passes. -->
+  <div id="m2_ext_task" class="step-hidden">
+    <div class="section-label">★★★★ Extension — FILL IN: extension label</div>
+    <div class="modify-task ext">
+      <span class="stars">★★★★</span>
+      <div class="task-text">
+        <!-- One <li> per EXT_CHECK.reqs entry, same convention as Modify/Make above. -->
+        <ul class="req-list" id="req_m2_ext">
+          <li><span>1</span><span class="req-text">FILL IN: Extension challenge requirement. Should add a meaningful feature
+            on top of the Make program — e.g. a loop, validation, or extra output.</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="code-checker">
+    <!-- FILL IN ⑮: Replace with the actual project name for the editor title. -->
+    <textarea class="checker-textarea" id="m2_editor" data-title="FILL IN: project name" style="min-height:320px" oninput="saveState()"></textarea>
+    <div class="checker-footer">
+      <button class="btn btn-check" id="btn_check_m2" onclick="checkMake()">⚡ Check program</button>
+      <div class="feedback hidden" id="fb_m2"></div>
+    </div>
+  </div>
+
+  <div class="completion-banner" id="completionBanner">
+    <div style="font-size:2.5rem;margin-bottom:0.5rem">🏆</div>
+    <h3>PRIMM Complete!</h3>
+    <!-- FILL IN ⑯: Topic name. -->
+    <p>You've worked through all five stages for FILL IN: topic. Excellent work — show your teacher!</p>
+  </div>
+</section>
+
+<!-- Toast for Classroom feedback -->
+<div class="ac-toast" id="toast"></div>
+
+<!-- Shows any unexpected page error at the bottom of the page (no dev console on student PCs). Keep this first. -->
+<script src="../../../error-reporter.js"></script>
+<script src="../../../activity-ui.js"></script>
+<!-- Google Classroom integration -->
+<script src="../../../classroom.js"></script>
+
+<script type="module">
+/*
+  ╔══════════════════════════════════════════════════════════════════════════════╗
+  ║  checkers.js — what you must create in the same folder as this file        ║
+  ║                                                                              ║
+  ║  Export these from ./checkers.js:                                           ║
+  ║                                                                              ║
+  ║  normalise(code)        strips comments/strings, lowercases, collapses ws  ║
+  ║  has(code, pattern)     returns true if code contains string or regex      ║
+  ║                                                                              ║
+  ║  Each check (Modify/Make/Extension) is a list of independent, individually- ║
+  ║  detected `reqs` — ONE PER <li> IN ITS req-list, IN THE SAME ORDER. The    ║
+  ║  bullet TEXT lives only in the HTML — never duplicate it into checkers.js  ║
+  ║  (a `label` field here would drift out of sync with the HTML over time).   ║
+  ║                                                                              ║
+  ║  MOD_CHECKS = {                                                              ║
+  ║    mod1: { reqs: [{ hint, test(raw) → bool }, …], passMsg }               ║
+  ║    mod2: { reqs: […], passMsg },                                           ║
+  ║    mod3: { reqs: […], passMsg },                                           ║
+  ║    mod4: { reqs: […], passMsg },                                           ║
+  ║  }                                                                           ║
+  ║  evalMod(checkKey, raw) → { results: bool[], pass: bool, msg: string }     ║
+  ║    — runs every req; msg is passMsg if all pass, else the first failing    ║
+  ║    req's hint. Write this helper once in checkers.js:                      ║
+  ║      export function evalMod(checkKey, raw) {                              ║
+  ║        const check = MOD_CHECKS[checkKey];                                 ║
+  ║        const results = check.reqs.map(r => !!r.test(raw));                ║
+  ║        const pass = results.every(Boolean);                                ║
+  ║        const hint = pass ? check.passMsg                                   ║
+  ║          : check.reqs[results.findIndex(r => !r)].hint;                    ║
+  ║        return { results, pass, msg: hint };                                ║
+  ║      }                                                                       ║
+  ║                                                                              ║
+  ║  MOD_INPUTS = {                                                              ║
+  ║    mod1: ['Alice', '13'],   // mock inputs fed to runPython() for step 1   ║
+  ║    mod2: ['Alice', '13'],   // omit a key entirely if no input() needed    ║
+  ║    ...                                                                       ║
+  ║  }                                                                           ║
+  ║                                                                              ║
+  ║  MAKE_CHECK = { reqs: […], passMsg }   // one req per Make req-list <li>   ║
+  ║  evalMake(raw) → { results, pass, msg }        // same shape as evalMod()  ║
+  ║  EXT_CHECK  = { reqs: […], passMsg }   // one req per Extension <li>       ║
+  ║  evalExt(raw)  → { results, pass, msg }                                    ║
+  ║                                                                              ║
+  ║  INVESTIGATE (tick-lists on each prompt card, gating each step's Check):   ║
+  ║  INV_CHECKS = {                                                              ║
+  ║    inv1: { reqs: [{ hint, test(raw, ctx) → bool }, …] },  // one per       ║
+  ║    …                                  // numbered <li> in #req_i_N          ║
+  ║  }                                    // (omit a step with no code change) ║
+  ║  evalInv(n, raw, ctx) → { results, pass, msg }                              ║
+  ║    ctx = { breaks, fixes, lastRun: { code, ok } } — Break it presses and   ║
+  ║    break→fix→run cycles at this step, and the last Investigate Run. A     ║
+  ║    hint may be a function (raw, ctx) → string.                              ║
+  ║  IBUG_LINE, IBUG_FIXED_LINE          the bug step's broken / fixed line    ║
+  ║  isBugFixed(raw)    the code no longer has the bug AND still has the fix   ║
+  ║                     (false if the line was simply deleted, unless deleting ║
+  ║                     IS the fix)                                             ║
+  ║  isBugPairLine(line)  a Break it demo line (stripped when the step ends)   ║
+  ║  breakCode(raw) → { code, lineNo }   what 😈 Break it does: turn the       ║
+  ║                     student's version of the line (fixed OR a near-miss)   ║
+  ║                     back into IBUG_LINE in place, append it if absent,     ║
+  ║                     leave an already-broken line alone. Match loosely.     ║
+  ║  Give fixHint a "Nearly!" branch for a line that runs but isn't the fix,   ║
+  ║  so the student is never told the line "has gone" when it's still there.   ║
+  ║                                                                              ║
+  ║  See Y8/Python Unit 1/L4_Data_Types_Casting/checkers.js (+ checkers.test.js)║
+  ║  for a complete reference, including the Investigate checks.               ║
+  ╚══════════════════════════════════════════════════════════════════════════════╝
+*/
+import { normalise, has, MOD_CHECKS, MOD_INPUTS, evalMod, MAKE_CHECK, evalMake, EXT_CHECK, evalExt,
+         evalInv, isBugFixed, isBugPairLine, breakCode } from './checkers.js';
+import { runPython, preload } from '../../../pyodide-runner.js';
+import { setupEditors, clearSyntaxHint, setEditorOutput, refreshEditor } from '../../../code-editor.js';
+
+
+// ═══════════════════════════════════════════════════════
+//  FILL IN ① — Activity identity
+//  These three constants are the only JS values that differ between activities.
+// ═══════════════════════════════════════════════════════
+
+const STORAGE_KEY    = 'primm_l?_topic';        // unique per activity, e.g. 'primm_l5_lists'
+const ACTIVITY_TITLE = 'TOPIC PRIMM Practice';  // must match <!-- ACTIVITY title: --> above
+const STARTER_CODE   = `# FILL IN: the Python program shown in the annotated code block.
+# This exact string is pre-loaded into the Run, Investigate, and Modify editors.
+print("Hello!")`;
+
+
+// ═══════════════════════════════════════════════════════
+//  FILL IN ② — Step counts
+//  Update when you add or remove steps in the HTML.
+//  Everything else (progress bars, button labels, loops) updates automatically.
+// ═══════════════════════════════════════════════════════
+
+const STEP_COUNT_I  = 3;   // must equal the number of qcard_i1…qcard_iN cards
+const STEP_COUNT_M1 = 4;   // must equal the number of m1_step_1…m1_step_N divs
+
+
+// ═══════════════════════════════════════════════════════
+//  FILL IN ②b — The standard "fix a bug" step (ALWAYS the last Investigate step)
+//  Every PRIMM activity has the student press "😈 Break it" to meet a real, safe
+//  error, guided (the line and error named for them), then fix it themselves — the
+//  step's Check button ends the Investigate stage. This is standard across every
+//  activity, not optional.
+//
+//  IBUG_LINE / IBUG_FIXED_LINE must be a SINGLE extra line that can be appended to
+//  the end of the student's current code without touching anything else they wrote,
+//  and must need NO input() — the goal is a predictable, deterministic error every
+//  time. Pick a bug that demonstrates the ACTUAL misconception this lesson teaches
+//  (a missing quote, a bad cast, an off-by-one index …), not a generic typo.
+//  See Y8/Python Unit 1/L1_Output (a missing closing quote) for the worked
+//  reference example.
+//
+//  IBUG_LINE / IBUG_FIXED_LINE live in checkers.js (with isBugFixed / isBugPairLine),
+//  so the step's tick-list and the Break it button agree on them, e.g.
+//    export const IBUG_LINE       = 'print("Debugging is normal!)';   // deliberately broken
+//    export const IBUG_FIXED_LINE = 'print("Debugging is normal!")';  // the corrected version
+// ═══════════════════════════════════════════════════════
+
+
+// ═══════════════════════════════════════════════════════
+//  FILL IN ③ — localStorage field lists
+//  TEXT_FIELDS : every <textarea> and <input type=text> id in the page
+//  RADIO_GROUPS: every radio group name= attribute used in Predict
+// ═══════════════════════════════════════════════════════
+
+const TEXT_FIELDS = [
+  'p_text1',                              // Predict free-text question(s)
+  'r_editor', 'r1',                       // Run stage
+  'i_editor', 'i1', 'i2',                // Investigate free-text steps — i3 is the bug-step MCQ
+  'm1_editor', 'm2_editor',              // Modify + Make editors
+];
+const RADIO_GROUPS = ['p_mcq1', 'p_mcq2', 'i3_mcq'];  // Predict + the standard bug-step MCQ
+
+
+// ═══════════════════════════════════════════════════════
+//  FILL IN ④ — Predict answer key and feedback strings
+//  P_CORRECT  : the value= of the correct option for each radio group
+//  P_PASS_MSG : shown when the student selects the correct MCQ option
+//  P_FAIL_MSG : shown when the student selects a wrong MCQ option
+// ═══════════════════════════════════════════════════════
+
+const P_CORRECT = {
+  p_mcq1: 'option_b',   // FILL IN: the value= of the correct radio option
+  p_mcq2: 'option_a',   // FILL IN
+};
+const P_PASS_MSG = {
+  p_mcq1: 'Correct — FILL IN: explanation of why this is right.',
+  p_mcq2: 'Correct — FILL IN: explanation.',
+};
+const P_FAIL_MSG = {
+  p_mcq1: 'FILL IN: explanation pointing the student toward the correct concept.',
+  p_mcq2: 'FILL IN: explanation.',
+};
+
+
+// ═══════════════════════════════════════════════════════
+//  FILL IN ⑤ — Investigate step validators
+//  Each entry matches one qcard_iN card.
+//  validate(v) returns a string error message if invalid, or null if acceptable.
+//  Use keyword regexes to guide students toward the concept being explored.
+// ═══════════════════════════════════════════════════════
+
+const I_FIELDS = [
+  // type:'text' (default) — textarea answer with a validate(v) function.
+  // type:'mcq' — radio-group answer; add radioName, correctValue, passMsg, failMsg,
+  //   and a validate() (no arg) that queries the radio and returns null if correct.
+  //   Remove the field id from TEXT_FIELDS and add radioName to RADIO_GROUPS.
+  //
+  // needsNewLine: set true when the step asks students to ADD a new line of code —
+  // the editor will auto-append a newline and position the cursor there on transition.
+
+  { id:'i1', cardId:'qcard_i1', type:'text', needsNewLine: false, validate(v) {
+    if (v.length < 4)  return 'Describe what happened — even a few words is fine.';
+    if (isNonsense(v)) return "That doesn't look like a real answer.";
+    // FILL IN: add a keyword check to guide the student if needed, e.g.:
+    // if (!/keyword1|keyword2/.test(v.toLowerCase()))
+    //   return 'FILL IN: hint about what the student should have noticed.';
+    return null;
+  }},
+
+  // Example MCQ step (replace i2 textarea with MCQ):
+  // { id:'i2', cardId:'qcard_i2', type:'mcq', radioName:'i2_mcq', correctValue:'option_b',
+  //   needsNewLine: false,
+  //   passMsg: 'Correct — FILL IN explanation.',
+  //   failMsg: 'Not quite — FILL IN hint.',
+  //   validate() {
+  //     const c = document.querySelector('input[name="i2_mcq"]:checked');
+  //     if (!c) return 'Select an answer before checking.';
+  //     if (c.value !== 'option_b') return 'FILL IN hint.';
+  //     return null;
+  //   },
+  // },
+
+  { id:'i2', cardId:'qcard_i2', type:'text', needsNewLine: false, validate(v) {
+    if (v.length < 4)  return 'Describe what happened.';
+    if (isNonsense(v)) return "That doesn't look like a real answer.";
+    return null;
+  }},
+
+  // ── THE STANDARD BUG STEP (do not remove — see FILL IN ②b above) ──────────
+  // Step 3 (last step) — guided: the student reads the error, identifies what
+  // Python was complaining about, then fixes it themselves.
+  { id:'i3', cardId:'qcard_i3', type:'mcq', radioName:'i3_mcq', correctValue:'option_b', needsNewLine: false,
+    passMsg: 'Exactly — FILL IN explanation of the error in plain English.',
+    failMsg: 'Read the error and the line it points to again — FILL IN a nudge toward the real cause.',
+    validate() {
+      const c = document.querySelector('input[name="i3_mcq"]:checked');
+      if (!c) return 'Select an answer before checking — even a guess is fine.';
+      if (c.value !== 'option_b') return 'Not quite — read the error message again. Which part of the line is wrong?';
+      return null;
+    },
+  },
+  // ── End standard bug step ───────────────────────────────────────────────────
+
+  // Add a step here (BEFORE the bug step above) if STEP_COUNT_I > 3 — see the
+  // "To add a step BEFORE the standard bug step" comment in the HTML above.
+];
+
+
+// ═══════════════════════════════════════════════════════
+//  FILL IN ⑤b — Investigate code-change ticks
+//  Each prompt card's numbered <li>s (#req_i_N) are checked by INV_CHECKS.invN in
+//  checkers.js — ticked live as the student edits/runs, crossed on Check, and ALL
+//  must pass before that step's answer is accepted (see invGate()). A step with no
+//  code change (no #req_i_N list / no INV_CHECKS entry) is never gated.
+// ═══════════════════════════════════════════════════════
+
+
+
+// ═══════════════════════════════════════════════════════
+//  STATE  — no changes needed below this line
+// ═══════════════════════════════════════════════════════
+
+let state = {};
+try { state = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch(e) {}
+
+let currentStage    = state.currentStage    || 'P';
+let completedStages = state.completedStages || [];
+let passedChecks    = state.passedChecks    || {};
+let predictStep     = state.predictStep     || 1;
+let stepI  = state.stepI  || 1;
+let stepM1 = state.stepM1 || 1;
+// Furthest question/step the student has unlocked in each stage — drives the Forward → button.
+let maxPredictStep = state.maxPredictStep || predictStep;
+let maxStepI       = state.maxStepI       || stepI;
+let maxStepM1      = state.maxStepM1      || stepM1;
+// Per-step code snapshots for the shared i_editor/m1_editor textareas — captured
+// when a step's check passes, so Back/Forward can show the code as it stood for
+// that answer rather than whatever the student has since typed further on.
+// iCodeDraft/m1CodeDraft hold the in-progress (not yet checked) frontier code so
+// stepping away and back doesn't lose unsaved edits.
+let iCodeSnapshots  = state.iCodeSnapshots  || {};
+let iCodeDraft      = state.iCodeDraft;
+let m1CodeSnapshots = state.m1CodeSnapshots || {};
+let m1CodeDraft     = state.m1CodeDraft;
+let skippedStages = state.skippedStages || [];
+// Per-question skip tracking (keyed the same way as attemptCounts: 'i'+n, 'm1_'+n,
+// 'm2ext_'+n). A key is added when that specific question is skipped and removed the
+// moment it's later passed — unlike skippedStages (which is stage-level and sticky
+// for the nav dot), this drives whether a skipped question's editor is unlocked for
+// a reattempt and whether the top progress bar shows its persistent "unresolved" red.
+let skippedSteps = state.skippedSteps || {};
+let attemptCounts = state.attemptCounts || {};
+let iStepRan = state.iStepRan || {};
+// Break it / fix-it progress per Investigate step: { breaks, fixes, pending } — a "fix"
+// counts only when a Break it is followed by a successful run of genuinely fixed code
+// (isBugFixed in checkers.js), so deleting a line that should be fixed never counts.
+let iBugProgress = state.iBugProgress || {};
+// The last Run of the Investigate editor — lets "fix it, then run it" ticks confirm the
+// student ran the code as it stands now.
+let iLastRun = state.iLastRun || null;
+let firstRunShown = false;
+// One consistent auto-advance delay across Predict / Investigate / Modify so the
+// student sees the feedback before the next question appears.
+const AUTO_ADVANCE_MS = 1500;
+const PREDICT_CARDS = ['qcard_p_mcq1', 'qcard_p_mcq2', 'qcard_p_text1'];
+const PREDICT_NAMES = ['p_mcq1', 'p_mcq2', 'p_text1'];
+const PREDICT_TOTAL = PREDICT_CARDS.length;
+
+const STAGES = ['P','R','I','M1','M2'];
+
+// ── "Stuck" indicator ──────────────────────────────────
+// If a student sits on the same stage without progressing past the thresholds
+// below, the top progress bar turns amber (see .progress-fill.stuck) as a quiet
+// nudge to ask for help. M2 (Make) has no threshold — open-ended build time is
+// expected there, so it is deliberately absent from this map.
+const STUCK_THRESHOLDS_MS = { P: 8 * 60 * 1000, R: 8 * 60 * 1000, I: 8 * 60 * 1000, M1: 10 * 60 * 1000 };
+let stageEnteredAt = Date.now();
+
+function checkStuck() {
+  const fill = document.getElementById('progressFill');
+  if (!fill) return;
+  const threshold = STUCK_THRESHOLDS_MS[currentStage];
+  const stuck = !!threshold && (Date.now() - stageEnteredAt) >= threshold;
+  fill.classList.toggle('stuck', stuck);
+  fill.title = stuck ? 'Been a while on this step — ask your teacher if you’re stuck.' : '';
+}
+
+// ── Save / restore ────────────────────────────────────
+
+function saveState() {
+  TEXT_FIELDS.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) state[id] = el.value;
+  });
+  RADIO_GROUPS.forEach(name => {
+    const checked = document.querySelector(`input[name="${name}"]:checked`);
+    if (checked) state['radio_' + name] = checked.value;
+  });
+  state.currentStage    = currentStage;
+  state.completedStages = completedStages;
+  state.passedChecks    = passedChecks;
+  state.predictStep = predictStep;
+  state.stepI  = stepI;
+  state.stepM1 = stepM1;
+  state.maxPredictStep = maxPredictStep;
+  state.maxStepI       = maxStepI;
+  state.maxStepM1      = maxStepM1;
+  state.skippedStages = skippedStages;
+  state.skippedSteps = skippedSteps;
+  state.attemptCounts = attemptCounts;
+  state.iStepRan = iStepRan;
+  state.iBugProgress = iBugProgress;
+  state.iLastRun = iLastRun;
+  state.iCodeSnapshots  = iCodeSnapshots;
+  state.iCodeDraft      = iCodeDraft;
+  state.m1CodeSnapshots = m1CodeSnapshots;
+  state.m1CodeDraft     = m1CodeDraft;
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
+}
+
+function restoreInputs() {
+  TEXT_FIELDS.forEach(id => {
+    const el = document.getElementById(id);
+    if (el && state[id] !== undefined) el.value = state[id];
+  });
+  RADIO_GROUPS.forEach(name => {
+    const val = state['radio_' + name];
+    if (val) {
+      const r = document.querySelector(`input[name="${name}"][value="${CSS.escape(val)}"]`)
+             || document.querySelector(`input[name="${name}"][value="${val}"]`);
+      if (r) r.checked = true;
+    }
+  });
+}
+
+// ── Progress bars ─────────────────────────────────────
+
+function updateGranularProgress() {
+  const iFill = document.getElementById('progress-fill-I');
+  if (iFill) iFill.style.width = Math.round(((stepI - 1) / STEP_COUNT_I) * 100) + '%';
+
+  const m1Fill = document.getElementById('progress-fill-M1');
+  if (m1Fill) m1Fill.style.width = Math.round(((stepM1 - 1) / STEP_COUNT_M1) * 100) + '%';
+
+  const m2Fill = document.getElementById('progress-fill-M2');
+  if (m2Fill) {
+    let pct = 0;
+    if (passedChecks['m2_make']) pct += 50;
+    if (passedChecks['m2_ext'])  pct += 50;
+    m2Fill.style.width = pct + '%';
+  }
+}
+
+// ── Step visibility ───────────────────────────────────
+
+function updateStepVisibility() {
+  const iRevisiting = stepI < maxStepI;   // stepped back to a completed step
+  for (let i = 1; i <= STEP_COUNT_I; i++) {
+    const active = i === stepI;
+    // a step's instruction (prompt, top) and answer (below the editor) are toggled together
+    const revisiting = active && iRevisiting;
+    const prompt = document.getElementById('qcard_i' + i + '_prompt');
+    const ans    = document.getElementById('qcard_i' + i);
+    prompt?.classList.toggle('step-hidden', !active);
+    prompt?.classList.toggle('revisiting', revisiting);
+    ans?.classList.toggle('step-hidden', !active);
+    ans?.classList.toggle('revisiting', revisiting);
+    const checkBtn = document.getElementById('btn_check_i' + i);
+    if (checkBtn) checkBtn.disabled = !iStepRan[i];
+  }
+  // The editor is shared across all Investigate steps — lock it to read-only while
+  // looking back at an already-PASSED step, since edits there would be silently
+  // discarded the moment the student moves on again (see restoreCodeForStep). A
+  // skipped step has no snapshot, so it stays editable — the student can still
+  // reattempt it rather than being locked out for good.
+  const iEditor = document.getElementById('i_editor');
+  if (iEditor) iEditor.readOnly = iRevisiting && iCodeSnapshots[stepI] !== undefined;
+  // Passed steps show every code-change ticked; the current step shows live ticks only
+  // (crosses appear when Check is pressed); other steps start neutral.
+  for (let i = 1; i <= STEP_COUNT_I; i++) {
+    renderInvReqs(i, iCodeSnapshots[i] !== undefined ? 'passed' : i === stepI ? 'soft' : 'neutral');
+  }
+  const resetIBtn = document.getElementById('btn_reset_i');
+  if (resetIBtn) {
+    resetIBtn.disabled = !!iEditor?.readOnly;   // nothing to reset while looking back at a passed step
+    resetIBtn.title = stepI === 1
+      ? 'Put the editor back to the original starting code'
+      : 'Put the editor back to how it was when you finished step ' + (stepI - 1);
+  }
+  closeSkipGate('i');
+  const skipIWrap = document.getElementById('i_skip_wrap');
+  if (skipIWrap) skipIWrap.style.display = !iEditor?.readOnly && (attemptCounts['i' + stepI] || 0) >= 3 ? '' : 'none';
+  syncBugLineLabel();   // standard bug step — keep the "line N" label current, no planting
+  const m1Revisiting = stepM1 < maxStepM1;
+  for (let i = 1; i <= STEP_COUNT_M1; i++) {
+    const step = document.getElementById('m1_step_' + i);
+    step?.classList.toggle('step-hidden', i !== stepM1);
+    step?.classList.toggle('revisiting', i === stepM1 && m1Revisiting);
+    // Passed steps show all bullets ticked; the not-yet-attempted current step
+    // (or one reached via Forward before being checked) starts neutral.
+    const passed = !!passedChecks['m1_code' + i];
+    renderReqResults(document.getElementById('req_m1_' + i), passed ? MOD_CHECKS['mod' + i].reqs.map(() => true) : null);
+  }
+  const m1Editor = document.getElementById('m1_editor');
+  // Same rule as Investigate: only lock the editor when stepping back to a step that
+  // was genuinely PASSED, not one that was skipped — a skipped step must stay editable.
+  if (m1Editor) m1Editor.readOnly = m1Revisiting && !!passedChecks['m1_code' + stepM1];
+
+  const m1Btn = document.getElementById('btn_check_m1');
+  if (m1Btn) m1Btn.textContent = stepM1 === STEP_COUNT_M1
+    ? '▶ Run & check final modification'
+    : '▶ Run & check modification ' + stepM1;
+  const resetM1Btn = document.getElementById('btn_reset_m1');
+  if (resetM1Btn) {
+    // Nothing to reset while looking back at a passed step (its editor is read-only).
+    resetM1Btn.disabled = !!document.getElementById('m1_editor')?.readOnly;
+    resetM1Btn.title = stepM1 === 1
+      ? 'Put the editor back to the original starting code'
+      : 'Put the editor back to how it was when you finished the previous modification';
+  }
+  closeSkipGate('m1');   // the step just changed (or was refreshed) — never leave a half-open gate behind
+  const skipM1Wrap = document.getElementById('m1_skip_wrap');
+  if (skipM1Wrap) skipM1Wrap.style.display = (attemptCounts['m1_' + stepM1] || 0) >= 3 ? '' : 'none';
+
+  document.getElementById('btn_goto_m2')?.classList.toggle('step-hidden', !passedChecks['m1_code' + STEP_COUNT_M1]);
+  document.getElementById('m2_make_task')?.classList.toggle('step-hidden', !!passedChecks['m2_make']);
+  document.getElementById('m2_ext_task')?.classList.toggle('step-hidden', !passedChecks['m2_make']);
+  renderReqResults(document.getElementById('req_m2_make'), passedChecks['m2_make'] ? MAKE_CHECK.reqs.map(() => true) : null);
+  renderReqResults(document.getElementById('req_m2_ext'), passedChecks['m2_ext'] ? EXT_CHECK.reqs.map(() => true) : null);
+
+  const m2Btn = document.getElementById('btn_check_m2');
+  if (m2Btn) {
+    m2Btn.textContent = passedChecks['m2_make'] ? '⚡ Check extension' : '⚡ Check program';
+    m2Btn.onclick = passedChecks['m2_make'] ? checkExt : checkMake;
+  }
+  renderStepNav('I');
+  renderStepNav('M1');
+  updateGranularProgress();
+  updateSkipIndicator();
+}
+
+// Top progress bar stays red for as long as ANY skipped question hasn't since been
+// passed (skippedSteps entries are removed the moment their question is passed —
+// see nextStep/tryCompleteInvestigate/checkMod/checkExtStep), then reverts to normal.
+function updateSkipIndicator() {
+  const fill = document.getElementById('progressFill');
+  if (!fill) return;
+  fill.classList.toggle('skip-pending', Object.keys(skippedSteps).length > 0);
+}
+
+// ── Back / Forward navigation (one question on screen at a time) ───────────
+// Shared by Predict, Investigate and Modify so the flow is identical everywhere.
+
+function renderStepNav(stage) {
+  const step = stage === 'P' ? predictStep : stage === 'I' ? stepI : stepM1;
+  const max  = stage === 'P' ? maxPredictStep : stage === 'I' ? maxStepI : maxStepM1;
+  const back = document.getElementById('btn_back_' + stage);
+  const fwd  = document.getElementById('btn_fwd_' + stage);
+  const canBack = step > 1, canFwd = step < max;
+  if (back) back.disabled = !canBack;
+  if (fwd)  fwd.disabled  = !canFwd;
+  // hide the whole bar while there is nowhere to go (e.g. the very first question)
+  const bar = document.getElementById('stepnav-' + stage);
+  if (bar) bar.style.display = (canBack || canFwd) ? '' : 'none';
+}
+
+// Before stepping away from the current frontier (in-progress, not-yet-checked)
+// step, stash its live code so Forward can bring it back exactly as left.
+// Completed steps already have a locked snapshot (taken when their check passed)
+// and are never overwritten by this.
+function snapshotFrontierIfNeeded(stage) {
+  if (stage === 'I' && stepI === maxStepI && iCodeSnapshots[stepI] === undefined) {
+    iCodeDraft = document.getElementById('i_editor')?.value;
+  } else if (stage === 'M1' && stepM1 === maxStepM1 && m1CodeSnapshots[stepM1] === undefined) {
+    m1CodeDraft = document.getElementById('m1_editor')?.value;
+  }
+}
+
+// Load the shared editor with the code as it stood for `step` — its locked
+// snapshot if the step has been completed, or the stashed frontier draft if it's
+// the in-progress step. Leaves the editor untouched if neither exists yet (first
+// time arriving at a step via normal forward progress, not Back/Forward).
+function restoreCodeForStep(stage, step) {
+  const isI = stage === 'I';
+  const ta = document.getElementById(isI ? 'i_editor' : 'm1_editor');
+  if (!ta) return;
+  const snapshots = isI ? iCodeSnapshots : m1CodeSnapshots;
+  const draft     = isI ? iCodeDraft     : m1CodeDraft;
+  const maxStep   = isI ? maxStepI       : maxStepM1;
+  let code;
+  if (snapshots[step] !== undefined) code = snapshots[step];
+  else if (step === maxStep && draft !== undefined) code = draft;
+  else return;
+  ta.value = code;
+  refreshEditor(ta);
+}
+
+function goBack(stage) {
+  if (stage === 'P') {
+    if (predictStep > 1) { predictStep--; renderPredict(); saveState(); }
+  } else if (stage === 'I') {
+    if (stepI > 1) { snapshotFrontierIfNeeded('I'); stepI--; restoreCodeForStep('I', stepI); updateStepVisibility(); saveState(); scrollToActive('qcard_i' + stepI + '_prompt'); }
+  } else if (stage === 'M1') {
+    if (stepM1 > 1) { snapshotFrontierIfNeeded('M1'); stepM1--; restoreCodeForStep('M1', stepM1); updateStepVisibility(); saveState(); scrollToActive('m1_step_' + stepM1); }
+  }
+}
+
+function goForward(stage) {
+  if (stage === 'P') {
+    if (predictStep < maxPredictStep) { predictStep++; renderPredict(); saveState(); }
+  } else if (stage === 'I') {
+    if (stepI < maxStepI) { stepI++; restoreCodeForStep('I', stepI); updateStepVisibility(); saveState(); scrollToActive('qcard_i' + stepI + '_prompt'); }
+  } else if (stage === 'M1') {
+    if (stepM1 < maxStepM1) { stepM1++; restoreCodeForStep('M1', stepM1); updateStepVisibility(); saveState(); scrollToActive('m1_step_' + stepM1); }
+  }
+}
+
+function scrollToActive(id) {
+  document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ── Score  P=5 R=5 I=5, each mod=10, Make=25, Ext=20 → max 100 ──
+
+function calcScore() {
+  let s = 0;
+  if (completedStages.includes('P')) s += 5;
+  if (completedStages.includes('R')) s += 5;
+  if (completedStages.includes('I')) s += 5;
+  for (let i = 1; i <= STEP_COUNT_M1; i++) {
+    if (passedChecks['m1_code' + i]) s += 10;
+  }
+  if (passedChecks['m2_make']) s += 25;
+  if (passedChecks['m2_ext'])  s += 20;
+  return Math.min(100, s);
+}
+
+function submitScore() {
+  const score = calcScore();
+  window.ActivityUI?.setScore(score);
+  window.Classroom?.submitGrade(score, ACTIVITY_TITLE);
+  // PRIMM is all code tasks (Modify/Make) or excluded stages (P/R/I) — always gold when done.
+  if (score >= 100) window.ActivityUI?.launchCelebration({ percent: 100 });
+}
+
+function setAnswerState(target, ok) {
+  const el = typeof target === 'string' ? document.getElementById(target) : target;
+  const block = el?.closest('.q-card, .modify-task, .req-list li, .code-checker');
+  if (block) {
+    block.classList.toggle('is-wrong', !ok);
+    block.classList.toggle('is-right', ok);
+    if (ok) window.ActivityUI?.miniCelebration(block);
+  }
+}
+
+// ── Nav ───────────────────────────────────────────────
+function showStage(s, persist = true) {
+  document.querySelectorAll('.stage-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.primm-nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('stage-' + s).classList.add('active');
+  document.querySelector(`[data-stage="${s}"]`).classList.add('active');
+  currentStage = s;
+  stageEnteredAt = Date.now();
+  checkStuck();
+
+  if (s === 'R') {
+    const ta = document.getElementById('r_editor');
+    if (!ta.value) ta.value = STARTER_CODE;
+    refreshEditor(ta);
+  }
+  if (s === 'I') {
+    const ta = document.getElementById('i_editor');
+    if (!ta.value) ta.value = STARTER_CODE;
+    refreshEditor(ta);
+  }
+  if (s === 'M1') {
+    const ta = document.getElementById('m1_editor');
+    // Start Modify from the original Predict/Run code, not the accumulated
+    // Investigate code — the Modify tasks build back up from there themselves.
+    if (!ta.value) ta.value = STARTER_CODE;
+    refreshEditor(ta);
+  }
+  if (s === 'M2') {
+    refreshEditor(document.getElementById('m2_editor'));
+  }
+  updateStepVisibility();
+  if (persist) saveState();
+}
+
+function updateNav() {
+  completedStages.forEach(s => {
+    const btn = document.querySelector(`[data-stage="${s}"]`);
+    if (btn) btn.classList.add('done');
+  });
+}
+
+function updateProgress() {
+  const idx = STAGES.indexOf(currentStage);
+  const pct = Math.max(20, Math.round(((idx + 1) / STAGES.length) * 100));
+  document.getElementById('progressFill').style.width = pct + '%';
+}
+
+function completeStage(s) {
+  if (window.Classroom?.verifyAuth() === false) return;
+  if (!completedStages.includes(s)) completedStages.push(s);
+  updateNav();
+  const nextIdx = STAGES.indexOf(s) + 1;
+  if (nextIdx < STAGES.length) {
+    showStage(STAGES[nextIdx]);
+    updateProgress();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+  saveState();
+  submitScore();
+}
+
+
+// ── Pyodide status ────────────────────────────────────
+
+function setPyStatus(st) {
+  const bar  = document.getElementById('pyStatus');
+  const text = document.getElementById('pyStatusText');
+  if (!bar || !text) return;
+  if (st === 'loading') {
+    bar.style.display = 'block'; text.textContent = 'loading…'; text.style.color = '#f9e2af';
+  } else if (st === 'ready') {
+    text.textContent = 'ready ✓'; text.style.color = '#a6e3a1';
+    setTimeout(() => { bar.style.display = 'none'; }, 3000);
+  } else {
+    text.textContent = 'unavailable'; text.style.color = '#f38ba8';
+  }
+}
+
+// ── Run helper ────────────────────────────────────────
+
+async function runCodeInEditor(editorId, statusElId, inputs = []) {
+  if (window.Classroom?.verifyAuth() === false) return;
+  const editorEl = document.getElementById(editorId);
+  const statusEl = document.getElementById(statusElId);
+  const code = editorEl?.value || '';
+  if (statusEl) {
+    statusEl.classList.remove('hidden', 'fail', 'pass');
+    statusEl.classList.add('loading');
+    statusEl.textContent = '⏳ Running…';
+  }
+  const codeRun = editorEl?.value || '';
+  const result = await runPython(code, { inputs });
+  setEditorOutput(editorEl, result.output, !result.ok, result.line);
+  clearSyntaxHint(editorEl);
+
+  if (editorId === 'r_editor' && !firstRunShown) {
+    firstRunShown = true;
+    setTimeout(() => spotlightOutput(editorId), 150);
+  }
+
+  if (editorId === 'i_editor') {
+    iStepRan[stepI] = true;
+    iLastRun = { code: codeRun, ok: !!result.ok };
+    // A Break it followed by a clean run of fixed code = one break/fix cycle.
+    const bp = invBugProgress(stepI);
+    if (bp.pending && result.ok && isBugFixed(codeRun)) { bp.fixes++; bp.pending = false; }
+    const checkBtn = document.getElementById('btn_check_i' + stepI);
+    if (checkBtn) checkBtn.disabled = false;
+    refreshInvTicks();
+    saveState();
+  }
+
+  if (statusEl) {
+    statusEl.classList.remove('loading');
+    if (result.ok) {
+      statusEl.classList.add('pass');
+      statusEl.textContent = '✅ Code ran successfully.';
+    } else {
+      statusEl.classList.add('fail');
+      statusEl.textContent = '❌ ' + result.output.split('\n').pop();
+    }
+  }
+}
+
+// Where this step's code started: the snapshot taken when the nearest earlier step
+// passed (minus any Break it demo line), or the original starting code for step 1 /
+// if nothing earlier was passed. Resetting to this — not always STARTER_CODE — means
+// a reset never throws away the work from earlier steps.
+function iBaselineCode(step) {
+  for (let k = step - 1; k >= 1; k--) {
+    if (iCodeSnapshots[k] !== undefined) return iCodeSnapshots[k].split('\n').filter(l => !isBugPairLine(l)).join('\n');
+  }
+  return STARTER_CODE;
+}
+
+function resetInvestigateEditor() {
+  const ta = document.getElementById('i_editor');
+  if (!ta || ta.readOnly) return;
+  ta.value = iBaselineCode(stepI);
+  if (stepI === maxStepI) iCodeDraft = undefined;
+  clearSyntaxHint(ta);
+  refreshEditor(ta);
+  renderInvReqs(stepI, 'soft');
+  saveState();
+  // No auto-replant here — the student presses "😈 Break it" again themselves.
+}
+
+// ── Investigate code-change ticks (INV_CHECKS in checkers.js) ─────────────────
+
+function invBugProgress(n) {
+  return iBugProgress[n] || (iBugProgress[n] = { breaks: 0, fixes: 0, pending: false });
+}
+
+// Evaluate step n's code-change bullets against the live editor and draw them.
+// mode: 'full' ticks + crosses (on Check) · 'soft' ticks only, unmet bullets stay
+// neutral (while editing/running) · 'passed' all ticked · 'neutral' all plain.
+function renderInvReqs(n, mode) {
+  const list = document.getElementById('req_i_' + n);
+  if (!list) return null;
+  if (mode === 'neutral' || mode === 'passed') {
+    const count = list.querySelectorAll(':scope > li:not(.req-note)').length;
+    renderReqResults(list, mode === 'passed' ? Array(count).fill(true) : null);
+    return null;
+  }
+  const r = evalInv(n, document.getElementById('i_editor')?.value || '', { ...invBugProgress(n), lastRun: iLastRun });
+  renderReqResults(list, mode === 'full' ? r.results : r.results.map(ok => ok || undefined));
+  return r;
+}
+
+// Live ticks while typing — only on the step being worked on (a passed step stays all-ticked).
+function refreshInvTicks() {
+  if (currentStage === 'I' && iCodeSnapshots[stepI] === undefined) renderInvReqs(stepI, 'soft');
+}
+
+// Wipes an Investigate MCQ's ✔/✘ message and option highlights. Called when the code
+// check blocks marking and whenever the student picks a different option, so an earlier
+// wrong answer's ✘ never sits next to a new (possibly correct) choice.
+function clearInvestigateMCQFeedback(field) {
+  if (field?.type !== 'mcq') return;
+  document.querySelectorAll(`input[name="${field.radioName}"]`)
+    .forEach(r => r.closest('.radio-opt')?.classList.remove('correct', 'wrong'));
+  const fb = document.getElementById('fb_' + field.id);
+  if (fb) { fb.className = 'mcq-fb'; fb.textContent = ''; }
+}
+document.addEventListener('change', e => {
+  const field = I_FIELDS.find(f => f.type === 'mcq' && f.radioName === e.target.name);
+  if (!field) return;
+  clearInvestigateMCQFeedback(field);
+  const card = document.getElementById(field.cardId);
+  card?.classList.remove('error');
+  if (card) fieldHint(card, '');
+});
+
+// Gate for Check answer: every code-change bullet on step n must be met. Shows crosses,
+// the first unmet bullet's hint, and points the student back at the instructions.
+function invGate(n, card) {
+  const r = renderInvReqs(n, 'full');
+  if (!r || r.pass) return true;
+  clearInvestigateMCQFeedback(I_FIELDS[n - 1]);   // the answer wasn't marked this time
+  card?.classList.add('error');
+  card?.classList.remove('is-right');
+  fieldHint(card, 'Finish the code changes first: ' + r.msg);
+  flashInstruction(n);
+  recordIAttempt(n);
+  return false;
+}
+
+// ── Standard "fix a bug" step (see FILL IN ②b) ─────────────────────────────
+//
+// "😈 Break it" is used at the guided bug step — the student presses it once,
+// with the line and error explained to them, then fixes it themselves. Toggles
+// between IBUG_LINE and IBUG_FIXED_LINE so repeated clicks never pile up
+// duplicate lines — safe to mash. The planted-or-fixed line is removed again
+// once the step is done (see stripPlantedBugLine, called from skipStep /
+// tryCompleteInvestigate).
+//
+// No inputs are passed, so the run auto-collects any input() prompts interactively
+// (the student types their answers, then meets the intended bug). Do NOT pass []:
+// that means "run with no inputs at all", so if the accumulated code in i_editor
+// calls input() the student sees a raw "OSError: I/O error" instead of the bug.
+//
+// The line matching lives in breakCode() (checkers.js) so Break it and the tick-list
+// agree on what counts as the broken / fixed line. Match loosely there — an exact
+// text search misses a fix typed with different spacing, and a near-miss that still
+// CONTAINS IBUG_LINE (e.g. print("x)") for a missing-quote bug) would leave Break it
+// doing nothing while the hint tells the student to press it.
+function breakItDemo() {
+  const ta = document.getElementById('i_editor');
+  if (!ta || ta.readOnly) return;   // looking back at a passed step
+  const { code, lineNo } = breakCode(ta.value);
+  ta.value = code;
+  state.iBugPlantedLineNo = lineNo;
+  const lineSpan = document.getElementById('ibug_line');
+  if (lineSpan) lineSpan.textContent = String(lineNo);
+  const bp = invBugProgress(stepI);
+  bp.breaks++;
+  bp.pending = true;   // the next successful run of fixed code counts as a fix
+  saveState();
+  refreshEditor(ta);
+  runCodeInEditor('i_editor', 'i_fb_run');
+}
+
+// Keeps the "line N" label in the step-3 prompt showing the right number when the
+// student steps Back/Forward to revisit it — never plants or removes anything.
+function syncBugLineLabel() {
+  const lineSpan = document.getElementById('ibug_line');
+  if (lineSpan && state.iBugPlantedLineNo) lineSpan.textContent = String(state.iBugPlantedLineNo);
+}
+
+// Remove the auto-planted/broken-or-fixed demo line once the bug step has done its
+// job (student advanced past it or skipped it), so Modify inherits clean code.
+function stripPlantedBugLine() {
+  const ta = document.getElementById('i_editor');
+  if (!ta) return;
+  ta.value = ta.value.split('\n')
+    .filter(l => !isBugPairLine(l))
+    .join('\n');
+  refreshEditor(ta);
+}
+
+function insertNewLine(editorId) {
+  const ta = document.getElementById(editorId);
+  if (!ta) return;
+  const val = ta.value;
+  ta.value = val.endsWith('\n') ? val : val + '\n';
+  ta.focus();
+  ta.setSelectionRange(ta.value.length, ta.value.length);
+  refreshEditor(ta);
+  saveState();
+}
+
+function spotlightOutput(editorId) {
+  const ta = document.getElementById(editorId);
+  if (!ta) return;
+  const panel = ta.closest('.editor-wrap')?.querySelector('.output-panel');
+  if (!panel || panel.classList.contains('spotlight')) return;
+  panel.classList.add('spotlight');
+  setTimeout(() => panel.classList.remove('spotlight'), 5500);
+}
+
+// ── Nonsense guard (do not modify) ───────────────────
+
+function isNonsense(text) {
+  const t = text.trim().replace(/\s+/g, ' ');
+  if (t.length < 3) return true;
+  const counts = {};
+  for (const c of t) counts[c] = (counts[c] || 0) + 1;
+  if (Math.max(...Object.values(counts)) / t.length > 0.65) return true;
+  const lower = t.toLowerCase();
+  if (['asdf','qwer','zxcv','hjkl','1234'].some(r => lower.split(r).length > 2)) return true;
+  const LAZY = /^(i\s*d\s*k|i\s*don'?t\s*know|don'?t\s*know|dunno|dont\s*know|no\s*idea|not\s*sure|\?+|nope|nah|lol|yeah|yep|ok|okay|fine|hmm+|meh|same|nothing|none|n\/a|na|pass|skip|bruh|lmao|haha|hehe|wtf|idek|idk)$/i;
+  if (LAZY.test(lower)) return true;
+  const letters = lower.replace(/[^a-z]/g, '');
+  if (letters.length >= 4 && !/[aeiou]/.test(letters)) return true;
+  return false;
+}
+
+function fieldHint(card, msg) {
+  let el = card.querySelector('.field-hint');
+  if (!el) {
+    el = document.createElement('div');
+    el.className = 'field-hint';
+    el.style.cssText = 'font-size:0.8rem;color:var(--red-text, #dc2626);margin-top:0.4rem;font-style:italic';
+    card.appendChild(el);
+  }
+  el.textContent = msg ? '⚠️ ' + msg : '';
+}
+
+// ── Predict (per-question flow) ───────────────────────────────────────────
+
+function applyMCQFeedback(name, correct) {
+  const chosen = document.querySelector(`input[name="${name}"]:checked`);
+  if (!chosen) return false;
+  const val = chosen.value;
+  const isCorrect = val === correct;
+  document.querySelectorAll(`input[name="${name}"]`).forEach(r => {
+    const opt = r.closest('.radio-opt');
+    opt.classList.remove('correct','wrong');
+    if (r.value === correct) opt.classList.add('correct');
+    else if (r.value === val && !isCorrect) opt.classList.add('wrong');
+  });
+  const fb = document.getElementById('fb_' + name);
+  if (fb) {
+    fb.className = 'mcq-fb ' + (isCorrect ? 'pass' : 'fail');
+    fb.textContent = (isCorrect ? '✔ ' : '✘ ') + (isCorrect ? P_PASS_MSG[name] : P_FAIL_MSG[name]);
+  }
+  return true;
+}
+
+function clearPredictError(cardId) {
+  document.getElementById(cardId)?.classList.remove('error');
+}
+
+// Re-display the feedback for an already-answered Predict card (used on render / Back).
+function showPredictFeedback(idx) {
+  const name = PREDICT_NAMES[idx];
+  if (name === 'p_text1') evaluatePredictText();
+  else applyMCQFeedback(name, P_CORRECT[name]);
+}
+
+// Show the Predict question at position `predictStep` (1-based).
+function renderPredict() {
+  predictStep = Math.min(Math.max(predictStep, 1), PREDICT_TOTAL);
+  document.querySelectorAll('.predict-continue').forEach(b => b.remove());  // clear any transient manual-continue buttons
+
+  PREDICT_CARDS.forEach((id, i) => {
+    const card = document.getElementById(id);
+    const isActive   = i === predictStep - 1;
+    const revisiting = isActive && predictStep < maxPredictStep;   // stepped back to an answered card
+    card?.classList.toggle('step-hidden', !isActive);
+    card?.classList.toggle('revisiting', revisiting);
+    // the "Check answer" button only appears on the frontier question (newest, not yet answered)
+    const cb = document.getElementById('btn_check_' + PREDICT_NAMES[i]);
+    if (cb) cb.classList.toggle('step-hidden', !(isActive && predictStep >= maxPredictStep));
+    if (revisiting) showPredictFeedback(i);   // re-show the answer + feedback they saw before
+  });
+
+  renderStepNav('P');
+  scrollToActive(PREDICT_CARDS[predictStep - 1]);
+}
+
+// Advance to the next Predict question, or complete the Predict stage on the last question.
+function advancePredict() {
+  if (predictStep === PREDICT_TOTAL && !completedStages.includes('P')) {
+    maxPredictStep = Math.max(maxPredictStep, predictStep);
+    saveState();
+    completeStage('P');
+    return;
+  }
+  predictStep = Math.min(predictStep + 1, PREDICT_TOTAL);
+  maxPredictStep = Math.max(maxPredictStep, predictStep);
+  saveState();
+  renderPredict();
+}
+
+// When a Predict answer is WRONG we don't auto-advance — the student reads the
+// feedback at their own pace and clicks this button to move on. Forward → still works too.
+function showPredictContinue(card) {
+  if (!card || card.querySelector('.predict-continue')) return;
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'btn btn-next predict-continue';
+  btn.style.marginTop = '0.8rem';
+  btn.textContent = 'Continue →';
+  btn.addEventListener('click', () => { btn.remove(); advancePredict(); });
+  card.appendChild(btn);
+}
+
+// Check one MCQ: show feedback. Correct → auto-advance; wrong → manual Continue.
+function checkPredictMCQ(name) {
+  if (window.Classroom?.verifyAuth() === false) return;
+  const attempted = applyMCQFeedback(name, P_CORRECT[name]);
+  const card = document.getElementById('qcard_' + name);
+  if (!attempted) {
+    card?.classList.add('error');
+    fieldHint(card, 'Select an option before checking — even a guess is fine.');
+    return;
+  }
+  card?.classList.remove('error');
+  fieldHint(card, '');
+  if (document.querySelector(`input[name="${name}"]:checked`)?.value === P_CORRECT[name])
+    window.ActivityUI?.miniCelebration(card);
+  document.getElementById('btn_check_' + name)?.classList.add('step-hidden');
+  maxPredictStep = Math.max(maxPredictStep, predictStep + 1);  // unlock Forward immediately
+  saveState();
+  if (document.querySelector(`input[name="${name}"]:checked`)?.value === P_CORRECT[name])
+    setTimeout(advancePredict, AUTO_ADVANCE_MS);
+  else
+    showPredictContinue(card);
+}
+
+// Compute + render the free-text feedback. Returns true if the typed answer matched.
+function evaluatePredictText() {
+  const val = (document.getElementById('p_text1')?.value || '').trim().toLowerCase();
+  // ── FILL IN ⑥: Free-text feedback ───────────────────────────────────────
+  // Replace 'fill in correct answer' with the expected answer (lowercased).
+  // Update the pass/fail messages to match your question.
+  const ok = val === 'fill in correct answer';
+  const fb = document.getElementById('fb_p_text1');
+  if (fb) {
+    fb.className = 'mcq-fb ' + (ok ? 'pass' : 'fail');
+    fb.textContent = ok
+      ? '✔ Correct — FILL IN: explanation.'
+      : '✘ Not quite — FILL IN: hint pointing toward the right answer.';
+  }
+  // ── End free-text block ──────────────────────────────────────────────────
+  return ok;
+}
+
+// Check the free-text predict question: show feedback, then AUTO-ADVANCE to the review screen.
+function checkPredictText() {
+  if (window.Classroom?.verifyAuth() === false) return;
+  const val  = (document.getElementById('p_text1')?.value || '').trim();
+  const card = document.getElementById('qcard_p_text1');
+  if (val.length < 1) {
+    card?.classList.add('error');
+    fieldHint(card, 'Type something before checking — even a guess is fine.');
+    return;
+  }
+  card?.classList.remove('error');
+  fieldHint(card, '');
+  const ok = evaluatePredictText();
+  if (ok) window.ActivityUI?.miniCelebration(card);
+  document.getElementById('btn_check_p_text1')?.classList.add('step-hidden');
+  maxPredictStep = Math.max(maxPredictStep, predictStep + 1);
+  saveState();
+  if (ok) setTimeout(advancePredict, AUTO_ADVANCE_MS);
+  else showPredictContinue(card);
+}
+
+// ── Run ───────────────────────────────────────────────
+
+function clearRunError(cardId) {
+  document.getElementById(cardId)?.classList.remove('error');
+}
+
+function tryCompleteRun() {
+  if (window.Classroom?.verifyAuth() === false) return;
+  let allOk = true;
+  let firstError = null;
+
+  const r1val  = (document.getElementById('r1')?.value || '').trim();
+  const r1card = document.getElementById('qcard_r1');
+  let r1msg = null;
+  if (r1val.length < 5)       r1msg = 'Describe what you saw — even a few words is fine.';
+  else if (isNonsense(r1val)) r1msg = "That doesn't look like a real answer — give it another try.";
+  if (r1msg) {
+    allOk = false;
+    r1card?.classList.add('error');
+    r1card?.classList.remove('is-right');
+    fieldHint(r1card, r1msg);
+    if (!firstError) firstError = r1card;
+  } else {
+    r1card?.classList.remove('error');
+    r1card?.classList.add('is-right');
+    fieldHint(r1card, '');
+    window.ActivityUI?.miniCelebration(r1card);
+  }
+
+  if (allOk) {
+    const btn = document.getElementById('btn_check_run');
+    if (btn) { btn.disabled = true; btn.textContent = '✅ Moving to Investigate…'; }
+    clearSyntaxHint(document.getElementById('r_editor'));
+    window.ActivityUI?.showToast('✅ Great — moving to Investigate!');
+    submitScore();
+    setTimeout(() => completeStage('R'), 1500);
+  } else {
+    firstError?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+}
+
+// ── Investigate ───────────────────────────────────────
+
+// Draw the student's eye back to the step instruction when they press Check
+// without having made the code change. Adds bobbing green arrows + a glow and
+// scrolls the instruction (which sits directly above the editor) into view.
+function flashInstruction(n) {
+  const prompt = document.getElementById('qcard_i' + n + '_prompt');
+  if (!prompt) return;
+  if (!prompt.querySelector('.ig-callout')) {
+    const note = document.createElement('div');
+    note.className = 'ig-callout';
+    note.setAttribute('role', 'status');
+    note.innerHTML = '<span class="ig-callout-arrows" aria-hidden="true">➜➜➜</span>' +
+      '<span>Do this step first — make each numbered change in the editor below until it ticks ✓, then press Check.</span>';
+    prompt.insertBefore(note, prompt.firstChild);
+  }
+  prompt.classList.remove('needs-attention');
+  void prompt.offsetWidth;            // restart the glow animation
+  prompt.classList.add('needs-attention');
+  prompt.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  clearTimeout(flashInstruction._t);
+  flashInstruction._t = setTimeout(() => prompt.classList.remove('needs-attention'), 4200);
+}
+
+// Highlights an Investigate MCQ's options and shows its pass/fail message for the
+// chosen radio. Shared by nextStep() and tryCompleteInvestigate() so a wrong
+// answer's red feedback is always replaced once the student answers correctly.
+function showInvestigateMCQFeedback(field, chosen) {
+  const ok = chosen.value === field.correctValue;
+  document.querySelectorAll(`input[name="${field.radioName}"]`).forEach(r => {
+    const opt = r.closest('.radio-opt');
+    opt.classList.remove('correct', 'wrong');
+    if (r.value === field.correctValue) opt.classList.add('correct');
+    else if (r.value === chosen.value && !ok) opt.classList.add('wrong');
+  });
+  const fb = document.getElementById('fb_' + field.id);
+  if (fb) {
+    fb.className = 'mcq-fb ' + (ok ? 'pass' : 'fail');
+    fb.textContent = (ok ? '✔ ' : '✘ ') + (ok ? field.passMsg : field.failMsg);
+  }
+  return ok;
+}
+
+function nextStep(stage, n) {
+  if (stage !== 'I') return;
+  const field = I_FIELDS[n - 1];
+  if (!field) return;
+  const card = document.getElementById(field.cardId);
+
+  const code = document.getElementById('i_editor')?.value || '';
+  if (!invGate(n, card)) return;
+
+  if (field.type === 'mcq') {
+    const chosen = document.querySelector(`input[name="${field.radioName}"]:checked`);
+    if (!chosen) {
+      card.classList.add('error');
+      fieldHint(card, 'Select an answer before checking — even a guess is fine.');
+      return;
+    }
+    const ok = showInvestigateMCQFeedback(field, chosen);
+    if (!ok) {
+      card.classList.add('error');
+      card.classList.remove('is-right');
+      fieldHint(card, '');
+      card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      recordIAttempt(n);
+      return;
+    }
+  } else {
+    const msg = field.validate((document.getElementById(field.id)?.value || '').trim());
+    if (msg) {
+      card.classList.add('error');
+      card.classList.remove('is-right');
+      fieldHint(card, msg);
+      card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      recordIAttempt(n);
+      return;
+    }
+  }
+  card.classList.remove('error');
+  card.classList.add('is-right');
+  fieldHint(card, '');
+  window.ActivityUI?.miniCelebration(card);
+  // Lock in the code as it stood for this answer, so Back/Forward can restore it later.
+  iCodeSnapshots[n] = code;
+  iCodeDraft = undefined;
+  delete skippedSteps['i' + n];
+  const btn = card.querySelector('.btn-next');
+  if (btn) { btn.disabled = true; btn.textContent = '✅ Moving on…'; }
+  window.ActivityUI?.showToast('✅ Good observation! On to the next change…');
+  setTimeout(() => {
+    card.classList.remove('is-right');
+    stepI = n + 1;
+    maxStepI = Math.max(maxStepI, stepI);
+    const nextField = I_FIELDS[stepI - 1];
+    updateStepVisibility();
+    saveState();
+    if (nextField?.needsNewLine) {
+      const ta = document.getElementById('i_editor');
+      if (ta) {
+        if (!ta.value.endsWith('\n')) ta.value += '\n';
+        ta.focus();
+        ta.setSelectionRange(ta.value.length, ta.value.length);
+        refreshEditor(ta);
+        saveState();
+      }
+      // focusing the editor already brings it into view (cursor is waiting there)
+    } else {
+      // show the next instruction first (editor sits just below it)
+      document.getElementById('qcard_i' + stepI + '_prompt')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, AUTO_ADVANCE_MS);
+}
+
+function tryCompleteInvestigate() {
+  if (window.Classroom?.verifyAuth() === false) return;
+
+  // Same code-change gate as nextStep() — the LAST Investigate step is checked here instead.
+  const code     = document.getElementById('i_editor')?.value || '';
+  const lastCard = document.getElementById('qcard_i' + STEP_COUNT_I);
+  if (!invGate(STEP_COUNT_I, lastCard)) return;
+
+  let allOk = true;
+  let firstError = null;
+
+  I_FIELDS.forEach(f => {
+    const card = document.getElementById(f.cardId);
+    let msg;
+    if (f.type === 'mcq') {
+      msg = f.validate();
+      const chosen = document.querySelector(`input[name="${f.radioName}"]:checked`);
+      if (chosen) showInvestigateMCQFeedback(f, chosen);   // also clears an earlier ✘ once corrected
+    } else {
+      msg = f.validate((document.getElementById(f.id)?.value || '').trim());
+    }
+    if (msg) {
+      card?.classList.add('error');
+      card?.classList.remove('is-right');
+      fieldHint(card, msg);
+      allOk = false; if (!firstError) firstError = card;
+    } else {
+      card?.classList.remove('error');
+      card?.classList.add('is-right');
+      fieldHint(card, '');
+    }
+  });
+
+  if (allOk) {
+    iCodeSnapshots[STEP_COUNT_I] = code;
+    iCodeDraft = undefined;
+    delete skippedSteps['i' + STEP_COUNT_I];
+    stripPlantedBugLine();   // break-it demo line must not carry into Modify
+    const lastBtn  = lastCard?.querySelector('.btn-next');
+    if (lastBtn) { lastBtn.disabled = true; lastBtn.textContent = '✅ Investigation complete! Moving on…'; }
+    window.ActivityUI?.miniCelebration(lastCard);
+    window.ActivityUI?.showToast('🎉 Investigation complete! Moving to Modify…');
+    setTimeout(() => completeStage('I'), 1500);
+  } else {
+    recordIAttempt(stepI);
+    firstError?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+}
+
+// ── Modify ────────────────────────────────────────────
+
+// Ticks/crosses each <li> in a req-list to match `results` (one boolean per
+// bullet, in order). Pass null to reset a list back to its neutral numbered state
+// (used when a step is not-yet-attempted, e.g. after Back/Forward navigation).
+function renderReqResults(listEl, results) {
+  if (!listEl) return;
+  // .req-note lines are plain instructions between bullets — never ticked or numbered
+  [...listEl.children].filter(li => !li.classList.contains('req-note')).forEach((li, i) => {
+    const icon = li.querySelector(':scope > span:first-child');
+    const ok = results ? results[i] : undefined;
+    li.classList.toggle('req-pass', ok === true);
+    li.classList.toggle('req-fail', ok === false);
+    if (icon) icon.textContent = ok === true ? '✓' : ok === false ? '✗' : String(i + 1);
+  });
+}
+
+async function checkMod() {
+  if (window.Classroom?.verifyAuth() === false) return;
+  const editorEl = document.getElementById('m1_editor');
+  const raw      = editorEl?.value || '';
+  const fbEl     = document.getElementById('fb_m1');
+  const checkKey = 'mod' + stepM1;
+  const checkId  = 'm1_code' + stepM1;
+  const reqListEl = document.getElementById('req_m1_' + stepM1);
+  if (!fbEl) return;
+  fbEl.classList.remove('hidden');
+  if (raw.trim().length < 10) {
+    fbEl.className = 'feedback fail'; fbEl.textContent = '⚠️ Write some code first.'; return;
+  }
+  const structural = evalMod(checkKey, raw);
+  renderReqResults(reqListEl, structural.results);
+  // Run BEFORE checking the structural (regex) requirements — a genuine Python
+  // error (NameError, SyntaxError, ...) is a bigger problem than an unmet
+  // bullet point, and the structural checks never execute the code so they
+  // can't see it. Running first means a crash always outranks a formative hint.
+  fbEl.className = 'feedback loading'; fbEl.textContent = '⏳ Checking…';
+  const inputs = MOD_INPUTS?.[checkKey] || [];
+  const run = await runPython(raw, { inputs });
+  if (!run.ok) {
+    fbEl.className = 'feedback fail'; fbEl.textContent = '❌ Error: ' + run.output; recordM1Attempt(); return;
+  }
+  if (!structural.pass) {
+    fbEl.className = 'feedback fail'; fbEl.textContent = structural.msg; recordM1Attempt(); return;
+  }
+  fbEl.className = 'feedback pass';
+  fbEl.textContent = structural.msg;
+  setEditorOutput(document.getElementById('m1_editor'), run.output, false);
+  clearSyntaxHint(document.getElementById('m1_editor'));
+  passedChecks[checkId] = true;
+  delete skippedSteps['m1_' + stepM1];
+  // Lock in the code as it stood for this modification, so Back/Forward can restore it later.
+  m1CodeSnapshots[stepM1] = raw;
+  m1CodeDraft = undefined;
+  window.ActivityUI?.miniCelebration(fbEl);
+  window.ActivityUI?.showToast('✅ Modification ' + stepM1 + ' complete!');
+  if (stepM1 < STEP_COUNT_M1) {
+    setTimeout(() => {
+      stepM1++;
+      maxStepM1 = Math.max(maxStepM1, stepM1);
+      fbEl.classList.add('hidden');
+      updateStepVisibility();
+      saveState();
+      // Scroll back up to the next modification's prompt so it isn't missed.
+      scrollToActive('m1_step_' + stepM1);
+    }, AUTO_ADVANCE_MS);
+  } else {
+    // Final modification done — lock the button and move to Make automatically.
+    const m1Btn = document.getElementById('btn_check_m1');
+    if (m1Btn) { m1Btn.disabled = true; m1Btn.textContent = '✅ All modifications done — moving to Make…'; }
+    updateStepVisibility();
+    setTimeout(() => completeStage('M1'), AUTO_ADVANCE_MS);
+  }
+  saveState();
+  submitScore();
+}
+
+// ── Make ──────────────────────────────────────────────
+
+async function checkMake() {
+  if (window.Classroom?.verifyAuth() === false) return;
+  const raw  = document.getElementById('m2_editor')?.value || '';
+  const fbEl = document.getElementById('fb_m2');
+  fbEl.classList.remove('hidden');
+  const structural = evalMake(raw);
+  renderReqResults(document.getElementById('req_m2_make'), structural.results);
+  // Run BEFORE checking the structural (regex) requirements — see the comment
+  // in checkMod() above for why a real error must outrank a formative hint.
+  fbEl.className = 'feedback loading'; fbEl.textContent = '⏳ Checking…';
+  // FILL IN ⑦: Representative mock inputs for your Make program.
+  // Supply enough inputs to exercise all main branches without hanging.
+  // e.g. { inputs: ['1', '4'] } for a menu where 1 picks an option and 4 quits.
+  const run = await runPython(raw, { inputs: [/* FILL IN */] });
+  if (!run.ok) {
+    fbEl.className = 'feedback fail';
+    fbEl.textContent = '❌ Your program has an error: ' + run.output; return;
+  }
+  if (!structural.pass) {
+    fbEl.className = 'feedback fail'; fbEl.textContent = structural.msg; return;
+  }
+  if (run.output.trim().length < 5) {
+    fbEl.className = 'feedback fail';
+    fbEl.textContent = '❌ Your program ran but produced no output — check your print() calls.'; return;
+  }
+  fbEl.className = 'feedback pass';
+  fbEl.textContent = structural.msg;
+  setEditorOutput(document.getElementById('m2_editor'), run.output, false);
+  passedChecks['m2_make'] = true;
+  window.ActivityUI?.miniCelebration(fbEl);
+  window.ActivityUI?.showToast('✅ Make complete! Now tackle the extension!');
+  updateStepVisibility();
+  saveState(); submitScore();
+  setTimeout(() => document.getElementById('m2_ext_task')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+}
+
+async function checkExt() {
+  if (window.Classroom?.verifyAuth() === false) return;
+  const raw  = document.getElementById('m2_editor')?.value || '';
+  const fbEl = document.getElementById('fb_m2');
+  fbEl.classList.remove('hidden');
+  const structural = evalExt(raw);
+  renderReqResults(document.getElementById('req_m2_ext'), structural.results);
+  // Run BEFORE checking the structural (regex) requirements — see the comment
+  // in checkMod() above for why a real error must outrank a formative hint.
+  fbEl.className = 'feedback loading'; fbEl.textContent = '⏳ Checking…';
+  // FILL IN ⑧: Mock inputs for the extension (typically just the quit/exit path).
+  const run = await runPython(raw, { inputs: [/* FILL IN */] });
+  if (!run.ok) {
+    fbEl.className = 'feedback fail';
+    fbEl.textContent = '❌ Your program has an error: ' + run.output; return;
+  }
+  if (!structural.pass) {
+    fbEl.className = 'feedback fail'; fbEl.textContent = structural.msg; return;
+  }
+  fbEl.className = 'feedback pass'; fbEl.textContent = structural.msg;
+  setEditorOutput(document.getElementById('m2_editor'), run.output, false);
+  passedChecks['m2_ext'] = true;
+  window.ActivityUI?.miniCelebration(fbEl);
+  window.ActivityUI?.showToast('🌟 Extension complete! Outstanding!');
+  if (!completedStages.includes('M2')) { completedStages.push('M2'); updateNav(); saveState(); }
+  updateStepVisibility();
+  showCompletion();
+  saveState(); submitScore();
+}
+
+function showCompletion() {
+  const banner = document.getElementById('completionBanner');
+  banner.style.display = 'block';
+  banner.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+// ── Skip step ─────────────────────────────────────────
+
+function markStageSkipped(stage) {
+  if (!skippedStages.includes(stage)) skippedStages.push(stage);
+  const btn = document.querySelector(`[data-stage="${stage}"]`);
+  if (btn) btn.classList.add('skipped');
+  flashSkip();
+  saveState();
+}
+
+// One-off red flash on the top progress bar — the remove/reflow/add dance lets
+// it re-trigger even if a flash from an earlier skip is still on the element.
+function flashSkip() {
+  const fill = document.getElementById('progressFill');
+  if (!fill) return;
+  fill.classList.remove('skip-flash');
+  void fill.offsetWidth;
+  fill.classList.add('skip-flash');
+}
+
+function skipStep(stage) {
+  markStageSkipped(stage);
+  if (stage === 'I') {
+    skippedSteps['i' + stepI] = true;
+    if (stepI === STEP_COUNT_I) stripPlantedBugLine();   // don't carry the broken line forward
+    if (stepI < STEP_COUNT_I) { stepI++; maxStepI = Math.max(maxStepI, stepI); updateStepVisibility(); saveState(); scrollToActive('qcard_i' + stepI + '_prompt'); }
+    else { completeStage('I'); }
+  } else if (stage === 'M1') {
+    skippedSteps['m1_' + stepM1] = true;
+    if (stepM1 < STEP_COUNT_M1) { stepM1++; maxStepM1 = Math.max(maxStepM1, stepM1); updateStepVisibility(); saveState(); scrollToActive('m1_step_' + stepM1); }
+    else { completeStage('M1'); }
+  }
+}
+
+// ── Password-gated skip (Investigate + Modify) ───────
+// Students can't skip an Investigate step or Modify task themselves — the button only
+// opens a password box, and skipStep() runs once a teacher has typed the password.
+// key is 'i' (Investigate) or 'm1' (Modify) — the suffix on the gate's element ids.
+const SKIP_PASSWORD = 'outwood';
+
+function openSkipGate(key) {
+  const gate = document.getElementById('skip_gate_' + key);
+  if (!gate) return;
+  gate.classList.add('open');
+  document.getElementById('skip_pw_' + key)?.focus();
+}
+
+function closeSkipGate(key) {
+  document.getElementById('skip_gate_' + key)?.classList.remove('open');
+  const pw = document.getElementById('skip_pw_' + key);
+  if (pw) pw.value = '';
+  const err = document.getElementById('skip_gate_err_' + key);
+  if (err) err.textContent = '';
+}
+
+function confirmSkip(key) {
+  const pw = document.getElementById('skip_pw_' + key);
+  if (!pw) return;
+  if (pw.value.trim().toLowerCase() !== SKIP_PASSWORD) {
+    const err = document.getElementById('skip_gate_err_' + key);
+    if (err) err.textContent = 'Incorrect password — ask your teacher.';
+    pw.select();
+    return;
+  }
+  closeSkipGate(key);
+  skipStep(key === 'i' ? 'I' : 'M1');
+}
+
+// ── Modify: reset editor ──────────────────────────────
+// Where this modification's code started: the snapshot taken when the nearest
+// earlier modification passed (the code the student carried into this task), or
+// the original starting code for Modification 1 / if nothing earlier was passed.
+function m1BaselineCode(step) {
+  for (let k = step - 1; k >= 1; k--) {
+    if (m1CodeSnapshots[k] !== undefined) return m1CodeSnapshots[k];
+  }
+  return STARTER_CODE;
+}
+
+function resetModifyEditor() {
+  const ta = document.getElementById('m1_editor');
+  if (!ta || ta.readOnly) return;
+  ta.value = m1BaselineCode(stepM1);
+  if (stepM1 === maxStepM1) m1CodeDraft = undefined;
+  clearSyntaxHint(ta);
+  refreshEditor(ta);
+  // Wipe the last check's result for this task — it described the code that was just discarded.
+  document.getElementById('fb_m1')?.classList.add('hidden');
+  if (!passedChecks['m1_code' + stepM1]) renderReqResults(document.getElementById('req_m1_' + stepM1), null);
+  saveState();
+}
+
+function recordIAttempt(n) {
+  const key = 'i' + n;
+  attemptCounts[key] = (attemptCounts[key] || 0) + 1;
+  if (attemptCounts[key] >= 3 && n === stepI) {
+    const wrap = document.getElementById('i_skip_wrap');
+    if (wrap) wrap.style.display = '';
+  }
+  saveState();
+}
+
+function recordM1Attempt() {
+  const key = 'm1_' + stepM1;
+  attemptCounts[key] = (attemptCounts[key] || 0) + 1;
+  if (attemptCounts[key] >= 3) {
+    const wrap = document.getElementById('m1_skip_wrap');
+    if (wrap) wrap.style.display = '';
+  }
+  saveState();
+}
+
+// ── Expose globals (module script requirement) ────────
+
+Object.assign(window, {
+  showStage, saveState,
+  clearPredictError, checkPredictMCQ, checkPredictText, advancePredict,
+  clearRunError, tryCompleteRun,
+  tryCompleteInvestigate, nextStep,
+  checkMod, completeStage,
+  checkMake, checkExt,
+  runCodeInEditor, resetInvestigateEditor, insertNewLine, breakItDemo,
+  skipStep, goBack, goForward,
+  openSkipGate, closeSkipGate, confirmSkip, resetModifyEditor, refreshInvTicks,
+});
+
+// ── Init ──────────────────────────────────────────────
+
+window.addEventListener('DOMContentLoaded', () => {
+  restoreInputs();
+  // errorHints: show a Year-8-friendly explanation + Debugging Recipe below an
+  // editor a few seconds after a run fails (powered by python-error-hints.js).
+  setupEditors('.checker-textarea', { errorHints: true });
+  showStage(currentStage, false);
+  updateNav();
+  updateProgress();
+  setInterval(checkStuck, 15000);
+
+  setPyStatus('loading');
+  preload().then(() => setPyStatus('ready')).catch(err => {
+    setPyStatus('error');
+    window.ErrorReporter?.report('Python engine failed to load', err);
+  });
+
+  // Predict: render the one-question-at-a-time flow. renderPredict() shows the current
+  // card (or the review screen when predictStep > total) and wires the Back/Forward bar.
+  if (completedStages.includes('P')) predictStep = Math.max(predictStep, PREDICT_TOTAL + 1);
+  maxPredictStep = Math.max(maxPredictStep, predictStep);
+  renderPredict();
+
+  if (passedChecks['m2_make']) {
+    const fb = document.getElementById('fb_m2');
+    if (fb) { fb.classList.remove('hidden'); fb.className = 'feedback pass'; fb.textContent = '✅ Main program complete.'; }
+  }
+  if (passedChecks['m2_ext']) showCompletion();
+
+  skippedStages.forEach(s => {
+    const btn = document.querySelector(`[data-stage="${s}"]`);
+    if (btn) btn.classList.add('skipped');
+  });
+
+
+  updateStepVisibility();
+});
+</script>
+</body>
+</html>

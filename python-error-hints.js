@@ -96,6 +96,28 @@ const HINTS = [
     fix: 'Wrap the number in str(), e.g. "Age: " + str(12).',
   },
   {
+    // Raised by pyodide-runner.js's loop guard (not a real Python error).
+    id: 'infinite-loop-input',
+    match: /InfiniteLoopError:.*asking for input/i,
+    title: 'The loop never stopped',
+    plain: 'the loop **kept asking for input forever**.',
+    fix: 'Check the loop condition can become False once the right answer is typed.',
+  },
+  {
+    id: 'infinite-loop',
+    match: /InfiniteLoopError/i,
+    title: 'The loop never stopped',
+    plain: 'a loop **never finished**, so the program was stopped.',
+    fix: 'Check something inside the loop changes the variable in its condition.',
+  },
+  {
+    id: 'eof-input',
+    match: /EOFError/i,
+    title: 'Ran out of answers',
+    plain: 'the program **asked for input more times** than expected.',
+    fix: 'Check how many times input() runs, especially inside a loop.',
+  },
+  {
     // Catch-all — keep LAST.
     id: 'invalid-syntax',
     match: /invalid syntax|SyntaxError/i,

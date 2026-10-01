@@ -3,9 +3,12 @@
 //
 // preload()  — starts downloading Pyodide in the background; returns the
 //              Promise so callers can .then()/.catch() for status feedback.
-// runPython(code, { inputs: [] })
+// runPython(code, { inputs: [], onInputsExhausted, seed, timeLimitMs })
 //           — runs `code` in the shared interpreter; resolves with
-//             { ok: boolean, output: string }
+//             { ok: boolean, output: string, line?: number }
+//             or, when onInputsExhausted is 'ask' and the program wants
+//             another answer, { ok: false, needsInput: true, prompt, output }
+//             (see the option notes above runPython).
 // checkSyntax(code)
 //           — parses `code` with Python's ast module; resolves with
 //             { ok: boolean, line?: number, msg?: string }
@@ -91,12 +94,50 @@ export async function checkSyntax(code) {
   }
 }
 
-export async function runPython(code, { inputs = [] } = {}) {
+// Pyodide runs on the page's main thread and cannot be interrupted, so a
+// never-ending loop would freeze the whole tab. Every run therefore has a loop
+// guard: before running, the student's code is parsed and a `_rq_tick()` call
+// is inserted as the first statement of every while/for body. Once the program
+// has been running longer than timeLimitMs, the tick raises InfiniteLoopError
+// at that loop, and keeps raising on every later pass, so a bare `except:`
+// inside the loop can't swallow it and carry on. (A sys.settrace tracer can't
+// do this: CPython switches tracing off the first time a tracer raises.)
+// Inputs are always pre-supplied (mocked), so the clock never includes time a
+// student spends typing.
+const DEFAULT_TIME_LIMIT_MS = 4000;
+// Cap on captured stdout chunks, so `while True: print(...)` can't exhaust
+// memory in the seconds before the time limit trips.
+const MAX_OUTPUT_CHUNKS = 5000;
+// Written to stdout by input() when it needs an answer it wasn't given ('ask'
+// mode). Output is cut here, so anything the program prints afterwards (e.g.
+// from a bare `except:` swallowing the stop) never reaches the student.
+// (Plain text — Pyodide's stdout drops control characters such as NUL.)
+const NEED_INPUT_MARK = '@@rq-needs-input@@';
+
+// Options:
+//   inputs            — answers fed to input(), in order.
+//   onInputsExhausted — what input() does once `inputs` has run out:
+//       'zero'  (default, legacy) returns '0'. If that then traps the program
+//               in a loop, the InfiniteLoopError says it was waiting on input.
+//       'error' raises EOFError (what real Python does when stdin runs out).
+//               Use this for checkers that feed a fixed list of test inputs.
+//       'ask'   stops the program and resolves with
+//               { ok: false, needsInput: true, prompt, output } so the editor
+//               can ask the student for one more answer and re-run with it.
+//   seed              — seeds `random` so re-runs with the same answers make
+//                       the same choices (needed by 'ask' re-runs).
+//   timeLimitMs       — see DEFAULT_TIME_LIMIT_MS.
+export async function runPython(code, {
+  inputs = [],
+  onInputsExhausted = 'zero',
+  seed = null,
+  timeLimitMs = DEFAULT_TIME_LIMIT_MS,
+} = {}) {
   if (!_loading) _loading = _init();
   await _loading;
 
   const out = [];
-  _pyodide.setStdout({ batched: s => out.push(s) });
+  _pyodide.setStdout({ batched: s => { if (out.length < MAX_OUTPUT_CHUNKS) out.push(s); } });
   _pyodide.setStderr({ batched: () => {} }); // errors surface via exception
 
   // The interpreter's global namespace persists between runs (later calls,
@@ -112,45 +153,106 @@ export async function runPython(code, { inputs = [] } = {}) {
     `_b.input = _b._orig_input\n` +
     `for _n in list(globals()):\n` +
     `    if hasattr(_b, _n) and globals()[_n] is not getattr(_b, _n):\n` +
-    `        globals()[_n] = getattr(_b, _n)\n`;
+    `        globals()[_n] = getattr(_b, _n)\n` +
+    `_rq_need = None\n` +
+    `_rq_ran_out = False\n`;
 
-  // Inject input() mock when test values are supplied.
+  // Inject input() mock when test values are supplied (or when running out of
+  // them must be caught rather than falling back to '0').
   // Echo the prompt + the "typed" value to stdout so the output matches a real
   // terminal: `name = input("What is your name? ")` with value "Nick" shows the
   // line `What is your name? Nick`, then later print()s follow.
-  // Fallback '0' (not '') so exhausted inputs don't produce a str that breaks arithmetic.
-  const inputsPreamble = inputs.length
+  // Legacy fallback '0' (not '') so exhausted inputs don't produce a str that
+  // breaks arithmetic. 'error' / 'ask' also set _rg['halt'], so the program
+  // still stops if student code swallows the exception with a bare `except:`.
+  const onExhausted = {
+    zero:  `        _v = '0'\n`,
+    error: `        _rg['halt'] = lambda: EOFError('the program asked for input more times than it was given answers')\n` +
+           `        raise _rg['halt']()\n`,
+    ask:   `        _rq_need = str(prompt)\n` +
+           `        _sys.stdout.write(${JSON.stringify(NEED_INPUT_MARK)} + '\\n')\n` +
+           `        _rg['halt'] = _RunnerNeedsInput\n` +
+           `        raise _RunnerNeedsInput()\n`,
+  }[onInputsExhausted] ?? `        _v = '0'\n`;
+  const inputsPreamble = (inputs.length || onInputsExhausted !== 'zero')
     ? `import sys as _sys\n` +
       `_q = iter(${JSON.stringify(inputs)})\n` +
       `def _mock_input(prompt=''):\n` +
-      `    _v = next(_q, '0')\n` +
+      `    global _rq_need, _rq_ran_out\n` +
+      `    _v = next(_q, None)\n` +
+      `    if _v is None:\n` +
+      `        _rq_ran_out = True\n` +
+      onExhausted +
       `    _sys.stdout.write(str(prompt) + str(_v) + '\\n')\n` +
       `    return _v\n` +
       `_b.input = _mock_input\n`
     : '';
-  const preamble = resetPreamble + inputsPreamble;
-  // Line numbers in the traceback are relative to preamble + code — shift them
-  // back by the (invisible-to-the-student) preamble length before reporting.
-  const preambleLines = preamble.split('\n').length - 1;
 
+  const seedPreamble = seed === null ? '' :
+    `import random as _rnd\n_rnd.seed(${Math.trunc(Number(seed)) || 0})\n`;
+
+  // Loop guard (see DEFAULT_TIME_LIMIT_MS). The student's code is compiled as
+  // '<student>' with its own line numbers, so traceback lines need no offset.
+  const limitSecs = Math.max(0.1, timeLimitMs / 1000);
+  const guardPreamble =
+    `import ast as _ast, time as _time\n` +
+    `class InfiniteLoopError(Exception): pass\n` +
+    `class _RunnerNeedsInput(EOFError): pass\n` +
+    `def _rq_loop_error():\n` +
+    `    if _rq_ran_out:\n` +
+    `        return InfiniteLoopError('the program kept asking for input after every answer had been used, so it was stopped - check the loop can finish')\n` +
+    `    return InfiniteLoopError('the program was still running after ${limitSecs} seconds, so it was stopped - a loop probably never finishes')\n` +
+    `_rg = {'n': 0, 'end': _time.monotonic() + ${limitSecs}, 'halt': None}\n` +
+    `def _rq_tick():\n` +
+    `    if _rg['halt'] is not None:\n` +
+    `        raise _rg['halt']()\n` +
+    `    _rg['n'] += 1\n` +
+    `    if _rg['n'] >= 200:\n` +
+    `        _rg['n'] = 0\n` +
+    `        if _time.monotonic() > _rg['end']:\n` +
+    `            _rg['halt'] = _rq_loop_error\n` +
+    `            raise _rq_loop_error()\n` +
+    `class _RqAddTicks(_ast.NodeTransformer):\n` +
+    `    def _tick(self, node):\n` +
+    `        self.generic_visit(node)\n` +
+    `        t = _ast.Expr(_ast.Call(_ast.Name('_rq_tick', _ast.Load()), [], []))\n` +
+    `        node.body.insert(0, _ast.copy_location(t, node.body[0]))\n` +
+    `        return node\n` +
+    `    visit_While = visit_For = _tick\n` +
+    `_rq_tree = _RqAddTicks().visit(_ast.parse(${JSON.stringify(code)}, '<student>'))\n` +
+    `_ast.fix_missing_locations(_rq_tree)\n` +
+    `exec(compile(_rq_tree, '<student>', 'exec'), globals())\n`;
+
+  const preamble = resetPreamble + inputsPreamble + seedPreamble + guardPreamble;
+  const stdout = () => out.length ? out.join('\n') + '\n' : '';
+
+  let result;
   try {
-    await _pyodide.runPythonAsync(preamble + code);
-    return { ok: true, output: out.length ? out.join('\n') + '\n' : '' };
+    await _pyodide.runPythonAsync(preamble);
+    result = { ok: true, output: stdout() };
   } catch (err) {
     // Return only the final error line — strip the Python traceback header
     const raw = String(err);
     const lines = raw.split('\n').filter(l => l.trim());
     const msg = lines[lines.length - 1] || raw;
-    // Pull the deepest "line N" the traceback reports — the frame closest to
-    // the actual failure — so the help card can point the student at it.
-    const lineMatches = [...raw.matchAll(/, line (\d+)/g)];
-    let line = null;
-    if (lineMatches.length) {
-      const n = parseInt(lineMatches[lineMatches.length - 1][1], 10) - preambleLines;
-      if (n >= 1) line = n;
-    }
-    return { ok: false, output: msg, line };
+    // Pull the deepest student-code "line N" the traceback reports — the frame
+    // closest to the actual failure — so the help card can point at it.
+    const lineMatches = [...raw.matchAll(/File "<student>", line (\d+)/g)];
+    const line = lineMatches.length
+      ? parseInt(lineMatches[lineMatches.length - 1][1], 10)
+      : null;
+    result = { ok: false, output: msg, line };
   }
+
+  if (onInputsExhausted === 'ask') {
+    const prompt = _pyodide.globals.get('_rq_need');
+    if (typeof prompt === 'string') {
+      const output = stdout();
+      const cut = output.indexOf(NEED_INPUT_MARK);
+      return { ok: false, needsInput: true, prompt, output: cut < 0 ? output : output.slice(0, cut) };
+    }
+  }
+  return result;
 }
 
 export async function analyzeCode(code) {

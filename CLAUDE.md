@@ -18,7 +18,7 @@ Interactive Computing Education Platform — a static web hub serving self-conta
 - **`error-reporter.js`** — Shows unexpected page errors (uncaught JS errors, unhandled rejections, failed script/style loads, Pyodide load failure) in a footer panel at the bottom of the page, since the dev console isn't available on student computers. Load it as a plain `<script>` **before** `activity-ui.js`. Currently used by the Y8 and PRIMM Y8 templates and the Y8 Python Unit 1 activities; opt-in per activity.
 - **`pseudocode-transpiler.js`** — OCR pseudocode → Python transpiler. Exports `transpile(src)` and `mapErrorLine(map, pyLine)`. Covers the procedural subset, file I/O, and the OCR class/inheritance subset.
 - **`pseudocode-editor.js`** — Editor widget for OCR pseudocode activities (fork of `code-editor.js`). Targets `.pseudocode-textarea`. Exports `setupEditors`, `clearSyntaxHint`, `setEditorOutput`, `refreshEditor`, `setFiles`, `getWrittenFiles`, `runPseudocode`.
-- **`_templates/`** — Activity starter templates (excluded from manifest). Copy `Y8.html`, `Y9.html`, `Y11.html`, or `Pseudocode_Y11.html` as the basis for a new activity.
+- **`_templates/`** — Activity starter templates (excluded from manifest). Copy `Y8.html`, `Y9.html`, `Y11.html`, or `Pseudocode_Y11.html` as the basis for a new activity; for a Python PRIMM lesson copy `PRIMM_Python_Y8.html` or `PRIMM_Python_Y9.html`.
 
 ## Running Locally
 
@@ -107,7 +107,11 @@ would undermine the task.
 
 ### PRIMM Investigate + Modify: teacher-gated skip and reset (Y8 PRIMM activities)
 
-Both the Investigate and Modify skip buttons ("Skip this step →" / "Skip this task →", shown after 3 failed checks on the current step) only open a password box — a teacher types `outwood` (`SKIP_PASSWORD` in the JS) to actually skip (`confirmSkip('i')` / `confirmSkip('m1')`). Both editors also have a **↺ Reset to original** button (`resetInvestigateEditor` / `resetModifyEditor`): step 1 restores the starting code, and later steps restore the code snapshot taken when the previous step passed (falling back to the starting code), so a reset never throws away earlier steps' work. It is disabled while revisiting an already-passed step. All of this lives in `_templates/PRIMM_Python_Y8.html`.
+Both the Investigate and Modify skip buttons ("Skip this step →" / "Skip this task →", shown after 3 failed checks on the current step) only open a password box — a teacher types `outwood` (`SKIP_PASSWORD` in the JS) to actually skip (`confirmSkip('i')` / `confirmSkip('m1')`). Both editors also have a **↺ Reset to original** button (`resetInvestigateEditor` / `resetModifyEditor`): step 1 restores the starting code, and later steps restore the code snapshot taken when the previous step passed (falling back to the starting code), so a reset never throws away earlier steps' work. It is disabled while revisiting an already-passed step. All of this lives in `_templates/PRIMM_Python_Y8.html`, and `_templates/PRIMM_Python_Y9.html` carries the same logic.
+
+### Y9 PRIMM template (`_templates/PRIMM_Python_Y9.html`)
+
+This is a copy of the Y8 PRIMM template with **identical HTML structure and JS**. Only the `<style>` block differs: Y9 uses a neutral "graphite" dark theme (charcoal canvas, near-black header with a five-colour PRIMM stage stripe, dark cards, cobalt accent, flat sentence-case buttons, graphite editor chrome, no violet/neon/glow), so it stays dark (students prefer it) but is clearly different from Y8's neon arcade. Its tokens are declared on `:root, body[data-year]` so they win over shared.css's dark `[data-year="9"]` palette. **When you change PRIMM logic or markup in one template, make the same change in the other.**
 
 ### PRIMM Investigate: code-change tick-lists (Y8 PRIMM activities)
 

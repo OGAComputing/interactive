@@ -20,6 +20,12 @@ const CASES = [
   ['TypeError: can only concatenate str (not "int") to str', 'type-concat', 'number'],
   ['TypeError: unsupported operand type(s) for +: \'int\' and \'str\'', 'type-concat', 'number'],
   ['SyntaxError: invalid syntax', 'invalid-syntax', 'typo'],
+  // Raised by pyodide-runner.js's loop guard / exhausted input() mock.
+  ['InfiniteLoopError: the program was still running after 4 seconds, so it was stopped - a loop probably never finishes',
+    'infinite-loop', 'never finished'],
+  ['InfiniteLoopError: the program kept asking for input after every answer had been used, so it was stopped - check the loop can finish',
+    'infinite-loop-input', 'asking for input'],
+  ['EOFError: the program asked for input more times than it was given answers', 'eof-input', 'more times'],
 ];
 
 describe('explainPythonError', () => {
