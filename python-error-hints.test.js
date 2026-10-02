@@ -13,7 +13,7 @@ const CASES = [
   ["  File \"<exec>\", line 1\nSyntaxError: expected ':'", 'missing-colon', 'colon'],
   ['IndentationError: expected an indented block', 'expected-indent', 'indented'],
   ['IndentationError: unexpected indent', 'unexpected-indent', 'extra space'],
-  ['IndentationError: unindent does not match any outer indentation level', 'unindent-mismatch', 'less than'],
+  ['IndentationError: unindent does not match any outer indentation level', 'unindent-mismatch', "doesn't line up"],
   ['TabError: inconsistent use of tabs and spaces in indentation', 'tab-error', 'tabs and spaces'],
   ["SyntaxError: Missing parentheses in call to 'print'", 'print-parens', 'brackets'],
   ["NameError: name 'fun' is not defined", 'name-error', 'speech marks'],
@@ -50,6 +50,27 @@ describe('explainPythonError', () => {
     // but a message that mentions both should still pick the most specific.
     const raw = 'SyntaxError: unterminated string literal (detected at line 1)';
     expect(explainPythonError(raw).id).toBe('unterminated-string');
+  });
+
+  test('"invalid syntax" on an else: line is explained as an indentation slip', () => {
+    // A flat line between the if block and else:, or an indented else:, both come out of
+    // Python as a bare "invalid syntax" pointing at the else line.
+    for (const lineText of ['else:', '    else:', 'elif score > 10:']) {
+      const hint = explainPythonError('SyntaxError: invalid syntax', { lineText });
+      expect(hint.id).toBe('stray-else');
+      expect(hint.plain).toContain('**');
+      expect(hint.fix).toMatch(/Indent/);
+    }
+  });
+
+  test('without the line text (or on any other line) "invalid syntax" stays the generic typo hint', () => {
+    expect(explainPythonError('SyntaxError: invalid syntax').id).toBe('invalid-syntax');
+    expect(explainPythonError('SyntaxError: invalid syntax', { lineText: 'print "hi"' }).id).toBe('invalid-syntax');
+    expect(explainPythonError('SyntaxError: invalid syntax', { lineText: 'elsewhere = 5' }).id).toBe('invalid-syntax');
+  });
+
+  test('a missing colon on else still wins over the stray-else hint', () => {
+    expect(explainPythonError("SyntaxError: expected ':'", { lineText: 'else' }).id).toBe('missing-colon');
   });
 
   test('returns null for an unrecognised message', () => {

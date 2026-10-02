@@ -33,6 +33,7 @@ const castCount  = raw => (normalise(raw).match(/\b(?:int|float)\s*\(/g) || []).
 // Non-blank code lines (comments removed, strings blanked), keeping their indentation.
 const codeLines = raw => normalise(raw).split('\n').filter(l => l.trim());
 const indentOf  = line => line.match(/^[ \t]*/)[0].replace(/\t/g, '    ').length;
+const leadOf    = line => line.match(/^[ \t]*/)[0];   // the exact whitespace — Python won't match a Tab with 4 spaces
 const COMPARISON = /==|!=|<=|>=|<|>/;
 const isIfLine   = l => /^\s*if\b.*:\s*$/.test(l);
 const isElseLine = l => /^\s*else\s*:\s*$/.test(l);
@@ -137,6 +138,42 @@ function fixHint(raw, ctx) {
   return 'Now press ▶ Run code to check your fix works.';
 }
 
+// Where things sit in the student's if/else, on RAW lines (so blank lines count — step 2's
+// first bullet is "make an empty line"). Comment lines are skipped when searching.
+//   ifIdx    the first if line          passIdx  the first line after it (print("Pass"))
+//   elseIdx  the else: after that       newIdx   another print() between if and else, or -1
+// null if there is no if … else to work with.
+function ifGeometry(raw) {
+  const lines = raw.split('\n');
+  const live = i => lines[i].trim() && !/^\s*#/.test(lines[i]);
+  const ifIdx = lines.findIndex((l, i) => live(i) && /^\s*if\b.*:\s*(#.*)?$/.test(l));
+  if (ifIdx === -1) return null;
+  let passIdx = -1;
+  for (let i = ifIdx + 1; i < lines.length; i++) if (live(i)) { passIdx = i; break; }
+  if (passIdx === -1 || /^\s*else\s*:/.test(lines[passIdx])) return null;
+  const elseIdx = lines.findIndex((l, i) => i > passIdx && /^\s*else\s*:/.test(l));
+  if (elseIdx === -1) return null;
+  let newIdx = -1;
+  for (let i = ifIdx + 1; i < elseIdx; i++) if (i !== passIdx && live(i) && /\bprint\s*\(/.test(lines[i])) { newIdx = i; break; }
+  return { lines, ifIdx, passIdx, elseIdx, newIdx };
+}
+
+// Step 2, bullet 2 — says exactly where the student's Well done line has ended up.
+function wellDoneWhereHint(raw) {
+  const g = ifGeometry(raw);
+  if (!g) return 'Keep the if / else from the starting code — line 2 should still start with if, with else: further down';
+  const where = g.lines.findIndex(l => !/^\s*#/.test(l) && /print\s*\(.*well\s*done/i.test(l));
+  const goes = 'Move it up so it sits between print("Pass") and else:';
+  if (where === -1) return 'On your new empty line, type print("Well done!")';
+  if (where < g.ifIdx) return 'Your print("Well done!") is above the if. Move it down so it sits between print("Pass") and else:';
+  if (where > g.elseIdx) {
+    return indentOf(g.lines[where]) > 0
+      ? 'Your print("Well done!") is under the else, so it would only show for a Fail. ' + goes
+      : 'Your print("Well done!") is at the bottom, outside the if/else, so it would show every time. ' + goes;
+  }
+  return 'Type print("Well done!") on the new line between print("Pass") and else:';
+}
+
 export const INV_CHECKS = {
   // Step 1 — the pass mark becomes 70.
   inv1: {
@@ -147,20 +184,43 @@ export const INV_CHECKS = {
       },
     ],
   },
-  // Step 2 — a second line inside the if block (any message — "Well done!" is the example).
+  // Step 2 — a second line inside the if block. Indentation is where students get stuck, so
+  // the one change is split into three bullets that tick live, in the order they happen:
+  // make a new line in the right place → type the print() on it → line it up with Tab.
+  // Each hint names the exact problem (inside the else, at the bottom, 2 spaces not 4 …).
   inv2: {
     reqs: [
       {
-        hint: raw => {
-          const lines = raw.split('\n');
-          const i = lines.findIndex(l => /^\s*print\s*\(.*well done/i.test(l));
-          if (i !== -1 && indentOf(lines[i]) === 0) return 'Your new print() has no spaces in front of it, so it is not inside the if. Indent it (press Tab) so it lines up with print("Pass")';
-          return 'Add print("Well done!") on a new line straight under print("Pass") — indented by the same amount, so it is inside the if';
+        hint: 'Click at the very end of line 3 — just after print("Pass") — and press Enter to make a new, empty line underneath it',
+        test: raw => { const g = ifGeometry(raw); return !!g && g.elseIdx - g.passIdx > 1; },
+      },
+      {
+        hint: wellDoneWhereHint,
+        test: raw => { const g = ifGeometry(raw); return !!g && g.newIdx !== -1; },
+        // typed, but somewhere other than inside the if (under the else, at the bottom …)
+        wrong: raw => {
+          const g = ifGeometry(raw);
+          return !!g && g.newIdx === -1 && g.lines.some(l => !/^\s*#/.test(l) && /print\s*\(.*well\s*done/i.test(l));
         },
-        test(raw) {
-          const lines = codeLines(raw);
-          return ifElsePairs(raw).some(({ ifLine, ifIdx, elseIdx }) =>
-            lines.slice(ifIdx + 1, elseIdx).filter(l => indentOf(l) > indentOf(ifLine) && /\bprint\s*\(/.test(l)).length >= 2);
+      },
+      {
+        hint: raw => {
+          const g = ifGeometry(raw);
+          if (!g || g.newIdx === -1) return 'Once print("Well done!") is in place, press Tab at the start of it so it lines up with print("Pass")';
+          const have = indentOf(g.lines[g.newIdx]), want = indentOf(g.lines[g.passIdx]);
+          if (have === want) return 'Your new line mixes a Tab character with spaces, which Python can\'t match up. Delete the gap at the start of the line and press Tab once';
+          if (have === 0) return 'Your new line starts at the left edge, so Python thinks the if has already finished. Click at the very start of the line and press Tab once';
+          if (have < want) return `Your new line has ${have} space${have === 1 ? '' : 's'} in front; print("Pass") has ${want}. They must match exactly — click at the start of the line and add ${want - have} more`;
+          return `Your new line has ${have} spaces in front; print("Pass") has ${want}. Too many — click at the start of the line and press Shift+Tab to take 4 away`;
+        },
+        test: raw => {
+          const g = ifGeometry(raw);
+          return !!g && g.newIdx !== -1 && leadOf(g.lines[g.newIdx]) === leadOf(g.lines[g.passIdx]);
+        },
+        // in place, but its spaces don't match print("Pass")
+        wrong: raw => {
+          const g = ifGeometry(raw);
+          return !!g && g.newIdx !== -1 && leadOf(g.lines[g.newIdx]) !== leadOf(g.lines[g.passIdx]);
         },
       },
     ],
@@ -186,13 +246,17 @@ export const INV_CHECKS = {
 };
 
 // Runs every req for Investigate step n (1-based). ctx fields default to "nothing done".
+// A req may also have wrong(raw, ctx): true when the student has made a definite MISTAKE on
+// that bullet (not just "not done yet"). The page shows those as live red crosses, and
+// wrongMsg is the first such bullet's hint, so the live coach names the mistake first.
 export function evalInv(n, raw, ctx = {}) {
   const c = { breaks: 0, fixes: 0, lastRun: null, ...ctx };
   const reqs = INV_CHECKS['inv' + n]?.reqs || [];
   const results = reqs.map(r => !!r.test(raw, c));
+  const wrongs = reqs.map((r, i) => !results[i] && !!r.wrong?.(raw, c));
+  const resolve = i => { const h = i === -1 ? null : reqs[i].hint; return typeof h === 'function' ? h(raw, c) : h; };
   const bad = results.findIndex(r => !r);
-  const hint = bad === -1 ? null : reqs[bad].hint;
-  return { results, pass: bad === -1, msg: typeof hint === 'function' ? hint(raw, c) : hint };
+  return { results, wrongs, pass: bad === -1, msg: resolve(bad), wrongMsg: resolve(wrongs.findIndex(Boolean)) };
 }
 
 // ── Modify checks ─────────────────────────────────────────────────────────────
@@ -220,6 +284,8 @@ export const MOD_TEST_NOTES = {
 };
 
 const passFailWorks = (raw, c) => says(c.aOnly, PASS_WORD) && says(c.bOnly, FAIL_WORD);
+// The first if compares with "40 or less" (score <= 40, or 40 >= score) — exactly 40 would fail.
+const hasLe40 = raw => /<=\s*40\b|\b40\s*>=/.test(codeLines(raw).find(isIfLine) || '');
 
 export const MOD_CHECKS = {
   // Mod 1 — a new pass mark. Behaviour only: >= 40 and > 39 are both right.
@@ -246,10 +312,20 @@ export const MOD_CHECKS = {
         },
       },
       {
-        hint: (raw, c) => says(c.aOnly, FAIL_WORD)
+        // Checked on its own: <= 40 means "40 or less", so exactly 40 would fail. Code-based,
+        // so <= 39 (also correct) still passes.
+        hint: '❌ <= means "40 or less", so a score of exactly 40 would FAIL. Use < so only 39 and below fail — e.g. if score < 40:',
+        test: raw => !hasLe40(raw),
+      },
+      {
+        hint: (raw, c) => says(c.la, FAIL_WORD)
           ? '❌ Now 40 prints Fail! Your if checks for a fail, so print("Fail") must move up under the if — and print("Pass") down under the else'
           : '❌ The program should still work the same: 40 prints Pass and 39 prints Fail. Swap your two print() messages over',
-        test: passFailWorks,
+        // Are the messages in the right branches? 39 must print Fail. 40 must print Pass too —
+        // unless the comparison is <= 40, which the bullet above already flags, so a <= slip
+        // doesn't also cross out a swap the student has done correctly.
+        test: (raw, c) => says(c.lb, FAIL_WORD) && !says(c.lb, PASS_WORD) &&
+          (hasLe40(raw) || (says(c.la, PASS_WORD) && !says(c.la, FAIL_WORD))),
       },
     ],
     passMsg: '✅ Same behaviour, different code — the if checks for a fail now, so the messages had to swap places.',

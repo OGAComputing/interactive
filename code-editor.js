@@ -440,7 +440,10 @@ function _showErrHelper(ta, rawError, lineNo = null, errType = null) {
   const term = _cleanErrorTerm(rawError);
   const type = errType || _errorType(rawError) || 'Error';
   const where = lineNo ? ' — line ' + lineNo : '';
-  const hint = explainPythonError(rawError);
+  // The offending line lets the library spot errors whose message alone is ambiguous
+  // (e.g. "invalid syntax" on an else: line is really an indentation slip above it).
+  const lineText = lineNo ? (ta.value.split('\n')[lineNo - 1] ?? '') : '';
+  const hint = explainPythonError(rawError, { lineText });
   const meaning = hint
     ? _boldify(hint.plain)
     : 'Python could not read that line.';
@@ -947,7 +950,10 @@ export function setupEditors(selector = '.checker-textarea', opts = {}) {
         ta.value = ta.value.slice(0, start) + '    ' + ta.value.slice(end);
         ta.selectionStart = ta.selectionEnd = start + 4;
       }
-      _debouncedCheck(ta);
+      // Changing .value from script fires no 'input' event, so announce the edit the way a
+      // real keystroke would — the editor's own listener re-checks syntax, and an activity's
+      // oninput (saveState, live tick-lists) sees the new indentation straight away.
+      ta.dispatchEvent(new Event('input', { bubbles: true }));
       window.saveState?.(); // activities expose saveState as a global
     });
 

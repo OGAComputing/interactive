@@ -41,23 +41,59 @@ describe('evalInv step 1 — pass mark 70', () => {
   });
 });
 
-describe('evalInv step 2 — a second line inside the if', () => {
-  test('step 1 code alone is not accepted', () => {
-    expect(evalInv(2, code(STEP1)).pass).toBe(false);
+describe('evalInv step 2 — new line → type it → line it up', () => {
+  // STEP1 lines: 0 score=…, 1 if score >= 70:, 2     print("Pass"), 3 else:, 4     print("Fail"), 5 print("Thanks…")
+  const at = (line, idx = 3) => code([...STEP1.slice(0, idx), line, ...STEP1.slice(idx)]);
+
+  test('step 1 code alone: nothing ticked, nothing red, coach says press Enter', () => {
+    const r = evalInv(2, code(STEP1));
+    expect(r.results).toEqual([false, false, false]);
+    expect(r.wrongs).toEqual([false, false, false]);
+    expect(r.msg).toMatch(/press Enter/);
   });
-  test('an indented second print() inside the if passes — any message', () => {
+
+  test('an empty new line under print("Pass") ticks bullet 1 only', () => {
+    expect(evalInv(2, at('')).results).toEqual([true, false, false]);
+    expect(evalInv(2, at('    ')).results).toEqual([true, false, false]);
+  });
+
+  test('typed at the left edge: bullets 1–2 tick, bullet 3 goes red with the left-edge hint', () => {
+    const r = evalInv(2, at('print("Well done!")'));
+    expect(r.results).toEqual([true, true, false]);
+    expect(r.wrongs).toEqual([false, false, true]);
+    expect(r.wrongMsg).toMatch(/left edge/);
+  });
+
+  test('2 spaces or 8 spaces: red, and the hint counts the spaces', () => {
+    const two = evalInv(2, at('  print("Well done!")'));
+    expect(two.wrongs[2]).toBe(true);
+    expect(two.wrongMsg).toMatch(/2 spaces.*has 4/);
+    const eight = evalInv(2, at('        print("Well done!")'));
+    expect(eight.wrongMsg).toMatch(/8 spaces.*Shift\+Tab/);
+  });
+
+  test('lined up with print("Pass") passes — any message, and above print("Pass") is fine too', () => {
     expect(evalInv(2, code(STEP2)).pass).toBe(true);
-    const other = [...STEP1.slice(0, 3), '    print("Nice one")', ...STEP1.slice(3)];
-    expect(evalInv(2, code(other)).pass).toBe(true);
+    expect(evalInv(2, at('    print("Nice one")')).pass).toBe(true);
+    expect(evalInv(2, at('    print("Well done!")', 2)).pass).toBe(true);
   });
-  test('an unindented print() is not inside the if, and the hint says so', () => {
-    const flat = [...STEP1, 'print("Well done!")'];
-    const r = evalInv(2, code(flat));
-    expect(r.pass).toBe(false);
-    expect(r.msg).toMatch(/not inside the if/);
+
+  test('under the else: bullet 2 red, coach says it is under the else', () => {
+    const r = evalInv(2, at('    print("Well done!")', 5));
+    expect(r.wrongs[1]).toBe(true);
+    expect(r.wrongMsg).toMatch(/under the else/);
   });
-  test('an extra print() in the else block does not count', () => {
-    expect(evalInv(2, code([...STEP1.slice(0, 5), '    print("Well done!")', STEP1[5]])).pass).toBe(false);
+
+  test('at the bottom, outside the if/else: bullet 2 red, coach says so', () => {
+    const r = evalInv(2, code([...STEP1, 'print("Well done!")']));
+    expect(r.wrongs[1]).toBe(true);
+    expect(r.wrongMsg).toMatch(/at the bottom/);
+  });
+
+  test('a pasted tab character next to 4 spaces is red (Python would raise TabError)', () => {
+    const r = evalInv(2, at('\tprint("Well done!")'));
+    expect(r.wrongs[2]).toBe(true);
+    expect(r.wrongMsg).toMatch(/Tab character/);
   });
 });
 
@@ -165,12 +201,22 @@ describe('evalMod', () => {
   test('mod2: flipped but messages not swapped → specific hint', () => {
     const unswapped = [STARTER[0], 'if score < 40:', '    print("Pass")', 'else:', '    print("Fail")', STARTER[5]];
     const r = evalMod('mod2', code(unswapped), [runOut('40', 'Fail'), runOut('39', 'Pass')]);
-    expect(r.results).toEqual([true, false]);
+    expect(r.results).toEqual([true, true, false]);
     expect(r.msg).toMatch(/40 prints Fail/);
   });
   test('mod2 fails when the comparison was not flipped', () => {
     const r = evalMod('mod2', code(STARTER.map(l => l.replace('50', '40'))), PASS40);
-    expect(r.results).toEqual([false, true]);
+    expect(r.results).toEqual([false, true, true]);
+  });
+  test('mod2: <= 40 is flagged by its own bullet, and does not also cross out a correct swap', () => {
+    const le = FLIPPED.map(l => l.replace('score < 40', 'score <= 40'));
+    const r = evalMod('mod2', code(le), [runOut('40', 'Fail'), runOut('39', 'Fail')]);
+    expect(r.results).toEqual([true, false, true]);
+    expect(r.msg).toMatch(/exactly 40 would FAIL/);
+    expect(evalMod('mod2', code(FLIPPED.map(l => l.replace('score < 40', '40 >= score'))), [runOut('40', 'Fail'), runOut('39', 'Fail')]).results[1]).toBe(false);
+  });
+  test('mod2: <= 39 is also correct and passes', () => {
+    expect(evalMod('mod2', code(FLIPPED.map(l => l.replace('score < 40', 'score <= 39'))), PASS40).pass).toBe(true);
   });
 
   test('mod3 passes any two new messages, including ones that repeat the score', () => {

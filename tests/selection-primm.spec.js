@@ -101,6 +101,43 @@ test('Make → extension unlocks; interactive extension completes the activity',
   await expect(page.locator('#completionBanner')).toBeVisible();
 });
 
+test('Investigate step 2: live red cross + coach for a flat line, real Tab key turns it green', async ({ page }) => {
+  const STEP1_CODE = STARTER.replace('50', '70');
+  await openAt(page, {
+    currentStage: 'I', completedStages: ['P', 'R'], stepI: 2, maxStepI: 2,
+    iCodeSnapshots: { 1: STEP1_CODE }, i_editor: STEP1_CODE,
+  });
+  const bullets = page.locator('#req_i_2 li:not(.req-note)');
+  const coach = page.locator('#coach_i_2');
+  await expect(coach).toContainText('press Enter');                  // next thing to do, before any typing
+
+  // typed at the left edge between print("Pass") and else:
+  await setCode(page, 'i_editor', STEP1_CODE.replace('    print("Pass")\n', '    print("Pass")\nprint("Well done!")\n'));
+  await expect(bullets.nth(0)).toHaveClass(/req-pass/);
+  await expect(bullets.nth(1)).toHaveClass(/req-pass/);
+  await expect(bullets.nth(2)).toHaveClass(/req-fail/);              // red live, no Check needed
+  await expect(coach).toContainText('left edge');
+
+  // put the cursor at the start of line 4 and press the real Tab key
+  await page.locator('#i_editor').evaluate(ta => {
+    const pos = ta.value.indexOf('print("Well done!")');
+    ta.focus(); ta.setSelectionRange(pos, pos);
+  });
+  await page.keyboard.press('Tab');
+  await expect(bullets.nth(2)).toHaveClass(/req-pass/);
+  await expect(coach).toHaveClass(/done/);
+});
+
+test('help card: "invalid syntax" on an else line is explained as indentation', async ({ page }) => {
+  const flat = STARTER.replace('    print("Pass")\n', '    print("Pass")\nprint("Well done!")\n');
+  await openAt(page, { currentStage: 'I', completedStages: ['P', 'R'], stepI: 2, maxStepI: 2, i_editor: flat });
+  await page.click('#stage-I button:has-text("Run code")');
+  await expect(page.locator('#i_fb_run')).toHaveClass(/fail/, { timeout: 30000 });
+  const checker = page.locator('#i_editor').locator('xpath=ancestor::div[contains(@class,"code-checker")]');
+  await checker.locator('button:has-text("Get help")').last().click();
+  await expect(checker).toContainText('ended too early');
+});
+
 test('Break it: indented Goodbye line errors; deleting it is not accepted, fixing it is', async ({ page }) => {
   await openAt(page, {
     currentStage: 'I', completedStages: ['P', 'R'], stepI: 4, maxStepI: 4,

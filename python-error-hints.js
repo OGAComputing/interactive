@@ -62,8 +62,8 @@ const HINTS = [
     id: 'unindent-mismatch',
     match: /IndentationError:\s*unindent does not match any outer indentation level|unindent does not match/i,
     title: "Indenting doesn't line up",
-    plain: 'this line is indented **less than any line above it**, so Python cannot tell which block it belongs to.',
-    fix: "Line it up exactly with the start of an if, for, while or function line above it.",
+    plain: "this line's indenting **doesn't line up** with any line above it.",
+    fix: 'Give it exactly the same spaces as the line above it (one Tab = 4 spaces).',
   },
   {
     id: 'tab-error',
@@ -118,6 +118,19 @@ const HINTS = [
     fix: 'Check how many times input() runs, especially inside a loop.',
   },
   {
+    // An indentation slip that Python reports as a plain "invalid syntax" on the else line:
+    // a line between the if block and else: left at the left edge ends the if early, and an
+    // indented else: has no if to pair with. Without this, the catch-all below says "small
+    // typo" and points the student at the else line, which is the wrong place to look.
+    // Needs the offending line's text (ctx.lineText), so it only fires when the caller has it.
+    id: 'stray-else',
+    match: /invalid syntax/i,
+    when: ctx => /^\s*(else|elif)\b/.test(ctx.lineText || ''),
+    title: 'An else without its if',
+    plain: 'the **if above ended too early**, so this else has nothing to belong to.',
+    fix: 'Indent every line between the if and the else the same (Tab), and line else: up with if.',
+  },
+  {
     // Catch-all — keep LAST.
     id: 'invalid-syntax',
     match: /invalid syntax|SyntaxError/i,
@@ -130,15 +143,17 @@ const HINTS = [
 /**
  * Map a raw Python / Pyodide error message to a friendly explanation.
  * @param {string} rawError - The full error output or its last line.
+ * @param {{lineText?: string}} [ctx] - Optional: the source line the error points at, so
+ *   entries with a `when(ctx)` test can tell apart errors whose message alone is ambiguous.
  * @returns {{id: string, title: string, plain: string, fix: string} | null}
  *   null when nothing matches.
  */
-export function explainPythonError(rawError) {
+export function explainPythonError(rawError, ctx = {}) {
   if (!rawError) return null;
   const text = String(rawError);
   for (const hint of HINTS) {
     const m = hint.match.exec(text);
-    if (m) {
+    if (m && (!hint.when || hint.when(ctx))) {
       return {
         id: hint.id,
         title: hint.title,
