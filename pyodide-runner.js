@@ -113,6 +113,23 @@ const MAX_OUTPUT_CHUNKS = 5000;
 // from a bare `except:` swallowing the stop) never reaches the student.
 // (Plain text — Pyodide's stdout drops control characters such as NUL.)
 const NEED_INPUT_MARK = '@@rq-needs-input@@';
+// Reads the trackVars snapshot: [[name, typeName, display], …] as JSON, for the
+// names in _rq_names that currently hold a value. Strings are shown in double
+// quotes (as students write them); builtins are reached through the module so
+// a student's `repr = …` or `len = …` can't break it.
+const SNAPSHOT_PY =
+  `def _rq_snap():\n` +
+  `    import builtins as _bb, json as _js\n` +
+  `    _g, _out = globals(), []\n` +
+  `    for _n in _g.get('_rq_names', []):\n` +
+  `        if _n not in _g: continue\n` +
+  `        _v = _g[_n]\n` +
+  `        _t = _bb.type(_v).__name__\n` +
+  `        _d = '"' + _v + '"' if _t == 'str' else _bb.repr(_v)\n` +
+  `        if _bb.len(_d) > 60: _d = _d[:57] + '...'\n` +
+  `        _out.append([_n, _t, _d])\n` +
+  `    return _js.dumps(_out)\n` +
+  `_rq_snap()`;
 
 // Options:
 //   inputs            — answers fed to input(), in order.
@@ -126,12 +143,16 @@ const NEED_INPUT_MARK = '@@rq-needs-input@@';
 //               can ask the student for one more answer and re-run with it.
 //   seed              — seeds `random` so re-runs with the same answers make
 //                       the same choices (needed by 'ask' re-runs).
+//   trackVars         — also resolve with `vars`: [[name, type, display], …]
+//                       for each variable the student's code assigned, in
+//                       source order, as memory held them when the run stopped.
 //   timeLimitMs       — see DEFAULT_TIME_LIMIT_MS.
 export async function runPython(code, {
   inputs = [],
   onInputsExhausted = 'zero',
   seed = null,
   timeLimitMs = DEFAULT_TIME_LIMIT_MS,
+  trackVars = false,
 } = {}) {
   if (!_loading) _loading = _init();
   await _loading;
@@ -191,6 +212,16 @@ export async function runPython(code, {
   const seedPreamble = seed === null ? '' :
     `import random as _rnd\n_rnd.seed(${Math.trunc(Number(seed)) || 0})\n`;
 
+  // Variable tracking (trackVars): list every name the student's code assigns,
+  // in source order, and drop any value left over from an earlier run, so the
+  // snapshot shows only what *this* run stored. Off by default: other
+  // activities may rely on globals persisting between runs.
+  const trackPreamble =
+    `_rq_names = sorted({(n.lineno, n.col_offset, n.id) for n in _ast.walk(_rq_tree)\n` +
+    `                    if isinstance(n, _ast.Name) and isinstance(n.ctx, _ast.Store)})\n` +
+    `_rq_names = list(dict.fromkeys(n for _, _, n in _rq_names if not n.startswith('_')))\n` +
+    `for _n in _rq_names: globals().pop(_n, None)\n`;
+
   // Loop guard (see DEFAULT_TIME_LIMIT_MS). The student's code is compiled as
   // '<student>' with its own line numbers, so traceback lines need no offset.
   const limitSecs = Math.max(0.1, timeLimitMs / 1000);
@@ -219,7 +250,9 @@ export async function runPython(code, {
     `        node.body.insert(0, _ast.copy_location(t, node.body[0]))\n` +
     `        return node\n` +
     `    visit_While = visit_For = _tick\n` +
+    `_rq_names = []\n` +
     `_rq_tree = _RqAddTicks().visit(_ast.parse(${JSON.stringify(code)}, '<student>'))\n` +
+    (trackVars ? trackPreamble : '') +
     `_ast.fix_missing_locations(_rq_tree)\n` +
     `exec(compile(_rq_tree, '<student>', 'exec'), globals())\n`;
 
@@ -244,12 +277,19 @@ export async function runPython(code, {
     result = { ok: false, output: msg, line };
   }
 
+  // The snapshot is read after the run stops — however it stopped (finished,
+  // crashed, or paused for input) — so it shows what memory held at that moment.
+  if (trackVars) {
+    try { result.vars = JSON.parse(_pyodide.runPython(SNAPSHOT_PY)); }
+    catch { result.vars = []; }
+  }
+
   if (onInputsExhausted === 'ask') {
     const prompt = _pyodide.globals.get('_rq_need');
     if (typeof prompt === 'string') {
       const output = stdout();
       const cut = output.indexOf(NEED_INPUT_MARK);
-      return { ok: false, needsInput: true, prompt, output: cut < 0 ? output : output.slice(0, cut) };
+      return { ok: false, needsInput: true, prompt, output: cut < 0 ? output : output.slice(0, cut), vars: result.vars };
     }
   }
   return result;

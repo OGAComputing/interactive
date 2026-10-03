@@ -338,6 +338,73 @@ function _injectStyles() {
     @media (prefers-reduced-motion: reduce) {
       :where(.error-helper) { animation: none; }
     }
+
+    /* Memory view (opt-in via setupEditors(..., {memoryView:true})): each
+       variable as a labelled box at the foot of the output panel. Values use
+       the same amber as typed input, so an answer visibly lands in its box. */
+    :where(.memory-view) {
+      flex: 1 0 auto;               /* fills spare panel height, so the strip sits at the bottom */
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      margin-top: 0.6rem;
+      font-family: 'Courier New', monospace;
+    }
+    :where(.memory-view[hidden]) { display: none; }
+    :where(.memory-inner) {
+      padding-top: 0.6rem;
+      border-top: 1px dashed #2d2f45;
+    }
+    :where(.memory-header) {
+      font-size: 0.65rem;
+      color: #585b70;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.45rem;
+      user-select: none;
+    }
+    :where(.memory-boxes) {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.9rem 0.6rem;
+    }
+    :where(.mem-box) {
+      position: relative;
+      min-width: 5.5rem;
+      max-width: 100%;
+      padding: 0.75rem 0.65rem 0.4rem;
+      border: 1.5px solid #3b3f5c;
+      border-radius: 4px;
+      background: #10121c;
+    }
+    :where(.mem-label) {
+      position: absolute;
+      top: -0.6rem;
+      left: 0.45rem;
+      padding: 0 0.35rem;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: #0a0c0f;
+      background: #5eead4;
+      border-radius: 3px;
+    }
+    :where(.mem-value) {
+      display: block;
+      color: #f9e2af;
+      font-size: 0.85rem;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+    :where(.mem-box.mem-new) { animation: _mem-in 0.35s ease-out; }
+    :where(.mem-box.mem-changed) { animation: _mem-flash 0.9s ease-out; }
+    @keyframes _mem-in { from { opacity: 0; transform: translateY(6px) scale(0.92); } to { opacity: 1; transform: none; } }
+    @keyframes _mem-flash { from { border-color: #f9b020; box-shadow: 0 0 0 3px rgba(249,176,32,0.35); } to { border-color: #3b3f5c; box-shadow: none; } }
+    @media (prefers-reduced-motion: reduce) {
+      :where(.mem-box.mem-new), :where(.mem-box.mem-changed) { animation: none; }
+    }
   `;
   document.head.appendChild(s);
 }
@@ -357,6 +424,11 @@ const _uiTimers = new Map(); // textarea → debounce for fast UI tasks
 const _errHintsOn   = new Set(); // textareas opted into friendly error help
 const _errHelperMap = new Map(); // textarea → .error-helper element
 const _errHelpBtnMap = new Map(); // textarea → "Get help" button shown after a failed run
+
+// ── Memory view state ─────────────────────────────────────────────────────────
+const _memOn   = new Set(); // textareas opted into the memory view
+const _memMap  = new Map(); // textarea → .memory-view element
+const _memPrev = new Map(); // textarea → Map(name → display) from the last render, to spot changes
 
 function _escapeHTML(s) {
   return String(s).replace(/[&<>"']/g, c =>
@@ -387,6 +459,48 @@ function _errorType(raw) {
   const line = String(raw).split('\n').map(l => l.trim()).filter(Boolean).pop() || '';
   const m = line.match(/^([A-Za-z]+Error)\b/);
   return m ? m[1] : '';
+}
+
+// ?memory=off / ?memory=on overrides every editor on the page, so one activity
+// can be trialled with and without the memory view (e.g. one class each).
+const _memParam = new URLSearchParams(location.search).get('memory');
+
+function _memEnabled(ta) {
+  if (_memParam === 'off') return false;
+  if (_memParam === 'on') return true;
+  return _memOn.has(ta) || ta.hasAttribute('data-memory-view');
+}
+
+/**
+ * Draw `vars` ([[name, type, display], …] from runPython's trackVars) as
+ * labelled boxes. A box that wasn't there last time slides in; one whose value
+ * changed flashes. Pass null to empty the view (e.g. at the start of a run).
+ */
+function _renderMemory(ta, vars) {
+  const view = _memMap.get(ta);
+  if (!view) return;
+  const prev = _memPrev.get(ta) || new Map();
+  const next = new Map();
+  const list = view.querySelector('.memory-boxes');
+  list.textContent = '';
+  for (const [name, type, display] of vars || []) {
+    next.set(name, display);
+    const li = document.createElement('li');
+    li.className = 'mem-box';
+    if (!prev.has(name)) li.classList.add('mem-new');
+    else if (prev.get(name) !== display) li.classList.add('mem-changed');
+    li.title = `${name} holds ${display} (type: ${type})`;
+    const label = document.createElement('span');
+    label.className = 'mem-label';
+    label.textContent = name;
+    const value = document.createElement('span');
+    value.className = 'mem-value';
+    value.textContent = display;
+    li.append(label, value);
+    list.appendChild(li);
+  }
+  _memPrev.set(ta, next);
+  view.hidden = next.size === 0;
 }
 
 function _errHelperEnabled(ta) {
@@ -613,10 +727,13 @@ export function clearSyntaxHint(ta) {
  * @param {string} text - The text to display
  * @param {boolean} isError - Whether to style as an error
  * @param {number|null} [lineNo] - Line number the error was reported at, if known
+ * @param {Array|null} [vars] - runPython's `vars` (needs trackVars) to show in
+ *   the memory view; null empties it; omitted leaves it as it is.
  */
-export function setEditorOutput(ta, text, isError = false, lineNo = null) {
+export function setEditorOutput(ta, text, isError = false, lineNo = null, vars) {
   const panel = _outputMap.get(ta);
   if (!panel) return;
+  if (vars !== undefined) _renderMemory(ta, vars);
   panel.classList.toggle('error', isError);
   const content = panel.querySelector('.output-content');
   if (content) content.textContent = text || '';
@@ -744,17 +861,19 @@ async function _runLive(ta) {
   _liveRuns.set(ta, token);
   const seed = Math.floor(Math.random() * 2 ** 31);
   const answers = [];
+  const trackVars = _memEnabled(ta);
+  if (trackVars) _renderMemory(ta, null);   // a fresh run starts with empty memory
   for (;;) {
-    const r = await runPython(ta.value, { inputs: answers, onInputsExhausted: 'ask', seed });
+    const r = await runPython(ta.value, { inputs: answers, onInputsExhausted: 'ask', seed, trackVars });
     // A newer Run click owns the output panel now.
     if (_liveRuns.get(ta) !== token) return { ok: true, output: '', cancelled: true };
     if (!r.needsInput) {
       _liveRuns.delete(ta);
-      if (r.ok) setEditorOutput(ta, r.output || '(no output)');
-      else setEditorOutput(ta, r.output, true, r.line);
+      if (r.ok) setEditorOutput(ta, r.output || '(no output)', false, null, r.vars);
+      else setEditorOutput(ta, r.output, true, r.line, r.vars);
       return r;
     }
-    setEditorOutput(ta, r.output);
+    setEditorOutput(ta, r.output, false, null, r.vars);
     const got = await _collectInputs(ta, [r.prompt], { keepContent: true });
     if (got === null || _liveRuns.get(ta) !== token) return { ok: true, output: '', cancelled: true };
     answers.push(got[0]);
@@ -774,7 +893,9 @@ async function _runLive(ta) {
  * @returns {Promise<{ ok: boolean, output: string }>}
  */
 export async function runCode(ta, { inputs = null } = {}) {
-  if (inputs === null && _needsLiveInput(ta.value)) return _runLive(ta);
+  // The memory view always runs live, even for straight-line code, so each
+  // answer drops into its box the moment it's typed (not all at the end).
+  if (inputs === null && (_needsLiveInput(ta.value) || _memEnabled(ta))) return _runLive(ta);
 
   let resolvedInputs = inputs;
   if (resolvedInputs === null) {
@@ -789,7 +910,9 @@ export async function runCode(ta, { inputs = null } = {}) {
   // other run is doing the same on the one shared Pyodide interpreter.
   if (resolvedInputs === null) return { ok: true, output: '', cancelled: true };
 
-  const r = await runPython(ta.value, { inputs: resolvedInputs });
+  const trackVars = _memEnabled(ta);
+  const r = await runPython(ta.value, { inputs: resolvedInputs, trackVars });
+  if (trackVars) { _renderMemory(ta, null); _renderMemory(ta, r.vars); }
 
   const panel = _outputMap.get(ta);
   const content = panel?.querySelector('.output-content');
@@ -830,6 +953,9 @@ export async function runCode(ta, { inputs = null } = {}) {
  *   just-in-time, Year-8-friendly explanation + Debugging Recipe below an editor
  *   a few seconds after a run fails. (A per-editor `data-error-hints` attribute
  *   opts a single textarea in regardless of this flag.)
+ *   Pass `{memoryView: true}` (or `data-memory-view` on one textarea) to show
+ *   each variable as a labelled box under the output, filled as the program
+ *   runs. `?memory=off` / `?memory=on` in the page URL overrides both.
  */
 export function setupEditors(selector = '.checker-textarea', opts = {}) {
   _injectStyles();
@@ -886,6 +1012,22 @@ export function setupEditors(selector = '.checker-textarea', opts = {}) {
       '</div>';
     wrap.appendChild(output);
     _outputMap.set(ta, output);
+
+    if (opts.memoryView) _memOn.add(ta);
+    if (_memEnabled(ta)) {
+      const mem = document.createElement('div');
+      mem.className = 'memory-view';
+      mem.hidden = true;
+      mem.setAttribute('role', 'region');
+      mem.setAttribute('aria-label', 'Variables in memory');
+      mem.innerHTML =
+        '<div class="memory-inner">' +
+          '<div class="memory-header">Memory — your variables</div>' +
+          '<ul class="memory-boxes"></ul>' +
+        '</div>';
+      output.appendChild(mem);
+      _memMap.set(ta, mem);
+    }
 
     // Hint sits after the wrap so it spans the full editor width
     const hint = document.createElement('div');

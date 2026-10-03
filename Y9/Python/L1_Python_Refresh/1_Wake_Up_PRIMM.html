@@ -1,47 +1,54 @@
 <!-- ACTIVITY
-title:  FILL IN: e.g. "Lists PRIMM Practice"
+title:  Wake Up — Input Refresh
 type:   PRIMM
-lesson: FILL IN: e.g. "Lesson 5"
-stars:  5
-desc:   FILL IN: one sentence for the hub card
-color:  blue
+lesson: Lesson 1
+stars:  3
+desc:   Station Zero, Chapter 1: wake up alone on a dead space station and rebuild the door check-in program with input(), variables and +.
+color:  teal
 -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<!-- FILL IN: topic name in both places -->
-<title>PRIMM Practice · TOPIC · Year 9</title>
+<title>Station Zero · Chapter 1: Wake Up · Year 9</title>
 <link rel="stylesheet" href="../../../shared.css">
 <style>
   /* ════════════════════════════════════════════════════════════════════
-     YEAR 9 THEME — "graphite": a calm, grown-up dark mode.
-     Deliberately different from the Year 8 neon arcade — neutral charcoal
-     (no violet nebula, no pixel grid, no glow), cobalt accent, flat buttons,
-     sentence-case headings, and a five-colour PRIMM stripe as the signature.
+     YEAR 9 THEME — "Station Zero": survival-horror variant of the graphite
+     Y9 PRIMM template. Near-black hull, cold HUD teal accent, emergency red
+     reserved for the threat. The story lives ONLY in the header, the
+     between-stage situation reports and the completion banner. Questions,
+     editors and feedback are styled exactly like the graphite template so
+     the programming part stays calm and readable.
 
      Tokens are declared on `body[data-year]` as well as :root so they beat
      shared.css's [data-year="9"] palette, which classroom.js switches on
      from the URL path. Variable NAMES match the Y8 PRIMM template because
-     inline styles and the JS reference them — keep them all.
+     inline styles and the JS reference them — keep them all. ("cobalt" is
+     now teal; the name is kept so the shared CSS/JS keep working.)
      ════════════════════════════════════════════════════════════════════ */
   :root, body[data-year] {
     color-scheme: dark;
 
     /* surfaces, darkest → lightest */
-    --canvas:       #15171c;   /* page background */
-    --chrome:       #0e1014;   /* header */
-    --card:         #1e2229;   /* q-cards, modify tasks, nav */
-    --card-raised:  #262b33;   /* req-list items, options, inputs sit here */
-    --card-hover:   #2c323c;
-    --line:         #2f3540;   /* card borders / dividers */
-    --line-strong:  #3d4451;
+    --canvas:       #0b0e12;   /* page background — hull black */
+    --chrome:       #07090c;   /* header + situation report */
+    --card:         #141a20;   /* q-cards, modify tasks, nav */
+    --card-raised:  #1b222a;   /* req-list items, options, inputs sit here */
+    --card-hover:   #222b35;
+    --line:         #26303a;   /* card borders / dividers */
+    --line-strong:  #34404c;
 
-    --cobalt:       #3b63e0;   /* button fill — white text 5.2:1 */
-    --cobalt-dark:  #2f52c4;
-    --cobalt-text:  #8ea8ff;   /* accent used AS text on dark — 7.1:1 on --card */
-    --cobalt-tint:  rgba(59,99,224,0.16);
+    --cobalt:       #0f766e;   /* button fill (HUD teal) — white text 5.5:1 */
+    --cobalt-dark:  #0d5f59;
+    --cobalt-text:  #5eead4;   /* accent used AS text on dark — 11:1 on --card */
+    --cobalt-tint:  rgba(45,212,191,0.13);
+
+    /* story layer */
+    --threat:       #ff3b4e;   /* motion blips, sealed rooms — never used for feedback */
+    --threat-text:  #ff9aa5;
+    --hud-font:     'Cascadia Code', 'Consolas', 'SFMono-Regular', 'Courier New', monospace;
 
     /* legacy names used by inline styles + JS — mapped onto the Y9 palette */
     --ink:          #e6e8ec;
@@ -53,8 +60,8 @@ color:  blue
     --white:        #ffffff;
     --off-white:    var(--card);
 
-    --text:         #e6e8ec;   /* 13:1 on --card */
-    --muted:        #9aa3b2;   /* 6.4:1 on --card */
+    --text:         #e3e8ec;   /* 14:1 on --card */
+    --muted:        #94a3b0;   /* 6.9:1 on --card */
     --amber:        #f5a524;
     --amber-bg:     rgba(245,165,36,0.12);
     --amber-text:   #fcd28a;
@@ -64,7 +71,7 @@ color:  blue
     --red:          #f0506e;
     --red-text:     #ff9aad;
     --red-bg:       rgba(240,80,110,0.12);
-    --code-bg:      #0f1115;
+    --code-bg:      #080b0e;
     --code-text:    #d8dee9;
 
     /* PRIMM stage colours — filled chips with white text at ≥ 4.5:1 */
@@ -79,8 +86,8 @@ color:  blue
     --accent:       var(--cobalt);
     --accent-dark:  var(--cobalt-dark);
     --accent-light: var(--cobalt-text);
-    --accent-rgb:   59,99,224;
-    --surface-mid:  #2a2f38;   /* ac-progress-bar track */
+    --accent-rgb:   15,118,110;
+    --surface-mid:  #222b35;   /* ac-progress-bar track */
     --text-inv:     #ffffff;
     --gold:         #f59e0b;
     --green-dark:   #15803d;
@@ -93,16 +100,18 @@ color:  blue
     --radius:       12px;
     --shadow-sm:    0 1px 2px rgba(0,0,0,0.35);
     --shadow-md:    0 6px 18px rgba(0,0,0,0.35), 0 1px 3px rgba(0,0,0,0.3);
-    --focus-ring:   0 0 0 3px rgba(142,168,255,0.5);
+    --focus-ring:   0 0 0 3px rgba(94,234,212,0.55);
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html { overflow-x: hidden; }
   body {
     font-family: var(--font-body); background-color: var(--canvas); color: var(--text);
     min-height: 100vh; position: relative; line-height: 1.5;
-    /* faint dot grid — squared-paper feel, never competes with content */
-    background-image: radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1.2px);
-    background-size: 22px 22px;
+    /* cold emergency-light wash from above + faint deck-plate grid; both static */
+    background-image:
+      radial-gradient(ellipse 80% 45% at 50% 0%, rgba(45,212,191,0.06), transparent 70%),
+      radial-gradient(rgba(255,255,255,0.035) 1px, transparent 1.2px);
+    background-size: auto, 22px 22px;
   }
   :focus-visible { outline: none; box-shadow: var(--focus-ring); }
   strong { color: #fff; }
@@ -470,6 +479,280 @@ color:  blue
     .code-checker { margin-left: 0; margin-right: 0; }
     .ann-row { grid-template-columns: 1.4rem 1fr; } .ann-label { grid-column: 2; text-align: left; white-space: normal; justify-self: start; }
   }
+
+  /* ════════════════════════════════════════════════════════════════════
+     STATION ZERO — STORY LAYER
+     Everything below is the narrative skin. None of it touches a question,
+     an editor or a feedback message.
+     ════════════════════════════════════════════════════════════════════ */
+  .info-box { color: #ccfbf1; border-color: rgba(94,234,212,0.3); }
+
+  /* ── Header: station ident, objective, map button ──
+     The same 80s green-phosphor terminal as the situation report, so the page
+     and the map read as one console. Tokens are shared with .sz-overlay below. */
+  .site-header, .sz-overlay {
+    --crt:        #5cff8f;   /* phosphor green — 14:1 on --crt-bg */
+    --crt-dim:    #3fcf6e;
+    --crt-faint:  #1f7a40;
+    --crt-bg:     #010903;
+    --crt-glow:   0 0 3px rgba(92,255,143,0.55), 0 0 12px rgba(92,255,143,0.2);
+    --crt-warn:   #ffc95c;
+    --crt-crit:   #ff6b78;
+  }
+  .site-header {
+    background: radial-gradient(ellipse at 30% 50%, #04170a 0%, var(--crt-bg) 75%);
+    border-bottom: 1px solid var(--crt-faint);
+    color: var(--crt); font-family: var(--hud-font); text-shadow: var(--crt-glow);
+  }
+  /* scanlines + vignette (::before is the PRIMM stripe) — texture only */
+  .site-header::after {
+    content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 0;
+    background:
+      repeating-linear-gradient(0deg, rgba(0,0,0,0.28) 0 1px, transparent 1px 3px),
+      radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,0.4) 100%);
+  }
+  .site-header > * { position: relative; z-index: 1; }
+  .sz-mark {
+    width: 46px; height: 46px; border-radius: 8px; flex-shrink: 0;
+    display: grid; place-items: center; color: var(--crt);
+    background: #020704; border: 1px solid var(--crt-faint);
+    box-shadow: inset 0 0 12px rgba(92,255,143,0.08);
+  }
+  .sz-mark svg { width: 28px; height: 28px; filter: drop-shadow(0 0 3px rgba(92,255,143,0.6)); }
+  .site-header .header-text h1 {
+    font-family: var(--hud-font); text-transform: uppercase; letter-spacing: 0.14em; font-size: 1.15rem;
+    color: var(--crt);
+  }
+  .site-header .header-text h1::before { content: '> '; color: var(--crt-dim); }
+  .site-header .header-text p {
+    font-size: 0.8rem; color: var(--crt-dim); text-transform: uppercase; letter-spacing: 0.1em;
+  }
+  .sz-header-right { margin-left: auto; display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+  .sz-objective {
+    font-family: var(--hud-font); font-size: 0.8rem; letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--crt); border: 1px solid var(--crt-faint); border-left: 3px solid var(--crt-warn); border-radius: 6px;
+    padding: 0.5rem 0.75rem; background: #020704; max-width: 24rem; line-height: 1.45;
+  }
+  .sz-objective b { color: var(--crt-warn); font-weight: 700; text-shadow: 0 0 4px rgba(255,201,92,0.5); margin-right: 0.35rem; }
+  /* the objective is the "waiting for input" line — it keeps the blinking block cursor */
+  .sz-objective .sz-obj-text::after { content: '█'; margin-left: 2px; animation: sz-cursor 1.05s steps(1) infinite; }
+  .btn-map {
+    min-height: 44px; background: transparent; color: var(--crt); border: 1px solid var(--crt-faint); border-radius: 6px;
+    font-family: var(--hud-font); font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.1em;
+    text-shadow: var(--crt-glow);
+  }
+  .btn-map:hover { background: rgba(92,255,143,0.1); border-color: var(--crt); color: var(--crt); }
+  .btn-map:focus-visible { outline: 2px solid var(--crt); outline-offset: 3px; }
+  .btn-map svg { width: 18px; height: 18px; flex-shrink: 0; filter: drop-shadow(0 0 3px rgba(92,255,143,0.6)); }
+
+  /* ── Situation report overlay — an 80s green-phosphor terminal ──
+     A plain fixed overlay (not <dialog>.showModal()) on purpose: a top-layer
+     modal would sit above classroom.js's sign-in overlays (z 99998) and make
+     them unclickable. z 9000 keeps it under those and under activity-ui.js's
+     celebrations (z 10000). Focus is trapped by the story script instead.
+     The text types itself in (story script → typeSequence), with a blinking
+     block cursor; reduced motion, the map button and any click/key show it all at once. */
+  .sz-overlay {
+    position: fixed; inset: 0; z-index: 9000; display: none;
+    align-items: center; justify-content: center; padding: 16px;
+    background: rgba(1,4,2,0.9);
+  }
+  .sz-overlay.open { display: flex; }
+  .sz-panel {
+    position: relative; width: min(860px, 100%); max-height: calc(100dvh - 32px); overflow-y: auto;
+    background: radial-gradient(ellipse at 50% 40%, #04170a 0%, var(--crt-bg) 70%);
+    border: 1px solid var(--crt-faint); border-top: 3px solid var(--crt);
+    border-radius: 14px; padding: 1.1rem 1.4rem 1.3rem;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.75), inset 0 0 60px rgba(92,255,143,0.05);
+    color: var(--crt); font-family: var(--hud-font); text-shadow: var(--crt-glow);
+  }
+  .sz-panel.is-threat { border-top-color: var(--crt-crit); }
+  /* CRT scanlines + a dark vignette at the edges — texture only, too faint to affect legibility */
+  .sz-panel::before {
+    content: ''; position: absolute; inset: 0; pointer-events: none; border-radius: inherit; z-index: 1;
+    background:
+      repeating-linear-gradient(0deg, rgba(0,0,0,0.28) 0 1px, transparent 1px 3px),
+      radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,0.45) 100%);
+  }
+  .sz-overlay.open .sz-panel { animation: sz-power-on 0.5s ease-out; }
+  /* one dip in brightness as the screen "powers on" — a single flicker, never a strobe */
+  @keyframes sz-power-on {
+    0%   { opacity: 0; transform: scaleY(0.02); }
+    30%  { opacity: 0.9; transform: scaleY(1); }
+    40%  { opacity: 0.45; }
+    55%  { opacity: 1; transform: none; }
+    100% { opacity: 1; }
+  }
+
+  /* typing: the element being written gets the block cursor; the last one keeps
+     blinking when everything is written, like a terminal waiting for input */
+  .tw-active::after, .tw-idle::after {
+    content: '█'; margin-left: 1px; color: var(--crt); text-shadow: var(--crt-glow);
+  }
+  .tw-idle::after { animation: sz-cursor 1.05s steps(1) infinite; }
+  @keyframes sz-cursor { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
+
+  .sz-head { display: flex; align-items: center; gap: 0.8rem; margin-bottom: 0.5rem; }
+  .sz-kicker {
+    font-size: 0.76rem; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--crt-dim); display: flex; align-items: center; gap: 0.5rem;
+  }
+  .sz-panel.is-threat .sz-kicker { color: var(--crt-crit); text-shadow: 0 0 6px rgba(255,107,120,0.5); }
+  .sz-live-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; box-shadow: 0 0 6px currentColor; animation: sz-blink 1.6s ease-in-out infinite; }
+  @keyframes sz-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+  .sz-clock { font-size: 0.76rem; color: var(--crt-dim); letter-spacing: 0.12em; margin-left: auto; text-transform: uppercase; }
+  .sz-close {
+    width: 44px; height: 44px; border-radius: 6px; border: 1px solid var(--crt-faint); background: transparent;
+    color: var(--crt); cursor: pointer; display: grid; place-items: center; flex-shrink: 0; position: relative; z-index: 2;
+  }
+  .sz-close:hover { background: rgba(92,255,143,0.1); border-color: var(--crt); }
+  .sz-close:focus-visible, .sz-continue:focus-visible { outline: 2px solid var(--crt); outline-offset: 3px; }
+  .sz-close svg { width: 20px; height: 20px; filter: drop-shadow(0 0 3px rgba(92,255,143,0.6)); }
+  .sz-title {
+    font-size: 1.45rem; font-weight: 700; color: var(--crt);
+    text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.9rem; line-height: 1.25; min-height: 1.25em;
+  }
+  .sz-title-typed::before { content: '> '; color: var(--crt-dim); }
+  .sz-panel.is-threat .sz-title { text-shadow: var(--crt-glow), 2px 0 rgba(255,107,120,0.45), -2px 0 rgba(92,255,143,0.25); }
+
+  /* ── Station map (SVG drawn by the story script from ROOMS) ──
+     A top-down illustration: WARDEN's core at the hub, the rooms as modules round a
+     ring corridor, maintenance ducts on an inner ring, solar wing, docking arm,
+     starfield and planet. Rooms keep their state colours AND a status word.
+     All lettering is terminal phosphor and types itself in with the rest of the report. */
+  .sz-map { background: #020704; border: 1px solid var(--crt-faint); border-radius: 8px; overflow: hidden; }
+  .sz-map svg { display: block; width: 100%; height: auto; }
+  .sz-map text { font-family: var(--hud-font); filter: drop-shadow(0 0 2px rgba(92,255,143,0.65)); }
+  .sz-map .star     { fill: #cfe9d6; }
+  .sz-map .planet   { fill: url(#szPlanet); stroke: rgba(92,255,143,0.3); stroke-width: 2; }
+  .sz-map .truss    { stroke: #33473a; stroke-width: 3; fill: none; }
+  .sz-map .panel    { fill: url(#szSolar); stroke: #2a5a3c; stroke-width: 1.5; }
+  .sz-map .dock     { fill: #0c140f; stroke: #33473a; stroke-width: 1.5; }
+  .sz-map .dock-ring { fill: none; stroke: #4f6b58; stroke-width: 3; }
+  .sz-map .spoke    { stroke: #121b15; stroke-width: 16; stroke-linecap: round; }
+  .sz-map .spoke-edge { stroke: #26372c; stroke-width: 20; stroke-linecap: round; }
+  .sz-map .ring     { fill: none; stroke: #121b15; stroke-width: 22; }
+  .sz-map .ring-edge { fill: none; stroke: #26372c; stroke-width: 26; }
+  .sz-map .ring-light { fill: #5cff8f; opacity: 0.75; }
+  .sz-map .duct     { fill: none; stroke: #6b3341; stroke-width: 2; stroke-dasharray: 3 5; }
+  .sz-map .zone-label { fill: #3fcf6e; font-size: 9px; letter-spacing: 0.22em; }
+  .sz-map .room .base { fill: #070d09; }
+  .sz-map .room .body { fill: url(#szPlate); stroke: #33473a; stroke-width: 1.5; stroke-dasharray: 5 4; }
+  .sz-map .room .win  { fill: #1d2a21; }
+  .sz-map .room .name   { fill: #5cff8f; font-size: 13px; font-weight: 700; letter-spacing: 0.04em; }
+  .sz-map .room .status { font-size: 10px; letter-spacing: 0.14em; fill: #3fcf6e; }
+  .sz-map .room .obj-tag { font-size: 9.5px; letter-spacing: 0.12em; fill: #ffc95c; filter: drop-shadow(0 0 2px rgba(255,201,92,0.6)); }
+  .sz-map .room.offline .name { fill: #3fcf6e; }
+  .sz-map .room.online   .body { fill: rgba(92,255,143,0.12); stroke: #5cff8f; stroke-dasharray: none; }
+  .sz-map .room.online   .status, .sz-map .room.online .win { fill: #5cff8f; }
+  .sz-map .room.unstable .body { fill: rgba(255,201,92,0.1); stroke: #ffc95c; stroke-dasharray: none; }
+  .sz-map .room.unstable .status, .sz-map .room.unstable .win { fill: #ffc95c; }
+  .sz-map .room.unstable .status { filter: drop-shadow(0 0 2px rgba(255,201,92,0.6)); }
+  .sz-map .room.sealed   .body { fill: url(#szHatch); stroke: #ff6b78; stroke-dasharray: none; }
+  .sz-map .room.sealed   .status, .sz-map .room.sealed .win { fill: #ff8f99; }
+  .sz-map .room.sealed   .status { filter: drop-shadow(0 0 2px rgba(255,107,120,0.6)); }
+  .sz-map .room.objective .body { stroke-width: 2.5; }
+  .sz-map .core-ring { fill: none; stroke: #33473a; stroke-width: 1; stroke-dasharray: 2 4; }
+  .sz-map .obj-ring { fill: none; stroke: #ffc95c; stroke-width: 1.5; animation: sz-obj 2.4s ease-in-out infinite; }
+  @keyframes sz-obj { 0%, 100% { stroke-opacity: 0.15; } 50% { stroke-opacity: 0.8; } }
+  .sz-map .you        { fill: #5cff8f; stroke: #020704; stroke-width: 2; filter: drop-shadow(0 0 4px rgba(92,255,143,0.8)); }
+  .sz-map .threat-dot { fill: var(--threat); }
+  .sz-map .threat-ring {
+    fill: none; stroke: var(--threat); stroke-width: 2;
+    transform-box: fill-box; transform-origin: center; animation: sz-ping 1.8s ease-out infinite;
+  }
+  @keyframes sz-ping { 0% { transform: scale(1); opacity: 0.9; } 100% { transform: scale(3); opacity: 0; } }
+
+  .sz-legend { display: flex; flex-wrap: wrap; gap: 0.4rem 1.1rem; margin-top: 0.5rem; font-size: 0.74rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--crt-dim); }
+  .sz-legend span { display: inline-flex; align-items: center; gap: 0.4rem; }
+  .sz-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; }
+  .sz-legend .k-you    { background: #5cff8f; box-shadow: 0 0 5px #5cff8f; }
+  .sz-legend .k-threat { background: var(--threat); box-shadow: 0 0 0 3px rgba(255,59,78,0.3); }
+  .sz-legend .k-obj    { border-radius: 2px; border: 2px solid #ffc95c; width: 12px; height: 10px; }
+
+  /* Text version of the map: always available to screen readers, and shown on
+     narrow screens where the SVG labels would be too small to read. */
+  .sz-roomlist {
+    list-style: none; display: none; grid-template-columns: 1fr 1fr; gap: 0.35rem;
+    margin-top: 0.6rem; font-size: 0.82rem; text-transform: uppercase;
+  }
+  .sz-roomlist li { border: 1px solid var(--crt-faint); border-radius: 6px; padding: 0.4rem 0.6rem; color: var(--crt); }
+  .sz-roomlist li span { display: block; font-size: 0.7rem; letter-spacing: 0.08em; color: var(--crt-dim); }
+  .sz-roomlist li.st-online   { border-color: var(--crt); }
+  .sz-roomlist li.st-unstable { border-color: rgba(255,201,92,0.6); }  .sz-roomlist li.st-unstable span { color: var(--crt-warn); }
+  .sz-roomlist li.st-sealed   { border-color: rgba(255,107,120,0.6); }  .sz-roomlist li.st-sealed span   { color: var(--crt-crit); }
+  /* focus lands on the stage heading after a report closes — it's a landmark, not a control */
+  .stage-header h2[tabindex="-1"]:focus { box-shadow: none; }
+
+  /* ── Status readouts — terminal lines: LABEL ...... VALUE [TAG].
+       The level is the tag word (OK / WARN / CRIT), never colour alone. ── */
+  .sz-readouts {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr)); gap: 0.15rem 1.6rem;
+    margin: 0.9rem 0 0.2rem; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.06em;
+  }
+  .sz-readout { display: flex; align-items: baseline; gap: 0.5rem; min-height: 1.6em; }
+  .sz-readout .r-label { color: var(--crt-dim); white-space: nowrap; }
+  .sz-readout .r-lead  { flex: 1; min-width: 1rem; border-bottom: 2px dotted var(--crt-faint); transform: translateY(-0.25em); }
+  .sz-readout .r-value { font-weight: 700; color: var(--crt); font-variant-numeric: tabular-nums; text-align: right; }
+  .sz-readout .r-tag   { font-size: 0.78rem; color: var(--crt-dim); white-space: pre; min-width: 4.4em; }
+  .sz-readout.lvl-warn   .r-value, .sz-readout.lvl-warn .r-tag { color: var(--crt-warn); text-shadow: 0 0 4px rgba(255,201,92,0.5); }
+  .sz-readout.lvl-danger .r-value, .sz-readout.lvl-danger .r-tag { color: var(--crt-crit); text-shadow: 0 0 4px rgba(255,107,120,0.55); }
+
+  /* ── Log text + optional crew log ── */
+  .sz-log {
+    font-size: 1.02rem; line-height: 1.7; color: var(--crt); margin-top: 1rem;
+    max-width: 68ch; min-height: 3.4em; cursor: default;
+  }
+  .sz-log .prompt { color: var(--crt-dim); margin-right: 0.5rem; }
+  .sz-quote {
+    margin-top: 0.9rem; padding: 0.7rem 0.95rem; border-left: 3px solid var(--crt-crit);
+    background: rgba(255,107,120,0.06); border-radius: 0 6px 6px 0; max-width: 68ch;
+  }
+  .sz-quote p    { font-size: 0.94rem; line-height: 1.6; color: #ffd0d4; text-shadow: 0 0 4px rgba(255,107,120,0.35); min-height: 1.6em; }
+  .sz-quote cite { display: block; margin-top: 0.35rem; font-style: normal; font-size: 0.74rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--crt-crit); min-height: 1.2em; }
+  .sz-foot { display: flex; justify-content: flex-end; align-items: center; gap: 1rem; margin-top: 1.1rem; position: relative; z-index: 2; }
+  .sz-skip-hint { font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--crt-faint); text-shadow: none; }
+  .sz-continue {
+    min-height: 48px; padding: 0.7rem 1.4rem; font-size: 0.95rem; font-family: var(--hud-font);
+    text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700;
+    background: var(--crt); color: #021006; border: 1px solid var(--crt); border-radius: 6px; text-shadow: none;
+    box-shadow: 0 0 14px rgba(92,255,143,0.35);
+  }
+  .sz-continue:hover { background: #8dffb0; border-color: #8dffb0; }
+
+  /* ── Completion banner reskin ── */
+  .completion-banner { border-top-color: var(--cobalt-text); }
+  .completion-banner h3 { font-family: var(--hud-font); text-transform: uppercase; letter-spacing: 0.1em; color: var(--cobalt-text); }
+
+  /* ── "Remind me" cards — worked reminders on demand (expertise reversal: fluent
+       students skip them, students who've forgotten open them) ── */
+  .remind { background: var(--card); border: 1px solid var(--line); border-radius: 10px; margin: 0 0 1rem; }
+  .remind summary {
+    cursor: pointer; min-height: 44px; display: flex; align-items: center; gap: 0.5rem;
+    padding: 0.55rem 1rem; font-weight: 600; font-size: 0.9rem; color: var(--cobalt-text); list-style: none;
+  }
+  .remind summary::-webkit-details-marker { display: none; }
+  .remind summary::before { content: '▸'; transition: transform 0.15s; }
+  .remind[open] summary::before { transform: rotate(90deg); }
+  .remind summary code, .remind li code {
+    background: var(--code-bg); color: var(--cobalt-text); border: 1px solid var(--line-strong);
+    font-family: var(--font-mono); padding: 0.05rem 0.35rem; border-radius: 5px; font-size: 0.86em;
+  }
+  .remind ul { margin: 0 1rem 0.9rem 2.2rem; display: grid; gap: 0.4rem; font-size: 0.9rem; color: var(--text); line-height: 1.55; }
+
+  @media (max-width: 600px) {
+    .sz-header-right { margin-left: 0; width: 100%; }
+    .sz-objective { flex: 1; max-width: none; }
+    .sz-panel { padding: 0.9rem 1rem 1.1rem; }
+    .sz-title { font-size: 1.15rem; }
+    .sz-map, .sz-legend, .sz-skip-hint { display: none; }
+    .sz-roomlist { display: grid; }
+    .sz-readouts { grid-template-columns: 1fr; font-size: 0.84rem; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .sz-live-dot, .sz-map .obj-ring, .sz-map .threat-ring, .tw-idle::after, .sz-objective .sz-obj-text::after { animation: none !important; }
+    .sz-map .threat-ring { opacity: 0.6; transform: scale(1.8); }
+  }
 </style>
 </head>
 <body>
@@ -487,28 +770,30 @@ color:  blue
     ✔  (tested with 9 and 5) — e.g. print(a - b)
 -->
 
+<!-- STATION ZERO HEADER — chapter line + objective are filled in from STORY by the story script. -->
 <header class="site-header">
-  <!--
-    FILL IN ①: Header icon — a short keyword, symbol, or emoji representing the topic.
-    For a code keyword (e.g. "def", "input", "for"): use <div class="header-icon">keyword</div>
-    For an emoji: use <div style="font-size:3rem;line-height:1">🐢</div>
-  -->
-  <div class="header-icon">???</div>
-
-  <div class="header-text">
-    <h1>PRIMM Practice</h1>
-    <!-- FILL IN ②: Replace TOPIC with the lesson topic name -->
-    <p>TOPIC &nbsp;·&nbsp; Python Programming &nbsp;·&nbsp; Year 9</p>
+  <div class="sz-mark" aria-hidden="true">
+    <!-- station glyph: ring hull + spine -->
+    <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+      <circle cx="16" cy="16" r="10"/><circle cx="16" cy="16" r="3.5"/>
+      <path d="M16 2v6M16 24v6M2 16h6M24 16h6"/>
+    </svg>
   </div>
 
-  <!--
-    FILL IN ③: A 4–6 line syntax-highlighted snippet of the key concept.
-    Highlight using: <span class="kw"> keywords, <span class="fn"> functions,
-    <span class="st"> strings, <span class="num"> numbers.
-    This is decorative only — it does not need to exactly match STARTER_CODE.
-  -->
-  <pre class="header-code"><span class="kw">keyword</span> <span class="fn">example</span>():
-    <span class="fn">print</span>(<span class="st">"Hello!"</span>)</pre>
+  <div class="header-text">
+    <h1>Station Zero</h1>
+    <p id="szChapterLine">Chapter · Python Programming · Year 9</p>
+  </div>
+
+  <div class="sz-header-right">
+    <div class="sz-objective" id="szObjective"><b>Objective:</b> —</div>
+    <button class="btn btn-map" type="button" onclick="window.StationZero?.showMap()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 11h18M9 4v7M15 11v9"/>
+      </svg>
+      Station map
+    </button>
+  </div>
 </header>
 
 <div class="progress-strip"><div class="progress-fill" id="progressFill" style="width:20%"></div></div>
@@ -537,82 +822,36 @@ color:  blue
 
   <div class="info-box">
     <span class="icon">💡</span>
-    <span>Read the code below <strong>but don't run it yet</strong>. Making predictions (even wrong ones) helps you learn more when you run it.</span>
+    <span>This is what's left of the Cryo Bay's <strong>door check-in program</strong>. Read it <strong>but don't run it yet</strong>.
+    Imagine the user types <strong>Riley</strong> for their name and <strong>Engineer</strong> for their job.</span>
   </div>
 
-  <!--
-    FILL IN ④: Annotated code block.
-    Each line of code is one .ann-row with three cells:
-      1. Line number (.line-num)
-      2. The code (use .kw / .fn / .st / .num spans for highlighting)
-      3. A short annotation label (.ann-label) — omit the <span> to leave blank
-    Blank lines: <div class="ann-row"><span class="line-num">N</span><span>&nbsp;</span><span></span></div>
-  -->
   <div class="annotated-code">
-    <div class="ann-row"><span class="line-num">1</span><span><span class="kw">keyword</span> <span class="fn">example</span>()</span><span class="ann-label">FILL IN: annotation</span></div>
-    <div class="ann-row"><span class="line-num">2</span><span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">print</span>(<span class="st">"Hello!"</span>)</span><span class="ann-label">FILL IN: annotation</span></div>
-    <!-- Add more .ann-row divs to match STARTER_CODE line count -->
+    <div class="ann-row"><span class="line-num">1</span><span>name = <span class="fn">input</span>(<span class="st">"Enter your name: "</span>)</span><span class="ann-label">asks a question, stores the answer</span></div>
+    <div class="ann-row"><span class="line-num">2</span><span>role = <span class="fn">input</span>(<span class="st">"Enter your job: "</span>)</span><span class="ann-label">asks again, stores a second answer</span></div>
+    <div class="ann-row"><span class="line-num">3</span><span><span class="fn">print</span>(<span class="st">"CRYO BAY DOOR"</span>)</span><span class="ann-label"></span></div>
+    <div class="ann-row"><span class="line-num">4</span><span><span class="fn">print</span>(<span class="st">"Checking in: "</span> + role + <span class="st">" "</span> + name)</span><span class="ann-label">+ joins pieces of text</span></div>
+    <div class="ann-row"><span class="line-num">5</span><span><span class="fn">print</span>(<span class="st">"Door unlocking..."</span>)</span><span class="ann-label"></span></div>
   </div>
 
-  <!--
-    FILL IN ⑤: Predict questions — aim for 3–4 total.
-    Mix question types: use at most one or two free-text boxes; prefer MCQ, True/False,
-    or word-bank for the rest. Questions are shown ONE AT A TIME — each card has its
-    own "Check answer" button. After checking, the student sees the feedback and then
-    the activity AUTO-ADVANCES to the next card (after a short delay, so the feedback
-    is read). A "← Back / Forward →" bar below the cards lets students revisit any
-    question they have already answered (their answer and feedback are re-shown).
-    This one-question-at-a-time + back/forward pattern is the SAME
-    across Predict, Investigate, and Modify — keep it consistent.
-    Predict advances automatically ONLY when the answer is correct; a wrong answer
-    shows a manual "Continue →" button so the student can read the feedback at their
-    own pace. (Handled by showPredictContinue() — no per-question wiring needed.)
+  <details class="remind">
+    <summary>Remind me: <code>input()</code>, variables and <code>+</code></summary>
+    <ul>
+      <li><code>input("…")</code> shows the question, waits for the user to type, then gives back what they typed.</li>
+      <li><code>=</code> stores the value on the right in the variable on the left, so <code>name = input(…)</code> keeps the answer in <code>name</code></li>
+      <li>Words in quotes are printed exactly as written. A variable name with <strong>no</strong> quotes prints what is stored inside it.</li>
+      <li><code>+</code> between two pieces of text <strong>joins</strong> them: <code>"Hi " + "Sam"</code> gives <code>Hi Sam</code></li>
+    </ul>
+  </details>
 
-    ── QUESTION TYPES ──────────────────────────────────────────────────────────
-
-    Card order is fixed by PREDICT_CARDS / PREDICT_NAMES in the JS (qcard_p_mcq1,
-    qcard_p_mcq2, qcard_p_text1). To add/remove a Predict question, update those two
-    arrays — the one-at-a-time flow, auto-advance and Back/Forward all follow them.
-
-    MCQ (4 options):
-      • name= must match an entry in RADIO_GROUPS; value= must match P_CORRECT key
-      • id: qcard_<name>, feedback: fb_<name>
-      • Keep all option texts roughly the same length
-      • Check button only: checkPredictMCQ('p_mcq1')  — auto-advances if correct,
-        otherwise shows a manual "Continue →"
-
-    TRUE/FALSE (2-option MCQ — same pattern, just 2 radio options):
-      • Use when the question has a binary correct/incorrect answer
-      • Same radio-opts markup, same checkPredictMCQ('<name>') call
-
-    WORD BANK (click-to-place — good for "what is the output?" questions):
-      • Uses .wb-pool + .wb-answer markup (CSS already included above)
-      • Add a const WB_<id>_WORDS array + wbState object in the JS
-      • Render function: wbRender(); Place/remove: wbPlace(word) / wbRemove(idx)
-      • Check: a custom checkWordBank() function (see 1_Strings_PRIMM.html for
-        a complete worked example — search for "wbP3")
-      • Do NOT add word-bank ids to TEXT_FIELDS; save placed[] in state manually
-
-    FREE-TEXT (single-line input — use sparingly):
-      • id= must match an entry in TEXT_FIELDS
-      • Check button only: checkPredictText()  — auto-advances if correct,
-        otherwise shows a manual "Continue →"
-      • On the last Predict card, answering correctly (or clicking Continue →) advances directly to Run
-
-    ── DESIGN RULE ─────────────────────────────────────────────────────────────
-    Target: 1 MCQ + 1 True/False + 1 word-bank OR free-text per Predict section.
-    Never use free-text for questions with a single objectively correct answer —
-    that is what MCQ and word-bank are for.
-  -->
-
-  <!-- MCQ question 1 — visible immediately -->
+  <!-- Card order is fixed by PREDICT_CARDS / PREDICT_NAMES in the JS. -->
   <div class="q-card" id="qcard_p_mcq1">
-    <label class="q-label"><span class="q-num">1</span> FILL IN: Question text?</label>
+    <label class="q-label"><span class="q-num">1</span> What is stored in <code>role</code> after line 2 runs?</label>
     <div class="radio-opts" id="ropts_p_mcq1">
-      <label class="radio-opt"><input type="radio" name="p_mcq1" value="option_a" onchange="saveState()"> <span>FILL IN: Option A</span></label>
-      <label class="radio-opt"><input type="radio" name="p_mcq1" value="option_b" onchange="saveState()"> <span>FILL IN: Option B (correct — keep same length as others)</span></label>
-      <label class="radio-opt"><input type="radio" name="p_mcq1" value="option_c" onchange="saveState()"> <span>FILL IN: Option C</span></label>
-      <label class="radio-opt"><input type="radio" name="p_mcq1" value="option_d" onchange="saveState()"> <span>FILL IN: Option D</span></label>
+      <label class="radio-opt"><input type="radio" name="p_mcq1" value="option_a" onchange="saveState()"> <span>The word the user types, such as Engineer</span></label>
+      <label class="radio-opt"><input type="radio" name="p_mcq1" value="option_b" onchange="saveState()"> <span>The question text, "Enter your job: "</span></label>
+      <label class="radio-opt"><input type="radio" name="p_mcq1" value="option_c" onchange="saveState()"> <span>Nothing yet — role is filled in on line 4</span></label>
+      <label class="radio-opt"><input type="radio" name="p_mcq1" value="option_d" onchange="saveState()"> <span>The name the user typed in on line 1</span></label>
     </div>
     <div class="mcq-fb" id="fb_p_mcq1"></div>
     <div style="margin-top:0.8rem;display:flex;gap:0.6rem;flex-wrap:wrap;align-items:center">
@@ -621,13 +860,11 @@ color:  blue
     <div class="revisit-note">You've already answered this — use <strong>Forward →</strong> to return to where you were.</div>
   </div>
 
-  <!-- MCQ question 2 — revealed after Q1 is answered -->
   <div class="q-card step-hidden" id="qcard_p_mcq2">
-    <label class="q-label"><span class="q-num">2</span> FILL IN: Question text?</label>
+    <label class="q-label"><span class="q-num">2</span> True or false: line 3 asks the user a question.</label>
     <div class="radio-opts" id="ropts_p_mcq2">
-      <label class="radio-opt"><input type="radio" name="p_mcq2" value="option_a" onchange="saveState()"> <span>FILL IN: Option A (correct)</span></label>
-      <label class="radio-opt"><input type="radio" name="p_mcq2" value="option_b" onchange="saveState()"> <span>FILL IN: Option B</span></label>
-      <label class="radio-opt"><input type="radio" name="p_mcq2" value="option_c" onchange="saveState()"> <span>FILL IN: Option C</span></label>
+      <label class="radio-opt"><input type="radio" name="p_mcq2" value="option_a" onchange="saveState()"> <span>True</span></label>
+      <label class="radio-opt"><input type="radio" name="p_mcq2" value="option_b" onchange="saveState()"> <span>False</span></label>
     </div>
     <div class="mcq-fb" id="fb_p_mcq2"></div>
     <div style="margin-top:0.8rem;display:flex;gap:0.6rem;flex-wrap:wrap;align-items:center">
@@ -636,12 +873,10 @@ color:  blue
     <div class="revisit-note">You've already answered this — use <strong>Forward →</strong> to return to where you were.</div>
   </div>
 
-  <!-- Free-text question — revealed after Q2 is answered -->
   <div class="q-card step-hidden" id="qcard_p_text1">
-    <label class="q-label"><span class="q-num">3</span> FILL IN: Question asking for exact output or a typed answer?</label>
-    <input type="text" id="p_text1" placeholder="Type your answer here…" oninput="saveState(); clearPredictError('qcard_p_text1')">
-    <!-- Optional: add a hint box pointing at the relevant line -->
-    <div class="hint-box" style="margin-top:0.6rem">Hint: FILL IN: brief pointer to the relevant line(s) of code.</div>
+    <label class="q-label" for="p_text1"><span class="q-num">3</span> Riley types <code>Engineer</code> for the job. Exactly what does line 4 print?</label>
+    <input type="text" id="p_text1" placeholder="Type what appears on screen…" oninput="saveState(); clearPredictError('qcard_p_text1')">
+    <div class="hint-box" style="margin-top:0.6rem">Hint: <code>+</code> joins the pieces in the order they're written, and <code>" "</code> is a space</div>
     <div class="mcq-fb" id="fb_p_text1"></div>
     <div style="margin-top:0.8rem;display:flex;gap:0.6rem;flex-wrap:wrap;align-items:center">
       <button class="btn btn-check" id="btn_check_p_text1" onclick="checkPredictText()">✓ Check answer</button>
@@ -669,43 +904,25 @@ color:  blue
     </div>
   </div>
 
-  <!--
-    FILL IN ⑥: Describe what will happen when Run code is clicked.
-    If the program uses input(), name the mock values that will be used.
-    If it uses no input(), remove the "test inputs" clause.
-  -->
-  <!--
-    LINEAR FLOW: instruction (this info box) → editor (with Run) → answer + Check button.
-    Everything reads straight down, so the student never scrolls back up. The same
-    instruction → editor → answer order is used in Investigate. Keep it consistent.
-  -->
   <div class="info-box">
     <span class="icon">🖥️</span>
-    <span>Use the <strong>▶ Run code</strong> button below to see the program in action.
-    <!-- e.g. "The program will run with the test inputs Alice and 13." -->
-    Compare the output with your predictions, then describe what you saw at the bottom.</span>
+    <span>Press <strong>▶ Run code</strong>. When the program asks, type <strong>your own name</strong>, then a job (for example <strong>Engineer</strong>) —
+    type each answer in the output panel and press Enter. Compare what appears with your predictions, then answer at the bottom.</span>
   </div>
 
-  <!-- ① Editor (with Run) -->
   <div class="code-checker">
-    <textarea class="checker-textarea" id="r_editor" data-title="Python Editor"></textarea>
+    <textarea class="checker-textarea" id="r_editor" data-title="Door check-in"></textarea>
     <div class="checker-footer">
-      <!--
-        FILL IN ⑦: Mock inputs for the Run stage.
-        If the program calls input() N times, supply N strings in the array.
-        If no input() is used, leave the array empty: []
-      -->
-      <button class="btn btn-check" onclick="runCodeInEditor('r_editor', 'r_fb_run', [/* 'input1', 'input2' */])">▶ Run code</button>
+      <!-- no inputs passed → the student types answers live in the output panel -->
+      <button class="btn btn-check" onclick="runCodeInEditor('r_editor', 'r_fb_run')">▶ Run code</button>
       <div class="feedback loading hidden" id="r_fb_run"></div>
     </div>
   </div>
 
-  <!-- FILL IN ⑧: Key concept hint shown after running. -->
-  <div class="hint-box">💡 FILL IN: The most important thing to notice about the output or the code structure.</div>
+  <div class="hint-box">💡 Each <code>input()</code> waited for you, then stored your answer in a variable. Line 4 printed what was <strong>stored</strong> in <code>role</code> and <code>name</code>, not the words "role" and "name".</div>
 
-  <!-- ② Answer + Check button, directly below the editor -->
   <div class="q-card" id="qcard_r1">
-    <label class="q-label"><span class="q-num">1</span> Describe what output you saw when you ran the program. Did anything surprise you compared with your predictions?</label>
+    <label class="q-label" for="r1"><span class="q-num">1</span> Did line 4 show your job and name the way you predicted? Was anything different from what you expected?</label>
     <textarea id="r1" placeholder="Write what appeared in the output panel…" oninput="saveState(); clearRunError('qcard_r1')"></textarea>
     <button class="btn btn-check" id="btn_check_run" onclick="tryCompleteRun()" style="margin-top:0.8rem">
       ⚡ Check response
@@ -730,194 +947,73 @@ color:  blue
     <div class="ac-progress-fill" id="progress-fill-I" style="width: 0%; background: var(--stage-i);"></div>
   </div>
 
-  <!--
-    FILL IN ⑨: Investigate step questions.
-
-    ╔══ FLOW RULE — READ BEFORE WRITING STEP INSTRUCTIONS ══════════════════╗
-    ║  Each step tells the student what to CHANGE or ADD to the code that   ║
-    ║  is already in the editor. Students never retype earlier work.        ║
-    ║                                                                       ║
-    ║  Step 1: "Change X to Y. Run it. What happens?"                      ║
-    ║  Step 2: "Keep your step 1 change. Now also add Z. Run it."          ║
-    ║  Step 3: "Keep all your changes. Now try W. Why does that happen?"   ║
-    ║  Step 4: "Keep all your changes. Now add something new."             ║
-    ║                                                                       ║
-    ║  Avoid: "Write the following code", "Start with this program",       ║
-    ║  or any instruction that implies starting fresh.                      ║
-    ╠══ QUESTION PLACEMENT — INSTRUCTIONS ABOVE, QUESTION BELOW ════════════╣
-    ║  The prompt card up top (#i_steps) holds ONLY the instructions to     ║
-    ║  carry out — the change(s) to make plus "Run your code." The actual   ║
-    ║  QUESTION the student answers ("How many lines now?", "What changed?")║
-    ║  goes in the matching answer card below the editor (#i_answers),      ║
-    ║  rendered as a <label class="q-label"> above its input. This keeps    ║
-    ║  the thing-to-do next to the editor and the thing-to-answer next to   ║
-    ║  the answer box. Applies to Modify steps too.                         ║
-    ╚═══════════════════════════════════════════════════════════════════════╝
-
-    ╔══ THE STANDARD BUG STEP — step 3 below is ALREADY WRITTEN ════════════╗
-    ║  In the default 3-step layout, steps 1–2 are yours to fill in freely  ║
-    ║  (concept exploration); step 3 is the STANDARD "fix a bug" step and   ║
-    ║  ships pre-written as an MCQ — you only need to fill in IBUG_LINE /   ║
-    ║  IBUG_FIXED_LINE in checkers.js and the option text (see FILL IN ②b). ║
-    ║  Step 3 = guided encounter — student presses "😈 Break it" to add the ║
-    ║  bug, with the line/error explained, then fixes it themselves. Its    ║
-    ║  Check button completes Investigate (tryCompleteInvestigate()), so    ║
-    ║  this step must always be the FINAL one — if you add more concept     ║
-    ║  steps, insert them before it and renumber (see the HTML comment      ║
-    ║  just above the bug-step card for the exact renumbering checklist).   ║
-    ╚═══════════════════════════════════════════════════════════════════════╝
-
-    ── QUESTION TYPES FOR INVESTIGATE STEPS (steps BEFORE the bug step) ────
-
-    Mix question types — avoid making every step a free-text box.
-    Target: at least 1 text + 1 MCQ or True/False across your concept steps
-    (steps 1–2 by default), on top of the standard bug-step MCQ.
-
-    TEXT (textarea):
-      • For open observations ("What changed?", "Why does this happen?")
-      • Add validate(v) to I_FIELDS with keyword checks where useful
-      • Set type:'text' (or omit — text is the default)
-
-    MCQ (4-option radio inside the ANSWER card, below the editor):
-      • Use when the answer is one of a small set of concrete values
-        (e.g. "how many lines?", "which value is stored?")
-      • Put radio-opts markup (name="iN_group" onchange="saveState()") in the answer
-        card qcard_iN (below the editor) — NOT in the prompt card up top
-      • Add a feedback div: <div class="mcq-fb" id="fb_iN"></div>
-      • In I_FIELDS set type:'mcq', radioName:'iN_group',
-        correctValue:'option_X', passMsg:'…', failMsg:'…',
-        and validate() { const c = document.querySelector(...):checked;
-          if (!c) return 'Select…'; if (c.value!==X) return failMsg; return null; }
-      • Add the radio group name to RADIO_GROUPS so it is saved/restored
-
-    TRUE/FALSE (2-option radio — same MCQ pattern, 2 options):
-      • Use for binary yes/no questions ("Does it still work?")
-      • Same type:'mcq' setup with only 2 radio options
-
-    Add/remove cards to match STEP_COUNT_I in the JS.
-    The LAST step's button must call tryCompleteInvestigate() instead of nextStep().
-  -->
-  <!-- ① INSTRUCTION (prompt) cards — top. The matching answer box for each step is
-       rendered below the editor in #i_answers. Both are toggled together per step. -->
+  <!-- Two steps only (confidence builder): the prompt isn't stored · the standard bug step
+       (a NameError — capital N). Each numbered <li> is checked by INV_CHECKS.invN in
+       checkers_wakeup.js. -->
   <div id="i_steps">
 
-    <!-- TICK-LISTS: every instruction that needs a CODE CHANGE is a numbered <li> in the
-         step's <ul class="req-list" id="req_i_N">, checked by INV_CHECKS.invN in
-         checkers.js (one req per numbered <li>, same order). They tick live as the
-         student types/runs, cross on Check, and ALL must pass before that step's answer
-         is accepted. "Run your code" / "type 5 when asked" go in <li class="req-note">
-         lines, which are never ticked. A step with NO code change has no req-list and no
-         INV_CHECKS entry — it is never gated (see L3_Input step 2). -->
     <div class="q-card" id="qcard_i1_prompt" style="border-left-color:var(--stage-i)">
-      <label class="q-label"><span class="q-num" style="background:var(--stage-i)">1</span> In the editor below:</label>
+      <label class="q-label"><span class="q-num" style="background:var(--stage-i)">1</span> Does the question get stored? In the editor below:</label>
       <ul class="req-list" id="req_i_1">
-        <li><span>1</span><span class="req-text">FILL IN: Change <code>X</code> to <code>Y</code></span></li>
-        <li class="req-note">Then press <strong>▶ Run code</strong>.</li>
+        <li><span>1</span><span class="req-text">On line 2, change the words <strong>inside the quotes</strong> to a different question — for example <code>"What is your job? "</code></span></li>
+        <li class="req-note">Press <strong>▶ Run code</strong>, then type any name and any job.</li>
       </ul>
-      <!-- INSTRUCTIONS ONLY here — the question itself lives in the answer card below the editor. -->
     </div>
 
+    <!-- STANDARD BUG STEP — always the last Investigate step; its Check button calls tryCompleteInvestigate(). -->
     <div class="q-card step-hidden" id="qcard_i2_prompt" style="border-left-color:var(--stage-i)">
-      <!--
-        FILL IN: one numbered <li> per code change; students never retype earlier work.
-        If this step asks students to add a new line of code, set needsNewLine: true in I_FIELDS
-        for this step — the editor will automatically insert a newline and position the cursor there.
-      -->
-      <label class="q-label"><span class="q-num" style="background:var(--stage-i)">2</span> Keep your step 1 change. Now:</label>
+      <label class="q-label"><span class="q-num" style="background:var(--stage-i)">2</span> Storm damage: let's <strong>meet an error</strong> — every programmer does, all the time, and it is not a disaster.</label>
       <ul class="req-list" id="req_i_2">
-        <li><span>1</span><span class="req-text">FILL IN: <strong>Add/change</strong> <code>Z</code></span></li>
-        <li class="req-note">Run your code.</li>
-      </ul>
-      <!-- INSTRUCTIONS ONLY — put the question ("What do you observe?") in the answer card below. -->
-    </div>
-
-    <!--
-      STANDARD BUG STEP — the guided bug encounter is ALWAYS the last Investigate
-      step in every activity. See the "THE STANDARD BUG STEP" note further down
-      (near I_FIELDS) for the full explanation and what checkers.js must export
-      (IBUG_LINE / IBUG_FIXED_LINE / isBugFixed …). If you add extra concept steps,
-      insert them BEFORE this step and renumber qcard_i3... and req_i_3 up to match —
-      this step must stay the final one, and its Check button must call
-      tryCompleteInvestigate(). Its "Fix it" tick only counts while the FIXED line is
-      present, so a student who deletes the broken line instead of fixing it never
-      gets the tick (unless deleting IS the fix — see L2_Variables).
-    -->
-    <div class="q-card step-hidden" id="qcard_i3_prompt" style="border-left-color:var(--stage-i)">
-      <label class="q-label"><span class="q-num" style="background:var(--stage-i)">3</span> Now let's <strong>meet an error</strong> — every programmer does, all the time, and it is not a disaster.</label>
-      <ul class="req-list" id="req_i_3">
         <li><span>1</span><span class="req-text">Under the editor, press <strong>😈 Break it</strong> — it adds <strong>one broken line</strong> to your code and runs it for you: it's <strong>line <span id="ibug_line">the last line</span></strong>,
-          <code>FILL IN: show IBUG_LINE here</code><br>FILL IN: name the exact mistake in plain English.</span></li>
-        <li class="req-note">Python stops with a red <strong>FILL IN: error type, e.g. SyntaxError / TypeError</strong> — that's expected. Read the message, then click <strong>💡 Get help</strong> below the editor for a plain-English hint.</li>
-        <li><span>2</span><span class="req-text"><strong>Fix it</strong> (don't delete it!): FILL IN: describe the exact fix (it must turn the line into IBUG_FIXED_LINE), then press <strong>▶ Run code</strong> again until it works.</span></li>
+          <code>print("Access granted to " + Name)</code><br>Look carefully at the capital <strong>N</strong>.</span></li>
+        <li class="req-note">Answer the questions, and Python stops with a red <strong>NameError</strong> — that's expected. Read the message, then click <strong>💡 Get help</strong> below the editor for a plain-English hint.</li>
+        <li><span>2</span><span class="req-text"><strong>Fix it</strong> (don't delete it!): change <code>Name</code> to <code>name</code> so it matches the variable on line 1<br>Then press <strong>▶ Run code</strong> again until it works.</span></li>
       </ul>
-      <!-- INSTRUCTIONS ONLY — put the "what was Python complaining about?" MCQ in the answer card below. -->
     </div>
   </div>
 
-  <!-- ② Shared editor (with Run). Students accumulate changes here across steps. -->
+  <!-- Shared editor (with Run). Students accumulate changes here across steps. -->
   <div class="code-checker" style="margin-top:0.5rem">
-    <textarea class="checker-textarea" id="i_editor" data-title="Python Editor" oninput="saveState(); refreshInvTicks()"></textarea>
+    <textarea class="checker-textarea" id="i_editor" data-title="Door check-in" oninput="saveState(); refreshInvTicks()"></textarea>
     <div class="checker-footer">
-      <!-- FILL IN ⑩: Mock inputs matching the current state of the code in the editor. -->
-      <button class="btn btn-check" onclick="runCodeInEditor('i_editor', 'i_fb_run', [/* 'input1' */])">▶ Run code</button>
+      <button class="btn btn-check" onclick="runCodeInEditor('i_editor', 'i_fb_run')">▶ Run code</button>
       <button class="btn btn-reset" id="btn_reset_i" onclick="resetInvestigateEditor()">↺ Reset to original</button>
       <div class="feedback loading hidden" id="i_fb_run"></div>
     </div>
   </div>
 
-  <!-- ③ ANSWER cards — directly below the editor (one per step, toggled with its prompt).
-       For an MCQ/True-False step, put the radio-opts + <div class="mcq-fb" id="fb_iN"> here
-       (inside the answer card), not in the prompt card above. -->
+  <!-- ANSWER cards — directly below the editor, one per step, toggled with its prompt. -->
   <div id="i_answers">
 
     <div class="q-card" id="qcard_i1" style="border-left-color:var(--stage-i)">
       <div style="font-size:0.84rem;color:var(--muted);margin-bottom:0.4rem">✍️ Your answer — step 1</div>
-      <label class="q-label">FILL IN: What changes in the output?</label>
-      <textarea id="i1" placeholder="Describe what changed…" oninput="saveState()"></textarea>
+      <label class="q-label">You changed the question's words. Did that change what is stored in <code>role</code>?</label>
+      <div class="radio-opts" id="ropts_i1_mcq">
+        <label class="radio-opt"><input type="radio" name="i1_mcq" value="option_a" onchange="saveState()"> <span>Yes — role now holds the new question text</span></label>
+        <label class="radio-opt"><input type="radio" name="i1_mcq" value="option_b" onchange="saveState()"> <span>Yes — role is now empty, as the question changed</span></label>
+        <label class="radio-opt"><input type="radio" name="i1_mcq" value="option_c" onchange="saveState()"> <span>No — the question is only shown, never stored</span></label>
+        <label class="radio-opt"><input type="radio" name="i1_mcq" value="option_d" onchange="saveState()"> <span>No — but Python now ignores the job you type</span></label>
+      </div>
+      <div class="mcq-fb" id="fb_i1"></div>
       <button class="btn btn-next" id="btn_check_i1" style="margin-top:10px" onclick="nextStep('I', 1)" disabled>✓ Check answer</button>
     </div>
 
     <div class="q-card step-hidden" id="qcard_i2" style="border-left-color:var(--stage-i)">
-      <div style="font-size:0.84rem;color:var(--muted);margin-bottom:0.4rem">✍️ Your answer — step 2</div>
-      <label class="q-label">FILL IN: What do you observe?</label>
-      <textarea id="i2" placeholder="Describe what happened…" oninput="saveState()"></textarea>
-      <button class="btn btn-next" id="btn_check_i2" style="margin-top:10px" onclick="nextStep('I', 2)" disabled>✓ Check answer</button>
-    </div>
-
-    <!-- Guided bug encounter — step 3 (the last step) answer is a comprehension MCQ
-         about the error message, and the step's Check button completes Investigate. -->
-    <div class="q-card step-hidden" id="qcard_i3" style="border-left-color:var(--stage-i)">
-      <div style="font-size:0.84rem;color:var(--muted);margin-bottom:0.4rem">✍️ Your answer — step 3 (read the error)</div>
+      <div style="font-size:0.84rem;color:var(--muted);margin-bottom:0.4rem">✍️ Your answer — step 2 (read the error)</div>
       <div style="display:flex;gap:0.6rem;flex-wrap:wrap;margin-bottom:0.7rem;align-items:center">
         <button class="btn btn-check" type="button" onclick="breakItDemo()">😈 Break it</button>
         <span style="font-size:0.82rem;color:var(--muted);font-style:italic">adds the broken line above and runs it — then read the error below</span>
       </div>
       <label class="q-label">You ran the broken line and read the error. <strong>What was Python complaining about?</strong></label>
-      <div class="radio-opts" id="ropts_i3_mcq" style="margin-top:0.5rem">
-        <label class="radio-opt"><input type="radio" name="i3_mcq" value="option_a" onchange="saveState()"> <span>FILL IN: a plausible wrong answer</span></label>
-        <label class="radio-opt"><input type="radio" name="i3_mcq" value="option_b" onchange="saveState()"> <span>FILL IN: the CORRECT description of the bug</span></label>
-        <label class="radio-opt"><input type="radio" name="i3_mcq" value="option_c" onchange="saveState()"> <span>FILL IN: a plausible wrong answer</span></label>
-        <label class="radio-opt"><input type="radio" name="i3_mcq" value="option_d" onchange="saveState()"> <span>FILL IN: a plausible wrong answer</span></label>
+      <div class="radio-opts" id="ropts_i2_mcq" style="margin-top:0.5rem">
+        <label class="radio-opt"><input type="radio" name="i2_mcq" value="option_a" onchange="saveState()"> <span>Name with a capital N is a different variable, never made</span></label>
+        <label class="radio-opt"><input type="radio" name="i2_mcq" value="option_b" onchange="saveState()"> <span>print() can only show text in quotes, not a variable</span></label>
+        <label class="radio-opt"><input type="radio" name="i2_mcq" value="option_c" onchange="saveState()"> <span>The user didn't type anything when asked for a name</span></label>
+        <label class="radio-opt"><input type="radio" name="i2_mcq" value="option_d" onchange="saveState()"> <span>+ can only join a variable to text if it's a number</span></label>
       </div>
-      <div class="mcq-fb" id="fb_i3"></div>
-      <!-- Last step → tryCompleteInvestigate(), not nextStep() -->
-      <button class="btn btn-next" id="btn_check_i3" style="margin-top:10px" onclick="tryCompleteInvestigate()" disabled>✓ Check answer</button>
+      <div class="mcq-fb" id="fb_i2"></div>
+      <button class="btn btn-next" id="btn_check_i2" style="margin-top:10px" onclick="tryCompleteInvestigate()" disabled>✓ Check answer</button>
     </div>
-
-    <!--
-      To add a step BEFORE the standard bug step (e.g. a 4th concept step, keeping the
-      bug step as step 4):
-        1. Add a new prompt card id="qcard_i3_prompt" in #i_steps above (shifting the
-           guided-bug prompt to qcard_i4_prompt), and a matching answer card here in
-           #i_answers.
-        2. Renumber every qcard_iN / btn_check_iN / btn_skip_iN id, radio name=, and
-           the visible step number, so the bug step is ALWAYS the final one.
-        3. Update every nextStep('I', N) call to match the new numbering; the LAST
-           card's button must still call tryCompleteInvestigate().
-        4. Update TEXT_FIELDS / RADIO_GROUPS and I_FIELDS in the JS, and INV_CHECKS in
-           checkers.js (plus every req_i_N list id), to match the new step count and positions.
-        5. Set STEP_COUNT_I to the new total.
-    -->
   </div>
 
   <!-- Skipping needs the teacher password (SKIP_PASSWORD in the JS), same as Modify.
@@ -957,107 +1053,62 @@ color:  blue
     <div class="ac-progress-fill" id="progress-fill-M1" style="width: 0%; background: var(--stage-m1);"></div>
   </div>
 
-  <!--
-    FILL IN ⑪: Modify task cards.
+  <div class="info-box">
+    <span class="icon">🧪</span>
+    <span>The editor starts again from the original program. Each check runs your code by typing <strong>Riley</strong>, <strong>Engineer</strong> and <strong>4</strong> into your questions, in that order — and <strong>Dizzy</strong> when you ask how they are feeling.</span>
+  </div>
 
-    ╔══ FLOW RULE — READ BEFORE WRITING TASK DESCRIPTIONS ══════════════════╗
-    ║  Each task instructs the student to make an ADDITIONAL change to the  ║
-    ║  code they already have. The editor carries state forward throughout. ║
-    ║                                                                       ║
-    ║  Mod 1: "Do X to your code."                                         ║
-    ║  Mod 2: "Keep your code so far. Now also do Y."                      ║
-    ║  Mod 3: "Keep your code so far. Now do Z."                           ║
-    ║  Mod 4: "Keep your code so far. Now do W." (harder, often ★★★)      ║
-    ║                                                                       ║
-    ║  NEVER reference "mod 1"/"mod 2" by number in student-facing text —   ║
-    ║  say "Keep your code so far" instead of "Keep mods 1–2". Reference    ║
-    ║  what was DONE, not which numbered step it happened in, where it      ║
-    ║  helps the student understand how the code is evolving.               ║
-    ╚═══════════════════════════════════════════════════════════════════════╝
-
-    ╔══ BULLETED REQUIREMENTS — one <li> per independently-checkable thing ═╗
-    ║  Each task's instructions are a <ul class="req-list" id="req_m1_N">   ║
-    ║  — ONE <li> PER REQUIREMENT, not one paragraph. checkMod() ticks/     ║
-    ║  crosses each <li> individually against MOD_CHECKS.modN.reqs[i].test  ║
-    ║  (raw) every time the single "▶ Run & check" button is clicked — so   ║
-    ║  the reqs array in checkers.js must have exactly one entry per <li>,  ║
-    ║  IN THE SAME ORDER. A task with only one testable requirement still   ║
-    ║  gets a single-item list (for a consistent tick/cross UI everywhere). ║
-    ║                                                                       ║
-    ║  ALWAYS wrap each bullet's description in a SECOND span with class    ║
-    ║  "req-text" — e.g. <li><span>1</span><span class="req-text">…</span> ║
-    ║  </li>. Without it, raw text/<strong>/<code> as direct children of    ║
-    ║  <li> (a flex container) become separate flex items and visually      ║
-    ║  break the sentence apart. Keep all <code>/<strong> markup and exact  ║
-    ║  example snippets from the instructions inside that req-text span.    ║
-    ╚═══════════════════════════════════════════════════════════════════════╝
-
-    Stars: ★ easy  ★★ medium  ★★★ hard  ★★★★ extension
-    Add checks to checkers.js: MOD_CHECKS.mod1.reqs, .mod2.reqs, .mod3.reqs, .mod4.reqs …
-    The JS advances automatically after each passing check (1.5 s delay).
-    Add/remove <div id="m1_step_N"> to match STEP_COUNT_M1 in the JS.
-  -->
   <div id="m1_steps">
 
     <div id="m1_step_1">
-      <div class="section-label">★ Modification 1 — FILL IN: short label</div>
+      <div class="section-label">★ Modification 1 — A new door message</div>
       <div class="modify-task">
         <span class="stars">★</span>
         <div class="task-text">
           <ul class="req-list" id="req_m1_1">
-            <li><span>1</span><span class="req-text">FILL IN: first requirement. Use <strong>bold</strong> for key terms
-              and <code>code style</code>
-              for code references.</span></li>
-            <li><span>2</span><span class="req-text">FILL IN: second requirement, if this task has more than one (delete this &lt;li&gt; — and the matching reqs[1] entry — if the task only has one).</span></li>
+            <li><span>1</span><span class="req-text">Change the last line so the door prints <code>Cryo Bay door: OPEN</code> instead of <em>Door unlocking...</em></span></li>
           </ul>
         </div>
       </div>
     </div>
 
     <div id="m1_step_2" class="step-hidden">
-      <div class="section-label">★★ Modification 2 — FILL IN: short label</div>
+      <div class="section-label">★★ Modification 2 — Which pod?</div>
       <div class="modify-task">
         <span class="stars">★★</span>
         <div class="task-text">
           <ul class="req-list" id="req_m1_2">
-            <li><span>1</span><span class="req-text">FILL IN: Keep your code so far, and … [additive instruction referencing what was done in step 1].</span></li>
+            <li><span>1</span><span class="req-text">Keep your code so far. At the <strong>bottom</strong> of your program, add a <strong>third question</strong> that asks for the user's pod number and stores it — for example <code>pod = input("Pod number: ")</code></span></li>
+            <li><span>2</span><span class="req-text">On a <strong>new line underneath</strong> that question, print the pod number joined to your own words with <code>+</code> — for example <code>print("Pod: " + pod)</code></span></li>
           </ul>
         </div>
       </div>
     </div>
 
     <div id="m1_step_3" class="step-hidden">
-      <div class="section-label">★★ Modification 3 — FILL IN: short label</div>
+      <div class="section-label">★★ Modification 3 — How are you feeling?</div>
       <div class="modify-task">
         <span class="stars">★★</span>
         <div class="task-text">
           <ul class="req-list" id="req_m1_3">
-            <li><span>1</span><span class="req-text">FILL IN: Keep your code so far. Now … [additive instruction].</span></li>
+            <li><span>1</span><span class="req-text">At the <strong>bottom</strong> of your program, add a question that asks the user <strong>how they are feeling</strong>, and store the answer in a new variable. This time, write the code yourself.</span></li>
+            <li><span>2</span><span class="req-text">On a <strong>new line underneath</strong>, print the answer joined to your own words with <code>+</code></span></li>
           </ul>
         </div>
       </div>
     </div>
 
     <div id="m1_step_4" class="step-hidden">
-      <div class="section-label">★★★ Modification 4 — FILL IN: short label</div>
+      <div class="section-label">★★★ Modification 4 — Put it together</div>
       <div class="modify-task">
         <span class="stars">★★★</span>
         <div class="task-text">
           <ul class="req-list" id="req_m1_4">
-            <li><span>1</span><span class="req-text">FILL IN: Keep your code so far. Now … [more challenging additive instruction].</span></li>
+            <li><span>1</span><span class="req-text">Change your last print line so <strong>one line</strong> shows the user's <strong>name and</strong> how they are feeling, joined with <code>+</code> — so it prints something like <em>Riley is feeling Dizzy</em></span></li>
           </ul>
         </div>
       </div>
     </div>
-
-    <!--
-      To add a 5th modification:
-        1. Copy a step div above, set id="m1_step_5", class="step-hidden", and
-           its req-list id="req_m1_5"
-        2. Add MOD_CHECKS.mod5 = { reqs: […], passMsg } (and optionally
-           MOD_INPUTS.mod5) in checkers.js — one reqs entry per <li>
-        3. Set STEP_COUNT_M1 = 5 in the JS
-    -->
   </div>
 
   <!-- Back / Forward through completed modifications (same pattern as Predict / Investigate). -->
@@ -1101,8 +1152,7 @@ color:  blue
     <div class="stage-badge badge-M2">M</div>
     <div class="stage-header-text">
       <h2>Make</h2>
-      <!-- FILL IN ⑫: Name the project the student will build from scratch. -->
-      <p>Build a <strong>FILL IN: project name</strong> from scratch.</p>
+      <p>Build a <strong>crew locator</strong> from scratch.</p>
     </div>
   </div>
 
@@ -1110,53 +1160,39 @@ color:  blue
     <div class="ac-progress-fill" id="progress-fill-M2" style="width: 0%; background: var(--stage-m2);"></div>
   </div>
 
-  <!-- FILL IN ⑬: What the student needs to build and how many criteria there are. -->
   <div id="m2_make_task">
     <div class="info-box">
       <span class="icon">🔨</span>
-      <span>FILL IN: Describe the program in one sentence. <strong>All success criteria below must be met</strong> before you paste your code.</span>
+      <span>The station's crew locator has been wiped too. Write a program that asks for a crew member's <strong>name</strong> and the <strong>room</strong> they were last seen in, then prints a short report. All the success criteria below must be met.</span>
     </div>
+    <div class="hint-box">Your program is checked by typing words as the answers: <strong>Ash</strong>, then <strong>Navigation</strong>, then <strong>Missing</strong>.</div>
 
     <div class="section-label">What your program must do</div>
-
-    <!--
-      FILL IN ⑭: Success criteria list.
-      Each <li> maps directly to one entry in MAKE_CHECK.reqs in checkers.js,
-      IN THE SAME ORDER — checkMake() ticks/crosses each <li> individually
-      against MAKE_CHECK.reqs[i].test(raw) on every check click. Keep this
-      list in sync with the checker: add a criterion here, add a matching
-      reqs entry there. Wrap each bullet's text in a "req-text" span (see the
-      Modify section's comment above for why). Add class="ext" for a bullet
-      that only matters for the extension criterion.
-    -->
+    <!-- One <li> per MAKE_CHECK.reqs entry in checkers_wakeup.js, same order. -->
     <ul class="req-list" id="req_m2_make">
-      <li><span>1</span><span class="req-text">FILL IN: Requirement 1 — e.g. "Define a <strong>show_menu()</strong> function that prints a numbered list."</span></li>
-      <li><span>2</span><span class="req-text">FILL IN: Requirement 2.</span></li>
-      <li><span>3</span><span class="req-text">FILL IN: Requirement 3.</span></li>
-      <li><span>4</span><span class="req-text">FILL IN: Requirement 4.</span></li>
-      <li><span>5</span><span class="req-text">FILL IN: Requirement 5.</span></li>
-      <!-- Add or remove items. Each must have a matching reqs entry in MAKE_CHECK. -->
+      <li><span>1</span><span class="req-text">Ask at least <strong>2 questions</strong> with <code>input()</code></span></li>
+      <li><span>2</span><span class="req-text">Store each answer in its <strong>own variable</strong></span></li>
+      <li><span>3</span><span class="req-text">Print a sentence that joins your words to an answer with <code>+</code> — for example <code>print("Last seen in: " + room)</code></span></li>
+      <li><span>4</span><span class="req-text">Print at least <strong>2 lines</strong> of report (the questions don't count).</span></li>
     </ul>
   </div>
 
-  <!-- Extension task — replaces the task description above after Make passes. -->
+  <!-- Extension — replaces the task description above once Make passes. -->
   <div id="m2_ext_task" class="step-hidden">
-    <div class="section-label">★★★★ Extension — FILL IN: extension label</div>
+    <div class="section-label">★★★ Extension — Status report</div>
     <div class="modify-task ext">
-      <span class="stars">★★★★</span>
+      <span class="stars">★★★</span>
       <div class="task-text">
-        <!-- One <li> per EXT_CHECK.reqs entry, same convention as Modify/Make above. -->
         <ul class="req-list" id="req_m2_ext">
-          <li><span>1</span><span class="req-text">FILL IN: Extension challenge requirement. Should add a meaningful feature
-            on top of the Make program — e.g. a loop, validation, or extra output.</span></li>
+          <li><span>1</span><span class="req-text">Add a <strong>third question</strong> that asks for the crew member's status (it's tested with <strong>Missing</strong>)</span></li>
+          <li><span>2</span><span class="req-text">Print <strong>one line</strong> that uses all three answers — for example <code>print(name + " is " + status + " in " + room)</code></span></li>
         </ul>
       </div>
     </div>
   </div>
 
   <div class="code-checker">
-    <!-- FILL IN ⑮: Replace with the actual project name for the editor title. -->
-    <textarea class="checker-textarea" id="m2_editor" data-title="FILL IN: project name" style="min-height:320px" oninput="saveState()"></textarea>
+    <textarea class="checker-textarea" id="m2_editor" data-title="Crew locator" style="min-height:280px" oninput="saveState()"></textarea>
     <div class="checker-footer">
       <button class="btn btn-check" id="btn_check_m2" onclick="checkMake()">⚡ Check program</button>
       <div class="feedback hidden" id="fb_m2"></div>
@@ -1164,15 +1200,460 @@ color:  blue
   </div>
 
   <div class="completion-banner" id="completionBanner">
-    <div style="font-size:2.5rem;margin-bottom:0.5rem">🏆</div>
-    <h3>PRIMM Complete!</h3>
-    <!-- FILL IN ⑯: Topic name. -->
-    <p>You've worked through all five stages for FILL IN: topic. Excellent work — show your teacher!</p>
+    <h3>System restored</h3>
+    <p>The Cryo Bay door is open. You've worked through all five stages of the input refresh — excellent work! Now open <strong>Life Support</strong>, the second activity in this lesson.</p>
   </div>
 </section>
 
 <!-- Toast for Classroom feedback -->
 <div class="ac-toast" id="toast"></div>
+
+<!-- ════════════════════════════════════════════════
+     STATION ZERO — situation report (filled by the story script; don't edit)
+════════════════════════════════════════════════ -->
+<div class="sz-overlay" id="szOverlay" aria-hidden="true">
+  <div class="sz-panel" id="szPanel" role="dialog" aria-modal="true" aria-labelledby="szTitle" aria-describedby="szLogFull">
+    <div class="sz-head">
+      <div class="sz-kicker"><span class="sz-live-dot" aria-hidden="true"></span><span id="szKicker">Situation report</span></div>
+      <div class="sz-clock" id="szClock"></div>
+      <button class="sz-close" id="szClose" type="button" aria-label="Close situation report">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <h2 class="sz-title" id="szTitle"><span class="sr-only" id="szTitleFull"></span><span class="sz-title-typed" aria-hidden="true" id="szTitleTyped"></span></h2>
+    <div class="sz-map" id="szMap"></div>
+    <div class="sz-legend" aria-hidden="true">
+      <span><i class="k-you"></i>You</span>
+      <span><i class="k-threat"></i>Motion detected</span>
+      <span><i class="k-obj"></i>Objective</span>
+    </div>
+    <ul class="sz-roomlist" id="szRoomList" aria-label="Station rooms"></ul>
+    <div class="sz-readouts" id="szReadouts"></div>
+    <p class="sz-log" id="szLog"><span class="prompt" aria-hidden="true">&gt;</span><span class="sr-only" id="szLogFull"></span><span aria-hidden="true" id="szLogTyped"></span></p>
+    <blockquote class="sz-quote" id="szQuote" hidden><p id="szQuoteText"></p><cite id="szQuoteWho"></cite></blockquote>
+    <div class="sz-foot"><span class="sz-skip-hint" id="szSkipHint" aria-hidden="true" hidden>Click or press any key to skip</span><button class="btn sz-continue" id="szContinue" type="button">Continue →</button></div>
+  </div>
+</div>
+
+<script>
+/* ════════════════════════════════════════════════════════════════════════════
+   STATION ZERO — STORY LAYER
+   A short situation report (map + status + 2–3 sentences of story) appears:
+     • once when the lesson is first opened ("intro" — the chapter title card)
+     • once after each PRIMM stage is completed for the first time (P, R, I, M1)
+     • once when the Make program first passes (M2 — the chapter cliffhanger)
+   Each report shows only once per student (remembered in localStorage) and is
+   always one click to dismiss. The "Station map" button in the header re-opens
+   the latest report at any time. Teacher switch: add ?story=off to the URL to
+   stop reports popping up automatically (the map button still works).
+
+   RULES (see Knowledge Base/project_y9_python_mtp.md → Narrative thread):
+     • The story is framing only — never put task instructions or hints in it.
+     • Mistakes never make it scarier; only these story beats move the plot.
+     • Horror without gore: people can die or vanish, nothing is described graphically.
+     • The alien is never shown clearly — only what sensors see (blips, heat, bio-scans).
+     • Keep each log to ≤ 3 sentences. Readouts: 2–4 per beat.
+
+   The PRIMM code talks to this layer through exactly three hooks, all called
+   as window.StationZero?.… so the page still works if this block is removed:
+     start()      — end of the DOMContentLoaded init
+     beat(stage)  — completeStage() (first completion only) and checkMake() (first pass)
+     showMap()    — the header's Station map button
+   ════════════════════════════════════════════════════════════════════════════ */
+(function () {
+  'use strict';
+
+  /* ═══════════════════════════════════════════════════════════════════════
+     STORY — Chapter 1 (Wake Up). Field guide below.
+     Map fields per beat:
+       you:       room id where the player is
+       objective: room id this chapter is restoring (amber outline + "OBJECTIVE")
+       threat:    room id, 'corridor', 'vents', or null — the motion blip
+       rooms:     { roomId: 'online' | 'unstable' | 'sealed' } — anything not
+                  listed is 'offline'. Carry earlier chapters' restored rooms
+                  forward as 'online' so the station visibly comes back to life.
+     Room ids: cryo, life, sensors, airlock, core, drone, nav, ducts
+     Readout level: 'ok' | 'warn' | 'danger'
+     Optional per beat: quote: { who, text } (a recovered crew log), cta (button text)
+     ═══════════════════════════════════════════════════════════════════════ */
+  const STORY = {
+    chapter:   'Chapter 1 — Wake Up',
+    topic:     'Input refresh',
+    objective: 'Get out of the Cryo Bay',
+    beats: {
+      intro: {
+        headline: 'Chapter 1 — Wake Up',
+        time: '03:02',
+        log: "You wake on the cold floor of the Cryo Bay. Every pod is frosted over except Pod 2, Engineer Hale’s, which is open and empty, its glass cracked from the inside. The door is sealed until someone checks in, and the check-in program has been wiped.",
+        readouts: [
+          { label: 'Oxygen', value: '31%', level: 'danger' },
+          { label: 'Cryo Bay door', value: 'Sealed', level: 'danger' },
+          { label: 'Crew awake', value: '1', level: 'warn' },
+          { label: 'Motion', value: 'None', level: 'ok' },
+        ],
+        map: { you: 'cryo', objective: 'cryo', threat: null, rooms: { cryo: 'sealed', core: 'sealed' } },
+      },
+      P: {
+        headline: 'Frost',
+        time: '03:06',
+        log: "You’ve worked out what the check-in program should do. On the inside of Pod 2’s glass, someone has written one word in the frost with a finger: RUN.",
+        readouts: [
+          { label: 'Oxygen', value: '31%', level: 'danger' },
+          { label: 'Pod 2', value: 'Empty', level: 'warn' },
+        ],
+        map: { you: 'cryo', objective: 'cryo', threat: null, rooms: { cryo: 'sealed', core: 'sealed' } },
+      },
+      R: {
+        headline: 'Check-in accepted',
+        time: '03:10',
+        log: "The program runs and the door panel flickers green, then red again. Somewhere above the ceiling, something moves away fast.",
+        readouts: [
+          { label: 'Cryo Bay door', value: 'Unstable', level: 'warn' },
+          { label: 'Motion', value: 'Ducts', level: 'danger' },
+        ],
+        map: { you: 'cryo', objective: 'cryo', threat: 'vents', rooms: { cryo: 'unstable', core: 'sealed' } },
+      },
+      I: {
+        headline: 'Pod 2’s record',
+        time: '03:17',
+        log: "The bug you fixed was in the pod records. Pod 2’s record has finally loaded. Hale’s heart stopped three days ago, and twelve hours later the pod was opened from the inside.",
+        readouts: [
+          { label: 'Hale · heart rate', value: '0', level: 'danger' },
+          { label: 'Pod 2', value: 'Opened from inside', level: 'danger' },
+        ],
+        map: { you: 'cryo', objective: 'cryo', threat: null, rooms: { cryo: 'unstable', core: 'sealed' } },
+      },
+      M1: {
+        headline: 'Footsteps',
+        time: '03:22',
+        log: "Your check-in program is nearly rebuilt. Out in the corridor, slow footsteps stop right outside the Cryo Bay door. The crew list says you’re the only one awake.",
+        readouts: [
+          { label: 'Crew awake', value: '1', level: 'warn' },
+          { label: 'Motion', value: 'Outside the door', level: 'danger' },
+        ],
+        map: { you: 'cryo', objective: 'cryo', threat: 'corridor', rooms: { cryo: 'unstable', core: 'sealed' } },
+      },
+      M2: {
+        headline: 'Door open',
+        time: '03:27',
+        log: "The Cryo Bay door slides open onto an empty corridor. A trail of frost leads away towards Life Support, where the air is running out. Something that cold shouldn’t be able to walk.",
+        readouts: [
+          { label: 'Cryo Bay door', value: 'Open', level: 'ok' },
+          { label: 'Oxygen', value: '29%', level: 'danger' },
+          { label: 'Motion', value: 'Signal lost', level: 'warn' },
+        ],
+        map: { you: 'cryo', objective: 'life', threat: null, rooms: { cryo: 'online', core: 'sealed' } },
+        cta: 'Continue',
+      },
+    },
+  };
+  /* ═══ end STORY ═══ */
+
+  // Station layout — shared by every chapter so students learn one map. A ring station:
+  // WARDEN's core at the hub, the other rooms as modules round the main ring.
+  const HUB = { x: 400, y: 235 };
+  const RING_R = 120, DUCT_R = 88;
+  const ROOMS = {
+    cryo:    { name: 'Cryo Bay',     cx: 190, cy: 100 },
+    life:    { name: 'Life Support', cx: 400, cy: 52 },
+    sensors: { name: 'Sensor Ops',   cx: 610, cy: 100 },
+    airlock: { name: 'Airlock',      cx: 668, cy: 235, w: 130 },
+    nav:     { name: 'Navigation',   cx: 610, cy: 370 },
+    drone:   { name: 'Drone Bay',    cx: 400, cy: 418 },
+    ducts:   { name: 'Maintenance',  cx: 190, cy: 370 },
+    core:    { name: 'WARDEN Core',  cx: HUB.x, cy: HUB.y, r: 56 },
+  };
+  for (const r of Object.values(ROOMS)) {
+    if (r.r) { r.x = r.cx - r.r; r.y = r.cy - r.r; r.w = r.h = r.r * 2; }
+    else { r.w = r.w || 150; r.h = 60; r.x = r.cx - r.w / 2; r.y = r.cy - r.h / 2; }
+  }
+  // where a room's markers sit: right-hand end of the status row (names can be long, status words never are)
+  const markerAt = r => r.r ? { x: r.cx + 32, y: r.cy - 30 } : { x: r.x + r.w - 16, y: r.y + 36 };
+  const onCircle = (rad, deg) => ({ x: HUB.x + rad * Math.cos(deg * Math.PI / 180), y: HUB.y - rad * Math.sin(deg * Math.PI / 180) });
+  const POINTS = { corridor: onCircle(RING_R, -60), vents: onCircle(DUCT_R, 120) };
+  const STATUS_TEXT = { offline: 'OFFLINE', online: 'ONLINE', unstable: 'UNSTABLE', sealed: 'SEALED' };
+  const LEVEL_TAG   = { ok: '[ OK ]', warn: '[WARN]', danger: '[CRIT]' };
+  const LEVEL_SR    = { ok: 'normal', warn: 'warning', danger: 'critical' };
+  const CTA = {
+    intro: 'Begin: Predict →', P: 'Continue to Run →', R: 'Continue to Investigate →',
+    I: 'Continue to Modify →', M1: 'Continue to Make →', M2: 'Continue →',
+  };
+  const ORDER = ['intro', 'P', 'R', 'I', 'M1', 'M2'];
+
+  const KEY = 'sz_story_' + location.pathname;
+  const storyOff = new URLSearchParams(location.search).get('story') === 'off';
+  const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+
+  let seen = [];
+  try { seen = JSON.parse(localStorage.getItem(KEY) || '[]'); } catch (e) {}
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(seen)); } catch (e) {} };
+
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+  function roomState(map, id) { return (map.rooms && map.rooms[id]) || 'offline'; }
+
+  function threatPoint(where) {
+    if (!where) return null;
+    if (POINTS[where]) return POINTS[where];
+    return ROOMS[where] ? markerAt(ROOMS[where]) : null;
+  }
+
+  // The parts of the picture that never change — drawn once.
+  let backdrop = null;
+  function stationBackdrop() {
+    if (backdrop) return backdrop;
+    let seed = 7;
+    const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    let stars = '';
+    for (let i = 0; i < 150; i++) {
+      stars += `<circle class="star" cx="${(rnd() * 800).toFixed(1)}" cy="${(rnd() * 470).toFixed(1)}" r="${(0.35 + rnd() * 1.1).toFixed(2)}" opacity="${(0.2 + rnd() * 0.65).toFixed(2)}"/>`;
+    }
+    let lights = '';
+    for (let a = 15; a < 360; a += 30) { const p = onCircle(RING_R, a); lights += `<circle class="ring-light" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="1.6"/>`; }
+    let spokes = '';
+    for (const [id, r] of Object.entries(ROOMS)) {
+      if (r.r) continue;
+      const dx = r.cx - HUB.x, dy = r.cy - HUB.y, len = Math.hypot(dx, dy);
+      const p = { x: HUB.x + dx / len * RING_R, y: HUB.y + dy / len * RING_R };
+      for (const cls of ['spoke-edge', 'spoke'])
+        spokes += `<line class="${cls}" x1="${r.cx}" y1="${r.cy}" x2="${p.x.toFixed(1)}" y2="${p.y.toFixed(1)}"/>`;
+    }
+    const label = onCircle(RING_R, 60);
+    backdrop =
+      '<defs>'
+      + '<pattern id="szHatch" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">'
+      + '<rect width="8" height="8" fill="#140b0e"/><line x1="0" y1="0" x2="0" y2="8" stroke="#5a1d29" stroke-width="3"/></pattern>'
+      + '<pattern id="szPlate" width="24" height="12" patternUnits="userSpaceOnUse">'
+      + '<rect width="24" height="12" fill="#0c1218"/><path d="M0 0H24M0 0V12" stroke="#141c24" stroke-width="1"/></pattern>'
+      + '<pattern id="szSolar" width="11" height="11" patternUnits="userSpaceOnUse">'
+      + '<rect width="11" height="11" fill="#0b1a2c"/><path d="M0 0H11M0 0V11" stroke="#1d3656" stroke-width="1"/></pattern>'
+      + '<radialGradient id="szNebula" cx="0.82" cy="0.12" r="0.55"><stop offset="0" stop-color="#5b3aa8" stop-opacity="0.22"/><stop offset="1" stop-color="#5b3aa8" stop-opacity="0"/></radialGradient>'
+      + '<radialGradient id="szNebula2" cx="0.12" cy="0.1" r="0.45"><stop offset="0" stop-color="#2dd4bf" stop-opacity="0.08"/><stop offset="1" stop-color="#2dd4bf" stop-opacity="0"/></radialGradient>'
+      + '<radialGradient id="szPlanet" cx="0.62" cy="0.18" r="0.85"><stop offset="0" stop-color="#1b4a63"/><stop offset="0.55" stop-color="#0b2233"/><stop offset="1" stop-color="#050b12"/></radialGradient>'
+      + '</defs>'
+      + '<rect width="800" height="470" fill="#03050a"/>'
+      + '<rect width="800" height="470" fill="url(#szNebula)"/><rect width="800" height="470" fill="url(#szNebula2)"/>'
+      + stars
+      + '<circle class="planet" cx="60" cy="660" r="300"/>'
+      // solar wing (left) and docking arm (right)
+      + '<path class="truss" d="M150 228H280M150 242H280M150 228L170 242L190 228L210 242L230 228L250 242L270 228M86 222V248"/>'
+      + '<rect class="panel" x="22" y="160" width="128" height="62" rx="2"/><rect class="panel" x="22" y="248" width="128" height="62" rx="2"/>'
+      + '<rect class="dock" x="733" y="227" width="44" height="16" rx="3"/><circle class="dock-ring" cx="782" cy="235" r="11"/>'
+      + spokes
+      + `<circle class="ring-edge" cx="${HUB.x}" cy="${HUB.y}" r="${RING_R}"/><circle class="ring" cx="${HUB.x}" cy="${HUB.y}" r="${RING_R}"/>`
+      + lights
+      + `<text class="zone-label" text-anchor="middle" dy="3" transform="translate(${label.x.toFixed(1)} ${label.y.toFixed(1)}) rotate(30)">MAIN RING</text>`
+      + `<circle class="duct" cx="${HUB.x}" cy="${HUB.y}" r="${DUCT_R}"/>`
+      + `<text class="zone-label" text-anchor="middle" x="${HUB.x}" y="${HUB.y - DUCT_R + 15}">DUCTS</text>`;
+    return backdrop;
+  }
+
+  function renderRoom(id, r, map) {
+    const st = roomState(map, id);
+    const obj = map.objective === id;
+    let s = `<g class="room ${st}${obj ? ' objective' : ''}">`;
+    if (r.r) {   // the core — a round hub
+      if (obj) s += `<circle class="obj-ring" cx="${r.cx}" cy="${r.cy}" r="${r.r + 6}"/>`;
+      s += `<circle class="base" cx="${r.cx}" cy="${r.cy}" r="${r.r}"/><circle class="body" cx="${r.cx}" cy="${r.cy}" r="${r.r}"/>`
+        + `<circle class="core-ring" cx="${r.cx}" cy="${r.cy}" r="${r.r - 10}"/>`
+        + `<text class="name" text-anchor="middle" x="${r.cx}" y="${r.cy - 6}">WARDEN</text>`
+        + `<text class="name" text-anchor="middle" x="${r.cx}" y="${r.cy + 9}">CORE</text>`
+        + `<text class="status" text-anchor="middle" x="${r.cx}" y="${r.cy + 26}">${STATUS_TEXT[st] || esc(st)}</text>`;
+      if (obj) s += `<text class="obj-tag" text-anchor="middle" x="${r.cx}" y="${r.cy + 40}">◆ OBJECTIVE</text>`;
+      return s + '</g>';
+    }
+    if (obj) s += `<rect class="obj-ring" x="${r.x - 5}" y="${r.y - 5}" width="${r.w + 10}" height="${r.h + 10}" rx="12"/>`;
+    s += `<rect class="base" x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" rx="9"/>`
+      + `<rect class="body" x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" rx="9"/>`;
+    for (let i = 0; i < 4; i++) s += `<rect class="win" x="${r.x + r.w - 15 - i * 9}" y="${r.y + 6}" width="5" height="3" rx="1"/>`;
+    s += `<text class="name" x="${r.x + 12}" y="${r.y + 22}">${esc(r.name)}</text>`
+      + `<text class="status" x="${r.x + 12}" y="${r.y + 39}">${STATUS_TEXT[st] || esc(st)}</text>`;
+    if (obj) s += `<text class="obj-tag" x="${r.x + 12}" y="${r.y + 53}">◆ OBJECTIVE</text>`;
+    return s + '</g>';
+  }
+
+  function renderMap(map) {
+    let s = '<svg viewBox="0 0 800 470" role="img" aria-label="Station map. A text list of the rooms follows.">'
+      + stationBackdrop();
+    for (const [id, r] of Object.entries(ROOMS)) s += renderRoom(id, r, map);
+    const you = ROOMS[map.you];
+    if (you) { const m = markerAt(you); s += `<circle class="you" cx="${m.x - (map.threat === map.you ? 20 : 0)}" cy="${m.y}" r="7"/>`; }
+    const t = threatPoint(map.threat);
+    if (t) s += `<circle class="threat-ring" cx="${t.x.toFixed(1)}" cy="${t.y.toFixed(1)}" r="6"/><circle class="threat-dot" cx="${t.x.toFixed(1)}" cy="${t.y.toFixed(1)}" r="5"/>`;
+    return s + '</svg>';
+  }
+
+  function renderRoomList(map) {
+    const threatName = map.threat ? (ROOMS[map.threat]?.name || (map.threat === 'vents' ? 'the ducts' : 'the main corridor')) : null;
+    let html = Object.entries(ROOMS).map(([id, r]) => {
+      const notes = [STATUS_TEXT[roomState(map, id)]];
+      if (map.objective === id) notes.push('OBJECTIVE');
+      if (map.you === id) notes.push('YOU ARE HERE');
+      if (map.threat === id) notes.push('MOTION');
+      return `<li class="st-${roomState(map, id)}">${esc(r.name)}<span>${notes.join(' · ')}</span></li>`;
+    }).join('');
+    if (threatName && !ROOMS[map.threat]) html += `<li>Motion detected<span>IN ${esc(threatName.toUpperCase())}</span></li>`;
+    return html;
+  }
+
+  function renderReadouts(list) {
+    return (list || []).map(r => {
+      const lvl = LEVEL_TAG[r.level] ? r.level : 'ok';
+      return `<div class="sz-readout lvl-${lvl}">`
+        + `<span class="sr-only">${esc(r.label)}: ${esc(r.value)} (${LEVEL_SR[lvl]})</span>`
+        + `<span class="r-label" aria-hidden="true" data-tw>${esc(r.label)}</span><span class="r-lead" aria-hidden="true"></span>`
+        + `<span class="r-value" aria-hidden="true" data-tw>${esc(r.value)}</span>`
+        + `<span class="r-tag" aria-hidden="true" data-tw>${LEVEL_TAG[lvl]}</span></div>`;
+    }).join('');
+  }
+
+  // ── Typewriter: the report writes itself like an 80s terminal ──
+  // Groups type one after another; the elements inside a group type together
+  // (all the map labels at once, then each readout line, then the log…).
+  // cps = characters added per 16 ms tick. The element being written carries the
+  // block cursor, and the last one keeps it blinking once everything is written.
+  // Everything appears at once for reduced motion, map re-opens, and any click or key.
+  let tw = null;
+  function finishTyping() {
+    if (!tw) return;
+    clearInterval(tw.timer);
+    for (const g of tw.groups) for (const it of g.items) it.el.textContent = it.text;
+    $('szPanel').querySelectorAll('.tw-active').forEach(e => e.classList.remove('tw-active'));
+    tw.idleEl?.classList.add('tw-idle');
+    $('szSkipHint').hidden = true;
+    tw = null;
+  }
+  function typeSequence(groups, idleEl, instant) {
+    if (tw) { clearInterval(tw.timer); tw = null; }
+    $('szPanel').querySelectorAll('.tw-active, .tw-idle').forEach(e => e.classList.remove('tw-active', 'tw-idle'));
+    groups = groups
+      .map(g => ({ cps: g.cps || 2, items: g.items.filter(Boolean).map(el => ({ el, text: el.textContent })) }))
+      .filter(g => g.items.length);
+    tw = { groups, idleEl, timer: null };
+    if (instant || reduceMotion) { finishTyping(); return; }
+    for (const g of groups) for (const it of g.items) it.el.textContent = '';
+    $('szSkipHint').hidden = false;
+    let gi = 0, pos = 0, cursorEl = null;
+    tw.timer = setInterval(() => {
+      const g = groups[gi];
+      pos += g.cps;
+      let busy = null;
+      for (const it of g.items) {
+        it.el.textContent = it.text.slice(0, pos);
+        if (pos < it.text.length) busy = it.el;
+      }
+      // SVG text can't show a ::after cursor, so map labels just print in
+      const htmlBusy = busy && !(busy instanceof SVGElement) ? busy : null;
+      if (cursorEl !== htmlBusy) { cursorEl?.classList.remove('tw-active'); htmlBusy?.classList.add('tw-active'); cursorEl = htmlBusy; }
+      if (!busy) { gi++; pos = 0; if (gi >= groups.length) finishTyping(); }
+    }, 16);
+  }
+
+  // ── Open / close with focus management ──
+  let returnFocus = null;
+  let onCloseCb = null;
+
+  function open(key, { review = false, onClose = null } = {}) {
+    const b = STORY.beats[key];
+    if (!b) { onClose?.(); return; }
+    const map = b.map || {};
+    returnFocus = document.activeElement;
+    onCloseCb = onClose;
+
+    $('szPanel').classList.toggle('is-threat', !!map.threat);
+    $('szKicker').textContent = map.threat ? 'Warning · motion detected' : (key === 'intro' ? 'Station Zero · emergency wake' : 'Situation report');
+    $('szClock').textContent = b.time ? 'Station time ' + b.time : '';
+    $('szTitleFull').textContent = $('szTitleTyped').textContent = b.headline || '';
+    $('szMap').innerHTML = renderMap(map);
+    $('szRoomList').innerHTML = renderRoomList(map);
+    $('szReadouts').innerHTML = renderReadouts(b.readouts);
+    $('szLogFull').textContent = $('szLogTyped').textContent = b.log || '';
+    const q = $('szQuote');
+    q.hidden = !b.quote;
+    $('szQuoteText').textContent = b.quote ? '“' + b.quote.text + '”' : '';
+    $('szQuoteWho').textContent = b.quote ? b.quote.who : '';
+    $('szContinue').textContent = review ? 'Back to the task' : (b.cta || CTA[key] || 'Continue →');
+
+    const ov = $('szOverlay');
+    ov.classList.remove('open'); void ov.offsetWidth;   // re-trigger the power-on flicker
+    ov.classList.add('open');
+    ov.setAttribute('aria-hidden', 'false');
+    document.documentElement.style.overflow = 'hidden';
+    $('szPanel').scrollTop = 0;
+    const rows = [...$('szReadouts').children];
+    typeSequence([
+      { cps: 3, items: [$('szKicker'), $('szClock')] },
+      { cps: 2, items: [$('szTitleTyped')] },
+      { cps: 1, items: [...$('szMap').querySelectorAll('text')] },
+      ...rows.map(row => ({ cps: 3, items: [...row.querySelectorAll('[data-tw]')] })),
+      { cps: 2, items: [$('szLogTyped')] },
+      ...(b.quote ? [{ cps: 2, items: [$('szQuoteText')] }, { cps: 3, items: [$('szQuoteWho')] }] : []),
+    ], b.quote ? $('szQuoteText') : $('szLogTyped'), review);
+    $('szContinue').focus();
+  }
+
+  function close() {
+    const ov = $('szOverlay');
+    if (!ov.classList.contains('open')) return;
+    finishTyping();
+    ov.classList.remove('open');
+    ov.setAttribute('aria-hidden', 'true');
+    document.documentElement.style.overflow = '';
+    // Return focus to where it was; if that control has since been hidden (e.g. the
+    // "go to next stage" button), land on the new stage's heading instead.
+    let target = returnFocus;
+    if (!target || !target.isConnected || target.offsetParent === null) {
+      target = document.querySelector('.stage-panel.active .stage-header h2');
+      if (target) target.setAttribute('tabindex', '-1');
+    }
+    target?.focus({ preventScroll: true });
+    const cb = onCloseCb; onCloseCb = null;
+    cb?.();
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    $('szContinue').addEventListener('click', close);
+    $('szClose').addEventListener('click', close);
+    // a click anywhere on the screen (except its buttons) shows the whole report at once
+    $('szPanel').addEventListener('click', e => { if (!e.target.closest('button')) finishTyping(); });
+    $('szOverlay').addEventListener('keydown', e => {
+      if (e.key === 'Escape') { e.preventDefault(); close(); return; }
+      if (e.key !== 'Tab') {
+        // the first Enter/Space while it's still typing only skips the typing
+        if (tw && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); finishTyping(); return; }
+        if (!['Shift', 'Control', 'Alt', 'Meta'].includes(e.key)) finishTyping();
+        return;
+      }
+      const f = [...$('szPanel').querySelectorAll('button:not([disabled])')];
+      const first = f[0], last = f[f.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    });
+  });
+
+  // ── Public API (the three hooks) ──
+  function beat(key, opts) {
+    if (seen.includes(key)) return;
+    seen.push(key); save();
+    if (storyOff) { opts?.onClose?.(); return; }
+    open(key, opts);
+  }
+
+  function start() {
+    $('szChapterLine').textContent = [STORY.chapter, STORY.topic, 'Python · Year 9'].filter(Boolean).join('  ·  ');
+    $('szObjective').innerHTML = '<b>Objective:</b><span class="sz-obj-text">' + esc(STORY.objective || '') + '</span>';
+    beat('intro');
+  }
+
+  function showMap() {
+    const last = ORDER.filter(k => seen.includes(k)).pop() || 'intro';
+    open(last, { review: true });
+  }
+
+  window.StationZero = { beat, start, showMap };
+})();
+</script>
 
 <!-- Shows any unexpected page error at the bottom of the page (no dev console on student PCs). Keep this first. -->
 <script src="../../../error-reporter.js"></script>
@@ -1249,158 +1730,79 @@ color:  blue
   ║  for a complete reference, including the Investigate checks.               ║
   ╚══════════════════════════════════════════════════════════════════════════════╝
 */
-import { normalise, has, MOD_CHECKS, MOD_INPUTS, evalMod, MAKE_CHECK, evalMake, EXT_CHECK, evalExt,
-         evalInv, isBugFixed, isBugPairLine, breakCode } from './checkers.js';
+import { normalise, has, MOD_CHECKS, MOD_INPUTS, evalMod, MAKE_CHECK, MAKE_INPUTS, evalMake, EXT_CHECK, EXT_INPUTS, evalExt,
+         evalInv, isBugFixed, isBugPairLine, breakCode } from './checkers_wakeup.js';
 import { runPython, preload } from '../../../pyodide-runner.js';
-import { setupEditors, clearSyntaxHint, setEditorOutput, refreshEditor } from '../../../code-editor.js';
+import { setupEditors, clearSyntaxHint, setEditorOutput, refreshEditor, runCode } from '../../../code-editor.js';
 
 
 // ═══════════════════════════════════════════════════════
-//  FILL IN ① — Activity identity
-//  These three constants are the only JS values that differ between activities.
+//  Activity identity
 // ═══════════════════════════════════════════════════════
 
-const STORAGE_KEY    = 'primm_l?_topic';        // unique per activity, e.g. 'primm_l5_lists'
-const ACTIVITY_TITLE = 'TOPIC PRIMM Practice';  // must match <!-- ACTIVITY title: --> above
-const STARTER_CODE   = `# FILL IN: the Python program shown in the annotated code block.
-# This exact string is pre-loaded into the Run, Investigate, and Modify editors.
-print("Hello!")`;
+const STORAGE_KEY    = 'primm_y9_l1_wake_up';
+const ACTIVITY_TITLE = 'Wake Up — Input Refresh';   // must match <!-- ACTIVITY title: --> above
+const STARTER_CODE   = `name = input("Enter your name: ")
+role = input("Enter your job: ")
+print("CRYO BAY DOOR")
+print("Checking in: " + role + " " + name)
+print("Door unlocking...")`;
 
+const STEP_COUNT_I  = 2;   // qcard_i1…qcard_i2 (step 2 = the standard bug step)
+const STEP_COUNT_M1 = 4;   // m1_step_1…m1_step_4
 
-// ═══════════════════════════════════════════════════════
-//  FILL IN ② — Step counts
-//  Update when you add or remove steps in the HTML.
-//  Everything else (progress bars, button labels, loops) updates automatically.
-// ═══════════════════════════════════════════════════════
+// The standard bug step's broken / fixed line (IBUG_LINE / IBUG_FIXED_LINE) lives in checkers_wakeup.js:
+//   print("Access granted to " + Name)  →  print("Access granted to " + name)
 
-const STEP_COUNT_I  = 3;   // must equal the number of qcard_i1…qcard_iN cards
-const STEP_COUNT_M1 = 4;   // must equal the number of m1_step_1…m1_step_N divs
-
-
-// ═══════════════════════════════════════════════════════
-//  FILL IN ②b — The standard "fix a bug" step (ALWAYS the last Investigate step)
-//  Every PRIMM activity has the student press "😈 Break it" to meet a real, safe
-//  error, guided (the line and error named for them), then fix it themselves — the
-//  step's Check button ends the Investigate stage. This is standard across every
-//  activity, not optional.
-//
-//  IBUG_LINE / IBUG_FIXED_LINE must be a SINGLE extra line that can be appended to
-//  the end of the student's current code without touching anything else they wrote,
-//  and must need NO input() — the goal is a predictable, deterministic error every
-//  time. Pick a bug that demonstrates the ACTUAL misconception this lesson teaches
-//  (a missing quote, a bad cast, an off-by-one index …), not a generic typo.
-//  See Y8/Python Unit 1/L1_Output (a missing closing quote) for the worked
-//  reference example.
-//
-//  IBUG_LINE / IBUG_FIXED_LINE live in checkers.js (with isBugFixed / isBugPairLine),
-//  so the step's tick-list and the Break it button agree on them, e.g.
-//    export const IBUG_LINE       = 'print("Debugging is normal!)';   // deliberately broken
-//    export const IBUG_FIXED_LINE = 'print("Debugging is normal!")';  // the corrected version
-// ═══════════════════════════════════════════════════════
+// localStorage field lists
+const TEXT_FIELDS  = ['p_text1', 'r_editor', 'r1', 'i_editor', 'm1_editor', 'm2_editor'];
+const RADIO_GROUPS = ['p_mcq1', 'p_mcq2', 'i1_mcq', 'i2_mcq'];
 
 
 // ═══════════════════════════════════════════════════════
-//  FILL IN ③ — localStorage field lists
-//  TEXT_FIELDS : every <textarea> and <input type=text> id in the page
-//  RADIO_GROUPS: every radio group name= attribute used in Predict
+//  Predict answer key and feedback
 // ═══════════════════════════════════════════════════════
 
-const TEXT_FIELDS = [
-  'p_text1',                              // Predict free-text question(s)
-  'r_editor', 'r1',                       // Run stage
-  'i_editor', 'i1', 'i2',                // Investigate free-text steps — i3 is the bug-step MCQ
-  'm1_editor', 'm2_editor',              // Modify + Make editors
-];
-const RADIO_GROUPS = ['p_mcq1', 'p_mcq2', 'i3_mcq'];  // Predict + the standard bug-step MCQ
-
-
-// ═══════════════════════════════════════════════════════
-//  FILL IN ④ — Predict answer key and feedback strings
-//  P_CORRECT  : the value= of the correct option for each radio group
-//  P_PASS_MSG : shown when the student selects the correct MCQ option
-//  P_FAIL_MSG : shown when the student selects a wrong MCQ option
-// ═══════════════════════════════════════════════════════
-
-const P_CORRECT = {
-  p_mcq1: 'option_b',   // FILL IN: the value= of the correct radio option
-  p_mcq2: 'option_a',   // FILL IN
-};
+const P_CORRECT = { p_mcq1: 'option_a', p_mcq2: 'option_b' };
 const P_PASS_MSG = {
-  p_mcq1: 'Correct — FILL IN: explanation of why this is right.',
-  p_mcq2: 'Correct — FILL IN: explanation.',
+  p_mcq1: 'Correct — input() gives back whatever the user types, and = stores it in role.',
+  p_mcq2: 'Correct — false. Line 3 only prints. Only input() asks a question and waits for an answer.',
 };
 const P_FAIL_MSG = {
-  p_mcq1: 'FILL IN: explanation pointing the student toward the correct concept.',
-  p_mcq2: 'FILL IN: explanation.',
+  p_mcq1: 'Not quite. The words in the quotes are only shown on screen. What does input() give back once the user has typed?',
+  p_mcq2: 'Look again: line 3 uses print(), not input(). Does print() wait for the user to type anything?',
 };
 
 
 // ═══════════════════════════════════════════════════════
-//  FILL IN ⑤ — Investigate step validators
-//  Each entry matches one qcard_iN card.
-//  validate(v) returns a string error message if invalid, or null if acceptable.
-//  Use keyword regexes to guide students toward the concept being explored.
+//  Investigate step validators (one per qcard_iN)
 // ═══════════════════════════════════════════════════════
 
-const I_FIELDS = [
-  // type:'text' (default) — textarea answer with a validate(v) function.
-  // type:'mcq' — radio-group answer; add radioName, correctValue, passMsg, failMsg,
-  //   and a validate() (no arg) that queries the radio and returns null if correct.
-  //   Remove the field id from TEXT_FIELDS and add radioName to RADIO_GROUPS.
-  //
-  // needsNewLine: set true when the step asks students to ADD a new line of code —
-  // the editor will auto-append a newline and position the cursor there on transition.
-
-  { id:'i1', cardId:'qcard_i1', type:'text', needsNewLine: false, validate(v) {
-    if (v.length < 4)  return 'Describe what happened — even a few words is fine.';
-    if (isNonsense(v)) return "That doesn't look like a real answer.";
-    // FILL IN: add a keyword check to guide the student if needed, e.g.:
-    // if (!/keyword1|keyword2/.test(v.toLowerCase()))
-    //   return 'FILL IN: hint about what the student should have noticed.';
+const mcqStep = (n, correctValue, passMsg, failMsg, extra = {}) => ({
+  id: 'i' + n, cardId: 'qcard_i' + n, type: 'mcq', radioName: 'i' + n + '_mcq', correctValue,
+  needsNewLine: false, passMsg, failMsg, ...extra,
+  validate() {
+    const c = document.querySelector(`input[name="i${n}_mcq"]:checked`);
+    if (!c) return 'Select an answer before checking — even a guess is fine.';
+    if (c.value !== correctValue) return failMsg;
     return null;
-  }},
-
-  // Example MCQ step (replace i2 textarea with MCQ):
-  // { id:'i2', cardId:'qcard_i2', type:'mcq', radioName:'i2_mcq', correctValue:'option_b',
-  //   needsNewLine: false,
-  //   passMsg: 'Correct — FILL IN explanation.',
-  //   failMsg: 'Not quite — FILL IN hint.',
-  //   validate() {
-  //     const c = document.querySelector('input[name="i2_mcq"]:checked');
-  //     if (!c) return 'Select an answer before checking.';
-  //     if (c.value !== 'option_b') return 'FILL IN hint.';
-  //     return null;
-  //   },
-  // },
-
-  { id:'i2', cardId:'qcard_i2', type:'text', needsNewLine: false, validate(v) {
-    if (v.length < 4)  return 'Describe what happened.';
-    if (isNonsense(v)) return "That doesn't look like a real answer.";
-    return null;
-  }},
-
-  // ── THE STANDARD BUG STEP (do not remove — see FILL IN ②b above) ──────────
-  // Step 3 (last step) — guided: the student reads the error, identifies what
-  // Python was complaining about, then fixes it themselves.
-  { id:'i3', cardId:'qcard_i3', type:'mcq', radioName:'i3_mcq', correctValue:'option_b', needsNewLine: false,
-    passMsg: 'Exactly — FILL IN explanation of the error in plain English.',
-    failMsg: 'Read the error and the line it points to again — FILL IN a nudge toward the real cause.',
-    validate() {
-      const c = document.querySelector('input[name="i3_mcq"]:checked');
-      if (!c) return 'Select an answer before checking — even a guess is fine.';
-      if (c.value !== 'option_b') return 'Not quite — read the error message again. Which part of the line is wrong?';
-      return null;
-    },
   },
-  // ── End standard bug step ───────────────────────────────────────────────────
+});
 
-  // Add a step here (BEFORE the bug step above) if STEP_COUNT_I > 3 — see the
-  // "To add a step BEFORE the standard bug step" comment in the HTML above.
+const I_FIELDS = [
+  mcqStep(1, 'option_c',
+    'Right — the question is only shown on screen. role still stores whatever job is typed.',
+    'Look at the output: line 4 still shows the job you typed. The words in the quotes are only shown, never stored.'),
+
+  // ── THE STANDARD BUG STEP (always last) ──
+  mcqStep(2, 'option_a',
+    'Exactly — Python is case-sensitive. Name and name are two different variables, and Name was never made.',
+    'Read the last line of the error again: name \'Name\' is not defined. Python even suggests a fix — look at the capital letter.'),
 ];
 
 
 // ═══════════════════════════════════════════════════════
-//  FILL IN ⑤b — Investigate code-change ticks
+//  Investigate code-change ticks
 //  Each prompt card's numbered <li>s (#req_i_N) are checked by INV_CHECKS.invN in
 //  checkers.js — ticked live as the student edits/runs, crossed on Check, and ALL
 //  must pass before that step's answer is accepted (see invGate()). A step with no
@@ -1794,7 +2196,8 @@ function updateProgress() {
 
 function completeStage(s) {
   if (window.Classroom?.verifyAuth() === false) return;
-  if (!completedStages.includes(s)) completedStages.push(s);
+  const firstCompletion = !completedStages.includes(s);   // STATION ZERO hook
+  if (firstCompletion) completedStages.push(s);
   updateNav();
   const nextIdx = STAGES.indexOf(s) + 1;
   if (nextIdx < STAGES.length) {
@@ -1804,6 +2207,8 @@ function completeStage(s) {
   }
   saveState();
   submitScore();
+  // STATION ZERO hook: situation report between stages (first completion only).
+  if (firstCompletion) window.StationZero?.beat(s);
 }
 
 
@@ -1825,19 +2230,19 @@ function setPyStatus(st) {
 
 // ── Run helper ────────────────────────────────────────
 
-async function runCodeInEditor(editorId, statusElId, inputs = []) {
+// inputs = null → the student types each answer live in the output panel (runCode).
+async function runCodeInEditor(editorId, statusElId, inputs = null) {
   if (window.Classroom?.verifyAuth() === false) return;
   const editorEl = document.getElementById(editorId);
   const statusEl = document.getElementById(statusElId);
-  const code = editorEl?.value || '';
   if (statusEl) {
     statusEl.classList.remove('hidden', 'fail', 'pass');
     statusEl.classList.add('loading');
     statusEl.textContent = '⏳ Running…';
   }
   const codeRun = editorEl?.value || '';
-  const result = await runPython(code, { inputs });
-  setEditorOutput(editorEl, result.output, !result.ok, result.line);
+  const result = await runCode(editorEl, { inputs });
+  if (result.cancelled) return;   // a later Run click superseded this one — it already owns the UI
   clearSyntaxHint(editorEl);
 
   if (editorId === 'r_editor' && !firstRunShown) {
@@ -1953,7 +2358,7 @@ function invGate(n, card) {
   return false;
 }
 
-// ── Standard "fix a bug" step (see FILL IN ②b) ─────────────────────────────
+// ── Standard "fix a bug" step (IBUG_LINE in checkers.js) ─────────────────────────────
 //
 // "😈 Break it" is used at the guided bug step — the student presses it once,
 // with the line and error explained to them, then fixes it themselves. Toggles
@@ -2160,16 +2565,17 @@ function checkPredictMCQ(name) {
 // Compute + render the free-text feedback. Returns true if the typed answer matched.
 function evaluatePredictText() {
   const val = (document.getElementById('p_text1')?.value || '').trim().toLowerCase();
-  // ── FILL IN ⑥: Free-text feedback ───────────────────────────────────────
-  // Replace 'fill in correct answer' with the expected answer (lowercased).
-  // Update the pass/fail messages to match your question.
-  const ok = val === 'fill in correct answer';
+  // "Checking in: Engineer Riley" — any case, quotes, extra spaces or a full stop are fine.
+  const said = val.replace(/["']/g, '').replace(/\s+/g, ' ').replace(/\.$/, '').trim();
+  const ok = /^checking in:? ?engineer riley$/.test(said);
   const fb = document.getElementById('fb_p_text1');
   if (fb) {
     fb.className = 'mcq-fb ' + (ok ? 'pass' : 'fail');
     fb.textContent = ok
-      ? '✔ Correct — FILL IN: explanation.'
-      : '✘ Not quite — FILL IN: hint pointing toward the right answer.';
+      ? '✔ Correct — "Checking in: " + "Engineer" + " " + "Riley", joined in that order.'
+      : (/riley engineer/.test(said)
+        ? '✘ Nearly — check the order. Line 4 joins role first, then the space, then name.'
+        : '✘ Not quite — line 4 joins "Checking in: ", then what is stored in role, then a space, then what is stored in name.');
   }
   // ── End free-text block ──────────────────────────────────────────────────
   return ok;
@@ -2430,25 +2836,24 @@ async function checkMod() {
   if (raw.trim().length < 10) {
     fbEl.className = 'feedback fail'; fbEl.textContent = '⚠️ Write some code first.'; return;
   }
-  const structural = evalMod(checkKey, raw);
-  renderReqResults(reqListEl, structural.results);
-  // Run BEFORE checking the structural (regex) requirements — a genuine Python
-  // error (NameError, SyntaxError, ...) is a bigger problem than an unmet
-  // bullet point, and the structural checks never execute the code so they
-  // can't see it. Running first means a crash always outranks a formative hint.
-  fbEl.className = 'feedback loading'; fbEl.textContent = '⏳ Checking…';
-  const inputs = MOD_INPUTS?.[checkKey] || [];
-  const run = await runPython(raw, { inputs });
+  // Run FIRST with the fixed test answers: a real Python error outranks an unmet bullet,
+  // and the arithmetic bullets are judged on what the program actually printed.
+  fbEl.className = 'feedback loading'; fbEl.textContent = '⏳ Checking — typing Riley, Engineer, 4 and Dizzy…';
+  const run = await runPython(raw, { trackVars: true, inputs: MOD_INPUTS[checkKey] || [], onInputsExhausted: 'error' });
   if (!run.ok) {
+    renderReqResults(reqListEl, null);
+    setEditorOutput(editorEl, run.output, true, run.line, run.vars);
     fbEl.className = 'feedback fail'; fbEl.textContent = '❌ Error: ' + run.output; recordM1Attempt(); return;
   }
-  if (!structural.pass) {
-    fbEl.className = 'feedback fail'; fbEl.textContent = structural.msg; recordM1Attempt(); return;
+  const result = evalMod(checkKey, raw, run.output);
+  renderReqResults(reqListEl, result.results);
+  setEditorOutput(editorEl, run.output, false, null, run.vars);
+  if (!result.pass) {
+    fbEl.className = 'feedback fail'; fbEl.textContent = result.msg; recordM1Attempt(); return;
   }
   fbEl.className = 'feedback pass';
-  fbEl.textContent = structural.msg;
-  setEditorOutput(document.getElementById('m1_editor'), run.output, false);
-  clearSyntaxHint(document.getElementById('m1_editor'));
+  fbEl.textContent = result.msg;
+  clearSyntaxHint(editorEl);
   passedChecks[checkId] = true;
   delete skippedSteps['m1_' + stepM1];
   // Lock in the code as it stood for this modification, so Back/Forward can restore it later.
@@ -2463,11 +2868,9 @@ async function checkMod() {
       fbEl.classList.add('hidden');
       updateStepVisibility();
       saveState();
-      // Scroll back up to the next modification's prompt so it isn't missed.
       scrollToActive('m1_step_' + stepM1);
     }, AUTO_ADVANCE_MS);
   } else {
-    // Final modification done — lock the button and move to Make automatically.
     const m1Btn = document.getElementById('btn_check_m1');
     if (m1Btn) { m1Btn.disabled = true; m1Btn.textContent = '✅ All modifications done — moving to Make…'; }
     updateStepVisibility();
@@ -2481,61 +2884,61 @@ async function checkMod() {
 
 async function checkMake() {
   if (window.Classroom?.verifyAuth() === false) return;
-  const raw  = document.getElementById('m2_editor')?.value || '';
+  const editorEl = document.getElementById('m2_editor');
+  const raw  = editorEl?.value || '';
   const fbEl = document.getElementById('fb_m2');
+  const listEl = document.getElementById('req_m2_make');
   fbEl.classList.remove('hidden');
-  const structural = evalMake(raw);
-  renderReqResults(document.getElementById('req_m2_make'), structural.results);
-  // Run BEFORE checking the structural (regex) requirements — see the comment
-  // in checkMod() above for why a real error must outrank a formative hint.
-  fbEl.className = 'feedback loading'; fbEl.textContent = '⏳ Checking…';
-  // FILL IN ⑦: Representative mock inputs for your Make program.
-  // Supply enough inputs to exercise all main branches without hanging.
-  // e.g. { inputs: ['1', '4'] } for a menu where 1 picks an option and 4 quits.
-  const run = await runPython(raw, { inputs: [/* FILL IN */] });
+  if (raw.trim().length < 10) {
+    fbEl.className = 'feedback fail'; fbEl.textContent = '⚠️ Write your program first.'; return;
+  }
+  fbEl.className = 'feedback loading'; fbEl.textContent = '⏳ Checking — typing Ash, Navigation and Missing…';
+  const run = await runPython(raw, { trackVars: true, inputs: MAKE_INPUTS });
   if (!run.ok) {
-    fbEl.className = 'feedback fail';
-    fbEl.textContent = '❌ Your program has an error: ' + run.output; return;
+    renderReqResults(listEl, null);
+    setEditorOutput(editorEl, run.output, true, run.line, run.vars);
+    fbEl.className = 'feedback fail'; fbEl.textContent = '❌ Your program has an error: ' + run.output; return;
   }
-  if (!structural.pass) {
-    fbEl.className = 'feedback fail'; fbEl.textContent = structural.msg; return;
-  }
-  if (run.output.trim().length < 5) {
-    fbEl.className = 'feedback fail';
-    fbEl.textContent = '❌ Your program ran but produced no output — check your print() calls.'; return;
+  const result = evalMake(raw, run.output);
+  renderReqResults(listEl, result.results);
+  setEditorOutput(editorEl, run.output, false, null, run.vars);
+  if (!result.pass) {
+    fbEl.className = 'feedback fail'; fbEl.textContent = result.msg; return;
   }
   fbEl.className = 'feedback pass';
-  fbEl.textContent = structural.msg;
-  setEditorOutput(document.getElementById('m2_editor'), run.output, false);
+  fbEl.textContent = result.msg;
+  const firstMakePass = !passedChecks['m2_make'];   // STATION ZERO hook
   passedChecks['m2_make'] = true;
   window.ActivityUI?.miniCelebration(fbEl);
-  window.ActivityUI?.showToast('✅ Make complete! Now tackle the extension!');
+  window.ActivityUI?.showToast('✅ Make complete! Now try the extension!');
   updateStepVisibility();
   saveState(); submitScore();
   setTimeout(() => document.getElementById('m2_ext_task')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+  // STATION ZERO hook: the chapter cliffhanger, the first time the Make program passes.
+  if (firstMakePass) window.StationZero?.beat('M2');
 }
 
 async function checkExt() {
   if (window.Classroom?.verifyAuth() === false) return;
-  const raw  = document.getElementById('m2_editor')?.value || '';
+  const editorEl = document.getElementById('m2_editor');
+  const raw  = editorEl?.value || '';
   const fbEl = document.getElementById('fb_m2');
+  const listEl = document.getElementById('req_m2_ext');
   fbEl.classList.remove('hidden');
-  const structural = evalExt(raw);
-  renderReqResults(document.getElementById('req_m2_ext'), structural.results);
-  // Run BEFORE checking the structural (regex) requirements — see the comment
-  // in checkMod() above for why a real error must outrank a formative hint.
-  fbEl.className = 'feedback loading'; fbEl.textContent = '⏳ Checking…';
-  // FILL IN ⑧: Mock inputs for the extension (typically just the quit/exit path).
-  const run = await runPython(raw, { inputs: [/* FILL IN */] });
+  fbEl.className = 'feedback loading'; fbEl.textContent = '⏳ Checking — typing Ash, Navigation and Missing…';
+  const run = await runPython(raw, { trackVars: true, inputs: EXT_INPUTS });
   if (!run.ok) {
-    fbEl.className = 'feedback fail';
-    fbEl.textContent = '❌ Your program has an error: ' + run.output; return;
+    renderReqResults(listEl, null);
+    setEditorOutput(editorEl, run.output, true, run.line, run.vars);
+    fbEl.className = 'feedback fail'; fbEl.textContent = '❌ Your program has an error: ' + run.output; return;
   }
-  if (!structural.pass) {
-    fbEl.className = 'feedback fail'; fbEl.textContent = structural.msg; return;
+  const result = evalExt(raw, run.output);
+  renderReqResults(listEl, result.results);
+  setEditorOutput(editorEl, run.output, false, null, run.vars);
+  if (!result.pass) {
+    fbEl.className = 'feedback fail'; fbEl.textContent = result.msg; return;
   }
-  fbEl.className = 'feedback pass'; fbEl.textContent = structural.msg;
-  setEditorOutput(document.getElementById('m2_editor'), run.output, false);
+  fbEl.className = 'feedback pass'; fbEl.textContent = result.msg;
   passedChecks['m2_ext'] = true;
   window.ActivityUI?.miniCelebration(fbEl);
   window.ActivityUI?.showToast('🌟 Extension complete! Outstanding!');
@@ -2683,7 +3086,7 @@ window.addEventListener('DOMContentLoaded', () => {
   restoreInputs();
   // errorHints: show a Year-8-friendly explanation + Debugging Recipe below an
   // editor a few seconds after a run fails (powered by python-error-hints.js).
-  setupEditors('.checker-textarea', { errorHints: true });
+  setupEditors('.checker-textarea', { errorHints: true, memoryView: true });   // memory view: trial — ?memory=off to compare
   showStage(currentStage, false);
   updateNav();
   updateProgress();
@@ -2714,6 +3117,8 @@ window.addEventListener('DOMContentLoaded', () => {
 
 
   updateStepVisibility();
+  // STATION ZERO hook: header chapter/objective + the chapter title card on first visit.
+  window.StationZero?.start();
 });
 </script>
 </body>

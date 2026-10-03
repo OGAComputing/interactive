@@ -1799,7 +1799,8 @@ async function runCodeInEditor(editorId, statusElId, inputs = null) {
     if (bp.pending && result.ok && isBugFixed(codeRun)) { bp.fixes++; bp.pending = false; }
     const checkBtn = document.getElementById('btn_check_i' + stepI);
     if (checkBtn) checkBtn.disabled = false;
-    refreshInvTicks();
+    // Run alone shows progress: ✓ for each change made, ✗ for each still to do — no MCQ needed first.
+    if (iCodeSnapshots[stepI] === undefined) renderInvReqs(stepI, 'full');
     saveState();
   }
 
@@ -1845,8 +1846,8 @@ function invBugProgress(n) {
 }
 
 // Evaluate step n's code-change bullets against the live editor and draw them.
-// mode: 'full' ticks + crosses (on Check) · 'soft' ticks only, unmet bullets stay
-// neutral (while editing/running) · 'passed' all ticked · 'neutral' all plain.
+// mode: 'full' ticks + crosses (on Run and on Check) · 'soft' ticks only, unmet bullets stay
+// neutral (while typing) · 'passed' all ticked · 'neutral' all plain.
 function renderInvReqs(n, mode) {
   const list = document.getElementById('req_i_' + n);
   if (!list) return null;

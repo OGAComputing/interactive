@@ -100,6 +100,18 @@ test('Investigate step 1 cannot be passed until line 1 uses input()', async ({ p
   await expect(page.locator('#qcard_i2_prompt')).toBeVisible({ timeout: 10000 });
 });
 
+test('Investigate: Run alone shows a cross for a change not yet made, then a tick — no MCQ needed', async ({ page }) => {
+  await openAt(page, { currentStage: 'I', completedStages: ['P', 'R'] });
+  await page.click('#stage-I button:has-text("Run code")');
+  await expect(page.locator('#req_i_1 li:not(.req-note)').first()).toHaveClass(/req-fail/, { timeout: 30000 });
+  await expect(page.locator('#req_i_1 li:not(.req-note) > span').first()).toHaveText('✗');
+
+  await setCode(page, 'i_editor', STEP1_CODE);
+  await page.click('#stage-I button:has-text("Run code")');
+  await answerPrompts(page, 'i_editor', ['5']);
+  await expect(page.locator('#req_i_1 li:not(.req-note) > span').first()).toHaveText('✓', { timeout: 30000 });
+});
+
 test('Investigate reset returns to the code the step started with, not the original', async ({ page }) => {
   await openAt(page, {
     currentStage: 'I', completedStages: ['P', 'R'], stepI: 2, maxStepI: 2,

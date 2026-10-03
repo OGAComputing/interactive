@@ -18,7 +18,7 @@ Interactive Computing Education Platform — a static web hub serving self-conta
 - **`error-reporter.js`** — Shows unexpected page errors (uncaught JS errors, unhandled rejections, failed script/style loads, Pyodide load failure) in a footer panel at the bottom of the page, since the dev console isn't available on student computers. Load it as a plain `<script>` **before** `activity-ui.js`. Currently used by the Y8 and PRIMM Y8 templates and the Y8 Python Unit 1 activities; opt-in per activity.
 - **`pseudocode-transpiler.js`** — OCR pseudocode → Python transpiler. Exports `transpile(src)` and `mapErrorLine(map, pyLine)`. Covers the procedural subset, file I/O, and the OCR class/inheritance subset.
 - **`pseudocode-editor.js`** — Editor widget for OCR pseudocode activities (fork of `code-editor.js`). Targets `.pseudocode-textarea`. Exports `setupEditors`, `clearSyntaxHint`, `setEditorOutput`, `refreshEditor`, `setFiles`, `getWrittenFiles`, `runPseudocode`.
-- **`_templates/`** — Activity starter templates (excluded from manifest). Copy `Y8.html`, `Y9.html`, `Y11.html`, or `Pseudocode_Y11.html` as the basis for a new activity; for a Python PRIMM lesson copy `PRIMM_Python_Y8.html` or `PRIMM_Python_Y9.html`.
+- **`_templates/`** — Activity starter templates (excluded from manifest). Copy `Y8.html`, `Y9.html`, `Y11.html`, or `Pseudocode_Y11.html` as the basis for a new activity; for a Python PRIMM lesson copy `PRIMM_Python_Y8.html` or `PRIMM_Python_Y9.html` (or `PRIMM_Python_Y9_StationZero.html` for the Y9 Python unit's story-threaded lessons).
 
 ## Running Locally
 
@@ -105,17 +105,33 @@ textarea can also opt in with a `data-error-hints` attribute. The PRIMM Y8 templ
 enables it by default. Leave it **off for assessments**, where scaffolding the fix
 would undermine the task.
 
+### Memory view (`memoryView`) — trial
+
+`setupEditors(selector, { memoryView: true })` (or `data-memory-view` on one textarea) adds a **Memory** strip at the foot of the output panel: each variable the student's code assigns appears as a labelled box holding its value (strings in double quotes), in source order. Editors with it on always run in live-input mode, so a box appears the moment the student presses Enter on an `input()`. After a crash the boxes show what memory held at that moment. Activities that call `runPython` directly (Modify/Make checks) pass `trackVars: true` and hand `run.vars` to `setEditorOutput(ta, text, isError, line, vars)`. `?memory=off` / `?memory=on` in the URL overrides it for the whole page, for A/B trials. It is currently on only in `Y9/Python/L1_Python_Refresh/1_Wake_Up_PRIMM.html`.
+
 ### PRIMM Investigate + Modify: teacher-gated skip and reset (Y8 PRIMM activities)
 
 Both the Investigate and Modify skip buttons ("Skip this step →" / "Skip this task →", shown after 3 failed checks on the current step) only open a password box — a teacher types `outwood` (`SKIP_PASSWORD` in the JS) to actually skip (`confirmSkip('i')` / `confirmSkip('m1')`). Both editors also have a **↺ Reset to original** button (`resetInvestigateEditor` / `resetModifyEditor`): step 1 restores the starting code, and later steps restore the code snapshot taken when the previous step passed (falling back to the starting code), so a reset never throws away earlier steps' work. It is disabled while revisiting an already-passed step. All of this lives in `_templates/PRIMM_Python_Y8.html`, and `_templates/PRIMM_Python_Y9.html` carries the same logic.
 
 ### Y9 PRIMM template (`_templates/PRIMM_Python_Y9.html`)
 
-This is a copy of the Y8 PRIMM template with **identical HTML structure and JS**. Only the `<style>` block differs: Y9 uses a neutral "graphite" dark theme (charcoal canvas, near-black header with a five-colour PRIMM stage stripe, dark cards, cobalt accent, flat sentence-case buttons, graphite editor chrome, no violet/neon/glow), so it stays dark (students prefer it) but is clearly different from Y8's neon arcade. Its tokens are declared on `:root, body[data-year]` so they win over shared.css's dark `[data-year="9"]` palette. **When you change PRIMM logic or markup in one template, make the same change in the other.**
+This is a copy of the Y8 PRIMM template with **identical HTML structure and JS**. Only the `<style>` block differs: Y9 uses a neutral "graphite" dark theme (charcoal canvas, near-black header with a five-colour PRIMM stage stripe, dark cards, cobalt accent, flat sentence-case buttons, graphite editor chrome, no violet/neon/glow), so it stays dark (students prefer it) but is clearly different from Y8's neon arcade. Its tokens are declared on `:root, body[data-year]` so they win over shared.css's dark `[data-year="9"]` palette. **When you change PRIMM logic or markup in one template, make the same change in the others (including the Station Zero variant below).**
+
+### Y9 Station Zero template (`_templates/PRIMM_Python_Y9_StationZero.html`)
+
+This is the Y9 PRIMM template with a survival-horror story layer for the Y9 Python unit (see the "Narrative thread" section of `Knowledge Base/project_y9_python_mtp.md`). Everything else is identical PRIMM markup and JS. It differs in five places:
+
+- a darker "hull" palette, using the same token names
+- a station header with the objective and a **Station map** button
+- a situation-report overlay (map, status readouts, 2–3 sentences of story) that shows once each: on first load, after each stage's first completion, and when Make first passes. It is styled as an 80s green-phosphor terminal whose text types itself in with a blinking block cursor; a click or key shows it all, and reduced motion shows it at once. The template also carries collapsible "Remind me" cards (`<details class="remind">`) for worked reminders
+- a self-contained story `<script>` whose only per-lesson edit is the `STORY` object (FILL IN Ⓢ)
+- three hooks in the module, marked `STATION ZERO hook`: `start()`, `beat(stage)` and `showMap()`, each called as `window.StationZero?.…`
+
+The overlay is a fixed div at z-index 9000, not a `<dialog>`, so it never covers classroom.js's sign-in overlays. `?story=off` stops reports appearing automatically. The station layout (`ROOMS`) is shared by every chapter, so don't change it per lesson.
 
 ### PRIMM Investigate: code-change tick-lists (Y8 PRIMM activities)
 
-Every Investigate instruction that needs a code change is a numbered `<li>` in the step's `<ul class="req-list" id="req_i_N">` (plain "run it" lines are `<li class="req-note">`, never ticked). `INV_CHECKS.invN` in the activity's `checkers.js` has one req per numbered `<li>`; they tick live as the student types/runs, cross on Check, and **all must pass before that step's answer is accepted**. A step with no code change has no list and no `INV_CHECKS` entry, so it is never gated. For the Break it step, `isBugFixed(raw)` must require the *fixed* line to be present, so deleting the broken line never counts as fixing it — unless deleting it *is* the fix (L2 Variables). Reference implementation: `Y8/Python Unit 1/L4_Data_Types_Casting/checkers.js` + `checkers.test.js`.
+Every Investigate instruction that needs a code change is a numbered `<li>` in the step's `<ul class="req-list" id="req_i_N">` (plain "run it" lines are `<li class="req-note">`, never ticked). `INV_CHECKS.invN` in the activity's `checkers.js` has one req per numbered `<li>`; they tick live as the student types, show ticks and crosses on Run (no MCQ needed first), and **all must pass before that step's answer is accepted**. A step with no code change has no list and no `INV_CHECKS` entry, so it is never gated. For the Break it step, `isBugFixed(raw)` must require the *fixed* line to be present, so deleting the broken line never counts as fixing it — unless deleting it *is* the fix (L2 Variables). Reference implementation: `Y8/Python Unit 1/L4_Data_Types_Casting/checkers.js` + `checkers.test.js`.
 
 **Do not reference any other external files** from activity HTML — no CDN URLs, no third-party libraries.
 
