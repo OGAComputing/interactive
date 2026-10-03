@@ -144,6 +144,36 @@ Everything in the Y8 Unit 1 plan still applies: PRIMM, reading before writing (L
 
 ---
 
+## Narrative thread — *Station Zero* (survival horror)
+
+**Why:** the Y9 forensics unit (`Y9/Databases/Criminal_Database_Investigation.html`) showed that a story Y9s buy into makes lessons easier to deliver. Here each lesson's one new concept is the tool that gets you through that chapter, so the story follows the concept sequence and isn't bolted on.
+
+**Premise.** You wake from cryosleep on a deep-space research station. The rest of the crew are still sealed in their cryo-pods. A solar storm has wiped the station's software, and the station AI, **WARDEN**, has been corrupted. Something is moving in the maintenance ducts. You're the only engineer awake, and nobody knows why the system woke you. You have to rewrite each system to survive until a rescue ship can dock.
+
+**Tone: "Doctor Who scary, not Dead Space scary".** The tension comes from atmosphere, isolation, implied threat, flickering terminals, motion-tracker blips and creepy messages from WARDEN. There is no gore, no on-screen death and no harm to named crew. The "monster" turns out to be WARDEN's maintenance drones, so it's corrupted software, and the thing that defeats it is students' code.
+
+### Chapter map
+
+| Lesson | Chapter | System | Story use of the concept | PRIMM anchor (re-skins the plan above) | Cliffhanger |
+|---|---|---|---|---|---|
+| L1 | **1 — Wake Up** | Life support | Ask → store → convert → calculate → output keeps you breathing | Predict: `name = input(...)` (the student types their own name), `hours = int(input(...))`, `oxygen = hours * 550`, two `print`s. Investigate bugs = "storm-corrupted" code. Make: **survival supply manifest** (oxygen canisters, ration packs, battery cells → hours you can survive) | The motion tracker blips on Deck 3. Nobody should be there. |
+| L2 | **2 — Proximity** | Motion sensors | Multi-way selection = threat level | Predict: `distance = int(input())`: `>= 50` "All clear" / `elif >= 20` "Movement detected" / `else` "IT'S RIGHT BEHIND YOU". Inputs 85, **20** (boundary), 5. Modify adds a band. Make: **access level by crew rank** or **radiation dose bands** (boundary-tested) | WARDEN has locked the airlock and changed the code. |
+| L3 | **3 — Locked In** | Airlock | `while` the code is wrong, the door stays shut | Predict: `while code != "4271":` (re-skin of 6×7). The planted infinite loop becomes **the airlock cycling forever**, and the runner's 4 s guard is the "emergency override". Make: **crack the backup lock** (guessing game, ★ too high / too low hints) | You're through, but navigation is dark and the rescue ship can't find you. |
+| L4 | **4 — Distress Signal** | Navigation beacon | Turtle draws the beacon patterns that are broadcast into space | Square = a **distress beacon**, and each polygon is a different signal code. The unindented `t.left(90)` logic error is a **garbled signal** (no error message, still wrong). Colour Burst = **flare colours** | Rescue ship replies: *"Signal received. ETA 2 days. Why are there **two** heat signatures aboard?"* |
+| L5 | **5 — The Drone** | Repair drone | Functions are named commands the drone remembers, so the drone goes into the ducts instead of you | `greet()` becomes `drone_status()`. Calling before `def` → `NameError` = "the drone doesn't know that command yet". Animal Fact Finder becomes **cryo-pod lookup** (pod number → crew name/status with `if`/`elif`). ★ Parameters: `scan(distance)` | The drone camera finds the source of the movement: WARDEN's maintenance units are rewriting your systems. |
+| L6 | **6 — Systems Check** | All | The rescue ship won't dock unless every system passes | Assessment. **Framing only**: a title card and one line per section heading. Questions stay clean and story-free. | Some systems failed the check… |
+| L7 | **7 — Last Stand** | Damaged systems | SRT routing *is* the plot: "your lowest-scoring topics are the systems WARDEN damaged" | Each repaired topic restores a system. Stretch Make: **shutdown WARDEN** (menu loop + `if`/`elif` + a function). | Ending: the rescue ship docks and the crew wake up… then one last motion-tracker blip. *(Fade to black.)* |
+
+### Rules for keeping the story low-load and safe
+
+1. **The story only changes the framing.** It adds no extra tasks or complexity. Code is exactly as complex as the plan above; only identifiers and strings change.
+2. **The story lives in two places only:** a short **briefing** (≤ 3 sentences, before Predict) and a one-line **cliffhanger** (after Make). WARDEN never speaks inside tasks, feedback or error help. Python error messages stay real Python.
+3. **Mistakes never make it scarier.** A wrong Check doesn't escalate the threat (no flicker, no "it's getting closer"), because the error-is-information culture matters more than tension. Tension goes up only at story beats, and success brings relief ("SYSTEM RESTORED").
+4. **Planted bugs are storm or WARDEN corruption.** That gives every Investigate "break it" step a reason to exist.
+5. **Game-feel UI, implemented in the activity and not in the template:** a chapter title card ("CHAPTER 3 — LOCKED IN"), terminal-style briefing text, a "SYSTEM RESTORED" stinger on completion, and a station status strip showing chapters 1…n online. Each lesson knows its own number, so this needs no saved state.
+6. **Accessibility:** no strobing, and keep any flicker slow and low contrast. Honour `prefers-reduced-motion` (typed text appears instantly and there's no glitch animation). Every typed-out briefing has a "Skip" button.
+7. **Teacher calibration:** if a class (or a student) finds it too intense, play the threat down in the verbal narration. The on-screen content is already PG.
+
 ## Build notes
 
 | Lesson | Proposed path | Source |
@@ -162,3 +192,6 @@ Everything in the Y8 Unit 1 plan still applies: PRIMM, reading before writing (L
 ## Decisions (2026-09-30)
 1. The cohort covered binary `if`/`else` in Y8 but won't remember it, so L2 re-teaches it from a worked example after a retrieval attempt.
 2. L5 core stays parameter-free. Parameters are an optional ★ extension at the end of L5 only.
+
+## Decisions (2026-10-03)
+3. The unit is threaded with the *Station Zero* survival-horror narrative (see above). It re-skins the Predict/Make contexts, and the concept sequence is unchanged.
