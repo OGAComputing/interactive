@@ -1,9 +1,9 @@
 import { test, expect } from '@playwright/test';
 import {
   ANSWERS, GATES, CHECKPOINTS, THREATS, ATTACK_TARGETS, fallsWithinHour, DEMO_PREDICT, CARVE_BLOCKS, isHistoryBlock,
-} from '../Y9/Cybersecurity/searching-checkers.js';
+} from '../Y9/Digital_Forensics/L5_Searching_the_Computer/searching-checkers.js';
 
-const URL = '/Y9/Cybersecurity/Searching_the_Computer.html';
+const URL = '/Y9/Digital_Forensics/L5_Searching_the_Computer/Searching_the_Computer.html';
 const KEY = 'y9-searching-computer-v3';
 
 test.beforeEach(async ({ page }) => {

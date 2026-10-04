@@ -147,7 +147,7 @@ Everything in the Y8 Unit 1 plan still applies: PRIMM, reading before writing (L
 
 ## Narrative thread — *Station Zero* (survival horror)
 
-**Why:** the Y9 forensics unit (`Y9/Databases/Criminal_Database_Investigation.html`) showed that a story Y9s buy into makes lessons easier to deliver. Here each lesson's one new concept is the tool that gets you through that chapter, so the story follows the concept sequence and isn't bolted on.
+**Why:** the Y9 forensics unit (`Y9/Digital_Forensics/L4_Criminal_Database/Criminal_Database_Investigation.html`) showed that a story Y9s buy into makes lessons easier to deliver. Here each lesson's one new concept is the tool that gets you through that chapter, so the story follows the concept sequence and isn't bolted on.
 
 **Premise.** You wake from cryosleep on Station Zero, a research station orbiting an uncharted planet. The rest of the crew are still sealed in their cryo-pods, except Pod 2 (Engineer Hale), which is empty and cracked from the inside. A solar storm has wiped the station's software, and the station AI, **WARDEN**, has locked every door. **The science team brought samples up from the planet, and something came with them.** It's now living in the maintenance ducts. You're the only engineer awake. You have to rewrite each system to survive until a rescue ship can dock.
 

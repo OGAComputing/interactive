@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-const URL = '/Y9/Databases/Criminal_Database_Investigation.html';
+const URL = '/Y9/Digital_Forensics/L4_Criminal_Database/Criminal_Database_Investigation.html';
 
 test('progress survives a page refresh', async ({ page }) => {
   await page.goto(URL);

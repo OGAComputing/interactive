@@ -58,6 +58,15 @@ Lesson folders must start with `L<number>` (e.g. `L1`, `L02`, `L1_Variables`, `L
 3. Replace placeholder content with your tasks; update `TASK_COUNT` in the script to match
 5. Push to main — the workflow auto-generates `activities.json` and `meta.json`
 
+## Moving an Activity
+
+Links to activities are already posted in Google Classroom, so a moved activity must keep working at its old URL:
+
+1. `git mv` the HTML (and any `checkers.js` / tests beside it) to the new folder; fix test imports and URLs.
+2. Leave a redirect stub at the old path (see `Y9/Databases/Criminal_Database_Investigation.html`). It must contain a `<!-- REDIRECT` comment so the manifest build skips it, and it forwards with `location.replace(newPath + location.search + location.hash)` so `?courseId=…&proxyUrl=…` survive.
+3. Add `<meta name="classroom-former-path" content="Y9/Old_Topic/File.html">` to the moved page's `<head>`. `classroom.js` matches Classroom assignments by link URL, so without it, grades from assignments posted with the old link would not be submitted.
+4. localStorage progress is per-origin, so it carries over by itself.
+
 ## Shared Files
 
 These files are intentionally shared across activities via relative paths (`../../` for topic-level, `../../../` for lesson-level):
@@ -109,6 +118,10 @@ would undermine the task.
 
 `setupEditors(selector, { memoryView: true })` (or `data-memory-view` on one textarea) adds a **Memory** strip at the foot of the output panel: each variable the student's code assigns appears as a labelled box holding its value (strings in double quotes), in source order. Editors with it on always run in live-input mode, so a box appears the moment the student presses Enter on an `input()`. After a crash the boxes show what memory held at that moment. Activities that call `runPython` directly (Modify/Make checks) pass `trackVars: true` and hand `run.vars` to `setEditorOutput(ta, text, isError, line, vars)`. `?memory=off` / `?memory=on` in the URL overrides it for the whole page, for A/B trials. It is currently on only in `Y9/Python/L1_Python_Refresh/1_Wake_Up_PRIMM.html`.
 
+### Step-through Run (`stepThrough`) — trial
+
+`setupEditors(selector, { stepThrough: true })` (or `data-step-through` on one textarea) makes `runCode()` (the **▶ Run code** buttons) show the run line by line. The program still runs in one go: `runPython(..., { traceLines: true })` records each line as it is about to run, and how much had been printed by then. The editor then replays that record at 0.5 s per line (`STEP_MS`). A bar sits behind the running line, its number lights up in the gutter, and the output that line printed appears while it is lit. A **⏩ Skip to end** button finishes the replay at once, and so does typing in the editor. `input()` works as in live-input mode: the replay waits on the input line while the student types, then carries on. After a crash, the output printed before it stays above the error, and the failing line stays marked in red until the code is edited. No replay takes more than 5 s (`MAX_REPLAY_MS`): a program with more than 10 lines to show gets shorter steps so it still fits. With `input()`, each stretch between answers gets its own 5 s, because later lines aren't known until the student answers. Only the first 150 lines run are replayed (`MAX_TRACE_STEPS`), and the rest of the output appears at once. Checks that call `runPython` themselves (Modify/Make) pass `traceLines: true` and hand the result to `replayRun(ta, run)` in place of `setEditorOutput`. It steps through the run (or shows it at once when stepping is off), and resolves `false` if a newer run took over the panel, in which case the check should stop. `?step=off` / `?step=on` in the URL overrides it for the whole page. It is on in `_templates/PRIMM_Python_Y9_StationZero.html` and both Y9 L1 lessons (Wake Up, Life Support).
+
 ### PRIMM Investigate + Modify: teacher-gated skip and reset (Y8 PRIMM activities)
 
 Both the Investigate and Modify skip buttons ("Skip this step →" / "Skip this task →", shown after 3 failed checks on the current step) only open a password box — a teacher types `outwood` (`SKIP_PASSWORD` in the JS) to actually skip (`confirmSkip('i')` / `confirmSkip('m1')`). Both editors also have a **↺ Reset to original** button (`resetInvestigateEditor` / `resetModifyEditor`): step 1 restores the starting code, and later steps restore the code snapshot taken when the previous step passed (falling back to the starting code), so a reset never throws away earlier steps' work. It is disabled while revisiting an already-passed step. All of this lives in `_templates/PRIMM_Python_Y8.html`, and `_templates/PRIMM_Python_Y9.html` carries the same logic.
@@ -147,7 +160,7 @@ Topic values map to accent colour overrides. Current supported topics:
 |------|--------|
 | 7    | Digital_Skills |
 | 8    | Python |
-| 9    | Hardware_Networks, Algorithms, Cybersecurity, Databases |
+| 9    | Hardware_Networks, Algorithms, Cybersecurity, Databases, Digital_Forensics |
 | 11   | Networks, NetworkHardware, Legislation, System_Software, Algorithms, Security |
 
 To add a new topic, append a `[data-year="…"][data-topic="…"]` rule to `shared.css`.

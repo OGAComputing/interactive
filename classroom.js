@@ -596,6 +596,11 @@
   async function lookupCourseWorkId(token, cId) {
     const pageBase = decodeURIComponent(window.location.origin + window.location.pathname);
     const pagePath = decodeURIComponent(window.location.pathname);
+    // Activities that moved folder list their old path(s) in
+    // <meta name="classroom-former-path" content="Y9/Databases/File.html">, so
+    // assignments posted with the old link still match after the redirect.
+    const formerPaths = [...document.querySelectorAll('meta[name="classroom-former-path"]')]
+      .map(m => '/' + m.content.replace(/^\/+/, ''));
     try {
       for (const state of ['PUBLISHED', 'DRAFT']) {
         let pageToken = '';
@@ -615,6 +620,7 @@
               if (m.link && m.link.url) {
                 const linkBase = decodeURIComponent(m.link.url.split('?')[0]);
                 if (linkBase === pageBase || linkBase.endsWith(pagePath)) return cw.id;
+                if (formerPaths.some(p => linkBase.endsWith(p))) return cw.id;
               }
             }
           }

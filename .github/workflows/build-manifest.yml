@@ -34,6 +34,8 @@
 # Any HTML file whose name starts with '_' will be skipped.
 # e.g.  Y8/Python/_work-in-progress.html  →  excluded
 #       Y8/_drafts/NewLesson.html          →  excluded
+# Any HTML file containing a <!-- REDIRECT --> comment (a stub left at an
+# activity's old path after it moved) is skipped too.
 
 name: Build activity manifest
 
@@ -152,6 +154,11 @@ jobs:
 
               with open(filepath, encoding='utf-8') as fh:
                 content = fh.read()
+
+              # Redirect stubs left behind when an activity moves folder
+              if '<!-- REDIRECT' in content:
+                print(f"  Skipping (redirect stub): {rel_path}")
+                continue
 
               meta_match = ACTIVITY_PATTERN.search(content)
 
