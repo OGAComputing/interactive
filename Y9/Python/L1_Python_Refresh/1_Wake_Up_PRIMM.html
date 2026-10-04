@@ -1733,7 +1733,7 @@ color:  teal
 import { normalise, has, MOD_CHECKS, MOD_INPUTS, evalMod, MAKE_CHECK, MAKE_INPUTS, evalMake, EXT_CHECK, EXT_INPUTS, evalExt,
          evalInv, isBugFixed, isBugPairLine, breakCode } from './checkers_wakeup.js';
 import { runPython, preload } from '../../../pyodide-runner.js';
-import { setupEditors, clearSyntaxHint, setEditorOutput, refreshEditor, runCode, replayRun } from '../../../code-editor.js';
+import { setupEditors, clearSyntaxHint, setEditorOutput, refreshEditor, runCode } from '../../../code-editor.js';
 
 
 // ═══════════════════════════════════════════════════════
@@ -2839,14 +2839,15 @@ async function checkMod() {
   // Run FIRST with the fixed test answers: a real Python error outranks an unmet bullet,
   // and the arithmetic bullets are judged on what the program actually printed.
   fbEl.className = 'feedback loading'; fbEl.textContent = '⏳ Checking — typing Riley, Engineer, 4 and Dizzy…';
-  const run = await runPython(raw, { traceLines: true, trackVars: true, inputs: MOD_INPUTS[checkKey] || [], onInputsExhausted: 'error' });
-  if (!(await replayRun(editorEl, run))) return;   // step through the run before judging it (stepThrough)
+  const run = await runPython(raw, { trackVars: true, inputs: MOD_INPUTS[checkKey] || [], onInputsExhausted: 'error' });
   if (!run.ok) {
     renderReqResults(reqListEl, null);
+    setEditorOutput(editorEl, run.output, true, run.line, run.vars);
     fbEl.className = 'feedback fail'; fbEl.textContent = '❌ Error: ' + run.output; recordM1Attempt(); return;
   }
   const result = evalMod(checkKey, raw, run.output);
   renderReqResults(reqListEl, result.results);
+  setEditorOutput(editorEl, run.output, false, null, run.vars);
   if (!result.pass) {
     fbEl.className = 'feedback fail'; fbEl.textContent = result.msg; recordM1Attempt(); return;
   }
@@ -2892,14 +2893,15 @@ async function checkMake() {
     fbEl.className = 'feedback fail'; fbEl.textContent = '⚠️ Write your program first.'; return;
   }
   fbEl.className = 'feedback loading'; fbEl.textContent = '⏳ Checking — typing Ash, Navigation and Missing…';
-  const run = await runPython(raw, { traceLines: true, trackVars: true, inputs: MAKE_INPUTS });
-  if (!(await replayRun(editorEl, run))) return;   // step through the run before judging it (stepThrough)
+  const run = await runPython(raw, { trackVars: true, inputs: MAKE_INPUTS });
   if (!run.ok) {
     renderReqResults(listEl, null);
+    setEditorOutput(editorEl, run.output, true, run.line, run.vars);
     fbEl.className = 'feedback fail'; fbEl.textContent = '❌ Your program has an error: ' + run.output; return;
   }
   const result = evalMake(raw, run.output);
   renderReqResults(listEl, result.results);
+  setEditorOutput(editorEl, run.output, false, null, run.vars);
   if (!result.pass) {
     fbEl.className = 'feedback fail'; fbEl.textContent = result.msg; return;
   }
@@ -2924,14 +2926,15 @@ async function checkExt() {
   const listEl = document.getElementById('req_m2_ext');
   fbEl.classList.remove('hidden');
   fbEl.className = 'feedback loading'; fbEl.textContent = '⏳ Checking — typing Ash, Navigation and Missing…';
-  const run = await runPython(raw, { traceLines: true, trackVars: true, inputs: EXT_INPUTS });
-  if (!(await replayRun(editorEl, run))) return;   // step through the run before judging it (stepThrough)
+  const run = await runPython(raw, { trackVars: true, inputs: EXT_INPUTS });
   if (!run.ok) {
     renderReqResults(listEl, null);
+    setEditorOutput(editorEl, run.output, true, run.line, run.vars);
     fbEl.className = 'feedback fail'; fbEl.textContent = '❌ Your program has an error: ' + run.output; return;
   }
   const result = evalExt(raw, run.output);
   renderReqResults(listEl, result.results);
+  setEditorOutput(editorEl, run.output, false, null, run.vars);
   if (!result.pass) {
     fbEl.className = 'feedback fail'; fbEl.textContent = result.msg; return;
   }
@@ -3083,8 +3086,7 @@ window.addEventListener('DOMContentLoaded', () => {
   restoreInputs();
   // errorHints: show a Year-8-friendly explanation + Debugging Recipe below an
   // editor a few seconds after a run fails (powered by python-error-hints.js).
-  // memory view and step-through (Run + Modify/Make checks): trials — ?memory=off / ?step=off to compare
-  setupEditors('.checker-textarea', { errorHints: true, memoryView: true, stepThrough: true });
+  setupEditors('.checker-textarea', { errorHints: true, memoryView: true });   // memory view: trial — ?memory=off to compare
   showStage(currentStage, false);
   updateNav();
   updateProgress();
