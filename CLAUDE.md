@@ -33,7 +33,7 @@ Y8/Python/Spot_the_Error.html              ← topic-level (no lesson grouping)
 Y8/Python/L1_Variables/1_Spot_the_Error.html  ← lesson-level (grouped under "Lesson 1 — Variables")
 ```
 
-Lesson folders must start with `L<number>` (e.g. `L1`, `L02`, `L1_Variables`, `L3_Loops_and_Lists`). The hub shows them as subheadings within the topic. Activities without a lesson folder are shown ungrouped as before.
+Lesson folders must start with `L<number>` (e.g. `L1`, `L02`, `L1_Variables`, `L3_Loops_and_Lists`). The hub shows them as subheadings within the topic. One letter may follow the number for an in-between lesson, e.g. `L4R_Revision` → "Lesson 4R", sorted straight after Lesson 4 (stored as `lesson_suffix` in `activities.json`). Activities without a lesson folder are shown ungrouped as before.
 
 **Note:** Activities in a lesson subfolder are one level deeper, so shared file paths need an extra `../`:
 - `shared.css` → `../../../shared.css`

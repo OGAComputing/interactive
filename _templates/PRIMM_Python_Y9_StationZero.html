@@ -980,12 +980,9 @@ color:  blue
   <div class="code-checker">
     <textarea class="checker-textarea" id="r_editor" data-title="Python Editor"></textarea>
     <div class="checker-footer">
-      <!--
-        FILL IN ⑦: Mock inputs for the Run stage.
-        If the program calls input() N times, supply N strings in the array.
-        If no input() is used, leave the array empty: []
-      -->
-      <button class="btn btn-check" onclick="runCodeInEditor('r_editor', 'r_fb_run', [/* 'input1', 'input2' */])">▶ Run code</button>
+      <!-- no inputs passed → the student types answers live in the output panel,
+           while the run steps through the code line by line (stepThrough) -->
+      <button class="btn btn-check" onclick="runCodeInEditor('r_editor', 'r_fb_run')">▶ Run code</button>
       <div class="feedback loading hidden" id="r_fb_run"></div>
     </div>
   </div>
@@ -1148,8 +1145,7 @@ color:  blue
   <div class="code-checker" style="margin-top:0.5rem">
     <textarea class="checker-textarea" id="i_editor" data-title="Python Editor" oninput="saveState(); refreshInvTicks()"></textarea>
     <div class="checker-footer">
-      <!-- FILL IN ⑩: Mock inputs matching the current state of the code in the editor. -->
-      <button class="btn btn-check" onclick="runCodeInEditor('i_editor', 'i_fb_run', [/* 'input1' */])">▶ Run code</button>
+      <button class="btn btn-check" onclick="runCodeInEditor('i_editor', 'i_fb_run')">▶ Run code</button>
       <button class="btn btn-reset" id="btn_reset_i" onclick="resetInvestigateEditor()">↺ Reset to original</button>
       <div class="feedback loading hidden" id="i_fb_run"></div>
     </div>
@@ -1988,7 +1984,7 @@ color:  blue
 import { normalise, has, MOD_CHECKS, MOD_INPUTS, evalMod, MAKE_CHECK, evalMake, EXT_CHECK, evalExt,
          evalInv, isBugFixed, isBugPairLine, breakCode } from './checkers.js';
 import { runPython, preload } from '../../../pyodide-runner.js';
-import { setupEditors, clearSyntaxHint, setEditorOutput, refreshEditor } from '../../../code-editor.js';
+import { setupEditors, clearSyntaxHint, setEditorOutput, refreshEditor, runCode, replayRun } from '../../../code-editor.js';
 
 
 // ═══════════════════════════════════════════════════════
@@ -2564,19 +2560,20 @@ function setPyStatus(st) {
 
 // ── Run helper ────────────────────────────────────────
 
-async function runCodeInEditor(editorId, statusElId, inputs = []) {
+// inputs = null → the student types each answer live in the output panel (runCode).
+// With stepThrough on, runCode resolves only once the line-by-line replay ends.
+async function runCodeInEditor(editorId, statusElId, inputs = null) {
   if (window.Classroom?.verifyAuth() === false) return;
   const editorEl = document.getElementById(editorId);
   const statusEl = document.getElementById(statusElId);
-  const code = editorEl?.value || '';
   if (statusEl) {
     statusEl.classList.remove('hidden', 'fail', 'pass');
     statusEl.classList.add('loading');
     statusEl.textContent = '⏳ Running…';
   }
   const codeRun = editorEl?.value || '';
-  const result = await runPython(code, { inputs });
-  setEditorOutput(editorEl, result.output, !result.ok, result.line);
+  const result = await runCode(editorEl, { inputs });
+  if (result.cancelled) return;   // a later Run click superseded this one — it already owns the UI
   clearSyntaxHint(editorEl);
 
   if (editorId === 'r_editor' && !firstRunShown) {
@@ -3177,7 +3174,8 @@ async function checkMod() {
   // can't see it. Running first means a crash always outranks a formative hint.
   fbEl.className = 'feedback loading'; fbEl.textContent = '⏳ Checking…';
   const inputs = MOD_INPUTS?.[checkKey] || [];
-  const run = await runPython(raw, { inputs });
+  const run = await runPython(raw, { traceLines: true, inputs });
+  if (!(await replayRun(document.getElementById('m1_editor'), run))) return;   // step through the run before judging it (stepThrough)
   if (!run.ok) {
     fbEl.className = 'feedback fail'; fbEl.textContent = '❌ Error: ' + run.output; recordM1Attempt(); return;
   }
@@ -3186,7 +3184,6 @@ async function checkMod() {
   }
   fbEl.className = 'feedback pass';
   fbEl.textContent = structural.msg;
-  setEditorOutput(document.getElementById('m1_editor'), run.output, false);
   clearSyntaxHint(document.getElementById('m1_editor'));
   passedChecks[checkId] = true;
   delete skippedSteps['m1_' + stepM1];
@@ -3231,7 +3228,8 @@ async function checkMake() {
   // FILL IN ⑦: Representative mock inputs for your Make program.
   // Supply enough inputs to exercise all main branches without hanging.
   // e.g. { inputs: ['1', '4'] } for a menu where 1 picks an option and 4 quits.
-  const run = await runPython(raw, { inputs: [/* FILL IN */] });
+  const run = await runPython(raw, { traceLines: true, inputs: [/* FILL IN */] });
+  if (!(await replayRun(document.getElementById('m2_editor'), run))) return;   // step through the run before judging it (stepThrough)
   if (!run.ok) {
     fbEl.className = 'feedback fail';
     fbEl.textContent = '❌ Your program has an error: ' + run.output; return;
@@ -3245,7 +3243,6 @@ async function checkMake() {
   }
   fbEl.className = 'feedback pass';
   fbEl.textContent = structural.msg;
-  setEditorOutput(document.getElementById('m2_editor'), run.output, false);
   const firstMakePass = !passedChecks['m2_make'];   // STATION ZERO hook
   passedChecks['m2_make'] = true;
   window.ActivityUI?.miniCelebration(fbEl);
@@ -3268,7 +3265,8 @@ async function checkExt() {
   // in checkMod() above for why a real error must outrank a formative hint.
   fbEl.className = 'feedback loading'; fbEl.textContent = '⏳ Checking…';
   // FILL IN ⑧: Mock inputs for the extension (typically just the quit/exit path).
-  const run = await runPython(raw, { inputs: [/* FILL IN */] });
+  const run = await runPython(raw, { traceLines: true, inputs: [/* FILL IN */] });
+  if (!(await replayRun(document.getElementById('m2_editor'), run))) return;   // step through the run before judging it (stepThrough)
   if (!run.ok) {
     fbEl.className = 'feedback fail';
     fbEl.textContent = '❌ Your program has an error: ' + run.output; return;
@@ -3277,7 +3275,6 @@ async function checkExt() {
     fbEl.className = 'feedback fail'; fbEl.textContent = structural.msg; return;
   }
   fbEl.className = 'feedback pass'; fbEl.textContent = structural.msg;
-  setEditorOutput(document.getElementById('m2_editor'), run.output, false);
   passedChecks['m2_ext'] = true;
   window.ActivityUI?.miniCelebration(fbEl);
   window.ActivityUI?.showToast('🌟 Extension complete! Outstanding!');
@@ -3425,7 +3422,10 @@ window.addEventListener('DOMContentLoaded', () => {
   restoreInputs();
   // errorHints: show a Year-8-friendly explanation + Debugging Recipe below an
   // editor a few seconds after a run fails (powered by python-error-hints.js).
-  setupEditors('.checker-textarea', { errorHints: true });
+  // stepThrough: Run and the Modify/Make checks (via replayRun) replay the program a
+  // line at a time (0.5 s each, faster so it never takes over 5 s), lighting the
+  // running line and printing its output as it goes — trial, ?step=off to compare.
+  setupEditors('.checker-textarea', { errorHints: true, stepThrough: true });
   showStage(currentStage, false);
   updateNav();
   updateProgress();

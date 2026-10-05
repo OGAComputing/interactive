@@ -246,12 +246,6 @@ export function evalMod(checkKey, raw, output = '') {
 // The student's own questions, so only the SHAPE is checked. Run with word answers.
 export const MAKE_INPUTS = ['Ash', 'Navigation', 'Missing', 'Kai', 'Drone Bay', 'Awake'];
 
-// Lines the program printed itself — the runner echoes one "prompt + answer" line per input().
-function ownOutputLines(raw, out) {
-  const lines = (out || '').split('\n').filter(l => l.trim());
-  return Math.max(0, lines.length - Math.min(inputCount(raw), MAKE_INPUTS.length));
-}
-
 export const MAKE_CHECK = {
   reqs: [
     {
@@ -267,8 +261,9 @@ export const MAKE_CHECK = {
       test: raw => joinsAnswer(raw),
     },
     {
-      hint: '❌ Your report should print at least 2 lines of its own (not counting the questions).',
-      test: (raw, out) => ownOutputLines(raw, out) >= 2,
+      // Both answers printed by the program itself — on one line or on separate lines.
+      hint: '❌ Your report should print BOTH answers — tested with Ash and Navigation.',
+      test: (raw, out) => MAKE_INPUTS.slice(0, 2).every(a => printedAnswer(out, a)),
     },
   ],
   passMsg: '✅ Crew locator working — questions, variables and a clear printed report.',

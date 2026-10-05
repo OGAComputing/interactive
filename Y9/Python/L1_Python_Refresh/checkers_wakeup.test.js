@@ -193,9 +193,13 @@ describe('Make — crew locator', () => {
     const src = code('input("Crew member: ")', 'input("Room: ")', 'print("Report")', 'print("done")');
     expect(evalMake(src, out('Crew member: Ash', 'Room: Navigation', 'Report', 'done')).results[1]).toBe(false);
   });
-  test('only one line of report fails the last bullet', () => {
+  test('both answers on one line of report passes', () => {
     const src = code(MAKE_GOOD[0], MAKE_GOOD[1], 'print(name + " was last seen in " + room)');
-    expect(evalMake(src, out('Crew member: Ash', 'Last seen in: Navigation', 'Ash was last seen in Navigation')).results[3]).toBe(false);
+    expect(evalMake(src, out('Crew member: Ash', 'Last seen in: Navigation', 'Ash was last seen in Navigation')).pass).toBe(true);
+  });
+  test('printing only one of the answers fails the last bullet', () => {
+    const src = code(MAKE_GOOD[0], MAKE_GOOD[1], 'print("Crew member: " + name)', 'print("Report done")');
+    expect(evalMake(src, out('Crew member: Ash', 'Last seen in: Navigation', 'Crew member: Ash', 'Report done')).results[3]).toBe(false);
   });
 });
 

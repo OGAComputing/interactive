@@ -857,7 +857,8 @@
 
       if (!tree[group])          tree[group] = {};
       if (!tree[group][topic]) tree[group][topic] = {};
-      const lKey = a.lesson_num != null ? String(a.lesson_num) : '__none__';
+      // lesson_suffix: the letter in a folder like L4R_Revision → key "4R".
+      const lKey = a.lesson_num != null ? a.lesson_num + (a.lesson_suffix || '') : '__none__';
       if (!tree[group][topic][lKey]) {
         tree[group][topic][lKey] = { name: a.lesson || null, activities: [] };
       }
@@ -897,11 +898,11 @@
       }).forEach(topic => {
         const lessonBuckets = tree[year][topic];
 
-        // Sort lesson keys: ungrouped first, then numerically
+        // Sort lesson keys: ungrouped first, then numerically ("4" before "4R" before "5")
         const lessonKeys = Object.keys(lessonBuckets).sort((a, b) => {
           if (a === '__none__') return -1;
           if (b === '__none__') return  1;
-          return Number(a) - Number(b);
+          return parseInt(a, 10) - parseInt(b, 10) || a.localeCompare(b);
         });
 
         const hasLessons = lessonKeys.some(k => k !== '__none__');

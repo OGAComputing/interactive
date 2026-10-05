@@ -1,0 +1,1104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- ACTIVITY
+title:  Revision Quest — Python So Far
+type:   Practice
+stars:  3
+desc:   Cover lesson: five levels revising print, variables, input and casting, then three extensions ending in an open-ended Design Studio.
+color:  purple
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Revision Quest — Year 8 Python</title>
+<link rel="stylesheet" href="../../../shared.css">
+
+<style>
+  /* ── Header ──────────────────────────────────────────── */
+  .header { background: var(--surface); padding: 18px 28px 14px; border-bottom: 4px solid var(--accent); }
+  .header-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  .header-title { font-family: var(--font-head); font-size: 1.5rem; font-weight: 700; color: var(--text-inv); }
+  .header-sub { font-size: 0.82rem; color: var(--accent-light); margin-top: 3px; }
+  .py-status { font-size: 0.75rem; color: var(--accent-light); background: var(--surface-mid); padding: 4px 10px; border-radius: 999px; }
+  .py-status.ready { color: #bbf7d0; }
+  .progress-row { display: flex; gap: 6px; margin-top: 10px; align-items: center; flex-wrap: wrap; }
+  .pdot { width: 10px; height: 10px; border-radius: 50%; background: var(--surface-dim); border: 2px solid #3a5a7a; transition: background .3s, border-color .3s; }
+  .pdot.correct { background: var(--green); border-color: var(--green); }
+  .pdot.gold    { background: var(--gold);  border-color: var(--gold); }
+  .pdot.ext     { border-radius: 2px; transform: rotate(45deg); }
+  .pdot-gap { width: 10px; }
+
+  #glow-overlay { position: fixed; inset: 0; pointer-events: none; z-index: 0; opacity: 0; transition: opacity 1.8s ease; }
+  #glow-overlay.gold  { background: radial-gradient(ellipse at 50% 55%, rgba(251,191,36,.24) 0%, transparent 65%); }
+  #glow-overlay.green { background: radial-gradient(ellipse at 50% 55%, rgba(16,185,129,.20) 0%, transparent 65%); }
+  #glow-overlay.show  { opacity: 1; }
+
+  /* ── Cover note ──────────────────────────────────────── */
+  .cover-note { max-width: 920px; margin: 14px auto 0; padding: 0 28px; font-size: 0.86rem; }
+  .cover-note details { background: #fff; border: 1.5px dashed var(--muted); border-radius: 8px; padding: 8px 14px; }
+  .cover-note summary { cursor: pointer; font-weight: 700; color: var(--surface); }
+  .cover-note ul { margin: 8px 0 4px 20px; line-height: 1.6; }
+
+  /* ── Tabs ────────────────────────────────────────────── */
+  .tab-bar { display: flex; background: var(--surface-mid); padding: 0 20px; gap: 2px; overflow-x: auto; border-bottom: 1px solid #2a4060; margin-top: 14px; }
+  .tab { padding: 10px 14px 9px; border: none; background: transparent; color: var(--accent-light); font-family: var(--font-body); font-size: 0.86rem; font-weight: 600; cursor: pointer; border-bottom: 3px solid transparent; white-space: nowrap; user-select: none; }
+  .tab:hover:not(:disabled) { color: #fff; }
+  .tab.active { color: var(--text-inv); border-bottom-color: var(--accent); }
+  .tab.done   { color: var(--gold); }
+  .tab.done.active { border-bottom-color: var(--gold); }
+  .tab.locked { opacity: .45; cursor: not-allowed; }
+  .tab .lock { display: none; }
+  .tab.locked .lock { display: inline; }
+  .tab.ext-tab { font-style: italic; }
+  .tab-sep { align-self: center; color: var(--muted); font-size: 0.75rem; padding: 0 6px; white-space: nowrap; }
+
+  /* ── Panels ──────────────────────────────────────────── */
+  .panel { display: none; padding: 24px 28px 64px; max-width: 920px; margin: 0 auto; position: relative; z-index: 1; }
+  .panel.active { display: block; animation: ac-fade-in .25s ease; }
+  .task-header { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+  .task-badge { width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: var(--font-head); font-size: 1.1rem; font-weight: 700; color: var(--text-inv); background: var(--accent); flex-shrink: 0; }
+  .task-badge.ext { background: var(--surface); color: var(--gold); border-radius: 10px; }
+  .task-title { font-family: var(--font-head); font-size: 1.25rem; font-weight: 700; color: var(--surface); }
+  .task-sub { font-size: 0.82rem; color: var(--muted); }
+  .goal { display: block; background: #fff; border-left: 4px solid var(--accent); padding: 10px 14px; border-radius: 0 6px 6px 0; font-size: 0.92rem; font-weight: 600; color: var(--surface); margin-bottom: 16px; line-height: 1.5; }
+  .panel p { line-height: 1.55; }
+  code { font-family: var(--font-mono); background: #e3ecf6; padding: 0 4px; border-radius: 3px; font-size: 0.92em; }
+
+  .question-card { border: 1.5px solid #c9d8e8; border-radius: 10px; padding: 14px 16px; margin: 12px 0; background: #fff; }
+  .question-card.is-wrong { border-color: var(--red); background: rgba(220,38,38,.06); }
+  .question-card.is-right { border-color: var(--green); background: rgba(16,185,129,.07); animation: success-pulse .8s ease forwards; }
+  @keyframes success-pulse { 0% { box-shadow: 0 0 0 0 rgba(16,185,129,0); } 40% { box-shadow: 0 0 0 8px rgba(16,185,129,.4); } 100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); } }
+
+  .feedback { min-height: 1.4em; font-size: 0.9rem; font-weight: 600; margin-top: 10px; line-height: 1.5; }
+  .feedback.correct { color: var(--green-dark); }
+  .feedback.wrong   { color: var(--red); animation: ac-shake .35s ease; }
+  .feedback.info    { color: var(--muted); }
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
+  .ac-btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+  .done-box { background: var(--green-bg); border: 1.5px solid var(--green); border-radius: 10px; padding: 14px 16px; margin-top: 14px; font-weight: 600; color: var(--green-dark); display: flex; gap: 12px; align-items: center; flex-wrap: wrap; justify-content: space-between; }
+  .done-box.gold { background: var(--gold-bg); border-color: var(--gold); color: #8a5a00; }
+
+  /* Static code listing */
+  .listing { background: var(--surface); color: #dbe7f5; font-family: var(--font-mono); font-size: 0.92rem; border-radius: 8px; padding: 10px 0; margin: 10px 0; overflow-x: auto; }
+  .listing .ln { display: flex; gap: 12px; padding: 1px 14px; white-space: pre; }
+  .listing .n { color: #6b8cae; width: 1.4em; text-align: right; flex-shrink: 0; user-select: none; }
+  .listing .note { color: var(--gold); font-style: italic; margin-left: auto; padding-left: 18px; font-family: var(--font-body); font-size: 0.82rem; }
+  .listing .s { color: #a7f3a0; }
+  .listing .f { color: #90e0ef; }
+  .listing .k { color: #ffb4a2; }
+
+  /* ── Level 1: quick-fire chain ───────────────────────── */
+  .chain-pips { display: flex; gap: 6px; margin: 4px 0 10px; }
+  .chain-pip { width: 28px; height: 8px; border-radius: 4px; background: #c9d8e8; }
+  .chain-pip.on { background: var(--green); }
+  .chain-pip.bad { background: var(--red); }
+  .q-label { font-weight: 700; color: var(--surface); line-height: 1.5; display: block; margin-bottom: 6px; }
+  .q-topic { font-size: 0.72rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 700; }
+  .opts { display: grid; gap: 8px; margin-top: 10px; }
+  .opt { display: flex; gap: 10px; align-items: center; border: 1.5px solid #c9d8e8; border-radius: 8px; padding: 9px 12px; cursor: pointer; background: #fff; }
+  .opt:hover { border-color: var(--accent); }
+  .opt input { accent-color: var(--accent); }
+  .opt.right { border-color: var(--green); background: var(--green-bg); }
+  .opt.wrong { border-color: var(--red); background: var(--red-bg); }
+  .why { margin-top: 10px; padding: 10px 12px; border-radius: 8px; background: #f2f6fb; font-size: 0.9rem; line-height: 1.5; }
+
+  /* ── Level 2: memory boxes ───────────────────────────── */
+  .trace-grid { display: flex; gap: 14px; flex-wrap: wrap; margin: 10px 0; }
+  .trace-box { display: flex; flex-direction: column; gap: 4px; min-width: 150px; }
+  .trace-box label { font-family: var(--font-mono); font-weight: 700; color: var(--surface); font-size: 0.9rem; }
+  .trace-box input, .out-line input { font-family: var(--font-mono); font-size: 0.95rem; padding: 8px 10px; border: 2px solid #b8cbe0; border-radius: 8px; width: 100%; background: #fff; }
+  .trace-box input { border-style: solid; box-shadow: inset 0 -3px 0 #e3ecf6; }
+  .ans-correct { border-color: var(--green) !important; background: rgba(16,185,129,.12) !important; }
+  .ans-wrong   { border-color: var(--red) !important;   background: rgba(220,38,38,.10) !important; }
+  .cell-msg { font-size: 0.78rem; color: var(--red); min-height: 1.1em; font-weight: 600; }
+  .out-line { display: flex; gap: 8px; align-items: flex-start; margin: 6px 0; }
+  .out-line .n { font-family: var(--font-mono); color: var(--muted); padding-top: 9px; width: 4.5em; flex-shrink: 0; font-size: 0.8rem; }
+  .out-line > div { flex: 1; }
+  .rule-box { background: #fff; border-radius: 8px; padding: 10px 14px; font-size: 0.86rem; border: 1px solid #c9d8e8; line-height: 1.6; }
+
+  /* ── Level 3: sort ───────────────────────────────────── */
+  .sort-pool, .sort-bin { border: 2px dashed #b8cbe0; border-radius: 10px; padding: 10px; min-height: 64px; display: flex; flex-wrap: wrap; gap: 8px; align-content: flex-start; background: #fff; transition: border-color .15s, background .15s; }
+  .sort-pool { margin: 10px 0 14px; }
+  .sort-pool:empty::after { content: 'All cards placed — press Check.'; color: var(--muted); font-size: 0.85rem; }
+  .sort-bins { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .sort-bin { flex-direction: column; flex-wrap: nowrap; min-height: 180px; cursor: pointer; }
+  .sort-bin h4 { font-family: var(--font-head); color: var(--surface); font-size: 1rem; margin-bottom: 4px; pointer-events: none; }
+  .sort-bin.over, .sort-pool.over, .sort-bin.target { border-color: var(--accent); background: #eaf8fc; }
+  .sort-card { font-family: var(--font-mono); font-size: 0.9rem; background: var(--surface); color: #fff; border-radius: 8px; padding: 7px 12px; cursor: grab; border: 2px solid transparent; user-select: none; }
+  .sort-card.selected { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(255,209,102,.5); }
+  .sort-card.is-right { border-color: var(--green); background: #1e5e4a; }
+  .sort-card.is-wrong { border-color: var(--red); background: #7a1f29; }
+  .sort-locked .sort-card { cursor: default; }
+  @media (max-width: 680px) { .sort-bins { grid-template-columns: 1fr; } .sort-bin { min-height: 90px; } }
+
+  /* ── Code tasks ──────────────────────────────────────── */
+  .code-checker { background: var(--surface); border-radius: 10px; overflow: hidden; margin: 10px 0; }
+  .checker-footer { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; padding: 10px 12px; background: var(--surface-mid); }
+  .btn-run, .btn-reset { padding: 8px 16px; border-radius: 8px; font-weight: 700; font-size: 0.86rem; cursor: pointer; font-family: var(--font-body); }
+  .btn-run   { background: transparent; color: var(--accent-light); border: 2px solid var(--accent-light); }
+  .btn-reset { background: transparent; color: #9fb4cc; border: 2px solid #4a6a8c; }
+  .btn-run:hover, .btn-reset:hover { color: #fff; border-color: #fff; }
+  .checker-footer .ac-btn { padding: 8px 18px; font-size: 0.88rem; }
+  .bug-head { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .bug-num { font-family: var(--font-head); font-weight: 700; background: var(--surface); color: var(--gold); padding: 2px 10px; border-radius: 999px; font-size: 0.85rem; }
+  .bug-title { font-weight: 700; color: var(--surface); }
+  .bug-kind { font-size: 0.78rem; font-weight: 700; background: var(--green-bg); color: var(--green-dark); padding: 2px 8px; border-radius: 999px; }
+  .goal-line { font-size: 0.9rem; margin: 6px 0 2px; color: var(--surface); }
+  .hint-box { background: var(--gold-bg); border-left: 4px solid var(--gold); border-radius: 0 8px 8px 0; padding: 8px 12px; font-size: 0.88rem; margin-top: 8px; line-height: 1.5; }
+  .counter { font-weight: 700; color: var(--surface); }
+
+  .req-list { list-style: none; margin: 8px 0; display: grid; gap: 6px; }
+  .req-list li { display: flex; gap: 10px; align-items: flex-start; background: #fff; border: 1.5px solid #c9d8e8; border-radius: 8px; padding: 8px 12px; line-height: 1.5; font-size: 0.92rem; }
+  .req-list li .tick { width: 22px; height: 22px; border-radius: 50%; background: #e3ecf6; color: var(--surface); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.8rem; flex-shrink: 0; }
+  .req-list li.req-pass { border-color: var(--green); }
+  .req-list li.req-pass .tick { background: var(--green); color: #fff; }
+  .req-list li.req-fail { border-color: var(--red); }
+  .req-list li.req-fail .tick { background: var(--red); color: #fff; }
+
+  .terminal { background: #0d1726; color: #d6e4f0; font-family: var(--font-mono); font-size: 0.92rem; border-radius: 8px; padding: 12px 16px; white-space: pre-wrap; line-height: 1.6; }
+  .terminal .typed { color: var(--gold); font-weight: 700; }
+  .terminal .cap { display: block; color: #6b8cae; font-family: var(--font-body); font-size: 0.75rem; margin-bottom: 4px; }
+
+  /* ── Design studio ───────────────────────────────────── */
+  .ideas { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 8px; margin: 10px 0 14px; padding: 0; list-style: none; }
+  .ideas li { background: #fff; border: 1.5px solid #c9d8e8; border-radius: 8px; padding: 8px 12px; font-size: 0.88rem; line-height: 1.45; }
+  .badge-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 8px; margin: 10px 0; }
+  .badge { display: flex; gap: 10px; align-items: center; background: #fff; border: 1.5px solid #c9d8e8; border-radius: 10px; padding: 8px 10px; opacity: .55; filter: grayscale(1); transition: opacity .3s, filter .3s, border-color .3s; }
+  .badge .ic { font-size: 1.5rem; }
+  .badge .nm { font-weight: 700; font-size: 0.85rem; color: var(--surface); }
+  .badge .ds { font-size: 0.75rem; color: var(--muted); line-height: 1.35; }
+  .badge.earned { opacity: 1; filter: none; border-color: var(--gold); background: var(--gold-bg); }
+  .badge.fresh { animation: ac-pulse-gold 1.2s ease 2; }
+
+  /* ── Remind me cards ─────────────────────────────────── */
+  .remind { margin: 0 0 14px; }
+  .remind > summary { cursor: pointer; font-weight: 700; color: var(--accent-dark); font-size: 0.9rem; }
+  .remind-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; margin-top: 10px; }
+  .remind-card { background: #fff; border: 1.5px solid #c9d8e8; border-radius: 8px; padding: 10px 12px; font-size: 0.85rem; line-height: 1.55; }
+  .remind-card h5 { font-size: 0.9rem; color: var(--surface); margin-bottom: 4px; }
+  .remind-card pre { background: var(--surface); color: #dbe7f5; font-family: var(--font-mono); font-size: 0.82rem; padding: 6px 10px; border-radius: 6px; margin: 4px 0; white-space: pre-wrap; }
+  .remind-card ol { margin-left: 18px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .question-card.is-right, .badge.fresh, .panel.active { animation: none; }
+  }
+  @media (max-width: 600px) {
+    .panel, .cover-note { padding-left: 16px; padding-right: 16px; }
+    .header { padding: 14px 16px; }
+  }
+</style>
+</head>
+
+<body>
+
+<!--
+  WRITING INSTRUCTIONS THAT CONTAIN CODE
+  Never put a full stop or comma straight after code the student might type.
+-->
+
+<div id="done-banner" class="ac-banner gold">🏆 Revision complete — great work! Try the ★ extensions next.</div>
+<div id="glow-overlay"></div>
+
+<div class="header">
+  <div class="header-top">
+    <div>
+      <div class="header-title">🗺️ Revision Quest — Python So Far</div>
+      <div class="header-sub">Year 8 Python · Revision of Lessons 1–4: print, variables, input, data types &amp; casting</div>
+    </div>
+    <div class="py-status" id="pyStatus">Python: loading…</div>
+  </div>
+  <div class="progress-row" aria-label="Progress">
+    <span class="pdot" id="dot-0" title="Level 1"></span>
+    <span class="pdot" id="dot-1" title="Level 2"></span>
+    <span class="pdot" id="dot-2" title="Level 3"></span>
+    <span class="pdot" id="dot-3" title="Level 4"></span>
+    <span class="pdot" id="dot-4" title="Level 5"></span>
+    <span class="pdot-gap"></span>
+    <span class="pdot ext" id="dot-x1" title="Extension 1"></span>
+    <span class="pdot ext" id="dot-x2" title="Extension 2"></span>
+  </div>
+</div>
+
+<div class="cover-note">
+  <details>
+    <summary>👋 How this lesson works (students — and the cover teacher)</summary>
+    <ul>
+      <li>This is a <strong>revision</strong> lesson. There is nothing new: everything here comes from Lessons 1–4.</li>
+      <li>Work through <strong>Levels 1 → 5</strong> in order. Each level unlocks when you finish the one before.</li>
+      <li>Stuck? Open <strong>📖 Remind me</strong> at the top of a level, or press <strong>💡 Get help</strong> under an error.</li>
+      <li>Your work <strong>saves automatically</strong> and is sent to Google Classroom as you go. Nothing needs printing or handing in.</li>
+      <li>Finished all five? The <strong>★ extensions</strong> unlock. The last one, <strong>Design Studio</strong>, is open-ended, so there is always more to do.</li>
+    </ul>
+  </details>
+</div>
+
+<div class="tab-bar" id="tab-bar" role="tablist">
+  <button class="tab active" data-idx="0">1 · Quick-fire <span class="lock">🔒</span></button>
+  <button class="tab" data-idx="1">2 · Trace the boxes <span class="lock">🔒</span></button>
+  <button class="tab" data-idx="2">3 · Join, maths or error? <span class="lock">🔒</span></button>
+  <button class="tab" data-idx="3">4 · Bug hunt <span class="lock">🔒</span></button>
+  <button class="tab" data-idx="4">5 · Build it <span class="lock">🔒</span></button>
+  <span class="tab-sep">★ Extensions</span>
+  <button class="tab ext-tab" data-idx="5">★1 Copy the machine <span class="lock">🔒</span></button>
+  <button class="tab ext-tab" data-idx="6">★2 Pizza planner <span class="lock">🔒</span></button>
+  <button class="tab ext-tab" data-idx="7">★3 Design Studio <span id="badge-count"></span> <span class="lock">🔒</span></button>
+</div>
+
+<!-- ══ Level 1 — Quick-fire recall (checkpoint chain) ══════════════════ -->
+<div class="panel active" id="panel-0">
+  <div class="task-header">
+    <div class="task-badge">1</div>
+    <div>
+      <div class="task-title">Quick-fire recall</div>
+      <div class="task-sub">Lessons 1–4 · questions from a bank of 20</div>
+    </div>
+  </div>
+  <div class="goal">🎯 Get <span id="chain-len">6</span> questions right <strong>in a row</strong>. One wrong answer ends the run, shows you why, and starts a new run with different questions.</div>
+  <div class="chain-pips" id="chain-pips"></div>
+  <div id="chain-area"></div>
+</div>
+
+<!-- ══ Level 2 — Trace the boxes ═══════════════════════════════════════ -->
+<div class="panel" id="panel-1">
+  <div class="task-header">
+    <div class="task-badge">2</div>
+    <div>
+      <div class="task-title">Trace the boxes</div>
+      <div class="task-sub">Play computer: run the program in your head, line by line</div>
+    </div>
+  </div>
+  <div class="remind-slot"></div>
+  <div class="goal">🎯 Read the program from the top. Work out what is in each variable's box when it finishes, and exactly what it prints.</div>
+  <div class="listing" id="trace-listing"></div>
+  <div class="rule-box">✍️ Write each box's value the way you would in Python code: <strong>text in quotes</strong>, like <code>"Sam"</code>, and <strong>numbers without quotes</strong>, like <code>12</code><br>Remember: a box only holds its <strong>latest</strong> value.</div>
+
+  <div class="question-card" id="trace-card">
+    <span class="q-label">📦 What is in each box at the end?</span>
+    <div class="trace-grid" id="trace-vars"></div>
+    <span class="q-label" style="margin-top:10px">🖥️ What does the program print? (Not the questions it asks — just the print() lines.)</span>
+    <div id="trace-outs"></div>
+  </div>
+  <div class="row">
+    <button class="ac-btn" id="trace-check">✓ Check my trace</button>
+  </div>
+  <div class="feedback" id="trace-fb"></div>
+  <div id="trace-done"></div>
+</div>
+
+<!-- ══ Level 3 — Join, maths or error? ═════════════════════════════════ -->
+<div class="panel" id="panel-2">
+  <div class="task-header">
+    <div class="task-badge">3</div>
+    <div>
+      <div class="task-title">Join, maths or error?</div>
+      <div class="task-sub">Data types: what does + (or *) do with each pair?</div>
+    </div>
+  </div>
+  <div class="remind-slot"></div>
+  <div class="goal">🎯 Sort every card into the right group. Drag it, or click a card and then click a group.</div>
+  <p style="font-size:0.9rem">These two lines ran first, so <code>name</code> and <code>age</code> both hold whatever the user typed:</p>
+  <div class="listing"><div class="ln"><span class="n">1</span><span>name <span class="k">=</span> <span class="f">input</span>(<span class="s">"Name? "</span>)</span></div><div class="ln"><span class="n">2</span><span>age <span class="k">=</span> <span class="f">input</span>(<span class="s">"Age? "</span>)</span></div></div>
+  <div class="sort-pool" id="sort-pool" data-bin=""></div>
+  <div class="sort-bins" id="sort-bins"></div>
+  <div class="row">
+    <button class="ac-btn" id="sort-check">✓ Check my sorting</button>
+  </div>
+  <div class="feedback" id="sort-fb"></div>
+  <div id="sort-done"></div>
+</div>
+
+<!-- ══ Level 4 — Bug hunt ══════════════════════════════════════════════ -->
+<div class="panel" id="panel-3">
+  <div class="task-header">
+    <div class="task-badge">4</div>
+    <div>
+      <div class="task-title">Bug hunt</div>
+      <div class="task-sub">Five programs, one bug each · <span class="counter" id="bug-counter">0 of 5 fixed</span></div>
+    </div>
+  </div>
+  <div class="remind-slot"></div>
+  <div class="goal">🎯 Each program has one bug. Press <strong>▶ Run code</strong> to see what goes wrong, fix it, then press <strong>✓ Run &amp; check</strong>. Fix the bug: don't delete the line!</div>
+  <div id="bug-list"></div>
+  <div id="bugs-done"></div>
+</div>
+
+<!-- ══ Level 5 — Build it ═════════════════════════════════════════════ -->
+<div class="panel" id="panel-4">
+  <div class="task-header">
+    <div class="task-badge">5</div>
+    <div>
+      <div class="task-title">Build it: the cinema ticket machine</div>
+      <div class="task-sub">Everything together: input, variables, casting, maths and print</div>
+    </div>
+  </div>
+  <div class="remind-slot"></div>
+  <div class="goal">🎯 Write a program for a cinema. Tickets cost £7 each. Here is a sample run (the yellow parts were typed by the customer):</div>
+  <div class="terminal"><span class="cap">Sample run</span>What is your name? <span class="typed">Ava</span>
+How many tickets? <span class="typed">3</span>
+Ava, your 3 tickets cost £21</div>
+  <p class="section-label" style="margin-top:14px;font-weight:700;color:var(--surface)">Your program must:</p>
+  <ul class="req-list" id="req_build">
+    <li><span class="tick">1</span><span>Ask two questions with <code>input()</code>: the customer's name <strong>first</strong>, then how many tickets they want</span></li>
+    <li><span class="tick">2</span><span>Cast the number of tickets with <code>int()</code> so Python can do maths with it</span></li>
+    <li><span class="tick">3</span><span>Store the ticket price in its own variable, e.g. <code>price = 7</code></span></li>
+    <li><span class="tick">4</span><span>Work out the total cost: number of tickets × the price</span></li>
+    <li><span class="tick">5</span><span>Print one sentence with the name and the total in it (your own wording is fine)</span></li>
+  </ul>
+  <p style="font-size:0.85rem;color:var(--muted)">When you press ✓ Run &amp; check, your program is tested with two customers: <strong>Ava</strong> buying <strong>3</strong>, then <strong>Leo</strong> buying <strong>5</strong>.</p>
+  <div class="code-checker">
+    <textarea class="checker-textarea" id="build_editor" data-title="Cinema ticket machine"># Cinema ticket machine
+</textarea>
+    <div class="checker-footer">
+      <button class="btn-run" data-run="build_editor">▶ Run code</button>
+      <button class="ac-btn" id="build-check">✓ Run &amp; check</button>
+    </div>
+  </div>
+  <div class="feedback" id="build-fb"></div>
+  <div id="build-done"></div>
+</div>
+
+<!-- ══ Extension 1 — Copy the machine ═════════════════════════════════ -->
+<div class="panel" id="panel-5">
+  <div class="task-header">
+    <div class="task-badge ext">★1</div>
+    <div>
+      <div class="task-title">Copy the machine</div>
+      <div class="task-sub">Extension · write a program just from watching it run</div>
+    </div>
+  </div>
+  <div class="remind-slot"></div>
+  <div class="goal">🎯 Someone has lost the code for this pocket-money planner. All that is left is this sample run. Write a program that behaves <strong>exactly</strong> the same way.</div>
+  <div class="terminal"><span class="cap">Sample run (yellow = typed by the user)</span>How much pocket money do you get each week? <span class="typed">5</span>
+How many weeks will you save for? <span class="typed">6</span>
+In 6 weeks you will have £30</div>
+  <p style="font-size:0.85rem;color:var(--muted);margin-top:8px">It is tested with other numbers too (4 and 10, then 3 and 7), so it must really do the maths. The last line has to match word for word.</p>
+  <div class="code-checker">
+    <textarea class="checker-textarea" id="ext1_editor" data-title="Pocket money planner"># Pocket money planner
+</textarea>
+    <div class="checker-footer">
+      <button class="btn-run" data-run="ext1_editor">▶ Run code</button>
+      <button class="ac-btn" id="ext1-check">✓ Run &amp; check</button>
+    </div>
+  </div>
+  <div class="hint-box" id="ext1-hint" hidden></div>
+  <div class="feedback" id="ext1-fb"></div>
+  <div id="ext1-done"></div>
+</div>
+
+<!-- ══ Extension 2 — Pizza planner (four bugs) ═════════════════════════ -->
+<div class="panel" id="panel-6">
+  <div class="task-header">
+    <div class="task-badge ext">★2</div>
+    <div>
+      <div class="task-title">The pizza party planner</div>
+      <div class="task-sub">Extension · one program, four bugs</div>
+    </div>
+  </div>
+  <div class="remind-slot"></div>
+  <div class="goal">🎯 This planner should work out how many pizza slices and pizzas to order (3 slices each, 8 slices in a pizza). It has <strong>four</strong> bugs. Python only shows you one error at a time, so fix one, run again, and repeat.</div>
+  <div class="terminal"><span class="cap">How it should look when it works</span>=== Pizza Party Planner ===
+How many people are coming? <span class="typed">8</span>
+You need 24 slices
+Order 3.0 pizzas</div>
+  <div class="code-checker">
+    <textarea class="checker-textarea" id="ext2_editor" data-title="Pizza party planner"></textarea>
+    <div class="checker-footer">
+      <button class="btn-run" data-run="ext2_editor">▶ Run code</button>
+      <button class="ac-btn" id="ext2-check">✓ Run &amp; check</button>
+      <button class="btn-reset" id="ext2-reset">↺ Reset to original</button>
+    </div>
+  </div>
+  <div class="hint-box" id="ext2-hint" hidden></div>
+  <div class="feedback" id="ext2-fb"></div>
+  <div id="ext2-done"></div>
+</div>
+
+<!-- ══ Extension 3 — Design Studio (open-ended) ════════════════════════ -->
+<div class="panel" id="panel-7">
+  <div class="task-header">
+    <div class="task-badge ext">★3</div>
+    <div>
+      <div class="task-title">Design Studio</div>
+      <div class="task-sub">Extension · open-ended: your program, your idea</div>
+    </div>
+  </div>
+  <div class="remind-slot"></div>
+  <div class="goal">🎯 Build your own program using everything you know. Pick an idea (or invent one), then keep improving it to collect all the badges.</div>
+  <ul class="ideas">
+    <li>📖 <strong>Story maker</strong>: ask for a name, an animal, a place and a number, then print a silly story using them.</li>
+    <li>🧙 <strong>Character creator</strong>: name, strength, speed and magic. Work out a power score.</li>
+    <li>🎂 <strong>Age in numbers</strong>: your age in months, weeks and (roughly) days.</li>
+    <li>🛒 <strong>Shop till</strong>: three items, their prices (decimals!) and how many. Print a receipt.</li>
+    <li>🍰 <strong>Recipe scaler</strong>: a recipe for 4 people, scaled for however many are coming.</li>
+    <li>✈️ <strong>Holiday budget</strong>: days away, cost per day, spending money. What's the total?</li>
+  </ul>
+  <p style="font-size:0.88rem"><strong>🏅 Badges</strong>: press <strong>🏅 Check for badges</strong> whenever you like. Badges you have earned stay earned, even if you change your program.</p>
+  <div class="badge-grid" id="badge-grid"></div>
+  <div class="code-checker">
+    <textarea class="checker-textarea" id="ext3_editor" data-title="My program" style="min-height:260px"># My program:
+</textarea>
+    <div class="checker-footer">
+      <button class="btn-run" data-run="ext3_editor">▶ Run code</button>
+      <button class="ac-btn" id="ext3-check">🏅 Check for badges</button>
+    </div>
+  </div>
+  <div class="feedback" id="ext3-fb"></div>
+  <div class="hint-box">💡 <strong>Got every badge?</strong> Start a second idea from the list above in the same editor. Can you earn the badges with a completely different program? Or swap seats with a neighbour, read their code and predict what it prints before you run it.</div>
+</div>
+
+<!-- Remind-me cards, copied into each .remind-slot -->
+<template id="remind-tpl">
+  <details class="remind">
+    <summary>📖 Remind me (Lessons 1–4)</summary>
+    <div class="remind-grid">
+      <div class="remind-card"><h5>🖨️ print and text</h5>
+        <pre>print("Hello")
+print()</pre>
+        Text (a <strong>string</strong>) goes in quotes. <code>print()</code> with nothing inside prints a blank line. Python runs from the top line down.</div>
+      <div class="remind-card"><h5>📦 Variables</h5>
+        <pre>name = "Sam"
+name = "Ali"
+print("Hi " + name)</pre>
+        <code>=</code> stores a value in a box. A new value replaces the old one. <code>+</code> joins text exactly (it doesn't add a space).</div>
+      <div class="remind-card"><h5>⌨️ input()</h5>
+        <pre>colour = input("Colour? ")</pre>
+        Shows the question, waits, then stores what the user typed. The answer is <strong>always text</strong>, even if they type a number.</div>
+      <div class="remind-card"><h5>🔢 Types and casting</h5>
+        <pre>"5" + "5"   →  55   (text joins)
+5 + 5       →  10   (numbers add)
+age = int(input("Age? "))
+price = float("2.5")
+print("Age: " + str(age))</pre>
+        <code>int()</code> makes a whole number, <code>float()</code> a decimal, <code>str()</code> text. Maths: <code>+ - * /</code></div>
+      <div class="remind-card"><h5>🐞 Debugging recipe</h5>
+        <ol><li>Read the <strong>last line</strong> of the error.</li><li>Find the <strong>line number</strong>.</li><li>Read that line <strong>aloud</strong>.</li><li>Compare it with what you <strong>meant</strong>.</li></ol></div>
+      <div class="remind-card"><h5>🚨 The three errors</h5>
+        <strong>SyntaxError</strong>: a typo Python can't read, e.g. a missing quote or bracket.<br>
+        <strong>NameError</strong>: a name Python hasn't met: misspelt, or used before it was made.<br>
+        <strong>TypeError</strong>: text and a number joined with <code>+</code>. Cast one of them.</div>
+    </div>
+  </details>
+</template>
+
+<div class="ac-toast" id="toast"></div>
+
+<!-- Shows any unexpected page error at the bottom of the page (no dev console on student PCs). Keep this first. -->
+<script src="../../../error-reporter.js"></script>
+<script src="../../../activity-ui.js"></script>
+<script src="../../../classroom.js"></script>
+
+<script type="module">
+import {
+  mulberry32, shuffle, CHAIN_LENGTH, drawChain, quizById,
+  TRACE_VARIANTS, checkTraceValue, checkTraceOutput,
+  SORT_BINS, SORT_CARDS, checkSort,
+  BUGS, bugById, evalBug, BUILD_TESTS, evalBuild,
+  EXT1_TESTS, evalExt1, EXT2_STARTER, EXT2_TESTS, evalExt2,
+  BADGES, COMPLETIONIST, evalBadges, badgeInputs,
+} from './checkers.js';
+import { preload, runPython } from '../../../pyodide-runner.js';
+import { setupEditors, setEditorOutput, refreshEditor, runCode } from '../../../code-editor.js';
+
+// ── Activity identity ──────────────────────────────────
+const STORAGE_KEY     = 'y8_l4r_revision_quest';
+const ACTIVITY_TITLE  = 'Revision Quest — Python So Far';   // must match <!-- ACTIVITY title: -->
+const CORE            = 5;      // scored levels; the three extensions are bonus (not in the grade)
+const AUTO_ADVANCE_MS = 1500;
+const COOLDOWN_STEP_S = 10;     // wrong checks on Levels 2–3 wait 10 s, then 20 s, then 30 s
+
+const $  = sel => document.querySelector(sel);
+const $$ = sel => [...document.querySelectorAll(sel)];
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const authBlocked = () => window.Classroom?.verifyAuth() === false;   // undefined (no classroom.js) never blocks
+const toast = (msg, type = '') => window.ActivityUI?.showToast(msg, type);
+
+// ── State (everything is saved, including mid-task progress) ───────────
+function fresh() {
+  return {
+    seed: Math.floor(Math.random() * 2 ** 31), tab: 0,
+    completed: Array(CORE).fill(false), firstAttempt: Array(CORE).fill(true),
+    chain: { run: 0, draw: null, idx: 0, pending: null },
+    trace: { answers: {}, wrongs: 0, until: 0 },
+    sort:  { placements: {}, wrongs: 0, until: 0 },
+    bugs:  { done: {}, fails: {} },
+    ext:   { done: [false, false], fails: [0, 0], badges: [] },
+    code:  {},
+  };
+}
+let S;
+try { const s = JSON.parse(localStorage.getItem(STORAGE_KEY)); S = s && s.seed != null ? { ...fresh(), ...s } : fresh(); }
+catch (e) { S = fresh(); }
+function save() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(S)); } catch (e) {} }
+save();
+
+// ── Python listing with light highlighting ─────────────
+function hl(code) {
+  return esc(code)
+    .replace(/(&quot;[^&]*?&quot;)/g, '<span class="s">$1</span>')
+    .replace(/\b(print|input|int|float|str)\(/g, '<span class="f">$1</span>(');
+}
+function listing(lines) {
+  return lines.map(([code, note], i) =>
+    `<div class="ln"><span class="n">${i + 1}</span><span>${hl(code)}</span>${note ? `<span class="note">← ${esc(note)}</span>` : ''}</div>`).join('');
+}
+
+// ── Scoring + completion ───────────────────────────────
+function calcScore() {
+  const done     = S.completed.filter(Boolean).length;
+  const mastered = S.completed.filter((c, i) => c && S.firstAttempt[i]).length;
+  return Math.round(done / CORE * 80 + mastered / CORE * 20);
+}
+function submitScore() {
+  const pct = calcScore();
+  window.ActivityUI?.setScore(pct);
+  window.Classroom?.submitGrade(pct, ACTIVITY_TITLE);
+}
+function nextButton(i) {
+  const labels = ['Level 2', 'Level 3', 'Level 4', 'Level 5', '★ Extension 1', '★ Extension 2', '★ Design Studio'];
+  return i < 7 ? `<button class="ac-btn" data-goto="${i + 1}">Go to ${labels[i]} →</button>` : '';
+}
+function doneBox(i, text) {
+  const gold = i < CORE && S.firstAttempt[i];
+  return `<div class="done-box ${gold ? 'gold' : ''}"><span>${gold ? '⭐ ' : '✅ '}${text}</span>${nextButton(i)}</div>`;
+}
+function markDone(i) {
+  if (S.completed[i]) return;
+  S.completed[i] = true;
+  save();
+  refreshProgress();
+  submitScore();
+  if (S.completed.every(Boolean)) allComplete();
+}
+function showAllDone() {
+  const tier = S.firstAttempt.every(Boolean) ? 'gold' : 'green';
+  $('#done-banner').classList.add('show', tier);
+  $('#glow-overlay').classList.add(tier, 'show');
+  setTimeout(() => $('#done-banner').classList.remove('show'), 6000);
+}
+function allComplete() {
+  showAllDone();
+  window.ActivityUI?.launchCelebration({ percent: calcScore() });
+}
+function markExtDone(k) {
+  if (S.ext.done[k]) return;
+  S.ext.done[k] = true;
+  save();
+  refreshProgress();
+  submitScore();   // refreshes the Classroom evidence with the extension work
+  window.ActivityUI?.miniCelebration($('#panel-' + (CORE + k)));
+}
+
+// ── Tabs + progress ────────────────────────────────────
+const TABS = $$('.tab');
+function unlocked(i) {
+  if (i === 0) return true;
+  if (i < CORE) return S.completed[i - 1];
+  if (i === CORE) return S.completed.every(Boolean);
+  return S.ext.done[i - CORE - 1];
+}
+function refreshProgress() {
+  TABS.forEach((t, i) => {
+    const u = unlocked(i);
+    t.classList.toggle('locked', !u);
+    t.disabled = !u;
+    t.title = u ? '' : (i <= CORE ? 'Finish the level before to unlock this' : 'Finish the extension before to unlock this');
+    t.classList.toggle('done', i < CORE ? S.completed[i] : i < 7 && S.ext.done[i - CORE]);
+  });
+  for (let i = 0; i < CORE; i++) $('#dot-' + i).className = 'pdot' + (S.completed[i] ? (S.firstAttempt[i] ? ' gold' : ' correct') : '');
+  S.ext.done.forEach((d, k) => { $('#dot-x' + (k + 1)).className = 'pdot ext' + (d ? ' gold' : ''); });
+  $('#badge-count').textContent = `(${S.ext.badges.length}/${BADGES.length + 1})`;
+}
+function showTab(i) {
+  if (!unlocked(i)) return;
+  TABS.forEach((t, j) => t.classList.toggle('active', j === i));
+  $$('.panel').forEach((p, j) => p.classList.toggle('active', j === i));
+  S.tab = i; save();
+  $$('#panel-' + i + ' .checker-textarea').forEach(ta => { try { refreshEditor(ta); } catch (e) {} });
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+$('#tab-bar').addEventListener('click', e => { const t = e.target.closest('.tab'); if (t && !t.disabled) showTab(+t.dataset.idx); });
+document.addEventListener('click', e => { const g = e.target.closest('[data-goto]'); if (g) showTab(+g.dataset.goto); });
+
+// Wrong checks on Levels 2–3 lock the button for 10/20/30 s; the wait survives a refresh.
+function startCooldown(btn, key, label) {
+  clearInterval(btn._cd);
+  const tick = () => {
+    const left = Math.ceil((S[key].until - Date.now()) / 1000);
+    if (left > 0 && !S.completed[key === 'trace' ? 1 : 2]) { btn.disabled = true; btn.textContent = `⏳ Look again… ${left}s`; }
+    else { clearInterval(btn._cd); btn.disabled = S.completed[key === 'trace' ? 1 : 2]; btn.textContent = label; }
+  };
+  tick();
+  btn._cd = setInterval(tick, 500);
+}
+function penalise(i, key) {
+  S.firstAttempt[i] = false;
+  S[key].wrongs++;
+  S[key].until = Date.now() + Math.min(S[key].wrongs, 3) * COOLDOWN_STEP_S * 1000;
+  save();
+}
+
+// ══ Level 1: Quick-fire chain ═══════════════════════════════════════════
+$('#chain-len').textContent = CHAIN_LENGTH;
+function renderPips(bad) {
+  $('#chain-pips').innerHTML = Array.from({ length: CHAIN_LENGTH }, (_, k) =>
+    `<span class="chain-pip ${S.completed[0] || k < S.chain.idx ? 'on' : ''} ${bad && k === S.chain.idx ? 'bad' : ''}"></span>`).join('');
+}
+function optionOrder(qid) {
+  return shuffle([0, 1, 2, 3], mulberry32(S.seed + S.chain.run * 97 + qid.length * 13 + S.chain.idx));
+}
+function questionHtml(q, order, { chosen = null, locked = false } = {}) {
+  const opts = order.map(k => {
+    const o = q.opts[k];
+    const looksLikeCode = /[()"=*]/.test(o) && !/^A /.test(o);
+    const cls = locked ? (k === 0 ? 'right' : k === chosen ? 'wrong' : '') : '';
+    return `<label class="opt ${cls}"><input type="radio" name="chain_opt" value="${k}" ${locked ? 'disabled' : ''} ${k === chosen ? 'checked' : ''}>
+      <span>${looksLikeCode ? `<code>${esc(o)}</code>` : esc(o)}</span></label>`;
+  }).join('');
+  return `<span class="q-topic">${esc(q.topic)}</span>
+    <span class="q-label">${q.q}</span>
+    ${q.code ? `<div class="listing">${listing(q.code.split('\n').map(l => [l, '']))}</div>` : ''}
+    <div class="opts">${opts}</div>`;
+}
+function renderChain() {
+  const area = $('#chain-area');
+  if (S.completed[0]) {
+    renderPips(false);
+    area.innerHTML = doneBox(0, S.firstAttempt[0] ? `${CHAIN_LENGTH} in a row on your first run — Gold!` : `${CHAIN_LENGTH} in a row — Level 1 complete!`);
+    return;
+  }
+  if (!S.chain.draw) { S.chain.draw = drawChain(mulberry32(S.seed + 1000 + S.chain.run)); S.chain.idx = 0; save(); }
+  const q = quizById(S.chain.draw[S.chain.idx]);
+  const order = optionOrder(q.id);
+
+  if (S.chain.pending) {
+    renderPips(true);
+    area.innerHTML = `<div class="question-card is-wrong" id="chain-card">
+        ${questionHtml(q, order, { chosen: S.chain.pending.chosen, locked: true })}
+        <div class="why">❌ Not this time. <strong>Why:</strong> ${esc(q.why)}</div>
+      </div>
+      <p style="font-size:0.9rem">That run ended with <strong>${S.chain.idx}</strong> in a row. Read the reason above, then start a new run. You'll get a fresh set of questions.</p>
+      <div class="row"><button class="ac-btn" id="chain-restart">🔁 Start a new run</button></div>`;
+    $('#chain-restart').onclick = () => { S.chain.run++; S.chain.draw = null; S.chain.pending = null; save(); renderChain(); };
+    return;
+  }
+  renderPips(false);
+  area.innerHTML = `<div class="question-card" id="chain-card">
+      <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Question ${S.chain.idx + 1} of ${CHAIN_LENGTH} in a row</div>
+      ${questionHtml(q, order)}
+      <div class="feedback" id="chain-fb"></div>
+    </div>
+    <div class="row"><button class="ac-btn" id="chain-check">✓ Check answer</button></div>`;
+  $('#chain-check').onclick = checkChain;
+}
+function checkChain() {
+  if (authBlocked()) return;
+  const sel = document.querySelector('input[name="chain_opt"]:checked');
+  const fb = $('#chain-fb');
+  if (!sel) { fb.textContent = 'Pick an answer first.'; fb.className = 'feedback info'; return; }
+  const q = quizById(S.chain.draw[S.chain.idx]);
+  if (sel.value !== '0') {
+    S.firstAttempt[0] = false;
+    S.chain.pending = { chosen: +sel.value };   // saved now, so a refresh can't dodge the restart
+    save();
+    renderChain();
+    return;
+  }
+  $('#chain-check').disabled = true;
+  $$('input[name="chain_opt"]').forEach(r => { r.disabled = true; if (r.value === '0') r.closest('.opt').classList.add('right'); });
+  const card = $('#chain-card');
+  card.classList.add('is-right');
+  window.ActivityUI?.miniCelebration(card);
+  fb.innerHTML = `✅ Correct! <span style="font-weight:400">${esc(q.why)}</span>`;
+  fb.className = 'feedback correct';
+  S.chain.idx++;
+  if (S.chain.idx >= CHAIN_LENGTH) markDone(0);
+  save();
+  renderPips(false);
+  setTimeout(renderChain, AUTO_ADVANCE_MS);
+}
+
+// ══ Level 2: Trace the boxes ════════════════════════════════════════════
+const TV = TRACE_VARIANTS[S.seed % TRACE_VARIANTS.length];
+$('#trace-listing').innerHTML = listing(TV.lines);
+$('#trace-vars').innerHTML = TV.vars.map(v => `<div class="trace-box">
+    <label for="trace_v_${v.name}">${v.name}</label>
+    <input type="text" id="trace_v_${v.name}" autocomplete="off" spellcheck="false" placeholder="?">
+    <div class="cell-msg" id="msg_v_${v.name}"></div></div>`).join('');
+$('#trace-outs').innerHTML = TV.output.map((_, i) => `<div class="out-line"><span class="n">line ${i + 1}</span><div>
+    <input type="text" id="trace_o_${i}" autocomplete="off" spellcheck="false" placeholder="exactly what is printed">
+    <div class="cell-msg" id="msg_o_${i}"></div></div></div>`).join('');
+const traceInputs = () => $$('#trace-card input');
+traceInputs().forEach(inp => {
+  inp.value = S.trace.answers[inp.id] ?? '';
+  inp.addEventListener('input', () => {
+    S.trace.answers[inp.id] = inp.value; save();
+    inp.classList.remove('ans-correct', 'ans-wrong');
+  });
+});
+function renderTraceDone() {
+  if (!S.completed[1]) return;
+  traceInputs().forEach(i => { i.readOnly = true; i.classList.add('ans-correct'); });
+  $('#trace-card').classList.remove('is-wrong');
+  $('#trace-card').classList.add('is-right');
+  $('#trace-check').disabled = true;
+  $('#trace-done').innerHTML = doneBox(1, S.firstAttempt[1] ? 'Perfect trace first time — Gold!' : 'Trace correct — Level 2 complete!');
+}
+$('#trace-check').onclick = () => {
+  if (authBlocked() || S.completed[1] || S.trace.until > Date.now()) return;
+  const checks = [
+    ...TV.vars.map(v => [`trace_v_${v.name}`, `msg_v_${v.name}`, checkTraceValue(v, $('#trace_v_' + v.name).value)]),
+    ...TV.output.map((line, i) => [`trace_o_${i}`, `msg_o_${i}`, checkTraceOutput(line, $('#trace_o_' + i).value)]),
+  ];
+  if (checks.some(([id]) => !$('#' + id).value.trim())) {
+    $('#trace-fb').textContent = 'Fill in every box and every output line first.';
+    $('#trace-fb').className = 'feedback info';
+    return;
+  }
+  checks.forEach(([id, msgId, r]) => {
+    $('#' + id).classList.toggle('ans-correct', r.ok);
+    $('#' + id).classList.toggle('ans-wrong', !r.ok);
+    $('#' + msgId).textContent = r.ok ? '' : r.msg;
+  });
+  const wrong = checks.filter(c => !c[2].ok).length;
+  const fb = $('#trace-fb');
+  if (!wrong) {
+    fb.textContent = '✅ Your trace is spot on!';
+    fb.className = 'feedback correct';
+    window.ActivityUI?.miniCelebration($('#trace-card'));
+    markDone(1);
+    renderTraceDone();
+  } else {
+    $('#trace-card').classList.add('is-wrong');
+    fb.textContent = `❌ ${wrong} answer${wrong > 1 ? 's are' : ' is'} not right yet (marked red). Trace the program again from line 1.`;
+    fb.className = 'feedback wrong';
+    penalise(1, 'trace');
+    startCooldown($('#trace-check'), 'trace', '✓ Check my trace');
+  }
+};
+
+// ══ Level 3: Join, maths or error? ══════════════════════════════════════
+const SORT_ORDER = shuffle(SORT_CARDS, mulberry32(S.seed + 55));
+let selectedCard = null;
+$('#sort-bins').innerHTML = shuffle(SORT_BINS, mulberry32(S.seed + 77)).map(b =>
+  `<div class="sort-bin" data-bin="${b.id}"><h4>${b.label}</h4></div>`).join('');
+function renderSort() {
+  const zones = { '': $('#sort-pool') };
+  $$('.sort-bin').forEach(b => { zones[b.dataset.bin] = b; b.querySelectorAll('.sort-card').forEach(c => c.remove()); });
+  $('#sort-pool').innerHTML = '';
+  SORT_ORDER.forEach(c => {
+    const el = document.createElement('div');
+    el.className = 'sort-card' + (selectedCard === c.id ? ' selected' : '');
+    el.dataset.id = c.id;
+    el.draggable = !S.completed[2];
+    el.textContent = c.expr;
+    (zones[S.sort.placements[c.id] || ''] || zones['']).appendChild(el);
+  });
+  $$('.sort-bin').forEach(b => b.classList.toggle('target', !!selectedCard));
+  if (S.completed[2]) {
+    $$('.sort-card').forEach(c => c.classList.add('is-right'));
+    $('#panel-2').classList.add('sort-locked');
+    $('#sort-check').disabled = true;
+    $('#sort-done').innerHTML = doneBox(2, S.firstAttempt[2] ? 'Every card in the right place first time — Gold!' : 'All sorted — Level 3 complete!');
+  }
+}
+function moveCard(id, bin) {
+  if (S.completed[2] || !id) return;
+  if (bin) S.sort.placements[id] = bin; else delete S.sort.placements[id];
+  selectedCard = null;
+  save();
+  renderSort();
+}
+const panel2 = $('#panel-2');
+panel2.addEventListener('click', e => {
+  if (S.completed[2]) return;
+  const card = e.target.closest('.sort-card');
+  if (card) { selectedCard = selectedCard === card.dataset.id ? null : card.dataset.id; renderSort(); return; }
+  const zone = e.target.closest('.sort-bin, .sort-pool');
+  if (zone && selectedCard) moveCard(selectedCard, zone.dataset.bin);
+});
+panel2.addEventListener('dragstart', e => { const c = e.target.closest('.sort-card'); if (c) e.dataTransfer.setData('text/plain', c.dataset.id); });
+panel2.addEventListener('dragover', e => { const z = e.target.closest('.sort-bin, .sort-pool'); if (z) { e.preventDefault(); z.classList.add('over'); } });
+panel2.addEventListener('dragleave', e => { e.target.closest?.('.sort-bin, .sort-pool')?.classList.remove('over'); });
+panel2.addEventListener('drop', e => {
+  const z = e.target.closest('.sort-bin, .sort-pool');
+  if (!z) return;
+  e.preventDefault();
+  z.classList.remove('over');
+  moveCard(e.dataTransfer.getData('text/plain'), z.dataset.bin);
+});
+$('#sort-check').onclick = () => {
+  if (authBlocked() || S.completed[2] || S.sort.until > Date.now()) return;
+  const r = checkSort(S.sort.placements);
+  const fb = $('#sort-fb');
+  if (!r.placed) { fb.textContent = 'Put every card into a group first.'; fb.className = 'feedback info'; return; }
+  $$('.sort-card').forEach(c => { c.classList.toggle('is-right', r.results[c.dataset.id]); c.classList.toggle('is-wrong', !r.results[c.dataset.id]); });
+  if (r.pass) {
+    fb.textContent = '✅ All sorted correctly!';
+    fb.className = 'feedback correct';
+    markDone(2);
+    renderSort();
+  } else {
+    fb.innerHTML = `❌ ${r.wrong} card${r.wrong > 1 ? 's are' : ' is'} in the wrong group (red). Remember: <code>input()</code> always gives back text, and text + a number is a TypeError.`;
+    fb.className = 'feedback wrong';
+    penalise(2, 'sort');
+    startCooldown($('#sort-check'), 'sort', '✓ Check my sorting');
+  }
+};
+
+// ══ Level 4: Bug hunt ═══════════════════════════════════════════════════
+$('#bug-list').innerHTML = BUGS.map((b, i) => `
+  <div class="question-card" id="bugcard_${b.id}">
+    <div class="bug-head"><span class="bug-num">Bug ${i + 1}</span><span class="bug-title">${esc(b.title)}</span>
+      <span class="bug-kind" id="bugkind_${b.id}" hidden>That was: ${esc(b.kind)}</span></div>
+    <div class="goal-line">🎯 ${esc(b.goal)}</div>
+    <div class="code-checker">
+      <textarea class="checker-textarea" id="bug_${b.id}" data-title="Bug ${i + 1}">${esc(b.starter)}</textarea>
+      <div class="checker-footer">
+        <button class="btn-run" data-run="bug_${b.id}">▶ Run code</button>
+        <button class="ac-btn" data-bugcheck="${b.id}" id="bugcheck_${b.id}">✓ Run &amp; check</button>
+        <button class="btn-reset" data-bugreset="${b.id}">↺ Reset</button>
+      </div>
+    </div>
+    <div class="hint-box" id="bughint_${b.id}" hidden></div>
+    <div class="feedback" id="bugfb_${b.id}"></div>
+  </div>`).join('');
+
+// Run the code once per set of test answers, one after another (one shared Python).
+async function runTests(code, tests) {
+  const runs = [];
+  for (const inputs of tests) runs.push({ ...(await runPython(code, { inputs, onInputsExhausted: 'error' })), inputs });
+  return runs;
+}
+// Show the first failing run (or the first run) in the editor's output panel.
+function showRun(ta, runs) {
+  const r = runs.find(x => !x.ok) || runs[0];
+  const label = r.inputs.length ? `[test run — typed: ${r.inputs.join(', ')}]\n` : '';
+  setEditorOutput(ta, r.ok ? label + (r.output || '(no output)') : r.output, !r.ok, r.ok ? null : (r.line ?? null));
+}
+function renderBugs() {
+  const n = BUGS.filter(b => S.bugs.done[b.id]).length;
+  $('#bug-counter').textContent = `${n} of ${BUGS.length} fixed`;
+  BUGS.forEach(b => {
+    if (!S.bugs.done[b.id]) return;
+    $('#bugcard_' + b.id).classList.add('is-right');
+    $('#bugkind_' + b.id).hidden = false;
+    $('#bug_' + b.id).readOnly = true;
+    $('#bugcheck_' + b.id).disabled = true;
+    $(`[data-bugreset="${b.id}"]`).disabled = true;
+    $('#bughint_' + b.id).hidden = true;
+  });
+  if (S.completed[3]) $('#bugs-done').innerHTML = doneBox(3, 'All five bugs squashed — Level 4 complete!');
+}
+async function checkBug(id) {
+  if (authBlocked() || S.bugs.done[id]) return;
+  const b = bugById(id), ta = $('#bug_' + id), fb = $('#bugfb_' + id), btn = $('#bugcheck_' + id);
+  btn.disabled = true;
+  fb.textContent = 'Running your code…'; fb.className = 'feedback info';
+  try {
+    const runs = await runTests(ta.value, b.tests);
+    showRun(ta, runs);
+    const r = evalBug(id, ta.value, runs);
+    fb.textContent = (r.pass ? '✅ ' : '❌ ') + r.msg;
+    fb.className = 'feedback ' + (r.pass ? 'correct' : 'wrong');
+    const card = $('#bugcard_' + id);
+    card.classList.toggle('is-wrong', !r.pass);
+    if (r.pass) {
+      S.bugs.done[id] = true;
+      window.ActivityUI?.miniCelebration(card);
+      if (BUGS.every(x => S.bugs.done[x.id])) markDone(3);
+    } else {
+      S.bugs.fails[id] = (S.bugs.fails[id] || 0) + 1;
+      const hint = $('#bughint_' + id);
+      hint.hidden = false;
+      hint.textContent = '💡 Hint: ' + b.hints[Math.min(S.bugs.fails[id], b.hints.length) - 1];
+    }
+    save();
+    renderBugs();
+  } catch (err) {
+    window.ErrorReporter?.report('Bug hunt check', err);
+  } finally {
+    if (!S.bugs.done[id]) btn.disabled = false;
+  }
+}
+document.addEventListener('click', e => {
+  const c = e.target.closest('[data-bugcheck]');
+  if (c) return checkBug(c.dataset.bugcheck);
+  const r = e.target.closest('[data-bugreset]');
+  if (r && !S.bugs.done[r.dataset.bugreset]) {
+    const ta = $('#bug_' + r.dataset.bugreset);
+    ta.value = bugById(r.dataset.bugreset).starter;
+    ta.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+});
+
+// ══ Level 5: Build it ═══════════════════════════════════════════════════
+function renderBuildDone() {
+  if (!S.completed[4]) return;
+  $$('#req_build li').forEach(li => { li.classList.add('req-pass'); li.querySelector('.tick').textContent = '✓'; });
+  $('#build-check').disabled = true;
+  $('#build-done').innerHTML = doneBox(4, 'Ticket machine working — all five levels done! Time for the ★ extensions.');
+}
+$('#build-check').onclick = async () => {
+  if (authBlocked() || S.completed[4]) return;
+  const ta = $('#build_editor'), fb = $('#build-fb'), btn = $('#build-check');
+  btn.disabled = true; fb.textContent = 'Testing with Ava and Leo…'; fb.className = 'feedback info';
+  try {
+    const runs = await runTests(ta.value, BUILD_TESTS);
+    showRun(ta, runs);
+    const r = evalBuild(ta.value, runs);
+    $$('#req_build li').forEach((li, i) => {
+      li.classList.toggle('req-pass', r.results[i]);
+      li.classList.toggle('req-fail', !r.results[i]);
+      li.querySelector('.tick').textContent = r.results[i] ? '✓' : '✗';
+    });
+    fb.textContent = (r.pass ? '✅ ' : '❌ ') + r.msg;
+    fb.className = 'feedback ' + (r.pass ? 'correct' : 'wrong');
+    if (r.pass) { markDone(4); renderBuildDone(); }
+  } catch (err) {
+    window.ErrorReporter?.report('Build check', err);
+  } finally {
+    if (!S.completed[4]) btn.disabled = false;
+  }
+};
+
+// ══ Extensions 1 & 2 ════════════════════════════════════════════════════
+const EXT_HINTS = [
+  [
+    'Plan it first: two input() questions → cast both with int() → multiply → print one sentence.',
+    'The sentence joins text and numbers, so turn the numbers into text with str() before joining with +',
+    'Check your spaces: "In " + weeks + " weeks you will have £" + total (with str() around the numbers).',
+  ],
+  [
+    'Work on ONE error at a time: run it, read the last line of the error, fix that line, run again.',
+    'If it prints a strange number of slices, ask yourself: what type does input() give back?',
+    'The four fixes: a missing quote, an int() cast, a str() when joining, and a misspelt variable name.',
+  ],
+];
+const EXT = [
+  { k: 0, ta: 'ext1_editor', tests: EXT1_TESTS, evalFn: evalExt1, doneText: 'Exact copy — Extension 1 complete! Design Studio is two steps away.' },
+  { k: 1, ta: 'ext2_editor', tests: EXT2_TESTS, evalFn: evalExt2, doneText: 'Planner fixed — Extension 2 complete! The Design Studio is open.' },
+];
+function renderExtDone(x) {
+  if (!S.ext.done[x.k]) return;
+  $(`#ext${x.k + 1}-check`).disabled = true;
+  $(`#ext${x.k + 1}-hint`).hidden = true;
+  $(`#ext${x.k + 1}-done`).innerHTML = doneBox(CORE + x.k, x.doneText);
+}
+EXT.forEach(x => {
+  $(`#ext${x.k + 1}-check`).onclick = async () => {
+    if (authBlocked() || S.ext.done[x.k]) return;
+    const ta = $('#' + x.ta), fb = $(`#ext${x.k + 1}-fb`), btn = $(`#ext${x.k + 1}-check`);
+    btn.disabled = true; fb.textContent = 'Testing…'; fb.className = 'feedback info';
+    try {
+      const runs = await runTests(ta.value, x.tests);
+      if (runs.length) showRun(ta, runs);
+      const r = x.evalFn(ta.value, runs);
+      fb.textContent = (r.pass ? '✅ ' : '❌ ') + r.msg;
+      fb.className = 'feedback ' + (r.pass ? 'correct' : 'wrong');
+      if (r.pass) { markExtDone(x.k); renderExtDone(x); }
+      else {
+        S.ext.fails[x.k]++;
+        save();
+        const h = $(`#ext${x.k + 1}-hint`);
+        h.hidden = false;
+        h.textContent = '💡 Hint: ' + EXT_HINTS[x.k][Math.min(S.ext.fails[x.k], 3) - 1];
+      }
+    } catch (err) {
+      window.ErrorReporter?.report('Extension check', err);
+    } finally {
+      if (!S.ext.done[x.k]) btn.disabled = false;
+    }
+  };
+});
+$('#ext2-reset').onclick = () => {
+  if (S.ext.done[1]) return;
+  const ta = $('#ext2_editor');
+  ta.value = EXT2_STARTER;
+  ta.dispatchEvent(new Event('input', { bubbles: true }));
+};
+
+// ══ Extension 3: Design Studio ══════════════════════════════════════════
+const ALL_BADGES = [...BADGES, COMPLETIONIST];
+function renderBadges(fresh = []) {
+  $('#badge-grid').innerHTML = ALL_BADGES.map(b => `
+    <div class="badge ${S.ext.badges.includes(b.id) ? 'earned' : ''} ${fresh.includes(b.id) ? 'fresh' : ''}" data-id="${b.id}">
+      <span class="ic">${b.icon}</span><span><span class="nm">${esc(b.name)}</span><br><span class="ds">${esc(b.desc)}</span></span>
+    </div>`).join('');
+  refreshProgress();
+}
+$('#ext3-check').onclick = async () => {
+  if (authBlocked()) return;
+  const ta = $('#ext3_editor'), fb = $('#ext3-fb'), btn = $('#ext3-check');
+  btn.disabled = true; fb.textContent = 'Checking your program…'; fb.className = 'feedback info';
+  try {
+    // Silent test run: every input() is answered with 7, so int()/float() casts still work.
+    const inputs = badgeInputs(ta.value);
+    const run = { ...(await runPython(ta.value, { inputs })), inputs };
+    const r = evalBadges(ta.value, run);
+    if (!r.ok) {
+      setEditorOutput(ta, run.output, true, run.line ?? null);
+      fb.textContent = '❌ Your program stops with an error. Fix it first, then check for badges again.';
+      fb.className = 'feedback wrong';
+      return;
+    }
+    const fresh = r.earned.filter(id => !S.ext.badges.includes(id));
+    S.ext.badges.push(...fresh);
+    save();
+    renderBadges(fresh);
+    if (fresh.length) {
+      const names = fresh.map(id => ALL_BADGES.find(b => b.id === id)).map(b => b.icon + ' ' + b.name).join(', ');
+      fb.textContent = `🏅 New badge${fresh.length > 1 ? 's' : ''}: ${names}`;
+      fb.className = 'feedback correct';
+      toast('New badge: ' + names);
+      submitScore();   // refreshes the Classroom evidence with the new program
+    } else {
+      const left = ALL_BADGES.length - S.ext.badges.length;
+      fb.textContent = left ? `No new badges this time — ${left} still to find. Read the grey ones and add something new!` : '🏆 You have every badge! Try a second idea from the list.';
+      fb.className = 'feedback info';
+    }
+  } catch (err) {
+    window.ErrorReporter?.report('Badge check', err);
+  } finally {
+    btn.disabled = false;
+  }
+};
+
+// ── Shared: Run buttons, saved code, reminders ─────────
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-run]');
+  if (b) runCode($('#' + b.dataset.run));
+});
+$$('.remind-slot').forEach(slot => slot.appendChild($('#remind-tpl').content.cloneNode(true)));
+
+$('#ext2_editor').value = EXT2_STARTER;
+$$('.checker-textarea').forEach(ta => {
+  if (S.code[ta.id] != null) ta.value = S.code[ta.id];
+  ta.addEventListener('input', () => { S.code[ta.id] = ta.value; save(); });
+});
+
+// ── Boot ───────────────────────────────────────────────
+renderChain();
+renderTraceDone();
+if (S.trace.until > Date.now()) startCooldown($('#trace-check'), 'trace', '✓ Check my trace');
+renderSort();
+if (S.sort.until > Date.now()) startCooldown($('#sort-check'), 'sort', '✓ Check my sorting');
+renderBugs();
+renderBuildDone();
+EXT.forEach(renderExtDone);
+renderBadges();
+refreshProgress();
+showTab(unlocked(S.tab) ? S.tab : 0);
+if (S.completed.every(Boolean)) showAllDone();   // restore the look without re-celebrating
+window.ActivityUI?.setScore(calcScore());
+
+setupEditors('.checker-textarea', { errorHints: true });
+
+preload()
+  .then(() => { $('#pyStatus').textContent = 'Python: ready'; $('#pyStatus').classList.add('ready'); })
+  .catch(err => {
+    $('#pyStatus').textContent = 'Python: failed to load';
+    window.ErrorReporter?.report('Python engine failed to load', err);
+  });
+</script>
+</body>
+</html>

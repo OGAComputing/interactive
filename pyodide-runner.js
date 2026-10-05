@@ -8,7 +8,8 @@
 //             { ok: boolean, output: string, line?: number }
 //             or, when onInputsExhausted is 'ask' and the program wants
 //             another answer, { ok: false, needsInput: true, prompt, output }
-//             (see the option notes above runPython).
+//             (see the option notes above runPython). With traceLines it
+//             also resolves with `trace` and `stdout` (see traceLines below).
 // checkSyntax(code)
 //           — parses `code` with Python's ast module; resolves with
 //             { ok: boolean, line?: number, msg?: string }
@@ -117,7 +118,7 @@ const NEED_INPUT_MARK = '@@rq-needs-input@@';
 // names in _rq_names that currently hold a value. Strings are shown in double
 // quotes (as students write them); builtins are reached through the module so
 // a student's `repr = …` or `len = …` can't break it.
-const SNAPSHOT_PY =
+const SNAPSHOT_DEF =
   `def _rq_snap():\n` +
   `    import builtins as _bb, json as _js\n` +
   `    _g, _out = globals(), []\n` +
@@ -128,8 +129,11 @@ const SNAPSHOT_PY =
   `        _d = '"' + _v + '"' if _t == 'str' else _bb.repr(_v)\n` +
   `        if _bb.len(_d) > 60: _d = _d[:57] + '...'\n` +
   `        _out.append([_n, _t, _d])\n` +
-  `    return _js.dumps(_out)\n` +
-  `_rq_snap()`;
+  `    return _js.dumps(_out)\n`;
+const SNAPSHOT_PY = SNAPSHOT_DEF + `_rq_snap()`;
+// traceLines records at most this many line steps; a longer program (or a
+// never-ending loop) runs on untraced, so the step-through replay stays short.
+const MAX_TRACE_STEPS = 150;
 
 // Options:
 //   inputs            — answers fed to input(), in order.
@@ -146,6 +150,14 @@ const SNAPSHOT_PY =
 //   trackVars         — also resolve with `vars`: [[name, type, display], …]
 //                       for each variable the student's code assigned, in
 //                       source order, as memory held them when the run stopped.
+//   traceLines        — also resolve with `trace`: [{ line, at, vars? }, …], one
+//                       entry per student line, in the order they ran, recorded
+//                       just *before* each line runs. `at` is how many characters
+//                       of stdout had been printed by then, and `vars` (with
+//                       trackVars) is memory at that moment. Also resolves with
+//                       `stdout`: the program's printed output, kept even when it
+//                       crashed (where `output` holds only the error). Used by the
+//                       editor's step-through replay; see MAX_TRACE_STEPS.
 //   timeLimitMs       — see DEFAULT_TIME_LIMIT_MS.
 export async function runPython(code, {
   inputs = [],
@@ -153,12 +165,16 @@ export async function runPython(code, {
   seed = null,
   timeLimitMs = DEFAULT_TIME_LIMIT_MS,
   trackVars = false,
+  traceLines = false,
 } = {}) {
   if (!_loading) _loading = _init();
   await _loading;
 
   const out = [];
-  _pyodide.setStdout({ batched: s => { if (out.length < MAX_OUTPUT_CHUNKS) out.push(s); } });
+  let outChars = 0;   // length of stdout() so far: each chunk is followed by '\n'
+  _pyodide.setStdout({ batched: s => {
+    if (out.length < MAX_OUTPUT_CHUNKS) { out.push(s); outChars += s.length + 1; }
+  } });
   _pyodide.setStderr({ batched: () => {} }); // errors surface via exception
 
   // The interpreter's global namespace persists between runs (later calls,
@@ -222,6 +238,40 @@ export async function runPython(code, {
     `_rq_names = list(dict.fromkeys(n for _, _, n in _rq_names if not n.startswith('_')))\n` +
     `for _n in _rq_names: globals().pop(_n, None)\n`;
 
+  // Line tracing (traceLines): a sys.settrace tracer that, on each line of the
+  // student's code (and of their functions), flushes stdout and hands the line
+  // number (plus a memory snapshot, with trackVars) to _rq_js_mark. It never
+  // raises, so CPython's switch-tracing-off-on-error can't apply, and it turns
+  // itself off after MAX_TRACE_STEPS. Only the exec of the student's code is
+  // traced; the finally drops the tracer again however the run ends.
+  const trace = [];
+  if (traceLines) {
+    _pyodide.globals.set('_rq_js_mark', (line, vars) => {
+      trace.push(vars == null ? { line, at: outChars } : { line, at: outChars, vars: JSON.parse(vars) });
+    });
+  }
+  const traceExec =
+    `import sys as _rq_sys\n` +
+    (trackVars ? SNAPSHOT_DEF : '') +
+    `_rq_steps = [0]\n` +
+    `def _rq_trace(frame, event, arg):\n` +
+    `    if frame.f_code.co_filename != '<student>': return None\n` +
+    `    if event == 'line':\n` +
+    `        if _rq_steps[0] >= ${MAX_TRACE_STEPS}:\n` +
+    `            _rq_sys.settrace(None)\n` +
+    `            return None\n` +
+    `        _rq_steps[0] += 1\n` +
+    `        try:\n` +
+    `            _rq_sys.stdout.flush()\n` +
+    `            _rq_js_mark(frame.f_lineno, ${trackVars ? '_rq_snap()' : 'None'})\n` +
+    `        except Exception: pass\n` +
+    `    return _rq_trace\n` +
+    `_rq_sys.settrace(_rq_trace)\n` +
+    `try:\n` +
+    `    exec(compile(_rq_tree, '<student>', 'exec'), globals())\n` +
+    `finally:\n` +
+    `    _rq_sys.settrace(None)\n`;
+
   // Loop guard (see DEFAULT_TIME_LIMIT_MS). The student's code is compiled as
   // '<student>' with its own line numbers, so traceback lines need no offset.
   const limitSecs = Math.max(0.1, timeLimitMs / 1000);
@@ -254,7 +304,7 @@ export async function runPython(code, {
     `_rq_tree = _RqAddTicks().visit(_ast.parse(${JSON.stringify(code)}, '<student>'))\n` +
     (trackVars ? trackPreamble : '') +
     `_ast.fix_missing_locations(_rq_tree)\n` +
-    `exec(compile(_rq_tree, '<student>', 'exec'), globals())\n`;
+    (traceLines ? traceExec : `exec(compile(_rq_tree, '<student>', 'exec'), globals())\n`);
 
   const preamble = resetPreamble + inputsPreamble + seedPreamble + guardPreamble;
   const stdout = () => out.length ? out.join('\n') + '\n' : '';
@@ -283,13 +333,19 @@ export async function runPython(code, {
     try { result.vars = JSON.parse(_pyodide.runPython(SNAPSHOT_PY)); }
     catch { result.vars = []; }
   }
+  if (traceLines) {
+    result.trace = trace;
+    result.stdout = stdout();
+  }
 
   if (onInputsExhausted === 'ask') {
     const prompt = _pyodide.globals.get('_rq_need');
     if (typeof prompt === 'string') {
       const output = stdout();
       const cut = output.indexOf(NEED_INPUT_MARK);
-      return { ok: false, needsInput: true, prompt, output: cut < 0 ? output : output.slice(0, cut), vars: result.vars };
+      const shown = cut < 0 ? output : output.slice(0, cut);
+      return { ok: false, needsInput: true, prompt, output: shown, vars: result.vars,
+               ...(traceLines ? { trace, stdout: shown } : {}) };
     }
   }
   return result;

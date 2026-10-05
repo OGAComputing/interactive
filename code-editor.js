@@ -405,6 +405,48 @@ function _injectStyles() {
     @media (prefers-reduced-motion: reduce) {
       :where(.mem-box.mem-new), :where(.mem-box.mem-changed) { animation: none; }
     }
+
+    /* Step-through run (opt-in via setupEditors(..., {stepThrough:true})): a bar
+       behind the line that is running, its number lit in the gutter, and a
+       status row with a Skip button at the top of the output panel. */
+    :where(.exec-line) {
+      position: absolute;
+      left: 0; right: 0;
+      z-index: 0;                   /* behind the highlight layer's text */
+      pointer-events: none;
+      background: rgba(94,234,212,0.14);
+      box-shadow: inset 3px 0 0 #5eead4;
+      transition: top 0.18s ease;
+    }
+    :where(.exec-line[hidden]) { display: none; }
+    :where(.exec-line.exec-error) { background: rgba(243,139,168,0.16); box-shadow: inset 3px 0 0 #f38ba8; }
+    :where(.exec-num) { color: #5eead4; font-weight: 700; }
+    :where(.exec-num.exec-error) { color: #f38ba8; }
+    :where(.step-status) {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.6rem;
+      margin: -0.2rem 0 0.5rem;
+      font-size: 0.72rem;
+      color: #5eead4;
+    }
+    :where(.step-status[hidden]) { display: none; }
+    :where(.step-skip) {
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: #cdd6f4;
+      background: transparent;
+      border: 1px solid #3b3f5c;
+      border-radius: 5px;
+      padding: 0.2rem 0.6rem;
+    }
+    :where(.step-skip:hover) { border-color: #5eead4; color: #5eead4; }
+    @media (prefers-reduced-motion: reduce) {
+      :where(.exec-line) { transition: none; }
+    }
   `;
   document.head.appendChild(s);
 }
@@ -429,6 +471,11 @@ const _errHelpBtnMap = new Map(); // textarea → "Get help" button shown after 
 const _memOn   = new Set(); // textareas opted into the memory view
 const _memMap  = new Map(); // textarea → .memory-view element
 const _memPrev = new Map(); // textarea → Map(name → display) from the last render, to spot changes
+
+// ── Step-through run state ────────────────────────────────────────────────────
+const _stepOn      = new Set(); // textareas opted into the step-through run
+const _execLineMap = new Map(); // textarea → .exec-line bar inside its .editor-container
+const _stepRuns    = new Map(); // textarea → { fast, edited, wake } for the replay in progress
 
 function _escapeHTML(s) {
   return String(s).replace(/[&<>"']/g, c =>
@@ -501,6 +548,15 @@ function _renderMemory(ta, vars) {
   }
   _memPrev.set(ta, next);
   view.hidden = next.size === 0;
+}
+
+// ?step=off / ?step=on overrides every editor on the page, like ?memory= above.
+const _stepParam = new URLSearchParams(location.search).get('step');
+
+function _stepEnabled(ta) {
+  if (_stepParam === 'off') return false;
+  if (_stepParam === 'on') return true;
+  return _stepOn.has(ta) || ta.hasAttribute('data-step-through');
 }
 
 function _errHelperEnabled(ta) {
@@ -733,6 +789,8 @@ export function clearSyntaxHint(ta) {
 export function setEditorOutput(ta, text, isError = false, lineNo = null, vars) {
   const panel = _outputMap.get(ta);
   if (!panel) return;
+  _stopStepping(ta);   // a check writing to this panel ends any step-through replay
+  _hideExecLine(ta);
   if (vars !== undefined) _renderMemory(ta, vars);
   panel.classList.toggle('error', isError);
   const content = panel.querySelector('.output-content');
@@ -880,6 +938,207 @@ async function _runLive(ta) {
   }
 }
 
+// ── Step-through run ──────────────────────────────────────────────────────────
+// With stepThrough on, Run still executes the whole program in one go (Pyodide
+// can't pause mid-run), but with runPython's traceLines, then *replays* it: a
+// bar sits on each line in the order it ran, STEP_MS per line, and the output
+// that line printed appears while it is lit. input() works as in _runLive: the
+// replay stops on the input line, the student answers, the program re-runs from
+// the start with the same seed, and the replay carries on from where it was.
+// Checks that run the code themselves (Modify/Make) replay it with replayRun().
+const STEP_MS = 500;
+// No replay takes longer than this: a program with more than MAX_REPLAY_MS /
+// STEP_MS lines to show gets shorter steps, so it still fits. With input(),
+// each stretch between answers gets its own budget (later lines aren't known
+// until the student has answered).
+const MAX_REPLAY_MS = 5000;
+const STEP_OUTPUT_AT = 0.4;   // share of a step before its output appears
+
+function _lineHeightPx(ta) {
+  const cs = getComputedStyle(ta);
+  const lh = cs.lineHeight;
+  if (lh.endsWith('px')) return parseFloat(lh);
+  return (parseFloat(lh) || 1.7) * parseFloat(cs.fontSize);
+}
+
+// Put the bar (and the gutter highlight) on 1-based `line`. kind 'error' turns
+// both red, for the line a crash happened on.
+function _showExecLine(ta, line, kind = 'run') {
+  const bar = _execLineMap.get(ta);
+  if (!bar) return;
+  const lh = _lineHeightPx(ta);
+  bar.style.top = (parseFloat(getComputedStyle(ta).paddingTop) + (line - 1) * lh) + 'px';
+  bar.style.height = lh + 'px';
+  bar.classList.toggle('exec-error', kind === 'error');
+  bar.hidden = false;
+  const nums = _numsMap.get(ta);
+  if (nums) {
+    const cls = kind === 'error' ? 'exec-num exec-error' : 'exec-num';
+    const count = ta.value.split('\n').length;
+    nums.innerHTML = Array.from({ length: count }, (_, i) =>
+      i + 1 === line ? `<span class="${cls}">${i + 1}</span>` : String(i + 1)).join('\n');
+  }
+}
+
+function _hideExecLine(ta) {
+  const bar = _execLineMap.get(ta);
+  if (!bar || bar.hidden) return;
+  bar.hidden = true;
+  _updateNums(ta, _numsMap.get(ta));
+}
+
+// The status row ("Running line 3" + Skip) at the top of the output panel.
+function _stepStatus(ta, text) {
+  const row = _outputMap.get(ta)?.querySelector('.step-status');
+  if (!row) return;
+  row.hidden = text === null;
+  if (text !== null) row.querySelector('.step-label').textContent = text;
+}
+
+// Finish the replay in progress at once (Skip, or the student typing).
+function _skipStepping(ta, edited = false) {
+  const run = _stepRuns.get(ta);
+  if (!run) return;
+  run.fast = true;
+  if (edited) run.edited = true;
+  run.wake?.();
+}
+
+// Abandon the replay in progress — a newer run or check owns the panel now.
+function _stopStepping(ta) {
+  const run = _stepRuns.get(ta);
+  if (!run) return;
+  _stepRuns.delete(ta);
+  run.fast = true;
+  run.wake?.();
+  _stepStatus(ta, null);
+}
+
+function _stepPause(run, ms) {
+  if (run.fast) return Promise.resolve();
+  return new Promise(resolve => {
+    const done = () => { clearTimeout(t); run.wake = null; resolve(); };
+    const t = setTimeout(done, ms);
+    run.wake = done;
+  });
+}
+
+function _writeStepOutput(ta, text) {
+  const panel = _outputMap.get(ta);
+  const content = panel?.querySelector('.output-content');
+  if (!content) return;
+  panel.classList.remove('error');
+  content.textContent = text;
+}
+
+// Start a replay on `ta`: abandon any earlier one and clear the panel.
+function _beginStepping(ta, trackVars) {
+  _stopStepping(ta);
+  _inputAbort.get(ta)?.();   // a prompt still waiting from an earlier run
+  const run = { fast: false, edited: false, wake: null };
+  _stepRuns.set(ta, run);
+  _writeStepOutput(ta, '');
+  if (_errHelperEnabled(ta)) _hideErrHelper(ta);
+  if (trackVars) _renderMemory(ta, null);
+  _outputMap.get(ta)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  return run;
+}
+
+// Replay r.trace from step `from`, in at most MAX_REPLAY_MS. Resolves false if
+// a newer run took over the panel part-way through.
+async function _replaySteps(ta, run, r, from, trackVars) {
+  const out = r.stdout ?? '';
+  const trace = r.trace || [];
+  if (from >= trace.length) return true;
+  const stepMs = Math.min(STEP_MS, MAX_REPLAY_MS / (trace.length - from));
+  // Output from before the first new step (e.g. the echo of the answer just
+  // typed) belongs to the input line, which has already been shown.
+  _writeStepOutput(ta, out.slice(0, trace[from].at));
+  for (let i = from; i < trace.length && !run.fast; i++) {
+    const next = trace[i + 1];
+    _showExecLine(ta, trace[i].line);
+    _stepStatus(ta, '▶ Running line ' + trace[i].line);
+    await _stepPause(run, stepMs * STEP_OUTPUT_AT);
+    if (_stepRuns.get(ta) !== run) return false;
+    _writeStepOutput(ta, out.slice(0, next ? next.at : out.length));
+    if (trackVars) _renderMemory(ta, next ? next.vars : r.vars);
+    await _stepPause(run, stepMs * (1 - STEP_OUTPUT_AT));
+    if (_stepRuns.get(ta) !== run) return false;
+  }
+  return true;
+}
+
+// Show the finished run's final output — after a crash, the output printed
+// before it stays above the error and the failing line stays lit in red.
+function _finishStepping(ta, run, r) {
+  _stopStepping(ta);
+  const out = r.stdout ?? r.output ?? '';
+  if (r.ok) {
+    setEditorOutput(ta, out || '(no output)', false, null, r.vars);
+  } else {
+    setEditorOutput(ta, r.output, true, r.line, r.vars);
+    if (r.stdout) _outputMap.get(ta).querySelector('.output-content').textContent = r.stdout + r.output;
+    if (r.line && !run.edited) _showExecLine(ta, r.line, 'error');
+  }
+}
+
+/**
+ * Show a run the activity made itself (e.g. a Modify/Make check's runPython
+ * call) in `ta`'s output panel. With stepThrough on and `run` from
+ * runPython(..., { traceLines: true }), it is replayed line by line first;
+ * otherwise it is shown at once, as setEditorOutput would.
+ * Pass `run.vars` through by calling runPython with trackVars.
+ * @returns {Promise<boolean>} false if a newer run took over part-way — the
+ *   caller should stop, as its result is no longer the one on screen.
+ */
+export async function replayRun(ta, run) {
+  if (!_stepEnabled(ta) || !run.trace) {
+    setEditorOutput(ta, run.output, !run.ok, run.ok ? null : run.line, run.vars);
+    return true;
+  }
+  const trackVars = run.vars !== undefined;
+  const state = _beginStepping(ta, trackVars);
+  const ok = await _replaySteps(ta, state, run, 0, trackVars);
+  if (!ok) return false;
+  _finishStepping(ta, state, run);
+  return true;
+}
+
+async function _runStepped(ta, inputs) {
+  const cancelled = { ok: true, output: '', cancelled: true };
+  const code = ta.value;
+  const live = inputs === null;
+  const answers = live ? [] : inputs;
+  const seed = Math.floor(Math.random() * 2 ** 31);
+  const trackVars = _memEnabled(ta);
+  const run = _beginStepping(ta, trackVars);
+
+  let shown = 0;   // trace steps already replayed (re-runs after input() repeat them)
+  for (;;) {
+    _stepStatus(ta, '▶ Running…');
+    const r = await runPython(code, {
+      inputs: answers, onInputsExhausted: live ? 'ask' : 'zero', seed, trackVars, traceLines: true,
+    });
+    if (_stepRuns.get(ta) !== run) return cancelled;
+    if (!(await _replaySteps(ta, run, r, shown, trackVars))) return cancelled;
+    shown = Math.max(shown, (r.trace || []).length);
+
+    if (!r.needsInput) {
+      _finishStepping(ta, run, r);
+      return r;
+    }
+    const out = r.stdout ?? '';
+
+    // Paused on input(): the input line stays lit while the student answers.
+    _writeStepOutput(ta, out);
+    if (trackVars) _renderMemory(ta, r.vars);
+    _stepStatus(ta, '⌨ Waiting for your answer');
+    const got = await _collectInputs(ta, [r.prompt], { keepContent: true });
+    if (got === null || _stepRuns.get(ta) !== run) return cancelled;
+    answers.push(got[0]);
+  }
+}
+
 /**
  * Run the Python code in `ta`, collecting any required inputs interactively
  * via the output panel, then display the result.
@@ -893,6 +1152,7 @@ async function _runLive(ta) {
  * @returns {Promise<{ ok: boolean, output: string }>}
  */
 export async function runCode(ta, { inputs = null } = {}) {
+  if (_stepEnabled(ta)) return _runStepped(ta, inputs);
   // The memory view always runs live, even for straight-line code, so each
   // answer drops into its box the moment it's typed (not all at the end).
   if (inputs === null && (_needsLiveInput(ta.value) || _memEnabled(ta))) return _runLive(ta);
@@ -956,6 +1216,10 @@ export async function runCode(ta, { inputs = null } = {}) {
  *   Pass `{memoryView: true}` (or `data-memory-view` on one textarea) to show
  *   each variable as a labelled box under the output, filled as the program
  *   runs. `?memory=off` / `?memory=on` in the page URL overrides both.
+ *   Pass `{stepThrough: true}` (or `data-step-through` on one textarea) to make
+ *   runCode() replay the run line by line, STEP_MS per line, lighting the line
+ *   that is running and printing its output as it goes (with a Skip button).
+ *   `?step=off` / `?step=on` in the page URL overrides both.
  */
 export function setupEditors(selector = '.checker-textarea', opts = {}) {
   _injectStyles();
@@ -994,6 +1258,14 @@ export function setupEditors(selector = '.checker-textarea', opts = {}) {
 
     container.appendChild(ta);
 
+    if (opts.stepThrough) _stepOn.add(ta);
+    const execLine = document.createElement('div');
+    execLine.className = 'exec-line';
+    execLine.hidden = true;
+    execLine.setAttribute('aria-hidden', 'true');
+    container.insertBefore(execLine, hl);
+    _execLineMap.set(ta, execLine);
+
     const nums = document.createElement('div');
     nums.className = 'line-nums';
     nums.setAttribute('aria-hidden', 'true');
@@ -1012,6 +1284,17 @@ export function setupEditors(selector = '.checker-textarea', opts = {}) {
       '</div>';
     wrap.appendChild(output);
     _outputMap.set(ta, output);
+
+    if (_stepEnabled(ta)) {
+      const status = document.createElement('div');
+      status.className = 'step-status';
+      status.hidden = true;
+      status.innerHTML =
+        '<span class="step-label" aria-live="polite"></span>' +
+        '<button type="button" class="step-skip">⏩ Skip to end</button>';
+      status.querySelector('.step-skip').addEventListener('click', () => _skipStepping(ta));
+      output.querySelector('.output-header').insertAdjacentElement('afterend', status);
+    }
 
     if (opts.memoryView) _memOn.add(ta);
     if (_memEnabled(ta)) {
@@ -1056,6 +1339,9 @@ export function setupEditors(selector = '.checker-textarea', opts = {}) {
     });
 
     ta.addEventListener('input', () => {
+      // Editing mid-replay jumps it to the end; the lit line no longer matches the code.
+      _skipStepping(ta, true);
+      _hideExecLine(ta);
       _debouncedCheck(ta);
     });
 
