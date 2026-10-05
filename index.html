@@ -5,75 +5,89 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>CS Activities</title>
   <style>
+    :root {
+      --bg: #0f1c2e;
+      --bar: #0a1520;
+      --surface: #162032;
+      --surface-2: #1b283d;
+      --line: #1e3048;
+      --text: #e8edf2;
+      --muted: #8fa9c2;
+      --dim: #5f7f9c;
+      --accent: #00b4b4;
+      --star: #f5a623;
+      --bar-h: 120px; /* real value set from JS (header height varies with teacher status) */
+    }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { transition: none !important; }
+    }
 
     body {
       font-family: 'Trebuchet MS', Calibri, sans-serif;
-      background: #0f1c2e;
-      color: #e8edf2;
+      background: var(--bg);
+      color: var(--text);
       min-height: 100vh;
     }
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
-    /* ── Header ── */
-    header {
-      background: #0a1520;
-      border-bottom: 3px solid #00b4b4;
-      padding: 2rem 2.5rem 1.5rem;
+    /* ── Sticky top bar: brand + search + teacher tools, then year tabs ── */
+    .topbar {
+      position: sticky; top: 0; z-index: 50;
+      background: var(--bar);
+      border-bottom: 1px solid var(--line);
     }
-    .header-inner { max-width: 1100px; margin: 0 auto; }
-    .header-eyebrow {
-      font-size: 0.8rem;
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-      color: #00b4b4;
-      margin-bottom: 0.4rem;
+    .topbar-row {
+      max-width: 1280px; margin: 0 auto;
+      display: flex; align-items: center; gap: 0.75rem 1rem; flex-wrap: wrap;
+      padding: 0.7rem 1.5rem 0.5rem;
     }
-    header h1 {
-      font-size: 2rem;
-      font-weight: 800;
-      color: #ffffff;
+    .brand { font-size: 1.15rem; font-weight: 800; white-space: nowrap; color: #fff; }
+    .brand span { color: var(--accent); }
+    .search { flex: 1 1 220px; max-width: 360px; position: relative; }
+    .search input {
+      width: 100%; background: var(--surface); color: var(--text);
+      border: 1px solid var(--line); border-radius: 8px;
+      padding: 0.5rem 0.8rem 0.5rem 2.1rem; font: inherit; font-size: 0.88rem;
     }
-    header h1 span { color: #00b4b4; }
-    .header-sub {
-      margin-top: 0.5rem;
-      font-size: 0.9rem;
-      color: #7a9ab5;
-    }
+    .search input:focus { outline: none; border-color: var(--accent); }
+    .search input::placeholder { color: var(--dim); }
+    .search svg { position: absolute; left: 0.65rem; top: 50%; transform: translateY(-50%); color: var(--dim); pointer-events: none; }
 
-    /* ── Teacher Dashboard ── */
+    /* ── Teacher Tools ── */
     .teacher-tools {
-      background: #162032;
-      border: 1px solid #1e3048;
-      border-radius: 8px;
-      padding: 1rem;
-      max-width: 1100px;
-      margin: 1rem auto;
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      flex-wrap: wrap;
+      display: flex; align-items: center; gap: 0.5rem 0.75rem; flex-wrap: wrap;
+      margin-left: auto;
     }
-    .teacher-label { font-size: 0.75rem; font-weight: 700; color: #00b4b4; text-transform: uppercase; }
+    .teacher-label { font-size: 0.72rem; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.06em; }
     .btn-google {
-      background: #fff; color: #000; padding: 6px 12px; border-radius: 4px;
+      background: #fff; color: #000; padding: 6px 12px; border-radius: 6px;
       font-size: 0.8rem; font-weight: 700; border: none; cursor: pointer;
     }
+    .guide-link { font-size: 0.75rem; color: var(--muted); text-decoration: none; white-space: nowrap; }
+    .guide-link:hover { color: var(--text); }
+    #teacher-status { font-size: 0.8rem; color: var(--muted); }
+    #teacher-status:empty { display: none; }
     #course-combobox, #topic-combobox {
       position: relative;
       display: none;
       flex-shrink: 0;
     }
     #course-search, #topic-search {
-      background: #0a1520; color: #e8edf2; border: 1px solid #1e3048;
-      padding: 5px 26px 5px 8px; border-radius: 4px; font-size: 0.8rem;
+      background: var(--surface); color: var(--text); border: 1px solid var(--line);
+      padding: 6px 26px 6px 8px; border-radius: 6px; font-size: 0.8rem;
       width: 200px; font-family: inherit;
     }
     #topic-search { width: 220px; }
-    #course-search:focus, #topic-search:focus { outline: none; border-color: #00b4b4; }
-    #course-search::placeholder, #topic-search::placeholder { color: #3a6080; }
+    #course-search:focus, #topic-search:focus { outline: none; border-color: var(--accent); }
+    #course-search.attention { border-color: var(--star); box-shadow: 0 0 0 3px rgba(245,166,35,0.3); }
+    #course-search::placeholder, #topic-search::placeholder { color: var(--dim); }
     #course-chevron, #topic-chevron {
       position: absolute; right: 7px; top: 50%; transform: translateY(-50%);
-      pointer-events: none; color: #3a6080; font-size: 0.6rem;
+      pointer-events: none; color: var(--dim); font-size: 0.6rem;
     }
     #course-dropdown, #topic-dropdown {
       display: none;
@@ -81,11 +95,11 @@
       top: calc(100% + 4px);
       left: 0;
       min-width: 100%;
-      max-height: 220px;
+      max-height: 260px;
       overflow-y: auto;
       background: #0d1828;
-      border: 1px solid #1e3048;
-      border-radius: 4px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
       z-index: 100;
       box-shadow: 0 8px 24px rgba(0,0,0,0.5);
     }
@@ -97,20 +111,123 @@
       cursor: pointer;
       white-space: nowrap;
     }
-    .course-option:hover, .course-option.focused { background: #162032; color: #fff; }
-    .course-option.selected { color: #00b4b4; }
-    .course-no-match { padding: 7px 10px; font-size: 0.8rem; color: #3a6080; }
-    .btn-assign {
-      background: #00b4b4; color: #0a1520;
-      padding: 4px 8px; border-radius: 4px; border: none;
-      font-size: 0.7rem; font-weight: 700; cursor: pointer;
-      display: none;
-      margin-top: 5px;
-      align-self: flex-start;
+    .course-option:hover, .course-option.focused { background: var(--surface); color: #fff; }
+    .course-option.selected { color: var(--accent); }
+    .course-no-match { padding: 7px 10px; font-size: 0.8rem; color: var(--dim); }
+
+    /* ── Year tabs ── */
+    #year-tabs {
+      max-width: 1280px; margin: 0 auto;
+      display: flex; gap: 0.25rem;
+      padding: 0 1.5rem;
+      overflow-x: auto; scrollbar-width: none;
     }
-    body.teacher-mode .btn-assign { display: block; }
-    .btn-assign:hover { background: #00ffff; }
-    .btn-assign:disabled { opacity: 0.65; cursor: not-allowed; background: #00b4b4; }
+    .year-tab {
+      background: none; border: none; font: inherit; cursor: pointer; white-space: nowrap;
+      padding: 0.6rem 1rem;
+      font-size: 0.9rem; font-weight: 700;
+      color: var(--muted);
+      border-bottom: 3px solid transparent;
+      display: flex; align-items: center; gap: 0.4rem;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .year-tab:hover { color: var(--text); }
+    .year-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .year-tab .count {
+      font-size: 0.7rem; background: var(--surface); color: var(--muted);
+      border-radius: 999px; padding: 0.1em 0.5em;
+    }
+
+    /* ── Page: sticky topic sidebar + content ── */
+    .page {
+      max-width: 1280px; margin: 0 auto;
+      display: grid; grid-template-columns: 230px minmax(0, 1fr); gap: 2rem;
+      padding: 1.5rem 1.5rem 4rem;
+    }
+    .sidebar {
+      position: sticky; top: calc(var(--bar-h) + 1.5rem); align-self: start;
+      max-height: calc(100vh - var(--bar-h) - 3rem); overflow-y: auto;
+    }
+    .sidebar h2 { font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim); margin: 0 0 0.5rem 0.6rem; }
+    #toc { list-style: none; display: flex; flex-direction: column; gap: 2px; }
+    #toc a {
+      display: flex; align-items: center; gap: 0.6rem;
+      padding: 0.5rem 0.6rem; border-radius: 6px;
+      color: var(--muted); text-decoration: none; font-size: 0.88rem; line-height: 1.25;
+    }
+    #toc a:hover { background: var(--surface); color: var(--text); }
+    #toc a.active { background: var(--surface-2); color: var(--text); font-weight: 700; }
+    #toc .dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+    #toc .n { margin-left: auto; font-size: 0.72rem; color: var(--dim); }
+
+    /* ── Topic sections ── */
+    .topic { margin-bottom: 1.75rem; scroll-margin-top: calc(var(--bar-h) + 1rem); }
+    .topic-head {
+      width: 100%; display: flex; align-items: center; gap: 0.75rem; cursor: pointer;
+      background: var(--surface); border: none; border-left: 5px solid var(--tc); border-radius: 8px;
+      padding: 0.8rem 1rem; color: var(--text); font: inherit; text-align: left;
+    }
+    .topic-head:hover { background: var(--surface-2); }
+    .topic-head h3 { font-size: 1.2rem; font-weight: 800; }
+    .topic-head .n { font-size: 0.78rem; color: var(--muted); }
+    .topic-head .chev { margin-left: auto; color: var(--dim); transition: transform 0.2s; flex-shrink: 0; }
+    .topic-head[aria-expanded="false"] .chev { transform: rotate(-90deg); }
+    .topic-body { padding-top: 0.9rem; }
+    .topic-head[aria-expanded="false"] + .topic-body { display: none; }
+
+    /* Lesson tag on each card: one grid per topic instead of a heading row per lesson */
+    .lesson-tag { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.04em; color: var(--tc, var(--accent)); }
+    .lesson-tag b { text-transform: uppercase; letter-spacing: 0.08em; margin-right: 0.35em; }
+
+    .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 0.75rem; }
+
+    /* ── Card: whole card opens the activity; Assign button sits above the link ── */
+    .card {
+      position: relative;
+      display: flex; flex-direction: column; gap: 0.35rem;
+      background: var(--surface); border: 1px solid var(--line); border-radius: 8px;
+      padding: 0.75rem 0.9rem;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .card:hover { border-color: var(--tc, var(--accent)); background: var(--surface-2); }
+    .card:focus-within { border-color: var(--tc, var(--accent)); }
+    .crumb { font-size: 0.7rem; color: var(--dim); }
+    .card-title { font-size: 0.95rem; font-weight: 700; line-height: 1.25; }
+    .card-title a { color: #fff; text-decoration: none; }
+    .card-title a::after { content: ''; position: absolute; inset: 0; border-radius: 8px; }
+    .card-title a:focus-visible { outline: none; }
+    .card-title a:focus-visible::after { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .card-desc {
+      font-size: 0.8rem; color: var(--muted); line-height: 1.4;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .card-meta { display: flex; align-items: center; gap: 0.5rem; margin-top: auto; padding-top: 0.2rem; }
+    .pill {
+      font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+      color: var(--muted); border: 1px solid var(--line); border-radius: 4px; padding: 0.1em 0.45em;
+    }
+    .pill.challenge { color: var(--star); border-color: #5a4320; }
+    .stars { font-size: 0.72rem; color: var(--star); letter-spacing: 1px; }
+
+    .btn-assign {
+      position: relative; z-index: 1; /* above the card's stretched link */
+      width: 100%; margin-top: 0.35rem; justify-content: center;
+      display: flex; align-items: center; gap: 0.35rem;
+      background: var(--accent); color: #0a1520;
+      padding: 0.45rem 0.65rem; border-radius: 6px; border: none;
+      font: inherit; font-size: 0.8rem; font-weight: 700; cursor: pointer;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .btn-assign span { overflow: hidden; text-overflow: ellipsis; }
+    .btn-assign svg { flex-shrink: 0; }
+    .btn-assign:hover { background: #00e0e0; }
+    .btn-assign:disabled { opacity: 0.65; cursor: not-allowed; background: var(--accent); }
+
+    /* ── Search results / status ── */
+    #results h2 { font-size: 0.9rem; color: var(--muted); margin-bottom: 0.8rem; font-weight: 600; }
+    .empty { color: var(--muted); padding: 2rem 0; }
+    #status { font-size: 0.9rem; color: var(--muted); padding: 2rem 0; }
+    #status.error { color: #e05555; }
 
     /* ── Assign modal ── */
     #assign-modal-backdrop {
@@ -137,137 +254,6 @@
     .assign-btn-secondary { background: #374151; color: #d1d5db; }
     .assign-btn-secondary:hover { background: #4b5563; }
 
-    /* ── Year tabs ── */
-    #year-tabs {
-      background: #0d1828;
-      border-bottom: 1px solid #1e3048;
-      padding: 0 2.5rem;
-      display: flex;
-      gap: 0;
-      max-width: 100%;
-      overflow-x: auto;
-    }
-    .year-tab {
-      padding: 0.85rem 1.4rem;
-      font-size: 0.85rem;
-      font-weight: 700;
-      color: #7a9ab5;
-      cursor: pointer;
-      border-bottom: 3px solid transparent;
-      white-space: nowrap;
-      transition: color 0.15s, border-color 0.15s;
-      user-select: none;
-    }
-    .year-tab:hover { color: #c8d8e8; }
-    .year-tab.active {
-      color: #00b4b4;
-      border-bottom-color: #00b4b4;
-    }
-
-    /* ── Main ── */
-    main {
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 2rem 2.5rem 4rem;
-    }
-
-    /* ── Year panel ── */
-    .year-panel { display: none; }
-    .year-panel.active { display: block; }
-
-    /* ── Topic groups ── */
-    .topic-group { margin-bottom: 2.5rem; }
-    .topic-heading {
-      font-size: 0.75rem;
-      font-weight: 700;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: #7a9ab5;
-      border-bottom: 1px solid #1e3048;
-      padding-bottom: 0.5rem;
-      margin-bottom: 1rem;
-    }
-
-    /* ── Lesson groups (within a topic) ── */
-    .lesson-group { margin-bottom: 1.5rem; }
-    .lesson-heading {
-      font-size: 0.7rem;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: #3d6080;
-      margin-bottom: 0.65rem;
-    }
-    .lesson-heading span {
-      color: #00b4b4;
-      margin-right: 0.5em;
-    }
-
-    .card-row {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-      gap: 1rem;
-    }
-
-    /* ── Cards ── */
-    .card {
-      background: #162032;
-      border-radius: 8px;
-      padding: 1.1rem 1.2rem 1rem;
-      text-decoration: none;
-      color: inherit;
-      display: flex;
-      flex-direction: column;
-      gap: 0.45rem;
-      transition: transform 0.15s ease, box-shadow 0.15s ease;
-    }
-    .card:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
-    }
-    .card-top {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 0.2rem;
-    }
-    .badge {
-      font-size: 0.65rem;
-      font-weight: 700;
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
-      color: #0a1520;
-      padding: 0.2em 0.6em;
-      border-radius: 4px;
-    }
-    .stars { font-size: 0.75rem; color: #f5a623; }
-    .card-title {
-      font-size: 1rem;
-      font-weight: 700;
-      color: #ffffff;
-      line-height: 1.25;
-    }
-    .card-desc {
-      font-size: 0.8rem;
-      color: #7a9ab5;
-      line-height: 1.4;
-      flex: 1;
-    }
-    .card-arrow {
-      font-size: 0.78rem;
-      font-weight: 600;
-      color: #00b4b4;
-      margin-top: 0.3rem;
-    }
-
-    /* ── Loading / error ── */
-    #status {
-      font-size: 0.9rem;
-      color: #7a9ab5;
-      padding: 2rem 0;
-    }
-    #status.error { color: #e05555; }
-
     /* ── Footer ── */
     footer {
       text-align: center;
@@ -280,15 +266,15 @@
 
     /* ── Proxy helpers ── */
     .btn-inline {
-      background: #00b4b4; color: #0a1520;
+      background: var(--accent); color: #0a1520;
       padding: 2px 10px; border-radius: 4px; border: none;
       font-size: 0.75rem; font-weight: 700; cursor: pointer; vertical-align: middle;
     }
     .btn-inline:hover { background: #00ffff; }
     .btn-inline:disabled { opacity: 0.5; cursor: not-allowed; }
     .btn-inline-ghost {
-      background: transparent; color: #7a9ab5;
-      padding: 2px 8px; border-radius: 4px; border: 1px solid #1e3048;
+      background: transparent; color: var(--muted);
+      padding: 2px 8px; border-radius: 4px; border: 1px solid var(--line);
       font-size: 0.75rem; cursor: pointer; vertical-align: middle;
     }
     .btn-inline-ghost:hover { color: #c8d8e8; border-color: #3a6080; }
@@ -298,11 +284,11 @@
     #hub-proxy-row.visible { display: flex; }
     #hub-proxy-input {
       flex: 1; min-width: 200px;
-      background: #0a1520; color: #e8edf2; border: 1px solid #1e3048;
+      background: var(--surface); color: var(--text); border: 1px solid var(--line);
       padding: 4px 8px; border-radius: 4px; font-size: 0.78rem;
       font-family: 'Courier New', monospace;
     }
-    #hub-proxy-input:focus { outline: none; border-color: #00b4b4; }
+    #hub-proxy-input:focus { outline: none; border-color: var(--accent); }
 
     #build-meta {
       font-size: 0.7rem;
@@ -311,48 +297,76 @@
       font-family: 'Courier New', monospace;
       letter-spacing: 0.03em;
     }
+
+    /* ── Narrow screens: sidebar becomes a sticky row of topic chips ── */
+    @media (max-width: 900px) {
+      .page { grid-template-columns: minmax(0, 1fr); gap: 0; padding-top: 0; }
+      .sidebar {
+        position: sticky; top: var(--bar-h); z-index: 40; max-height: none; overflow: visible;
+        background: var(--bg); margin: 0 -1.5rem; padding: 0.6rem 1.5rem; border-bottom: 1px solid var(--line);
+      }
+      .sidebar h2 { display: none; }
+      #toc { flex-direction: row; overflow-x: auto; gap: 0.4rem; scrollbar-width: none; }
+      #toc a { white-space: nowrap; border: 1px solid var(--line); border-radius: 999px; padding: 0.4rem 0.8rem; }
+      #content { padding-top: 1rem; }
+      .search { max-width: none; }
+      .teacher-tools { margin-left: 0; }
+    }
+    @media (max-width: 600px) {
+      .topbar-row { padding: 0.5rem 1rem 0.35rem; gap: 0.5rem; }
+      .brand, .teacher-label, .guide-link { display: none; }
+      .page { padding-left: 1rem; padding-right: 1rem; }
+      .sidebar { margin: 0 -1rem; padding: 0.5rem 1rem; }
+      #year-tabs { padding: 0 1rem; }
+    }
   </style>
 </head>
 <body>
 
-<header>
-  <div class="header-inner">
-    <div class="header-eyebrow">Computer Science</div>
-    <h1>Activities <span>Hub</span></h1>
+<header class="topbar" id="topbar">
+  <div class="topbar-row">
+    <h1 class="brand">Activities <span>Hub</span></h1>
+    <label class="search">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <span class="sr-only">Search all activities</span>
+      <input id="search" type="search" placeholder="Search all activities…  ( / )" autocomplete="off">
+    </label>
 
     <div class="teacher-tools">
-      <span class="teacher-label">Teacher Tools:</span>
+      <span class="teacher-label">Teacher Tools</span>
       <button id="btnLogin" class="btn-google" onclick="requestPermission()">Sign in to Assign to Classroom</button>
       <div id="course-combobox">
-        <input id="course-search" type="text" placeholder="Select a class…" autocomplete="off" readonly>
+        <input id="course-search" type="text" placeholder="Select a class…" autocomplete="off" readonly aria-label="Class to assign to">
         <span id="course-chevron">▼</span>
         <div id="course-dropdown"></div>
       </div>
       <div id="topic-combobox">
-        <input id="topic-search" type="text" placeholder="Select a topic (optional)…" autocomplete="off">
+        <input id="topic-search" type="text" placeholder="Classroom topic (optional)…" autocomplete="off" aria-label="Classroom topic">
         <span id="topic-chevron">▼</span>
         <div id="topic-dropdown"></div>
       </div>
-      <span id="teacher-status" style="font-size: 0.8rem; color: #7a9ab5;"></span>
-      <a href="getting-started.html" style="font-size:0.75rem; color:#7a9ab5; text-decoration:none; margin-left:auto;" title="Teacher setup guide">New? Getting Started →</a>
-      <div id="hub-proxy-row">
-        <span style="font-size:0.78rem;color:#7a9ab5;white-space:nowrap">Proxy URL:</span>
-        <input id="hub-proxy-input" type="url" placeholder="https://script.google.com/macros/s/…/exec">
-        <button class="btn-inline" onclick="saveHubProxyUrl()">Save</button>
-        <button class="btn-inline-ghost" onclick="document.getElementById('hub-proxy-row').classList.remove('visible')">Cancel</button>
-      </div>
+      <span id="teacher-status"></span>
+      <a href="getting-started.html" class="guide-link" title="Teacher setup guide">Getting Started →</a>
     </div>
-
-    <p class="header-sub">Select a year group, then choose an activity</p>
+    <div id="hub-proxy-row">
+      <span style="font-size:0.78rem;color:var(--muted);white-space:nowrap">Proxy URL:</span>
+      <input id="hub-proxy-input" type="url" placeholder="https://script.google.com/macros/s/…/exec">
+      <button class="btn-inline" onclick="saveHubProxyUrl()">Save</button>
+      <button class="btn-inline-ghost" onclick="document.getElementById('hub-proxy-row').classList.remove('visible')">Cancel</button>
+    </div>
   </div>
+  <nav id="year-tabs" role="tablist" aria-label="Year group"></nav>
 </header>
 
-<nav id="year-tabs"></nav>
-
-<main>
-  <div id="status">Loading activities…</div>
-  <div id="content"></div>
-</main>
+<div class="page">
+  <aside class="sidebar" aria-label="Topics">
+    <h2>Topics</h2>
+    <ul id="toc"></ul>
+  </aside>
+  <main id="content">
+    <div id="status">Loading activities…</div>
+  </main>
+</div>
 
 <footer>
   Outwood Grange Academies Trust — CS Activities Hub &nbsp;|&nbsp;
@@ -597,6 +611,17 @@
 
     renderDropdown('');
 
+    // Reselect the class this teacher last assigned to on this device.
+    let lastCourseId = '';
+    try { lastCourseId = localStorage.getItem('oga_hub_last_course') || ''; } catch (_) {}
+    const lastCourse = allCourses.find(c => c.id === lastCourseId);
+    if (lastCourse && !selectedCourseId) {
+      selectedCourseId = lastCourse.id;
+      searchEl.value = lastCourse.name;
+      refreshAssignButtons();
+      fetchTopics(selectedCourseId);
+    }
+
     searchEl.removeAttribute('readonly');
     searchEl.addEventListener('focus', () => {
       renderDropdown(searchEl.value);
@@ -606,6 +631,7 @@
 
     searchEl.addEventListener('input', () => {
       selectedCourseId = '';
+      refreshAssignButtons();
       renderDropdown(searchEl.value);
       dropdown.classList.add('open');
       focusedIndex = -1;
@@ -654,6 +680,8 @@
         document.getElementById('course-search').value = el.dataset.name;
         dropdown.classList.remove('open');
         focusedIndex = -1;
+        try { localStorage.setItem('oga_hub_last_course', selectedCourseId); } catch (_) {}
+        refreshAssignButtons();
         fetchTopics(selectedCourseId);
       });
     });
@@ -700,7 +728,7 @@
     }
 
     if (btn) { btn.textContent = '⏳ Assigning…'; btn.disabled = true; }
-    const restoreBtn = () => { if (btn) { btn.textContent = '➕ Assign to Class'; btn.disabled = false; } };
+    const restoreBtn = () => { if (btn) { btn.innerHTML = assignLabel(); btn.disabled = false; } };
 
     let proxyUrl = localStorage.getItem('oga_proxy_url') || '';
 
@@ -808,139 +836,276 @@
     restoreBtn();
   }
 
-  const COLOR = {
-    teal:   { border: '#00b4b4', badge: '#00b4b4' },
-    amber:  { border: '#f5a623', badge: '#f5a623' },
-    red:    { border: '#e05555', badge: '#e05555' },
-    green:  { border: '#2ecc71', badge: '#2ecc71' },
-    blue:   { border: '#3b82f6', badge: '#3b82f6' },
-    purple: { border: '#a855f7', badge: '#a855f7' },
-    cyan:   { border: '#06b6d4', badge: '#06b6d4' },
-    indigo: { border: '#6366f1', badge: '#6366f1' },
-    orange: { border: '#f97316', badge: '#f97316' },
-  };
+  // ── Topic colours ────────────────────────────────────────
+  // Programming topics always get a shade of blue so they read as one family;
+  // every other topic takes the next colour from a palette with no blues in it.
+  const PROGRAMMING_TOPIC = /python|algorithm|oop|programming|pseudocode|sandbox/i;
+  const PROGRAMMING_COLOURS = ['#38bdf8', '#60a5fa', '#7dd3fc', '#818cf8'];
+  const OTHER_COLOURS = ['#00b4b4', '#f5a623', '#a855f7', '#2ecc71', '#e05555', '#f97316', '#ec4899', '#a3e635'];
+
+  function topicColours(topics) {
+    let p = 0, o = 0;
+    const map = {};
+    topics.forEach(t => {
+      map[t] = PROGRAMMING_TOPIC.test(t)
+        ? PROGRAMMING_COLOURS[p++ % PROGRAMMING_COLOURS.length]
+        : OTHER_COLOURS[o++ % OTHER_COLOURS.length];
+    });
+    return map;
+  }
+
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+  function slugify(str) {
+    return str.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  }
 
   function stars(n) {
     if (!n) return '';
-    const filled = Math.min(n, 5);
-    return `<span class="stars">${'★'.repeat(filled)}${'☆'.repeat(Math.max(0, 4 - filled))}</span>`;
+    const filled = Math.min(n, 4);
+    return `<span class="stars" aria-label="${filled} of 4 stars">${'★'.repeat(filled)}${'☆'.repeat(4 - filled)}</span>`;
   }
 
-  function slugify(str) {
-    return str.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+  // ── Assign button ────────────────────────────────────────
+  const PLUS_ICON = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>';
+
+  function selectedCourseName() {
+    const c = allCourses.find(c => c.id === selectedCourseId);
+    return c ? c.name : '';
   }
 
-  function renderCard(a) {
-    const c = COLOR[a.color] || COLOR.teal;
+  function assignLabel() {
+    const name = selectedCourseName();
+    return `${PLUS_ICON}<span>${name ? 'Assign to ' + esc(name) : 'Assign to Class'}</span>`;
+  }
+
+  // Called whenever the chosen class changes, so every card names it.
+  function refreshAssignButtons() {
+    const html = assignLabel();
+    const name = selectedCourseName();
+    document.querySelectorAll('.btn-assign:not(:disabled)').forEach(b => {
+      b.innerHTML = html;
+      b.title = name ? `Assign to ${name}` : 'Assign this activity to a Google Classroom class';
+    });
+  }
+
+  async function onAssignClick(btn) {
+    if (!accessToken) {
+      const signIn = await assignModalConfirm(
+        'Sign in to assign',
+        'Sign in with your school Google account to assign activities to your Classroom classes.',
+        [
+          { label: 'Cancel',  primary: false, value: false },
+          { label: 'Sign in', primary: true,  value: true  }
+        ]
+      );
+      if (signIn) requestPermission();
+      return;
+    }
+    if (!selectedCourseId) {
+      // Point at the class picker rather than a modal — it's always on screen in the top bar.
+      const search = document.getElementById('course-search');
+      search.classList.add('attention');
+      setTimeout(() => search.classList.remove('attention'), 2000);
+      search.focus();
+      return;
+    }
+    assignToClassroom(btn.dataset.path, btn.dataset.title, btn);
+  }
+
+  // ── Cards ────────────────────────────────────────────────
+  function renderCard(a, withCrumb, lessonKey) {
+    const isChallenge = /challenge/i.test(a.type || '');
     return `
-      <a class="card" href="${a.path}" style="border-top:4px solid ${c.border}">
-        <div class="card-top">
-          <span class="badge" style="background:${c.badge}">${a.type}</span>
+      <div class="card">
+        ${withCrumb ? `<div class="crumb">${esc(a._year)} › ${esc(a._topic)}</div>` : ''}
+        ${lessonKey ? `<div class="lesson-tag"><b>Lesson ${esc(lessonKey)}</b>${esc(a.lesson || '')}</div>` : ''}
+        <div class="card-title"><a href="${esc(a.path)}">${esc(a.title)}</a></div>
+        <div class="card-desc" title="${esc(a.desc)}">${esc(a.desc)}</div>
+        <div class="card-meta">
+          <span class="pill${isChallenge ? ' challenge' : ''}">${esc(a.type)}</span>
           ${stars(a.stars)}
         </div>
-        <div class="card-title">${a.title}</div>
-        <div class="card-desc">${a.desc}</div>
-        <button class="btn-assign" onclick="event.preventDefault(); assignToClassroom('${a.path}', '${a.title}', this)">➕ Assign to Class</button>
-        <div class="card-arrow">Open →</div>
-      </a>`;
+        <button class="btn-assign" data-path="${esc(a.path)}" data-title="${esc(a.title)}">${assignLabel()}</button>
+      </div>`;
   }
 
-  function buildUI(activities) {
-    // ── Group: year → topic → lesson_num ('__none__' if unset) → {name, activities} ──
-    const tree = {};
-    activities.forEach(a => {
-      const isYearGroup = /^Year\s+\d+$/i.test(a.year);
-      const group = isYearGroup ? a.year : 'Other';
-      const topic = isYearGroup
-        ? a.topic
-        : `${a.year} / ${a.topic}`;
+  // ── Build tree: year → topic → lesson key → {name, activities} ──
+  let ALL = [];
+  const tree = {};
+  let years = [];
+  let currentYear = null;
+  let collapsed = {};
+  try { collapsed = JSON.parse(localStorage.getItem('oga_hub_collapsed') || '{}'); } catch (_) {}
 
-      if (!tree[group])          tree[group] = {};
-      if (!tree[group][topic]) tree[group][topic] = {};
+  function buildUI(activities) {
+    ALL = activities.map(a => {
+      const isYearGroup = /^Year\s+\d+$/i.test(a.year);
+      return { ...a, _year: isYearGroup ? a.year : 'Other', _topic: isYearGroup ? a.topic : `${a.year} / ${a.topic}` };
+    });
+    ALL.forEach(a => {
       // lesson_suffix: the letter in a folder like L4R_Revision → key "4R".
       const lKey = a.lesson_num != null ? a.lesson_num + (a.lesson_suffix || '') : '__none__';
-      if (!tree[group][topic][lKey]) {
-        tree[group][topic][lKey] = { name: a.lesson || null, activities: [] };
-      }
-      tree[group][topic][lKey].activities.push(a);
+      const topics  = tree[a._year] || (tree[a._year] = {});
+      const lessons = topics[a._topic] || (topics[a._topic] = {});
+      (lessons[lKey] || (lessons[lKey] = { name: a.lesson || null, activities: [] })).activities.push(a);
     });
 
-    const years = Object.keys(tree).sort((a, b) => {
+    years = Object.keys(tree).sort((a, b) => {
       if (a === 'Other') return 1;
       if (b === 'Other') return -1;
       const n = s => parseInt(s.replace(/\D+/, ''), 10);
       return n(a) - n(b);
     });
-    const tabsEl    = document.getElementById('year-tabs');
-    const contentEl = document.getElementById('content');
 
-    years.forEach((year, i) => {
-      // Tab
-      const tab = document.createElement('div');
-      tab.className = 'year-tab' + (i === 0 ? ' active' : '');
-      tab.textContent = year;
-      tab.dataset.year = slugify(year);
-      tab.addEventListener('click', () => switchYear(slugify(year)));
-      tabsEl.appendChild(tab);
+    const tabsEl = document.getElementById('year-tabs');
+    tabsEl.innerHTML = years.map(y => {
+      const n = ALL.filter(a => a._year === y).length;
+      return `<button class="year-tab" role="tab" data-year="${slugify(y)}" aria-selected="false">${esc(y)}<span class="count">${n}</span></button>`;
+    }).join('');
+    tabsEl.querySelectorAll('.year-tab').forEach(t => t.addEventListener('click', () => switchYear(t.dataset.year, true)));
 
-      // Panel
-      const panel = document.createElement('div');
-      panel.className = 'year-panel' + (i === 0 ? ' active' : '');
-      panel.id = 'panel-' + slugify(year);
+    // One delegated listener for every Assign button (cards are re-rendered on tab/search changes).
+    document.getElementById('content').addEventListener('click', e => {
+      const btn = e.target.closest('.btn-assign');
+      if (btn) onAssignClick(btn);
+    });
 
-      Object.keys(tree[year]).sort((a, b) => {
-        if (year === 'Other') {
-          const aIsRs = /^rs\s*\//i.test(a);
-          const bIsRs = /^rs\s*\//i.test(b);
-          if (aIsRs !== bIsRs) return aIsRs ? 1 : -1;
-        }
-        return a.localeCompare(b);
-      }).forEach(topic => {
-        const lessonBuckets = tree[year][topic];
+    let start = decodeURIComponent(location.hash.slice(1));
+    if (!years.some(y => slugify(y) === start)) {
+      try { start = localStorage.getItem('oga_hub_year') || ''; } catch (_) { start = ''; }
+    }
+    switchYear(start);
+  }
 
-        // Sort lesson keys: ungrouped first, then numerically ("4" before "4R" before "5")
-        const lessonKeys = Object.keys(lessonBuckets).sort((a, b) => {
-          if (a === '__none__') return -1;
-          if (b === '__none__') return  1;
-          return parseInt(a, 10) - parseInt(b, 10) || a.localeCompare(b);
-        });
-
-        const hasLessons = lessonKeys.some(k => k !== '__none__');
-        let topicContent = '';
-
-        lessonKeys.forEach(lKey => {
-          const { name, activities: acts } = lessonBuckets[lKey];
-          const cards = acts.map(renderCard).join('');
-          if (lKey === '__none__') {
-            // No lesson — render cards directly (no subheading)
-            topicContent += `<div class="card-row">${cards}</div>`;
-          } else {
-            const lessonLabel = name ? `<span>Lesson ${lKey}</span>${name}` : `Lesson ${lKey}`;
-            topicContent += `
-              <div class="lesson-group">
-                <h3 class="lesson-heading">${lessonLabel}</h3>
-                <div class="card-row">${cards}</div>
-              </div>`;
-          }
-        });
-
-        panel.innerHTML += `
-          <div class="topic-group">
-            <h2 class="topic-heading">${topic}</h2>
-            ${topicContent}
-          </div>`;
-      });
-
-      contentEl.appendChild(panel);
+  function sortTopics(year, topics) {
+    return topics.sort((a, b) => {
+      if (year === 'Other') {
+        const aIsRs = /^rs\s*\//i.test(a);
+        const bIsRs = /^rs\s*\//i.test(b);
+        if (aIsRs !== bIsRs) return aIsRs ? 1 : -1;
+      }
+      return a.localeCompare(b, undefined, { numeric: true });
     });
   }
 
-  function switchYear(yearSlug) {
-    document.querySelectorAll('.year-tab').forEach(t =>
-      t.classList.toggle('active', t.dataset.year === yearSlug));
-    document.querySelectorAll('.year-panel').forEach(p =>
-      p.classList.toggle('active', p.id === 'panel-' + yearSlug));
+  function topicCount(lessons) {
+    return Object.values(lessons).reduce((n, l) => n + l.activities.length, 0);
   }
+
+  function switchYear(yearSlug, updateHash) {
+    const year = years.find(y => slugify(y) === yearSlug) || years[0];
+    currentYear = slugify(year);
+    document.getElementById('search').value = '';
+    document.querySelectorAll('.year-tab').forEach(t => {
+      const on = t.dataset.year === currentYear;
+      t.classList.toggle('active', on);
+      t.setAttribute('aria-selected', on);
+      if (on) t.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    });
+    try { localStorage.setItem('oga_hub_year', currentYear); } catch (_) {}
+    if (updateHash) history.replaceState(null, '', '#' + currentYear);
+
+    const topics  = sortTopics(year, Object.keys(tree[year]));
+    const colours = topicColours(topics);
+
+    document.getElementById('toc').innerHTML = topics.map(t => `
+      <li><a href="#t-${slugify(t)}" data-topic="${slugify(t)}">
+        <span class="dot" style="background:${colours[t]}"></span>${esc(t)}<span class="n">${topicCount(tree[year][t])}</span>
+      </a></li>`).join('');
+
+    document.getElementById('content').innerHTML = topics.map(t => {
+      const lessonBuckets = tree[year][t];
+      // Ungrouped first, then numerically ("4" before "4R" before "5")
+      const lessonKeys = Object.keys(lessonBuckets).sort((a, b) => {
+        if (a === '__none__') return -1;
+        if (b === '__none__') return  1;
+        return parseInt(a, 10) - parseInt(b, 10) || a.localeCompare(b);
+      });
+      const body = '<div class="cards">' + lessonKeys.map(lKey =>
+        lessonBuckets[lKey].activities.map(a => renderCard(a, false, lKey === '__none__' ? null : lKey)).join('')
+      ).join('') + '</div>';
+
+      const id  = slugify(t);
+      const key = currentYear + '/' + id;
+      const n   = topicCount(lessonBuckets);
+      return `
+        <section class="topic" id="t-${id}" style="--tc:${colours[t]}">
+          <button class="topic-head" aria-expanded="${!collapsed[key]}" data-key="${key}">
+            <h3>${esc(t)}</h3><span class="n">${n} activit${n === 1 ? 'y' : 'ies'}</span>
+            <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+          </button>
+          <div class="topic-body">${body}</div>
+        </section>`;
+    }).join('');
+
+    document.querySelectorAll('.topic-head').forEach(h => h.addEventListener('click', () => {
+      const open = h.getAttribute('aria-expanded') === 'true';
+      h.setAttribute('aria-expanded', String(!open));
+      if (open) collapsed[h.dataset.key] = true; else delete collapsed[h.dataset.key];
+      try { localStorage.setItem('oga_hub_collapsed', JSON.stringify(collapsed)); } catch (_) {}
+    }));
+    // Jumping to a collapsed topic from the sidebar opens it.
+    document.querySelectorAll('#toc a').forEach(a => a.addEventListener('click', () => {
+      const h = document.querySelector(`#t-${a.dataset.topic} .topic-head`);
+      if (h && h.getAttribute('aria-expanded') === 'false') h.click();
+    }));
+
+    refreshAssignButtons();
+    window.scrollTo({ top: 0, behavior: 'auto' });
+    watchTopics();
+  }
+
+  // ── Scroll-spy: highlight the topic currently under the top bar ──
+  let topicObserver = null;
+  function watchTopics() {
+    if (topicObserver) topicObserver.disconnect();
+    if (!('IntersectionObserver' in window)) return;
+    const barH = document.getElementById('topbar').offsetHeight;
+    topicObserver = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (!e.isIntersecting) return;
+        const id = e.target.id.slice(2);
+        document.querySelectorAll('#toc a').forEach(a => a.classList.toggle('active', a.dataset.topic === id));
+        const active = document.querySelector('#toc a.active');
+        if (active) active.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+      });
+    }, { rootMargin: `-${barH + 10}px 0px -70% 0px` });
+    document.querySelectorAll('.topic').forEach(s => topicObserver.observe(s));
+  }
+
+  // Keep --bar-h in step with the sticky header (it grows when teacher status text wraps).
+  function syncBarHeight() {
+    document.documentElement.style.setProperty('--bar-h', document.getElementById('topbar').offsetHeight + 'px');
+  }
+  if ('ResizeObserver' in window) {
+    new ResizeObserver(() => { syncBarHeight(); if (currentYear) watchTopics(); }).observe(document.getElementById('topbar'));
+  }
+  syncBarHeight();
+
+  // ── Search across every year ─────────────────────────────
+  const hubSearchEl = document.getElementById('search');
+  hubSearchEl.addEventListener('input', () => {
+    const q = hubSearchEl.value.trim().toLowerCase();
+    if (!q) { switchYear(currentYear); return; }
+    const hits = ALL.filter(a =>
+      [a.title, a.desc, a._year, a._topic, a.lesson || ''].join(' ').toLowerCase().includes(q));
+    document.querySelectorAll('.year-tab').forEach(t => { t.classList.remove('active'); t.setAttribute('aria-selected', 'false'); });
+    document.getElementById('toc').innerHTML = '';
+    document.getElementById('content').innerHTML = hits.length
+      ? `<div id="results"><h2>${hits.length} result${hits.length === 1 ? '' : 's'} for “${esc(hubSearchEl.value.trim())}”</h2>
+           <div class="cards">${hits.map(a => renderCard(a, true)).join('')}</div></div>`
+      : `<p class="empty">No activities match “${esc(hubSearchEl.value.trim())}”.</p>`;
+  });
+  document.addEventListener('keydown', e => {
+    const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName);
+    if (e.key === '/' && !typing) { e.preventDefault(); hubSearchEl.focus(); }
+    if (e.key === 'Escape' && document.activeElement === hubSearchEl && hubSearchEl.value) {
+      hubSearchEl.value = '';
+      hubSearchEl.dispatchEvent(new Event('input'));
+    }
+  });
 
   // ── Fetch and render ─────────────────────────────────────
   fetch('activities.json?v=' + Date.now())
@@ -954,6 +1119,7 @@
     })
     .catch(err => {
       const el = document.getElementById('status');
+      if (!el) return;
       el.className = 'error';
       el.textContent = 'Could not load activities: ' + err.message;
     });

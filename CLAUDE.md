@@ -219,7 +219,7 @@ The transpiler covers the OCR GCSE procedural subset:
 - **Vanilla JS only**: No frameworks or libraries; direct DOM manipulation
 - **Files/folders starting with `_`** are excluded from the manifest (use `_drafts/` for WIP, `_templates/` for starters)
 - **Folder structure determines metadata**: `Y8/` → "Year 8", topic folder names become topic labels, `L<n>_Name` folders become lesson subheadings
-- **Color themes**: The `color:` field in the `<!-- ACTIVITY -->` block controls card styling in the hub; the activity's own accent colour is set automatically from the folder path via `classroom.js`
+- **Color themes**: The hub colours cards by **topic**, not by the `color:` field (still required in the `<!-- ACTIVITY -->` block, but currently unused by `index.html`). Programming topics (folder names matching `python|algorithm|oop|programming|pseudocode|sandbox`) always get a shade of blue; other topics take the next non-blue colour. The activity's own accent colour is set automatically from the folder path via `classroom.js`
 
 ## Mandatory: Grade submission and work evidence
 
