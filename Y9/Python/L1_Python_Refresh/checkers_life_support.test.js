@@ -36,11 +36,19 @@ describe('evalInv step 1 — delete int()', () => {
   });
 });
 
-describe('evalInv step 2 — int() back on line 2', () => {
+describe('evalInv step 2 — int() back on line 2, then print(hours + 1)', () => {
+  const PLUS = 'print(hours + 1)';
   test('uncast fails, cast passes (either way of casting)', () => {
-    expect(evalInv(2, code(...withLine(1, 'hours = input("Hours left? ")'))).pass).toBe(false);
-    expect(evalInv(2, code(...STARTER)).pass).toBe(true);
-    expect(evalInv(2, code(...withLine(1, 'hours = input("Hours left? ")'), 'hours = int(hours)')).pass).toBe(true);
+    expect(evalInv(2, code(...withLine(1, 'hours = input("Hours left? ")'), PLUS)).results).toEqual([false, true]);
+    expect(evalInv(2, code(...STARTER, PLUS)).pass).toBe(true);
+    expect(evalInv(2, code(...withLine(1, 'hours = input("Hours left? ")'), 'hours = int(hours)', PLUS)).pass).toBe(true);
+  });
+  test('the print(hours + 1) line is required; spacing and order are flexible', () => {
+    const r = evalInv(2, code(...STARTER));
+    expect(r.results).toEqual([true, false]);
+    expect(r.msg).toMatch(/print\(hours \+ 1\)/);
+    expect(evalInv(2, code(...STARTER, 'print( 1+hours )')).pass).toBe(true);
+    expect(evalInv(2, code(...STARTER, '# print(hours + 1)')).pass).toBe(false);
   });
 });
 

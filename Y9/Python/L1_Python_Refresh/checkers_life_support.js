@@ -164,12 +164,18 @@ export const INV_CHECKS = {
       test: hoursUncast,
     }],
   },
-  // Step 2 — int() back; typing "six" shows int() can only convert digits (ValueError).
+  // Step 2 — int() back; print(hours + 1) shows + now adds (6 → 7), where text would join.
   inv2: {
-    reqs: [{
-      hint: 'Put int( back on line 2 so it starts hours = int(input( — and add the extra ) at the end of the line.',
-      test: hoursCast,
-    }],
+    reqs: [
+      {
+        hint: 'Put int( back on line 2 so it starts hours = int(input( — and add the extra ) at the end of the line.',
+        test: hoursCast,
+      },
+      {
+        hint: 'At the bottom of the program, add the line print(hours + 1)',
+        test: raw => /\bprint\s*\(\s*(?:hours\s*\+\s*1|1\s*\+\s*hours)\s*\)/.test(normalise(raw)),
+      },
+    ],
   },
   // Step 3 — the standard bug step: Break it, then fix it with str().
   inv3: {
@@ -274,11 +280,11 @@ function ownOutputLines(raw, out) {
 export const MAKE_CHECK = {
   reqs: [
     {
-      hint: '❌ Ask at least 2 questions with input() — e.g. how many oxygen canisters, and how many ration packs.',
+      hint: '❌ Use input() to ask two questions: how many you have of two different supplies — e.g. oxygen canisters, then ration packs.',
       test: raw => inputCount(raw) >= 2,
     },
     {
-      hint: '❌ Turn at least 2 answers into whole numbers with int() — e.g. cans = int(input("Oxygen canisters: "))',
+      hint: '❌ Turn both answers into whole numbers with int() — e.g. cans = int(input("Oxygen canisters: "))',
       test: raw => castCount(raw) >= 2,
     },
     {
@@ -298,7 +304,7 @@ export const MAKE_CHECK = {
       test: raw => joinsWithStr(raw),
     },
     {
-      hint: '❌ Your manifest should print at least 3 lines of its own (not counting the questions).',
+      hint: '❌ Your manifest should print at least 3 lines of its own (not counting the questions) — e.g. a heading, how long the oxygen lasts, how long the food lasts.',
       test: (raw, out) => ownOutputLines(raw, out) >= 3,
     },
   ],

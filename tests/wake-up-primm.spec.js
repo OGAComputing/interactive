@@ -186,9 +186,9 @@ test('Modify: door message, pod line, own question, then two answers on one line
   await expect(page.locator('#stage-M2')).toHaveClass(/active/, { timeout: 10000 });
 });
 
-// ─── Make → extension ────────────────────────────────────────────────────────
+// ─── Make → Life Support link + extension ────────────────────────────────────
 
-test('Make passes on the output, and the extension completes the activity', async ({ page }) => {
+test('Make shows the link on to Life Support, and the extension completes the activity', async ({ page }) => {
   await openAt(page, { currentStage: 'M2', completedStages: ['P', 'R', 'I', 'M1'] });
   const make = [
     'name = input("Crew member: ")',
@@ -201,9 +201,13 @@ test('Make passes on the output, and the extension completes the activity', asyn
   await page.click('#btn_check_m2');
   await expect(page.locator('#fb_m2')).toHaveClass(/pass/, { timeout: 30000 });
   await expect(page.locator('#m2_ext_task')).toBeVisible();
+  await expect(page.locator('#completionBanner')).toBeVisible();
+  await expect(page.locator('body')).toHaveClass(/chapter-done/);
+  // the link keeps the query string (?story=off here; ?courseId=… in Classroom)
+  await expect(page.locator('#nextActivityLink')).toHaveAttribute('href', '2_Life_Support_PRIMM.html?story=off');
 
   await setCode(page, 'm2_editor', [...make, 'status = input("Status: ")', 'print(name + " is " + status + " in " + room)'].join('\n'));
   await page.click('#btn_check_m2');
   await expect(page.locator('#fb_m2')).toHaveClass(/pass/, { timeout: 30000 });
-  await expect(page.locator('#completionBanner')).toBeVisible();
+  await expect(page.locator('#req_m2_ext li')).toHaveClass([/req-pass/, /req-pass/]);
 });

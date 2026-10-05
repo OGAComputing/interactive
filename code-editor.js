@@ -371,25 +371,62 @@ function _injectStyles() {
       flex-wrap: wrap;
       gap: 0.9rem 0.6rem;
     }
+    /* Each data type gets a colour (Okabe-Ito, safe for colour-blind readers),
+       a background pattern, and its name on the label, so no one cue is the only
+       one. The box redraws on every replayed line, so a cast changes them
+       as soon as the line runs. --mem-c is the colour, --mem-p the pattern. */
     :where(.mem-box) {
+      --mem-c: #9aa0b4;
+      --mem-p: none;
       position: relative;
       min-width: 5.5rem;
       max-width: 100%;
       padding: 0.75rem 0.65rem 0.4rem;
       border: 1.5px solid #3b3f5c;
       border-radius: 4px;
-      background: #10121c;
+      background: var(--mem-p), #10121c;
     }
-    :where(.mem-label) {
-      position: absolute;
-      top: -0.6rem;
-      left: 0.45rem;
-      padding: 0 0.35rem;
+    :where(.mem-box[data-type="str"]) {          /* diagonal stripes */
+      --mem-c: #e69f00;
+      --mem-p: repeating-linear-gradient(45deg, rgba(230,159,0,0.2) 0 2px, transparent 2px 8px);
+    }
+    :where(.mem-box[data-type="int"]) {          /* dots */
+      --mem-c: #56b4e9;
+      --mem-p: radial-gradient(circle, rgba(86,180,233,0.3) 1.3px, transparent 1.8px) 0 0 / 8px 8px;
+    }
+    :where(.mem-box[data-type="float"]) {        /* grid */
+      --mem-c: #009e73;
+      --mem-p: repeating-linear-gradient(0deg, rgba(0,158,115,0.24) 0 1px, transparent 1px 8px),
+               repeating-linear-gradient(90deg, rgba(0,158,115,0.24) 0 1px, transparent 1px 8px);
+    }
+    :where(.mem-box[data-type="bool"]) {         /* horizontal stripes */
+      --mem-c: #cc79a7;
+      --mem-p: repeating-linear-gradient(0deg, rgba(204,121,167,0.22) 0 2px, transparent 2px 7px);
+    }
+    :where(.mem-box[data-type="list"]) {         /* vertical stripes */
+      --mem-c: #f0e442;
+      --mem-p: repeating-linear-gradient(90deg, rgba(240,228,66,0.16) 0 2px, transparent 2px 7px);
+    }
+    :where(.mem-label) {            /* in flow (pulled up over the border) so the box widens to fit it */
+      width: max-content;
+      margin: -1.35rem 0 0.25rem -0.2rem;
+      display: flex;
+      align-items: stretch;
       font-size: 0.72rem;
       font-weight: 700;
       color: #0a0c0f;
-      background: #5eead4;
+      background: var(--mem-c);
       border-radius: 3px;
+      white-space: nowrap;
+    }
+    :where(.mem-name) { padding: 0 0.35rem; }
+    :where(.mem-type) {
+      padding: 0 0.35rem;
+      font-weight: 400;
+      font-style: italic;
+      background: rgba(10,12,15,0.18);
+      border-left: 1px solid rgba(10,12,15,0.45);
+      border-radius: 0 3px 3px 0;
     }
     :where(.mem-value) {
       display: block;
@@ -401,9 +438,12 @@ function _injectStyles() {
     :where(.mem-box.mem-new) { animation: _mem-in 0.35s ease-out; }
     :where(.mem-box.mem-changed) { animation: _mem-flash 0.9s ease-out; }
     @keyframes _mem-in { from { opacity: 0; transform: translateY(6px) scale(0.92); } to { opacity: 1; transform: none; } }
+    :where(.mem-box.mem-retyped .mem-label) { animation: _mem-retype 0.6s ease-out; transform-origin: left center; }
     @keyframes _mem-flash { from { border-color: #f9b020; box-shadow: 0 0 0 3px rgba(249,176,32,0.35); } to { border-color: #3b3f5c; box-shadow: none; } }
+    @keyframes _mem-retype { 0% { transform: scale(1); } 35% { transform: scale(1.25); box-shadow: 0 0 0 3px var(--mem-c); } 100% { transform: scale(1); box-shadow: none; } }
     @media (prefers-reduced-motion: reduce) {
-      :where(.mem-box.mem-new), :where(.mem-box.mem-changed) { animation: none; }
+      :where(.mem-box.mem-new), :where(.mem-box.mem-changed),
+      :where(.mem-box.mem-retyped .mem-label) { animation: none; }
     }
 
     /* Step-through run (opt-in via setupEditors(..., {stepThrough:true})): a bar
@@ -494,7 +534,7 @@ const _errHelpBtnMap = new Map(); // textarea → "Get help" button shown after 
 // ── Memory view state ─────────────────────────────────────────────────────────
 const _memOn   = new Set(); // textareas opted into the memory view
 const _memMap  = new Map(); // textarea → .memory-view element
-const _memPrev = new Map(); // textarea → Map(name → display) from the last render, to spot changes
+const _memPrev = new Map(); // textarea → Map(name → {type, display}) from the last render, to spot changes
 
 // ── Step-through run state ────────────────────────────────────────────────────
 const _stepOn      = new Set(); // textareas opted into the step-through run
@@ -544,8 +584,10 @@ function _memEnabled(ta) {
 
 /**
  * Draw `vars` ([[name, type, display], …] from runPython's trackVars) as
- * labelled boxes. A box that wasn't there last time slides in; one whose value
- * changed flashes. Pass null to empty the view (e.g. at the start of a run).
+ * labelled boxes, coloured and patterned by data type. A box that wasn't there
+ * last time slides in; one whose value changed flashes, and one whose type
+ * changed (a cast) also pops its label. Pass null to empty the view (e.g. at
+ * the start of a run).
  */
 function _renderMemory(ta, vars) {
   const view = _memMap.get(ta);
@@ -555,15 +597,26 @@ function _renderMemory(ta, vars) {
   const list = view.querySelector('.memory-boxes');
   list.textContent = '';
   for (const [name, type, display] of vars || []) {
-    next.set(name, display);
+    next.set(name, { type, display });
     const li = document.createElement('li');
     li.className = 'mem-box';
-    if (!prev.has(name)) li.classList.add('mem-new');
-    else if (prev.get(name) !== display) li.classList.add('mem-changed');
+    li.dataset.type = type;
+    const before = prev.get(name);
+    if (!before) li.classList.add('mem-new');
+    else {
+      if (before.display !== display) li.classList.add('mem-changed');
+      if (before.type !== type) li.classList.add('mem-retyped');
+    }
     li.title = `${name} holds ${display} (type: ${type})`;
     const label = document.createElement('span');
     label.className = 'mem-label';
-    label.textContent = name;
+    const nameEl = document.createElement('span');
+    nameEl.className = 'mem-name';
+    nameEl.textContent = name;
+    const typeEl = document.createElement('span');
+    typeEl.className = 'mem-type';
+    typeEl.textContent = type;
+    label.append(nameEl, typeEl);
     const value = document.createElement('span');
     value.className = 'mem-value';
     value.textContent = display;

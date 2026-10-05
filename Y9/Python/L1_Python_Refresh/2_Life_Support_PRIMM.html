@@ -720,6 +720,141 @@ color:  teal
   }
   .sz-continue:hover { background: #8dffb0; border-color: #8dffb0; }
 
+  /* ── Live feed — the student's program output travels down a wire into a station
+       device, and the device reacts (recyclers spin up, crew logs load, lights die, tracker pings).
+       Plays at the top of a stage's situation report, before the rest types in.
+       Every one-shot animation carries .a (lines, pulse, caption) or .dv (device parts:
+       delay var(--dev), length var(--dd), keyframes chosen by the .sc-* scene class).
+       .done jumps them all to their final frame: a click/key, reduced motion. ── */
+  .sz-impact {
+    margin: 0 0 0.9rem; padding: 0.6rem 0.7rem 0.7rem; position: relative; z-index: 2;
+    background: #020704; border: 1px solid var(--crt-faint); border-radius: 8px;
+  }
+  .sz-impact[hidden] { display: none; }
+  .sz-impact-head {
+    font-size: 0.72rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--crt-dim);
+    margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;
+  }
+  .sz-impact-head b { color: var(--crt); font-weight: 700; }
+  .sz-impact-body { display: grid; grid-template-columns: minmax(0, 1fr) 44px minmax(0, 1.15fr); align-items: center; }
+  .sz-feed-term {
+    margin: 0; padding: 0.5rem 0.6rem; min-height: 6.5em; font-family: var(--hud-font); font-size: 0.8rem; line-height: 1.5;
+    white-space: pre-wrap; overflow-wrap: anywhere; border: 1px dashed var(--crt-faint); border-radius: 6px; color: var(--crt);
+  }
+  .sz-feed-term .lbl { display: block; font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--crt-dim); margin-bottom: 0.25rem; }
+  .sz-feed-term .ln { display: block; animation: sz-ln 0.12s linear both; }
+  .sz-feed-term .ln.hit { background: rgba(92,255,143,0.14); border-radius: 3px; }
+  .sz-feed-term .ln.err { color: var(--crt-crit); text-decoration: line-through; opacity: 0.8; text-shadow: 0 0 4px rgba(255,107,120,0.45); }
+  @keyframes sz-ln { from { opacity: 0; } to { opacity: 1; } }
+  .sz-feed-wire { position: relative; height: 2px; margin: 0 4px; background: repeating-linear-gradient(90deg, var(--crt-faint) 0 4px, transparent 4px 7px); }
+  .sz-feed-wire i {
+    position: absolute; top: -3px; left: 0; width: 8px; height: 8px; border-radius: 50%;
+    background: var(--crt); box-shadow: 0 0 8px var(--crt); animation: sz-pulse 0.5s linear var(--wire) both;
+  }
+  @keyframes sz-pulse { 0% { left: 0; opacity: 0; } 10%, 85% { opacity: 1; } 100% { left: calc(100% - 8px); opacity: 0; } }
+  .sz-feed-device svg { display: block; width: 100%; height: auto; border: 1px solid var(--crt-faint); border-radius: 6px; }
+  .sz-impact-cap { margin-top: 0.6rem; font-size: 0.92rem; line-height: 1.55; color: var(--crt); max-width: 68ch; animation: sz-ln 0.3s var(--cap) both; }
+  .sz-impact-cap::before { content: '> '; color: var(--crt-dim); }
+  .sz-impact.done .a, .sz-impact.done .dv { animation-delay: 0s !important; animation-duration: 0s !important; }
+
+  .sz-dev text { font-family: var(--hud-font); }
+  .sz-dev .wall   { fill: #030a05; }
+  .sz-dev .duct   { fill: #08120b; stroke: #1f3326; stroke-width: 1.5; }
+  .sz-dev .slat   { stroke: #1f3326; stroke-width: 2; }
+  .sz-dev .duct-shadow { fill: #000; opacity: 0; }
+  .sz-dev .screen { fill: #010603; stroke: #1f7a40; stroke-width: 1.5; }
+  .sz-dev .scr    { font-size: 10.5px; fill: #5cff8f; filter: drop-shadow(0 0 2px rgba(92,255,143,0.6)); }
+  .sz-dev .warn   { fill: #ffc95c; filter: drop-shadow(0 0 2px rgba(255,201,92,0.6)); }
+  .sz-dev .crit   { fill: #ff6b78; filter: drop-shadow(0 0 2px rgba(255,107,120,0.6)); }
+  .sz-dev .lamp   { fill: #ff6b78; filter: drop-shadow(0 0 5px currentColor); }
+  .sz-dev .frame  { fill: #000; stroke: #33473a; stroke-width: 3; }
+  .sz-dev .light  { fill: #c9ffdb; opacity: 0; }
+  .sz-dev .leaf   { stroke: #33473a; stroke-width: 1.5; }
+  .sz-dev .floor  { fill: #0b140e; }
+  .sz-dev .tag    { font-size: 9px; letter-spacing: 0.12em; }
+  .sz-dev .dv     { animation-duration: var(--dd); animation-delay: var(--dev); animation-fill-mode: both; animation-timing-function: ease-in-out; }
+  @keyframes szShow  { 0% { opacity: 0; } 8%, 100% { opacity: 1; } }
+
+  /* Life Support devices: the O2 recycler (screen, oxygen gauge, two fans), the crew-log
+     screen, the corridor outside, and the motion tracker. The gauge fill runs from
+     --g0 to --g1 (0–1, set on the element) and rests at --g1. */
+  .sz-dev .gtrack    { fill: #08120b; stroke: #1f3326; stroke-width: 1; }
+  .sz-dev .gfill     { fill: #5cff8f; transform-box: fill-box; transform-origin: left center; transform: scaleX(var(--g1)); }
+  .sz-dev .fan-house { fill: #020704; stroke: #33473a; stroke-width: 3; }
+  .sz-dev .blade     { fill: #1f3326; stroke: #33473a; stroke-width: 1; }
+  .sz-dev .fan       { transform-box: fill-box; transform-origin: center; }
+  .sz-dev .hub       { fill: #33473a; }
+  .sz-dev .cl-off    { fill: #1f3326; }
+  .sz-dev .cl        { fill: #c9ffdb; }
+  .sz-dev .cone      { fill: #c9ffdb; opacity: 0.1; }
+  .sz-dev .you-fig   { fill: #5cff8f; filter: drop-shadow(0 0 3px rgba(92,255,143,0.6)); }
+  .sz-dev .row-line  { stroke: #1f3326; stroke-width: 1; }
+  .sz-dev .row-st    { font-size: 9px; }
+  @keyframes szGauge   { 0%, 12% { transform: scaleX(var(--g0)); } 50%, 100% { transform: scaleX(var(--g1)); } }
+  @keyframes szSwapOut { 0%, 48% { opacity: 1; } 52%, 100% { opacity: 0; } }
+  @keyframes szSwapIn  { 0%, 48% { opacity: 0; } 52%, 100% { opacity: 1; } }
+
+  /* P — prediction shown as a simulation; nothing moves */
+  .sc-sim .lamp { fill: #ffc95c; animation-name: szSimLamp; animation-timing-function: steps(1); }
+  .sc-sim .l1, .sc-sim .l2 { animation-name: szShow; }
+  @keyframes szSimLamp { 0%, 20%, 40%, 60%, 80%, 100% { opacity: 1; } 10%, 30%, 50%, 70% { opacity: 0.2; } }
+
+  /* R — the oxygen figure reaches the recyclers: lamp goes green, the fans cough then spin, O2 climbs */
+  .sc-recycle .l1   { animation-name: szShow; }
+  .sc-recycle .l2a, .sc-recycle .p0 { animation-name: szSwapOut; }
+  .sc-recycle .l2b, .sc-recycle .p1 { animation-name: szSwapIn; }
+  .sc-recycle .lamp { animation-name: szLampGo; }
+  .sc-recycle .fan  { animation-name: szFanCough; animation-timing-function: linear; }
+  .sc-recycle .gfill { animation-name: szGauge; }
+  @keyframes szLampGo   { 0%, 14% { fill: #ff6b78; } 18%, 100% { fill: #5cff8f; } }
+  @keyframes szFanCough { 0%, 14% { transform: rotate(0deg); } 22% { transform: rotate(50deg); } 28% { transform: rotate(35deg); } 36% { transform: rotate(90deg); } 100% { transform: rotate(1440deg); } }
+
+  /* I — the error clears and the crew logs load one row at a time; Hale's last log blinks */
+  .sc-log .locked { animation-name: szGone; }
+  .sc-log .r1 { animation-name: szRowA; }
+  .sc-log .r2 { animation-name: szRowB; }
+  .sc-log .r3 { animation-name: szRowC; }
+  .sc-log .r4 { animation-name: szRowD; }
+  @keyframes szGone { 0%, 10% { opacity: 1; } 14%, 100% { opacity: 0; } }
+  @keyframes szRowA { 0%, 15% { opacity: 0; } 18%, 100% { opacity: 1; } }
+  @keyframes szRowB { 0%, 32% { opacity: 0; } 35%, 100% { opacity: 1; } }
+  @keyframes szRowC { 0%, 49% { opacity: 0; } 52%, 100% { opacity: 1; } }
+  @keyframes szRowD { 0%, 66% { opacity: 0; } 69%, 76% { opacity: 1; } 80% { opacity: 0.2; } 84% { opacity: 1; } 88% { opacity: 0.2; } 92%, 100% { opacity: 1; } }
+
+  /* M1 — the crew total reaches the recyclers and O2 climbs… then the corridor lights die one
+     panel at a time, towards you (each panel's delay is inline), and something crawls along the duct */
+  .sc-lights .l1    { animation-name: szShow; }
+  .sc-lights .p0    { animation-name: szSwapOut; }
+  .sc-lights .p1    { animation-name: szSwapIn; }
+  .sc-lights .gfill { animation-name: szGauge; }
+  .sc-lights .duct-shadow { animation-name: szDuctCreep; animation-timing-function: linear; }
+  .sc-lights .mot   { animation-name: szMotEnd; }
+  @keyframes szLightOff  { 0% { opacity: 1; } 25% { opacity: 0.2; } 40% { opacity: 0.9; } 60% { opacity: 0.1; } 72% { opacity: 0.5; } 100% { opacity: 0; } }
+  @keyframes szDuctCreep { 0%, 45% { transform: translateX(0); opacity: 0; } 50% { opacity: 0.95; } 96% { transform: translateX(300px); opacity: 0.95; } 100% { transform: translateX(300px); opacity: 0; } }
+  @keyframes szMotEnd    { 0%, 84% { opacity: 0; } 88%, 100% { opacity: 1; } }
+
+  /* M2 — life support shows online, the tracker sweeps, then pings Sensor Ops: crew tag HALE, not human */
+  .sc-tracker .m-ring    { fill: none; stroke: #1f3326; stroke-width: 7; }
+  .sc-tracker .m-room    { fill: #070d09; stroke: #33473a; stroke-width: 1; }
+  .sc-tracker .m-name    { font-size: 7.5px; fill: #3fcf6e; }
+  .sc-tracker .m-life-on { fill: rgba(92,255,143,0.2); stroke: #5cff8f; }
+  .sc-tracker .m-tgt     { fill: rgba(255,107,120,0.2); stroke: #ff6b78; stroke-width: 1.5; }
+  .sc-tracker .sweep     { stroke: #5cff8f; stroke-width: 1.5; filter: drop-shadow(0 0 3px rgba(92,255,143,0.8)); animation-name: szSweepT; animation-timing-function: linear; }
+  .sc-tracker .ping      { fill: none; stroke: #ff6b78; stroke-width: 2; transform-box: fill-box; transform-origin: center; animation-name: szPingT; animation-timing-function: ease-out; }
+  .sc-tracker .m-life-on, .sc-tracker .life-lbl { animation-name: szAt14; }
+  .sc-tracker .m-tgt, .sc-tracker .tgt-lbl { animation-name: szAt60; }
+  .sc-tracker .bio-lbl   { animation-name: szAt80; }
+  @keyframes szSweepT { 0%, 18% { transform: rotate(0deg); opacity: 0; } 20% { opacity: 1; } 58% { transform: rotate(720deg); opacity: 1; } 62%, 100% { transform: rotate(720deg); opacity: 0; } }
+  @keyframes szPingT  { 0%, 58% { opacity: 0; transform: scale(1); } 60% { opacity: 1; } 78% { opacity: 0; transform: scale(3.2); } 100% { opacity: 0; transform: scale(3.2); } }
+  @keyframes szAt14 { 0%, 12% { opacity: 0; } 16%, 100% { opacity: 1; } }
+  @keyframes szAt60 { 0%, 58% { opacity: 0; } 62%, 100% { opacity: 1; } }
+  @keyframes szAt80 { 0%, 78% { opacity: 0; } 82%, 100% { opacity: 1; } }
+
+  @media (max-width: 600px) {
+    .sz-impact-body { grid-template-columns: 1fr; gap: 0.5rem; }
+    .sz-feed-wire { display: none; }
+  }
+
   /* ── Completion banner reskin ── */
   .completion-banner { border-top-color: var(--cobalt-text); }
   .completion-banner h3 { font-family: var(--hud-font); text-transform: uppercase; letter-spacing: 0.1em; color: var(--cobalt-text); }
@@ -948,8 +1083,8 @@ color:  teal
     <div class="ac-progress-fill" id="progress-fill-I" style="width: 0%; background: var(--stage-i);"></div>
   </div>
 
-  <!-- Three steps, one casting idea each: input() gives text (delete int()) · int() can only
-       convert digits (type "six") · the standard bug step (str()). Each numbered <li> is
+  <!-- Three steps, one casting idea each: input() gives text (delete int()) · with int() back,
+       + adds (print(hours + 1)) · the standard bug step (str()). Each numbered <li> is
        checked by INV_CHECKS.invN in checkers_life_support.js. -->
   <div id="i_steps">
 
@@ -962,10 +1097,11 @@ color:  teal
     </div>
 
     <div class="q-card step-hidden" id="qcard_i2_prompt" style="border-left-color:var(--stage-i)">
-      <label class="q-label"><span class="q-num" style="background:var(--stage-i)">2</span> What can <code>int()</code> convert? Now:</label>
+      <label class="q-label"><span class="q-num" style="background:var(--stage-i)">2</span> Now <code>hours</code> is a number again. What does <code>+</code> do with it?</label>
       <ul class="req-list" id="req_i_2">
         <li><span>1</span><span class="req-text">Put <code>int(</code> back on line 2 — with its closing <code>)</code> at the end — so the line starts <code>hours = int(input(</code></span></li>
-        <li class="req-note">Run your code, type any name, then type the <strong>word</strong> <code>six</code> instead of the number. Read what Python says.</li>
+        <li><span>2</span><span class="req-text">At the <strong>bottom</strong> of the program, add a new line: <code>print(hours + 1)</code></span></li>
+        <li class="req-note">Press <strong>▶ Run code</strong>, type any name, then <strong>6</strong>, and look at the last line of output.</li>
       </ul>
     </div>
 
@@ -1003,12 +1139,12 @@ color:  teal
 
     <div class="q-card step-hidden" id="qcard_i2" style="border-left-color:var(--stage-i)">
       <div style="font-size:0.84rem;color:var(--muted);margin-bottom:0.4rem">✍️ Your answer — step 2</div>
-      <label class="q-label">You typed <code>six</code> as a word. What happened, and why?</label>
+      <label class="q-label">What did <code>print(hours + 1)</code> show, and why?</label>
       <div class="radio-opts" id="ropts_i2_mcq">
-        <label class="radio-opt"><input type="radio" name="i2_mcq" value="option_a" onchange="saveState()"> <span>It printed 300 — Python can read numbers in words</span></label>
-        <label class="radio-opt"><input type="radio" name="i2_mcq" value="option_b" onchange="saveState()"> <span>A ValueError — int() only converts digits like 6</span></label>
-        <label class="radio-opt"><input type="radio" name="i2_mcq" value="option_c" onchange="saveState()"> <span>It printed six fifty times, all joined together</span></label>
-        <label class="radio-opt"><input type="radio" name="i2_mcq" value="option_d" onchange="saveState()"> <span>hours was set to 0 because the answer was wrong</span></label>
+        <label class="radio-opt"><input type="radio" name="i2_mcq" value="option_a" onchange="saveState()"> <span>It stuck the 1 on the end, the way + joins text</span></label>
+        <label class="radio-opt"><input type="radio" name="i2_mcq" value="option_b" onchange="saveState()"> <span>It added 1, as int() made hours a real number</span></label>
+        <label class="radio-opt"><input type="radio" name="i2_mcq" value="option_c" onchange="saveState()"> <span>An error, as you can't add to an input() answer</span></label>
+        <label class="radio-opt"><input type="radio" name="i2_mcq" value="option_d" onchange="saveState()"> <span>The same number, as print() ignores the + 1</span></label>
       </div>
       <div class="mcq-fb" id="fb_i2"></div>
       <button class="btn btn-next" id="btn_check_i2" style="margin-top:10px" onclick="nextStep('I', 2)" disabled>✓ Check answer</button>
@@ -1194,11 +1330,11 @@ color:  teal
     <div class="section-label">What your program must do</div>
     <!-- One <li> per MAKE_CHECK.reqs entry in checkers.js, same order. -->
     <ul class="req-list" id="req_m2_make">
-      <li><span>1</span><span class="req-text">Ask at least <strong>2 questions</strong> with <code>input()</code></span></li>
-      <li><span>2</span><span class="req-text">Turn at least 2 answers into whole numbers with <code>int()</code></span></li>
-      <li><span>3</span><span class="req-text">Do at least one <strong>calculation</strong> with your numbers — for example <code>air = cans * 8</code></span></li>
-      <li><span>4</span><span class="req-text">Print a sentence that joins your words to a number with <code>+</code> and <code>str()</code></span></li>
-      <li><span>5</span><span class="req-text">Print at least <strong>3 lines</strong> of manifest (the questions don't count).</span></li>
+      <li><span>1</span><span class="req-text">Use <code>input()</code> to ask <strong>two questions</strong>: how many you have of two different supplies — for example <strong>oxygen canisters</strong>, then <strong>ration packs</strong></span></li>
+      <li><span>2</span><span class="req-text">Turn <strong>both answers</strong> into whole numbers with <code>int()</code> — for example <code>cans = int(input("Oxygen canisters: "))</code></span></li>
+      <li><span>3</span><span class="req-text">Do at least one <strong>calculation</strong> with your numbers — for example <code>air = cans * 8</code> (how many hours the oxygen lasts)</span></li>
+      <li><span>4</span><span class="req-text">Print a sentence that joins your words to a number with <code>+</code> and <code>str()</code> — for example <code>print("Oxygen lasts " + str(air) + " hours")</code></span></li>
+      <li><span>5</span><span class="req-text">Print at least <strong>3 lines</strong> of your own (the questions don't count) — e.g. a heading, how long the oxygen lasts, how long the food lasts</span></li>
     </ul>
   </div>
 
@@ -1246,6 +1382,7 @@ color:  teal
       </button>
     </div>
     <h2 class="sz-title" id="szTitle"><span class="sr-only" id="szTitleFull"></span><span class="sz-title-typed" aria-hidden="true" id="szTitleTyped"></span></h2>
+    <div class="sz-impact" id="szImpact" hidden></div>
     <div class="sz-map" id="szMap"></div>
     <div class="sz-legend" aria-hidden="true">
       <span><i class="k-you"></i>You</span>
@@ -1282,7 +1419,8 @@ color:  teal
    The PRIMM code talks to this layer through exactly three hooks, all called
    as window.StationZero?.… so the page still works if this block is removed:
      start()      — end of the DOMContentLoaded init
-     beat(stage)  — completeStage() (first completion only) and checkMake() (first pass)
+     beat(stage, { feed }) — completeStage() (first completion only) and checkMake()
+                  (first pass); feed = what that stage's final action printed, for the live feed
      showMap()    — the header's Station map button
    ════════════════════════════════════════════════════════════════════════════ */
 (function () {
@@ -1300,6 +1438,13 @@ color:  teal
      Room ids: cryo, life, sensors, airlock, core, drone, nav, ducts
      Readout level: 'ok' | 'warn' | 'danger'
      Optional per beat: quote: { who, text } (a recovered crew log), cta (button text)
+     Optional per beat: impact — the "live feed" that plays first: the output of the
+       stage's final action (passed in by the PRIMM code) travels into a station device.
+         scene:    'sim' (recycler, prediction only) | 'recycle' (recycler; O2 climbs) |
+                   'log' (crew logs) | 'lights' (corridor) | 'tracker' (mini map; Sensor Ops pings)
+         device:   what the feed is plugged into (shown in the feed's heading)
+         caption:  one sentence on what the code did; {o2} = the oxygen figure the program printed
+         fallback: output lines to show if there's no live output (e.g. after a reload)
      ═══════════════════════════════════════════════════════════════════════ */
   const STORY = {
     chapter:   'Chapter 1, part 2 — Life Support',
@@ -1319,6 +1464,11 @@ color:  teal
         map: { you: 'life', objective: 'life', threat: null, rooms: { cryo: 'online', core: 'sealed' } },
       },
       P: {
+        impact: {
+          scene: 'sim', device: 'O2 recycler',
+          caption: "Your prediction is loaded into the recycler as a simulation. Nothing changes until the program really runs.",
+          fallback: ['300'],
+        },
         headline: 'Something in the vents',
         time: '03:36',
         log: "You’ve worked out what the old life-support code was meant to do. Above your head, a vent cover clangs onto the floor. Nothing climbs out.",
@@ -1329,6 +1479,11 @@ color:  teal
         map: { you: 'life', objective: 'life', threat: 'vents', rooms: { cryo: 'online', core: 'sealed' } },
       },
       R: {
+        impact: {
+          scene: 'recycle', device: 'O2 recycler',
+          caption: "Your program worked out that {o2} litres of oxygen are needed and sent it to the recyclers. They coughed, spun up, and the oxygen level started to climb.",
+          fallback: ['Enter your name: Riley', 'Hours until rescue: 6', 'Engineer Riley is awake.', 'Oxygen needed in litres:', '300'],
+        },
         headline: 'Air',
         time: '03:42',
         log: "The code runs, and the oxygen recyclers cough into life. Oxygen is holding at 34%. The motion tracker blips once, then goes quiet.",
@@ -1339,6 +1494,11 @@ color:  teal
         map: { you: 'life', objective: 'life', threat: null, rooms: { cryo: 'online', life: 'unstable', core: 'sealed' } },
       },
       I: {
+        impact: {
+          scene: 'log', device: 'Crew logs',
+          caption: "With the TypeError fixed, the program ran to the end, and the crew logs it had been blocking finally loaded.",
+          fallback: ['Engineer Riley is awake.', 'Oxygen needed in litres:', '300', 'Oxygen per hour: 50'],
+        },
         headline: 'Engineer Hale’s last log',
         time: '03:55',
         log: "Repairing the storm damage has shown you how this system breaks. A crew log flickers onto the screen. It was recorded three days ago, and it stops mid-sentence.",
@@ -1350,6 +1510,11 @@ color:  teal
         map: { you: 'life', objective: 'life', threat: 'ducts', rooms: { cryo: 'online', life: 'unstable', core: 'sealed' } },
       },
       M1: {
+        impact: {
+          scene: 'lights', device: 'O2 recycler',
+          caption: "Your crew total reached the recyclers and oxygen climbed fast. Then the corridor lights started going out, one panel at a time, moving towards you.",
+          fallback: ['Oxygen needed in litres:', '360', '3', '1080', 'Total oxygen: 1080 litres'],
+        },
         headline: 'Lights out',
         time: '04:08',
         log: "You’ve rebuilt life support piece by piece, and oxygen is climbing. Then the corridor lights start going out, one panel at a time, moving towards you. Something is scraping along the inside of the ducts.",
@@ -1361,6 +1526,11 @@ color:  teal
         map: { you: 'life', objective: 'life', threat: 'corridor', rooms: { cryo: 'online', life: 'unstable', core: 'sealed' } },
       },
       M2: {
+        impact: {
+          scene: 'tracker', device: 'Motion tracker',
+          caption: "Your manifest is loaded and the supplies will hold, so life support is online. Then the motion tracker picked up a crew tag in Sensor Ops: HALE.",
+          fallback: ['Oxygen canisters: 4', 'Ration packs: 5', 'SUPPLY MANIFEST', 'Oxygen lasts 32 hours', 'Food lasts 60 hours'],
+        },
         headline: 'Life support online',
         time: '04:20',
         log: "You take your first proper breath since waking up. Then the motion tracker lights up: Sensor Ops, where nobody should be. The signal is carrying a crew ID tag.",
@@ -1536,6 +1706,174 @@ color:  teal
     }).join('');
   }
 
+  // ── Live feed: the student's own output goes into a station device, which reacts ──
+  // Timeline: the output lines print one by one, a pulse runs down the wire, then the
+  // device plays its scene (CSS keyframes under .sc-<scene>), then the caption appears.
+  // renderImpact returns how long that takes, so the rest of the report waits for it.
+  const clip = (s, n) => s.length > n ? s.slice(0, n - 1) + '…' : s;
+  const pick = (lines, re) => [...lines].reverse().find(l => re.test(l)) || lines[lines.length - 1] || '';
+  const pct = g => Math.round(g * 100) + '%';
+
+  function feedLines(feed, fallback) {
+    const lines = String(feed || '').split('\n').map(l => l.replace(/\s+$/, '')).filter(l => l.trim());
+    return lines.length ? lines : (fallback || []);
+  }
+
+  // The oxygen figure the program printed: the last line that is only a number
+  // (print(oxygen)), else the last number anywhere (a typed prediction like "300 litres").
+  function feedNumber(lines) {
+    const own = [...lines].reverse().find(l => /^\s*-?\d+(\.\d+)?\s*$/.test(l));
+    if (own) return own.trim();
+    const all = lines.join(' ').match(/-?\d+(\.\d+)?/g);
+    return all ? all[all.length - 1] : '';
+  }
+
+  // The O2 recycler: a screen, an oxygen gauge (g0 → g1, 0–1) and two fans.
+  function recyclerSvg({ l1 = '', l1cls = '', l2 = '', l2cls = '', extra = '', g0, g1 }) {
+    const fan = cx => `<circle class="fan-house" cx="${cx}" cy="150" r="30"/><g class="fan dv">`
+      + [0, 90, 180, 270].map(a => `<ellipse class="blade" cx="${cx}" cy="136" rx="6" ry="12" transform="rotate(${a} ${cx} 150)"/>`).join('')
+      + `</g><circle class="hub" cx="${cx}" cy="150" r="5"/>`;
+    return '<svg class="sz-dev" viewBox="0 0 300 200" aria-hidden="true">'
+      + '<rect class="wall" width="300" height="200"/>'
+      + '<rect class="screen" x="10" y="10" width="280" height="56" rx="4"/>'
+      + '<text class="scr tag" x="20" y="25">O2 RECYCLER · LIFE SUPPORT</text>'
+      + '<circle class="lamp dv" cx="274" cy="22" r="6"/>'
+      + `<text class="scr l1 dv ${l1cls}" x="20" y="42">${esc(clip(l1, 36))}</text>`
+      + (l2 ? `<text class="scr l2 dv ${l2cls}" x="20" y="58">${esc(clip(l2, 36))}</text>` : '')
+      + '<text class="scr" x="20" y="96">O2</text>'
+      + '<rect class="gtrack" x="44" y="86" width="190" height="12" rx="2"/>'
+      + `<rect class="gfill dv" x="44" y="86" width="190" height="12" rx="2" style="--g0:${g0};--g1:${g1}"/>`
+      + `<text class="scr p0 dv" x="244" y="96">${pct(g0)}</text>`
+      + (g1 !== g0 ? `<text class="scr p1 dv" x="244" y="96">${pct(g1)}</text>` : '')
+      + fan(90) + fan(210)
+      + '<text class="scr tag" x="90" y="196" text-anchor="middle">FAN A</text>'
+      + '<text class="scr tag" x="210" y="196" text-anchor="middle">FAN B</text>'
+      + extra + '</svg>';
+  }
+
+  // The corridor outside Life Support: O2 gauge on the screen, the duct above, six ceiling
+  // lights that die one after another towards you.
+  function corridorSvg({ l1 = '', g0, g1 }) {
+    let slats = '', lights = '';
+    for (let x = 18; x < 300; x += 26) slats += `<line class="slat" x1="${x}" y1="69" x2="${x + 8}" y2="79"/>`;
+    for (let i = 0; i < 6; i++) {
+      const x = 12 + i * 44;
+      lights += `<rect class="cl-off" x="${x}" y="86" width="26" height="4" rx="1"/>`
+        + `<g class="a" style="animation: szLightOff 0.7s calc(var(--dev) + var(--dd) * 0.45 + ${(i * 0.32).toFixed(2)}s) both">`
+        + `<polygon class="cone" points="${x},90 ${x + 26},90 ${x + 38},192 ${x - 12},192"/>`
+        + `<rect class="cl" x="${x}" y="86" width="26" height="4" rx="1"/></g>`;
+    }
+    return '<svg class="sz-dev" viewBox="0 0 300 200" aria-hidden="true">'
+      + '<rect class="wall" width="300" height="200"/>'
+      + '<rect class="screen" x="10" y="6" width="280" height="52" rx="4"/>'
+      + `<text class="scr l1 dv" x="20" y="24">${esc(clip(l1, 36))}</text>`
+      + '<text class="scr" x="20" y="48">O2</text>'
+      + '<rect class="gtrack" x="44" y="39" width="190" height="10" rx="2"/>'
+      + `<rect class="gfill dv" x="44" y="39" width="190" height="10" rx="2" style="--g0:${g0};--g1:${g1}"/>`
+      + `<text class="scr p0 dv" x="244" y="48">${pct(g0)}</text><text class="scr p1 dv" x="244" y="48">${pct(g1)}</text>`
+      + `<rect class="duct" x="-2" y="65" width="304" height="18"/>${slats}<rect class="duct-shadow dv" x="-40" y="68" width="40" height="12" rx="4"/>`
+      + lights
+      + '<rect class="floor" x="0" y="192" width="300" height="8"/>'
+      + '<text class="scr tag" x="284" y="138" text-anchor="middle">YOU</text>'
+      + '<circle class="you-fig" cx="284" cy="152" r="6"/><rect class="you-fig" x="279" y="160" width="10" height="30" rx="3"/>'
+      + '<g class="mot dv"><text class="scr tag crit" x="14" y="124">MOTION · CORRIDOR</text></g>'
+      + '</svg>';
+  }
+
+  // The motion tracker: a mini station map. Life Support comes online, then Sensor Ops pings.
+  function trackerSvg() {
+    const s = 0.36, ox = 6, oy = 6, P = (x, y) => [ox + x * s, oy + y * s];
+    const [hx, hy] = P(HUB.x, HUB.y);
+    let rooms = '';
+    for (const [id, r] of Object.entries(ROOMS)) {
+      const [x, y] = P(r.x, r.y), w = r.w * s, h = r.h * s;
+      const label = id === 'core' ? 'WARDEN' : r.name;
+      const shape = cls => r.r
+        ? `<circle class="m-room ${cls}" cx="${hx}" cy="${hy}" r="${(r.r * s).toFixed(1)}"/>`
+        : `<rect class="m-room ${cls}" x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" rx="3"/>`;
+      rooms += shape('');
+      if (id === 'life') rooms += shape('m-life-on dv');
+      if (id === 'sensors') rooms += shape('m-tgt dv');
+      rooms += `<text class="m-name" text-anchor="middle" x="${(r.r ? hx : x + w / 2).toFixed(1)}" y="${(r.r ? hy + 3 : y + h / 2 + 3).toFixed(1)}">${esc(label)}</text>`;
+    }
+    const [tx, ty] = P(ROOMS.sensors.cx, ROOMS.sensors.cy);
+    return '<svg class="sz-dev" viewBox="0 0 300 198" aria-hidden="true">'
+      + '<rect class="wall" width="300" height="198"/>'
+      + `<circle class="m-ring" cx="${hx}" cy="${hy}" r="${RING_R * s}"/>`
+      + rooms
+      + `<line class="sweep dv" x1="${hx}" y1="${hy}" x2="${hx}" y2="${hy - 82}" style="transform-origin:${hx}px ${hy}px"/>`
+      + `<circle class="ping dv" cx="${tx.toFixed(1)}" cy="${ty.toFixed(1)}" r="5"/>`
+      + '<text class="scr tag life-lbl dv" x="8" y="180">LIFE SUPPORT: ONLINE</text>'
+      + '<text class="scr tag crit tgt-lbl dv" x="8" y="193">SENSOR OPS: CREW TAG HALE</text>'
+      + '<text class="scr tag crit bio-lbl dv" x="292" y="193" text-anchor="end">NOT HUMAN</text>'
+      + '</svg>';
+  }
+
+  const SCENES = {
+    sim: lines => ({
+      label: 'Your prediction', dd: 2.4,
+      svg: recyclerSvg({ l1: 'O2 NEEDED: ' + (feedNumber(lines) || '?') + ' L', l1cls: 'warn',
+        l2: 'SIMULATION · NOT RUN YET', l2cls: 'warn', g0: 0.29, g1: 0.29 }),
+    }),
+    recycle: lines => {
+      const n = feedNumber(lines) || '300';
+      return {
+        hit: /^\s*-?\d+(\.\d+)?\s*$/, dd: 3.4, vars: { o2: n },
+        svg: recyclerSvg({
+          l1: 'O2 NEEDED: ' + n + ' L', g0: 0.29, g1: 0.34,
+          extra: '<text class="scr warn l2a dv" x="20" y="58">RECYCLERS: STARTING…</text>'
+               + '<text class="scr l2b dv" x="20" y="58">RECYCLERS: ONLINE</text>',
+        }),
+      };
+    },
+    log: () => {
+      const rows = [
+        ['LOG 0411', 'PLANET SAMPLES LOADED', ''], ['LOG 0412', 'SAMPLE TANK 3 · SEAL BROKEN', 'warn'],
+        ['LOG 0413', 'HALE · BODY TEMP 21°C', 'warn'], ['LOG 0414', 'HALE · LAST LOG · PLAYING', 'crit'],
+      ];
+      let svg = '<svg class="sz-dev" viewBox="0 0 300 200" aria-hidden="true"><rect class="wall" width="300" height="200"/>'
+        + '<rect class="screen" x="10" y="10" width="280" height="180" rx="5"/>'
+        + '<text class="scr" x="24" y="34">CREW LOGS · LIFE SUPPORT</text>'
+        + '<line class="row-line" x1="20" y1="44" x2="280" y2="44"/>'
+        + '<text class="scr crit locked dv" x="24" y="104">LOGS LOCKED · PROGRAM ERROR</text>';
+      rows.forEach(([log, st, cls], i) => {
+        const y = 70 + i * 32;
+        svg += `<g class="r${i + 1} dv"><text class="scr ${cls}" x="24" y="${y}">${log}</text>`
+          + `<text class="scr row-st ${cls}" x="96" y="${y}">${esc(st)}</text>`
+          + `<line class="row-line" x1="20" y1="${y + 12}" x2="280" y2="${y + 12}"/></g>`;
+      });
+      return { hit: /oxygen per hour/i, dd: 3.2, before: ['TypeError: can only concatenate str…'], svg: svg + '</svg>' };
+    },
+    lights: lines => ({
+      hit: /total|1080/i, dd: 4.4,
+      svg: corridorSvg({ l1: pick(lines, /total|1080/i), g0: 0.34, g1: 0.58 }),
+    }),
+    tracker: () => ({ dd: 3.8, svg: trackerSvg() }),
+  };
+
+  function renderImpact(el, imp, feed) {
+    const lines = feedLines(feed, imp.fallback);
+    const sc = SCENES[imp.scene](lines);
+    const term = [...(sc.before || []).map(t => ({ t, cls: 'err' })), ...lines.slice(-5).map(t => ({ t, cls: sc.hit?.test(t) ? 'hit' : '' }))];
+    const LINE_S = 0.25, t0 = 0.3;
+    const wire = t0 + term.length * LINE_S + 0.1, dev = wire + 0.5, dd = sc.dd || 3, cap = dev + dd;
+    el.className = 'sz-impact sc-' + imp.scene;
+    el.style.cssText = `--wire:${wire}s;--dev:${dev}s;--dd:${dd}s;--cap:${cap}s`;
+    const caption = (imp.caption || '').replace(/\{(\w+)\}/g, (m, k) => (sc.vars && sc.vars[k]) || m);
+    el.innerHTML =
+      `<div class="sz-impact-head"><span class="sz-live-dot" aria-hidden="true"></span>Live feed · your code → <b>${esc(imp.device || '')}</b></div>`
+      + '<div class="sz-impact-body">'
+      + `<pre class="sz-feed-term"><span class="lbl">${esc(sc.label || 'Program output')}</span>`
+      + term.map((l, i) => `<span class="ln a ${l.cls}" style="animation-delay:${(t0 + i * LINE_S).toFixed(2)}s">${esc(clip(l.t, 44))}</span>`).join('')
+      + '</pre>'
+      + '<div class="sz-feed-wire" aria-hidden="true"><i class="a"></i></div>'
+      + `<div class="sz-feed-device">${sc.svg}</div>`
+      + '</div>'
+      + `<p class="sz-impact-cap a">${esc(caption)}</p>`;
+    el.hidden = false;
+    return Math.round((cap + 0.4) * 1000);
+  }
+
   // ── Typewriter: the report writes itself like an 80s terminal ──
   // Groups type one after another; the elements inside a group type together
   // (all the map labels at once, then each readout line, then the log…).
@@ -1549,6 +1887,7 @@ color:  teal
     for (const g of tw.groups) for (const it of g.items) it.el.textContent = it.text;
     $('szPanel').querySelectorAll('.tw-active').forEach(e => e.classList.remove('tw-active'));
     tw.idleEl?.classList.add('tw-idle');
+    $('szImpact').classList.add('done');
     $('szSkipHint').hidden = true;
     tw = null;
   }
@@ -1556,8 +1895,8 @@ color:  teal
     if (tw) { clearInterval(tw.timer); tw = null; }
     $('szPanel').querySelectorAll('.tw-active, .tw-idle').forEach(e => e.classList.remove('tw-active', 'tw-idle'));
     groups = groups
-      .map(g => ({ cps: g.cps || 2, items: g.items.filter(Boolean).map(el => ({ el, text: el.textContent })) }))
-      .filter(g => g.items.length);
+      .map(g => ({ cps: g.cps || 2, wait: g.wait || 0, items: (g.items || []).filter(Boolean).map(el => ({ el, text: el.textContent })) }))
+      .filter(g => g.items.length || g.wait);
     tw = { groups, idleEl, timer: null };
     if (instant || reduceMotion) { finishTyping(); return; }
     for (const g of groups) for (const it of g.items) it.el.textContent = '';
@@ -1565,6 +1904,11 @@ color:  teal
     let gi = 0, pos = 0, cursorEl = null;
     tw.timer = setInterval(() => {
       const g = groups[gi];
+      if (g.wait) {   // a pause (the live feed playing) before the next group types
+        pos += 16;
+        if (pos >= g.wait) { gi++; pos = 0; if (gi >= groups.length) finishTyping(); }
+        return;
+      }
       pos += g.cps;
       let busy = null;
       for (const it of g.items) {
@@ -1582,7 +1926,7 @@ color:  teal
   let returnFocus = null;
   let onCloseCb = null;
 
-  function open(key, { review = false, onClose = null } = {}) {
+  function open(key, { review = false, onClose = null, feed = '' } = {}) {
     const b = STORY.beats[key];
     if (!b) { onClose?.(); return; }
     const map = b.map || {};
@@ -1593,6 +1937,12 @@ color:  teal
     $('szKicker').textContent = map.threat ? 'Warning · motion detected' : (key === 'intro' ? 'Station Zero · emergency wake' : 'Situation report');
     $('szClock').textContent = b.time ? 'Station time ' + b.time : '';
     $('szTitleFull').textContent = $('szTitleTyped').textContent = b.headline || '';
+    // the live feed plays only as the stage is completed, not on map re-opens
+    const imp = $('szImpact');
+    imp.classList.remove('done');
+    let feedMs = 0;
+    if (b.impact && !review) feedMs = renderImpact(imp, b.impact, feed);
+    else { imp.hidden = true; imp.innerHTML = ''; }
     $('szMap').innerHTML = renderMap(map);
     $('szRoomList').innerHTML = renderRoomList(map);
     $('szReadouts').innerHTML = renderReadouts(b.readouts);
@@ -1613,12 +1963,15 @@ color:  teal
     typeSequence([
       { cps: 3, items: [$('szKicker'), $('szClock')] },
       { cps: 2, items: [$('szTitleTyped')] },
+      ...(feedMs ? [{ wait: feedMs }] : []),
       { cps: 1, items: [...$('szMap').querySelectorAll('text')] },
       ...rows.map(row => ({ cps: 3, items: [...row.querySelectorAll('[data-tw]')] })),
       { cps: 2, items: [$('szLogTyped')] },
       ...(b.quote ? [{ cps: 2, items: [$('szQuoteText')] }, { cps: 3, items: [$('szQuoteWho')] }] : []),
     ], b.quote ? $('szQuoteText') : $('szLogTyped'), review);
-    $('szContinue').focus();
+    // focus Continue without scrolling to it — a tall report must open at the top (headline + live feed)
+    $('szContinue').focus({ preventScroll: true });
+    $('szPanel').scrollTop = 0;
   }
 
   function close() {
@@ -1828,8 +2181,8 @@ const I_FIELDS = [
   }},
 
   mcqStep(2, 'option_b',
-    'Right — int() can turn the text "6" into the number 6, but "six" isn\'t made of digits, so Python stops with a ValueError.',
-    'Read the red error again: ValueError: invalid literal for int(). int() can only convert text made of digits.'),
+    'Right — int() turned the text "6" into the number 6, so + does maths: 6 + 1 = 7. In step 1, without int(), hours was text.',
+    'Look at the last line of output again — you typed 6. Did it show 7 or 61? Check the Memory boxes too: is hours an int or a str?'),
 
   // ── THE STANDARD BUG STEP (always last) ──
   mcqStep(3, 'option_b',
@@ -1891,6 +2244,9 @@ let iBugProgress = state.iBugProgress || {};
 // student ran the code as it stands now.
 let iLastRun = state.iLastRun || null;
 let firstRunShown = false;
+// STATION ZERO hook: the last successful output per editor, so a stage's situation
+// report can play what the student's code printed into the station (the live feed).
+const storyFeed = {};
 // One consistent auto-advance delay across Predict / Investigate / Modify so the
 // student sees the feedback before the next question appears.
 const AUTO_ADVANCE_MS = 1500;
@@ -2244,8 +2600,14 @@ function completeStage(s) {
   }
   saveState();
   submitScore();
-  // STATION ZERO hook: situation report between stages (first completion only).
-  if (firstCompletion) window.StationZero?.beat(s);
+  // STATION ZERO hook: situation report between stages (first completion only),
+  // with what this stage's final action printed for the live feed.
+  if (firstCompletion) window.StationZero?.beat(s, { feed: stageFeed(s) });
+}
+
+function stageFeed(s) {
+  if (s === 'P') return document.getElementById('p_text1')?.value || '';
+  return storyFeed[{ R: 'r_editor', I: 'i_editor', M1: 'm1_editor' }[s]] || '';
 }
 
 
@@ -2281,6 +2643,7 @@ async function runCodeInEditor(editorId, statusElId, inputs = null) {
   const result = await runCode(editorEl, { inputs });
   if (result.cancelled) return;   // a later Run click superseded this one — it already owns the UI
   clearSyntaxHint(editorEl);
+  if (result.ok) storyFeed[editorId] = result.output;   // STATION ZERO hook
 
   if (editorId === 'r_editor' && !firstRunShown) {
     firstRunShown = true;
@@ -2873,7 +3236,7 @@ async function checkMod() {
   // Run FIRST with the fixed test answers: a real Python error outranks an unmet bullet,
   // and the arithmetic bullets are judged on what the program actually printed.
   fbEl.className = 'feedback loading'; fbEl.textContent = '⏳ Checking — typing Riley, 6 and 3…';
-  const run = await runPython(raw, { traceLines: true, inputs: MOD_INPUTS[checkKey] || [], onInputsExhausted: 'error' });
+  const run = await runPython(raw, { traceLines: true, trackVars: true, inputs: MOD_INPUTS[checkKey] || [], onInputsExhausted: 'error' });
   if (!(await replayRun(editorEl, run))) return;   // step through the run before judging it (stepThrough)
   if (!run.ok) {
     renderReqResults(reqListEl, null);
@@ -2888,6 +3251,7 @@ async function checkMod() {
   fbEl.textContent = result.msg;
   clearSyntaxHint(editorEl);
   passedChecks[checkId] = true;
+  storyFeed.m1_editor = run.output;   // STATION ZERO hook
   delete skippedSteps['m1_' + stepM1];
   // Lock in the code as it stood for this modification, so Back/Forward can restore it later.
   m1CodeSnapshots[stepM1] = raw;
@@ -2926,7 +3290,7 @@ async function checkMake() {
     fbEl.className = 'feedback fail'; fbEl.textContent = '⚠️ Write your program first.'; return;
   }
   fbEl.className = 'feedback loading'; fbEl.textContent = '⏳ Checking — answering every question with a number…';
-  const run = await runPython(raw, { traceLines: true, inputs: MAKE_INPUTS });
+  const run = await runPython(raw, { traceLines: true, trackVars: true, inputs: MAKE_INPUTS });
   if (!(await replayRun(editorEl, run))) return;   // step through the run before judging it (stepThrough)
   if (!run.ok) {
     renderReqResults(listEl, null);
@@ -2947,7 +3311,7 @@ async function checkMake() {
   saveState(); submitScore();
   setTimeout(() => document.getElementById('m2_ext_task')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
   // STATION ZERO hook: the chapter cliffhanger, the first time the Make program passes.
-  if (firstMakePass) window.StationZero?.beat('M2');
+  if (firstMakePass) window.StationZero?.beat('M2', { feed: run.output });
 }
 
 async function checkExt() {
@@ -2958,7 +3322,7 @@ async function checkExt() {
   const listEl = document.getElementById('req_m2_ext');
   fbEl.classList.remove('hidden');
   fbEl.className = 'feedback loading'; fbEl.textContent = '⏳ Checking — answering every question with a number…';
-  const run = await runPython(raw, { traceLines: true, inputs: EXT_INPUTS });
+  const run = await runPython(raw, { traceLines: true, trackVars: true, inputs: EXT_INPUTS });
   if (!(await replayRun(editorEl, run))) return;   // step through the run before judging it (stepThrough)
   if (!run.ok) {
     renderReqResults(listEl, null);
@@ -3117,9 +3481,8 @@ window.addEventListener('DOMContentLoaded', () => {
   restoreInputs();
   // errorHints: show a Year-8-friendly explanation + Debugging Recipe below an
   // editor a few seconds after a run fails (powered by python-error-hints.js).
-  // stepThrough: Run and the Modify/Make checks replay the program a line at a time
-  // (0.5 s each, faster so it never takes over 5 s) — trial, ?step=off to compare
-  setupEditors('.checker-textarea', { errorHints: true, stepThrough: true });
+  // memory view and step-through (Run + Modify/Make checks): trials — ?memory=off / ?step=off to compare
+  setupEditors('.checker-textarea', { errorHints: true, memoryView: true, stepThrough: true });
   showStage(currentStage, false);
   updateNav();
   updateProgress();

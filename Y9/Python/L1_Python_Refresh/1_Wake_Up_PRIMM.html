@@ -856,6 +856,22 @@ color:  teal
   .completion-banner { border-top-color: var(--cobalt-text); }
   .completion-banner h3 { font-family: var(--hud-font); text-transform: uppercase; letter-spacing: 0.1em; color: var(--cobalt-text); }
 
+  /* ── Chapter done: the page turns a little greener (systems back online) and the
+       banner becomes a phosphor-green "next activity" screen ── */
+  body.chapter-done { --canvas: #0a1610; }
+  body.chapter-done .completion-banner {
+    background: radial-gradient(ellipse at 50% 30%, #0d2a17 0%, #071a0e 75%);
+    border-color: #1f7a40; border-top-color: #5cff8f;
+  }
+  body.chapter-done .completion-banner h3 { color: #5cff8f; text-shadow: 0 0 6px rgba(92,255,143,0.45); }
+  body.chapter-done .completion-banner p  { color: #cfeedd; }
+  .btn-next-activity {
+    margin-top: 1.1rem; text-decoration: none; font-size: 1rem;
+    background: #5cff8f; color: #04170a; border-color: #5cff8f;
+  }
+  .btn-next-activity:hover { background: #8dffb0; border-color: #8dffb0; }
+  .btn-next-activity:focus-visible { outline: 2px solid #5cff8f; outline-offset: 3px; }
+
   /* ── "Remind me" cards — worked reminders on demand (expertise reversal: fluent
        students skip them, students who've forgotten open them) ── */
   .remind { background: var(--card); border: 1px solid var(--line); border-radius: 10px; margin: 0 0 1rem; }
@@ -1331,9 +1347,13 @@ color:  teal
     </div>
   </div>
 
+  <!-- Shown as soon as Make passes: the extension above is optional, the link moves the student on. -->
   <div class="completion-banner" id="completionBanner">
-    <h3>System restored</h3>
-    <p>The Cryo Bay door is open. You've worked through all five stages of the input refresh — excellent work! Now open <strong>Life Support</strong>, the second activity in this lesson.</p>
+    <h3>Chapter 1, part 1 complete</h3>
+    <p>The Cryo Bay door is open. You've worked through all five stages of the input refresh — excellent work!
+      The frost trail leads to <strong>Life Support</strong>, where the air is running out.
+      Try the <strong>extension</strong> above first if you have time.</p>
+    <a class="btn btn-next-activity" id="nextActivityLink" href="2_Life_Support_PRIMM.html">Go to Life Support →</a>
   </div>
 </section>
 
@@ -3255,6 +3275,7 @@ async function checkMake() {
   window.ActivityUI?.miniCelebration(fbEl);
   window.ActivityUI?.showToast('✅ Make complete! Now try the extension!');
   updateStepVisibility();
+  showCompletion(false);   // the link to Life Support appears now; the extension stays optional
   saveState(); submitScore();
   setTimeout(() => document.getElementById('m2_ext_task')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
   // STATION ZERO hook: the chapter cliffhanger, the first time the Make program passes.
@@ -3290,10 +3311,16 @@ async function checkExt() {
   saveState(); submitScore();
 }
 
-function showCompletion() {
+// Once Make passes: the page turns greener and the banner links on to Life Support, keeping
+// ?courseId=…&proxyUrl=… so the next activity can still submit to Classroom.
+// scroll = false when Make has just passed, so the page scrolls to the extension instead.
+function showCompletion(scroll = true) {
+  document.body.classList.add('chapter-done');
+  const link = document.getElementById('nextActivityLink');
+  if (link) link.href = '2_Life_Support_PRIMM.html' + location.search;
   const banner = document.getElementById('completionBanner');
   banner.style.display = 'block';
-  banner.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  if (scroll) banner.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
 // ── Skip step ─────────────────────────────────────────
@@ -3451,7 +3478,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const fb = document.getElementById('fb_m2');
     if (fb) { fb.classList.remove('hidden'); fb.className = 'feedback pass'; fb.textContent = '✅ Main program complete.'; }
   }
-  if (passedChecks['m2_ext']) showCompletion();
+  if (passedChecks['m2_make']) showCompletion(!!passedChecks['m2_ext']);
 
   skippedStages.forEach(s => {
     const btn = document.querySelector(`[data-stage="${s}"]`);

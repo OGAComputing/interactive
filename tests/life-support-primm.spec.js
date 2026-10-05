@@ -95,6 +95,27 @@ test('Run: the student types their own answers live and sees 300', async ({ page
   await expect(outputOf(page, 'r_editor')).toContainText('300');
 });
 
+test("the live feed plays the student's own run output into the recycler", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 600 });   // report taller than the screen
+  await page.addInitScript(p => localStorage.setItem('sz_story_' + p, JSON.stringify(['intro', 'P'])), PATH);
+  await openAt(page, { currentStage: 'R', completedStages: ['P'] }, { story: true });
+  await page.click('#stage-R button:has-text("Run code")');
+  await answerPrompts(page, 'r_editor', ['Sam', '7']);
+  await expect(outputOf(page, 'r_editor')).toContainText('350', { timeout: 30000 });
+  await page.fill('#r1', 'It showed 350 because I typed 7');
+  await page.click('#btn_check_run');
+  await expect(page.locator('#szOverlay')).toHaveClass(/open/, { timeout: 10000 });
+  await expect(page.locator('#szImpact')).toBeVisible();
+  expect(await page.locator('#szPanel').evaluate(p => p.scrollHeight > p.clientHeight && p.scrollTop === 0)).toBe(true);
+  await expect(page.locator('#szContinue')).toBeFocused();
+  await expect(page.locator('#szImpact .sz-feed-term .ln.hit')).toHaveText('350');
+  await expect(page.locator('#szImpact svg')).toContainText('O2 NEEDED: 350 L');
+  await expect(page.locator('#szImpact .sz-impact-cap')).toContainText('350 litres');
+  await page.click('#szContinue');
+  await page.click('.btn-map');
+  await expect(page.locator('#szImpact')).toBeHidden();
+});
+
 // ─── Investigate ─────────────────────────────────────────────────────────────
 
 test('Investigate step 1 is gated until int() is deleted; then the 6 is repeated as text', async ({ page }) => {
@@ -110,13 +131,15 @@ test('Investigate step 1 is gated until int() is deleted; then the 6 is repeated
   await expect(page.locator('#qcard_i2_prompt')).toBeVisible({ timeout: 10000 });
 });
 
-test('Investigate step 2: with int() back, typing "six" gives a ValueError', async ({ page }) => {
+test('Investigate step 2: with int() back, print(hours + 1) adds', async ({ page }) => {
   await openAt(page, { currentStage: 'I', completedStages: ['P', 'R'], stepI: 2, maxStepI: 2, i_editor: STARTER,
     i1: 'It repeated the text 6 fifty times because it was a string' });
-  await expect(page.locator('#req_i_2 li:not(.req-note)').first()).toHaveClass(/req-pass/);
+  await expect(page.locator('#req_i_2 li:not(.req-note)')).toHaveClass([/req-pass/, /^(?!.*req-pass)/]);
+  await setCode(page, 'i_editor', STARTER + '\nprint(hours + 1)');
+  await expect(page.locator('#req_i_2 li:not(.req-note)')).toHaveClass([/req-pass/, /req-pass/]);
   await page.click('#stage-I button:has-text("Run code")');
-  await answerPrompts(page, 'i_editor', ['Sam', 'six']);
-  await expect(page.locator('#i_fb_run')).toContainText('ValueError', { timeout: 30000 });
+  await answerPrompts(page, 'i_editor', ['Sam', '6']);
+  await expect(outputOf(page, 'i_editor')).toContainText('300\n7', { timeout: 30000 });
   await page.check('input[name="i2_mcq"][value="option_b"]');
   await page.click('#btn_check_i2');
   await expect(page.locator('#qcard_i3_prompt')).toBeVisible({ timeout: 10000 });
@@ -189,6 +212,7 @@ test('Make passes, plays the cliffhanger once, and the extension completes the c
   await expect(page.locator('#fb_m2')).toHaveClass(/pass/, { timeout: 30000 });
   await expect(page.locator('#szOverlay')).toHaveClass(/open/, { timeout: 5000 });
   await expect(page.locator('#szTitle')).toHaveText(/Life support online/i);
+  await expect(page.locator('#szImpact svg')).toContainText('SENSOR OPS: CREW TAG HALE');
   await page.click('#szContinue');
   await expect(page.locator('#m2_ext_task')).toBeVisible();
 
