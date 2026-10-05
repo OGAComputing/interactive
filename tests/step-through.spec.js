@@ -127,6 +127,24 @@ test('A Modify check steps through the run with its test answers before giving f
   await expect(m.locator('.exec-line')).toBeHidden();
 });
 
+test('A Modify check types each test answer into the output, then keeps it highlighted', async ({ page }) => {
+  await openAt(page, { currentStage: 'M1', completedStages: ['P', 'R', 'I'] });
+  await setCode(page, 'm1_editor', LS_STARTER);
+  const m = checker(page, 'm1_editor');
+  await page.click('#btn_check_m1');
+
+  // Mid-typing: the answer box is part-filled, tagged "typed for you", and the status names it.
+  await expect(m.locator('.fed-input.fed-typing.fed-active')).toBeVisible({ timeout: 30000 });
+  await expect(m.locator('.step-status')).toContainText('typing the answer "Riley"');
+  await expect(litLine(page, 'm1_editor')).toHaveText('1');
+
+  // Finished: both answers stay highlighted after their prompts, with no tag or caret left.
+  await expect(page.locator('#fb_m1')).toHaveClass(/pass/, { timeout: 15000 });
+  await expect(m.locator('.fed-input')).toHaveText(['Riley', '6']);
+  await expect(m.locator('.fed-active, .fed-typing')).toHaveCount(0);
+  await expect(m.locator('.output-content')).toContainText('Enter your name: Riley\nHours until rescue: 6\n');
+});
+
 test('A Make check that crashes shows the error after stepping to the failing line', async ({ page }) => {
   await openAt(page, { currentStage: 'M2', completedStages: ['P', 'R', 'I', 'M1'] });
   await setCode(page, 'm2_editor', 'print("Station log")\nprint(missing_name)');

@@ -249,20 +249,20 @@ export const MAKE_INPUTS = ['Ash', 'Navigation', 'Missing', 'Kai', 'Drone Bay', 
 export const MAKE_CHECK = {
   reqs: [
     {
-      hint: '❌ Ask at least 2 questions with input() — e.g. the crew member\'s name, and the room they were last seen in.',
+      hint: '❌ Use input() to ask two questions: first the crew member\'s name, then the room they were last seen in.',
       test: raw => inputCount(raw) >= 2,
     },
     {
-      hint: '❌ Store each answer in its own variable — e.g. name = input("Crew member: ") and room = input("Last seen in: ")',
+      hint: '❌ Store the name and the room in two different variables — e.g. name = input("Crew member: ") and room = input("Last seen in: ")',
       test: raw => inputVars(raw).length >= 2,
     },
     {
-      hint: '❌ Print a sentence that joins your own words to one of the answers with + — e.g. print("Last seen in: " + room)',
+      hint: '❌ Print a line that joins your own words to the name or the room with + — e.g. print("Last seen in: " + room)',
       test: raw => joinsAnswer(raw),
     },
     {
       // Both answers printed by the program itself — on one line or on separate lines.
-      hint: '❌ Your report should print BOTH answers — tested with Ash and Navigation.',
+      hint: '❌ Your report should print both the name and the room — tested with Ash (name) and Navigation (room).',
       test: (raw, out) => MAKE_INPUTS.slice(0, 2).every(a => printedAnswer(out, a)),
     },
   ],

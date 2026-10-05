@@ -444,8 +444,32 @@ function _injectStyles() {
       padding: 0.2rem 0.6rem;
     }
     :where(.step-skip:hover) { border-color: #5eead4; color: #5eead4; }
+    /* An answer a check fed to input() — typed in during the replay, then kept
+       highlighted, so it reads as an input rather than as printed output. */
+    :where(.fed-input) {
+      color: #fde68a;
+      background: rgba(249,176,32,0.16);
+      box-shadow: inset 0 -1.5px 0 #f9b020;
+      border-radius: 3px;
+      padding: 0 0.15em;
+    }
+    :where(.fed-input.fed-typing) { border-right: 2px solid #f9b020; animation: _fed-caret 0.6s steps(1) infinite; }
+    :where(.fed-input.fed-active)::after {
+      content: '⌨ typed for you';
+      margin-left: 0.5em;
+      padding: 0.05em 0.5em;
+      border-radius: 999px;
+      background: #f9b020;
+      color: #1e1e2e;
+      font-size: 0.68em;
+      font-weight: 700;
+      vertical-align: middle;
+      white-space: nowrap;
+    }
+    @keyframes _fed-caret { 50% { border-right-color: transparent; } }
     @media (prefers-reduced-motion: reduce) {
       :where(.exec-line) { transition: none; }
+      :where(.fed-input.fed-typing) { animation: none; }
     }
   `;
   document.head.appendChild(s);
@@ -1023,12 +1047,66 @@ function _stepPause(run, ms) {
   });
 }
 
-function _writeStepOutput(ta, text) {
+// Answers a check fed to input() (runPython's `inputs`, with traceLines) are
+// typed into the output a character at a time, in a highlighted box tagged
+// "typed for you", so students see the program still stopped for an input.
+const TYPE_CHAR_MS = 70;
+const TYPE_MAX_MS = 700;    // a long answer types faster, so it still fits
+const TYPE_HOLD_MS = 350;   // the finished answer stays tagged this long
+
+// Write `text` into `content`, wrapping each fed answer in a .fed-input span
+// (cut short, with a caret, if `text` ends part-way through it). `active` is
+// the answer being typed now, which carries the "typed for you" tag.
+function _renderFed(content, text, fed, active = null) {
+  content.textContent = '';
+  let pos = 0;
+  for (const f of fed) {
+    if (f.at > text.length) break;
+    if (!f.text || f.at < pos) continue;
+    const end = Math.min(f.at + f.text.length, text.length);
+    const span = document.createElement('span');
+    span.className = 'fed-input';
+    span.title = 'Typed in automatically to test your program';
+    if (end < f.at + f.text.length) span.classList.add('fed-typing');
+    if (f === active) span.classList.add('fed-active');
+    span.textContent = text.slice(f.at, end);
+    content.append(text.slice(pos, f.at), span);
+    pos = end;
+  }
+  content.append(text.slice(pos));
+}
+
+function _writeStepOutput(ta, text, fed = null, active = null) {
   const panel = _outputMap.get(ta);
   const content = panel?.querySelector('.output-content');
   if (!content) return;
   panel.classList.remove('error');
-  content.textContent = text;
+  if (fed?.length) _renderFed(content, text, fed, active);
+  else content.textContent = text;
+}
+
+// Type each fed answer that lands in out[start, end). Resolves false if a
+// newer run took over the panel part-way through.
+async function _typeFedInputs(ta, run, out, fed, start, end, line) {
+  const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  for (const f of fed || []) {
+    if (run.fast) break;
+    if (!f.text || f.at < start || f.at >= end) continue;
+    _stepStatus(ta, `⌨ input() on line ${line} — typing the answer "${f.text}"`);
+    if (!reduced) {
+      const charMs = Math.min(TYPE_CHAR_MS, TYPE_MAX_MS / f.text.length);
+      for (let k = 0; k < f.text.length && !run.fast; k++) {
+        _writeStepOutput(ta, out.slice(0, f.at + k), fed, f);
+        await _stepPause(run, charMs);
+        if (_stepRuns.get(ta) !== run) return false;
+      }
+    }
+    _writeStepOutput(ta, out.slice(0, f.at + f.text.length), fed, f);
+    await _stepPause(run, TYPE_HOLD_MS);
+    if (_stepRuns.get(ta) !== run) return false;
+    _stepStatus(ta, '▶ Running line ' + line);
+  }
+  return true;
 }
 
 // Start a replay on `ta`: abandon any earlier one and clear the panel.
@@ -1044,23 +1122,26 @@ function _beginStepping(ta, trackVars) {
   return run;
 }
 
-// Replay r.trace from step `from`, in at most MAX_REPLAY_MS. Resolves false if
-// a newer run took over the panel part-way through.
-async function _replaySteps(ta, run, r, from, trackVars) {
+// Replay r.trace from step `from`, in at most MAX_REPLAY_MS (plus the time
+// spent typing `fed` answers — see _typeFedInputs). Resolves false if a newer
+// run took over the panel part-way through.
+async function _replaySteps(ta, run, r, from, trackVars, fed = null) {
   const out = r.stdout ?? '';
   const trace = r.trace || [];
   if (from >= trace.length) return true;
   const stepMs = Math.min(STEP_MS, MAX_REPLAY_MS / (trace.length - from));
   // Output from before the first new step (e.g. the echo of the answer just
   // typed) belongs to the input line, which has already been shown.
-  _writeStepOutput(ta, out.slice(0, trace[from].at));
+  _writeStepOutput(ta, out.slice(0, trace[from].at), fed);
   for (let i = from; i < trace.length && !run.fast; i++) {
     const next = trace[i + 1];
+    const upTo = next ? next.at : out.length;
     _showExecLine(ta, trace[i].line);
     _stepStatus(ta, '▶ Running line ' + trace[i].line);
     await _stepPause(run, stepMs * STEP_OUTPUT_AT);
     if (_stepRuns.get(ta) !== run) return false;
-    _writeStepOutput(ta, out.slice(0, next ? next.at : out.length));
+    if (!(await _typeFedInputs(ta, run, out, fed, trace[i].at, upTo, trace[i].line))) return false;
+    _writeStepOutput(ta, out.slice(0, upTo), fed);
     if (trackVars) _renderMemory(ta, next ? next.vars : r.vars);
     await _stepPause(run, stepMs * (1 - STEP_OUTPUT_AT));
     if (_stepRuns.get(ta) !== run) return false;
@@ -1070,14 +1151,20 @@ async function _replaySteps(ta, run, r, from, trackVars) {
 
 // Show the finished run's final output — after a crash, the output printed
 // before it stays above the error and the failing line stays lit in red.
-function _finishStepping(ta, run, r) {
+// Fed answers (`fed`) stay highlighted in the final output.
+function _finishStepping(ta, run, r, fed = null) {
   _stopStepping(ta);
   const out = r.stdout ?? r.output ?? '';
+  const content = () => _outputMap.get(ta).querySelector('.output-content');
   if (r.ok) {
     setEditorOutput(ta, out || '(no output)', false, null, r.vars);
+    if (out && fed?.length) _renderFed(content(), out, fed);
   } else {
     setEditorOutput(ta, r.output, true, r.line, r.vars);
-    if (r.stdout) _outputMap.get(ta).querySelector('.output-content').textContent = r.stdout + r.output;
+    if (r.stdout) {
+      if (fed?.length) _renderFed(content(), r.stdout + r.output, fed);
+      else content().textContent = r.stdout + r.output;
+    }
     if (r.line && !run.edited) _showExecLine(ta, r.line, 'error');
   }
 }
@@ -1098,9 +1185,9 @@ export async function replayRun(ta, run) {
   }
   const trackVars = run.vars !== undefined;
   const state = _beginStepping(ta, trackVars);
-  const ok = await _replaySteps(ta, state, run, 0, trackVars);
+  const ok = await _replaySteps(ta, state, run, 0, trackVars, run.inputs);
   if (!ok) return false;
-  _finishStepping(ta, state, run);
+  _finishStepping(ta, state, run, run.inputs);
   return true;
 }
 
@@ -1120,11 +1207,13 @@ async function _runStepped(ta, inputs) {
       inputs: answers, onInputsExhausted: live ? 'ask' : 'zero', seed, trackVars, traceLines: true,
     });
     if (_stepRuns.get(ta) !== run) return cancelled;
-    if (!(await _replaySteps(ta, run, r, shown, trackVars))) return cancelled;
+    // Preset answers are typed in for the student; their own live answers aren't.
+    const fed = live ? null : r.inputs;
+    if (!(await _replaySteps(ta, run, r, shown, trackVars, fed))) return cancelled;
     shown = Math.max(shown, (r.trace || []).length);
 
     if (!r.needsInput) {
-      _finishStepping(ta, run, r);
+      _finishStepping(ta, run, r, fed);
       return r;
     }
     const out = r.stdout ?? '';

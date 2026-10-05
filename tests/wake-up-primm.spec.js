@@ -69,6 +69,28 @@ test('reduced motion shows the whole report at once', async ({ page }) => {
   await expect(page.locator('#szSkipHint')).toBeHidden();
 });
 
+test("the live feed plays the student's own run output into the door", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 600 });   // report taller than the screen
+  await page.addInitScript(p => localStorage.setItem('sz_story_' + p, JSON.stringify(['intro', 'P'])), PATH);
+  await openAt(page, { currentStage: 'R', completedStages: ['P'] }, { story: true });
+  await page.click('#stage-R button:has-text("Run code")');
+  await answerPrompts(page, 'r_editor', ['Sam', 'Pilot']);
+  await expect(outputOf(page, 'r_editor')).toContainText('Checking in: Pilot Sam', { timeout: 30000 });
+  await page.fill('#r1', 'It showed my job then my name');
+  await page.click('#btn_check_run');
+  await expect(page.locator('#szOverlay')).toHaveClass(/open/, { timeout: 10000 });
+  await expect(page.locator('#szImpact')).toBeVisible();
+  // opens at the top (headline + feed), even though Continue at the bottom has focus
+  expect(await page.locator('#szPanel').evaluate(p => p.scrollHeight > p.clientHeight && p.scrollTop === 0)).toBe(true);
+  await expect(page.locator('#szContinue')).toBeFocused();
+  await expect(page.locator('#szImpact .sz-feed-term .ln.hit')).toHaveText('Checking in: Pilot Sam');
+  await expect(page.locator('#szImpact svg')).toContainText('Checking in: Pilot Sam');
+  await page.click('#szContinue');
+  // the map button re-opens the report without replaying the feed
+  await page.click('.btn-map');
+  await expect(page.locator('#szImpact')).toBeHidden();
+});
+
 // ─── Predict ─────────────────────────────────────────────────────────────────
 
 test('Predict: three answers (exact output typed loosely) move to Run', async ({ page }) => {

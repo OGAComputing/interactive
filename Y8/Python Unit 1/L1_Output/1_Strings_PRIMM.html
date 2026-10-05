@@ -673,7 +673,7 @@ color:  purple
     <div class="q-card step-hidden" id="qcard_i4_prompt" style="border-left-color:var(--stage-i)">
       <label class="q-label"><span class="q-num" style="background:var(--stage-i)">4</span> Now let's <strong>meet an error</strong> — every programmer does, all the time, and it is not a disaster.</label>
       <ul class="req-list" id="req_i_4">
-        <li><span>1</span><span class="req-text">Under the editor, press <strong>😈 Break it</strong> — it adds <strong>one broken line</strong> to your code and runs it: it's <strong>line <span id="i4_line">the last line</span></strong>, <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print(&quot;Debugging is normal!)</code><br>It is missing its closing <code style="background:#ede0ff;padding:0 3px;border-radius:3px">&quot;</code></span></li>
+        <li><span>1</span><span class="req-text">Under the editor, press <strong>😈 Break it</strong> — it adds <strong>one broken line</strong> to your code and runs it: it's <strong><span id="i4_line">the last line</span></strong>, <code style="background:#ede0ff;padding:0 3px;border-radius:3px">print(&quot;Debugging is normal!)</code><br>It is missing its closing <code style="background:#ede0ff;padding:0 3px;border-radius:3px">&quot;</code></span></li>
         <li class="req-note">Python stops with a red <strong>SyntaxError</strong> — that's expected. Read the message, then click <strong>💡 Get help</strong> below the editor for a plain-English hint.</li>
         <li><span>2</span><span class="req-text"><strong>Fix it</strong> (don't delete it!): add the missing <code style="background:#ede0ff;padding:0 3px;border-radius:3px">&quot;</code> before the <code style="background:#ede0ff;padding:0 3px;border-radius:3px">)</code>, then press <strong>▶ Run code</strong> again until it works.</span></li>
       </ul>
@@ -924,6 +924,13 @@ color:  purple
       <li><span>1</span><span class="req-text">Print <strong>four names</strong> in total — yours and three friends'.</span></li>
       <li><span>2</span><span class="req-text">Every name is <strong>real, non-empty text</strong> — no blank print() used as a name.</span></li>
     </ul>
+
+    <!-- Make 2 clears the editor; the finished extension is kept here (read-only, visible) so it
+         stays in the saved state and in the Classroom evidence report. -->
+    <div id="m2_ext_saved_wrap" style="display:none;margin-top:0.8rem">
+      <div class="section-label">Your finished name list (saved for your teacher)</div>
+      <textarea id="m2_ext_saved" readonly rows="6" style="width:100%;font-family:var(--font-mono);font-size:0.85rem;opacity:0.75;resize:vertical"></textarea>
+    </div>
   </div>
 
   <div class="code-checker">
@@ -1177,7 +1184,7 @@ const STEP_COUNT_M1 = 4;
 const TEXT_FIELDS = [
   'r_editor', 'r1',
   'i_editor', 'i1', 'i5',
-  'm1_editor', 'm2_editor',
+  'm1_editor', 'm2_editor', 'm2_ext_saved',
   'tq_editor',
   'vp_editor', 'vp_try_answer', 'vp_m_editor', 'vp_challenge_editor',
 ];
@@ -1873,7 +1880,7 @@ function breakItStep4() {
   ta.value = code;
   state.i4PlantedLineNo = lineNo;
   const lineSpan = document.getElementById('i4_line');
-  if (lineSpan) lineSpan.textContent = String(lineNo);
+  if (lineSpan) lineSpan.textContent = 'line ' + lineNo;
   const bp = invBugProgress(stepI);
   bp.breaks++;
   bp.pending = true;   // the next successful run of fixed code counts as a fix
@@ -1886,7 +1893,7 @@ function breakItStep4() {
 // student steps Back/Forward to revisit it — never plants or removes anything.
 function syncI4LineLabel() {
   const lineSpan = document.getElementById('i4_line');
-  if (lineSpan && state.i4PlantedLineNo) lineSpan.textContent = String(state.i4PlantedLineNo);
+  if (lineSpan && state.i4PlantedLineNo) lineSpan.textContent = 'line ' + state.i4PlantedLineNo;
 }
 
 // Remove the step-4 auto-planted line once it has done its job (student advanced
@@ -2461,10 +2468,18 @@ async function checkExt() {
     fbEl.className = 'feedback fail'; fbEl.textContent = structural.msg; return;
   }
   fbEl.className = 'feedback pass'; fbEl.textContent = structural.msg;
-  setEditorOutput(document.getElementById('m2_editor'), run.output, false);
   passedChecks['m2_ext'] = true;
   window.ActivityUI?.miniCelebration(fbEl);
   window.ActivityUI?.showToast('🌟 Extension complete! One more program to go…');
+  // Make 2 is a brand new program: keep the finished extension (read-only) and hand the
+  // student an empty editor, so it's obvious they start from scratch.
+  const m2Ed = document.getElementById('m2_editor');
+  const savedEl = document.getElementById('m2_ext_saved');
+  if (savedEl) savedEl.value = raw;
+  m2Ed.value = '';
+  refreshEditor(m2Ed);
+  setEditorOutput(m2Ed, '', false);
+  setTimeout(() => fbEl.classList.add('hidden'), 2500);
   updateStepVisibility();
   saveState(); submitScore();
 }
@@ -2476,7 +2491,7 @@ function showMake2Task() {
   if (!taskText) return;
   taskText.innerHTML = `
     <strong>★★★★ Make 2 — a brand new program, from scratch.</strong><br>
-    Clear the editor and write a completely new program: a short <strong>"Top 3" list</strong> (your top 3 films, games, or songs — you choose).
+    The editor has been cleared — write a completely new program: a short <strong>"Top 3" list</strong> (your top 3 films, games, or songs — you choose).
     <ul style="margin:0.5rem 0 0 1.2rem;line-height:2">
       <li>Print a <strong>title line</strong> first (e.g. <code style="background:#ede0ff;color:#4c1d95;padding:0 3px;border-radius:3px">print("My Top 3 Films")</code>).</li>
       <li>Add an <strong>empty print()</strong> to leave a blank line under your title.</li>
@@ -2486,6 +2501,8 @@ function showMake2Task() {
   taskText.closest('.info-box').querySelector('.icon').textContent = '🔨';
   if (reqLabel) reqLabel.style.display = 'none';
   if (reqList)  reqList.style.display  = 'none';
+  const savedWrap = document.getElementById('m2_ext_saved_wrap');
+  if (savedWrap) savedWrap.style.display = document.getElementById('m2_ext_saved')?.value.trim() ? '' : 'none';
 }
 
 async function checkMake2() {

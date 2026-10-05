@@ -156,8 +156,10 @@ const MAX_TRACE_STEPS = 150;
 //                       of stdout had been printed by then, and `vars` (with
 //                       trackVars) is memory at that moment. Also resolves with
 //                       `stdout`: the program's printed output, kept even when it
-//                       crashed (where `output` holds only the error). Used by the
-//                       editor's step-through replay; see MAX_TRACE_STEPS.
+//                       crashed (where `output` holds only the error), and
+//                       `inputs`: [{ at, text }, …], each answer input() was fed
+//                       and where it starts in `stdout`. Used by the editor's
+//                       step-through replay; see MAX_TRACE_STEPS.
 //   timeLimitMs       — see DEFAULT_TIME_LIMIT_MS.
 export async function runPython(code, {
   inputs = [],
@@ -220,6 +222,12 @@ export async function runPython(code, {
       `    if _v is None:\n` +
       `        _rq_ran_out = True\n` +
       onExhausted +
+      (traceLines
+        ? `    try:\n` +
+          `        _sys.stdout.flush()\n` +
+          `        _rq_js_input(str(prompt), str(_v))\n` +
+          `    except Exception: pass\n`
+        : '') +
       `    _sys.stdout.write(str(prompt) + str(_v) + '\\n')\n` +
       `    return _v\n` +
       `_b.input = _mock_input\n`
@@ -245,9 +253,13 @@ export async function runPython(code, {
   // itself off after MAX_TRACE_STEPS. Only the exec of the student's code is
   // traced; the finally drops the tracer again however the run ends.
   const trace = [];
+  const fedInputs = [];   // traceLines: where each answer input() was fed sits in stdout
   if (traceLines) {
     _pyodide.globals.set('_rq_js_mark', (line, vars) => {
       trace.push(vars == null ? { line, at: outChars } : { line, at: outChars, vars: JSON.parse(vars) });
+    });
+    _pyodide.globals.set('_rq_js_input', (prompt, text) => {
+      fedInputs.push({ at: outChars + prompt.length, text });   // JS length, as stdout is measured
     });
   }
   const traceExec =
@@ -336,6 +348,7 @@ export async function runPython(code, {
   if (traceLines) {
     result.trace = trace;
     result.stdout = stdout();
+    result.inputs = fedInputs;
   }
 
   if (onInputsExhausted === 'ask') {
@@ -345,7 +358,7 @@ export async function runPython(code, {
       const cut = output.indexOf(NEED_INPUT_MARK);
       const shown = cut < 0 ? output : output.slice(0, cut);
       return { ok: false, needsInput: true, prompt, output: shown, vars: result.vars,
-               ...(traceLines ? { trace, stdout: shown } : {}) };
+               ...(traceLines ? { trace, stdout: shown, inputs: fedInputs } : {}) };
     }
   }
   return result;
