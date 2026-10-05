@@ -172,6 +172,7 @@ test('Make passes on the output, and the extension completes the activity', asyn
     'name = input("Crew member: ")',
     'room = input("Last seen in: ")',
     'print("CREW LOCATOR")',
+    'print("Crew member: " + name)',
     'print("Last seen in: " + room)',
   ];
   await setCode(page, 'm2_editor', make.join('\n'));

@@ -35,7 +35,8 @@ test.describe('ActivityUI shared helpers', () => {
     await expect(toast).toHaveClass(/show/);
     await expect(toast).toHaveClass(/warn/);
     await expect.poll(() => page.evaluate(() => window.__toastEvents)).toBe(1);
-    await expect(toast).not.toHaveClass(/show/, { timeout: 1000 });
+    // Default timeout, not a tight one: under parallel Pyodide load the page's 500 ms timer can fire late.
+    await expect(toast).not.toHaveClass(/show/);
   });
 
   test('showToast creates a toast element when one is missing', async ({ page }) => {

@@ -5,6 +5,9 @@ import path from 'node:path';
 const ACTIVITY_ROOTS = ['Y8', 'Y9', 'Y11', 'Y13', 'Other'];
 const EXEMPTION_PATTERN = /^\s*(?:shared-dependencies|sharedDependencies)\s*:\s*exempt\b/i;
 const REASON_PATTERN = /^\s*(?:shared-dependencies-reason|sharedDependenciesReason)\s*:\s*\S+/i;
+// Redirect stubs left at a moved activity's old path (see CLAUDE.md "Moving an Activity")
+// only forward the browser on, so they load no shared scripts. The manifest build skips them too.
+const REDIRECT_PATTERN = /<!--\s*REDIRECT\b/;
 
 function findHtmlFiles(dir) {
   if (!existsSync(dir)) return [];
@@ -40,6 +43,7 @@ describe('activity shared dependencies', () => {
 
     for (const file of htmlFiles) {
       const html = readFileSync(file, 'utf8');
+      if (REDIRECT_PATTERN.test(html)) continue;
       const exemption = dependencyExemption(html);
       if (exemption.exempt) {
         if (!exemption.valid) {
