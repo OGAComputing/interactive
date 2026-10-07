@@ -200,8 +200,6 @@ test('full investigation unlocks stations in order and finishes the case', async
   await page.click('#recover-btn');
   await expect(page.locator('#recovered .rec-card')).toHaveCount(5);
   await passGate(page, 'recov');
-  await page.fill('#explain-del', 'Only the file table entry is removed, so the data stays until it is overwritten.');
-  await page.click('button:has-text("Add to case notes")');
   await passCheckpoint(page, 5);
   await page.click('#next-5');
 

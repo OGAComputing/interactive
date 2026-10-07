@@ -198,7 +198,7 @@ export const ANSWERS = {
     h5: 'hide', h6: 'hide', h7: 'none', h8: 'none',
   },
   t4: { f1: 'full', f2: 'gone', f3: 'part', f4: 'full', f5: 'part' },
-  // AW/03's patch level is 1 Mar 2023, so only holes fixed after that date are still open.
+  // Ashley's phone's patch level is 1 Mar 2023, so only holes fixed after that date are still open.
   t6: { pt_open: ['lockslip', 'picbomb', 'wifispy'], pt_tool: 'lockslip', pt_fix: 'auto' },
   t7: { pe1: 'safe', pe2: 'exposed', pe3: 'exposed', pe4: 'safe', pe5: 'exposed', pe6: 'safe' },
   t9: { r1: 'cookies', r2: 'history', r3: 'photos', r4: 'phone', r5: 'hide' },
@@ -286,7 +286,7 @@ export const CHECKPOINTS = {
       ['b', 'They contain the full text of every message that was sent'],
       ['c', "They prove that Maria once visited Ashley's house"],
       ['d', 'They reveal which VPN company Ashley was paying for']],
-      why: 'Each login cookie names an account, and all three were saved on AW/02.' },
+      why: 'Each login cookie names an account, and all three were saved on Ashley’s computer.' },
     { id: 'pb', q: 'What does private (incognito) browsing actually hide?', a: 'd', opts: [
       ['a', 'Your activity from your internet provider'],
       ['b', 'Your activity from the websites you visit'],
@@ -375,12 +375,12 @@ export const CHECKPOINTS = {
       ['c', 'A hole that was fixed on 1 May 2024'],
       ['d', 'A hole that was fixed on 1 August 2024']],
       why: 'Only holes fixed after the patch level date are still open.' },
-    { id: 'lab', q: 'How did the lab get past the PIN on AW/03?', a: 'b', opts: [
+    { id: 'lab', q: 'How did the lab get past the PIN on Ashley’s phone?', a: 'b', opts: [
       ['a', 'It tried every 6-digit PIN until one worked'],
       ['b', 'It used a hole a skipped update would fix'],
       ['c', 'Instagram sent the police the phone\'s PIN'],
       ['d', 'The PIN was written down in Ashley\'s journal']],
-      why: 'AW/03 was on an old patch level, so the LockSlip hole was still open.' },
+      why: 'Ashley’s phone was on an old patch level, so the LockSlip hole was still open.' },
     { id: 'law', q: 'Why can police examiners use a hole like this when you cannot?', a: 'a', opts: [
       ['a', 'They have a warrant; for anyone else it is a crime'],
       ['b', 'The tools only work on phones owned by the police'],
@@ -434,7 +434,7 @@ export function shuffled(arr, rnd = Math.random) {
 // ── Evidence logs: short ungraded checks that gate the next step ─────────────
 export const GATES = {
   cookies: {
-    ck_acc: ['sk8r.ellie', 'dance.mad.jess', 'music_lover_kay'], // tick every account logged in on AW/02
+    ck_acc: ['sk8r.ellie', 'dance.mad.jess', 'music_lover_kay'], // tick every account logged in on Ashley's computer
     ck_trk: 'trackr',
   },
   recov: { rc_dev: 'samsung', rc_file: 'logins', rc_lost: 'img0418' },
