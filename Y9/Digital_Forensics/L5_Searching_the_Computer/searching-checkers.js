@@ -222,9 +222,9 @@ export function allCorrect(result) {
   return Object.values(result).every(Boolean);
 }
 
-// Wait after a wrong "Check answers", so guessing and re-clicking is slow: 10 s, 20 s, then 30 s.
+// Wait after a wrong "Check answers", so guessing and re-clicking is slow: always 10 s.
 export function cooldownSeconds(wrongCount) {
-  return Math.min(30, 10 * Math.max(1, wrongCount));
+  return 10;
 }
 
 // ── Checkpoints: answer N in a row; one wrong answer restarts with a fresh draw ──

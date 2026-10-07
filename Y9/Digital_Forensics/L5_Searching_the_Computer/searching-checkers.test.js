@@ -134,8 +134,8 @@ describe('checkpoints', () => {
     expect(new Set(orders).size).toBeGreaterThan(1);
     expect(optionOrder('t3', 'ck1', 's1', 0).sort()).toEqual(['a', 'b', 'c', 'd']);
   });
-  test('cooldown grows to a 30 second cap', () => {
-    expect([1, 2, 3, 9].map(cooldownSeconds)).toEqual([10, 20, 30, 30]);
+  test('cooldown is always 10 seconds', () => {
+    expect([1, 2, 3, 9].map(cooldownSeconds)).toEqual([10, 10, 10, 10]);
   });
 });
 
