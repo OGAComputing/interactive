@@ -134,3 +134,48 @@ test.describe('Signed in as teacher', () => {
     await expect(page.locator('#classroom-text')).toContainText('Teacher mode', { timeout: AUTH_TIMEOUT });
   });
 });
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  Sign-in log viewer and automatic-redirect loop guard
+// ═══════════════════════════════════════════════════════════════════════════════
+
+test.describe('Sign-in log', () => {
+  test('signed out: log button opens a log of what happened', async ({ page }) => {
+    await mockSignedOut(page);
+    await page.goto(`${HOST}?courseId=${COURSE_ID}`);
+    await page.locator('#classroom-log-btn').click();
+    await expect(page.locator('#cr-log-backdrop')).toHaveClass(/open/);
+    await expect(page.locator('#cr-log-text')).toContainText('Page opened');
+    await expect(page.locator('#cr-log-text')).toContainText('Silent sign-in failed');
+    await page.locator('#cr-log-box button:has-text("Close")').click();
+    await expect(page.locator('#cr-log-backdrop')).not.toHaveClass(/open/);
+  });
+
+  test('student: log records who signed in and whether the assignment was found', async ({ page }) => {
+    await mockAsStudent(page, COURSE_ID, ACTIVITY_URL);
+    await page.goto(`${HOST}?courseId=${COURSE_ID}`);
+    await expect(page.locator('#classroom-dot')).toHaveClass(/online/, { timeout: AUTH_TIMEOUT });
+    await page.locator('#classroom-log-btn').click();
+    await expect(page.locator('#cr-log-text')).toContainText('Signed in as student@test.com');
+    await expect(page.locator('#cr-log-text')).toContainText('assignment found');
+    await expect(page.locator('#cr-log-text')).not.toContainText('mock-token-abc123');
+  });
+
+  test('loop guard: stops automatic sign-in after repeated attempts', async ({ page }) => {
+    // Three automatic trips to Google in the last minute, and no silent-failure flag:
+    // without the guard, bootstrap would redirect to Google yet again.
+    await page.addInitScript(`(function(){
+      try {
+        const now = Date.now();
+        sessionStorage.setItem('oga_auto_redirects', JSON.stringify([now - 30000, now - 20000, now - 10000]));
+      } catch(e) {}
+    })()`);
+    let wentToGoogle = false;
+    await page.route('https://accounts.google.com/**', route => { wentToGoogle = true; route.abort(); });
+    await page.goto(`${HOST}?courseId=${COURSE_ID}`);
+    await expect(page.locator('#classroom-text')).toContainText('Automatic sign-in kept failing');
+    expect(wentToGoogle).toBe(false);
+    await page.locator('#classroom-log-btn').click();
+    await expect(page.locator('#cr-log-text')).toContainText('LOOP GUARD');
+  });
+});

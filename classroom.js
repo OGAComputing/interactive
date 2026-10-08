@@ -104,6 +104,48 @@
   let authHealthy = false;
   let authPaused = false;
   let authHeartbeatTimer = null;
+  let grantedScopeList = [];
+
+  // ── Sign-in log ───────────────────────────────────────────────────────────────
+  // Students can't open dev tools, so every sign-in step is written to
+  // localStorage (it survives the redirects to Google and back, and is shared
+  // with oauth-callback.html, which writes to the same key). The "Sign-in log"
+  // button in the banner shows it so a teacher can read or copy it.
+  // Never log access tokens.
+  const AUTH_LOG_KEY = 'oga_auth_log';
+  const AUTH_LOG_MAX = 80;
+
+  function shortScope(s) {
+    return s.replace('https://www.googleapis.com/auth/', '');
+  }
+
+  function authLog(message) {
+    try {
+      const log = JSON.parse(localStorage.getItem(AUTH_LOG_KEY) || '[]');
+      log.push({ t: Date.now(), p: location.pathname.split('/').slice(-2).join('/'), m: String(message) });
+      localStorage.setItem(AUTH_LOG_KEY, JSON.stringify(log.slice(-AUTH_LOG_MAX)));
+    } catch (_) {}
+  }
+
+  // Logs a failed Google/proxy response: status, which API, and the start of
+  // Google's error body (e.g. "appNotAuthorizedToFile", "rateLimitExceeded").
+  function noteHttpFailure(res, label) {
+    let where = label || '';
+    try { if (!where) { const u = new URL(res.url); where = u.host.split('.')[0] + u.pathname; } } catch (_) {}
+    let clone = null;
+    try { clone = res.clone(); } catch (_) {}
+    if (!clone) { authLog(`HTTP ${res.status} from ${where}`); return; }
+    clone.text().then(body => {
+      let detail = String(body || '').replace(/\s+/g, ' ').trim();
+      try {
+        const j = JSON.parse(body);
+        const e = j.error || {};
+        detail = [e.status, e.errors?.[0]?.reason, e.message || j.error_description || (typeof j.error === 'string' ? j.error : '')]
+          .filter(Boolean).join(' — ');
+      } catch (_) {}
+      authLog(`HTTP ${res.status} from ${where}${detail ? ': ' + detail.slice(0, 220) : ''}`);
+    }).catch(() => authLog(`HTTP ${res.status} from ${where}`));
+  }
 
   // ── Login banner ─────────────────────────────────────────────────────────────
 
@@ -149,6 +191,41 @@
       }
       #classroom-copy-btn:hover { background: #d97706; }
       #classroom-copy-btn.visible { display: inline-block; }
+      #classroom-log-btn {
+        background: transparent; color: #9ca3af; border: 1px solid #4b5563;
+        padding: 5px 10px; border-radius: 4px;
+        font-size: 0.75rem; cursor: pointer; white-space: nowrap;
+      }
+      #classroom-log-btn:hover { color: #e5e7eb; border-color: #9ca3af; }
+
+      /* Sign-in log viewer — above the assessment blocking modal */
+      #cr-log-backdrop {
+        display: none; position: fixed; inset: 0; z-index: 100000;
+        background: rgba(0,0,0,0.75); align-items: center; justify-content: center;
+      }
+      #cr-log-backdrop.open { display: flex; }
+      #cr-log-box {
+        background: #1e293b; border: 1px solid #475569; border-radius: 12px;
+        padding: 20px 24px; width: min(860px, calc(100% - 32px)); max-height: calc(100vh - 48px);
+        display: flex; flex-direction: column; gap: 12px;
+        font-family: 'Segoe UI', system-ui, sans-serif; color: #e2e8f0;
+        box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+      }
+      #cr-log-box h2 { font-size: 1.05rem; margin: 0; }
+      #cr-log-box p  { font-size: 0.8rem; color: #94a3b8; margin: 0; line-height: 1.5; }
+      #cr-log-text {
+        flex: 1; min-height: 200px; overflow: auto; margin: 0;
+        background: #0f172a; border: 1px solid #334155; border-radius: 6px;
+        padding: 10px 12px; font: 0.74rem/1.5 'Cascadia Code', Consolas, monospace;
+        white-space: pre-wrap; word-break: break-word; color: #cbd5e1;
+      }
+      #cr-log-actions { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+      #cr-log-actions button {
+        padding: 7px 16px; border: none; border-radius: 6px;
+        font-size: 0.82rem; font-weight: 700; cursor: pointer;
+        background: #374151; color: #d1d5db;
+      }
+      #cr-log-actions button.primary { background: #3b82f6; color: #fff; }
       #classroom-toast {
         position: fixed; bottom: 24px; right: 24px; z-index: 99999;
         background: #10b981; color: #fff;
@@ -243,6 +320,7 @@
       </div>
       <div id="classroom-banner-actions">
         <button id="classroom-copy-btn" onclick="window._classroomCopyLink()">Copy assignment link</button>
+        <button id="classroom-log-btn" onclick="window._classroomShowLog()" title="Show what happened during Google sign-in">Sign-in log</button>
         <button id="classroom-signin-btn" onclick="window._classroomSignIn()">Sign in with Google</button>
       </div>
     `;
@@ -345,10 +423,86 @@
           You must sign in with your school Google account to begin.
         </p>
         <button id="cr-modal-save" style="width:100%; padding:12px; font-size:1rem;" onclick="window._classroomSignIn()">Sign in with Google</button>
+        <button onclick="window._classroomShowLog()" style="margin-top:12px; background:none; border:none; color:#94a3b8; text-decoration:underline; cursor:pointer; font-size:0.8rem;">View sign-in log</button>
       </div>
     `;
     document.body.appendChild(authModal);
+
+    const logModal = document.createElement('div');
+    logModal.id = 'cr-log-backdrop';
+    logModal.innerHTML = `
+      <div id="cr-log-box" role="dialog" aria-modal="true" aria-labelledby="cr-log-title">
+        <h2 id="cr-log-title">Google sign-in log</h2>
+        <p>Every sign-in step on this computer, oldest first. If sign-in isn't working, press <strong>Copy log</strong> and send it to your teacher.</p>
+        <pre id="cr-log-text"></pre>
+        <div id="cr-log-actions">
+          <button onclick="window._classroomClearLog()">Clear log</button>
+          <button id="cr-log-copy" onclick="window._classroomCopyLog()">Copy log</button>
+          <button class="primary" onclick="window._classroomCloseLog()">Close</button>
+        </div>
+      </div>
+    `;
+    logModal.addEventListener('click', e => { if (e.target === logModal) window._classroomCloseLog(); });
+    document.body.appendChild(logModal);
   }
+
+  function buildAuthLogText() {
+    let log = [];
+    try { log = JSON.parse(localStorage.getItem(AUTH_LOG_KEY) || '[]'); } catch (_) {}
+    const mins = ms => Math.round(ms / 60000) + ' min';
+    const lines = [
+      'Now:        ' + new Date().toLocaleString('en-GB'),
+      'Page:       ' + location.pathname,
+      'Browser:    ' + navigator.userAgent,
+      'Signed in:  ' + (accessToken
+        ? `yes${userInfo?.email ? ' as ' + userInfo.email : ''}${authExpiresAt ? ', token expires in ' + mins(authExpiresAt - Date.now()) : ''}`
+        : 'no') + (authPaused ? ' (paused)' : ''),
+      'Role:       ' + (accessToken ? (isTeacherMode ? 'teacher' : 'student') : 'unknown'),
+      'Scopes:     ' + (grantedScopeList.length ? grantedScopeList.map(shortScope).join(', ') : '—'),
+      'Assignment: ' + (courseWorkId ? 'found' : 'not found') + ', submission: ' + (submissionId ? 'found' : 'not found'),
+      'Proxy:      ' + (proxyUrl ? 'set' : 'not set'),
+      '',
+      '── Log ──'
+    ];
+    if (!log.length) lines.push('(empty)');
+    for (const e of log) {
+      const d = new Date(e.t);
+      const stamp = d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' }) + ' ' +
+        d.toLocaleTimeString('en-GB', { hour12: false });
+      lines.push(`${stamp}  [${e.p}]  ${e.m}`);
+    }
+    return lines.join('\n');
+  }
+
+  window._classroomShowLog = function () {
+    const el = document.getElementById('cr-log-backdrop');
+    const pre = document.getElementById('cr-log-text');
+    if (!el || !pre) return;
+    pre.textContent = buildAuthLogText();
+    el.classList.add('open');
+    pre.scrollTop = pre.scrollHeight;
+  };
+
+  window._classroomCloseLog = function () {
+    const el = document.getElementById('cr-log-backdrop');
+    if (el) el.classList.remove('open');
+  };
+
+  window._classroomClearLog = function () {
+    try { localStorage.removeItem(AUTH_LOG_KEY); } catch (_) {}
+    window._classroomShowLog();
+  };
+
+  window._classroomCopyLog = function () {
+    const text = buildAuthLogText();
+    const btn = document.getElementById('cr-log-copy');
+    const done = ok => { if (btn) { btn.textContent = ok ? 'Copied!' : 'Select the text and copy it'; setTimeout(() => btn.textContent = 'Copy log', 2000); } };
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(text).then(() => done(true), () => done(false));
+    } else {
+      done(false);
+    }
+  };
 
   function setBannerStudent() {
     const dot  = document.getElementById('classroom-dot');
@@ -452,6 +606,7 @@
 
   function handleAuthLost(reason) {
     if (authPaused && !accessToken) return;
+    authLog('Sign-in dropped: ' + (reason || 'no reason given'));
     const lostToken = accessToken;
     authPaused = true;
     authHealthy = false;
@@ -497,6 +652,7 @@
         authHealthy = true;
         return true;
       }
+      noteHttpFailure(res);
       if (isTokenRejected(res.status)) {
         handleAuthLost(reason || 'Google has signed you out. Assessment paused until you sign in again.');
         return false;
@@ -505,6 +661,7 @@
       return authHealthy;
     } catch (e) {
       console.warn('Classroom: auth heartbeat could not reach Google', e);
+      authLog('Sign-in check could not reach Google (network?)');
       return authHealthy;
     }
   }
@@ -561,12 +718,14 @@
         }),
         { headers: { Authorization: `Bearer ${token}` } }
       );
+      if (!searchRes.ok) noteHttpFailure(searchRes, 'proxy search (Drive)');
       const { files } = await searchRes.json();
       if (!files || files.length === 0) return null;
       const depRes = await fetch(
         `https://script.googleapis.com/v1/projects/${files[0].id}/deployments`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
+      if (!depRes.ok) noteHttpFailure(depRes, 'proxy deployments (Apps Script)');
       const depData = await depRes.json();
       // Sort by updateTime descending so the most recently deployed version wins.
       // Skip the HEAD deployment — its URL ends in /dev and requires editor-level
@@ -631,7 +790,7 @@
             `?courseWorkStates=${state}&pageSize=100` +
             (pageToken ? `&pageToken=${encodeURIComponent(pageToken)}` : '');
           const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
-          if (!res.ok) break;
+          if (!res.ok) { noteHttpFailure(res, 'courseWork list'); break; }
           const data = await res.json();
           pageToken = data.nextPageToken || '';
           if (!data.courseWork) break;
@@ -668,7 +827,7 @@
         const url = 'https://classroom.googleapis.com/v1/courses?pageSize=50' +
           (pageToken ? `&pageToken=${encodeURIComponent(pageToken)}` : '');
         const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
-        if (!res.ok) break;
+        if (!res.ok) { noteHttpFailure(res, 'courses list'); break; }
         const data = await res.json();
         pageToken = data.nextPageToken || '';
         for (const course of (data.courses || [])) {
@@ -700,6 +859,7 @@
         { headers: { Authorization: `Bearer ${token}` } }
       );
       if (!res.ok) {
+        noteHttpFailure(res, 'submission lookup');
         console.warn('Classroom: submission lookup failed', res.status);
         return null;
       }
@@ -779,7 +939,7 @@
         'https://classroom.googleapis.com/v1/courses?teacherId=me&pageSize=50',
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      if (!res.ok) return false;
+      if (!res.ok) { noteHttpFailure(res, 'teacher check'); return false; }
       const data = await res.json();
       return (data.courses || []).some(c => c.id === courseId);
     } catch (_) {
@@ -798,6 +958,7 @@
       const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo',
         { headers: { Authorization: `Bearer ${token}` } });
       if (!res.ok) {
+        noteHttpFailure(res);
         if (isTokenRejected(res.status)) handleAuthLost('Google sign-in has expired. Assessment paused until you sign in again.');
         return null;
       }
@@ -1059,6 +1220,7 @@
       }
     );
     if (!res.ok) {
+      noteHttpFailure(res);
       if (isTokenRejected(res.status)) handleAuthLost('Google sign-in has expired. Assessment paused until you sign in again.');
       const err = Object.assign(new Error(`Drive create ${res.status}: ${await res.text().catch(() => '')}`), { status: res.status });
       throw err;
@@ -1085,6 +1247,7 @@
       }
     );
     if (!res.ok) {
+      noteHttpFailure(res);
       if (isTokenRejected(res.status)) handleAuthLost('Google sign-in has expired. Assessment paused until you sign in again.');
       const err = Object.assign(new Error(`Drive update ${res.status}`), { status: res.status });
       throw err;
@@ -1107,6 +1270,7 @@
       }
     );
     if (!res.ok) {
+      noteHttpFailure(res);
       if (isTokenRejected(res.status)) handleAuthLost('Google sign-in has expired. Assessment paused until you sign in again.');
       const err = Object.assign(new Error(`modifyAttachments ${res.status}: ${await res.text().catch(() => '')}`), { status: res.status });
       throw err;
@@ -1251,6 +1415,7 @@
         { headers: { Authorization: `Bearer ${accessToken}` } }
       );
       if (!res.ok) {
+        noteHttpFailure(res);
         if (isTokenRejected(res.status)) handleAuthLost('Google sign-in has expired. Assessment paused until you sign in again.');
         return null;
       }
@@ -1278,6 +1443,7 @@
       }
     );
     if (!res.ok) {
+      noteHttpFailure(res);
       if (isTokenRejected(res.status)) handleAuthLost('Google sign-in has expired. Assessment paused until you sign in again.');
       const err = Object.assign(new Error(`Drive results create ${res.status}: ${await res.text().catch(() => '')}`), { status: res.status });
       throw err;
@@ -1298,6 +1464,7 @@
       }
     );
     if (!res.ok) {
+      noteHttpFailure(res);
       if (isTokenRejected(res.status)) handleAuthLost('Google sign-in has expired. Assessment paused until you sign in again.');
       const e = Object.assign(new Error(`Drive results update ${res.status}`), { status: res.status });
       throw e;
@@ -1375,6 +1542,7 @@
         { headers: { Authorization: `Bearer ${accessToken}` } }
       );
       if (!res.ok) {
+        noteHttpFailure(res);
         if (isTokenRejected(res.status)) handleAuthLost('Google sign-in has expired. Assessment paused until you sign in again.');
         // Cached file is gone or unreadable with this sign-in: forget it so the
         // next lookup searches Drive afresh.
@@ -1398,6 +1566,7 @@
   async function handleTokenResponse(tokenResponse, opts) {
     if (tokenResponse.error !== undefined) {
       console.error('Classroom OAuth error:', tokenResponse);
+      authLog('OAuth error: ' + tokenResponse.error);
       return;
     }
 
@@ -1407,9 +1576,11 @@
     // Google may report `email` under its long name, so accept either.
     const grantedScopes = (tokenResponse.scope || '').split(' ')
       .map(s => s === 'https://www.googleapis.com/auth/userinfo.email' ? 'email' : s);
+    grantedScopeList = grantedScopes.filter(Boolean);
     const missingScopes = SCOPE.split(' ').filter(s => s && !grantedScopes.includes(s));
     if (missingScopes.length > 0) {
       console.warn('Classroom: missing scopes after sign-in:', missingScopes);
+      authLog('Permissions missing from Google\'s reply: ' + missingScopes.map(shortScope).join(', '));
       try { localStorage.removeItem(AUTH_STORAGE_KEY); } catch (_) {}
       let retried = false;
       try { retried = !!sessionStorage.getItem(CONSENT_RETRY_KEY); } catch (_) {}
@@ -1418,7 +1589,7 @@
         try { sessionStorage.setItem(CONSENT_RETRY_KEY, '1'); } catch (_) {}
         setBannerAuthRequired('⚠️ Some permissions were not granted — taking you back to tick every box…');
         showClassroomToast('⚠️ Please tick every permission box.');
-        setTimeout(() => signInViaRedirect({ prompt: 'consent' }), 1500);
+        setTimeout(() => signInViaRedirect({ prompt: 'consent', auto: true }), 1500);
       } else {
         // Already re-prompted once in this tab: stop here rather than loop. If the
         // school's Google admin blocks a scope, Google will never grant it.
@@ -1440,9 +1611,13 @@
       // the page yet, so try one silent sign-in before asking the student.
       let silentFailed = false;
       try { silentFailed = !!sessionStorage.getItem('oga_silent_failed'); } catch (_) {}
-      if (opts && opts.fromStorage && !silentFailed) signInViaRedirect({ prompt: 'none' });
+      if (opts && opts.fromStorage && !silentFailed) {
+        authLog('Saved sign-in was rejected — trying silent sign-in');
+        signInViaRedirect({ prompt: 'none', auto: true });
+      }
       return;
     }
+    authLog(`Signed in${userInfo?.email ? ' as ' + userInfo.email : ''} — token valid for ${authExpiresAt ? Math.round((authExpiresAt - Date.now()) / 60000) + ' min' : 'unknown time'}`);
 
     const blockingModal = document.getElementById('cr-auth-blocking-modal-backdrop');
     if (blockingModal) blockingModal.classList.remove('open');
@@ -1495,6 +1670,7 @@
       }
     }
     submissionId = await lookupSubmissionId(accessToken, courseWorkId);
+    authLog(`Role: ${isTeacher ? 'teacher' : 'student'}; assignment ${courseWorkId ? 'found' : 'NOT found'}; submission ${submissionId ? 'found' : 'NOT found'}; proxy ${proxyUrl ? 'set' : 'not set'}`);
 
     if (isTeacher) {
       stopAuthWatchdog();
@@ -1519,8 +1695,33 @@
   // After sign-in Google redirects to oauth-callback.html, which stores the token
   // in sessionStorage and bounces the user back to the originating activity page.
 
+  // Loop guard: at most this many automatic (not clicked) trips to Google per
+  // tab in the window below. Past that, stop and leave the student on the page
+  // with the sign-in button and the log, instead of flickering forever.
+  const AUTO_REDIRECT_LIMIT     = 3;
+  const AUTO_REDIRECT_WINDOW_MS = 2 * 60 * 1000;
+
+  function autoRedirectAllowed() {
+    let times = [];
+    try { times = JSON.parse(sessionStorage.getItem('oga_auto_redirects') || '[]'); } catch (_) {}
+    const now = Date.now();
+    times = times.filter(t => now - t < AUTO_REDIRECT_WINDOW_MS);
+    if (times.length >= AUTO_REDIRECT_LIMIT) return false;
+    times.push(now);
+    try { sessionStorage.setItem('oga_auto_redirects', JSON.stringify(times)); } catch (_) {}
+    return true;
+  }
+
   function signInViaRedirect(opts) {
     const prompt = (opts && opts.prompt) || 'select_account';
+    const auto = !!(opts && opts.auto);
+    if (auto && !autoRedirectAllowed()) {
+      authLog(`LOOP GUARD: stopped automatic sign-in (prompt=${prompt}) — ${AUTO_REDIRECT_LIMIT} already in the last ${AUTO_REDIRECT_WINDOW_MS / 60000} min`);
+      setBannerAuthRequired('⚠️ Automatic sign-in kept failing. Click Sign in — if that doesn\'t work, open the Sign-in log and show it to your teacher.');
+      window.ErrorReporter?.report('Classroom sign-in', new Error('Automatic sign-in loop stopped'));
+      return;
+    }
+    authLog(`→ Going to Google (prompt=${prompt}, ${auto ? 'automatic' : 'clicked'})`);
     const params = new URLSearchParams({
       client_id    : CLIENT_ID,
       redirect_uri : window.location.origin + '/interactive/oauth-callback.html',
@@ -1572,6 +1773,7 @@
     try { data = JSON.parse(json) || {}; } catch (_) {}
     if (!data.error) return;
     console.warn('Classroom: sign-in error from Google:', data.error, data.description || '');
+    authLog('Showing Google error to student: ' + data.error);
     setBannerAuthRequired('⚠️ ' + describeAuthError(data.error));
     window.ErrorReporter?.report('Classroom sign-in',
       new Error('Google returned ' + data.error + (data.description ? ': ' + data.description : '')));
@@ -1588,8 +1790,10 @@
     // Discard if already expired (30 s margin for clock skew).
     if (data.expires_at && data.expires_at < Date.now() + 30000) {
       console.warn('Classroom: discarding expired token from redirect');
+      authLog('Token from Google was already expired — discarded (is the computer clock right?)');
       return false;
     }
+    authLog('Picked up new token from Google');
     // Persist for cross-activity reuse within the ~1-hour token lifetime.
     try {
       localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify({
@@ -1610,8 +1814,10 @@
     if (!data || !data.access_token) return false;
     if (data.expires_at && data.expires_at < Date.now() + 30000) {
       try { localStorage.removeItem(AUTH_STORAGE_KEY); } catch (_) {}
+      authLog('Saved token has expired — removed');
       return false;
     }
+    authLog(`Using saved token (${Math.round(((data.expires_at || 0) - Date.now()) / 60000)} min left)`);
     handleTokenResponse({ access_token: data.access_token, scope: data.scope || '', expires_at: data.expires_at || 0 }, { fromStorage: true });
     return true;
   }
@@ -1669,6 +1875,7 @@
       const result = await res.text();
       if (result !== 'ok') {
         console.warn(`Classroom proxy responded: "${result}" for "${activityName}"`);
+        authLog('Grade proxy replied: ' + String(result).replace(/\s+/g, ' ').slice(0, 220));
 
         // SERVICE_DISABLED — show actionable modal so the teacher can fix it
         if (isAuthFailureMessage(result)) {
@@ -1701,6 +1908,7 @@
       console.log(`Classroom grade submitted via proxy: ${gradePercent}% for "${activityName}" — proxy said: ${result}`);
     } catch (err) {
       console.error('Classroom sync failed:', err);
+      authLog('Grade save failed: ' + String(err && err.message || err).replace(/\s+/g, ' ').slice(0, 220));
       showClassroomToast('⚠️ Grade sync failed — see console.');
     }
   }
@@ -1793,6 +2001,7 @@
     }, 10 * 60 * 1000);
 
     // Pick up token from redirect, or restore a persisted one (refresh / different activity).
+    authLog('Page opened' + (isAssessment() ? ' (assessment)' : ''));
     const hasToken = checkPendingOAuthToken() || checkStoredToken();
     if (!hasToken) checkInteractiveAuthError();
 
@@ -1804,21 +2013,23 @@
 
       if (isAssessment()) {
         if (silentFailed) {
+          authLog('Silent sign-in failed — showing assessment sign-in box');
           document.getElementById('cr-auth-blocking-modal-backdrop').classList.add('open');
           try { sessionStorage.removeItem('oga_silent_failed'); } catch (_) {}
         } else {
-          signInViaRedirect({ prompt: 'none' });
+          signInViaRedirect({ prompt: 'none', auto: true });
         }
       } else {
         if (silentFailed) {
           // Silent auth failed — clear flag and leave the sign-in button visible.
+          authLog('Silent sign-in failed — waiting for student to click Sign in');
           try { sessionStorage.removeItem('oga_silent_failed'); } catch (_) {}
         } else {
           // Try silent sign-in using the browser's existing Google session.
           // Works automatically if the student is already signed into Chrome and has
           // previously granted the required scopes (common in a managed school environment).
           // If it fails, oauth-callback.html sets oga_silent_failed and bounces back here.
-          signInViaRedirect({ prompt: 'none' });
+          signInViaRedirect({ prompt: 'none', auto: true });
         }
       }
     }

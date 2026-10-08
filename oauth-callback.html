@@ -24,11 +24,22 @@
 (function () {
   // Google redirects here with the OAuth response in the URL fragment after sign-in.
   // Parse the token, store it for the originating page to pick up, then navigate back.
-  const params    = new URLSearchParams(location.hash.slice(1));
+  // Errors normally arrive in the fragment too, but fall back to the query string.
+  const params    = new URLSearchParams(location.hash.slice(1) || location.search.slice(1));
   const token     = params.get('access_token');
   const expiresIn = parseInt(params.get('expires_in') || '3600', 10);
   const scope     = params.get('scope') || '';
   const error     = params.get('error');
+
+  // Same log and format as classroom.js's authLog(), so the activity's
+  // "Sign-in log" button shows this step too. Never log the token itself.
+  function authLog(message) {
+    try {
+      const log = JSON.parse(localStorage.getItem('oga_auth_log') || '[]');
+      log.push({ t: Date.now(), p: 'oauth-callback', m: String(message) });
+      localStorage.setItem('oga_auth_log', JSON.stringify(log.slice(-80)));
+    } catch (_) {}
+  }
 
   let returnUrl = null;
   let mode = null; // 'silent' (prompt=none) or 'interactive'; null from older cached classroom.js
@@ -39,6 +50,8 @@
   } catch (_) {}
 
   if (error) {
+    const desc = params.get('error_description') || '';
+    authLog(`← Back from Google with ERROR: ${error}${desc ? ' — ' + desc : ''} (${mode || 'unknown'} sign-in)`);
     if (returnUrl) {
       // Always set oga_silent_failed so the page doesn't immediately retry
       // silent auth (which would bounce straight back here in a loop).
@@ -64,12 +77,18 @@
   }
 
   if (!token) {
+    authLog('← Back from Google with no token and no error (URL had: ' +
+      (location.hash ? 'fragment' : 'no fragment') + ', ' + (location.search ? 'query' : 'no query') + ')');
     document.getElementById('status').textContent =
       'No token received. Please go back and try again.';
     return;
   }
 
+  authLog(`← Back from Google with a token (${expiresIn}s); permissions: ` +
+    (scope.split(' ').filter(Boolean).map(s => s.replace('https://www.googleapis.com/auth/', '')).join(', ') || 'none listed'));
+
   if (!returnUrl) {
+    authLog('Stuck: no return page saved in this tab (sign-in finished in a different tab or window?)');
     document.getElementById('status').textContent =
       'Could not determine which page to return to. Please go back manually.';
     return;
