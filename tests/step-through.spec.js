@@ -117,6 +117,7 @@ const LS_STARTER = [
 
 test('A Modify check steps through the run with its test answers before giving feedback', async ({ page }) => {
   await openAt(page, { currentStage: 'M1', completedStages: ['P', 'R', 'I'] });
+  await page.check('input[name="m1_choice"][value="full"]');   // Modification 1 is a choice: 60 litres an hour
   await setCode(page, 'm1_editor', LS_STARTER);
   const m = checker(page, 'm1_editor');
   await page.click('#btn_check_m1');
@@ -129,6 +130,7 @@ test('A Modify check steps through the run with its test answers before giving f
 
 test('A Modify check types each test answer into the output, then keeps it highlighted', async ({ page }) => {
   await openAt(page, { currentStage: 'M1', completedStages: ['P', 'R', 'I'] });
+  await page.check('input[name="m1_choice"][value="full"]');   // Modification 1 is a choice: 60 litres an hour
   await setCode(page, 'm1_editor', LS_STARTER);
   const m = checker(page, 'm1_editor');
   await page.click('#btn_check_m1');
