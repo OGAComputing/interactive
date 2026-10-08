@@ -407,6 +407,14 @@
     return status === 401 || status === 403;
   }
 
+  // For direct Google API calls (Drive, Classroom, userinfo) only a 401 means
+  // the token itself is dead (expired, revoked, signed out). A 403 is about one
+  // file or request — no access to a cached file ID, rate limit, Drive full —
+  // and signing in again does not fix it, so it must not drop the sign-in.
+  function isTokenRejected(status) {
+    return status === 401;
+  }
+
   function isAuthFailureMessage(text) {
     return /invalid[_\s-]?token|invalid[_\s-]?grant|unauthorized|unauthenticated|login[_\s-]?required|permission denied|401|403/i.test(String(text || ''));
   }
@@ -444,6 +452,7 @@
 
   function handleAuthLost(reason) {
     if (authPaused && !accessToken) return;
+    const lostToken = accessToken;
     authPaused = true;
     authHealthy = false;
     accessToken = null;
@@ -451,10 +460,22 @@
     userInfo = null;
     clearPendingSyncTimers();
     stopAuthWatchdog();
-    try { localStorage.removeItem(AUTH_STORAGE_KEY); } catch (_) {}
-    setBannerAuthRequired(reason || 'Google sign-in has expired. Assessment paused until you sign in again.');
-    if (isAssessment()) openAssessmentAuthModal(reason);
-    showClassroomToast('Google sign-in needed - assessment paused.');
+    // Only forget the stored token if it is the one that failed: another tab
+    // may already have signed in again and saved a fresh one.
+    try {
+      const stored = JSON.parse(localStorage.getItem(AUTH_STORAGE_KEY) || 'null');
+      if (!stored || stored.access_token === lostToken) localStorage.removeItem(AUTH_STORAGE_KEY);
+    } catch (_) {}
+    if (isAssessment()) {
+      setBannerAuthRequired(reason || 'Google sign-in has expired. Assessment paused until you sign in again.');
+      openAssessmentAuthModal(reason);
+      showClassroomToast('Google sign-in needed - assessment paused.');
+    } else {
+      // Outside assessments nothing is paused; the student just needs to sign in
+      // again for their next save to reach Classroom.
+      setBannerAuthRequired('Your Google sign-in has expired — click Sign in to keep saving your work to Classroom.');
+      showClassroomToast('Google sign-in expired — click Sign in to keep saving.');
+    }
   }
 
   function tokenNeedsRenewalSoon() {
@@ -476,7 +497,7 @@
         authHealthy = true;
         return true;
       }
-      if (isAuthStatus(res.status)) {
+      if (isTokenRejected(res.status)) {
         handleAuthLost(reason || 'Google has signed you out. Assessment paused until you sign in again.');
         return false;
       }
@@ -777,7 +798,7 @@
       const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo',
         { headers: { Authorization: `Bearer ${token}` } });
       if (!res.ok) {
-        if (isAuthStatus(res.status)) handleAuthLost('Google Drive access was lost. Assessment paused until you sign in again.');
+        if (isTokenRejected(res.status)) handleAuthLost('Google sign-in has expired. Assessment paused until you sign in again.');
         return null;
       }
       const d = await res.json();
@@ -1038,7 +1059,7 @@
       }
     );
     if (!res.ok) {
-      if (isAuthStatus(res.status)) handleAuthLost('Google Drive access was lost. Assessment paused until you sign in again.');
+      if (isTokenRejected(res.status)) handleAuthLost('Google sign-in has expired. Assessment paused until you sign in again.');
       const err = Object.assign(new Error(`Drive create ${res.status}: ${await res.text().catch(() => '')}`), { status: res.status });
       throw err;
     }
@@ -1064,7 +1085,7 @@
       }
     );
     if (!res.ok) {
-      if (isAuthStatus(res.status)) handleAuthLost('Google Drive access was lost. Assessment paused until you sign in again.');
+      if (isTokenRejected(res.status)) handleAuthLost('Google sign-in has expired. Assessment paused until you sign in again.');
       const err = Object.assign(new Error(`Drive update ${res.status}`), { status: res.status });
       throw err;
     }
@@ -1086,7 +1107,7 @@
       }
     );
     if (!res.ok) {
-      if (isAuthStatus(res.status)) handleAuthLost('Google Classroom access was lost. Assessment paused until you sign in again.');
+      if (isTokenRejected(res.status)) handleAuthLost('Google sign-in has expired. Assessment paused until you sign in again.');
       const err = Object.assign(new Error(`modifyAttachments ${res.status}: ${await res.text().catch(() => '')}`), { status: res.status });
       throw err;
     }
@@ -1120,7 +1141,9 @@
         try {
           await driveUpdateFile(fileId, filename, html);
         } catch (e) {
-          if (e.status === 404) { fileId = null; }  // file was deleted — fall through to create
+          // 404: file was deleted. 403: this sign-in can't open the cached file
+          // (e.g. it was made under another account). Either way, make a new one.
+          if (e.status === 404 || e.status === 403) { fileId = null; }
           else throw e;
         }
       }
@@ -1228,7 +1251,7 @@
         { headers: { Authorization: `Bearer ${accessToken}` } }
       );
       if (!res.ok) {
-        if (isAuthStatus(res.status)) handleAuthLost('Google Drive access was lost. Assessment paused until you sign in again.');
+        if (isTokenRejected(res.status)) handleAuthLost('Google sign-in has expired. Assessment paused until you sign in again.');
         return null;
       }
       const data = await res.json();
@@ -1255,7 +1278,7 @@
       }
     );
     if (!res.ok) {
-      if (isAuthStatus(res.status)) handleAuthLost('Google Drive access was lost. Assessment paused until you sign in again.');
+      if (isTokenRejected(res.status)) handleAuthLost('Google sign-in has expired. Assessment paused until you sign in again.');
       const err = Object.assign(new Error(`Drive results create ${res.status}: ${await res.text().catch(() => '')}`), { status: res.status });
       throw err;
     }
@@ -1275,7 +1298,7 @@
       }
     );
     if (!res.ok) {
-      if (isAuthStatus(res.status)) handleAuthLost('Google Drive access was lost. Assessment paused until you sign in again.');
+      if (isTokenRejected(res.status)) handleAuthLost('Google sign-in has expired. Assessment paused until you sign in again.');
       const e = Object.assign(new Error(`Drive results update ${res.status}`), { status: res.status });
       throw e;
     }
@@ -1299,7 +1322,7 @@
           await driveUpdateJsonFile(fileId, jsonStr);
           return;
         } catch (e) {
-          if (e.status !== 404) throw e;
+          if (e.status !== 404 && e.status !== 403) throw e;
           fileId = null;
         }
       }
@@ -1311,7 +1334,7 @@
           try { localStorage.setItem(storageKey, fileId); } catch (_) {}
           return;
         } catch (e) {
-          if (e.status !== 404) throw e;
+          if (e.status !== 404 && e.status !== 403) throw e;
           fileId = null;
         }
       }
@@ -1352,7 +1375,12 @@
         { headers: { Authorization: `Bearer ${accessToken}` } }
       );
       if (!res.ok) {
-        if (isAuthStatus(res.status)) handleAuthLost('Google Drive access was lost. Assessment paused until you sign in again.');
+        if (isTokenRejected(res.status)) handleAuthLost('Google sign-in has expired. Assessment paused until you sign in again.');
+        // Cached file is gone or unreadable with this sign-in: forget it so the
+        // next lookup searches Drive afresh.
+        if (res.status === 403 || res.status === 404) {
+          try { localStorage.removeItem(storageKey); } catch (_) {}
+        }
         return null;
       }
       const data = await res.json();
@@ -1367,7 +1395,7 @@
   // Shared between the redirect-return path (sessionStorage) and any future
   // popup fallback. Extracted so the bootstrap and re-prompt paths both use it.
 
-  async function handleTokenResponse(tokenResponse) {
+  async function handleTokenResponse(tokenResponse, opts) {
     if (tokenResponse.error !== undefined) {
       console.error('Classroom OAuth error:', tokenResponse);
       return;
@@ -1406,7 +1434,15 @@
     authHealthy = true;
     authPaused = false;
     userInfo    = await fetchUserInfo(accessToken);
-    if (!accessToken) return;
+    if (!accessToken) {
+      // A token saved earlier was rejected as the page opened (expired early or
+      // revoked, e.g. by the school's 14-day sign-out). Nothing has been done on
+      // the page yet, so try one silent sign-in before asking the student.
+      let silentFailed = false;
+      try { silentFailed = !!sessionStorage.getItem('oga_silent_failed'); } catch (_) {}
+      if (opts && opts.fromStorage && !silentFailed) signInViaRedirect({ prompt: 'none' });
+      return;
+    }
 
     const blockingModal = document.getElementById('cr-auth-blocking-modal-backdrop');
     if (blockingModal) blockingModal.classList.remove('open');
@@ -1576,7 +1612,7 @@
       try { localStorage.removeItem(AUTH_STORAGE_KEY); } catch (_) {}
       return false;
     }
-    handleTokenResponse({ access_token: data.access_token, scope: data.scope || '', expires_at: data.expires_at || 0 });
+    handleTokenResponse({ access_token: data.access_token, scope: data.scope || '', expires_at: data.expires_at || 0 }, { fromStorage: true });
     return true;
   }
 

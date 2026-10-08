@@ -3,6 +3,8 @@
 Use this document when creating lesson slides for Year 8 Python Unit 1.
 It covers the school's pedagogical framework, lesson structure, cognitive load principles, and design constraints.
 
+**Sections 1, 2, 4–7 and 9 apply to every lesson deck** (any year, any unit). Section 9 is the approved build system: slide order, palette, fonts, sizes and icon rules.
+
 ---
 
 ## 1. The Five Pillars
@@ -128,3 +130,53 @@ Each teaching lesson (1–4) runs a **complete PRIMM cycle**: Predict → Run �
 | 4 | How do we make a program choose between two options? |
 | 5 | What have I learned about Python? |
 | 6 | What did I get wrong, and how do I fix it? |
+
+---
+
+## 9. Approved Build System (all lesson decks and MTPs)
+
+Use this for every lesson deck unless Nick says otherwise.
+
+### Standard slide order
+
+1. **Recap & Recall starter** — retrieval questions from last lesson **and** further back. Tag each question with a pill label showing its source lesson (e.g. "Last lesson", "Lesson 2"). Recap & Recall icon.
+2. **Recap & Recall answers** — same layout, **dark background**, reveals the answers. Recap & Recall icon.
+3. **Title slide.**
+4. **Topic Question** (unit-level, muted) + **Lesson Question** (this lesson, in a highlighted card). Clarity icon.
+5. **Lesson content slides.**
+6. **Plenary** — revisits the same Lesson Question as an exit task. Recap & Recall icon.
+
+### Pillar icons (colour-coded)
+
+| Pillar | Colour | File |
+|---|---|---|
+| Clarity of Learning Intentions | pink | `ClarityOfLearningIntentions.png` |
+| New Information | yellow | `NewInformation.png` |
+| Deliberate Practice | teal | `DeliberatePractice.png` |
+| Recap & Recall | orange | `RecapAndRecall.png` |
+| Feedback | blue | `Feedback.png` |
+
+The PNGs are in `C:\Users\n.houlton_grange.out\Pictures\`.
+
+### Design system
+
+- **Reference template:** `component3_example_deck.pptx` (made in Claude web).
+- **Build tool:** pptxgenjs. Pipeline: `node build_deck.js` → `validate.py` → `soffice --headless --convert-to pdf` → `pdftoppm -jpeg -r 150` for per-slide visual QA.
+- **Layout:** `LAYOUT_WIDE` (13.33 × 7.5 in).
+- **Palette:** Charcoal `#1E1E24` · Gold `#D8A73D` · Off-white `#F5F5F3`.
+- **Fonts:** Cambria (headers), Calibri (body).
+- **Minimum font sizes:** body, bullet and card text **≥ 18pt**; callout banners and Turn & Talk prompts ~19–25pt; small uppercase labels, kickers and timer-chip captions 12–14pt.
+
+### Icon rendering rules
+
+- Source PNGs may have an opaque white background, and simple colour-keying leaves a halo. The correct fix: detect the non-white pixels → find the circle's bounding box → compute the true centre and radius geometrically → build a fresh alpha mask from that geometry (4× supersample, then downsample for a clean 1px anti-aliased edge). This keeps the inner white glyph opaque and gives a crisp, single-colour circle with no fringe.
+- **Never add a drop shadow to icons.** They must sit flat.
+- **Z-order:** call `addIcon()` *after* any background shapes that would otherwise cover it. pptxgenjs draws in the order shapes are added and has no z-index option.
+
+### Unit theme variants
+
+A unit with a story layer can restyle the deck to match it, but keeps the slide order, pillar icons, fonts, minimum sizes and Section 5–6 rules above.
+
+- **Y9 Python — *Station Zero*** (survival horror, `Y9/Python/`): charcoal stays the base, gold is used as the station's hazard/warning colour, and a dim phosphor green (Consolas) is kept for story text only: chapter cards and terminal logs. Alarm red appears **only** on error messages. The Recap & Recall starter stays light (off-white) so the answers slide can be the dark one. The story appears in two places only, as in the activities: a chapter card before the task and a cliffhanger at the end. Content slides carry no decorative horror imagery. Code uses Consolas, coloured like the activities' memory view: strings in Okabe-Ito orange (`str`), numbers in sky blue (`int`), so slides and activities use the same type colours.
+  - **Start from `_presentations/Y9_Python/README.md` and `Y9_Python_Deck_Template.pptx`** (one example of every slide type, with guidance in the speaker notes). The README holds the unit's rules and the running feedback log; the template's rules slides are generated from it.
+  - Slide types are functions in `sz_slides.cjs`, drawing parts in `sz_kit.cjs`. A lesson deck is one builder script (`build_deck.cjs` is Lesson 1); copy it for a new lesson. On Windows, call `soffice.exe --headless --convert-to pdf` directly — the pptx skill's `soffice.py` wrapper uses Unix sockets and fails.
