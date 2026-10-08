@@ -127,9 +127,18 @@
     } catch (_) {}
   }
 
+  // Reveals the "Sign-in log" button. It stays hidden while everything works,
+  // so students only see it when there is something worth reporting.
+  function markAuthProblem() {
+    try { document.body.classList.add('cr-auth-problem'); } catch (_) {}
+  }
+
   // Logs a failed Google/proxy response: status, which API, and the start of
   // Google's error body (e.g. "appNotAuthorizedToFile", "rateLimitExceeded").
-  function noteHttpFailure(res, label) {
+  // `quiet` is for lookups whose failure is expected and handled (e.g. a re-used
+  // post's old course): logged, but not shown to the student as a problem.
+  function noteHttpFailure(res, label, quiet) {
+    if (!quiet) markAuthProblem();
     let where = label || '';
     try { if (!where) { const u = new URL(res.url); where = u.host.split('.')[0] + u.pathname; } } catch (_) {}
     let clone = null;
@@ -197,6 +206,10 @@
         font-size: 0.75rem; cursor: pointer; white-space: nowrap;
       }
       #classroom-log-btn:hover { color: #e5e7eb; border-color: #9ca3af; }
+      /* Only offered once something has gone wrong (see markAuthProblem). */
+      #classroom-log-btn, #cr-auth-log-link { display: none; }
+      body.cr-auth-problem #classroom-log-btn { display: inline-block; }
+      body.cr-auth-problem #cr-auth-log-link { display: inline; }
 
       /* Sign-in log viewer — above the assessment blocking modal */
       #cr-log-backdrop {
@@ -423,7 +436,7 @@
           You must sign in with your school Google account to begin.
         </p>
         <button id="cr-modal-save" style="width:100%; padding:12px; font-size:1rem;" onclick="window._classroomSignIn()">Sign in with Google</button>
-        <button onclick="window._classroomShowLog()" style="margin-top:12px; background:none; border:none; color:#94a3b8; text-decoration:underline; cursor:pointer; font-size:0.8rem;">View sign-in log</button>
+        <button id="cr-auth-log-link" onclick="window._classroomShowLog()" style="margin-top:12px; background:none; border:none; color:#94a3b8; text-decoration:underline; cursor:pointer; font-size:0.8rem;">View sign-in log</button>
       </div>
     `;
     document.body.appendChild(authModal);
@@ -518,6 +531,7 @@
   }
 
   function setBannerAuthRequired(message) {
+    markAuthProblem();
     const dot  = document.getElementById('classroom-dot');
     const text = document.getElementById('classroom-text');
     const btn  = document.getElementById('classroom-signin-btn');
@@ -718,14 +732,14 @@
         }),
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      if (!searchRes.ok) noteHttpFailure(searchRes, 'proxy search (Drive)');
+      if (!searchRes.ok) noteHttpFailure(searchRes, 'proxy search (Drive)', true);
       const { files } = await searchRes.json();
       if (!files || files.length === 0) return null;
       const depRes = await fetch(
         `https://script.googleapis.com/v1/projects/${files[0].id}/deployments`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      if (!depRes.ok) noteHttpFailure(depRes, 'proxy deployments (Apps Script)');
+      if (!depRes.ok) noteHttpFailure(depRes, 'proxy deployments (Apps Script)', true);
       const depData = await depRes.json();
       // Sort by updateTime descending so the most recently deployed version wins.
       // Skip the HEAD deployment — its URL ends in /dev and requires editor-level
@@ -790,7 +804,7 @@
             `?courseWorkStates=${state}&pageSize=100` +
             (pageToken ? `&pageToken=${encodeURIComponent(pageToken)}` : '');
           const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
-          if (!res.ok) { noteHttpFailure(res, 'courseWork list'); break; }
+          if (!res.ok) { noteHttpFailure(res, 'courseWork list', true); break; }
           const data = await res.json();
           pageToken = data.nextPageToken || '';
           if (!data.courseWork) break;
@@ -827,7 +841,7 @@
         const url = 'https://classroom.googleapis.com/v1/courses?pageSize=50' +
           (pageToken ? `&pageToken=${encodeURIComponent(pageToken)}` : '');
         const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
-        if (!res.ok) { noteHttpFailure(res, 'courses list'); break; }
+        if (!res.ok) { noteHttpFailure(res, 'courses list', true); break; }
         const data = await res.json();
         pageToken = data.nextPageToken || '';
         for (const course of (data.courses || [])) {
@@ -939,7 +953,7 @@
         'https://classroom.googleapis.com/v1/courses?teacherId=me&pageSize=50',
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      if (!res.ok) { noteHttpFailure(res, 'teacher check'); return false; }
+      if (!res.ok) { noteHttpFailure(res, 'teacher check', true); return false; }
       const data = await res.json();
       return (data.courses || []).some(c => c.id === courseId);
     } catch (_) {
@@ -1875,6 +1889,7 @@
       const result = await res.text();
       if (result !== 'ok') {
         console.warn(`Classroom proxy responded: "${result}" for "${activityName}"`);
+        markAuthProblem();
         authLog('Grade proxy replied: ' + String(result).replace(/\s+/g, ' ').slice(0, 220));
 
         // SERVICE_DISABLED — show actionable modal so the teacher can fix it
@@ -1908,6 +1923,7 @@
       console.log(`Classroom grade submitted via proxy: ${gradePercent}% for "${activityName}" — proxy said: ${result}`);
     } catch (err) {
       console.error('Classroom sync failed:', err);
+      markAuthProblem();
       authLog('Grade save failed: ' + String(err && err.message || err).replace(/\s+/g, ' ').slice(0, 220));
       showClassroomToast('⚠️ Grade sync failed — see console.');
     }

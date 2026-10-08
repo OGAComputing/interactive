@@ -140,25 +140,36 @@ test.describe('Signed in as teacher', () => {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 test.describe('Sign-in log', () => {
-  test('signed out: log button opens a log of what happened', async ({ page }) => {
+  test('signed out with no problem: log button stays hidden', async ({ page }) => {
     await mockSignedOut(page);
     await page.goto(`${HOST}?courseId=${COURSE_ID}`);
-    await page.locator('#classroom-log-btn').click();
-    await expect(page.locator('#cr-log-backdrop')).toHaveClass(/open/);
-    await expect(page.locator('#cr-log-text')).toContainText('Page opened');
-    await expect(page.locator('#cr-log-text')).toContainText('Silent sign-in failed');
-    await page.locator('#cr-log-box button:has-text("Close")').click();
-    await expect(page.locator('#cr-log-backdrop')).not.toHaveClass(/open/);
+    await expect(page.locator('#classroom-signin-btn')).toBeVisible();
+    await expect(page.locator('#classroom-log-btn')).toBeHidden();
   });
 
-  test('student: log records who signed in and whether the assignment was found', async ({ page }) => {
+  test('student signed in normally: log button stays hidden, but the log is kept', async ({ page }) => {
     await mockAsStudent(page, COURSE_ID, ACTIVITY_URL);
     await page.goto(`${HOST}?courseId=${COURSE_ID}`);
     await expect(page.locator('#classroom-dot')).toHaveClass(/online/, { timeout: AUTH_TIMEOUT });
-    await page.locator('#classroom-log-btn').click();
+    await expect(page.locator('#classroom-log-btn')).toBeHidden();
+    await page.evaluate(() => window._classroomShowLog());
     await expect(page.locator('#cr-log-text')).toContainText('Signed in as student@test.com');
     await expect(page.locator('#cr-log-text')).toContainText('assignment found');
     await expect(page.locator('#cr-log-text')).not.toContainText('mock-token-abc123');
+  });
+
+  test('Google error after clicking Sign in: shows the error and the log button', async ({ page }) => {
+    await mockSignedOut(page);
+    await page.addInitScript(`(function(){
+      try { sessionStorage.setItem('oga_auth_error', JSON.stringify({ error: 'admin_policy_enforced', description: '' })); } catch(e) {}
+    })()`);
+    await page.goto(`${HOST}?courseId=${COURSE_ID}`);
+    await expect(page.locator('#classroom-text')).toContainText("school's Google settings");
+    await expect(page.locator('#classroom-log-btn')).toBeVisible();
+    await page.locator('#classroom-log-btn').click();
+    await expect(page.locator('#cr-log-text')).toContainText('admin_policy_enforced');
+    await page.locator('#cr-log-box button:has-text("Close")').click();
+    await expect(page.locator('#cr-log-backdrop')).not.toHaveClass(/open/);
   });
 
   test('loop guard: stops automatic sign-in after repeated attempts', async ({ page }) => {
