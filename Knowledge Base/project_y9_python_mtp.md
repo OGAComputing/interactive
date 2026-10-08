@@ -184,7 +184,9 @@ Students make story choices, and how many crew survive the unit depends on them.
 
 **Crew roster.** There are five crew: Okafor (Pod 1), Hale (Pod 2, already dead), Chen (Pod 3), you (Pod 4) and Patel (Pod 5). The Wake Up pod records introduce them and the first *Crew alive: 4 of 5* readout.
 
-**How a choice works (low load).** **Modification 1** of a lesson is the choice. The student picks one of two options on a "Your call" card, and only then does that option's single requirement appear. Both options pass. The note says *"There's no right answer… your choice changes the story, not your score."* The choice locks once Modification 1 passes, and it is stored for the unit in localStorage `sz_choices`. A choice made on another computer is missing, and the story then uses the default.
+**How a choice works (low load).** **Modification 1** of a lesson is the choice. The student picks one of two options on a "Your call" card, and only then does that option's single requirement appear. Both options pass. The note says *"There's no right answer… your choice changes the story, not your score."* The choice locks once Modification 1 passes, and it is stored for the unit in localStorage `sz_choices`. The choices are also saved to the student's Google Drive when they're signed in through Classroom, so they follow the student to another computer (the most recent choice wins). Without either copy, the story uses the default.
+
+**Missed lessons.** Every lesson's first report from Life Support on opens with a **"Previously…"** recap (1–2 sentences) built from the student's choices, or from the defaults. A student who missed a lesson gets the story so far without having seen it. Each recap should name who is alive, critical or dead, plus anything the next choice depends on (e.g. L7's recap must say whether WARDEN still controls the airlock and whether the nest was found).
 
 | Lesson | Choice | Code it changes | Immediate effect |
 |---|---|---|---|

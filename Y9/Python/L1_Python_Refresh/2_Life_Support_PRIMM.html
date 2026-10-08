@@ -699,6 +699,16 @@ color:  teal
   .sz-readout.lvl-warn   .r-value, .sz-readout.lvl-warn .r-tag { color: var(--crt-warn); text-shadow: 0 0 4px rgba(255,201,92,0.5); }
   .sz-readout.lvl-danger .r-value, .sz-readout.lvl-danger .r-tag { color: var(--crt-crit); text-shadow: 0 0 4px rgba(255,107,120,0.55); }
 
+  /* ── "Previously…" recap (a chapter's first report) ── */
+  .sz-prev {
+    margin-top: 0.6rem; padding: 0.45rem 0.8rem; max-width: 68ch; min-height: 2.2em;
+    font-size: 0.9rem; line-height: 1.6; color: var(--crt-dim);
+    border-left: 3px solid var(--crt-faint); background: rgba(92,255,143,0.04); border-radius: 0 6px 6px 0;
+  }
+  .sz-prev-tag {
+    display: inline-block; margin-right: 0.6rem; font-size: 0.7rem; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--crt-dim); font-weight: 700;
+  }
   /* ── Log text + optional crew log ── */
   .sz-log {
     font-size: 1.02rem; line-height: 1.7; color: var(--crt); margin-top: 1rem;
@@ -1404,7 +1414,7 @@ color:  teal
      STATION ZERO — situation report (filled by the story script; don't edit)
 ════════════════════════════════════════════════ -->
 <div class="sz-overlay" id="szOverlay" aria-hidden="true">
-  <div class="sz-panel" id="szPanel" role="dialog" aria-modal="true" aria-labelledby="szTitle" aria-describedby="szLogFull">
+  <div class="sz-panel" id="szPanel" role="dialog" aria-modal="true" aria-labelledby="szTitle" aria-describedby="szPrevFull szLogFull">
     <div class="sz-head">
       <div class="sz-kicker"><span class="sz-live-dot" aria-hidden="true"></span><span id="szKicker">Situation report</span></div>
       <div class="sz-clock" id="szClock"></div>
@@ -1413,6 +1423,7 @@ color:  teal
       </button>
     </div>
     <h2 class="sz-title" id="szTitle"><span class="sr-only" id="szTitleFull"></span><span class="sz-title-typed" aria-hidden="true" id="szTitleTyped"></span></h2>
+    <p class="sz-prev" id="szPrev" hidden><span class="sz-prev-tag">Previously</span><span class="sr-only" id="szPrevFull"></span><span aria-hidden="true" id="szPrevTyped"></span></p>
     <div class="sz-impact" id="szImpact" hidden></div>
     <div class="sz-map" id="szMap"></div>
     <div class="sz-legend" aria-hidden="true">
@@ -1484,6 +1495,9 @@ color:  teal
        'sz_choices': { door: 'open' | 'sealed' (Wake Up), air: 'full' | 'low' (this lesson) }).
          variant:  choices => the name of one of the variants (handle a missing choice)
          variants: { name: { …beat fields } } — they replace the beat's own fields
+     Optional on the intro beat: previously — a 1–2 sentence "Previously…" recap of the
+       chapters before, so a student who missed a lesson (or the week) can follow. Use
+       variants to make it follow the student's choices.
      ═══════════════════════════════════════════════════════════════════════ */
   // Station Zero choices → which version of a beat plays. A choice made on another computer
   // is missing: the door defaults to sealed and the rate to full (60 litres an hour).
@@ -1498,6 +1512,7 @@ color:  teal
         variant: door,
         variants: {
           open: {
+            previously: "You woke early. Engineer Hale is dead, Pod 2 was opened from the inside, and when you opened the Cryo Bay door, something slipped in where the crew sleep.",
             time: '03:31',
             log: "You follow the frost trail to Life Support. The recyclers are silent, and the program that runs them has been wiped. Behind you, the Cryo Bay door is still open.",
             readouts: [
@@ -1508,6 +1523,7 @@ color:  teal
             ],
           },
           sealed: {
+            previously: "You woke early. Engineer Hale is dead, Pod 2 was opened from the inside, and you kept the Cryo Bay door sealed until the footsteps outside went away.",
             time: '03:40',
             log: "You follow the frost trail to Life Support. The recyclers are silent, and the program that runs them has been wiped. Waiting at the Cryo Bay door cost you air.",
             readouts: [
@@ -1709,14 +1725,52 @@ color:  teal
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(seen)); } catch (e) {} };
 
   // Station Zero choices — what the student chose in Modify, shared by every chapter (same
-  // origin), so later reports can follow it. A choice made on another computer is missing,
-  // and each beat's variant() then falls back to its default.
+  // origin), so later reports can follow it. Each choice also goes to the student's Google
+  // Drive ("Station Zero — Results") when they're signed in through Classroom, so it follows
+  // them to another computer. With neither copy, each beat's variant() uses its default.
+  //   sz_choices = { door: 'open', …, _at: { door: <when it was chosen> } }
   const CHOICES_KEY = 'sz_choices';
-  let choices = {};
-  try { choices = JSON.parse(localStorage.getItem(CHOICES_KEY) || '{}') || {}; } catch (e) {}
+  const SYNC_NAME = 'Station Zero';
+  // Keep only what a choice can look like: the Drive copy is a file the student could edit.
+  // (An edited value that isn't an option just makes variant() fall back to its default.)
+  function clean(raw) {
+    const out = { _at: {} };
+    if (!raw || typeof raw !== 'object') return out;
+    const at = raw._at && typeof raw._at === 'object' ? raw._at : {};
+    for (const [k, v] of Object.entries(raw)) {
+      if (k === '_at' || !/^[a-z]\w{0,19}$/.test(k) || typeof v !== 'string' || !/^[a-z_]{1,20}$/.test(v)) continue;
+      out[k] = v;
+      out._at[k] = Number.isFinite(at[k]) ? at[k] : 0;
+    }
+    return out;
+  }
+  let choices = { _at: {} };
+  try { choices = clean(JSON.parse(localStorage.getItem(CHOICES_KEY) || '{}')); } catch (e) {}
+  const storeChoices = () => { try { localStorage.setItem(CHOICES_KEY, JSON.stringify(choices)); } catch (e) {} };
+  const upload = () => window.Classroom?.submitResults?.(choices, SYNC_NAME);   // no-op when not signed in
+
+  // Merge in the Drive copy: for each choice, the one made most recently wins. Then, if this
+  // computer knows something Drive doesn't, send it back.
+  let synced = Promise.resolve();
+  async function pull() {
+    const C = window.Classroom;
+    if (!C?.isClassroomContext || !C.fetchResults) return;
+    let remote = null;
+    try { remote = clean(await C.fetchResults(SYNC_NAME)); } catch (e) { return; }
+    let changed = false, ahead = false;
+    for (const k of new Set([...Object.keys(remote._at), ...Object.keys(choices._at)])) {
+      const rt = k in remote._at ? remote._at[k] : -1, lt = k in choices._at ? choices._at[k] : -1;
+      if (rt > lt) { choices[k] = remote[k]; choices._at[k] = rt; changed = true; }
+      else if (choices[k] !== remote[k]) ahead = true;
+    }
+    if (changed) storeChoices();
+    if (ahead) upload();
+  }
   function choose(key, value) {
     choices[key] = value;
-    try { localStorage.setItem(CHOICES_KEY, JSON.stringify(choices)); } catch (e) {}
+    choices._at[key] = Date.now();
+    storeChoices();
+    synced = synced.then(upload);   // after the Drive copy is merged, so it can't overwrite this
   }
   // The version of a beat that matches the student's choices.
   function resolve(b) {
@@ -2084,6 +2138,8 @@ color:  teal
     $('szMap').innerHTML = renderMap(map);
     $('szRoomList').innerHTML = renderRoomList(map);
     $('szReadouts').innerHTML = renderReadouts(b.readouts);
+    $('szPrev').hidden = !b.previously;
+    $('szPrevFull').textContent = $('szPrevTyped').textContent = b.previously || '';
     $('szLogFull').textContent = $('szLogTyped').textContent = b.log || '';
     const q = $('szQuote');
     q.hidden = !b.quote;
@@ -2101,6 +2157,7 @@ color:  teal
     typeSequence([
       { cps: 3, items: [$('szKicker'), $('szClock')] },
       { cps: 2, items: [$('szTitleTyped')] },
+      ...(b.previously ? [{ cps: 2, items: [$('szPrevTyped')] }] : []),
       ...(feedMs ? [{ wait: feedMs }] : []),
       { cps: 1, items: [...$('szMap').querySelectorAll('text')] },
       ...rows.map(row => ({ cps: 3, items: [...row.querySelectorAll('[data-tw]')] })),
@@ -2152,16 +2209,24 @@ color:  teal
   });
 
   // ── Public API (the three hooks) ──
-  function beat(key, opts) {
-    if (seen.includes(key)) return;
-    seen.push(key); save();
-    if (storyOff) { opts?.onClose?.(); return; }
-    open(key, opts);
+  // A report counts as seen once it's closed, not when it opens, so one that was cut off
+  // (a reload, or Classroom's sign-in redirect on a new computer) shows again.
+  let showing = null;
+  function beat(key, opts = {}) {
+    if (seen.includes(key) || showing === key) return;
+    const done = () => { if (!seen.includes(key)) { seen.push(key); save(); } };
+    if (storyOff) { done(); opts.onClose?.(); return; }
+    showing = key;
+    open(key, { ...opts, onClose: () => { showing = null; done(); opts.onClose?.(); } });
   }
 
-  function start() {
+  async function start() {
     $('szChapterLine').textContent = [STORY.chapter, STORY.topic, 'Python · Year 9'].filter(Boolean).join('  ·  ');
     $('szObjective').innerHTML = '<b>Objective:</b><span class="sz-obj-text">' + esc(STORY.objective || '') + '</span>';
+    // Fetch the student's choices from Drive first (for the "Previously…" line), but never
+    // hold up the first report for more than 4 seconds.
+    synced = pull();
+    if (window.Classroom?.isAuthenticated) await Promise.race([synced, new Promise(r => setTimeout(r, 4000))]);
     beat('intro');
   }
 

@@ -177,7 +177,7 @@ test('Modify 1 is a choice: the requirement appears once chosen, only that line 
   await page.click('#btn_check_m1');
   await expect(page.locator('#fb_m1')).toHaveClass(/pass/, { timeout: 30000 });
   await expect(page.locator('input[name="m1_choice"][value="open"]')).toBeDisabled();
-  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('sz_choices')))).toEqual({ door: 'sealed' });
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('sz_choices')))).toMatchObject({ door: 'sealed' });
   await expect(page.locator('#m1_step_2')).toBeVisible({ timeout: 10000 });
   // the choice is saved with the rest of the work
   await page.reload();

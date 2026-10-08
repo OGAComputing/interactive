@@ -193,7 +193,7 @@ test('choosing 40 litres changes the requirement and the later numbers, and is s
   await expect(page.locator('#m1_step_2')).toBeVisible({ timeout: 10000 });
   await expect(page.locator('#req_m1_3 .v-total')).toHaveText('720');
   await expect(page.locator('#req_m1_4 .v-total')).toHaveText('720');
-  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('sz_choices')))).toEqual({ air: 'low' });
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('sz_choices')))).toMatchObject({ air: 'low' });
 });
 
 // Door open (Wake Up) + 40 litres here: Pod 5 has both risks, and Patel doesn't make it.
@@ -272,4 +272,74 @@ test('Make passes, plays the cliffhanger once, and the extension completes the c
   await expect(page.locator('#fb_m2')).toHaveClass(/pass/, { timeout: 30000 });
   await expect(page.locator('#completionBanner')).toBeVisible();
   await expect(page.locator('#szOverlay')).not.toHaveClass(/open/);
+});
+
+// ─── Missed lessons and other computers ─────────────────────────────────────
+
+test('the first report recaps the last chapter, using the default when Wake Up was missed', async ({ page }) => {
+  await openAt(page, {}, { story: true });
+  await expect(page.locator('#szOverlay')).toHaveClass(/open/);
+  await expect(page.locator('#szPrev')).toBeVisible();
+  await expect(page.locator('#szPrevFull')).toContainText('kept the Cryo Bay door sealed');
+  await expect(page.locator('#szReadouts')).toContainText('24%');
+});
+
+test('the recap follows the door choice', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('sz_choices', JSON.stringify({ door: 'open' })));
+  await openAt(page, {}, { story: true });
+  await expect(page.locator('#szPrevFull')).toContainText('something slipped in');
+});
+
+test('a report that was never closed shows again after a reload', async ({ page }) => {
+  await openAt(page, {}, { story: true });
+  await expect(page.locator('#szOverlay')).toHaveClass(/open/);
+  await page.reload();
+  await expect(page.locator('#pyStatusText')).toHaveText(/ready/, { timeout: 60000 });
+  await expect(page.locator('#szOverlay')).toHaveClass(/open/);
+});
+
+// A stand-in for classroom.js: signed in through Classroom, with a Drive copy of the choices.
+function fakeClassroom(drive) {
+  return `window.__uploads = [];
+    window.Classroom = {
+      isClassroomContext: true, isAuthenticated: true,
+      verifyAuth: () => true, submitGrade() {}, submitResults(obj, name) { window.__uploads.push({ name, obj: JSON.parse(JSON.stringify(obj)) }); },
+      fetchResults: async name => name === 'Station Zero' ? ${JSON.stringify(drive)} : null,
+    };`;
+}
+
+test('on another computer, the choices come back from Drive before the first report', async ({ page }) => {
+  await page.route('**/classroom.js', r => r.fulfill({ contentType: 'application/javascript',
+    body: fakeClassroom({ door: 'open', air: '<b>x</b>', _at: { door: 5, air: 6 } }) }));
+  await openAt(page, {}, { story: true });
+  await expect(page.locator('#szOverlay')).toHaveClass(/open/);
+  await expect(page.locator('#szReadouts')).toContainText('29%');
+  await expect(page.locator('#szPrevFull')).toContainText('something slipped in');
+  // stored on this computer too; a value that isn't a valid choice is dropped
+  const local = await page.evaluate(() => JSON.parse(localStorage.getItem('sz_choices')));
+  expect(local.door).toBe('open');
+  expect(local.air).toBeUndefined();
+});
+
+test('the most recent choice wins, and a choice Drive is missing is sent to it', async ({ page }) => {
+  await page.route('**/classroom.js', r => r.fulfill({ contentType: 'application/javascript',
+    body: fakeClassroom({ door: 'open', _at: { door: 100 } }) }));
+  await page.addInitScript(() => localStorage.setItem('sz_choices',
+    JSON.stringify({ door: 'sealed', air: 'low', _at: { door: 50, air: 200 } })));
+  await openAt(page, {}, { story: true });
+  await expect(page.locator('#szPrevFull')).toContainText('something slipped in');   // Drive's door is newer
+  await expect.poll(() => page.evaluate(() => window.__uploads.length)).toBeGreaterThan(0);
+  const up = await page.evaluate(() => window.__uploads.at(-1));
+  expect(up.name).toBe('Station Zero');
+  expect(up.obj).toMatchObject({ door: 'open', air: 'low' });
+});
+
+test('locking in the Modify choice sends it to Drive', async ({ page }) => {
+  await page.route('**/classroom.js', r => r.fulfill({ contentType: 'application/javascript', body: fakeClassroom(null) }));
+  await openAt(page, { currentStage: 'M1', completedStages: ['P', 'R', 'I'] });
+  await page.check('input[name="m1_choice"][value="low"]');
+  await setCode(page, 'm1_editor', STARTER.replace('* 50', '* 40'));
+  await page.click('#btn_check_m1');
+  await expect(page.locator('#fb_m1')).toHaveClass(/pass/, { timeout: 30000 });
+  await expect.poll(() => page.evaluate(() => window.__uploads.at(-1)?.obj.air)).toBe('low');
 });
