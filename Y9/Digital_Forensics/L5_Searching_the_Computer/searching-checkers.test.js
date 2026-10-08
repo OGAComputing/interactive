@@ -5,6 +5,7 @@ import {
   DELETED_FILES, recoveryStatus, protectReady, justificationOk, personalDetails, weaknesses, checkJournalGuess,
   CHECKPOINTS, drawCheckpoint, optionOrder, GATES, CARVE_BLOCKS, CARVE_TARGET, isHistoryBlock, DEMO_PREDICT, cooldownSeconds,
   THREATS, DEFENCES, timeLimit, multiplier, scorePlay, rankFor, buildDeck, handFor, seededRandom,
+  THREAT_LEVELS, threatLevel,
 } from './searching-checkers.js';
 
 describe('journal dictionary attack', () => {
@@ -213,7 +214,10 @@ describe('Breach Defence game', () => {
   test('ranks', () => {
     expect(rankFor(0)).toBe('Trainee');
     expect(rankFor(2500)).toBe('Forensic Technician');
-    expect(rankFor(99999)).toBe('Head of Cyber Unit');
+    expect(rankFor(24999)).toBe('Head of Cyber Unit');
+    expect(rankFor(25000)).toBe('Threat Hunter');
+    expect(rankFor(99999)).toBe('National Cyber Chief');
+    expect(rankFor(250000)).toBe('Cyber Legend');
   });
 
   test('a challenge code gives everyone the same deck', () => {
@@ -237,5 +241,42 @@ describe('Breach Defence game', () => {
       expect(new Set(h).size).toBe(4);
       expect(h).toContain(t.best);
     }
+  });
+
+  test('threat level rises at 25k and 50k', () => {
+    expect(threatLevel(0).name).toBe('GUARDED');
+    expect(threatLevel(24999).name).toBe('GUARDED');
+    expect(threatLevel(25000).name).toBe('ELEVATED');
+    expect(threatLevel(75000).name).toBe('SEVERE');
+  });
+
+  test('higher threat levels deal bigger hands with every partly-right decoy', () => {
+    const rnd = seededRandom('decoys');
+    for (const lvl of THREAT_LEVELS) {
+      for (const t of THREATS) {
+        const h = handFor(t, rnd, lvl);
+        expect(h.length).toBe(lvl.cards);
+        expect(new Set(h).size).toBe(lvl.cards);
+        expect(h).toContain(t.best);
+        if (lvl.decoys) t.ok.forEach(d => expect(h).toContain(d));
+      }
+    }
+  });
+
+  test('at SEVERE a partly-right defence costs a life', () => {
+    const t = THREATS.find(x => x.id === 'phone'); // best lock, ok wipe
+    expect(scorePlay(t, 'wipe', 5, 10, 4, true)).toEqual({ result: 'ok', points: 0, streak: 0, lifeLost: true });
+    expect(scorePlay(t, 'lock', 10, 10, 0, true).lifeLost).toBe(false);
+  });
+
+  test('an extended deck carries on without a back-to-back repeat', () => {
+    const d = buildDeck('ABC', 120);
+    for (let k = 0; k < 5; k++) {
+      const more = buildDeck(`ABC#${d.length}`, 120, d[d.length - 1].id);
+      expect(more[0].id).not.toBe(d[d.length - 1].id);
+      d.push(...more);
+    }
+    for (let i = 1; i < d.length; i++) expect(d[i].id).not.toBe(d[i - 1].id);
+    expect(buildDeck('ABC#120', 120, 'bf').map(t => t.id)).toEqual(buildDeck('abc#120', 120, 'bf').map(t => t.id));
   });
 });

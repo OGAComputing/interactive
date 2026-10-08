@@ -570,6 +570,20 @@ export function timeLimit(cardIndex) {
   return Math.max(8, 20 - Math.floor(cardIndex / 5) * 3);
 }
 
+// Threat level rises with score, on top of the shrinking timer: a bigger hand, the
+// partly-right cards always dealt as decoys, then partly-right answers cost a life.
+export const THREAT_LEVELS = [
+  { min: 0,     name: 'GUARDED',  cards: 4, decoys: false, strict: false },
+  { min: 25000, name: 'ELEVATED', cards: 5, decoys: true,  strict: false },
+  { min: 50000, name: 'SEVERE',   cards: 6, decoys: true,  strict: true  },
+];
+
+export function threatLevel(score) {
+  let lvl = THREAT_LEVELS[0];
+  for (const l of THREAT_LEVELS) if (score >= l.min) lvl = l;
+  return lvl;
+}
+
 // Streak multiplier: x1, then x2 from 3 in a row, x3 from 6, x4 from 10.
 export function multiplier(streak) {
   if (streak >= 10) return 4;
@@ -580,14 +594,16 @@ export function multiplier(streak) {
 
 // Score one play. secondsLeft rewards speed: up to +100, in proportion to the time left.
 // Returns { result: 'best'|'ok'|'wrong', points, streak, lifeLost }.
-export function scorePlay(threat, defenceId, secondsLeft, limit, streak) {
+// With strict (threat level SEVERE), a partly-right defence scores nothing and costs a life.
+export function scorePlay(threat, defenceId, secondsLeft, limit, streak, strict = false) {
   if (defenceId === threat.best) {
     const newStreak = streak + 1;
     const speed = Math.round(SPEED_BONUS * Math.max(0, Math.min(1, secondsLeft / limit)));
     return { result: 'best', points: (BASE_POINTS + speed) * multiplier(newStreak), streak: newStreak, lifeLost: false };
   }
   if (threat.ok.includes(defenceId)) {
-    return { result: 'ok', points: PARTIAL_POINTS, streak: 0, lifeLost: false };
+    return strict ? { result: 'ok', points: 0, streak: 0, lifeLost: true }
+                  : { result: 'ok', points: PARTIAL_POINTS, streak: 0, lifeLost: false };
   }
   return { result: 'wrong', points: 0, streak: 0, lifeLost: true };
 }
@@ -596,6 +612,8 @@ export function scorePlay(threat, defenceId, secondsLeft, limit, streak) {
 export const RANKS = [
   [0, 'Trainee'], [1000, 'Evidence Officer'], [2500, 'Forensic Technician'],
   [5000, 'Digital Investigator'], [8000, 'Senior Analyst'], [12000, 'Head of Cyber Unit'],
+  [25000, 'Threat Hunter'], [50000, 'Incident Commander'], [75000, 'National Cyber Chief'],
+  [100000, 'Cyber Legend'],
 ];
 
 export function rankFor(score) {
@@ -618,7 +636,8 @@ export function seededRandom(seed) {
 }
 
 // A long run of threats (cycled reshuffles) so no card repeats back-to-back.
-export function buildDeck(seed, length = 120) {
+// afterId is the card just before this deck, so an extension never repeats it either.
+export function buildDeck(seed, length = 120, afterId = null) {
   const rnd = seed ? seededRandom(seed) : Math.random;
   const deck = [];
   while (deck.length < length) {
@@ -627,21 +646,23 @@ export function buildDeck(seed, length = 120) {
       const j = Math.floor(rnd() * (i + 1));
       [round[i], round[j]] = [round[j], round[i]];
     }
-    if (deck.length && round[0].id === deck[deck.length - 1].id) round.push(round.shift());
+    const prev = deck.length ? deck[deck.length - 1].id : afterId;
+    if (round[0].id === prev) round.push(round.shift());
     deck.push(...round);
   }
   return deck.slice(0, length);
 }
 
 // The defence cards offered for a threat: the best answer plus distractors, shuffled.
-// Always 4 cards; partly-right cards may appear as distractors.
-export function handFor(threat, rnd = Math.random) {
+// The threat level sets the hand size; with decoys on, the partly-right cards are always in it.
+export function handFor(threat, rnd = Math.random, level = THREAT_LEVELS[0]) {
   const others = Object.keys(DEFENCES).filter(d => d !== threat.best);
   for (let i = others.length - 1; i > 0; i--) {
     const j = Math.floor(rnd() * (i + 1));
     [others[i], others[j]] = [others[j], others[i]];
   }
-  const hand = [threat.best, ...others.slice(0, 3)];
+  if (level.decoys) others.sort((a, b) => threat.ok.includes(b) - threat.ok.includes(a));
+  const hand = [threat.best, ...others.slice(0, level.cards - 1)];
   for (let i = hand.length - 1; i > 0; i--) {
     const j = Math.floor(rnd() * (i + 1));
     [hand[i], hand[j]] = [hand[j], hand[i]];

@@ -378,11 +378,13 @@ color:  cyan
     padding: 22px; text-align: center; position: relative; min-height: 150px;
   }
   .threat .lbl { font: .68rem var(--font-head); color: var(--red); letter-spacing: 3px; }
+  .hud .lvl { font-size: .72rem; letter-spacing: 2px; padding: 3px 10px; border-radius: 12px; border: 1px solid var(--muted); color: var(--muted); }
+  .hud .lvl.up { border-color: var(--red); color: var(--red); }
   .threat .txt { font-size: 1.2rem; font-weight: 700; margin: 10px 0 14px; line-height: 1.4; }
   .tbar { height: 8px; border-radius: 4px; background: var(--bg); overflow: hidden; }
   .tbar > div { height: 100%; width: 100%; background: var(--gold); }
   .tbar > div.low { background: var(--red); }
-  .hand { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 16px; }
+  .hand { display: grid; grid-template-columns: repeat(var(--cols, 4), 1fr); gap: 12px; margin-top: 16px; }
   .dcard {
     border: 2px solid var(--surface-dim); border-radius: 12px; background: var(--surface); color: var(--text);
     padding: 16px 8px; cursor: pointer; text-align: center; font: 700 .9rem var(--font-body); transition: transform .12s, border-color .12s;
@@ -1122,7 +1124,7 @@ color:  cyan
         </div>
         <div class="card-title">🏅 Badges</div>
         <div class="badges" id="bd-badges"></div>
-        <p class="muted" style="font-size:.8rem;margin-top:14px">Scoring: best defence = 100 pts + up to 100 speed bonus (the faster you play, the more you get), × streak multiplier (×2 at 3 in a row, ×3 at 6, ×4 at 10). A partly-right defence = 30 pts but breaks your streak. Keys <b>1–4</b> play cards. You get 20 seconds per card at first; it shrinks every 5 threats.</p>
+        <p class="muted" style="font-size:.8rem;margin-top:14px">Scoring: best defence = 100 pts + up to 100 speed bonus (the faster you play, the more you get), × streak multiplier (×2 at 3 in a row, ×3 at 6, ×4 at 10). A partly-right defence = 30 pts but breaks your streak. Keys <b>1–6</b> play cards. You get 20 seconds per card at first; it shrinks every 5 threats.<br>Threat level rises with your score: at <b>25,000</b> (ELEVATED) you get 5 cards and the partly-right ones are always in your hand; at <b>50,000</b> (SEVERE) you get 6 cards and a partly-right defence counts as a breach.</p>
       </div>
 
       <!-- Game -->
@@ -1131,6 +1133,7 @@ color:  cyan
           <div class="score" id="hud-score">0</div>
           <div class="mult" id="hud-mult">×1</div>
           <div class="muted">Threat <b id="hud-card">1</b> · Streak <b id="hud-streak">0</b></div>
+          <div class="lvl" id="hud-lvl">GUARDED</div>
           <div class="lives" id="hud-lives">❤️❤️❤️</div>
         </div>
         <div class="threat">
@@ -1180,6 +1183,7 @@ import {
   CARVE_BLOCKS, CARVE_TARGET, CARVE_PENALTY, isHistoryBlock, DEMO_PREDICT,
   DELETED_FILES, OVERWRITTEN_BLOCKS, DISK_BLOCKS, justificationOk, protectReady,
   DEFENCES, LIVES, timeLimit, multiplier, scorePlay, RANKS, rankFor, buildDeck, handFor, seededRandom,
+  THREAT_LEVELS, threatLevel,
 } from './searching-checkers.js';
 
 const ACTIVITY_TITLE = 'Searching the Computer';
@@ -2279,7 +2283,7 @@ function bdStart(code) {
   bdStop();
   game = {
     code, deck: buildDeck(code || null, 120), rnd: code ? seededRandom(code + '#hand') : Math.random,
-    i: 0, score: 0, lives: LIVES, streak: 0, maxStreak: 0, bestCount: 0, fast: 0, perfect: true,
+    i: 0, score: 0, level: null, lives: LIVES, streak: 0, maxStreak: 0, bestCount: 0, fast: 0, perfect: true,
     missed: [], locked: false, over: false, raf: 0, next: 0,
   };
   bdShow('bd-game');
@@ -2295,16 +2299,33 @@ function bdHud() {
   document.getElementById('hud-card').textContent = game.i + 1;
   document.getElementById('hud-streak').textContent = game.streak;
   document.getElementById('hud-lives').textContent = '❤️'.repeat(game.lives) + '🖤'.repeat(LIVES - game.lives);
+  const lvl = document.getElementById('hud-lvl');
+  lvl.textContent = game.level.name; lvl.classList.toggle('up', game.level !== THREAT_LEVELS[0]);
 }
 function bdCard() {
+  // Top the deck up before it runs out; a challenge code still gives everyone the same threats.
+  if (game.i >= game.deck.length - 1) {
+    const seed = game.code ? `${game.code}#${game.deck.length}` : null;
+    game.deck.push(...buildDeck(seed, 120, game.deck[game.deck.length - 1].id));
+  }
   const threat = game.deck[game.i];
+  const level = threatLevel(game.score);
+  if (level !== game.level) {
+    if (game.level) showToast(level.strict
+      ? `🚨 Threat level ${level.name}: ${level.cards} cards, and partly-right answers now cost a life`
+      : `⚠ Threat level ${level.name}: ${level.cards} cards, and the partly-right ones are always dealt`, 'warn');
+    game.level = level;
+  }
   game.threat = threat;
-  game.hand = handFor(threat, game.rnd);
+  game.hand = handFor(threat, game.rnd, level);
   game.limit = timeLimit(game.i);
   game.locked = false;
+  document.getElementById('threat-lbl').textContent = '⚠ INCOMING THREAT' + (level === THREAT_LEVELS[0] ? '' : ` · ${level.name}`);
   document.getElementById('threat-txt').textContent = threat.text;
   document.getElementById('verdict').innerHTML = '';
-  document.getElementById('hand').innerHTML = game.hand.map((d, k) =>
+  const handEl = document.getElementById('hand');
+  handEl.style.setProperty('--cols', game.hand.length === 6 ? 3 : game.hand.length);
+  handEl.innerHTML = game.hand.map((d, k) =>
     `<button class="dcard" data-def="${d}" onclick="bdPlay('${d}')"><span class="big">${DEFENCES[d].icon}</span>${DEFENCES[d].name}<span class="key">[${k + 1}]</span></button>`).join('');
   bdHud();
   game.start = performance.now();
@@ -2326,7 +2347,7 @@ function bdPlay(defId) {
   const t = game.threat;
   const used = (performance.now() - game.start) / 1000;
   const left = Math.max(0, game.limit - used);
-  const res = defId ? scorePlay(t, defId, left, game.limit, game.streak)
+  const res = defId ? scorePlay(t, defId, left, game.limit, game.streak, game.level.strict)
                     : { result: 'wrong', points: 0, streak: 0, lifeLost: true };
   game.score += res.points;
   game.streak = res.streak;
@@ -2342,6 +2363,7 @@ function bdPlay(defId) {
   });
   const v = document.getElementById('verdict');
   if (res.result === 'best') v.innerHTML = `✅ Blocked! <span class="pts">+${res.points}</span><br><span class="muted">${t.why}</span>`;
+  else if (res.result === 'ok' && res.lifeLost) v.innerHTML = `🟡 Only partly helps, and at ${game.level.name} that's a breach. You lose a life. Best was <b>${DEFENCES[t.best].name}</b>.<br><span class="muted">${t.why}</span>`;
   else if (res.result === 'ok') v.innerHTML = `🟡 Partly helps <span class="pts">+${res.points}</span>. Best was <b>${DEFENCES[t.best].name}</b>.<br><span class="muted">${t.why}</span>`;
   else v.innerHTML = `${defId ? '💥 Breached!' : '⏱ Too slow!'} You lose a life. Best was <b>${DEFENCES[t.best].name}</b>.<br><span class="muted">${t.why}</span>`;
   bdHud();
@@ -2399,7 +2421,7 @@ function bdOver() {
 document.addEventListener('keydown', e => {
   if (!game || game.over || game.locked) return;
   if (!document.getElementById('bd-game').classList.contains('on')) return;
-  if (/^[1-4]$/.test(e.key)) { const d = game.hand[+e.key - 1]; if (d) bdPlay(d); }
+  if (/^[1-6]$/.test(e.key)) { const d = game.hand[+e.key - 1]; if (d) bdPlay(d); }
 });
 
 
