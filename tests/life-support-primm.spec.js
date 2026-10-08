@@ -170,6 +170,7 @@ test('Investigate bug step: Break it gives a TypeError; fixing with str() comple
 
 test('Modify 1 passes on the output (rate 60 → 360) and a wrong rate fails', async ({ page }) => {
   await openAt(page, { currentStage: 'M1', completedStages: ['P', 'R', 'I'] });
+  await page.check('input[name="m1_choice"][value="full"]');
   await setCode(page, 'm1_editor', STARTER.replace('* 50', '* 70'));
   await page.click('#btn_check_m1');
   await expect(page.locator('#fb_m1')).toHaveClass(/fail/, { timeout: 30000 });
@@ -179,6 +180,54 @@ test('Modify 1 passes on the output (rate 60 → 360) and a wrong rate fails', a
   await page.click('#btn_check_m1');
   await expect(page.locator('#fb_m1')).toHaveClass(/pass/, { timeout: 30000 });
   await expect(page.locator('#m1_step_2')).toBeVisible({ timeout: 10000 });
+});
+
+test('choosing 40 litres changes the requirement and the later numbers, and is stored for the story', async ({ page }) => {
+  await openAt(page, { currentStage: 'M1', completedStages: ['P', 'R', 'I'] });
+  await expect(page.locator('#m1_task_1')).toBeHidden();
+  await page.check('input[name="m1_choice"][value="low"]');
+  await expect(page.locator('#req_m1_1_text')).toContainText('240');
+  await setCode(page, 'm1_editor', STARTER.replace('* 50', '* 40'));
+  await page.click('#btn_check_m1');
+  await expect(page.locator('#fb_m1')).toHaveClass(/pass/, { timeout: 30000 });
+  await expect(page.locator('#m1_step_2')).toBeVisible({ timeout: 10000 });
+  await expect(page.locator('#req_m1_3 .v-total')).toHaveText('720');
+  await expect(page.locator('#req_m1_4 .v-total')).toHaveText('720');
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('sz_choices')))).toEqual({ air: 'low' });
+});
+
+// Door open (Wake Up) + 40 litres here: Pod 5 has both risks, and Patel doesn't make it.
+test('the report after Modify plays the outcome of both choices', async ({ page }) => {
+  await page.addInitScript(p => {
+    localStorage.setItem('sz_story_' + p, JSON.stringify(['intro', 'P', 'R', 'I']));
+    localStorage.setItem('sz_choices', JSON.stringify({ door: 'open', air: 'low' }));
+  }, PATH);
+  await openAt(page, {
+    currentStage: 'M1', completedStages: ['P', 'R', 'I'], stepM1: 4, maxStepM1: 4, radio_m1_choice: 'low',
+    passedChecks: { m1_code1: true, m1_code2: true, m1_code3: true },
+  }, { story: true });
+  await setCode(page, 'm1_editor', [
+    STARTER.replace('* 50', '* 40'),
+    'crew = int(input("Crew awake: "))',
+    'print(crew)',
+    'total = hours * crew * 40',
+    'print("Total oxygen: " + str(total) + " litres")',
+  ].join('\n'));
+  await page.click('#btn_check_m1');
+  await expect(page.locator('#fb_m1')).toHaveClass(/pass/, { timeout: 30000 });
+  await expect(page.locator('#szOverlay')).toHaveClass(/open/, { timeout: 10000 });
+  await expect(page.locator('#szTitle')).toHaveText(/Pod 5/);
+  await expect(page.locator('#szImpact .sz-feed-term .ln.hit')).toHaveText('Total oxygen: 720 litres');
+  await expect(page.locator('#szImpact svg')).toContainText('MOTION · CRYO BAY');
+  await expect(page.locator('#szReadouts')).toContainText('3 of 5');
+});
+
+test('the chapter opens with the door choice from Wake Up', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('sz_choices', JSON.stringify({ door: 'sealed' })));
+  await openAt(page, {}, { story: true });
+  await expect(page.locator('#szOverlay')).toHaveClass(/open/);
+  await expect(page.locator('#szReadouts')).toContainText('24%');
+  await expect(page.locator('#szLogFull')).toContainText('cost you air');
 });
 
 test('Modify 4: the crew total in a str() sentence passes', async ({ page }) => {

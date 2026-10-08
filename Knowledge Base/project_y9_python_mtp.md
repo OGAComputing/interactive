@@ -141,6 +141,7 @@ Everything in the Y8 Unit 1 plan still applies: PRIMM, reading before writing (L
 - **Topics:** reading errors · casting input · `str()` in sentences · selection with `elif` (ordering conditions) · `while` loops (stopping condition, infinite loops) · `for` and `range()` · turtle loops · defining and calling functions · functions with loops inside.
 - **Y9 addition:** finish with a short **interleaved mixed review** (4 items drawn from different topics). Blocked practice feels fluent but interleaved practice transfers better (Rohrer & Taylor 2007).
 - **Stretch / creative Make:** a guessing game or menu program that combines `while`, `if`/`elif` and at least one function. This is the unit-level "extended Make".
+- **Finale (everyone, decided 2026-10-07):** after the targeted practice, a short **containment protocol** PRIMM. Its Modification 1 is the final Station Zero choice (trap in the airlock or in the nest), and Make passing plays the ending. See "Choices plan, L2–L7".
 - As in the Y8 plan, keep L6 and L7 as **separate** lessons so there is a marking window.
 
 ---
@@ -170,12 +171,68 @@ Everything in the Y8 Unit 1 plan still applies: PRIMM, reading before writing (L
 |---|---|---|---|---|---|
 | L1 round 1 | **1 — Wake Up** | Cryo Bay door | Ask → store → join → output gets you out of the room | Predict: the door check-in program (`name`/`role` = `input(...)`, joined with `+`). Bug: `Name` vs `name` → `NameError`. Make: **crew locator** | A trail of frost leads to Life Support. Something that cold shouldn't be able to walk. |
 | L1 round 2 | **1 — Life Support** | Life support | Ask → store → convert → calculate → output keeps you breathing | Predict: `hours = int(input(...))`, `oxygen = hours * 50`. Investigate: delete `int()`, type `six` (`ValueError`), bug = `TypeError` fixed with `str()`. Hale's last log. Make: **survival supply manifest** | Motion in Sensor Ops. Crew tag: **HALE**. Bio-scan: **not human**. |
-| L2 | **2 — Proximity** | Motion sensors | Multi-way selection = threat level | Predict: `distance = int(input())`: `>= 50` "All clear" / `elif >= 20` "Movement detected" / `else` "IT'S RIGHT BEHIND YOU". Inputs 85, **20** (boundary), 5. Modify adds a band. Make: **access level by crew rank** or **radiation dose bands** (boundary-tested) | The sensors catch it for one frame: a figure in Hale's overalls, moving wrong. Then WARDEN locks the airlock and changes the code. |
-| L3 | **3 — Locked In** | Airlock | `while` the code is wrong, the door stays shut | Predict: `while code != "4271":` (re-skin of 6×7). The planted infinite loop becomes **the airlock cycling forever**, and the runner's 4 s guard is the "emergency override". Make: **crack the backup lock** (guessing game, ★ too high / too low hints) | You're through. Behind you, something hits the airlock door, then Hale's voice on the intercom: *"Let me in. It's me."* Navigation is dark and the rescue ship can't find you. |
-| L4 | **4 — Distress Signal** | Navigation beacon | Turtle draws the beacon patterns that are broadcast into space | Square = a **distress beacon**, and each polygon is a different signal code. The unindented `t.left(90)` logic error is a **garbled signal** (no error message, still wrong). Colour Burst = **flare colours** | Rescue ship replies: *"Signal received. ETA 2 days. Why are there **two** heat signatures aboard?"* |
-| L5 | **5 — The Drone** | Repair drone | Functions are named commands the drone remembers, so the drone goes into the ducts instead of you | `greet()` becomes `drone_status()`. Calling before `def` → `NameError` = "the drone doesn't know that command yet". Animal Fact Finder becomes **cryo-pod lookup** (pod number → crew name/status with `if`/`elif`). ★ Parameters: `scan(distance)` | **Twist:** the drone camera finds the creature nesting in Maintenance, and WARDEN finally speaks: *"HALE DIED THREE DAYS AGO. I SEALED THE DOORS TO KEEP IT IN. EVERY SYSTEM YOU RESTORE OPENS ONE."* The replayed log shows "don't trust WARDEN" wasn't Hale's voice. |
-| L6 | **6 — Systems Check** | All | The rescue ship won't dock unless every system passes | Assessment. **Framing only**: a title card and one line per section heading. Questions stay clean and story-free. | WARDEN: *"IF IT REACHES THE SHIP, IT REACHES EARTH."* Some systems failed the check… |
-| L7 | **7 — Last Stand** | Damaged systems | SRT routing *is* the plot: "your lowest-scoring topics are the systems the creature damaged" | Each repaired topic restores a system. Stretch Make: **containment protocol** with WARDEN (menu loop + `if`/`elif` + a function): seal the doors in the right order and trap it in the airlock. | Ending: the creature is sealed in, the rescue ship docks, the crew wake up… then the rescue ship's own motion tracker blips once. *(Fade to black.)* |
+| L2 | **2 — Proximity** | Motion sensors | Multi-way selection = threat level | Predict: `distance = int(input())`: `>= 50` "All clear" / `elif >= 20` "Movement detected" / `else` "IT'S RIGHT BEHIND YOU". Inputs 85, **20** (boundary), 5. Modify 1 = the **lockdown** choice (below); later steps add a band. Make: **access level by crew rank** or **radiation dose bands** (boundary-tested) | The sensors catch it for one frame: a figure in Hale's overalls, moving wrong. Then WARDEN locks the airlock and changes the code. |
+| L3 | **3 — Locked In** | Airlock | `while` the code is wrong, the door stays shut | Predict: `while code != "4271":` (re-skin of 6×7). The planted infinite loop becomes **the airlock cycling forever**, and the runner's 4 s guard is the "emergency override". Modify 1 = the **airlock code** choice (below). Make: **crack the backup lock** (guessing game, ★ too high / too low hints) | You're through. Behind you, something hits the airlock door (if WARDEN was overridden, the door buckles), then Hale's voice on the intercom: *"Let me in. It's me."* Navigation is dark and the rescue ship can't find you. |
+| L4 | **4 — Distress Signal** | Navigation beacon | Turtle draws the beacon patterns that are broadcast into space | Square = a **distress beacon**, and each polygon is a different signal code. The unindented `t.left(90)` logic error is a **garbled signal** (no error message, still wrong). Colour Burst = **flare colours**. Modify 1 = the **signal** choice (below) | Rescue ship replies: *"Signal received. ETA 1 day"* (MAYDAY) or *"ETA 3 days"* (QUARANTINE). *"Why are there **two** heat signatures aboard?"* |
+| L5 | **5 — The Drone** | Repair drone | Functions are named commands the drone remembers, so the drone goes into the ducts instead of you | `greet()` becomes `drone_status()`. Calling before `def` → `NameError` = "the drone doesn't know that command yet". Modify 1 = the **drone job** choice (below): the starter defines `scout_ducts()` and `guard_cryo()`, and students add a call to one. Animal Fact Finder becomes **cryo-pod lookup** (pod number → crew name/status with `if`/`elif`). ★ Parameters: `scan(distance)` | **Twist:** the drone camera finds the creature nesting in Maintenance, and WARDEN finally speaks: *"HALE DIED THREE DAYS AGO. I SEALED THE DOORS TO KEEP IT IN. EVERY SYSTEM YOU RESTORE OPENS ONE."* The replayed log shows "don't trust WARDEN" wasn't Hale's voice. If WARDEN was overridden in L3: *"YOU TOOK THE AIRLOCK FROM ME. I CAN NO LONGER HOLD IT THERE."* |
+| L6 | **6 — Systems Check** | All | The rescue ship won't dock unless every system passes | Assessment. **Framing only**: a title card and one line per section heading. Questions stay clean and story-free. **The score never changes the story.** The closing report is an inventory of what the student's choices have left them: *Crew alive*, *WARDEN airlock control*, *Nest location*, *Sensors*. | WARDEN: *"IF IT REACHES THE SHIP, IT REACHES EARTH."* |
+| L7 | **7 — Last Stand** | Damaged systems | SRT routing *is* the plot: "your lowest-scoring topics are the systems the creature damaged" | Each repaired topic restores a system. Then **everyone** does a short **containment protocol** PRIMM (decided 2026-10-07; it replaces the stretch-only Make). Its Modify 1 is the **trap** choice (below). | One of three endings (below). Only the bad ending keeps the rescue ship's motion tracker blipping once *(fade to black)*. |
+
+### Choices and the crew count (built 2026-10-07)
+
+Students make story choices, and how many crew survive the unit depends on them. There is no game over: every path reaches the same cliffhangers, and only the reports along the way differ.
+
+**Crew roster.** There are five crew: Okafor (Pod 1), Hale (Pod 2, already dead), Chen (Pod 3), you (Pod 4) and Patel (Pod 5). The Wake Up pod records introduce them and the first *Crew alive: 4 of 5* readout.
+
+**How a choice works (low load).** **Modification 1** of a lesson is the choice. The student picks one of two options on a "Your call" card, and only then does that option's single requirement appear. Both options pass. The note says *"There's no right answer… your choice changes the story, not your score."* The choice locks once Modification 1 passes, and it is stored for the unit in localStorage `sz_choices`. A choice made on another computer is missing, and the story then uses the default.
+
+| Lesson | Choice | Code it changes | Immediate effect |
+|---|---|---|---|
+| L1 Wake Up | **door**: open / sealed (default sealed) | last line prints `Cryo Bay door: OPEN` / `SEALED` | open: something slips into the Cryo Bay. Sealed: it moves away, but oxygen drops to 24% (29% if open) |
+| L1 Life Support | **air**: full (60 L/h) / low (40 L/h) (default full) | the rate on line 3, which flows into Modifications 3–4 (crew total 1080 / 720) | low: Pod 5 goes to minimum power, and oxygen climbs higher (64% vs 58%) |
+
+**Outcome (Life Support's report after Modify, and the cliffhanger's *Crew alive* readout).** Pod 5 faces two risks: the creature in the Cryo Bay (door open) and minimum power (air low).
+- No risk (sealed + full): everyone lives, *4 of 5*.
+- One risk: Patel is **critical**, *4 of 5 · 1 critical*. Later chapters can save or lose Patel.
+- Both risks (open + low): **Patel dies** (the heart monitor goes flat, no gore), *3 of 5*.
+
+**For later chapters:** read `sz_choices` and carry the crew count forward in readouts. One choice per lesson at most, always on Modification 1. Keep the trade-off visible on the card (safer vs. costs air), so a bad outcome never feels like a trick. The *final* survivor count belongs in the L7 ending.
+
+### Choices plan, L2–L7 (planned 2026-10-07, not built yet)
+
+L2–L5 and L7 each have **one PRIMM exercise**, and its Modification 1 is the lesson's choice. L6 (the assessment) has no choice. Each choice is a one-line edit that uses that lesson's concept, both options are equally hard, and the default applies when a choice is missing.
+
+**What the story tracks** (all in `sz_choices`):
+
+| Tracked | Set by | Used by |
+|---|---|---|
+| Crew status: Okafor, Chen, Patel each ok / critical / dead | L1 (Patel), L2 (Chen), L5 (Okafor) | Every report's *Crew alive* readout, and the ending |
+| `lockdown`: cryo / sensors → whether the sensors survive | L2 | The Maintenance trap (L7) |
+| `airlock`: warden / override → whether WARDEN keeps airlock control | L3 | The L5 twist, and the airlock trap (L7) |
+| `signal`: mayday / quarantine | L4 | Whether critical crew survive, and whether an escape reaches the ship |
+| `drone`: scout / guard → whether the nest location is known | L5 | The Maintenance trap (L7) |
+| `trap`: airlock / maintenance | L7 | The ending |
+
+**The rule that ties it together:** critical crew survive only if the rescue ship comes fast (MAYDAY). A fast ship comes unprepared, though, so if the trap fails, the creature gets aboard.
+
+| Lesson | Card (setup) | Option → edit | Trade-off shown on the card | Outcome |
+|---|---|---|---|---|
+| **L2 Proximity** (default: cryo) | Hale's tag is moving between you and the Cryo Bay. When it gets close, the sensor can lock down one room. | **Lock the Cryo Bay** → `else` branch prints `LOCKDOWN: CRYO BAY` · **Lock Sensor Ops** → `LOCKDOWN: SENSOR OPS` (tested with 5) | The crew are safe, but you'll lose the sensors · You and the sensors are safe, but the Cryo Bay is left open | Cryo: crew untouched, sensor array smashed (**sensors lost**). Sensor Ops: Chen becomes **critical**. If Chen is already critical or dead, the attack falls on Okafor instead. No clean "good" option. |
+| **L3 Locked In** (default: warden) | WARDEN has changed the airlock code. Hale's log said not to trust it. | **WARDEN's code** → `"4271"` becomes `"9013"` · **Engineer override** → `"0000"` | WARDEN keeps control of the airlock, and Hale said not to trust it · You're through, and WARDEN can never lock this airlock again | No crew change; it's a trust bet. WARDEN: held in the airlock for a scan, and the intercom voice comes then. Override: straight through, then the door buckles behind you. Most students will override (Hale's log), and L5 shows the cost, which the card stated. |
+| **L4 Distress Signal** (default: quarantine) | The beacon can send one message to the rescue ship. | **MAYDAY** → draw a hexagon (`range(6)`, `60`) · **QUARANTINE** → a triangle (`range(3)`, `120`) | Fastest rescue with medics, but the ship won't know what's aboard · The ship comes ready to contain it, but slower | MAYDAY: *"ETA 1 day. Medical team standing by."* QUARANTINE: *"ETA 3 days. Containment team aboard."* This is the hardest choice in the unit: save the crew or protect Earth. |
+| **L5 The Drone** (default: guard) | The drone can do one job. The creature is heading towards the Cryo Bay. | **Scout the ducts** → add a `scout_ducts()` call · **Guard the Cryo Bay** → add a `guard_cryo()` call | You'll find where it lives, but the Cryo Bay is unguarded · The crew are protected, but you won't learn where it hides | Scout: the nest is found in Maintenance (**nest known**), and Okafor becomes **critical**. Guard: crew safe, the drone is destroyed at the Cryo Bay door, and the nest stays unknown. The twist plays on both paths. |
+| **L6 Systems Check** | — | No choice (assessment) | — | Inventory report only. The score never changes the story. |
+| **L7 Last Stand** (default: airlock) | One chance to trap it. The card shows ✅/❌ for each trap's requirements, from the student's own state. If neither is possible: *"Neither trap is certain. Pick the best chance you have."* | **Trap it in the airlock** → add a `trap_airlock()` call · **Seal it in its nest** → add a `trap_maintenance()` call | Needs WARDEN's airlock control (L3) · Needs the nest known (L5) **and** the sensors (L2) | It's contained if the chosen trap's requirements are met. |
+
+**Endings (L7):**
+
+| Trap worked? | Signal | Ending | Tier |
+|---|---|---|---|
+| Yes | either | The creature is sealed in, the ship docks, the crew wake. WARDEN: *"QUARANTINE HOLDING. GOODBYE, ENGINEER."* No blip. | Good |
+| No | QUARANTINE | The containment team takes it aboard in a sealed unit. *"It's going to Earth. In a box."* | OK (uneasy) |
+| No | MAYDAY | The ship leaves, and its motion tracker blips once. Fade to black. | Bad |
+
+**Final roll call** on every ending: critical crew survive with MAYDAY and are lost with QUARANTINE. The best case is 4 of 5 (only Hale lost). The worst case is **1 of 5 (only you)**, which was confirmed as acceptable.
 
 ### Rules for keeping the story low-load and safe
 

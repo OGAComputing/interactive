@@ -1376,20 +1376,30 @@
     // Verify all required scopes were actually granted.
     // Users can uncheck permissions on the consent screen, so we must confirm
     // the returned scope list contains everything we asked for.
-    const grantedScopes = (tokenResponse.scope || '').split(' ');
+    // Google may report `email` under its long name, so accept either.
+    const grantedScopes = (tokenResponse.scope || '').split(' ')
+      .map(s => s === 'https://www.googleapis.com/auth/userinfo.email' ? 'email' : s);
     const missingScopes = SCOPE.split(' ').filter(s => s && !grantedScopes.includes(s));
     if (missingScopes.length > 0) {
       console.warn('Classroom: missing scopes after sign-in:', missingScopes);
       try { localStorage.removeItem(AUTH_STORAGE_KEY); } catch (_) {}
-      const dot  = document.getElementById('classroom-dot');
-      const text = document.getElementById('classroom-text');
-      if (dot)  dot.style.cssText = 'background:#ef4444;box-shadow:0 0 8px #ef4444';
-      if (text) text.textContent = '⚠️ Some permissions were not granted — please sign in again and allow all access.';
-      showClassroomToast('⚠️ Please grant all permissions and sign in again.');
-      // Re-prompt with consent screen so the user can tick all checkboxes.
-      setTimeout(() => signInViaRedirect({ prompt: 'consent' }), 1500);
+      let retried = false;
+      try { retried = !!sessionStorage.getItem(CONSENT_RETRY_KEY); } catch (_) {}
+      if (!retried) {
+        // Re-prompt with the consent screen once so the user can tick all checkboxes.
+        try { sessionStorage.setItem(CONSENT_RETRY_KEY, '1'); } catch (_) {}
+        setBannerAuthRequired('⚠️ Some permissions were not granted — taking you back to tick every box…');
+        showClassroomToast('⚠️ Please tick every permission box.');
+        setTimeout(() => signInViaRedirect({ prompt: 'consent' }), 1500);
+      } else {
+        // Already re-prompted once in this tab: stop here rather than loop. If the
+        // school's Google admin blocks a scope, Google will never grant it.
+        setBannerAuthRequired('⚠️ Google did not give this page every permission it needs. Click Sign in and tick every box — if it keeps happening, tell your teacher.');
+        window.ErrorReporter?.report('Classroom sign-in', new Error('Permissions not granted: ' + missingScopes.join(' ')));
+      }
       return;
     }
+    try { sessionStorage.removeItem(CONSENT_RETRY_KEY); } catch (_) {}
 
     accessToken = tokenResponse.access_token;
     authExpiresAt = tokenResponse.expires_at || 0;
@@ -1474,20 +1484,62 @@
   // in sessionStorage and bounces the user back to the originating activity page.
 
   function signInViaRedirect(opts) {
+    const prompt = (opts && opts.prompt) || 'select_account';
     const params = new URLSearchParams({
       client_id    : CLIENT_ID,
       redirect_uri : window.location.origin + '/interactive/oauth-callback.html',
       response_type: 'token',
       scope        : SCOPE,
-      prompt       : (opts && opts.prompt) || 'select_account',
+      prompt,
     });
-    try { sessionStorage.setItem('oga_return_url', window.location.href); } catch (_) {}
+    try {
+      sessionStorage.setItem('oga_return_url', window.location.href);
+      // Tells oauth-callback.html whether an error is an expected silent-auth
+      // miss or a real failure the student should see.
+      sessionStorage.setItem('oga_auth_mode', prompt === 'none' ? 'silent' : 'interactive');
+    } catch (_) {}
     window.location.href = 'https://accounts.google.com/o/oauth2/v2/auth?' + params;
   }
 
   // Called on page load to pick up a token left by oauth-callback.html after
   // returning from Google's sign-in page.
   const AUTH_STORAGE_KEY = 'oga_auth';
+  const CONSENT_RETRY_KEY = 'oga_consent_retried';
+
+  // Friendly text for errors Google returns after an interactive sign-in.
+  function describeAuthError(error) {
+    switch (error) {
+      case 'access_denied':
+        return 'Sign-in was cancelled, or a permission was refused. Click Sign in and tick every box.';
+      case 'admin_policy_enforced':
+      case 'org_internal':
+        return 'Your school\'s Google settings blocked sign-in for this page. Please tell your teacher.';
+      case 'interaction_required':
+      case 'login_required':
+      case 'consent_required':
+        return 'Google needs you to sign in again. Click Sign in and choose your school account.';
+      default:
+        return 'Google sign-in failed (' + error + '). Click Sign in to try again — if it keeps happening, tell your teacher.';
+    }
+  }
+
+  // An interactive sign-in that came back with an error: show it instead of
+  // silently returning the student to an unchanged page.
+  function checkInteractiveAuthError() {
+    let json = null;
+    try {
+      json = sessionStorage.getItem('oga_auth_error');
+      sessionStorage.removeItem('oga_auth_error');
+    } catch (_) {}
+    if (!json) return;
+    let data = {};
+    try { data = JSON.parse(json) || {}; } catch (_) {}
+    if (!data.error) return;
+    console.warn('Classroom: sign-in error from Google:', data.error, data.description || '');
+    setBannerAuthRequired('⚠️ ' + describeAuthError(data.error));
+    window.ErrorReporter?.report('Classroom sign-in',
+      new Error('Google returned ' + data.error + (data.description ? ': ' + data.description : '')));
+  }
 
   function checkPendingOAuthToken() {
     let json = null;
@@ -1528,7 +1580,13 @@
     return true;
   }
 
-  window._classroomSignIn = function () { signInViaRedirect(); };
+  window._classroomSignIn = function () {
+    // After a missing-permission retry, show the consent screen again so the
+    // student can tick the boxes they skipped.
+    let consentNeeded = false;
+    try { consentNeeded = !!sessionStorage.getItem(CONSENT_RETRY_KEY); } catch (_) {}
+    signInViaRedirect(consentNeeded ? { prompt: 'select_account consent' } : undefined);
+  };
 
   async function submitGradeNow(gradePercent, activityName) {
     if (!proxyUrl) {
@@ -1700,6 +1758,7 @@
 
     // Pick up token from redirect, or restore a persisted one (refresh / different activity).
     const hasToken = checkPendingOAuthToken() || checkStoredToken();
+    if (!hasToken) checkInteractiveAuthError();
 
     if (!hasToken) {
       // No token available. Check if a previous silent-auth attempt already failed

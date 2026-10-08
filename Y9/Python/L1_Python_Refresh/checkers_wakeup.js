@@ -65,11 +65,12 @@ const joinsAnswer = raw => {
   return printArgs(raw).some(a => /\+/.test(a) && /""|''/.test(a) && vars.some(v => word(v).test(a)));
 };
 
-function evalReqs(check, raw, output) {
-  const results = check.reqs.map(r => !!r.test(raw, output));
+// choice = the student's Station Zero choice (Modify 1 only); hints and passMsg may be functions of it.
+function evalReqs(check, raw, output, choice) {
+  const results = check.reqs.map(r => !!r.test(raw, output, choice));
   const pass = results.every(Boolean);
   const msg = pass ? check.passMsg : check.reqs[results.findIndex(r => !r)].hint;
-  return { results, pass, msg };
+  return { results, pass, msg: typeof msg === 'function' ? msg(choice) : msg };
 }
 
 // ── Investigate checks ────────────────────────────────────────────────────────
@@ -185,14 +186,21 @@ function feelingVars(raw) {
 // The program printed the answer itself — its echo line ("Pod number: 4") is only ONE line holding it.
 const printedAnswer = (out, answer) => (out || '').split('\n').filter(l => l.includes(answer)).length >= 2;
 
+// Modify 1 is a Station Zero choice: the student picks what the door does before the task
+// appears, and the check wants the line for THAT choice. Both pass; only the story differs.
+export const DOOR_CHOICES = { open: 'OPEN', sealed: 'SEALED' };
+const doorWord = choice => DOOR_CHOICES[choice] ? choice : 'open';
+
 export const MOD_CHECKS = {
-  // Mod 1 — trivial: change one message.
+  // Mod 1 — trivial: change one message (to the one the student chose).
   mod1: {
     reqs: [{
-      hint: '❌ Change the last line so it prints Cryo Bay door: OPEN',
-      test: (raw, out) => /door[^\w\n]*open/i.test(out || ''),
+      hint: choice => '❌ Change the last line so it prints Cryo Bay door: ' + DOOR_CHOICES[doorWord(choice)],
+      test: (raw, out, choice) => new RegExp('door[^\\w\\n]*' + doorWord(choice), 'i').test(out || ''),
     }],
-    passMsg: '✅ Door message updated.',
+    passMsg: choice => doorWord(choice) === 'sealed'
+      ? '✅ Door message updated. The door stays sealed.'
+      : '✅ Door message updated. The door will open.',
   },
 
   // Mod 2 — a third question at the bottom, printed on its own new line underneath.
@@ -238,8 +246,8 @@ export const MOD_CHECKS = {
   },
 };
 
-export function evalMod(checkKey, raw, output = '') {
-  return evalReqs(MOD_CHECKS[checkKey], raw, output);
+export function evalMod(checkKey, raw, output = '', choice) {
+  return evalReqs(MOD_CHECKS[checkKey], raw, output, choice);
 }
 
 // ── Make — crew locator ──────────────────────────────────────────────────────

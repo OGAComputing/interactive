@@ -31,13 +31,29 @@
   const error     = params.get('error');
 
   let returnUrl = null;
-  try { returnUrl = sessionStorage.getItem('oga_return_url'); } catch (_) {}
+  let mode = null; // 'silent' (prompt=none) or 'interactive'; null from older cached classroom.js
+  try {
+    returnUrl = sessionStorage.getItem('oga_return_url');
+    mode = sessionStorage.getItem('oga_auth_mode');
+    sessionStorage.removeItem('oga_auth_mode');
+  } catch (_) {}
 
   if (error) {
-    // If we have a return URL, this was a silent-auth attempt (prompt=none).
-    // Navigate back silently so the activity page can show the sign-in button.
     if (returnUrl) {
+      // Always set oga_silent_failed so the page doesn't immediately retry
+      // silent auth (which would bounce straight back here in a loop).
       try { sessionStorage.setItem('oga_silent_failed', '1'); } catch (_) {}
+      // A failed silent attempt is expected (the page just shows the sign-in
+      // button). A failed interactive attempt is a real problem: pass it back so
+      // the page can show it instead of looking as if nothing happened.
+      if (mode === 'interactive') {
+        try {
+          sessionStorage.setItem('oga_auth_error', JSON.stringify({
+            error       : error,
+            description : params.get('error_description') || ''
+          }));
+        } catch (_) {}
+      }
       try { sessionStorage.removeItem('oga_return_url'); } catch (_) {}
       location.replace(returnUrl);
     } else {

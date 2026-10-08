@@ -876,6 +876,24 @@ color:  teal
   }
   .remind ul { margin: 0 1rem 0.9rem 2.2rem; display: grid; gap: 0.4rem; font-size: 0.9rem; color: var(--text); line-height: 1.55; }
 
+  /* ── Station Zero choice — Modification 1 is a story decision. The student picks an option,
+       then only that option's requirement appears. Both options pass: the choice changes
+       the situation reports (and later chapters), never the score. Locked once it passes. ── */
+  .sz-choice { background: var(--chrome); border: 1px solid var(--line-strong); border-left: 4px solid var(--amber); border-radius: var(--radius); padding: 0.95rem 1.2rem 1rem; margin-bottom: 0.6rem; }
+  .sz-choice-kicker { font-family: var(--hud-font); font-size: 0.72rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--amber); margin: 0 0 0.35rem; }
+  .sz-choice-q { margin: 0 0 0.75rem; color: var(--text); font-size: 0.95rem; line-height: 1.55; }
+  .sz-choice-opts { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.6rem; }
+  .sz-opt { display: flex; gap: 0.6rem; align-items: flex-start; padding: 0.7rem 0.85rem; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--card-raised); cursor: pointer; }
+  .sz-opt:hover { border-color: var(--amber); }
+  .sz-opt:has(input:checked) { border-color: var(--amber); background: rgba(245,158,11,0.10); }
+  .sz-opt:has(input:focus-visible) { outline: 2px solid var(--amber); outline-offset: 2px; }
+  .sz-opt input { accent-color: var(--amber); width: 16px; height: 16px; margin-top: 0.2rem; flex-shrink: 0; }
+  .sz-opt b { display: block; color: var(--text); font-size: 0.95rem; }
+  .sz-opt small { display: block; color: var(--muted); font-size: 0.85rem; line-height: 1.45; margin-top: 0.15rem; }
+  .sz-choice.locked .sz-opt { cursor: default; }
+  .sz-choice.locked .sz-opt:not(:has(input:checked)) { opacity: 0.45; }
+  .sz-choice-note { margin: 0.65rem 0 0; font-size: 0.82rem; color: var(--muted); }
+
   @media (max-width: 600px) {
     .sz-header-right { margin-left: 0; width: 100%; }
     .sz-objective { flex: 1; max-width: none; }
@@ -1214,12 +1232,24 @@ color:  teal
   <div id="m1_steps">
 
     <div id="m1_step_1">
-      <div class="section-label">★ Modification 1 — Change the oxygen rate</div>
-      <div class="modify-task">
+      <div class="section-label">★ Modification 1 — The oxygen rate</div>
+      <!-- STATION ZERO choice: the student picks first, then only that option's requirement
+           appears (#req_m1_1_text is filled from CHOICE in the module). Both pass. The rate
+           also fills the .v-rate / .v-total numbers in Modifications 3 and 4. -->
+      <div class="sz-choice" id="m1_choice" role="radiogroup" aria-labelledby="m1_choice_q">
+        <p class="sz-choice-kicker">Your call</p>
+        <p class="sz-choice-q" id="m1_choice_q">The air scrubbers are damaged, so the old rate of 50 litres an hour is wrong. The rate you set decides who gets air.</p>
+        <div class="sz-choice-opts">
+          <label class="sz-opt"><input type="radio" name="m1_choice" value="full" onchange="pickChoice()"><span><b>60 litres an hour</b><small>Enough for you and every cryo pod at full power. But your own air will run low.</small></span></label>
+          <label class="sz-opt"><input type="radio" name="m1_choice" value="low" onchange="pickChoice()"><span><b>40 litres an hour</b><small>Enough for you, and it saves air. But Pod 5 drops to minimum power.</small></span></label>
+        </div>
+        <p class="sz-choice-note">There’s no right answer. Both programs pass, and your choice changes the story, not your score.</p>
+      </div>
+      <div class="modify-task step-hidden" id="m1_task_1">
         <span class="stars">★</span>
         <div class="task-text">
           <ul class="req-list" id="req_m1_1">
-            <li><span>1</span><span class="req-text">The air scrubbers are damaged, so each hour now needs <strong>60</strong> litres, not 50. Change the calculation on line 3 — with 6 hours it should print 360.</span></li>
+            <li><span>1</span><span class="req-text" id="req_m1_1_text"></span></li>
           </ul>
         </div>
       </div>
@@ -1244,7 +1274,7 @@ color:  teal
         <span class="stars">★★</span>
         <div class="task-text">
           <ul class="req-list" id="req_m1_3">
-            <li><span>1</span><span class="req-text">Keep your code so far. Work out the oxygen for the <strong>whole crew</strong> — hours × crew × 60 — and print it. With 6 hours and 3 crew it should print 1080. For example <code>total = hours * crew * 60</code></span></li>
+            <li><span>1</span><span class="req-text">Keep your code so far. Work out the oxygen for the <strong>whole crew</strong> — hours × crew × <span class="v-rate">60</span> — and print it. With 6 hours and 3 crew it should print <span class="v-total">1080</span>. For example <code>total = hours * crew * <span class="v-rate">60</span></code></span></li>
           </ul>
         </div>
       </div>
@@ -1257,7 +1287,7 @@ color:  teal
         <div class="task-text">
           <ul class="req-list" id="req_m1_4">
             <li><span>1</span><span class="req-text">Keep your code so far. Print the crew total inside a sentence, joining your words and the number with <code>+</code> and <code>str()</code> — for example <code>print("Total oxygen: " + str(total) + " litres")</code></span></li>
-            <li><span>2</span><span class="req-text">The sentence must show the <strong>crew total</strong> (1080 when tested with 6 hours and 3 crew).</span></li>
+            <li><span>2</span><span class="req-text">The sentence must show the <strong>crew total</strong> (<span class="v-total">1080</span> when tested with 6 hours and 3 crew).</span></li>
           </ul>
           <details class="remind" style="margin:0.4rem 0 0">
             <summary>Remind me: why <code>str()</code>?</summary>
@@ -1423,6 +1453,8 @@ color:  teal
      beat(stage, { feed }) — completeStage() (first completion only) and checkMake()
                   (first pass); feed = what that stage's final action printed, for the live feed
      showMap()    — the header's Station map button
+   plus one for the Station Zero choice in Modify 1:
+     choose(key, value) — checkMod(), when Modification 1 passes (see CHOICE in the module)
    ════════════════════════════════════════════════════════════════════════════ */
 (function () {
   'use strict';
@@ -1446,22 +1478,47 @@ color:  teal
          device:   what the feed is plugged into (shown in the feed's heading)
          caption:  one sentence on what the code did; {o2} = the oxygen figure the program printed
          fallback: output lines to show if there's no live output (e.g. after a reload)
+         motion, g1: 'lights' only — the motion tag's text, and the O2 gauge it climbs to (0–1)
+     Optional per beat: variant + variants — a beat that depends on a Station Zero choice
+       (a choice the student made in Modify, kept for the whole unit in localStorage
+       'sz_choices': { door: 'open' | 'sealed' (Wake Up), air: 'full' | 'low' (this lesson) }).
+         variant:  choices => the name of one of the variants (handle a missing choice)
+         variants: { name: { …beat fields } } — they replace the beat's own fields
      ═══════════════════════════════════════════════════════════════════════ */
+  // Station Zero choices → which version of a beat plays. A choice made on another computer
+  // is missing: the door defaults to sealed and the rate to full (60 litres an hour).
+  const door = c => c.door === 'open' ? 'open' : 'sealed';
+  const fate = c => door(c) + '_' + (c.air === 'low' ? 'low' : 'full');   // what happens to Pod 5
   const STORY = {
     chapter:   'Chapter 1, part 2 — Life Support',
     topic:     'Casting',
     objective: 'Restore life support',
     beats: {
       intro: {
+        variant: door,
+        variants: {
+          open: {
+            time: '03:31',
+            log: "You follow the frost trail to Life Support. The recyclers are silent, and the program that runs them has been wiped. Behind you, the Cryo Bay door is still open.",
+            readouts: [
+              { label: 'Oxygen', value: '29%', level: 'danger' },
+              { label: 'Power', value: '18%', level: 'warn' },
+              { label: 'Cryo Bay door', value: 'Open', level: 'warn' },
+              { label: 'Motion', value: 'None', level: 'ok' },
+            ],
+          },
+          sealed: {
+            time: '03:40',
+            log: "You follow the frost trail to Life Support. The recyclers are silent, and the program that runs them has been wiped. Waiting at the Cryo Bay door cost you air.",
+            readouts: [
+              { label: 'Oxygen', value: '24%', level: 'danger' },
+              { label: 'Power', value: '18%', level: 'warn' },
+              { label: 'Cryo Bay door', value: 'Sealed', level: 'ok' },
+              { label: 'Motion', value: 'None', level: 'ok' },
+            ],
+          },
+        },
         headline: 'Chapter 1 — Life Support',
-        time: '03:31',
-        log: "You follow the frost trail to Life Support. The recyclers are silent, and the program that runs them has been wiped. Oxygen is at 29% and falling.",
-        readouts: [
-          { label: 'Oxygen', value: '29%', level: 'danger' },
-          { label: 'Power', value: '18%', level: 'warn' },
-          { label: 'Crew awake', value: '1', level: 'warn' },
-          { label: 'Motion', value: 'None', level: 'ok' },
-        ],
         map: { you: 'life', objective: 'life', threat: null, rooms: { cryo: 'online', core: 'sealed' } },
       },
       P: {
@@ -1474,7 +1531,7 @@ color:  teal
         time: '03:36',
         log: "You’ve worked out what the old life-support code was meant to do. Above your head, a vent cover clangs onto the floor. Nothing climbs out.",
         readouts: [
-          { label: 'Oxygen', value: '28%', level: 'danger' },
+          { label: 'Oxygen', value: 'Falling', level: 'danger' },
           { label: 'Motion', value: 'Ducts', level: 'danger' },
         ],
         map: { you: 'life', objective: 'life', threat: 'vents', rooms: { cryo: 'online', core: 'sealed' } },
@@ -1510,7 +1567,67 @@ color:  teal
         ],
         map: { you: 'life', objective: 'life', threat: 'ducts', rooms: { cryo: 'online', life: 'unstable', core: 'sealed' } },
       },
+      // What happens to Pod 5 (Patel) depends on both Station Zero choices: the Wake Up door
+      // (open lets the creature into the Cryo Bay) and this lesson's rate (40 puts Pod 5 on
+      // minimum power). Neither risk → everyone lives; one → Patel is critical; both → Patel dies.
       M1: {
+        variant: fate,
+        variants: {
+          sealed_full: {
+            log: "You’ve rebuilt life support, and every pod is at full power. The corridor lights die one panel at a time, all the way to the Cryo Bay, and stop at its sealed door. Something scrapes at it for a while, then gives up.",
+            readouts: [
+              { label: 'Oxygen', value: '58%', level: 'warn' },
+              { label: 'Cryo pods', value: '3 of 3 stable', level: 'ok' },
+              { label: 'Crew alive', value: '4 of 5', level: 'ok' },
+              { label: 'Motion', value: 'Corridor', level: 'danger' },
+            ],
+          },
+          open_full: {
+            impact: {
+              scene: 'lights', device: 'O2 recycler', motion: 'MOTION · CRYO BAY',
+              caption: "Your crew total reached the recyclers and oxygen climbed fast. Then the corridor lights started going out, and the motion tracker followed something to the open Cryo Bay.",
+              fallback: ['Oxygen needed in litres:', '360', '3', '1080', 'Total oxygen: 1080 litres'],
+            },
+            log: "You’ve rebuilt life support, and every pod is at full power. The corridor lights die one panel at a time, all the way to the Cryo Bay, where the door is still open. Pod 5’s alarm goes off, and only full power is keeping Patel alive.",
+            readouts: [
+              { label: 'Oxygen', value: '58%', level: 'warn' },
+              { label: 'Pod 5 · Patel', value: 'Critical', level: 'danger' },
+              { label: 'Crew alive', value: '4 of 5', level: 'warn' },
+              { label: 'Motion', value: 'Cryo Bay', level: 'danger' },
+            ],
+            map: { you: 'life', objective: 'life', threat: 'cryo', rooms: { cryo: 'online', life: 'unstable', core: 'sealed' } },
+          },
+          sealed_low: {
+            impact: {
+              scene: 'lights', device: 'O2 recycler', g1: 0.64,
+              caption: "Your crew total reached the recyclers, and saving air sent oxygen up fast. Then the corridor lights started going out, one panel at a time, moving towards you.",
+              fallback: ['Oxygen needed in litres:', '240', '3', '720', 'Total oxygen: 720 litres'],
+            },
+            log: "You’ve rebuilt life support, and the air is holding. The corridor lights die one panel at a time and stop at the sealed Cryo Bay door. Inside, Pod 5 is on minimum power, and Patel’s vitals keep dropping.",
+            readouts: [
+              { label: 'Oxygen', value: '64%', level: 'warn' },
+              { label: 'Pod 5 · Patel', value: 'Critical', level: 'danger' },
+              { label: 'Crew alive', value: '4 of 5', level: 'warn' },
+              { label: 'Motion', value: 'Corridor', level: 'danger' },
+            ],
+          },
+          open_low: {
+            impact: {
+              scene: 'lights', device: 'O2 recycler', motion: 'MOTION · CRYO BAY', g1: 0.64,
+              caption: "Your crew total reached the recyclers, and saving air sent oxygen up fast. Then the corridor lights started going out, and the motion tracker followed something to the open Cryo Bay.",
+              fallback: ['Oxygen needed in litres:', '240', '3', '720', 'Total oxygen: 720 litres'],
+            },
+            headline: 'Pod 5',
+            log: "You’ve rebuilt life support, and the air is holding. The corridor lights die one panel at a time, all the way to the open Cryo Bay, where Pod 5 is on minimum power. Its alarm sounds once, and then Patel’s heart monitor goes flat.",
+            readouts: [
+              { label: 'Oxygen', value: '64%', level: 'warn' },
+              { label: 'Pod 5 · Patel', value: 'Heart rate 0', level: 'danger' },
+              { label: 'Crew alive', value: '3 of 5', level: 'danger' },
+              { label: 'Motion', value: 'Cryo Bay', level: 'danger' },
+            ],
+            map: { you: 'life', objective: 'life', threat: 'cryo', rooms: { cryo: 'online', life: 'unstable', core: 'sealed' } },
+          },
+        },
         impact: {
           scene: 'lights', device: 'O2 recycler',
           caption: "Your crew total reached the recyclers and oxygen climbed fast. Then the corridor lights started going out, one panel at a time, moving towards you.",
@@ -1518,15 +1635,16 @@ color:  teal
         },
         headline: 'Lights out',
         time: '04:08',
-        log: "You’ve rebuilt life support piece by piece, and oxygen is climbing. Then the corridor lights start going out, one panel at a time, moving towards you. Something is scraping along the inside of the ducts.",
-        readouts: [
-          { label: 'Oxygen', value: '58%', level: 'warn' },
-          { label: 'Power', value: '11%', level: 'danger' },
-          { label: 'Motion', value: 'Corridor', level: 'danger' },
-        ],
         map: { you: 'life', objective: 'life', threat: 'corridor', rooms: { cryo: 'online', life: 'unstable', core: 'sealed' } },
       },
       M2: {
+        variant: fate,
+        variants: {
+          sealed_full: { readouts: crewReadouts('4 of 5', 'ok') },
+          open_full:   { readouts: crewReadouts('4 of 5 · 1 critical', 'warn') },
+          sealed_low:  { readouts: crewReadouts('4 of 5 · 1 critical', 'warn') },
+          open_low:    { readouts: crewReadouts('3 of 5', 'danger') },
+        },
         impact: {
           scene: 'tracker', device: 'Motion tracker',
           caption: "Your manifest is loaded and the supplies will hold, so life support is online. Then the motion tracker picked up a crew tag in Sensor Ops: HALE.",
@@ -1535,17 +1653,20 @@ color:  teal
         headline: 'Life support online',
         time: '04:20',
         log: "You take your first proper breath since waking up. Then the motion tracker lights up: Sensor Ops, where nobody should be. The signal is carrying a crew ID tag.",
-        readouts: [
-          { label: 'Oxygen', value: '92%', level: 'ok' },
-          { label: 'Motion', value: 'Sensor Ops', level: 'danger' },
-          { label: 'Crew tag', value: 'HALE', level: 'danger' },
-          { label: 'Bio-scan', value: 'Not human', level: 'danger' },
-        ],
         map: { you: 'life', objective: 'sensors', threat: 'sensors', rooms: { cryo: 'online', life: 'online', core: 'sealed' } },
         cta: 'Continue',
       },
     },
   };
+  // The cliffhanger's readouts, with how many of the crew made it through the chapter.
+  function crewReadouts(alive, level) {
+    return [
+      { label: 'Oxygen', value: '92%', level: 'ok' },
+      { label: 'Crew alive', value: alive, level },
+      { label: 'Crew tag', value: 'HALE', level: 'danger' },
+      { label: 'Bio-scan', value: 'Not human', level: 'danger' },
+    ];
+  }
   /* ═══ end STORY ═══ */
 
   // Station layout — shared by every chapter so students learn one map. A ring station:
@@ -1586,6 +1707,22 @@ color:  teal
   let seen = [];
   try { seen = JSON.parse(localStorage.getItem(KEY) || '[]'); } catch (e) {}
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(seen)); } catch (e) {} };
+
+  // Station Zero choices — what the student chose in Modify, shared by every chapter (same
+  // origin), so later reports can follow it. A choice made on another computer is missing,
+  // and each beat's variant() then falls back to its default.
+  const CHOICES_KEY = 'sz_choices';
+  let choices = {};
+  try { choices = JSON.parse(localStorage.getItem(CHOICES_KEY) || '{}') || {}; } catch (e) {}
+  function choose(key, value) {
+    choices[key] = value;
+    try { localStorage.setItem(CHOICES_KEY, JSON.stringify(choices)); } catch (e) {}
+  }
+  // The version of a beat that matches the student's choices.
+  function resolve(b) {
+    const v = b && b.variant && b.variants ? b.variants[b.variant(choices)] : null;
+    return v ? { ...b, ...v } : b;
+  }
 
   const $ = id => document.getElementById(id);
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -1754,7 +1891,7 @@ color:  teal
 
   // The corridor outside Life Support: O2 gauge on the screen, the duct above, six ceiling
   // lights that die one after another towards you.
-  function corridorSvg({ l1 = '', g0, g1 }) {
+  function corridorSvg({ l1 = '', g0, g1, motion = 'MOTION · CORRIDOR' }) {
     let slats = '', lights = '';
     for (let x = 18; x < 300; x += 26) slats += `<line class="slat" x1="${x}" y1="69" x2="${x + 8}" y2="79"/>`;
     for (let i = 0; i < 6; i++) {
@@ -1777,7 +1914,7 @@ color:  teal
       + '<rect class="floor" x="0" y="192" width="300" height="8"/>'
       + '<text class="scr tag" x="284" y="138" text-anchor="middle">YOU</text>'
       + '<circle class="you-fig" cx="284" cy="152" r="6"/><rect class="you-fig" x="279" y="160" width="10" height="30" rx="3"/>'
-      + '<g class="mot dv"><text class="scr tag crit" x="14" y="124">MOTION · CORRIDOR</text></g>'
+      + `<g class="mot dv"><text class="scr tag crit" x="14" y="124">${esc(motion)}</text></g>`
       + '</svg>';
   }
 
@@ -1845,16 +1982,16 @@ color:  teal
       });
       return { hit: /oxygen per hour/i, dd: 3.2, before: ['TypeError: can only concatenate str…'], svg: svg + '</svg>' };
     },
-    lights: lines => ({
-      hit: /total|1080/i, dd: 4.4,
-      svg: corridorSvg({ l1: pick(lines, /total|1080/i), g0: 0.34, g1: 0.58 }),
+    lights: (lines, imp) => ({
+      hit: /total|1080|720/i, dd: 4.4,
+      svg: corridorSvg({ l1: pick(lines, /total|1080|720/i), g0: 0.34, g1: imp.g1 || 0.58, motion: imp.motion }),
     }),
     tracker: () => ({ dd: 3.8, svg: trackerSvg() }),
   };
 
   function renderImpact(el, imp, feed) {
     const lines = feedLines(feed, imp.fallback);
-    const sc = SCENES[imp.scene](lines);
+    const sc = SCENES[imp.scene](lines, imp);
     const term = [...(sc.before || []).map(t => ({ t, cls: 'err' })), ...lines.slice(-5).map(t => ({ t, cls: sc.hit?.test(t) ? 'hit' : '' }))];
     const LINE_S = 0.25, t0 = 0.3;
     const wire = t0 + term.length * LINE_S + 0.1, dev = wire + 0.5, dd = sc.dd || 3, cap = dev + dd;
@@ -1928,7 +2065,7 @@ color:  teal
   let onCloseCb = null;
 
   function open(key, { review = false, onClose = null, feed = '' } = {}) {
-    const b = STORY.beats[key];
+    const b = resolve(STORY.beats[key]);
     if (!b) { onClose?.(); return; }
     const map = b.map || {};
     returnFocus = document.activeElement;
@@ -2033,7 +2170,7 @@ color:  teal
     open(last, { review: true });
   }
 
-  window.StationZero = { beat, start, showMap };
+  window.StationZero = { beat, start, showMap, choose };
 })();
 </script>
 
@@ -2112,7 +2249,7 @@ color:  teal
   ║  for a complete reference, including the Investigate checks.               ║
   ╚══════════════════════════════════════════════════════════════════════════════╝
 */
-import { normalise, has, MOD_CHECKS, MOD_INPUTS, evalMod, MAKE_CHECK, MAKE_INPUTS, evalMake, EXT_CHECK, EXT_INPUTS, evalExt,
+import { normalise, has, MOD_CHECKS, MOD_INPUTS, evalMod, rateOf, hourTotal, crewTotal, MAKE_CHECK, MAKE_INPUTS, evalMake, EXT_CHECK, EXT_INPUTS, evalExt,
          evalInv, isBugFixed, isBugPairLine, breakCode } from './checkers_life_support.js';
 import { runPython, preload } from '../../../pyodide-runner.js';
 import { setupEditors, clearSyntaxHint, setEditorOutput, refreshEditor, runCode, replayRun } from '../../../code-editor.js';
@@ -2139,7 +2276,7 @@ const STEP_COUNT_M1 = 4;   // m1_step_1…m1_step_4
 
 // localStorage field lists
 const TEXT_FIELDS  = ['p_text1', 'r_editor', 'r1', 'i_editor', 'i1', 'm1_editor', 'm2_editor'];
-const RADIO_GROUPS = ['p_mcq1', 'p_mcq2', 'i2_mcq', 'i3_mcq'];
+const RADIO_GROUPS = ['m1_choice', 'p_mcq1', 'p_mcq2', 'i2_mcq', 'i3_mcq'];
 
 
 // ═══════════════════════════════════════════════════════
@@ -2154,6 +2291,20 @@ const P_PASS_MSG = {
 const P_FAIL_MSG = {
   p_mcq1: 'Not quite. input() gives back text — but line 2 wraps it in int(). What does int() do to "6"? (The question text itself is only shown, never stored.)',
   p_mcq2: 'Look again: there are no quotes around oxygen on line 6. Without quotes it is a variable, so Python prints what is stored inside it.',
+};
+
+// ═══════════════════════════════════════════════════════
+//  STATION ZERO choice — Modification 1
+//  The student picks the oxygen rate first; only then does that option's requirement appear.
+//  Both options pass: every Modify check is given the choice, and the numbers in
+//  Modifications 3 and 4 (.v-rate / .v-total) follow it. It is locked once Modification 1
+//  passes, and handed to the story layer then (StationZero.choose). Together with the door
+//  choice from Wake Up, it decides what happens to Pod 5 (the situation report after Modify).
+// ═══════════════════════════════════════════════════════
+
+const CHOICE = {
+  story: 'air',   // stored as sz_choices.air
+  req: c => `Change the calculation on line 3 to use <strong>${rateOf(c)}</strong> litres an hour instead of 50. With 6 hours it should print ${hourTotal(c)}.`,
 };
 
 
@@ -2381,6 +2532,7 @@ function updateStepVisibility() {
   if (skipIWrap) skipIWrap.style.display = !iEditor?.readOnly && (attemptCounts['i' + stepI] || 0) >= 3 ? '' : 'none';
   syncBugLineLabel();   // standard bug step — keep the "line N" label current, no planting
   const m1Revisiting = stepM1 < maxStepM1;
+  renderChoice();
   for (let i = 1; i <= STEP_COUNT_M1; i++) {
     const step = document.getElementById('m1_step_' + i);
     step?.classList.toggle('step-hidden', i !== stepM1);
@@ -3221,6 +3373,32 @@ function renderReqResults(listEl, results) {
   });
 }
 
+// ── Station Zero choice (Modification 1) ──────────────
+const getChoice = () => document.querySelector('input[name="m1_choice"]:checked')?.value;
+
+// Show the chosen option's requirement (nothing until a choice is made), and lock the
+// options once Modification 1 has passed.
+function renderChoice() {
+  const c = getChoice();
+  const locked = !!passedChecks['m1_code1'];
+  document.querySelectorAll('input[name="m1_choice"]').forEach(r => { r.disabled = locked; });
+  document.getElementById('m1_choice')?.classList.toggle('locked', locked);
+  document.getElementById('m1_task_1')?.classList.toggle('step-hidden', !c);
+  const text = document.getElementById('req_m1_1_text');
+  if (text) text.innerHTML = c ? CHOICE.req(c) : '';
+  const c0 = c || 'full';   // no choice (e.g. skipped) → the 60-litre numbers
+  document.querySelectorAll('#stage-M1 .v-rate').forEach(el => { el.textContent = rateOf(c0); });
+  document.querySelectorAll('#stage-M1 .v-total').forEach(el => { el.textContent = crewTotal(c0); });
+}
+
+function pickChoice() {
+  if (passedChecks['m1_code1']) return;
+  document.getElementById('fb_m1')?.classList.add('hidden');   // the last check was for the other option
+  renderReqResults(document.getElementById('req_m1_1'), null);
+  renderChoice();
+  saveState();
+}
+
 async function checkMod() {
   if (window.Classroom?.verifyAuth() === false) return;
   const editorEl = document.getElementById('m1_editor');
@@ -3231,6 +3409,9 @@ async function checkMod() {
   const reqListEl = document.getElementById('req_m1_' + stepM1);
   if (!fbEl) return;
   fbEl.classList.remove('hidden');
+  if (stepM1 === 1 && !getChoice()) {
+    fbEl.className = 'feedback fail'; fbEl.textContent = '⚠️ Make your choice above first.'; return;
+  }
   if (raw.trim().length < 10) {
     fbEl.className = 'feedback fail'; fbEl.textContent = '⚠️ Write some code first.'; return;
   }
@@ -3243,7 +3424,7 @@ async function checkMod() {
     renderReqResults(reqListEl, null);
     fbEl.className = 'feedback fail'; fbEl.textContent = '❌ Error: ' + run.output; recordM1Attempt(); return;
   }
-  const result = evalMod(checkKey, raw, run.output);
+  const result = evalMod(checkKey, raw, run.output, getChoice());
   renderReqResults(reqListEl, result.results);
   if (!result.pass) {
     fbEl.className = 'feedback fail'; fbEl.textContent = result.msg; recordM1Attempt(); return;
@@ -3253,6 +3434,7 @@ async function checkMod() {
   clearSyntaxHint(editorEl);
   passedChecks[checkId] = true;
   storyFeed.m1_editor = run.output;   // STATION ZERO hook
+  if (stepM1 === 1) { window.StationZero?.choose(CHOICE.story, getChoice()); renderChoice(); }   // STATION ZERO hook: the choice is now locked in
   delete skippedSteps['m1_' + stepM1];
   // Lock in the code as it stood for this modification, so Back/Forward can restore it later.
   m1CodeSnapshots[stepM1] = raw;
@@ -3469,7 +3651,7 @@ Object.assign(window, {
   clearPredictError, checkPredictMCQ, checkPredictText, advancePredict,
   clearRunError, tryCompleteRun,
   tryCompleteInvestigate, nextStep,
-  checkMod, completeStage,
+  checkMod, completeStage, pickChoice,
   checkMake, checkExt,
   runCodeInEditor, resetInvestigateEditor, insertNewLine, breakItDemo,
   skipStep, goBack, goForward,

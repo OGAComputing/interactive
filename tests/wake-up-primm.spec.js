@@ -160,8 +160,55 @@ test('Investigate bug step: Break it gives a NameError; fixing the capital N com
 
 // ─── Modify ──────────────────────────────────────────────────────────────────
 
+test('Modify 1 is a choice: the requirement appears once chosen, only that line passes, then it locks', async ({ page }) => {
+  await openAt(page, { currentStage: 'M1', completedStages: ['P', 'R', 'I'] });
+  await expect(page.locator('#m1_task_1')).toBeHidden();
+  await page.click('#btn_check_m1');
+  await expect(page.locator('#fb_m1')).toHaveText(/choice/);
+
+  await page.check('input[name="m1_choice"][value="sealed"]');
+  await expect(page.locator('#req_m1_1_text')).toContainText('Cryo Bay door: SEALED');
+  await setCode(page, 'm1_editor', STARTER.replace('Door unlocking...', 'Cryo Bay door: OPEN'));
+  await page.click('#btn_check_m1');
+  await expect(page.locator('#fb_m1')).toHaveClass(/fail/, { timeout: 30000 });
+  await expect(page.locator('#fb_m1')).toContainText('SEALED');
+
+  await setCode(page, 'm1_editor', STARTER.replace('Door unlocking...', 'Cryo Bay door: SEALED'));
+  await page.click('#btn_check_m1');
+  await expect(page.locator('#fb_m1')).toHaveClass(/pass/, { timeout: 30000 });
+  await expect(page.locator('input[name="m1_choice"][value="open"]')).toBeDisabled();
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('sz_choices')))).toEqual({ door: 'sealed' });
+  await expect(page.locator('#m1_step_2')).toBeVisible({ timeout: 10000 });
+  // the choice is saved with the rest of the work
+  await page.reload();
+  await expect(page.locator('#pyStatusText')).toHaveText(/ready/, { timeout: 60000 });
+  await page.click('#btn_back_M1');
+  await expect(page.locator('input[name="m1_choice"][value="sealed"]')).toBeChecked();
+  await expect(page.locator('#m1_choice')).toHaveClass(/locked/);
+});
+
+test('the report after Modify follows the door choice', async ({ page }) => {
+  await page.addInitScript(p => {
+    localStorage.setItem('sz_story_' + p, JSON.stringify(['intro', 'P', 'R', 'I']));
+    localStorage.setItem('sz_choices', JSON.stringify({ door: 'open' }));
+  }, PATH);
+  const done = STARTER.replace('Door unlocking...', 'Cryo Bay door: OPEN')
+    + '\npod = input("Pod number: ")\nprint("Pod: " + pod)\nfeeling = input("How are you feeling? ")\n';
+  await openAt(page, {
+    currentStage: 'M1', completedStages: ['P', 'R', 'I'], stepM1: 4, maxStepM1: 4, radio_m1_choice: 'open',
+    passedChecks: { m1_code1: true, m1_code2: true, m1_code3: true },
+  }, { story: true });
+  await setCode(page, 'm1_editor', done + 'print(name + " is feeling " + feeling)');
+  await page.click('#btn_check_m1');
+  await expect(page.locator('#szOverlay')).toHaveClass(/open/, { timeout: 30000 });
+  await expect(page.locator('#szTitle')).toHaveText(/Something got in/);
+  await expect(page.locator('#szImpact svg')).toContainText('Cryo Bay door: OPEN');
+  await expect(page.locator('#szReadouts')).toContainText('Cryo Bay');
+});
+
 test('Modify: door message, pod line, own question, then two answers on one line', async ({ page }) => {
   await openAt(page, { currentStage: 'M1', completedStages: ['P', 'R', 'I'] });
+  await page.check('input[name="m1_choice"][value="open"]');
   const mod1 = STARTER.replace('Door unlocking...', 'Cryo Bay door: OPEN');
   await setCode(page, 'm1_editor', mod1);
   await page.click('#btn_check_m1');

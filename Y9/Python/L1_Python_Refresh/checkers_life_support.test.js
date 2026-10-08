@@ -1,6 +1,6 @@
 import { describe, test, expect } from 'vitest';
 import { evalInv, evalMod, evalMake, evalExt, breakCode, hasBugLine, hasFixedLine, isBugFixed, isBugPairLine,
-         IBUG_LINE, IBUG_FIXED_LINE, MOD_INPUTS, MAKE_INPUTS } from './checkers_life_support.js';
+         IBUG_LINE, IBUG_FIXED_LINE, MOD_INPUTS, MAKE_INPUTS, RATES, hourTotal, crewTotal } from './checkers_life_support.js';
 
 const code = (...lines) => lines.join('\n');
 const out  = (...lines) => lines.join('\n') + '\n';
@@ -156,6 +156,37 @@ describe('Modify 4 — sentence with str()', () => {
   test('a str() sentence about the wrong number fails the second bullet', () => {
     const src = code(...base, 'print("Crew: " + str(crew))');
     expect(evalMod('mod4', src, out(...ECHO3, 'Crew: 3')).results).toEqual([true, false]);
+  });
+});
+
+describe('the rate choice (full = 60, low = 40) carries through every Modify check', () => {
+  test('the numbers each choice expects', () => {
+    expect(RATES).toEqual({ full: 60, low: 40 });
+    expect([hourTotal('full'), crewTotal('full')]).toEqual([360, 1080]);
+    expect([hourTotal('low'), crewTotal('low')]).toEqual([240, 720]);
+    expect(crewTotal(undefined)).toBe(1080);   // no choice recorded (e.g. skipped) → full
+  });
+  test('Modify 1: low wants 240, and 360 no longer counts', () => {
+    const src = code(...withLine(2, 'oxygen = hours * 40'));
+    const run = n => out(...ECHO, 'Engineer Riley is awake.', 'Oxygen needed in litres:', n);
+    expect(evalMod('mod1', src, run('240'), 'low').pass).toBe(true);
+    const r = evalMod('mod1', src, run('360'), 'low');
+    expect(r.pass).toBe(false);
+    expect(r.msg).toMatch(/40/);
+    expect(evalMod('mod1', src, run('240'), 'full').pass).toBe(false);
+  });
+  test('Modify 3 and 4: low wants 720 (900 at the old rate still counts)', () => {
+    const low = [...withLine(2, 'oxygen = hours * 40'), 'crew = int(input("Crew awake: "))', 'print(crew)', 'total = hours * crew * 40'];
+    expect(evalMod('mod3', code(...low, 'print(total)'), out(...ECHO3, '720'), 'low').pass).toBe(true);
+    expect(evalMod('mod3', code(...low, 'print(total)'), out(...ECHO3, '900'), 'low').pass).toBe(true);
+    expect(evalMod('mod3', code(...low, 'print(total)'), out(...ECHO3, '1080'), 'low').pass).toBe(false);
+    const src = code(...low, 'print("Total oxygen: " + str(total) + " litres")');
+    expect(evalMod('mod4', src, out(...ECHO3, 'Total oxygen: 720 litres'), 'low').pass).toBe(true);
+    expect(evalMod('mod4', src, out(...ECHO3, 'Total oxygen: 1080 litres'), 'low').results).toEqual([true, false]);
+  });
+  test('hints and pass messages show the chosen rate', () => {
+    expect(evalMod('mod3', code(...MOD2), out(...ECHO3, '3'), 'low').msg).toMatch(/× 40.*720/);
+    expect(evalMod('mod1', code(...STARTER), out(...ECHO, '240'), 'low').msg).toMatch(/× 40 litres = 240/);
   });
 });
 

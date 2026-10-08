@@ -106,6 +106,28 @@ describe('Modify 1 — door message', () => {
   });
 });
 
+describe('Modify 1 — the door choice decides which message passes', () => {
+  const run = last => out(...ECHO, 'CRYO BAY DOOR', 'Checking in: Engineer Riley', last);
+  const src = code(...STARTER);
+  test('choosing "sealed" wants SEALED, and OPEN no longer counts', () => {
+    expect(evalMod('mod1', src, run('Cryo Bay door: SEALED'), 'sealed').pass).toBe(true);
+    const r = evalMod('mod1', src, run('Cryo Bay door: OPEN'), 'sealed');
+    expect(r.pass).toBe(false);
+    expect(r.msg).toMatch(/SEALED/);
+  });
+  test('choosing "open" wants OPEN, and SEALED does not count', () => {
+    expect(evalMod('mod1', src, run('Cryo Bay door: OPEN'), 'open').pass).toBe(true);
+    expect(evalMod('mod1', src, run('Cryo Bay door: SEALED'), 'open').pass).toBe(false);
+  });
+  test('the pass message follows the choice', () => {
+    expect(evalMod('mod1', src, run('Cryo Bay door: SEALED'), 'sealed').msg).toMatch(/stays sealed/);
+    expect(evalMod('mod1', src, run('Cryo Bay door: OPEN'), 'open').msg).toMatch(/will open/);
+  });
+  test('the CRYO BAY DOOR heading alone never counts as SEALED', () => {
+    expect(evalMod('mod1', src, run('Door unlocking...'), 'sealed').pass).toBe(false);
+  });
+});
+
 const ECHO3 = [...ECHO, 'Pod number: 4'];
 const BEFORE_POD = ['CRYO BAY DOOR', 'Checking in: Engineer Riley', 'Door unlocking...'];
 

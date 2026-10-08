@@ -87,11 +87,13 @@ const sentenceWith = (output, values) =>
 // A print() that joins its own text to a number with + and str().
 const joinsWithStr = raw => printArgs(raw).some(a => /\bstr\s*\(/.test(a) && /\+/.test(a) && /""|''/.test(a));
 
-function evalReqs(check, raw, output) {
-  const results = check.reqs.map(r => !!r.test(raw, output));
+// choice = the student's Station Zero choice in Modify (the oxygen rate); hints and passMsg
+// may be functions of it.
+function evalReqs(check, raw, output, choice) {
+  const results = check.reqs.map(r => !!r.test(raw, output, choice));
   const pass = results.every(Boolean);
   const msg = pass ? check.passMsg : check.reqs[results.findIndex(r => !r)].hint;
-  return { results, pass, msg };
+  return { results, pass, msg: typeof msg === 'function' ? msg(choice) : msg };
 }
 
 // ── Investigate checks ────────────────────────────────────────────────────────
@@ -198,23 +200,34 @@ export function evalInv(n, raw, ctx = {}) {
 
 // ── Modify checks ─────────────────────────────────────────────────────────────
 // Modify starts from STARTER_CODE again. Test answers, in order: name Riley, 6 hours, 3 crew.
-//   rate 60: 6 × 60 = 360      crew total: 6 × 3 × 60 = 1080  (900 if the rate went back to 50)
+// Modify 1 is a Station Zero choice: the student picks the new oxygen rate before the task
+// appears, and every Modify check then uses THAT rate. Both pass; only the story differs.
+//   'full' = 60 litres an hour (every cryo pod stays at full power):  6 × 60 = 360,  crew total 1080
+//   'low'  = 40 litres an hour (Pod 5 drops to minimum power):        6 × 40 = 240,  crew total 720
+// The crew total also accepts 900, in case the rate went back to 50.
+export const RATES = { full: 60, low: 40 };
+export const rateOf = choice => RATES[choice] || RATES.full;
+const HOURS = 6, CREW = 3;
+const withFloat = n => [String(n), n + '.0'];
+export const hourTotal = choice => HOURS * rateOf(choice);          // 360 / 240
+export const crewTotal = choice => HOURS * CREW * rateOf(choice);   // 1080 / 720
+const crewTotals = choice => [...withFloat(crewTotal(choice)), '900', '900.0'];
+
 export const MOD_INPUTS = {
   mod1: ['Riley', '6', '3'],
   mod2: ['Riley', '6', '3'],
   mod3: ['Riley', '6', '3'],
   mod4: ['Riley', '6', '3'],
 };
-const CREW_TOTALS = ['1080', '1080.0', '900', '900.0'];
 
 export const MOD_CHECKS = {
-  // Mod 1 — trivial: change one number.
+  // Mod 1 — trivial: change one number (to the rate the student chose).
   mod1: {
     reqs: [{
-      hint: '❌ Change 50 to 60 in the calculation on line 3 — with 6 hours it should print 360.',
-      test: (raw, out) => printedAny(out, ['360', '360.0']),
+      hint: c => `❌ Change 50 to ${rateOf(c)} in the calculation on line 3. With 6 hours it should print ${hourTotal(c)}.`,
+      test: (raw, out, c) => printedAny(out, withFloat(hourTotal(c))),
     }],
-    passMsg: '✅ Rate updated — 6 hours × 60 litres = 360.',
+    passMsg: c => `✅ Rate updated: 6 hours × ${rateOf(c)} litres = ${hourTotal(c)}.`,
   },
 
   // Mod 2 — a new question, cast, printed on its own (no + needed yet).
@@ -240,10 +253,10 @@ export const MOD_CHECKS = {
   // Mod 3 — a calculation that uses the new number.
   mod3: {
     reqs: [{
-      hint: '❌ Work out the oxygen for the whole crew — hours × crew × 60 — and print it. Tested with 6 hours and 3 crew, it should print 1080. e.g. total = hours * crew * 60',
-      test: (raw, out) => /\*/.test(normalise(raw)) && printedAny(out, CREW_TOTALS),
+      hint: c => `❌ Work out the oxygen for the whole crew — hours × crew × ${rateOf(c)} — and print it. Tested with 6 hours and 3 crew, it should print ${crewTotal(c)}. e.g. total = hours * crew * ${rateOf(c)}`,
+      test: (raw, out, c) => /\*/.test(normalise(raw)) && printedAny(out, crewTotals(c)),
     }],
-    passMsg: '✅ 6 hours × 3 crew × 60 litres = 1080 litres. Life support can plan for everyone.',
+    passMsg: c => `✅ 6 hours × 3 crew × ${rateOf(c)} litres = ${crewTotal(c)} litres. Life support can plan for everyone.`,
   },
 
   // Mod 4 — the number inside a sentence, joined with + and str().
@@ -254,16 +267,16 @@ export const MOD_CHECKS = {
         test: raw => joinsWithStr(raw),
       },
       {
-        hint: '❌ Your sentence needs to show the crew total (1080 when tested with 6 hours and 3 crew) — put str(total) in it, not hours or crew.',
-        test: (raw, out) => sentenceWith(out, CREW_TOTALS),
+        hint: c => `❌ Your sentence needs to show the crew total (${crewTotal(c)} when tested with 6 hours and 3 crew) — put str(total) in it, not hours or crew.`,
+        test: (raw, out, c) => sentenceWith(out, crewTotals(c)),
       },
     ],
     passMsg: '✅ One clear sentence — str() turned the number into text so + could join it.',
   },
 };
 
-export function evalMod(checkKey, raw, output = '') {
-  return evalReqs(MOD_CHECKS[checkKey], raw, output);
+export function evalMod(checkKey, raw, output = '', choice) {
+  return evalReqs(MOD_CHECKS[checkKey], raw, output, choice);
 }
 
 // ── Make — supply manifest ───────────────────────────────────────────────────
