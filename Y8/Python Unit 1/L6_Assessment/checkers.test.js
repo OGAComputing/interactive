@@ -49,10 +49,10 @@ describe('question bank', () => {
     }
   });
 
-  test('marks: 38 in the grade, 3 bonus; writing is no more than a quarter', () => {
+  test('marks: 49 in the grade, 4 bonus; writing is no more than a quarter', () => {
     const s = summarise({}, 0);
-    expect(s.max).toBe(38);
-    expect(s.sections.ext.max).toBe(3);
+    expect(s.max).toBe(49);
+    expect(s.sections.ext.max).toBe(4);
     expect(s.sections.write.max / s.max).toBeLessThanOrEqual(0.25);
   });
 
@@ -83,11 +83,13 @@ describe('per-student randomness', () => {
 
 describe('trace marking', () => {
   const str = v => ({ type: 'str', value: v });
-  test('text needs quotes (either kind)', () => {
+  test('text is right with or without quotes (either kind); a quoted number is not', () => {
     expect(checkTraceValue(str('Tommy'), '"Tommy"').ok).toBe(true);
     expect(checkTraceValue(str('Tommy'), "'Tommy'").ok).toBe(true);
-    expect(checkTraceValue(str('Tommy'), 'Tommy').msg).toMatch(/quotes/);
+    expect(checkTraceValue(str('Tommy'), 'Tommy').ok).toBe(true);
     expect(checkTraceValue(str('Tommy'), '"Tom"').ok).toBe(false);
+    expect(checkTraceValue({ type: 'int', value: 8 }, '8').ok).toBe(true);
+    expect(checkTraceValue({ type: 'int', value: 8 }, '"8"').msg).toMatch(/quotes/);
   });
   test('output: case and extra spaces forgiven; a missing space is not', () => {
     expect(checkTraceOutput('HelloSam!', 'hellosam!').ok).toBe(true);
@@ -151,11 +153,13 @@ describe('fix-it items', () => {
     const it = itemById('c_fix');
     const run = (a, b, line) => ok([a, b], [`How many apples? ${a}`, `How many pears? ${b}`, line]);
     expect(evalCode(it, '', [run('5', '3', 'Fruit in the bowl: 8'), run('12', '30', 'Fruit in the bowl: 42')]).pts).toBe(2);
-    expect(evalCode(it, '', [run('5', '3', '8'), run('12', '30', '42')]).pts).toBe(1);
+    expect(evalCode(it, '', [run('5', '3', '8'), run('12', '30', '42')])).toMatchObject({ pts: 1, results: [true, false] });
     expect(evalCode(it, '', [run('5', '3', 'Fruit in the bowl: 53'), run('12', '30', 'Fruit in the bowl: 1230')]).pts).toBe(0);
     const r = evalCode(it, '', [fail(['5', '3'], 'TypeError: can only concatenate str (not "int") to str')]);
     expect(r.pts).toBe(0);
     expect(r.msg).toMatch(/TypeError/);
+    // The starter prints with a comma, so casting both answers with int() is the whole fix.
+    expect(it.starter).toContain('print("Fruit in the bowl:", total)');
   });
 
   test('s_fix: each mark gets only its own message', () => {
@@ -254,7 +258,9 @@ describe('write it: the game shop', () => {
 
 describe('extension: the speed camera', () => {
   const it = itemById('x_speed');
-  const code = 'limit = int(input("What is the speed limit? "))\nspeed = int(input("How fast were you going? "))';
+  const code = 'limit = int(input("What is the speed limit? "))\nspeed = int(input("How fast were you going? "))\n'
+    + 'if speed > limit:\n    print("You were " + str(speed - limit) + " mph over the limit")';
+  const commas = code.replace('print("You were " + str(speed - limit) + " mph over the limit")', 'print("You were", speed - limit, "mph over the limit")');
   const run = (l, s, ...lines) => ok([l, s], [`What is the speed limit? ${l}`, `How fast were you going? ${s}`, ...lines]);
   const good = [
     run('30', '36', 'You were 6 mph over the limit', 'Drive safely'),
@@ -262,12 +268,65 @@ describe('extension: the speed camera', () => {
     run('50', '72', 'You were 22 mph over the limit', 'Drive safely'),
     run('20', '15', 'Within the limit, thank you', 'Drive safely'),
   ];
-  test('an exact copy gets all 3 bonus marks', () => {
-    expect(evalCode(it, code, good).pts).toBe(3);
+  test('an exact copy built with + and str() gets all 4 bonus marks', () => {
+    expect(evalCode(it, code, good).pts).toBe(4);
   });
   test('>= instead of > (30 at 30 counted as over) loses the third mark', () => {
     const runs = [good[0], run('30', '30', 'You were 0 mph over the limit', 'Drive safely'), good[2], good[3]];
-    expect(evalCode(it, code, runs).results).toEqual([true, true, false]);
+    expect(evalCode(it, code, runs).results).toEqual([true, true, false, true]);
+  });
+  test('the same output printed with commas (no str()) loses only the str() mark', () => {
+    expect(evalCode(it, commas, good).results).toEqual([true, true, true, false]);
+  });
+});
+
+describe('short write-it tasks (one per lesson section)', () => {
+  test('o_write: both lines exactly, and nothing else', () => {
+    const it = itemById('o_write');
+    expect(evalCode(it, '', [ok([], ['I am learning Python', 'It is fun'])]).pts).toBe(2);
+    expect(evalCode(it, '', [ok([], ['I am learning Python'])]).results).toEqual([true, false]);
+    expect(evalCode(it, '', [ok([], ['I am learning Python', 'It is fun', 'Bye'])]).results).toEqual([true, false]);
+    expect(evalCode(it, it.starter, [ok([], [])]).pts).toBe(0);
+  });
+
+  test('v_write: the variable must be made AND used in the print()', () => {
+    const it = itemById('v_write');
+    const run = [ok([], ['blue'])];
+    expect(evalCode(it, 'colour = "blue"\nprint(colour)', run).pts).toBe(2);
+    expect(evalCode(it, "colour = 'Blue'\nprint(colour)", [ok([], ['Blue'])]).pts).toBe(2);
+    expect(evalCode(it, 'colour = "blue"\nprint("blue")', run).results).toEqual([true, false]);
+    expect(evalCode(it, 'colour = "blue"\nprint("colour")', [ok([], ['colour'])]).results).toEqual([true, false]);
+    expect(evalCode(it, 'x = "blue"\nprint(x)', run).results).toEqual([false, false]);
+    expect(evalCode(it, it.starter, [ok([], [])]).pts).toBe(0);
+  });
+
+  test('i_write: stores input() and says hello with the typed name', () => {
+    const it = itemById('i_write');
+    const code = 'name = input("What is your name? ")\nprint("Hello " + name)';
+    const runs = n => [ok(['Sam'], ['What is your name? Sam', n('Sam')]), ok(['Priya'], ['What is your name? Priya', n('Priya')])];
+    expect(evalCode(it, code, runs(x => `Hello ${x}`)).pts).toBe(2);
+    expect(evalCode(it, code, runs(x => `Hi ${x}!`)).pts).toBe(2);
+    expect(evalCode(it, code, runs(() => 'Hello Sam')).results).toEqual([true, false]);   // name typed in, not joined
+    expect(evalCode(it, 'input("Name? ")\nprint("Hello")', runs(() => 'Hello')).pts).toBe(0);
+  });
+
+  test('c_write: int() and the age next year; the starter alone gets nothing', () => {
+    const it = itemById('c_write');
+    const run = (a, line) => ok([a], [`How old are you? ${a}`, line]);
+    const model = 'age = int(input("How old are you? "))\nprint("Next year you will be", age + 1)';
+    expect(evalCode(it, model, [run('12', 'Next year you will be 13'), run('7', 'Next year you will be 8')]).pts).toBe(2);
+    expect(evalCode(it, model, [run('12', '13'), run('7', '8')]).pts).toBe(2);
+    expect(evalCode(it, it.starter, [fail(['12'], 'TypeError: can only concatenate str (not "int") to str')]).pts).toBe(0);
+  });
+
+  test('s_write: if/else with ==, and the right message either side of 1234', () => {
+    const it = itemById('s_write');
+    const model = 'pin = int(input("Enter your PIN: "))\nif pin == 1234:\n    print("Unlocked")\nelse:\n    print("Wrong PIN")';
+    const run = (p, line) => ok([p], [`Enter your PIN: ${p}`, line]);
+    expect(evalCode(it, model, [run('1234', 'Unlocked'), run('1233', 'Wrong PIN'), run('1235', 'Wrong PIN')]).pts).toBe(2);
+    const ge = [run('1234', 'Unlocked'), run('1233', 'Wrong PIN'), run('1235', 'Unlocked')];   // >= 1234
+    expect(evalCode(it, model.replace('==', '>='), ge).results).toEqual([true, false]);
+    expect(evalCode(it, it.starter, [run('1234', ''), run('1233', ''), run('1235', '')]).pts).toBe(0);
   });
 });
 

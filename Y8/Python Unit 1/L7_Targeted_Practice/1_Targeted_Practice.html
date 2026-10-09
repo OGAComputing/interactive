@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- ACTIVITY
+title:  Unit 1 Targeted Practice — Fix It, Then Make It
+type:   Practice
+stars:  3
+desc:   Follow-up to the Unit 1 assessment: look back at your own mistakes, practise the 3 things you found hardest, then make your own decision program.
+color:  teal
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unit 1 Targeted Practice — Year 8 Python</title>
+<link rel="stylesheet" href="../../../shared.css">
+
+<style>
+  [hidden] { display: none !important; }   /* .ac-btn's display would otherwise beat the hidden attribute */
+
+  /* ── Header ──────────────────────────────────────────── */
+  .header { background: var(--surface); padding: 18px 28px 14px; border-bottom: 4px solid var(--accent); }
+  .header-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  .header-title { font-family: var(--font-head); font-size: 1.5rem; font-weight: 700; color: var(--text-inv); }
+  .header-sub { font-size: 0.82rem; color: var(--accent-light); margin-top: 3px; }
+  .py-status { font-size: 0.75rem; color: var(--accent-light); background: var(--surface-mid); padding: 4px 10px; border-radius: 999px; }
+  .py-status.ready { color: #bbf7d0; }
+  .score-row { display: flex; align-items: center; gap: 14px; margin-top: 10px; flex-wrap: wrap; }
+  .score-pill { background: var(--surface-dim); border: 2px solid var(--accent); border-radius: 20px; padding: 4px 16px; font-size: 0.85rem; font-weight: 700; color: var(--text-inv); }
+  .bonus-pill { font-size: 0.8rem; font-weight: 700; color: var(--gold); }
+  .score-bar-wrap { flex: 1; min-width: 120px; max-width: 260px; height: 8px; background: var(--surface-dim); border-radius: 4px; overflow: hidden; }
+  .score-bar { height: 100%; background: var(--accent); border-radius: 4px; width: 0%; transition: width .5s ease; }
+  /* The header shows the progress; activity-ui's corner badge would repeat it. */
+  #activity-ui-score { display: none !important; }
+
+  #glow-overlay { position: fixed; inset: 0; pointer-events: none; z-index: 0; opacity: 0; transition: opacity 1.8s ease; }
+  #glow-overlay.gold  { background: radial-gradient(ellipse at 50% 55%, rgba(251,191,36,.24) 0%, transparent 65%); }
+  #glow-overlay.green { background: radial-gradient(ellipse at 50% 55%, rgba(16,185,129,.20) 0%, transparent 65%); }
+  #glow-overlay.show  { opacity: 1; }
+
+  /* ── How it works ────────────────────────────────────── */
+  .intro { max-width: 920px; margin: 14px auto 0; padding: 0 28px; font-size: 0.88rem; }
+  .intro details { background: #fff; border: 1.5px solid var(--accent); border-radius: 8px; padding: 8px 14px; }
+  .intro summary { cursor: pointer; font-weight: 700; color: var(--surface); }
+  .intro ul { margin: 8px 0 4px 20px; line-height: 1.65; }
+
+  /* ── Tabs ────────────────────────────────────────────── */
+  .tab-bar { display: flex; background: var(--surface-mid); padding: 0 20px; gap: 2px; overflow-x: auto; border-bottom: 1px solid #2a4060; margin-top: 14px; }
+  .tab { padding: 10px 10px 9px; border: none; background: transparent; color: var(--accent-light); font-family: var(--font-body); font-size: 0.82rem; font-weight: 600; cursor: pointer; border-bottom: 3px solid transparent; white-space: nowrap; user-select: none; }
+  .tab:hover { color: #fff; }
+  .tab.active { color: var(--text-inv); border-bottom-color: var(--accent); }
+  .tab.done { color: #bbf7d0; }
+  .tab.locked { opacity: .7; }
+
+  /* ── Panels ──────────────────────────────────────────── */
+  .panel { display: none; padding: 24px 28px 64px; max-width: 920px; margin: 0 auto; position: relative; z-index: 1; }
+  .panel.active { display: block; animation: ac-fade-in .25s ease; }
+  .task-header { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+  .task-badge { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; background: var(--accent); flex-shrink: 0; }
+  .task-title { font-family: var(--font-head); font-size: 1.25rem; font-weight: 700; color: var(--surface); }
+  .task-sub { font-size: 0.82rem; color: var(--muted); }
+  .goal { display: block; background: #fff; border-left: 4px solid var(--accent); padding: 10px 14px; border-radius: 0 6px 6px 0; font-size: 0.92rem; font-weight: 600; color: var(--surface); margin-bottom: 16px; line-height: 1.5; }
+  .panel p { line-height: 1.55; }
+  code { font-family: var(--font-mono); background: #e3ecf6; padding: 0 4px; border-radius: 3px; font-size: 0.92em; }
+  .next-row { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
+  .muted { color: var(--muted); }
+  .ac-btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
+
+  /* ── Plan ────────────────────────────────────────────── */
+  .sec-table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 10px; overflow: hidden; font-size: 0.9rem; margin: 6px 0 18px; }
+  .sec-table th, .sec-table td { padding: 8px 12px; text-align: left; border-bottom: 1px solid #e3ecf6; }
+  .sec-table th { background: var(--surface); color: var(--text-inv); font-size: 0.8rem; }
+  .mini-bar { width: 110px; height: 8px; background: #e3ecf6; border-radius: 4px; overflow: hidden; display: inline-block; vertical-align: middle; margin-right: 8px; }
+  .mini-bar span { display: block; height: 100%; background: var(--accent); }
+  .plan-cards { display: grid; gap: 10px; margin: 10px 0; }
+  .plan-card { display: flex; gap: 14px; align-items: center; background: #fff; border: 1.5px solid #c9d8e8; border-radius: 10px; padding: 12px 16px; }
+  .plan-card .ico { font-size: 1.5rem; }
+  .plan-card .t { font-weight: 700; color: var(--surface); }
+  .plan-card .s { font-size: 0.84rem; color: var(--muted); }
+  .plan-card .st { margin-left: auto; font-weight: 700; font-size: 0.85rem; white-space: nowrap; }
+  .plan-card.done { border-color: var(--green); background: rgba(16,185,129,.05); }
+  .plan-card.done .st { color: var(--green-dark); }
+  .plan-card.make { border-style: dashed; }
+  .picker { display: grid; gap: 8px; margin: 10px 0; }
+  .picker label { display: flex; gap: 12px; align-items: center; background: #fff; border: 1.5px solid #c9d8e8; border-radius: 8px; padding: 10px 14px; cursor: pointer; }
+  .picker label:hover { border-color: var(--accent); }
+  .picker input { accent-color: var(--accent); width: 18px; height: 18px; }
+  .picker small { display: block; color: var(--muted); }
+  .loading { display: flex; gap: 12px; align-items: center; background: #fff; border-radius: 10px; padding: 18px; font-weight: 600; color: var(--surface); }
+  .spinner { width: 20px; height: 20px; border: 3px solid #c9d8e8; border-top-color: var(--accent); border-radius: 50%; animation: spin 0.9s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Steps inside a target ───────────────────────────── */
+  .step { border: 1.5px solid #c9d8e8; border-radius: 12px; background: #fff; padding: 16px 18px; margin: 16px 0; transition: opacity .2s; }
+  .step.locked { opacity: .5; pointer-events: none; user-select: none; }
+  .step.done { border-color: var(--green); }
+  .step-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .step-no { width: 28px; height: 28px; border-radius: 50%; background: var(--surface); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem; flex-shrink: 0; }
+  .step.done .step-no { background: var(--green); }
+  .step-title { font-family: var(--font-head); font-weight: 700; font-size: 1.05rem; color: var(--surface); }
+  .step-lock { margin-left: auto; font-size: 0.78rem; color: var(--muted); font-weight: 600; }
+  .step.done .step-lock { color: var(--green-dark); }
+
+  /* Look back */
+  .lb { border-left: 4px solid var(--red); background: #fdf6f6; border-radius: 0 8px 8px 0; padding: 10px 14px; margin: 10px 0; }
+  .lb.partial { border-left-color: var(--amber); background: #fffaf3; }
+  .lb.unanswered { border-left-color: #9fb4cc; background: #f7fafd; }
+  .lb-head { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-size: 0.78rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+  .lb-q { font-weight: 700; color: var(--surface); margin: 4px 0; line-height: 1.5; }
+  .ans-row { display: grid; grid-template-columns: 8.5em 1fr; gap: 6px 10px; font-size: 0.9rem; margin-top: 6px; align-items: baseline; }
+  .ans-row .k { font-weight: 700; color: var(--muted); font-size: 0.82rem; }
+  .yours { color: var(--red); font-weight: 600; }
+  .yours.ok { color: var(--green-dark); }
+  .right { color: var(--green-dark); font-weight: 700; }
+  .why { margin-top: 8px; padding: 8px 12px; border-radius: 8px; background: #f2f6fb; font-size: 0.88rem; line-height: 1.5; }
+  .got-right { font-size: 0.88rem; color: var(--green-dark); font-weight: 600; margin-top: 8px; }
+  .lb-table { border-collapse: collapse; font-size: 0.88rem; margin-top: 6px; }
+  .lb-table td, .lb-table th { padding: 4px 10px 4px 0; text-align: left; vertical-align: top; }
+  .lb-table th { color: var(--muted); font-size: 0.76rem; }
+  .lb-table .mono { font-family: var(--font-mono); }
+  .rule { background: #eef8fb; border: 1.5px solid var(--accent); border-radius: 10px; padding: 12px 16px; margin-top: 14px; }
+  .rule h4 { font-family: var(--font-head); color: var(--surface); margin-bottom: 6px; }
+  .rule ul { margin: 0 0 8px 20px; line-height: 1.65; font-size: 0.92rem; }
+  .ex-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: start; }
+  @media (max-width: 680px) { .ex-grid { grid-template-columns: 1fr; } .ans-row { grid-template-columns: 1fr; } }
+
+  /* Reflect */
+  .reflect textarea { width: 100%; min-height: 64px; font-family: var(--font-body); font-size: 0.95rem; padding: 10px 12px; border: 2px solid #b8cbe0; border-radius: 8px; resize: vertical; }
+  .reflect textarea:focus { outline: none; border-color: var(--accent); }
+  .reflect textarea[readonly] { background: #f2f6fb; }
+
+  /* Checkpoint */
+  .cp-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-size: 0.82rem; color: var(--muted); font-weight: 700; }
+  .pips { display: flex; gap: 6px; }
+  .pip { width: 14px; height: 14px; border-radius: 50%; background: #e3ecf6; border: 2px solid #c9d8e8; }
+  .pip.on { background: var(--green); border-color: var(--green); }
+  .pip.now { border-color: var(--accent); }
+  .cp-q { font-weight: 700; color: var(--surface); line-height: 1.5; margin: 4px 0 8px; }
+  .cp-opts { display: grid; gap: 8px; margin-top: 8px; }
+  .cp-opt { text-align: left; border: 1.5px solid #c9d8e8; border-radius: 8px; padding: 9px 12px; background: #fff; cursor: pointer; font-family: var(--font-body); font-size: 0.92rem; color: var(--surface); }
+  .cp-opt:hover:not(:disabled) { border-color: var(--accent); }
+  .cp-opt:disabled { cursor: default; }
+  .cp-opt.right { border-color: var(--green); background: var(--green-bg); }
+  .cp-opt.wrong { border-color: var(--red); background: var(--red-bg); }
+  .cp-type { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+  .cp-type input { flex: 1; min-width: 200px; font-family: var(--font-mono); font-size: 0.95rem; padding: 8px 10px; border: 2px solid #b8cbe0; border-radius: 8px; }
+  .cp-type input.ok { border-color: var(--green); background: rgba(16,185,129,.1); }
+  .cp-type input.bad { border-color: var(--red); background: rgba(220,38,38,.08); }
+  .cp-msg { margin-top: 10px; font-weight: 600; font-size: 0.92rem; line-height: 1.5; }
+  .cp-msg.good { color: var(--green-dark); }
+  .cp-msg.bad { color: var(--red); }
+  .cp-msg .why { color: var(--surface); font-weight: 400; display: block; }
+  .cp-done { background: var(--green-bg); border: 1.5px solid var(--green); border-radius: 8px; padding: 10px 14px; font-weight: 700; color: var(--green-dark); }
+  .rule-box { background: #f7fafd; border-radius: 8px; padding: 6px 12px; font-size: 0.84rem; border: 1px solid #c9d8e8; margin-top: 6px; }
+
+  /* Static code listing */
+  .listing { background: var(--surface); color: #dbe7f5; font-family: var(--font-mono); font-size: 0.92rem; border-radius: 8px; padding: 10px 0; margin: 8px 0; overflow-x: auto; }
+  .listing .ln { display: flex; gap: 12px; padding: 1px 14px; white-space: pre; }
+  .listing .n { color: #6b8cae; width: 1.4em; text-align: right; flex-shrink: 0; user-select: none; }
+  .listing .note { color: var(--gold); font-style: italic; margin-left: auto; padding-left: 18px; font-family: var(--font-body); font-size: 0.82rem; }
+  .listing .s { color: #a7f3a0; }
+  .listing .f { color: #90e0ef; }
+  .listing .k { color: #ffb4a2; }
+  .err { background: #2b0f14; color: #fca5a5; font-family: var(--font-mono); font-size: 0.85rem; border-left: 4px solid var(--red); border-radius: 6px; padding: 8px 12px; margin: 8px 0; white-space: pre-wrap; }
+  .err-cap { font-size: 0.75rem; color: var(--muted); font-weight: 700; margin-top: 8px; }
+  .terminal { background: #0d1726; color: #d6e4f0; font-family: var(--font-mono); font-size: 0.9rem; border-radius: 8px; padding: 10px 14px; white-space: pre-wrap; line-height: 1.6; margin: 8px 0; }
+  .terminal .typed { color: var(--gold); font-weight: 700; }
+  .terminal .cap { display: block; color: #6b8cae; font-family: var(--font-body); font-size: 0.75rem; margin-bottom: 4px; }
+  .samples { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px; margin: 8px 0; }
+
+  /* Code tasks */
+  .code-checker { background: var(--surface); border-radius: 10px; overflow: hidden; margin: 10px 0; }
+  .checker-footer { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; padding: 10px 12px; background: var(--surface-mid); }
+  .btn-run, .btn-reset { padding: 8px 16px; border-radius: 8px; font-weight: 700; font-size: 0.86rem; cursor: pointer; font-family: var(--font-body); }
+  .btn-run   { background: transparent; color: var(--accent-light); border: 2px solid var(--accent-light); }
+  .btn-reset { background: transparent; color: #9fb4cc; border: 2px solid #4a6a8c; }
+  .btn-run:hover, .btn-reset:hover { color: #fff; border-color: #fff; }
+  .btn-reset:disabled { opacity: .4; cursor: not-allowed; }
+  .checker-footer .ac-btn { padding: 8px 18px; font-size: 0.88rem; }
+  .goal-line { font-size: 0.92rem; margin: 6px 0 4px; color: var(--surface); line-height: 1.5; }
+  .test-note { font-size: 0.84rem; color: var(--muted); margin: 6px 0; }
+  .feedback { min-height: 1.2em; font-size: 0.9rem; font-weight: 600; margin-top: 10px; line-height: 1.5; }
+  .feedback.correct { color: var(--green-dark); }
+  .feedback.wrong   { color: var(--red); }
+  .feedback.partial { color: var(--amber-dark); }
+  .feedback.info    { color: var(--muted); }
+  .own-note { background: var(--gold-bg); border: 1px solid var(--gold); border-radius: 8px; padding: 8px 12px; font-size: 0.88rem; margin: 8px 0; }
+  .req-list { list-style: none; margin: 8px 0; display: grid; gap: 6px; padding: 0; }
+  .req-list li { display: flex; gap: 10px; align-items: flex-start; background: #fff; border: 1.5px solid #c9d8e8; border-radius: 8px; padding: 8px 12px; line-height: 1.5; font-size: 0.92rem; }
+  .req-list li .tick { width: 22px; height: 22px; border-radius: 50%; background: #e3ecf6; color: var(--surface); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.8rem; flex-shrink: 0; }
+  .req-list li.req-pass { border-color: var(--green); }
+  .req-list li.req-pass .tick { background: var(--green); color: #fff; }
+  .req-list li.req-fail { border-color: var(--red); }
+  .req-list li.req-fail .tick { background: var(--red); color: #fff; }
+  .req-list.stretch li .tick { background: var(--gold-bg); }
+  .target-done { display: none; background: var(--green-bg); border: 1.5px solid var(--green); border-radius: 10px; padding: 12px 16px; font-weight: 700; color: var(--green-dark); margin-top: 14px; }
+  .target-done.show { display: block; animation: ac-fade-in .3s ease; }
+
+  /* Make it */
+  .lock-card { background: #fff; border: 2px dashed #b8cbe0; border-radius: 12px; padding: 22px; text-align: center; }
+  .lock-card .big { font-size: 2rem; }
+  .teacher-unlock { margin-top: 14px; font-size: 0.85rem; }
+  .teacher-unlock input { padding: 6px 10px; border: 1.5px solid #b8cbe0; border-radius: 6px; font-size: 0.9rem; }
+  .linkish { background: none; border: none; color: var(--muted); text-decoration: underline; cursor: pointer; font-size: 0.82rem; font-family: var(--font-body); }
+  .ideas { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; margin: 10px 0; }
+  .idea { text-align: left; background: #fff; border: 1.5px solid #c9d8e8; border-radius: 10px; padding: 10px 12px; cursor: pointer; font-family: var(--font-body); color: var(--surface); }
+  .idea:hover { border-color: var(--accent); }
+  .idea.on { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,180,216,.25); }
+  .idea b { display: block; font-size: 0.95rem; }
+  .idea small { color: var(--muted); font-size: 0.8rem; line-height: 1.4; display: block; margin-top: 2px; }
+  .test-plan { width: 100%; border-collapse: collapse; background: #fff; border-radius: 10px; overflow: hidden; font-size: 0.9rem; margin: 8px 0; }
+  .test-plan th, .test-plan td { padding: 8px 10px; border-bottom: 1px solid #e3ecf6; text-align: left; vertical-align: middle; }
+  .test-plan th { background: var(--surface); color: var(--text-inv); font-size: 0.8rem; }
+  .test-plan input { font-family: var(--font-mono); font-size: 0.92rem; padding: 6px 8px; border: 2px solid #b8cbe0; border-radius: 6px; width: 100%; min-width: 80px; }
+  .test-plan .path { font-size: 0.8rem; color: var(--muted); }
+  .test-plan .res { font-family: var(--font-mono); font-size: 0.82rem; white-space: pre-wrap; color: var(--surface); }
+
+  @media (prefers-reduced-motion: reduce) { .panel.active, .target-done.show { animation: none; } .spinner { animation: none; } }
+  @media (max-width: 600px) {
+    .panel, .intro { padding-left: 16px; padding-right: 16px; }
+    .header { padding: 14px 16px; }
+    .step { padding: 14px 12px; }
+    .plan-card { flex-wrap: wrap; }
+    .plan-card .st { margin-left: 0; }
+  }
+</style>
+</head>
+
+<body>
+
+<!--
+  Y8 Python Unit 1 · Lesson 7 — Targeted Practice (DIRT + the unit's creative Make). Not PRIMM.
+  Targets, question pools and all marking live in checkers.js (tests in checkers.test.js),
+  which reads the Lesson 6 assessment's question bank. This page only renders and records.
+  WRITING INSTRUCTIONS THAT CONTAIN CODE: never put a full stop or comma straight after code
+  the student might type.
+-->
+
+<div id="done-banner" class="ac-banner"></div>
+<div id="glow-overlay"></div>
+
+<div class="header">
+  <div class="header-top">
+    <div>
+      <div class="header-title">🎯 Unit 1 Targeted Practice — Fix It, Then Make It</div>
+      <div class="header-sub">Year 8 Python · Look back at your assessment · Practise your 3 targets · Make your own program</div>
+    </div>
+    <div class="py-status" id="pyStatus">Python: loading…</div>
+  </div>
+  <div class="score-row">
+    <div class="score-pill" id="score-pill">Progress: 0%</div>
+    <div class="score-bar-wrap"><div class="score-bar" id="score-bar"></div></div>
+    <div class="bonus-pill" id="bonus-pill"></div>
+  </div>
+</div>
+
+<div class="intro">
+  <details id="intro">
+    <summary>📋 How today works — read this first</summary>
+    <ul>
+      <li>Your <strong>plan</strong> is made from your Unit 1 assessment: the <strong>3 things you found hardest</strong>, each with its own tab.</li>
+      <li>Each target has 4 steps: <strong>🔍 look back</strong> at your own answers, <strong>✍️ write</strong> what you will do differently, pass a <strong>🧠 checkpoint</strong> (3 right in a row), then <strong>🛠 use it</strong> in a program.</li>
+      <li>In a checkpoint, one wrong answer sends you back to question 1 with new questions. Read the explanation, then try again. Getting it first time counts towards ⭐ gold.</li>
+      <li>This is practice, not a test: <strong>💡 Get help</strong> is on in the code editors, and checks tell you what to change.</li>
+      <li>When your targets are done, <strong>🎨 Make it</strong> unlocks: your own program that makes a decision. Everything saves automatically.</li>
+    </ul>
+  </details>
+</div>
+
+<div class="tab-bar" id="tab-bar" role="tablist"></div>
+<div id="panels">
+  <div class="panel active" id="panel-plan">
+    <div class="loading"><span class="spinner"></span> Looking for your assessment results…</div>
+  </div>
+</div>
+
+<div class="ac-toast" id="toast"></div>
+
+<!-- Shows any unexpected page error at the bottom of the page (no dev console on student PCs). Keep this first. -->
+<script src="../../../error-reporter.js"></script>
+<script src="../../../activity-ui.js"></script>
+<script src="../../../classroom.js"></script>
+
+<script type="module">
+import {
+  ASSESS, ITEMS, SECTIONS, itemById, variantOf, itemMax, TARGETS, targetById, CHAIN,
+  targetScores, choosePlan, readSnapshot, drawCheckpoint, poolQuestion, cpOptionOrder,
+  markCheckpoint, rightAnswer, applyFor, evalApply, inputPrompts, inputCount, evalMake,
+  MAKE_REQS, MAKE_STRETCH, IDEAS, lessonScore, targetDone, realSentence, questionNumber,
+  FIX_NOTES, checkTraceValue, checkTraceOutput, showValue, branchChoices, branchAnswer, markSort,
+} from './checkers.js';
+import { preload, runPython } from '../../../pyodide-runner.js';
+import { setupEditors, setEditorOutput, refreshEditor, runCode } from '../../../code-editor.js';
+
+// ── Activity identity ──────────────────────────────────
+const STORAGE_KEY    = 'oga_y8u1_dirt_v1';
+const ACTIVITY_TITLE = 'Unit 1 Targeted Practice — Fix It, Then Make It';   // must match <!-- ACTIVITY title: -->
+const SKIP_PASSWORD  = 'outwood';   // teacher unlock for 🎨 Make it (same as the PRIMM skip password)
+
+const $  = sel => document.querySelector(sel);
+const $$ = sel => [...document.querySelectorAll(sel)];
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const authBlocked = () => window.Classroom?.verifyAuth() === false;   // undefined (no classroom.js) never blocks
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const toast = (msg, kind = '') => {
+  const t = $('#toast'); t.textContent = msg; t.className = 'ac-toast show ' + kind;
+  clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), 3200);
+};
+
+// ── State (saved on every change, including a checkpoint restart) ──
+function fresh() {
+  return { seed: Math.floor(Math.random() * 2 ** 31), plan: null, snap: null, extra: [], tab: 'plan',
+           reflect: {}, cp: {}, applied: {}, code: {}, make: { core: 0, stretch: 0, results: null, stretchResults: null },
+           idea: null, tests: { A: [], B: [] }, teacherUnlock: false, finished: false };
+}
+let S;
+try { const s = JSON.parse(localStorage.getItem(STORAGE_KEY)); S = s && s.seed != null ? { ...fresh(), ...s } : fresh(); }
+catch (e) { S = fresh(); }
+function save() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(S)); } catch (e) {} }
+
+const targets = () => [...(S.plan || []), ...S.extra];
+const makeUnlocked = () => S.plan && (S.teacherUnlock || S.plan.every(t => targetDone(S, t)));
+
+// ── Rendering helpers ──────────────────────────────────
+function hl(code) {
+  return esc(code)
+    .replace(/(&quot;[^&]*?&quot;)/g, '<span class="s">$1</span>')
+    .replace(/\b(print|input|int|float|str)\(/g, '<span class="f">$1</span>(')
+    .replace(/^(\s*)(if|else)\b/g, '$1<span class="k">$2</span>');
+}
+function listing(code, notes = {}) {
+  return `<div class="listing">${code.split('\n').map((l, i) =>
+    `<div class="ln"><span class="n">${i + 1}</span><span>${hl(l)}</span>${notes[i] ? `<span class="note">← ${esc(notes[i])}</span>` : ''}</div>`).join('')}</div>`;
+}
+function terminal(text, typed, cap) {
+  const lines = text.split('\n').map(l => typed && /\?\s/.test(l) && l.endsWith(typed)
+    ? esc(l.slice(0, -typed.length)) + `<span class="typed">${esc(typed)}</span>` : esc(l));
+  return `<div class="terminal">${cap ? `<span class="cap">${esc(cap)}</span>` : ''}${lines.join('\n')}</div>`;
+}
+const sampleRun = (run, cap) => `<div class="terminal">${cap ? `<span class="cap">${esc(cap)}</span>` : ''}${
+  run.map(([text, typed]) => esc(text) + (typed ? `<span class="typed">${esc(typed)}</span>` : '')).join('\n')}</div>`;
+const looksLikeCode = o => /[()"=*+<>]/.test(o);
+const fmt = o => looksLikeCode(o) ? `<code>${esc(o)}</code>` : esc(o);
+
+// ══ Tabs ═══════════════════════════════════════════════
+function tabLabel(key) {
+  if (key === 'plan') return '🗺 Your plan';
+  if (key === 'make') return `${makeUnlocked() ? '🎨' : '🔒'} Make it`;
+  if (key === 'more') return '➕ More practice';
+  const t = targetById(key), i = targets().indexOf(key);
+  const extra = !S.plan?.includes(key);
+  return `${targetDone(S, key) ? '✓' : extra ? '+' : i + 1} · ${t.icon} ${esc(t.short)}`;
+}
+function tabKeys() { return S.plan ? ['plan', ...targets(), 'make', 'more'] : ['plan']; }
+function renderTabs() {
+  $('#tab-bar').innerHTML = tabKeys().map(k => `<button class="tab" role="tab" data-tab="${k}">${tabLabel(k)}</button>`).join('');
+  refreshTabs();
+}
+function refreshTabs() {
+  $$('.tab').forEach(b => {
+    const k = b.dataset.tab;
+    b.innerHTML = tabLabel(k);
+    b.classList.toggle('active', k === S.tab);
+    b.classList.toggle('done', targetDone(S, k) || (k === 'make' && S.make.core === MAKE_REQS.length));
+    b.classList.toggle('locked', k === 'make' && !makeUnlocked());
+  });
+}
+function showTab(k) {
+  if (!tabKeys().includes(k)) k = 'plan';
+  S.tab = k; save();
+  $$('.panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + k));
+  refreshTabs();
+  $$('#panel-' + k + ' .checker-textarea').forEach(ta => { try { refreshEditor(ta); } catch (e) {} });
+  window.scrollTo({ top: 0, behavior: reduceMotion ? 'auto' : 'smooth' });
+}
+$('#tab-bar').addEventListener('click', e => { const t = e.target.closest('.tab'); if (t) showTab(t.dataset.tab); });
+
+// ══ Plan ═══════════════════════════════════════════════
+function renderPlan() {
+  const p = $('#panel-plan');
+  if (!S.plan) { p.innerHTML = renderPicker(); return; }
+  const scores = S.snap ? Object.fromEntries(targetScores(S.snap.points).map(s => [s.id, s])) : {};
+  const secRows = S.snap ? SECTIONS.filter(s => !s.bonus).map(sec => {
+    const ids = ITEMS.filter(i => i.section === sec.id).map(i => i.id);
+    const max = ids.reduce((t, id) => t + itemMax(itemById(id)), 0);
+    const got = ids.reduce((t, id) => t + (S.snap.points[id] || 0), 0);
+    return `<tr><td>${sec.n} · ${esc(sec.label)}</td><td><span class="mini-bar"><span style="width:${Math.round(got / max * 100)}%"></span></span>${got} / ${max}</td></tr>`;
+  }).join('') : '';
+  const card = tid => {
+    const t = targetById(tid), s = scores[tid];
+    const why = s ? `You got ${s.earned} / ${s.max} on questions ${t.items.map(questionNumber).sort().join(', ')}` : 'You chose this one';
+    return `<div class="plan-card ${targetDone(S, tid) ? 'done' : ''}"><span class="ico">${t.icon}</span>
+      <div><div class="t">${esc(t.title)}</div><div class="s">${esc(t.lesson)} · ${why}</div></div>
+      <span class="st">${targetDone(S, tid) ? '✓ Done' : stepsLeft(tid)}</span></div>`;
+  };
+  const intro = !S.plan.length
+    ? `<div class="goal">🏆 You got every mark in the assessment, so there is nothing to fix. Go straight to <strong>🎨 Make it</strong>, then try the ★ challenge in <strong>➕ More practice</strong>.</div>`
+    : `<div class="goal">🎯 Today you will fix the ${S.plan.length === 1 ? 'one thing' : S.plan.length + ' things'} you found hardest${S.snap ? ' in the assessment' : ''}, then make your own program. Work through them in order.</div>`;
+  p.innerHTML = `
+    <div class="task-header"><div class="task-badge">🗺</div>
+      <div><div class="task-title">Your plan</div>
+      <div class="task-sub">${S.snap ? `From your Unit 1 assessment${S.snap.source === 'drive' ? ' (saved in your Google Drive)' : ''}` : 'Targets you chose'}</div></div></div>
+    ${intro}
+    ${S.snap ? `<p style="font-weight:700;color:var(--surface)">Your assessment, section by section</p><table class="sec-table"><tr><th>Section</th><th>Marks</th></tr>${secRows}</table>` : ''}
+    ${S.plan.length ? `<p style="font-weight:700;color:var(--surface)">Your targets</p>` : ''}
+    <div class="plan-cards">${S.plan.map(card).join('')}
+      <div class="plan-card make"><span class="ico">🎨</span><div><div class="t">Make it: your own decision program</div>
+        <div class="s">Unlocks when your targets are done</div></div><span class="st">${S.make.core === MAKE_REQS.length ? '✓ Done' : makeUnlocked() ? 'Unlocked' : '🔒'}</span></div></div>
+    <div class="next-row"><button class="ac-btn" data-tab-go="${S.plan[0] || 'make'}">Start: ${S.plan[0] ? esc(targetById(S.plan[0]).title) : 'Make it'} →</button></div>`;
+}
+function stepsLeft(tid) {
+  const n = [!!S.reflect[tid], !!S.cp[tid]?.done, !!S.applied[tid]].filter(Boolean).length;
+  return n ? `${n + 1} of 4 steps` : 'To do';
+}
+function renderPicker() {
+  return `
+    <div class="task-header"><div class="task-badge">🗺</div>
+      <div><div class="task-title">Choose your targets</div><div class="task-sub">No assessment results were found on this computer</div></div></div>
+    <div class="goal">🎯 Tick the <strong>3 things</strong> you found hardest in the Unit 1 assessment. If you did the assessment on another computer, open this activity from your Google Classroom link instead and it will find your results.</div>
+    <div class="picker">${TARGETS.map(t => `<label><input type="checkbox" data-pick="${t.id}"><span style="font-size:1.3rem">${t.icon}</span>
+      <span><strong>${esc(t.title)}</strong><small>${esc(t.lesson)} · ${esc(t.pick)}</small></span></label>`).join('')}</div>
+    <div class="row"><button class="ac-btn" id="pick-start" disabled>Start with these →</button><span class="muted" id="pick-count">Tick 1 to 3</span></div>`;
+}
+document.addEventListener('change', e => {
+  if (!e.target.dataset.pick) return;
+  const ticked = $$('[data-pick]:checked');
+  if (ticked.length > 3) { e.target.checked = false; toast('Choose up to 3 — the ones you found hardest.', 'warn'); }
+  const n = $$('[data-pick]:checked').length;
+  $('#pick-start').disabled = n === 0;
+  $('#pick-count').textContent = n ? `${n} chosen` : 'Tick 1 to 3';
+});
+
+// ══ A target ═══════════════════════════════════════════
+function renderTarget(tid) {
+  const t = targetById(tid);
+  const extra = !S.plan.includes(tid);
+  const ex = t.example;
+  const panel = document.createElement('div');
+  panel.className = 'panel';
+  panel.id = 'panel-' + tid;
+  panel.innerHTML = `
+    <div class="task-header"><div class="task-badge">${t.icon}</div>
+      <div><div class="task-title">${esc(t.title)}</div>
+      <div class="task-sub">${esc(t.lesson)}${extra ? ' · extra practice (bonus)' : ''}</div></div></div>
+
+    <div class="step" id="step1_${tid}">
+      <div class="step-head"><span class="step-no">1</span><span class="step-title">🔍 Look back at your answers</span></div>
+      ${renderLookBack(tid)}
+      <div class="rule"><h4>📌 Remember</h4><ul>${t.rule.map(r => `<li>${r}</li>`).join('')}</ul>
+        <div class="ex-grid"><div><div class="err-cap">Example</div>${listing(ex.code)}</div>
+          <div><div class="err-cap">${ex.err ? 'Python shows' : 'It prints'}</div>${ex.err ? `<pre class="err">${esc(ex.out)}</pre>` : terminal(ex.out, ex.typed)}</div></div></div>
+    </div>
+
+    <div class="step reflect" id="step2_${tid}">
+      <div class="step-head"><span class="step-no">2</span><span class="step-title">✍️ What will you do differently?</span><span class="step-lock" id="lock2_${tid}"></span></div>
+      <p>Look at what went wrong above and the rule. In one sentence: <strong>what will you check, or do differently, next time?</strong></p>
+      <textarea id="reflect_${tid}" data-reflect="${tid}" data-title="${esc(t.title)}: what I will do differently" placeholder="Next time I will…">${esc(S.reflect[tid] || '')}</textarea>
+      <div class="row"><button class="ac-btn" data-save-reflect="${tid}" id="savereflect_${tid}">Save my sentence</button></div>
+      <div class="feedback" id="fbreflect_${tid}"></div>
+    </div>
+
+    <div class="step" id="step3_${tid}">
+      <div class="step-head"><span class="step-no">3</span><span class="step-title">🧠 Checkpoint: ${CHAIN} in a row</span><span class="step-lock" id="lock3_${tid}"></span></div>
+      <p class="muted" style="font-size:0.88rem">New questions on the same idea. One wrong answer sends you back to question 1 with new questions.</p>
+      <div id="cp_${tid}"></div>
+    </div>
+
+    <div class="step" id="step4_${tid}">
+      <div class="step-head"><span class="step-no">4</span><span class="step-title">🛠 Use it</span><span class="step-lock" id="lock4_${tid}"></span></div>
+      ${renderApply(tid)}
+    </div>
+
+    <div class="target-done" id="tdone_${tid}">✅ Target complete: ${esc(t.title)}.</div>
+    <div class="next-row" id="next_${tid}"></div>`;
+  return panel;
+}
+
+// ── Step 1: the student's own answers ──
+function renderLookBack(tid) {
+  const t = targetById(tid);
+  const snap = S.snap;
+  if (!snap) {
+    return `<p class="muted">Here are the assessment questions on this, with the right answers.</p>` +
+      t.items.map(id => lookBackItem(id, null)).join('');
+  }
+  const lost = t.items.filter(id => (snap.points[id] || 0) < itemMax(itemById(id)));
+  const right = t.items.filter(id => !lost.includes(id));
+  return (lost.length ? lost.map(id => lookBackItem(id, snap)).join('') : '<p class="got-right">You got every question on this right. This is extra practice.</p>')
+    + (right.length && lost.length ? `<div class="got-right">✓ You got question${right.length > 1 ? 's' : ''} ${right.map(questionNumber).join(' and ')} right.</div>` : '');
+}
+function lookBackItem(id, snap) {
+  const item = itemById(id);
+  const v = variantOf(item, snap?.seed ?? 0);
+  const max = itemMax(item);
+  const has = snap && Object.prototype.hasOwnProperty.call(snap.points, id);
+  const got = has ? snap.points[id] : 0;
+  const status = !snap ? '' : !has ? 'not answered' : `you got ${got} / ${max}`;
+  const cls = !snap || !has ? 'unanswered' : got ? 'partial' : '';
+  // Without the seed we can't tell which version they saw, so their own answer can't be shown.
+  const knowVersion = !item.variants || snap?.seed != null;
+  const versionNote = snap && !knowVersion ? '<p class="muted" style="font-size:0.82rem">Your version of this question had different values.</p>' : '';
+  const sel = knowVersion ? snap?.sel?.[id] : undefined;
+  let body = '';
+
+  if (v.kind === 'mcq') {
+    body = `<div class="lb-q">${v.q}</div>${v.code ? listing(v.code) : ''}${v.error ? `<pre class="err">${esc(v.error)}</pre>` : ''}
+      <div class="ans-row">${sel != null ? `<span class="k">Your answer</span><span class="yours ${sel === 0 ? 'ok' : ''}">${fmt(v.opts[sel])}</span>` : ''}
+        <span class="k">Right answer</span><span class="right">${fmt(v.opts[0])}</span></div>
+      <div class="why"><strong>Why:</strong> ${esc(v.why)}</div>`;
+  } else if (v.kind === 'trace') {
+    const notes = Object.fromEntries(Object.entries(v.typed || {}).map(([i, x]) => [i, `the user types ${x}`]));
+    const mine = sel || {};
+    const rows = [
+      ...v.vars.map(x => [`${x.name} at the end`, mine[`tr_${id}_v_${x.name}`], showValue(x), t => checkTraceValue(x, t)]),
+      ...v.output.map((line, i) => [`printed line ${i + 1}`, mine[`tr_${id}_o_${i}`], line, t => checkTraceOutput(line, t)]),
+    ];
+    const showMine = snap && sel;
+    body = `<div class="lb-q">${v.q}</div>${listing(v.lines.join('\n'), notes)}
+      <table class="lb-table"><tr><th></th>${showMine ? '<th>Your answer</th>' : ''}<th>Right answer</th></tr>${rows.map(([k, yours, ans, mark]) => {
+        const r = showMine ? mark(yours) : null;
+        return `<tr><td>${esc(k)}</td>${showMine ? `<td class="mono ${r.ok ? 'yours ok' : 'yours'}">${esc(yours || '—')}${r.ok ? ' ✓' : ''}${!r.ok && r.msg && r.msg !== 'Not answered.' && !/^Not (the right|what)/.test(r.msg) ? `<br><small>${esc(r.msg)}</small>` : ''}</td>` : ''}<td class="mono right">${esc(ans)}</td></tr>`;
+      }).join('')}</table>`;
+  } else if (v.kind === 'branch') {
+    const choices = branchChoices(v), mine = sel || {};
+    body = `<div class="lb-q">${v.q}</div>${listing(v.code)}
+      <table class="lb-table"><tr><th>User types</th>${snap && sel ? '<th>Your answer</th>' : ''}<th>Right answer</th></tr>${v.rows.map((row, r) => {
+        const want = branchAnswer(row);
+        return `<tr><td class="mono">${esc(row[0])}</td>${snap && sel ? `<td class="${mine[r] === want ? 'yours ok' : 'yours'}">${mine[r] != null ? esc(choices[mine[r]]) : '—'}</td>` : ''}<td class="right">${esc(choices[want])}</td></tr>`;
+      }).join('')}</table>
+      <div class="why"><strong>Why:</strong> only the indented line under the branch that runs is printed. <code>${esc(v.after)}</code> has no indent, so it is always printed. Check the boundary number: <code>&gt;=</code> includes it, <code>&gt;</code> and <code>&lt;</code> do not.</div>`;
+  } else if (v.kind === 'sort') {
+    const place = (knowVersion && snap?.sort?.[id]) || {};
+    const label = b => v.bins.find(x => x.id === b)?.label || '—';
+    const known = snap && Object.keys(place).length;
+    const wrong = known ? v.cards.filter(c => place[c.id] !== c.bin) : v.cards;
+    body = `<div class="lb-q">Sort each expression: does it join text, do maths, or give a TypeError?</div>${listing(v.code)}
+      <table class="lb-table"><tr><th>Expression</th>${known ? '<th>You put</th>' : ''}<th>Right group</th></tr>${wrong.map(c =>
+        `<tr><td class="mono">${esc(c.expr)}</td>${known ? `<td class="yours">${esc(label(place[c.id]))}</td>` : ''}<td class="right">${esc(label(c.bin))}</td></tr>`).join('')}</table>
+      ${known ? `<p class="muted" style="font-size:0.82rem">${v.cards.length - wrong.length} of ${v.cards.length} cards were in the right group. Only the wrong ones are shown.</p>` : ''}
+      <div class="why"><strong>Why:</strong> text + text joins, number + number adds, and text + number is a TypeError. Anything from input() is text until it is cast.</div>`;
+  } else {
+    const mine = snap?.code?.['ed_' + id];
+    const results = snap?.results?.[id];
+    body = `<div class="lb-q">${esc(v.title)}</div><div class="goal-line">${v.goal}</div>
+      ${mine ? `<div class="err-cap">Your code</div>${listing(mine)}` : `<div class="err-cap">The program you were given</div>${listing(v.starter)}`}
+      ${v.reqs && Array.isArray(results) ? `<ul class="req-list">${v.reqs.map((r, i) => `<li class="${results[i] ? 'req-pass' : 'req-fail'}"><span class="tick">${results[i] ? '✓' : '✗'}</span><span>${r.text}</span></li>`).join('')}</ul>` : ''}
+      <div class="why"><strong>The fix:</strong> ${FIX_NOTES[id] || ''}</div>`;
+  }
+  return `<div class="lb ${cls}"><div class="lb-head"><span>Assessment question ${questionNumber(id)}</span><span>${status}</span></div>${versionNote}${body}</div>`;
+}
+
+// ── Step 3: checkpoint (N in a row; a wrong answer restarts with a new draw) ──
+const cpState = tid => (S.cp[tid] ||= { attempt: 0, pos: 0, done: false });
+const cpBusy = {};
+function renderCp(tid) {
+  const box = $('#cp_' + tid);
+  if (!box) return;
+  const s = cpState(tid);
+  if (s.done) {
+    box.innerHTML = `<div class="cp-done">✔ Checkpoint passed: ${CHAIN} in a row${s.attempt ? '' : ', first time! ⭐'}</div>`;
+    return;
+  }
+  const draw = drawCheckpoint(tid, S.seed, s.attempt);
+  const q = poolQuestion(tid, draw[s.pos]);
+  const pips = draw.map((_, k) => `<span class="pip ${k < s.pos ? 'on' : ''} ${k === s.pos ? 'now' : ''}"></span>`).join('');
+  const answer = q.kind === 'mcq'
+    ? `<div class="cp-opts">${cpOptionOrder(tid, q.id, S.seed, s.attempt).map(k => `<button class="cp-opt" data-cp="${tid}" data-k="${k}">${fmt(q.opts[k])}</button>`).join('')}</div>`
+    : `${q.as === 'value' ? '<div class="rule-box">Write text <strong>in quotes</strong>, like <code>"Sam"</code>, and numbers without, like <code>12</code></div>' : ''}
+       <div class="cp-type"><input type="text" id="cpin_${tid}" autocomplete="off" spellcheck="false" placeholder="${q.as === 'number' ? 'a number' : q.as === 'value' ? 'what is in the box' : 'exactly what is printed'}">
+       <button class="ac-btn" data-cp-type="${tid}">Check</button></div>`;
+  box.innerHTML = `
+    <div class="cp-head"><span>Question ${s.pos + 1} of ${draw.length}${s.attempt ? ` · try ${s.attempt + 1}` : ''}</span><span class="pips" aria-hidden="true">${pips}</span></div>
+    <div class="cp-q">${q.q}</div>
+    ${q.code ? listing(q.code) : ''}
+    ${q.error ? `<div class="err-cap">Python shows:</div><pre class="err">${esc(q.error)}</pre>` : ''}
+    ${answer}
+    <div class="cp-msg" id="cpmsg_${tid}" role="status"></div>`;
+  cpBusy[tid] = false;
+}
+function cpAnswer(tid, answer) {
+  if (cpBusy[tid] || cpState(tid).done || authBlocked()) return;
+  const s = cpState(tid);
+  const q = poolQuestion(tid, drawCheckpoint(tid, S.seed, s.attempt)[s.pos]);
+  if (q.kind !== 'mcq' && !String(answer).trim()) { toast('Type your answer first.', 'warn'); return; }
+  cpBusy[tid] = true;
+  const r = markCheckpoint(q, answer);
+  const box = $('#cp_' + tid), msg = $('#cpmsg_' + tid);
+  box.querySelectorAll('button, input').forEach(b => { b.disabled = true; });
+  if (q.kind === 'mcq') {
+    box.querySelector(`.cp-opt[data-k="${answer}"]`)?.classList.add(r.ok ? 'right' : 'wrong');
+    if (!r.ok) box.querySelector('.cp-opt[data-k="0"]')?.classList.add('right');
+  } else {
+    $('#cpin_' + tid)?.classList.add(r.ok ? 'ok' : 'bad');
+  }
+  if (r.ok) {
+    s.pos++;
+    if (s.pos >= CHAIN) s.done = true;
+    save();
+    msg.className = 'cp-msg good';
+    msg.innerHTML = `✓ Correct.<span class="why">${esc(q.why)}</span>`;
+    setTimeout(() => {
+      renderCp(tid);
+      if (s.done) { toast(s.attempt ? `✅ ${CHAIN} in a row: checkpoint passed.` : `⭐ ${CHAIN} in a row, first time!`, 'success'); progress(); }
+    }, reduceMotion ? 400 : 1500);
+  } else {
+    s.attempt++; s.pos = 0;
+    save();                                     // saved now, so a refresh can't dodge the restart
+    progress(false);
+    msg.className = 'cp-msg bad';
+    msg.innerHTML = `✗ Not quite.${r.msg ? ' ' + esc(r.msg) : ''}${q.kind !== 'mcq' ? ` The answer is <code>${esc(rightAnswer(q))}</code>.` : ''}
+      <span class="why">${esc(q.why)}</span>
+      <button class="ac-btn ac-btn-secondary" id="cprestart_${tid}" disabled style="margin-top:10px">Start again</button>`;
+    const restart = $('#cprestart_' + tid);
+    let left = reduceMotion ? 2 : 5;
+    const tick = () => {
+      if (left > 0) { restart.textContent = `Read the explanation… ${left}`; left--; setTimeout(tick, 1000); }
+      else { restart.disabled = false; restart.textContent = '↺ Start again from question 1'; restart.focus(); }
+    };
+    tick();
+    restart.onclick = () => renderCp(tid);
+  }
+}
+document.addEventListener('click', e => {
+  const o = e.target.closest('.cp-opt');
+  if (o && !o.disabled) { cpAnswer(o.dataset.cp, +o.dataset.k); return; }
+  const tb = e.target.closest('[data-cp-type]');
+  if (tb && !tb.disabled) cpAnswer(tb.dataset.cpType, $('#cpin_' + tb.dataset.cpType).value);
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && e.target.id?.startsWith('cpin_')) { e.preventDefault(); cpAnswer(e.target.id.slice(5), e.target.value); }
+});
+
+// ── Step 4: use it (a code task, with hints on) ──
+const APPLY = {};   // tid → task (the write target's depends on the student's assessment)
+function taskFor(tid) {
+  return (APPLY[tid] ||= applyFor(tid, S.snap?.points || {}, S.snap?.code || {}));
+}
+function renderApply(tid) {
+  const task = taskFor(tid);
+  const samples = task.samples ? `<div class="samples">${task.samples.map((r, i) => sampleRun(r, `Sample run ${i + 1}`)).join('')}</div>` : '';
+  const reqs = task.reqs ? `<p style="font-weight:700;color:var(--surface);margin-top:10px">Your program must:</p>
+    <ul class="req-list" id="req_${tid}">${task.reqs.map((r, i) => `<li><span class="tick">${i + 1}</span><span>${r.text}</span></li>`).join('')}</ul>` : '';
+  const own = task.own ? `<div class="own-note">✏️ This is <strong>your own program</strong> from the assessment. Improve it until every requirement has a tick.</div>` : '';
+  return `<div class="goal-line">🎯 <strong>${esc(task.title)}.</strong> ${task.goal}</div>
+    ${samples}${own}${reqs}
+    ${task.testNote ? `<div class="test-note">${esc(task.testNote)}</div>` : ''}
+    <div class="code-checker">
+      <textarea class="checker-textarea" id="ed_${tid}" data-title="${esc(task.title)}">${esc(S.code['ed_' + tid] ?? task.starter)}</textarea>
+      <div class="checker-footer">
+        <button class="btn-run" data-run="ed_${tid}">▶ Run code</button>
+        <button class="ac-btn" data-check="${tid}" id="check_${tid}">✓ Check</button>
+        <button class="btn-reset" data-reset="${tid}" id="reset_${tid}">↺ ${task.own ? 'Back to my assessment code' : 'Reset to the start'}</button>
+      </div>
+    </div>
+    <div class="feedback" id="fb_${tid}"></div>`;
+}
+async function runTests(code, tests) {
+  const runs = [];
+  for (const inputs of tests) runs.push({ ...(await runPython(code, { inputs, onInputsExhausted: 'error' })), inputs });
+  return runs;
+}
+function showRun(ta, runs) {
+  const r = runs.find(x => !x.ok) || runs[0];
+  const label = r.inputs.length ? `[test run — typed: ${r.inputs.join(', ')}]\n` : '';
+  setEditorOutput(ta, r.ok ? label + (r.output || '(no output)') : r.output, !r.ok, r.ok ? null : (r.line ?? null));
+}
+function applyReqTicks(listId, results) {
+  const list = $('#' + listId);
+  if (!list || !results) return;
+  list.querySelectorAll('li').forEach((li, i) => {
+    li.classList.toggle('req-pass', !!results[i]);
+    li.classList.toggle('req-fail', !results[i]);
+    li.querySelector('.tick').textContent = results[i] ? '✓' : '✗';
+  });
+}
+async function checkApply(tid) {
+  if (S.applied[tid] || authBlocked()) return;
+  const task = taskFor(tid);
+  const ta = $('#ed_' + tid), fb = $('#fb_' + tid), btn = $('#check_' + tid);
+  btn.disabled = true;
+  fb.textContent = task.tests.some(t => t.length) ? 'Running your code with the test answers…' : 'Running your code…';
+  fb.className = 'feedback info';
+  try {
+    const runs = await runTests(ta.value, task.tests);
+    showRun(ta, runs);
+    const r = evalApply(task, ta.value, runs);
+    applyReqTicks('req_' + tid, r.results);
+    fb.textContent = (r.ok ? '✅ ' : '❌ ') + r.msg;
+    fb.className = 'feedback ' + (r.ok ? 'correct' : 'wrong');
+    if (r.ok) {
+      S.applied[tid] = true;
+      save();
+      applyStep4(tid);
+      progress();
+    } else {
+      progress(false);
+    }
+  } catch (err) {
+    window.ErrorReporter?.report('Code check', err);
+  } finally {
+    if (!S.applied[tid]) btn.disabled = false;
+  }
+}
+function applyStep4(tid) {
+  if (!S.applied[tid]) return;
+  $('#ed_' + tid).readOnly = true;
+  $('#check_' + tid).disabled = true;
+  $('#reset_' + tid).disabled = true;
+  if (!$('#fb_' + tid).textContent) { $('#fb_' + tid).textContent = '✅ Done: it works for every test.'; $('#fb_' + tid).className = 'feedback correct'; }
+  const task = taskFor(tid);
+  if (task.reqs) applyReqTicks('req_' + tid, task.reqs.map(() => true));
+}
+
+// Steps unlock in order: reflect → checkpoint → use it.
+function refreshTarget(tid) {
+  if (!$('#panel-' + tid)) return;
+  const r = !!S.reflect[tid], c = !!S.cp[tid]?.done, a = !!S.applied[tid];
+  const set = (n, done, locked, why) => {
+    $(`#step${n}_${tid}`).classList.toggle('done', done);
+    $(`#step${n}_${tid}`).classList.toggle('locked', locked);
+    const l = $(`#lock${n}_${tid}`);
+    if (l) l.textContent = done ? '✓ Done' : locked ? `🔒 ${why}` : '';
+  };
+  set(1, true, false);
+  set(2, r, false);
+  set(3, c, !r, 'Save your sentence first');
+  set(4, a, !c, 'Pass the checkpoint first');
+  const ta = $('#reflect_' + tid);
+  ta.readOnly = r;
+  $('#savereflect_' + tid).hidden = r;
+  if (r && !$('#fbreflect_' + tid).textContent) { $('#fbreflect_' + tid).textContent = '✅ Saved.'; $('#fbreflect_' + tid).className = 'feedback correct'; }
+  const done = targetDone(S, tid);
+  $('#tdone_' + tid).classList.toggle('show', done);
+  const keys = tabKeys(), next = keys[keys.indexOf(tid) + 1];
+  $('#next_' + tid).innerHTML = done && next
+    ? `<button class="ac-btn" data-tab-go="${next}">Next: ${next === 'make' ? (makeUnlocked() ? '🎨 Make it' : '🔒 Make it') : esc(targetById(next).title)} →</button>` : '';
+}
+function saveReflect(tid) {
+  if (authBlocked()) return;
+  const text = $('#reflect_' + tid).value.trim();
+  const fb = $('#fbreflect_' + tid);
+  if (!realSentence(text)) {
+    fb.textContent = 'Write a full sentence (at least 4 real words) about what you will do differently.';
+    fb.className = 'feedback wrong';
+    return;
+  }
+  S.reflect[tid] = text;
+  save();
+  fb.textContent = '✅ Saved. Now the checkpoint.';
+  fb.className = 'feedback correct';
+  progress(false);
+  refreshTarget(tid);
+  setTimeout(() => $('#step3_' + tid)?.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' }), 200);
+}
+
+// ══ 🎨 Make it ═════════════════════════════════════════
+function renderMake() {
+  const panel = document.createElement('div');
+  panel.className = 'panel';
+  panel.id = 'panel-make';
+  panel.innerHTML = `
+    <div class="task-header"><div class="task-badge">🎨</div>
+      <div><div class="task-title">Make it: your own decision program</div><div class="task-sub">Lessons 1–5 · 4 requirements, plus 3 ★ stretches</div></div></div>
+    <div id="make-locked" class="lock-card">
+      <div class="big">🔒</div>
+      <p style="font-weight:700;color:var(--surface)">Finish your targets first.</p>
+      <p class="muted" id="make-locked-why"></p>
+      <div class="teacher-unlock"><button class="linkish" id="tu-show">Teacher unlock</button>
+        <span id="tu-box" hidden><input type="password" id="tu-pass" placeholder="Teacher password" autocomplete="off"> <button class="ac-btn ac-btn-secondary" id="tu-go">Unlock</button></span></div>
+    </div>
+    <div id="make-body" hidden>
+      <div class="goal">🎯 Write a program that <strong>asks a question</strong> and <strong>makes a decision</strong> with the answer. Pick an idea or use your own.</div>
+      <div class="ideas">${IDEAS.map(i => `<button class="idea" data-idea="${i.id}"><b>${i.icon} ${esc(i.title)}</b><small>${esc(i.brief)}</small></button>`).join('')}</div>
+      <div id="idea-sample"></div>
+      <p style="font-weight:700;color:var(--surface);margin-top:10px">Your program must:</p>
+      <ul class="req-list" id="req_make">${MAKE_REQS.map((r, i) => `<li><span class="tick">${i + 1}</span><span>${r.text}</span></li>`).join('')}</ul>
+      <p style="font-weight:700;color:var(--surface);margin-top:10px">★ Stretch (bonus):</p>
+      <ul class="req-list stretch" id="req_stretch">${MAKE_STRETCH.map((r, i) => `<li><span class="tick">★</span><span>${r.text}</span></li>`).join('')}</ul>
+      <div class="code-checker">
+        <textarea class="checker-textarea" id="ed_make" data-title="My own decision program">${esc(S.code.ed_make ?? '# My program\n')}</textarea>
+        <div class="checker-footer"><button class="btn-run" data-run="ed_make">▶ Run code</button></div>
+      </div>
+      <p style="font-weight:700;color:var(--surface);margin-top:14px">🧪 Your test plan</p>
+      <p class="muted" style="font-size:0.88rem">Choose answers for two tests: <strong>Test A</strong> should go down the <code>if</code> path, <strong>Test B</strong> down the <code>else</code> path. Then press Check: your program is run with both.</p>
+      <div id="test-plan"></div>
+      <div class="row"><button class="ac-btn" id="check_make">✓ Check my program</button></div>
+      <div class="feedback" id="fb_make"></div>
+    </div>`;
+  return panel;
+}
+function refreshMake() {
+  const open = makeUnlocked();
+  $('#make-locked').hidden = open;
+  $('#make-body').hidden = !open;
+  if (!open) {
+    const left = S.plan.filter(t => !targetDone(S, t));
+    $('#make-locked-why').textContent = `${left.length} target${left.length === 1 ? '' : 's'} still to do: ${left.map(t => targetById(t).title).join(', ')}.`;
+  }
+  $$('.idea').forEach(b => b.classList.toggle('on', b.dataset.idea === S.idea));
+  const idea = IDEAS.find(i => i.id === S.idea);
+  $('#idea-sample').innerHTML = idea?.sample ? sampleRun(idea.sample, `${idea.title}: an example run (yours can be different)`) : '';
+  applyReqTicks('req_make', S.make.results);
+  applyReqTicks('req_stretch', S.make.stretchResults);
+}
+// The test plan has one box per input() in the code, labelled with its question.
+let planCount = -1;
+function renderTestPlan(force = false) {
+  const code = $('#ed_make')?.value || '';
+  const prompts = inputPrompts(code).slice(0, 4);
+  const n = Math.max(1, prompts.length);
+  if (!force && n === planCount && $('#test-plan').innerHTML) { relabelPlan(prompts); return; }
+  planCount = n;
+  const cell = (t, i) => `<td><input type="text" data-test="${t}" data-i="${i}" value="${esc(S.tests[t][i] ?? '')}" autocomplete="off" spellcheck="false" aria-label="Test ${t} answer ${i + 1}"></td>`;
+  $('#test-plan').innerHTML = `<table class="test-plan">
+    <tr><th>Test</th>${[...Array(n).keys()].map(i => `<th id="tp_q${i}">${esc(prompts[i] || (prompts.length ? '' : 'Answer typed'))}</th>`).join('')}<th>It printed</th></tr>
+    <tr><td><strong>A</strong><div class="path">the if path</div></td>${[...Array(n).keys()].map(i => cell('A', i)).join('')}<td class="res" id="tp_resA"></td></tr>
+    <tr><td><strong>B</strong><div class="path">the else path</div></td>${[...Array(n).keys()].map(i => cell('B', i)).join('')}<td class="res" id="tp_resB"></td></tr></table>`;
+}
+function relabelPlan(prompts) { prompts.forEach((p, i) => { const th = $('#tp_q' + i); if (th) th.textContent = p; }); }
+document.addEventListener('input', e => {
+  const t = e.target.dataset?.test;
+  if (t) { S.tests[t][+e.target.dataset.i] = e.target.value; save(); }
+});
+async function checkMake() {
+  if (authBlocked() || !makeUnlocked()) return;
+  const ta = $('#ed_make'), fb = $('#fb_make'), btn = $('#check_make');
+  const n = inputCount(ta.value);
+  const tests = ['A', 'B'].map(t => S.tests[t].slice(0, n).map(a => a ?? ''));
+  btn.disabled = true;
+  fb.textContent = 'Running your program with Test A and Test B…'; fb.className = 'feedback info';
+  try {
+    const filled = tests.every(t => t.length === n && t.every(a => String(a).trim()));
+    const runs = filled ? await runTests(ta.value, tests) : [];
+    if (runs.length) {
+      showRun(ta, runs);
+      ['A', 'B'].forEach((t, i) => { $('#tp_res' + t).textContent = runs[i].ok ? (runs[i].output || '').trim() || '(nothing)' : '⚠ ' + (runs[i].output.trim().split('\n').pop() || 'error'); });
+    }
+    const r = evalMake(ta.value, tests, runs);
+    const core = r.core.filter(Boolean).length, stretch = r.stretch.filter(Boolean).length;
+    applyReqTicks('req_make', r.core);
+    applyReqTicks('req_stretch', r.stretch);
+    if (core >= S.make.core) { S.make.core = core; S.make.results = r.core; }
+    if (stretch >= S.make.stretch) { S.make.stretch = stretch; S.make.stretchResults = r.stretch; }
+    save();
+    fb.textContent = `${core === MAKE_REQS.length ? '✅' : core ? '🟡' : '❌'} ${r.msg} (${core} of ${MAKE_REQS.length}${stretch ? `, ★ ${stretch} of ${MAKE_STRETCH.length}` : ''})`;
+    fb.className = 'feedback ' + (core === MAKE_REQS.length ? 'correct' : core ? 'partial' : 'wrong');
+    progress();
+  } catch (err) {
+    window.ErrorReporter?.report('Make check', err);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+// ══ ➕ More practice ═══════════════════════════════════
+function renderMore() {
+  const panel = document.createElement('div');
+  panel.className = 'panel';
+  panel.id = 'panel-more';
+  panel.innerHTML = `
+    <div class="task-header"><div class="task-badge">➕</div>
+      <div><div class="task-title">More practice</div><div class="task-sub">Optional · bonus, so it can only add to how well you did</div></div></div>
+    <div class="goal">🎯 Finished your plan and your program? Add another target, or take on the ★ challenge.</div>
+    <div class="plan-cards" id="more-list"></div>
+    <div class="step" style="margin-top:20px">
+      <div class="step-head"><span class="step-no">★</span><span class="step-title">Challenge: copy the speed camera</span></div>
+      ${renderApply('challenge')}
+    </div>`;
+  return panel;
+}
+function refreshMore() {
+  const left = TARGETS.filter(t => !targets().includes(t.id));
+  $('#more-list').innerHTML = left.length ? left.map(t => `<div class="plan-card"><span class="ico">${t.icon}</span>
+    <div><div class="t">${esc(t.title)}</div><div class="s">${esc(t.lesson)} · ${esc(t.pick)}</div></div>
+    <button class="ac-btn ac-btn-secondary st" data-add="${t.id}">+ Add</button></div>`).join('')
+    : '<p class="muted">You have added every target.</p>';
+}
+function addTarget(tid) {
+  if (targets().includes(tid)) return;
+  S.extra.push(tid);
+  save();
+  const panel = renderTarget(tid);
+  $('#panel-make').before(panel);
+  setupEditors(`#ed_${tid}`, { errorHints: true });
+  wireEditor($('#ed_' + tid));
+  renderCp(tid);
+  refreshTarget(tid);
+  renderTabs();
+  refreshMore();
+  showTab(tid);
+}
+
+// ══ Score, Classroom and finishing ═════════════════════
+// refresh(): redraw everything that depends on progress. progress(): after something the
+// student did: refresh, then grade + evidence + results to Classroom (never on page load).
+function refresh() {
+  const s = lessonScore(S);
+  $('#score-pill').textContent = `Progress: ${s.pct}%`;
+  $('#score-bar').style.width = s.pct + '%';
+  $('#bonus-pill').textContent = s.bonus ? `★ +${s.bonus} bonus` : '';
+  targets().forEach(refreshTarget);
+  if ($('#panel-make')) { refreshMake(); refreshMore(); }
+  renderPlan();
+  refreshTabs();
+  return s;
+}
+function progress(maybeFinish = true) {
+  const s = refresh();
+  window.Classroom?.submitGrade(s.pct, ACTIVITY_TITLE);
+  window.Classroom?.submitResults({ plan: S.plan, extra: S.extra, source: S.snap?.source || 'picker',
+    targets: Object.fromEntries(targets().map(t => [t, { reflect: S.reflect[t] || '', checkpointTries: (S.cp[t]?.attempt || 0) + (S.cp[t]?.done ? 1 : 0), checkpoint: !!S.cp[t]?.done, used: !!S.applied[t] }])),
+    make: { core: S.make.core, stretch: S.make.stretch }, challenge: !!S.applied.challenge, pct: s.pct }, ACTIVITY_TITLE);
+  if (maybeFinish && s.complete && !S.finished) { S.finished = true; save(); showFinished(s, true); }
+  return s;
+}
+function showFinished(s, celebrate) {
+  const b = $('#done-banner');
+  b.textContent = s.gold ? '🏆 Every target fixed first time and your program works — gold!' : '✅ Targets fixed and your program works. Try a ★ stretch or ➕ More practice.';
+  b.classList.add('show', s.gold ? 'gold' : 'green');
+  $('#glow-overlay').classList.add(s.gold ? 'gold' : 'green', 'show');
+  setTimeout(() => b.classList.remove('show'), 7000);
+  if (celebrate) window.ActivityUI?.launchCelebration({ percent: s.pct });
+}
+
+// ══ Clicks ═════════════════════════════════════════════
+document.addEventListener('click', e => {
+  const go = e.target.closest('[data-tab-go]');
+  if (go) { showTab(go.dataset.tabGo); return; }
+  const sr = e.target.closest('[data-save-reflect]');
+  if (sr) { saveReflect(sr.dataset.saveReflect); return; }
+  const c = e.target.closest('[data-check]');
+  if (c) { checkApply(c.dataset.check); return; }
+  const r = e.target.closest('[data-reset]');
+  if (r && !S.applied[r.dataset.reset]) {
+    const ta = $('#ed_' + r.dataset.reset);
+    ta.value = taskFor(r.dataset.reset).starter;
+    ta.dispatchEvent(new Event('input', { bubbles: true }));
+    return;
+  }
+  const run = e.target.closest('[data-run]');
+  if (run) { runCode($('#' + run.dataset.run)); return; }
+  const idea = e.target.closest('[data-idea]');
+  if (idea) {
+    S.idea = idea.dataset.idea; save();
+    const ta = $('#ed_make'), i = IDEAS.find(x => x.id === S.idea);
+    if (!ta.value.replace(/#[^\n]*/g, '').trim()) {   // nothing written yet: start from the idea's title
+      ta.value = `# ${i.title}: ${i.brief}\n`;
+      ta.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+    refreshMake();
+    return;
+  }
+  const add = e.target.closest('[data-add]');
+  if (add) { addTarget(add.dataset.add); return; }
+  if (e.target.id === 'check_make') { checkMake(); return; }
+  if (e.target.id === 'pick-start') {
+    S.plan = $$('[data-pick]:checked').map(x => x.dataset.pick).sort((a, b) => TARGETS.findIndex(t => t.id === a) - TARGETS.findIndex(t => t.id === b));
+    save();
+    buildLesson();
+    showTab(S.plan[0]);
+    return;
+  }
+  if (e.target.id === 'tu-show') { $('#tu-box').hidden = false; $('#tu-pass').focus(); return; }
+  if (e.target.id === 'tu-go') {
+    if ($('#tu-pass').value === SKIP_PASSWORD) { S.teacherUnlock = true; save(); progress(false); toast('🎨 Make it unlocked.'); }
+    else { toast('That is not the teacher password.', 'warn'); }
+  }
+});
+
+// Code is saved as it is typed; the Make editor also keeps its test plan in step.
+let planTimer;
+function wireEditor(ta) {
+  if (!ta) return;
+  ta.addEventListener('input', () => {
+    S.code[ta.id] = ta.value; save();
+    if (ta.id === 'ed_make') { clearTimeout(planTimer); planTimer = setTimeout(() => renderTestPlan(), 350); }
+  });
+}
+
+// ══ Boot ═══════════════════════════════════════════════
+function buildLesson() {
+  $('#panels').innerHTML = '<div class="panel" id="panel-plan"></div>';
+  targets().forEach(tid => $('#panels').appendChild(renderTarget(tid)));
+  $('#panels').appendChild(renderMake());
+  $('#panels').appendChild(renderMore());
+  renderTabs();
+  setupEditors('.checker-textarea', { errorHints: true });   // practice, so 💡 Get help is on
+  $$('.checker-textarea').forEach(wireEditor);
+  targets().forEach(tid => { renderCp(tid); applyStep4(tid); });
+  applyStep4('challenge');
+  renderTestPlan(true);
+  refresh();
+  if (S.finished) showFinished(lessonScore(S), false);   // restore the look without re-celebrating
+}
+
+async function boot() {
+  if (!S.plan) {
+    let snap = null;
+    try { snap = readSnapshot(JSON.parse(localStorage.getItem(ASSESS.key)), 'local'); } catch (e) {}
+    if (!snap && window.Classroom?.isClassroomContext) {
+      try { snap = readSnapshot(await window.Classroom.fetchResults(ASSESS.title), 'drive'); }
+      catch (err) { window.ErrorReporter?.report('Reading assessment results', err); }
+    }
+    if (snap) { S.snap = snap; S.plan = choosePlan(snap.points); save(); }
+  }
+  if (S.plan) {
+    buildLesson();
+    showTab(S.tab);
+  } else {
+    renderTabs();
+    renderPlan();
+    showTab('plan');
+  }
+  $('#intro').open = !Object.keys(S.reflect).length && !S.make.core;
+}
+boot();
+
+preload()
+  .then(() => { $('#pyStatus').textContent = 'Python: ready'; $('#pyStatus').classList.add('ready'); })
+  .catch(err => {
+    $('#pyStatus').textContent = 'Python: failed to load';
+    window.ErrorReporter?.report('Python engine failed to load', err);
+  });
+</script>
+</body>
+</html>

@@ -5,7 +5,7 @@
 title:  Unit 1 Assessment — Python First Steps
 type:   Assessment
 stars:  4
-desc:   End-of-unit assessment for Lessons 1–5: reading, tracing and fixing code, then one short program to write.
+desc:   End-of-unit assessment for Lessons 1–5: reading, tracing, fixing and writing short bits of code, then one program to write.
 color:  teal
 -->
 <meta charset="UTF-8">
@@ -48,6 +48,10 @@ color:  teal
   .tab.done { color: #bbf7d0; }
   .tab .count { font-size: 0.72rem; font-weight: 700; background: rgba(255,255,255,.12); border-radius: 999px; padding: 1px 7px; margin-left: 4px; }
   .tab.done .count { background: rgba(87,204,153,.3); }
+  .tab.partial { color: #fcd34d; }
+  .tab.partial .count { background: rgba(252,211,77,.25); }
+  .tab.skipped { color: #fca5a5; }
+  .tab.skipped .count { background: #dc2626; color: #fff; }
 
   /* ── Panels ──────────────────────────────────────────── */
   .panel { display: none; padding: 24px 28px 64px; max-width: 920px; margin: 0 auto; position: relative; z-index: 1; }
@@ -76,6 +80,8 @@ color:  teal
   .feedback.wrong   { color: var(--red); }
   .feedback.partial { color: var(--amber-dark); }
   .feedback.info    { color: var(--muted); }
+  .answer-hidden .opts, .answer-hidden .branch-row, .answer-hidden .why { display: none; }
+  .hide-note { font-weight: 400; color: var(--muted); }
   .why { margin-top: 10px; padding: 9px 12px; border-radius: 8px; background: #f2f6fb; font-size: 0.88rem; line-height: 1.5; }
   .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
   .ac-btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
@@ -172,6 +178,9 @@ color:  teal
   .review-table th, .review-table td { padding: 9px 12px; text-align: left; border-bottom: 1px solid #e3ecf6; }
   .review-table th { background: var(--surface); color: var(--text-inv); font-weight: 700; font-size: 0.82rem; }
   .review-table tr.total td { font-weight: 700; background: #f2f6fb; }
+  .review-table tr.row-todo td { background: var(--red-bg); color: var(--red); font-weight: 700; border-bottom-color: var(--red); }
+  .review-table tr.row-todo td:first-child { box-shadow: inset 4px 0 0 var(--red); }
+  .review-table tr.row-ok td:last-child { color: var(--green-dark); font-weight: 700; }
   .todo-list { margin: 10px 0 0 0; padding: 0; list-style: none; display: grid; gap: 6px; }
   .todo-list button { background: #fff; border: 1.5px solid var(--amber); border-radius: 8px; padding: 7px 12px; cursor: pointer; font-family: var(--font-body); font-size: 0.88rem; text-align: left; width: 100%; color: var(--surface); }
   .todo-list button:hover { background: var(--amber-bg); }
@@ -206,7 +215,7 @@ color:  teal
     <div class="py-status" id="pyStatus">Python: loading…</div>
   </div>
   <div class="score-row">
-    <div class="score-pill" id="score-pill">Score: 0 / 38 (0%)</div>
+    <div class="score-pill" id="score-pill">Score: 0 / 49 (0%)</div>
     <div class="score-bar-wrap"><div class="score-bar" id="score-bar"></div></div>
     <div class="bonus-pill" id="bonus-pill"></div>
   </div>
@@ -271,6 +280,8 @@ const V = Object.fromEntries(ITEMS.map(i => [i.id, variantOf(i, S.seed)]));
 const MAX = Object.fromEntries(ITEMS.map(i => [i.id, itemMax(i, S.seed)]));
 const isCode = id => ['fix', 'reqs'].includes(V[id].kind);
 const answered = id => isCode(id) ? !!S.checked[id] : !!S.locked[id];
+// Marks still there to earn: an unanswered question, or a code question below full marks.
+const outstanding = id => !answered(id) || (isCode(id) && (S.pts[id] || 0) < MAX[id]);
 
 // Question numbers within each section: 1.1, 1.2 …
 const QNO = {};
@@ -314,7 +325,7 @@ function renderTrace(id) {
   const notes = Object.fromEntries(Object.entries(v.typed || {}).map(([i, t]) => [i, `the user types ${t}`]));
   const boxes = v.vars.length ? `
     <span class="q-label" style="margin-top:10px">📦 What is in each box at the end?</span>
-    <div class="rule-box">Write text <strong>in quotes</strong>, like <code>"Sam"</code>, and numbers without, like <code>12</code></div>
+    <div class="rule-box">Write just what is in the box, like <code>Sam</code> (you can put quotes round text if you like)</div>
     <div class="trace-grid">${v.vars.map(x => `<div class="trace-box">
       <label for="tr_${id}_v_${x.name}">${x.name}</label>
       <input type="text" id="tr_${id}_v_${x.name}" data-trace="${id}" autocomplete="off" spellcheck="false" placeholder="?">
@@ -365,9 +376,9 @@ function renderCodeItem(id) {
   const v = V[id];
   const samples = v.samples ? `<div class="samples">${v.samples.map((run, i) => `<div class="terminal"><span class="cap">Sample run ${i + 1}</span>${
     run.map(([text, typed]) => esc(text) + (typed ? `<span class="typed">${esc(typed)}</span>` : '')).join('\n')}</div>`).join('')}</div>` : '';
-  const reqs = v.reqs ? `<p style="font-weight:700;color:var(--surface);margin-top:10px">Your program must (1 mark each):</p>
+  const reqs = v.reqs ? `<p style="font-weight:700;color:var(--surface);margin-top:10px">Your program must (${v.reqs.length > 1 ? '1 mark each' : '1 mark'}):</p>
     <ul class="req-list" id="req_${id}">${v.reqs.map((r, i) => `<li><span class="tick">${i + 1}</span><span>${r.text}</span></li>`).join('')}</ul>` : '';
-  const resettable = v.kind === 'fix' || id === 'w_warm';
+  const resettable = v.kind === 'fix' || v.resettable;
   return `<div class="question-card" id="card_${id}">${head(id)}
     <div class="code-title">${esc(v.title)}</div>
     <div class="goal-line">🎯 ${v.goal}</div>
@@ -420,20 +431,35 @@ function refreshScore() {
   $('#score-pill').textContent = `Score: ${s.earned} / ${s.max} (${s.pct}%)`;
   $('#score-bar').style.width = s.pct + '%';
   $('#bonus-pill').textContent = s.bonus ? `★ +${s.bonus} bonus` : '';
+  // Tab colours: green = nothing left; amber = started, something left; red = something left
+  // and the student has already answered something in a later section (so it was skipped).
+  const secIds = SECTIONS.map(sec => ITEMS.filter(it => it.section === sec.id).map(it => it.id));
+  const started = secIds.map(ids => ids.some(answered));
   SECTIONS.forEach((sec, i) => {
-    const ids = ITEMS.filter(it => it.section === sec.id).map(it => it.id);
-    const n = ids.filter(answered).length;
-    $('#count_' + sec.id).textContent = `${n}/${ids.length}`;
-    $(`.tab[data-idx="${i}"]`).classList.toggle('done', n === ids.length);
+    const ids = secIds[i];
+    const n = ids.filter(answered).length, left = ids.some(outstanding);
+    const skipped = left && started.slice(i + 1).some(Boolean);
+    const partial = left && !skipped && n > 0;
+    const tab = $(`.tab[data-idx="${i}"]`);
+    $('#count_' + sec.id).textContent = `${skipped ? '⚠ ' : ''}${n}/${ids.length}`;
+    tab.classList.toggle('done', !left);
+    tab.classList.toggle('skipped', skipped);
+    tab.classList.toggle('partial', partial);
+    tab.title = !left ? 'All done' : skipped ? 'You skipped something here — there are still marks to get'
+      : partial ? 'Started — there are still marks to get' : '';
   });
   renderReview(s);
   return s;
 }
 // Called after every answer is locked or checked: grade + evidence + per-section results.
+// The answers themselves (seed, sel, sort, code, results) go too, so the L7 Targeted Practice
+// lesson can show a student their own mistakes on a different computer.
 function submit() {
   const s = refreshScore();
   window.Classroom?.submitGrade(s.pct, ACTIVITY_TITLE);
-  window.Classroom?.submitResults({ points: S.pts, sections: s.sections, earned: s.earned, max: s.max, pct: s.pct, bonus: s.bonus }, ACTIVITY_TITLE);
+  const code = Object.fromEntries(Object.entries(S.code).filter(([k]) => S.checked[k.slice(3)]));
+  window.Classroom?.submitResults({ points: S.pts, sections: s.sections, earned: s.earned, max: s.max, pct: s.pct, bonus: s.bonus,
+    seed: S.seed, sel: S.sel, sort: S.sort, results: S.results, code }, ACTIVITY_TITLE);
   checkFinished(s);
 }
 const coreIds = ITEMS.filter(i => !i.bonus).map(i => i.id);
@@ -457,15 +483,25 @@ function renderReview(s) {
   const rows = SECTIONS.map((sec, i) => {
     const ids = ITEMS.filter(it => it.section === sec.id).map(it => it.id);
     const se = s.sections[sec.id];
-    return `<tr><td>${sec.n} · ${esc(sec.label)}</td><td>${esc(sec.lesson)}</td><td>${ids.filter(answered).length} / ${ids.length}</td><td>${se.earned} / ${se.max}${sec.bonus ? ' bonus' : ''}</td></tr>`;
+    const left = ids.filter(outstanding);
+    const unanswered = left.filter(id => !answered(id)).length, codeLeft = left.length - unanswered;
+    const status = sec.bonus ? (left.length ? 'Optional' : '✓ Done')
+      : !left.length ? '✓ Done'
+      : [unanswered && `${unanswered} not answered`, codeLeft && `${codeLeft} code task${codeLeft > 1 ? 's' : ''} not finished`].filter(Boolean).join(' · ');
+    const cls = sec.bonus ? '' : left.length ? 'row-todo' : 'row-ok';
+    return `<tr class="${cls}"><td>${sec.n} · ${esc(sec.label)}</td><td>${esc(sec.lesson)}</td><td>${ids.filter(answered).length} / ${ids.length}</td><td>${se.earned} / ${se.max}${sec.bonus ? ' bonus' : ''}</td><td>${left.length && !sec.bonus ? '⚠ ' : ''}${status}</td></tr>`;
   }).join('');
-  $('#review-table').innerHTML = `<tr><th>Section</th><th>Lesson</th><th>Answered</th><th>Marks</th></tr>${rows}
-    <tr class="total"><td colspan="3">Total (not counting the bonus)</td><td>${s.earned} / ${s.max} (${s.pct}%)</td></tr>`;
+  $('#review-table').innerHTML = `<tr><th>Section</th><th>Lesson</th><th>Answered</th><th>Marks</th><th>Still to do</th></tr>${rows}
+    <tr class="total"><td colspan="3">Total (not counting the bonus)</td><td colspan="2">${s.earned} / ${s.max} (${s.pct}%)</td></tr>`;
+  const sectionOf = id => esc(SECTIONS.find(x => x.id === V[id].section).label);
   const todo = coreIds.filter(id => !answered(id));
-  $('#review-todo').innerHTML = todo.length
-    ? `<p style="margin-top:14px;font-weight:700;color:var(--surface)">Still to answer (${todo.length}):</p>
-       <ul class="todo-list">${todo.map(id => `<li><button data-goto-item="${id}">Question ${QNO[id]} — ${esc(SECTIONS.find(x => x.id === V[id].section).label)} →</button></li>`).join('')}</ul>`
-    : `<div class="all-done">✅ You have answered every question. Your teacher can see your results. If there is time left, try to get full marks on the code questions, or have a go at the ★ bonus.</div>`;
+  const unfinished = coreIds.filter(id => answered(id) && outstanding(id));
+  const list = (title, ids, note) => ids.length ? `<p style="margin-top:14px;font-weight:700;color:var(--red)">${title} (${ids.length}):</p>
+       <ul class="todo-list">${ids.map(id => `<li><button data-goto-item="${id}">Question ${QNO[id]} — ${sectionOf(id)}${note(id)} →</button></li>`).join('')}</ul>` : '';
+  $('#review-todo').innerHTML = todo.length || unfinished.length
+    ? list('Still to answer', todo, () => '')
+      + list('Code not finished — more marks to get', unfinished, id => ` (${S.pts[id] || 0} / ${MAX[id]}, not every requirement met yet)`)
+    : `<div class="all-done">✅ You have answered every question and every code question has full marks. Your teacher can see your results. If there is time left, have a go at the ★ bonus.</div>`;
 }
 
 // ── Tabs ───────────────────────────────────────────────
@@ -479,8 +515,24 @@ function showTab(i) {
 }
 $('#tab-bar').addEventListener('click', e => { const t = e.target.closest('.tab'); if (t) showTab(+t.dataset.idx); });
 
+// ══ One-try choice answers: show, then hide ═════════════
+// Right/wrong and the right answer show for REVEAL_MS, then the options are hidden so a
+// neighbour can't copy them. A reload shows only the hidden state. The radios stay checked
+// (just hidden), so the Classroom evidence report still records the student's choice.
+const REVEAL_MS = 6000;
+function hideAnswer(id, summary, justLocked) {
+  const card = $('#card_' + id), fb = $('#fb_' + id);
+  const hide = () => {
+    card.classList.add('answer-hidden');
+    fb.textContent = `🔒 Locked in — ${summary}. The answer is now hidden so no one can copy it.`;
+  };
+  if (!justLocked) return hide();
+  fb.insertAdjacentHTML('beforeend', ' <span class="hide-note">(This will hide in a few seconds so no one can copy it.)</span>');
+  setTimeout(hide, REVEAL_MS);
+}
+
 // ══ Multiple choice ═════════════════════════════════════
-function applyMcq(id) {
+function applyMcq(id, justLocked) {
   const card = $('#card_' + id);
   const chosen = S.sel[id];
   if (chosen != null) { const r = card.querySelector(`input[value="${chosen}"]`); if (r) r.checked = true; }
@@ -497,6 +549,7 @@ function applyMcq(id) {
   fb.innerHTML = S.pts[id] ? '✅ Correct.' : '❌ Not this time — the right answer is in green.';
   fb.className = 'feedback ' + (S.pts[id] ? 'correct' : 'wrong');
   if (!card.querySelector('.why')) fb.insertAdjacentHTML('afterend', `<div class="why"><strong>Why:</strong> ${esc(V[id].why)}</div>`);
+  hideAnswer(id, S.pts[id] ? '✅ you got it right' : '❌ you got it wrong', justLocked);
 }
 function lockMcq(id) {
   const fb = $('#fb_' + id);
@@ -504,7 +557,7 @@ function lockMcq(id) {
   S.locked[id] = true;
   S.pts[id] = S.sel[id] === 0 ? MAX[id] : 0;
   save();
-  applyMcq(id);
+  applyMcq(id, true);
   submit();
 }
 
@@ -550,7 +603,7 @@ function lockTrace(id) {
 }
 
 // ══ Selection rows ══════════════════════════════════════
-function applyBranch(id) {
+function applyBranch(id, justLocked) {
   const v = V[id], sel = S.sel[id] || {};
   v.rows.forEach((_, r) => { if (sel[r] != null) { const x = $(`input[name="br_${id}_${r}"][value="${sel[r]}"]`); if (x) x.checked = true; } });
   if (!S.locked[id]) return;
@@ -573,6 +626,7 @@ function applyBranch(id) {
   fb.textContent = right === MAX[id] ? '✅ All right — including the boundary value.' : `${right} of ${MAX[id]} right. The right answers are in green.`;
   fb.className = 'feedback ' + (right === MAX[id] ? 'correct' : right ? 'partial' : 'wrong');
   if (!card.querySelector('.why')) fb.insertAdjacentHTML('afterend', `<div class="why"><strong>Why:</strong> only the indented line under the branch that runs is printed. <code>${esc(v.after)}</code> has no indent, so it is always printed. Check the number on the boundary carefully: <code>&gt;=</code> includes it, <code>&gt;</code> and <code>&lt;</code> do not.</div>`);
+  hideAnswer(id, `${right === MAX[id] ? '✅' : right ? '🟡' : '❌'} ${right} of ${MAX[id]} right`, justLocked);
 }
 function lockBranch(id) {
   const sel = S.sel[id] || {};
@@ -581,7 +635,7 @@ function lockBranch(id) {
   S.locked[id] = true;
   S.pts[id] = V[id].rows.filter((row, r) => sel[r] === branchAnswer(row)).length;
   save();
-  applyBranch(id);
+  applyBranch(id, true);
   submit();
 }
 
@@ -679,7 +733,8 @@ function applyCode(id) {
   const card = $('#card_' + id);
   card.classList.remove('is-right', 'is-partial', 'is-wrong');
   card.classList.add(best === max ? 'is-right' : best ? 'is-partial' : 'is-wrong');
-  applyReqTicks(id, S.results[id]);
+  // Fix-it answers saved before they had requirement lists have no results: full marks = all ticked.
+  applyReqTicks(id, S.results[id] || (best === max ? V[id].reqs.map(() => true) : null));
   if (best === max) {
     card.classList.add('code-locked');
     $('#ed_' + id).readOnly = true;
