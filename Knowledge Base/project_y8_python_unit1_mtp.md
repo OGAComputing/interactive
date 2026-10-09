@@ -88,3 +88,6 @@ Ringfenced time to **act on specific feedback** from Lesson 6 (fix the exact thi
 
 ## Assessment / SRT arrangement
 Default best practice: **separate** assessment (L6) and DIRT (L7) so there is a marking window to give *specific* feedback. Blending into one hour is only defensible if the assessment is self/peer-marked live against a visible mark scheme.
+
+## Lesson 6 — built (2026-10-09)
+Built as `Y8/Python Unit 1/L6_Assessment/1_Python_Assessment.html` (questions + marking in `checkers.js`, tests in `checkers.test.js` and `tests/unit1-assessment.spec.js`). 38 marks across one section per lesson (L1 5, L2 6, L3 4, L4 8, L5 7) + Write 8 (warm-up edit 2, game-shop program 6); ≈80% reading/tracing/fixing. ★ speed-camera extension = 3 bonus marks outside the %. One-try MCQ/trace/sort (lock saved immediately), per-student versions + option order from a saved seed, behaviour-based code marking with best mark kept, no error hints. **For L7 DIRT:** state in localStorage `oga_y8u1_assess_v1` (`pts` per item id, item ids prefixed by section: o_/v_/i_/c_/s_/w_), and `Classroom.submitResults({ points, sections:{id:{earned,max}}, earned, max, pct, bonus }, "Unit 1 Assessment — Python First Steps")` → route the lowest `sections` first.

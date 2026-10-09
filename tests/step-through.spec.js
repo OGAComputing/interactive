@@ -151,8 +151,9 @@ test('A Make check that crashes shows the error after stepping to the failing li
   await openAt(page, { currentStage: 'M2', completedStages: ['P', 'R', 'I', 'M1'] });
   await setCode(page, 'm2_editor', 'print("Station log")\nprint(missing_name)');
   const m = checker(page, 'm2_editor');
+  await page.check('input[name="m2_choice"][value="suit"]');   // Make won't run until the "Your call" choice is made
   await page.click('#btn_check_m2');
-  await expect(page.locator('#fb_m2')).toHaveClass(/fail/, { timeout: 30000 });
+  await expect(page.locator('#fb_m2')).toContainText('Your program has an error', { timeout: 30000 });
   await expect(m.locator('.output-content')).toContainText('Station log');
   await expect(m.locator('.output-content')).toContainText('NameError');
   await expect(m.locator('.exec-line')).toHaveClass(/exec-error/);

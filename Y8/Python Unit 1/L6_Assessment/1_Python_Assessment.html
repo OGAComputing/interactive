@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- ACTIVITY
+title:  Unit 1 Assessment — Python First Steps
+type:   Assessment
+stars:  4
+desc:   End-of-unit assessment for Lessons 1–5: reading, tracing and fixing code, then one short program to write.
+color:  teal
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unit 1 Assessment — Year 8 Python</title>
+<link rel="stylesheet" href="../../../shared.css">
+
+<style>
+  /* ── Header ──────────────────────────────────────────── */
+  .header { background: var(--surface); padding: 18px 28px 14px; border-bottom: 4px solid var(--accent); }
+  .header-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  .header-title { font-family: var(--font-head); font-size: 1.5rem; font-weight: 700; color: var(--text-inv); }
+  .header-sub { font-size: 0.82rem; color: var(--accent-light); margin-top: 3px; }
+  .py-status { font-size: 0.75rem; color: var(--accent-light); background: var(--surface-mid); padding: 4px 10px; border-radius: 999px; }
+  .py-status.ready { color: #bbf7d0; }
+  .score-row { display: flex; align-items: center; gap: 14px; margin-top: 10px; flex-wrap: wrap; }
+  .score-pill { background: var(--surface-dim); border: 2px solid var(--accent); border-radius: 20px; padding: 4px 16px; font-size: 0.85rem; font-weight: 700; color: var(--text-inv); }
+  .bonus-pill { font-size: 0.8rem; font-weight: 700; color: var(--gold); }
+  .score-bar-wrap { flex: 1; min-width: 120px; max-width: 260px; height: 8px; background: var(--surface-dim); border-radius: 4px; overflow: hidden; }
+  .score-bar { height: 100%; background: var(--accent); border-radius: 4px; width: 0%; transition: width .5s ease; }
+  /* The header shows the score; activity-ui's corner badge says "Go for Gold", which can't apply to one-try answers. */
+  #activity-ui-score { display: none !important; }
+
+  #glow-overlay { position: fixed; inset: 0; pointer-events: none; z-index: 0; opacity: 0; transition: opacity 1.8s ease; }
+  #glow-overlay.gold  { background: radial-gradient(ellipse at 50% 55%, rgba(251,191,36,.24) 0%, transparent 65%); }
+  #glow-overlay.green { background: radial-gradient(ellipse at 50% 55%, rgba(16,185,129,.20) 0%, transparent 65%); }
+  #glow-overlay.show  { opacity: 1; }
+
+  /* ── How it works ────────────────────────────────────── */
+  .intro { max-width: 920px; margin: 14px auto 0; padding: 0 28px; font-size: 0.88rem; }
+  .intro details { background: #fff; border: 1.5px solid var(--accent); border-radius: 8px; padding: 8px 14px; }
+  .intro summary { cursor: pointer; font-weight: 700; color: var(--surface); }
+  .intro ul { margin: 8px 0 4px 20px; line-height: 1.65; }
+
+  /* ── Tabs ────────────────────────────────────────────── */
+  .tab-bar { display: flex; background: var(--surface-mid); padding: 0 20px; gap: 2px; overflow-x: auto; border-bottom: 1px solid #2a4060; margin-top: 14px; }
+  .tab { padding: 10px 9px 9px; border: none; background: transparent; color: var(--accent-light); font-family: var(--font-body); font-size: 0.8rem; font-weight: 600; cursor: pointer; border-bottom: 3px solid transparent; white-space: nowrap; user-select: none; }
+  .tab:hover { color: #fff; }
+  .tab.active { color: var(--text-inv); border-bottom-color: var(--accent); }
+  .tab.done { color: #bbf7d0; }
+  .tab .count { font-size: 0.72rem; font-weight: 700; background: rgba(255,255,255,.12); border-radius: 999px; padding: 1px 7px; margin-left: 4px; }
+  .tab.done .count { background: rgba(87,204,153,.3); }
+
+  /* ── Panels ──────────────────────────────────────────── */
+  .panel { display: none; padding: 24px 28px 64px; max-width: 920px; margin: 0 auto; position: relative; z-index: 1; }
+  .panel.active { display: block; animation: ac-fade-in .25s ease; }
+  .task-header { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+  .task-badge { width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: var(--font-head); font-size: 1.1rem; font-weight: 700; color: var(--text-inv); background: var(--accent); flex-shrink: 0; }
+  .task-badge.ext { background: var(--surface); color: var(--gold); border-radius: 10px; }
+  .task-title { font-family: var(--font-head); font-size: 1.25rem; font-weight: 700; color: var(--surface); }
+  .task-sub { font-size: 0.82rem; color: var(--muted); }
+  .goal { display: block; background: #fff; border-left: 4px solid var(--accent); padding: 10px 14px; border-radius: 0 6px 6px 0; font-size: 0.92rem; font-weight: 600; color: var(--surface); margin-bottom: 16px; line-height: 1.5; }
+  .panel p { line-height: 1.55; }
+  code { font-family: var(--font-mono); background: #e3ecf6; padding: 0 4px; border-radius: 3px; font-size: 0.92em; }
+  .next-row { display: flex; justify-content: flex-end; margin-top: 18px; }
+
+  /* ── Question cards ──────────────────────────────────── */
+  .question-card { border: 1.5px solid #c9d8e8; border-radius: 10px; padding: 14px 16px; margin: 14px 0; background: #fff; }
+  .question-card.is-wrong { border-color: var(--red); background: rgba(220,38,38,.04); }
+  .question-card.is-right { border-color: var(--green); background: rgba(16,185,129,.06); }
+  .question-card.is-partial { border-color: var(--amber); background: rgba(244,162,97,.07); }
+  .q-head { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; }
+  .q-no { font-size: 0.74rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 700; }
+  .q-marks { font-size: 0.72rem; font-weight: 700; background: #e3ecf6; color: var(--surface); border-radius: 4px; padding: 2px 7px; }
+  .q-label { font-weight: 700; color: var(--surface); line-height: 1.5; display: block; margin-bottom: 6px; }
+  .feedback { min-height: 1.2em; font-size: 0.9rem; font-weight: 600; margin-top: 10px; line-height: 1.5; }
+  .feedback.correct { color: var(--green-dark); }
+  .feedback.wrong   { color: var(--red); }
+  .feedback.partial { color: var(--amber-dark); }
+  .feedback.info    { color: var(--muted); }
+  .why { margin-top: 10px; padding: 9px 12px; border-radius: 8px; background: #f2f6fb; font-size: 0.88rem; line-height: 1.5; }
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
+  .ac-btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+  /* Static code listing */
+  .listing { background: var(--surface); color: #dbe7f5; font-family: var(--font-mono); font-size: 0.92rem; border-radius: 8px; padding: 10px 0; margin: 10px 0; overflow-x: auto; }
+  .listing .ln { display: flex; gap: 12px; padding: 1px 14px; white-space: pre; }
+  .listing .n { color: #6b8cae; width: 1.4em; text-align: right; flex-shrink: 0; user-select: none; }
+  .listing .note { color: var(--gold); font-style: italic; margin-left: auto; padding-left: 18px; font-family: var(--font-body); font-size: 0.82rem; }
+  .listing .s { color: #a7f3a0; }
+  .listing .f { color: #90e0ef; }
+  .listing .k { color: #ffb4a2; }
+  .err { background: #2b0f14; color: #fca5a5; font-family: var(--font-mono); font-size: 0.85rem; border-left: 4px solid var(--red); border-radius: 6px; padding: 8px 12px; margin: 8px 0; white-space: pre-wrap; }
+  .err-cap { font-size: 0.75rem; color: var(--muted); font-weight: 700; margin-top: 8px; }
+
+  /* Multiple choice */
+  .opts { display: grid; gap: 8px; margin-top: 10px; }
+  .opt { display: flex; gap: 10px; align-items: center; border: 1.5px solid #c9d8e8; border-radius: 8px; padding: 9px 12px; cursor: pointer; background: #fff; }
+  .opt:hover { border-color: var(--accent); }
+  .opt input { accent-color: var(--accent); }
+  .opt.right { border-color: var(--green); background: var(--green-bg); }
+  .opt.wrong { border-color: var(--red); background: var(--red-bg); }
+  .locked .opt { cursor: default; }
+  .locked .opt:hover:not(.right):not(.wrong) { border-color: #c9d8e8; }
+
+  /* Trace */
+  .trace-grid { display: flex; gap: 14px; flex-wrap: wrap; margin: 10px 0; }
+  .trace-box { display: flex; flex-direction: column; gap: 4px; min-width: 160px; }
+  .trace-box label { font-family: var(--font-mono); font-weight: 700; color: var(--surface); font-size: 0.9rem; }
+  .trace-box input, .out-line input { font-family: var(--font-mono); font-size: 0.95rem; padding: 8px 10px; border: 2px solid #b8cbe0; border-radius: 8px; width: 100%; background: #fff; }
+  .ans-correct { border-color: var(--green) !important; background: rgba(16,185,129,.12) !important; }
+  .ans-wrong   { border-color: var(--red) !important;   background: rgba(220,38,38,.10) !important; }
+  .cell-msg { font-size: 0.78rem; color: var(--red); min-height: 1.1em; font-weight: 600; }
+  .cell-msg .ans { color: var(--surface); font-family: var(--font-mono); }
+  .out-line { display: flex; gap: 8px; align-items: flex-start; margin: 6px 0; }
+  .out-line .n { font-family: var(--font-mono); color: var(--muted); padding-top: 9px; width: 4.5em; flex-shrink: 0; font-size: 0.8rem; }
+  .out-line > div { flex: 1; }
+  .rule-box { background: #f7fafd; border-radius: 8px; padding: 8px 12px; font-size: 0.85rem; border: 1px solid #c9d8e8; line-height: 1.6; margin-top: 6px; }
+
+  /* Selection rows */
+  .branch-row { display: grid; grid-template-columns: 9em 1fr; gap: 10px; align-items: start; padding: 10px 0; border-top: 1px solid #e3ecf6; }
+  .branch-row:first-of-type { border-top: none; }
+  .branch-row .typed-lbl { font-weight: 700; color: var(--surface); padding-top: 9px; }
+  .branch-row .typed-lbl b { font-family: var(--font-mono); background: var(--gold-bg); border: 1px solid var(--gold); border-radius: 4px; padding: 0 6px; }
+  .branch-row .opts { margin-top: 0; grid-template-columns: repeat(2, 1fr); }
+  @media (max-width: 680px) { .branch-row { grid-template-columns: 1fr; } .branch-row .opts { grid-template-columns: 1fr; } }
+
+  /* Sort */
+  .sort-pool, .sort-bin { border: 2px dashed #b8cbe0; border-radius: 10px; padding: 10px; min-height: 64px; display: flex; flex-wrap: wrap; gap: 8px; align-content: flex-start; background: #fff; transition: border-color .15s, background .15s; }
+  .sort-pool { margin: 10px 0 14px; }
+  .sort-pool:empty::after { content: 'All cards placed — now lock in your answer.'; color: var(--muted); font-size: 0.85rem; }
+  .sort-bins { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .sort-bin { flex-direction: column; flex-wrap: nowrap; min-height: 150px; cursor: pointer; }
+  .sort-bin h4 { font-family: var(--font-head); color: var(--surface); font-size: 1rem; margin-bottom: 4px; pointer-events: none; }
+  .sort-bin.over, .sort-pool.over, .sort-bin.target { border-color: var(--accent); background: #eaf8fc; }
+  .sort-card { font-family: var(--font-mono); font-size: 0.9rem; background: var(--surface); color: #fff; border-radius: 8px; padding: 7px 12px; cursor: grab; border: 2px solid transparent; user-select: none; }
+  .sort-card.selected { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(255,209,102,.5); }
+  .sort-card.is-right { border-color: var(--green); background: #1e5e4a; }
+  .sort-card.is-wrong { border-color: var(--red); background: #7a1f29; }
+  .sort-card .should { display: block; font-family: var(--font-body); font-size: 0.72rem; color: #fde68a; }
+  .locked .sort-card { cursor: default; }
+  @media (max-width: 680px) { .sort-bins { grid-template-columns: 1fr; } .sort-bin { min-height: 80px; } }
+
+  /* Code tasks */
+  .code-checker { background: var(--surface); border-radius: 10px; overflow: hidden; margin: 10px 0; }
+  .checker-footer { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; padding: 10px 12px; background: var(--surface-mid); }
+  .btn-run, .btn-reset { padding: 8px 16px; border-radius: 8px; font-weight: 700; font-size: 0.86rem; cursor: pointer; font-family: var(--font-body); }
+  .btn-run   { background: transparent; color: var(--accent-light); border: 2px solid var(--accent-light); }
+  .btn-reset { background: transparent; color: #9fb4cc; border: 2px solid #4a6a8c; }
+  .btn-run:hover, .btn-reset:hover { color: #fff; border-color: #fff; }
+  .btn-reset:disabled { opacity: .4; cursor: not-allowed; }
+  .checker-footer .ac-btn { padding: 8px 18px; font-size: 0.88rem; }
+  .code-title { font-weight: 700; color: var(--surface); font-size: 1rem; }
+  .goal-line { font-size: 0.92rem; margin: 6px 0 4px; color: var(--surface); line-height: 1.5; }
+  .test-note { font-size: 0.84rem; color: var(--muted); margin: 6px 0; }
+  .lock-msg { display: none; background: var(--green-bg); border: 1px solid var(--green); color: var(--green-dark); border-radius: 6px; padding: 8px 12px; font-size: 0.86rem; font-weight: 700; margin-top: 8px; }
+  .code-locked .lock-msg { display: block; }
+
+  .req-list { list-style: none; margin: 8px 0; display: grid; gap: 6px; }
+  .req-list li { display: flex; gap: 10px; align-items: flex-start; background: #fff; border: 1.5px solid #c9d8e8; border-radius: 8px; padding: 8px 12px; line-height: 1.5; font-size: 0.92rem; }
+  .req-list li .tick { width: 22px; height: 22px; border-radius: 50%; background: #e3ecf6; color: var(--surface); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.8rem; flex-shrink: 0; }
+  .req-list li.req-pass { border-color: var(--green); }
+  .req-list li.req-pass .tick { background: var(--green); color: #fff; }
+  .req-list li.req-fail { border-color: var(--red); }
+  .req-list li.req-fail .tick { background: var(--red); color: #fff; }
+
+  .samples { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px; margin: 8px 0; }
+  .terminal { background: #0d1726; color: #d6e4f0; font-family: var(--font-mono); font-size: 0.9rem; border-radius: 8px; padding: 10px 14px; white-space: pre-wrap; line-height: 1.6; }
+  .terminal .typed { color: var(--gold); font-weight: 700; }
+  .terminal .cap { display: block; color: #6b8cae; font-family: var(--font-body); font-size: 0.75rem; margin-bottom: 4px; }
+
+  /* Review */
+  .review-table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 10px; overflow: hidden; font-size: 0.92rem; }
+  .review-table th, .review-table td { padding: 9px 12px; text-align: left; border-bottom: 1px solid #e3ecf6; }
+  .review-table th { background: var(--surface); color: var(--text-inv); font-weight: 700; font-size: 0.82rem; }
+  .review-table tr.total td { font-weight: 700; background: #f2f6fb; }
+  .todo-list { margin: 10px 0 0 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+  .todo-list button { background: #fff; border: 1.5px solid var(--amber); border-radius: 8px; padding: 7px 12px; cursor: pointer; font-family: var(--font-body); font-size: 0.88rem; text-align: left; width: 100%; color: var(--surface); }
+  .todo-list button:hover { background: var(--amber-bg); }
+  .all-done { background: var(--green-bg); border: 1.5px solid var(--green); border-radius: 10px; padding: 12px 16px; font-weight: 600; color: var(--green-dark); margin-top: 12px; }
+
+  @media (prefers-reduced-motion: reduce) { .panel.active { animation: none; } }
+  @media (max-width: 600px) {
+    .panel, .intro { padding-left: 16px; padding-right: 16px; }
+    .header { padding: 14px 16px; }
+  }
+</style>
+</head>
+
+<body>
+
+<!--
+  Y8 Python Unit 1 · Lesson 6 — Assessment (not PRIMM). The questions and all marking live in
+  checkers.js (with unit tests in checkers.test.js); this page only renders and records them.
+  WRITING INSTRUCTIONS THAT CONTAIN CODE: never put a full stop or comma straight after code
+  the student might type.
+-->
+
+<div id="done-banner" class="ac-banner"></div>
+<div id="glow-overlay"></div>
+
+<div class="header">
+  <div class="header-top">
+    <div>
+      <div class="header-title">📝 Unit 1 Assessment — Python First Steps</div>
+      <div class="header-sub">Year 8 Python · Output · Variables · Input · Data types &amp; casting · Selection</div>
+    </div>
+    <div class="py-status" id="pyStatus">Python: loading…</div>
+  </div>
+  <div class="score-row">
+    <div class="score-pill" id="score-pill">Score: 0 / 38 (0%)</div>
+    <div class="score-bar-wrap"><div class="score-bar" id="score-bar"></div></div>
+    <div class="bonus-pill" id="bonus-pill"></div>
+  </div>
+</div>
+
+<div class="intro">
+  <details id="intro">
+    <summary>📋 How this assessment works — read this first</summary>
+    <ul>
+      <li>There are <strong>6 sections</strong>, one for each thing you learned, plus a ★ bonus. Do them in <strong>any order</strong>. The number on each tab shows how many questions you have answered.</li>
+      <li><strong>Multiple choice, trace and sort questions: one try only.</strong> When you press <strong>🔒 Lock in</strong> your answer is final, and then you are shown the right answer.</li>
+      <li><strong>Code questions:</strong> press <strong>▶ Run code</strong> and <strong>✓ Check</strong> as often as you like. Your best mark is kept. Full marks locks the question.</li>
+      <li>This is a test of what <strong>you</strong> know, so there are no hints and no 💡 Get help. If you get an error, read the <strong>last line</strong> first, then find the line number it gives.</li>
+      <li>Your answers save automatically and go to Google Classroom as you work. When you have finished, open the <strong>✓ Review</strong> tab to check nothing is left.</li>
+    </ul>
+  </details>
+</div>
+
+<div class="tab-bar" id="tab-bar" role="tablist"></div>
+<div id="panels"></div>
+
+<div class="ac-toast" id="toast"></div>
+
+<!-- Shows any unexpected page error at the bottom of the page (no dev console on student PCs). Keep this first. -->
+<script src="../../../error-reporter.js"></script>
+<script src="../../../activity-ui.js"></script>
+<script src="../../../classroom.js"></script>
+
+<script type="module">
+import {
+  ITEMS, SECTIONS, itemById, variantOf, optionOrder, itemMax, summarise,
+  checkTraceValue, checkTraceOutput, showValue, markSort, evalCode,
+  branchChoices, branchAnswer, mulberry32, shuffle, hashId,
+} from './checkers.js';
+import { preload, runPython } from '../../../pyodide-runner.js';
+import { setupEditors, setEditorOutput, refreshEditor, runCode } from '../../../code-editor.js';
+
+// ── Activity identity ──────────────────────────────────
+// STORAGE_KEY also feeds the L7 DIRT lesson on the same device; the same summary goes to
+// Drive with Classroom.submitResults(…, ACTIVITY_TITLE) for other devices.
+const STORAGE_KEY    = 'oga_y8u1_assess_v1';
+const ACTIVITY_TITLE = 'Unit 1 Assessment — Python First Steps';   // must match <!-- ACTIVITY title: -->
+
+const $  = sel => document.querySelector(sel);
+const $$ = sel => [...document.querySelectorAll(sel)];
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const authBlocked = () => window.Classroom?.verifyAuth() === false;   // undefined (no classroom.js) never blocks
+
+// ── State (saved on every change; locks are saved before anything is shown) ──
+function fresh() {
+  return { seed: Math.floor(Math.random() * 2 ** 31), tab: 0,
+           sel: {}, locked: {}, pts: {}, checked: {}, results: {}, code: {}, sort: {}, finished: false };
+}
+let S;
+try { const s = JSON.parse(localStorage.getItem(STORAGE_KEY)); S = s && s.seed != null ? { ...fresh(), ...s } : fresh(); }
+catch (e) { S = fresh(); }
+function save() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(S)); } catch (e) {} }
+save();
+
+// This student's version of every item, and its marks.
+const V = Object.fromEntries(ITEMS.map(i => [i.id, variantOf(i, S.seed)]));
+const MAX = Object.fromEntries(ITEMS.map(i => [i.id, itemMax(i, S.seed)]));
+const isCode = id => ['fix', 'reqs'].includes(V[id].kind);
+const answered = id => isCode(id) ? !!S.checked[id] : !!S.locked[id];
+
+// Question numbers within each section: 1.1, 1.2 …
+const QNO = {};
+SECTIONS.forEach(s => ITEMS.filter(i => i.section === s.id).forEach((it, k) => { QNO[it.id] = s.bonus ? `★${k + 1}` : `${s.n}.${k + 1}`; }));
+
+// ── Rendering helpers ──────────────────────────────────
+function hl(code) {
+  return esc(code)
+    .replace(/(&quot;[^&]*?&quot;)/g, '<span class="s">$1</span>')
+    .replace(/\b(print|input|int|float|str)\(/g, '<span class="f">$1</span>(')
+    .replace(/^(\s*)(if|else)\b/g, '$1<span class="k">$2</span>');
+}
+function listing(code, notes = {}) {
+  return `<div class="listing">${code.split('\n').map((l, i) =>
+    `<div class="ln"><span class="n">${i + 1}</span><span>${hl(l)}</span>${notes[i] ? `<span class="note">← ${esc(notes[i])}</span>` : ''}</div>`).join('')}</div>`;
+}
+const looksLikeCode = o => /[()"=*+<>]/.test(o);
+const fmtOpt = o => looksLikeCode(o) ? `<code>${esc(o)}</code>` : esc(o);
+const marksTag = id => {
+  const m = MAX[id], code = isCode(id);
+  return `${m} mark${m > 1 ? 's' : ''}${V[id].bonus ? ' (bonus)' : ''} · ${code ? 'check as often as you like' : 'one try'}`;
+};
+const head = id => `<div class="q-head"><span class="q-no">Question ${QNO[id]}</span><span class="q-marks">${marksTag(id)}</span></div>`;
+const lockBtn = (id, label = '🔒 Lock in answer') => `<div class="row"><button class="ac-btn" data-lock="${id}" id="lock_${id}">${label}</button></div>`;
+
+function renderMcq(id) {
+  const v = V[id];
+  const opts = optionOrder(id, v.opts.length, S.seed).map(k =>
+    `<label class="opt" data-k="${k}"><input type="radio" name="mcq_${id}" value="${k}"><span>${fmtOpt(v.opts[k])}</span></label>`).join('');
+  return `<div class="question-card" id="card_${id}">${head(id)}
+    <span class="q-label">${v.q}</span>
+    ${v.code ? listing(v.code) : ''}
+    ${v.error ? `<div class="err-cap">Python shows:</div><pre class="err">${esc(v.error)}</pre>` : ''}
+    <div class="opts">${opts}</div>
+    ${lockBtn(id)}
+    <div class="feedback" id="fb_${id}"></div></div>`;
+}
+
+function renderTrace(id) {
+  const v = V[id];
+  const notes = Object.fromEntries(Object.entries(v.typed || {}).map(([i, t]) => [i, `the user types ${t}`]));
+  const boxes = v.vars.length ? `
+    <span class="q-label" style="margin-top:10px">📦 What is in each box at the end?</span>
+    <div class="rule-box">Write text <strong>in quotes</strong>, like <code>"Sam"</code>, and numbers without, like <code>12</code></div>
+    <div class="trace-grid">${v.vars.map(x => `<div class="trace-box">
+      <label for="tr_${id}_v_${x.name}">${x.name}</label>
+      <input type="text" id="tr_${id}_v_${x.name}" data-trace="${id}" autocomplete="off" spellcheck="false" placeholder="?">
+      <div class="cell-msg" id="msg_${id}_v_${x.name}"></div></div>`).join('')}</div>` : '';
+  const outs = `
+    <span class="q-label" style="margin-top:10px">🖥️ What does it print${v.vars.length ? ', line by line' : ''}?</span>
+    ${v.output.map((_, i) => `<div class="out-line"><span class="n">line ${i + 1}</span><div>
+      <input type="text" id="tr_${id}_o_${i}" data-trace="${id}" autocomplete="off" spellcheck="false" placeholder="exactly what is printed">
+      <div class="cell-msg" id="msg_${id}_o_${i}"></div></div></div>`).join('')}`;
+  return `<div class="question-card" id="card_${id}">${head(id)}
+    <span class="q-label">${v.q}</span>
+    ${listing(v.lines.join('\n'), notes)}
+    ${boxes}${outs}
+    ${lockBtn(id, '🔒 Lock in my trace')}
+    <div class="feedback" id="fb_${id}"></div></div>`;
+}
+
+function renderBranch(id) {
+  const v = V[id];
+  const choices = branchChoices(v);
+  const order = optionOrder(id, choices.length, S.seed);
+  const rows = v.rows.map(([typed], r) => `<div class="branch-row" id="brow_${id}_${r}">
+      <div class="typed-lbl">User types <b>${esc(typed)}</b></div>
+      <div class="opts">${order.map(k => `<label class="opt" data-k="${k}"><input type="radio" name="br_${id}_${r}" value="${k}"><span>${esc(choices[k])}</span></label>`).join('')}</div>
+    </div>`).join('');
+  return `<div class="question-card" id="card_${id}">${head(id)}
+    <span class="q-label">${v.q}</span>
+    ${listing(v.code)}
+    ${rows}
+    ${lockBtn(id)}
+    <div class="feedback" id="fb_${id}"></div></div>`;
+}
+
+function renderSortItem(id) {
+  const v = V[id];
+  const bins = shuffle(v.bins, mulberry32(S.seed + hashId(id) + 7));
+  return `<div class="question-card" id="card_${id}">${head(id)}
+    <span class="q-label">${v.q}</span>
+    ${listing(v.code)}
+    <span class="q-label">Sort every card into the right group. Drag it, or click a card and then click a group.</span>
+    <div class="sort-pool" data-sort="${id}" data-bin=""></div>
+    <div class="sort-bins">${bins.map(b => `<div class="sort-bin" data-sort="${id}" data-bin="${b.id}"><h4>${b.label}</h4></div>`).join('')}</div>
+    ${lockBtn(id)}
+    <div class="feedback" id="fb_${id}"></div></div>`;
+}
+
+function renderCodeItem(id) {
+  const v = V[id];
+  const samples = v.samples ? `<div class="samples">${v.samples.map((run, i) => `<div class="terminal"><span class="cap">Sample run ${i + 1}</span>${
+    run.map(([text, typed]) => esc(text) + (typed ? `<span class="typed">${esc(typed)}</span>` : '')).join('\n')}</div>`).join('')}</div>` : '';
+  const reqs = v.reqs ? `<p style="font-weight:700;color:var(--surface);margin-top:10px">Your program must (1 mark each):</p>
+    <ul class="req-list" id="req_${id}">${v.reqs.map((r, i) => `<li><span class="tick">${i + 1}</span><span>${r.text}</span></li>`).join('')}</ul>` : '';
+  const resettable = v.kind === 'fix' || id === 'w_warm';
+  return `<div class="question-card" id="card_${id}">${head(id)}
+    <div class="code-title">${esc(v.title)}</div>
+    <div class="goal-line">🎯 ${v.goal}</div>
+    ${samples}${reqs}
+    ${v.testNote || v.note ? `<div class="test-note">${esc(v.testNote || v.note)}</div>` : ''}
+    <div class="code-checker">
+      <textarea class="checker-textarea" id="ed_${id}" data-title="${esc(v.title)}">${esc(v.starter)}</textarea>
+      <div class="checker-footer">
+        <button class="btn-run" data-run="ed_${id}">▶ Run code</button>
+        <button class="ac-btn" data-check="${id}" id="check_${id}">✓ Check</button>
+        ${resettable ? `<button class="btn-reset" data-reset="${id}" id="reset_${id}">↺ Reset to the start</button>` : ''}
+      </div>
+    </div>
+    <div class="feedback" id="fb_${id}"></div>
+    <div class="lock-msg">🔒 Full marks — this question is locked.</div></div>`;
+}
+
+const RENDER = { mcq: renderMcq, trace: renderTrace, branch: renderBranch, sort: renderSortItem, fix: renderCodeItem, reqs: renderCodeItem };
+
+// ── Build the page ─────────────────────────────────────
+const REVIEW = SECTIONS.length;
+$('#tab-bar').innerHTML = SECTIONS.map((s, i) =>
+  `<button class="tab" data-idx="${i}">${s.n} · ${esc(s.label)} <span class="count" id="count_${s.id}"></span></button>`).join('')
+  + `<button class="tab" data-idx="${REVIEW}">✓ Review</button>`;
+
+$('#panels').innerHTML = SECTIONS.map((s, i) => {
+  const items = ITEMS.filter(it => it.section === s.id);
+  const marks = items.reduce((t, it) => t + MAX[it.id], 0);
+  return `<div class="panel" id="panel-${i}">
+    <div class="task-header">
+      <div class="task-badge ${s.bonus ? 'ext' : ''}">${s.n}</div>
+      <div><div class="task-title">${esc(s.label)}</div>
+        <div class="task-sub">${esc(s.lesson)} · ${marks} ${s.bonus ? 'bonus marks — not part of your score' : 'marks'}</div></div>
+    </div>
+    ${s.bonus ? '<div class="goal">🎯 Only try this once you have finished everything else. It is a bonus, so it can only add to how well you did.</div>' : ''}
+    ${s.id === 'write' ? '<div class="goal">🎯 Start with the warm-up, then write the game shop program. You can use your own words for any message unless it says exactly.</div>' : ''}
+    ${items.map(it => RENDER[V[it.id].kind](it.id)).join('')}
+    <div class="next-row"><button class="ac-btn" data-goto="${i + 1}">${i + 1 < REVIEW ? `Next: ${esc(SECTIONS[i + 1].label)} →` : 'Go to ✓ Review →'}</button></div>
+  </div>`;
+}).join('') + `<div class="panel" id="panel-${REVIEW}">
+    <div class="task-header"><div class="task-badge">✓</div>
+      <div><div class="task-title">Review</div><div class="task-sub">Check nothing is left before you finish</div></div></div>
+    <table class="review-table" id="review-table"></table>
+    <div id="review-todo"></div>
+  </div>`;
+
+// ── Scoring + submission ───────────────────────────────
+function refreshScore() {
+  const s = summarise(S.pts, S.seed);
+  $('#score-pill').textContent = `Score: ${s.earned} / ${s.max} (${s.pct}%)`;
+  $('#score-bar').style.width = s.pct + '%';
+  $('#bonus-pill').textContent = s.bonus ? `★ +${s.bonus} bonus` : '';
+  SECTIONS.forEach((sec, i) => {
+    const ids = ITEMS.filter(it => it.section === sec.id).map(it => it.id);
+    const n = ids.filter(answered).length;
+    $('#count_' + sec.id).textContent = `${n}/${ids.length}`;
+    $(`.tab[data-idx="${i}"]`).classList.toggle('done', n === ids.length);
+  });
+  renderReview(s);
+  return s;
+}
+// Called after every answer is locked or checked: grade + evidence + per-section results.
+function submit() {
+  const s = refreshScore();
+  window.Classroom?.submitGrade(s.pct, ACTIVITY_TITLE);
+  window.Classroom?.submitResults({ points: S.pts, sections: s.sections, earned: s.earned, max: s.max, pct: s.pct, bonus: s.bonus }, ACTIVITY_TITLE);
+  checkFinished(s);
+}
+const coreIds = ITEMS.filter(i => !i.bonus).map(i => i.id);
+function checkFinished(s) {
+  if (S.finished || !coreIds.every(answered)) return;
+  S.finished = true;
+  save();
+  showFinished(s, true);
+}
+function showFinished(s, celebrate) {
+  const gold = s.pct === 100;
+  const b = $('#done-banner');
+  b.textContent = gold ? `🏆 Every question answered — full marks!` : `✅ Every question answered — you scored ${s.pct}%. You can still improve your code answers or try the ★ bonus.`;
+  b.classList.add('show', gold ? 'gold' : 'green');
+  $('#glow-overlay').classList.add(gold ? 'gold' : 'green', 'show');
+  setTimeout(() => b.classList.remove('show'), 7000);
+  if (celebrate && gold) window.ActivityUI?.launchCelebration({ percent: 100 });
+}
+
+function renderReview(s) {
+  const rows = SECTIONS.map((sec, i) => {
+    const ids = ITEMS.filter(it => it.section === sec.id).map(it => it.id);
+    const se = s.sections[sec.id];
+    return `<tr><td>${sec.n} · ${esc(sec.label)}</td><td>${esc(sec.lesson)}</td><td>${ids.filter(answered).length} / ${ids.length}</td><td>${se.earned} / ${se.max}${sec.bonus ? ' bonus' : ''}</td></tr>`;
+  }).join('');
+  $('#review-table').innerHTML = `<tr><th>Section</th><th>Lesson</th><th>Answered</th><th>Marks</th></tr>${rows}
+    <tr class="total"><td colspan="3">Total (not counting the bonus)</td><td>${s.earned} / ${s.max} (${s.pct}%)</td></tr>`;
+  const todo = coreIds.filter(id => !answered(id));
+  $('#review-todo').innerHTML = todo.length
+    ? `<p style="margin-top:14px;font-weight:700;color:var(--surface)">Still to answer (${todo.length}):</p>
+       <ul class="todo-list">${todo.map(id => `<li><button data-goto-item="${id}">Question ${QNO[id]} — ${esc(SECTIONS.find(x => x.id === V[id].section).label)} →</button></li>`).join('')}</ul>`
+    : `<div class="all-done">✅ You have answered every question. Your teacher can see your results. If there is time left, try to get full marks on the code questions, or have a go at the ★ bonus.</div>`;
+}
+
+// ── Tabs ───────────────────────────────────────────────
+const TABS = () => $$('.tab');
+function showTab(i) {
+  TABS().forEach((t, j) => t.classList.toggle('active', j === i));
+  $$('.panel').forEach((p, j) => p.classList.toggle('active', j === i));
+  S.tab = i; save();
+  $$('#panel-' + i + ' .checker-textarea').forEach(ta => { try { refreshEditor(ta); } catch (e) {} });
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+$('#tab-bar').addEventListener('click', e => { const t = e.target.closest('.tab'); if (t) showTab(+t.dataset.idx); });
+
+// ══ Multiple choice ═════════════════════════════════════
+function applyMcq(id) {
+  const card = $('#card_' + id);
+  const chosen = S.sel[id];
+  if (chosen != null) { const r = card.querySelector(`input[value="${chosen}"]`); if (r) r.checked = true; }
+  if (!S.locked[id]) return;
+  card.classList.add('locked', S.pts[id] ? 'is-right' : 'is-wrong');
+  card.querySelectorAll('.opt').forEach(o => {
+    o.querySelector('input').disabled = true;
+    const k = +o.dataset.k;
+    if (k === 0) o.classList.add('right');
+    else if (k === chosen) o.classList.add('wrong');
+  });
+  $('#lock_' + id).disabled = true;
+  const fb = $('#fb_' + id);
+  fb.innerHTML = S.pts[id] ? '✅ Correct.' : '❌ Not this time — the right answer is in green.';
+  fb.className = 'feedback ' + (S.pts[id] ? 'correct' : 'wrong');
+  if (!card.querySelector('.why')) fb.insertAdjacentHTML('afterend', `<div class="why"><strong>Why:</strong> ${esc(V[id].why)}</div>`);
+}
+function lockMcq(id) {
+  const fb = $('#fb_' + id);
+  if (S.sel[id] == null) { fb.textContent = 'Choose an answer first.'; fb.className = 'feedback info'; return; }
+  S.locked[id] = true;
+  S.pts[id] = S.sel[id] === 0 ? MAX[id] : 0;
+  save();
+  applyMcq(id);
+  submit();
+}
+
+// ══ Trace ═══════════════════════════════════════════════
+const traceFields = id => {
+  const v = V[id];
+  return [
+    ...v.vars.map(x => ({ key: `tr_${id}_v_${x.name}`, msg: `msg_${id}_v_${x.name}`, mark: t => checkTraceValue(x, t), answer: showValue(x) })),
+    ...v.output.map((line, i) => ({ key: `tr_${id}_o_${i}`, msg: `msg_${id}_o_${i}`, mark: t => checkTraceOutput(line, t), answer: line })),
+  ];
+};
+function applyTrace(id) {
+  const vals = S.sel[id] || {};
+  traceFields(id).forEach(f => { $('#' + f.key).value = vals[f.key] ?? ''; });
+  if (!S.locked[id]) return;
+  let right = 0;
+  traceFields(id).forEach(f => {
+    const r = f.mark(vals[f.key]);
+    const inp = $('#' + f.key);
+    inp.readOnly = true;
+    inp.classList.add(r.ok ? 'ans-correct' : 'ans-wrong');
+    $('#' + f.msg).innerHTML = r.ok ? '' : `${esc(r.msg)} Answer: <span class="ans">${esc(f.answer)}</span>`;
+    if (r.ok) right++;
+  });
+  const card = $('#card_' + id);
+  card.classList.add(right === MAX[id] ? 'is-right' : right ? 'is-partial' : 'is-wrong');
+  $('#lock_' + id).disabled = true;
+  const fb = $('#fb_' + id);
+  fb.textContent = right === MAX[id] ? '✅ Your trace is spot on.' : `${right} of ${MAX[id]} right. The right answers are shown under the red boxes.`;
+  fb.className = 'feedback ' + (right === MAX[id] ? 'correct' : right ? 'partial' : 'wrong');
+}
+function lockTrace(id) {
+  const vals = S.sel[id] || {};
+  const fb = $('#fb_' + id);
+  if (traceFields(id).some(f => !String(vals[f.key] ?? '').trim())) {
+    fb.textContent = 'Fill in every box first.'; fb.className = 'feedback info'; return;
+  }
+  S.locked[id] = true;
+  S.pts[id] = traceFields(id).filter(f => f.mark(vals[f.key]).ok).length;
+  save();
+  applyTrace(id);
+  submit();
+}
+
+// ══ Selection rows ══════════════════════════════════════
+function applyBranch(id) {
+  const v = V[id], sel = S.sel[id] || {};
+  v.rows.forEach((_, r) => { if (sel[r] != null) { const x = $(`input[name="br_${id}_${r}"][value="${sel[r]}"]`); if (x) x.checked = true; } });
+  if (!S.locked[id]) return;
+  const card = $('#card_' + id);
+  card.classList.add('locked');
+  let right = 0;
+  v.rows.forEach((row, r) => {
+    const want = branchAnswer(row);
+    if (sel[r] === want) right++;
+    $$(`#brow_${id}_${r} .opt`).forEach(o => {
+      o.querySelector('input').disabled = true;
+      const k = +o.dataset.k;
+      if (k === want) o.classList.add('right');
+      else if (k === sel[r]) o.classList.add('wrong');
+    });
+  });
+  card.classList.add(right === MAX[id] ? 'is-right' : right ? 'is-partial' : 'is-wrong');
+  $('#lock_' + id).disabled = true;
+  const fb = $('#fb_' + id);
+  fb.textContent = right === MAX[id] ? '✅ All right — including the boundary value.' : `${right} of ${MAX[id]} right. The right answers are in green.`;
+  fb.className = 'feedback ' + (right === MAX[id] ? 'correct' : right ? 'partial' : 'wrong');
+  if (!card.querySelector('.why')) fb.insertAdjacentHTML('afterend', `<div class="why"><strong>Why:</strong> only the indented line under the branch that runs is printed. <code>${esc(v.after)}</code> has no indent, so it is always printed. Check the number on the boundary carefully: <code>&gt;=</code> includes it, <code>&gt;</code> and <code>&lt;</code> do not.</div>`);
+}
+function lockBranch(id) {
+  const sel = S.sel[id] || {};
+  const fb = $('#fb_' + id);
+  if (V[id].rows.some((_, r) => sel[r] == null)) { fb.textContent = 'Choose an answer for every row first.'; fb.className = 'feedback info'; return; }
+  S.locked[id] = true;
+  S.pts[id] = V[id].rows.filter((row, r) => sel[r] === branchAnswer(row)).length;
+  save();
+  applyBranch(id);
+  submit();
+}
+
+// ══ Sort ════════════════════════════════════════════════
+let selectedCard = null;
+function applySort(id) {
+  const v = V[id], place = S.sort[id] || {};
+  const card = $('#card_' + id);
+  const zones = { '': card.querySelector('.sort-pool') };
+  card.querySelectorAll('.sort-bin').forEach(b => { zones[b.dataset.bin] = b; b.querySelectorAll('.sort-card').forEach(c => c.remove()); });
+  zones[''].innerHTML = '';
+  const locked = !!S.locked[id];
+  const marked = locked ? markSort(v, place) : null;
+  shuffle(v.cards, mulberry32(S.seed + hashId(id))).forEach(c => {
+    const el = document.createElement('div');
+    el.className = 'sort-card' + (selectedCard === c.id ? ' selected' : '');
+    el.dataset.id = c.id;
+    el.dataset.sort = id;
+    el.draggable = !locked;
+    el.textContent = c.expr;
+    if (locked) {
+      el.classList.add(marked.results[c.id] ? 'is-right' : 'is-wrong');
+      if (!marked.results[c.id]) el.insertAdjacentHTML('beforeend', `<span class="should">should be: ${esc(v.bins.find(b => b.id === c.bin).label)}</span>`);
+    }
+    (zones[place[c.id] || ''] || zones['']).appendChild(el);
+  });
+  card.querySelectorAll('.sort-bin').forEach(b => b.classList.toggle('target', !locked && !!selectedCard));
+  if (!locked) return;
+  card.classList.add('locked', marked.right === v.cards.length ? 'is-right' : marked.pts ? 'is-partial' : 'is-wrong');
+  $('#lock_' + id).disabled = true;
+  const fb = $('#fb_' + id);
+  fb.textContent = `${marked.right} of ${v.cards.length} cards in the right group = ${marked.pts} mark${marked.pts === 1 ? '' : 's'}.`;
+  fb.className = 'feedback ' + (marked.right === v.cards.length ? 'correct' : marked.pts ? 'partial' : 'wrong');
+}
+function moveCard(id, cardId, bin) {
+  if (S.locked[id] || !cardId) return;
+  S.sort[id] = S.sort[id] || {};
+  if (bin) S.sort[id][cardId] = bin; else delete S.sort[id][cardId];
+  selectedCard = null;
+  save();
+  applySort(id);
+}
+function lockSort(id) {
+  const r = markSort(V[id], S.sort[id] || {});
+  const fb = $('#fb_' + id);
+  if (!r.placed) { fb.textContent = 'Put every card into a group first.'; fb.className = 'feedback info'; return; }
+  S.locked[id] = true;
+  S.pts[id] = r.pts;
+  save();
+  applySort(id);
+  submit();
+}
+document.addEventListener('click', e => {
+  const c = e.target.closest('.sort-card');
+  if (c && !S.locked[c.dataset.sort]) { selectedCard = selectedCard === c.dataset.id ? null : c.dataset.id; applySort(c.dataset.sort); return; }
+  const z = e.target.closest('.sort-bin, .sort-pool');
+  if (z && selectedCard) moveCard(z.dataset.sort, selectedCard, z.dataset.bin);
+});
+document.addEventListener('dragstart', e => { const c = e.target.closest?.('.sort-card'); if (c) e.dataTransfer.setData('text/plain', c.dataset.id); });
+document.addEventListener('dragover', e => { const z = e.target.closest?.('.sort-bin, .sort-pool'); if (z && !S.locked[z.dataset.sort]) { e.preventDefault(); z.classList.add('over'); } });
+document.addEventListener('dragleave', e => { e.target.closest?.('.sort-bin, .sort-pool')?.classList.remove('over'); });
+document.addEventListener('drop', e => {
+  const z = e.target.closest?.('.sort-bin, .sort-pool');
+  if (!z) return;
+  e.preventDefault();
+  z.classList.remove('over');
+  moveCard(z.dataset.sort, e.dataTransfer.getData('text/plain'), z.dataset.bin);
+});
+
+// ══ Code questions ══════════════════════════════════════
+// Run the code once per set of test answers, one after another (one shared Python).
+async function runTests(code, tests) {
+  const runs = [];
+  for (const inputs of tests) runs.push({ ...(await runPython(code, { inputs, onInputsExhausted: 'error' })), inputs });
+  return runs;
+}
+// Show the first failing run (or the first run) in the editor's output panel.
+function showRun(ta, runs) {
+  const r = runs.find(x => !x.ok) || runs[0];
+  const label = r.inputs.length ? `[test run — typed: ${r.inputs.join(', ')}]\n` : '';
+  setEditorOutput(ta, r.ok ? label + (r.output || '(no output)') : r.output, !r.ok, r.ok ? null : (r.line ?? null));
+}
+function applyReqTicks(id, results) {
+  const list = $('#req_' + id);
+  if (!list || !results) return;
+  list.querySelectorAll('li').forEach((li, i) => {
+    li.classList.toggle('req-pass', !!results[i]);
+    li.classList.toggle('req-fail', !results[i]);
+    li.querySelector('.tick').textContent = results[i] ? '✓' : '✗';
+  });
+}
+function applyCode(id) {
+  if (!S.checked[id]) return;
+  const best = S.pts[id] || 0, max = MAX[id];
+  const card = $('#card_' + id);
+  card.classList.remove('is-right', 'is-partial', 'is-wrong');
+  card.classList.add(best === max ? 'is-right' : best ? 'is-partial' : 'is-wrong');
+  applyReqTicks(id, S.results[id]);
+  if (best === max) {
+    card.classList.add('code-locked');
+    $('#ed_' + id).readOnly = true;
+    $('#check_' + id).disabled = true;
+    const rs = $('#reset_' + id); if (rs) rs.disabled = true;
+  }
+}
+async function checkCode(id) {
+  if (S.pts[id] === MAX[id]) return;
+  const ta = $('#ed_' + id), fb = $('#fb_' + id), btn = $('#check_' + id);
+  btn.disabled = true;
+  fb.textContent = 'Running your code with the test answers…'; fb.className = 'feedback info';
+  try {
+    const runs = await runTests(ta.value, V[id].tests);
+    showRun(ta, runs);
+    const r = evalCode(V[id], ta.value, runs);
+    S.checked[id] = true;
+    if (r.pts >= (S.pts[id] || 0)) { S.pts[id] = r.pts; S.results[id] = r.results || null; }
+    save();
+    applyCode(id);
+    applyReqTicks(id, r.results);   // this attempt's ticks, even if an earlier attempt scored more
+    const best = S.pts[id], max = MAX[id];
+    fb.textContent = `${r.pts === max ? '✅' : r.pts ? '🟡' : '❌'} ${r.msg} This check: ${r.pts}/${max}.${best > r.pts ? ` Your best so far (${best}/${max}) is kept.` : ''}`;
+    fb.className = 'feedback ' + (r.pts === max ? 'correct' : r.pts ? 'partial' : 'wrong');
+    submit();
+  } catch (err) {
+    window.ErrorReporter?.report('Code check', err);
+  } finally {
+    if (S.pts[id] !== MAX[id]) btn.disabled = false;
+  }
+}
+
+// ── Clicks, selections, typing ─────────────────────────
+const LOCKERS = { mcq: lockMcq, trace: lockTrace, branch: lockBranch, sort: lockSort };
+document.addEventListener('click', e => {
+  const l = e.target.closest('[data-lock]');
+  if (l) { if (!authBlocked() && !S.locked[l.dataset.lock]) LOCKERS[V[l.dataset.lock].kind](l.dataset.lock); return; }
+  const c = e.target.closest('[data-check]');
+  if (c) { if (!authBlocked()) checkCode(c.dataset.check); return; }
+  const r = e.target.closest('[data-reset]');
+  if (r && S.pts[r.dataset.reset] !== MAX[r.dataset.reset]) {
+    const ta = $('#ed_' + r.dataset.reset);
+    ta.value = V[r.dataset.reset].starter;
+    ta.dispatchEvent(new Event('input', { bubbles: true }));
+    return;
+  }
+  const run = e.target.closest('[data-run]');
+  if (run) { runCode($('#' + run.dataset.run)); return; }
+  const g = e.target.closest('[data-goto]');
+  if (g) { showTab(+g.dataset.goto); return; }
+  const gi = e.target.closest('[data-goto-item]');
+  if (gi) {
+    const id = gi.dataset.gotoItem;
+    showTab(SECTIONS.findIndex(s => s.id === V[id].section));
+    setTimeout(() => $('#card_' + id)?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 150);
+  }
+});
+document.addEventListener('change', e => {
+  const t = e.target;
+  if (t.name?.startsWith('mcq_')) { const id = t.name.slice(4); if (!S.locked[id]) { S.sel[id] = +t.value; save(); } }
+  const m = t.name?.match(/^br_(.+)_(\d+)$/);
+  if (m && !S.locked[m[1]]) { S.sel[m[1]] = { ...(S.sel[m[1]] || {}), [m[2]]: +t.value }; save(); }
+});
+document.addEventListener('input', e => {
+  const id = e.target.dataset?.trace;
+  if (id && !S.locked[id]) { S.sel[id] = { ...(S.sel[id] || {}), [e.target.id]: e.target.value }; save(); }
+});
+
+// Code is saved as it is typed.
+$$('.checker-textarea').forEach(ta => {
+  if (S.code[ta.id] != null) ta.value = S.code[ta.id];
+  ta.addEventListener('input', () => { S.code[ta.id] = ta.value; save(); });
+});
+
+// ── Boot ───────────────────────────────────────────────
+const APPLY = { mcq: applyMcq, trace: applyTrace, branch: applyBranch, sort: applySort, fix: applyCode, reqs: applyCode };
+ITEMS.forEach(it => APPLY[V[it.id].kind](it.id));
+const startScore = refreshScore();
+if (S.finished) showFinished(startScore, false);   // restore the look without re-celebrating
+const anyAnswered = ITEMS.some(it => answered(it.id));
+$('#intro').open = !anyAnswered;
+showTab(Math.min(S.tab, REVIEW));
+
+// Assessment: no error hints, no step-through, no memory view (see the Unit 1 MTP).
+setupEditors('.checker-textarea');
+
+preload()
+  .then(() => { $('#pyStatus').textContent = 'Python: ready'; $('#pyStatus').classList.add('ready'); })
+  .catch(err => {
+    $('#pyStatus').textContent = 'Python: failed to load';
+    window.ErrorReporter?.report('Python engine failed to load', err);
+  });
+</script>
+</body>
+</html>
