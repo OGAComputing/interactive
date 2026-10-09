@@ -201,11 +201,11 @@ const MAKE_GOOD = [
   'print("Crew member: " + name)',
   'print("Last seen in: " + room)',
 ];
-const MAKE_OUT = out('Crew member: Ash', 'Last seen in: Navigation', 'CREW LOCATOR', 'Crew member: Ash', 'Last seen in: Navigation');
+const MAKE_OUT = out('Crew member: Ash', 'Last seen in: Navigation', 'CREW LOCATOR', 'Crew member: Ash', 'Last seen in: Navigation', 'LOCK: CRYO BAY DOOR');
 
 describe('Make — crew locator', () => {
   test('a complete locator passes', () => {
-    expect(evalMake(code(...MAKE_GOOD), MAKE_OUT).pass).toBe(true);
+    expect(evalMake(code(...MAKE_GOOD, 'print("LOCK: CRYO BAY DOOR")'), MAKE_OUT, 'bay').pass).toBe(true);
   });
   test('printing with commas instead of + fails the join bullet', () => {
     const src = code(MAKE_GOOD[0], MAKE_GOOD[1], 'print("Crew member:", name)', 'print("Room:", room)');
@@ -217,11 +217,28 @@ describe('Make — crew locator', () => {
   });
   test('both answers on one line of report passes', () => {
     const src = code(MAKE_GOOD[0], MAKE_GOOD[1], 'print(name + " was last seen in " + room)');
-    expect(evalMake(src, out('Crew member: Ash', 'Last seen in: Navigation', 'Ash was last seen in Navigation')).pass).toBe(true);
+    expect(evalMake(src, out('Crew member: Ash', 'Last seen in: Navigation', 'Ash was last seen in Navigation', 'LOCK: POD 5 SHIELD'), 'pod5').pass).toBe(true);
   });
   test('printing only one of the answers fails the last bullet', () => {
     const src = code(MAKE_GOOD[0], MAKE_GOOD[1], 'print("Crew member: " + name)', 'print("Report done")');
     expect(evalMake(src, out('Crew member: Ash', 'Last seen in: Navigation', 'Crew member: Ash', 'Report done')).results[3]).toBe(false);
+  });
+});
+
+describe('Make — the lock choice decides which last line passes', () => {
+  const src = code(...MAKE_GOOD);
+  test('only the chosen lock line passes', () => {
+    expect(evalMake(src, MAKE_OUT, 'bay').results[4]).toBe(true);
+    expect(evalMake(src, MAKE_OUT, 'pod5').results[4]).toBe(false);
+    expect(evalMake(src, MAKE_OUT, 'pod5').msg).toContain('LOCK: POD 5 SHIELD');
+  });
+  test('spacing and case are forgiven', () => {
+    expect(evalMake(src, out('Crew member: Ash', 'Last seen in: Navigation', 'Ash in Navigation', 'Lock - pod 5 shield'), 'pod5').pass).toBe(true);
+  });
+  test('no choice yet: the last bullet fails and asks for the call first', () => {
+    const r = evalMake(src, MAKE_OUT);
+    expect(r.results.slice(0, 4)).toEqual([true, true, true, true]);
+    expect(r.msg).toMatch(/Make your call/);
   });
 });
 

@@ -63,6 +63,19 @@ test('the terminal report types itself, a click shows it all, and it only shows 
   await expect(page.locator('#szOverlay')).not.toHaveClass(/open/);
 });
 
+test('a tall report has no close button, only "Jump to story", which shows the log and hides itself', async ({ page }) => {
+  await page.setViewportSize({ width: 1024, height: 600 });
+  await openAt(page, {}, { story: true, reducedMotion: 'no-preference' });
+  await expect(page.locator('#szOverlay')).toHaveClass(/open/);
+  await expect(page.locator('#szPanel button[aria-label*="Close"]')).toHaveCount(0);
+  await expect(page.locator('#szJump')).toBeVisible();
+  await page.click('#szJump');
+  await expect(page.locator('#szLogTyped')).toHaveText(await page.locator('#szLogFull').textContent());
+  await expect(page.locator('#szLog')).toBeInViewport();
+  await expect(page.locator('#szContinue')).toBeFocused();
+  await expect(page.locator('#szJump')).toBeHidden();
+});
+
 test('reduced motion shows the whole report at once', async ({ page }) => {
   await openAt(page, {}, { story: true });
   await expect(page.locator('#szLogTyped')).toHaveText(await page.locator('#szLogFull').textContent());
@@ -243,10 +256,17 @@ test('Make shows the link on to Life Support, and the extension completes the ac
     'print("CREW LOCATOR")',
     'print("Crew member: " + name)',
     'print("Last seen in: " + room)',
+    'print("LOCK: CRYO BAY DOOR")',
   ];
   await setCode(page, 'm2_editor', make.join('\n'));
+  // the second Station Zero call comes first
+  await page.click('#btn_check_m2');
+  await expect(page.locator('#fb_m2')).toHaveText(/call/);
+  await page.check('input[name="m2_choice"][value="bay"]');
+  await expect(page.locator('#req_m2_choice_text')).toContainText('LOCK: CRYO BAY DOOR');
   await page.click('#btn_check_m2');
   await expect(page.locator('#fb_m2')).toHaveClass(/pass/, { timeout: 30000 });
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('sz_choices')))).toMatchObject({ lock: 'bay' });
   await expect(page.locator('#m2_ext_task')).toBeVisible();
   await expect(page.locator('#completionBanner')).toBeVisible();
   await expect(page.locator('body')).toHaveClass(/chapter-done/);
@@ -257,4 +277,36 @@ test('Make shows the link on to Life Support, and the extension completes the ac
   await page.click('#btn_check_m2');
   await expect(page.locator('#fb_m2')).toHaveClass(/pass/, { timeout: 30000 });
   await expect(page.locator('#req_m2_ext li')).toHaveClass([/req-pass/, /req-pass/]);
+});
+
+// ─── Make: the second Station Zero call ──────────────────────────────────────
+
+test('the Make call repeats the fact from the last report that it turns on', async ({ page }) => {
+  await openAt(page, { currentStage: 'M2', completedStages: ['P', 'R', 'I', 'M1'], radio_m1_choice: 'sealed' });
+  await expect(page.locator('#m2_choice_report')).toContainText('Nothing got in');
+  await page.check('input[name="m2_choice"][value="pod5"]');
+  await expect(page.locator('#req_m2_choice_text')).toContainText('LOCK: POD 5 SHIELD');
+});
+
+// Door opened, then the bay locked: it's shut in with the crew. The cliffhanger says so.
+test('the cliffhanger follows both calls', async ({ page }) => {
+  await page.addInitScript(p => {
+    localStorage.setItem('sz_story_' + p, JSON.stringify(['intro', 'P', 'R', 'I', 'M1']));
+    localStorage.setItem('sz_choices', JSON.stringify({ door: 'open' }));
+  }, PATH);
+  await openAt(page, { currentStage: 'M2', completedStages: ['P', 'R', 'I', 'M1'], radio_m1_choice: 'open' }, { story: true });
+  await expect(page.locator('#m2_choice_report')).toContainText('Pod 5');
+  await page.check('input[name="m2_choice"][value="bay"]');
+  await setCode(page, 'm2_editor', [
+    'name = input("Crew member: ")',
+    'room = input("Last seen in: ")',
+    'print(name + " was last seen in " + room)',
+    'print("LOCK: CRYO BAY DOOR")',
+  ].join('\n'));
+  await page.click('#btn_check_m2');
+  await expect(page.locator('#fb_m2')).toHaveClass(/pass/, { timeout: 30000 });
+  await expect(page.locator('#szOverlay')).toHaveClass(/open/, { timeout: 10000 });
+  await expect(page.locator('#szTitle')).toHaveText(/Shut in/);
+  await expect(page.locator('#szReadouts')).toContainText('Frost spreading');
+  await expect(page.locator('input[name="m2_choice"][value="pod5"]')).toBeDisabled();
 });

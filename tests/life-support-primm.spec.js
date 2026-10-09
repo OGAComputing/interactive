@@ -196,11 +196,11 @@ test('choosing 40 litres changes the requirement and the later numbers, and is s
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem('sz_choices')))).toMatchObject({ air: 'low' });
 });
 
-// Door open (Wake Up) + 40 litres here: Pod 5 has both risks, and Patel doesn't make it.
-test('the report after Modify plays the outcome of both choices', async ({ page }) => {
+// Wake Up shut something in with the crew + 40 litres here: Pod 5 is failing, but Make can still save Patel.
+test('the report after Modify shows the danger to Pod 5 from both lessons', async ({ page }) => {
   await page.addInitScript(p => {
     localStorage.setItem('sz_story_' + p, JSON.stringify(['intro', 'P', 'R', 'I']));
-    localStorage.setItem('sz_choices', JSON.stringify({ door: 'open', air: 'low' }));
+    localStorage.setItem('sz_choices', JSON.stringify({ door: 'open', lock: 'bay', air: 'low' }));
   }, PATH);
   await openAt(page, {
     currentStage: 'M1', completedStages: ['P', 'R', 'I'], stepM1: 4, maxStepM1: 4, radio_m1_choice: 'low',
@@ -219,7 +219,8 @@ test('the report after Modify plays the outcome of both choices', async ({ page 
   await expect(page.locator('#szTitle')).toHaveText(/Pod 5/);
   await expect(page.locator('#szImpact .sz-feed-term .ln.hit')).toHaveText('Total oxygen: 720 litres');
   await expect(page.locator('#szImpact svg')).toContainText('MOTION · CRYO BAY');
-  await expect(page.locator('#szReadouts')).toContainText('3 of 5');
+  await expect(page.locator('#szReadouts')).toContainText('Failing');
+  await expect(page.locator('#szReadouts')).toContainText('4 of 5');
 });
 
 test('the chapter opens with the door choice from Wake Up', async ({ page }) => {
@@ -255,12 +256,17 @@ test('Make passes, plays the cliffhanger once, and the extension completes the c
     'print("SUPPLY MANIFEST")',
     'print("Oxygen lasts " + str(air) + " hours")',
     'print("Ration packs: " + str(packs))',
+    'print("TRANSFER: YOUR SUIT")',
   ];
   await setCode(page, 'm2_editor', make.join('\n'));
+  await expect(page.locator('#m2_choice_report')).toContainText('your own suit is down to 19%');
+  await page.check('input[name="m2_choice"][value="suit"]');
   await page.click('#btn_check_m2');
   await expect(page.locator('#fb_m2')).toHaveClass(/pass/, { timeout: 30000 });
   await expect(page.locator('#szOverlay')).toHaveClass(/open/, { timeout: 5000 });
   await expect(page.locator('#szTitle')).toHaveText(/Life support online/i);
+  await expect(page.locator('#szLogFull')).toContainText('refill your suit');
+  await expect(page.locator('#szReadouts')).toContainText('4 of 5');
   await expect(page.locator('#szImpact svg')).toContainText('SENSOR OPS: CREW TAG HALE');
   await page.click('#szContinue');
   await expect(page.locator('#m2_ext_task')).toBeVisible();
@@ -342,4 +348,54 @@ test('locking in the Modify choice sends it to Drive', async ({ page }) => {
   await page.click('#btn_check_m1');
   await expect(page.locator('#fb_m1')).toHaveClass(/pass/, { timeout: 30000 });
   await expect.poll(() => page.evaluate(() => window.__uploads.at(-1)?.obj.air)).toBe('low');
+});
+
+// ─── Make: the second Station Zero call settles Pod 5 ───────────────────────
+
+const MAKE = [
+  'cans = int(input("Oxygen canisters: "))',
+  'packs = int(input("Ration packs: "))',
+  'air = cans * 8',
+  'print("SUPPLY MANIFEST")',
+  'print("Oxygen lasts " + str(air) + " hours")',
+  'print("Ration packs: " + str(packs))',
+];
+
+async function makeWith(page, choices, rate, transfer) {
+  await page.addInitScript(([p, c]) => {
+    localStorage.setItem('sz_story_' + p, '["intro","P","R","I","M1"]');
+    localStorage.setItem('sz_choices', JSON.stringify(c));
+  }, [PATH, choices]);
+  await openAt(page, { currentStage: 'M2', completedStages: ['P', 'R', 'I', 'M1'], radio_m1_choice: rate }, { story: true });
+  await page.check(`input[name="m2_choice"][value="${transfer}"]`);
+  await setCode(page, 'm2_editor', [...MAKE, `print("TRANSFER: ${transfer === 'pod5' ? 'POD 5' : 'YOUR SUIT'}")`].join('\n'));
+  await page.click('#btn_check_m2');
+  await expect(page.locator('#fb_m2')).toHaveClass(/pass/, { timeout: 30000 });
+  await expect(page.locator('#szOverlay')).toHaveClass(/open/, { timeout: 5000 });
+}
+
+test('40 litres left Pod 5 short, and sending the canisters there saves Patel', async ({ page }) => {
+  await makeWith(page, { door: 'sealed', air: 'low' }, 'low', 'pod5');
+  await expect(page.locator('#szLogFull')).toContainText('back to full power');
+  await expect(page.locator('#szReadouts')).toContainText('4 of 5');
+  await expect(page.locator('#szReadouts')).not.toContainText('1 critical');
+});
+
+test('both lessons going wrong is the only way Patel dies', async ({ page }) => {
+  await makeWith(page, { door: 'open', lock: 'bay', air: 'low' }, 'low', 'suit');
+  await expect(page.locator('#szLogFull')).toContainText('heart monitor goes flat');
+  await expect(page.locator('#szReadouts')).toContainText('3 of 5');
+});
+
+test('the Make card warns when Wake Up shut something in with Pod 5', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('sz_choices', JSON.stringify({ door: 'open', lock: 'bay' })));
+  await openAt(page, { currentStage: 'M2', completedStages: ['P', 'R', 'I', 'M1'], radio_m1_choice: 'low' });
+  await expect(page.locator('#m2_choice_report')).toContainText('shut in the Cryo Bay');
+  await expect(page.locator('#m2_choice_report')).toContainText('minimum power');
+});
+
+test('the recap follows both Wake Up calls', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('sz_choices', JSON.stringify({ door: 'open', lock: 'bay' })));
+  await openAt(page, {}, { story: true });
+  await expect(page.locator('#szPrevFull')).toContainText('with it still inside');
 });

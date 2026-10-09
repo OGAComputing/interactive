@@ -284,9 +284,15 @@ export function evalMod(checkKey, raw, output = '', choice) {
 // numbers, so any int() succeeds whatever order the questions come in).
 export const MAKE_INPUTS = ['4', '5', '3', '2', '6', '1'];
 
+// Make is the second Station Zero choice: where the spare oxygen canisters go. The student
+// picks first, and the last req wants the line for THAT choice. Both pass.
+export const TRANSFER_CHOICES = { pod5: 'TRANSFER: POD 5', suit: 'TRANSFER: YOUR SUIT' };
+const TRANSFER_RE = { pod5: /transfer[^\w\n]*pod\s*5/i, suit: /transfer[^\w\n]*(?:your\s*)?suit/i };
+
 // Lines the program printed itself — the runner echoes one "prompt + answer" line per input().
+// The TRANSFER line for the Make choice doesn't count towards the manifest.
 function ownOutputLines(raw, out) {
-  const lines = (out || '').split('\n').filter(l => l.trim());
+  const lines = (out || '').split('\n').filter(l => l.trim() && !/^\s*transfer\b/i.test(l));
   return Math.max(0, lines.length - Math.min(inputCount(raw), MAKE_INPUTS.length));
 }
 
@@ -320,12 +326,21 @@ export const MAKE_CHECK = {
       hint: '❌ Your manifest should print at least 3 lines of its own (not counting the questions) — e.g. a heading, how long the oxygen lasts, how long the food lasts.',
       test: (raw, out) => ownOutputLines(raw, out) >= 3,
     },
+    {
+      hint: c => TRANSFER_CHOICES[c]
+        ? '❌ Add one more line at the end that prints ' + TRANSFER_CHOICES[c]
+        : '❌ Make your call above, then add the line it asks for.',
+      test: (raw, out, c) => !!TRANSFER_RE[c]?.test(out || ''),
+    },
   ],
-  passMsg: '✅ Manifest complete — questions, int(), a calculation and a clear printed report.',
+  passMsg: c => c === 'pod5'
+    ? '✅ Manifest complete — and the spare canisters are on their way to Pod 5.'
+    : '✅ Manifest complete — and the spare canisters are filling your suit.',
 };
 
-export function evalMake(raw, output = '') {
-  return evalReqs(MAKE_CHECK, raw, output);
+// choice = the student's Make choice (TRANSFER_CHOICES key).
+export function evalMake(raw, output = '', choice) {
+  return evalReqs(MAKE_CHECK, raw, output, choice);
 }
 
 // ── Extension — full manifest ────────────────────────────────────────────────

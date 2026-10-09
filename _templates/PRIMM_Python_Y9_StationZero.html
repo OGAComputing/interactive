@@ -602,13 +602,17 @@ color:  blue
   .sz-live-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; box-shadow: 0 0 6px currentColor; animation: sz-blink 1.6s ease-in-out infinite; }
   @keyframes sz-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
   .sz-clock { font-size: 0.76rem; color: var(--crt-dim); letter-spacing: 0.12em; margin-left: auto; text-transform: uppercase; }
-  .sz-close {
-    width: 44px; height: 44px; border-radius: 6px; border: 1px solid var(--crt-faint); background: transparent;
-    color: var(--crt); cursor: pointer; display: grid; place-items: center; flex-shrink: 0; position: relative; z-index: 2;
+  /* No close button up here: a student who closed the report from the top would never
+     scroll down to the story. "Jump to story" skips the typing and scrolls to the log,
+     and hides itself once the log is in view; Continue (under the story) is the way out. */
+  .sz-jump {
+    min-height: 44px; padding: 0.45rem 0.9rem; border-radius: 6px; border: 1px solid var(--crt-faint); background: transparent;
+    color: var(--crt); font-family: var(--hud-font); font-size: 0.78rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+    text-shadow: var(--crt-glow); cursor: pointer; flex-shrink: 0; position: relative; z-index: 2;
   }
-  .sz-close:hover { background: rgba(92,255,143,0.1); border-color: var(--crt); }
-  .sz-close:focus-visible, .sz-continue:focus-visible { outline: 2px solid var(--crt); outline-offset: 3px; }
-  .sz-close svg { width: 20px; height: 20px; filter: drop-shadow(0 0 3px rgba(92,255,143,0.6)); }
+  .sz-jump[hidden] { display: none; }
+  .sz-jump:hover { background: rgba(92,255,143,0.1); border-color: var(--crt); }
+  .sz-jump:focus-visible, .sz-continue:focus-visible { outline: 2px solid var(--crt); outline-offset: 3px; }
   .sz-title {
     font-size: 1.45rem; font-weight: 700; color: var(--crt);
     text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.9rem; line-height: 1.25; min-height: 1.25em;
@@ -757,6 +761,7 @@ color:  blue
     .sz-panel { padding: 0.9rem 1rem 1.1rem; }
     .sz-title { font-size: 1.15rem; }
     .sz-map, .sz-legend, .sz-skip-hint { display: none; }
+    .sz-head { flex-wrap: wrap; }
     .sz-roomlist { display: grid; }
     .sz-readouts { grid-template-columns: 1fr; font-size: 0.84rem; }
   }
@@ -1477,9 +1482,7 @@ color:  blue
     <div class="sz-head">
       <div class="sz-kicker"><span class="sz-live-dot" aria-hidden="true"></span><span id="szKicker">Situation report</span></div>
       <div class="sz-clock" id="szClock"></div>
-      <button class="sz-close" id="szClose" type="button" aria-label="Close situation report">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
-      </button>
+      <button class="sz-jump" id="szJump" type="button" hidden>Jump to story ↓</button>
     </div>
     <h2 class="sz-title" id="szTitle"><span class="sr-only" id="szTitleFull"></span><span class="sz-title-typed" aria-hidden="true" id="szTitleTyped"></span></h2>
     <p class="sz-prev" id="szPrev" hidden><span class="sz-prev-tag">Previously</span><span class="sr-only" id="szPrevFull"></span><span aria-hidden="true" id="szPrevTyped"></span></p>
@@ -1920,7 +1923,23 @@ color:  blue
       { cps: 2, items: [$('szLogTyped')] },
       ...(b.quote ? [{ cps: 2, items: [$('szQuoteText')] }, { cps: 3, items: [$('szQuoteWho')] }] : []),
     ], b.quote ? $('szQuoteText') : $('szLogTyped'), review);
-    $('szContinue').focus();
+    // focus Continue without scrolling to it — a tall report must open at the top
+    $('szContinue').focus({ preventScroll: true });
+    $('szPanel').scrollTop = 0;
+    updateJump();
+  }
+
+  // "Jump to story" shows only while the end of the story is below the fold
+  function updateJump() {
+    const p = $('szPanel'), end = $('szQuote').hidden ? $('szLog') : $('szQuote');
+    // layout offsets, not screen boxes: the power-on flicker scales the panel as it opens
+    $('szJump').hidden = end.offsetTop + end.offsetHeight <= p.scrollTop + p.clientHeight + 4;
+  }
+  function jumpToStory() {
+    finishTyping();
+    const p = $('szPanel');
+    p.scrollTo({ top: p.scrollHeight, behavior: reduceMotion ? 'auto' : 'smooth' });
+    $('szContinue').focus({ preventScroll: true });
   }
 
   function close() {
@@ -1944,7 +1963,9 @@ color:  blue
 
   document.addEventListener('DOMContentLoaded', () => {
     $('szContinue').addEventListener('click', close);
-    $('szClose').addEventListener('click', close);
+    $('szJump').addEventListener('click', jumpToStory);
+    $('szPanel').addEventListener('scroll', updateJump, { passive: true });
+    window.addEventListener('resize', () => { if ($('szOverlay').classList.contains('open')) updateJump(); });
     // a click anywhere on the screen (except its buttons) shows the whole report at once
     $('szPanel').addEventListener('click', e => { if (!e.target.closest('button')) finishTyping(); });
     $('szOverlay').addEventListener('keydown', e => {
@@ -1955,7 +1976,7 @@ color:  blue
         if (!['Shift', 'Control', 'Alt', 'Meta'].includes(e.key)) finishTyping();
         return;
       }
-      const f = [...$('szPanel').querySelectorAll('button:not([disabled])')];
+      const f = [...$('szPanel').querySelectorAll('button:not([disabled])')].filter(b => !b.hidden);
       const first = f[0], last = f[f.length - 1];
       if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
       else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }

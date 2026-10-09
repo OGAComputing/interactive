@@ -58,22 +58,36 @@ function questionsSlide(K, o) {
   return s;
 }
 
-// ── New Information: whole lines, sub-goals bracketed under the code ────────
-// lines: up to 2 × { code, labels: [{ n, text, from, to }], results: up to 2 × ({ n, terminal: [lines] } | { n, var: { name?, type, value, size? } }) }
-// Number the labels in the order Python does them; each result carries the same number.
-function labelledLinesSlide(K, o) {
-  const { P } = K;
-  const s = K.newSlide('SZ_DARK', o.section, o.title);
-  const rx = 8.05, rw = 4.68;
-  K.labelledCode(s, o.lines.map((ln) => ({
-    code: ln.code, labels: ln.labels,
-    result: (s, y) => (ln.results || []).forEach((r, j) => {
-      const ry = y + (j === 0 ? 0.1 : 1.25);
-      K.badge(s, r.n, rx, ry + 0.2, 0.42);
-      if (r.terminal) K.terminal(s, r.terminal, { x: rx + 0.6, y: ry, w: rw - 0.6, size: 22, h: 0.8 });
-      else K.varBox(s, { x: rx + 0.6, y: ry + 0.1, w: 2.6, h: 0.85, size: 24, ...r.var });
-    }),
-  })));
+// ── New Information: run a short program line by line ───────────────────────
+// One row per line, read left to right: the whole line → what's on screen after it → what's in memory after it.
+// lines: up to 2 × { code, say: runs (what the line does, in plain words), screen: terminal lines (whole screen
+//   so far — give older lines color: P.dim), screenNote?, memory: [varBox specs], memoryNote? }
+// Animated: each line takes 3 clicks (code, screen, memory), so 2 lines = 6 clicks. animate: false turns it off.
+function runLinesSlide(K, o) {
+  const { P, M } = K;
+  const s = K.newSlide('SZ_DARK', o.section, o.title || 'What happens when each line runs?');
+  const cx = M, cw = 6.1, sx = 7.05, sw = 3.2, mx = 10.5, mw = 2.23;
+  const y0 = 2.05, rowH = 2.2, gap = 0.2;
+  [['THE CODE', cx], ['ON SCREEN', sx], ['IN MEMORY', mx]].forEach(([t, x]) =>
+    K.text(s, t, { x, y: 1.62, w: 3, h: 0.3, fontSize: 13, bold: true, color: P.dim, charSpacing: 2 }));
+  // Each line takes 3 clicks (animate: false shows it all at once): the code → the screen → memory.
+  const step = (k, draw) => (o.animate === false ? draw() : K.onClick(s, k, draw));
+  o.lines.forEach((ln, i) => {
+    const y = y0 + i * (rowH + gap);
+    step(i * 3 + 1, () => {
+      if (i) s.addShape(K.pres.shapes.LINE, { x: M, y: y - gap / 2, w: 12.13, h: 0, line: { color: P.line, width: 1 } });
+      K.codePanel(s, [ln.code], { x: cx, y, w: cw, size: 26, h: 0.95, first: i + 1 });
+      K.text(s, ln.say, { x: cx + 0.1, y: y + 1.1, w: cw - 0.2, h: 0.95, fontSize: 20, color: P.off, valign: 'top' });
+    });
+    step(i * 3 + 2, () => {
+      K.terminal(s, ln.screen, { x: sx, y, w: sw, size: 22, h: 1.45 });
+      if (ln.screenNote) K.text(s, ln.screenNote, { x: sx, y: y + 1.55, w: sw, h: 0.35, fontSize: 14, italic: true, color: P.muted });
+    });
+    step(i * 3 + 3, () => {
+      (ln.memory || []).forEach((v, j) => K.varBox(s, { x: mx, y: y + 0.3 + j * 1.2, w: mw, h: 0.95, size: 24, ...v }));
+      if (ln.memoryNote) K.text(s, ln.memoryNote, { x: mx, y: y + 1.35, w: mw, h: 0.35, fontSize: 14, italic: true, color: P.muted });
+    });
+  });
   K.addIcon(s, o.icon || 'info');
   if (o.notes) s.addNotes(o.notes);
   return s;
@@ -257,6 +271,6 @@ function banner(K, s, content, y, h, size = 25) {
 }
 
 module.exports = {
-  recallStarter, recallAnswers, titleSlide, questionsSlide, labelledLinesSlide, pairSlide, predictSlide,
+  recallStarter, recallAnswers, titleSlide, questionsSlide, runLinesSlide, pairSlide, predictSlide,
   predictRevealSlide, debugRecipeSlide, chapterSlide, errorFeedbackSlide, turnTalkSlide, traceSlide, plenarySlide, banner,
 };

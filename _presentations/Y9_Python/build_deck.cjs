@@ -4,7 +4,7 @@
 //   node build_deck.cjs   (needs `npm install -g pptxgenjs`)
 //
 // Output: L1_Python_Refresh.pptx beside this file. Slide types come from sz_slides.cjs,
-// drawing parts from sz_kit.cjs. Slides 13–15 are one-off diagrams drawn here.
+// drawing parts from sz_kit.cjs. Slides 14–16 are one-off diagrams drawn here.
 
 const path = require('path');
 const { createDeck } = require('./sz_kit.cjs');
@@ -45,13 +45,17 @@ Note any question most of the class missed — that's the evidence for whether t
 // ════════════════════════════════════════════════════════════════════════════
 //  3–4. Title, questions
 // ════════════════════════════════════════════════════════════════════════════
+// Station state (README.md, "Station state"): the Do Now is clean; the story starts on the title as a
+// beat — lights out, then frost creeps into the corners.
+K.beat('L1');
 R.titleSlide(K, {
   section: 'Title', kicker: 'Y9 PYTHON  ·  LESSON 1  ·  PYTHON REFRESH', title: 'Station Zero', subtitle: 'Chapter 1 — Wake Up',
   status: ['SOFTWARE ....... WIPED', 'DOORS .......... SEALED', 'CREW AWAKE ..... 1 OF 5',
     [{ text: 'POD 2 .......... ' }, { text: 'OPEN', color: P.gold, bold: true }], [{ text: '> _' }]],
   notes: `Tell the premise — don't put it on screen (redundancy effect):
 "You wake from cryosleep on Station Zero, a research station orbiting an uncharted planet. A solar storm has wiped the station's software and every door is locked. The rest of the crew are still frozen in their pods — except Pod 2, Engineer Hale's. It's empty. You're the only engineer awake, and you'll have to rebuild each system in Python to survive."
-Keep it to under a minute. Tone it down if the class finds it too intense.`,
+Keep it to under a minute. Tone it down if the class finds it too intense.
+In Slide Show this slide fades in through black, then the frost creeps into the corners by itself: let it finish before you speak.`,
 });
 
 R.questionsSlide(K, {
@@ -66,21 +70,50 @@ We come back to this question in the plenary.`,
 // ════════════════════════════════════════════════════════════════════════════
 const P1 = 'Part 1 — Wake Up';
 
-R.labelledLinesSlide(K, {
-  section: P1, title: 'Ask → store → join → output',
+// The ask → store → join → print example, line by line (runLinesSlide).
+const verb = (t) => ({ text: t, options: { bold: true, color: P.gold } });
+const code = (t) => ({ text: t, options: { fontFace: MONO, color: P.off } });
+const RUN_NAME = [
+  { code: 'name = input("Name? ")',
+    say: [verb('Asks'), { text: ' the question and waits. Then ' }, verb('stores'), { text: ' what the user typed in ' }, code('name')],
+    screen: [[{ text: 'Name? ' }, { text: 'Riley', color: P.str, bold: true }]],
+    screenNote: 'The user typed Riley',
+    memory: [{ name: 'name', type: 'str', value: '"Riley"' }] },
+  { code: 'print("Hi " + name)',
+    say: [verb('Joins'), { text: ' "Hi " to what’s in ' }, code('name'), { text: ', then ' }, verb('prints'), { text: ' it' }],
+    screen: [[{ text: 'Name? Riley', color: P.dim }], [{ text: 'Hi Riley', bold: true }]],
+    memory: [{ name: 'name', type: 'str', value: '"Riley"' }],
+    memoryNote: 'No change' },
+];
+
+// Variables first: storing a value and reading it back, before input() fills the box.
+R.runLinesSlide(K, {
+  section: P1, title: 'A variable is a named box in memory',
   lines: [
-    { code: 'name = input("Name? ")',
-      labels: [{ n: 2, text: 'Store', from: 0, to: 6 }, { n: 1, text: 'Ask', from: 7, to: 22 }],
-      results: [{ n: 1, terminal: [[{ text: 'Name? ' }, { text: 'Riley', color: P.str, bold: true }]] },
-        { n: 2, var: { name: 'name', type: 'str', value: '"Riley"', size: 26 } }] },
-    { code: 'print("Hi " + name)',
-      labels: [{ n: 4, text: 'Output', from: 0, to: 5 }, { n: 3, text: 'Join', from: 6, to: 18 }],
-      results: [{ n: 3, var: { type: 'str', value: '"Hi Riley"' } }, { n: 4, terminal: ['Hi Riley'] }] },
+    { code: 'name = "Riley"',
+      say: [verb('Stores'), { text: ' "Riley" in a box called ' }, code('name'), { text: '. Here = means store, not equals' }],
+      screen: [], screenNote: 'Nothing on screen: storing is silent',
+      memory: [{ name: 'name', type: 'str', value: '"Riley"' }] },
+    { code: 'print(name)',
+      say: [verb('Looks'), { text: ' in the box called ' }, code('name'), { text: ' and ' }, verb('prints'), { text: ' what’s inside' }],
+      screen: [[{ text: 'Riley', bold: true }]],
+      memory: [{ name: 'name', type: 'str', value: '"Riley"' }],
+      memoryNote: 'No change' },
   ],
-  notes: `Four sub-goals — say them every time you live-code today: ASK, STORE, JOIN, OUTPUT.
-Point at each bracket as you talk, then at the matching numbered result on the right. Don't read the slide.
-Line 1 runs right to left: input() asks first (1), then = stores the answer in name (2). That's why 2 sits left of 1.
-Line 2: + joins "Hi " and what's stored in name (3), then print() shows it (4).
+  notes: `6 clicks: each line, then what's on screen after it, then what's in memory after it. Before each click, ask "what will appear?"
+Click 1–3 (line 1): = is STORE, not "equals". Python works out the right-hand side, then puts it in the box named on the left. Nothing appears on screen — many students expect it to.
+Click 4–6 (line 2): no quotes round name, so Python looks in the box and prints what's inside. Memory doesn't change — print only reads it.
+Link to the Do Now (Q2): score = 5 then score = 9 — a box holds one value, so the new one replaces the old.
+The orange box is how the activity's memory panel shows a string (str). Next slide: the same box, but the USER fills it.`,
+});
+
+R.runLinesSlide(K, {
+  section: P1, title: 'input(): the user fills the box',
+  lines: RUN_NAME,
+  notes: `6 clicks: each line, then what's on screen after it, then what's in memory after it. Before each click, ask "what will appear?"
+Click 1–3 (line 1): input() shows the question and WAITS. The user types Riley and presses Enter. = stores what they typed in name.
+Click 4–6 (line 2): + joins "Hi " to what's stored in name, and print() shows the result. Memory doesn't change — print only reads name.
+The four verbs in gold are today's sub-goals: ASK, STORE, JOIN, PRINT. Say them every time you live-code.
 The orange box is how the activity's memory panel shows a string (str) — the same colours they'll see later.
 LIVE CODE (optional, 2 min): type the two lines in the IDE and run it with a student's name.`,
 });
@@ -166,6 +199,7 @@ The memory box only has a variable called name (lower case).`,
 //  PART 2 — Life Support (slides 12–18)
 // ════════════════════════════════════════════════════════════════════════════
 const P2 = 'Part 2 — Life Support';
+K.station('L1b'); // still frosted; the O2 reading on the status line drops a little on every slide
 
 R.turnTalkSlide(K, {
   section: P2, title: 'Join or add?', codes: ['print("5" + "5")', 'print(5 + 5)'],
@@ -285,6 +319,7 @@ Anyone who didn't finish Wake Up: finish it first; their choices carry over.`,
 // ════════════════════════════════════════════════════════════════════════════
 //  19. Plenary
 // ════════════════════════════════════════════════════════════════════════════
+K.beat('L2'); // the cliffhanger: lights out, then the amber motion alarm (Chapter 2's state)
 R.plenarySlide(K, {
   section: 'Plenary', lesson: LESSON_Q,
   tasks: ['Write one line that asks how many crew are awake and stores it as a whole number in crew.',
@@ -294,7 +329,8 @@ R.plenarySlide(K, {
   notes: `Exit task on whiteboards or a sticky note.
 1. crew = int(input("How many crew are awake? ")) — any prompt is fine; int() and the variable name crew are the point.
 2. print("Crew awake: " + str(crew)) — crew is a number, and + can't join text and a number, so it's a TypeError.
-Close the story: "Motion in Sensor Ops. The tag says HALE. Next lesson, we find out what's moving." (Hale is dead — leave it hanging.)`,
+Close the story: "Motion in Sensor Ops. The tag says HALE. Next lesson, we find out what's moving." (Hale is dead — leave it hanging.)
+In Slide Show this slide fades in through black and the amber alarm creeps in by itself: Chapter 2's state, which Lesson 2's deck opens with.`,
 });
 
 K.write(OUT);

@@ -205,11 +205,11 @@ const MAKE_OUT = out('Oxygen canisters: 4', 'Ration packs: 5', 'SUPPLY MANIFEST'
 
 describe('Make — supply manifest', () => {
   test('a complete manifest passes', () => {
-    expect(evalMake(code(...MAKE_GOOD), MAKE_OUT).pass).toBe(true);
+    expect(evalMake(code(...MAKE_GOOD), MAKE_OUT + 'TRANSFER: POD 5\n', 'pod5').pass).toBe(true);
   });
   test('a calculation done inside the print still counts', () => {
     const src = code('a = int(input("A? "))', 'b = int(input("B? "))', 'print("Total: " + str(a + b))', 'print("-")', 'print("end")');
-    expect(evalMake(src, out('A? 4', 'B? 5', 'Total: 9', '-', 'end')).pass).toBe(true);
+    expect(evalMake(src, out('A? 4', 'B? 5', 'Total: 9', '-', 'end', 'TRANSFER: YOUR SUIT'), 'suit').pass).toBe(true);
   });
   test('joining text with + and str() is not mistaken for a calculation', () => {
     const src = code('a = int(input("A? "))', 'b = int(input("B? "))', 'print("A: " + str(a))', 'print("B: " + str(b))', 'print("done")');
@@ -222,6 +222,24 @@ describe('Make — supply manifest', () => {
   test('uncast answers fail the int() bullet', () => {
     const src = code('a = input("A? ")', 'b = input("B? ")', 'print(a + b)');
     expect(evalMake(src, out('A? 4', 'B? 5', '45')).results[1]).toBe(false);
+  });
+});
+
+describe('Make — the transfer choice decides which last line passes', () => {
+  test('only the chosen transfer line passes', () => {
+    const o = MAKE_OUT + 'TRANSFER: YOUR SUIT\n';
+    expect(evalMake(code(...MAKE_GOOD), o, 'suit').results[5]).toBe(true);
+    expect(evalMake(code(...MAKE_GOOD), o, 'pod5').results[5]).toBe(false);
+    expect(evalMake(code(...MAKE_GOOD), o, 'pod5').msg).toContain('TRANSFER: POD 5');
+  });
+  test('the transfer line does not count as one of the 3 manifest lines', () => {
+    const src = code(...MAKE_GOOD.slice(0, 4), 'print("Oxygen lasts " + str(air))', 'print("x")');
+    expect(evalMake(src, out('Oxygen canisters: 4', 'Ration packs: 5', 'Oxygen lasts 32', 'x', 'TRANSFER: POD 5'), 'pod5').results[4]).toBe(false);
+  });
+  test('no choice yet: the last bullet fails and asks for the call first', () => {
+    const r = evalMake(code(...MAKE_GOOD), MAKE_OUT);
+    expect(r.results.slice(0, 5)).toEqual([true, true, true, true, true]);
+    expect(r.msg).toMatch(/Make your call/);
   });
 });
 

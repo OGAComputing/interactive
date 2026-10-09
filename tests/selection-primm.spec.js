@@ -134,7 +134,7 @@ test('help card: "invalid syntax" on an else line is explained as indentation', 
   await page.click('#stage-I button:has-text("Run code")');
   await expect(page.locator('#i_fb_run')).toHaveClass(/fail/, { timeout: 30000 });
   const checker = page.locator('#i_editor').locator('xpath=ancestor::div[contains(@class,"code-checker")]');
-  await checker.locator('button:has-text("Get help")').last().click();
+  await checker.locator('button:has-text("Get help"):visible').first().click();
   await expect(checker).toContainText('ended too early');
 });
 

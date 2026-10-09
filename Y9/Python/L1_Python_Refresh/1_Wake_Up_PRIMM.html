@@ -601,13 +601,17 @@ color:  teal
   .sz-live-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; box-shadow: 0 0 6px currentColor; animation: sz-blink 1.6s ease-in-out infinite; }
   @keyframes sz-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
   .sz-clock { font-size: 0.76rem; color: var(--crt-dim); letter-spacing: 0.12em; margin-left: auto; text-transform: uppercase; }
-  .sz-close {
-    width: 44px; height: 44px; border-radius: 6px; border: 1px solid var(--crt-faint); background: transparent;
-    color: var(--crt); cursor: pointer; display: grid; place-items: center; flex-shrink: 0; position: relative; z-index: 2;
+  /* No close button up here: a student who closed the report from the top would never
+     scroll down to the story. "Jump to story" skips the typing and scrolls to the log,
+     and hides itself once the log is in view; Continue (under the story) is the way out. */
+  .sz-jump {
+    min-height: 44px; padding: 0.45rem 0.9rem; border-radius: 6px; border: 1px solid var(--crt-faint); background: transparent;
+    color: var(--crt); font-family: var(--hud-font); font-size: 0.78rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+    text-shadow: var(--crt-glow); cursor: pointer; flex-shrink: 0; position: relative; z-index: 2;
   }
-  .sz-close:hover { background: rgba(92,255,143,0.1); border-color: var(--crt); }
-  .sz-close:focus-visible, .sz-continue:focus-visible { outline: 2px solid var(--crt); outline-offset: 3px; }
-  .sz-close svg { width: 20px; height: 20px; filter: drop-shadow(0 0 3px rgba(92,255,143,0.6)); }
+  .sz-jump[hidden] { display: none; }
+  .sz-jump:hover { background: rgba(92,255,143,0.1); border-color: var(--crt); }
+  .sz-jump:focus-visible, .sz-continue:focus-visible { outline: 2px solid var(--crt); outline-offset: 3px; }
   .sz-title {
     font-size: 1.45rem; font-weight: 700; color: var(--crt);
     text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.9rem; line-height: 1.25; min-height: 1.25em;
@@ -913,9 +917,11 @@ color:  teal
   }
   .remind ul { margin: 0 1rem 0.9rem 2.2rem; display: grid; gap: 0.4rem; font-size: 0.9rem; color: var(--text); line-height: 1.55; }
 
-  /* ── Station Zero choice — Modification 1 is a story decision. The student picks an option,
-       then only that option's requirement appears. Both options pass: the choice changes
-       the situation reports (and later chapters), never the score. Locked once it passes. ── */
+  /* ── Station Zero choices — Modification 1 and Make are story decisions. The student picks an
+       option, then only that option's requirement appears. Both options pass: the choice changes
+       the situation reports (and later chapters), never the score. Locked once it passes.
+       Make's card is the second call: it reacts to what the first one caused, and its
+       .sz-choice-report line repeats the fact from the last report that it turns on. ── */
   .sz-choice { background: var(--chrome); border: 1px solid var(--line-strong); border-left: 4px solid var(--amber); border-radius: var(--radius); padding: 0.95rem 1.2rem 1rem; margin-bottom: 0.6rem; }
   .sz-choice-kicker { font-family: var(--hud-font); font-size: 0.72rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--amber); margin: 0 0 0.35rem; }
   .sz-choice-q { margin: 0 0 0.75rem; color: var(--text); font-size: 0.95rem; line-height: 1.55; }
@@ -930,6 +936,8 @@ color:  teal
   .sz-choice.locked .sz-opt { cursor: default; }
   .sz-choice.locked .sz-opt:not(:has(input:checked)) { opacity: 0.45; }
   .sz-choice-note { margin: 0.65rem 0 0; font-size: 0.82rem; color: var(--muted); }
+  .sz-choice-report { margin: -0.35rem 0 0.75rem; padding: 0.45rem 0.7rem; border-left: 2px solid var(--line-strong); font-family: var(--hud-font); font-size: 0.82rem; line-height: 1.5; color: var(--text); background: var(--card-raised); border-radius: 0 6px 6px 0; }
+  .sz-choice-report b { color: var(--amber); font-weight: 600; letter-spacing: 0.06em; }
 
   @media (max-width: 600px) {
     .sz-header-right { margin-left: 0; width: 100%; }
@@ -937,6 +945,7 @@ color:  teal
     .sz-panel { padding: 0.9rem 1rem 1.1rem; }
     .sz-title { font-size: 1.15rem; }
     .sz-map, .sz-legend, .sz-skip-hint { display: none; }
+    .sz-head { flex-wrap: wrap; }
     .sz-roomlist { display: grid; }
     .sz-readouts { grid-template-columns: 1fr; font-size: 0.84rem; }
   }
@@ -1178,12 +1187,12 @@ color:  teal
 
     <div class="q-card" id="qcard_i1" style="border-left-color:var(--stage-i)">
       <div style="font-size:0.84rem;color:var(--muted);margin-bottom:0.4rem">✍️ Your answer — step 1</div>
-      <label class="q-label">You changed the question's words. Did that change what is stored in <code>role</code>?</label>
+      <label class="q-label">You changed the words in the quotes on line 2, ran it and typed a job. <strong>What is stored in <code>role</code> now?</strong></label>
       <div class="radio-opts" id="ropts_i1_mcq">
-        <label class="radio-opt"><input type="radio" name="i1_mcq" value="option_a" onchange="saveState()"> <span>Yes — role now holds the new question text</span></label>
-        <label class="radio-opt"><input type="radio" name="i1_mcq" value="option_b" onchange="saveState()"> <span>Yes — role is now empty, as the question changed</span></label>
-        <label class="radio-opt"><input type="radio" name="i1_mcq" value="option_c" onchange="saveState()"> <span>No — the question is only shown, never stored</span></label>
-        <label class="radio-opt"><input type="radio" name="i1_mcq" value="option_d" onchange="saveState()"> <span>No — but Python now ignores the job you type</span></label>
+        <label class="radio-opt"><input type="radio" name="i1_mcq" value="option_a" onchange="saveState()"> <span>The new words you wrote inside the quotes</span></label>
+        <label class="radio-opt"><input type="radio" name="i1_mcq" value="option_b" onchange="saveState()"> <span>Nothing — role is empty now the words changed</span></label>
+        <label class="radio-opt"><input type="radio" name="i1_mcq" value="option_c" onchange="saveState()"> <span>The job you typed in when the program asked</span></label>
+        <label class="radio-opt"><input type="radio" name="i1_mcq" value="option_d" onchange="saveState()"> <span>The words in the quotes, then the job you typed</span></label>
       </div>
       <div class="mcq-fb" id="fb_i1"></div>
       <button class="btn btn-next" id="btn_check_i1" style="margin-top:10px" onclick="nextStep('I', 1)" disabled>✓ Check answer</button>
@@ -1369,6 +1378,20 @@ color:  teal
     </div>
     <div class="hint-box">Your program is checked by typing words as the answers: <strong>Ash</strong>, then <strong>Navigation</strong>, then <strong>Missing</strong>.</div>
 
+    <!-- STATION ZERO choice 2: reacts to the door choice (Modification 1). #m2_choice_report
+         repeats the fact from the last report that decides which lock is the better call;
+         #req_m2_choice_text is filled from MAKE_CHOICE in the module. Both pass. -->
+    <div class="sz-choice" id="m2_choice" role="radiogroup" aria-labelledby="m2_choice_q">
+      <p class="sz-choice-kicker">Your call</p>
+      <p class="sz-choice-q" id="m2_choice_q">Before you leave the Cryo Bay, your locator can lock one thing.</p>
+      <p class="sz-choice-report" id="m2_choice_report"></p>
+      <div class="sz-choice-opts">
+        <label class="sz-opt"><input type="radio" name="m2_choice" value="pod5" onchange="pickMakeChoice()"><span><b>Lock Pod 5’s shield</b><small>Protects Patel from anything inside the bay. The bay door stays unlocked behind you.</small></span></label>
+        <label class="sz-opt"><input type="radio" name="m2_choice" value="bay" onchange="pickMakeChoice()"><span><b>Lock the Cryo Bay door</b><small>Nothing outside can get in to the crew. Anything already inside is shut in with them.</small></span></label>
+      </div>
+      <p class="sz-choice-note">Read the last report first: one of these is the better call. Both programs pass, and your choice changes the story, not your score.</p>
+    </div>
+
     <div class="section-label">What your program must do</div>
     <!-- One <li> per MAKE_CHECK.reqs entry in checkers_wakeup.js, same order. -->
     <ul class="req-list" id="req_m2_make">
@@ -1376,6 +1399,7 @@ color:  teal
       <li><span>2</span><span class="req-text">Store the name and the room in <strong>two different variables</strong> — <code>name</code> and <code>room</code> are good choices</span></li>
       <li><span>3</span><span class="req-text">Print a line that joins your own words to the name or the room with <code>+</code> — for example <code>print("Last seen in: " + room)</code></span></li>
       <li><span>4</span><span class="req-text">Make your report print <strong>both the name and the room</strong> — e.g. <code>Crew member: Ash</code> and <code>Last seen in: Navigation</code></span></li>
+      <li><span>5</span><span class="req-text" id="req_m2_choice_text">Make your call above, then add the line it asks for.</span></li>
     </ul>
   </div>
 
@@ -1422,9 +1446,7 @@ color:  teal
     <div class="sz-head">
       <div class="sz-kicker"><span class="sz-live-dot" aria-hidden="true"></span><span id="szKicker">Situation report</span></div>
       <div class="sz-clock" id="szClock"></div>
-      <button class="sz-close" id="szClose" type="button" aria-label="Close situation report">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
-      </button>
+      <button class="sz-jump" id="szJump" type="button" hidden>Jump to story ↓</button>
     </div>
     <h2 class="sz-title" id="szTitle"><span class="sr-only" id="szTitleFull"></span><span class="sz-title-typed" aria-hidden="true" id="szTitleTyped"></span></h2>
     <p class="sz-prev" id="szPrev" hidden><span class="sz-prev-tag">Previously</span><span class="sr-only" id="szPrevFull"></span><span aria-hidden="true" id="szPrevTyped"></span></p>
@@ -1468,8 +1490,10 @@ color:  teal
      beat(stage, { feed }) — completeStage() (first completion only) and checkMake()
                   (first pass); feed = what that stage's final action printed, for the live feed
      showMap()    — the header's Station map button
-   plus one for the Station Zero choice in Modify 1:
-     choose(key, value) — checkMod(), when Modification 1 passes (see CHOICE in the module)
+   plus two for the Station Zero choices:
+     choose(key, value) — checkMod() when Modification 1 passes (CHOICE in the module), and
+                  checkMake() when Make first passes (MAKE_CHOICE), just before beat('M2')
+     choices()    — a copy of every choice so far (Make's card reads the door from it)
    ════════════════════════════════════════════════════════════════════════════ */
 (function () {
   'use strict';
@@ -1494,12 +1518,22 @@ color:  teal
          caption:  one sentence on what the code did; {room} = the room the locator found
          fallback: output lines to show if there's no live output (e.g. after a reload)
      Optional per beat: variant + variants — a beat that depends on a Station Zero choice
-       (a choice the student made in Modify, kept for the whole unit in localStorage
-       'sz_choices': { door: 'open' | 'sealed', air: 'full' | 'low' }).
+       (a choice the student made in Modify 1 or Make, kept for the whole unit in localStorage
+       'sz_choices': { door: 'open' | 'sealed', lock: 'pod5' | 'bay' (this chapter),
+       air: 'full' | 'low', transfer: 'pod5' | 'suit' (Life Support) }).
          variant:  choices => the name of one of the variants (handle a missing choice)
          variants: { name: { …beat fields } } — they replace the beat's own fields
      (Chapter 1 opens the story, so its intro has no "previously" recap; see Life Support.)
      ═══════════════════════════════════════════════════════════════════════ */
+  // Station Zero choices → which version of a beat plays. Choice 1 (Modify 1) is the door;
+  // choice 2 (Make) is what the locator locks, and reacts to it. A missing choice falls back
+  // to the safe door and the better lock for that door, so a missed lesson never costs crew.
+  //   open + bay:  the thing that got in is shut in with the crew — Pod 5 is at risk (bad)
+  //   open + pod5: Pod 5 is shielded and it leaves — recovered (ok)
+  //   sealed + bay: nothing got in, and the bay is locked behind you (good)
+  //   sealed + pod5: nothing got in, but the bay is left unlocked (ok)
+  const door = c => c.door === 'open' ? 'open' : 'sealed';
+  const lock = c => c.lock === 'pod5' || c.lock === 'bay' ? c.lock : door(c) === 'open' ? 'pod5' : 'bay';
   const STORY = {
     chapter:   'Chapter 1 — Wake Up',
     topic:     'Input refresh',
@@ -1565,7 +1599,7 @@ color:  teal
       },
       // Modification 1 was the student's choice: open the door to the footsteps, or keep it sealed.
       M1: {
-        variant: c => c.door === 'open' ? 'open' : 'sealed',
+        variant: door,
         variants: {
           open: {
             impact: {
@@ -1575,11 +1609,12 @@ color:  teal
             },
             headline: 'Something got in',
             time: '03:22',
-            log: "You open the door and look out. The corridor is empty, but the frost on the inside of the doorframe is fresh. Something got into the Cryo Bay behind you, where the crew are still asleep.",
+            log: "You open the door and look out. The corridor is empty, but something got into the Cryo Bay behind you, where the crew are still asleep. Fresh frost is creeping across Pod 5’s glass.",
             readouts: [
               { label: 'Cryo Bay door', value: 'Open', level: 'warn' },
               { label: 'Oxygen', value: '29%', level: 'danger' },
               { label: 'Motion', value: 'Cryo Bay', level: 'danger' },
+              { label: 'Pod 5', value: 'Frost on the glass', level: 'warn' },
             ],
             map: { you: 'cryo', objective: 'cryo', threat: 'cryo', rooms: { cryo: 'unstable', core: 'sealed' } },
           },
@@ -1601,37 +1636,70 @@ color:  teal
           },
         },
       },
+      // Make was choice 2: what the locator locks on the way out (see door/lock above).
       M2: {
-        variant: c => c.door === 'open' ? 'open' : 'sealed',
+        variant: c => door(c) + '_' + lock(c),
         variants: {
-          open: {
-            impact: {
-              scene: 'locator', device: 'Crew locator',
-              caption: "Your crew locator scanned the station: last seen in {room}, no life signs there. Then it found a trail of frost leading out of the open Cryo Bay.",
-              fallback: ['Name: Ash', 'Room: Navigation', 'Ash was last seen in: Navigation'],
-            },
-            time: '03:27',
-            log: "A trail of frost leads out of the Cryo Bay towards Life Support, where the air is running out. It passes every pod, and stops for a while beside Pod 5. Something that cold shouldn’t be able to walk.",
-            readouts: [
-              { label: 'Oxygen', value: '29%', level: 'danger' },
-              { label: 'Pod 5', value: 'Frost on the glass', level: 'warn' },
-              { label: 'Motion', value: 'Signal lost', level: 'warn' },
-            ],
-          },
-          sealed: {
+          sealed_bay: {
             time: '03:36',
-            log: "You step out and seal the Cryo Bay behind you, so the crew are safe. A trail of frost leads away towards Life Support, where the air is running out. Something that cold shouldn’t be able to walk.",
+            log: "You step out and lock the Cryo Bay behind you, so the crew are safe. A trail of frost leads away towards Life Support, where the air is running out. Something that cold shouldn’t be able to walk.",
             readouts: [
-              { label: 'Cryo Bay', value: 'Sealed behind you', level: 'ok' },
+              { label: 'Cryo Bay', value: 'Locked behind you', level: 'ok' },
               { label: 'Oxygen', value: '24%', level: 'danger' },
               { label: 'Motion', value: 'Signal lost', level: 'warn' },
             ],
           },
+          sealed_pod5: {
+            impact: {
+              scene: 'locator', device: 'Crew locator',
+              caption: "Your crew locator scanned the station: last seen in {room}, no life signs there. It locked Pod 5’s shield, and left the Cryo Bay door unlocked behind you.",
+              fallback: ['Name: Ash', 'Room: Navigation', 'Ash was last seen in: Navigation', 'LOCK: POD 5 SHIELD'],
+            },
+            time: '03:36',
+            log: "You lock Pod 5’s shield and step out, leaving the Cryo Bay door unlocked behind you. A trail of frost leads away towards Life Support, where the air is running out. Something that cold shouldn’t be able to walk.",
+            readouts: [
+              { label: 'Pod 5', value: 'Shielded', level: 'ok' },
+              { label: 'Cryo Bay door', value: 'Unlocked', level: 'warn' },
+              { label: 'Oxygen', value: '24%', level: 'danger' },
+              { label: 'Motion', value: 'Signal lost', level: 'warn' },
+            ],
+          },
+          open_pod5: {
+            impact: {
+              scene: 'locator', device: 'Crew locator',
+              caption: "Your crew locator scanned the station: last seen in {room}, no life signs there. Pod 5’s shield slammed down, and something left the Cryo Bay in a hurry.",
+              fallback: ['Name: Ash', 'Room: Navigation', 'Ash was last seen in: Navigation', 'LOCK: POD 5 SHIELD'],
+            },
+            headline: 'Shield down',
+            time: '03:27',
+            log: "Pod 5’s shield slams down, and the frost on its glass stops spreading. Whatever got in leaves in a hurry, and a trail of frost leads towards Life Support, where the air is running out. Something that cold shouldn’t be able to walk.",
+            readouts: [
+              { label: 'Pod 5', value: 'Shielded', level: 'ok' },
+              { label: 'Oxygen', value: '29%', level: 'danger' },
+              { label: 'Motion', value: 'Signal lost', level: 'warn' },
+            ],
+          },
+          open_bay: {
+            impact: {
+              scene: 'locator', device: 'Crew locator',
+              caption: "Your crew locator scanned the station: last seen in {room}, no life signs there. Then it locked the Cryo Bay door, with the motion signal still inside.",
+              fallback: ['Name: Ash', 'Room: Navigation', 'Ash was last seen in: Navigation', 'LOCK: CRYO BAY DOOR'],
+            },
+            headline: 'Shut in',
+            time: '03:27',
+            log: "You lock the Cryo Bay door behind you, with whatever got in still inside, alone with the sleeping crew. Through the window, frost is spreading across Pod 5’s glass. Another trail of frost leads to Life Support, where the air is running out.",
+            readouts: [
+              { label: 'Oxygen', value: '29%', level: 'danger' },
+              { label: 'Pod 5', value: 'Frost spreading', level: 'danger' },
+              { label: 'Motion', value: 'Cryo Bay', level: 'danger' },
+            ],
+            map: { you: 'cryo', objective: 'life', threat: 'cryo', rooms: { cryo: 'online', core: 'sealed' } },
+          },
         },
         impact: {
           scene: 'locator', device: 'Crew locator',
-          caption: "Your crew locator scanned the station: last seen in {room}, no life signs there. The corridor reads clear, so the Cryo Bay door finally opens.",
-          fallback: ['Name: Ash', 'Room: Navigation', 'Ash was last seen in: Navigation'],
+          caption: "Your crew locator scanned the station: last seen in {room}, no life signs there. The corridor reads clear, so you step out and lock the Cryo Bay behind you.",
+          fallback: ['Name: Ash', 'Room: Navigation', 'Ash was last seen in: Navigation', 'LOCK: CRYO BAY DOOR'],
         },
         headline: 'Door open',
         map: { you: 'cryo', objective: 'life', threat: null, rooms: { cryo: 'online', core: 'sealed' } },
@@ -2121,6 +2189,20 @@ color:  teal
     // focus Continue without scrolling to it — a tall report must open at the top (headline + live feed)
     $('szContinue').focus({ preventScroll: true });
     $('szPanel').scrollTop = 0;
+    updateJump();
+  }
+
+  // "Jump to story" shows only while the end of the story is below the fold
+  function updateJump() {
+    const p = $('szPanel'), end = $('szQuote').hidden ? $('szLog') : $('szQuote');
+    // layout offsets, not screen boxes: the power-on flicker scales the panel as it opens
+    $('szJump').hidden = end.offsetTop + end.offsetHeight <= p.scrollTop + p.clientHeight + 4;
+  }
+  function jumpToStory() {
+    finishTyping();
+    const p = $('szPanel');
+    p.scrollTo({ top: p.scrollHeight, behavior: reduceMotion ? 'auto' : 'smooth' });
+    $('szContinue').focus({ preventScroll: true });
   }
 
   function close() {
@@ -2144,7 +2226,9 @@ color:  teal
 
   document.addEventListener('DOMContentLoaded', () => {
     $('szContinue').addEventListener('click', close);
-    $('szClose').addEventListener('click', close);
+    $('szJump').addEventListener('click', jumpToStory);
+    $('szPanel').addEventListener('scroll', updateJump, { passive: true });
+    window.addEventListener('resize', () => { if ($('szOverlay').classList.contains('open')) updateJump(); });
     // a click anywhere on the screen (except its buttons) shows the whole report at once
     $('szPanel').addEventListener('click', e => { if (!e.target.closest('button')) finishTyping(); });
     $('szOverlay').addEventListener('keydown', e => {
@@ -2155,7 +2239,7 @@ color:  teal
         if (!['Shift', 'Control', 'Alt', 'Meta'].includes(e.key)) finishTyping();
         return;
       }
-      const f = [...$('szPanel').querySelectorAll('button:not([disabled])')];
+      const f = [...$('szPanel').querySelectorAll('button:not([disabled])')].filter(b => !b.hidden);
       const first = f[0], last = f[f.length - 1];
       if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
       else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
@@ -2189,7 +2273,7 @@ color:  teal
     open(last, { review: true });
   }
 
-  window.StationZero = { beat, start, showMap, choose };
+  window.StationZero = { beat, start, showMap, choose, choices: () => ({ ...choices }) };
 })();
 </script>
 
@@ -2268,7 +2352,7 @@ color:  teal
   ║  for a complete reference, including the Investigate checks.               ║
   ╚══════════════════════════════════════════════════════════════════════════════╝
 */
-import { normalise, has, MOD_CHECKS, MOD_INPUTS, evalMod, DOOR_CHOICES, MAKE_CHECK, MAKE_INPUTS, evalMake, EXT_CHECK, EXT_INPUTS, evalExt,
+import { normalise, has, MOD_CHECKS, MOD_INPUTS, evalMod, DOOR_CHOICES, MAKE_CHECK, MAKE_INPUTS, evalMake, LOCK_CHOICES, EXT_CHECK, EXT_INPUTS, evalExt,
          evalInv, isBugFixed, isBugPairLine, breakCode } from './checkers_wakeup.js';
 import { runPython, preload } from '../../../pyodide-runner.js';
 import { setupEditors, clearSyntaxHint, setEditorOutput, refreshEditor, runCode, replayRun } from '../../../code-editor.js';
@@ -2294,7 +2378,7 @@ const STEP_COUNT_M1 = 4;   // m1_step_1…m1_step_4
 
 // localStorage field lists
 const TEXT_FIELDS  = ['p_text1', 'r_editor', 'r1', 'i_editor', 'm1_editor', 'm2_editor'];
-const RADIO_GROUPS = ['m1_choice', 'p_mcq1', 'p_mcq2', 'i1_mcq', 'i2_mcq'];
+const RADIO_GROUPS = ['m1_choice', 'm2_choice', 'p_mcq1', 'p_mcq2', 'i1_mcq', 'i2_mcq'];
 
 
 // ═══════════════════════════════════════════════════════
@@ -2324,6 +2408,18 @@ const CHOICE = {
   req: c => `Change the last line so the door prints <code>Cryo Bay door: ${DOOR_CHOICES[c]}</code> instead of <em>Door unlocking...</em>`,
 };
 
+// The second choice is on Make, and reacts to the first: if the door was opened, something
+// got in and is at Pod 5, so the shield is the better call (locking the bay shuts it in with
+// the crew). If the door stayed sealed, nothing got in, so locking the bay is better.
+// The card's report line repeats that fact, so the better call is never a trick.
+const MAKE_CHOICE = {
+  story: 'lock',   // stored as sz_choices.lock
+  req: c => `Add one more line at the end that prints <code>${LOCK_CHOICES[c]}</code>`,
+  report: door => door === 'open'
+    ? '<b>Last report:</b> something got into the Cryo Bay, and fresh frost is creeping across Pod 5’s glass.'
+    : '<b>Last report:</b> the footsteps moved away down the corridor. Nothing got in.',
+};
+
 
 // ═══════════════════════════════════════════════════════
 //  Investigate step validators (one per qcard_iN)
@@ -2342,8 +2438,8 @@ const mcqStep = (n, correctValue, passMsg, failMsg, extra = {}) => ({
 
 const I_FIELDS = [
   mcqStep(1, 'option_c',
-    'Right — the question is only shown on screen. role still stores whatever job is typed.',
-    'Look at the output: line 4 still shows the job you typed. The words in the quotes are only shown, never stored.'),
+    'Right — the words in the quotes are only shown on screen. role stores whatever job is typed.',
+    'Look at the output: line 4 shows the job you typed, not your new words. The words in the quotes are only shown, never stored.'),
 
   // ── THE STANDARD BUG STEP (always last) ──
   mcqStep(2, 'option_a',
@@ -2574,6 +2670,7 @@ function updateStepVisibility() {
 
   document.getElementById('btn_goto_m2')?.classList.toggle('step-hidden', !passedChecks['m1_code' + STEP_COUNT_M1]);
   document.getElementById('m2_make_task')?.classList.toggle('step-hidden', !!passedChecks['m2_make']);
+  renderMakeChoice();
   document.getElementById('m2_ext_task')?.classList.toggle('step-hidden', !passedChecks['m2_make']);
   renderReqResults(document.getElementById('req_m2_make'), passedChecks['m2_make'] ? MAKE_CHECK.reqs.map(() => true) : null);
   renderReqResults(document.getElementById('req_m2_ext'), passedChecks['m2_ext'] ? EXT_CHECK.reqs.map(() => true) : null);
@@ -3408,6 +3505,32 @@ function pickChoice() {
   saveState();
 }
 
+// ── Station Zero choice 2 (Make) ──────────────────────
+const getMakeChoice = () => document.querySelector('input[name="m2_choice"]:checked')?.value;
+// The door as the story knows it: this page's Modification 1, else the saved choice (default sealed).
+const doorChoice = () => getChoice() || window.StationZero?.choices?.().door || 'sealed';
+
+// The report line follows the door; the requirement appears once a lock is picked; the
+// options lock once Make has passed.
+function renderMakeChoice() {
+  const c = getMakeChoice();
+  const locked = !!passedChecks['m2_make'];
+  document.querySelectorAll('input[name="m2_choice"]').forEach(r => { r.disabled = locked; });
+  document.getElementById('m2_choice')?.classList.toggle('locked', locked);
+  const report = document.getElementById('m2_choice_report');
+  if (report) report.innerHTML = MAKE_CHOICE.report(doorChoice());
+  const text = document.getElementById('req_m2_choice_text');
+  if (text) text.innerHTML = c ? MAKE_CHOICE.req(c) : 'Make your call above, then add the line it asks for.';
+}
+
+function pickMakeChoice() {
+  if (passedChecks['m2_make']) return;
+  document.getElementById('fb_m2')?.classList.add('hidden');   // the last check was for the other option
+  renderReqResults(document.getElementById('req_m2_make'), null);
+  renderMakeChoice();
+  saveState();
+}
+
 async function checkMod() {
   if (window.Classroom?.verifyAuth() === false) return;
   const editorEl = document.getElementById('m1_editor');
@@ -3481,6 +3604,9 @@ async function checkMake() {
   if (raw.trim().length < 10) {
     fbEl.className = 'feedback fail'; fbEl.textContent = '⚠️ Write your program first.'; return;
   }
+  if (!getMakeChoice()) {
+    fbEl.className = 'feedback fail'; fbEl.textContent = '⚠️ Make your call above first.'; return;
+  }
   fbEl.className = 'feedback loading'; fbEl.textContent = '⏳ Checking — typing Ash, Navigation and Missing…';
   const run = await runPython(raw, { traceLines: true, trackVars: true, inputs: MAKE_INPUTS });
   if (!(await replayRun(editorEl, run))) return;   // step through the run before judging it (stepThrough)
@@ -3488,7 +3614,7 @@ async function checkMake() {
     renderReqResults(listEl, null);
     fbEl.className = 'feedback fail'; fbEl.textContent = '❌ Your program has an error: ' + run.output; return;
   }
-  const result = evalMake(raw, run.output);
+  const result = evalMake(raw, run.output, getMakeChoice());
   renderReqResults(listEl, result.results);
   if (!result.pass) {
     fbEl.className = 'feedback fail'; fbEl.textContent = result.msg; return;
@@ -3497,6 +3623,7 @@ async function checkMake() {
   fbEl.textContent = result.msg;
   const firstMakePass = !passedChecks['m2_make'];   // STATION ZERO hook
   passedChecks['m2_make'] = true;
+  if (firstMakePass) window.StationZero?.choose(MAKE_CHOICE.story, getMakeChoice());   // STATION ZERO hook: choice 2 is locked in before the cliffhanger plays
   window.ActivityUI?.miniCelebration(fbEl);
   window.ActivityUI?.showToast('✅ Make complete! Now try the extension!');
   updateStepVisibility();
@@ -3668,7 +3795,7 @@ Object.assign(window, {
   clearRunError, tryCompleteRun,
   tryCompleteInvestigate, nextStep,
   checkMod, completeStage, pickChoice,
-  checkMake, checkExt,
+  checkMake, checkExt, pickMakeChoice,
   runCodeInEditor, resetInvestigateEditor, insertNewLine, breakItDemo,
   skipStep, goBack, goForward,
   openSkipGate, closeSkipGate, confirmSkip, resetModifyEditor, refreshInvTicks,

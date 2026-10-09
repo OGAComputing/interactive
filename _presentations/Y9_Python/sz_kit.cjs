@@ -8,15 +8,16 @@
 //   K.write('Deck.pptx');
 
 const path = require('path');
-// Falls back to the global npm folder, so `npm install -g pptxgenjs` is enough.
-const pptxgen = (() => {
-  try { return require('pptxgenjs'); } catch {
+// Falls back to the global npm folder, so `npm install -g pptxgenjs` is enough (jszip comes with it).
+const requireGlobal = (name) => {
+  try { return require(name); } catch {
     const root = require('child_process').execSync('npm root -g').toString().trim();
-    return require(path.join(root, 'pptxgenjs'));
+    try { return require(path.join(root, name)); } catch { return require(path.join(root, 'pptxgenjs', 'node_modules', name)); }
   }
-})();
+};
+const pptxgen = requireGlobal('pptxgenjs');
 
-function createDeck({ title, footerText, author = 'Nicholas Houlton' }) {
+function createDeck({ title, footerText, author = 'Nicholas Houlton', station: startState = 'none' }) {
 // ── Palette ─────────────────────────────────────────────────────────────────
 // Approved: charcoal / gold / off-white. Station Zero adds phosphor green (story text only)
 // and alarm red (error messages only).
@@ -69,6 +70,52 @@ pres.defineSlideMaster({
 });
 pres.defineSlideMaster({ title: 'SZ_COVER', background: { color: P.deep }, objects: [] });
 
+// ── Station state ───────────────────────────────────────────────────────────
+// The slides decay with the story (README.md, "Station state"). Damage is drawn only in the frame:
+// edges, corners and the status line above the title. It sits under everything else on the slide,
+// so code, terminals and memory boxes always stay clean. Art: station/*.png (make_station_art.py).
+// hud: status-line items; a function gets i = slides since this state began (e.g. a falling O2 level).
+const STATION = {
+  none: {},
+  L1:  { frost: true, dot: 'C8E4FF', hud: ['CRYO BAY', 'TEMP −41°C', 'POWER 12%', 'CREW AWAKE 1/5'] },
+  L1b: { frost: true, dot: P.str, hud: ['LIFE SUPPORT', (i) => `O2 ${Math.max(9, 94 - i * 3)}%`, 'POWER 31%', 'CREW AWAKE 1/5'] },
+  L2:  { edge: 'amber', dot: P.str, hud: ['SENSOR OPS', 'MOTION DETECTED', 'BIO-SCAN: NOT HUMAN'] },
+  L3:  { edge: 'red', hazard: true, dot: P.red, hud: ['LOCKDOWN', 'AIRLOCK CYCLING', 'WARDEN: NO RESPONSE'] },
+  L4:  { static: true, dot: P.int, hud: ['NAV BEACON', 'SIGNAL WEAK ▂▁▃▁', 'RESCUE SHIP: NO REPLY'] },
+  L5:  { cracks: true, edge: 'red', dot: P.red, hud: ['HULL BREACH · DECK 2', 'DRONE ONLINE', 'O2 VENTING'] },
+  L6:  { dot: P.gold, hud: ['SYSTEMS CHECK', 'DIAGNOSTIC MODE'] },
+  L7:  { cracks: true, edge: 'red', static: true, dot: P.red, hud: ['LAST STAND', 'SYSTEMS DAMAGED', 'RESCUE SHIP DOCKING'] },
+};
+let state = {}, stateSlide = 0, beatFrom = null;
+const beatSlides = [];
+// Switch state for the slides that follow. overrides change single layers, e.g. station('L7', { static: false })
+// as each system is repaired.
+function station(name, overrides = {}) {
+  if (!STATION[name]) throw new Error(`Unknown station state "${name}" (${Object.keys(STATION).join(', ')})`);
+  state = { ...STATION[name], ...overrides };
+  stateSlide = 0;
+}
+// A story beat: the next slide fades in through black, then whatever damage is new creeps in by itself.
+function beat(name, overrides) { const before = state; station(name, overrides); beatFrom = before; }
+function drawStation(s, master) {
+  const light = master === 'SZ_LIGHT';
+  const layers = [['frost', state.frost && !light], ['edge_' + state.edge, !!state.edge], ['hazard', state.hazard],
+    ['static', state.static && !light], ['cracks', state.cracks]];
+  const isNew = (f) => !!beatFrom && (f.startsWith('edge_') ? f !== 'edge_' + beatFrom.edge : !beatFrom[f]);
+  layers.filter(([, on]) => on).forEach(([f]) => s.addImage({ path: path.join(__dirname, 'station', f + '.png'),
+    x: 0, y: 0, w: W, h: 7.5, objectName: (isNew(f) ? 'auto · ' : '') + 'station ' + f, altText: '' }));
+  if (state.hud) {
+    const items = state.hud.map((h) => (typeof h === 'function' ? h(stateSlide) : h));
+    s.addText([{ text: '●  ', options: { color: state.dot || P.dim } },
+      { text: items.join('   ·   '), options: { color: light ? '8A8A93' : P.dim } }],
+    { isTextBox: true, x: M, y: 0.08, w: 11.2, h: 0.26, margin: 0, fontFace: MONO, fontSize: 11, charSpacing: 1,
+      valign: 'middle', objectName: 'station status' });
+  }
+  if (beatFrom) { beatSlides.push(slideNo); beatFrom = null; }
+  stateSlide++;
+}
+station(startState);
+
 // ── Helpers ─────────────────────────────────────────────────────────────────
 let slideNo = 0;
 const sections = new Set();
@@ -76,9 +123,21 @@ function newSlide(master, section, title) {
   if (!sections.has(section)) { pres.addSection({ title: section }); sections.add(section); }
   const s = pres.addSlide({ masterName: master, sectionTitle: section });
   slideNo++;
+  drawStation(s, master);
   if (title) s.addText(title, { placeholder: 'title' });
   return s;
 }
+// Click animation: everything draw() adds to the slide fades in on click k (1, 2, 3 …).
+// pptxgenjs can't write animations, so this only names the shapes "click<k>"; write() adds the timing XML.
+function onClick(s, k, draw) {
+  const orig = { addText: s.addText, addShape: s.addShape, addImage: s.addImage };
+  const tag = (o = {}) => ({ ...o, objectName: `click${k}` + (o.objectName ? ' · ' + o.objectName : '') });
+  s.addText = (t, o) => orig.addText.call(s, t, tag(o));
+  s.addShape = (type, o) => orig.addShape.call(s, type, tag(o));
+  s.addImage = (o) => orig.addImage.call(s, tag(o));
+  try { draw(); } finally { Object.assign(s, orig); }
+}
+
 // Pillar icon: always added last-ish (after any background shapes), flat, no shadow.
 // pos is optional ({ x, y, d }); the default is the standard top-right spot.
 function addIcon(s, kind, pos = {}) {
@@ -135,7 +194,7 @@ function codePanel(s, lines, o) {
   lines.forEach((ln, i) => {
     const y = o.y + padY + i * lh;
     if (o.hl && o.hl.includes(i + 1)) box(s, { x: o.x + 0.06, y, w: o.w - 0.12, h: lh, fill: '2B2618' });
-    if (gut) text(s, String(i + 1), { x: o.x + 0.12, y, w: 0.3, h: lh, fontFace: MONO, fontSize: size - 4,
+    if (gut) text(s, String(i + (o.first || 1)), { x: o.x + 0.12, y, w: 0.3, h: lh, fontFace: MONO, fontSize: size - 4,
       color: P.dim, align: 'right', valign: 'middle' });
     s.addText(pyRuns(ln, size), { isTextBox: true, x: o.x + 0.2 + gut, y, w: o.w - 0.3 - gut, h: lh,
       margin: 0, valign: 'middle' });
@@ -274,35 +333,6 @@ function traceTable(s, o) {
   s.addTable(rows, { x, y, w: cws.reduce((a, b) => a + b), colW: cws, rowH: rh, margin: [0.04, 0.15, 0.04, 0.15] });
 }
 
-// Whole lines of code with sub-goal labels under the exact characters they describe.
-// (Feedback 2026-10-08: never split code into fragments — label the real line.)
-// lines: [{ code, labels: [{ n, text, from, to }], result: (s, yTop, rowH) => void }]
-// from/to are character indexes into code (to is exclusive). Consolas is ~0.55em per character.
-function labelledCode(s, lines, o = {}) {
-  const size = o.size || 26, cw = size * 0.55 / 72, x = o.x ?? M, w = o.w ?? 7.1;
-  const rowH = o.rowH || 2.25, y0 = o.y ?? 1.7, padX = 0.35, gap = o.gap ?? 0.25;
-  lines.forEach((ln, i) => {
-    const y = y0 + i * (rowH + gap);
-    box(s, { x, y, w, h: rowH, fill: P.code, line: P.line, r: 0.08, name: 'line' + (i + 1) });
-    text(s, 'LINE ' + (i + 1), { x: x + padX, y: y + 0.15, w: 2, h: 0.3, fontSize: 12, bold: true, color: P.dim, charSpacing: 2 });
-    s.addText(pyRuns(ln.code, size), { isTextBox: true, x: x + padX, y: y + 0.45, w: w - padX * 2, h: 0.55,
-      margin: 0, valign: 'middle' });
-    (ln.labels || []).forEach((lb) => {
-      const lx = x + padX + lb.from * cw, lw = (lb.to - lb.from) * cw, by = y + 1.1;
-      // a bracket under the characters: a line with short end ticks
-      s.addShape(pres.shapes.LINE, { x: lx + 0.03, y: by, w: lw - 0.06, h: 0, line: { color: P.gold, width: 2 } });
-      s.addShape(pres.shapes.LINE, { x: lx + 0.03, y: by - 0.1, w: 0, h: 0.1, line: { color: P.gold, width: 2 } });
-      s.addShape(pres.shapes.LINE, { x: lx + lw - 0.03, y: by - 0.1, w: 0, h: 0.1, line: { color: P.gold, width: 2 } });
-      const cx = lx + lw / 2;
-      s.addShape(pres.shapes.LINE, { x: cx, y: by, w: 0, h: 0.2, line: { color: P.gold, width: 2 } });
-      badge(s, lb.n, cx - 0.21, by + 0.2, 0.42);
-      text(s, lb.text, { x: cx - 0.9, y: by + 0.65, w: 1.8, h: 0.4, fontFace: HEAD, fontSize: 22, bold: true,
-        color: P.gold, align: 'center', valign: 'middle' });
-    });
-    if (ln.result) ln.result(s, y, rowH);
-  });
-}
-
 // Template deck only: a one-line note in the footer row saying which recipe this is (see README.md).
 function templateNote(s, t, light = false) {
   text(s, t, { x: 4.6, y: 6.95, w: 7.45, h: 0.35, fontSize: 13, italic: true, bold: true,
@@ -311,6 +341,7 @@ function templateNote(s, t, light = false) {
 
 async function write(out, theme = THEME) {
   await pres.writeFile({ fileName: out });
+  await addClickAnimations(out, beatSlides);
   if (process.env.APPLY_THEME) {
     const { applyTheme } = require(process.env.APPLY_THEME);
     await applyTheme(out, theme);
@@ -319,7 +350,64 @@ async function write(out, theme = THEME) {
 }
 
 return { pres, P, THEME, HEAD, BODY, MONO, W, M, newSlide, addIcon, text, box, chip, timer, arrow, pyRuns,
-  codePanel, terminal, varBox, badge, recallCards, chapterTask, traceTable, labelledCode, templateNote, write };
+  codePanel, terminal, varBox, badge, recallCards, chapterTask, traceTable, templateNote, onClick, station, beat,
+  STATES: Object.keys(STATION), write };
+}
+
+// Adds a fade-in on click for every shape named "click<k>" (see onClick): click 1 shows all the
+// click1 shapes together, then click 2, and so on. Shapes named "auto…" (new station damage on a
+// story beat) fade in by themselves as the slide opens, before any click. Beat slides (1-based
+// numbers in beats) also get a slow fade-through-black transition: the lights go out.
+async function addClickAnimations(file, beats = []) {
+  const fs = require('fs');
+  const JSZip = requireGlobal('jszip');
+  const zip = await JSZip.loadAsync(fs.readFileSync(file));
+  const slides = Object.keys(zip.files).filter((f) => /^ppt\/slides\/slide\d+\.xml$/.test(f));
+  for (const f of slides) {
+    let xml = await zip.file(f).async('string');
+    const isBeat = beats.includes(+f.match(/slide(\d+)\.xml$/)[1]);
+    const groups = new Map();   // click number → shape ids; 0 = auto (plays as the slide opens)
+    const textIds = new Set();
+    for (const m of xml.matchAll(/<p:(sp|pic|cxnSp)>\s*<p:nv\w+Pr>\s*<p:cNvPr id="(\d+)" name="(?:click(\d+)|(auto))[^"]*"[\s\S]*?<\/p:\1>/g)) {
+      const k = m[4] ? 0 : +m[3];
+      if (!groups.has(k)) groups.set(k, []);
+      groups.get(k).push(m[2]);
+      if (m[1] === 'sp' && m[0].includes('<p:txBody>')) textIds.add(m[2]);
+    }
+    if (!groups.size && !isBeat) continue;
+    let id = 2;
+    const effect = (spid, node, delay, dur) => {
+      const g = textIds.has(spid) ? ' grpId="0"' : '';
+      return `<p:par><p:cTn id="${++id}" presetID="10" presetClass="entr" presetSubtype="0" fill="hold"${g} nodeType="${node}">`
+        + `<p:stCondLst><p:cond delay="${delay}"/></p:stCondLst><p:childTnLst>`
+        + `<p:set><p:cBhvr><p:cTn id="${++id}" dur="1" fill="hold"><p:stCondLst><p:cond delay="0"/></p:stCondLst></p:cTn>`
+        + `<p:tgtEl><p:spTgt spid="${spid}"/></p:tgtEl><p:attrNameLst><p:attrName>style.visibility</p:attrName></p:attrNameLst></p:cBhvr>`
+        + '<p:to><p:strVal val="visible"/></p:to></p:set>'
+        + `<p:animEffect transition="in" filter="fade"><p:cBhvr><p:cTn id="${++id}" dur="${dur}"/>`
+        + `<p:tgtEl><p:spTgt spid="${spid}"/></p:tgtEl></p:cBhvr></p:animEffect></p:childTnLst></p:cTn></p:par>`;
+    };
+    const clicks = [...groups.keys()].sort((a, b) => a - b).map((k) => {
+      const outer = ++id, inner = ++id, auto = k === 0;
+      const fx = groups.get(k).map((spid, i) => effect(spid, i > 0 ? 'withEffect' : auto ? 'afterEffect' : 'clickEffect',
+        auto ? 700 : 0, auto ? 2000 : 500)).join('');
+      const start = '<p:cond delay="indefinite"/>' + (auto ? '<p:cond evt="onBegin" delay="0"><p:tn val="2"/></p:cond>' : '');
+      return `<p:par><p:cTn id="${outer}" fill="hold"><p:stCondLst>${start}</p:stCondLst><p:childTnLst>`
+        + `<p:par><p:cTn id="${inner}" fill="hold"><p:stCondLst><p:cond delay="0"/></p:stCondLst><p:childTnLst>${fx}`
+        + '</p:childTnLst></p:cTn></p:par></p:childTnLst></p:cTn></p:par>';
+    }).join('');
+    const bld = [...textIds].map((spid) => `<p:bldP spid="${spid}" grpId="0" animBg="1"/>`).join('');
+    const timing = !groups.size ? '' : '<p:timing><p:tnLst><p:par><p:cTn id="1" dur="indefinite" restart="never" nodeType="tmRoot"><p:childTnLst>'
+      + '<p:seq concurrent="1" nextAc="seek"><p:cTn id="2" dur="indefinite" nodeType="mainSeq"><p:childTnLst>' + clicks
+      + '</p:childTnLst></p:cTn><p:prevCondLst><p:cond evt="onPrev" delay="0"><p:tgtEl><p:sldTgt/></p:tgtEl></p:cond></p:prevCondLst>'
+      + '<p:nextCondLst><p:cond evt="onNext" delay="0"><p:tgtEl><p:sldTgt/></p:tgtEl></p:cond></p:nextCondLst></p:seq>'
+      + '</p:childTnLst></p:cTn></p:par></p:tnLst>' + (bld ? `<p:bldLst>${bld}</p:bldLst>` : '') + '</p:timing>';
+    const add = (isBeat ? '<p:transition spd="slow"><p:fade thruBlk="1"/></p:transition>' : '') + timing;
+    xml = xml.includes('<p:extLst>') && xml.lastIndexOf('<p:extLst>') > xml.lastIndexOf('</p:cSld>')
+      ? xml.replace(/<p:extLst>(?![\s\S]*<p:extLst>)/, add + '<p:extLst>')
+      : xml.replace('</p:sld>', add + '</p:sld>');
+    zip.file(f, xml);
+  }
+  fs.writeFileSync(file, await zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' }));
 }
 
 module.exports = { createDeck };

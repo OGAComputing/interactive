@@ -17,7 +17,7 @@ const { P, M, HEAD, MONO, newSlide, addIcon, text, box, badge, terminal, templat
 const readme = fs.readFileSync(path.join(__dirname, 'README.md'), 'utf8');
 const logPart = (readme.split(/^## Rules and feedback log\s*$/m)[1] || '').split(/^## /m)[0];
 const plain = (t) => t.replace(/\*\*|`/g, '');
-const RULES = logPart.split('\n').filter((l) => l.startsWith('- ')).map((l) => {
+const RULES = logPart.split(/\r?\n/).filter((l) => l.startsWith('- ')).map((l) => {
   const m = l.match(/^- \*\*(.+?)\s·\s(.+?)\*\*\s—\s(.+)$/);
   return m ? { date: m[1], topic: m[2], text: plain(m[3]) } : { date: '', topic: '', text: plain(l.slice(2)) };
 });
@@ -154,25 +154,33 @@ tag(R.questionsSlide(K, {
   ]),
 }), 'questionsSlide', 'Topic + lesson question');
 
-tag(R.labelledLinesSlide(K, {
-  section: EX, title: 'Ask → store → join → output',
-  lines: [
-    { code: 'name = input("Name? ")',
-      labels: [{ n: 2, text: 'Store', from: 0, to: 6 }, { n: 1, text: 'Ask', from: 7, to: 22 }],
-      results: [{ n: 1, terminal: [[{ text: 'Name? ' }, { text: 'Riley', color: P.str, bold: true }]] },
-        { n: 2, var: { name: 'name', type: 'str', value: '"Riley"', size: 26 } }] },
-    { code: 'print("Hi " + name)',
-      labels: [{ n: 4, text: 'Output', from: 0, to: 5 }, { n: 3, text: 'Join', from: 6, to: 18 }],
-      results: [{ n: 3, var: { type: 'str', value: '"Hi Riley"' } }, { n: 4, terminal: ['Hi Riley'] }] },
-  ],
+// The ask → store → join → print example, line by line (runLinesSlide).
+const verb = (t) => ({ text: t, options: { bold: true, color: P.gold } });
+const code = (t) => ({ text: t, options: { fontFace: MONO, color: P.off } });
+const RUN_NAME = [
+  { code: 'name = input("Name? ")',
+    say: [verb('Asks'), { text: ' the question and waits. Then ' }, verb('stores'), { text: ' what the user typed in ' }, code('name')],
+    screen: [[{ text: 'Name? ' }, { text: 'Riley', color: P.str, bold: true }]],
+    screenNote: 'The user typed Riley',
+    memory: [{ name: 'name', type: 'str', value: '"Riley"' }] },
+  { code: 'print("Hi " + name)',
+    say: [verb('Joins'), { text: ' "Hi " to what’s in ' }, code('name'), { text: ', then ' }, verb('prints'), { text: ' it' }],
+    screen: [[{ text: 'Name? Riley', color: P.dim }], [{ text: 'Hi Riley', bold: true }]],
+    memory: [{ name: 'name', type: 'str', value: '"Riley"' }],
+    memoryNote: 'No change' },
+];
+tag(R.runLinesSlide(K, {
+  section: EX, lines: RUN_NAME,
   notes: guide([
-    'WHEN: introducing sub-goals (the steps of a recipe) on real code.',
+    'WHEN: showing what a short program does, before students predict or trace one themselves.',
     'RULES: whole lines only — never fragments like input(…) (feedback 2026-10-08). Up to 2 lines.',
-    'Each label is bracketed under the exact characters that do that step: from/to are character positions in the line.',
-    'Number the labels in the order Python does them (so in line 1, Ask is 1 and Store is 2), and give each result on the right the same number.',
-    'Results are a terminal (what the screen shows) or a variable box (what memory holds).',
+    'One row per line, read left to right: the code → the whole screen after that line → memory after that line.',
+    'Under each line, one sentence saying what it does, with the sub-goal verbs in gold (Asks, stores, joins, prints).',
+    'Grey out older screen lines (color: P.dim) so the new output stands out. Say "No change" when memory stays the same.',
+    'ANIMATED: each part fades in on click — code, then screen, then memory (3 clicks per line, 6 for two). Ask "what will appear?" before each click. animate: false turns it off.',
+    'Any slide type can do this: wrap what should appear in K.onClick(s, clickNumber, () => { …draw… }).',
   ]),
-}), 'labelledLinesSlide', 'Whole lines with sub-goal labels');
+}), 'runLinesSlide', 'Run it line by line');
 
 tag(R.pairSlide(K, {
   section: EX, title: 'Quotes: the word, or what’s stored?', memory: { name: 'name', type: 'str', value: '"Riley"' },
@@ -263,5 +271,98 @@ tag(R.plenarySlide(K, {
     'Optional one-line cliffhanger in green, to lead into the next chapter.',
   ]),
 }), 'plenarySlide', 'Plenary');
+
+// ════════════════════════════════════════════════════════════════════════════
+//  Station state — the slides decay with the story (README.md, "Station state")
+// ════════════════════════════════════════════════════════════════════════════
+const ST = 'Station state';
+{
+  const s = newSlide('SZ_DARK', ST, 'The station decays with the story');
+  const cards = [
+    ['Why', 'Students feel what is happening to the station without reading anything extra. The story is in the look, not in more text.'],
+    ['Where', 'Only the frame: the edges, the corners and the status line above the title. Code, output and memory boxes always stay clean.'],
+    ['When', 'It gets worse each chapter. At a story beat it changes in front of the class: the lights go out, then new damage creeps in.'],
+  ];
+  const cw = 3.87, cg = 0.26;
+  cards.forEach(([h, t], i) => {
+    const x = M + i * (cw + cg);
+    box(s, { x, y: 1.75, w: cw, h: 4.4, fill: P.panel, r: 0.08 });
+    badge(s, i + 1, x + 0.3, 2.05, 0.6);
+    text(s, h, { x: x + 0.3, y: 2.85, w: cw - 0.6, h: 0.6, fontFace: HEAD, fontSize: 28, bold: true, color: P.gold });
+    text(s, t, { x: x + 0.3, y: 3.55, w: cw - 0.6, h: 2.3, fontSize: 20, valign: 'top' });
+  });
+  templateNote(s, 'GUIDE  ·  STATION STATE');
+  s.addNotes(guide([
+    'INTENTION: the decks show the state of the station, so the story builds week to week and peaks at its beats, without adding words to read.',
+    'Cognitive load comes first. The damage is drawn underneath everything, only in the frame, at low contrast. If it ever competes with the content, the content wins: turn the layer off.',
+    'It is made-up damage, not real corruption: every deck still validates and opens normally.',
+    'HOW: createDeck({ station: "L3" }) sets the chapter state for the whole deck. K.station("L5") switches it for the slides after it. K.beat("L2") does the same as a story beat (see the last two slides).',
+    'States: ' + K.STATES.join(', ') + '. L1b is Life Support (the O2 reading drops slide by slide). L6 is the assessment, so it stays clean apart from the status line.',
+    'Overrides change single layers, e.g. K.station("L7", { static: false }) once a system is repaired in Last Stand.',
+  ]));
+}
+
+const STATE_EXAMPLES = [
+  ['L1', 'Ch 1 Wake Up: frost in the corners', () => R.titleSlide(K, {
+    section: ST, kicker: 'Y9 PYTHON  ·  LESSON 1  ·  PYTHON REFRESH', title: 'Station Zero', subtitle: 'Chapter 1 — Wake Up',
+    status: ['SOFTWARE ....... WIPED', 'DOORS .......... SEALED', 'CREW AWAKE ..... 1 OF 5', [{ text: '> _' }]] })],
+  ['L1b', 'Ch 1 Life Support: frost, O2 falling (light slides skip frost)', () => R.recallStarter(K, { section: ST, questions: RR })],
+  ['L2', 'Ch 2 Proximity: amber alarm at the edges', () => R.pairSlide(K, {
+    section: ST, title: 'Quotes: the word, or what’s stored?', memory: { name: 'name', type: 'str', value: '"Riley"' },
+    rows: [
+      { code: 'print("name")', out: 'name', note: [{ text: 'In quotes', options: { bold: true, color: P.str } }, { text: ' → printed exactly as written' }] },
+      { code: 'print(name)', out: 'Riley', note: [{ text: 'No quotes', options: { bold: true, color: P.gold } }, { text: ' → prints what’s stored inside' }] },
+    ] })],
+  ['L3', 'Ch 3 Locked In: red alarm + hazard stripes', () => R.predictSlide(K, {
+    section: ST, code: PREDICT_CODE, inputs: [['1st', 'Medbay'], ['2nd', '3']],
+    prompt: [{ text: 'On your whiteboard: ', options: { bold: true, color: P.gold } }, { text: 'write the exact last line this program prints.' }] })],
+  ['L4', 'Ch 4 Distress Signal: static at the edges', () => R.turnTalkSlide(K, {
+    section: ST, title: 'Join or add?', codes: ['print("5" + "5")', 'print(5 + 5)'],
+    prompt: 'what does each one print — and why are they different?' })],
+  ['L5', 'Ch 5 The Drone: hull cracks, claw marks, red alarm', () => R.runLinesSlide(K, {
+    section: ST, lines: RUN_NAME, animate: false })],
+  ['L6', 'Ch 6 Systems Check: clean (assessment), status line only', () => R.questionsSlide(K, {
+    section: ST, topic: 'How do we write programs that make decisions, repeat and reuse code?',
+    lesson: 'Can every system pass the check?' })],
+  ['L7', 'Ch 7 Last Stand: everything at once; switch layers off as systems are repaired', () => R.chapterSlide(K, {
+    section: ST, kicker: 'CHAPTER 7', title: 'Last Stand', activity: 'Containment Protocol', time: '≈20 MIN', logLabel: 'ALL DECKS',
+    log: ['Three systems down.', 'The rescue ship is', 'docking anyway.'],
+    note: [{ text: 'Modification 1 is your call. ', options: { bold: true, color: P.gold } }, { text: 'Airlock or nest.' }] })],
+];
+STATE_EXAMPLES.forEach(([st, what, draw]) => {
+  K.station(st);
+  const s = draw();
+  templateNote(s, `station('${st}')  ·  ${what}`, st === 'L1b');
+  s.addNotes(guide([
+    `STATE ${st}: ${what}.`,
+    `Set it for a whole deck with createDeck({ station: '${st}' }), or from this slide on with K.station('${st}').`,
+    'Check: is every line of code, output and memory still as easy to read as on a clean slide? If not, turn the layer off.',
+  ]));
+});
+
+// A beat inside a lesson: Life Support's chapter card, then the cliffhanger changes the station.
+K.station('L1b');
+tag(R.chapterSlide(K, {
+  section: ST, kicker: 'CHAPTER 1  ·  PART 2', title: 'Life Support', activity: 'Life Support', time: '≈20 MIN', logLabel: 'LIFE SUPPORT',
+  log: ['The O2 recycler is failing.', '', 'Hale’s last log is', 'still on the screen.'],
+  note: [{ text: 'Modification 1 is your call. ', options: { bold: true, color: P.gold } }, { text: 'It changes the story, not your score.' }],
+  notes: guide([
+    'BEAT DEMO, part 1 of 2: before the beat. State L1b: frost, with O2 falling on the status line.',
+    'Present the next slide in Slide Show to see the beat.',
+  ]),
+}), 'chapterSlide', 'beat demo 1 of 2: station(\'L1b\') before the beat');
+K.beat('L2');
+tag(R.plenarySlide(K, {
+  section: ST, lesson: 'How do we ask for, store and calculate with what a user types?',
+  tasks: ['Write one line that asks how many crew are awake and stores it as a whole number in crew.',
+    'Fix this line, and say why it crashed:'],
+  code: 'print("Crew awake: " + crew)',
+  cliff: [{ text: 'MOTION DETECTED · SENSOR OPS · TAG: ' }, { text: 'HALE', color: P.gold, bold: true }],
+  notes: guide([
+    'BEAT DEMO, part 2 of 2: K.beat("L2") before this slide.',
+    'In Slide Show the slide fades in through black (the lights go out), then the amber alarm fades in by itself over 2 seconds. No click needed, and it never hides content.',
+    'Use a beat at most once or twice a lesson, on the story moment itself (here the cliffhanger), so it stays a shock.',
+  ]),
+}), 'plenarySlide', 'beat demo 2 of 2: beat(\'L2\') — lights out, then the alarm creeps in');
 
 K.write(OUT);

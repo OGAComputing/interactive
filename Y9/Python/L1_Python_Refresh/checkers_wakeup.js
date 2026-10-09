@@ -65,7 +65,7 @@ const joinsAnswer = raw => {
   return printArgs(raw).some(a => /\+/.test(a) && /""|''/.test(a) && vars.some(v => word(v).test(a)));
 };
 
-// choice = the student's Station Zero choice (Modify 1 only); hints and passMsg may be functions of it.
+// choice = the student's Station Zero choice (Modify 1 and Make); hints and passMsg may be functions of it.
 function evalReqs(check, raw, output, choice) {
   const results = check.reqs.map(r => !!r.test(raw, output, choice));
   const pass = results.every(Boolean);
@@ -254,6 +254,11 @@ export function evalMod(checkKey, raw, output = '', choice) {
 // The student's own questions, so only the SHAPE is checked. Run with word answers.
 export const MAKE_INPUTS = ['Ash', 'Navigation', 'Missing', 'Kai', 'Drone Bay', 'Awake'];
 
+// Make is the second Station Zero choice: before leaving, the locator locks ONE thing.
+// The student picks first, and the last req wants the line for THAT choice. Both pass.
+export const LOCK_CHOICES = { pod5: 'LOCK: POD 5 SHIELD', bay: 'LOCK: CRYO BAY DOOR' };
+const LOCK_RE = { pod5: /lock[^\w\n]*pod\s*5/i, bay: /lock[^\w\n]*cryo\s*bay/i };
+
 export const MAKE_CHECK = {
   reqs: [
     {
@@ -273,12 +278,21 @@ export const MAKE_CHECK = {
       hint: '❌ Your report should print both the name and the room — tested with Ash (name) and Navigation (room).',
       test: (raw, out) => MAKE_INPUTS.slice(0, 2).every(a => printedAnswer(out, a)),
     },
+    {
+      hint: choice => LOCK_CHOICES[choice]
+        ? '❌ Add one more line at the end that prints ' + LOCK_CHOICES[choice]
+        : '❌ Make your call above, then add the line it asks for.',
+      test: (raw, out, choice) => !!LOCK_RE[choice]?.test(out || ''),
+    },
   ],
-  passMsg: '✅ Crew locator working — questions, variables and a clear printed report.',
+  passMsg: choice => choice === 'pod5'
+    ? '✅ Crew locator working — and Pod 5’s shield is locked.'
+    : '✅ Crew locator working — and the Cryo Bay door is locked behind you.',
 };
 
-export function evalMake(raw, output = '') {
-  return evalReqs(MAKE_CHECK, raw, output);
+// choice = the student's Make choice (LOCK_CHOICES key).
+export function evalMake(raw, output = '', choice) {
+  return evalReqs(MAKE_CHECK, raw, output, choice);
 }
 
 // ── Extension — status report ────────────────────────────────────────────────
