@@ -30,8 +30,8 @@ test('page shell: six sections, a bonus and a review tab; nothing answered', asy
   await expectPageTitle(page, /Unit 1 Assessment/);
   await expectNoClassroomBanner(page);
   await expect(page.locator('.tab')).toHaveCount(8);
-  await expect(page.locator('#count_output')).toHaveText('0/6');
-  await expect(page.locator('#score-pill')).toHaveText('Score: 0 / 49 (0%)');
+  await expect(page.locator('#count_output')).toHaveText('0/7');
+  await expect(page.locator('#score-pill')).toHaveText('Score: 0 / 51 (0%)');
   await expect(page.locator('#intro')).toHaveAttribute('open', '');
 });
 
@@ -42,7 +42,7 @@ test('multiple choice: one try, the lock survives a reload', async ({ page }) =>
   await expect(page.locator('#card_o_print')).toHaveClass(/is-wrong/);
   await expect(page.locator('#card_o_print .opt[data-k="0"]')).toHaveClass(/right/);
   await expect(page.locator('#card_o_print .why')).toBeVisible();
-  await expect(page.locator('#count_output')).toHaveText('1/6');
+  await expect(page.locator('#count_output')).toHaveText('1/7');
 
   // After a few seconds the answer hides, so a neighbour can't copy it; the result stays.
   await expect(page.locator('#card_o_print .opts')).toBeHidden({ timeout: 10000 });
@@ -71,7 +71,7 @@ test('trace: marked box by box, with the right answers shown', async ({ page }) 
   await expect(page.locator(`#msg_v_trace_v_${a.name}`)).toContainText(a.value);
   await expect(page.locator(`#tr_v_trace_v_${b.name}`)).toHaveClass(/ans-correct/);
   await expect(page.locator('#fb_v_trace')).toContainText('3 of 4');
-  await expect(page.locator('#score-pill')).toContainText('Score: 3 / 49');
+  await expect(page.locator('#score-pill')).toContainText('Score: 3 / 51');
 });
 
 test('selection rows and the sort lock with per-row and per-card marking', async ({ page }) => {
@@ -94,7 +94,7 @@ test('selection rows and the sort lock with per-row and per-card marking', async
   }
   await page.click('#lock_c_sort');
   await expect(page.locator('#fb_c_sort')).toContainText('6 of 6');
-  await expect(page.locator('#score-pill')).toContainText('Score: 6 / 49');
+  await expect(page.locator('#score-pill')).toContainText('Score: 6 / 51');
 });
 
 test('fix-it: the starter fails; the fix passes in real Python and locks', async ({ page }) => {
@@ -141,6 +141,8 @@ test('write it: a partial answer keeps its marks and shows which requirement is 
 
 // Every code question in real Python: the starter scores 0 and a model answer scores full marks.
 const MODELS = {
+  o_copy: 'print("Hello, world!")',
+  v_change: 'pet = "dog"\nprint(pet)',
   o_write: 'print("I am learning Python")\nprint("It is fun")',
   v_write: 'colour = "blue"\nprint(colour)',
   i_write: 'name = input("What is your name? ")\nprint("Hello " + name)',
@@ -185,7 +187,7 @@ test('review lists what is left; answering the last question shows the finished 
   await page.click('#lock_o_print');
   await expect(page.locator('#done-banner')).toHaveClass(/show/);
   await expect(page.locator('#done-banner')).toContainText('full marks');
-  await expect(page.locator('#score-pill')).toHaveText('Score: 49 / 49 (100%)');
+  await expect(page.locator('#score-pill')).toHaveText('Score: 51 / 51 (100%)');
 });
 
 test('review shows a red row for a code question checked but below full marks', async ({ page }) => {

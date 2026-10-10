@@ -18,8 +18,8 @@ const SEED = 1;
 const ALL = TARGETS.map(t => t.id);
 
 // An assessment with marks lost on o_print (chose option 2), c_join, c_fix and s_boundary:
-// print 4/5, cast_int 3/6, conditions 3/4 → plan: print, cast_int, conditions.
-const FULL = { o_print: 1, o_lines: 1, o_errline: 1, o_errfix: 1, o_fix: 1, o_write: 2, v_trace: 4, v_quotes: 1, v_order: 1, v_write: 2,
+// print 5/6, cast_int 3/6, conditions 3/4 → plan: print, cast_int, conditions.
+const FULL = { o_print: 1, o_lines: 1, o_errline: 1, o_errfix: 1, o_fix: 1, o_copy: 1, o_write: 2, v_trace: 4, v_quotes: 1, v_order: 1, v_change: 1, v_write: 2,
   i_prompt: 1, i_trace: 1, i_store: 1, i_fix: 1, i_write: 2, c_sort: 3, c_join: 1, c_int: 1, c_str: 1, c_fix: 2, c_write: 2,
   s_indented: 1, s_branch: 3, s_equals: 1, s_indent: 1, s_boundary: 1, s_fix: 1, s_write: 2, w_warm: 2, w_make: 6 };
 const ASSESSMENT = { seed: 0, pts: { ...FULL, o_print: 0, c_join: 0, c_fix: 0, s_boundary: 0 },
@@ -52,7 +52,7 @@ test('page shell, and the plan built from the assessment', async ({ page }) => {
   await expectNoClassroomBanner(page);
   await expect(page.locator('.tab')).toHaveCount(6);                // plan + 3 targets + make + more
   await expect(page.locator('#panel-plan .plan-card:not(.make)')).toHaveCount(3);
-  await expect(page.locator('#panel-plan')).toContainText('You got 4 / 5 on questions 1.1, 1.2, 1.5, 1.6');
+  await expect(page.locator('#panel-plan')).toContainText('You got 5 / 6 on questions 1.1, 1.2, 1.5, 1.6, 1.7');
   await expect(page.locator('.tab[data-tab="make"]')).toContainText('🔒');
   await expect(page.locator('#score-pill')).toHaveText('Progress: 0%');
 });
@@ -64,9 +64,26 @@ test('look back shows the student\'s own wrong answer, the right one and why', a
   await expect(lb).toHaveCount(1);                                   // only o_print was lost
   await expect(lb).toContainText('print(Good morning)');            // what they chose
   await expect(lb.locator('.right')).toContainText('print("Good morning")');
-  await expect(page.locator('#step1_print .got-right')).toContainText('1.2 and 1.5');
+  await expect(page.locator('#step1_print .got-right')).toContainText('1.2, 1.5, 1.6 and 1.7');
   await tab(page, 'cast_int');
   await expect(page.locator('#step1_cast_int')).toContainText('apples = input("How many apples? ")');   // their own code
+});
+
+// The class that sat the assessment before its revision: no write-it items, no s_indented, and
+// some questions asked differently. Lost: the self-join trace (2/4) and the old == question.
+test('first sitting: routed on the items they sat; a changed question hides their answer', async ({ page }) => {
+  const NEW = ['o_copy', 'o_write', 'v_change', 'v_write', 'i_write', 'c_write', 's_indented', 's_write'];
+  const pts = Object.fromEntries(Object.entries(FULL).filter(([id]) => !NEW.includes(id)));
+  await openWith(page, { assess: { seed: 0, pts: { ...pts, v_trace: 2, s_equals: 0 }, sel: { s_equals: 1 } }, state: { seed: SEED } });
+  await expect(page.locator('#panel-plan .plan-card:not(.make)')).toHaveCount(2);   // variables, conditions
+  await expect(page.locator('#panel-plan')).toContainText('You got 3 / 5 on questions 2.1, 2.2');
+  await expect(page.locator('#panel-plan')).toContainText('You got 1 / 2 on questions 5.2, 5.4');   // their numbering
+  await expect(page.locator('#panel-plan .sec-table')).toContainText('6 / 7');       // selection was 7 marks then
+  await tab(page, 'conditions');
+  const lb = page.locator('#step1_conditions .lb');
+  await expect(lb).toHaveCount(1);
+  await expect(lb).toContainText('asked this in a slightly different way');
+  await expect(lb.locator('.yours')).toHaveCount(0);
 });
 
 test('no results: the student picks up to 3 targets', async ({ page }) => {
@@ -77,7 +94,7 @@ test('no results: the student picks up to 3 targets', async ({ page }) => {
   await page.click('#pick-start');
   await expect(page.locator('.tab')).toHaveCount(5);
   await expect(page.locator('#panel-print')).toHaveClass(/active/);   // in lesson order
-  await expect(page.locator('#step1_print .lb')).toHaveCount(4);      // every question, with answers
+  await expect(page.locator('#step1_print .lb')).toHaveCount(5);      // every question, with answers
 });
 
 test('steps unlock in order; a sentence must be a real sentence', async ({ page }) => {

@@ -3,7 +3,7 @@ import {
   ITEMS, itemById, itemMax, TARGETS, targetById, CHAIN, targetScores, choosePlan, readSnapshot,
   drawCheckpoint, poolQuestion, cpOptionOrder, markCheckpoint, rightAnswer, applyFor, evalApply,
   writeItemFor, REQ_HINTS, inputPrompts, inputCount, evalMake, MAKE_REQS, MAKE_STRETCH, IDEAS,
-  lessonScore, targetDone, realSentence, questionNumber,
+  lessonScore, targetDone, realSentence, questionNumber, FIRST_SITTING,
 } from './checkers.js';
 
 // A fake runPython result: each input() is echoed as "prompt + answer" on its own line,
@@ -26,8 +26,8 @@ describe('targets', () => {
     for (const it of ITEMS) expect(seen.includes(it.id), it.id).toBe(!it.bonus);
   });
 
-  test('target marks add up to the assessment total (49)', () => {
-    expect(targetScores({}).reduce((s, t) => s + t.max, 0)).toBe(49);
+  test('target marks add up to the assessment total (51)', () => {
+    expect(targetScores({}).reduce((s, t) => s + t.max, 0)).toBe(51);
   });
 
   test('every target has a rule, an example, a pool of at least 2 × CHAIN and (except write) a code task', () => {
@@ -99,7 +99,37 @@ describe('choosePlan', () => {
   });
 
   test('a mark above the maximum is capped', () => {
-    expect(targetScores({ ...full, o_print: 99 }).find(s => s.id === 'print').earned).toBe(5);
+    expect(targetScores({ ...full, o_print: 99 }).find(s => s.id === 'print').earned).toBe(6);
+  });
+});
+
+describe('the first sitting (before the revision)', () => {
+  const firstFull = Object.fromEntries(Object.entries(full).filter(([id]) => !FIRST_SITTING.missing.includes(id)));
+
+  test('only the items they sat count: 38 marks, and every target still has some', () => {
+    const scores = targetScores({}, true);
+    expect(scores.reduce((s, t) => s + t.max, 0)).toBe(38);
+    for (const s of scores) expect(s.max, s.id).toBeGreaterThan(0);
+  });
+
+  test('full marks on the first sitting → nothing to fix (the new items are not counted as lost)', () => {
+    expect(choosePlan(firstFull)).not.toEqual([]);
+    expect(choosePlan(firstFull, 3, true)).toEqual([]);
+  });
+
+  test('routing uses their own weak spots', () => {
+    // Lost the self-join trace (2 of 4) and the old == question: variables 3/5, conditions 1/2.
+    expect(choosePlan({ ...firstFull, v_trace: 2, s_equals: 0 }, 3, true)).toEqual(['variables', 'conditions']);
+  });
+
+  test('question numbers as they saw them (no s_indented, so selection starts at s_branch)', () => {
+    expect(questionNumber('s_branch')).toBe('5.2');
+    expect(questionNumber('s_branch', true)).toBe('5.1');
+    expect(questionNumber('o_fix', true)).toBe('1.5');
+  });
+
+  test('the lists name real items', () => {
+    for (const id of [...FIRST_SITTING.missing, ...FIRST_SITTING.changed]) expect(itemById(id), id).toBeTruthy();
   });
 });
 
@@ -111,6 +141,14 @@ describe('readSnapshot', () => {
 
   test('reads the Drive results payload (old payloads without answers too)', () => {
     expect(readSnapshot({ points: { c_fix: 1 }, sections: {}, pct: 10 }, 'drive')).toMatchObject({ points: { c_fix: 1 }, seed: null, sel: {} });
+  });
+
+  test('spots the first sitting: no item added since was ever touched', () => {
+    expect(readSnapshot({ seed: 5, pts: { o_print: 1 }, locked: { o_print: true } }, 'local').first).toBe(true);
+    expect(readSnapshot({ points: { o_print: 1 } }, 'drive').first).toBe(true);
+    expect(readSnapshot({ seed: 5, pts: { o_print: 1 }, locked: { s_indented: true } }, 'local').first).toBe(false);
+    expect(readSnapshot({ seed: 5, pts: { o_print: 1 }, code: { ed_o_write: 'print()' } }, 'local').first).toBe(false);
+    expect(readSnapshot({ seed: 5, pts: { o_print: 1, c_write: 0 } }, 'local').first).toBe(false);
   });
 
   test('rejects missing or empty data and ignores unknown ids', () => {

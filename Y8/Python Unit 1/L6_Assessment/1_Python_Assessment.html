@@ -157,6 +157,9 @@ color:  teal
   .code-title { font-weight: 700; color: var(--surface); font-size: 1rem; }
   .goal-line { font-size: 0.92rem; margin: 6px 0 4px; color: var(--surface); line-height: 1.5; }
   .test-note { font-size: 0.84rem; color: var(--muted); margin: 6px 0; }
+  .howto { background: var(--gold-bg); border: 1.5px solid var(--gold); border-radius: 8px; padding: 10px 14px; margin: 10px 0; font-size: 0.9rem; line-height: 1.5; }
+  .howto-h { font-weight: 700; color: var(--surface); margin-bottom: 4px; }
+  .howto .listing { margin: 8px 0 2px; }
   .lock-msg { display: none; background: var(--green-bg); border: 1px solid var(--green); color: var(--green-dark); border-radius: 6px; padding: 8px 12px; font-size: 0.86rem; font-weight: 700; margin-top: 8px; }
   .code-locked .lock-msg { display: block; }
 
@@ -215,7 +218,7 @@ color:  teal
     <div class="py-status" id="pyStatus">Python: loading…</div>
   </div>
   <div class="score-row">
-    <div class="score-pill" id="score-pill">Score: 0 / 49 (0%)</div>
+    <div class="score-pill" id="score-pill">Score: 0 / 51 (0%)</div>
     <div class="score-bar-wrap"><div class="score-bar" id="score-bar"></div></div>
     <div class="bonus-pill" id="bonus-pill"></div>
   </div>
@@ -228,7 +231,7 @@ color:  teal
       <li>There are <strong>6 sections</strong>, one for each thing you learned, plus a ★ bonus. Do them in <strong>any order</strong>. The number on each tab shows how many questions you have answered.</li>
       <li><strong>Multiple choice, trace and sort questions: one try only.</strong> When you press <strong>🔒 Lock in</strong> your answer is final, and then you are shown the right answer.</li>
       <li><strong>Code questions:</strong> press <strong>▶ Run code</strong> and <strong>✓ Check</strong> as often as you like. Your best mark is kept. Full marks locks the question.</li>
-      <li>This is a test of what <strong>you</strong> know, so there are no hints and no 💡 Get help. If you get an error, read the <strong>last line</strong> first, then find the line number it gives.</li>
+      <li>If you get an error, read the <strong>last line</strong> first, then find the line number it gives. Still stuck? Press <strong>💡 Get help</strong> to see what the error means.</li>
       <li>Your answers save automatically and go to Google Classroom as you work. When you have finished, open the <strong>✓ Review</strong> tab to check nothing is left.</li>
     </ul>
   </details>
@@ -379,10 +382,11 @@ function renderCodeItem(id) {
   const reqs = v.reqs ? `<p style="font-weight:700;color:var(--surface);margin-top:10px">Your program must (${v.reqs.length > 1 ? '1 mark each' : '1 mark'}):</p>
     <ul class="req-list" id="req_${id}">${v.reqs.map((r, i) => `<li><span class="tick">${i + 1}</span><span>${r.text}</span></li>`).join('')}</ul>` : '';
   const resettable = v.kind === 'fix' || v.resettable;
+  const howto = v.howto ? `<div class="howto"><div class="howto-h">💡 How to do it</div>${v.howto.text}${listing(v.howto.code)}</div>` : '';
   return `<div class="question-card" id="card_${id}">${head(id)}
     <div class="code-title">${esc(v.title)}</div>
     <div class="goal-line">🎯 ${v.goal}</div>
-    ${samples}${reqs}
+    ${samples}${howto}${reqs}
     ${v.testNote || v.note ? `<div class="test-note">${esc(v.testNote || v.note)}</div>` : ''}
     <div class="code-checker">
       <textarea class="checker-textarea" id="ed_${id}" data-title="${esc(v.title)}">${esc(v.starter)}</textarea>
@@ -818,8 +822,8 @@ const anyAnswered = ITEMS.some(it => answered(it.id));
 $('#intro').open = !anyAnswered;
 showTab(Math.min(S.tab, REVIEW));
 
-// Assessment: no error hints, no step-through, no memory view (see the Unit 1 MTP).
-setupEditors('.checker-textarea');
+// 💡 Get help is on (it explains a Python error, not the task). No step-through, no memory view.
+setupEditors('.checker-textarea', { errorHints: true });
 
 preload()
   .then(() => { $('#pyStatus').textContent = 'Python: ready'; $('#pyStatus').classList.add('ready'); })

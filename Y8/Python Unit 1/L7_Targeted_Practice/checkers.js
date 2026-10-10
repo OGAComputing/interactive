@@ -35,6 +35,8 @@ export const FIX_NOTES = {
   i_fix: 'Line 2 used <code>aminal</code>, but the box is called <code>animal</code>. A name must be spelt the same way every time.',
   c_fix: 'input() gives back text, so + joined 5 and 3 into 53. Both answers needed <code>int()</code> before they were added.',
   s_fix: 'The print() under the if had no indent, so Python stopped with an IndentationError. It needed four spaces in front.',
+  o_copy: 'Copy the line exactly: <code>print("Hello, world!")</code> — lower-case print, round brackets, text in double quotes.',
+  v_change: 'Only the text in the quotes on line 1 changes: <code>pet = "dog"</code>. <code>print(pet)</code> then prints the new value.',
   o_write: 'One print() for each line, with the text in quotes: <code>print("I am learning Python")</code> then <code>print("It is fun")</code>',
   v_write: '<code>colour = "blue"</code> makes the box, then <code>print(colour)</code> (no quotes) shows what is in it.',
   i_write: '<code>name = input("What is your name? ")</code> stores the answer, then <code>print("Hello " + name)</code> joins it into the message.',
@@ -47,6 +49,17 @@ export const ASSESS = {
   key: 'oga_y8u1_assess_v1',                                   // its localStorage key
   title: 'Unit 1 Assessment — Python First Steps',            // its Drive results name
 };
+
+// One class sat the assessment before it was revised (38 marks). Their saved data looks the
+// same, so it is spotted by never touching an item added since. They are routed on the items
+// they sat, and for the questions asked differently then, their own answer isn't shown (it
+// would be compared with a question they never saw).
+export const FIRST_SITTING = {
+  missing: ['o_copy', 'o_write', 'v_change', 'v_write', 'i_write', 'c_write', 's_indented', 's_write'],
+  changed: ['v_trace', 'v_quotes', 'i_prompt', 'i_trace', 'c_sort', 'c_int', 's_equals'],
+};
+// The items a student sat: all of them, or the first sitting's.
+export const satItems = (ids, first) => first ? ids.filter(id => !FIRST_SITTING.missing.includes(id)) : ids;
 
 // ── Small helpers ────────────────────────────────────────────────────────────
 
@@ -71,11 +84,11 @@ export function realSentence(text) {
   return words.filter(w => /[aeiouy]/.test(w) && w.length >= 2).length >= 3;
 }
 
-// Question number as the assessment showed it: 1.1, 2.3 …
-export function questionNumber(itemId) {
+// Question number as the assessment showed it: 1.1, 2.3 … (first: the first sitting's numbers)
+export function questionNumber(itemId, first = false) {
   const it = itemById(itemId);
   const sec = SECTIONS.find(s => s.id === it.section);
-  const k = ITEMS.filter(i => i.section === it.section).indexOf(it);
+  const k = satItems(ITEMS.filter(i => i.section === it.section).map(i => i.id), first).indexOf(itemId);
   return sec.bonus ? `★${k + 1}` : `${sec.n}.${k + 1}`;
 }
 
@@ -100,7 +113,7 @@ const NAME_ERR = (line, src, name) =>
 export const TARGETS = [
   // ── Lesson 1 ──────────────────────────────────────────────────────────────
   { id: 'print', short: 'print()', icon: '🖨️', title: 'print() and text', lesson: 'Lesson 1',
-    items: ['o_print', 'o_lines', 'o_fix', 'o_write'],
+    items: ['o_print', 'o_lines', 'o_fix', 'o_copy', 'o_write'],
     pick: 'Writing print() lines exactly right, and what print() on its own does',
     rule: [
       '<code>print</code> is all lower case and needs round brackets: <code>print( )</code>',
@@ -186,7 +199,7 @@ export const TARGETS = [
 
   // ── Lesson 2 ──────────────────────────────────────────────────────────────
   { id: 'variables', short: 'Variables', icon: '📦', title: 'Variables: boxes and new values', lesson: 'Lesson 2',
-    items: ['v_trace', 'v_quotes', 'v_write'],
+    items: ['v_trace', 'v_quotes', 'v_change', 'v_write'],
     pick: 'Tracing what is in each variable, and quotes vs variable names',
     rule: [
       '<code>=</code> stores the value on the right in the box on the left.',
@@ -456,11 +469,12 @@ export const CHAIN = 3;   // checkpoint questions in a row
 
 // ── Routing: which targets each student practises ───────────────────────────
 
-// points: { itemId: marks } from the assessment.
-export function targetScores(points = {}) {
+// points: { itemId: marks } from the assessment. first: they sat the first version.
+export function targetScores(points = {}, first = false) {
   return TARGETS.map((t, order) => {
-    const max = t.items.reduce((s, id) => s + itemMax(itemById(id)), 0);
-    const earned = t.items.reduce((s, id) => s + Math.min(points[id] || 0, itemMax(itemById(id))), 0);
+    const items = satItems(t.items, first);
+    const max = items.reduce((s, id) => s + itemMax(itemById(id)), 0);
+    const earned = items.reduce((s, id) => s + Math.min(points[id] || 0, itemMax(itemById(id))), 0);
     return { id: t.id, order, earned, max, lost: max - earned, ratio: earned / max };
   });
 }
@@ -468,8 +482,8 @@ export function targetScores(points = {}) {
 // The plan: up to `size` targets with marks lost, lowest share first (ties: the earlier
 // lesson, so a student who struggled everywhere starts with the foundations), then shown in
 // lesson order.
-export function choosePlan(points = {}, size = 3) {
-  return targetScores(points)
+export function choosePlan(points = {}, size = 3, first = false) {
+  return targetScores(points, first)
     .filter(s => s.lost > 0)
     .sort((a, b) => a.ratio - b.ratio || a.order - b.order)
     .slice(0, size)
@@ -484,10 +498,13 @@ export function readSnapshot(raw, source) {
   if (!raw || typeof raw !== 'object') return null;
   const points = raw.pts || raw.points;
   if (!points || typeof points !== 'object') return null;
+  const has = (o, k) => !!o && typeof o === 'object' && Object.prototype.hasOwnProperty.call(o, k);
+  const first = !FIRST_SITTING.missing.some(id =>
+    [points, raw.sel, raw.locked, raw.checked].some(o => has(o, id)) || has(raw.code, 'ed_' + id));
   const clean = {};
   for (const it of ITEMS) if (Number.isFinite(points[it.id])) clean[it.id] = Math.max(0, Math.min(points[it.id], itemMax(it)));
   if (!Object.keys(clean).length) return null;
-  return { source, points: clean, seed: Number.isFinite(raw.seed) ? raw.seed : null,
+  return { source, first, points: clean, seed: Number.isFinite(raw.seed) ? raw.seed : null,
            sel: raw.sel || {}, sort: raw.sort || {}, code: raw.code || {}, results: raw.results || {} };
 }
 

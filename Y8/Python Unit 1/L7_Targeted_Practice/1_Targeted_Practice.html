@@ -287,6 +287,7 @@ import {
   markCheckpoint, rightAnswer, applyFor, evalApply, inputPrompts, inputCount, evalMake,
   MAKE_REQS, MAKE_STRETCH, IDEAS, lessonScore, targetDone, realSentence, questionNumber,
   FIX_NOTES, checkTraceValue, checkTraceOutput, showValue, branchChoices, branchAnswer, markSort,
+  FIRST_SITTING, satItems,
 } from './checkers.js';
 import { preload, runPython } from '../../../pyodide-runner.js';
 import { setupEditors, setEditorOutput, refreshEditor, runCode } from '../../../code-editor.js';
@@ -318,6 +319,8 @@ catch (e) { S = fresh(); }
 function save() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(S)); } catch (e) {} }
 
 const targets = () => [...(S.plan || []), ...S.extra];
+const first = () => !!S.snap?.first;                       // sat the assessment before its revision
+const qNum = id => questionNumber(id, first());
 const makeUnlocked = () => S.plan && (S.teacherUnlock || S.plan.every(t => targetDone(S, t)));
 
 // ── Rendering helpers ──────────────────────────────────
@@ -378,16 +381,16 @@ $('#tab-bar').addEventListener('click', e => { const t = e.target.closest('.tab'
 function renderPlan() {
   const p = $('#panel-plan');
   if (!S.plan) { p.innerHTML = renderPicker(); return; }
-  const scores = S.snap ? Object.fromEntries(targetScores(S.snap.points).map(s => [s.id, s])) : {};
+  const scores = S.snap ? Object.fromEntries(targetScores(S.snap.points, first()).map(s => [s.id, s])) : {};
   const secRows = S.snap ? SECTIONS.filter(s => !s.bonus).map(sec => {
-    const ids = ITEMS.filter(i => i.section === sec.id).map(i => i.id);
+    const ids = satItems(ITEMS.filter(i => i.section === sec.id).map(i => i.id), first());
     const max = ids.reduce((t, id) => t + itemMax(itemById(id)), 0);
     const got = ids.reduce((t, id) => t + (S.snap.points[id] || 0), 0);
     return `<tr><td>${sec.n} · ${esc(sec.label)}</td><td><span class="mini-bar"><span style="width:${Math.round(got / max * 100)}%"></span></span>${got} / ${max}</td></tr>`;
   }).join('') : '';
   const card = tid => {
     const t = targetById(tid), s = scores[tid];
-    const why = s ? `You got ${s.earned} / ${s.max} on questions ${t.items.map(questionNumber).sort().join(', ')}` : 'You chose this one';
+    const why = s ? `You got ${s.earned} / ${s.max} on questions ${satItems(t.items, first()).map(qNum).sort().join(', ')}` : 'You chose this one';
     return `<div class="plan-card ${targetDone(S, tid) ? 'done' : ''}"><span class="ico">${t.icon}</span>
       <div><div class="t">${esc(t.title)}</div><div class="s">${esc(t.lesson)} · ${why}</div></div>
       <span class="st">${targetDone(S, tid) ? '✓ Done' : stepsLeft(tid)}</span></div>`;
@@ -482,10 +485,11 @@ function renderLookBack(tid) {
     return `<p class="muted">Here are the assessment questions on this, with the right answers.</p>` +
       t.items.map(id => lookBackItem(id, null)).join('');
   }
-  const lost = t.items.filter(id => (snap.points[id] || 0) < itemMax(itemById(id)));
-  const right = t.items.filter(id => !lost.includes(id));
+  const sat = satItems(t.items, snap.first);
+  const lost = sat.filter(id => (snap.points[id] || 0) < itemMax(itemById(id)));
+  const right = sat.filter(id => !lost.includes(id));
   return (lost.length ? lost.map(id => lookBackItem(id, snap)).join('') : '<p class="got-right">You got every question on this right. This is extra practice.</p>')
-    + (right.length && lost.length ? `<div class="got-right">✓ You got question${right.length > 1 ? 's' : ''} ${right.map(questionNumber).join(' and ')} right.</div>` : '');
+    + (right.length && lost.length ? `<div class="got-right">✓ You got question${right.length > 1 ? 's' : ''} ${right.map(qNum).join(', ').replace(/, ([^,]*)$/, ' and $1')} right.</div>` : '');
 }
 function lookBackItem(id, snap) {
   const item = itemById(id);
@@ -496,8 +500,11 @@ function lookBackItem(id, snap) {
   const status = !snap ? '' : !has ? 'not answered' : `you got ${got} / ${max}`;
   const cls = !snap || !has ? 'unanswered' : got ? 'partial' : '';
   // Without the seed we can't tell which version they saw, so their own answer can't be shown.
-  const knowVersion = !item.variants || snap?.seed != null;
-  const versionNote = snap && !knowVersion ? '<p class="muted" style="font-size:0.82rem">Your version of this question had different values.</p>' : '';
+  // Nor for a question asked differently in the first sitting.
+  const changed = snap?.first && FIRST_SITTING.changed.includes(id);
+  const knowVersion = !changed && (!item.variants || snap?.seed != null);
+  const versionNote = !snap || knowVersion ? ''
+    : `<p class="muted" style="font-size:0.82rem">${changed ? 'Your assessment asked this in a slightly different way. Here is the question now, with the right answer.' : 'Your version of this question had different values.'}</p>`;
   const sel = knowVersion ? snap?.sel?.[id] : undefined;
   let body = '';
 
@@ -545,7 +552,7 @@ function lookBackItem(id, snap) {
       ${v.reqs && Array.isArray(results) ? `<ul class="req-list">${v.reqs.map((r, i) => `<li class="${results[i] ? 'req-pass' : 'req-fail'}"><span class="tick">${results[i] ? '✓' : '✗'}</span><span>${r.text}</span></li>`).join('')}</ul>` : ''}
       <div class="why"><strong>The fix:</strong> ${FIX_NOTES[id] || ''}</div>`;
   }
-  return `<div class="lb ${cls}"><div class="lb-head"><span>Assessment question ${questionNumber(id)}</span><span>${status}</span></div>${versionNote}${body}</div>`;
+  return `<div class="lb ${cls}"><div class="lb-head"><span>Assessment question ${qNum(id)}</span><span>${status}</span></div>${versionNote}${body}</div>`;
 }
 
 // ── Step 3: checkpoint (N in a row; a wrong answer restarts with a new draw) ──
@@ -1000,7 +1007,7 @@ async function boot() {
       try { snap = readSnapshot(await window.Classroom.fetchResults(ASSESS.title), 'drive'); }
       catch (err) { window.ErrorReporter?.report('Reading assessment results', err); }
     }
-    if (snap) { S.snap = snap; S.plan = choosePlan(snap.points); save(); }
+    if (snap) { S.snap = snap; S.plan = choosePlan(snap.points, 3, snap.first); save(); }
   }
   if (S.plan) {
     buildLesson();

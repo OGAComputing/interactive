@@ -49,9 +49,9 @@ describe('question bank', () => {
     }
   });
 
-  test('marks: 49 in the grade, 4 bonus; writing is no more than a quarter', () => {
+  test('marks: 51 in the grade, 4 bonus; writing is no more than a quarter', () => {
     const s = summarise({}, 0);
-    expect(s.max).toBe(49);
+    expect(s.max).toBe(51);
     expect(s.sections.ext.max).toBe(4);
     expect(s.sections.write.max / s.max).toBeLessThanOrEqual(0.25);
   });
@@ -281,6 +281,26 @@ describe('extension: the speed camera', () => {
 });
 
 describe('short write-it tasks (one per lesson section)', () => {
+  test('o_copy: prints Hello, world! exactly', () => {
+    const it = itemById('o_copy');
+    expect(evalCode(it, '', [ok([], ['Hello, world!'])]).pts).toBe(1);
+    expect(evalCode(it, '', [ok([], ['Hello world'])]).pts).toBe(0);
+    expect(evalCode(it, it.starter, [ok([], [])]).pts).toBe(0);
+  });
+
+  test('v_change: prints dog, still through print(pet)', () => {
+    const it = itemById('v_change');
+    expect(evalCode(it, 'pet = "dog"\nprint(pet)', [ok([], ['dog'])]).pts).toBe(1);
+    expect(evalCode(it, 'pet = "cat"\nprint("dog")', [ok([], ['dog'])]).pts).toBe(0);
+    expect(evalCode(it, it.starter, [ok([], ['cat'])]).pts).toBe(0);
+  });
+
+  test('every guided task has a how-to with example code', () => {
+    for (const id of ['o_copy', 'o_write', 'v_change', 'v_write', 'i_write']) {
+      expect(itemById(id).howto.code.length, id).toBeGreaterThan(5);
+    }
+  });
+
   test('o_write: both lines exactly, and nothing else', () => {
     const it = itemById('o_write');
     expect(evalCode(it, '', [ok([], ['I am learning Python', 'It is fun'])]).pts).toBe(2);

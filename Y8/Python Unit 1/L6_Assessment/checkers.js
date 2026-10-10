@@ -4,7 +4,7 @@
 // What the assessment is built on (lessons from the Unit 2 assessment and the units since):
 //   • Weighted toward READING, TRACING and SPOT-AND-FIX, with one short write task preceded
 //     by a trivial warm-up edit, so nobody starts writing from a blank page.
-//   • Every lesson section ends with a small "Write it" task (2 marks): one skill, a starter
+//   • Every lesson section ends with a small "Write it" task: one skill, a starter
 //     line or comment to build on. These are the easy marks for writing code.
 //   • Revised after the first sitting (class mean 37%): the questions under ~40% were made
 //     fairer (no self-joining in the trace, spaces inside the quotes, quotes optional on
@@ -244,7 +244,7 @@ const runFor = (runs, ...inputs) => runs.find(r => r.inputs.join('|') === inputs
 const allOk = runs => runs.length > 0 && runs.every(r => r.ok);
 
 export const ITEMS = [
-  // ── 1 · Output & errors (Lesson 1) ── 7 marks
+  // ── 1 · Output & errors (Lesson 1) ── 8 marks
   { id: 'o_print', section: 'output', kind: 'mcq', pts: 1,
     q: 'Which line prints the message <strong>Good morning</strong>?',
     opts: ['print("Good morning")', 'Print("Good morning")', 'print(Good morning)', 'print "Good morning"'],
@@ -277,9 +277,23 @@ export const ITEMS = [
       { text: 'Print exactly these three lines and nothing else: <code>Welcome to the quiz!</code> then <code>Good luck</code> then <code>Question 1 is coming up</code>',
         test: printsExactly(() => ['Welcome to the quiz!', 'Good luck', 'Question 1 is coming up']) },
     ] },
+  // Guided: the "How to do it" box shows the exact line, to build confidence.
+  { id: 'o_copy', section: 'output', kind: 'reqs', resettable: true,
+    title: 'Write it: your first line',
+    goal: 'Type the line in the box below into the editor, exactly as it is. Then press ▶ Run code and ✓ Check.',
+    howto: { text: 'Copy it letter for letter: <code>print</code> in lower case, round brackets, and the text inside double quotes.',
+             code: 'print("Hello, world!")' },
+    starter: '# Type the line under this comment\n',
+    tests: [[]],
+    reqs: [
+      { text: 'Print exactly <code>Hello, world!</code>',
+        test: printsExactly(() => ['Hello, world!']) },
+    ] },
   { id: 'o_write', section: 'output', kind: 'reqs', resettable: true,
     title: 'Write it: two lines',
     goal: 'Write a program that prints the two lines below, one under the other.',
+    howto: { text: 'Use one <code>print()</code> for each line, with the text inside double quotes. This example prints two different lines:',
+             code: 'print("Good morning")\nprint("Time for school")' },
     samples: [[['I am learning Python'], ['It is fun']]],
     starter: '# Print two lines\n',
     tests: [[]],
@@ -290,7 +304,7 @@ export const ITEMS = [
         test: (raw, runs) => allOk(runs) && printedLines(runs[0]).length === 2 && same(printedLines(runs[0])[1], 'It is fun') },
     ] },
 
-  // ── 2 · Variables (Lesson 2) ── 8 marks
+  // ── 2 · Variables (Lesson 2) ── 9 marks
   // The trace tests that a new value REPLACES the old one, and that a print() that ran earlier
   // used the old value. (Joining a variable onto itself was dropped: 9% in the first sitting.)
   { id: 'v_trace', section: 'variables', kind: 'trace',
@@ -317,9 +331,23 @@ export const ITEMS = [
     code: 'print("Total: " + total)\ntotal = "50"',
     opts: ['A NameError on line 1', 'It prints Total: 50', 'It prints Total: total', 'A SyntaxError on line 2'],
     why: 'Python runs from the top. Line 1 uses total before line 2 has made it, so it is a NameError.' },
+  { id: 'v_change', section: 'variables', kind: 'reqs', resettable: true,
+    title: 'Write it: change the box',
+    goal: 'This program prints <strong>cat</strong>. Change <strong>line 1 only</strong> so that it prints <strong>dog</strong>',
+    howto: { text: 'Change the word inside the quotes on line 1, and keep the quotes. Leave line 2 alone: <code>print(pet)</code> prints whatever is in the box. For example, this changes a box from chips to pizza:',
+             code: 'food = "pizza"\nprint(food)' },
+    starter: 'pet = "cat"\nprint(pet)',
+    tests: [[]],
+    reqs: [
+      { text: 'Print <code>dog</code>, with <code>print(pet)</code> still on line 2',
+        test: (raw, runs) => allOk(runs) && printedLines(runs[0]).length === 1 && same(printedLines(runs[0])[0], 'dog')
+          && /\bprint\s*\(\s*pet\s*\)/.test(normalise(raw)) },
+    ] },
   { id: 'v_write', section: 'variables', kind: 'reqs', resettable: true,
     title: 'Write it: a variable',
     goal: 'Make a variable called <code>colour</code> that holds the text <strong>blue</strong>. Then print what is in the box.',
+    howto: { text: 'Write the name of the box, then <code>=</code>, then the text in quotes. On the next line, put the box name inside <code>print()</code> with <strong>no</strong> quotes. For example:',
+             code: 'animal = "cat"\nprint(animal)' },
     starter: '# Make the variable, then print it\n',
     tests: [[]],
     reqs: [
@@ -361,6 +389,8 @@ export const ITEMS = [
   { id: 'i_write', section: 'input', kind: 'reqs', resettable: true,
     title: 'Write it: say hello',
     goal: 'Ask the user for their name, then say hello to them. Here is a sample run (yellow = typed by the user):',
+    howto: { text: 'Put <code>input()</code> on the right of <code>=</code> so the answer is stored in a box. Then join the box onto your message with <code>+</code>, with a space inside the quotes. For example:',
+             code: 'food = input("What is your favourite food? ")\nprint("I like " + food)' },
     samples: [[['What is your name? ', 'Sam'], ['Hello Sam']]],
     starter: '# Ask their name, then say hello\n',
     tests: [['Sam'], ['Priya']],
