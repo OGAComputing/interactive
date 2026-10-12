@@ -546,6 +546,102 @@ color:  blue
   .btn-map:focus-visible { outline: 2px solid var(--crt); outline-offset: 3px; }
   .btn-map svg { width: 18px; height: 18px; flex-shrink: 0; filter: drop-shadow(0 0 3px rgba(92,255,143,0.6)); }
 
+  /* ── Crew readout (header) — pod lights, a heart-monitor line and a crew count ──
+     Hover, click or Enter opens the crew manifest under it. Colour is never the only
+     signal: every state has its own light shape, and a word on its manifest card.
+       alive = solid square · risk = amber square · critical = blinking amber square
+       dead = hollow square with a cross · you = ring · unknown = dashed outline */
+  .site-header.crew-open { z-index: 50; }   /* lift the open manifest over the progress strip */
+  /* let the chapter line wrap before the objective / crew / map group drops to a second row */
+  .site-header .header-text { flex: 1 1 14rem; min-width: 0; }
+  .crew { position: relative; }
+  .crew-btn {
+    min-height: 44px; padding: 0 0.75rem; display: inline-flex; align-items: center; gap: 0.6rem;
+    background: #020704; color: var(--crt); border: 1px solid var(--crt-faint); border-radius: 6px;
+    font-family: var(--hud-font); font-size: 0.78rem; letter-spacing: 0.1em; text-transform: uppercase;
+    text-shadow: var(--crt-glow); cursor: pointer; transition: background 0.15s, border-color 0.15s;
+  }
+  .crew-btn:hover, .crew-btn[aria-expanded="true"] { background: rgba(92,255,143,0.08); border-color: var(--crt); }
+  .crew-btn:focus-visible { outline: 2px solid var(--crt); outline-offset: 3px; }
+  .crew-label { color: var(--crt-dim); }
+  .crew-count { font-variant-numeric: tabular-nums; font-weight: 700; }
+  .crew-count small { color: var(--crt-dim); font-weight: 400; font-size: inherit; }
+  .crew-btn.warn .crew-count { color: var(--crt-warn); text-shadow: 0 0 4px rgba(255,201,92,0.5); }
+  .crew-btn.loss .crew-count { color: var(--crt-crit); text-shadow: 0 0 4px rgba(255,107,120,0.5); }
+  .crew-pods { display: inline-flex; gap: 4px; align-items: center; }
+  .crew-pod { width: 10px; height: 10px; border-radius: 2px; position: relative; }
+  .crew-pod.alive    { background: var(--crt); box-shadow: 0 0 5px rgba(92,255,143,0.7); }
+  .crew-pod.risk     { background: var(--crt-warn); box-shadow: 0 0 5px rgba(255,201,92,0.6); }
+  .crew-pod.critical { background: var(--crt-warn); box-shadow: 0 0 6px rgba(255,201,92,0.8); animation: crew-blink 1.2s steps(1) infinite; }
+  .crew-pod.dead     { border: 1.5px solid var(--crt-crit); }
+  .crew-pod.dead::before, .crew-pod.dead::after { content: ''; position: absolute; left: 50%; top: -1px; width: 1.5px; height: 10px; background: var(--crt-crit); }
+  .crew-pod.dead::before { transform: translateX(-50%) rotate(45deg); }
+  .crew-pod.dead::after  { transform: translateX(-50%) rotate(-45deg); }
+  .crew-pod.you      { border: 1.5px solid var(--crt); border-radius: 50%; }
+  .crew-pod.unknown  { border: 1.5px dashed var(--crt-faint); }
+  @keyframes crew-blink { 50% { opacity: 0.25; } }
+  .crew-ecg { display: block; width: 72px; height: 22px; }
+
+  .crew-panel {
+    position: absolute; top: calc(100% + 8px); right: 0; z-index: 2; width: min(560px, calc(100vw - 32px));
+    background: radial-gradient(ellipse at 50% 0%, #04170a 0%, var(--crt-bg) 80%);
+    border: 1px solid var(--crt-faint); border-top: 2px solid var(--crt); border-radius: 10px;
+    padding: 0.8rem 0.9rem 0.9rem; box-shadow: 0 18px 50px rgba(0,0,0,0.7);
+    color: var(--crt); font-family: var(--hud-font); text-shadow: none;
+    opacity: 0; transform: translateY(-4px); visibility: hidden; pointer-events: none;
+    transition: opacity 0.18s ease-out, transform 0.18s ease-out, visibility 0s linear 0.18s;
+  }
+  .crew-panel.open { opacity: 1; transform: none; visibility: visible; pointer-events: auto; transition: opacity 0.18s ease-out, transform 0.18s ease-out; }
+  .crew-panel::after {
+    content: ''; position: absolute; inset: 0; pointer-events: none; border-radius: inherit;
+    background: repeating-linear-gradient(0deg, rgba(0,0,0,0.22) 0 1px, transparent 1px 3px);
+  }
+  .crew-panel h2 {
+    font-family: var(--hud-font); font-size: 0.74rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--crt-dim);
+    font-weight: 400; display: flex; justify-content: space-between; gap: 1rem; margin: 0 0 0.65rem;
+  }
+  .crew-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.5rem; }
+  .crew-card { border: 1px solid var(--crt-faint); border-radius: 6px; padding: 0.4rem 0.4rem 0.45rem; background: rgba(2,7,4,0.85); display: flex; flex-direction: column; gap: 0.3rem; min-width: 0; }
+  .crew-card .portrait {
+    position: relative; aspect-ratio: 5 / 6; border-radius: 3px; overflow: hidden; color: var(--crt);
+    background: repeating-linear-gradient(0deg, rgba(92,255,143,0.07) 0 1px, transparent 1px 2px), #021006;
+    border: 1px solid rgba(92,255,143,0.18);
+  }
+  .crew-card .portrait svg { display: block; width: 100%; height: 100%; }
+  .crew-card .tag { font-size: 0.62rem; letter-spacing: 0.08em; color: var(--crt-dim); text-transform: uppercase; line-height: 1.35; }
+  .crew-card .name { font-size: 0.8rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--crt); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .crew-card .status { font-size: 0.66rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--crt); }
+  .crew-card canvas { display: block; width: 100%; height: 22px; }
+  .crew-card.risk, .crew-card.critical { border-color: rgba(255,201,92,0.55); }
+  .crew-card.risk .status, .crew-card.critical .status { color: var(--crt-warn); }
+  .crew-card.critical .portrait::after {
+    content: ''; position: absolute; inset: 0; pointer-events: none;
+    box-shadow: inset 0 0 0 2px rgba(255,201,92,0.6); animation: crew-blink 1.2s steps(1) infinite;
+  }
+  .crew-card.dead { border-color: rgba(255,107,120,0.4); }
+  .crew-card.dead .status { color: var(--crt-crit); }
+  .crew-card.dead .name { color: var(--crt-crit); text-decoration: line-through; text-decoration-thickness: 1px; }
+  .crew-card.dead .portrait svg, .crew-card.unknown .portrait svg { opacity: 0.35; filter: grayscale(1); }
+  /* a "NO SIGNAL" / "NO DATA" bar across the photo */
+  .crew-card.dead .portrait::after, .crew-card.unknown .portrait::after {
+    content: 'NO SIGNAL'; position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%);
+    background: rgba(40,4,8,0.85); color: var(--crt-crit); font-size: 0.6rem; letter-spacing: 0.18em; text-align: center; padding: 3px 0;
+    border-top: 1px solid var(--crt-crit); border-bottom: 1px solid var(--crt-crit);
+  }
+  .crew-card.unknown { border-style: dashed; }
+  .crew-card.unknown .portrait::after { content: 'NO DATA'; background: rgba(2,10,4,0.85); color: var(--crt-dim); border-color: var(--crt-faint); }
+  .crew-card.unknown .name, .crew-card.unknown .status { color: var(--crt-dim); }
+  .crew-note { margin: 0.6rem 0 0; font-size: 0.7rem; color: var(--crt-dim); letter-spacing: 0.04em; line-height: 1.5; }
+  @media (max-width: 640px) {
+    .crew { position: static; }   /* the manifest then spans the header row (.sz-header-right) */
+    .crew-panel { left: 0; right: 0; width: auto; }
+    .crew-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .crew-pod.critical, .crew-card.critical .portrait::after { animation: none; }
+    .crew-panel, .crew-panel.open { transition: none; }
+  }
+
   /* ── Situation report overlay — an 80s green-phosphor terminal ──
      A plain fixed overlay (not <dialog>.showModal()) on purpose: a top-layer
      modal would sit above classroom.js's sign-in overlays (z 99998) and make
@@ -807,6 +903,21 @@ color:  blue
 
   <div class="sz-header-right">
     <div class="sz-objective" id="szObjective"><b>Objective:</b> —</div>
+    <!-- Crew readout: filled in by the story script (STORY.crew); hover/click opens the manifest -->
+    <div class="crew" id="szCrew" hidden>
+      <button class="crew-btn" id="szCrewBtn" type="button" aria-expanded="false" aria-controls="szCrewPanel">
+        <span class="crew-label">Crew</span>
+        <span class="crew-pods" id="szCrewPods" aria-hidden="true"></span>
+        <canvas class="crew-ecg" id="szCrewEcg" aria-hidden="true"></canvas>
+        <span class="crew-count" id="szCrewCount" aria-hidden="true"></span>
+        <span class="sr-only" id="szCrewSr"></span>
+      </button>
+      <div class="crew-panel" id="szCrewPanel" role="region" aria-label="Crew manifest">
+        <h2><span>Crew manifest · bio-monitor</span><span id="szCrewTime"></span></h2>
+        <div class="crew-grid" id="szCrewGrid"></div>
+        <p class="crew-note" id="szCrewNote"></p>
+      </div>
+    </div>
     <button class="btn btn-map" type="button" onclick="window.StationZero?.showMap()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 11h18M9 4v7M15 11v9"/>
@@ -1543,6 +1654,11 @@ color:  blue
      Room ids: cryo, life, sensors, airlock, core, drone, nav, ducts
      Readout level: 'ok' | 'warn' | 'danger'
      Optional per beat: quote: { who, text } (a recovered crew log), cta (button text)
+     Optional: crew(choices, seen) — what the header's crew readout shows. Return null while
+       the crew is unknown (only your own vitals show), or { pod: status } for the pods that
+       differ from the start of the story (Hale dead, everyone else stable). Statuses:
+       'alive' | 'risk' (a choice put them in danger, not settled yet) | 'critical' | 'dead'.
+       seen = the reports already closed, so gate each change on the report that reveals it.
      Optional per beat: variant + variants — a beat that depends on a Station Zero choice
        (one the student made in Modify, stored with StationZero.choose(key, value) and kept
        for the whole unit in localStorage 'sz_choices', and in their Drive when signed in).
@@ -1556,6 +1672,9 @@ color:  blue
     chapter:   'Chapter 1 — Wake Up',
     topic:     'Input refresh',
     objective: 'Get out of the Cryo Bay',
+    // FILL IN Ⓢ — the header crew readout (see crew in the field guide). From Chapter 3 on,
+    // start from Patel's fate after Life Support. This example hides the crew until the pod records (I).
+    crew: (c, seen) => seen.includes('I') ? {} : null,
     beats: {
       intro: {
         headline: 'Chapter 1 — Wake Up',
@@ -1983,13 +2102,203 @@ color:  blue
     });
   });
 
+  // ── Crew readout (header) ──
+  // Pod lights, a heart-monitor line and a crew count. Hover, click or Enter opens the crew
+  // manifest. What each pod shows comes from STORY.crew(choices, seen); it's re-read when a
+  // report closes, so the readout never gets ahead of the story. The roster is shared by every
+  // chapter (like ROOMS), so don't change it per lesson.
+  const CREW = [
+    { pod: 1, name: 'Okafor', role: 'Commander', face: 'okafor' },
+    { pod: 2, name: 'Hale',   role: 'Engineer',  face: 'hale', deadNote: 'Heart stopped, pod opened from inside' },
+    { pod: 3, name: 'Chen',   role: 'Medic',     face: 'chen' },
+    { pod: 4, name: 'You',    role: 'Survivor',  face: 'you' },
+    { pod: 5, name: 'Patel',  role: 'Pilot',     face: 'patel' },
+  ];
+  const CREW_BASE = { 1: 'alive', 2: 'dead', 3: 'alive', 4: 'you', 5: 'alive' };
+  const CREW_WORD = { alive: 'Stable', risk: 'At risk', critical: 'Critical', dead: 'Deceased', you: 'Awake', unknown: 'No data' };
+  const CREW_SAYS = { alive: 'asleep, vitals stable', risk: 'vitals unstable', critical: 'vitals falling, alarm sounding', dead: 'no life signs', you: 'awake', unknown: 'pod records offline' };
+
+  // ID-badge portraits: the same bust with different hair and kit, drawn in phosphor lines.
+  const FACE_LINE = 'fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"';
+  const FACE_FRAME = '<path d="M2 4h6M2 4v6M48 4h-6M48 4v6" stroke="#1f7a40" stroke-width="1"/>';
+  const bust = (hair, extra = '') => '<svg viewBox="0 0 50 60" aria-hidden="true">'
+    + `<path d="M8 60C8 47 15 43 25 43C35 43 42 47 42 60" ${FACE_LINE} fill="rgba(92,255,143,0.08)"/>`
+    + `<path d="M20 39v5M30 39v5" ${FACE_LINE}/>`
+    + `<ellipse cx="25" cy="27" rx="9.5" ry="12" ${FACE_LINE} fill="rgba(92,255,143,0.06)"/>`
+    + `<path d="M21.5 26h2M26.5 26h2M23 33q2 1 4 0" ${FACE_LINE} stroke-width="1.2"/>`
+    + hair + extra + FACE_FRAME + '</svg>';
+  const FACES = {
+    okafor: bust(`<path d="M15.6 24C15.6 15 34.4 15 34.4 24" ${FACE_LINE}/>`, `<path d="M14 52l6-3M36 52l-6-3" ${FACE_LINE} stroke-width="1.2"/>`),
+    hale:   bust(`<path d="M15 22C16 13 34 13 35 22L37 22" ${FACE_LINE}/>`, `<path d="M17 31C18 40 32 40 33 31" ${FACE_LINE} stroke-width="1.2"/>`),
+    chen:   bust(`<path d="M15 33C13 14 37 14 35 33M15.6 22C20 20 28 19 34 23" ${FACE_LINE}/>`),
+    patel:  bust(`<path d="M15.6 23C16 14 34 14 34.4 23M33 18C38 18 39 23 36 25" ${FACE_LINE}/>`,
+                 `<path d="M19 26a2.6 2.6 0 1 0 5.2 0a2.6 2.6 0 1 0-5.2 0M25.8 26a2.6 2.6 0 1 0 5.2 0a2.6 2.6 0 1 0-5.2 0M24.2 26h1.6" ${FACE_LINE} stroke-width="1"/>`),
+    you:    '<svg viewBox="0 0 50 60" aria-hidden="true">'
+            + `<path d="M8 60C8 47 15 43 25 43C35 43 42 47 42 60" ${FACE_LINE} fill="rgba(92,255,143,0.08)"/>`
+            + `<circle cx="25" cy="26" r="13" ${FACE_LINE} stroke-dasharray="3 2.5"/>`
+            + '<text x="25" y="31" text-anchor="middle" font-family="Consolas, monospace" font-size="13" fill="currentColor">?</text>'
+            + FACE_FRAME + '</svg>',
+  };
+
+  // Heart-monitor lines: a sweep that redraws left to right, like a bedside monitor. One
+  // requestAnimationFrame loop drives them all; the manifest's lines only run while it's open.
+  // Reduced motion draws each one as a still trace.
+  const ECG_COLOUR = { alive: '#5cff8f', you: '#3fcf6e', risk: '#ffc95c', critical: '#ffc95c', dead: '#ff6b78', unknown: '#1f7a40' };
+  const ECG_BPM = { alive: 64, you: 96, risk: 104, critical: 132, dead: 0, unknown: 0 };
+  // one heartbeat, t in [0, 1): P wave, QRS spike, T wave
+  function heartbeat(t) {
+    const g = (c, w, a) => a * Math.exp(-((t - c) ** 2) / (2 * w * w));
+    return g(0.12, 0.025, 0.12) - g(0.24, 0.008, 0.12) + g(0.27, 0.01, 1) - g(0.3, 0.01, 0.28) + g(0.5, 0.045, 0.22);
+  }
+  const traces = new Set();
+  function fitCanvas(c) {
+    const dpr = window.devicePixelRatio || 1, r = c.getBoundingClientRect();
+    if (!r.width) return false;
+    const w = Math.round(r.width * dpr), h = Math.round(r.height * dpr);
+    if (c.width !== w || c.height !== h) { c.width = w; c.height = h; }
+    return true;
+  }
+  const ecgY = (st, phase, h) => h * 0.62 - (ECG_BPM[st] ? heartbeat(phase) * (st === 'critical' ? 0.55 : 1) * h * 0.5 : 0);
+  function drawStill(tr) {
+    const c = tr.canvas;
+    if (!fitCanvas(c)) return;
+    const ctx = c.getContext('2d'), w = c.width, h = c.height;
+    ctx.clearRect(0, 0, w, h);
+    ctx.strokeStyle = ECG_COLOUR[tr.st]; ctx.lineWidth = Math.max(1, h / 14); ctx.beginPath();
+    for (let x = 0; x <= w; x++) { const y = ecgY(tr.st, (x / w * 2.2 + 0.55) % 1, h); x ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
+    ctx.stroke();
+  }
+  let ecgLast = 0, ecgRunning = false;
+  function ecgFrame(t) {
+    const dt = Math.min(0.05, (t - ecgLast) / 1000 || 0);
+    ecgLast = t;
+    const dpr = window.devicePixelRatio || 1;
+    let any = false;
+    for (const tr of traces) {
+      if (!tr.on || !tr.canvas.isConnected || !fitCanvas(tr.canvas)) continue;
+      any = true;
+      const ctx = tr.canvas.getContext('2d'), w = tr.canvas.width, h = tr.canvas.height;
+      const step = tr.speed * dpr * dt;
+      const jitter = tr.st === 'critical' ? 0.6 + Math.random() * 0.8 : 1;   // critical: an uneven rhythm
+      tr.phase = (tr.phase + ECG_BPM[tr.st] / 60 * dt * jitter) % 1;
+      const x = tr.x + step, y = ecgY(tr.st, tr.phase, h);
+      ctx.clearRect(tr.x, 0, step + 8 * dpr, h);   // the gap in front of the sweep
+      ctx.strokeStyle = ctx.shadowColor = ECG_COLOUR[tr.st];
+      ctx.lineWidth = Math.max(1, h / 14); ctx.lineCap = 'round'; ctx.shadowBlur = 3 * dpr;
+      ctx.beginPath(); ctx.moveTo(tr.x, tr.y ?? y); ctx.lineTo(x, y); ctx.stroke();
+      tr.x = x; tr.y = y;
+      if (tr.x > w) { tr.x = 0; tr.y = null; }
+    }
+    ecgRunning = any;
+    if (any) requestAnimationFrame(ecgFrame);
+  }
+  function runTrace(tr, on) {
+    tr.on = on;
+    if (!on) return;
+    if (reduceMotion) { drawStill(tr); return; }
+    tr.x = 0; tr.y = null;
+    if (!ecgRunning) { ecgRunning = true; ecgLast = performance.now(); requestAnimationFrame(ecgFrame); }
+  }
+
+  let crewTrace = null, cardTraces = [], crewPinned = false;
+  function crewNow() {
+    const o = typeof STORY.crew === 'function' ? STORY.crew(choices, seen) : {};
+    return CREW.map(m => {
+      let st = o === null ? (m.pod === 4 ? 'you' : 'unknown') : ((o && o[m.pod]) || CREW_BASE[m.pod]);
+      if (!CREW_WORD[st]) st = CREW_BASE[m.pod];
+      return { ...m, st };
+    });
+  }
+  function crewTime() {
+    for (const k of ORDER.filter(k => seen.includes(k)).reverse()) {
+      const b = resolve(STORY.beats[k]);
+      if (b && b.time) return b.time;
+    }
+    return '';
+  }
+  function refreshCrew() {
+    const box = $('szCrew');
+    if (!box) return;
+    box.hidden = false;
+    const crew = crewNow();
+    const unknown = crew.some(m => m.st === 'unknown');
+    const alive = crew.filter(m => m.st !== 'dead').length;
+    const crit = crew.filter(m => m.st === 'critical' || m.st === 'risk').length;
+    const lost = crew.some(m => m.st === 'dead' && m.pod !== 2);   // Hale is dead from the start
+    const btn = $('szCrewBtn');
+    btn.classList.toggle('warn', !unknown && crit > 0);
+    btn.classList.toggle('loss', lost);
+    $('szCrewPods').innerHTML = crew.map(m => `<span class="crew-pod ${m.st}"></span>`).join('');
+    $('szCrewCount').innerHTML = (unknown ? '?' : alive) + '<small>/5</small>';
+    $('szCrewSr').textContent = unknown
+      ? 'Crew: pod records offline. Show crew manifest.'
+      : `Crew: ${alive} of 5 alive${crit ? `, ${crit} in danger` : ''}. Show crew manifest.`;
+
+    // the header line follows the worst-off living crew member (only you, until the records load)
+    const head = unknown ? 'you' : crew.some(m => m.st === 'critical') ? 'critical' : crew.some(m => m.st === 'risk') ? 'risk' : 'alive';
+    if (!crewTrace) { crewTrace = { canvas: $('szCrewEcg'), speed: 34, phase: 0 }; traces.add(crewTrace); }
+    if (crewTrace.st !== head) { crewTrace.st = head; runTrace(crewTrace, true); }
+
+    $('szCrewTime').textContent = crewTime();
+    cardTraces.forEach(tr => traces.delete(tr));
+    $('szCrewGrid').innerHTML = crew.map(m => {
+      const hidden = m.st === 'unknown';
+      const says = m.st === 'dead' && m.deadNote ? m.deadNote.toLowerCase() : CREW_SAYS[m.st];
+      return `<div class="crew-card ${m.st}" role="group" aria-label="${esc(hidden ? `Pod ${m.pod}: no data` : `Pod ${m.pod}, ${m.name}, ${m.role}: ${CREW_WORD[m.st]}, ${says}`)}">`
+        + `<div class="portrait">${FACES[m.face]}</div>`
+        + `<div class="tag">Pod ${m.pod}<br>${hidden ? '—' : esc(m.role)}</div>`
+        + `<div class="name">${hidden ? '———' : esc(m.name)}</div>`
+        + '<canvas aria-hidden="true"></canvas>'
+        + `<div class="status">${CREW_WORD[m.st]}</div></div>`;
+    }).join('');
+    const open = $('szCrewPanel').classList.contains('open');
+    cardTraces = [...$('szCrewGrid').querySelectorAll('canvas')].map((c, i) => {
+      const tr = { canvas: c, speed: 22, phase: Math.random(), st: crew[i].st };
+      traces.add(tr);
+      if (open) runTrace(tr, true);
+      return tr;
+    });
+
+    const notes = crew.map(m =>
+      m.st === 'critical' ? `WARNING: Pod ${m.pod} alarm. ${m.name}’s vitals are falling.`
+      : m.st === 'risk' ? `Pod ${m.pod}: ${m.name}’s vitals are unstable.`
+      : m.st === 'dead' && m.pod !== 2 ? `Pod ${m.pod}: ${m.name}, no life signs.` : '').filter(Boolean);
+    $('szCrewNote').textContent = unknown
+      ? '> Pod records offline. Only your own vitals are on the monitor.'
+      : `> ${notes.length ? notes.join(' ') : 'All sleeping crew stable.'} Crew alive: ${alive} of 5.`;
+  }
+  function setCrewOpen(open) {
+    $('szCrewPanel').classList.toggle('open', open);
+    $('szCrewBtn').setAttribute('aria-expanded', String(open));
+    $('szCrew').closest('.site-header')?.classList.toggle('crew-open', open);
+    cardTraces.forEach(tr => runTrace(tr, open));
+  }
+  document.addEventListener('DOMContentLoaded', () => {
+    const box = $('szCrew'), btn = $('szCrewBtn');
+    if (!box) return;
+    // hover opens it after a moment (so passing the mouse over doesn't flash it); a click pins it open
+    let timer;
+    const canHover = window.matchMedia?.('(hover: hover)').matches;
+    box.addEventListener('mouseenter', () => { if (!canHover) return; clearTimeout(timer); timer = setTimeout(() => setCrewOpen(true), 120); });
+    box.addEventListener('mouseleave', () => { if (!canHover) return; clearTimeout(timer); if (!crewPinned) timer = setTimeout(() => setCrewOpen(false), 250); });
+    btn.addEventListener('click', () => {
+      crewPinned = !crewPinned || !$('szCrewPanel').classList.contains('open');
+      setCrewOpen(crewPinned);
+    });
+    document.addEventListener('click', e => { if (crewPinned && !box.contains(e.target)) { crewPinned = false; setCrewOpen(false); } });
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && !e.defaultPrevented && $('szCrewPanel').classList.contains('open')) { crewPinned = false; setCrewOpen(false); btn.focus(); }
+    });
+    window.addEventListener('resize', () => { if (reduceMotion) traces.forEach(tr => tr.on && drawStill(tr)); });
+  });
+
   // ── Public API (the three hooks) ──
   // A report counts as seen once it's closed, not when it opens, so one that was cut off
   // (a reload, or Classroom's sign-in redirect on a new computer) shows again.
   let showing = null;
   function beat(key, opts = {}) {
     if (seen.includes(key) || showing === key) return;
-    const done = () => { if (!seen.includes(key)) { seen.push(key); save(); } };
+    const done = () => { if (!seen.includes(key)) { seen.push(key); save(); } refreshCrew(); };
     if (storyOff) { done(); opts.onClose?.(); return; }
     showing = key;
     open(key, { ...opts, onClose: () => { showing = null; done(); opts.onClose?.(); } });
@@ -2002,6 +2311,8 @@ color:  blue
     // hold up the first report for more than 4 seconds.
     synced = pull();
     if (window.Classroom?.isAuthenticated) await Promise.race([synced, new Promise(r => setTimeout(r, 4000))]);
+    refreshCrew();
+    synced.then(refreshCrew);   // in case Drive answers after the 4 s
     beat('intro');
   }
 

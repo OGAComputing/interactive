@@ -399,3 +399,40 @@ test('the recap follows both Wake Up calls', async ({ page }) => {
   await openAt(page, {}, { story: true });
   await expect(page.locator('#szPrevFull')).toContainText('with it still inside');
 });
+
+// ─── Crew readout (header) ───────────────────────────────────────────────────
+
+async function openStory(page, path, seen, choices) {
+  await page.addInitScript(([p, s, c]) => {
+    localStorage.setItem('sz_story_' + p, JSON.stringify(s));
+    localStorage.setItem('sz_choices', JSON.stringify(c));
+  }, [path, seen, choices]);
+  await page.goto(path + '?story=off');
+}
+
+test('crew readout: unknown in Wake Up until the pod records, then Patel at risk once the door is opened', async ({ page }) => {
+  const WU = '/Y9/Python/L1_Python_Refresh/1_Wake_Up_PRIMM.html';
+  await openStory(page, WU, ['intro', 'P', 'R'], {});
+  await expect(page.locator('#szCrewCount')).toHaveText('?/5');
+  await openStory(page, WU, ['intro', 'P', 'R', 'I', 'M1'], { door: 'open' });
+  await expect(page.locator('#szCrewCount')).toHaveText('4/5');
+  await expect(page.locator('#szCrewPods .crew-pod').nth(4)).toHaveClass(/risk/);
+});
+
+test('crew readout: hover opens the manifest, Esc closes it, and it follows Patel’s fate', async ({ page }) => {
+  await openStory(page, PATH, ['intro', 'P', 'R', 'I', 'M1', 'M2'], { door: 'open', lock: 'bay', air: 'low', transfer: 'suit' });
+  await expect(page.locator('#szCrewCount')).toHaveText('3/5');
+  await expect(page.locator('#szCrewBtn')).toHaveClass(/loss/);
+  await page.hover('#szCrewBtn');
+  await expect(page.locator('#szCrewPanel')).toHaveClass(/open/);
+  await expect(page.locator('.crew-card').nth(4)).toHaveClass(/dead/);
+  await expect(page.locator('#szCrewNote')).toContainText('Crew alive: 3 of 5');
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#szCrewPanel')).not.toHaveClass(/open/);
+});
+
+test('crew readout: Patel stays stable when the transfer saves Pod 5', async ({ page }) => {
+  await openStory(page, PATH, ['intro', 'P', 'R', 'I', 'M1', 'M2'], { door: 'sealed', lock: 'bay', air: 'low', transfer: 'pod5' });
+  await expect(page.locator('#szCrewCount')).toHaveText('4/5');
+  await expect(page.locator('#szCrewPods .crew-pod').nth(4)).toHaveClass(/alive/);
+});

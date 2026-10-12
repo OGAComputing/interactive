@@ -182,7 +182,7 @@ Everything in the Y8 Unit 1 plan still applies: PRIMM, reading before writing (L
 
 Students make story choices, and how many crew survive the unit depends on them. There is no game over: every path reaches the same cliffhangers, and only the reports along the way differ.
 
-**Crew roster.** There are five crew: Okafor (Pod 1), Hale (Pod 2, already dead), Chen (Pod 3), you (Pod 4) and Patel (Pod 5). The Wake Up pod records introduce them and the first *Crew alive: 4 of 5* readout.
+**Crew roster.** There are five crew: Okafor (Pod 1, Commander), Hale (Pod 2, Engineer, already dead), Chen (Pod 3, Medic), you (Pod 4) and Patel (Pod 5, Pilot). Only Hale's role comes from the story; the other roles were added for the header crew readout (2026-10-12) and can still change. The Wake Up pod records introduce them and the first *Crew alive: 4 of 5* readout. **Header crew readout (built 2026-10-12):** pod lights, a heart-monitor line and a crew count, with a manifest of portraits on hover. It hides the crew until Wake Up's pod records. In Wake Up, Patel shows *at risk* after the door is opened and *critical* if Make then locks the bay. In Life Support, Patel follows `fate()`. Every chapter from L2 on needs a `STORY.crew` that starts from Patel's fate after Life Support.
 
 **Two choices per PRIMM cycle (decided 2026-10-08, user feedback: one per cycle wasn't enough to keep students interested).** Every PRIMM exercise has a pair of choices, and the second one can win back a bad first one:
 

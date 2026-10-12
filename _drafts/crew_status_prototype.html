@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Crew Status Prototype</title>
+<!-- PROTOTYPE ONLY — a crew-remaining readout for the Station Zero header.
+     Not wired to StationZero yet; the controls panel fakes the story state. -->
+<style>
+  :root {
+    color-scheme: dark;
+    --canvas: #0b0e12; --card: #141a20; --card-raised: #1b222a; --line: #26303a; --line-strong: #34404c;
+    --text: #e3e8ec; --muted: #94a3b0;
+    --hud-font: 'Cascadia Code', 'Consolas', 'SFMono-Regular', 'Courier New', monospace;
+    --font-body: 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', Arial, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font-body); background: var(--canvas); color: var(--text); min-height: 100dvh; }
+
+  /* ── Copy of the Station Zero header (from 1_Wake_Up_PRIMM.html) ── */
+  .site-header, .crew-panel {
+    --crt: #5cff8f; --crt-dim: #3fcf6e; --crt-faint: #1f7a40; --crt-bg: #010903;
+    --crt-glow: 0 0 3px rgba(92,255,143,0.55), 0 0 12px rgba(92,255,143,0.2);
+    --crt-warn: #ffc95c; --crt-crit: #ff6b78;
+  }
+  .site-header {
+    position: relative; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
+    padding: 0.85rem 1.5rem;
+    background: radial-gradient(ellipse at 30% 50%, #04170a 0%, var(--crt-bg) 75%);
+    border-bottom: 1px solid var(--crt-faint);
+    color: var(--crt); font-family: var(--hud-font); text-shadow: var(--crt-glow);
+  }
+  .site-header::after {
+    content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 0;
+    background:
+      repeating-linear-gradient(0deg, rgba(0,0,0,0.28) 0 1px, transparent 1px 3px),
+      radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,0.4) 100%);
+  }
+  .site-header > * { position: relative; z-index: 1; }
+  .sz-mark { width: 46px; height: 46px; border-radius: 8px; display: grid; place-items: center; background: #020704; border: 1px solid var(--crt-faint); }
+  .sz-mark svg { width: 28px; height: 28px; filter: drop-shadow(0 0 3px rgba(92,255,143,0.6)); }
+  .header-text h1 { font-size: 1.15rem; text-transform: uppercase; letter-spacing: 0.14em; }
+  .header-text h1::before { content: '> '; color: var(--crt-dim); }
+  .header-text p { font-size: 0.8rem; color: var(--crt-dim); text-transform: uppercase; letter-spacing: 0.1em; margin-top: 0.15rem; }
+  .sz-header-right { margin-left: auto; display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+  .sz-objective {
+    font-size: 0.8rem; letter-spacing: 0.06em; text-transform: uppercase; line-height: 1.45;
+    border: 1px solid var(--crt-faint); border-left: 3px solid var(--crt-warn); border-radius: 6px;
+    padding: 0.5rem 0.75rem; background: #020704; max-width: 24rem;
+  }
+  .sz-objective b { color: var(--crt-warn); margin-right: 0.35rem; }
+  .btn-map {
+    min-height: 44px; padding: 0 1rem; background: transparent; color: var(--crt); border: 1px solid var(--crt-faint);
+    border-radius: 6px; font: inherit; font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.1em; text-shadow: var(--crt-glow); cursor: pointer;
+    display: inline-flex; align-items: center; gap: 0.45rem;
+  }
+  .btn-map svg { width: 18px; height: 18px; }
+
+  /* ════════════════════════════════════════════════════════════════════
+     CREW READOUT — the new bit
+     A button in the header (same height as the map button). Hover, focus+Enter
+     or click opens the crew manifest below it. Colour is never the only signal:
+     every state has its own light shape and a word in the manifest.
+     ════════════════════════════════════════════════════════════════════ */
+  .crew { position: relative; }
+  .crew-btn {
+    min-height: 44px; padding: 0 0.75rem; display: inline-flex; align-items: center; gap: 0.6rem;
+    background: #020704; color: var(--crt); border: 1px solid var(--crt-faint); border-radius: 6px;
+    font: inherit; font-size: 0.78rem; letter-spacing: 0.1em; text-transform: uppercase; text-shadow: var(--crt-glow);
+    cursor: pointer; transition: background 0.15s, border-color 0.15s;
+  }
+  .crew-btn:hover, .crew-btn[aria-expanded="true"] { background: rgba(92,255,143,0.08); border-color: var(--crt); }
+  .crew-btn:focus-visible { outline: 2px solid var(--crt); outline-offset: 3px; }
+  .crew-label { color: var(--crt-dim); }
+  .crew-count { font-variant-numeric: tabular-nums; font-weight: 700; }
+  .crew-count small { color: var(--crt-dim); font-weight: 400; }
+  .crew-btn.warn .crew-count { color: var(--crt-warn); text-shadow: 0 0 4px rgba(255,201,92,0.5); }
+  .crew-btn.loss .crew-count { color: var(--crt-crit); text-shadow: 0 0 4px rgba(255,107,120,0.5); }
+
+  /* pod lights: alive = filled square, critical = filled + blinking, dead = hollow with a cross, you = ring */
+  .pods { display: inline-flex; gap: 4px; align-items: center; }
+  .pod { width: 10px; height: 10px; border-radius: 2px; position: relative; }
+  .pod.alive    { background: var(--crt); box-shadow: 0 0 5px rgba(92,255,143,0.7); }
+  .pod.critical { background: var(--crt-warn); box-shadow: 0 0 6px rgba(255,201,92,0.8); animation: pod-blink 1.2s steps(1) infinite; }
+  .pod.dead     { border: 1.5px solid var(--crt-crit); }
+  .pod.dead::before, .pod.dead::after { content: ''; position: absolute; left: 50%; top: -1px; width: 1.5px; height: 10px; background: var(--crt-crit); }
+  .pod.dead::before { transform: translateX(-50%) rotate(45deg); }
+  .pod.dead::after  { transform: translateX(-50%) rotate(-45deg); }
+  .pod.you      { border: 1.5px solid var(--crt); border-radius: 50%; }
+  @keyframes pod-blink { 50% { opacity: 0.25; } }
+
+  .mini-ecg { display: block; width: 72px; height: 22px; }
+
+  /* variant switches (prototype) */
+  .crew[data-variant="lights"] .mini-ecg { display: none; }
+  .crew[data-variant="ecg"] .pods { display: none; }
+
+  /* ── The manifest panel ── */
+  .crew-panel {
+    position: absolute; top: calc(100% + 8px); right: 0; z-index: 800; width: min(560px, calc(100vw - 32px));
+    background: radial-gradient(ellipse at 50% 0%, #04170a 0%, var(--crt-bg) 80%);
+    border: 1px solid var(--crt-faint); border-top: 2px solid var(--crt); border-radius: 10px;
+    padding: 0.8rem 0.9rem 0.9rem; box-shadow: 0 18px 50px rgba(0,0,0,0.7);
+    color: var(--crt); font-family: var(--hud-font); text-shadow: none;
+    opacity: 0; transform: translateY(-4px); visibility: hidden; pointer-events: none;
+    transition: opacity 0.18s ease-out, transform 0.18s ease-out, visibility 0s linear 0.18s;
+  }
+  .crew-panel.open { opacity: 1; transform: none; visibility: visible; pointer-events: auto; transition: opacity 0.18s ease-out, transform 0.18s ease-out; }
+  .crew-panel::after {
+    content: ''; position: absolute; inset: 0; pointer-events: none; border-radius: inherit;
+    background: repeating-linear-gradient(0deg, rgba(0,0,0,0.22) 0 1px, transparent 1px 3px);
+  }
+  .crew-panel h2 { font-size: 0.74rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--crt-dim); font-weight: 400; display: flex; justify-content: space-between; gap: 1rem; margin-bottom: 0.65rem; }
+  .crew-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.5rem; }
+
+  .crew-card { border: 1px solid var(--crt-faint); border-radius: 6px; padding: 0.4rem 0.4rem 0.45rem; background: rgba(2,7,4,0.85); display: flex; flex-direction: column; gap: 0.3rem; min-width: 0; }
+  .crew-card .portrait { position: relative; aspect-ratio: 5 / 6; border-radius: 3px; overflow: hidden; background: #021006; border: 1px solid rgba(92,255,143,0.18); }
+  .crew-card .portrait svg { display: block; width: 100%; height: 100%; }
+  .crew-card .tag { font-size: 0.62rem; letter-spacing: 0.08em; color: var(--crt-dim); text-transform: uppercase; }
+  .crew-card .name { font-size: 0.8rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--crt); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .crew-card .status { font-size: 0.66rem; letter-spacing: 0.08em; text-transform: uppercase; display: flex; align-items: center; gap: 0.3rem; }
+  .crew-card .ecg { display: block; width: 100%; height: 22px; }
+
+  .crew-card.alive .status    { color: var(--crt); }
+  .crew-card.critical         { border-color: rgba(255,201,92,0.55); }
+  .crew-card.critical .status { color: var(--crt-warn); }
+  .crew-card.dead             { border-color: rgba(255,107,120,0.4); }
+  .crew-card.dead .status     { color: var(--crt-crit); }
+  .crew-card.dead .name       { color: var(--crt-crit); text-decoration: line-through; text-decoration-thickness: 1px; }
+  .crew-card.dead .portrait svg { opacity: 0.35; filter: grayscale(1); }
+  /* dead portrait: a "no signal" bar across the photo */
+  .crew-card.dead .portrait::after {
+    content: 'NO SIGNAL'; position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%);
+    background: rgba(40,4,8,0.85); color: var(--crt-crit); font-size: 0.6rem; letter-spacing: 0.18em; text-align: center; padding: 3px 0;
+    border-top: 1px solid var(--crt-crit); border-bottom: 1px solid var(--crt-crit);
+  }
+  .crew-card.critical .portrait::after {
+    content: ''; position: absolute; inset: 0; pointer-events: none;
+    box-shadow: inset 0 0 0 2px rgba(255,201,92,0.6); animation: pod-blink 1.2s steps(1) infinite;
+  }
+  .crew-card.you .portrait svg { opacity: 0.8; }
+  .crew-note { margin-top: 0.6rem; font-size: 0.7rem; color: var(--crt-dim); letter-spacing: 0.04em; line-height: 1.5; }
+
+  @media (max-width: 640px) {
+    .sz-header-right { margin-left: 0; width: 100%; }
+    .crew-panel { position: fixed; top: auto; left: 16px; right: 16px; width: auto; margin-top: 8px; }
+    .crew-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .pod.critical, .crew-card.critical .portrait::after { animation: none; }
+    .crew-panel, .crew-panel.open { transition: none; }
+  }
+  body.force-reduce .pod.critical, body.force-reduce .crew-card.critical .portrait::after { animation: none; }
+
+  /* ── Fake lesson body + prototype controls ── */
+  main { max-width: 900px; margin: 0 auto; padding: 1.5rem 16px 4rem; }
+  .stub { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 1.2rem 1.4rem; margin-bottom: 1rem; color: var(--muted); font-size: 0.92rem; line-height: 1.6; }
+  .stub h2 { color: #fff; font-size: 1.2rem; margin-bottom: 0.4rem; }
+  .controls { background: #1a1f26; border: 1px dashed var(--line-strong); border-radius: 12px; padding: 1rem 1.2rem; margin-bottom: 1.4rem; }
+  .controls h3 { font-size: 0.78rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.7rem; }
+  .ctl-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin-bottom: 0.6rem; font-size: 0.86rem; }
+  .ctl-row > span { min-width: 9.5rem; color: var(--muted); }
+  .seg { display: inline-flex; border: 1px solid var(--line-strong); border-radius: 8px; overflow: hidden; }
+  .seg button { min-height: 36px; padding: 0 0.8rem; background: transparent; color: var(--text); border: 0; border-right: 1px solid var(--line-strong); font: inherit; font-size: 0.84rem; cursor: pointer; }
+  .seg button:last-child { border-right: 0; }
+  .seg button[aria-pressed="true"] { background: #0f766e; color: #fff; }
+  .seg button:focus-visible { outline: 2px solid #5eead4; outline-offset: -2px; }
+  .controls p { font-size: 0.82rem; color: var(--muted); line-height: 1.55; }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="sz-mark" aria-hidden="true">
+    <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+      <circle cx="16" cy="16" r="10"/><circle cx="16" cy="16" r="3.5"/><path d="M16 2v6M16 24v6M2 16h6M24 16h6"/>
+    </svg>
+  </div>
+  <div class="header-text">
+    <h1>Station Zero</h1>
+    <p>Chapter 2 · Life Support · Year 9</p>
+  </div>
+
+  <div class="sz-header-right">
+    <div class="sz-objective"><b>Objective:</b> Restore the oxygen recycler</div>
+
+    <!-- CREW READOUT -->
+    <div class="crew" id="crew" data-variant="both">
+      <button class="crew-btn" id="crewBtn" type="button" aria-expanded="false" aria-controls="crewPanel">
+        <span class="crew-label">Crew</span>
+        <span class="pods" id="crewPods" aria-hidden="true"></span>
+        <canvas class="mini-ecg" id="miniEcg" aria-hidden="true"></canvas>
+        <span class="crew-count" id="crewCount"></span>
+        <span class="sr-only" id="crewSr" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)"></span>
+      </button>
+      <div class="crew-panel" id="crewPanel" role="region" aria-label="Crew manifest">
+        <h2><span>Crew manifest · bio-monitor</span><span id="crewStamp">04:20</span></h2>
+        <div class="crew-grid" id="crewGrid"></div>
+        <p class="crew-note" id="crewNote"></p>
+      </div>
+    </div>
+
+    <button class="btn-map" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 11h18M9 4v7M15 11v9"/></svg>
+      Station map
+    </button>
+  </div>
+</header>
+
+<main>
+  <section class="controls" aria-label="Prototype controls">
+    <h3>Prototype controls (not part of the design)</h3>
+    <div class="ctl-row"><span>Header readout</span>
+      <div class="seg" data-ctl="variant">
+        <button type="button" data-v="lights">A · Pod lights</button>
+        <button type="button" data-v="ecg">B · Heart monitor</button>
+        <button type="button" data-v="both" aria-pressed="true">C · Both</button>
+      </div>
+    </div>
+    <div class="ctl-row"><span>Patel's outcome</span>
+      <div class="seg" data-ctl="fate">
+        <button type="button" data-v="ok" aria-pressed="true">Safe · 4 of 5</button>
+        <button type="button" data-v="critical">Critical</button>
+        <button type="button" data-v="dead">Dead · 3 of 5</button>
+      </div>
+    </div>
+    <div class="ctl-row"><span>Reduced motion</span>
+      <div class="seg" data-ctl="motion">
+        <button type="button" data-v="on" aria-pressed="true">Animated</button>
+        <button type="button" data-v="off">Reduced</button>
+      </div>
+    </div>
+    <p>Hover over the <b>Crew</b> readout in the header to see the manifest. You can also click it (it stays open until you click away or press Esc), or tab to it and press Enter.</p>
+  </section>
+
+  <section class="stub"><h2>Stage 1 · Predict</h2>Lesson content sits here. This shows how much attention the readout pulls while students work.</section>
+  <section class="stub"><h2>What will this program print?</h2>…</section>
+</main>
+
+<script>
+(() => {
+  /* ── Crew data. In the real build this comes from StationZero.choices() via fate(). ── */
+  const CREW = [
+    { pod: 1, name: 'Okafor', role: 'Commander', face: 'okafor' },
+    { pod: 2, name: 'Hale',   role: 'Engineer',  face: 'hale', status: 'dead', detail: 'Heart 0 · pod opened from inside' },
+    { pod: 3, name: 'Chen',   role: 'Medic',     face: 'chen' },
+    { pod: 4, name: 'You',    role: 'Survivor',  face: 'you', status: 'you' },
+    { pod: 5, name: 'Patel',  role: 'Pilot',     face: 'patel' },
+  ];
+  const FATE = {
+    ok:       { status: 'alive',    detail: 'Asleep · vitals stable' },
+    critical: { status: 'critical', detail: 'Vitals falling · alarm' },
+    dead:     { status: 'dead',     detail: 'Flatline · 04:17' },
+  };
+  const STATUS_WORD = { alive: 'Stable', critical: 'Critical', dead: 'Deceased', you: 'Awake' };
+
+  /* ── Portraits: inline SVG ID-badge busts. Same base, different hair/kit, so nobody is a caricature. ── */
+  const P = 'fill="none" stroke="#5cff8f" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"';
+  const base = (hair, extra = '') => `
+    <svg viewBox="0 0 50 60" aria-hidden="true">
+      <defs><pattern id="scan" width="2" height="2" patternUnits="userSpaceOnUse"><rect width="2" height="1" fill="rgba(92,255,143,0.07)"/></pattern></defs>
+      <rect width="50" height="60" fill="url(#scan)"/>
+      <path d="M8 60 C8 47 15 43 25 43 C35 43 42 47 42 60" ${P} fill="rgba(92,255,143,0.08)"/>
+      <path d="M20 39 L20 44 M30 39 L30 44" ${P}/>
+      <ellipse cx="25" cy="27" rx="9.5" ry="12" ${P} fill="rgba(92,255,143,0.06)"/>
+      <path d="M21.5 26 h2 M26.5 26 h2 M23 33 q2 1 4 0" ${P} stroke-width="1.2"/>
+      ${hair}${extra}
+      <path d="M2 4 h6 M2 4 v6 M48 4 h-6 M48 4 v6" stroke="#1f7a40" stroke-width="1"/>
+    </svg>`;
+  const FACES = {
+    okafor: base('<path d="M15.6 24 C15.6 15 34.4 15 34.4 24" ' + P + '/>', '<path d="M14 52 l6 -3 M36 52 l-6 -3" ' + P + ' stroke-width="1.2"/>'),
+    hale:   base('<path d="M15 22 C16 13 34 13 35 22 L37 22" ' + P + '/>', '<path d="M17 31 C18 40 32 40 33 31" ' + P + ' stroke-width="1.2"/>'),
+    chen:   base('<path d="M15 33 C13 14 37 14 35 33 M15.6 22 C20 20 28 19 34 23" ' + P + '/>'),
+    patel:  base('<path d="M15.6 23 C16 14 34 14 34.4 23 M33 18 C38 18 39 23 36 25" ' + P + '/>', '<path d="M19 26 a2.6 2.6 0 1 0 5.2 0 a2.6 2.6 0 1 0 -5.2 0 M25.8 26 a2.6 2.6 0 1 0 5.2 0 a2.6 2.6 0 1 0 -5.2 0 M24.2 26 h1.6" ' + P + ' stroke-width="1"/>'),
+    you:    `<svg viewBox="0 0 50 60" aria-hidden="true">
+      <path d="M8 60 C8 47 15 43 25 43 C35 43 42 47 42 60" ${P} fill="rgba(92,255,143,0.08)"/>
+      <circle cx="25" cy="26" r="13" ${P} stroke-dasharray="3 2.5"/>
+      <text x="25" y="31" text-anchor="middle" font-family="Consolas, monospace" font-size="13" fill="#5cff8f">?</text>
+      <path d="M2 4 h6 M2 4 v6 M48 4 h-6 M48 4 v6" stroke="#1f7a40" stroke-width="1"/></svg>`,
+  };
+
+  /* ── ECG traces: one requestAnimationFrame loop for every visible canvas ── */
+  const COL = { alive: '#5cff8f', critical: '#ffc95c', dead: '#ff6b78', you: '#3fcf6e' };
+  const RHYTHM = { alive: { bpm: 64, amp: 1 }, you: { bpm: 96, amp: 0.85 }, critical: { bpm: 132, amp: 0.55 }, dead: { bpm: 0, amp: 0 } };
+  // one beat, t in [0,1): P wave, QRS spike, T wave
+  function beat(t) {
+    const g = (c, w, a) => a * Math.exp(-((t - c) ** 2) / (2 * w * w));
+    return g(0.12, 0.025, 0.12) - g(0.24, 0.008, 0.12) + g(0.27, 0.01, 1) - g(0.30, 0.01, 0.28) + g(0.5, 0.045, 0.22);
+  }
+  const traces = new Set();
+  let reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function makeTrace(canvas, getState, pxPerSec) {
+    const tr = { canvas, getState, pxPerSec, x: 0, phase: Math.random(), lastY: null, active: true };
+    traces.add(tr);
+    return tr;
+  }
+  function sizeCanvas(c) {
+    const dpr = window.devicePixelRatio || 1, r = c.getBoundingClientRect();
+    if (!r.width) return false;
+    if (c.width !== Math.round(r.width * dpr)) { c.width = Math.round(r.width * dpr); c.height = Math.round(r.height * dpr); }
+    return true;
+  }
+  function yFor(tr, h) {
+    const { bpm, amp } = RHYTHM[tr.getState()];
+    return h * 0.62 - beat(tr.phase) * amp * h * 0.5;
+  }
+  function drawStatic(tr) {  // reduced motion: a full still trace, so the status still reads
+    const c = tr.canvas; if (!sizeCanvas(c)) return;
+    const ctx = c.getContext('2d'), w = c.width, h = c.height, st = tr.getState();
+    const { bpm } = RHYTHM[st];
+    ctx.clearRect(0, 0, w, h); ctx.strokeStyle = COL[st]; ctx.lineWidth = Math.max(1, h / 14); ctx.beginPath();
+    const beatsAcross = bpm ? 2.2 : 1;
+    for (let x = 0; x <= w; x++) { tr.phase = (x / w * beatsAcross + 0.55) % 1; const y = bpm ? yFor(tr, h) : h * 0.62; x ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
+    ctx.stroke();
+  }
+  let lastT = 0;
+  function frame(t) {
+    const dt = Math.min(0.05, (t - lastT) / 1000 || 0); lastT = t;
+    for (const tr of traces) {
+      if (!tr.active || reduced) continue;
+      const c = tr.canvas; if (!sizeCanvas(c)) continue;
+      const ctx = c.getContext('2d'), w = c.width, h = c.height, st = tr.getState(), dpr = window.devicePixelRatio || 1;
+      const { bpm } = RHYTHM[st];
+      let jitter = st === 'critical' ? 0.6 + Math.random() * 0.8 : 1;   // critical: an uneven rhythm
+      const step = tr.pxPerSec * dpr * dt;
+      tr.phase = (tr.phase + (bpm / 60) * dt * jitter) % 1;
+      const nx = tr.x + step, ny = bpm ? yFor(tr, h) : h * 0.62;
+      ctx.clearRect(tr.x, 0, step + 8 * dpr, h);                       // the sweep's erase gap
+      ctx.strokeStyle = COL[st]; ctx.lineWidth = Math.max(1, h / 14); ctx.lineCap = 'round';
+      ctx.shadowColor = COL[st]; ctx.shadowBlur = 3 * dpr;
+      ctx.beginPath(); ctx.moveTo(tr.x, tr.lastY ?? ny); ctx.lineTo(nx, ny); ctx.stroke();
+      tr.x = nx; tr.lastY = ny;
+      if (tr.x > w) { tr.x = 0; tr.lastY = null; }
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  /* ── Render ── */
+  let fate = 'ok';
+  const crewNow = () => CREW.map(m => m.pod === 5 ? { ...m, ...FATE[fate] } : { ...m, status: m.status || 'alive', detail: m.detail || 'Asleep · vitals stable' });
+  // the header line follows the worst-off living crew member
+  const headerState = () => crewNow().some(m => m.status === 'critical') ? 'critical' : 'alive';
+  const cardTraces = [];
+
+  function render() {
+    const crew = crewNow();
+    const alive = crew.filter(m => m.status !== 'dead').length;
+    const crit = crew.filter(m => m.status === 'critical').length;
+    const btn = document.getElementById('crewBtn');
+    btn.classList.toggle('warn', crit > 0);
+    btn.classList.toggle('loss', fate === 'dead');
+    document.getElementById('crewPods').innerHTML = crew.map(m => `<span class="pod ${m.status}" title="Pod ${m.pod} · ${m.name}"></span>`).join('');
+    document.getElementById('crewCount').innerHTML = `${alive}<small>/5</small>`;
+    document.getElementById('crewSr').textContent =
+      `: ${alive} of 5 alive${crit ? `, ${crit} critical` : ''}. Show crew manifest.`;
+
+    const grid = document.getElementById('crewGrid');
+    cardTraces.forEach(tr => traces.delete(tr)); cardTraces.length = 0;
+    grid.innerHTML = crew.map(m => `
+      <div class="crew-card ${m.status}" role="group" aria-label="Pod ${m.pod}, ${m.name}, ${m.role}: ${STATUS_WORD[m.status]}. ${m.detail}">
+        <div class="portrait">${FACES[m.face]}</div>
+        <div class="tag">Pod ${m.pod}<br>${m.role}</div>
+        <div class="name">${m.name}</div>
+        <canvas class="ecg" aria-hidden="true"></canvas>
+        <div class="status">${STATUS_WORD[m.status]}</div>
+      </div>`).join('');
+    grid.querySelectorAll('canvas.ecg').forEach((c, i) => {
+      const st = crew[i].status;
+      const tr = makeTrace(c, () => st, 22);
+      tr.active = panel.classList.contains('open');   // card lines only run while the panel is open
+      cardTraces.push(tr);
+    });
+    document.getElementById('crewNote').textContent = {
+      ok: '> All sleeping crew stable. Pod 2 opened from inside, 3 days ago.',
+      critical: '> WARNING: Pod 5 alarm. Patel’s vitals are falling.',
+      dead: '> Pod 5: life signs lost at 04:17. Crew alive: 3 of 5.',
+    }[fate];
+    if (reduced) setTimeout(() => traces.forEach(drawStatic));
+  }
+
+  /* ── Open/close: hover (with small delays so it doesn't flicker), click to pin, Esc to close ── */
+  const crewEl = document.getElementById('crew'), panel = document.getElementById('crewPanel'), btn = document.getElementById('crewBtn');
+  let pinned = false, hoverTimer;
+  function setOpen(open) {
+    panel.classList.toggle('open', open);
+    btn.setAttribute('aria-expanded', open);
+    cardTraces.forEach(tr => { tr.active = open; tr.x = 0; tr.lastY = null; });
+    if (open && reduced) setTimeout(() => cardTraces.forEach(drawStatic));
+  }
+  const canHover = matchMedia('(hover: hover)').matches;
+  crewEl.addEventListener('mouseenter', () => { if (!canHover) return; clearTimeout(hoverTimer); hoverTimer = setTimeout(() => setOpen(true), 120); });
+  crewEl.addEventListener('mouseleave', () => { if (!canHover) return; clearTimeout(hoverTimer); if (!pinned) hoverTimer = setTimeout(() => setOpen(false), 250); });
+  btn.addEventListener('click', () => { pinned = !pinned || !panel.classList.contains('open'); setOpen(pinned); });
+  document.addEventListener('click', e => { if (pinned && !crewEl.contains(e.target)) { pinned = false; setOpen(false); } });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && panel.classList.contains('open')) { pinned = false; setOpen(false); btn.focus(); } });
+
+  /* ── Prototype controls ── */
+  const headerTrace = makeTrace(document.getElementById('miniEcg'), headerState, 34);
+  document.querySelectorAll('.seg').forEach(seg => seg.addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    seg.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x === b));
+    const v = b.dataset.v, ctl = seg.dataset.ctl;
+    if (ctl === 'variant') crewEl.dataset.variant = v;
+    if (ctl === 'fate') { fate = v; render(); }
+    if (ctl === 'motion') {
+      reduced = v === 'off'; document.body.classList.toggle('force-reduce', reduced);
+      traces.forEach(tr => { tr.x = 0; tr.lastY = null; tr.canvas.getContext('2d').clearRect(0, 0, tr.canvas.width, tr.canvas.height); });
+      if (reduced) setTimeout(() => traces.forEach(drawStatic));
+    }
+    if (reduced) setTimeout(() => traces.forEach(drawStatic));
+  }));
+
+  render();
+})();
+</script>
+</body>
+</html>

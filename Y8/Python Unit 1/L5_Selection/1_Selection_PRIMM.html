@@ -409,6 +409,14 @@ color:  purple
   .indent-pic pre { font-family: var(--font-mono); font-size: 0.9rem; line-height: 1.6; color: var(--code-text); margin: 0; }
   .indent-pic .sp { color: #ffb020; opacity: 0.85; }
   .indent-pic .new-line { background: rgba(43,217,107,0.18); outline: 1px solid rgba(43,217,107,0.6); border-radius: 3px; }
+  .i2c-progress { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; color: var(--muted); margin: 0.3rem 0 0.2rem; }
+  .i2c-progress span:last-child { margin-left: 6px; }
+  .i2c-dot { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--purple-light); background: transparent; }
+  .i2c-dot.now { background: var(--purple-light); }
+  .i2c-dot.ok  { background: var(--green); border-color: var(--green); }
+  .i2c-wait { font-size: 0.85rem; font-weight: 600; color: var(--purple); background: #f3ecff; border-radius: 6px; padding: 0.4rem 0.7rem; margin: 0.4rem 0; }
+  .i2c-q .indent-pic { margin-top: 0.5rem; }
+  .i2c-q .radio-opt input:disabled + span { cursor: default; }
   .indent-pic .new-tag { color: var(--green); font-family: var(--font-body); font-size: 0.8rem; margin-left: 0.6rem; }
   .ig-callout {
     display: flex; align-items: center; gap: 0.6rem;
@@ -858,9 +866,13 @@ color:  purple
 
     <div class="q-card step-hidden" id="qcard_i2" style="border-left-color:var(--stage-i)">
       <div style="font-size:0.84rem;color:var(--muted);margin-bottom:0.4rem">✍️ Your answer — step 2</div>
-      <label class="q-label">When does <strong>Well done!</strong> appear — and why does <strong>Thanks for playing!</strong> appear <strong>every</strong> time?</label>
-      <textarea id="i2" placeholder="Think about which lines are indented…" oninput="saveState()"></textarea>
-      <button class="btn btn-next" id="btn_check_i2" style="margin-top:10px" onclick="nextStep('I', 2)" disabled>✓ Check answer</button>
+      <!-- Indentation checkpoint chain: I2_CHAIN slots in a row, one on screen at a time.
+           Rendered by renderI2Chain(); a wrong answer explains why, then restarts with a
+           fresh draw. Finishing the chain calls nextStep('I', 2). -->
+      <label class="q-label">What do the <strong>spaces</strong> at the start of a line do? Answer <strong id="i2c_total">4</strong> questions in a row.</label>
+      <div style="font-size:0.8rem;color:var(--muted);margin-bottom:0.4rem">Get one wrong and you'll see why, then start again with new questions.</div>
+      <div id="i2_chain"></div>
+      <button class="btn btn-next" id="btn_check_i2" style="margin-top:10px;display:none" onclick="nextStep('I', 2)" disabled>✓ Check answer</button>
     </div>
 
     <div class="q-card step-hidden" id="qcard_i3" style="border-left-color:var(--stage-i)">
@@ -1287,7 +1299,7 @@ const STEP_COUNT_M1 = 4;   // must equal the number of m1_step_1…m1_step_N div
 
 const TEXT_FIELDS = [
   'r_editor', 'r1',                       // Run stage
-  'i_editor', 'i2',                       // Investigate — i2 is the only free-text step
+  'i_editor',                             // Investigate (step 2 is a question chain, saved as state.i2Chain)
   'm1_editor', 'm2_editor',              // Modify + Make editors
 ];
 const RADIO_GROUPS = ['p_mcq1', 'p_mcq2', 'p_mcq3', 'i1_mcq', 'i3_mcq', 'i4_mcq'];  // Predict + Investigate MCQs
@@ -1346,13 +1358,10 @@ const I_FIELDS = [
   },
 
   // Step 2 — a second line inside the if; the unindented last line always runs.
-  { id:'i2', cardId:'qcard_i2', type:'text', needsNewLine: false, validate(v) {
-    if (v.length < 10)  return 'Answer both parts — when does Well done! appear, and why does Thanks for playing! always appear?';
-    if (isNonsense(v)) return "That doesn't look like a real answer.";
-    const t = v.toLowerCase();
-    if (!/pass|70|80|true|if|indent|inside|tab|space/.test(t))
-      return 'Think about the spaces in front of each line. Which lines are indented under the if — and which line isn\'t indented at all?';
-    return null;
+  // Answered through the indentation question chain (I2_CHAIN, renderI2Chain).
+  { id:'i2', cardId:'qcard_i2', type:'chain', needsNewLine: false, validate() {
+    if (i2Chain.done || iCodeSnapshots[2] !== undefined || skippedSteps.i2) return null;
+    return 'Answer the indenting questions in a row first.';
   }},
 
   // Step 3 — = (store) vs == (compare).
@@ -1491,6 +1500,7 @@ function saveState() {
   state.iStepRan = iStepRan;
   state.iBugProgress = iBugProgress;
   state.iLastRun = iLastRun;
+  state.i2Chain  = i2Chain;
   state.iCodeSnapshots  = iCodeSnapshots;
   state.iCodeDraft      = iCodeDraft;
   state.m1CodeSnapshots = m1CodeSnapshots;
@@ -1560,6 +1570,7 @@ function updateStepVisibility() {
   for (let i = 1; i <= STEP_COUNT_I; i++) {
     renderInvReqs(i, iCodeSnapshots[i] !== undefined ? 'passed' : i === stepI ? 'soft' : 'neutral');
   }
+  if (!i2Busy) renderI2Chain();
   const resetIBtn = document.getElementById('btn_reset_i');
   if (resetIBtn) {
     resetIBtn.disabled = !!iEditor?.readOnly;   // nothing to reset while looking back at a passed step
@@ -1833,6 +1844,7 @@ async function runCodeInEditor(editorId, statusElId, inputs = null) {
   }
 
   if (editorId === 'i_editor') {
+    const iStepRanBefore = !!iStepRan[stepI];
     iStepRan[stepI] = true;
     iLastRun = { code: codeRun, ok: !!result.ok };
     // A Break it followed by a clean run of fixed code = one break/fix cycle.
@@ -1842,6 +1854,7 @@ async function runCodeInEditor(editorId, statusElId, inputs = null) {
     if (checkBtn) checkBtn.disabled = false;
     // Run alone shows progress: ✓ for each change made, ✗ for each still to do — no MCQ needed first.
     if (iCodeSnapshots[stepI] === undefined) renderInvReqs(stepI, 'full');
+    if (stepI === 2 && !i2Busy && !iStepRanBefore) renderI2Chain();   // unlocks the question chain
     saveState();
   }
 
@@ -2287,6 +2300,161 @@ function flashInstruction(n) {
 // Highlights an Investigate MCQ's options and shows its pass/fail message for the
 // chosen radio. Shared by nextStep() and tryCompleteInvestigate() so a wrong
 // answer's red feedback is always replaced once the student answers correctly.
+// ── Investigate step 2: indentation question chain ───────────────────────
+//
+// Many students reach this lesson without really knowing what an indent is, so step 2
+// checks it with a chain of MCQs in a row instead of a free-text answer. Each slot draws one
+// variant at random; the option order is shuffled. The first option in every `opts` list is
+// the right one (the shuffle hides that). A wrong answer explains why, then the student
+// starts again with a fresh draw, which is saved at once so a refresh can't dodge it.
+const C = s => `<code style="background:#ede0ff;padding:0 3px;border-radius:3px">${s}</code>`;
+const DOT4 = '<span class="sp">····</span>';
+const I2_CHAIN = [
+  // 1 — spotting an indent
+  [
+    { q: `An <strong>indented</strong> line has spaces at the start. In your code, which print line is <strong>not</strong> indented?`,
+      opts: [C('print("Thanks for playing!")'), C('print("Well done!")'), C('print("Pass")'), C('print("Fail")')],
+      right: 'Yes — it starts right at the left edge. The other three print lines each have 4 spaces in front.',
+      wrong: 'Look at the start of each line. print("Pass"), print("Well done!") and print("Fail") all have 4 spaces in front. Only print("Thanks for playing!") starts at the left edge.' },
+    { q: `How many spaces are in front of ${C('print("Well done!")')} in your code?`,
+      opts: ['4 spaces', 'No spaces', '1 space', '8 spaces'],
+      right: 'Yes — your Tab put 4 spaces in front, the same as print("Pass") above it.',
+      wrong: 'Your Tab put 4 spaces in front of it, the same as print("Pass") above it. Count the dots in the picture at the top.' },
+  ],
+  // 2 — what the runs printed
+  [
+    { q: `When you typed <strong>80</strong>, what did the program print?`,
+      opts: ['Pass, Well done!, Thanks for playing!', 'Pass, Thanks for playing!', 'Pass, Well done!, Fail', 'Well done!, Thanks for playing!'],
+      right: 'Yes — 80 >= 70 is True, so BOTH lines indented under the if run. Then the last line runs.',
+      wrong: '80 >= 70 is True, so Python runs every line indented under the if: Pass AND Well done!. Then it runs the last line, which has no indent.' },
+    { q: `When you typed <strong>40</strong>, what did the program print?`,
+      opts: ['Fail, Thanks for playing!', 'Fail, Well done!, Thanks for playing!', 'Pass, Well done!, Thanks for playing!', 'Fail, Well done!'],
+      right: 'Yes — 40 >= 70 is False, so Python skips both lines indented under the if and runs the else line instead.',
+      wrong: '40 >= 70 is False, so Python skips EVERY line indented under the if (Pass and Well done!). It runs the line under the else, then the last line.' },
+  ],
+  // 3 — an indented line belongs to the if above it
+  [
+    { q: `Why did <strong>Well done!</strong> NOT appear when you typed 40?`,
+      opts: ['It is indented under the if, and 40 >= 70 is False', 'An if can only run one line, so Python skipped it', 'It has no spaces in front, so Python ignored it', 'Python only prints Well done! if you type 80'],
+      right: 'Yes — the 4 spaces put it inside the if. When the if is False, Python skips everything inside it.',
+      wrong: 'The 4 spaces in front put Well done! INSIDE the if, with Pass. 40 >= 70 is False, so Python skips every line inside the if.' },
+    { q: `Your new line ${C('print("Well done!")')} is indented under the ${C('if')}. When does it run?`,
+      opts: ['Only when score >= 70 is True', 'Every time the program runs', 'Only when score >= 70 is False', 'Only when the else runs too'],
+      right: 'Yes — it is indented under the if, so it belongs to the if. It runs only when the if is True.',
+      wrong: 'It is indented under the if, so it belongs to the if, just like print("Pass"). It runs only when score >= 70 is True.' },
+  ],
+  // 4 — an unindented line is outside the if/else
+  [
+    { q: `Why does <strong>Thanks for playing!</strong> appear <strong>every</strong> time?`,
+      opts: ['It has no indent, so it is not inside the if or else', 'It is the last line, and Python always runs last lines', 'It is indented inside the else, which always runs', 'Python runs every print() line, whatever the score'],
+      right: 'Yes — no spaces in front means it is outside the if/else, so it runs whatever the score.',
+      wrong: 'Look at the spaces: print("Thanks for playing!") has none. That puts it outside the if and the else, so it runs every time, whichever path was taken.' },
+    { q: `Look at this new program. <code>age</code> is <strong>10</strong>. What does it print?<div class="indent-pic"><pre><span class="kw">if</span> age &gt;= <span class="num">13</span>:\n${DOT4}<span class="fn">print</span>(<span class="st">"Welcome"</span>)\n${DOT4}<span class="fn">print</span>(<span class="st">"Enjoy!"</span>)\n<span class="fn">print</span>(<span class="st">"Bye"</span>)</pre></div>`,
+      opts: ['Bye', 'Welcome, Enjoy!, Bye', 'Enjoy!, Bye', 'Nothing at all'],
+      right: 'Yes — 10 >= 13 is False, so Python skips BOTH indented lines. print("Bye") has no indent, so it always runs.',
+      wrong: '10 >= 13 is False, so Python skips both indented lines (Welcome and Enjoy!). print("Bye") has no indent, so it is outside the if and always runs.' },
+    { q: `What do the spaces at the <strong>start</strong> of a line tell Python?`,
+      opts: ['Which if or else the line belongs to', 'How important the line is', 'Nothing — they just make it neat', 'Which line it should run first'],
+      right: 'Yes — indented lines belong to the if or else above them. No indent means the line is outside them.',
+      wrong: 'The spaces matter to Python: an indented line belongs to the if or else above it, and a line with no indent is outside them both.' },
+  ],
+];
+
+function shuffled(n) {
+  const a = [...Array(n).keys()];
+  for (let i = n - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+  return a;
+}
+function newI2Draw() {
+  return {
+    pick:  I2_CHAIN.map(slot => Math.floor(Math.random() * slot.length)),
+    order: I2_CHAIN.map(() => shuffled(4)),
+    q: 0, done: false,
+  };
+}
+let i2Chain = state.i2Chain && Array.isArray(state.i2Chain.pick) && state.i2Chain.pick.length === I2_CHAIN.length
+  ? state.i2Chain : newI2Draw();
+let i2Busy = false;   // between an answer and the next question appearing
+
+function i2Item(slot) { return I2_CHAIN[slot][i2Chain.pick[slot]] || I2_CHAIN[slot][0]; }
+
+function renderI2Chain() {
+  const box = document.getElementById('i2_chain');
+  if (!box) return;
+  const total = I2_CHAIN.length;
+  const tot = document.getElementById('i2c_total');
+  if (tot) tot.textContent = total;
+  const passed = i2Chain.done || iCodeSnapshots[2] !== undefined;
+  const checkBtn = document.getElementById('btn_check_i2');
+  // The button only matters if the chain is done but the step hasn't moved on (e.g. the
+  // code was changed in between, so nextStep's code gate stopped it).
+  if (checkBtn) checkBtn.style.display = i2Chain.done && iCodeSnapshots[2] === undefined ? '' : 'none';
+
+  const slots = passed ? [...Array(total).keys()] : [i2Chain.q];
+  const dots = [...Array(total).keys()].map(i =>
+    `<span class="i2c-dot${passed || i < i2Chain.q ? ' ok' : i === i2Chain.q ? ' now' : ''}"></span>`).join('');
+  const ran = !!iStepRan[2];
+  box.innerHTML = (passed ? '' : `<div class="i2c-progress">${dots}<span>Question ${i2Chain.q + 1} of ${total}</span></div>`)
+    + (!passed && !ran ? `<div class="i2c-wait">▶ Run your code first (type 80, then 40) — then answer.</div>` : '')
+    + slots.map(slot => {
+      const it = i2Item(slot);
+      const opts = i2Chain.order[slot].map(o => `
+        <label class="radio-opt${passed && o === 0 ? ' correct' : ''}"><input type="radio" name="i2c_${slot}" value="${o}"
+          ${passed && o === 0 ? 'checked' : ''} ${passed || !ran ? 'disabled' : ''} onchange="answerI2(${slot}, ${o})"> <span>${it.opts[o]}</span></label>`).join('');
+      return `<div class="i2c-q" data-slot="${slot}">
+        <div class="q-label" style="margin-top:0.6rem">${passed ? (slot + 1) + '. ' : ''}${it.q}</div>
+        <div class="radio-opts" style="margin-top:0.4rem">${opts}</div>
+        <div class="mcq-fb" id="fb_i2c_${slot}"></div>
+      </div>`;
+    }).join('');
+}
+
+function answerI2(slot, opt) {
+  if (i2Busy || slot !== i2Chain.q || i2Chain.done) return;
+  const card = document.getElementById('qcard_i2');
+  const radios = document.querySelectorAll(`input[name="i2c_${slot}"]`);
+  // The questions are about the student's own code and runs, so the code must be in place.
+  if (!invGate(2, card)) { radios.forEach(r => { r.checked = false; }); return; }
+  card?.classList.remove('error');
+  fieldHint(card, '');
+  const it = i2Item(slot);
+  const ok = opt === 0;
+  radios.forEach(r => {
+    r.disabled = true;
+    const lab = r.closest('.radio-opt');
+    if (+r.value === 0 && ok) lab.classList.add('correct');
+    else if (+r.value === opt && !ok) lab.classList.add('wrong');
+  });
+  const fb = document.getElementById('fb_i2c_' + slot);
+  if (fb) { fb.className = 'mcq-fb ' + (ok ? 'pass' : 'fail'); fb.textContent = (ok ? '✔ ' : '✘ ') + (ok ? it.right : it.wrong); }
+
+  if (!ok) {
+    // Restart now (and save it), but leave the explanation up until they choose to go on.
+    i2Chain = newI2Draw();
+    recordIAttempt(2);
+    card?.classList.add('error');
+    const again = document.createElement('button');
+    again.className = 'btn btn-reset';
+    again.type = 'button';
+    again.style.marginTop = '8px';
+    again.textContent = '↺ Start the questions again';
+    again.onclick = () => { card?.classList.remove('error'); renderI2Chain(); };
+    fb?.after(again);
+    return;
+  }
+  if (slot + 1 >= I2_CHAIN.length) {
+    i2Chain.done = true;
+    saveState();
+    nextStep('I', 2);   // keeps this feedback up while it moves on
+    if (iCodeSnapshots[2] === undefined) renderI2Chain();   // stopped by the code gate — show Check answer
+    return;
+  }
+  i2Busy = true;
+  i2Chain.q = slot + 1;
+  saveState();
+  setTimeout(() => { i2Busy = false; renderI2Chain(); }, AUTO_ADVANCE_MS);
+}
+
 function showInvestigateMCQFeedback(field, chosen) {
   const ok = chosen.value === field.correctValue;
   document.querySelectorAll(`input[name="${field.radioName}"]`).forEach(r => {
@@ -2695,7 +2863,7 @@ Object.assign(window, {
   checkMake, checkExt,
   runCodeInEditor, resetInvestigateEditor, insertNewLine, breakItDemo,
   skipStep, goBack, goForward,
-  openSkipGate, closeSkipGate, confirmSkip, resetModifyEditor, refreshInvTicks,
+  openSkipGate, closeSkipGate, confirmSkip, resetModifyEditor, refreshInvTicks, answerI2,
 });
 
 // ── Init ──────────────────────────────────────────────

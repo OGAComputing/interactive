@@ -128,6 +128,30 @@ test('Investigate step 2: live red cross + coach for a flat line, real Tab key t
   await expect(coach).toHaveClass(/done/);
 });
 
+test('Investigate step 2: indentation questions in a row — a wrong answer restarts, all right moves on', async ({ page }) => {
+  const STEP2_CODE = STARTER.replace('50', '70').replace('    print("Pass")', '    print("Pass")\n    print("Well done!")');
+  const order = [[0, 1, 2, 3], [0, 1, 2, 3], [0, 1, 2, 3], [0, 1, 2, 3]];
+  await openAt(page, {
+    currentStage: 'I', completedStages: ['P', 'R'], stepI: 2, maxStepI: 2,
+    iCodeSnapshots: { 1: STARTER.replace('50', '70') }, i_editor: STEP2_CODE, iStepRan: { 2: true },
+    i2Chain: { pick: [0, 0, 0, 0], order, q: 0, done: false },   // option 0 is always the right one
+  });
+  const chain = page.locator('#i2_chain');
+  await expect(chain).toContainText('Question 1 of 4');
+
+  await chain.locator('input[name="i2c_0"][value="1"]').check();     // wrong
+  await expect(page.locator('#fb_i2c_0')).toHaveClass(/fail/);
+  await chain.locator('button:has-text("Start the questions again")').click();
+  await expect(chain).toContainText('Question 1 of 4');
+
+  // the restart is a fresh random draw, so read it back and answer option 0 each time
+  for (let slot = 0; slot < 4; slot++) {
+    await chain.locator(`input[name="i2c_${slot}"][value="0"]`).check();
+    await expect(page.locator(`#fb_i2c_${slot}`)).toHaveClass(/pass/);
+  }
+  await expect(page.locator('#qcard_i3_prompt')).toBeVisible({ timeout: 10000 });
+});
+
 test('help card: "invalid syntax" on an else line is explained as indentation', async ({ page }) => {
   const flat = STARTER.replace('    print("Pass")\n', '    print("Pass")\nprint("Well done!")\n');
   await openAt(page, { currentStage: 'I', completedStages: ['P', 'R'], stepI: 2, maxStepI: 2, i_editor: flat });
