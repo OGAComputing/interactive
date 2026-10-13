@@ -219,6 +219,18 @@ describe('Make — crew locator', () => {
     const src = code(MAKE_GOOD[0], MAKE_GOOD[1], 'print(name + " was last seen in " + room)');
     expect(evalMake(src, out('Crew member: Ash', 'Last seen in: Navigation', 'Ash was last seen in Navigation', 'LOCK: POD 5 SHIELD'), 'pod5').pass).toBe(true);
   });
+  test('typing the answers into a print string instead of using the variables fails', () => {
+    const src = code('name = input("What is your name?")', 'room = input("What room are you in?")',
+      'print("Last seen in: " + room)', 'print("Crew member: Ash Last seen in: Navigation")', 'print("LOCK: CRYO BAY DOOR")');
+    const o = out('What is your name?Ash', 'What room are you in?Navigation', 'Last seen in: Navigation', 'Crew member: Ash Last seen in: Navigation', 'LOCK: CRYO BAY DOOR');
+    const r = evalMake(src, o, 'bay');
+    expect(r.results[3]).toBe(false);
+    expect(r.pass).toBe(false);
+  });
+  test('variable names do not matter', () => {
+    const src = code('who = input("Who? ")', 'where = input("Where? ")', 'print(who + " was in " + where)', 'print("LOCK: CRYO BAY DOOR")');
+    expect(evalMake(src, out('Who? Ash', 'Where? Navigation', 'Ash was in Navigation', 'LOCK: CRYO BAY DOOR'), 'bay').pass).toBe(true);
+  });
   test('printing only one of the answers fails the last bullet', () => {
     const src = code(MAKE_GOOD[0], MAKE_GOOD[1], 'print("Crew member: " + name)', 'print("Report done")');
     expect(evalMake(src, out('Crew member: Ash', 'Last seen in: Navigation', 'Crew member: Ash', 'Report done')).results[3]).toBe(false);

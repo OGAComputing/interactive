@@ -65,6 +65,12 @@ const joinsAnswer = raw => {
   return printArgs(raw).some(a => /\+/.test(a) && /""|''/.test(a) && vars.some(v => word(v).test(a)));
 };
 
+// At least n different input variables each appear inside some print().
+const printsVars = (raw, n) => {
+  const args = printArgs(raw);
+  return inputVars(raw).filter(v => args.some(a => word(v).test(a))).length >= n;
+};
+
 // choice = the student's Station Zero choice (Modify 1 and Make); hints and passMsg may be functions of it.
 function evalReqs(check, raw, output, choice) {
   const results = check.reqs.map(r => !!r.test(raw, output, choice));
@@ -274,9 +280,10 @@ export const MAKE_CHECK = {
       test: raw => joinsAnswer(raw),
     },
     {
-      // Both answers printed by the program itself — on one line or on separate lines.
-      hint: '❌ Your report should print both the name and the room — tested with Ash (name) and Navigation (room).',
-      test: (raw, out) => MAKE_INPUTS.slice(0, 2).every(a => printedAnswer(out, a)),
+      // Both answers printed by the program itself — on one line or on separate lines —
+      // and through the VARIABLES (any names), so typing "Ash" into a print string fails.
+      hint: '❌ Your report should print both the name and the room using your two variables, not typed-in words — tested with Ash (name) and Navigation (room).',
+      test: (raw, out) => printsVars(raw, 2) && MAKE_INPUTS.slice(0, 2).every(a => printedAnswer(out, a)),
     },
     {
       hint: choice => LOCK_CHOICES[choice]

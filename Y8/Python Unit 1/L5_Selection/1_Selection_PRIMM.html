@@ -1710,19 +1710,45 @@ function scrollToActive(id) {
   document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-// ── Score  P=5 R=5 I=5, each mod=10, Make=25, Ext=20 → max 100 ──
+// ── Score  P=5 R=5 I=5, Modify=40, Make=25 (part marks per requirement), Ext=20 → max 100 ──
+
+// Predict, Investigate and Modify are split evenly across their steps, so every step
+// a student finishes raises the grade (Investigate 2 is worth more than Investigate 1).
+// Steps finished in a one-step-at-a-time stage (Predict, Investigate): every step
+// before the frontier, or all of them once the stage is complete. Steps a teacher
+// skipped earn nothing, as with Modify.
+function stepsDone(stage, maxStep, total) {
+  let n = 0;
+  for (let i = 1; i <= total; i++) {
+    const reached = completedStages.includes(stage) || i < maxStep;
+    if (reached && !(stage === 'I' && skippedSteps['i' + i])) n++;
+  }
+  return n;
+}
+
+// Make earns part of its 25 marks for each requirement met by a program that runs
+// without errors. The best share is kept, so later edits never lower the grade, and
+// it stays short of full marks until the whole check passes.
+function recordMakeProgress(results) {
+  if (!results?.length) return;
+  const met   = Math.min(results.filter(Boolean).length, results.length - 1);
+  const share = met / results.length;
+  if (share <= (passedChecks['m2_make_share'] || 0)) return;
+  passedChecks['m2_make_share'] = share;
+  saveState(); submitScore();
+}
 
 function calcScore() {
   let s = 0;
-  if (completedStages.includes('P')) s += 5;
+  s += 5 * stepsDone('P', maxPredictStep, PREDICT_TOTAL) / PREDICT_TOTAL;
   if (completedStages.includes('R')) s += 5;
-  if (completedStages.includes('I')) s += 5;
+  s += 5 * stepsDone('I', maxStepI, STEP_COUNT_I) / STEP_COUNT_I;
   for (let i = 1; i <= STEP_COUNT_M1; i++) {
-    if (passedChecks['m1_code' + i]) s += 10;
+    if (passedChecks['m1_code' + i]) s += 40 / STEP_COUNT_M1;
   }
-  if (passedChecks['m2_make']) s += 25;
+  s += passedChecks['m2_make'] ? 25 : 25 * (passedChecks['m2_make_share'] || 0);
   if (passedChecks['m2_ext'])  s += 20;
-  return Math.min(100, s);
+  return Math.min(100, Math.round(s));
 }
 
 function submitScore() {
@@ -2189,6 +2215,7 @@ function checkPredictMCQ(name) {
   document.getElementById('btn_check_' + name)?.classList.add('step-hidden');
   maxPredictStep = Math.max(maxPredictStep, predictStep + 1);  // unlock Forward immediately
   saveState();
+  submitScore();
   if (document.querySelector(`input[name="${name}"]:checked`)?.value === P_CORRECT[name])
     setTimeout(advancePredict, AUTO_ADVANCE_MS);
   else
@@ -2228,6 +2255,7 @@ function checkPredictText() {
   document.getElementById('btn_check_p_text1')?.classList.add('step-hidden');
   maxPredictStep = Math.max(maxPredictStep, predictStep + 1);
   saveState();
+  submitScore();
   if (ok) setTimeout(advancePredict, AUTO_ADVANCE_MS);
   else showPredictContinue(card);
 }
@@ -2522,6 +2550,7 @@ function nextStep(stage, n) {
     card.classList.remove('is-right');
     stepI = n + 1;
     maxStepI = Math.max(maxStepI, stepI);
+    submitScore();
     const nextField = I_FIELDS[stepI - 1];
     updateStepVisibility();
     saveState();
@@ -2688,6 +2717,7 @@ async function checkMake() {
   }
   const structural = evalMake(raw, run.outputs);
   renderReqResults(reqListEl, structural.results);
+  recordMakeProgress(structural.results);
   if (!structural.pass) {
     fbEl.className = 'feedback fail'; fbEl.textContent = structural.msg; return;
   }

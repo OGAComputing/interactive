@@ -436,3 +436,15 @@ test('crew readout: Patel stays stable when the transfer saves Pod 5', async ({ 
   await expect(page.locator('#szCrewCount')).toHaveText('4/5');
   await expect(page.locator('#szCrewPods .crew-pod').nth(4)).toHaveClass(/alive/);
 });
+
+test('crew readout: Hale is dead until the cliffhanger, then his tag is active and not human (and not counted alive)', async ({ page }) => {
+  await openStory(page, PATH, ['intro', 'P', 'R', 'I', 'M1'], {});
+  await expect(page.locator('#szCrewPods .crew-pod').nth(1)).toHaveClass(/dead/);
+  await openStory(page, PATH, ['intro', 'P', 'R', 'I', 'M1', 'M2'], {});
+  await expect(page.locator('#szCrewPods .crew-pod').nth(1)).toHaveClass(/compromised/);
+  await expect(page.locator('#szCrewCount')).toHaveText('4/5');
+  await page.click('#szCrewBtn');
+  await expect(page.locator('.crew-card').nth(1)).toHaveClass(/compromised/);
+  await expect(page.locator('.crew-card').nth(1).locator('.status')).toHaveText('Tag active');
+  await expect(page.locator('#szCrewNote')).toContainText('Bio-scan: not human');
+});

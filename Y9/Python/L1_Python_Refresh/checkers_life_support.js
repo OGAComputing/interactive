@@ -84,8 +84,14 @@ const printedAny = (output, values) => { const t = outTokens(output); return val
 const sentenceWith = (output, values) =>
   (output || '').split('\n').some(l => /[A-Za-z]{2,}/.test(l) && printedAny(l, values));
 
-// A print() that joins its own text to a number with + and str().
-const joinsWithStr = raw => printArgs(raw).some(a => /\bstr\s*\(/.test(a) && /\+/.test(a) && /""|''/.test(a));
+// A print() that joins its own text to a number with + and str() — and the str() holds one of
+// the student's number VARIABLES (any name), so str(1080) with the answer typed in fails.
+const strOfNumberVar = (a, nv) =>
+  [...a.matchAll(/\bstr\s*\(([^()]*)\)/g)].some(m => nv.some(v => word(v).test(m[1])));
+const joinsWithStr = raw => {
+  const nv = numberVars(raw);
+  return printArgs(raw).some(a => strOfNumberVar(a, nv) && /\+/.test(a) && /""|''/.test(a));
+};
 
 // choice = the student's Station Zero choice in Modify (the oxygen rate); hints and passMsg
 // may be functions of it.
@@ -319,7 +325,7 @@ export const MAKE_CHECK = {
       },
     },
     {
-      hint: '❌ Print a sentence that joins your words to a number with + and str() — e.g. print("Oxygen lasts " + str(hours) + " hours")',
+      hint: '❌ Print a sentence that joins your words to one of your number variables with + and str() — not a number typed in — e.g. print("Oxygen lasts " + str(hours) + " hours")',
       test: raw => joinsWithStr(raw),
     },
     {

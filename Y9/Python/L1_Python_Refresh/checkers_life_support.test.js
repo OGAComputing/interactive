@@ -157,6 +157,10 @@ describe('Modify 4 — sentence with str()', () => {
     const src = code(...base, 'print("Crew: " + str(crew))');
     expect(evalMod('mod4', src, out(...ECHO3, 'Crew: 3')).results).toEqual([true, false]);
   });
+  test('the answer typed into str() instead of the variable fails the first bullet', () => {
+    const src = code(...base, 'print("Total oxygen: " + str(1080) + " litres")');
+    expect(evalMod('mod4', src, out(...ECHO3, 'Total oxygen: 1080 litres')).results).toEqual([false, true]);
+  });
 });
 
 describe('the rate choice (full = 60, low = 40) carries through every Modify check', () => {
@@ -218,6 +222,16 @@ describe('Make — supply manifest', () => {
   test('only the questions echoed back is not 3 lines of manifest', () => {
     const src = code(...MAKE_GOOD.slice(0, 4), 'print("Oxygen lasts " + str(air))');
     expect(evalMake(src, out('Oxygen canisters: 4', 'Ration packs: 5', 'Oxygen lasts 32')).results[4]).toBe(false);
+  });
+  test('typing the number into str() instead of using a variable fails the str() bullet', () => {
+    const src = code(...MAKE_GOOD.slice(0, 4), 'print("SUPPLY MANIFEST")', 'print("Oxygen lasts " + str(32) + " hours")', 'print("Food lasts 60 hours")', 'print("TRANSFER: POD 5")');
+    const r = evalMake(src, MAKE_OUT + 'TRANSFER: POD 5\n', 'pod5');
+    expect(r.results[3]).toBe(false);
+    expect(r.pass).toBe(false);
+  });
+  test('any variable names pass the str() bullet', () => {
+    const src = code('x = int(input("X? "))', 'y = int(input("Y? "))', 'z = x * y', 'print("Z is " + str(z))', 'print("-")', 'print("end")');
+    expect(evalMake(src, out('X? 4', 'Y? 5', 'Z is 20', '-', 'end', 'TRANSFER: YOUR SUIT'), 'suit').pass).toBe(true);
   });
   test('uncast answers fail the int() bullet', () => {
     const src = code('a = input("A? ")', 'b = input("B? ")', 'print(a + b)');
