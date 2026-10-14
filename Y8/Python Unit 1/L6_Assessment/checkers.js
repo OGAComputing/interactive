@@ -10,6 +10,11 @@
 //     fairer (no self-joining in the trace, spaces inside the quotes, quotes optional on
 //     trace values, recognition instead of prediction for quotes-vs-variable and ==), and
 //     the game shop starts with step comments.
+//   • Revised after the second sitting (mean 47%, 54 students): the low scorers answered the
+//     multiple-choice questions but skipped the code, so Casting and Selection now OPEN with a
+//     guided 1-mark code task. Trace boxes forgive capital letters (like the printed lines);
+//     two questions that didn't separate strong from weak students (v_order, c_str) are
+//     retired: kept here, unmarked and unshown, so L7 can still use them for that sitting.
 //   • One section per lesson (L1–L5), so the DIRT lesson (L7) can route students to the
 //     lessons they need. Per-section scores go to Drive via Classroom.submitResults().
 //   • Multiple-choice, trace and sort answers are ONE TRY: they lock when checked, show the
@@ -149,14 +154,15 @@ const branchKey = (run, name) => printedLines(run)
 const QUOTED = /^(["'])(.*)\1$/;
 const NUMERIC = /^-?\d+(?:\.\d+)?$/;
 
-// "What is in the box at the end?" Text may be written with or without quotes (the trace
-// tests what is stored, not how to write it); a number written in quotes is still wrong.
+// "What is in the box at the end?" Text may be written with or without quotes, and in any
+// case (the trace tests what is stored, not how to write it; 20 students lost a mark for
+// "tom"); a number written in quotes is still wrong.
 export function checkTraceValue(expected, typed) {
   const t = String(typed ?? '').trim();
   if (!t) return { ok: false, msg: 'Not answered.' };
   const q = t.match(QUOTED);
   if (expected.type === 'str') {
-    return (q ? q[2] : t) === expected.value ? { ok: true } : { ok: false, msg: 'Not the right text.' };
+    return (q ? q[2] : t).toLowerCase() === expected.value.toLowerCase() ? { ok: true } : { ok: false, msg: 'Not the right text.' };
   }
   const inner = q ? q[2] : t;
   if (!NUMERIC.test(inner) || Number(inner) !== expected.value) return { ok: false, msg: 'Not the right number.' };
@@ -304,7 +310,7 @@ export const ITEMS = [
         test: (raw, runs) => allOk(runs) && printedLines(runs[0]).length === 2 && same(printedLines(runs[0])[1], 'It is fun') },
     ] },
 
-  // ── 2 · Variables (Lesson 2) ── 9 marks
+  // ── 2 · Variables (Lesson 2) ── 8 marks
   // The trace tests that a new value REPLACES the old one, and that a print() that ran earlier
   // used the old value. (Joining a variable onto itself was dropped: 9% in the first sitting.)
   { id: 'v_trace', section: 'variables', kind: 'trace',
@@ -313,9 +319,9 @@ export const ITEMS = [
       { lines: ['pet = "cat"', 'owner = "Tom"', 'print(owner + " has a " + pet)', 'pet = "dog"', 'print(owner + " has a " + pet)'],
         vars: [{ name: 'pet', type: 'str', value: 'dog' }, { name: 'owner', type: 'str', value: 'Tom' }],
         output: ['Tom has a cat', 'Tom has a dog'] },
-      { lines: ['food = "pizza"', 'chef = "Al"', 'print(chef + " cooks " + food)', 'food = "pasta"', 'print(chef + " cooks " + food)'],
-        vars: [{ name: 'food', type: 'str', value: 'pasta' }, { name: 'chef', type: 'str', value: 'Al' }],
-        output: ['Al cooks pizza', 'Al cooks pasta'] },
+      { lines: ['food = "pizza"', 'chef = "Ed"', 'print(chef + " cooks " + food)', 'food = "pasta"', 'print(chef + " cooks " + food)'],
+        vars: [{ name: 'food', type: 'str', value: 'pasta' }, { name: 'chef', type: 'str', value: 'Ed' }],
+        output: ['Ed cooks pizza', 'Ed cooks pasta'] },
       { lines: ['drink = "tea"', 'friend = "Jo"', 'print(friend + " likes " + drink)', 'drink = "milk"', 'print(friend + " likes " + drink)'],
         vars: [{ name: 'drink', type: 'str', value: 'milk' }, { name: 'friend', type: 'str', value: 'Jo' }],
         output: ['Jo likes tea', 'Jo likes milk'] },
@@ -326,7 +332,8 @@ export const ITEMS = [
     code: 'city = "Leeds"',
     opts: ['print(city)', 'print("city")', 'print(City)', 'print(Leeds)'],
     why: 'Without quotes, city means the box, so print(city) shows what is in it. print("city") shows the word city; City and Leeds are names Python has never seen.' },
-  { id: 'v_order', section: 'variables', kind: 'mcq', pts: 1,
+  // Retired after the second sitting (39%, barely separated strong from weak students).
+  { id: 'v_order', section: 'variables', kind: 'mcq', pts: 1, retired: true,
     q: 'Python runs a program one line at a time, starting at the top. What happens when this program runs?',
     code: 'print("Total: " + total)\ntotal = "50"',
     opts: ['A NameError on line 1', 'It prints Total: 50', 'It prints Total: total', 'A SyntaxError on line 2'],
@@ -365,13 +372,13 @@ export const ITEMS = [
     opts: ['Hull', 'Where do you live?', 'town', 'Nothing is stored'],
     why: 'The text in the brackets is only shown as a question. Only the answer the user types is stored.' },
   // The space is inside the quotes, so this tests what input() stores and what + joins, not
-  // the missing-space trap (0% in the first sitting; the trap is practised in L7).
+  // the missing-space trap (0% in the first sitting; the trap is practised in L7). The name
+  // typed is in the question itself: in the second sitting a quarter wrote "Welcome name!".
   { id: 'i_trace', section: 'input', kind: 'trace',
-    q: 'Type exactly what the <code>print()</code> line shows (not the question).',
     variants: [
-      { lines: ['name = input("Name? ")', 'print("Hello " + name + "!")'], typed: { 0: 'Sam' }, vars: [], output: ['Hello Sam!'] },
-      { lines: ['name = input("Name? ")', 'print("Welcome " + name + "!")'], typed: { 0: 'Kim' }, vars: [], output: ['Welcome Kim!'] },
-      { lines: ['name = input("Name? ")', 'print("Morning " + name + "!")'], typed: { 0: 'Raj' }, vars: [], output: ['Morning Raj!'] },
+      { q: 'When the program runs, the user types <strong>Sam</strong> at the <code>Name?</code> question. Type exactly what the <code>print()</code> line shows.', lines: ['name = input("Name? ")', 'print("Hello " + name + "!")'], typed: { 0: 'Sam' }, vars: [], output: ['Hello Sam!'] },
+      { q: 'When the program runs, the user types <strong>Kim</strong> at the <code>Name?</code> question. Type exactly what the <code>print()</code> line shows.', lines: ['name = input("Name? ")', 'print("Welcome " + name + "!")'], typed: { 0: 'Kim' }, vars: [], output: ['Welcome Kim!'] },
+      { q: 'When the program runs, the user types <strong>Raj</strong> at the <code>Name?</code> question. Type exactly what the <code>print()</code> line shows.', lines: ['name = input("Name? ")', 'print("Morning " + name + "!")'], typed: { 0: 'Raj' }, vars: [], output: ['Morning Raj!'] },
     ] },
   { id: 'i_store', section: 'input', kind: 'mcq', pts: 1,
     q: 'Which line asks for the user\'s age <strong>and stores the answer</strong>?',
@@ -404,6 +411,20 @@ export const ITEMS = [
     ] },
 
   // ── 4 · Data types & casting (Lesson 4) ── 10 marks
+  // Guided, and FIRST in the section: in the second sitting the low scorers answered the
+  // multiple-choice questions but never reached the code below them.
+  { id: 'c_guide', section: 'casting', kind: 'reqs', resettable: true,
+    title: 'Write it: make it a number',
+    goal: 'Type <strong>5</strong> and this program prints <strong>55</strong>, not 10, because <code>input()</code> gives back text. Change <strong>line 1 only</strong> so that typing 5 prints 10.',
+    howto: { text: 'Put <code>int( )</code> around the whole <code>input(...)</code>, so the answer becomes a whole number before it is stored. Count the brackets: one more <code>)</code> at the end. For example:',
+             code: 'score = int(input("Score? "))' },
+    starter: 'num = input("Pick a number: ")\nprint(num * 2)',
+    tests: [['5'], ['12']],
+    testNote: 'Checked by running it with 5 and then 12.',
+    reqs: [
+      { text: 'Print double the number typed (<strong>10</strong> when 5 is typed), using <code>int()</code>',
+        test: (raw, runs) => intCount(raw) >= 1 && printsExactly(([n]) => [String(Number(n) * 2)])(raw, runs) },
+    ] },
   // Two num cards swapped for plain text-vs-number ones (41% in the first sitting).
   { id: 'c_sort', section: 'casting', kind: 'sort', pts: 3,
     q: 'This line ran first, so <code>num</code> holds whatever the user typed:',
@@ -429,7 +450,8 @@ export const ITEMS = [
     q: 'Which of these is an <strong>int</strong> (a whole number)?',
     opts: ['12', '"12"', '12.5', '"twelve"'],
     why: 'An int is a whole number with no quotes. 12.5 has a decimal point, so it is a float; anything in quotes is text.' },
-  { id: 'c_str', section: 'casting', kind: 'mcq', pts: 1,
+  // Retired after the second sitting (15%, answers spread like guesses; L7 still teaches str()).
+  { id: 'c_str', section: 'casting', kind: 'mcq', pts: 1, retired: true,
     q: '<code>points</code> holds the number 10. Text and a number can\'t be joined with + until the number is turned into text. Which line prints <strong>Points: 10</strong>?',
     opts: ['print("Points: " + str(points))', 'print("Points: " + int(points))', 'print("Points: " + "points")', 'print("Points: " + points)'],
     why: 'str() turns the number into text so it can be joined with +.' },
@@ -462,7 +484,21 @@ export const ITEMS = [
         test: (raw, runs) => allOk(runs) && runs.every(r => printedNumbers(r).includes(Number(r.inputs[0]) + 1)) },
     ] },
 
-  // ── 5 · Selection (Lesson 5) ── 10 marks
+  // ── 5 · Selection (Lesson 5) ── 11 marks
+  // Guided, and first in the section (see c_guide).
+  { id: 's_guide', section: 'selection', kind: 'reqs', resettable: true,
+    title: 'Write it: add the else',
+    goal: 'This program prints <strong>Pass</strong> when the score is 50 or more, but prints nothing when it is lower. Add an <code>else</code> so any score <strong>under 50</strong> prints <strong>Try again</strong>',
+    howto: { text: '<code>else:</code> goes on its own line with <strong>no</strong> indent, lined up with the <code>if</code>, and ends with a colon. The line it runs goes under it, indented by 4 spaces. For example:',
+             code: 'if age >= 13:\n    print("Welcome")\nelse:\n    print("Too young")' },
+    starter: 'score = int(input("Score? "))\nif score >= 50:\n    print("Pass")\n',
+    tests: [['70'], ['50'], ['49']],
+    testNote: 'Checked by running it with 70, 50 and 49.',
+    reqs: [
+      { text: 'Use an <code>else</code> so that 50 or more prints <code>Pass</code> and anything lower prints <code>Try again</code>',
+        test: (raw, runs) => /^else\s*:/m.test(normalise(raw))
+          && printsExactly(([n]) => [Number(n) >= 50 ? 'Pass' : 'Try again'])(raw, runs) },
+    ] },
   // A helper first: what an indent does, before any question that relies on it.
   { id: 's_indented', section: 'selection', kind: 'mcq', pts: 1,
     q: 'The four spaces in front of <code>print("Well done")</code> are called an <strong>indent</strong>. What do they do?',
@@ -594,6 +630,11 @@ export const ITEMS = [
 ];
 
 export const itemById = id => ITEMS.find(i => i.id === id);
+// The questions the assessment shows and marks now (retired ones stay in ITEMS for L7).
+export const LIVE_ITEMS = ITEMS.filter(i => !i.retired);
+// Saved with every attempt, so L7 knows which version a student sat (1: 38 marks, first
+// sitting; 2: the 13 Oct 2026 sitting; 3: guided casting/selection tasks, two retired).
+export const VERSION = 3;
 
 // Marks available for an item (for this student's version).
 export function itemMax(item, seed = 0) {
@@ -614,7 +655,7 @@ export const branchAnswer = row => (row[1] === 'a' ? 0 : 1);
 export function summarise(points, seed = 0) {
   const sections = {};
   for (const s of SECTIONS) sections[s.id] = { earned: 0, max: 0 };
-  for (const it of ITEMS) {
+  for (const it of LIVE_ITEMS) {
     sections[it.section].max += itemMax(it, seed);
     sections[it.section].earned += points[it.id] || 0;
   }

@@ -74,12 +74,12 @@ function printArgs(raw) {
   return out;
 }
 
-// Everything the program printed, split into "words" so a value can be matched exactly —
-// "Total oxygen: 1080 litres." → [..., "1080", "litres"]. A trailing full stop is dropped.
-function outTokens(output) {
-  return (output || '').split(/[\s,:=()!?]+/).map(t => t.replace(/\.$/, '')).filter(Boolean);
-}
-const printedAny = (output, values) => { const t = outTokens(output); return values.some(v => t.includes(v)); };
+// Did the program print one of the values? The number may touch a word ("1080litres",
+// "oxygen1080") — a missing space in the quotes is a spacing slip, not a wrong answer — but
+// not another digit, so 10800 doesn't count as 1080 (and 1080.5 isn't 1080).
+const numberIn = (text, v) =>
+  new RegExp('(?<![\\d.])' + v.replace('.', '\\.') + '(?!\\d|\\.\\d)').test(text || '');
+const printedAny = (output, values) => values.some(v => numberIn(output, v));
 // A printed line that has words in it AND one of the values — i.e. the number is in a sentence.
 const sentenceWith = (output, values) =>
   (output || '').split('\n').some(l => /[A-Za-z]{2,}/.test(l) && printedAny(l, values));
@@ -123,8 +123,8 @@ const hoursUncast = raw => {
 // the space before the closing quote) so a correct fix typed as str( 50 ) still counts.
 export const IBUG_LINE       = 'print("Oxygen per hour: " + 50)';
 export const IBUG_FIXED_LINE = 'print("Oxygen per hour: " + str(50))';
-const BUG_RE   = /print\s*\(\s*(["'])Oxygen per hour:\s*\1\s*\+\s*50\s*\)/i;
-const FIXED_RE = /print\s*\(\s*(["'])Oxygen per hour:\s*\1\s*\+\s*str\s*\(\s*50\s*\)\s*\)/i;
+const BUG_RE   = /print\s*\(\s*(["'])\s*Oxygen\s+per\s+hour\s*:\s*\1\s*\+\s*50\s*\)/i;
+const FIXED_RE = /print\s*\(\s*(["'])\s*Oxygen\s+per\s+hour\s*:\s*\1\s*\+\s*str\s*\(\s*50\s*\)\s*\)/i;
 export const hasBugLine    = raw => BUG_RE.test(liveLines(raw));
 export const hasFixedLine  = raw => FIXED_RE.test(liveLines(raw));
 export const isBugPairLine = line => BUG_RE.test(line) || FIXED_RE.test(line);

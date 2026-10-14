@@ -287,7 +287,7 @@ import {
   markCheckpoint, rightAnswer, applyFor, evalApply, inputPrompts, inputCount, evalMake,
   MAKE_REQS, MAKE_STRETCH, IDEAS, lessonScore, targetDone, realSentence, questionNumber,
   FIX_NOTES, checkTraceValue, checkTraceOutput, showValue, branchChoices, branchAnswer, markSort,
-  FIRST_SITTING, satItems,
+  SITTINGS, satItems,
 } from './checkers.js';
 import { preload, runPython } from '../../../pyodide-runner.js';
 import { setupEditors, setEditorOutput, refreshEditor, runCode } from '../../../code-editor.js';
@@ -319,7 +319,9 @@ catch (e) { S = fresh(); }
 function save() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(S)); } catch (e) {} }
 
 const targets = () => [...(S.plan || []), ...S.extra];
-const first = () => !!S.snap?.first;                       // sat the assessment before its revision
+// Which version of the assessment they sat (see SITTINGS). A plan saved before sittings were
+// numbered has only `first`; any other student then had sat version 2.
+const first = () => S.snap ? S.snap.sitting ?? (S.snap.first ? 1 : 2) : 3;
 const qNum = id => questionNumber(id, first());
 const makeUnlocked = () => S.plan && (S.teacherUnlock || S.plan.every(t => targetDone(S, t)));
 
@@ -483,9 +485,9 @@ function renderLookBack(tid) {
   const snap = S.snap;
   if (!snap) {
     return `<p class="muted">Here are the assessment questions on this, with the right answers.</p>` +
-      t.items.map(id => lookBackItem(id, null)).join('');
+      satItems(t.items, 3).map(id => lookBackItem(id, null)).join('');
   }
-  const sat = satItems(t.items, snap.first);
+  const sat = satItems(t.items, first());
   const lost = sat.filter(id => (snap.points[id] || 0) < itemMax(itemById(id)));
   const right = sat.filter(id => !lost.includes(id));
   return (lost.length ? lost.map(id => lookBackItem(id, snap)).join('') : '<p class="got-right">You got every question on this right. This is extra practice.</p>')
@@ -500,8 +502,8 @@ function lookBackItem(id, snap) {
   const status = !snap ? '' : !has ? 'not answered' : `you got ${got} / ${max}`;
   const cls = !snap || !has ? 'unanswered' : got ? 'partial' : '';
   // Without the seed we can't tell which version they saw, so their own answer can't be shown.
-  // Nor for a question asked differently in the first sitting.
-  const changed = snap?.first && FIRST_SITTING.changed.includes(id);
+  // Nor for a question asked differently in the version they sat.
+  const changed = !!snap && SITTINGS[first()].changed.includes(id);
   const knowVersion = !changed && (!item.variants || snap?.seed != null);
   const versionNote = !snap || knowVersion ? ''
     : `<p class="muted" style="font-size:0.82rem">${changed ? 'Your assessment asked this in a slightly different way. Here is the question now, with the right answer.' : 'Your version of this question had different values.'}</p>`;
@@ -1007,7 +1009,7 @@ async function boot() {
       try { snap = readSnapshot(await window.Classroom.fetchResults(ASSESS.title), 'drive'); }
       catch (err) { window.ErrorReporter?.report('Reading assessment results', err); }
     }
-    if (snap) { S.snap = snap; S.plan = choosePlan(snap.points, 3, snap.first); save(); }
+    if (snap) { S.snap = snap; S.plan = choosePlan(snap.points, 3, snap.sitting); save(); }
   }
   if (S.plan) {
     buildLesson();

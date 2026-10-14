@@ -249,7 +249,7 @@ color:  teal
 
 <script type="module">
 import {
-  ITEMS, SECTIONS, itemById, variantOf, optionOrder, itemMax, summarise,
+  LIVE_ITEMS as ITEMS, VERSION, SECTIONS, itemById, variantOf, optionOrder, itemMax, summarise,
   checkTraceValue, checkTraceOutput, showValue, markSort, evalCode,
   branchChoices, branchAnswer, mulberry32, shuffle, hashId,
 } from './checkers.js';
@@ -269,11 +269,11 @@ const authBlocked = () => window.Classroom?.verifyAuth() === false;   // undefin
 
 // ── State (saved on every change; locks are saved before anything is shown) ──
 function fresh() {
-  return { seed: Math.floor(Math.random() * 2 ** 31), tab: 0,
+  return { ver: VERSION, seed: Math.floor(Math.random() * 2 ** 31), tab: 0,
            sel: {}, locked: {}, pts: {}, checked: {}, results: {}, code: {}, sort: {}, finished: false };
 }
 let S;
-try { const s = JSON.parse(localStorage.getItem(STORAGE_KEY)); S = s && s.seed != null ? { ...fresh(), ...s } : fresh(); }
+try { const s = JSON.parse(localStorage.getItem(STORAGE_KEY)); S = s && s.seed != null ? { ...fresh(), ver: null, ...s } : fresh(); }   // ver: null = started before versions were saved
 catch (e) { S = fresh(); }
 function save() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(S)); } catch (e) {} }
 save();
@@ -308,16 +308,24 @@ const marksTag = id => {
   return `${m} mark${m > 1 ? 's' : ''}${V[id].bonus ? ' (bonus)' : ''} · ${code ? 'check as often as you like' : 'one try'}`;
 };
 const head = id => `<div class="q-head"><span class="q-no">Question ${QNO[id]}</span><span class="q-marks">${marksTag(id)}</span></div>`;
+// The evidence report (classroom.js) labels an answer by its data-title, so every answer
+// names its question number. A hidden textarea adds what the report can't see: the version
+// of a question this student got, and where they put each sort card. No answers go in it.
+const plain = h => String(h).replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim();
+const evTitle = (id, extra) => esc(`Question ${QNO[id]}${extra ? ' — ' + extra : ''}`);
+const evNote = (id, label, text) => `<textarea hidden data-evidence="${id}" data-title="${evTitle(id, label)}">${esc(text)}</textarea>`;
+const isVariant = id => !!ITEMS.find(i => i.id === id).variants;
 const lockBtn = (id, label = '🔒 Lock in answer') => `<div class="row"><button class="ac-btn" data-lock="${id}" id="lock_${id}">${label}</button></div>`;
 
 function renderMcq(id) {
   const v = V[id];
   const opts = optionOrder(id, v.opts.length, S.seed).map(k =>
-    `<label class="opt" data-k="${k}"><input type="radio" name="mcq_${id}" value="${k}"><span>${fmtOpt(v.opts[k])}</span></label>`).join('');
+    `<label class="opt" data-k="${k}"><input type="radio" name="mcq_${id}" value="${k}" data-title="${evTitle(id, plain(v.q))}"><span>${fmtOpt(v.opts[k])}</span></label>`).join('');
   return `<div class="question-card" id="card_${id}">${head(id)}
     <span class="q-label">${v.q}</span>
     ${v.code ? listing(v.code) : ''}
     ${v.error ? `<div class="err-cap">Python shows:</div><pre class="err">${esc(v.error)}</pre>` : ''}
+    ${isVariant(id) ? evNote(id, 'version shown', plain(v.q) + (v.code ? '\n' + v.code : '')) : ''}
     <div class="opts">${opts}</div>
     ${lockBtn(id)}
     <div class="feedback" id="fb_${id}"></div></div>`;
@@ -326,22 +334,25 @@ function renderMcq(id) {
 function renderTrace(id) {
   const v = V[id];
   const notes = Object.fromEntries(Object.entries(v.typed || {}).map(([i, t]) => [i, `the user types ${t}`]));
+  // The printed lines come first and the boxes ask about "after the last line": with the boxes
+  // first, 17 of 28 students who printed the changed value still put the first value in its box.
   const boxes = v.vars.length ? `
-    <span class="q-label" style="margin-top:10px">📦 What is in each box at the end?</span>
+    <span class="q-label" style="margin-top:10px">📦 What is in each box after the <strong>last</strong> line has run?</span>
     <div class="rule-box">Write just what is in the box, like <code>Sam</code> (you can put quotes round text if you like)</div>
     <div class="trace-grid">${v.vars.map(x => `<div class="trace-box">
       <label for="tr_${id}_v_${x.name}">${x.name}</label>
-      <input type="text" id="tr_${id}_v_${x.name}" data-trace="${id}" autocomplete="off" spellcheck="false" placeholder="?">
+      <input type="text" id="tr_${id}_v_${x.name}" data-trace="${id}" data-title="${evTitle(id, 'box ' + x.name)}" autocomplete="off" spellcheck="false" placeholder="?">
       <div class="cell-msg" id="msg_${id}_v_${x.name}"></div></div>`).join('')}</div>` : '';
   const outs = `
     <span class="q-label" style="margin-top:10px">🖥️ What does it print${v.vars.length ? ', line by line' : ''}?</span>
     ${v.output.map((_, i) => `<div class="out-line"><span class="n">line ${i + 1}</span><div>
-      <input type="text" id="tr_${id}_o_${i}" data-trace="${id}" autocomplete="off" spellcheck="false" placeholder="exactly what is printed">
+      <input type="text" id="tr_${id}_o_${i}" data-trace="${id}" data-title="${evTitle(id, 'printed line ' + (i + 1))}" autocomplete="off" spellcheck="false" placeholder="exactly what is printed">
       <div class="cell-msg" id="msg_${id}_o_${i}"></div></div></div>`).join('')}`;
   return `<div class="question-card" id="card_${id}">${head(id)}
     <span class="q-label">${v.q}</span>
     ${listing(v.lines.join('\n'), notes)}
-    ${boxes}${outs}
+    ${isVariant(id) ? evNote(id, 'version shown', v.lines.join('\n') + Object.entries(v.typed || {}).map(([i, t]) => `\n(line ${+i + 1}: the user types ${t})`).join('')) : ''}
+    ${outs}${boxes}
     ${lockBtn(id, '🔒 Lock in my trace')}
     <div class="feedback" id="fb_${id}"></div></div>`;
 }
@@ -352,7 +363,7 @@ function renderBranch(id) {
   const order = optionOrder(id, choices.length, S.seed);
   const rows = v.rows.map(([typed], r) => `<div class="branch-row" id="brow_${id}_${r}">
       <div class="typed-lbl">User types <b>${esc(typed)}</b></div>
-      <div class="opts">${order.map(k => `<label class="opt" data-k="${k}"><input type="radio" name="br_${id}_${r}" value="${k}"><span>${esc(choices[k])}</span></label>`).join('')}</div>
+      <div class="opts">${order.map(k => `<label class="opt" data-k="${k}"><input type="radio" name="br_${id}_${r}" value="${k}" data-title="${evTitle(id, 'user types ' + typed)}"><span>${esc(choices[k])}</span></label>`).join('')}</div>
     </div>`).join('');
   return `<div class="question-card" id="card_${id}">${head(id)}
     <span class="q-label">${v.q}</span>
@@ -369,6 +380,7 @@ function renderSortItem(id) {
     <span class="q-label">${v.q}</span>
     ${listing(v.code)}
     <span class="q-label">Sort every card into the right group. Drag it, or click a card and then click a group.</span>
+    ${evNote(id, 'where each card was put', '')}
     <div class="sort-pool" data-sort="${id}" data-bin=""></div>
     <div class="sort-bins">${bins.map(b => `<div class="sort-bin" data-sort="${id}" data-bin="${b.id}"><h4>${b.label}</h4></div>`).join('')}</div>
     ${lockBtn(id)}
@@ -389,7 +401,7 @@ function renderCodeItem(id) {
     ${samples}${howto}${reqs}
     ${v.testNote || v.note ? `<div class="test-note">${esc(v.testNote || v.note)}</div>` : ''}
     <div class="code-checker">
-      <textarea class="checker-textarea" id="ed_${id}" data-title="${esc(v.title)}">${esc(v.starter)}</textarea>
+      <textarea class="checker-textarea" id="ed_${id}" data-title="${evTitle(id, v.title)}">${esc(v.starter)}</textarea>
       <div class="checker-footer">
         <button class="btn-run" data-run="ed_${id}">▶ Run code</button>
         <button class="ac-btn" data-check="${id}" id="check_${id}">✓ Check</button>
@@ -463,7 +475,7 @@ function submit() {
   window.Classroom?.submitGrade(s.pct, ACTIVITY_TITLE);
   const code = Object.fromEntries(Object.entries(S.code).filter(([k]) => S.checked[k.slice(3)]));
   window.Classroom?.submitResults({ points: S.pts, sections: s.sections, earned: s.earned, max: s.max, pct: s.pct, bonus: s.bonus,
-    seed: S.seed, sel: S.sel, sort: S.sort, results: S.results, code }, ACTIVITY_TITLE);
+    ver: S.ver, seed: S.seed, sel: S.sel, sort: S.sort, results: S.results, code }, ACTIVITY_TITLE);
   checkFinished(s);
 }
 const coreIds = ITEMS.filter(i => !i.bonus).map(i => i.id);
@@ -667,6 +679,8 @@ function applySort(id) {
     (zones[place[c.id] || ''] || zones['']).appendChild(el);
   });
   card.querySelectorAll('.sort-bin').forEach(b => b.classList.toggle('target', !locked && !!selectedCard));
+  card.querySelector('textarea[data-evidence]').value = v.cards.map(c =>
+    `${c.expr}  →  ${place[c.id] ? plain(v.bins.find(b => b.id === place[c.id]).label) : '(not sorted)'}`).join('\n');
   if (!locked) return;
   card.classList.add('locked', marked.right === v.cards.length ? 'is-right' : marked.pts ? 'is-partial' : 'is-wrong');
   $('#lock_' + id).disabled = true;

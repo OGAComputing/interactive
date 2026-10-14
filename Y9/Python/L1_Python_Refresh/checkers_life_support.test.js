@@ -84,6 +84,7 @@ describe('bug-pair helpers', () => {
   test('broken and fixed lines are recognised loosely', () => {
     expect(hasBugLine("print('Oxygen per hour:' + 50)")).toBe(true);
     expect(hasFixedLine('print( "Oxygen per hour: "+str( 50 ) )')).toBe(true);
+    expect(hasFixedLine('print(" Oxygen  per hour : " + str(50))')).toBe(true);
     expect(isBugFixed(code(...STARTER, IBUG_FIXED_LINE))).toBe(true);
     expect(isBugFixed(code(...STARTER))).toBe(false);
     expect(isBugPairLine(IBUG_LINE) && isBugPairLine(IBUG_FIXED_LINE)).toBe(true);
@@ -148,6 +149,22 @@ describe('Modify 4 — sentence with str()', () => {
   test('str() sentence with the total passes', () => {
     const src = code(...base, 'print("Total oxygen: " + str(total) + " litres")');
     expect(evalMod('mod4', src, out(...ECHO3, 'Total oxygen: 1080 litres')).pass).toBe(true);
+  });
+  test('a missing or extra space around litres still passes', () => {
+    for (const [lit, shown] of [['"litres"', 'Total oxygen: 1080litres'], ['"litres "', 'Total oxygen: 1080litres '], ['" litres "', 'Total oxygen: 1080 litres ']]) {
+      const src = code(...base, `print("Total oxygen: " + str(total) + ${lit})`);
+      expect(evalMod('mod4', src, out(...ECHO3, shown)).pass).toBe(true);
+    }
+    const glued = code(...base, 'print("Oxygen" + str(total) + "litres")');
+    expect(evalMod('mod4', glued, out(...ECHO3, 'Oxygen1080litres')).pass).toBe(true);
+  });
+  test('Modify 3 accepts the total printed next to a word with no space', () => {
+    const src = code(...base, 'print("Total:" + str(total) + "litres")');
+    expect(evalMod('mod3', src, out(...ECHO3, 'Total:1080litres')).pass).toBe(true);
+  });
+  test('a different number containing the total does not count', () => {
+    const src = code(...base, 'print("Total oxygen: " + str(total) + "0 litres")');
+    expect(evalMod('mod4', src, out(...ECHO3, 'Total oxygen: 10800 litres')).results).toEqual([true, false]);
   });
   test('commas instead of str() fail the first bullet', () => {
     const src = code(...base, 'print("Total oxygen:", total)');

@@ -306,7 +306,8 @@ test('the cliffhanger follows both calls', async ({ page }) => {
   await page.click('#btn_check_m2');
   await expect(page.locator('#fb_m2')).toHaveClass(/pass/, { timeout: 30000 });
   await expect(page.locator('#szOverlay')).toHaveClass(/open/, { timeout: 10000 });
-  await expect(page.locator('#szTitle')).toHaveText(/Shut in/);
-  await expect(page.locator('#szReadouts')).toContainText('Frost spreading');
+  await expect(page.locator('#szTitle')).toHaveText(/Crew tag: HALE/);
+  await expect(page.locator('#szReadouts')).toContainText('Critical');
+  await expect(page.locator('#szReadouts')).toContainText('Not human');
   await expect(page.locator('input[name="m2_choice"][value="pod5"]')).toBeDisabled();
 });

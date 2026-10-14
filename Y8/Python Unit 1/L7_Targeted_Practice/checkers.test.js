@@ -3,7 +3,7 @@ import {
   ITEMS, itemById, itemMax, TARGETS, targetById, CHAIN, targetScores, choosePlan, readSnapshot,
   drawCheckpoint, poolQuestion, cpOptionOrder, markCheckpoint, rightAnswer, applyFor, evalApply,
   writeItemFor, REQ_HINTS, inputPrompts, inputCount, evalMake, MAKE_REQS, MAKE_STRETCH, IDEAS,
-  lessonScore, targetDone, realSentence, questionNumber, FIRST_SITTING,
+  lessonScore, targetDone, realSentence, questionNumber, FIRST_SITTING, SITTINGS,
 } from './checkers.js';
 
 // A fake runPython result: each input() is echoed as "prompt + answer" on its own line,
@@ -70,7 +70,10 @@ describe('targets', () => {
 
   test('question numbers match the assessment', () => {
     expect(questionNumber('o_print')).toBe('1.1');
-    expect(questionNumber('v_order')).toBe('2.3');
+    expect(questionNumber('v_quotes')).toBe('2.2');
+    expect(questionNumber('v_change')).toBe('2.3');            // v_order is retired
+    expect(questionNumber('c_guide')).toBe('4.1');
+    expect(questionNumber('s_guide')).toBe('5.1');
     expect(questionNumber('w_make')).toBe('6.2');
     expect(questionNumber('x_speed')).toBe('★1');
   });
@@ -123,7 +126,7 @@ describe('the first sitting (before the revision)', () => {
   });
 
   test('question numbers as they saw them (no s_indented, so selection starts at s_branch)', () => {
-    expect(questionNumber('s_branch')).toBe('5.2');
+    expect(questionNumber('s_branch')).toBe('5.3');
     expect(questionNumber('s_branch', true)).toBe('5.1');
     expect(questionNumber('o_fix', true)).toBe('1.5');
   });
@@ -133,7 +136,35 @@ describe('the first sitting (before the revision)', () => {
   });
 });
 
+describe('the second sitting (13 Oct 2026: before the guided tasks; v_order and c_str still in)', () => {
+  test('51 marks: the two retired questions count, the two guided tasks do not', () => {
+    const scores = targetScores({}, 2);
+    expect(scores.reduce((s, t) => s + t.max, 0)).toBe(51);
+    expect(scores.find(t => t.id === 'errors').max).toBe(3);      // o_errline, o_errfix, v_order
+    expect(targetScores({}).find(t => t.id === 'errors').max).toBe(2);
+  });
+
+  test('question numbers as they saw them', () => {
+    expect(questionNumber('v_order', 2)).toBe('2.3');
+    expect(questionNumber('c_join', 2)).toBe('4.2');
+    expect(questionNumber('c_join')).toBe('4.3');
+    expect(questionNumber('s_branch', 2)).toBe('5.2');
+  });
+
+  test('a student who got everything they sat right has nothing to fix', () => {
+    const sat2 = Object.fromEntries(Object.entries(full).filter(([id]) => !SITTINGS[2].missing.includes(id)));
+    expect(choosePlan({ ...sat2, v_order: 1, c_str: 1 }, 3, 2)).toEqual([]);
+  });
+});
+
 describe('readSnapshot', () => {
+  test('tells the three sittings apart', () => {
+    expect(readSnapshot({ ver: 3, seed: 5, pts: { o_print: 1 } }, 'local').sitting).toBe(3);
+    expect(readSnapshot({ seed: 5, pts: { o_print: 1, v_order: 1 }, locked: { s_indented: true } }, 'local').sitting).toBe(2);
+    expect(readSnapshot({ seed: 5, pts: { o_print: 1, v_order: 1 } }, 'local').sitting).toBe(1);
+    expect(readSnapshot({ ver: 9, points: { o_print: 1, c_write: 0 } }, 'drive').sitting).toBe(2);   // unknown ver: worked out
+  });
+
   test('reads the assessment\'s own saved state', () => {
     const s = readSnapshot({ seed: 5, pts: { o_print: 1, v_trace: 3 }, sel: { o_print: 2 }, code: { ed_o_fix: 'x' } }, 'local');
     expect(s).toMatchObject({ source: 'local', seed: 5, points: { o_print: 1, v_trace: 3 }, sel: { o_print: 2 } });

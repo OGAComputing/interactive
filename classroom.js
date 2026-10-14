@@ -92,7 +92,12 @@
   let isTeacherMode        = false; // true once detectTeacher confirms the signed-in user is a teacher
   const CLASSROOM_SYNC_INTERVAL_MS = 60 * 1000;
   const AUTH_HEARTBEAT_INTERVAL_MS = 60 * 1000;
-  const AUTH_RENEWAL_MARGIN_MS     = 15 * 60 * 1000;
+  // Pause an assessment this long before the token runs out. Keep it short:
+  // while a token is still valid Google hands the *same* token back on every
+  // sign-in (with less time left each go), so a long margin made students sign
+  // in over and over until the old token finally expired. Must be at least one
+  // heartbeat so the watchdog still catches expiry before a save fails.
+  const AUTH_RENEWAL_MARGIN_MS     = 2 * 60 * 1000;
 
   let _lastGradePercent = null;
 
@@ -654,6 +659,7 @@
   async function checkAuthHealth(reason) {
     if (!accessToken || isTeacherMode) return !!accessToken;
     if (tokenNeedsRenewalSoon()) {
+      authLog(`Token has ${Math.max(0, Math.round((authExpiresAt - Date.now()) / 1000))}s left — renewing`);
       handleAuthLost('Google sign-in needs renewing before the assessment can continue.');
       return false;
     }

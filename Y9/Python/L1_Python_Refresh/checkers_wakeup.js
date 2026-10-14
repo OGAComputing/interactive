@@ -96,8 +96,8 @@ function rolePromptText(raw) {
 // spacing and quote style, but the variable's case is exactly what the step is about.
 export const IBUG_LINE       = 'print("Access granted to " + Name)';
 export const IBUG_FIXED_LINE = 'print("Access granted to " + name)';
-const BUG_RE   = /print\s*\(\s*(["'])Access granted to\s*\1\s*\+\s*Name\s*\)/;
-const FIXED_RE = /print\s*\(\s*(["'])Access granted to\s*\1\s*\+\s*name\s*\)/;
+const BUG_RE   = /print\s*\(\s*(["'])\s*Access\s+granted\s+to\s*\1\s*\+\s*Name\s*\)/;
+const FIXED_RE = /print\s*\(\s*(["'])\s*Access\s+granted\s+to\s*\1\s*\+\s*name\s*\)/;
 export const hasBugLine    = raw => BUG_RE.test(liveLines(raw));
 export const hasFixedLine  = raw => FIXED_RE.test(liveLines(raw));
 export const isBugPairLine = line => BUG_RE.test(line) || FIXED_RE.test(line);

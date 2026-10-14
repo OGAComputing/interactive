@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { expectPageTitle, expectNoClassroomBanner } from './helpers/activityHelpers.js';
-import { ITEMS, variantOf, itemMax } from '../Y8/Python Unit 1/L6_Assessment/checkers.js';
+import { LIVE_ITEMS as ITEMS, variantOf, itemMax } from '../Y8/Python Unit 1/L6_Assessment/checkers.js';
 
 // Y8 Unit 1 · L6 Assessment — UI wiring only (marking permutations live in
 // Y8/Python Unit 1/L6_Assessment/checkers.test.js).
@@ -97,6 +97,27 @@ test('selection rows and the sort lock with per-row and per-card marking', async
   await expect(page.locator('#score-pill')).toContainText('Score: 6 / 51');
 });
 
+// classroom.js labels each answer in the evidence report by its data-title, and reads hidden
+// textareas, so the version a student got and the card sort reach the teacher's doc.
+test('evidence: answers carry question numbers; the version shown and the sort are recorded', async ({ page }) => {
+  await openWith(page);
+  await expect(page.locator('#card_o_print input[type="radio"]').first()).toHaveAttribute('data-title', /^Question 1\.1 — Which line prints/);
+  await expect(page.locator('#tr_v_trace_o_0')).toHaveAttribute('data-title', 'Question 2.1 — printed line 1');
+  const lines = page.locator('textarea[data-evidence="o_lines"]');
+  await expect(lines).toHaveAttribute('data-title', 'Question 1.2 — version shown');
+  expect(await lines.inputValue()).toContain(V('o_lines').code);
+  await expect(page.locator('textarea[data-evidence="o_print"]')).toHaveCount(0);   // one version only
+
+  const sort = page.locator('textarea[data-evidence="c_sort"]');
+  const [c] = V('c_sort').cards;
+  expect(await sort.inputValue()).toContain(`${c.expr}  →  (not sorted)`);
+  await tab(page, 3);
+  await page.click(`.sort-card[data-id="${c.id}"]`);
+  await page.locator(`.sort-bin[data-bin="${c.bin}"]`).click({ position: { x: 12, y: 12 } });
+  expect(await sort.inputValue()).toMatch(new RegExp(`${c.expr.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}  →  \\S`));
+  expect(await sort.inputValue()).not.toContain(`${c.expr}  →  (not sorted)`);
+});
+
 test('fix-it: the starter fails; the fix passes in real Python and locks', async ({ page }) => {
   await openWith(page);
   await waitForPython(page);
@@ -146,6 +167,8 @@ const MODELS = {
   o_write: 'print("I am learning Python")\nprint("It is fun")',
   v_write: 'colour = "blue"\nprint(colour)',
   i_write: 'name = input("What is your name? ")\nprint("Hello " + name)',
+  c_guide: 'num = int(input("Pick a number: "))\nprint(num * 2)',
+  s_guide: 'score = int(input("Score? "))\nif score >= 50:\n    print("Pass")\nelse:\n    print("Try again")',
   c_write: 'age = int(input("How old are you? "))\nprint("Next year you will be", age + 1)',
   s_write: 'pin = int(input("Enter your PIN: "))\nif pin == 1234:\n    print("Unlocked")\nelse:\n    print("Wrong PIN")',
   i_fix: 'animal = input("What is your favourite animal? ")\nprint("I like " + animal + "s too!")',

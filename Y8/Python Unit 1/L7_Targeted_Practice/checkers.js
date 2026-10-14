@@ -40,6 +40,8 @@ export const FIX_NOTES = {
   o_write: 'One print() for each line, with the text in quotes: <code>print("I am learning Python")</code> then <code>print("It is fun")</code>',
   v_write: '<code>colour = "blue"</code> makes the box, then <code>print(colour)</code> (no quotes) shows what is in it.',
   i_write: '<code>name = input("What is your name? ")</code> stores the answer, then <code>print("Hello " + name)</code> joins it into the message.',
+  c_guide: '<code>input()</code> gives back text, and text times 2 is the text twice (55). <code>num = int(input("Pick a number: "))</code> makes it a number first.',
+  s_guide: '<code>else:</code> goes under the if with no indent, then the line it runs, indented: <code>else:</code> then <code>    print("Try again")</code>',
   c_write: 'The answer needed <code>int()</code> to become a number, e.g. <code>age = int(input("How old are you? "))</code>, then <code>print("Next year you will be", age + 1)</code>',
   s_write: '<code>if pin == 1234:</code> (two equals signs, then a colon), an indented <code>print("Unlocked")</code>, then <code>else:</code> with an indented <code>print("Wrong PIN")</code>',
   w_warm: 'The condition needed to include 25 (<code>temp &gt;= 25</code>), and <code>print("Have a good day!")</code> needed to go at the bottom with no indent.',
@@ -50,16 +52,25 @@ export const ASSESS = {
   title: 'Unit 1 Assessment — Python First Steps',            // its Drive results name
 };
 
-// One class sat the assessment before it was revised (38 marks). Their saved data looks the
-// same, so it is spotted by never touching an item added since. They are routed on the items
-// they sat, and for the questions asked differently then, their own answer isn't shown (it
+// The assessment has had three versions. Each student is routed and numbered on the items
+// THEY sat, and for the questions asked differently since, their own answer isn't shown (it
 // would be compared with a question they never saw).
-export const FIRST_SITTING = {
-  missing: ['o_copy', 'o_write', 'v_change', 'v_write', 'i_write', 'c_write', 's_indented', 's_write'],
-  changed: ['v_trace', 'v_quotes', 'i_prompt', 'i_trace', 'c_sort', 'c_int', 's_equals'],
+//   1 · the first sitting (38 marks)            2 · the 13 Oct 2026 sitting (two classes)
+//   3 · now: guided casting/selection tasks; v_order and c_str retired
+// Version 3 saves `ver`. Older data is told apart by what it touched: version 1 never touched
+// an item added in version 2.
+const ADDED_IN_3 = ['c_guide', 's_guide'];
+export const SITTINGS = {
+  1: { missing: ['o_copy', 'o_write', 'v_change', 'v_write', 'i_write', 'c_write', 's_indented', 's_write', ...ADDED_IN_3],
+       changed: ['v_trace', 'v_quotes', 'i_prompt', 'i_trace', 'c_sort', 'c_int', 's_equals'] },
+  2: { missing: ADDED_IN_3, changed: ['v_trace'] },           // the chef was "Al" (read as "AI")
+  3: { missing: ITEMS.filter(i => i.retired).map(i => i.id), changed: [] },
 };
-// The items a student sat: all of them, or the first sitting's.
-export const satItems = (ids, first) => first ? ids.filter(id => !FIRST_SITTING.missing.includes(id)) : ids;
+export const FIRST_SITTING = SITTINGS[1];
+// sitting: 1, 2 or 3 (true means 1, as before; missing means the current version).
+const sittingOf = s => s === true ? 1 : SITTINGS[s] ? s : 3;
+// The items a student sat.
+export const satItems = (ids, sitting) => ids.filter(id => !SITTINGS[sittingOf(sitting)].missing.includes(id));
 
 // ── Small helpers ────────────────────────────────────────────────────────────
 
@@ -84,8 +95,8 @@ export function realSentence(text) {
   return words.filter(w => /[aeiouy]/.test(w) && w.length >= 2).length >= 3;
 }
 
-// Question number as the assessment showed it: 1.1, 2.3 … (first: the first sitting's numbers)
-export function questionNumber(itemId, first = false) {
+// Question number as the assessment showed it to this sitting: 1.1, 2.3 …
+export function questionNumber(itemId, first) {
   const it = itemById(itemId);
   const sec = SECTIONS.find(s => s.id === it.section);
   const k = satItems(ITEMS.filter(i => i.section === it.section).map(i => i.id), first).indexOf(itemId);
@@ -214,8 +225,8 @@ export const TARGETS = [
         opts: ['band', 'Queen', '"Queen"', 'A NameError'], why: 'band is in quotes, so it is printed as the word band, not what is in the box.' },
       { id: 'v3', kind: 'type', as: 'output', q: 'What does this program print?', code: 'snack = "crisps"\nprint(snack)\nsnack = "apple"',
         answer: 'crisps', why: 'print() ran on line 2, before snack was changed on line 3.' },
-      { id: 'v4', kind: 'type', as: 'value', q: 'What is in <code>name</code> at the end?', code: 'name = "Al"\nname = name + "ex"',
-        answer: { type: 'str', value: 'Alex' }, why: 'name + "ex" joins Al and ex, and the answer is stored back in name.' },
+      { id: 'v4', kind: 'type', as: 'value', q: 'What is in <code>name</code> at the end?', code: 'name = "Jo"\nname = name + "sh"',
+        answer: { type: 'str', value: 'Josh' }, why: 'name + "sh" joins Jo and sh, and the answer is stored back in name.' },
       { id: 'v5', kind: 'type', as: 'value', q: 'What is in <code>score</code> at the end?', code: 'score = 5\nscore = 8',
         answer: { type: 'int', value: 8 }, why: 'The 5 is replaced by 8. It is a number, so no quotes.' },
       { id: 'v6', kind: 'type', as: 'output', q: 'What does this program print?', code: 'food = "chips"\ndrink = "cola"\nprint(food + " and " + drink)',
@@ -277,7 +288,7 @@ export const TARGETS = [
 
   // ── Lesson 4 ──────────────────────────────────────────────────────────────
   { id: 'cast_int', short: 'int()', icon: '🔢', title: 'input() gives text: int() for maths', lesson: 'Lesson 4',
-    items: ['c_join', 'c_int', 'c_fix', 'c_write'],
+    items: ['c_guide', 'c_join', 'c_int', 'c_fix', 'c_write'],
     pick: 'Why 5 + 3 can give 53, and using int() so Python does maths',
     rule: [
       '<code>input()</code> <strong>always</strong> gives back text (a string), even when the user types a number.',
@@ -355,7 +366,7 @@ export const TARGETS = [
 
   // ── Lesson 5 ──────────────────────────────────────────────────────────────
   { id: 'branches', short: 'Branches', icon: '🔀', title: 'Which branch runs?', lesson: 'Lesson 5',
-    items: ['s_indented', 's_branch', 's_indent', 's_fix'],
+    items: ['s_guide', 's_indented', 's_branch', 's_indent', 's_fix'],
     pick: 'Tracing if/else, and what the indent does',
     rule: [
       'If the condition is <strong>True</strong>, only the indented lines under <code>if</code> run. If it is False, only the lines under <code>else</code> run.',
@@ -469,8 +480,8 @@ export const CHAIN = 3;   // checkpoint questions in a row
 
 // ── Routing: which targets each student practises ───────────────────────────
 
-// points: { itemId: marks } from the assessment. first: they sat the first version.
-export function targetScores(points = {}, first = false) {
+// points: { itemId: marks } from the assessment. first: the sitting (see SITTINGS).
+export function targetScores(points = {}, first) {
   return TARGETS.map((t, order) => {
     const items = satItems(t.items, first);
     const max = items.reduce((s, id) => s + itemMax(itemById(id)), 0);
@@ -482,7 +493,7 @@ export function targetScores(points = {}, first = false) {
 // The plan: up to `size` targets with marks lost, lowest share first (ties: the earlier
 // lesson, so a student who struggled everywhere starts with the foundations), then shown in
 // lesson order.
-export function choosePlan(points = {}, size = 3, first = false) {
+export function choosePlan(points = {}, size = 3, first) {
   return targetScores(points, first)
     .filter(s => s.lost > 0)
     .sort((a, b) => a.ratio - b.ratio || a.order - b.order)
@@ -499,12 +510,14 @@ export function readSnapshot(raw, source) {
   const points = raw.pts || raw.points;
   if (!points || typeof points !== 'object') return null;
   const has = (o, k) => !!o && typeof o === 'object' && Object.prototype.hasOwnProperty.call(o, k);
-  const first = !FIRST_SITTING.missing.some(id =>
-    [points, raw.sel, raw.locked, raw.checked].some(o => has(o, id)) || has(raw.code, 'ed_' + id));
+  const touched = id => [points, raw.sel, raw.locked, raw.checked].some(o => has(o, id)) || has(raw.code, 'ed_' + id);
+  const sitting = SITTINGS[raw.ver] ? raw.ver
+    : SITTINGS[1].missing.filter(id => !ADDED_IN_3.includes(id)).some(touched) ? 2 : 1;
+  const first = sitting === 1;
   const clean = {};
   for (const it of ITEMS) if (Number.isFinite(points[it.id])) clean[it.id] = Math.max(0, Math.min(points[it.id], itemMax(it)));
   if (!Object.keys(clean).length) return null;
-  return { source, first, points: clean, seed: Number.isFinite(raw.seed) ? raw.seed : null,
+  return { source, sitting, first, points: clean, seed: Number.isFinite(raw.seed) ? raw.seed : null,
            sel: raw.sel || {}, sort: raw.sort || {}, code: raw.code || {}, results: raw.results || {} };
 }
 

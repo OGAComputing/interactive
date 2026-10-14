@@ -1,7 +1,7 @@
 import { describe, test, expect } from 'vitest';
 import {
   printedLines, mulberry32, shuffle, variantOf, optionOrder,
-  ITEMS, SECTIONS, itemById, itemMax, summarise,
+  ITEMS, LIVE_ITEMS, SECTIONS, itemById, itemMax, summarise,
   checkTraceValue, checkTraceOutput, markSort,
   evalCode, ifElseLines, branchChoices, branchAnswer,
 } from './checkers.js';
@@ -88,6 +88,8 @@ describe('trace marking', () => {
     expect(checkTraceValue(str('Tommy'), "'Tommy'").ok).toBe(true);
     expect(checkTraceValue(str('Tommy'), 'Tommy').ok).toBe(true);
     expect(checkTraceValue(str('Tommy'), '"Tom"').ok).toBe(false);
+    expect(checkTraceValue(str('Tommy'), 'tommy').ok).toBe(true);     // capital letters forgiven, as on printed lines
+    expect(checkTraceValue(str('Tommy'), '"TOMMY"').ok).toBe(true);
     expect(checkTraceValue({ type: 'int', value: 8 }, '8').ok).toBe(true);
     expect(checkTraceValue({ type: 'int', value: 8 }, '"8"').msg).toMatch(/quotes/);
   });
@@ -347,6 +349,45 @@ describe('short write-it tasks (one per lesson section)', () => {
     const ge = [run('1234', 'Unlocked'), run('1233', 'Wrong PIN'), run('1235', 'Unlocked')];   // >= 1234
     expect(evalCode(it, model.replace('==', '>='), ge).results).toEqual([true, false]);
     expect(evalCode(it, it.starter, [run('1234', ''), run('1233', ''), run('1235', '')]).pts).toBe(0);
+  });
+});
+
+describe('guided tasks that open Casting and Selection (after the second sitting)', () => {
+  test('they come first in their sections, with a how-to', () => {
+    for (const [sec, id] of [['casting', 'c_guide'], ['selection', 's_guide']]) {
+      expect(LIVE_ITEMS.filter(i => i.section === sec)[0].id).toBe(id);
+      expect(itemById(id).howto.code.length).toBeGreaterThan(5);
+    }
+  });
+
+  test('c_guide: int() so that 5 doubles to 10; the starter (55) gets nothing', () => {
+    const it = itemById('c_guide');
+    const run = (n, line) => ok([n], [`Pick a number: ${n}`, line]);
+    const model = 'num = int(input("Pick a number: "))\nprint(num * 2)';
+    expect(evalCode(it, model, [run('5', '10'), run('12', '24')]).pts).toBe(1);
+    expect(evalCode(it, it.starter, [run('5', '55'), run('12', '1212')]).pts).toBe(0);
+    expect(evalCode(it, 'num = input("Pick a number: ")\nprint(10)', [run('5', '10'), run('12', '10')]).pts).toBe(0);
+  });
+
+  test('s_guide: an else prints Try again under 50; the starter gets nothing', () => {
+    const it = itemById('s_guide');
+    const run = (n, ...lines) => ok([n], [`Score? ${n}`, ...lines]);
+    const model = it.starter + 'else:\n    print("Try again")';
+    expect(evalCode(it, model, [run('70', 'Pass'), run('50', 'Pass'), run('49', 'Try again')]).pts).toBe(1);
+    expect(evalCode(it, it.starter, [run('70', 'Pass'), run('50', 'Pass'), run('49')]).pts).toBe(0);
+    const twoIfs = it.starter + 'if score < 50:\n    print("Try again")';      // works, but no else
+    expect(evalCode(it, twoIfs, [run('70', 'Pass'), run('50', 'Pass'), run('49', 'Try again')]).pts).toBe(0);
+  });
+});
+
+describe('retired questions (after the second sitting)', () => {
+  test('v_order and c_str stay in ITEMS for L7 but are not shown or marked', () => {
+    for (const id of ['v_order', 'c_str']) {
+      expect(itemById(id).retired, id).toBe(true);
+      expect(LIVE_ITEMS.map(i => i.id)).not.toContain(id);
+    }
+    const all = Object.fromEntries(LIVE_ITEMS.filter(i => !i.bonus).map(i => [i.id, itemMax(i, 0)]));
+    expect(summarise({ ...all, v_order: 0, c_str: 0 }, 0).pct).toBe(100);
   });
 });
 

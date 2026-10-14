@@ -72,6 +72,7 @@ describe('bug-pair helpers', () => {
   test('case matters: Name is broken, name is fixed', () => {
     expect(hasBugLine("print('Access granted to ' + Name)")).toBe(true);
     expect(hasFixedLine('print( "Access granted to "+name )')).toBe(true);
+    expect(hasFixedLine('print(" Access  granted to " + name)')).toBe(true);
     expect(hasFixedLine(IBUG_LINE)).toBe(false);
     expect(isBugFixed(code(...STARTER, IBUG_FIXED_LINE))).toBe(true);
     expect(isBugPairLine(IBUG_LINE) && isBugPairLine(IBUG_FIXED_LINE)).toBe(true);

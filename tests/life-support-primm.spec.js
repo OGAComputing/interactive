@@ -267,7 +267,8 @@ test('Make passes, plays the cliffhanger once, and the extension completes the c
   await expect(page.locator('#szTitle')).toHaveText(/Life support online/i);
   await expect(page.locator('#szLogFull')).toContainText('refill your suit');
   await expect(page.locator('#szReadouts')).toContainText('4 of 5');
-  await expect(page.locator('#szImpact svg')).toContainText('SENSOR OPS: CREW TAG HALE');
+  await expect(page.locator('#szImpact svg')).toContainText('SENSOR OPS: MOTION');
+  await expect(page.locator('#szReadouts')).toContainText('Proximity sensors');
   await page.click('#szContinue');
   await expect(page.locator('#m2_ext_task')).toBeVisible();
 
@@ -288,6 +289,13 @@ test('the first report recaps the last chapter, using the default when Wake Up w
   await expect(page.locator('#szPrev')).toBeVisible();
   await expect(page.locator('#szPrevFull')).toContainText('kept the Cryo Bay door sealed');
   await expect(page.locator('#szReadouts')).toContainText('24%');
+});
+
+// Hale's story is told in Wake Up, so a student who didn't finish it gets it from the recap.
+test('the recap tells Hale’s story, which this chapter no longer does', async ({ page }) => {
+  await openAt(page, {}, { story: true });
+  await expect(page.locator('#szPrevFull')).toContainText('Hale died three days ago');
+  await expect(page.locator('#szPrevFull')).toContainText('not human');
 });
 
 test('the recap follows the door choice', async ({ page }) => {
@@ -381,10 +389,26 @@ test('40 litres left Pod 5 short, and sending the canisters there saves Patel', 
   await expect(page.locator('#szReadouts')).not.toContainText('1 critical');
 });
 
-test('both lessons going wrong is the only way Patel dies', async ({ page }) => {
-  await makeWith(page, { door: 'open', lock: 'bay', air: 'low' }, 'low', 'suit');
+// Wake Up left Patel critical: only the canisters can save him, at either rate.
+test('a critical Patel from Wake Up dies if the canisters go to your suit, even at 60 litres', async ({ page }) => {
+  await makeWith(page, { door: 'open', lock: 'bay', air: 'full' }, 'full', 'suit');
   await expect(page.locator('#szLogFull')).toContainText('heart monitor goes flat');
   await expect(page.locator('#szReadouts')).toContainText('3 of 5');
+});
+
+test('a critical Patel from Wake Up is saved by sending the canisters to Pod 5', async ({ page }) => {
+  await makeWith(page, { door: 'open', lock: 'bay', air: 'low' }, 'low', 'pod5');
+  await expect(page.locator('#szLogFull')).toContainText('heart rate steadies');
+  await expect(page.locator('#szReadouts')).toContainText('4 of 5');
+  await expect(page.locator('#szReadouts')).not.toContainText('1 critical');
+});
+
+// Lesson 2's recap reads the same rule: a critical Patel who never got the canisters (Make not
+// finished, so no transfer was chosen) has died.
+test('a critical Patel with no transfer chosen counts as dead', async ({ page }) => {
+  await openStory(page, PATH, ['intro', 'P', 'R', 'I', 'M1', 'M2'], { door: 'open', lock: 'bay', air: 'full' });
+  await expect(page.locator('#szCrewCount')).toHaveText('3/5');
+  await expect(page.locator('#szCrewPods .crew-pod').nth(4)).toHaveClass(/dead/);
 });
 
 test('the Make card warns when Wake Up shut something in with Pod 5', async ({ page }) => {
@@ -392,6 +416,7 @@ test('the Make card warns when Wake Up shut something in with Pod 5', async ({ p
   await openAt(page, { currentStage: 'M2', completedStages: ['P', 'R', 'I', 'M1'], radio_m1_choice: 'low' });
   await expect(page.locator('#m2_choice_report')).toContainText('shut in the Cryo Bay');
   await expect(page.locator('#m2_choice_report')).toContainText('minimum power');
+  await expect(page.locator('#m2_choice_report')).toContainText('Patel is critical');
 });
 
 test('the recap follows both Wake Up calls', async ({ page }) => {
@@ -437,10 +462,13 @@ test('crew readout: Patel stays stable when the transfer saves Pod 5', async ({ 
   await expect(page.locator('#szCrewPods .crew-pod').nth(4)).toHaveClass(/alive/);
 });
 
-test('crew readout: Hale is dead until the cliffhanger, then his tag is active and not human (and not counted alive)', async ({ page }) => {
-  await openStory(page, PATH, ['intro', 'P', 'R', 'I', 'M1'], {});
+test('crew readout: Hale is dead until Wake Up’s cliffhanger, then his tag is active and not human (and not counted alive)', async ({ page }) => {
+  const WU = '/Y9/Python/L1_Python_Refresh/1_Wake_Up_PRIMM.html';
+  await openStory(page, WU, ['intro', 'P', 'R', 'I', 'M1'], {});
   await expect(page.locator('#szCrewPods .crew-pod').nth(1)).toHaveClass(/dead/);
-  await openStory(page, PATH, ['intro', 'P', 'R', 'I', 'M1', 'M2'], {});
+  await openStory(page, WU, ['intro', 'P', 'R', 'I', 'M1', 'M2'], {});
+  await expect(page.locator('#szCrewPods .crew-pod').nth(1)).toHaveClass(/compromised/);
+  await openStory(page, PATH, ['intro'], {});   // and stays so all through Life Support
   await expect(page.locator('#szCrewPods .crew-pod').nth(1)).toHaveClass(/compromised/);
   await expect(page.locator('#szCrewCount')).toHaveText('4/5');
   await page.click('#szCrewBtn');
