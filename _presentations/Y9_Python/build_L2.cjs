@@ -205,35 +205,35 @@ const R1 = 'Round 1 — numbers';
 const STEPS_1 = ['True or False?', 'Which lines run?', 'What is printed?'];
 
 R.whatPrintedSlide(K, {
-  section: R1, mode: 'I DO',
-  code: ['if 30 >= 50:', '    print("All clear")', 'else:', '    print("Too close")', 'print("Scan complete")'],
-  conds: [{ line: 1, expr: '30 >= 50', result: false }], runs: [4], skipped: [2], always: [5],
-  output: ['Too close', 'Scan complete'], steps: STEPS_1,
+  section: R1, mode: 'I DO', lh: 0.8,
+  code: ['if 30 >= 50:', '    print("All clear")', 'else:', '    print("Too close")'],
+  conds: [{ line: 1, expr: '30 >= 50', result: false }], runs: [4], skipped: [2],
+  output: ['Too close'], steps: STEPS_1,
   notes: `I DO — model it out loud, students just watch. Same three questions every time (the strip at the bottom).
 Click 1 — True or False? "Is 30 more than or equal to 50? No. False."
-Click 2 — Which lines run? "False, so skip the if block and run the else block. Line 5 isn't indented, so it isn't in either block: it runs every time."
-Click 3 — What is printed? Too close, then Scan complete.
+Click 2 — Which lines run? "False, so skip the if block and run the else block."
+Click 3 — What is printed? Too close — and only Too close.
 Say the steps every time: "condition, block, print".`,
 });
 
 R.whatPrintedSlide(K, {
-  section: R1, mode: 'WE DO',
-  code: ['if 7 == 7:', '    print("Door open")', 'else:', '    print("Door locked")', 'print("Done")'],
-  conds: [{ line: 1, expr: '7 == 7', result: true }], runs: [2], skipped: [4], always: [5],
-  output: ['Door open', 'Done'], steps: STEPS_1,
+  section: R1, mode: 'WE DO', lh: 0.8,
+  code: ['if 7 == 7:', '    print("Door open")', 'else:', '    print("Door locked")'],
+  conds: [{ line: 1, expr: '7 == 7', result: true }], runs: [2], skipped: [4],
+  output: ['Door open'], steps: STEPS_1,
   notes: `WE DO — students answer each step on boards BEFORE you click.
 Step 1: "True or False?" Boards up → click. (== asks "are they equal?" 7 equals 7: True.)
-Step 2: "Which lines run?" Cold-call someone to say the line numbers → click. Line 5 runs every time.
-Step 3: "What is printed?" Boards up → click. Door open, then Done.
+Step 2: "Which lines run?" Cold-call someone to say the line numbers → click.
+Step 3: "What is printed?" Boards up → click. Door open.
 Look for anyone writing Door open AND Door locked: exactly one block runs.`,
 });
 
 const YOU_1 = [
   { code: ['if 9 < 12:', '    print("Low")', 'else:', '    print("High")'], output: ['Low'],
     why: [{ text: '9 < 12', options: { fontFace: MONO, bold: true } }, { text: ' is True' }] },
-  { code: ['if 20 > 20:', '    print("Alarm")', 'else:', '    print("Quiet")', 'print("Scan done")'], output: ['Quiet', 'Scan done'],
+  { code: ['if 20 > 20:', '    print("Alarm")', 'else:', '    print("Quiet")'], output: ['Quiet'],
     why: [{ text: '20 > 20', options: { fontFace: MONO, bold: true } }, { text: ' is False' }] },
-  { code: ['if 4 >= 4:', '    print("Ready")', 'else:', '    print("Wait")', 'print("End")'], output: ['Ready', 'End'],
+  { code: ['if 4 >= 4:', '    print("Ready")', 'else:', '    print("Wait")'], output: ['Ready'],
     why: [{ text: '4 >= 4', options: { fontFace: MONO, bold: true } }, { text: ' is True' }] },
 ];
 R.whatPrintedGridSlide(K, {
@@ -245,8 +245,9 @@ Number 2 is the boundary trap (20 > 20).`,
 R.whatPrintedGridSlide(K, {
   section: R1, items: YOU_1, reveal: true,
   notes: `Check boards. Most common mistakes:
-2: "Alarm" — 20 is not MORE than 20, so it's False. And forgetting "Scan done", which runs every time.
-3: "Wait" — >= lets 4 equal 4, so it's True. And forgetting "End".
+2: "Alarm" — 20 is not MORE than 20, so it's False.
+3: "Wait" — >= lets 4 equal 4, so it's True.
+Anyone who wrote both messages for a program: exactly one block runs.
 If most of the class got 2 or 3 wrong, do one more together before Round 2.`,
 });
 
@@ -290,12 +291,12 @@ R.whatPrintedSlide(K, {
   memory: { line: 1, name: 'distance', type: 'int', value: '30' },
   conds: [{ line: 2, expr: '30 >= 50', result: false }], runs: [5], skipped: [3], always: [6],
   output: ['Too close', 'Scan complete'], steps: STEPS_2,
-  notes: `I DO — the same program as Round 1's I do, but the number is now in a variable. One new step: look in the box.
+  notes: `I DO — Round 1's I do program with two changes: the number is now in a variable (one new step: look in the box), and a last line that isn't indented.
 Click 1 — Look in the box: line 1 stores 30 in distance.
 Click 2 — True or False? "Swap distance for what's in the box: 30 >= 50. False."
-Click 3 — Which lines run? The else block, and line 6 every time.
-Click 4 — What is printed? Same as before: Too close, Scan complete.
-Point out: the output didn't change — a variable is just a name for the value in the box.`,
+Click 3 — Which lines run? "The else block. Line 6 isn't indented, so it isn't inside the if or the else: it runs every time, after them."
+Click 4 — What is printed? Too close, then Scan complete.
+Point out: Too close is the same as Round 1 — a variable is just a name for the value in the box. Scan complete is new, and it would print whatever distance was.`,
 });
 
 R.whatPrintedSlide(K, {

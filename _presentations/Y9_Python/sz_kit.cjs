@@ -163,9 +163,11 @@ function timer(s, label, dark = true) {
   chip(s, '⏱  ' + label, { x: 10.35, y: 0.62, w: 1.4, fill: dark ? P.charcoal : P.paper,
     line: dark ? P.gold : P.ink, color: dark ? P.gold : P.ink, size: 14 });
 }
+// A line can't have a negative width or height (PowerPoint reports the file as corrupt), so an arrow
+// pointing left or up is drawn from its top-left corner and flipped.
 function arrow(s, x1, y1, x2, y2, color = P.muted) {
-  s.addShape(pres.shapes.LINE, { x: x1, y: y1, w: x2 - x1, h: y2 - y1,
-    line: { color, width: 2.25, endArrowType: 'triangle' } });
+  s.addShape(pres.shapes.LINE, { x: Math.min(x1, x2), y: Math.min(y1, y2), w: Math.abs(x2 - x1), h: Math.abs(y2 - y1),
+    flipH: x2 < x1, flipV: y2 < y1, line: { color, width: 2.25, endArrowType: 'triangle' } });
 }
 
 // Python syntax colouring → pptxgenjs runs. Strings = str colour, numbers = int colour.
@@ -369,6 +371,15 @@ async function addClickAnimations(file, beats = []) {
   const slides = Object.keys(zip.files).filter((f) => /^ppt\/slides\/slide\d+\.xml$/.test(f));
   for (const f of slides) {
     let xml = await zip.file(f).async('string');
+    // pptxgenjs gives the slide-number placeholder a fixed id (25), which clashes with the 25th shape on a
+    // busy slide, and PowerPoint then reports the file as corrupt. Give any repeated id a fresh one.
+    const seen = new Set();
+    let next = Math.max(0, ...[...xml.matchAll(/<p:cNvPr id="(\d+)"/g)].map((m) => +m[1]));
+    xml = xml.replace(/<p:cNvPr id="(\d+)" name="([^"]*)"/g, (all, idv, name) => {
+      if (!seen.has(idv)) { seen.add(idv); return all; }
+      return `<p:cNvPr id="${++next}" name="${name}"`;
+    });
+    zip.file(f, xml);
     const isBeat = beats.includes(+f.match(/slide(\d+)\.xml$/)[1]);
     const groups = new Map();   // click number → shape ids; 0 = auto (plays as the slide opens)
     const textIds = new Set();
