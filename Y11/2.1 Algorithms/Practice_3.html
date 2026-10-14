@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- ACTIVITY
+title:  Algorithm Practice 3
+type:   Practice
+stars:  3
+desc:   Twelve OCR pseudocode questions that build up one skill at a time (variables, calculations, selection, while loops, for loops, totalling), then combine them, with instant mark-scheme feedback on every Run.
+color:  blue
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Algorithm Practice 3 — Year 11</title>
+
+<link rel="stylesheet" href="../../shared.css">
+
+<style>
+  /* ── Sticky header ───────────────────────────────────── */
+
+  header {
+    background: var(--surface);
+    border-bottom: 2px solid var(--surface-mid);
+    padding: 12px 20px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.35);
+  }
+  .header-progress { display: flex; align-items: center; gap: 10px; }
+
+  .page-wrap { padding: 28px 16px 60px; }
+
+  .page-title { font-size: 1.35rem; font-weight: 700; text-align: center; color: var(--accent-light); margin-bottom: 4px; }
+  .page-subtitle { text-align: center; font-size: 0.82rem; color: var(--muted); margin-bottom: 28px; }
+
+  /* ── Pill tab bar, split into Part A / Part B ───────── */
+
+  .tab-groups { display: flex; justify-content: center; gap: 18px 28px; flex-wrap: wrap; margin-bottom: 28px; }
+  .tab-group { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .tab-group-label {
+    font-size: 0.68rem;
+    font-family: var(--font-head, monospace);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+  }
+  .tabs { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
+  .tab-btn {
+    padding: 7px 14px;
+    border: 2px solid var(--surface-mid);
+    border-radius: 20px;
+    background: var(--surface);
+    color: var(--muted);
+    font-family: var(--font-body);
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s, color 0.2s;
+    user-select: none;
+  }
+  .tab-btn:hover:not(.active) { border-color: var(--accent); color: var(--text); }
+  .tab-btn.active    { background: var(--accent); border-color: var(--accent); color: var(--text-inv); }
+  .tab-btn.partial   { border-color: var(--gold); }
+  .tab-btn.done-gold { background: var(--gold);   border-color: var(--gold);   color: #111; }
+
+  /* ── Panels ──────────────────────────────────────────── */
+
+  .panel { display: none; max-width: 880px; margin: 0 auto; animation: ac-fade-in 0.2s ease; }
+  .panel.active { display: block; }
+
+  .card { background: var(--surface); border-left: 4px solid var(--accent); border-radius: 8px; padding: 18px 22px; margin-bottom: 22px; }
+  .card h2 { font-size: 0.82rem; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 12px; }
+  .card h2 + p, .card p + h2, .card ul + h2 { margin-top: 0; }
+  .card p { color: var(--text); font-size: 0.9rem; line-height: 1.7; margin-bottom: 10px; }
+  .card ul { margin: 6px 0 12px 1.2em; color: var(--text); font-size: 0.9rem; line-height: 1.8; }
+  .card ul:last-child { margin-bottom: 0; }
+  .card code { background: var(--code-bg, #1a1a2e); color: var(--code-text, #a0c4ff); padding: 1px 6px; border-radius: 4px; font-family: var(--font-head, monospace); font-size: 0.85em; }
+
+  .goal { background: var(--surface); border-left: 4px solid var(--accent); border-radius: 0 8px 8px 0; padding: 10px 16px; font-size: 0.9rem; font-weight: 600; color: var(--text); margin-bottom: 12px; }
+
+  .skills { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 20px; }
+  .skill-chip {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--accent);
+    color: var(--accent-light);
+    letter-spacing: 0.03em;
+  }
+
+  /* ── Pseudocode checker card ─────────────────────────── */
+
+  .code-checker { background: var(--surface); border-radius: 12px; border: 2px solid var(--surface-mid); overflow: hidden; margin: 0 -1rem 14px; }
+  .checker-footer { display: flex; gap: 10px; padding: 10px 14px; background: var(--surface-mid); border-top: 1px solid var(--surface-dim); flex-wrap: wrap; align-items: center; }
+  .checker-footer .ac-btn-secondary { font-size: 0.78rem; padding: 5px 14px; }
+  .checker-footer .ac-btn           { font-size: 0.78rem; padding: 5px 14px; }
+  .code-checker.is-wrong { outline: 2px solid var(--red); background: rgba(220,38,38,.08); }
+
+  /* ── Mark scheme ─────────────────────────────────────── */
+
+  .markscheme { background: var(--surface); border: 2px solid var(--surface-mid); border-radius: 8px; padding: 14px 18px; margin-bottom: 22px; }
+  .ms-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .ms-header h3 { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); }
+  .ms-total { font-size: 0.72rem; font-family: var(--font-head, monospace); color: var(--muted); letter-spacing: 0.06em; }
+  .ms-list { list-style: none; margin: 0 0 10px; padding: 0; display: flex; flex-direction: column; gap: 5px; }
+  .ms-row { display: flex; align-items: flex-start; gap: 10px; padding: 5px 8px; border-radius: 6px; font-size: 0.87rem; transition: background 0.15s; }
+  .ms-tick { font-size: 1rem; width: 1.3em; text-align: center; color: var(--muted); flex-shrink: 0; margin-top: 0.05em; }
+  .ms-text { flex: 1; color: var(--text); line-height: 1.5; }
+  .ms-marks { font-size: 0.7rem; font-family: var(--font-head, monospace); color: var(--muted); white-space: nowrap; margin-top: 0.2em; flex-shrink: 0; }
+  .ms-row.pass { background: rgba(52,211,153,0.08); }
+  .ms-row.pass .ms-tick, .ms-row.pass .ms-text, .ms-row.pass .ms-marks { color: var(--green); }
+  .ms-row.fail { background: rgba(248,113,113,0.06); }
+  .ms-row.fail .ms-tick  { color: var(--red); }
+  .ms-row.fail .ms-text  { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--red); }
+  .ms-divider { border: none; border-top: 1px solid var(--surface-mid); margin: 8px 0; }
+  .ms-score { font-size: 0.88rem; font-weight: 700; color: var(--accent); text-align: right; }
+  .ms-score.full { color: var(--gold); }
+
+  .score-pct { font-family: var(--font-head, monospace); font-size: 0.8rem; color: var(--accent); white-space: nowrap; }
+
+  /* ── Glow overlay ────────────────────────────────────── */
+
+  #glow-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none; z-index: 0; opacity: 0;
+    transition: opacity 1.8s ease;
+  }
+  #glow-overlay.gold { background: radial-gradient(ellipse at 50% 55%, rgba(251,191,36,.24) 0%, transparent 65%); }
+  #glow-overlay.show { opacity: 1; }
+</style>
+</head>
+
+<body>
+
+<div id="done-banner" class="ac-banner gold">
+  Full marks — outstanding algorithm writing!
+</div>
+<div id="glow-overlay"></div>
+
+<header>
+  <div class="header-progress">
+    <div class="ac-progress-bar" style="flex:1;">
+      <div class="ac-progress-fill" id="progress-fill"></div>
+    </div>
+    <span class="score-pct" id="progress-pct">0 marks</span>
+  </div>
+</header>
+
+<div class="page-wrap">
+  <h2 class="page-title">Algorithm Writing — Building Up</h2>
+  <p class="page-subtitle" id="page-subtitle">Variables → Calculations → Selection → While loops → For loops → Totalling</p>
+
+  <div class="tab-groups" id="tab-bar">
+    <div class="tab-group">
+      <span class="tab-group-label">Part A · one skill at a time</span>
+      <div class="tabs" id="tabs-a"></div>
+    </div>
+    <div class="tab-group">
+      <span class="tab-group-label">Part B · combining skills</span>
+      <div class="tabs" id="tabs-b"></div>
+    </div>
+  </div>
+
+  <!-- Question panels are built from the TASKS array below -->
+  <div id="panels"></div>
+</div><!-- /.page-wrap -->
+
+<div class="ac-toast" id="toast"></div>
+
+<script type="module">
+import { setupEditors, runPseudocode } from '../../pseudocode-editor.js';
+import { preload } from '../../pyodide-runner.js';
+
+const ACTIVITY_TITLE = 'Algorithm Practice 3';
+const STORE_NS = location.pathname;
+
+// ── Check helpers ──────────────────────────────────────────────
+// The mocked input() echoes "prompt + value" into the output, so every
+// behaviour check looks only at what the program printed itself.
+
+const escRe = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+// Lines the program printed, with the input echo lines removed (in order).
+function printed(run) {
+  const lines = (run.output || '').split('\n');
+  const keep = [];
+  let k = 0;
+  for (const line of lines) {
+    const v = run.inputs[k];
+    if (v !== undefined && new RegExp('(^|[^\\w.\\-])' + escRe(String(v)) + '$').test(line.trimEnd())) {
+      k++;
+      continue;
+    }
+    keep.push(line);
+  }
+  return { lines: keep.filter(l => l.trim() !== ''), consumed: k };
+}
+
+const text  = run => printed(run).lines.join('\n').toLowerCase();
+const nums  = s => (s.match(/-?\d+(?:\.\d+)?/g) || []).map(Number);
+const ok    = run => !!run && run.ok;
+const has   = (run, needle) => ok(run) && text(run).includes(needle.toLowerCase());
+const count = (run, re) => ok(run) ? (text(run).match(new RegExp(re.source, 'g')) || []).length : 0;
+const hasNum = (run, n) => ok(run) && nums(text(run)).some(x => Math.abs(x - n) < 1e-9);
+const lastNum = run => { const a = nums(text(run)); return a.length ? a[a.length - 1] : NaN; };
+// Some printed line containing `word` also contains the number n.
+const lineNum = (run, word, n) => ok(run) &&
+  printed(run).lines.some(l => l.toLowerCase().includes(word) && nums(l).some(x => Math.abs(x - n) < 1e-9));
+// The numbers in `seq` appear one after another in a list of numbers.
+const hasSeq = (list, seq) => list.some((_, i) => seq.every((v, j) => Math.abs(list[i + j] - v) < 1e-9));
+
+const inputs     = src => (src.match(/\binput\s*\(/g) || []).length;
+const hasIf      = src => /\bif\b/.test(src);
+const hasLoop    = src => /\bfor\b|\bwhile\b|\bdo\b/.test(src);
+const hasForLoop = src => /\bfor\s+\w+\s*=.*?\bto\b/.test(src);
+const hasCondLoop = src => /\bwhile\b|\bdo\b.*?\buntil\b/.test(src);
+const runningTotal = src => /\b(\w+)\s*=\s*(?:\1\s*\+|[\w.]+\s*\+\s*\1\b)/.test(src);
+
+// ── Questions ──────────────────────────────────────────────────
+// Each task: part, title, skills, goal, scenario (HTML), must [], tests [{inputs, expected}],
+// criteria [{text, marks, check({src, runs})}]. `expected` only colours the test output.
+const TASKS = [
+
+  // ════════════ PART A — one skill at a time ════════════
+
+  // ── Q1: Variables ──────────────────────────────────────────
+  {
+    part: 'A',
+    title: 'Player Profile',
+    skills: ['Variables'],
+    goal: 'Store two pieces of information in variables and output them in one message.',
+    scenario: `<p>A games console sets up a player profile. It asks the player for their <strong>username</strong> and the <strong>level</strong> they have reached, then displays a single message such as:</p>
+      <p><code>Shadow99 is on level 12</code></p>`,
+    must: [
+      'Ask the user to enter their username',
+      'Ask the user to enter their level',
+      'Output one message that includes both the username and the level',
+    ],
+    tests: [
+      { inputs: ['Shadow99', '12'], expected: ['shadow99', '12'] },
+      { inputs: ['Pixel', '3'],     expected: ['pixel', '3'] },
+    ],
+    criteria: [
+      { text: 'Inputs and stores the username', marks: 1,
+        check: ({ src }) => inputs(src) >= 1 },
+      { text: 'Inputs and stores the level', marks: 1,
+        check: ({ src }) => inputs(src) >= 2 },
+      { text: 'Outputs one message containing both the username and the level (tested: Shadow99 / 12 and Pixel / 3)', marks: 1,
+        check: ({ runs }) => runs.every(r => ok(r) && printed(r).lines.some(l =>
+          l.toLowerCase().includes(String(r.inputs[0]).toLowerCase()) && nums(l).includes(Number(r.inputs[1])))) },
+    ],
+  },
+
+  // ── Q2: Calculations ───────────────────────────────────────
+  {
+    part: 'A',
+    title: 'Pizza Party',
+    skills: ['Calculations'],
+    goal: 'Use arithmetic to work out how many pizza slices there are and how many each guest gets.',
+    scenario: `<p>A party planner app works out how much pizza there is. Every pizza is cut into <strong>8 slices</strong>. The user enters the number of pizzas and the number of guests. The app displays the <strong>total number of slices</strong> and <strong>how many slices each guest gets</strong>.</p>
+      <p>Example: 3 pizzas and 6 guests → 24 slices in total, 4 slices each.</p>`,
+    must: [
+      'Ask the user to enter the number of pizzas and the number of guests',
+      'Calculate the total number of slices',
+      'Calculate the number of slices each guest gets',
+      'Output both results',
+    ],
+    tests: [
+      { inputs: ['3', '6'],  expected: ['24', '4'] },
+      { inputs: ['4', '16'], expected: ['32', '2'] },
+    ],
+    criteria: [
+      { text: 'Inputs and stores the number of pizzas and the number of guests', marks: 1,
+        check: ({ src }) => inputs(src) >= 2 },
+      { text: 'Multiplies by 8 to calculate the total number of slices', marks: 1,
+        check: ({ src }) => /\*\s*8\b|\b8\s*\*/.test(src) },
+      { text: 'Outputs the correct total number of slices (3 pizzas → 24, 4 pizzas → 32)', marks: 1,
+        check: ({ runs }) => hasNum(runs[0], 24) && hasNum(runs[1], 32) },
+      { text: 'Outputs the correct number of slices per guest (24 ÷ 6 → 4, 32 ÷ 16 → 2)', marks: 1,
+        check: ({ runs }) => hasNum(runs[0], 4) && hasNum(runs[1], 2) },
+    ],
+  },
+
+  // ── Q3: Selection ──────────────────────────────────────────
+  {
+    part: 'A',
+    title: 'Ride Height Check',
+    skills: ['Selection'],
+    goal: 'Decide whether a visitor is tall enough to go on a ride.',
+    scenario: `<p>A theme park ride has a height restriction. Visitors must be <strong>120 cm or taller</strong> to ride. A member of staff enters the visitor's height in cm and the system displays whether they can ride.</p>`,
+    must: [
+      'Ask the user to enter the visitor\'s height in cm',
+      'Output <code>Enjoy the ride</code> if the visitor is 120 cm or taller',
+      'Output <code>Sorry, you are too short</code> otherwise',
+    ],
+    tests: [
+      { inputs: ['150'], expected: 'enjoy' },
+      { inputs: ['120'], expected: 'enjoy' },
+      { inputs: ['119'], expected: 'too short' },
+      { inputs: ['95'],  expected: 'too short' },
+    ],
+    criteria: [
+      { text: 'Inputs and stores the height', marks: 1,
+        check: ({ src }) => inputs(src) >= 1 },
+      { text: 'Attempts to use selection (any if statement present)', marks: 1,
+        check: ({ src }) => hasIf(src) },
+      { text: 'Outputs "Enjoy the ride" for heights of 120 cm or more, and nothing about being too short (tested: 150, 120)', marks: 1,
+        check: ({ runs }) => [0, 1].every(i => has(runs[i], 'enjoy') && !has(runs[i], 'short')) },
+      { text: 'Outputs "Sorry, you are too short" for heights under 120 cm, and nothing about enjoying the ride (tested: 119, 95)', marks: 1,
+        check: ({ runs }) => [2, 3].every(i => has(runs[i], 'too short') && !has(runs[i], 'enjoy')) },
+    ],
+  },
+
+  // ── Q4: While loop (no totalling) ──────────────────────────
+  {
+    part: 'A',
+    title: 'Password Gate',
+    skills: ['While loop'],
+    goal: 'Keep asking for a password until the correct one is entered.',
+    scenario: `<p>A school laptop locker opens only when the correct password is entered. The password is <code>dragon42</code>. The locker keeps asking for the password until it is entered correctly, then displays <code>Access granted</code>.</p>`,
+    must: [
+      'Ask the user to enter the password',
+      'Keep asking until the user enters <code>dragon42</code>',
+      'Output <code>Access granted</code> once the correct password has been entered',
+    ],
+    tests: [
+      { inputs: ['cat', 'letmein', 'dragon42'], expected: 'access granted' },
+      { inputs: ['dragon42'],                   expected: 'access granted' },
+      { inputs: ['Dragon42', 'dragon42'],       expected: 'access granted' },
+    ],
+    criteria: [
+      { text: 'Inputs and stores the password', marks: 1,
+        check: ({ src }) => inputs(src) >= 1 },
+      { text: 'Attempts to use iteration (any loop present)', marks: 1,
+        check: ({ src }) => hasLoop(src) },
+      { text: 'Uses a condition-controlled loop (while or do…until)', marks: 1,
+        check: ({ src }) => hasCondLoop(src) },
+      { text: 'Keeps asking until "dragon42" is entered, then outputs "Access granted" once (tested: right first time, third time, and "Dragon42" with a capital D)', marks: 1,
+        check: ({ runs }) => runs.every(r => count(r, /access granted/) === 1 && printed(r).consumed === r.inputs.length) },
+    ],
+  },
+
+  // ── Q5: For loop ───────────────────────────────────────────
+  {
+    part: 'A',
+    title: 'Rocket Countdown',
+    skills: ['For loop'],
+    goal: 'Count down from a number the user chooses, then launch.',
+    scenario: `<p>A science club launches model rockets. The launch controller enters a starting number, and the system counts down <strong>from that number to 1</strong>, outputting each number on its own line. After the countdown it outputs <code>Lift off!</code></p>
+      <p>Example: starting number 3 → <code>3</code>, <code>2</code>, <code>1</code>, <code>Lift off!</code></p>`,
+    must: [
+      'Ask the user to enter the starting number',
+      'Use a count-controlled loop to output every number from the starting number down to 1',
+      'Output <code>Lift off!</code> once, after the countdown',
+    ],
+    tests: [
+      { inputs: ['5'], expected: ['5', '4', '3', '2', '1', 'lift off'] },
+      { inputs: ['3'], expected: ['3', '2', '1', 'lift off'] },
+    ],
+    criteria: [
+      { text: 'Inputs and stores the starting number', marks: 1,
+        check: ({ src }) => inputs(src) >= 1 },
+      { text: 'Attempts to use iteration (any loop present)', marks: 1,
+        check: ({ src }) => hasLoop(src) },
+      { text: 'Uses a count-controlled (for) loop', marks: 1,
+        check: ({ src }) => hasForLoop(src) },
+      { text: 'Outputs every number from the starting number down to 1, in order, without 0 (tested: 5 and 3)', marks: 1,
+        check: ({ runs }) =>
+          ok(runs[0]) && ok(runs[1]) &&
+          hasSeq(nums(text(runs[0])), [5, 4, 3, 2, 1]) && !hasNum(runs[0], 0) && !hasNum(runs[0], 6) &&
+          hasSeq(nums(text(runs[1])), [3, 2, 1])       && !hasNum(runs[1], 0) && !hasNum(runs[1], 4) },
+      { text: 'Outputs "Lift off!" exactly once, after the last number', marks: 1,
+        check: ({ runs }) => runs.every(r => {
+          const lines = printed(r).lines;
+          return ok(r) && count(r, /lift off/) === 1 && /lift off/i.test(lines[lines.length - 1] || '');
+        }) },
+    ],
+  },
+
+  // ── Q6: Loop with totalling ────────────────────────────────
+  {
+    part: 'A',
+    title: 'Step Counter',
+    skills: ['Loop with totalling'],
+    goal: 'Add up a number of daily step counts to find the total.',
+    scenario: `<p>A fitness tracker app works out how many steps a user has walked in total. The user first enters <strong>how many days</strong> they want to add up. The app then asks for the <strong>number of steps walked on each day</strong>. After all the days have been entered, it outputs the <strong>total number of steps</strong>.</p>`,
+    must: [
+      'Ask the user how many days they want to enter',
+      'Ask for the number of steps for each of those days',
+      'Add each day\'s steps to a running total',
+      'Output the total after all the days have been entered',
+    ],
+    // A trailing 999 is only read if the loop runs one time too many.
+    tests: [
+      { inputs: ['3', '4000', '2500', '6000', '999'], expected: '12500' },
+      { inputs: ['2', '800', '700', '999'],           expected: '1500' },
+    ],
+    criteria: [
+      { text: 'Inputs the number of days and the steps for each day', marks: 1,
+        check: ({ src }) => inputs(src) >= 2 },
+      { text: 'Attempts to use iteration (any loop present)', marks: 1,
+        check: ({ src }) => hasLoop(src) },
+      { text: 'Adds each day\'s steps to a running total', marks: 1,
+        check: ({ src }) => runningTotal(src) },
+      { text: 'Outputs the correct total after the loop (3 days: 4000 + 2500 + 6000 → 12500)', marks: 1,
+        check: ({ runs }) => ok(runs[0]) && lastNum(runs[0]) === 12500 },
+      { text: 'Loop repeats the number of times the user entered, not a fixed number (2 days: 800 + 700 → 1500)', marks: 1,
+        check: ({ runs }) => ok(runs[1]) && lastNum(runs[1]) === 1500 },
+    ],
+  },
+
+  // ════════════ PART B — combining skills ════════════
+
+  // ── Q7: Calculations + selection ───────────────────────────
+  {
+    part: 'B',
+    title: 'School Trip Minibuses',
+    skills: ['Variables', 'Calculations', 'Selection'],
+    goal: 'Work out how many minibuses can be filled, how many students are left over, and whether another minibus is needed.',
+    scenario: `<p>A school is booking minibuses for a trip. Each minibus holds exactly <strong>16 students</strong>. The trip organiser enters the number of students going. The system outputs:</p>
+      <ul>
+        <li>how many minibuses can be <strong>completely filled</strong></li>
+        <li>how many students are <strong>left over</strong></li>
+        <li><code>Extra minibus needed</code> if any students are left over, or <code>All minibuses full</code> if none are</li>
+      </ul>
+      <p>Example: 50 students → 3 full minibuses, 2 students left over, <code>Extra minibus needed</code></p>`,
+    must: [
+      'Ask the user to enter the number of students',
+      'Calculate and output the number of completely full minibuses',
+      'Calculate and output the number of students left over',
+      'Output the correct message about an extra minibus',
+    ],
+    tests: [
+      { inputs: ['50'], expected: ['3', '2', 'extra minibus'] },
+      { inputs: ['32'], expected: ['2', '0', 'all minibuses full'] },
+      { inputs: ['70'], expected: ['4', '6', 'extra minibus'] },
+    ],
+    criteria: [
+      { text: 'Inputs and stores the number of students', marks: 1,
+        check: ({ src }) => inputs(src) >= 1 },
+      { text: 'Outputs the correct number of full minibuses (50 → 3, 32 → 2, 70 → 4)', marks: 1,
+        check: ({ runs }) => hasNum(runs[0], 3) && hasNum(runs[1], 2) && hasNum(runs[2], 4) },
+      { text: 'Outputs the correct number of students left over (50 → 2, 32 → 0, 70 → 6)', marks: 1,
+        check: ({ runs }) => hasNum(runs[0], 2) && hasNum(runs[1], 0) && hasNum(runs[2], 6) },
+      { text: 'Attempts to use selection (any if statement present)', marks: 1,
+        check: ({ src }) => hasIf(src) },
+      { text: 'Outputs "Extra minibus needed" when students are left over (tested: 50, 70)', marks: 1,
+        check: ({ runs }) => [0, 2].every(i => has(runs[i], 'extra minibus') && !has(runs[i], 'all minibuses full')) },
+      { text: 'Outputs "All minibuses full" when no students are left over (tested: 32)', marks: 1,
+        check: ({ runs }) => has(runs[1], 'all minibuses full') && !has(runs[1], 'extra minibus') },
+    ],
+  },
+
+  // ── Q8: While loop + selection ─────────────────────────────
+  {
+    part: 'B',
+    title: 'Guess the Number',
+    skills: ['Variables', 'Selection', 'While loop'],
+    goal: 'Keep asking for guesses, giving a clue after each wrong one, until the secret number is found.',
+    scenario: `<p>A simple guessing game stores a secret number, <strong>37</strong>. The player keeps entering guesses until they guess the secret number.</p>
+      <ul>
+        <li>If a guess is too big, the game outputs <code>Too high</code></li>
+        <li>If a guess is too small, the game outputs <code>Too low</code></li>
+        <li>When the player guesses correctly, the game outputs <code>Correct!</code> and stops</li>
+      </ul>`,
+    must: [
+      'Store the secret number 37',
+      'Repeatedly ask the user to enter a guess until they guess 37',
+      'Output <code>Too high</code> or <code>Too low</code> after each wrong guess',
+      'Output <code>Correct!</code> when the number is guessed',
+    ],
+    // A trailing 99 is only read if the game keeps going after a correct guess.
+    tests: [
+      { inputs: ['50', '20', '37', '99'], expected: ['too high', 'too low', 'correct'] },
+      { inputs: ['37', '99'],             expected: 'correct' },
+      { inputs: ['38', '36', '37', '99'], expected: ['too high', 'too low', 'correct'] },
+    ],
+    criteria: [
+      { text: 'Inputs and stores the player\'s guess', marks: 1,
+        check: ({ src }) => inputs(src) >= 1 },
+      { text: 'Attempts to use iteration (any loop present)', marks: 1,
+        check: ({ src }) => hasLoop(src) },
+      { text: 'Attempts to use selection (any if statement present)', marks: 1,
+        check: ({ src }) => hasIf(src) },
+      { text: 'Outputs "Too high" once for each guess above 37 (tested: 50, 38)', marks: 1,
+        check: ({ runs }) => count(runs[0], /too high/) === 1 && count(runs[2], /too high/) === 1 && count(runs[1], /too high/) === 0 },
+      { text: 'Outputs "Too low" once for each guess below 37 (tested: 20, 36)', marks: 1,
+        check: ({ runs }) => count(runs[0], /too low/) === 1 && count(runs[2], /too low/) === 1 && count(runs[1], /too low/) === 0 },
+      { text: 'Outputs "Correct!" once when 37 is guessed, and stops asking (tested: first guess and third guess)', marks: 1,
+        check: ({ runs }) => runs.every(r => count(r, /\bcorrect\b/) === 1 && printed(r).consumed === r.inputs.length - 1) },
+    ],
+  },
+
+  // ── Q9: For loop + selection + counting ────────────────────
+  {
+    part: 'B',
+    title: 'Test Results',
+    skills: ['For loop', 'Selection', 'Totalling'],
+    goal: 'Read six test scores and count how many students passed and how many failed.',
+    scenario: `<p>A teacher enters the test scores for a group of <strong>6 students</strong>, one at a time. A score of <strong>40 or more</strong> is a pass. After all 6 scores have been entered, the program outputs <strong>how many students passed</strong> and <strong>how many failed</strong>.</p>
+      <p>Example output: <code>Passed: 4</code> and <code>Failed: 2</code></p>`,
+    must: [
+      'Use a count-controlled loop that repeats exactly 6 times',
+      'Ask for a score on each pass through the loop',
+      'Count the number of passes and the number of fails',
+      'Output both counts after the loop, labelled "Passed" and "Failed"',
+    ],
+    // A trailing 99 is only read if the loop runs more than 6 times.
+    tests: [
+      { inputs: ['55', '40', '39', '72', '12', '40', '99'], expected: ['passed', '4', 'failed', '2'] },
+      { inputs: ['90', '10', '5', '8', '41', '6', '99'],    expected: ['passed', '2', 'failed', '4'] },
+    ],
+    criteria: [
+      { text: 'Inputs and stores a score inside the loop', marks: 1,
+        check: ({ src }) => inputs(src) >= 1 },
+      { text: 'Uses a count-controlled (for) loop that repeats exactly 6 times', marks: 1,
+        check: ({ src, runs }) => hasForLoop(src) && runs.every(r => ok(r) && printed(r).consumed === 6) },
+      { text: 'Attempts to use selection (any if statement present)', marks: 1,
+        check: ({ src }) => hasIf(src) },
+      { text: 'Keeps a count of passes and/or fails that goes up by 1', marks: 1,
+        check: ({ src }) => /\b(\w+)\s*=\s*(?:\1\s*\+\s*1\b|1\s*\+\s*\1\b)/.test(src) },
+      { text: 'Outputs the correct number passed — 40 counts as a pass (tested: 4 passed, then 2 passed)', marks: 1,
+        check: ({ runs }) => lineNum(runs[0], 'pass', 4) && lineNum(runs[1], 'pass', 2) },
+      { text: 'Outputs the correct number failed (tested: 2 failed, then 4 failed)', marks: 1,
+        check: ({ runs }) => lineNum(runs[0], 'fail', 2) && lineNum(runs[1], 'fail', 4) },
+    ],
+  },
+
+  // ── Q10: While loop + totalling + selection ────────────────
+  {
+    part: 'B',
+    title: 'Online Basket',
+    skills: ['While loop', 'Totalling', 'Selection'],
+    goal: 'Add up item prices until 0 is entered, then decide whether delivery is free.',
+    scenario: `<p>An online shop adds up the price of every item in a customer's basket. The user enters item prices one at a time and enters <strong>0</strong> when there are no more items. The shop then outputs the <strong>basket total</strong>.</p>
+      <p>Orders with a total of <strong>£50 or more</strong> get free delivery, so the shop also outputs <code>Free delivery</code>. Otherwise it outputs <code>Delivery charge £3.99</code>.</p>`,
+    must: [
+      'Repeatedly ask the user to enter an item price until they enter 0',
+      'Add each price to a running total',
+      'Output the basket total after the loop',
+      'Output <code>Free delivery</code> if the total is 50 or more, otherwise <code>Delivery charge £3.99</code>',
+    ],
+    tests: [
+      { inputs: ['12.5', '20', '0', '99'], expected: ['32.5', 'delivery charge'] },
+      { inputs: ['30', '25', '0', '99'],   expected: ['55', 'free delivery'] },
+      { inputs: ['20', '30', '0', '99'],   expected: ['50', 'free delivery'] },
+      { inputs: ['0', '99'],               expected: ['0', 'delivery charge'] },
+    ],
+    criteria: [
+      { text: 'Inputs and stores an item price', marks: 1,
+        check: ({ src }) => inputs(src) >= 1 },
+      { text: 'Attempts to use iteration (any loop present)', marks: 1,
+        check: ({ src }) => hasLoop(src) },
+      { text: 'Adds each price to a running total', marks: 1,
+        check: ({ src }) => runningTotal(src) },
+      { text: 'Stops when 0 is entered and outputs the correct total (32.5, 55, 50 and 0)', marks: 1,
+        check: ({ runs }) =>
+          runs.every(r => ok(r) && printed(r).consumed === r.inputs.length - 1) &&
+          hasNum(runs[0], 32.5) && hasNum(runs[1], 55) && hasNum(runs[2], 50) && hasNum(runs[3], 0) },
+      { text: 'Attempts to use selection (any if statement present)', marks: 1,
+        check: ({ src }) => hasIf(src) },
+      { text: 'Outputs "Free delivery" for totals of £50 or more (tested: 55, and exactly 50)', marks: 1,
+        check: ({ runs }) => [1, 2].every(i => has(runs[i], 'free delivery') && !has(runs[i], 'delivery charge')) },
+      { text: 'Outputs "Delivery charge £3.99" for totals under £50 (tested: 32.5 and 0)', marks: 1,
+        check: ({ runs }) => [0, 3].every(i => has(runs[i], 'delivery charge') && !has(runs[i], 'free')) },
+    ],
+  },
+
+  // ── Q11: Validation loop + selection + calculation ─────────
+  {
+    part: 'B',
+    title: 'Car Park Charges',
+    skills: ['While loop', 'Selection', 'Calculations'],
+    goal: 'Make sure the number of hours is valid, then calculate the parking charge.',
+    scenario: `<p>A car park ticket machine asks drivers how many <strong>whole hours</strong> they stayed. The number of hours must be <strong>between 1 and 24</strong> inclusive — if it is not, the machine keeps asking until a valid number is entered.</p>
+      <p>The charge is:</p>
+      <ul>
+        <li><strong>£3.00</strong> for a stay of up to 2 hours</li>
+        <li><strong>£3.00 plus £1.50 for every hour over 2</strong> for longer stays</li>
+      </ul>
+      <p>Example: 5 hours → 3.00 + 3 × 1.50 = <code>7.5</code></p>`,
+    must: [
+      'Ask the user to enter the number of hours',
+      'Keep asking until the number of hours is between 1 and 24 inclusive',
+      'Calculate the charge using the rules above',
+      'Output the charge',
+    ],
+    // A trailing 99 is only read if a valid number of hours is wrongly rejected.
+    tests: [
+      { inputs: ['1', '99'],      expected: '3' },
+      { inputs: ['2', '99'],      expected: '3' },
+      { inputs: ['3', '99'],      expected: '4.5' },
+      { inputs: ['24', '99'],     expected: '36' },
+      { inputs: ['0', '25', '5'], expected: '7.5' },
+    ],
+    criteria: [
+      { text: 'Inputs and stores the number of hours', marks: 1,
+        check: ({ src }) => inputs(src) >= 1 },
+      { text: 'Attempts to use iteration (any loop present)', marks: 1,
+        check: ({ src }) => hasLoop(src) },
+      { text: 'Rejects hours outside 1–24 and asks again (tested: 0, then 25, then 5 → 7.5)', marks: 1,
+        check: ({ runs }) => ok(runs[4]) && printed(runs[4]).consumed === 3 && hasNum(runs[4], 7.5) },
+      { text: 'Accepts the boundary values 1 and 24 first time', marks: 1,
+        check: ({ runs }) => [0, 3].every(i => ok(runs[i]) && printed(runs[i]).consumed === 1) },
+      { text: 'Attempts to use selection (any if statement present)', marks: 1,
+        check: ({ src }) => hasIf(src) },
+      { text: 'Charges £3.00 for stays of up to 2 hours (tested: 1 and 2 hours)', marks: 1,
+        check: ({ runs }) => hasNum(runs[0], 3) && hasNum(runs[1], 3) },
+      { text: 'Charges correctly for stays over 2 hours (3 → 4.5, 24 → 36, 5 → 7.5)', marks: 1,
+        check: ({ runs }) => hasNum(runs[2], 4.5) && hasNum(runs[3], 36) && hasNum(runs[4], 7.5) },
+    ],
+  },
+
+  // ── Q12: Everything ────────────────────────────────────────
+  {
+    part: 'B',
+    title: 'Arcade Game',
+    skills: ['Variables', 'Calculations', 'Selection', 'While loop', 'Totalling'],
+    goal: 'Run a game that adds up points until the player runs out of lives.',
+    scenario: `<p>An arcade game starts the player with <strong>3 lives</strong> and a score of <strong>0</strong>. Each round, the number of points the player scored is entered.</p>
+      <ul>
+        <li>If the points for a round are <strong>0</strong>, the player loses a life and the game outputs how many lives are left, e.g. <code>Lives left: 2</code></li>
+        <li>Otherwise, the points are added to the player's score</li>
+      </ul>
+      <p>The game ends when the player has <strong>no lives left</strong>. It then outputs the final score. If the final score is <strong>100 or more</strong>, it also outputs <code>New high score!</code></p>`,
+    must: [
+      'Repeatedly ask for the points scored in a round until the player has no lives left',
+      'Take away a life and output the number of lives left when 0 points are scored',
+      'Add the points to the score otherwise',
+      'Output the final score after the game ends',
+      'Output <code>New high score!</code> if the final score is 100 or more',
+    ],
+    tests: [
+      { inputs: ['20', '0', '50', '0', '40', '0'],  expected: ['110', 'new high score'] },
+      { inputs: ['0', '15', '0', '5', '0'],         expected: '20' },
+      { inputs: ['60', '40', '0', '0', '0', '99'],  expected: ['100', 'new high score'] },
+    ],
+    criteria: [
+      { text: 'Inputs and stores the points for each round', marks: 1,
+        check: ({ src }) => inputs(src) >= 1 },
+      { text: 'Attempts to use iteration (any loop present)', marks: 1,
+        check: ({ src }) => hasLoop(src) },
+      { text: 'Attempts to use selection (any if statement present)', marks: 1,
+        check: ({ src }) => hasIf(src) },
+      { text: 'Takes away a life for 0 points and outputs the lives left (2, then 1, then 0)', marks: 1,
+        check: ({ runs }) => [0, 1].every(i => ok(runs[i]) &&
+          hasSeq(nums(printed(runs[i]).lines.filter(l => /li(fe|ves)/i.test(l)).join(' ')), [2, 1, 0])) },
+      { text: 'Adds the points for each round to a running score', marks: 1,
+        check: ({ src }) => runningTotal(src) },
+      { text: 'Ends the game when the lives run out and outputs the correct final score (110, 20, and 100 — not 199)', marks: 1,
+        check: ({ runs }) => hasNum(runs[0], 110) && hasNum(runs[1], 20) && hasNum(runs[2], 100) && !hasNum(runs[2], 199) },
+      { text: 'Outputs "New high score!" only when the score is 100 or more (tested: 110, exactly 100, and 20)', marks: 1,
+        check: ({ runs }) => has(runs[0], 'high score') && has(runs[2], 'high score') && ok(runs[1]) && !has(runs[1], 'high score') },
+    ],
+  },
+
+]; // end TASKS
+
+TASKS.forEach(t => { t.maxMarks = t.criteria.reduce((s, c) => s + c.marks, 0); });
+const TASK_COUNT  = TASKS.length;
+const TOTAL_MARKS = TASKS.reduce((s, t) => s + t.maxMarks, 0);
+
+// ── Build tabs and panels ──────────────────────────────────────
+const plural = n => n + ' mark' + (n === 1 ? '' : 's');
+
+TASKS.forEach((t, i) => {
+  const tab = document.createElement('button');
+  tab.type = 'button';
+  tab.className = 'tab-btn' + (i === 0 ? ' active' : '');
+  tab.dataset.idx = i;
+  tab.textContent = `Q${i + 1} · ${t.maxMarks}m`;
+  tab.title = t.title;
+  document.getElementById(t.part === 'A' ? 'tabs-a' : 'tabs-b').appendChild(tab);
+
+  const panel = document.createElement('div');
+  panel.className = 'panel' + (i === 0 ? ' active' : '');
+  panel.id = 'panel-' + i;
+  panel.innerHTML = `
+    <div class="goal">Q${i + 1} — ${t.title}: ${t.goal}</div>
+    <div class="skills">${t.skills.map(s => `<span class="skill-chip">${s}</span>`).join('')}</div>
+
+    <div class="card">
+      <h2>Scenario</h2>
+      ${t.scenario}
+      <h2 style="margin-top:14px;">Your algorithm must:</h2>
+      <ul>${t.must.map(m => `<li>${m}</li>`).join('')}</ul>
+    </div>
+
+    <div class="code-checker" id="checker-${i}">
+      <div class="checker-header">
+        <span class="checker-dot dot-r"></span>
+        <span class="checker-dot dot-y"></span>
+        <span class="checker-dot dot-g"></span>
+        <span>Q${i + 1} — Write your pseudocode here</span>
+      </div>
+      <textarea class="pseudocode-textarea" id="editor-${i}" spellcheck="false"
+                autocomplete="off" autocapitalize="off">// Write your OCR pseudocode here
+</textarea>
+      <div class="checker-footer">
+        <button class="ac-btn" id="run-${i}" type="button">Run ▶</button>
+        <button class="ac-btn-secondary" id="clear-${i}" type="button">Clear</button>
+        <span id="run-status-${i}" style="font-size:0.75rem;color:var(--muted);"></span>
+      </div>
+    </div>
+
+    <div class="markscheme" id="ms-${i}">
+      <div class="ms-header">
+        <h3>Mark Scheme</h3>
+        <span class="ms-total">${plural(t.maxMarks)} available</span>
+      </div>
+      <ul class="ms-list" id="ms-list-${i}">
+        ${t.criteria.map(c => `
+        <li class="ms-row">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">${c.text}</span>
+          <span class="ms-marks">${plural(c.marks)}</span>
+        </li>`).join('')}
+      </ul>
+      <hr class="ms-divider">
+      <div class="ms-score" id="ms-score-${i}">— / ${plural(t.maxMarks)}</div>
+    </div>`;
+  document.getElementById('panels').appendChild(panel);
+});
+
+document.getElementById('page-subtitle').textContent += ` · ${TOTAL_MARKS} marks total`;
+
+// ── State ──────────────────────────────────────────────────────
+const taskEarned = new Array(TASK_COUNT).fill(0);
+
+// Lower-case the source and blank out comments and string literals, so words
+// inside messages (e.g. "Thanks for playing") don't count as keywords.
+function normSrc(raw) {
+  return raw
+    .replace(/\/\/[^\n]*/g, ' ')
+    .replace(/"[^"\n]*"|'[^'\n]*'/g, '""')
+    .replace(/\s+/g, ' ')
+    .toLowerCase()
+    .trim();
+}
+
+// ── Editor setup ───────────────────────────────────────────────
+for (let i = 0; i < TASK_COUNT; i++) {
+  try {
+    const saved = localStorage.getItem(STORE_NS + ':e' + i);
+    if (saved !== null) document.getElementById('editor-' + i).value = saved;
+  } catch (_) {}
+}
+setupEditors('.pseudocode-textarea');
+preload();
+
+// ── Restore mark scheme state ──────────────────────────────────
+for (let i = 0; i < TASK_COUNT; i++) {
+  try {
+    const raw = localStorage.getItem(STORE_NS + ':ms' + i);
+    if (!raw) continue;
+    const { earned, passed } = JSON.parse(raw);
+    if (passed.length !== TASKS[i].criteria.length) continue;
+    taskEarned[i] = earned;
+    applyMarkscheme(i, passed, earned, TASKS[i].maxMarks);
+    updateTabState(i, earned, TASKS[i].maxMarks);
+  } catch (_) {}
+}
+updateProgress();
+
+// ── Tab switching ──────────────────────────────────────────────
+document.getElementById('tab-bar').addEventListener('click', e => {
+  const tab = e.target.closest('.tab-btn');
+  if (!tab) return;
+  const idx = +tab.dataset.idx;
+  document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  tab.classList.add('active');
+  document.getElementById('panel-' + idx).classList.add('active');
+});
+
+// ── Run button wiring ──────────────────────────────────────────
+for (let idx = 0; idx < TASK_COUNT; idx++) {
+  const runBtn   = document.getElementById('run-'        + idx);
+  const clearBtn = document.getElementById('clear-'      + idx);
+  const statusEl = document.getElementById('run-status-' + idx);
+  const editorEl = document.getElementById('editor-'     + idx);
+
+  runBtn.addEventListener('click', () => handleRun(idx, editorEl, runBtn, statusEl));
+
+  clearBtn.addEventListener('click', () => {
+    editorEl.value = '';
+    editorEl.dispatchEvent(new Event('input'));
+    setAnswerState(editorEl, true);
+    resetMarkscheme(idx);
+    try {
+      localStorage.removeItem(STORE_NS + ':e' + idx);
+      localStorage.removeItem(STORE_NS + ':ms' + idx);
+    } catch (_) {}
+  });
+
+  let saveTimer;
+  editorEl.addEventListener('input', () => {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+      try { localStorage.setItem(STORE_NS + ':e' + idx, editorEl.value); } catch (_) {}
+    }, 500);
+  });
+}
+
+async function handleRun(idx, editorEl, runBtn, statusEl) {
+  const task = TASKS[idx];
+  runBtn.disabled = true;
+  statusEl.textContent = 'Running…';
+
+  const runs = [];
+  for (const test of task.tests) {
+    const r = await runPseudocode(editorEl, { inputs: test.inputs });
+    runs.push({ inputs: test.inputs, output: r.output || '', ok: r.ok });
+  }
+
+  statusEl.textContent = '';
+  runBtn.disabled = false;
+
+  _renderTestOutput(editorEl, task.tests, runs);
+
+  if (!runs[0].ok && !runs[0].output) {
+    window.ActivityUI?.showToast('Fix the syntax error shown in the editor before checking marks.', 'warn');
+  }
+
+  const src = normSrc(editorEl.value);
+  let earned = 0;
+  const passed = task.criteria.map(c => {
+    let result = false;
+    try { result = !!c.check({ src, runs }); } catch (_) { result = false; }
+    if (result) earned += c.marks;
+    return result;
+  });
+
+  applyMarkscheme(idx, passed, earned, task.maxMarks);
+  setAnswerState(editorEl, earned === task.maxMarks);
+  try { localStorage.setItem(STORE_NS + ':ms' + idx, JSON.stringify({ earned, passed })); } catch (_) {}
+
+  taskEarned[idx] = earned;
+  updateTabState(idx, earned, task.maxMarks);
+  const pct = updateProgress();
+  window.ActivityUI?.setScore?.(pct);
+  window.Classroom?.submitGrade(pct, ACTIVITY_TITLE);
+
+  if (taskEarned.every((e, i) => e === TASKS[i].maxMarks)) allComplete();
+}
+
+// ── Per-test coloured output ───────────────────────────────────
+// Passing tests show teal; failing tests (wrong output or error) show red.
+function _renderTestOutput(editorEl, tests, runs) {
+  const outputPanel = editorEl.closest('.editor-wrap')?.querySelector('.output-panel');
+  if (!outputPanel) return;
+  outputPanel.classList.remove('error');
+  const content = outputPanel.querySelector('.output-content');
+  const inputRow = outputPanel.querySelector('.output-input-row');
+  if (inputRow) inputRow.hidden = true;
+  if (!content) return;
+
+  const SEP = '─'.repeat(44);
+  const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+  content.innerHTML = runs.map((run, i) => {
+    const test = tests[i];
+    const label = run.inputs.length === 1
+      ? `input: "${run.inputs[0]}"`
+      : `inputs: ${run.inputs.map(v => `"${v}"`).join(', ')}`;
+
+    let testPassed;
+    if (!run.ok) {
+      testPassed = false;
+    } else if (test.expected !== undefined) {
+      const out = text(run);
+      const needles = Array.isArray(test.expected) ? test.expected : [test.expected];
+      testPassed = needles.every(n => /^-?\d+(\.\d+)?$/.test(n) ? hasNum(run, Number(n)) : out.includes(n.toLowerCase()));
+    } else {
+      testPassed = true;
+    }
+
+    const out = run.ok ? (run.output || '(no output)') : `⚠ ${run.output || 'Error — check syntax'}`;
+    const color = testPassed ? '#5eead4' : '#ff6b6b';
+    return `<span style="color:${color}">${esc(`Test ${i + 1}  (${label})\n${SEP}\n${out}`)}</span>`;
+  }).join('\n\n');
+}
+
+// ── Mark scheme DOM updates ────────────────────────────────────
+function applyMarkscheme(idx, passed, earned, maxMarks) {
+  document.getElementById('ms-list-' + idx).querySelectorAll('.ms-row').forEach((row, i) => {
+    row.classList.remove('pass', 'fail');
+    row.classList.add(passed[i] ? 'pass' : 'fail');
+    row.querySelector('.ms-tick').textContent = passed[i] ? '✓' : '✗';
+  });
+  const scoreEl = document.getElementById('ms-score-' + idx);
+  scoreEl.textContent = earned + ' / ' + plural(maxMarks);
+  scoreEl.classList.toggle('full', earned === maxMarks);
+}
+
+function resetMarkscheme(idx) {
+  document.getElementById('ms-list-' + idx).querySelectorAll('.ms-row').forEach(row => {
+    row.classList.remove('pass', 'fail');
+    row.querySelector('.ms-tick').textContent = '○';
+  });
+  const scoreEl = document.getElementById('ms-score-' + idx);
+  scoreEl.textContent = '— / ' + plural(TASKS[idx].maxMarks);
+  scoreEl.classList.remove('full');
+}
+
+// ── Tab state ──────────────────────────────────────────────────
+// Code tasks are always gold when complete; a partly-marked question gets a gold outline.
+function updateTabState(idx, earned, maxMarks) {
+  const tab = document.querySelector('.tab-btn[data-idx="' + idx + '"]');
+  if (!tab) return;
+  tab.classList.toggle('done-gold', earned === maxMarks);
+  tab.classList.toggle('partial', earned > 0 && earned < maxMarks);
+}
+
+// ── Progress bar ───────────────────────────────────────────────
+function updateProgress() {
+  const totalEarned = taskEarned.reduce((s, v) => s + v, 0);
+  const pct = Math.round(totalEarned / TOTAL_MARKS * 100);
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-pct').textContent  = totalEarned + ' / ' + TOTAL_MARKS;
+  return pct;
+}
+
+// ── All tasks complete ─────────────────────────────────────────
+function allComplete() {
+  document.getElementById('done-banner').classList.add('show', 'gold');
+  document.getElementById('glow-overlay')?.classList.add('gold', 'show');
+  window.ActivityUI?.launchCelebration({ percent: 100 });
+}
+
+// Highlight the checker block that needs attention.
+function setAnswerState(target, isOk) {
+  const block = target?.closest('.code-checker');
+  if (block) block.classList.toggle('is-wrong', !isOk);
+}
+
+window.showToast = (msg, type = '') => window.ActivityUI?.showToast(msg, type);
+</script>
+
+<script src="../../activity-ui.js"></script>
+<script src="../../classroom.js"></script>
+</body>
+</html>
