@@ -89,8 +89,19 @@ function _esc(s) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+// Python keywords that are not OCR keywords, so students may use them as
+// names (e.g. `pass = 0` for a count of passes). Renamed to _psc_<word>.
+// Leaves out `in`/`is` (they work as operators today) and True/False/None.
+const _PY_ONLY_KEYWORDS = [
+  'pass', 'lambda', 'def', 'import', 'from', 'as', 'with', 'try', 'except',
+  'finally', 'raise', 'yield', 'del', 'assert', 'nonlocal', 'async', 'await',
+  'continue', 'elif',
+];
+const _PY_ONLY_KW_RE = new RegExp(`\\b(${_PY_ONLY_KEYWORDS.join('|')})\\b`, 'g');
+
 function _pyIdent(name) {
-  return /^break$/i.test(name) ? '_psc_break' : name;
+  if (/^break$/i.test(name)) return '_psc_break';
+  return _PY_ONLY_KEYWORDS.includes(name) ? '_psc_' + name : name;
 }
 
 function _splitParams(params) {
@@ -330,6 +341,7 @@ function rewriteOperators(code, ctx) {
 
   // OCR J277 has no break keyword; allow it as a student variable name.
   s = s.replace(/\bbreak\b/gi, '_psc_break');
+  s = s.replace(_PY_ONLY_KW_RE, '_psc_$1');
 
   // Logical/arithmetic operators
   s = s.replace(/\bAND\b/gi, 'and');

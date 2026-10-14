@@ -297,6 +297,8 @@ function _translateMsg(pyMsg, srcLine) {
   if (String(pyMsg).includes('_psc_loop_limit'))
     return "Infinite loop — your program was stopped because a loop ran too many times. Check that your loop condition will eventually be false.";
   let msg = String(pyMsg).replace(/^(?:SyntaxError|IndentationError|TabError|RuntimeError|Exception): /, '').split('\n')[0];
+  // Show renamed identifiers (e.g. _psc_pass) by the name the student wrote.
+  msg = msg.replace(/\b_psc_(\w+)/g, '$1');
 
   if (/expected.*':'|invalid syntax|missing colon/i.test(msg))
     msg = "Syntax error — check for a missing keyword (then, do, to) or unmatched brackets";

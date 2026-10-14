@@ -179,7 +179,16 @@ const STORE_NS = location.pathname;
 // The mocked input() echoes "prompt + value" into the output, so every
 // behaviour check looks only at what the program printed itself.
 
-const escRe = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+// An echo line is "prompt + value", where the prompt may or may not end in a
+// space (input("Password") gives "Passworddragon42"). A line only counts if
+// the match doesn't split a number, so "Total: 50" isn't taken as a typed "0".
+function isEcho(line, value) {
+  const v = String(value);
+  const l = line.trimEnd();
+  if (!l.endsWith(v)) return false;
+  const before = l.slice(0, l.length - v.length);
+  return !(/^[\d.\-]/.test(v) && /[\d.]$/.test(before));
+}
 
 // Lines the program printed, with the input echo lines removed (in order).
 function printed(run) {
@@ -188,7 +197,7 @@ function printed(run) {
   let k = 0;
   for (const line of lines) {
     const v = run.inputs[k];
-    if (v !== undefined && new RegExp('(^|[^\\w.\\-])' + escRe(String(v)) + '$').test(line.trimEnd())) {
+    if (v !== undefined && isEcho(line, v)) {
       k++;
       continue;
     }

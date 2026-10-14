@@ -425,6 +425,16 @@ describe('J277 keyword compatibility', () => {
     expect(errs('break = 0')).toHaveLength(0);
   });
 
+  test('Python-only keywords such as pass can be used as names', () => {
+    const out = py('pass = 0\nfor from = 1 to 3\n    pass = pass + 1\nnext from\nprint("Passed: " + str(pass))');
+    expect(out).toContain('_psc_pass = 0');
+    expect(out).toContain('for _psc_from in _psc_rng(1, 3):');
+    expect(out).toContain('_psc_pass = _psc_pass + 1');
+    expect(out).toContain('str(_psc_pass)');
+    expect(out).toContain('_PscStr("Passed: ")');
+    expect(errs('lambda = 2')).toHaveLength(0);
+  });
+
   test('do...until still emits Python break internally', () => {
     const out = py('do\n    break = break + 1\nuntil break == 3');
     expect(out).toContain('_psc_break = _psc_break + 1');

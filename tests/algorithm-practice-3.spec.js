@@ -145,6 +145,23 @@ test.describe('Algorithm Practice 3', () => {
     await expect(page.locator('#done-banner')).toHaveClass(/show/);
   });
 
+  test('prompts without a trailing space still score full marks', async ({ page }) => {
+    await page.goto(ACTIVITY);
+    for (let i = 0; i < MODEL.length; i++) {
+      const code = MODEL[i].replace(/input\("([^"]*?)\s+"/g, 'input("$1"');
+      const score = await runAnswer(page, i, code);
+      const [got, max] = score.match(/\d+/g).map(Number);
+      expect(got, `Q${i + 1}: ${score}`).toBe(max);
+    }
+  });
+
+  test('a variable called pass works (Q9)', async ({ page }) => {
+    await page.goto(ACTIVITY);
+    const code = MODEL[8].replace(/\bpassed\b/g, 'pass').replace(/\bfailed\b/g, 'fail');
+    const score = await runAnswer(page, 8, code);
+    expect(score).toBe('6 / 6 marks');
+  });
+
   test('common mistakes lose marks', async ({ page }) => {
     await page.goto(ACTIVITY);
     const lost = async (idx, code) => {
