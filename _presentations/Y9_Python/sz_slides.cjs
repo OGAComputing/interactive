@@ -263,6 +263,138 @@ function plenarySlide(K, o) {
   return s;
 }
 
+// ── Selection: a True / False chip (Python's True or False, never alarm red) ──
+function boolChip(K, s, value, x, y, w = 1.05, h = 0.5, size = 22) {
+  const { P } = K;
+  K.box(s, { x, y, w, h, r: 0.08, fill: value ? P.ok : P.charcoal, line: value ? undefined : P.muted, lw: 1.5 });
+  K.text(s, value ? 'True' : 'False', { x, y, w, h, fontFace: K.MONO, fontSize: size, bold: true,
+    color: value ? P.code : P.off, align: 'center', valign: 'middle' });
+}
+// I do / We do / You do chip, in the timer's spot (or left of it when there's a timer).
+function modeChip(K, s, mode, beside) {
+  const { P } = K;
+  K.chip(s, mode, { x: beside ? 8.8 : 10.35, y: 0.62, w: 1.4, fill: P.gold, color: P.charcoal, size: 14, cs: 2 });
+}
+
+// ── Deliberate Practice / Feedback: six conditions, True or False? ─────────
+// items: 6 × { expr, value }; reveal: show the answers; takeaway: runs (reveal) or prompt (starter)
+function trueFalseSlide(K, o) {
+  const { P, M } = K;
+  const s = K.newSlide('SZ_DARK', o.section, o.title || (o.reveal ? 'True or False? — answers' : 'True or False?'));
+  const tw = 3.84, th = 1.45, gx = 0.3;
+  o.items.forEach((it, i) => {
+    const x = M + (i % 3) * (tw + gx), y = 1.7 + Math.floor(i / 3) * (th + 0.25);
+    K.box(s, { x, y, w: tw, h: th, fill: P.code, line: P.line, r: 0.08 });
+    K.badge(s, i + 1, x + 0.18, y + 0.18, 0.42);
+    s.addText(K.pyRuns(it.expr, 34), { isTextBox: true, x: x + 0.7, y, w: o.reveal ? 1.95 : tw - 0.9, h: th, margin: 0,
+      align: o.reveal ? 'left' : 'center', valign: 'middle' });
+    if (o.reveal) boolChip(K, s, it.value, x + tw - 1.3, y + (th - 0.6) / 2, 1.1, 0.6, 24);
+  });
+  banner(K, s, o.takeaway, 5.25, 1.2, 24);
+  if (!o.reveal) K.timer(s, o.time || '2 MIN');
+  K.addIcon(s, o.reveal ? 'feedback' : 'practice');
+  if (o.notes) s.addNotes(o.notes);
+  return s;
+}
+
+// ── Selection: what is printed? A worked example, one step per click (I do / We do) ──
+// code: lines (≤ 24 characters each at size 24) · mode: 'I DO' | 'WE DO'
+// memory?: { line, name, type, value } — the line that stores the variable used in the condition
+// conds: [{ line, expr (the condition with the value swapped in), result }] in order; conditions after the
+//   first True one are shown as "not checked"
+// runs / skipped / always: line numbers · output: terminal lines · steps: sub-goal strip (2–4 short labels)
+// Clicks: memory → each checked condition → runs / skipped → output. Each answer carries its step's badge.
+function whatPrintedSlide(K, o) {
+  const { P, M } = K;
+  const s = K.newSlide('SZ_DARK', o.section, o.title || 'What is printed?');
+  const size = o.size || 24, lh = o.lh || 0.62;
+  const cp = K.codePanel(s, o.code, { x: M, y: 1.7, w: o.codeW || 5.3, size, lh });
+  const ax = M + (o.codeW || 5.3) + 0.25, bx = ax + 0.47, bd = 0.36;
+  const top = (n) => cp.ys[n - 1] - lh / 2;
+  let k = 0, stepNo = 0;
+  const step = (draw) => K.onClick(s, ++k, draw);
+  if (o.memory) {
+    const n = ++stepNo;
+    step(() => {
+      K.badge(s, n, ax, cp.ys[o.memory.line - 1] - bd / 2, bd);
+      K.varBox(s, { x: bx + 0.05, y: top(o.memory.line) + 0.06, w: 2.35, h: lh - 0.1, size: 20, ...o.memory, line: undefined });
+    });
+  }
+  const firstTrue = o.conds.findIndex((c) => c.result);
+  const condStep = ++stepNo;
+  o.conds.forEach((c, i) => {
+    const y = top(c.line);
+    const checked = firstTrue === -1 || i <= firstTrue;
+    const draw = () => {
+      if (checked) {
+        K.badge(s, condStep, ax, cp.ys[c.line - 1] - bd / 2, bd);
+        s.addText(K.pyRuns(c.expr, 22), { isTextBox: true, x: bx, y, w: 1.55, h: lh, margin: 0, valign: 'middle' });
+        K.arrow(s, bx + 1.6, y + lh / 2, bx + 2.0, y + lh / 2);
+        boolChip(K, s, c.result, bx + 2.1, y + 0.07, 0.95, lh - 0.14, 20);
+      } else {
+        K.text(s, 'not checked', { x: bx, y, w: 2.9, h: lh, fontSize: 18, italic: true, color: P.dim, valign: 'middle' });
+      }
+    };
+    // Conditions after the first True one appear with it: Python never gets to them.
+    if (checked) step(draw); else K.onClick(s, k, draw);
+  });
+  const runStep = ++stepNo;
+  step(() => {
+    const first = Math.min(...[...o.runs, ...(o.skipped || [])]);
+    K.badge(s, runStep, ax, cp.ys[first - 1] - bd / 2, bd);
+    o.runs.forEach((n) => K.text(s, '✓ runs', { x: bx, y: top(n), w: 2.9, h: lh, fontSize: 20, bold: true, color: P.ok,
+      valign: 'middle' }));
+    (o.skipped || []).forEach((n) => K.text(s, 'skipped', { x: bx, y: top(n), w: 2.9, h: lh, fontSize: 20, italic: true,
+      color: P.dim, valign: 'middle' }));
+    (o.always || []).forEach((n) => K.text(s, '✓ runs every time', { x: bx, y: top(n), w: 2.9, h: lh, fontSize: 20,
+      bold: true, color: P.gold, valign: 'middle' }));
+  });
+  const outStep = ++stepNo;
+  const ox = 9.95, ow = 12.73 - ox;
+  step(() => {
+    K.badge(s, outStep, ox, 1.7, bd);
+    K.text(s, 'WHAT IS PRINTED', { x: ox + 0.5, y: 1.7, w: ow - 0.5, h: bd, fontSize: 13, bold: true, color: P.dim,
+      charSpacing: 2, valign: 'middle' });
+    K.terminal(s, o.output, { x: ox, y: 2.2, w: ow, size: 20 });
+  });
+  // Sub-goal strip: the same questions every time, so students learn the routine.
+  const sy = o.stripY || 6.08, sh = 0.62, iw = 12.13 / o.steps.length;
+  K.box(s, { x: M, y: sy, w: 12.13, h: sh, fill: P.panel, r: 0.08 });
+  o.steps.forEach((t, i) => {
+    K.badge(s, i + 1, M + 0.2 + i * iw, sy + (sh - bd) / 2, bd);
+    K.text(s, t, { x: M + 0.68 + i * iw, y: sy, w: iw - 0.75, h: sh, fontSize: 18, valign: 'middle' });
+  });
+  modeChip(K, s, o.mode);
+  K.addIcon(s, o.mode === 'I DO' ? 'info' : 'practice');
+  if (o.notes) s.addNotes(o.notes);
+  return s;
+}
+
+// ── Selection: three short programs side by side (You do), then the answers ──
+// items: 3 × { code: lines (≤ 23 characters each), output: terminal lines, why: runs (reveal only) }
+function whatPrintedGridSlide(K, o) {
+  const { P, M } = K;
+  const s = K.newSlide('SZ_DARK', o.section, o.title || (o.reveal ? 'What is printed? — answers' : 'What is printed?'));
+  const cw = 3.84, gx = 0.3, rows = Math.max(...o.items.map((it) => it.code.length));
+  const lh = rows > 5 ? 0.44 : 0.5;
+  o.items.forEach((it, i) => {
+    const x = M + i * (cw + gx);
+    K.badge(s, i + 1, x, 1.65, 0.42);
+    if (o.reveal && it.why) K.text(s, it.why, { x: x + 0.55, y: 1.6, w: cw - 0.55, h: 0.52, fontSize: 18, valign: 'middle' });
+    const cp = K.codePanel(s, it.code, { x, y: 2.2, w: cw, size: 20, lh, nums: false, h: rows * lh + 0.44 });
+    if (o.reveal) K.terminal(s, it.output, { x, y: 2.2 + cp.h + 0.2, w: cw, size: 18 });
+  });
+  if (!o.reveal) {
+    banner(K, s, o.prompt || [{ text: 'On your board: ', options: { bold: true, color: P.gold } },
+      { text: 'write exactly what each program prints.' }], 2.2 + rows * lh + 0.44 + 0.35, 1.0, 24);
+    K.timer(s, o.time || '4 MIN');
+    modeChip(K, s, 'YOU DO', true);
+  }
+  K.addIcon(s, o.reveal ? 'feedback' : 'practice');
+  if (o.notes) s.addNotes(o.notes);
+  return s;
+}
+
 // Gold-outlined prompt banner (whiteboard prompts, Turn & Talk, takeaways).
 function banner(K, s, content, y, h, size = 25) {
   const { P, M } = K;
@@ -273,4 +405,5 @@ function banner(K, s, content, y, h, size = 25) {
 module.exports = {
   recallStarter, recallAnswers, titleSlide, questionsSlide, runLinesSlide, pairSlide, predictSlide,
   predictRevealSlide, debugRecipeSlide, chapterSlide, errorFeedbackSlide, turnTalkSlide, traceSlide, plenarySlide, banner,
+  trueFalseSlide, whatPrintedSlide, whatPrintedGridSlide, boolChip, modeChip,
 };

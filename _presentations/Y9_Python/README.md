@@ -10,8 +10,10 @@ PowerPoint decks for the Y9 Python unit, themed for the unit's *Station Zero* su
 |---|---|
 | `Y9_Python_Deck_Template.pptx` | The template deck: one example of each slide type, with guidance in the speaker notes |
 | `L1_Python_Refresh.pptx` | Lesson 1 deck (Wake Up + Life Support) |
+| `L2_Selection.pptx` | Lesson 2 deck (Proximity) |
 | `build_template.cjs` | Builds the template deck (re-reads this README for the rules slides) |
 | `build_deck.cjs` | Builds the Lesson 1 deck: copy this file to start a new lesson's deck |
+| `build_L2.cjs` | Builds the Lesson 2 deck |
 | `sz_slides.cjs` | The slide types ("recipes"), one function each |
 | `sz_kit.cjs` | Drawing parts: palette, layouts, code panels, terminals, variable boxes, badges |
 | `clean_icons.py`, `icons/` | The five pillar icons, edges rebuilt from the circle's geometry |
@@ -22,6 +24,7 @@ PowerPoint decks for the Y9 Python unit, themed for the unit's *Station Zero* su
 ```
 npm install -g pptxgenjs          (once)
 node build_deck.cjs               → L1_Python_Refresh.pptx
+node build_L2.cjs                 → L2_Selection.pptx
 node build_template.cjs           → Y9_Python_Deck_Template.pptx
 ```
 
@@ -49,6 +52,9 @@ Close the `.pptx` in PowerPoint first, or the build can't save over it. To check
 | `errorFeedbackSlide` | Feedback | A common error after an activity: code, real error, what's in memory, one takeaway |
 | `chapterSlide` | Deliberate Practice | Story card + "open this activity" task |
 | `plenarySlide` | Recap & Recall | Lesson question again + 2 exit tasks + optional cliffhanger |
+| `trueFalseSlide` | Deliberate Practice / Feedback | Six conditions, True or False? on boards, then the answers (`reveal`) |
+| `whatPrintedSlide` | New Information (I do) / Deliberate Practice (We do) | A selection worked example, one step per click: what's in the box → each condition → which lines run → what is printed, with the steps in a strip along the bottom |
+| `whatPrintedGridSlide` | Deliberate Practice (You do) / Feedback | Three short programs side by side, then their outputs (`reveal`) |
 
 ## Station state (the slides decay with the story)
 
@@ -87,3 +93,4 @@ Add new feedback at the bottom, dated. `build_template.cjs` turns this list into
 - **2026-10-08 · Sequencing** — Reintroduce each idea on its own slide before a slide builds on it (e.g. a variable is a named box, *then* input() fills the box). Reuse the same layout so only the new part changes.
 - **2026-10-08 · Station state** — The slides decay with the story: chapter by chapter, and on screen at a story beat. Damage only ever goes in the frame, under the content, so code, output and memory stay clean (`createDeck({ station })`, `K.station`, `K.beat`).
 - **2026-10-08 · Station state** — Make the damage clearly visible (first version was too subtle): stronger frost, wider alarm glow, solid hazard stripes, heavier static and cracks. Still frame only.
+- **2026-10-14 · Worked examples** — Teach selection conditions first (True or False on their own), then "what is printed?" in two rounds: numbers in the condition, then one variable. Each round is I do (1 example) → We do (1) → You do (3) → answers (`whatPrintedSlide`, `whatPrintedGridSlide`).

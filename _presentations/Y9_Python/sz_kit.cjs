@@ -169,18 +169,22 @@ function arrow(s, x1, y1, x2, y2, color = P.muted) {
 }
 
 // Python syntax colouring → pptxgenjs runs. Strings = str colour, numbers = int colour.
+// Keywords (if, elif, else …) and comparison operators (>=, == …) are bold, so a condition stands out.
 const BUILTINS = new Set(['print', 'input', 'int', 'str']);
+const KEYWORDS = new Set(['if', 'elif', 'else', 'while', 'for', 'in', 'def', 'return', 'True', 'False']);
 function pyRuns(src, size, base = P.off) {
   const runs = [];
-  const re = /("[^"\n]*"?|'[^'\n]*'?)|(\b\d+\b)|([A-Za-z_]\w*)|(\s+)|(.)/g;
+  const re = /("[^"\n]*"?|'[^'\n]*'?)|(\b\d+\b)|([A-Za-z_]\w*)|(\s+)|(>=|<=|==|!=|<|>)|(.)/g;
   let m;
   while ((m = re.exec(src))) {
-    let color = base;
+    let color = base, bold = false;
     if (m[1]) color = P.str;
     else if (m[2]) color = P.int;
     else if (m[3] && BUILTINS.has(m[3])) color = P.fn;
-    else if (m[5]) color = P.muted;
-    runs.push({ text: m[0], options: { color, fontFace: MONO, fontSize: size } });
+    else if (m[3] && KEYWORDS.has(m[3])) bold = true;
+    else if (m[5]) bold = true;
+    else if (m[6]) color = P.muted;
+    runs.push({ text: m[0], options: { color, bold, fontFace: MONO, fontSize: size } });
   }
   return runs;
 }

@@ -260,6 +260,50 @@ tag(R.errorFeedbackSlide(K, {
   notes: guide(['WHEN: whole-class feedback after an activity, usually on its planted bug. Real error text; one takeaway sentence.']),
 }), 'errorFeedbackSlide', 'Common error feedback');
 
+// Selection recipes (content from Lesson 2)
+tag(R.trueFalseSlide(K, {
+  section: EX,
+  items: [{ expr: '8 > 3', value: true }, { expr: '4 >= 4', value: true }, { expr: '10 < 2', value: false },
+    { expr: '7 == 7', value: true }, { expr: '5 > 5', value: false }, { expr: '9 <= 6', value: false }],
+  takeaway: [{ text: 'On your board: ', options: { bold: true, color: P.gold } }, { text: 'write T or F for all six. Boards up together.' }],
+  notes: guide([
+    'WHEN: practice straight after teaching a new kind of condition (comparisons now; loop conditions later).',
+    'Include boundary pairs (5 > 5 vs 4 >= 4): they are where programs go wrong.',
+    'reveal: true gives the answers slide (True / False chips) — pass the "watch out" line as takeaway.',
+    'DATA: items: 6 × { expr, value }, takeaway: runs.',
+  ]),
+}), 'trueFalseSlide', 'True or False? grid');
+
+tag(R.whatPrintedSlide(K, {
+  section: EX, mode: 'I DO',
+  code: ['distance = 30', 'if distance >= 50:', '    print("All clear")', 'else:', '    print("Too close")', 'print("Scan complete")'],
+  memory: { line: 1, name: 'distance', type: 'int', value: '30' },
+  conds: [{ line: 2, expr: '30 >= 50', result: false }], runs: [5], skipped: [3], always: [6],
+  output: ['Too close', 'Scan complete'], steps: ['Look in the box', 'True or False?', 'Which lines run?', 'What is printed?'],
+  notes: guide([
+    'WHEN: worked examples of selection, as I do (model it) then WE DO (boards up before each click). mode sets the chip and icon.',
+    'One step per click: what is in the box → each condition checked → which lines run → what is printed. The strip names the steps, the same every time.',
+    'Conditions after the first True one show "not checked" (elif). Code lines ≤ 24 characters at size 24; use size: 22, lh: 0.55 for 7 lines.',
+    'DATA: code, memory?, conds: [{ line, expr, result }], runs, skipped, always, output, steps.',
+  ]),
+}), 'whatPrintedSlide', 'What is printed? (I do / We do)');
+
+tag(R.whatPrintedGridSlide(K, {
+  section: EX,
+  items: [
+    { code: ['level = 3', 'if level > 2:', '    print("Locked")', 'else:', '    print("Open")'], output: ['Locked'] },
+    { code: ['power = 50', 'if power >= 50:', '    print("Systems on")', 'else:', '    print("Backup")', 'print("Done")'],
+      output: ['Systems on', 'Done'] },
+    { code: ['answer = "n"', 'if answer == "y":', '    print("Sent")', 'else:', '    print("Cancelled")', 'print("Done")'],
+      output: ['Cancelled', 'Done'] },
+  ],
+  notes: guide([
+    'WHEN: YOU DO after an I do + We do pair: three short programs, silent, on boards.',
+    'reveal: true gives the answers slide: each output under its code, plus a one-line why (e.g. "50 >= 50 is True").',
+    'Code lines ≤ 23 characters. DATA: items: 3 × { code, output, why? }.',
+  ]),
+}), 'whatPrintedGridSlide', 'What is printed? (You do)');
+
 tag(R.plenarySlide(K, {
   section: EX, lesson: 'How do we ask for, store and calculate with what a user types?',
   tasks: ['Write one line that asks how many crew are awake and stores it as a whole number in crew.',

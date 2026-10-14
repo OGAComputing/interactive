@@ -136,13 +136,52 @@ Everything in the Y8 Unit 1 plan still applies: PRIMM, reading before writing (L
 
 *Modelled on `Y8/Python Unit 2/L6_Targeted_Practice/1_Targeted_Practice.html`.*
 
-- Reads `oga_y9py_assess_v1`, puts the lowest-scoring topics first and caps at 5–6 topics (≈50 min). The manual topic picker stays as the fallback, because results only exist **on the device used for the assessment**.
+- Reads `oga_y9py_assess_v1` (from localStorage, then from Drive via `Classroom.fetchResults` as in Y8), puts the lowest-scoring topics first and caps at **3–4 topics** (≈25 min; cut from 5–6 on 2026-10-14 so every student has time for the containment PRIMM). The manual topic picker stays as the fallback, because results only exist on the device used for the assessment or in a Classroom-linked Drive.
 - Each topic uses the Y8 pattern of a **walkthrough (worked example) then an "on your own" similar task**. This is a faded-example pair, the right pattern for a remediation lesson.
 - **Topics:** reading errors · casting input · `str()` in sentences · selection with `elif` (ordering conditions) · `while` loops (stopping condition, infinite loops) · `for` and `range()` · turtle loops · defining and calling functions · functions with loops inside.
-- **Y9 addition:** finish with a short **interleaved mixed review** (4 items drawn from different topics). Blocked practice feels fluent but interleaved practice transfers better (Rohrer & Taylor 2007).
-- **Stretch / creative Make:** a guessing game or menu program that combines `while`, `if`/`elif` and at least one function. This is the unit-level "extended Make".
-- **Finale (everyone, decided 2026-10-07):** after the targeted practice, a short **containment protocol** PRIMM. Its Modification 1 is the trap choice (airlock or nest), its Make is the docking call (dock now or hold the ship off), and Make passing plays the ending. See "Choices plan, L2–L7".
+- **Y9 addition (if time):** a short **interleaved mixed review** (4 items drawn from different topics). Blocked practice feels fluent but interleaved practice transfers better (Rohrer & Taylor 2007). Under the 3–4 topic cap it may not fit; keep it after the containment PRIMM or drop it.
+- **The containment PRIMM replaces the Y8 extension tab** (the guessing-game "extended Make"). That stretch task can still sit after the ending for students who finish early, with no story attached.
+- **Finale (everyone, decided 2026-10-07):** after the targeted practice, a short **containment protocol** PRIMM. Its Modification 1 is the trap choice (airlock or nest), its Make is the docking call (dock now or hold the ship off), and Make passing plays the ending. See "Choices plan, L2–L7" and "L7 story layer" below.
 - As in the Y8 plan, keep L6 and L7 as **separate** lessons so there is a marking window.
+
+### L7 story layer — repairs, then containment (planned 2026-10-14)
+
+The Y8 page's flow (boot → plan screen → one tab per topic with Task A then Task B → extension → reflect) maps onto Station Zero as **"your lowest-scoring topics are the systems the creature damaged"**:
+
+| Y8 page | Y9 Station Zero version |
+|---|---|
+| Boot screen: "Looking up your assessment results…" | WARDEN's **damage scan**: "Scanning station systems…" (the same results fetch). |
+| Plan screen | The **intro report**: a "Previously…" recap from `sz_choices` (crew alive, WARDEN's airlock control, nest found, sensors, ship fast/prepared), then the station map with each damaged room in red and the topic list as a **repair list** (e.g. *Sensor Ops: selection logic corrupted*). |
+| One tab per topic | One **system**, by the chapter that taught the concept (table below). |
+| Task A passes | The room turns `UNSTABLE` on the map. No report. |
+| Task B passes | The room turns `ONLINE` and one **short** report plays: a feed animation into that room's device and one line of story. |
+| "All right" refresher (3 strongest topics) | *"Minor faults only"*: the topics are routine maintenance. |
+| No-data fallback / picker | *"Damage scan failed. Check every system by hand."* |
+| Extension tab | The **containment protocol PRIMM** (`trap`, `dock`). |
+| Reflect tab | Kept after the ending, framed as the rescue ship's **debrief**. The questions stay plain. |
+
+**Topic → room** (each concept returns to the chapter that taught it):
+
+| Topic(s) | Room | Device for the feed animation |
+|---|---|---|
+| Reading errors | WARDEN Core | WARDEN's diagnostics |
+| Casting input, `str()` in sentences | Life Support | O2 recycler |
+| Selection with `elif` | Sensor Ops | Proximity sensors |
+| `while` loops | Airlock | Airlock seals |
+| `for` / `range()`, turtle loops | Navigation | Beacon |
+| Functions, functions with loops | Drone Bay | Drone |
+
+**Rules:**
+1. **The score never changes the ending** (as in L6). Which rooms are damaged depends on the score, but that is scenery only. A repair must **not** feed the trap requirements (e.g. "fixing selection restores the sensors"), because a student who was strong at selection never gets that topic and would be punished for it. The trap requirements and the ending come only from `sz_choices` (L2–L5, then `trap` and `dock`).
+2. **Everyone reaches the ending.** The containment tab is **unlocked from the start**, not gated behind the repairs, so the teacher can call "move to containment" at a set time (≈25 min in). An unfinished repair is one readout line (*Drone Bay: OFFLINE*) that changes nothing else.
+3. **Keep repair reports light.** Up to 4 repairs plus a PRIMM is too many full typed reports. Repair reports are one line plus the feed animation. Full reports are only for the intro, the containment stages and the ending.
+
+**Hooks** (the Y8 page has no story layer, so the Station Zero overlay script and header are added to it):
+- `beat('intro')` on the plan screen.
+- `beat('fix_<room>')` when a topic's Task B passes, with one entry per room in `STORY.beats`. Two topics share a room, so the beat plays on the **first** pass in that room.
+- `beat('P'|'R'|'I'|'M1'|'M2')` in the containment PRIMM, as in the other chapters. `M2` plays the ending.
+- `STORY.crew` starts from the roll call left after L5 (Patel from L1, Chen from L2, Okafor from L5) and settles critical crew at `M2` by the final roll-call rule.
+- `?story=off` and the Station map button work as in the other chapters. The map shows every room the student has already restored across the unit as `online`, except the damaged ones.
 
 ---
 
@@ -280,7 +319,7 @@ L2–L5 and L7 each have **one PRIMM exercise** with two choices: **Modification
 | Lesson | Proposed path | Source |
 |---|---|---|
 | 1 | `Y9/Python/L1_Python_Refresh/1_Wake_Up_PRIMM.html` + `2_Life_Support_PRIMM.html` | New, from `_templates/PRIMM_Python_Y9_StationZero.html` (its `STORY` example is already Chapter 1) |
-| 2 | `Y9/Python/L2_Selection/1_Selection_PRIMM.html` | New, from the same template |
+| 2 | `Y9/Python/L2_Selection/1_Proximity_PRIMM.html` | Built 2026-10-14 from `2_Life_Support_PRIMM.html` (it already had `runCode`, both choices and the Drive sync, which the template still lacks) |
 | 3 | `Y9/Python/L3_While_Loops/1_While_PRIMM.html` | New (runner loop guard and live input are in place) |
 | 4 | `Y9/Python/L4_For_Loops_Turtle/1_For_Loop_Turtle_PRIMM.html` | Adapted copy of Y8 U2 L3 |
 | 5 | `Y9/Python/L5_Functions/1_Functions_PRIMM.html` | Adapted copy of Y8 U2 L4 (+ `checkers.js`) |
@@ -296,6 +335,15 @@ L2–L5 and L7 each have **one PRIMM exercise** with two choices: **Modification
   - The **diagnostic retrieval quiz (Do Now) is not built yet**. It is a separate activity.
   - **Second choice per round (built 2026-10-08):** each round's Make has a "Your call" card (`#m2_choice`, radios `m2_choice`) with a *Last report* line, and a final requirement for the chosen fixed `print` line (`LOCK_CHOICES` / `TRANSFER_CHOICES` in the checkers, checked by `evalMake(raw, out, choice)`). It locks when Make first passes, and `StationZero.choose()` runs just before the cliffhanger. Life Support's Make card reads Wake Up's choices through `StationZero.choices()`. The transfer line doesn't count towards the manifest's 3 lines.
   - Both rounds run code with `runCode` (students type answers live in the output panel). Modify/Make are judged on the program's output, run with fixed answers. The Station Zero template still uses the older `runPython` wiring, so port these two pieces into the templates before building L2.
+- **L2 built (2026-10-14): `Y9/Python/L2_Selection/1_Proximity_PRIMM.html`** (`checkers.js`, 39 unit tests, `tests/proximity-primm.spec.js`). Chapter 2, blue-steel tint.
+  - **Predict** re-teaches before `elif`: Program A (binary) is shown bare for question 1 (the retrieval attempt). Its annotations and a "How if / else works" recipe card then appear (`data-reveal`). Program B (the same program plus one highlighted `elif`) and a "How elif works" card appear from question 3. Questions: 30 on A, indentation of `Scan complete`, then 85, **20** and 5 on B.
+  - **Run** is gated: it must be run with 85, 20 and 5 (ticked from the echoed input) before the question is accepted.
+  - **Investigate** has 4 steps: swap the two numbers (30 now prints All clear: order matters), `elif` → `if` (85 prints two messages), `>=` → `>` (20 falls to the else), then the bug step. **Only the un-cast `TypeError` bug was built**: Break it takes `int()` off line 1 in place, so nothing is planted and `isBugPairLine` is always false. `=` vs `==` is covered by Modification 4's Remind card; a missing colon is caught by the live syntax hint.
+  - **Modify:** the lockdown choice (one indented print in the `else`, tested with 5/30/85), `>= 60` (60/59), a 10–19 "Proximity alert" band with no code given (15/10/25/20/9, with an order hint), then `== "y"` at the bottom (5+y, 5+n).
+  - **Make** is a **radiation scanner** (DANGER 200+ / WARNING 100–199 / CAUTION 50–99 / SAFE), tested on both sides of every boundary. Each message must contain only its own band word. The power line must print on every run. **Extension:** SCANNER FAULT below 0, EVACUATE from 500.
+  - **Behaviour-based checking** is built: `runTests()` runs the program once per test (`MOD_TESTS` / `MAKE_TESTS` / `EXT_TESTS`, `onInputsExhausted: 'error'`). The checkers drop the echoed prompt lines (`ownOutput`), and the editor steps through the run of the failing requirement (`show`). Copy this pattern for L3.
+  - **Story:** `lockdown` + `power` as planned. Chen is critical after a Sensor Ops lockdown and is saved by `power: pods`. Patel follows Life Support's `fate()` (copied in) and nothing in L2 changes him. The recap names Patel ok / critical / dead. Camera stills: the report after Modify shows the sealed-door still (`_drafts/story/wake_up_corridor.png`), labelled as the door of the room the student locked down. The cliffhanger shows "the figure in Hale's overalls, moving wrong" (`_drafts/story/proximity_cctv_hale.jpg`, cropped in tight so it reads as a different shot from Wake Up's walking-away still; note `life_support_hale_cctv.png` is the one Wake Up already uses, despite its name).
+  - **Ligatures:** Cascadia Code draws `>=` `<=` `==` `!=` as single symbols, so the page sets `font-variant-ligatures: none`. The same rule is now in both L1 pages and both Y9 templates (Station Zero and graphite), so L3's `!=` shows as typed.
 - **Situation reports are an 80s green-phosphor terminal** (like the *Alien* ship's computer). Text types itself in group by group (kicker, title, map labels, readout lines, log, crew log) with a blinking block cursor. A click or any key shows it all. Reduced motion and map re-opens show it at once. Readouts are `LABEL ..... VALUE [CRIT]` lines, so the level is a word, not just a colour. This is all in the template's story layer, so no per-lesson work is needed.
 - Each PRIMM lesson gets `checkers.js` + `checkers.test.js` (Vitest), following the existing testing architecture.
 
