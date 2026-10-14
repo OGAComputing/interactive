@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<!-- One-off AoE2 joke resource. Lives in _drafts/ so the manifest build skips it. Not linked from the hub. -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Economy Simulator — Archers into Castle</title>
+<style>
+  :root {
+    --bg: #17140f; --panel: #241f17; --panel2: #2e2719; --line: #4a3f2a;
+    --text: #efe6d0; --mute: #a89c80; --gold: #d8a73d; --food: #d0574a; --wood: #b07a45; --goldres: #e3c04d;
+    --good: #5fb37a; --bad: #e0574a; --warn: #e3a13d; --brit: #c94b4b; --boh: #5b8fca;
+    --accent: var(--gold);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.4 "Segoe UI", system-ui, sans-serif; }
+  h1, h2, h3 { font-family: Cambria, Georgia, serif; margin: 0; }
+  button { font: inherit; cursor: pointer; border-radius: 6px; border: 1px solid var(--line); background: var(--panel2); color: var(--text); padding: 6px 10px; }
+  button:hover:not(:disabled) { border-color: var(--accent); }
+  button:disabled { opacity: .4; cursor: not-allowed; }
+  button.primary { background: var(--accent); color: #1a1408; border-color: var(--accent); font-weight: 700; }
+  kbd { font: 11px Consolas, monospace; background: #0004; border: 1px solid var(--line); border-radius: 3px; padding: 0 4px; color: var(--mute); }
+  .wrap { max-width: 1240px; margin: 0 auto; padding: 16px; }
+
+  /* Start screen */
+  #start h1 { font-size: 34px; color: var(--gold); }
+  #start p.lede { color: var(--mute); max-width: 760px; }
+  .civs { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin: 20px 0; }
+  .civ { background: var(--panel); border: 2px solid var(--line); border-radius: 10px; padding: 18px; text-align: left; }
+  .civ h2 { font-size: 26px; }
+  .civ ul { margin: 10px 0 0; padding-left: 18px; color: var(--text); }
+  .civ.brit h2 { color: var(--brit); } .civ.boh h2 { color: var(--boh); }
+  .civ.selected { border-color: var(--accent); box-shadow: 0 0 0 3px #d8a73d33; }
+  .rules { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 18px; }
+  .rules li { margin: 4px 0; }
+
+  /* Game */
+  #game { display: none; }
+  .topbar { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; position: sticky; top: 0; z-index: 5; }
+  .clock { font: 700 26px Consolas, monospace; color: var(--gold); min-width: 92px; }
+  .age { font-family: Cambria, Georgia, serif; font-size: 18px; }
+  .res { display: flex; gap: 14px; font: 700 18px Consolas, monospace; }
+  .res span::before { content: ""; display: inline-block; width: 12px; height: 12px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
+  .r-f::before { background: var(--food); } .r-w::before { background: var(--wood); } .r-g::before { background: var(--goldres); }
+  .pop { font: 700 18px Consolas, monospace; } .pop.full { color: var(--bad); }
+  .speed { margin-left: auto; display: flex; gap: 4px; }
+  .speed button.on { border-color: var(--accent); color: var(--accent); }
+
+  .alerts { display: flex; flex-wrap: wrap; gap: 8px; min-height: 34px; margin: 10px 0; }
+  .alert { padding: 5px 10px; border-radius: 6px; font-weight: 700; font-size: 14px; animation: blink 1s steps(2) infinite; }
+  .alert.bad { background: #e0574a33; color: #ff9b8f; border: 1px solid var(--bad); }
+  .alert.warn { background: #e3a13d26; color: #ffcf80; border: 1px solid var(--warn); animation: none; }
+  @keyframes blink { 50% { opacity: .55; } }
+  @media (prefers-reduced-motion: reduce) { .alert { animation: none; } }
+
+  .grid { display: grid; grid-template-columns: 1.05fr 1.2fr .95fr; gap: 12px; }
+  @media (max-width: 980px) { .grid { grid-template-columns: 1fr; } }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+  .panel h3 { font-size: 17px; color: var(--gold); margin-bottom: 8px; display: flex; justify-content: space-between; align-items: baseline; }
+  .panel h3 small { font: 12px "Segoe UI", sans-serif; color: var(--mute); }
+  .panel + .panel { margin-top: 12px; }
+
+  .job { display: grid; grid-template-columns: 1fr auto auto auto; gap: 6px; align-items: center; padding: 6px 0; border-bottom: 1px dashed var(--line); }
+  .job:last-of-type { border-bottom: 0; }
+  .job .name { font-weight: 600; } .job .sub { display: block; font-size: 12px; color: var(--mute); font-weight: 400; }
+  .job .n { font: 700 20px Consolas, monospace; min-width: 34px; text-align: center; }
+  .job button { padding: 2px 10px; font-weight: 700; }
+  .job.idle .n { color: var(--bad); }
+  .rally { margin-top: 8px; font-size: 13px; color: var(--mute); }
+  .rally label { margin-right: 10px; color: var(--text); }
+
+  .row { display: flex; align-items: center; gap: 8px; padding: 5px 0; flex-wrap: wrap; }
+  .row .grow { flex: 1; min-width: 120px; }
+  .cost { font: 12px Consolas, monospace; color: var(--mute); }
+  .cost .f { color: var(--food); } .cost .w { color: var(--wood); } .cost .g { color: var(--goldres); }
+  .bar { height: 8px; background: #0005; border-radius: 4px; overflow: hidden; margin-top: 4px; }
+  .bar i { display: block; height: 100%; background: var(--accent); width: 0; }
+  .queue { display: flex; gap: 4px; margin-top: 6px; min-height: 26px; flex-wrap: wrap; }
+  .queue span { font-size: 12px; padding: 3px 7px; border-radius: 4px; background: var(--panel2); border: 1px solid var(--line); }
+  .queue span.age { border-color: var(--accent); color: var(--accent); }
+  .tag { font-size: 12px; padding: 1px 6px; border-radius: 4px; border: 1px solid var(--line); color: var(--mute); }
+  .tag.done { color: var(--good); border-color: var(--good); }
+  .tc-status { font-size: 13px; margin-top: 4px; color: var(--mute); } .tc-status.bad { color: var(--bad); font-weight: 700; }
+
+  .sins div { display: flex; justify-content: space-between; padding: 3px 0; font-size: 14px; }
+  .sins b { font-family: Consolas, monospace; }
+  .log { height: 260px; overflow-y: auto; font-size: 13px; display: flex; flex-direction: column-reverse; }
+  .log p { margin: 0; padding: 4px 0; border-bottom: 1px solid #ffffff0d; }
+  .log time { font-family: Consolas, monospace; color: var(--gold); margin-right: 6px; }
+  .log .bad { color: #ff9b8f; } .log .good { color: #9be0b0; } .log .warn { color: #ffcf80; }
+
+  /* End screen */
+  #end { position: fixed; inset: 0; background: #000b; display: none; align-items: center; justify-content: center; z-index: 50; padding: 16px; }
+  #end .card { background: var(--panel); border: 2px solid var(--accent); border-radius: 14px; max-width: 620px; width: 100%; padding: 24px; max-height: 92vh; overflow-y: auto; }
+  #end h2 { font-size: 30px; color: var(--gold); }
+  #end .rank { font-family: Cambria, Georgia, serif; font-size: 22px; margin: 6px 0 14px; }
+  #end table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+  #end td { padding: 6px 4px; border-bottom: 1px solid var(--line); }
+  #end td:last-child { text-align: right; font-family: Consolas, monospace; font-weight: 700; }
+  #end td.good { color: var(--good); } #end td.bad { color: var(--bad); }
+  #end .tip { background: var(--panel2); border-left: 4px solid var(--accent); padding: 10px 12px; border-radius: 4px; }
+  #confetti { position: fixed; inset: 0; pointer-events: none; z-index: 60; }
+</style>
+</head>
+<body>
+<canvas id="confetti"></canvas>
+
+<!-- ═══════════════ START ═══════════════ -->
+<div class="wrap" id="start">
+  <h1>Economy Simulator: Archers into Castle</h1>
+  <p class="lede">Get from the Dark Age to the Castle Age with an archer army that keeps raiders off your villagers. Your economy has to keep growing the whole time. The clock runs fast, and there will be raids.</p>
+
+  <div class="civs" role="radiogroup" aria-label="Choose your civilisation">
+    <button class="civ brit selected" data-civ="britons" role="radio" aria-checked="true">
+      <h2>Britons</h2>
+      <ul>
+        <li>Shepherds work 25% faster (the first 1,200 food)</li>
+        <li>Town Centres half wood in Castle (you'll need it after this)</li>
+        <li>Recommended for a first go</li>
+      </ul>
+    </button>
+    <button class="civ boh" data-civ="bohemians" role="radio" aria-checked="false">
+      <h2>Bohemians</h2>
+      <ul>
+        <li>Mining Camp technologies are free (Gold Mining costs nothing)</li>
+        <li>Blacksmith costs 100 less wood</li>
+        <li>Rewards a big gold line</li>
+      </ul>
+    </button>
+  </div>
+
+  <div class="rules">
+    <h3 style="color:var(--gold)">How it works</h3>
+    <ul>
+      <li>You start with 3 villagers on sheep, 200 food, 200 wood and 100 gold. The Town Centre (TC) is doing <strong>nothing</strong>. Fix that.</li>
+      <li>Queue villagers <kbd>Q</kbd>, build houses <kbd>H</kbd>, farms <kbd>F</kbd>, train archers <kbd>A</kbd>. <kbd>Space</kbd> pauses the game.</li>
+      <li>Natural food (sheep, boar, berries) runs out. After that, every food villager needs a farm, or they stand around.</li>
+      <li>Aging up and researching at the TC stops villager production while it runs, like in the real game.</li>
+      <li>Raids arrive at set times. Your archers (+25% with Fletching) have to match the raid's strength, or you lose villagers. Loom stops the early scout raid on its own.</li>
+      <li>Reach the Castle Age before <strong>27:00</strong>. The game is scored on the Five Idle Sins.</li>
+    </ul>
+  </div>
+  <p style="margin-top:18px"><button class="primary" id="btnStart" style="font-size:18px;padding:10px 22px">Start the game →</button>
+  <span id="best" style="margin-left:12px;color:var(--mute)"></span></p>
+</div>
+
+<!-- ═══════════════ GAME ═══════════════ -->
+<div class="wrap" id="game">
+  <div class="topbar">
+    <div class="clock" id="clock">0:00</div>
+    <div class="age" id="age">Dark Age</div>
+    <div class="res"><span class="r-f" id="rf">200</span><span class="r-w" id="rw">200</span><span class="r-g" id="rg">100</span></div>
+    <div class="pop" id="pop">4/5</div>
+    <div class="speed" aria-label="Game speed">
+      <button data-speed="0" title="Pause (Space)">❚❚</button>
+      <button data-speed="4">4×</button>
+      <button data-speed="8" class="on">8×</button>
+      <button data-speed="16">16×</button>
+    </div>
+  </div>
+
+  <div class="alerts" id="alerts" aria-live="polite"></div>
+
+  <div class="grid">
+    <!-- Economy -->
+    <div>
+      <div class="panel">
+        <h3>Villagers <small id="vilTotal">3 villagers</small></h3>
+        <div class="job"><span class="name">Food <span class="sub" id="foodSub"></span></span><button data-job="food" data-d="-1" aria-label="Fewer on food">−</button><span class="n" id="n-food">3</span><button data-job="food" data-d="1" aria-label="More on food">+</button></div>
+        <div class="job"><span class="name">Wood <span class="sub" id="woodSub"></span></span><button data-job="wood" data-d="-1" aria-label="Fewer on wood">−</button><span class="n" id="n-wood">0</span><button data-job="wood" data-d="1" aria-label="More on wood">+</button></div>
+        <div class="job"><span class="name">Gold <span class="sub" id="goldSub"></span></span><button data-job="gold" data-d="-1" aria-label="Fewer on gold">−</button><span class="n" id="n-gold">0</span><button data-job="gold" data-d="1" aria-label="More on gold">+</button></div>
+        <div class="job idle"><span class="name">Idle <span class="sub">“−” sends villagers here; “+” takes them from here</span></span><span></span><span class="n" id="n-idle">0</span><span></span></div>
+        <div class="rally">New villagers go to:
+          <label><input type="radio" name="rally" value="food" checked> Food</label>
+          <label><input type="radio" name="rally" value="wood"> Wood</label>
+          <label><input type="radio" name="rally" value="gold"> Gold</label>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>Economy upgrades</h3>
+        <div id="ecoTechs"></div>
+      </div>
+    </div>
+
+    <!-- Production -->
+    <div>
+      <div class="panel">
+        <h3>Town Centre <small>max 5 in queue</small></h3>
+        <div class="row">
+          <button class="primary" id="btnVil">Villager <kbd>Q</kbd></button><span class="cost"><span class="f">50f</span> · 25 s</span>
+          <span class="grow"></span>
+          <button id="btnLoom">Loom</button><span class="cost"><span class="g">50g</span></span>
+        </div>
+        <div class="row">
+          <button id="btnAge">Advance to Feudal</button><span class="cost" id="ageCost"></span>
+        </div>
+        <div class="bar"><i id="tcBar"></i></div>
+        <div class="tc-status" id="tcStatus"></div>
+        <div class="queue" id="tcQueue"></div>
+      </div>
+      <div class="panel">
+        <h3>Build</h3>
+        <div id="buildList"></div>
+      </div>
+      <div class="panel">
+        <h3>Archery <small id="archerInfo"></small></h3>
+        <div class="row">
+          <button class="primary" id="btnArcher">Archer <kbd>A</kbd></button><span class="cost"><span class="w">25w</span> <span class="g">45g</span> · 35 s</span>
+          <span class="grow"></span>
+          <button id="btnArcher5">×5</button>
+        </div>
+        <div id="ranges"></div>
+      </div>
+    </div>
+
+    <!-- Info -->
+    <div>
+      <div class="panel">
+        <h3>The Five Idle Sins <small>live</small></h3>
+        <div class="sins">
+          <div><span>TC idle</span><b id="s-tc">0 s</b></div>
+          <div><span>Housed</span><b id="s-house">0 s</b></div>
+          <div><span>Idle villager-seconds</span><b id="s-idle">0</b></div>
+          <div><span>Villagers lost to raids</span><b id="s-lost">0</b></div>
+          <div><span>Eco upgrades taken</span><b id="s-up">0/4</b></div>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>Scout reports</h3>
+        <div class="log" id="log"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ END ═══════════════ -->
+<div id="end" role="dialog" aria-modal="true" aria-labelledby="endTitle">
+  <div class="card">
+    <h2 id="endTitle"></h2>
+    <div class="rank" id="endRank"></div>
+    <table id="endTable"></table>
+    <p class="tip" id="endTip"></p>
+    <p style="display:flex;gap:10px;flex-wrap:wrap"><button class="primary" id="btnAgain">Play again</button><button id="btnCiv">Change civ</button></p>
+  </div>
+</div>
+
+<script>
+(() => {
+  // ───────────────────────── Tuning ─────────────────────────
+  const RATE = { natural: 0.33, farm: 0.30, wood: 0.36, gold: 0.35 };
+  const SHEEP = 1200, OTHER_NATURAL = 1430;          // 12 sheep; 2 boar + berries
+  const TIME_LIMIT = 27 * 60, STEP = 0.5;
+  const VIL = { f: 50, t: 25 };
+  const AGES = [
+    { name: 'Dark Age' },
+    { name: 'Feudal Age', cost: { f: 500 }, t: 130 },
+    { name: 'Castle Age', cost: { f: 800, g: 200 }, t: 160 },
+  ];
+  const BUILD = {
+    house:    { label: 'House', key: 'H', cost: { w: 25 }, t: 25, age: 0, note: '+5 population' },
+    farm:     { label: 'Farm', key: 'F', cost: { w: 60 }, t: 15, age: 0, note: 'one food villager each' },
+    barracks: { label: 'Barracks', cost: { w: 175 }, t: 50, age: 0, max: 1, note: 'needed for an Archery Range' },
+    range:    { label: 'Archery Range', cost: { w: 175 }, t: 50, age: 1, max: 4, needs: 'barracks', note: 'trains archers' },
+    smith:    { label: 'Blacksmith', cost: { w: 150 }, t: 40, age: 1, max: 1, note: 'Fletching; Castle needs one' },
+  };
+  const TECH = {
+    dbl:    { label: 'Double-Bit Axe', cost: { f: 100, w: 50 }, t: 25, age: 1, eco: true, note: 'wood +15%' },
+    collar: { label: 'Horse Collar', cost: { f: 75, w: 75 }, t: 20, age: 1, eco: true, note: 'farms +15%' },
+    mining: { label: 'Gold Mining', cost: { f: 100, w: 75 }, t: 30, age: 1, eco: true, note: 'gold +15%' },
+    fletch: { label: 'Fletching', cost: { f: 100, g: 50 }, t: 30, age: 1, needs: 'smith', note: 'archers +25% in fights' },
+  };
+  const WHEEL = { cost: { f: 175, w: 50 }, t: 75 };
+  const ARCHER = { cost: { w: 25, g: 45 }, t: 35 };
+  const RAIDS = [
+    { at: 450,  str: 2,  who: 'Enemy scouts', scout: true },
+    { at: 750,  str: 3,  who: 'Two enemy archers' },
+    { at: 930,  str: 6,  who: 'An archer pack' },
+    { at: 1110, str: 9,  who: 'Archers and skirmishers' },
+    { at: 1290, str: 12, who: 'A proper push' },
+    { at: 1470, str: 16, who: 'Everything they own' },
+  ];
+
+  // ───────────────────────── State ─────────────────────────
+  let civ = 'britons', S, timer = null, speed = 8;
+  const $ = id => document.getElementById(id);
+  const fmt = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+
+  function fresh() {
+    const b = JSON.parse(JSON.stringify(BUILD)), t = JSON.parse(JSON.stringify(TECH));
+    if (civ === 'bohemians') { b.smith.cost = { w: 50 }; t.mining.cost = {}; t.mining.note = 'gold +15% · FREE'; }
+    return {
+      t: 0, res: { f: 200, w: 200, g: 100 }, age: 0,
+      jobs: { food: 3, wood: 0, gold: 0, idle: 0 }, sheep: SHEEP, natural: OTHER_NATURAL,
+      built: { house: 0, farm: 0, barracks: 0, range: 0, smith: 0 }, building: [],
+      tc: [], tcProg: 0, loom: false, wheel: false,
+      techs: {}, researching: {},
+      ranges: [], archers: 0,
+      sins: { tc: 0, house: 0, idle: 0, lost: 0 }, raidIdx: 0, warned: {},
+      castleClick: null, vilsAtClick: null, over: false, B: b, T: t,
+    };
+  }
+  const vils = () => S.jobs.food + S.jobs.wood + S.jobs.gold + S.jobs.idle;
+  const popUsed = () => vils() + S.archers + 1 + S.ranges.filter(r => r.prog > 0).length + (S.tc[0]?.type === 'vil' && S.tcProg > 0 ? 1 : 0);
+  const popCap = () => Math.min(200, 5 + 5 * S.built.house);
+  const can = c => (c.f || 0) <= S.res.f && (c.w || 0) <= S.res.w && (c.g || 0) <= S.res.g;
+  const pay = c => { S.res.f -= c.f || 0; S.res.w -= c.w || 0; S.res.g -= c.g || 0; };
+  const costHtml = c => ['f', 'w', 'g'].filter(k => c[k]).map(k => `<span class="${k}">${c[k]}${k}</span>`).join(' ') || '<span style="color:var(--good)">free</span>';
+
+  function log(msg, cls = '') {
+    const p = document.createElement('p');
+    p.innerHTML = `<time>${fmt(S.t)}</time><span class="${cls}">${msg}</span>`;
+    $('log').prepend(p);
+  }
+
+  // ───────────────────────── Actions ─────────────────────────
+  const A = {
+    vil(n = 1) {
+      for (let i = 0; i < n; i++) {
+        if (S.tc.length >= 5 || !can({ f: VIL.f })) return;
+        pay({ f: VIL.f }); S.tc.push({ type: 'vil', t: VIL.t, label: 'Villager' });
+      }
+    },
+    loom() {
+      if (S.loom || S.tc.some(q => q.type === 'loom') || S.tc.length >= 5 || !can({ g: 50 })) return;
+      pay({ g: 50 }); S.tc.push({ type: 'loom', t: 25, label: 'Loom' });
+    },
+    wheel() {
+      if (S.wheel || S.age < 1 || S.tc.some(q => q.type === 'wheel') || S.tc.length >= 5 || !can(WHEEL.cost)) return;
+      pay(WHEEL.cost); S.tc.push({ type: 'wheel', t: WHEEL.t, label: 'Wheelbarrow' });
+    },
+    age() {
+      const next = AGES[S.age + 1];
+      if (!next || S.tc.some(q => q.type === 'age') || S.tc.length >= 5 || !ageReady() || !can(next.cost)) return;
+      pay(next.cost); S.tc.push({ type: 'age', t: next.t, label: next.name });
+      if (S.age + 1 === 2) { S.castleClick = S.t; S.vilsAtClick = vils(); }
+      log(`You click up to the <b>${next.name}</b> with ${vils()} villagers.`, 'good');
+    },
+    build(k) {
+      const b = S.B[k];
+      if (S.age < b.age || (b.needs && !S.built[b.needs]) || atMax(k) || !can(b.cost)) return;
+      pay(b.cost); S.building.push({ k, t: b.t, total: b.t });
+    },
+    tech(k) {
+      const t = S.T[k];
+      if (S.techs[k] || S.researching[k] || S.age < t.age || (t.needs && !S.built[t.needs]) || !can(t.cost)) return;
+      pay(t.cost); S.researching[k] = t.t;
+    },
+    archer(n = 1) {
+      for (let i = 0; i < n; i++) {
+        if (!S.ranges.length || !can(ARCHER.cost)) return;
+        const r = S.ranges.reduce((a, b) => (b.q < a.q ? b : a));
+        if (r.q >= 5) return;
+        pay(ARCHER.cost); r.q++;
+      }
+    },
+    job(job, d) {
+      if (d > 0 && S.jobs.idle > 0) { S.jobs.idle--; S.jobs[job]++; }
+      if (d < 0 && S.jobs[job] > 0) { S.jobs[job]--; S.jobs.idle++; }
+    },
+  };
+  const atMax = k => S.B[k].max && S.built[k] + S.building.filter(x => x.k === k).length >= S.B[k].max;
+  function ageReady() {
+    if (S.age === 0) return true;
+    if (S.age === 1) return S.built.range > 0 && S.built.smith > 0;
+    return false;
+  }
+
+  // ───────────────────────── Simulation step ─────────────────────────
+  function step(dt) {
+    S.t += dt;
+    const wb = S.wheel ? 1.1 : 1;
+
+    // Food: natural first (sheep then boar/berries), then farms
+    let foodWorkers = S.jobs.food, foodIdle = 0;
+    if (S.sheep + S.natural <= 0) {
+      const farmers = Math.min(S.jobs.food, S.built.farm);
+      foodIdle = S.jobs.food - farmers;
+      S.res.f += farmers * RATE.farm * (S.techs.collar ? 1.15 : 1) * wb * dt;
+    } else {
+      let want = foodWorkers * RATE.natural * wb * dt;
+      if (S.sheep > 0) {
+        const g = Math.min(S.sheep, want * (civ === 'britons' ? 1.25 : 1));
+        S.sheep -= g; S.res.f += g;
+      } else {
+        const g = Math.min(S.natural, want); S.natural -= g; S.res.f += g;
+      }
+      if (S.sheep + S.natural <= 0) log(`The last of the natural food is gone. Food villagers need <b>farms</b> now (you have ${S.built.farm}).`, 'warn');
+    }
+    S.res.w += S.jobs.wood * RATE.wood * (S.techs.dbl ? 1.15 : 1) * wb * dt;
+    S.res.g += S.jobs.gold * RATE.gold * (S.techs.mining ? 1.15 : 1) * wb * dt;
+    S.sins.idle += (S.jobs.idle + foodIdle) * dt;
+    S.foodIdle = foodIdle;
+
+    // Town Centre
+    const head = S.tc[0];
+    if (!head) S.sins.tc += dt;
+    else if (head.type === 'vil' && S.tcProg === 0 && popUsed() >= popCap()) S.sins.house += dt;
+    else {
+      S.tcProg += dt;
+      if (S.tcProg >= head.t) {
+        S.tc.shift(); S.tcProg = 0;
+        if (head.type === 'vil') { S.jobs[document.querySelector('input[name=rally]:checked').value]++; }
+        if (head.type === 'loom') { S.loom = true; log('Loom done. Your villagers can now fight off a scout.', 'good'); }
+        if (head.type === 'wheel') { S.wheel = true; log('Wheelbarrow done: everyone gathers 10% faster.', 'good'); }
+        if (head.type === 'age') {
+          S.age++;
+          log(`You reach the <b>${AGES[S.age].name}</b>!`, 'good');
+          if (S.age === 2) return finish(true);
+        }
+      }
+    }
+
+    // Buildings
+    S.building.forEach(b => (b.t -= dt));
+    S.building = S.building.filter(b => {
+      if (b.t > 0) return true;
+      S.built[b.k]++;
+      if (b.k === 'range') S.ranges.push({ q: 0, prog: 0 });
+      if (b.k !== 'house' && b.k !== 'farm') log(`${S.B[b.k].label} finished.`);
+      return false;
+    });
+
+    // Techs
+    for (const k in S.researching) {
+      S.researching[k] -= dt;
+      if (S.researching[k] <= 0) { delete S.researching[k]; S.techs[k] = true; log(`${S.T[k].label} researched.`, 'good'); }
+    }
+
+    // Archery ranges
+    S.ranges.forEach(r => {
+      if (!r.q) return;
+      if (r.prog === 0 && popUsed() >= popCap()) { S.sins.house += dt / Math.max(1, S.ranges.length); return; }
+      r.prog += dt;
+      if (r.prog >= ARCHER.t) { r.prog = 0; r.q--; S.archers++; }
+    });
+
+    // Raids
+    const raid = RAIDS[S.raidIdx];
+    if (raid) {
+      if (!S.warned[S.raidIdx] && S.t >= raid.at - 45) {
+        S.warned[S.raidIdx] = true;
+        log(`⚠ ${raid.who} spotted heading your way! Arriving at <b>${fmt(raid.at)}</b>, strength ${raid.str}.`, 'warn');
+      }
+      if (S.t >= raid.at) { S.raidIdx++; resolveRaid(raid); }
+    }
+
+    if (S.t >= TIME_LIMIT) finish(false);
+  }
+
+  function resolveRaid(raid) {
+    const mult = S.techs.fletch ? 1.25 : 1;
+    const def = S.archers * mult + (raid.scout && S.loom ? 99 : 0);
+    if (def >= raid.str) {
+      const dead = raid.scout && !S.archers ? 0 : Math.floor(raid.str / 4);
+      S.archers = Math.max(0, S.archers - dead);
+      log(raid.scout && S.loom && !S.archers
+        ? 'The scouts poke a few villagers, who are wearing Loom and hit back. They leave.'
+        : `${raid.who} hit an arrow storm and go home. You lose ${dead} archer${dead === 1 ? '' : 's'}.`, 'good');
+      return;
+    }
+    let lost = Math.max(1, Math.ceil((raid.str - def) / 2));
+    if (S.loom && !raid.scout) lost = Math.ceil(lost / 2);
+    lost = Math.min(lost, vils());
+    S.archers = Math.floor(S.archers / 2);
+    let left = lost;
+    for (const j of ['gold', 'wood', 'idle', 'food']) { const k = Math.min(left, S.jobs[j]); S.jobs[j] -= k; left -= k; }
+    S.sins.lost += lost;
+    log(`💀 ${raid.who} reach your villagers. You lose <b>${lost}</b> villager${lost === 1 ? '' : 's'}${raid.scout ? '. (Loom would have stopped this.)' : '. You needed more archers.'}`, 'bad');
+  }
+
+  // ───────────────────────── Render ─────────────────────────
+  function render() {
+    $('clock').textContent = fmt(S.t);
+    $('age').textContent = AGES[S.age].name;
+    $('rf').textContent = Math.floor(S.res.f); $('rw').textContent = Math.floor(S.res.w); $('rg').textContent = Math.floor(S.res.g);
+    $('pop').textContent = `${popUsed()}/${popCap()}`;
+    $('pop').classList.toggle('full', popUsed() >= popCap());
+    for (const j in S.jobs) $('n-' + j).textContent = S.jobs[j];
+    $('vilTotal').textContent = `${vils()} villagers`;
+    const nat = Math.floor(S.sheep + S.natural);
+    $('foodSub').textContent = nat > 0 ? `natural food left: ${nat}${S.sheep > 0 ? ' (sheep)' : ''} · farms: ${S.built.farm}` : `farms: ${S.built.farm} · ${S.foodIdle ? S.foodIdle + ' waiting for a farm!' : 'all farming'}`;
+    $('woodSub').textContent = S.techs.dbl ? 'Double-Bit Axe ✓' : '';
+    $('goldSub').textContent = S.techs.mining ? 'Gold Mining ✓' : '';
+
+    // TC
+    const next = AGES[S.age + 1];
+    $('btnAge').textContent = next ? `Advance to ${next.name}` : 'Castle Age';
+    $('ageCost').innerHTML = next ? `${costHtml(next.cost)} · ${next.t} s${S.age === 1 ? ' · needs Archery Range + Blacksmith' : ''}` : '';
+    $('btnAge').disabled = !next || !ageReady() || !can(next.cost) || S.tc.some(q => q.type === 'age') || S.tc.length >= 5;
+    $('btnVil').disabled = S.tc.length >= 5 || !can({ f: VIL.f });
+    $('btnLoom').disabled = S.loom || S.tc.some(q => q.type === 'loom') || !can({ g: 50 });
+    $('btnLoom').textContent = S.loom ? 'Loom ✓' : 'Loom';
+    const head = S.tc[0];
+    $('tcBar').style.width = head ? `${(S.tcProg / head.t) * 100}%` : '0';
+    const st = $('tcStatus');
+    if (!head) { st.textContent = 'IDLE — queue a villager!'; st.className = 'tc-status bad'; }
+    else if (head.type === 'vil' && S.tcProg === 0 && popUsed() >= popCap()) { st.textContent = 'HOUSED — build a house!'; st.className = 'tc-status bad'; }
+    else { st.textContent = `Working on: ${head.label}${head.type !== 'vil' ? ' (no villagers until it finishes)' : ''}`; st.className = 'tc-status'; }
+    $('tcQueue').innerHTML = S.tc.map(q => `<span class="${q.type === 'age' ? 'age' : ''}">${q.label}</span>`).join('');
+
+    // Build
+    $('buildList').innerHTML = Object.entries(S.B).map(([k, b]) => {
+      const lock = S.age < b.age ? `${AGES[b.age].name}` : (b.needs && !S.built[b.needs] ? `needs ${S.B[b.needs].label}` : '');
+      const going = S.building.filter(x => x.k === k).length;
+      return `<div class="row"><button data-build="${k}" ${lock || atMax(k) || !can(b.cost) ? 'disabled' : ''}>${b.label}${b.key ? ` <kbd>${b.key}</kbd>` : ''}</button>
+        <span class="cost">${costHtml(b.cost)} · ${b.note}</span><span class="grow"></span>
+        <span class="tag ${S.built[k] ? 'done' : ''}">${lock || `${S.built[k]} built${going ? ` · ${going} going up` : ''}`}</span></div>`;
+    }).join('');
+
+    // Eco techs
+    const ups = Object.entries(S.T).map(([k, t]) => {
+      const lock = S.age < t.age ? AGES[t.age].name : (t.needs && !S.built[t.needs] ? `needs ${S.B[t.needs].label}` : '');
+      const state = S.techs[k] ? '✓ done' : S.researching[k] ? `${Math.ceil(S.researching[k])} s` : lock;
+      return `<div class="row"><button data-tech="${k}" ${state || !can(t.cost) ? 'disabled' : ''}>${t.label}</button>
+        <span class="cost">${costHtml(t.cost)} · ${t.note}</span><span class="grow"></span>${state ? `<span class="tag ${S.techs[k] ? 'done' : ''}">${state}</span>` : ''}</div>`;
+    });
+    const wState = S.wheel ? '✓ done' : S.tc.some(q => q.type === 'wheel') ? 'queued at TC' : S.age < 1 ? 'Feudal Age' : '';
+    ups.splice(0, 0, `<div class="row"><button data-wheel ${wState || !can(WHEEL.cost) ? 'disabled' : ''}>Wheelbarrow</button>
+      <span class="cost">${costHtml(WHEEL.cost)} · all +10% · <b>uses the TC</b></span><span class="grow"></span>${wState ? `<span class="tag ${S.wheel ? 'done' : ''}">${wState}</span>` : ''}</div>`);
+    $('ecoTechs').innerHTML = ups.join('');
+
+    // Archers
+    $('archerInfo').textContent = `${S.archers} archer${S.archers === 1 ? '' : 's'}${S.techs.fletch ? ' · Fletching ✓' : ''}`;
+    $('btnArcher').disabled = $('btnArcher5').disabled = !S.ranges.length || !can(ARCHER.cost);
+    $('ranges').innerHTML = S.ranges.length
+      ? S.ranges.map((r, i) => `<div class="row"><span class="grow">Range ${i + 1}: ${r.q ? `${r.q} queued` : '<b style="color:var(--warn)">idle</b>'}</span></div><div class="bar"><i style="width:${(r.prog / ARCHER.t) * 100}%"></i></div>`).join('')
+      : `<p class="cost">${S.age < 1 ? 'Archery Ranges unlock in the Feudal Age (and need a Barracks).' : 'Build an Archery Range.'}</p>`;
+
+    // Sins
+    $('s-tc').textContent = `${Math.round(S.sins.tc)} s`;
+    $('s-house').textContent = `${Math.round(S.sins.house)} s`;
+    $('s-idle').textContent = Math.round(S.sins.idle);
+    $('s-lost').textContent = S.sins.lost;
+    $('s-up').textContent = `${ecoCount()}/4`;
+
+    // Alerts
+    const al = [];
+    if (!head) al.push(['bad', '🏰 TC IDLE']);
+    else if (head.type === 'vil' && S.tcProg === 0 && popUsed() >= popCap()) al.push(['bad', '🏠 HOUSED']);
+    else if (popCap() - popUsed() <= 2 && popCap() < 200 && !S.building.some(b => b.k === 'house')) al.push(['warn', '🏠 Nearly housed']);
+    if (S.jobs.idle + (S.foodIdle || 0)) al.push(['bad', `😴 ${S.jobs.idle + (S.foodIdle || 0)} idle villager(s)`]);
+    if (nat > 0 && nat < 300) al.push(['warn', `🫐 Natural food nearly gone (${nat})`]);
+    const raid = RAIDS[S.raidIdx];
+    if (raid && S.warned[S.raidIdx]) al.push(['warn', `⚔ Raid at ${fmt(raid.at)} · strength ${raid.str} · your defence ${(S.archers * (S.techs.fletch ? 1.25 : 1)).toFixed(1)}${raid.scout ? (S.loom ? ' + Loom' : ' (Loom would stop it)') : ''}`]);
+    $('alerts').innerHTML = al.map(([c, t]) => `<span class="alert ${c}">${t}</span>`).join('');
+  }
+  const ecoCount = () => ['dbl', 'collar', 'mining'].filter(k => S.techs[k]).length + (S.wheel ? 1 : 0);
+
+  // ───────────────────────── End ─────────────────────────
+  function finish(won) {
+    if (S.over) return;
+    S.over = true; setSpeed(0, true);
+    const arch = S.archers, v = vils();
+    let score = 1000;
+    score -= Math.round(S.sins.tc) + Math.round(S.sins.house) + Math.round(S.sins.idle * 0.2) + S.sins.lost * 25;
+    score += Math.max(0, (S.vilsAtClick || v) - 25) * 20 + arch * 5 + ecoCount() * 25;
+    if (won) score += Math.max(0, Math.round((TIME_LIMIT - S.t) / 3));
+    else score = Math.min(score, 499);
+    score = Math.max(0, score);
+
+    const rank = !won ? 'Rank: Wololo’d — the enemy has knights and you have regrets'
+      : score >= 1250 ? 'Rank: Grandmaster of the Longbow'
+      : score >= 1100 ? 'Rank: Castellan'
+      : score >= 950 ? 'Rank: Feudal Lord'
+      : score >= 750 ? 'Rank: Squire'
+      : 'Rank: Peasant who has heard of houses';
+    $('endTitle').textContent = won ? `Castle Age at ${fmt(S.t)}!` : 'Out of time';
+    $('endRank').textContent = `${rank} · ${score} points`;
+    const row = (k, val, ok) => `<tr><td>${k}</td><td class="${ok === undefined ? '' : ok ? 'good' : 'bad'}">${val}</td></tr>`;
+    $('endTable').innerHTML =
+      row('Castle Age clicked at', S.castleClick !== null ? fmt(S.castleClick) : '—', S.castleClick !== null && S.castleClick <= 1260) +
+      row('Villagers at the Castle click', S.vilsAtClick ?? v, (S.vilsAtClick ?? v) >= 28) +
+      row('Archers alive', arch, arch >= 8) +
+      row('TC idle', `${Math.round(S.sins.tc)} s`, S.sins.tc < 30) +
+      row('Housed', `${Math.round(S.sins.house)} s`, S.sins.house < 10) +
+      row('Idle villager-seconds', Math.round(S.sins.idle), S.sins.idle < 200) +
+      row('Villagers lost to raids', S.sins.lost, S.sins.lost === 0) +
+      row('Eco upgrades (Wheelbarrow, Double-Bit, Horse Collar, Gold Mining)', `${ecoCount()}/4`, ecoCount() >= 3);
+    const worst = [
+      [S.sins.tc, 'Your TC sat idle for a while. Queue 2–3 villagers at a time so it never runs dry while you look at your archers.'],
+      [S.sins.house * 1.2, 'You were housed. Build a house whenever you are within 3 of your population cap.'],
+      [S.sins.idle * 0.15, 'Villagers stood around: build farms before the berries and boar run out, not after.'],
+      [S.sins.lost * 30, 'Raiders got to your villagers. Keep both ranges working and get Fletching before the 15:30 raid.'],
+      [(4 - ecoCount()) * 25, 'You skipped eco upgrades. Double-Bit Axe and Horse Collar pay for themselves quickly.'],
+    ].sort((a, b) => b[0] - a[0])[0];
+    $('endTip').innerHTML = `<b>Worst sin:</b> ${worst[0] > 5 ? worst[1] : 'Honestly? Not much. Now go do it in a real game.'}` +
+      (won && civ === 'britons' ? '<br><br><b>Britons:</b> now drop two extra TCs at half wood and get the Crossbowman upgrade.' : '') +
+      (won && civ === 'bohemians' ? '<br><br><b>Bohemians:</b> now Crossbowman upgrade, Gold Shaft Mining (free) and some hand cannoneers.' : '');
+    $('end').style.display = 'flex';
+    $('btnAgain').focus();
+    try {
+      const key = 'aoe2sim_best_' + civ, best = +localStorage.getItem(key) || 0;
+      if (score > best) localStorage.setItem(key, score);
+    } catch {}
+    if (won && score >= 950) confetti();
+  }
+
+  // ───────────────────────── Loop & input ─────────────────────────
+  function setSpeed(s, quiet) {
+    speed = s;
+    document.querySelectorAll('.speed button').forEach(b => b.classList.toggle('on', +b.dataset.speed === s));
+    clearInterval(timer); timer = null;
+    if (s > 0 && !S.over) timer = setInterval(() => {
+      let left = s * 0.1;
+      while (left > 0 && !S.over) { const d = Math.min(STEP, left); step(d); left -= d; }
+      render();
+    }, 100);
+    if (!quiet) render();
+  }
+
+  function startGame() {
+    S = fresh();
+    $('log').innerHTML = '';
+    $('start').style.display = 'none'; $('game').style.display = 'block'; $('end').style.display = 'none';
+    log(`You are the <b>${civ === 'britons' ? 'Britons' : 'Bohemians'}</b>. 3 villagers are on sheep. The TC is doing nothing. (Hint: <kbd>Q</kbd>)`);
+    render(); setSpeed(8);
+  }
+
+  document.querySelectorAll('.civ').forEach(b => b.addEventListener('click', () => {
+    civ = b.dataset.civ;
+    document.querySelectorAll('.civ').forEach(c => { c.classList.toggle('selected', c === b); c.setAttribute('aria-checked', c === b); });
+    showBest();
+  }));
+  $('btnStart').onclick = startGame;
+  $('btnAgain').onclick = startGame;
+  $('btnCiv').onclick = () => { $('end').style.display = 'none'; $('game').style.display = 'none'; $('start').style.display = 'block'; showBest(); };
+  $('btnVil').onclick = () => { A.vil(); render(); };
+  $('btnLoom').onclick = () => { A.loom(); render(); };
+  $('btnAge').onclick = () => { A.age(); render(); };
+  $('btnArcher').onclick = () => { A.archer(); render(); };
+  $('btnArcher5').onclick = () => { A.archer(5); render(); };
+  document.querySelectorAll('.speed button').forEach(b => b.onclick = () => setSpeed(+b.dataset.speed));
+  document.querySelectorAll('.job button').forEach(b => b.onclick = () => { A.job(b.dataset.job, +b.dataset.d); render(); });
+  $('game').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.build) A.build(b.dataset.build);
+    else if (b.dataset.tech) A.tech(b.dataset.tech);
+    else if ('wheel' in b.dataset) A.wheel();
+    else return;
+    render();
+  });
+  document.addEventListener('keydown', e => {
+    if (!S || S.over || $('game').style.display === 'none' || e.ctrlKey || e.metaKey || e.altKey) return;
+    const k = e.key.toLowerCase();
+    if (k === 'q') A.vil(); else if (k === 'h') A.build('house'); else if (k === 'f') A.build('farm');
+    else if (k === 'a') A.archer();
+    else if (k === ' ') { e.preventDefault(); setSpeed(speed ? 0 : 8); return; }
+    else return;
+    render();
+  });
+  function showBest() {
+    try { const b = localStorage.getItem('aoe2sim_best_' + civ); $('best').textContent = b ? `Your best as ${civ === 'britons' ? 'Britons' : 'Bohemians'}: ${b}` : ''; } catch {}
+  }
+  showBest();
+
+  // ───────────────────────── Confetti ─────────────────────────
+  function confetti() {
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const c = $('confetti'), x = c.getContext('2d');
+    c.width = innerWidth; c.height = innerHeight;
+    const cols = ['#d8a73d', '#f3d27a', '#c94b4b', '#5b8fca', '#efe6d0'];
+    const bits = Array.from({ length: 160 }, () => ({ x: Math.random() * c.width, y: -20 - Math.random() * c.height * .5,
+      vx: (Math.random() - .5) * 3, vy: 2 + Math.random() * 3, r: Math.random() * 6.28, s: 5 + Math.random() * 6, col: cols[Math.random() * 5 | 0] }));
+    let f = 0;
+    (function draw() {
+      x.clearRect(0, 0, c.width, c.height);
+      bits.forEach(b => { b.x += b.vx; b.y += b.vy; b.r += .1; x.save(); x.translate(b.x, b.y); x.rotate(b.r); x.fillStyle = b.col; x.fillRect(-b.s / 2, -b.s / 4, b.s, b.s / 2); x.restore(); });
+      if (++f < 220) requestAnimationFrame(draw); else x.clearRect(0, 0, c.width, c.height);
+    })();
+  }
+})();
+</script>
+</body>
+</html>
