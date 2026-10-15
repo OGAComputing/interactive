@@ -1041,6 +1041,12 @@ color:  teal
   .completion-banner { border-top-color: var(--cobalt-text); }
   .completion-banner h3 { font-family: var(--hud-font); text-transform: uppercase; letter-spacing: 0.1em; color: var(--cobalt-text); }
 
+  /* Predict questions: the Memory strip's boxes, drawn by hand, showing what the user's typed
+     answers put in memory. Never on a question that asks what is stored, and a value the
+     question asks for shows as ?. Box styles come from code-editor.js. */
+  .predict-memory { margin: 0.2rem 0 1rem; padding: 0.6rem 0.8rem 0.8rem; background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; font-family: var(--font-mono); }
+  .predict-memory .memory-header { margin-bottom: 1rem; }
+
   /* ── "Remind me" cards — worked reminders on demand (expertise reversal: fluent
        students skip them, students who've forgotten open them) ── */
   .remind { background: var(--card); border: 1px solid var(--line); border-radius: 10px; margin: 0 0 1rem; }
@@ -1206,7 +1212,7 @@ color:  teal
 
   <!-- Card order is fixed by PREDICT_CARDS / PREDICT_NAMES in the JS. -->
   <div class="q-card" id="qcard_p_mcq1">
-    <label class="q-label"><span class="q-num">1</span> The user types <code>6</code> for the hours. What is stored in <code>hours</code> after line 2?</label>
+    <label class="q-label"><span class="q-num">1</span> The user types <code>Riley</code> for their name, then <code>6</code> for the hours. What is stored in <code>hours</code> after line 2?</label>
     <div class="radio-opts" id="ropts_p_mcq1">
       <label class="radio-opt"><input type="radio" name="p_mcq1" value="option_a" onchange="saveState()"> <span>The text "6", because input() always gives text</span></label>
       <label class="radio-opt"><input type="radio" name="p_mcq1" value="option_b" onchange="saveState()"> <span>The number 6, because int() converted the text</span></label>
@@ -1221,7 +1227,16 @@ color:  teal
   </div>
 
   <div class="q-card step-hidden" id="qcard_p_mcq2">
-    <label class="q-label"><span class="q-num">2</span> True or false: line 6 prints the word <strong>oxygen</strong> on the screen.</label>
+    <label class="q-label"><span class="q-num">2</span> The user types <code>Riley</code> for their name, then <code>6</code> for the hours. True or false: line 6 prints the word <strong>oxygen</strong> on the screen.</label>
+    <!-- oxygen shows ?: question 3 asks for its value. -->
+    <div class="predict-memory" aria-label="Memory after line 3: name holds Riley, hours holds 6, oxygen holds a number">
+      <div class="memory-header">Memory after line 3</div>
+      <ul class="memory-boxes">
+        <li class="mem-box" data-type="str"><span class="mem-label"><span class="mem-name">name</span><span class="mem-type">str</span></span><span class="mem-value">"Riley"</span></li>
+        <li class="mem-box" data-type="int"><span class="mem-label"><span class="mem-name">hours</span><span class="mem-type">int</span></span><span class="mem-value">6</span></li>
+        <li class="mem-box" data-type="int"><span class="mem-label"><span class="mem-name">oxygen</span><span class="mem-type">int</span></span><span class="mem-value">?</span></li>
+      </ul>
+    </div>
     <div class="radio-opts" id="ropts_p_mcq2">
       <label class="radio-opt"><input type="radio" name="p_mcq2" value="option_a" onchange="saveState()"> <span>True</span></label>
       <label class="radio-opt"><input type="radio" name="p_mcq2" value="option_b" onchange="saveState()"> <span>False</span></label>
@@ -1234,7 +1249,15 @@ color:  teal
   </div>
 
   <div class="q-card step-hidden" id="qcard_p_text1">
-    <label class="q-label" for="p_text1"><span class="q-num">3</span> Riley types <code>6</code> for the hours. What number does line 6 print?</label>
+    <label class="q-label" for="p_text1"><span class="q-num">3</span> The user types <code>Riley</code> for their name, then <code>6</code> for the hours. What number does line 6 print?</label>
+    <div class="predict-memory" aria-label="Memory after line 3: name holds Riley, hours holds 6, oxygen holds a number">
+      <div class="memory-header">Memory after line 3</div>
+      <ul class="memory-boxes">
+        <li class="mem-box" data-type="str"><span class="mem-label"><span class="mem-name">name</span><span class="mem-type">str</span></span><span class="mem-value">"Riley"</span></li>
+        <li class="mem-box" data-type="int"><span class="mem-label"><span class="mem-name">hours</span><span class="mem-type">int</span></span><span class="mem-value">6</span></li>
+        <li class="mem-box" data-type="int"><span class="mem-label"><span class="mem-name">oxygen</span><span class="mem-type">int</span></span><span class="mem-value">?</span></li>
+      </ul>
+    </div>
     <input type="text" id="p_text1" placeholder="Type the number…" inputmode="numeric" oninput="saveState(); clearPredictError('qcard_p_text1')">
     <div class="hint-box" style="margin-top:0.6rem">Hint: line 3 works out what is stored in <code>oxygen</code></div>
     <div class="mcq-fb" id="fb_p_text1"></div>
