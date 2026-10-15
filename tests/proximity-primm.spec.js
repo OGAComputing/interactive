@@ -183,7 +183,7 @@ test('Investigate bug step: Break it gives a TypeError; int() back completes Inv
     currentStage: 'I', completedStages: ['P', 'R'], stepI: 4, maxStepI: 4, i_editor: starter({ 3: 'elif distance > 20:' }),
     radio_i1_mcq: 'option_c', i2: 'Both ifs were checked separately and both were true', radio_i3_mcq: 'option_b',
   });
-  await page.click('#qcard_i4 button:has-text("Break it")');
+  await page.click('#qcard_i4_prompt button:has-text("Break it")');
   await expect(page.locator('#i_editor')).toHaveValue(/^distance = input\(/);
   await answerPrompts(page, 'i_editor', ['30']);
   await expect(page.locator('#i_fb_run')).toContainText('TypeError', { timeout: 30000 });

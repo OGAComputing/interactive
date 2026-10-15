@@ -365,6 +365,45 @@ color:  blue
   #i_steps .req-list li.req-pass > span:first-child { background: var(--green); }
   #i_steps .req-list li.req-fail > span:first-child { background: var(--red); }
   #i_steps .req-list li.req-note { background: none; border: none; padding: 0.1rem 0.2rem 0.5rem 2.25rem; display: block; color: var(--muted); }
+  /* The current step's instructions stay in view while the student scrolls down to the
+     output, so they can watch each tick go green or red (Break it → Fix it especially).
+     Short screens keep the old layout, where a stuck card would hide the editor. */
+  #i_steps { position: sticky; top: calc(var(--cr-banner-h, 0px) + 10px); z-index: 6; max-height: 55vh; overflow-y: auto; }
+  @media (max-height: 640px), (max-width: 640px) { #i_steps { position: static; max-height: none; overflow: visible; } }
+  /* Once pinned (.is-stuck, set by syncInvSticky), only the requirement list shows: the step
+     heading, the grey notes and any "Remind me" card hide, so the card stays small. */
+  #i_steps.is-stuck .q-card { padding-top: 0.55rem; padding-bottom: 0.55rem; }
+  #i_steps.is-stuck .q-card > :not(.req-list),
+  #i_steps.is-stuck .q-card:not(:has(.req-list)),
+  #i_steps.is-stuck .req-list li.req-note { display: none; }
+  #i_steps.is-stuck .req-list { margin: 0; }
+  #i_steps.is-stuck .req-list li:last-child { margin-bottom: 0; }
+  .btn.btn-inline { min-height: 34px; padding: 0.25rem 0.75rem; margin: 0 0.15rem; vertical-align: middle; }
+  /* ── Make toolkit — the student's own finished Modify program and a cheat sheet of this
+       lesson's code, above the Make editor, so they don't keep flipping back to Modify. ── */
+  .toolkit { display: grid; gap: 0.5rem; margin: 0.9rem 0; }
+  .toolkit details { background: var(--card); border: 1px solid var(--line); border-radius: 10px; }
+  .toolkit summary {
+    cursor: pointer; min-height: 44px; display: flex; align-items: center; gap: 0.5rem;
+    padding: 0.55rem 1rem; font-weight: 600; font-size: 0.9rem; color: var(--cobalt-text); list-style: none;
+  }
+  .toolkit summary::-webkit-details-marker { display: none; }
+  .toolkit summary::before { content: '▸'; transition: transform 0.15s; }
+  .toolkit details[open] summary::before { transform: rotate(90deg); }
+  .toolkit pre {
+    margin: 0 1rem 0.9rem; padding: 0.7rem 0.9rem; background: var(--code-bg); color: var(--text);
+    border: 1px solid var(--line-strong); border-radius: 8px; font-family: var(--font-mono);
+    font-size: 0.86rem; line-height: 1.55; white-space: pre; overflow-x: auto;
+  }
+  .toolkit .tk-rows { margin: 0 1rem 0.9rem; display: grid; gap: 0.45rem; font-size: 0.9rem; color: var(--text); line-height: 1.5; }
+  .toolkit .tk-row { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 0.75rem; align-items: center; }
+  .toolkit summary code, .toolkit .tk-row code {
+    background: var(--code-bg); color: var(--cobalt-text); border: 1px solid var(--line-strong);
+    font-family: var(--font-mono); padding: 0.2rem 0.45rem; border-radius: 5px; font-size: 0.86em; overflow-wrap: anywhere;
+  }
+  .toolkit .tk-row span { color: var(--muted); }
+  .toolkit .tk-tip { margin: 0 1rem 0.9rem; font-size: 0.86rem; color: var(--muted); }
+  @media (max-width: 640px) { .toolkit .tk-row { grid-template-columns: 1fr; gap: 0.2rem; } }
 
   /* ── MISC ── */
   .section-label { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 700; margin-bottom: 0.45rem; margin-top: 1.3rem; }
@@ -849,9 +888,8 @@ color:  blue
     <div class="q-card step-hidden" id="qcard_i3_prompt" style="border-left-color:var(--stage-i)">
       <label class="q-label"><span class="q-num" style="background:var(--stage-i)">3</span> Now let's <strong>meet an error</strong> — every programmer does, all the time, and it is not a disaster.</label>
       <ul class="req-list" id="req_i_3">
-        <li><span>1</span><span class="req-text">Under the editor, press <strong>😈 Break it</strong> — it adds <strong>one broken line</strong> to your code and runs it for you: it's <strong>line <span id="ibug_line">the last line</span></strong>,
-          <code>FILL IN: show IBUG_LINE here</code><br>FILL IN: name the exact mistake in plain English.</span></li>
-        <li class="req-note">Python stops with a red <strong>FILL IN: error type, e.g. SyntaxError / TypeError</strong> — that's expected. Read the message, then click <strong>💡 Get help</strong> below the editor for a plain-English hint.</li>
+        <li><span>1</span><span class="req-text">Press <button class="btn btn-check btn-inline" type="button" onclick="breakItDemo()">😈 Break it</button> It adds one broken line and runs it: <strong>line <span id="ibug_line">the last line</span></strong>, <code>FILL IN: show IBUG_LINE here</code>. FILL IN: name the exact mistake in a few words.</span></li>
+        <li class="req-note">Python stops with a red <strong>FILL IN: error type, e.g. SyntaxError / TypeError</strong>: that's expected. Read it, or click <strong>💡 Get help</strong> for a plain-English hint.</li>
         <li><span>2</span><span class="req-text"><strong>Fix it</strong> (don't delete it!): FILL IN: describe the exact fix (it must turn the line into IBUG_FIXED_LINE), then press <strong>▶ Run code</strong> again until it works.</span></li>
       </ul>
       <!-- INSTRUCTIONS ONLY — put the "what was Python complaining about?" MCQ in the answer card below. -->
@@ -892,10 +930,6 @@ color:  blue
          about the error message, and the step's Check button completes Investigate. -->
     <div class="q-card step-hidden" id="qcard_i3" style="border-left-color:var(--stage-i)">
       <div style="font-size:0.84rem;color:var(--muted);margin-bottom:0.4rem">✍️ Your answer — step 3 (read the error)</div>
-      <div style="display:flex;gap:0.6rem;flex-wrap:wrap;margin-bottom:0.7rem;align-items:center">
-        <button class="btn btn-check" type="button" onclick="breakItDemo()">😈 Break it</button>
-        <span style="font-size:0.82rem;color:var(--muted);font-style:italic">adds the broken line above and runs it — then read the error below</span>
-      </div>
       <label class="q-label">You ran the broken line and read the error. <strong>What was Python complaining about?</strong></label>
       <div class="radio-opts" id="ropts_i3_mcq" style="margin-top:0.5rem">
         <label class="radio-opt"><input type="radio" name="i3_mcq" value="option_a" onchange="saveState()"> <span>FILL IN: a plausible wrong answer</span></label>
@@ -1156,6 +1190,24 @@ color:  blue
         </ul>
       </div>
     </div>
+  </div>
+
+  <!-- Make toolkit: the student's finished Modify program (filled by renderModifyRecap() when
+       Make opens) and a cheat sheet of this lesson's code. Examples deliberately use a
+       different context from the Make task, so there's nothing to copy straight in. -->
+  <div class="toolkit">
+    <details>
+      <summary>📋 Your Modify program: look back at how you did it</summary>
+      <pre id="m2_mod_code"></pre>
+    </details>
+    <details>
+      <summary>🧰 Cheat sheet: FILL IN: this lesson's skills</summary>
+        <!-- FILL IN: one row per skill the student has used so far, with an example from a
+             DIFFERENT context to the Make task. Optionally add a <pre> worked example above. -->
+        <div class="tk-rows">
+          <div class="tk-row"><code>FILL IN: example line of code</code><span>FILL IN: what it does, in a few words</span></div>
+        </div>
+    </details>
   </div>
 
   <div class="code-checker">
@@ -1803,6 +1855,7 @@ function showStage(s, persist = true) {
     refreshEditor(ta);
   }
   if (s === 'M2') {
+    renderModifyRecap();
     refreshEditor(document.getElementById('m2_editor'));
   }
   updateStepVisibility();
@@ -2035,6 +2088,31 @@ function stripPlantedBugLine() {
     .join('\n');
   refreshEditor(ta);
 }
+
+// The Investigate instructions are pinned to the top of the screen (CSS sticky on #i_steps).
+// Once pinned, .is-stuck trims the card to its requirement list. The bottom margin keeps the
+// space the hidden text took up, so the editor below doesn't jump up as the card shrinks.
+function syncInvSticky() {
+  const el = document.getElementById('i_steps');
+  if (!el) return;
+  const cs = getComputedStyle(el);
+  const stuck = cs.position === 'sticky' && el.offsetParent !== null
+    && el.getBoundingClientRect().top <= parseFloat(cs.top) + 1;
+  if (stuck === el.classList.contains('is-stuck')) return;
+  if (stuck) {
+    const full = el.getBoundingClientRect().height;
+    el.classList.add('is-stuck');
+    // + the next block's top margin, which this margin would otherwise collapse into
+    const next = el.nextElementSibling;
+    const nextTop = next ? Math.max(0, parseFloat(getComputedStyle(next).marginTop) || 0) : 0;
+    el.style.marginBottom = (full - el.getBoundingClientRect().height + nextTop) + 'px';
+  } else {
+    el.classList.remove('is-stuck');
+    el.style.marginBottom = '';
+  }
+}
+window.addEventListener('scroll', syncInvSticky, { passive: true });
+window.addEventListener('resize', syncInvSticky);
 
 function insertNewLine(editorId) {
   const ta = document.getElementById(editorId);
@@ -2450,6 +2528,11 @@ function renderReqResults(listEl, results) {
   });
 }
 
+// True between a modification passing and the move to the next one (AUTO_ADVANCE_MS).
+// A second ⚡ Check click in that gap used to pass the same modification again and advance
+// twice, skipping the next task (Wake Up students reached Mod 3 with no pod question).
+let m1Advancing = false;
+
 async function checkMod() {
   if (window.Classroom?.verifyAuth() === false) return;
   const editorEl = document.getElementById('m1_editor');
@@ -2457,6 +2540,7 @@ async function checkMod() {
   const fbEl     = document.getElementById('fb_m1');
   const checkKey = 'mod' + stepM1;
   const checkId  = 'm1_code' + stepM1;
+  const step     = stepM1;   // stepM1 can move on during the awaits below
   const reqListEl = document.getElementById('req_m1_' + stepM1);
   if (!fbEl) return;
   fbEl.classList.remove('hidden');
@@ -2478,6 +2562,7 @@ async function checkMod() {
   if (!structural.pass) {
     fbEl.className = 'feedback fail'; fbEl.textContent = structural.msg; recordM1Attempt(); return;
   }
+  if (m1Advancing || stepM1 !== step) return;   // already passed and moving on
   fbEl.className = 'feedback pass';
   fbEl.textContent = structural.msg;
   setEditorOutput(document.getElementById('m1_editor'), run.output, false);
@@ -2490,9 +2575,15 @@ async function checkMod() {
   window.ActivityUI?.miniCelebration(fbEl);
   window.ActivityUI?.showToast('✅ Modification ' + stepM1 + ' complete!');
   if (stepM1 < STEP_COUNT_M1) {
+    m1Advancing = true;
+    const checkBtn = document.getElementById('btn_check_m1');
+    if (checkBtn) checkBtn.disabled = true;
     setTimeout(() => {
-      stepM1++;
+      m1Advancing = false;
+      if (checkBtn) checkBtn.disabled = false;
+      stepM1 = step + 1;
       maxStepM1 = Math.max(maxStepM1, stepM1);
+      restoreCodeForStep('M1', stepM1);   // re-checked while looking back: show that step's code, not this one's
       fbEl.classList.add('hidden');
       updateStepVisibility();
       saveState();
@@ -2504,10 +2595,22 @@ async function checkMod() {
     const m1Btn = document.getElementById('btn_check_m1');
     if (m1Btn) { m1Btn.disabled = true; m1Btn.textContent = '✅ All modifications done — moving to Make…'; }
     updateStepVisibility();
-    setTimeout(() => completeStage('M1'), AUTO_ADVANCE_MS);
+    m1Advancing = true;
+    setTimeout(() => { m1Advancing = false; completeStage('M1'); }, AUTO_ADVANCE_MS);
   }
   saveState();
   submitScore();
+}
+
+// ── Make toolkit ──────────────────────────────────────
+// Shows the student's own finished Modify program above the Make editor: the code as it
+// stood when their last modification passed, else whatever is in the Modify editor.
+function renderModifyRecap() {
+  const pre = document.getElementById('m2_mod_code');
+  if (!pre) return;
+  let code;
+  for (let k = STEP_COUNT_M1; k >= 1 && code === undefined; k--) code = m1CodeSnapshots[k];
+  pre.textContent = (code ?? document.getElementById('m1_editor')?.value ?? '').trim() || STARTER_CODE;
 }
 
 // ── Make ──────────────────────────────────────────────

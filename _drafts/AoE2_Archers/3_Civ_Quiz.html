@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<!-- One-off AoE2 joke resource. Lives in _drafts/ so the manifest build skips it. Not linked from the hub. -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Civ Quiz — Archers into Castle</title>
+<style>
+  :root {
+    --bg: #17140f; --panel: #241f17; --panel2: #2e2719; --line: #4a3f2a;
+    --text: #efe6d0; --mute: #a89c80; --gold: #d8a73d; --good: #5fb37a; --bad: #e0574a;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.5 "Segoe UI", system-ui, sans-serif; }
+  .wrap { max-width: 820px; margin: 0 auto; padding: 24px 16px 60px; }
+  h1 { font: 700 32px Cambria, Georgia, serif; color: var(--gold); margin: 0 0 6px; }
+  p.lede { color: var(--mute); margin: 0 0 18px; }
+  button { font: inherit; cursor: pointer; border-radius: 6px; border: 1px solid var(--line); background: var(--panel2); color: var(--text); padding: 8px 14px; min-height: 40px; }
+  button:hover:not(:disabled) { border-color: var(--gold); }
+  button:focus-visible, input:focus-visible + span { outline: 3px solid var(--gold); outline-offset: 2px; }
+  button.primary { background: var(--gold); color: #1a1408; border-color: var(--gold); font-weight: 700; }
+  fieldset.q { background: var(--panel); border: 2px solid var(--line); border-radius: 10px; padding: 14px 16px 10px; margin: 0 0 12px; transition: border-color .15s, background-color .15s; }
+  fieldset.q legend { font-weight: 600; padding: 0 6px; }
+  .q .pill { display: inline-block; font-size: 12px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; border-radius: 999px; padding: 1px 9px; margin-right: 6px; vertical-align: 1px; }
+  .pill.brit { background: #c94b4b33; color: #f0a0a0; } .pill.boh { background: #5b8fca33; color: #a9c8ee; } .pill.eco { background: #d8a73d33; color: #f3d27a; }
+  .opts { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px; margin-top: 6px; }
+  .opts label { display: block; cursor: pointer; }
+  .opts input { position: absolute; opacity: 0; }
+  .opts span { display: block; border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; background: var(--panel2); min-height: 44px; }
+  .opts input:checked + span { border-color: var(--gold); background: #d8a73d22; }
+  .q.ok { border-color: var(--good); background: #5fb37a14; }
+  .q.wrong { border-color: var(--bad); background: #e0574a14; }
+  .q .why { margin: 8px 0 2px; font-size: 14px; color: var(--mute); display: none; }
+  .q.ok .why, .q.wrong .why { display: block; }
+  .q.ok .why::before { content: "✓ Correct. "; color: var(--good); font-weight: 700; }
+  .q.wrong .why::before { content: "✗ Not quite. "; color: #ff9b8f; font-weight: 700; }
+  .bar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 14px; position: sticky; bottom: 0; background: var(--bg); padding: 10px 0; border-top: 1px solid var(--line); }
+  #score { font: 700 18px Consolas, monospace; }
+  #confetti { position: fixed; inset: 0; pointer-events: none; z-index: 60; }
+</style>
+</head>
+<body>
+<canvas id="confetti"></canvas>
+<div class="wrap">
+  <h1>Britons or Bohemians?</h1>
+  <p class="lede">Twelve questions on the two civs and the economy behind an archer build. No googling. Your opponent won't let you google mid-game either.</p>
+  <form id="quiz"></form>
+  <div class="bar">
+    <button class="primary" id="btnCheck">Check answers</button>
+    <button id="btnReset">Start again</button>
+    <span id="score" aria-live="polite"></span>
+  </div>
+</div>
+<script>
+(() => {
+  // a = index of the correct option. Options are shuffled on screen.
+  const QS = [
+    { tag: 'brit', q: 'Whose shepherds work 25% faster?', o: ['Britons', 'Bohemians', 'Franks', 'Mongols'], a: 0, why: 'Britons: a quicker Dark Age on sheep.' },
+    { tag: 'boh', q: 'Which Bohemian bonus helps an archer build most?', o: ['Mining Camp techs are free', 'Lumber Camp techs are free', 'Mill techs are all free', 'Farm upgrades are free'], a: 0, why: 'Free Mining Camp techs mean more gold for archers.' },
+    { tag: 'brit', q: 'What discount do Britons get on Town Centres?', o: ['−50% wood from Castle Age', '−50% stone from Feudal Age', '−50% food from Castle Age', '−25% wood from Dark Age'], a: 0, why: 'Half-price wood TCs from Castle Age: boom behind your crossbows.' },
+    { tag: 'brit', q: 'How much extra range do Briton foot archers get?', o: ['+1 Castle, +1 Imperial', '+2 in Feudal Age only', '+1 Feudal, +1 Castle', '+3 in Imperial Age only'], a: 0, why: '+1 in Castle and +1 in Imperial, and Yeomen adds more.' },
+    { tag: 'boh', q: 'What can Bohemians train in Castle Age that most civs wait for?', o: ['Hand Cannoneers', 'Bombard Cannons', 'Arbalesters', 'Elite Skirmishers'], a: 0, why: 'Hand cannons in Castle Age: an archer who discovered chemistry.' },
+    { tag: 'boh', q: 'What is the Bohemian unique unit?', o: ['Hussite Wagon', 'Longbowman', 'War Wagon', 'Leitis'], a: 0, why: 'The Hussite Wagon. Houfnice is their bombard upgrade.' },
+    { tag: 'brit', q: 'What is the Briton unique unit?', o: ['Longbowman', 'Hussite Wagon', 'Plumed Archer', 'Rattan Archer'], a: 0, why: 'The Longbowman: an archer that hates you from very far away.' },
+    { tag: 'eco', q: 'What does clicking up to Castle Age cost?', o: ['800 food, 200 gold', '500 food, 200 gold', '800 food, 500 gold', '1000 food, 800 gold'], a: 0, why: '800 food and 200 gold, which every archer competes with.' },
+    { tag: 'eco', q: 'What does one archer cost?', o: ['25 wood, 45 gold', '45 wood, 25 gold', '35 food, 45 gold', '25 food, 25 gold'], a: 0, why: '25 wood and 45 gold. Gold is the bottleneck.' },
+    { tag: 'eco', q: 'You reach Castle Age with archers. What do you research first?', o: ['Crossbowman upgrade', 'Bodkin Arrow', 'Thumb Ring', 'Ballistics'], a: 0, why: 'The Crossbowman upgrade, or your army is out of date.' },
+    { tag: 'eco', q: 'Why does the barracks go up in the Dark Age in this build?', o: ['Ranges need a barracks', 'Feudal needs a barracks', 'It adds 5 population', 'Archers train there'], a: 0, why: 'An Archery Range needs a Barracks first.' },
+    { tag: 'eco', q: 'Your TC was idle for one minute. Roughly how many villagers did you lose?', o: ['About 2–3', 'About 1', 'About 5–6', 'None at all'], a: 0, why: '60 ÷ 25 s ≈ 2.4 villagers, plus all they would have gathered.' },
+  ];
+  const TAGS = { brit: 'Britons', boh: 'Bohemians', eco: 'Economy' };
+  const form = document.getElementById('quiz'), score = document.getElementById('score');
+  const shuffled = a => a.map(v => [Math.random(), v]).sort((x, y) => x[0] - y[0]).map(x => x[1]);
+
+  function build() {
+    form.innerHTML = shuffled(QS.map((q, i) => i)).map((qi, n) => {
+      const q = QS[qi];
+      const opts = shuffled(q.o.map((t, i) => i)).map(oi =>
+        `<label><input type="radio" name="q${qi}" value="${oi}"><span>${q.o[oi]}</span></label>`).join('');
+      return `<fieldset class="q" data-q="${qi}"><legend>${n + 1}. <span class="pill ${q.tag}">${TAGS[q.tag]}</span>${q.q}</legend>
+        <div class="opts">${opts}</div><p class="why">${q.why}</p></fieldset>`;
+    }).join('');
+    score.textContent = '';
+  }
+
+  document.getElementById('btnCheck').onclick = () => {
+    let right = 0, answered = 0;
+    form.querySelectorAll('fieldset.q').forEach(fs => {
+      const qi = +fs.dataset.q, sel = fs.querySelector('input:checked');
+      fs.classList.remove('ok', 'wrong');
+      if (!sel) return;
+      answered++;
+      const ok = +sel.value === QS[qi].a;
+      if (ok) right++;
+      fs.classList.add(ok ? 'ok' : 'wrong');
+    });
+    score.textContent = `${right}/${QS.length}${answered < QS.length ? ` · ${QS.length - answered} not answered` : ''}`;
+    if (right === QS.length) confetti();
+  };
+  form.addEventListener('change', e => e.target.closest('fieldset').classList.remove('ok', 'wrong'));
+  document.getElementById('btnReset').onclick = build;
+  build();
+
+  function confetti() {
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const c = document.getElementById('confetti'), x = c.getContext('2d');
+    c.width = innerWidth; c.height = innerHeight;
+    const cols = ['#d8a73d', '#f3d27a', '#fff2c4', '#c94b4b', '#5b8fca'];
+    const bits = Array.from({ length: 140 }, () => ({ x: Math.random() * c.width, y: -20 - Math.random() * c.height * .5,
+      vx: (Math.random() - .5) * 3, vy: 2 + Math.random() * 3, r: Math.random() * 6.28, s: 5 + Math.random() * 6, col: cols[Math.random() * cols.length | 0] }));
+    let f = 0;
+    (function draw() {
+      x.clearRect(0, 0, c.width, c.height);
+      bits.forEach(b => { b.x += b.vx; b.y += b.vy; b.r += .1; x.save(); x.translate(b.x, b.y); x.rotate(b.r); x.fillStyle = b.col; x.fillRect(-b.s / 2, -b.s / 4, b.s, b.s / 2); x.restore(); });
+      if (++f < 200) requestAnimationFrame(draw); else x.clearRect(0, 0, c.width, c.height);
+    })();
+  }
+})();
+</script>
+</body>
+</html>

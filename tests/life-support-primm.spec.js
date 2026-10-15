@@ -151,7 +151,7 @@ test('Investigate bug step: Break it gives a TypeError; fixing with str() comple
     currentStage: 'I', completedStages: ['P', 'R'], stepI: 3, maxStepI: 3, i_editor: STARTER,
     i1: 'It repeated the text 6 fifty times because it was a string', radio_i2_mcq: 'option_b',
   });
-  await page.click('#qcard_i3 button:has-text("Break it")');
+  await page.click('#qcard_i3_prompt button:has-text("Break it")');
   await answerPrompts(page, 'i_editor', ['Sam', '6']);
   await expect(page.locator('#i_fb_run')).toContainText('TypeError', { timeout: 30000 });
 

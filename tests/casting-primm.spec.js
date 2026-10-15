@@ -33,6 +33,26 @@ test('Modify 1 passes using the test numbers (9 and 5 → 4)', async ({ page }) 
   await expect(page.locator('#fb_m1')).toHaveClass(/pass/, { timeout: 30000 });
 });
 
+test('a second Check in the pause after a pass never skips the next modification', async ({ page }) => {
+  await openAt(page, { currentStage: 'M1', completedStages: ['P', 'R', 'I'] });
+  await setCode(page, 'm1_editor', [
+    'a = int(input("Enter first number: "))',
+    'b = int(input("Enter second number: "))',
+    'print(a + b)',
+    'print(b - a)',
+  ].join('\n'));
+  await page.click('#btn_check_m1');
+  await expect(page.locator('#fb_m1')).toHaveClass(/pass/, { timeout: 30000 });
+  await expect(page.locator('#btn_check_m1')).toBeDisabled();
+  // A click that beat the disable: the same modification passes again, but must not advance twice.
+  await page.evaluate(() => window.checkMod());
+  await expect(page.locator('#m1_step_2')).toBeVisible({ timeout: 10000 });
+  await page.waitForTimeout(2500);
+  await expect(page.locator('#m1_step_2')).toBeVisible();
+  await expect(page.locator('#m1_step_3')).toBeHidden();
+  await expect(page.locator('#btn_check_m1')).toBeEnabled();
+});
+
 test('Make → extension ladder: challenge 1 completes, challenge 2 unlocks', async ({ page }) => {
   await openAt(page, { currentStage: 'M2', completedStages: ['P', 'R', 'I', 'M1'] });
   await setCode(page, 'm2_editor', [

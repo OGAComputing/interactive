@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<!-- One-off AoE2 joke resource. Lives in _drafts/ so the manifest build skips it. Not linked from the hub. -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Build Order Sequencer — Archers into Castle</title>
+<style>
+  :root {
+    --bg: #17140f; --panel: #241f17; --panel2: #2e2719; --line: #4a3f2a;
+    --text: #efe6d0; --mute: #a89c80; --gold: #d8a73d; --good: #5fb37a; --bad: #e0574a;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.5 "Segoe UI", system-ui, sans-serif; }
+  .wrap { max-width: 820px; margin: 0 auto; padding: 24px 16px 60px; }
+  h1 { font: 700 32px Cambria, Georgia, serif; color: var(--gold); margin: 0 0 6px; }
+  p.lede { color: var(--mute); margin: 0 0 18px; }
+  button { font: inherit; cursor: pointer; border-radius: 6px; border: 1px solid var(--line); background: var(--panel2); color: var(--text); padding: 8px 14px; min-height: 40px; touch-action: manipulation; }
+  button:hover:not(:disabled) { border-color: var(--gold); }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+  button.primary { background: var(--gold); color: #1a1408; border-color: var(--gold); font-weight: 700; }
+  .ages { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; font-size: 13px; color: var(--mute); }
+  .ages span { border: 1px solid var(--line); border-radius: 999px; padding: 2px 10px; }
+
+  ol#list { list-style: none; margin: 0; padding: 0; }
+  .item { display: grid; grid-template-columns: 52px 1fr auto; gap: 10px; align-items: center; background: var(--panel); border: 2px solid var(--line);
+    border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; cursor: grab; user-select: none; touch-action: none; transition: border-color .15s, background-color .15s; }
+  .item .num { font: 700 18px Consolas, monospace; color: var(--gold); text-align: center; }
+  .item .txt b { color: var(--gold); font-weight: 600; }
+  .item .moves { display: flex; gap: 4px; }
+  .item .moves button { min-width: 44px; padding: 4px 0; }
+  .item.dragging { opacity: .85; border-color: var(--gold); cursor: grabbing; box-shadow: 0 8px 24px #0008; position: relative; z-index: 2; }
+  .item.ok { border-color: var(--good); background: #5fb37a1f; }
+  .item.ok .num::after { content: " ✓"; color: var(--good); }
+  .item.wrong { border-color: var(--bad); background: #e0574a1f; }
+  .item.wrong .num::after { content: " ✗"; color: var(--bad); }
+  .bar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 14px; }
+  #msg { font-weight: 600; } #msg.good { color: var(--good); } #msg.bad { color: #ff9b8f; }
+  .done { display: none; margin-top: 18px; background: var(--panel); border: 2px solid var(--gold); border-radius: 12px; padding: 16px 18px; }
+  .done h2 { font: 700 24px Cambria, Georgia, serif; color: var(--gold); margin: 0 0 6px; }
+  #confetti { position: fixed; inset: 0; pointer-events: none; z-index: 60; }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+</style>
+</head>
+<body>
+<canvas id="confetti"></canvas>
+<div class="wrap">
+  <h1>Build Order Sequencer</h1>
+  <p class="lede">Your scout came back with these orders in the wrong order. Drag them into place, from the first sheep to the first crossbow. You can also use the ↑ and ↓ buttons. Every wrong check locks the button for a few seconds, so don't just guess.</p>
+  <div class="ages"><span>Dark Age: steps 1–8</span><span>Feudal Age: steps 9–12</span><span>Castle Age: steps 13–14</span></div>
+  <ol id="list" aria-describedby="hint"></ol>
+  <p id="hint" class="sr-only">Use the move up and move down buttons on each step to reorder the list.</p>
+  <div class="bar">
+    <button class="primary" id="btnCheck">Check order</button>
+    <button id="btnShuffle">Shuffle again</button>
+    <span id="msg" aria-live="polite"></span>
+  </div>
+  <div class="done" id="done">
+    <h2>A textbook archer build</h2>
+    <p>Now notice what keeps coming back in every age: villagers, houses, farms, drop-off camps. The archers are the easy bit. Next: <b>2_Economy_Simulator.html</b>, where you have to do all of this against the clock.</p>
+  </div>
+</div>
+<script>
+(() => {
+  const STEPS = [
+    'Villagers 1–6 on <b>sheep</b>. First wood goes on a <b>house</b>.',
+    'Villagers 7–10 to <b>wood</b>, with a lumber camp.',
+    'Villager 11 <b>lures the first boar</b> to the Town Centre.',
+    'Villagers 12–15 on <b>berries</b>, with a mill.',
+    'Villagers 16–17 on food. <b>Lure the second boar.</b>',
+    'Villagers 18–19 to wood. Build a <b>barracks</b>.',
+    'Villagers 20–21 to <b>gold</b>, with a mining camp.',
+    'Research <b>Loom</b>, then click <b>Feudal Age</b> at 22 population.',
+    'Arrive in Feudal: build <b>2 Archery Ranges</b> and start archers.',
+    '<b>Double-Bit Axe</b>, then a Blacksmith and <b>Fletching</b>.',
+    'Food runs out: <b>reseed onto farms</b>. Add miners to 6–8 on gold.',
+    '<b>Wheelbarrow + Horse Collar</b> at about 25 villagers.',
+    'Click <b>Castle Age</b> at 28–32 villagers, both ranges still working.',
+    'Arrive in Castle: <b>Crossbowman upgrade</b> first, then another TC.',
+  ];
+  const list = document.getElementById('list'), msg = document.getElementById('msg');
+  let order = [], tries = 0, solved = false;
+
+  function shuffle() {
+    do { order = STEPS.map((_, i) => i).sort(() => Math.random() - .5); } while (order.every((v, i) => v === i));
+    solved = false; document.getElementById('done').style.display = 'none'; msg.textContent = ''; msg.className = '';
+    render();
+  }
+  function render(marks) {
+    list.innerHTML = order.map((s, pos) => `<li class="item ${marks ? (marks[pos] ? 'ok' : 'wrong') : ''}" data-pos="${pos}">
+      <span class="num">${pos + 1}</span><span class="txt">${STEPS[s]}</span>
+      <span class="moves"><button data-mv="-1" aria-label="Move step ${pos + 1} up" ${pos === 0 ? 'disabled' : ''}>↑</button><button data-mv="1" aria-label="Move step ${pos + 1} down" ${pos === order.length - 1 ? 'disabled' : ''}>↓</button></span></li>`).join('');
+  }
+  function move(from, to) {
+    if (to < 0 || to >= order.length || solved) return;
+    const [x] = order.splice(from, 1); order.splice(to, 0, x);
+    render();
+  }
+
+  list.addEventListener('click', e => {
+    const b = e.target.closest('button[data-mv]'); if (!b) return;
+    const from = +b.closest('.item').dataset.pos, to = from + +b.dataset.mv;
+    move(from, to);
+    list.children[to]?.querySelector(`button[data-mv="${b.dataset.mv}"]:not(:disabled)`)?.focus() || list.children[to]?.querySelector('button:not(:disabled)')?.focus();
+  });
+
+  // Pointer drag (mouse and touch). A 6px threshold stops taps on the arrow buttons turning into drags.
+  let drag = null;
+  list.addEventListener('pointerdown', e => {
+    const li = e.target.closest('.item'); if (!li || e.target.closest('button') || solved) return;
+    drag = { li, from: +li.dataset.pos, y0: e.clientY, started: false };
+    li.setPointerCapture(e.pointerId);
+  });
+  list.addEventListener('pointermove', e => {
+    if (!drag) return;
+    const dy = e.clientY - drag.y0;
+    if (!drag.started && Math.abs(dy) < 6) return;
+    drag.started = true; drag.li.classList.add('dragging');
+    drag.li.style.transform = `translateY(${dy}px)`;
+  });
+  list.addEventListener('pointerup', e => {
+    if (!drag) return;
+    const { li, from, started } = drag; drag = null;
+    if (!started) return;
+    li.style.transform = ''; li.classList.remove('dragging');
+    const items = [...list.children].filter(x => x !== li);
+    let to = items.findIndex(x => e.clientY < x.getBoundingClientRect().top + x.offsetHeight / 2);
+    if (to === -1) to = items.length;
+    move(from, to);
+  });
+
+  document.getElementById('btnCheck').onclick = function () {
+    tries++;
+    const marks = order.map((s, i) => s === i), right = marks.filter(Boolean).length;
+    render(marks);
+    if (right === STEPS.length) {
+      solved = true;
+      msg.textContent = `All ${STEPS.length} in order${tries === 1 ? ' on the first go!' : ` after ${tries} checks.`}`; msg.className = 'good';
+      document.getElementById('done').style.display = 'block';
+      confetti(tries === 1);
+      return;
+    }
+    msg.className = 'bad';
+    let wait = Math.min(15, 3 + tries * 2);
+    this.disabled = true;
+    const tick = () => {
+      msg.textContent = `${right}/${STEPS.length} in the right place. Fix the red ones. Check again in ${wait} s.`;
+      if (wait-- <= 0) { this.disabled = false; msg.textContent = `${right}/${STEPS.length} in the right place. Fix the red ones.`; return; }
+      setTimeout(tick, 1000);
+    };
+    tick();
+  };
+  document.getElementById('btnShuffle').onclick = () => { tries = 0; shuffle(); };
+  shuffle();
+
+  function confetti(gold) {
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const c = document.getElementById('confetti'), x = c.getContext('2d');
+    c.width = innerWidth; c.height = innerHeight;
+    const cols = gold ? ['#d8a73d', '#f3d27a', '#fff2c4'] : ['#5fb37a', '#9be0b0', '#efe6d0'];
+    const bits = Array.from({ length: 140 }, () => ({ x: Math.random() * c.width, y: -20 - Math.random() * c.height * .5,
+      vx: (Math.random() - .5) * 3, vy: 2 + Math.random() * 3, r: Math.random() * 6.28, s: 5 + Math.random() * 6, col: cols[Math.random() * cols.length | 0] }));
+    let f = 0;
+    (function draw() {
+      x.clearRect(0, 0, c.width, c.height);
+      bits.forEach(b => { b.x += b.vx; b.y += b.vy; b.r += .1; x.save(); x.translate(b.x, b.y); x.rotate(b.r); x.fillStyle = b.col; x.fillRect(-b.s / 2, -b.s / 4, b.s, b.s / 2); x.restore(); });
+      if (++f < 200) requestAnimationFrame(draw); else x.clearRect(0, 0, c.width, c.height);
+    })();
+  }
+})();
+</script>
+</body>
+</html>

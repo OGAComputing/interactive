@@ -157,7 +157,7 @@ test('Investigate: Run alone shows a cross for a change not yet made, then a tic
 test('Investigate bug step: Break it gives a NameError; fixing the capital N completes Investigate', async ({ page }) => {
   await openAt(page, { currentStage: 'I', completedStages: ['P', 'R'], stepI: 2, maxStepI: 2,
     i_editor: STARTER.replace('Enter your job: ', 'Job? '), radio_i1_mcq: 'option_c' });
-  await page.click('#qcard_i2 button:has-text("Break it")');
+  await page.click('#qcard_i2_prompt button:has-text("Break it")');
   await answerPrompts(page, 'i_editor', ['Sam', 'Pilot']);
   await expect(page.locator('#i_fb_run')).toContainText('NameError', { timeout: 30000 });
 
@@ -169,6 +169,26 @@ test('Investigate bug step: Break it gives a NameError; fixing the capital N com
   await page.check('input[name="i2_mcq"][value="option_a"]');
   await page.click('#btn_check_i2');
   await expect(page.locator('#stage-M1')).toHaveClass(/active/, { timeout: 10000 });
+});
+
+test('scrolled down, the pinned bug step shows only its requirements, without moving the page', async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 768 });
+  await openAt(page, { currentStage: 'I', completedStages: ['P', 'R'], stepI: 2, maxStepI: 2,
+    i_editor: STARTER.replace('Enter your job: ', 'Job? '), radio_i1_mcq: 'option_c' });
+  const card = page.locator('#qcard_i2_prompt');
+  await expect(card.locator('.q-label')).toBeVisible();
+  const editorTop = () => page.locator('#stage-I .code-checker').evaluate(e => e.getBoundingClientRect().top + scrollY);
+  const before = await editorTop();
+  await page.locator('#qcard_i2').scrollIntoViewIfNeeded();
+  await expect(page.locator('#i_steps')).toHaveClass(/is-stuck/);
+  await expect(card.locator('.q-label')).toBeHidden();
+  await expect(card.locator('li.req-note')).toBeHidden();
+  await expect(card.locator('button:has-text("Break it")')).toBeVisible();
+  await expect(card.locator('#req_i_2 li:not(.req-note)')).toHaveCount(2);
+  expect(await editorTop()).toBeCloseTo(before, 0);
+  await page.evaluate(() => scrollTo(0, 0));
+  await expect(page.locator('#i_steps')).not.toHaveClass(/is-stuck/);
+  await expect(card.locator('.q-label')).toBeVisible();
 });
 
 // ─── Modify ──────────────────────────────────────────────────────────────────
@@ -244,6 +264,31 @@ test('Modify: door message, pod line, own question, then two answers on one line
   await page.click('#btn_check_m1');
   await expect(page.locator('#fb_m1')).toHaveClass(/pass/, { timeout: 30000 });
   await expect(page.locator('#stage-M2')).toHaveClass(/active/, { timeout: 10000 });
+});
+
+test('a second Check in the pause after a pass never skips the next modification', async ({ page }) => {
+  await openAt(page, { currentStage: 'M1', completedStages: ['P', 'R', 'I'] });
+  await page.check('input[name="m1_choice"][value="open"]');
+  await setCode(page, 'm1_editor', STARTER.replace('Door unlocking...', 'Cryo Bay door: OPEN'));
+  await page.click('#btn_check_m1');
+  await expect(page.locator('#fb_m1')).toHaveClass(/pass/, { timeout: 30000 });
+  await expect(page.locator('#btn_check_m1')).toBeDisabled();
+  // A click that beat the disable: the same modification passes again, but must not advance twice.
+  await page.evaluate(() => window.checkMod());
+  await expect(page.locator('#m1_step_2')).toBeVisible({ timeout: 10000 });
+  await page.waitForTimeout(2500);
+  await expect(page.locator('#m1_step_2')).toBeVisible();
+  await expect(page.locator('#m1_step_3')).toBeHidden();
+  await expect(page.locator('#btn_check_m1')).toBeEnabled();
+});
+
+test("Make's toolkit shows the student's own finished Modify program and a cheat sheet", async ({ page }) => {
+  const modCode = STARTER + '\npod = input("Pod number: ")\nprint("Pod: " + pod)';
+  await openAt(page, { currentStage: 'M2', completedStages: ['P', 'R', 'I', 'M1'], m1CodeSnapshots: { 3: 'old', 4: modCode } });
+  await page.click('#stage-M2 .toolkit summary:has-text("Your Modify program")');
+  await expect(page.locator('#m2_mod_code')).toHaveText(modCode);
+  await page.click('#stage-M2 .toolkit summary:has-text("Cheat sheet")');
+  await expect(page.locator('#stage-M2 .toolkit')).toContainText('print("You chose " + food)');
 });
 
 // ─── Make → Life Support link + extension ────────────────────────────────────

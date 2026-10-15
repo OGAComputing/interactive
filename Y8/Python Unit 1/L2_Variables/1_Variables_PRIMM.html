@@ -2374,6 +2374,11 @@ function renderReqResults(listEl, results) {
   });
 }
 
+// True between a modification passing and the move to the next one (AUTO_ADVANCE_MS).
+// A second ⚡ Check click in that gap used to pass the same modification again and advance
+// twice, skipping the next task.
+let m1Advancing = false;
+
 async function checkMod() {
   if (window.Classroom?.verifyAuth() === false) return;
   const editorEl = document.getElementById('m1_editor');
@@ -2381,6 +2386,7 @@ async function checkMod() {
   const fbEl     = document.getElementById('fb_m1');
   const checkKey = 'mod' + stepM1;
   const checkId  = 'm1_code' + stepM1;
+  const step     = stepM1;   // stepM1 can move on during the awaits below
   const reqListEl = document.getElementById('req_m1_' + stepM1);
   if (!fbEl) return;
   fbEl.classList.remove('hidden');
@@ -2401,6 +2407,7 @@ async function checkMod() {
   if (!structural.pass) {
     fbEl.className = 'feedback fail'; fbEl.textContent = structural.msg; recordM1Attempt(); return;
   }
+  if (m1Advancing || stepM1 !== step) return;   // already passed and moving on
   fbEl.className = 'feedback pass';
   fbEl.textContent = structural.msg;
   setEditorOutput(editorEl, run.output, false);
@@ -2413,9 +2420,15 @@ async function checkMod() {
   window.ActivityUI?.miniCelebration(fbEl);
   window.ActivityUI?.showToast('✅ Modification ' + stepM1 + ' complete!');
   if (stepM1 < STEP_COUNT_M1) {
+    m1Advancing = true;
+    const checkBtn = document.getElementById('btn_check_m1');
+    if (checkBtn) checkBtn.disabled = true;
     setTimeout(() => {
-      stepM1++;
+      m1Advancing = false;
+      if (checkBtn) checkBtn.disabled = false;
+      stepM1 = step + 1;
       maxStepM1 = Math.max(maxStepM1, stepM1);
+      restoreCodeForStep('M1', stepM1);   // re-checked while looking back: show that step's code, not this one's
       fbEl.classList.add('hidden');
       updateStepVisibility();
       saveState();
@@ -2427,7 +2440,8 @@ async function checkMod() {
     const m1Btn = document.getElementById('btn_check_m1');
     if (m1Btn) { m1Btn.disabled = true; m1Btn.textContent = '✅ All modifications done — moving to Make…'; }
     updateStepVisibility();
-    setTimeout(() => completeStage('M1'), AUTO_ADVANCE_MS);
+    m1Advancing = true;
+    setTimeout(() => { m1Advancing = false; completeStage('M1'); }, AUTO_ADVANCE_MS);
   }
   saveState();
   submitScore();
