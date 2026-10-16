@@ -27,7 +27,7 @@ const RULES = logPart.split(/\r?\n/).filter((l) => l.startsWith('- ')).map((l) =
 // ════════════════════════════════════════════════════════════════════════════
 R.titleSlide(K, {
   section: 'How to use', kicker: 'Y9 PYTHON  ·  LESSON DECKS', title: 'Deck template', subtitle: 'One example of every slide type',
-  status: ['SLIDE TYPES ...... 14', `RULES ............ ${RULES.length}`, 'SOURCE ........... README.md', [{ text: '> _' }]],
+  status: ['SLIDE TYPES ...... 16', `RULES ............ ${RULES.length}`, 'SOURCE ........... README.md', [{ text: '> _' }]],
   statusLabel: 'TEMPLATE',
   notes: `This deck is a reference, not a lesson. It shows one example of every Station Zero slide type, in lesson order.
 Each example's footer names its recipe (the function in sz_slides.cjs), and its speaker notes say when to use it and what to watch for.
@@ -193,6 +193,18 @@ tag(R.pairSlide(K, {
     'Each row: code → output → a one-line rule. Optional "IN MEMORY" box shows what the variable holds.',
   ]),
 }), 'pairSlide', 'Discriminating pair');
+
+tag(R.storySoFarSlide(K, {
+  section: EX, title: 'Wake Up', logLabel: 'CRYO BAY',
+  log: ['A solar storm has wiped the station’s software.', 'You woke up alone. The crew are still frozen.',
+    'Every door is sealed.'],
+  notes: guide([
+    'WHEN: after the New Information, just before the Predict stage (predictSlide, traceSlide or the first "What is printed?"). Once per Predict.',
+    'RULES: at most 3 short sentences, one per line. Read aloud in about 20 seconds, no discussion.',
+    'Keep it true for every student: leave out anything that depends on their story choices (the activity\'s "Previously…" recap covers those).',
+    'DATA: { title (the chapter), log: up to 3 sentences, one per line (≤ 50 characters), logLabel? }.',
+  ]),
+}), 'storySoFarSlide', 'Story so far (before Predict)');
 
 const PREDICT_CODE = ['room = input("Which room? ")', 'level = input("Which level? ")', 'print("Scanning...")',
   'print(room + " on level " + level)'];

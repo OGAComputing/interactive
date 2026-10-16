@@ -4,6 +4,7 @@ import {
   drawCheckpoint, poolQuestion, cpOptionOrder, markCheckpoint, rightAnswer, applyFor, evalApply,
   writeItemFor, REQ_HINTS, inputPrompts, inputCount, evalMake, MAKE_REQS, MAKE_STRETCH, IDEAS,
   lessonScore, targetDone, realSentence, questionNumber, FIRST_SITTING, SITTINGS,
+  orderBlocks, orderCode, evalOrder, spotMistake, MISTAKES,
 } from './checkers.js';
 
 // A fake runPython result: each input() is echoed as "prompt + answer" on its own line,
@@ -435,4 +436,117 @@ describe('realSentence', () => {
 
 describe('targetById', () => {
   test('finds every target', () => { for (const t of TARGETS) expect(targetById(t.id)).toBe(t); });
+});
+
+// ── 🧩 Build it ──────────────────────────────────────────────────────────────
+
+describe('build it (fake runs; the E2E spec runs every puzzle in real Python)', () => {
+  test('every target has a puzzle: 3+ lines, 2 traps that are not real lines, and tests', () => {
+    for (const t of TARGETS) {
+      expect(t.order, t.id).toBeTruthy();
+      expect(t.order.lines.length, t.id).toBeGreaterThanOrEqual(3);
+      expect(t.order.traps.length, t.id).toBe(2);
+      for (const trap of t.order.traps) expect(t.order.lines.includes(trap), t.id).toBe(false);
+      expect(t.order.tests.length, t.id).toBeGreaterThanOrEqual(1);
+    }
+  });
+
+  test('blocks: every line and trap once, shuffled the same way for the same seed', () => {
+    const b = orderBlocks('variables', 7);
+    expect(b.map(x => x.id).sort()).toEqual(['m0', 'm1', 'm2', 'm3', 'm4', 't0', 't1']);
+    expect(orderBlocks('variables', 7)).toEqual(b);
+    expect(b.filter(x => x.trap).map(x => x.text).sort()).toEqual(['pet = dog', 'print(Pet)']);
+  });
+
+  test('marking: any order that prints the right thing, using every block but the traps', () => {
+    const right = [run([], ['cat', 'pet', 'dog'])];
+    expect(orderCode('variables', ['m0', 'm1', 'm2'])).toBe('pet = "cat"\nprint(pet)\npet = "dog"');
+    expect(evalOrder('variables', [], right)).toMatchObject({ ok: false, msg: expect.stringMatching(/Drag/) });
+    expect(evalOrder('variables', ['m0', 'm1', 'm2', 'm3', 'm4'], right).ok).toBe(true);
+    expect(evalOrder('variables', ['m0', 'm1', 'm3', 'm2', 'm4'], right).ok).toBe(true);    // another order that works
+    expect(evalOrder('variables', ['m0', 'm1', 'm2', 'm3', 'm4', 't1'], right)).toMatchObject({ ok: false, msg: expect.stringMatching(/trap/) });
+    expect(evalOrder('variables', ['m0', 'm1', 'm2', 'm3'], right)).toMatchObject({ ok: false, msg: expect.stringMatching(/1 block is left over/) });
+    expect(evalOrder('variables', ['m0', 'm2', 'm1', 'm3', 'm4'], [run([], ['dog', 'pet', 'dog'])]))
+      .toMatchObject({ ok: false, got: ['dog', 'pet', 'dog'], want: ['cat', 'pet', 'dog'] });
+  });
+
+  test('a crash names the mistake (here: a trap with no quotes)', () => {
+    const r = evalOrder('variables', ['m0', 't0'], [{ inputs: [], ok: false, line: 2, output: "NameError: name 'dog' is not defined" }]);
+    expect(r).toMatchObject({ ok: false, mistake: { line: 2, msg: expect.stringMatching(/quotes/) } });
+  });
+
+  test('the print puzzle keeps its empty line', () => {
+    expect(evalOrder('print', ['m0', 'm1', 'm2', 'm3'], [{ inputs: [], ok: true, output: 'Ready\n\nSteady\nGo!\n' }]).ok).toBe(true);
+    expect(evalOrder('print', ['m0', 'm2', 'm1', 'm3'], [{ inputs: [], ok: true, output: 'Ready\nSteady\n\nGo!\n' }]).ok).toBe(false);
+  });
+});
+
+// ── Spotting common mistakes ─────────────────────────────────────────────────
+
+describe('spotMistake: names what the student did', () => {
+  const pet = raw => spotMistake(raw, [run([], ['I have a cat', 'Now I have a cat'])], MISTAKES.variables);
+  const start = 'pet = "cat"\nprint("I have a " + pet)\n';
+  const end = 'print("Now I have a " + pet)';
+
+  test('variables: no second pet = line', () => {
+    expect(pet(start + end).msg).toMatch(/only one `pet =` line/);
+    expect(pet(start + '"dog"\n' + end).msg).toMatch(/only one `pet =` line/);
+    expect(pet(start + 'dog = "dog"\n' + end)).toMatchObject({ line: 3, msg: expect.stringMatching(/new box called `dog`/) });
+    expect(pet(start + 'pet == "dog"\n' + end)).toMatchObject({ line: 3, msg: expect.stringMatching(/==/) });
+    expect(pet(start + 'Pet = "dog"\n' + end)).toMatchObject({ line: 3, msg: expect.stringMatching(/capital P/) });
+    expect(pet(start + 'print("Now I have a dog")')).toMatchObject({ line: 3, msg: expect.stringMatching(/typed dog/) });
+    expect(pet(start + end + '\npet = "dog"')).toMatchObject({ line: 4, msg: expect.stringMatching(/too late/) });
+    expect(spotMistake(start + 'pet = dog\n' + end, [{ inputs: [], ok: false, line: 3, output: "NameError: name 'dog' is not defined" }], MISTAKES.variables))
+      .toMatchObject({ line: 3, msg: expect.stringMatching(/put it in quotes: `"dog"`/) });
+  });
+
+  test('evalApply attaches the mistake, and what it printed vs what it should', () => {
+    const r = evalApply(applyFor('variables'), start + end, [run([], ['I have a cat', 'Now I have a cat'])]);
+    expect(r).toMatchObject({ ok: false, got: ['I have a cat', 'Now I have a cat'], want: ['I have a cat', 'Now I have a dog'],
+      mistake: { msg: expect.stringMatching(/only one `pet =`/) } });
+    expect(evalApply(applyFor('variables'), start + 'pet = "dog"\n' + end, [run([], ['I have a cat', 'Now I have a dog'])]).mistake).toBeUndefined();
+  });
+
+  test('other targets: their own common mistakes', () => {
+    const one = (tid, raw, runs = [run([], ['x'])]) => spotMistake(raw, runs, MISTAKES[tid])?.msg;
+    expect(one('input', 'colour = input("Colour? ")\nprint("Your favourite colour is" + colour)')).toMatch(/no space after "is"/);
+    expect(one('input', 'colour = input("Colour? ")\nprint("Your favourite colour is red")')).toMatch(/typed the colour/);
+    expect(one('cast_int', 'round1 = input("1? ")\nround2 = input("2? ")\ntotal = int(round1 + round2)')).toMatch(/joins the text first/);
+    expect(one('cast_int', 'round1 = int(input("1? "))\nround2 = input("2? ")')).toMatch(/Only one answer/);
+    expect(one('cast_str', 'age = int(input("Age? "))\nprint("Next year you will be " + str(age) + str(1))')).toMatch(/121/);
+    expect(one('cast_str', 'age = input("Age? ")\nprint("Next year you will be " + str(age + 1))')).toMatch(/lost its `int\(\)`/);
+    expect(one('branches', 'if t > 0:\n    print("Book now!")\nelse:\n    print("Sold out")\n    print("Thanks for visiting")')).toMatch(/still indented/);
+    expect(one('branches', 'if t > 0:\n    print("Book now!")\n    else:\n    print("Sold out")')).toMatch(/line up with the `if`/);
+    expect(one('conditions', 'if age == 60:')).toMatch(/exactly 60/);
+    expect(one('conditions', 'if age > 60:')).toMatch(/leaves out 60/);
+    expect(one('conditions', 'if age >= "60":')).toMatch(/in quotes/);
+    expect(one('errors', 'print("Your team is " + teem)')).toMatch(/no `team =` line/);
+  });
+
+  test('mistakes any program can make', () => {
+    const one = (raw, runs = []) => spotMistake(raw, runs);
+    expect(one('Print("Hi")')).toEqual({ line: 1, msg: expect.stringMatching(/`Print` has a capital letter/) });
+    expect(one('print("Hi)')).toMatchObject({ msg: expect.stringMatching(/only one `"`/) });
+    expect(one('print(“Hi”)')).toMatchObject({ msg: expect.stringMatching(/curly quotes/) });
+    expect(one('print("Hi"')).toMatchObject({ msg: expect.stringMatching(/more `\(` than `\)`/) });
+    expect(one('x = 5\nif x = 5:\n    print("y")')).toEqual({ line: 2, msg: expect.stringMatching(/use two: `==`/) });
+    expect(one('if x >= 5:')).toBeNull();
+    expect(one('if x == 5:')).toBeNull();
+    expect(one('if x => 5:')).toMatchObject({ msg: expect.stringMatching(/wrong way round/) });
+    expect(one('if x > 5\n    print("y")')).toEqual({ line: 1, msg: expect.stringMatching(/`if` line must end with a colon/) });
+    expect(one('else\n    print("y")')).toMatchObject({ msg: expect.stringMatching(/`else` line/) });
+    expect(one('age = input(int("Age? "))')).toMatchObject({ msg: expect.stringMatching(/inside `input\(\)`/) });
+    expect(one('input("Name? ") = name')).toMatchObject({ msg: expect.stringMatching(/left of `=`/) });
+    const fail = (output, line = 2) => [{ inputs: [], ok: false, line, output }];
+    expect(one('s = 3\nprint("S: " + s)', fail('TypeError: can only concatenate str (not "int") to str'))).toMatchObject({ line: 2, msg: expect.stringMatching(/str\(\)/) });
+    expect(one('a = input("A? ")\nif a > 3:', fail("TypeError: '>' not supported between instances of 'str' and 'int'"))).toMatchObject({ msg: expect.stringMatching(/wrap the `input\(\)` in `int\(\)`/) });
+    expect(one('colour = "red"\nprint(color)', fail("NameError: name 'color' is not defined"))).toMatchObject({ msg: expect.stringMatching(/Your box is called `colour`/) });
+    expect(one('print(team)\nteam = "Rovers"', fail("NameError: name 'team' is not defined", 1))).toMatchObject({ msg: expect.stringMatching(/before line 2/) });
+    expect(one('print("Hello world")')).toBeNull();
+  });
+
+  test('make it: a failed check names the mistake too', () => {
+    const r = evalMake('a = int(input("A? "))\nif a > 5\n    print("Big")\nelse:\n    print("Small")', [['9'], ['1']], []);
+    expect(r.mistake).toMatchObject({ line: 2, msg: expect.stringMatching(/colon/) });
+  });
 });

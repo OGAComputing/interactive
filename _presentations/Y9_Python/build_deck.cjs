@@ -132,6 +132,14 @@ Cover the outputs, ask "what does each print?", then reveal.
 This is Predict question 2 territory in the activity (line 3 "only prints").`,
 });
 
+R.storySoFarSlide(K, {
+  section: P1, title: 'Wake Up', logLabel: 'CRYO BAY',
+  log: ['A solar storm has wiped the station’s software.', 'You woke up alone. The crew are still frozen.',
+    'Every door is sealed.'],
+  notes: `Read it aloud in 20 seconds, then straight into Predict. It's the premise from the title slide, shortened: for anyone who has forgotten it, or was late.
+No discussion here: the next part of the story is on the chapter card.`,
+});
+
 const PREDICT_CODE = ['room = input("Which room? ")', 'level = input("Which level? ")', 'print("Scanning...")',
   'print(room + " on level " + level)'];
 R.predictSlide(K, {
@@ -287,6 +295,14 @@ Ask: what would int("six") do? (ValueError — they'll try it in Investigate.)`)
 Line 1 does three jobs. Trace it inside-out with your finger: input() asks, int() converts, = stores.
 LIVE CODE (optional): type it, run with 6, then delete int( ) and run again — the output shows 6 repeated 50 times. Ask why. (They'll meet this in Investigate step 1, so you can leave it as a teaser instead.)`);
 }
+
+R.storySoFarSlide(K, {
+  section: P2, title: 'Life Support', logLabel: 'CREW LOCATOR',
+  log: ['Engineer Hale died three days ago.', 'Now his tag is walking the station: not human.',
+    'And the air is running out.'],
+  notes: `Read it aloud in 20 seconds, then straight into the trace. This is what Wake Up revealed, for anyone who didn't finish it.
+It leaves out the door choice on purpose: that differs from student to student.`,
+});
 
 const TRACE_CODE = ['battery = int(input("Battery %: "))', 'battery = battery - 15', 'print("Power left: " + str(battery) + "%")'];
 const TRACE_TABLE = (rows) => ({ cols: ['Line', 'battery', 'Output'], colW: [1.4, 2.6, 8.13], rows });

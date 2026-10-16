@@ -92,12 +92,14 @@
   let isTeacherMode        = false; // true once detectTeacher confirms the signed-in user is a teacher
   const CLASSROOM_SYNC_INTERVAL_MS = 60 * 1000;
   const AUTH_HEARTBEAT_INTERVAL_MS = 60 * 1000;
-  // Pause an assessment this long before the token runs out. Keep it short:
-  // while a token is still valid Google hands the *same* token back on every
-  // sign-in (with less time left each go), so a long margin made students sign
-  // in over and over until the old token finally expired. Must be at least one
-  // heartbeat so the watchdog still catches expiry before a save fails.
-  const AUTH_RENEWAL_MARGIN_MS     = 2 * 60 * 1000;
+  // Drop the token this long before it runs out, so a save never goes out with
+  // a token that dies in flight. Keep it tiny: while a token is still valid
+  // Google hands the *same* token back on every sign-in (with less time left
+  // each go), so renewing early can never work — any margin longer than one
+  // round trip to Google makes the student sign in over and over until the old
+  // token finally expires. An exact timer (authExpiryTimer) drops the token on
+  // time; the heartbeat no longer has to catch it.
+  const AUTH_RENEWAL_MARGIN_MS     = 10 * 1000;
 
   let _lastGradePercent = null;
 
@@ -109,6 +111,7 @@
   let authHealthy = false;
   let authPaused = false;
   let authHeartbeatTimer = null;
+  let authExpiryTimer = null;
   let grantedScopeList = [];
 
   // ── Sign-in log ───────────────────────────────────────────────────────────────
@@ -634,6 +637,7 @@
     userInfo = null;
     clearPendingSyncTimers();
     stopAuthWatchdog();
+    clearAuthExpiryTimer();
     // Only forget the stored token if it is the one that failed: another tab
     // may already have signed in again and saved a fresh one.
     try {
@@ -654,6 +658,29 @@
 
   function tokenNeedsRenewalSoon() {
     return !!authExpiresAt && authExpiresAt <= Date.now() + AUTH_RENEWAL_MARGIN_MS;
+  }
+
+  function clearAuthExpiryTimer() {
+    if (authExpiryTimer) {
+      clearTimeout(authExpiryTimer);
+      authExpiryTimer = null;
+    }
+  }
+
+  // Drop the token when it runs out (less the margin). Signing in again only
+  // gets a new token from Google once the old one has expired.
+  function scheduleAuthExpiry() {
+    clearAuthExpiryTimer();
+    if (!authExpiresAt || isTeacherMode) return;
+    const delay = Math.max(0, authExpiresAt - Date.now() - AUTH_RENEWAL_MARGIN_MS);
+    authExpiryTimer = setTimeout(() => {
+      authExpiryTimer = null;
+      if (!accessToken || isTeacherMode) return;
+      authLog('Token has run out');
+      handleAuthLost(isAssessment()
+        ? 'Your Google sign-in has run out. Assessment paused until you sign in again.'
+        : 'Your Google sign-in has run out.');
+    }, delay);
   }
 
   async function checkAuthHealth(reason) {
@@ -1624,6 +1651,7 @@
     authExpiresAt = tokenResponse.expires_at || 0;
     authHealthy = true;
     authPaused = false;
+    scheduleAuthExpiry();
     userInfo    = await fetchUserInfo(accessToken);
     if (!accessToken) {
       // A token saved earlier was rejected as the page opened (expired early or
@@ -1807,11 +1835,16 @@
     let data;
     try { data = JSON.parse(json); } catch (_) { return false; }
     if (!data.access_token) return false;
-    // Discard if already expired (30 s margin for clock skew).
-    if (data.expires_at && data.expires_at < Date.now() + 30000) {
-      console.warn('Classroom: discarding expired token from redirect');
-      authLog('Token from Google was already expired — discarded (is the computer clock right?)');
-      return false;
+    // expires_at is this computer's clock + Google's expires_in, so clock skew
+    // can't make it look expired. A token that is nearly out is Google's old
+    // token handed back (it only issues a new one once the old one expires):
+    // wait for it to run out, then sign in silently to get a fresh one.
+    if (data.expires_at && data.expires_at < Date.now() + AUTH_RENEWAL_MARGIN_MS) {
+      const left = Math.max(0, data.expires_at - Date.now());
+      authLog(`Google gave back the old token (${Math.round(left / 1000)}s left) — waiting for it to run out, then signing in again`);
+      setBannerAuthRequired('Renewing your Google sign-in…');
+      setTimeout(() => signInViaRedirect({ prompt: 'none', auto: true }), left + 3000);
+      return true;
     }
     authLog('Picked up new token from Google');
     // Persist for cross-activity reuse within the ~1-hour token lifetime.
@@ -1832,7 +1865,7 @@
     let data = null;
     try { data = JSON.parse(localStorage.getItem(AUTH_STORAGE_KEY) || 'null'); } catch (_) {}
     if (!data || !data.access_token) return false;
-    if (data.expires_at && data.expires_at < Date.now() + 30000) {
+    if (data.expires_at && data.expires_at < Date.now() + AUTH_RENEWAL_MARGIN_MS) {
       try { localStorage.removeItem(AUTH_STORAGE_KEY); } catch (_) {}
       authLog('Saved token has expired — removed');
       return false;

@@ -34,7 +34,7 @@ Close the `.pptx` in PowerPoint first, or the build can't save over it. To check
 
 ## Slide order
 
-1. **Recap & Recall** starter (light) → 2. **answers** (dark) → 3. **Title** → 4. **Topic + lesson question** → 5. lesson content, repeating New Information → Deliberate Practice → Feedback, with a chapter card before each activity → 6. **Plenary** (the same lesson question as an exit task).
+1. **Recap & Recall** starter (light) → 2. **answers** (dark) → 3. **Title** → 4. **Topic + lesson question** → 5. lesson content, repeating New Information → **Story so far** → Deliberate Practice → Feedback, with a chapter card before each activity → 6. **Plenary** (the same lesson question as an exit task).
 
 ## Slide types (recipes in `sz_slides.cjs`)
 
@@ -45,6 +45,7 @@ Close the `.pptx` in PowerPoint first, or the build can't save over it. To check
 | `questionsSlide` | Clarity | Topic question (muted) + lesson question (highlighted) |
 | `runLinesSlide` | New Information | A short program run line by line: each row is the whole line → what's on screen → what's in memory, with one plain sentence under the line. Fades in on click: code → screen → memory (6 clicks for 2 lines) |
 | `pairSlide` | New Information | Two lines that differ by one thing (quotes vs no quotes) |
+| `storySoFarSlide` | Deliberate Practice | A 3-sentence story recap between the New Information and the Predict stage (choice-neutral) |
 | `predictSlide` / `predictRevealSlide` | Deliberate Practice / Feedback | Mini-whiteboard Predict, then the output and two common mistakes |
 | `traceSlide` | Deliberate Practice / Feedback | Trace table, blank then filled (`reveal`) |
 | `turnTalkSlide` | Deliberate Practice | Two short lines to discuss *before* the explanation |
@@ -94,3 +95,4 @@ Add new feedback at the bottom, dated. `build_template.cjs` turns this list into
 - **2026-10-08 · Station state** — The slides decay with the story: chapter by chapter, and on screen at a story beat. Damage only ever goes in the frame, under the content, so code, output and memory stay clean (`createDeck({ station })`, `K.station`, `K.beat`).
 - **2026-10-08 · Station state** — Make the damage clearly visible (first version was too subtle): stronger frost, wider alarm glow, solid hazard stripes, heavier static and cracks. Still frame only.
 - **2026-10-14 · Worked examples** — Teach selection conditions first (True or False on their own), then "what is printed?" in two rounds: numbers in the condition, then one variable. Each round is I do (1 example) → We do (1) → You do (3) → answers (`whatPrintedSlide`, `whatPrintedGridSlide`).
+- **2026-10-15 · Story** — Before each Predict stage (after the New Information), add a very brief "Story so far" slide: at most 3 short sentences, true for every student whatever their choices (`storySoFarSlide`). Story slides are now the title, these, the chapter cards and the plenary cliffhanger.

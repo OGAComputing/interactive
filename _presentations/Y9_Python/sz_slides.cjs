@@ -190,6 +190,22 @@ function chapterSlide(K, o) {
   return s;
 }
 
+// ── Story so far: a short recap between New Information and Predict ─────────
+// title (the chapter), log: ≤ 3 short sentences, one per line (≤ 50 characters each), logLabel?
+// Keep it true for every student: leave out anything that depends on their story choices.
+function storySoFarSlide(K, o) {
+  const { P, M, HEAD } = K;
+  const s = K.newSlide('SZ_COVER', o.section);
+  K.text(s, o.kicker || 'THE STORY SO FAR', { x: M, y: 0.6, w: 8, h: 0.35, fontSize: 14, bold: true, color: P.gold, charSpacing: 3 });
+  K.text(s, o.title, { x: M, y: 1.0, w: 10, h: 1.0, fontFace: HEAD, fontSize: 48, bold: true });
+  // A blank line between sentences, so each one lands on its own.
+  const lines = o.log.flatMap((l, i) => (i ? ['', l] : [l]));
+  K.terminal(s, lines, { x: M, y: 2.35, w: 12.13, size: 26, lh: 0.5, story: true, label: o.logLabel || 'STATION LOG' });
+  K.addIcon(s, 'practice');
+  if (o.notes) s.addNotes(o.notes);
+  return s;
+}
+
 // ── Feedback: a common error, with what's in memory ─────────────────────────
 // code, hl, error: terminal lines (last line of the real message), memory: varBox spec, takeaway: runs
 function errorFeedbackSlide(K, o) {
@@ -404,6 +420,6 @@ function banner(K, s, content, y, h, size = 25) {
 
 module.exports = {
   recallStarter, recallAnswers, titleSlide, questionsSlide, runLinesSlide, pairSlide, predictSlide,
-  predictRevealSlide, debugRecipeSlide, chapterSlide, errorFeedbackSlide, turnTalkSlide, traceSlide, plenarySlide, banner,
+  predictRevealSlide, debugRecipeSlide, chapterSlide, storySoFarSlide, errorFeedbackSlide, turnTalkSlide, traceSlide, plenarySlide, banner,
   trueFalseSlide, whatPrintedSlide, whatPrintedGridSlide, boolChip, modeChip,
 };

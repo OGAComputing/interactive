@@ -7,6 +7,7 @@ import { TARGETS, drawCheckpoint, poolQuestion, rightAnswer } from '../Y8/Python
 //   • The plan comes from the assessment's saved state; with none, the student picks targets.
 //   • Look back shows the student's own wrong answers.
 //   • Steps unlock in order; a checkpoint restart is saved at once (survives a reload).
+//   • Build it: every puzzle's lines, in order, pass in real Python; a trap fails and waits.
 //   • Every code task: the starter fails and a model answer passes in real Python.
 //   • Make it: locked until the targets are done (teacher password unlocks), checked against
 //     the student's own test plan.
@@ -98,7 +99,7 @@ test('no results: the student picks up to 3 targets', async ({ page }) => {
 });
 
 test('steps unlock in order; a sentence must be a real sentence', async ({ page }) => {
-  await openWith(page, { assess: ASSESSMENT, state: { seed: SEED } });
+  await openWith(page, { assess: ASSESSMENT, state: { seed: SEED, order: { print: { placed: [], tries: 1, done: true, until: 0 } } } });
   await tab(page, 'print');
   await expect(page.locator('#step3_print')).toHaveClass(/locked/);
   await page.fill('#reflect_print', 'idk');
@@ -108,6 +109,42 @@ test('steps unlock in order; a sentence must be a real sentence', async ({ page 
   await page.click('#savereflect_print');
   await expect(page.locator('#step3_print')).not.toHaveClass(/locked/);
   await expect(page.locator('#step4_print')).toHaveClass(/locked/);
+});
+
+test('build it: locks the sentence; blocks move by click; a trap fails and waits; the right order passes', async ({ page }) => {
+  await openWith(page, { assess: ASSESSMENT, state: { seed: SEED } });
+  await tab(page, 'print');
+  await waitForPython(page);
+  await expect(page.locator('#step2_print')).toHaveClass(/locked/);
+  const block = id => page.locator(`#pz_print .pz-block[data-id="${id}"]`);
+  for (const id of ['m0', 't0', 'm2', 'm3']) await block(id).click();      // Print("Steady") is a trap
+  await expect(page.locator('#pz_print .pz-prog .pz-line')).toHaveCount(4);
+  await page.click('#ordercheck_print');
+  await expect(page.locator('#fborder_print')).toHaveClass(/wrong/, { timeout: 30000 });
+  await expect(page.locator('#fborder_print .mistake')).toContainText('capital letter');
+  await expect(page.locator('#ordercheck_print')).toBeDisabled();
+  await block('t0').click();                                               // back to the blocks
+  await block('m1').click();
+  await block('m2').click();
+  await block('m3').click();
+  await block('m2').click();
+  await block('m3').click();                                               // now: m0 m1 m2 m3
+  await expect(page.locator('#ordercheck_print')).toBeEnabled({ timeout: 8000 });
+  await page.click('#ordercheck_print');
+  await expect(page.locator('#fborder_print')).toHaveClass(/correct/, { timeout: 30000 });
+  await expect(page.locator('#step2_print')).not.toHaveClass(/locked/);
+});
+
+test('build it: every puzzle, in its given order, passes in real Python', async ({ page }) => {
+  test.setTimeout(180000);
+  await openWith(page, { state: { seed: SEED, plan: ALL } });
+  await waitForPython(page);
+  for (const t of TARGETS) {
+    await tab(page, t.id);
+    for (let i = 0; i < t.order.lines.length; i++) await page.locator(`#pz_${t.id} .pz-block[data-id="m${i}"]`).click();
+    await page.click('#ordercheck_' + t.id);
+    await expect(page.locator('#fborder_' + t.id), t.id).toHaveClass(/correct/, { timeout: 30000 });
+  }
 });
 
 async function answerCp(page, tid, q, right) {

@@ -132,6 +132,9 @@ export const TARGETS = [
       '<code>print()</code> with nothing inside prints an <strong>empty line</strong>. It still counts as a line.',
     ],
     example: { code: 'print("Ready")\nprint()\nprint("Go!")', out: 'Ready\n\nGo!' },
+    order: { keepBlank: true, tests: [{ typed: [], out: ['Ready', '', 'Steady', 'Go!'] }],
+      lines: ['print("Ready")', 'print()', 'print("Steady")', 'print("Go!")'],
+      traps: ['Print("Steady")', 'print("Go!)'] },
     pool: [
       { id: 'p1', kind: 'mcq', q: 'Which line prints <strong>Game over</strong>?',
         opts: ['print("Game over")', 'Print("Game over")', 'print(Game over)', 'print("Game over)'],
@@ -174,6 +177,9 @@ export const TARGETS = [
       '<code>NameError</code> means Python does not know that name: it is <strong>spelt differently</strong>, or it is used <strong>before</strong> the line that makes it.',
     ],
     example: { code: 'lives = 3\nprint(lifes)', out: 'NameError: name \'lifes\' is not defined', err: true },
+    order: { tests: [{ typed: [], out: ['Your team is Rovers', 'Come on Rovers!'] }],
+      lines: ['team = "Rovers"', 'print("Your team is " + team)', 'print("Come on " + team + "!")'],
+      traps: ['print("Come on " + teem + "!")', 'print("Your team is " + Team)'] },
     pool: [
       { id: 'e1', kind: 'mcq', q: 'Which line has the bug?', code: 'name = "Zara"\nage = 13\nprint(nmae)',
         error: NAME_ERR(3, 'print(nmae)', 'nmae'), opts: ['Line 3', 'Line 1', 'Line 2', 'All of them'],
@@ -218,6 +224,9 @@ export const TARGETS = [
       'With quotes it is text: <code>print("pet")</code> prints the word pet. Without quotes, <code>print(pet)</code> prints what is in the box.',
     ],
     example: { code: 'pet = "cat"\nprint(pet)\npet = "dog"\nprint("pet")\nprint(pet)', out: 'cat\npet\ndog' },
+    order: { tests: [{ typed: [], out: ['cat', 'pet', 'dog'] }],
+      lines: ['pet = "cat"', 'print(pet)', 'pet = "dog"', 'print("pet")', 'print(pet)'],
+      traps: ['pet = dog', 'print(Pet)'] },
     pool: [
       { id: 'v1', kind: 'type', as: 'value', q: 'What is in <code>colour</code> at the end?', code: 'colour = "red"\ncolour = "blue"',
         answer: { type: 'str', value: 'blue' }, why: 'The second line replaces red with blue. It is text, so it is written "blue".' },
@@ -258,6 +267,9 @@ export const TARGETS = [
       '<code>+</code> joins text <strong>exactly</strong>: it never adds a space. Put the space inside the quotes: <code>"Hello " + name</code>',
     ],
     example: { code: 'name = input("Name? ")\nprint("Hello" + name)\nprint("Hello " + name)', out: 'Name? Sam\nHelloSam\nHello Sam', typed: 'Sam' },
+    order: { tests: [{ typed: ['Sam'], out: ['Hello Sam', 'Bye Sam!'] }],
+      lines: ['name = input("Name? ")', 'print("Hello " + name)', 'print("Bye " + name + "!")'],
+      traps: ['print("Hello" + name)', 'input("Name? ") = name'] },
     pool: [
       { id: 'n1', kind: 'mcq', q: 'The user types <strong>Leeds</strong>. What is stored in <code>team</code>?', code: 'team = input("Which team? ")',
         opts: ['Leeds', 'Which team?', 'Which team? Leeds', 'team'], why: 'The question is only shown. Only the answer, Leeds, is stored.' },
@@ -296,6 +308,9 @@ export const TARGETS = [
       'Wrap the input in <code>int()</code> to make a whole number: <code>apples = int(input("Apples? "))</code>',
     ],
     example: { code: 'a = input("A? ")\nb = int(input("B? "))\nprint(a + a)\nprint(b + b)', out: 'A? 5\nB? 5\n55\n10', typed: '5' },
+    order: { tests: [{ typed: ['4', '3'], out: ['7'] }, { typed: ['10', '5'], out: ['15'] }],
+      lines: ['a = int(input("First? "))', 'b = int(input("Second? "))', 'print(a + b)'],
+      traps: ['a = input("First? ")', 'b = input("Second? ")'] },
     pool: [
       { id: 'ci1', kind: 'type', as: 'output', q: 'The user types <strong>2</strong>, then <strong>3</strong>. What is printed?',
         code: 'a = input("First? ")\nb = input("Second? ")\nprint(a + b)', answer: '23',
@@ -333,6 +348,9 @@ export const TARGETS = [
       'Use <code>str()</code> to turn a number into text so it can be joined: <code>"Score: " + str(score)</code>',
     ],
     example: { code: 'score = 7\nprint("Score: " + str(score))\nprint("Next: " + str(score + 1))', out: 'Score: 7\nNext: 8' },
+    order: { tests: [{ typed: [], out: ['Goals: 4', 'Double: 8'] }],
+      lines: ['goals = 4', 'print("Goals: " + str(goals))', 'print("Double: " + str(goals * 2))'],
+      traps: ['print("Goals: " + goals)', 'print("Double: " + str(goals) * 2)'] },
     pool: [
       { id: 'cs1', kind: 'mcq', q: '<code>lives</code> holds the number 3. Which line prints <strong>Lives: 3</strong>?',
         opts: ['print("Lives: " + str(lives))', 'print("Lives: " + lives)', 'print("Lives: " + int(lives))', 'print("Lives: " + "lives")'],
@@ -374,6 +392,9 @@ export const TARGETS = [
       'Check the number on the boundary: <code>&gt;=</code> includes it, <code>&gt;</code> and <code>&lt;</code> do not.',
     ],
     example: { code: 'age = int(input("Age? "))\nif age >= 13:\n    print("Welcome")\nelse:\n    print("Too young")\nprint("Bye")', out: 'Age? 13\nWelcome\nBye', typed: '13' },
+    order: { tests: [{ typed: ['14'], out: ['Welcome', 'Bye'] }, { typed: ['9'], out: ['Too young', 'Bye'] }],
+      lines: ['age = int(input("Age? "))', 'if age >= 13:', '    print("Welcome")', 'else:', '    print("Too young")', 'print("Bye")'],
+      traps: ['    print("Bye")', 'print("Welcome")'] },
     pool: [
       branchQ('b1', TEMP, '30', 'Hot', 'Not hot', 'Bye', 'a', '30 > 25 is True, so the if branch runs. Bye has no indent, so it always runs.'),
       branchQ('b2', TEMP, '25', 'Hot', 'Not hot', 'Bye', 'b', '25 > 25 is False (25 is not MORE than 25), so the else branch runs.'),
@@ -405,6 +426,10 @@ export const TARGETS = [
       'Test the boundary number itself: it is where most bugs hide.',
     ],
     example: { code: 'age = 11\nprint(age >= 11)\nprint(age > 11)', out: 'True\nFalse' },
+    order: { goal: 'Anyone <strong>11 or older</strong> can come in.',
+      tests: [{ typed: ['11'], out: ['Come in'] }, { typed: ['10'], out: ['Too young'] }],
+      lines: ['age = int(input("Age? "))', 'if age >= 11:', '    print("Come in")', 'else:', '    print("Too young")'],
+      traps: ['if age > 11:', 'if age = 11:'] },
     pool: [
       { id: 'k1', kind: 'mcq', q: 'Free entry if you are <strong>under 5</strong>. Which line is right?',
         opts: ['if age < 5:', 'if age <= 5:', 'if age > 5:', 'if age == 5:'], why: 'Under 5 means 4 or less, so 5 itself is not let in: < 5.' },
@@ -447,6 +472,9 @@ export const TARGETS = [
       'Test both paths <strong>and</strong> the boundary number before you say it works.',
     ],
     example: { code: 'name = input("Name? ")\nage = int(input("Age? "))\nif age >= 12:\n    print("Enjoy, " + name)\nelse:\n    print("Sorry, " + name)', out: 'Name? Zoe\nAge? 12\nEnjoy, Zoe', typed: 'Zoe' },
+    order: { tests: [{ typed: ['Zoe', '12'], out: ['Enjoy, Zoe'] }, { typed: ['Max', '9'], out: ['Sorry, Max'] }],
+      lines: ['name = input("Name? ")', 'age = int(input("Age? "))', 'if age >= 12:', '    print("Enjoy, " + name)', 'else:', '    print("Sorry, " + name)'],
+      traps: ['age = input("Age? ")', 'else'] },
     pool: [
       { id: 'w1', kind: 'mcq', q: 'This program stops with a <code>TypeError</code> on line 2. Which change fixes it?',
         code: 'age = input("Age? ")\nif age >= 12:\n    print("OK")\nelse:\n    print("Too young")',
@@ -562,6 +590,175 @@ export function markCheckpoint(q, answer) {
 export const rightAnswer = q => q.kind === 'mcq' ? q.opts[0]
   : q.as === 'value' ? (q.answer.type === 'str' ? `"${q.answer.value}"` : String(q.answer.value)) : String(q.answer);
 
+// ── 🧩 Build it: put the blocks in order (uses the 📌 Remember rules) ─────────
+// Each target's `order`: the lines of a program in a right order, plus traps built on the
+// target's misconception. The student's arrangement is RUN, so any order that prints the right
+// thing passes, as long as it uses every block except the traps.
+
+export const orderBlocks = (tid, seed) => {
+  const o = targetById(tid).order;
+  return shuffle([...o.lines.map((text, i) => ({ id: 'm' + i, text })), ...o.traps.map((text, i) => ({ id: 't' + i, text, trap: true }))],
+    rngFor(seed, `order|${tid}`));
+};
+const blockText = (tid, id) => {
+  const o = targetById(tid).order, n = Number(id.slice(1));
+  return (id[0] === 'm' ? o.lines : o.traps)[n];
+};
+export const orderCode = (tid, placed) => placed.map(id => blockText(tid, id)).join('\n');
+
+// placed: block ids in the student's order. runs: one per order.tests entry, of orderCode().
+// → { ok, msg, got?, want?, typed?, mistake? }
+export function evalOrder(tid, placed, runs) {
+  const o = targetById(tid).order;
+  if (!placed.length) return { ok: false, msg: 'Drag the blocks into Your program first.' };
+  const code = orderCode(tid, placed);
+  for (let i = 0; i < o.tests.length; i++) {
+    const r = runs[i], t = o.tests[i];
+    if (!r.ok) return { ok: false, typed: t.typed, msg: `${typedPhrase(t.typed) || 'When it runs, '}Python stops with an error.`, mistake: spotMistake(code, [r]) };
+    const got = o.keepBlank ? allLines(r) : printedLines(r);
+    if (got.length !== t.out.length || !t.out.every((w, k) => same(got[k], w))) return { ok: false, got, want: t.out, typed: t.typed, msg: 'It does not print the right thing yet.' };
+  }
+  if (placed.some(id => id[0] === 't')) return { ok: false, msg: 'It prints the right thing, but you used a trap block. Find it and drag it back.' };
+  if (placed.length < o.lines.length) return { ok: false, msg: `It prints the right thing, but ${o.lines.length - placed.length} block${o.lines.length - placed.length === 1 ? ' is' : 's are'} left over. Use every block except the traps.` };
+  return { ok: true, msg: 'It works: every block in the right place.' };
+}
+
+// ── Spotting common mistakes ─────────────────────────────────────────────────
+// When a check fails, name what the student actually did ("there is only one pet = line"),
+// so they don't have to read a long message to find it. Each check gets (raw, runs) and gives
+// back '' or { line?, msg }. In msg, `backticks` mark code. The target's own MISTAKES are
+// tried first, then the ones every program can make.
+
+const codeLines = raw => String(raw || '').split('\n');
+// The first line (1-based) whose code, with the text in quotes blanked out, matches re.
+const findLine = (raw, re, keepStrings = false) => {
+  const i = codeLines(raw).findIndex(l => re.test(keepStrings ? l.replace(/#.*$/, '') : normalise(l)));
+  return i < 0 ? 0 : i + 1;
+};
+// A check that fires on the first matching line.
+const onLine = (re, msg, keepStrings) => raw => {
+  const line = findLine(raw, re, keepStrings);
+  return line ? { line, msg } : '';
+};
+const assigns = (raw, name) => codeLines(raw).filter(l => new RegExp(`^\\s*${name}\\s*=(?!=)`).test(normalise(l))).length;
+const madeNames = raw => codeLines(raw).map((l, i) => [normalise(l).match(/^\s*([A-Za-z_]\w*)\s*=(?!=)/)?.[1], i + 1]).filter(([n]) => n);
+const editDistance = (a, b) => {
+  const d = Array.from({ length: a.length + 1 }, (_, i) => [i, ...Array(b.length).fill(0)]);
+  for (let j = 1; j <= b.length; j++) d[0][j] = j;
+  for (let i = 1; i <= a.length; i++) for (let j = 1; j <= b.length; j++)
+    d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+  return d[a.length][b.length];
+};
+
+export const MISTAKES = {
+  print: [],
+  errors: [
+    raw => assigns(raw, 'team') ? '' : { msg: 'There is no `team =` line any more, so Python has never made the box. Keep `team = "Rovers"`: just move it.' },
+    onLine(/print\s*\(\s*"[^"]*Rovers/, 'You typed Rovers into the print() line. Use the variable `team` instead, so it still works if the team changes.', true),
+  ],
+  variables: [
+    onLine(/print\s*\(\s*"Now I have a dog"/, 'You typed dog into the print() line. Leave both print lines alone, and store the new value in the box: `pet = "dog"`', true),
+    onLine(/^\s*pet\s*==/, '`==` only checks if two things are the same. To store a new value, use one `=`: `pet = "dog"`'),
+    onLine(/^\s*Pet\s*=(?!=)/, '`Pet` with a capital P is a different box from `pet`. Use lower case.'),
+    raw => {
+      if (assigns(raw, 'pet') >= 2) return '';
+      const other = madeNames(raw).find(([n]) => n !== 'pet');
+      return other
+        ? { line: other[1], msg: `You made a new box called \`${other[0]}\`. The print() lines still use \`pet\`, so store the new value in pet: \`pet = "dog"\`` }
+        : { msg: 'There is only one `pet =` line, so pet still holds "cat". Add a second line that starts `pet =` to store the new value.' };
+    },
+    raw => {
+      const ls = codeLines(raw).map(normalise);
+      const lastPrint = ls.map((l, i) => /\bprint\s*\(/.test(l) ? i : -1).filter(i => i >= 0).pop() ?? -1;
+      const lastPet = ls.map((l, i) => /^\s*pet\s*=(?!=)/.test(l) ? i : -1).filter(i => i >= 0).pop() ?? -1;
+      return lastPet > lastPrint ? { line: lastPet + 1, msg: 'Your new `pet =` line comes after the last print(), so it changes pet too late. Move it between the two print() lines.' } : '';
+    },
+  ],
+  input: [
+    onLine(/print\s*\(\s*"[^"]*\b(red|blue)\b/i, 'You typed the colour into the message. Join the variable `colour` instead, so it works whatever the user types.', true),
+    onLine(/\+\s*"colou?r"/, '`"colour"` is in quotes, so it prints the word colour. Take the quotes off to use what is in the box.', true),
+    onLine(/"Your favourite colour is"\s*\+/, 'There is no space after "is". `+` joins exactly, so put the space inside the quotes: `"Your favourite colour is "`', true),
+  ],
+  cast_int: [
+    onLine(/int\s*\(\s*round1\s*\+\s*round2\s*\)/, '`int(round1 + round2)` joins the text first (75), then makes it a number. Put `int()` around each `input()` instead.'),
+    raw => count(raw, /\bint\s*\(/g) === 1 ? { line: findLine(raw, /\bint\s*\(/), msg: 'Only one answer has `int()`. Both answers need to be numbers before they are added.' } : '',
+  ],
+  cast_str: [
+    raw => /\bint\s*\(\s*input/.test(normalise(raw)) ? '' : { line: 1, msg: 'Line 1 has lost its `int()`. The age must be a number before you can add 1 to it.' },
+    onLine(/str\s*\(\s*age\s*\)\s*\+\s*str\s*\(\s*1\s*\)/, '`str(age) + str(1)` turns both into text, so they join: 121. Do the maths inside the brackets: `str(age + 1)`'),
+    onLine(/str\s*\(\s*age\s*\)\s*\+\s*1\b/, '`str(age) + 1` tries to join text and a number. Do the maths inside the brackets: `str(age + 1)`'),
+    onLine(/\+\s*int\s*\(\s*age/, '`int()` makes a number, but to join it to text you need `str()`: `str(age + 1)`'),
+  ],
+  branches: [
+    onLine(/^\s+else\s*:/, '`else:` has spaces in front. It must line up with the `if`, with no indent.'),
+    raw => /Thanks for visiting/.test(raw) ? '' : { msg: 'The Thanks for visiting line has gone. Keep it: just take away its indent so it runs for everyone.' },
+    onLine(/^\s+print\s*\(\s*"Thanks/, '`print("Thanks for visiting")` is still indented, so it is inside the else: it only runs when it is sold out. Take away its 4 spaces.', true),
+  ],
+  conditions: [
+    onLine(/(==|>=?|<=?)\s*"\d+"/, 'The number is in quotes, so it is text. Compare with the number itself, with no quotes: `60`', true),
+    onLine(/^\s*if\s+age\s*==\s*60\b/, '`== 60` only lets in people who are exactly 60. "60 or over" needs `>= 60`'),
+    onLine(/^\s*if\s+age\s*>\s*60\b/, '`> 60` leaves out 60 itself. "60 or over" needs `>= 60`'),
+  ],
+};
+
+// The mistakes any program can make, checked line by line in this order.
+const LINE_MISTAKES = [
+  [(l) => /[“”‘’]/.test(l), () => 'These are curly quotes “ ”. Python needs straight quotes: `"`'],
+  [(l, n) => /\b(Print|Input|Int|Str|If|Else|PRINT|INPUT)\b/.test(n), (l, n) => {
+    const w = n.match(/\b(Print|Input|Int|Str|If|Else|PRINT|INPUT)\b/)[1];
+    return `\`${w}\` has a capital letter. Python only knows \`${w.toLowerCase()}\`, all in lower case.`;
+  }],
+  [(l) => (l.replace(/#.*$/, '').match(/"/g) || []).length % 2 === 1, () => 'This line has only one `"`. Text needs a quote mark at both ends.'],
+  [(l, n) => /=>|=</.test(n), () => '`=>` is the wrong way round. "More than or equal to" is written `>=` (and "less than or equal to" is `<=`).'],
+  [(l, n) => /^\s*if\b/.test(n) && /(^|[^=!<>])=(?!=)/.test(n.replace(/^\s*if/, '')), () => 'One `=` stores a value. To compare in an if, use two: `==`'],
+  [(l, n) => /^\s*(if|else|elif)\b/.test(n) && !/:/.test(n), (l, n) => `An \`${n.trim().match(/^\w+/)[0]}\` line must end with a colon \`:\``],
+  [(l, n) => /\binput\s*\(\s*int\s*\(/.test(n), () => '`int()` is inside `input()`. Swap them round: `int()` goes outside, like `int(input("Age? "))`'],
+  [(l, n) => /^\s*(int\s*\(\s*)?input\s*\(.*\)\s*=(?!=)/.test(n), () => 'The box goes on the left of `=`, and `input()` on the right: `name = input("Name? ")`'],
+  [(l, n) => (n.match(/\(/g) || []).length !== (n.match(/\)/g) || []).length, (l, n) => (n.match(/\(/g) || []).length > (n.match(/\)/g) || []).length
+    ? 'A bracket is missing: this line has more `(` than `)`. Every `(` needs a `)`.'
+    : 'This line has an extra `)`. Count the brackets: every `(` needs one `)`.'],
+];
+
+// What went wrong when the program ran (r: a failed run; raw: the code).
+function runMistake(raw, r) {
+  const out = r?.output || '', line = r?.line || 0;
+  const at = line ? { line } : {};
+  if (/can only concatenate str \(not "(int|float)"\) to str|unsupported operand type\(s\) for \+: '(int|float)' and 'str'/.test(out))
+    return { ...at, msg: 'You joined a number to text with `+`. Turn the number into text first with `str()`, like `"Score: " + str(score)`' };
+  if (/not supported between instances of 'str' and '(int|float)'/.test(out))
+    return { ...at, msg: 'You compared text with a number. Answers from `input()` are text: wrap the `input()` in `int()`.' };
+  if (/expected an indented block/.test(out)) return { ...at, msg: 'The line after an `if` or `else:` needs 4 spaces in front of it.' };
+  if (/unexpected indent/.test(out)) return { ...at, msg: 'This line has spaces in front, but it is not inside an if or else. Take the spaces away.' };
+  if (/unindent does not match/.test(out)) return { ...at, msg: 'The spaces in front of this line do not line up with the lines above. Use exactly 4.' };
+  if (/invalid literal for int\(\)/.test(out)) return { ...at, msg: '`int()` was given something that is not a whole number.' };
+  const name = out.match(/NameError: name '(\w+)' is not defined/)?.[1];
+  if (name) {
+    const made = madeNames(raw);
+    const later = made.find(([n, l]) => n === name && l > line);
+    if (later) return { ...at, msg: `\`${name}\` is used before line ${later[1]}, the line that makes it. Python runs from the top, so make the box first.` };
+    const close = made.map(([n]) => n).find(n => n !== name && (n.toLowerCase() === name.toLowerCase() || editDistance(n, name) <= 2));
+    if (close) return { ...at, msg: `Python does not know \`${name}\`. Your box is called \`${close}\`: spell it the same way every time.` };
+    return { ...at, msg: `Python does not know a box called \`${name}\`. If it is meant to be text, put it in quotes: \`"${name}"\`` };
+  }
+  return null;
+}
+
+// → { line?, msg } for the first mistake spotted, or null. extra: the target's own checks.
+export function spotMistake(raw, runs = [], extra = []) {
+  for (const check of extra) {
+    const m = check(raw, runs);
+    if (m) return typeof m === 'string' ? { msg: m } : m;
+  }
+  const ls = codeLines(raw);
+  for (const [test, msg] of LINE_MISTAKES)
+    for (let i = 0; i < ls.length; i++) {
+      const n = normalise(ls[i]);
+      if (ls[i].trim() && test(ls[i], n)) return { line: i + 1, msg: msg(ls[i], n) };
+    }
+  const f = firstFailed(runs);
+  return f ? runMistake(raw, f) : null;
+}
+
 // ── Use it: the code task for each target ────────────────────────────────────
 
 // Hints for requirement lists (this is practice, so a failed requirement gets a pointer).
@@ -603,11 +800,18 @@ export function applyFor(tid, points = {}, own = {}) {
              samples: item.samples, tests: item.tests, testNote: item.testNote, reqs: item.reqs, extraMsg: item.extraMsg,
              starter: usable ? mine : item.starter, own: !!usable, original: item.starter };
   }
-  return { ...targetById(tid).apply, original: targetById(tid).apply.starter };
+  return { ...targetById(tid).apply, original: targetById(tid).apply.starter, mistakes: MISTAKES[tid] || [] };
 }
 
-// runs: [{ inputs, ok, output }] — one per test. → { ok, msg, results? }
+// runs: [{ inputs, ok, output }] — one per test.
+// → { ok, msg, results?, mistake?, got?, want?, typed?, hint? } (got/want: the first test whose
+// output was wrong, for the page to show side by side; hint: the task's own pointer).
 export function evalApply(task, raw, runs) {
+  const r = markApply(task, raw, runs);
+  if (!r.ok) r.mistake = spotMistake(raw, runs, task.mistakes);
+  return r;
+}
+function markApply(task, raw, runs) {
   if (task.kind === 'reqs') {
     const r = evalReqs(task, raw, runs);
     const bad = r.results.findIndex(x => !x);
@@ -627,7 +831,8 @@ export function evalApply(task, raw, runs) {
     if (got.length !== want.length || !want.every((w, i) => same(got[i], w))) {
       const shown = got.map(l => l.trim() ? l : '(empty line)').join(' / ') || 'nothing';
       const extra = task.diagnose?.(raw, runs) || '';
-      return { ok: false, msg: `${typedPhrase(r.inputs) || 'It runs! '}It prints: ${shown}. It should print: ${want.map(l => l || '(empty line)').join(' / ')}.${extra ? ' ' + extra : ''}` };
+      return { ok: false, got, want, typed: r.inputs, hint: extra,
+               msg: `${typedPhrase(r.inputs) || 'It runs! '}It prints: ${shown}. It should print: ${want.map(l => l || '(empty line)').join(' / ')}.${extra ? ' ' + extra : ''}` };
     }
   }
   const structural = task.check?.(raw) || '';
@@ -723,7 +928,7 @@ export function evalMake(raw, tests, runs) {
   } else if (stretch.every(Boolean)) {
     msg = 'All 4 requirements and all 3 ★ stretches met. Brilliant!';
   }
-  return { core, stretch, msg };
+  return { core, stretch, msg, mistake: bad >= 0 ? spotMistake(raw, runs) : null };
 }
 
 // Ideas to start from (the student can also use their own).

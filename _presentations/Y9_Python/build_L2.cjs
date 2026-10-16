@@ -202,6 +202,15 @@ Ask: 85 >= 50 is True, so what's printed? (All clear — and only All clear.)`);
 //  Round 1 — numbers in the condition: I do → We do → You do → answers
 // ════════════════════════════════════════════════════════════════════════════
 const R1 = 'Round 1 — numbers';
+
+R.storySoFarSlide(K, {
+  section: R1, title: 'Proximity', logLabel: 'SENSOR OPS',
+  log: ['Hale’s tag is walking the station: not human.', 'It was heading for Sensor Ops. So are you.',
+    'The proximity sensors are offline.'],
+  notes: `Read it aloud in 20 seconds, then into "What is printed?". The story so far, for anyone who missed Lesson 1.
+It leaves out Lesson 1's choices (the door, Pod 5): they differ from student to student, and the activity's own "Previously…" recap covers them.
+Link it: a proximity sensor has to choose what to say — that's what we're about to predict.`,
+});
 const STEPS_1 = ['True or False?', 'Which lines run?', 'What is printed?'];
 
 R.whatPrintedSlide(K, {
