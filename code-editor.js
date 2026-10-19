@@ -511,6 +511,56 @@ function _injectStyles() {
       :where(.exec-line) { transition: none; }
       :where(.fed-input.fed-typing) { animation: none; }
     }
+
+    /* ── Light mode ── only on pages that load theme-toggle.js, which sets
+       html[data-theme="light"]. Elsewhere the editor is always dark. Syntax
+       colours are One Light hues, darkened where needed for 4.5:1 on the pale
+       background. */
+    html[data-theme="light"] .editor-wrap { background: #fbfaff; }
+    html[data-theme="light"] .checker-header { background: #efe9fd; color: #4b3c7a; border-color: #d9cff3; }
+    html[data-theme="light"] .checker-header span:last-child { color: #6a1fd0; }
+    html[data-theme="light"] .line-nums { color: #6b6390; background: #f3effc; border-right-color: #e2dbf5; }
+    html[data-theme="light"] .checker-textarea { caret-color: #2a1260; scrollbar-color: #cfc3ee #fbfaff; }
+    html[data-theme="light"] .checker-textarea::-webkit-scrollbar-track { background: #fbfaff; }
+    html[data-theme="light"] .checker-textarea::-webkit-scrollbar-thumb { background: #cfc3ee; }
+    html[data-theme="light"] .highlight-layer { color: #24203a; }
+    html[data-theme="light"] .tok-kw { color: #a626a4; }
+    html[data-theme="light"] .tok-str { color: #3b7a2a; }
+    html[data-theme="light"] .tok-num { color: #986801; }
+    html[data-theme="light"] .tok-comment { color: #6b6d7a; }
+    html[data-theme="light"] .tok-builtin { color: #2f5fd0; }
+    html[data-theme="light"] .tok-op { color: #0f7490; }
+    html[data-theme="light"] .editor-container.loading::after {
+      background-image: linear-gradient(#d9d2ee 0.7rem, transparent 0.7rem, transparent 1.7rem);
+    }
+    html[data-theme="light"] .syntax-hint { color: #6e4700; background: #fff4d9; border-top-color: #f2c45a; }
+    html[data-theme="light"] .output-panel { background: #f6f4fc; color: #0f766e; border-left-color: #e2dbf5; border-top-color: #e2dbf5; }
+    html[data-theme="light"] .output-panel.error { color: #c11f43; }
+    html[data-theme="light"] .output-header { color: #6b6390; }
+    html[data-theme="light"] .output-input-row { border-top-color: #e2dbf5; }
+    html[data-theme="light"] .output-prompt-label { color: #0f766e; }
+    html[data-theme="light"] .output-input-field { color: #8a4b00; caret-color: #8a4b00; }
+    html[data-theme="light"] .output-panel.waiting-for-input .output-header,
+    html[data-theme="light"] .output-panel.waiting-for-input .output-prompt-label { color: #8a4b00; }
+    html[data-theme="light"] .output-panel.waiting-for-input .output-header::after,
+    html[data-theme="light"] .input-type-hint { color: #9a5b00; }
+    html[data-theme="light"] .error-helper { background: #fff6e0; color: #4a3200; }
+    html[data-theme="light"] .error-helper .eh-head,
+    html[data-theme="light"] .error-helper .eh-fix strong { color: #7a4f00; }
+    html[data-theme="light"] .error-helper .eh-term { color: #8a5a00; }
+    html[data-theme="light"] .error-helper .eh-plain strong { color: #1d1240; }
+    html[data-theme="light"] .memory-inner { border-top-color: #d9d2ee; }
+    html[data-theme="light"] .memory-header { color: #6b6390; }
+    html[data-theme="light"] .mem-box { background: var(--mem-p), #ffffff; border-color: #cfc8e6; }
+    html[data-theme="light"] .mem-value { color: #8a4b00; }
+    html[data-theme="light"] .exec-line { background: rgba(15,118,110,0.10); box-shadow: inset 3px 0 0 #0f766e; }
+    html[data-theme="light"] .exec-line.exec-error { background: rgba(193,31,67,0.10); box-shadow: inset 3px 0 0 #c11f43; }
+    html[data-theme="light"] .exec-num { color: #0f766e; }
+    html[data-theme="light"] .exec-num.exec-error { color: #c11f43; }
+    html[data-theme="light"] .step-status { color: #0f766e; }
+    html[data-theme="light"] .step-skip { color: #3a2a70; border-color: #cfc8e6; }
+    html[data-theme="light"] .step-skip:hover { color: #0f766e; border-color: #0f766e; }
+    html[data-theme="light"] .fed-input { color: #7a4f00; background: rgba(249,176,32,0.18); }
   `;
   document.head.appendChild(s);
 }
