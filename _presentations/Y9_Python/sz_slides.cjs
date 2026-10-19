@@ -63,6 +63,7 @@ function questionsSlide(K, o) {
 // lines: up to 2 × { code, say: runs (what the line does, in plain words), screen: terminal lines (whole screen
 //   so far — give older lines color: P.dim), screenNote?, memory: [varBox specs], memoryNote? }
 // Animated: each line takes 3 clicks (code, screen, memory), so 2 lines = 6 clicks. animate: false turns it off.
+// codeSize? (default 26): smaller for a long line, so it never wraps (L2's int(input(…)) uses 21).
 function runLinesSlide(K, o) {
   const { P, M } = K;
   const s = K.newSlide('SZ_DARK', o.section, o.title || 'What happens when each line runs?');
@@ -76,7 +77,7 @@ function runLinesSlide(K, o) {
     const y = y0 + i * (rowH + gap);
     step(i * 3 + 1, () => {
       if (i) s.addShape(K.pres.shapes.LINE, { x: M, y: y - gap / 2, w: 12.13, h: 0, line: { color: P.line, width: 1 } });
-      K.codePanel(s, [ln.code], { x: cx, y, w: cw, size: 26, h: 0.95, first: i + 1 });
+      K.codePanel(s, [ln.code], { x: cx, y, w: cw, size: o.codeSize || 26, h: 0.95, first: i + 1 });
       K.text(s, ln.say, { x: cx + 0.1, y: y + 1.1, w: cw - 0.2, h: 0.95, fontSize: 20, color: P.off, valign: 'top' });
     });
     step(i * 3 + 2, () => {

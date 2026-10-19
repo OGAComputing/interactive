@@ -339,7 +339,7 @@ test.describe('Make stage', () => {
 
   test('warns on empty submission', async ({ page }) => {
     await page.locator('#btn_check_m2').click();
-    await expect(page.locator('#fb_m2')).toHaveClass(/fail/);
+    await expect(page.locator('#fb_m2')).toHaveClass(/fail/, { timeout: 60000 });   // waits for Pyodide to load
     await expect(page.locator('#fb_m2')).toContainText('show_menu()');
   });
 

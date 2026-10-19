@@ -20,7 +20,9 @@ const { P, HEAD, MONO, M, newSlide, addIcon, text, box, arrow, pyRuns, codePanel
 const LESSON_Q = 'How do we make a program choose which lines to run?';
 
 // ════════════════════════════════════════════════════════════════════════════
-//  1–2. Recap & Recall (Lesson 1, plus = from Year 8)
+//  1–2. Recap & Recall (Lesson 1 = Wake Up: input, variables, +; plus = from Year 8)
+//  Most students didn't reach Lesson 1's Life Support round (casting), so nothing here needs str() or
+//  int(). Q4 is the casting item: input() gives text, which today's int() slide then fixes.
 // ════════════════════════════════════════════════════════════════════════════
 const RR = [
   { pill: 'Y8 · LESSON 2', q: 'Which line stores 70 in score?', type: 'mcq',
@@ -29,21 +31,21 @@ const RR = [
   { pill: 'LAST LESSON', q: 'What does this print?', type: 'mcq',
     code: ['x = "5" + "5"', 'print(x)'], opts: ['10', '55', '5 5'],
     a: 'B — 55', why: 'two strings, so + joins them' },
-  { pill: 'LAST LESSON', q: 'This line crashes. Which error?', type: 'write',
-    code: ['crew = 4', 'print("Crew: " + crew)'], a: 'TypeError', why: 'fix it with str(crew)' },
-  { pill: 'LAST LESSON', q: 'Write exactly what this prints.', type: 'write',
-    code: ['o2 = 90 - 25', 'print("O2: " + str(o2))'], a: 'O2: 65', why: 'str() turns 65 into text', aMono: true },
+  { pill: 'LAST LESSON', q: 'Line 2 crashes. Which error?', type: 'write',
+    code: ['name = input("Name? ")', 'print("Hi " + Name)'], a: 'NameError', why: 'Name (capital N) was never stored' },
+  { pill: 'LAST LESSON', q: 'They type 14. What is printed?', type: 'write',
+    code: ['age = input("Age? ")', 'print(age + age)'], a: '1414', why: 'input() gives text, so + joins', aMono: true },
 ];
 R.recallStarter(K, { section: 'Recap & Recall', questions: RR, notes: `DO NOW — 5 minutes, silent, no notes. Mini-whiteboards or books.
-Q1 is from Year 8 (variables); Q2–4 are from last lesson (joining, TypeError, str()).
+Q1 is from Year 8 (variables); Q2–4 are from last lesson, Wake Up (joining, the NameError bug, input()).
 Q1–2 are multiple choice (everyone commits to an answer). Q3–4 need a written answer.
 Confidence rating 1–3 next to each answer — confident-but-wrong is the one most worth correcting.` });
 
 R.recallAnswers(K, { section: 'Recap & Recall', questions: RR, notes: `Reveal and self-mark. Hands up for "confident and wrong" on each.
 Q1: = STORES. Don't explain == yet — just say "keep that question in your head, we answer it today".
 Q2: "5" and "5" are strings (orange), so + joins them: 55. No space appears because there's no space inside the quotes.
-Q3: crew is a number (int), and + can't join text and a number. TypeError. Fix: str(crew).
-Q4: 90 − 25 = 65, then str() turns it into text so + can join it.` });
+Q3: Python is case-sensitive: name and Name are different boxes, and Name was never stored. NameError — the Break it bug from Wake Up.
+Q4: input() always gives back text, even when you type a number: age holds "14", so + JOINS it to itself: 1414, not 28. Don't fix it yet — "we'll see how to turn it into a number before the activity".` });
 
 // ════════════════════════════════════════════════════════════════════════════
 //  3–4. Title, questions
@@ -380,18 +382,52 @@ This is the big one: Python checks from the top and stops at the FIRST True cond
 });
 
 // ════════════════════════════════════════════════════════════════════════════
+//  input() gives text → int() (casting, moved here from Lesson 1's Life Support round)
+//  The activity's very first program starts distance = int(input(…)), so this comes right before it.
+// ════════════════════════════════════════════════════════════════════════════
+const verb = (t) => ({ text: t, options: { bold: true, color: P.gold } });
+const code = (t) => ({ text: t, options: { fontFace: MONO, color: P.off } });
+R.runLinesSlide(K, {
+  section: 'Numbers from input', title: 'input() gives text. int() makes it a number.', codeSize: 21,
+  lines: [
+    { code: 'dist = input("Dist? ")',
+      say: [verb('Asks'), { text: ' and ' }, verb('stores'), { text: ' what was typed, as ' }, { text: 'text', options: { bold: true, color: P.str } },
+        { text: ', even though it looks like a number' }],
+      screen: [[{ text: 'Dist? ' }, { text: '30', color: P.str, bold: true }]],
+      screenNote: 'The user typed 30',
+      memory: [{ name: 'dist', type: 'str', value: '"30"' }],
+      memoryNote: 'Text: can’t compare with 50' },
+    { code: 'dist = int(input("Dist? "))',
+      say: [verb('Asks'), { text: ', then ' }, code('int()'), { text: ' turns the text into a ' }, { text: 'whole number', options: { bold: true, color: P.int } },
+        { text: ' before = stores it' }],
+      screen: [[{ text: 'Dist? ' }, { text: '30', color: P.str, bold: true }]],
+      screenNote: 'The same 30 typed',
+      memory: [{ name: 'dist', type: 'int', value: '30' }],
+      memoryNote: 'A number: 30 >= 50 works' },
+  ],
+  notes: `Casting is new for most of the class this year: it was in Lesson 1's second round (Life Support), which most students didn't reach.
+Link to Do Now Q4: age + age gave 1414 because input() gives TEXT.
+6 clicks: each line, then what's on screen, then what's in memory. The screen is the same both times: the difference is only in memory.
+Line 1: the box is orange (str) and holds "30" in quotes. An if can't compare that with 50: Python gives a TypeError (they'll do exactly this in Investigate's Break it step).
+Line 2: read it inside-out with your finger: input() asks, int() converts, = stores. The box is now an int: 30, no quotes.
+If someone types a word, like thirty, int() can't convert it: ValueError. The activity's "Remind me" card on the bug step says the same.`,
+});
+
+// ════════════════════════════════════════════════════════════════════════════
 //  The activity, feedback, plenary
 // ════════════════════════════════════════════════════════════════════════════
 const A = 'Proximity';
 R.chapterSlide(K, {
   section: A, kicker: 'CHAPTER 2', title: 'Proximity', activity: 'Proximity', time: '≈30 MIN', logLabel: 'SENSOR OPS',
   log: ['The room is empty.', '', 'Frost on the floor.', 'A vent cover hangs open', 'above the console.'],
-  note: [{ text: 'Two calls this time: ', options: { bold: true, color: P.gold } },
-    { text: 'one in Modify, one in Make. They change the story, not your score.' }],
+  note: [{ text: 'Three calls this time: ', options: { bold: true, color: P.gold } },
+    { text: 'in Investigate, Modify and Make. They change the story, not your score.' }],
   notes: `Students open "Proximity — Selection" from Google Classroom (Y9 › Python › Lesson 2).
 Predict (5 questions: Program A is if / else, Program B adds one elif) → Run (85, 20, 5) → Investigate (4 steps: swap the numbers, elif → if, >= → >, then Break it: int() removed → TypeError) → Modify (4 steps; step 1 is the lockdown choice) → Make (radiation scanner, plus the power choice).
+The three calls: Investigate step 1 opens with the CRISIS — frost is spreading across Pods 3 and 5, and the heaters can save one. Whoever isn't heated (Chen or Patel) goes critical, and their heart rate falls on every report until the lockdown (Modify 1) and power (Make) calls save them, or don't. There's no right answer to the crisis: let students argue about it. Step 1's task only appears once they've picked.
+Students whose Wake Up choices left Patel critical see that on the crisis card: heating Pod 5 saves him.
 Circulate. During Investigate, point students back to the debugging recipe (Lesson 1) before they press Get help.
-Anyone who missed Lesson 1: the activity's "Previously…" recap catches them up on the story.
+Anyone who missed Lesson 1, or didn't finish Wake Up: the activity's "Previously…" recap tells them all of it (Hale's pod, his last log, the tag that isn't human). They don't need to go back to Lesson 1. Life Support is now an optional bonus round, not needed for today.
 Fast finishers: the Make extension (SCANNER FAULT below 0, EVACUATE from 500).`,
 });
 
@@ -419,6 +455,7 @@ R.plenarySlide(K, {
 1. if temp >= 30: print("Hot") / elif temp >= 15: print("Warm") / else: print("Cold"). Follow-up question: what does yours print when temp = 15? (Warm: 15 >= 15 is True.) Any order that works is fine — check they didn't put >= 15 first (then 30 would print Warm).
 2. if answer == "y": — one = stores, an if needs == to ask. It's a SyntaxError.
 Close the story: "For one frame, the sensors catch it: a figure in Hale's overalls, moving wrong. Then the airlock seals, and WARDEN changes the access code. Next lesson: you're locked in."
+Quick hands-up: "Whose crew member is still critical?" (Only students whose lockdown left the Cryo Bay open AND sent power to the sensors.) Their crew member can still be saved later: the rescue ship has to be fast.
 In Slide Show this slide fades in through black and the red alarm creeps in by itself: Chapter 3's state, which Lesson 3's deck opens with.`,
 });
 

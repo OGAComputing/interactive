@@ -1,6 +1,9 @@
 import { test, expect } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 
+// These tests watch animations play, so they opt out of the suite-wide reduced motion (playwright.config.js).
+test.use({ contextOptions: { reducedMotion: 'no-preference' } });
+
 const y11Activities = [
   '/Y11/1.1 Systems Architecture/CPU_Architecture.html',
   '/Y11/1.2 Data Representation/Binary_Addition.html',

@@ -5,7 +5,8 @@ import { test, expect } from '@playwright/test';
 //   • Predict reveals its worked examples as the student reaches them.
 //   • Run is gated until all three distances (85, 20, 5) have been run.
 //   • Modify / Make are checked by running the program once per test answer and reading the output.
-//   • The story follows Chapter 1's choices (Patel) and this chapter's (Chen, the sensors).
+//   • The story follows Wake Up's choices (Patel) and this chapter's: the crisis on Investigate 1
+//     (which pod the heaters save; the other crew member, X, is critical), then the lockdown and power.
 
 const PATH = '/Y9/Python/L2_Selection/1_Proximity_PRIMM.html';
 const KEY  = 'primm_y9_l2_proximity';
@@ -70,18 +71,28 @@ test('chapter title card shows once, and ?story=off stops it', async ({ page }) 
   await expect(page.locator('#szOverlay')).not.toHaveClass(/open/);
 });
 
-test('the recap says Patel died when Wake Up shut him in and Life Support never saved him', async ({ page }) => {
-  await page.addInitScript(() => localStorage.setItem('sz_choices', JSON.stringify({ door: 'open', lock: 'bay', air: 'full' })));
+test('the recap says Patel is critical when Wake Up shut it in with him (nobody has died)', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('sz_choices', JSON.stringify({ door: 'open', lock: 'bay' })));
   await openAt(page, {}, { story: true });
-  await expect(page.locator('#szPrevFull')).toContainText('heart monitor went flat');
-  await expect(page.locator('#szReadouts')).toContainText('3 of 5');
-  await expect(page.locator('#szCrewCount')).toContainText('3');
+  await expect(page.locator('#szPrevFull')).toContainText('Patel is critical');
+  await expect(page.locator('#szReadouts')).toContainText('4 of 5 · 1 critical');
+  await expect(page.locator('#szCrewPods .crew-pod').nth(4)).toHaveClass(/critical/);
 });
 
-test('with no earlier choices, the recap uses the defaults: everyone stable', async ({ page }) => {
+test('the optional Life Support round can save a critical Patel: canisters to Pod 5', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('sz_choices', JSON.stringify({ door: 'open', lock: 'bay', transfer: 'pod5' })));
   await openAt(page, {}, { story: true });
-  await expect(page.locator('#szPrevFull')).toContainText('Hale died three days ago');
-  await expect(page.locator('#szPrevFull')).toContainText('the sleeping crew are stable');
+  await expect(page.locator('#szPrevFull')).not.toContainText('Patel is critical');
+  await expect(page.locator('#szReadouts')).toContainText('4 of 5');
+  await expect(page.locator('#szCrewPods .crew-pod').nth(4)).not.toHaveClass(/critical/);
+});
+
+test('with no earlier choices, the recap tells all of Wake Up and why you came to Sensor Ops', async ({ page }) => {
+  await openAt(page, {}, { story: true });
+  await expect(page.locator('#szPrevFull')).toContainText('Hale froze himself in Pod 2');
+  await expect(page.locator('#szPrevFull')).toContainText('don’t trust WARD');
+  await expect(page.locator('#szPrevFull')).toContainText('reserve tanks');
+  await expect(page.locator('#szPrevFull')).toContainText('Sensor Ops');
   await expect(page.locator('#szReadouts')).toContainText('4 of 5');
 });
 
@@ -155,8 +166,11 @@ test('Run is gated until 85, 20 and 5 have all been run, then the radar plays th
 
 // ─── Investigate ─────────────────────────────────────────────────────────────
 
-test('Investigate 1: swapping the numbers makes 30 print All clear', async ({ page }) => {
+test('Investigate 1: the crisis pick comes first, then swapping the numbers makes 30 print All clear', async ({ page }) => {
   await openAt(page, { currentStage: 'I', completedStages: ['P', 'R'] });
+  await expect(page.locator('#i1_task')).toBeHidden();
+  await page.check('input[name="i_choice"][value="pod3"]');
+  await expect(page.locator('#i1_task')).toBeVisible();
   await expect(page.locator('#btn_check_i1')).toBeDisabled();
   await setCode(page, 'i_editor', starter({ 1: 'if distance >= 20:', 3: 'elif distance >= 50:' }));
   await expect(page.locator('#req_i_1 li:not(.req-note)')).toHaveClass([/req-pass/, /req-pass/]);
@@ -165,6 +179,29 @@ test('Investigate 1: swapping the numbers makes 30 print All clear', async ({ pa
   await page.check('input[name="i1_mcq"][value="option_c"]');
   await page.click('#btn_check_i1');
   await expect(page.locator('#qcard_i2_prompt')).toBeVisible({ timeout: 10000 });
+  // the pick is locked and stored: heating Pod 3 leaves Patel (Pod 5) critical
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('sz_choices')))).toMatchObject({ shield: 'pod3' });
+  await expect(page.locator('input[name="i_choice"][value="pod5"]')).toBeDisabled();
+  await expect(page.locator('#szCrewPods .crew-pod').nth(4)).toHaveClass(/critical/);
+});
+
+test('Investigate 1: the crisis report names who the heaters could not save', async ({ page }) => {
+  await page.addInitScript(p => localStorage.setItem('sz_story_' + p, '["intro","P","R"]'), PATH);
+  await openAt(page, {
+    currentStage: 'I', completedStages: ['P', 'R'], radio_i_choice: 'pod5',
+    i_editor: starter({ 1: 'if distance >= 20:', 3: 'elif distance >= 50:' }), radio_i1_mcq: 'option_c',
+  }, { story: true });
+  await runWith(page, 'I', 'i_editor', ['30']);
+  await expect(outputOf(page, 'i_editor')).toContainText('All clear', { timeout: 30000 });
+  await page.click('#btn_check_i1');
+  await expect(page.locator('#szOverlay')).toHaveClass(/open/, { timeout: 10000 });
+  await expect(page.locator('#szTitle')).toHaveText(/Two pods/);
+  await expect(page.locator('#szLogFull')).toContainText('get help to Chen');
+  await expect(page.locator('#szReadouts')).toContainText('Pod 3 · Chen');
+  await page.click('#szContinue');
+  await expect(page.locator('#szCrewPods .crew-pod').nth(2)).toHaveClass(/critical/);
+  // the Modify card names Chen as the one left in the Cryo Bay
+  await expect(page.locator('#m1_choice .sz-x').first()).toHaveText('Chen');
 });
 
 test('Investigate 2: two separate ifs print two messages for 85', async ({ page }) => {

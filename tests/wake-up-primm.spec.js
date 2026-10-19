@@ -9,12 +9,13 @@ import { test, expect } from '@playwright/test';
 const PATH = '/Y9/Python/L1_Python_Refresh/1_Wake_Up_PRIMM.html';
 const KEY  = 'primm_y9_l1_wake_up';
 
+// step=off shows each run at once instead of stepping through it, to keep the tests quick.
 async function openAt(page, state = {}, { story = false, reducedMotion = 'reduce' } = {}) {
   await page.emulateMedia({ reducedMotion });
   await page.addInitScript(([k, s]) => {
     if (!sessionStorage.getItem('seeded')) { localStorage.setItem(k, JSON.stringify(s)); sessionStorage.setItem('seeded', '1'); }
   }, [KEY, state]);
-  await page.goto(PATH + (story ? '' : '?story=off'));
+  await page.goto(PATH + '?step=off' + (story ? '' : '&story=off'));
   await expect(page.locator('#pyStatusText')).toHaveText(/ready/, { timeout: 60000 });
 }
 
@@ -130,7 +131,7 @@ test('Predict: the name and job the wrong way round gets an order hint', async (
 // ─── Investigate ─────────────────────────────────────────────────────────────
 
 test('Investigate step 1 is gated until the question text changes', async ({ page }) => {
-  await openAt(page, { currentStage: 'I', completedStages: ['P', 'R'] });
+  await openAt(page, { currentStage: 'I', completedStages: ['P', 'R'], radio_i_choice: 'silent' });
   await setCode(page, 'i_editor', STARTER.replace('Enter your job: ', 'What is your job? '));
   await expect(page.locator('#req_i_1 li:not(.req-note)').first()).toHaveClass(/req-pass/);
   await page.click('#stage-I button:has-text("Run code")');
@@ -139,6 +140,42 @@ test('Investigate step 1 is gated until the question text changes', async ({ pag
   await page.check('input[name="i1_mcq"][value="option_c"]');
   await page.click('#btn_check_i1');
   await expect(page.locator('#qcard_i2_prompt')).toBeVisible({ timeout: 10000 });
+});
+
+test('Investigate 1: the voice comes first, then locks and is stored when the step passes', async ({ page }) => {
+  await openAt(page, { currentStage: 'I', completedStages: ['P', 'R'],
+    i_editor: STARTER.replace('Enter your job: ', 'What is your job? '), radio_i1_mcq: 'option_c' });
+  await expect(page.locator('#i1_task')).toBeHidden();
+  await page.locator('#btn_check_i1').evaluate(b => { b.disabled = false; });
+  await page.click('#btn_check_i1');
+  await expect(page.locator('#qcard_i1')).toHaveClass(/error/);
+  await expect(page.locator('#qcard_i2_prompt')).toBeHidden();
+
+  await page.check('input[name="i_choice"][value="answer"]');
+  await expect(page.locator('#i1_task')).toBeVisible();
+  await page.click('#stage-I button:has-text("Run code")');
+  await answerPrompts(page, 'i_editor', ['Sam', 'Pilot']);
+  await expect(outputOf(page, 'i_editor')).toContainText('Checking in: Pilot Sam', { timeout: 30000 });
+  await page.click('#btn_check_i1');
+  await expect(page.locator('#qcard_i2_prompt')).toBeVisible({ timeout: 10000 });
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('sz_choices')))).toMatchObject({ voice: 'answer' });
+  await expect(page.locator('input[name="i_choice"][value="silent"]')).toBeDisabled();
+  // the door choice remembers that it knows you're in here
+  await expect(page.locator('#m1_choice_q')).toContainText('Hale’s voice says your name');
+});
+
+test('Investigate 1: the crisis report follows the voice choice', async ({ page }) => {
+  await page.addInitScript(p => localStorage.setItem('sz_story_' + p, '["intro","P","R"]'), PATH);
+  await openAt(page, { currentStage: 'I', completedStages: ['P', 'R'], radio_i_choice: 'silent',
+    i_editor: STARTER.replace('Enter your job: ', 'What is your job? '), radio_i1_mcq: 'option_c' }, { story: true });
+  await page.click('#stage-I button:has-text("Run code")');
+  await answerPrompts(page, 'i_editor', ['Sam', 'Pilot']);
+  await expect(outputOf(page, 'i_editor')).toContainText('Checking in: Pilot Sam', { timeout: 30000 });
+  await page.click('#btn_check_i1');
+  await expect(page.locator('#szOverlay')).toHaveClass(/open/, { timeout: 10000 });
+  await expect(page.locator('#szTitle')).toHaveText(/The voice/);
+  await expect(page.locator('#szLogFull')).toContainText('working its way round the station');
+  await expect(page.locator('#szReadouts')).toContainText('Location unknown');
 });
 
 test('Investigate: Run alone shows a cross for a change not yet made, then a tick — no MCQ needed', async ({ page }) => {
@@ -316,7 +353,7 @@ test('Make shows the link on to Life Support, and the extension completes the ac
   await expect(page.locator('#completionBanner')).toBeVisible();
   await expect(page.locator('body')).toHaveClass(/chapter-done/);
   // the link keeps the query string (?story=off here; ?courseId=… in Classroom)
-  await expect(page.locator('#nextActivityLink')).toHaveAttribute('href', '2_Life_Support_PRIMM.html?story=off');
+  await expect(page.locator('#nextActivityLink')).toHaveAttribute('href', '2_Life_Support_PRIMM.html?step=off&story=off');
 
   await setCode(page, 'm2_editor', [...make, 'status = input("Status: ")', 'print(name + " is " + status + " in " + room)'].join('\n'));
   await page.click('#btn_check_m2');

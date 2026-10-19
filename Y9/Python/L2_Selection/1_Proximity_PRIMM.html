@@ -381,9 +381,12 @@ color:  teal
   #i_steps { position: sticky; top: calc(var(--cr-banner-h, 0px) + 10px); z-index: 6; max-height: 55vh; overflow-y: auto; }
   @media (max-height: 640px), (max-width: 640px) { #i_steps { position: static; max-height: none; overflow: visible; } }
   /* Once pinned (.is-stuck, set by syncInvSticky), only the requirement list shows: the step
-     heading, the grey notes and any "Remind me" card hide, so the card stays small. */
+     heading, the grey notes and any "Remind me" card hide, so the card stays small. A "Your
+     call" card stays until an option is picked, and a list inside a wrapper (#i1_task) shows. */
   #i_steps.is-stuck .q-card { padding-top: 0.55rem; padding-bottom: 0.55rem; }
-  #i_steps.is-stuck .q-card > :not(.req-list),
+  #i_steps.is-stuck .q-card > :not(.req-list):not(:has(.req-list)):not(.sz-choice),
+  #i_steps.is-stuck .q-card > :has(> .req-list) > :not(.req-list),
+  #i_steps.is-stuck .q-card > .sz-choice:has(input:checked),
   #i_steps.is-stuck .q-card:not(:has(.req-list)),
   #i_steps.is-stuck .req-list li.req-note { display: none; }
   #i_steps.is-stuck .req-list { margin: 0; }
@@ -1402,12 +1405,26 @@ color:  teal
   <div id="i_steps">
 
     <div class="q-card" id="qcard_i1_prompt" style="border-left-color:var(--stage-i)">
+      <!-- STATION ZERO crisis: a plain pick with no code. It locks when step 1 passes (or is
+           skipped), then goes to the story layer (StationZero.choose('shield')) and the short
+           I1 report plays. The step's task appears once a pod is picked. -->
+      <div class="sz-choice" id="i_choice" role="radiogroup" aria-labelledby="i_choice_q">
+        <p class="sz-choice-kicker">Your call</p>
+        <p class="sz-choice-q" id="i_choice_q">It went past the Cryo Bay on its way here, and it knows the door codes. Frost is spreading across two pods, and the heaters can only save one.</p>
+        <div class="sz-choice-opts">
+          <label class="sz-opt"><input type="radio" name="i_choice" value="pod3" onchange="pickCrisis()"><span><b>Heat Pod 3 · Chen</b><small id="i_choice_pod3">Chen will be safe. Patel’s pod freezes.</small></span></label>
+          <label class="sz-opt"><input type="radio" name="i_choice" value="pod5" onchange="pickCrisis()"><span><b>Heat Pod 5 · Patel</b><small id="i_choice_pod5">Patel will be safe. Chen’s pod freezes.</small></span></label>
+        </div>
+        <p class="sz-choice-note">Either way, someone is in danger. The rest of this chapter is about getting them out. Your choice changes the story, not your score.</p>
+      </div>
+      <div id="i1_task">
       <label class="q-label"><span class="q-num" style="background:var(--stage-i)">1</span> Does the order of the conditions matter? In the editor below:</label>
       <ul class="req-list" id="req_i_1">
         <li><span>1</span><span class="req-text">On line 2, change <code>50</code> to <code>20</code>, so it reads <code>if distance &gt;= 20:</code></span></li>
         <li><span>2</span><span class="req-text">On line 4, change <code>20</code> to <code>50</code>, so it reads <code>elif distance &gt;= 50:</code></span></li>
         <li class="req-note">Press <strong>▶ Run code</strong> and type <strong>30</strong>. Is the message right for something 30 metres away?</li>
       </ul>
+      </div>
     </div>
 
     <div class="q-card step-hidden" id="qcard_i2_prompt" style="border-left-color:var(--stage-i)">
@@ -1443,6 +1460,15 @@ color:  teal
         <li class="req-note">Type any distance. Python stops with a red <strong>TypeError</strong>: that's expected. Read it, or click <strong>💡 Get help</strong> for a plain-English hint.</li>
         <li><span>2</span><span class="req-text"><strong>Fix it</strong>: put <code>int(</code> back round <code>input(</code>, so line 1 reads <code>distance = int(input("Distance to target in metres: "))</code><br>Then press <strong>▶ Run code</strong> again until it works.</span></li>
       </ul>
+      <details class="remind" style="margin:0.6rem 0 0">
+        <summary>Remind me: <code>input()</code> and <code>int()</code></summary>
+        <ul>
+          <li><code>input()</code> always gives back <strong>text</strong>, even when you type a number: typing 30 stores <code>"30"</code>.</li>
+          <li>Python can't compare text with a number, so <code>"30" &gt;= 50</code> is a <strong>TypeError</strong>.</li>
+          <li><code>int()</code> turns the text into a whole number: <code>int("30")</code> is <code>30</code>, so <code>30 &gt;= 50</code> works.</li>
+          <li><code>int()</code> only works on digits. Typing <code>thirty</code> gives a <strong>ValueError</strong>: Python can't turn that word into a number.</li>
+        </ul>
+      </details>
     </div>
   </div>
 
@@ -1558,8 +1584,8 @@ color:  teal
         <p class="sz-choice-kicker">Your call</p>
         <p class="sz-choice-q" id="m1_choice_q">Hale's tag is moving along the ring, between you and the Cryo Bay. The sensor can lock down one room the moment the target gets close.</p>
         <div class="sz-choice-opts">
-          <label class="sz-opt"><input type="radio" name="m1_choice" value="cryo" onchange="pickChoice()"><span><b>Lock down the Cryo Bay</b><small>The sleeping crew are sealed in safe. But Sensor Ops, and you, stay open.</small></span></label>
-          <label class="sz-opt"><input type="radio" name="m1_choice" value="sensors" onchange="pickChoice()"><span><b>Lock down Sensor Ops</b><small>You and the sensors are sealed in safe. But the Cryo Bay is left open.</small></span></label>
+          <label class="sz-opt"><input type="radio" name="m1_choice" value="cryo" onchange="pickChoice()"><span><b>Lock down the Cryo Bay</b><small>The sleeping crew are sealed in safe, <span class="sz-x">Chen</span> too. But Sensor Ops, and you, stay open.</small></span></label>
+          <label class="sz-opt"><input type="radio" name="m1_choice" value="sensors" onchange="pickChoice()"><span><b>Lock down Sensor Ops</b><small>You and the sensors are sealed in safe. But the Cryo Bay is left open, with <span class="sz-x">Chen</span> inside.</small></span></label>
         </div>
         <p class="sz-choice-note">There’s no right answer. Both programs pass, and your choice changes the story, not your score.</p>
       </div>
@@ -1838,12 +1864,14 @@ else:
    as window.StationZero?.… so the page still works if this block is removed:
      start()      — end of the DOMContentLoaded init
      beat(stage, { feed }) — completeStage() (first completion only) and checkMake()
-                  (first pass); feed = what that stage's final action printed, for the live feed
+                  (first pass); feed = what that stage's final action printed, for the live feed.
+                  Also beat('I1'), the short crisis report, when Investigate step 1 passes
      showMap()    — the header's Station map button
    plus two for the Station Zero choices:
-     choose(key, value) — checkMod() when Modification 1 passes (CHOICE in the module), and
-                  checkMake() when Make first passes (MAKE_CHOICE), just before beat('M2')
-     choices()    — a copy of every choice so far (Make's card reads Wake Up's from it)
+     choose(key, value) — Investigate step 1 passing (CRISIS in the module), just before
+                  beat('I1'); checkMod() when Modification 1 passes (CHOICE); and checkMake()
+                  when Make first passes (MAKE_CHOICE), just before beat('M2')
+     choices()    — a copy of every choice so far (the choice cards read earlier ones from it)
    ════════════════════════════════════════════════════════════════════════════ */
 (function () {
   'use strict';
@@ -1881,73 +1909,139 @@ else:
        seen = the reports already closed, so gate each change on the report that reveals it.
      Optional per beat: variant + variants — a beat that depends on a Station Zero choice
        (a choice the student made in Modify 1 or Make, kept for the whole unit in localStorage
-       'sz_choices': { door, lock (Wake Up), air, transfer (Life Support),
-       lockdown: 'cryo' | 'sensors', power: 'sensors' | 'pods' (this lesson) }).
+       'sz_choices': { door, lock (Wake Up), air, transfer (Life Support: optional; only
+       transfer: 'pod5' is read here, as it saves a critical Patel), shield: 'pod3' | 'pod5', lockdown: 'cryo' | 'sensors', power: 'sensors' | 'pods'
+       (this lesson) }).
          variant:  choices => the name of one of the variants (handle a missing choice)
          variants: { name: { …beat fields } } — they replace the beat's own fields
      Optional on the intro beat: previously — a 1–2 sentence "Previously…" recap of the
        chapters before, so a student who missed a lesson (or the week) can follow. Use
        variants to make it follow the student's choices.
      ═══════════════════════════════════════════════════════════════════════ */
-  // ── Chapter 1's choices (copied from Life Support's story script — keep them in step) ──
-  // A missing choice falls back to the safe option or the better call, except Patel's fate below.
+  // ── Chapter 1's choices. A missing choice falls back to the safe option or the better call.
   const door = c => c.door === 'open' ? 'open' : 'sealed';
   const lock = c => c.lock === 'pod5' || c.lock === 'bay' ? c.lock : door(c) === 'open' ? 'pod5' : 'bay';
-  const air = c => c.air === 'low' ? 'low' : 'full';
-  const shutIn = c => door(c) === 'open' && lock(c) === 'bay';
-  const transfer = c => c.transfer === 'pod5' || c.transfer === 'suit' ? c.transfer : shutIn(c) || air(c) === 'low' ? 'pod5' : 'suit';
-  // Pod 5 (Patel) after Chapter 1. If Wake Up shut the thing in with the crew, only Life Support's
-  // canisters (transfer: pod5) saved him, and a missing transfer counts as "not saved", so a student
-  // who never finished Life Support learns here that Patel died. Otherwise, 40 litres and the
-  // canisters to your suit left him critical. Nothing in this chapter changes Patel.
-  const fate = c => shutIn(c) ? (c.transfer === 'pod5' ? 'ok' : 'dead')
-    : air(c) === 'low' && transfer(c) !== 'pod5' ? 'critical' : 'ok';
+  // Patel starts this chapter critical if Wake Up opened the door and then locked the bay with
+  // it inside, unless the optional Life Support round sent its canisters to Pod 5 (that round
+  // can only help, so it's the one Life Support choice read here).
+  const shutIn = c => door(c) === 'open' && lock(c) === 'bay' && c.transfer !== 'pod5';
 
   // ── This chapter's choices ──
-  // Choice 1 (Modify 1): which room the sensor locks down. There's no safe option: the Cryo Bay
-  // costs the sensors, Sensor Ops costs Chen. A missing choice means the Cryo Bay.
+  // The crisis (Investigate step 1): frost is spreading across Pods 3 and 5, and the heaters can
+  // save one. Whoever isn't heated is X, critical for the rest of the chapter. A missing choice
+  // heats Pod 5 (so Chen is X). If Wake Up left Patel critical, heating Pod 5 saves him.
+  const shield = c => c.shield === 'pod3' ? 'pod3' : 'pod5';
+  const X = c => shield(c) === 'pod5' ? { pod: 3, name: 'Chen' } : { pod: 5, name: 'Patel' };
+  const SAFE = c => shield(c) === 'pod5' ? { pod: 5, name: 'Patel' } : { pod: 3, name: 'Chen' };
+  // Choice 1 (Modify 1): which room the sensor locks down. The Cryo Bay seals X in, safe from
+  // it, but costs the sensors; Sensor Ops keeps the sensors but leaves X open to it. A missing
+  // choice means the Cryo Bay.
   // Choice 2 (Make): where the last of the power goes. The better call recovers choice 1: the
-  // sensors after a Cryo Bay lockdown (the pods were never touched), the pods after a Sensor Ops
-  // lockdown (Chen is critical). A missing choice means the better call.
+  // sensors after a Cryo Bay lockdown (X is warming anyway), the pods after a Sensor Ops lockdown
+  // (X is failing). A missing choice means the better call.
   const lockdown = c => c.lockdown === 'sensors' ? 'sensors' : 'cryo';
   const power = c => c.power === 'sensors' || c.power === 'pods' ? c.power : lockdown(c) === 'cryo' ? 'sensors' : 'pods';
-  const chenCritical = c => lockdown(c) === 'sensors' && power(c) !== 'pods';
+  const xCritical = c => lockdown(c) === 'sensors' && power(c) !== 'pods';
   const sensorsLost = c => lockdown(c) === 'cryo' && power(c) === 'pods';
 
-  // "Crew alive" readout: Hale is gone; Patel follows Chapter 1; Chen can be critical here.
-  function crewAlive(p, chenCrit) {
-    const crit = (p === 'critical' ? 1 : 0) + (chenCrit ? 1 : 0);
-    return {
-      label: 'Crew alive',
-      value: (p === 'dead' ? '3 of 5' : '4 of 5') + (crit ? ` · ${crit} critical` : ''),
-      level: p === 'dead' || crit > 1 ? 'danger' : crit ? 'warn' : 'ok',
+  // The stake readout: X's heart rate, worse at each report until the cliffhanger settles it.
+  const stake = (x, value, level = 'danger') => ({ label: `Pod ${x.pod} · ${x.name}`, value, level });
+
+  // "Crew alive" readout: Hale is gone; nobody else dies in this chapter.
+  const crewAlive = crit => ({ label: 'Crew alive', value: '4 of 5' + (crit ? ` · ${crit} critical` : ''), level: crit ? 'warn' : 'ok' });
+
+  // The "Previously…" recap retells all of Wake Up (most students never reached its log or its
+  // cliffhanger), says life support is on reserve tanks, and gives the reason to come here.
+  const HALE_RECAP = "Engineer Hale froze himself in Pod 2 with something from the planet inside him. His heart stopped, the pod opened from the inside, and his last log ended: “don’t trust WARD—”. Now his crew tag walks the station, and the bio-scan says it isn’t human.";
+  const WHY_HERE = " Life support is limping along on reserve tanks. Hale’s tag was heading for Sensor Ops: get the proximity sensors working, and you’ll know where it is.";
+  const INTRO_VARIANTS = {
+    ok: { previously: HALE_RECAP + WHY_HERE, readouts: [crewAlive(0)] },
+    critical: { previously: HALE_RECAP + " You locked it in the Cryo Bay with the crew, and Pod 5 · Patel is critical." + WHY_HERE, readouts: [crewAlive(1)] },
+  };
+  for (const v of Object.values(INTRO_VARIANTS)) {
+    v.readouts.push(
+      { label: 'Life support', value: 'Reserve tanks', level: 'warn' },
+      { label: 'Proximity sensors', value: 'Offline', level: 'warn' },
+      { label: 'Motion', value: 'No data', level: 'warn' },
+    );
+  }
+
+  // The crisis report (I1): what the heaters saved, and who they couldn't.
+  const I1_VARIANTS = {};
+  for (const s of ['pod3', 'pod5']) for (const wasCrit of [false, true]) {
+    const c = { shield: s }, x = X(c), safe = SAFE(c);
+    const saved = safe.name === 'Patel' && wasCrit
+      ? 'The heaters swing to Pod 5. The frost on Patel’s glass melts, and the heart rate that has been falling since you left the Cryo Bay starts to climb.'
+      : `The heaters swing to Pod ${safe.pod}, and the frost on ${safe.name}’s glass melts away.`;
+    const lost = x.name === 'Patel' && wasCrit
+      ? ' Pod 5 gets nothing, and Patel, already critical, gets worse.'
+      : ` Across the bay, Pod ${x.pod} ices over, and ${x.name}’s heart rate starts to fall.`;
+    I1_VARIANTS[`${s}_${wasCrit}`] = {
+      log: saved + lost + ` You have to get help to ${x.name}.`,
+      readouts: [
+        stake(x, '34 bpm · falling'),
+        { label: `Pod ${safe.pod} · ${safe.name}`, value: 'Warming', level: 'ok' },
+      ],
+    };
+  }
+  // End of Investigate (I): the stake readout carries on falling.
+  const I_VARIANTS = {};
+  for (const s of ['pod3', 'pod5']) {
+    I_VARIANTS[s] = { readouts: [
+      { label: 'Proximity sensors', value: 'Calibrated', level: 'ok' },
+      { label: 'Contact', value: 'Life Support', level: 'danger' },
+      stake(X({ shield: s }), '29 bpm · falling'),
+    ] };
+  }
+
+  // After choice 1 the cost is shown, but not settled: Make's choice 2 can still recover it.
+  const M1_VARIANTS = {};
+  for (const s of ['pod3', 'pod5']) {
+    const x = X({ shield: s });
+    M1_VARIANTS[`cryo_${s}`] = {
+      impact: {
+        scene: 'tracker', device: 'Lockdown relay', hit: 'lockdown',
+        on: 'cryo', onLbl: 'CRYO BAY: LOCKED DOWN', tgt: 'sensors', tgtLbl: 'SENSOR OPS: MOTION', bioLbl: 'RANGE: 0 M',
+        caption: "Your program sent the lockdown to the Cryo Bay, and its doors sealed round the sleeping crew. Then the blip turned towards Sensor Ops, where you are.",
+        fallback: ['Distance to target in metres: 5', 'IT’S RIGHT BEHIND YOU', 'LOCKDOWN: CRYO BAY', 'Scan complete', 'Send alert to the crew? (y/n) y', 'Alert sent'],
+      },
+      cam: 'cryoDoor',
+      log: `You lock down the Cryo Bay, and its doors seal round the sleeping crew, ${x.name} too. Then the Sensor Ops door slides open, and you hide under the console while something walks slowly through the room. When it leaves, the sensor array is smashed. In the sealed bay, Pod ${x.pod} is slowly warming.`,
+      readouts: [
+        { label: 'Cryo Bay', value: 'Locked down', level: 'ok' },
+        { label: 'Sensor array', value: 'Smashed', level: 'danger' },
+        stake(x, '30 bpm · holding', 'warn'),
+        { label: 'Motion', value: 'Leaving', level: 'warn' },
+      ],
+      map: { you: 'sensors', objective: 'sensors', threat: 'corridor', rooms: { cryo: 'sealed', life: 'unstable', sensors: 'unstable', core: 'sealed' } },
+    };
+    M1_VARIANTS[`sensors_${s}`] = {
+      impact: {
+        scene: 'tracker', device: 'Lockdown relay', hit: 'lockdown',
+        on: 'sensors', onLbl: 'SENSOR OPS: LOCKED DOWN', tgt: 'cryo', tgtLbl: 'CRYO BAY: MOTION', bioLbl: `POD ${x.pod}: ALARM`,
+        caption: "Your program sent the lockdown to Sensor Ops, and the door sealed with you inside. Then the blip turned away, towards the Cryo Bay.",
+        fallback: ['Distance to target in metres: 5', 'IT’S RIGHT BEHIND YOU', 'LOCKDOWN: SENSOR OPS', 'Scan complete', 'Send alert to the crew? (y/n) y', 'Alert sent'],
+      },
+      cam: 'opsDoor',
+      log: `You lock down Sensor Ops, and a second later something hits the door, hard. Then the footsteps go away, towards the Cryo Bay, where the door is still open. Pod ${x.pod}’s alarm starts screaming: ${x.name}’s heart rate is falling fast.`,
+      readouts: [
+        { label: 'Sensor Ops', value: 'Locked down', level: 'ok' },
+        { label: 'Proximity sensors', value: 'Online', level: 'ok' },
+        stake(x, '24 bpm · falling'),
+        { label: 'Motion', value: 'Cryo Bay', level: 'danger' },
+      ],
+      map: { you: 'sensors', objective: 'sensors', threat: 'cryo', rooms: { cryo: 'online', life: 'unstable', sensors: 'sealed', core: 'sealed' } },
     };
   }
 
-  // The "Previously…" recap names who is alive, critical or dead after Chapter 1.
-  const HALE_RECAP = "Engineer Hale died three days ago with something from the planet inside him, and now his crew tag walks the station: the bio-scan says not human.";
-  const INTRO_VARIANTS = {
-    ok: { previously: HALE_RECAP + " You got life support running and the sleeping crew are stable, but then the motion tracker pinged Sensor Ops." },
-    critical: { previously: HALE_RECAP + " You got life support running, but Pod 5 is on minimum power and Patel is critical. Then the motion tracker pinged Sensor Ops." },
-    dead: { previously: HALE_RECAP + " You got life support running, but too late for Pod 5: Patel’s heart monitor went flat. Then the motion tracker pinged Sensor Ops." },
-  };
-  for (const [p, v] of Object.entries(INTRO_VARIANTS)) {
-    v.readouts = [
-      crewAlive(p, false),
-      { label: 'Life support', value: 'Online', level: 'ok' },
-      { label: 'Proximity sensors', value: 'Offline', level: 'warn' },
-      { label: 'Motion', value: 'No data', level: 'warn' },
-    ];
-  }
-
-  // The cliffhanger (after Make) settles both choices. Every path ends the same way: one frame
-  // of a figure in Hale's overalls, then WARDEN locks the airlock (Lesson 3, "Locked In").
+  // The cliffhanger (after Make) settles both choices, and X. Every path ends the same way: one
+  // frame of a figure in Hale's overalls, then WARDEN locks the airlock (Lesson 3, "Locked In").
   const AIRLOCK = 'Then every airlock light turns red: WARDEN has locked the airlock and changed the code.';
   const POWER_LOG = {
-    cryo_sensors: "You restart the sensors on backup power, and the smashed array flickers back to life. For one frame it catches a figure in Hale’s overalls in the ring corridor, moving wrong.",
-    cryo_pods: "The power reaches the pods, but they were never damaged, and the smashed sensors stay dark. The last camera still working catches one frame: a figure in Hale’s overalls, moving wrong.",
-    sensors_pods: "Power floods the Cryo Bay, and Chen’s vitals settle. On the proximity screen, for one frame, a figure in Hale’s overalls walks past the Cryo Bay door, moving wrong.",
-    sensors_sensors: "The sensors get the power, so you can watch it, but nothing reaches Pod 3, and Chen’s alarm keeps sounding. For one frame the screen shows a figure in Hale’s overalls, moving wrong.",
+    cryo_sensors: x => `You restart the sensors on backup power, and the smashed array flickers back to life. In the sealed Cryo Bay, ${x.name}’s pod has warmed through, and the heart rate is steady again. For one frame the array catches a figure in Hale’s overalls in the ring corridor, moving wrong.`,
+    cryo_pods: x => `The power reaches the pods, and ${x.name}’s heart rate settles, but the smashed sensors stay dark. The last camera still working catches one frame: a figure in Hale’s overalls, moving wrong.`,
+    sensors_pods: x => `Power floods the Cryo Bay, and ${x.name}’s heart rate climbs back up. On the proximity screen, for one frame, a figure in Hale’s overalls walks past the Cryo Bay door, moving wrong.`,
+    sensors_sensors: x => `The sensors get the power, so you can watch it, but nothing reaches Pod ${x.pod}, and ${x.name}’s alarm keeps sounding. For one frame the screen shows a figure in Hale’s overalls, moving wrong.`,
   };
   const SENSOR_STATE = {
     cryo_sensors: { label: 'Proximity sensors', value: 'Backup power', level: 'warn' },
@@ -1956,15 +2050,15 @@ else:
     sensors_sensors: { label: 'Proximity sensors', value: 'Online', level: 'ok' },
   };
   const M2_VARIANTS = {};
-  for (const l of ['cryo', 'sensors']) for (const pw of ['sensors', 'pods']) for (const p of ['ok', 'critical', 'dead']) {
-    const c = { lockdown: l, power: pw };
-    M2_VARIANTS[`${l}_${pw}_${p}`] = {
-      log: POWER_LOG[`${l}_${pw}`] + ' ' + AIRLOCK,
+  for (const l of ['cryo', 'sensors']) for (const pw of ['sensors', 'pods']) for (const s of ['pod3', 'pod5']) {
+    const c = { lockdown: l, power: pw, shield: s }, x = X(c), crit = xCritical(c);
+    M2_VARIANTS[`${l}_${pw}_${s}`] = {
+      log: POWER_LOG[`${l}_${pw}`](x) + ' ' + AIRLOCK,
       readouts: [
         SENSOR_STATE[`${l}_${pw}`],
-        crewAlive(p, chenCritical(c)),
+        crit ? stake(x, '22 bpm · critical') : stake(x, 'Stable', 'ok'),
+        crewAlive(crit ? 1 : 0),
         { label: 'Airlock', value: 'Locked by WARDEN', level: 'danger' },
-        { label: 'Motion', value: 'Airlock', level: 'danger' },
       ],
       impact: {
         scene: 'tracker', device: 'Power relay', hit: 'power',
@@ -1977,7 +2071,7 @@ else:
       },
       map: {
         you: 'sensors', objective: 'airlock', threat: 'airlock',
-        rooms: { cryo: 'online', life: 'online', sensors: sensorsLost(c) ? 'unstable' : 'online', core: 'sealed', airlock: 'sealed' },
+        rooms: { cryo: 'online', life: 'unstable', sensors: sensorsLost(c) ? 'unstable' : 'online', core: 'sealed', airlock: 'sealed' },
       },
     };
   }
@@ -1998,23 +2092,23 @@ else:
     chapter:   'Chapter 2 — Proximity',
     topic:     'Selection',
     objective: 'Restore the proximity sensors',
-    // Header crew readout. Hale has been compromised since Wake Up; Patel follows Chapter 1.
-    // A Sensor Ops lockdown puts Chen in danger (shown once the report after Modify closes);
-    // the cliffhanger (M2) settles it: power to the pods saves Chen.
+    // Header crew readout. Hale has been compromised since Wake Up. Until the crisis (I1), Patel
+    // is critical only if Wake Up locked it in with him. From the crisis on, X (the pod the
+    // heaters skipped) is critical, and the other is stable; the cliffhanger (M2) settles X.
     crew: (c, seen) => {
-      const p = fate(c);
-      const out = { 2: 'compromised', ...(p === 'ok' ? {} : { 5: p }) };
-      if (lockdown(c) === 'sensors' && seen.includes('M1') && (!seen.includes('M2') || chenCritical(c))) out[3] = 'critical';
+      const out = { 2: 'compromised' };
+      if (!['I1', 'I', 'M1', 'M2'].some(k => seen.includes(k))) { if (shutIn(c)) out[5] = 'critical'; return out; }
+      if (!seen.includes('M2') || xCritical(c)) out[X(c).pod] = 'critical';
       return out;
     },
     beats: {
       intro: {
-        variant: c => fate(c),
+        variant: c => shutIn(c) ? 'critical' : 'ok',
         variants: INTRO_VARIANTS,
         headline: 'Chapter 2 — Proximity',
         time: '04:31',
         log: "You reach Sensor Ops. The room is empty, but there’s frost on the floor, and a vent cover hangs open above the console. The proximity sensors that could tell you how close it is are offline, and their program is corrupted.",
-        map: { you: 'sensors', objective: 'sensors', threat: 'vents', rooms: { cryo: 'online', life: 'online', core: 'sealed' } },
+        map: { you: 'sensors', objective: 'sensors', threat: 'vents', rooms: { cryo: 'online', life: 'unstable', core: 'sealed' } },
       },
       P: {
         impact: {
@@ -2029,7 +2123,7 @@ else:
           { label: 'Proximity sensors', value: 'Test only', level: 'warn' },
           { label: 'WARDEN', value: 'Watching', level: 'warn' },
         ],
-        map: { you: 'sensors', objective: 'sensors', threat: null, rooms: { cryo: 'online', life: 'online', core: 'sealed' } },
+        map: { you: 'sensors', objective: 'sensors', threat: null, rooms: { cryo: 'online', life: 'unstable', core: 'sealed' } },
       },
       R: {
         impact: {
@@ -2045,9 +2139,19 @@ else:
           { label: 'Contacts', value: '1', level: 'danger' },
           { label: 'Range', value: 'Edge of scan', level: 'warn' },
         ],
-        map: { you: 'sensors', objective: 'sensors', threat: 'corridor', rooms: { cryo: 'online', life: 'online', sensors: 'unstable', core: 'sealed' } },
+        map: { you: 'sensors', objective: 'sensors', threat: 'corridor', rooms: { cryo: 'online', life: 'unstable', sensors: 'unstable', core: 'sealed' } },
+      },
+      // The crisis (Investigate step 1): a short report, no live feed or camera still.
+      I1: {
+        variant: c => `${shield(c)}_${shutIn(c)}`,
+        variants: I1_VARIANTS,
+        headline: 'Two pods',
+        time: '04:50',
+        map: { you: 'sensors', objective: 'sensors', threat: 'corridor', rooms: { cryo: 'online', life: 'unstable', sensors: 'unstable', core: 'sealed' } },
       },
       I: {
+        variant: c => shield(c),
+        variants: I_VARIANTS,
         impact: {
           scene: 'log', device: 'Sensor calibration',
           caption: "With int() back, the program could compare the distance with a number, and the sensor array finished calibrating.",
@@ -2056,58 +2160,18 @@ else:
         headline: 'Calibrated',
         time: '04:58',
         log: "Repairing the storm damage has shown you how this system breaks. The calibrated array finds the blip again, outside Life Support. It moves along the ring, slow and steady, the way a person walks.",
-        readouts: [
-          { label: 'Proximity sensors', value: 'Calibrated', level: 'ok' },
-          { label: 'Contact', value: 'Life Support', level: 'danger' },
-          { label: 'Crew tag', value: 'HALE', level: 'danger' },
-        ],
-        map: { you: 'sensors', objective: 'sensors', threat: 'life', rooms: { cryo: 'online', life: 'online', sensors: 'unstable', core: 'sealed' } },
+        map: { you: 'sensors', objective: 'sensors', threat: 'life', rooms: { cryo: 'online', life: 'unstable', sensors: 'unstable', core: 'sealed' } },
       },
       // After choice 1 the cost is shown, but not settled: Make's choice 2 can still recover it,
       // and the cliffhanger (M2) settles it.
       M1: {
-        variant: c => lockdown(c),
-        variants: {
-          cryo: {
-            impact: {
-              scene: 'tracker', device: 'Lockdown relay', hit: 'lockdown',
-              on: 'cryo', onLbl: 'CRYO BAY: LOCKED DOWN', tgt: 'sensors', tgtLbl: 'SENSOR OPS: MOTION', bioLbl: 'RANGE: 0 M',
-              caption: "Your program sent the lockdown to the Cryo Bay, and its doors sealed round the sleeping crew. Then the blip turned towards Sensor Ops, where you are.",
-              fallback: ['Distance to target in metres: 5', 'IT’S RIGHT BEHIND YOU', 'LOCKDOWN: CRYO BAY', 'Scan complete', 'Send alert to the crew? (y/n) y', 'Alert sent'],
-            },
-            cam: 'cryoDoor',
-            log: "You lock down the Cryo Bay, and its doors seal round the sleeping crew. Then the Sensor Ops door slides open, and you hide under the console while something walks slowly through the room. When it leaves, the sensor array is smashed, but it never went near the pods.",
-            readouts: [
-              { label: 'Cryo Bay', value: 'Locked down', level: 'ok' },
-              { label: 'Sensor array', value: 'Smashed', level: 'danger' },
-              { label: 'Cryo pods', value: 'Untouched', level: 'ok' },
-              { label: 'Motion', value: 'Leaving', level: 'warn' },
-            ],
-            map: { you: 'sensors', objective: 'sensors', threat: 'corridor', rooms: { cryo: 'sealed', life: 'online', sensors: 'unstable', core: 'sealed' } },
-          },
-          sensors: {
-            impact: {
-              scene: 'tracker', device: 'Lockdown relay', hit: 'lockdown',
-              on: 'sensors', onLbl: 'SENSOR OPS: LOCKED DOWN', tgt: 'cryo', tgtLbl: 'CRYO BAY: MOTION', bioLbl: 'POD 3: ALARM',
-              caption: "Your program sent the lockdown to Sensor Ops, and the door sealed with you inside. Then the blip turned away, towards the Cryo Bay.",
-              fallback: ['Distance to target in metres: 5', 'IT’S RIGHT BEHIND YOU', 'LOCKDOWN: SENSOR OPS', 'Scan complete', 'Send alert to the crew? (y/n) y', 'Alert sent'],
-            },
-            cam: 'opsDoor',
-            log: "You lock down Sensor Ops, and a second later something hits the door, hard. Then the footsteps go away, towards the Cryo Bay, where the door is still open. Pod 3’s alarm starts screaming: Chen is critical.",
-            readouts: [
-              { label: 'Sensor Ops', value: 'Locked down', level: 'ok' },
-              { label: 'Proximity sensors', value: 'Online', level: 'ok' },
-              { label: 'Pod 3 · Chen', value: 'Critical', level: 'danger' },
-              { label: 'Motion', value: 'Cryo Bay', level: 'danger' },
-            ],
-            map: { you: 'sensors', objective: 'sensors', threat: 'cryo', rooms: { cryo: 'online', life: 'online', sensors: 'sealed', core: 'sealed' } },
-          },
-        },
+        variant: c => `${lockdown(c)}_${shield(c)}`,
+        variants: M1_VARIANTS,
         headline: 'Lockdown',
         time: '05:10',
       },
       M2: {
-        variant: c => `${lockdown(c)}_${power(c)}_${fate(c)}`,
+        variant: c => `${lockdown(c)}_${power(c)}_${shield(c)}`,
         variants: M2_VARIANTS,
         headline: 'One frame',
         time: '05:22',
@@ -2145,9 +2209,9 @@ else:
   const LEVEL_SR    = { ok: 'normal', warn: 'warning', danger: 'critical' };
   const CTA = {
     intro: 'Begin: Predict →', P: 'Continue to Run →', R: 'Continue to Investigate →',
-    I: 'Continue to Modify →', M1: 'Continue to Make →', M2: 'Continue →',
+    I1: 'Back to Investigate →', I: 'Continue to Modify →', M1: 'Continue to Make →', M2: 'Continue →',
   };
-  const ORDER = ['intro', 'P', 'R', 'I', 'M1', 'M2'];
+  const ORDER = ['intro', 'P', 'R', 'I1', 'I', 'M1', 'M2'];
 
   const KEY = 'sz_story_' + location.pathname;
   const storyOff = new URLSearchParams(location.search).get('story') === 'off';
@@ -2171,7 +2235,7 @@ else:
     if (!raw || typeof raw !== 'object') return out;
     const at = raw._at && typeof raw._at === 'object' ? raw._at : {};
     for (const [k, v] of Object.entries(raw)) {
-      if (k === '_at' || !/^[a-z]\w{0,19}$/.test(k) || typeof v !== 'string' || !/^[a-z_]{1,20}$/.test(v)) continue;
+      if (k === '_at' || !/^[a-z]\w{0,19}$/.test(k) || typeof v !== 'string' || !/^[a-z][a-z0-9_]{0,19}$/.test(v)) continue;
       out[k] = v;
       out._at[k] = Number.isFinite(at[k]) ? at[k] : 0;
     }
@@ -2901,7 +2965,7 @@ const RUN_DISTANCES = [85, 20, 5];
 
 // localStorage field lists
 const TEXT_FIELDS  = ['p_text1', 'r_editor', 'r1', 'i_editor', 'i2', 'm1_editor', 'm2_editor'];
-const RADIO_GROUPS = ['m1_choice', 'm2_choice', 'p_mcq1', 'p_mcq2', 'p_mcq3', 'p_mcq4', 'i1_mcq', 'i3_mcq', 'i4_mcq'];
+const RADIO_GROUPS = ['i_choice', 'm1_choice', 'm2_choice', 'p_mcq1', 'p_mcq2', 'p_mcq3', 'p_mcq4', 'i1_mcq', 'i3_mcq', 'i4_mcq'];
 
 
 // ═══════════════════════════════════════════════════════
@@ -2936,14 +3000,14 @@ const CHOICE = {
 
 // The second choice is on Make, and reacts to the first: a Cryo Bay lockdown left the sensors
 // smashed but the pods untouched, so the sensors are the better call; a Sensor Ops lockdown let
-// it into the Cryo Bay and left Chen critical, so the pods are. The card's report line repeats
+// it into the Cryo Bay with X (the crew member the crisis left critical), so the pods are. The card's report line repeats
 // the deciding fact from the report after Modify.
 const MAKE_CHOICE = {
   story: 'power',   // stored as sz_choices.power
   req: c => `Add one more line at the very end, not indented, that prints <code>${POWER_CHOICES[c]}</code>`,
-  report: lockdown => '<b>Last report:</b> ' + (lockdown === 'sensors'
-    ? 'it got into the Cryo Bay, and Pod 3 · Chen is critical. The sensors are still working.'
-    : 'the sensor array is smashed, but it never went near the pods: they don’t need the power.'),
+  report: (lockdown, x) => '<b>Last report:</b> ' + (lockdown === 'sensors'
+    ? `it got into the Cryo Bay, and Pod ${x.pod} · ${x.name} is critical. The sensors are still working.`
+    : `the sensor array is smashed, but ${x.name}’s pod is sealed in and warming by itself: the pods don’t need the power.`),
 };
 
 
@@ -3178,6 +3242,7 @@ function updateStepVisibility() {
   if (skipIWrap) skipIWrap.style.display = !iEditor?.readOnly && (attemptCounts['i' + stepI] || 0) >= 3 ? '' : 'none';
   syncBugLineLabel();   // standard bug step — keep the "line N" label current, no planting
   const m1Revisiting = stepM1 < maxStepM1;
+  renderCrisis();
   renderChoice();
   for (let i = 1; i <= STEP_COUNT_M1; i++) {
     const step = document.getElementById('m1_step_' + i);
@@ -3981,6 +4046,12 @@ function nextStep(stage, n) {
   const card = document.getElementById(field.cardId);
 
   const code = document.getElementById('i_editor')?.value || '';
+  if (n === 1 && !getCrisis()) {
+    card.classList.add('error');
+    fieldHint(card, 'Make your call at the top of step 1 first: which pod do the heaters save?');
+    document.getElementById('i_choice')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
   if (!invGate(n, card)) return;
 
   if (field.type === 'mcq') {
@@ -4026,6 +4097,7 @@ function nextStep(stage, n) {
     stepI = n + 1;
     maxStepI = Math.max(maxStepI, stepI);
     submitScore();
+    if (n === 1) lockCrisis();
     const nextField = I_FIELDS[stepI - 1];
     updateStepVisibility();
     saveState();
@@ -4112,6 +4184,53 @@ function renderReqResults(listEl, results) {
   });
 }
 
+// ── Station Zero crisis (Investigate step 1) ──────────
+// A plain pick, no code: which pod the heaters save. The other pod's crew member (X) is
+// critical for the rest of the chapter, and the Modify and Make choices decide whether X is
+// saved. It locks once step 1 has passed or been skipped.
+const CRISIS = { story: 'shield', fallback: 'pod5' };   // stored as sz_choices.shield
+const getCrisis = () => document.querySelector('input[name="i_choice"]:checked')?.value;
+const crisisLocked = () => iCodeSnapshots[1] !== undefined || !!skippedSteps.i1 || maxStepI > 1;
+function crisisX() {
+  const s = getCrisis() || window.StationZero?.choices?.().shield || CRISIS.fallback;
+  return s === 'pod3' ? { pod: 5, name: 'Patel' } : { pod: 3, name: 'Chen' };
+}
+
+// Show the step's task once a pod is picked; lock the options once step 1 is done. If Wake Up
+// locked the thing in with Patel, the options say he is already critical.
+function renderCrisis() {
+  const c = getCrisis(), locked = crisisLocked();
+  document.querySelectorAll('input[name="i_choice"]').forEach(r => { r.disabled = locked; });
+  document.getElementById('i_choice')?.classList.toggle('locked', locked);
+  document.getElementById('i1_task')?.classList.toggle('step-hidden', !c && !locked);
+  const wu = window.StationZero?.choices?.() || {};
+  const patelCritical = wu.door === 'open' && wu.lock === 'bay' && wu.transfer !== 'pod5';   // same rule as shutIn() in the story script
+  const t3 = document.getElementById('i_choice_pod3'), t5 = document.getElementById('i_choice_pod5');
+  if (t3) t3.textContent = patelCritical ? 'Chen will be safe. Patel, already critical, gets worse.' : 'Chen will be safe. Patel’s pod freezes.';
+  if (t5) t5.textContent = patelCritical ? 'Patel is already critical: this saves him. Chen’s pod freezes.' : 'Patel will be safe. Chen’s pod freezes.';
+  document.querySelectorAll('.sz-x').forEach(el => { el.textContent = crisisX().name; });
+}
+
+function pickCrisis() {
+  if (crisisLocked()) return;
+  document.getElementById('qcard_i1')?.classList.remove('error');
+  renderCrisis();
+  saveState();
+}
+
+// Step 1 is done: lock the pick (a skipped step with no pick takes the fallback), hand it to
+// the story layer, and play the short crisis report.
+function lockCrisis() {
+  if (!getCrisis()) {
+    const r = document.querySelector(`input[name="i_choice"][value="${CRISIS.fallback}"]`);
+    if (r) r.checked = true;
+  }
+  window.StationZero?.choose(CRISIS.story, getCrisis());   // STATION ZERO hook: the crisis is locked in
+  renderCrisis();
+  saveState();
+  window.StationZero?.beat('I1');
+}
+
 // ── Station Zero choice (Modification 1) ──────────────
 const getChoice = () => document.querySelector('input[name="m1_choice"]:checked')?.value;
 
@@ -4149,7 +4268,7 @@ function renderMakeChoice() {
   const story = window.StationZero?.choices?.() || {};
   const lockdown = getChoice() || story.lockdown || 'cryo';
   const report = document.getElementById('m2_choice_report');
-  if (report) report.innerHTML = MAKE_CHOICE.report(lockdown);
+  if (report) report.innerHTML = MAKE_CHOICE.report(lockdown, crisisX());
   const text = document.getElementById('req_m2_choice_text');
   if (text) text.innerHTML = c ? MAKE_CHOICE.req(c) : 'Make your call above, then add the line it asks for.';
 }
@@ -4387,6 +4506,7 @@ function skipStep(stage) {
   markStageSkipped(stage);
   if (stage === 'I') {
     skippedSteps['i' + stepI] = true;
+    if (stepI === 1) lockCrisis();
     if (stepI === STEP_COUNT_I) stripPlantedBugLine();   // don't carry the broken line forward
     if (stepI < STEP_COUNT_I) { stepI++; maxStepI = Math.max(maxStepI, stepI); updateStepVisibility(); saveState(); scrollToActive('qcard_i' + stepI + '_prompt'); }
     else { completeStage('I'); }
@@ -4487,6 +4607,7 @@ Object.assign(window, {
   runCodeInEditor, resetInvestigateEditor, insertNewLine, breakItDemo,
   skipStep, goBack, goForward,
   openSkipGate, closeSkipGate, confirmSkip, resetModifyEditor, refreshInvTicks,
+  pickCrisis,
 });
 
 // ── Init ──────────────────────────────────────────────

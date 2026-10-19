@@ -89,16 +89,17 @@ Needs: npm install -g pptxgenjs. Close the .pptx in PowerPoint before rebuilding
 Every slide carries exactly one pillar icon, top right (the title and chapter cards are story slides: the chapter card counts as Deliberate Practice).`);
 }
 
-// Rules: 5 per slide
-for (let p = 0; p < RULES.length; p += 5) {
-  const page = RULES.slice(p, p + 5);
-  const s = newSlide('SZ_DARK', 'How to use', RULES.length > 5 ? `Rules and feedback (${p / 5 + 1} of ${Math.ceil(RULES.length / 5)})` : 'Rules and feedback');
+// Rules: 4 per slide, in rows tall enough for a 4-line entry at 18pt (5 per slide overflowed)
+const PER = 4;
+for (let p = 0; p < RULES.length; p += PER) {
+  const page = RULES.slice(p, p + PER);
+  const s = newSlide('SZ_DARK', 'How to use', RULES.length > PER ? `Rules and feedback (${p / PER + 1} of ${Math.ceil(RULES.length / PER)})` : 'Rules and feedback');
   page.forEach((r, i) => {
-    const y = 1.6 + i * 1.0;
-    box(s, { x: M, y, w: 12.13, h: 0.88, fill: P.panel, r: 0.06 });
-    text(s, r.topic, { x: M + 0.25, y: y + 0.08, w: 2.6, h: 0.45, fontSize: 18, bold: true, color: P.gold, valign: 'middle' });
-    text(s, r.date, { x: M + 0.25, y: y + 0.5, w: 2.6, h: 0.3, fontSize: 12, color: P.dim, valign: 'middle' });
-    text(s, r.text, { x: M + 3.0, y: y + 0.04, w: 8.95, h: 0.8, fontSize: 18, valign: 'middle' });
+    const y = 1.55 + i * 1.27;
+    box(s, { x: M, y, w: 12.13, h: 1.17, fill: P.panel, r: 0.06 });
+    text(s, r.topic, { x: M + 0.25, y: y + 0.12, w: 2.6, h: 0.45, fontSize: 18, bold: true, color: P.gold, valign: 'middle' });
+    text(s, r.date, { x: M + 0.25, y: y + 0.55, w: 2.6, h: 0.3, fontSize: 12, color: P.dim, valign: 'middle' });
+    text(s, r.text, { x: M + 3.0, y: y + 0.03, w: 8.95, h: 1.11, fontSize: 18, valign: 'middle' });
   });
   templateNote(s, 'FROM README.md — ADD NEW FEEDBACK THERE');
   s.addNotes('These rules come from the "Rules and feedback log" in README.md. Add new feedback there (one dated line) and rebuild.');

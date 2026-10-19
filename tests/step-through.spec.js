@@ -1,5 +1,8 @@
 import { test, expect } from '@playwright/test';
 
+// These tests watch animations play, so they opt out of the suite-wide reduced motion (playwright.config.js).
+test.use({ contextOptions: { reducedMotion: 'no-preference' } });
+
 // Step-through Run (code-editor.js `stepThrough`, trialled in the Y9 Station Zero lessons):
 // Run replays the program a line at a time, lighting the running line and printing that
 // line's output as it goes. Exercised through Life Support's Run and Investigate editors.

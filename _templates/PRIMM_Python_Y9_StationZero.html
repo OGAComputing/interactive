@@ -381,9 +381,12 @@ color:  blue
   #i_steps { position: sticky; top: calc(var(--cr-banner-h, 0px) + 10px); z-index: 6; max-height: 55vh; overflow-y: auto; }
   @media (max-height: 640px), (max-width: 640px) { #i_steps { position: static; max-height: none; overflow: visible; } }
   /* Once pinned (.is-stuck, set by syncInvSticky), only the requirement list shows: the step
-     heading, the grey notes and any "Remind me" card hide, so the card stays small. */
+     heading, the grey notes and any "Remind me" card hide, so the card stays small. A "Your
+     call" card stays until an option is picked, and a list inside a wrapper (#i1_task) shows. */
   #i_steps.is-stuck .q-card { padding-top: 0.55rem; padding-bottom: 0.55rem; }
-  #i_steps.is-stuck .q-card > :not(.req-list),
+  #i_steps.is-stuck .q-card > :not(.req-list):not(:has(.req-list)):not(.sz-choice),
+  #i_steps.is-stuck .q-card > :has(> .req-list) > :not(.req-list),
+  #i_steps.is-stuck .q-card > .sz-choice:has(input:checked),
   #i_steps.is-stuck .q-card:not(:has(.req-list)),
   #i_steps.is-stuck .req-list li.req-note { display: none; }
   #i_steps.is-stuck .req-list { margin: 0; }
@@ -595,7 +598,8 @@ color:  blue
      Hover, click or Enter opens the crew manifest under it. Colour is never the only
      signal: every state has its own light shape, and a word on its manifest card.
        alive = solid square · risk = amber square · critical = blinking amber square
-       dead = hollow square with a cross · you = ring · unknown = dashed outline */
+       dead = hollow square with a cross · you = ring · unknown = dashed outline
+       hunted = amber ring (you, with it closing in) · injured = blinking red ring (you, hurt) */
   .site-header.crew-open { z-index: 50; }   /* lift the open manifest over the progress strip */
   /* let the chapter line wrap before the objective / crew / map group drops to a second row */
   .site-header .header-text { flex: 1 1 14rem; min-width: 0; }
@@ -623,6 +627,8 @@ color:  blue
   .crew-pod.dead::before { transform: translateX(-50%) rotate(45deg); }
   .crew-pod.dead::after  { transform: translateX(-50%) rotate(-45deg); }
   .crew-pod.you      { border: 1.5px solid var(--crt); border-radius: 50%; }
+  .crew-pod.hunted   { border: 1.5px solid var(--crt-warn); border-radius: 50%; box-shadow: 0 0 5px rgba(255,201,92,0.6); }
+  .crew-pod.injured  { border: 2px solid var(--crt-crit); border-radius: 50%; box-shadow: 0 0 6px rgba(255,107,120,0.7); animation: crew-blink 1.2s steps(1) infinite; }
   .crew-pod.unknown  { border: 1.5px dashed var(--crt-faint); }
   /* compromised = a red diamond: the crew member is dead, but their tag is moving */
   .crew-pod.compromised { width: 8px; height: 8px; margin: 0 1px; border-radius: 1px; background: var(--crt-crit);
@@ -668,8 +674,10 @@ color:  blue
   .crew-card .name { font-size: 0.8rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--crt); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .crew-card .status { font-size: 0.66rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--crt); }
   .crew-card canvas { display: block; width: 100%; height: 22px; }
-  .crew-card.risk, .crew-card.critical { border-color: rgba(255,201,92,0.55); }
-  .crew-card.risk .status, .crew-card.critical .status { color: var(--crt-warn); }
+  .crew-card.risk, .crew-card.critical, .crew-card.hunted { border-color: rgba(255,201,92,0.55); }
+  .crew-card.risk .status, .crew-card.critical .status, .crew-card.hunted .status { color: var(--crt-warn); }
+  .crew-card.injured { border-color: rgba(255,107,120,0.5); }
+  .crew-card.injured .status { color: var(--crt-crit); }
   .crew-card.critical .portrait::after {
     content: ''; position: absolute; inset: 0; pointer-events: none;
     box-shadow: inset 0 0 0 2px rgba(255,201,92,0.6); animation: crew-blink 1.2s steps(1) infinite;
@@ -706,7 +714,7 @@ color:  blue
     .crew-grid { grid-template-columns: repeat(3, 1fr); }
   }
   @media (prefers-reduced-motion: reduce) {
-    .crew-pod.critical, .crew-card.critical .portrait::after, .crew-pod.compromised, .crew-card.compromised .portrait img { animation: none; }
+    .crew-pod.critical, .crew-pod.injured, .crew-card.critical .portrait::after, .crew-pod.compromised, .crew-card.compromised .portrait img { animation: none; }
     .crew-panel, .crew-panel.open { transition: none; }
   }
 
@@ -927,6 +935,29 @@ color:  blue
     font-family: var(--font-mono); padding: 0.05rem 0.35rem; border-radius: 5px; font-size: 0.86em;
   }
   .remind ul { margin: 0 1rem 0.9rem 2.2rem; display: grid; gap: 0.4rem; font-size: 0.9rem; color: var(--text); line-height: 1.55; }
+
+  /* ── Station Zero choices — the crisis (Investigate step 1, from Lesson 2), Modification 1 and
+       Make are story decisions. The crisis is a plain pick with no code. The student picks an
+       option, then only that option's requirement appears. Both options pass: the choice changes
+       the situation reports (and later chapters), never the score. Locked once it passes.
+       Make's card is the second call: it reacts to what the first one caused, and its
+       .sz-choice-report line repeats the fact from the last report that it turns on. ── */
+  .sz-choice { background: var(--chrome); border: 1px solid var(--line-strong); border-left: 4px solid var(--amber); border-radius: var(--radius); padding: 0.95rem 1.2rem 1rem; margin-bottom: 0.6rem; }
+  .sz-choice-kicker { font-family: var(--hud-font); font-size: 0.72rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--amber); margin: 0 0 0.35rem; }
+  .sz-choice-q { margin: 0 0 0.75rem; color: var(--text); font-size: 0.95rem; line-height: 1.55; }
+  .sz-choice-opts { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.6rem; }
+  .sz-opt { display: flex; gap: 0.6rem; align-items: flex-start; padding: 0.7rem 0.85rem; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--card-raised); cursor: pointer; }
+  .sz-opt:hover { border-color: var(--amber); }
+  .sz-opt:has(input:checked) { border-color: var(--amber); background: rgba(245,158,11,0.10); }
+  .sz-opt:has(input:focus-visible) { outline: 2px solid var(--amber); outline-offset: 2px; }
+  .sz-opt input { accent-color: var(--amber); width: 16px; height: 16px; margin-top: 0.2rem; flex-shrink: 0; }
+  .sz-opt b { display: block; color: var(--text); font-size: 0.95rem; }
+  .sz-opt small { display: block; color: var(--muted); font-size: 0.85rem; line-height: 1.45; margin-top: 0.15rem; }
+  .sz-choice.locked .sz-opt { cursor: default; }
+  .sz-choice.locked .sz-opt:not(:has(input:checked)) { opacity: 0.45; }
+  .sz-choice-note { margin: 0.65rem 0 0; font-size: 0.82rem; color: var(--muted); }
+  .sz-choice-report { margin: -0.35rem 0 0.75rem; padding: 0.45rem 0.7rem; border-left: 2px solid var(--line-strong); font-family: var(--hud-font); font-size: 0.82rem; line-height: 1.5; color: var(--text); background: var(--card-raised); border-radius: 0 6px 6px 0; }
+  .sz-choice-report b { color: var(--amber); font-weight: 600; letter-spacing: 0.06em; }
 
   @media (max-width: 600px) {
     .sz-header-right { margin-left: 0; width: 100%; }
@@ -1316,11 +1347,28 @@ color:  blue
          lines, which are never ticked. A step with NO code change has no req-list and no
          INV_CHECKS entry — it is never gated (see L3_Input step 2). -->
     <div class="q-card" id="qcard_i1_prompt" style="border-left-color:var(--stage-i)">
+      <!-- STATION ZERO crisis (from Lesson 2; delete the #i_choice div in a chapter with no crisis,
+           and step 1 works as normal). A sideways pick with NO code: it decides who or what is
+           in danger, and Modify 1 / Make decide whether it's saved. The task below appears once
+           an option is picked; step 1 won't pass without one. It locks when step 1 passes (or is
+           skipped), then StationZero.choose(CRISIS.story, …) runs and beat('I1') plays.
+           See "Three choices per PRIMM cycle" in the MTP. -->
+      <div class="sz-choice" id="i_choice" role="radiogroup" aria-labelledby="i_choice_q">
+        <p class="sz-choice-kicker">Your call</p>
+        <p class="sz-choice-q" id="i_choice_q">FILL IN: the crisis, in 1–2 sentences. Neither option is safe.</p>
+        <div class="sz-choice-opts">
+          <label class="sz-opt"><input type="radio" name="i_choice" value="a" onchange="pickCrisis()"><span><b>FILL IN: option A</b><small>FILL IN: who is safe, and who is in danger.</small></span></label>
+          <label class="sz-opt"><input type="radio" name="i_choice" value="b" onchange="pickCrisis()"><span><b>FILL IN: option B</b><small>FILL IN: who is safe, and who is in danger.</small></span></label>
+        </div>
+        <p class="sz-choice-note">Either way, someone is in danger. The rest of this chapter is about getting them out. Your choice changes the story, not your score.</p>
+      </div>
+      <div id="i1_task">
       <label class="q-label"><span class="q-num" style="background:var(--stage-i)">1</span> In the editor below:</label>
       <ul class="req-list" id="req_i_1">
         <li><span>1</span><span class="req-text">FILL IN: Change <code>X</code> to <code>Y</code></span></li>
         <li class="req-note">Then press <strong>▶ Run code</strong>.</li>
       </ul>
+      </div>
       <!-- INSTRUCTIONS ONLY here — the question itself lives in the answer card below the editor. -->
     </div>
 
@@ -1767,8 +1815,17 @@ color:  blue
      Optional: crew(choices, seen) — what the header's crew readout shows. Return null while
        the crew is unknown (only your own vitals show), or { pod: status } for the pods that
        differ from the start of the story (Hale dead, everyone else stable). Statuses:
-       'alive' | 'risk' (a choice put them in danger, not settled yet) | 'critical' | 'dead'.
+       'alive' | 'risk' (a choice put them in danger, not settled yet) | 'critical' | 'dead' |
+       'compromised' (dead, but the crew tag is moving: Hale, from Wake Up's cliffhanger on).
+       Pod 4 is you: 'you' (default) | 'hunted' (it's closing in) | 'injured'.
        seen = the reports already closed, so gate each change on the report that reveals it.
+     Optional beat I1 (from Lesson 2) — the crisis report: plays when Investigate step 1 passes
+       (or is skipped), straight after the crisis choice (CRISIS in the module) is stored. Keep it
+       short: 2 sentences, a stake readout and one other line, no impact, no cam.
+     Stake readout (from Lesson 2) — whoever the crisis put in danger gets an ordinary readout
+       line on I1 and every later report, worse each time until M2 settles it, e.g.
+       { label: 'Pod 3 · Chen', value: '34 bpm · falling', level: 'danger' } → '29 bpm' → …
+       It worsens with time between reports, never because a check failed.
      Optional per beat: variant + variants — a beat that depends on a Station Zero choice
        (one the student made in Modify, stored with StationZero.choose(key, value) and kept
        for the whole unit in localStorage 'sz_choices', and in their Drive when signed in).
@@ -1785,9 +1842,10 @@ color:  blue
     chapter:   'Chapter 1 — Wake Up',
     topic:     'Input refresh',
     objective: 'Get out of the Cryo Bay',
-    // FILL IN Ⓢ — the header crew readout (see crew in the field guide). From Chapter 3 on,
-    // start from Patel's fate after Life Support. This example hides the crew until the pod records (I).
-    crew: (c, seen) => ({ 2: 'compromised' }),   // Hale's tag has been moving since Life Support; add Patel's fate, then this chapter's changes
+    // FILL IN Ⓢ — the header crew readout (see crew in the field guide). Start from the roll
+    // call the earlier chapters left (Hale compromised; who is critical: see the MTP's "Final
+    // roll call"), then add this chapter's: the crisis victim from I1 until M2 settles them.
+    crew: (c, seen) => ({ 2: 'compromised' }),   // Hale's tag has been moving since Wake Up's cliffhanger
     beats: {
       intro: {
         headline: 'Chapter 1 — Wake Up',
@@ -1819,6 +1877,21 @@ color:  blue
           { label: 'Cryo Bay door', value: 'Unstable', level: 'warn' },
           { label: 'Motion', value: 'Ducts', level: 'danger' },
         ],
+        map: { you: 'cryo', objective: 'cryo', threat: 'vents', rooms: { cryo: 'unstable', core: 'sealed' } },
+      },
+      // FILL IN Ⓢ (from Lesson 2) — the crisis report. variant reads the crisis choice by its
+      // CRISIS.story key (here 'crisis'; use a new key each lesson, as sz_choices is shared by
+      // the whole unit). Delete this beat in a chapter with no crisis (Wake Up).
+      I1: {
+        variant: c => c.crisis === 'b' ? 'b' : 'a',   // default = CRISIS.fallback
+        variants: {
+          a: { log: "FILL IN: what option A saved, and who it couldn't. You have to get help to them.",
+               readouts: [{ label: 'FILL IN: Pod n · Name', value: '34 bpm · falling', level: 'danger' }] },
+          b: { log: "FILL IN: what option B saved, and who it couldn't.",
+               readouts: [{ label: 'FILL IN: Pod n · Name', value: '34 bpm · falling', level: 'danger' }] },
+        },
+        headline: 'FILL IN',
+        time: '03:13',
         map: { you: 'cryo', objective: 'cryo', threat: 'vents', rooms: { cryo: 'unstable', core: 'sealed' } },
       },
       I: {
@@ -1884,9 +1957,9 @@ color:  blue
   const LEVEL_SR    = { ok: 'normal', warn: 'warning', danger: 'critical' };
   const CTA = {
     intro: 'Begin: Predict →', P: 'Continue to Run →', R: 'Continue to Investigate →',
-    I: 'Continue to Modify →', M1: 'Continue to Make →', M2: 'Continue →',
+    I1: 'Back to Investigate →', I: 'Continue to Modify →', M1: 'Continue to Make →', M2: 'Continue →',
   };
-  const ORDER = ['intro', 'P', 'R', 'I', 'M1', 'M2'];
+  const ORDER = ['intro', 'P', 'R', 'I1', 'I', 'M1', 'M2'];
 
   const KEY = 'sz_story_' + location.pathname;
   const storyOff = new URLSearchParams(location.search).get('story') === 'off';
@@ -1910,7 +1983,7 @@ color:  blue
     if (!raw || typeof raw !== 'object') return out;
     const at = raw._at && typeof raw._at === 'object' ? raw._at : {};
     for (const [k, v] of Object.entries(raw)) {
-      if (k === '_at' || !/^[a-z]\w{0,19}$/.test(k) || typeof v !== 'string' || !/^[a-z_]{1,20}$/.test(v)) continue;
+      if (k === '_at' || !/^[a-z]\w{0,19}$/.test(k) || typeof v !== 'string' || !/^[a-z][a-z0-9_]{0,19}$/.test(v)) continue;
       out[k] = v;
       out._at[k] = Number.isFinite(at[k]) ? at[k] : 0;
     }
@@ -2233,8 +2306,8 @@ color:  blue
     { pod: 5, name: 'Patel',  role: 'Pilot',     face: 'patel' },
   ];
   const CREW_BASE = { 1: 'alive', 2: 'dead', 3: 'alive', 4: 'you', 5: 'alive' };
-  const CREW_WORD = { alive: 'Stable', risk: 'At risk', critical: 'Critical', dead: 'Deceased', compromised: 'Tag active', you: 'Awake', unknown: 'No data' };
-  const CREW_SAYS = { alive: 'asleep, vitals stable', risk: 'vitals unstable', critical: 'vitals falling, alarm sounding', dead: 'no life signs', compromised: 'heart stopped, but the crew tag is moving, bio-scan not human', you: 'awake', unknown: 'pod records offline' };
+  const CREW_WORD = { alive: 'Stable', risk: 'At risk', critical: 'Critical', dead: 'Deceased', compromised: 'Tag active', you: 'Awake', hunted: 'Hunted', injured: 'Injured', unknown: 'No data' };
+  const CREW_SAYS = { alive: 'asleep, vitals stable', risk: 'vitals unstable', critical: 'vitals falling, alarm sounding', dead: 'no life signs', compromised: 'heart stopped, but the crew tag is moving, bio-scan not human', you: 'awake', hunted: 'awake, and something is closing in', injured: 'awake, but hurt', unknown: 'pod records offline' };
 
   // ID-badge portraits: photos from a generated crew sheet (kept in _drafts/crew/), cropped to
   // 200×240 WebP and inlined so the page needs no other files. CSS tints them phosphor green.
@@ -2252,8 +2325,8 @@ color:  blue
   // Heart-monitor lines: a sweep that redraws left to right, like a bedside monitor. One
   // requestAnimationFrame loop drives them all; the manifest's lines only run while it's open.
   // Reduced motion draws each one as a still trace.
-  const ECG_COLOUR = { alive: '#5cff8f', you: '#3fcf6e', risk: '#ffc95c', critical: '#ffc95c', dead: '#ff6b78', compromised: '#ff6b78', unknown: '#1f7a40' };
-  const ECG_BPM = { alive: 64, you: 96, risk: 104, critical: 132, dead: 0, compromised: 20, unknown: 0 };
+  const ECG_COLOUR = { alive: '#5cff8f', you: '#3fcf6e', hunted: '#ffc95c', injured: '#ff6b78', risk: '#ffc95c', critical: '#ffc95c', dead: '#ff6b78', compromised: '#ff6b78', unknown: '#1f7a40' };
+  const ECG_BPM = { alive: 64, you: 96, hunted: 128, injured: 112, risk: 104, critical: 132, dead: 0, compromised: 20, unknown: 0 };
   // one heartbeat, t in [0, 1): P wave, QRS spike, T wave
   function heartbeat(t) {
     const g = (c, w, a) => a * Math.exp(-((t - c) ** 2) / (2 * w * w));
@@ -2332,7 +2405,7 @@ color:  blue
     const crew = crewNow();
     const unknown = crew.some(m => m.st === 'unknown');
     const alive = crew.filter(m => m.st !== 'dead' && m.st !== 'compromised').length;
-    const crit = crew.filter(m => m.st === 'critical' || m.st === 'risk').length;
+    const crit = crew.filter(m => ['critical', 'risk', 'hunted', 'injured'].includes(m.st)).length;
     const lost = crew.some(m => m.st === 'dead' && m.pod !== 2);   // Hale is dead from the start
     const btn = $('szCrewBtn');
     btn.classList.toggle('warn', !unknown && crit > 0);
@@ -2371,6 +2444,8 @@ color:  blue
     const notes = crew.map(m =>
       m.st === 'critical' ? `WARNING: Pod ${m.pod} alarm. ${m.name}’s vitals are falling.`
       : m.st === 'risk' ? `Pod ${m.pod}: ${m.name}’s vitals are unstable.`
+      : m.st === 'hunted' ? 'WARNING: motion closing on your position.'
+      : m.st === 'injured' ? 'You are injured. Your suit is logging the damage.'
       : m.st === 'compromised' ? `Pod ${m.pod}: ${m.name}’s heart stopped, but crew tag ${m.name.toUpperCase()} is moving. Bio-scan: not human.`
       : m.st === 'dead' && m.pod !== 2 ? `Pod ${m.pod}: ${m.name}, no life signs.` : '').filter(Boolean);
     $('szCrewNote').textContent = unknown
@@ -2572,7 +2647,7 @@ const TEXT_FIELDS = [
   'i_editor', 'i1', 'i2',                // Investigate free-text steps — i3 is the bug-step MCQ
   'm1_editor', 'm2_editor',              // Modify + Make editors
 ];
-const RADIO_GROUPS = ['p_mcq1', 'p_mcq2', 'i3_mcq'];  // Predict + the standard bug-step MCQ
+const RADIO_GROUPS = ['i_choice', 'p_mcq1', 'p_mcq2', 'i3_mcq'];  // Predict + the standard bug-step MCQ
 
 
 // ═══════════════════════════════════════════════════════
@@ -2845,6 +2920,7 @@ function updateStepVisibility() {
   const skipIWrap = document.getElementById('i_skip_wrap');
   if (skipIWrap) skipIWrap.style.display = !iEditor?.readOnly && (attemptCounts['i' + stepI] || 0) >= 3 ? '' : 'none';
   syncBugLineLabel();   // standard bug step — keep the "line N" label current, no planting
+  renderCrisis();
   const m1Revisiting = stepM1 < maxStepM1;
   for (let i = 1; i <= STEP_COUNT_M1; i++) {
     const step = document.getElementById('m1_step_' + i);
@@ -3599,6 +3675,48 @@ function showInvestigateMCQFeedback(field, chosen) {
   return ok;
 }
 
+// ── Station Zero crisis (Investigate step 1, from Lesson 2) ──
+// A plain pick, no code: who or what is in danger for the rest of the chapter. It locks once
+// step 1 has passed or been skipped. A chapter with no #i_choice card skips all of this.
+const CRISIS = {
+  story: 'crisis',   // FILL IN Ⓢ — a new sz_choices key each lesson (L2 'shield', L3 'heat', …)
+  fallback: 'a',     // FILL IN Ⓢ — the option used when step 1 is skipped with nothing picked
+};
+const hasCrisis = () => !!document.getElementById('i_choice');
+const getCrisis = () => document.querySelector('input[name="i_choice"]:checked')?.value;
+const crisisLocked = () => iCodeSnapshots[1] !== undefined || !!skippedSteps.i1 || maxStepI > 1;
+
+// Show step 1's task once an option is picked; lock the options once step 1 is done.
+// FILL IN Ⓢ — if earlier choices change the options' wording (L2: "Patel is already critical"),
+// set it here from window.StationZero?.choices?.().
+function renderCrisis() {
+  if (!hasCrisis()) return;
+  const c = getCrisis(), locked = crisisLocked();
+  document.querySelectorAll('input[name="i_choice"]').forEach(r => { r.disabled = locked; });
+  document.getElementById('i_choice')?.classList.toggle('locked', locked);
+  document.getElementById('i1_task')?.classList.toggle('step-hidden', !c && !locked);
+}
+
+function pickCrisis() {
+  if (crisisLocked()) return;
+  document.getElementById('qcard_i1')?.classList.remove('error');
+  renderCrisis();
+  saveState();
+}
+
+// Step 1 is done: lock the pick (the fallback if none), store it, play the crisis report.
+function lockCrisis() {
+  if (!hasCrisis()) return;
+  if (!getCrisis()) {
+    const r = document.querySelector(`input[name="i_choice"][value="${CRISIS.fallback}"]`);
+    if (r) r.checked = true;
+  }
+  window.StationZero?.choose(CRISIS.story, getCrisis());   // STATION ZERO hook: the crisis is locked in
+  renderCrisis();
+  saveState();
+  window.StationZero?.beat('I1');
+}
+
 function nextStep(stage, n) {
   if (stage !== 'I') return;
   const field = I_FIELDS[n - 1];
@@ -3606,6 +3724,12 @@ function nextStep(stage, n) {
   const card = document.getElementById(field.cardId);
 
   const code = document.getElementById('i_editor')?.value || '';
+  if (n === 1 && hasCrisis() && !getCrisis()) {
+    card.classList.add('error');
+    fieldHint(card, 'Make your call at the top of step 1 first.');
+    document.getElementById('i_choice')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
   if (!invGate(n, card)) return;
 
   if (field.type === 'mcq') {
@@ -3651,6 +3775,7 @@ function nextStep(stage, n) {
     stepI = n + 1;
     maxStepI = Math.max(maxStepI, stepI);
     submitScore();
+    if (n === 1) lockCrisis();
     const nextField = I_FIELDS[stepI - 1];
     updateStepVisibility();
     saveState();
@@ -3924,6 +4049,7 @@ function skipStep(stage) {
   markStageSkipped(stage);
   if (stage === 'I') {
     skippedSteps['i' + stepI] = true;
+    if (stepI === 1) lockCrisis();
     if (stepI === STEP_COUNT_I) stripPlantedBugLine();   // don't carry the broken line forward
     if (stepI < STEP_COUNT_I) { stepI++; maxStepI = Math.max(maxStepI, stepI); updateStepVisibility(); saveState(); scrollToActive('qcard_i' + stepI + '_prompt'); }
     else { completeStage('I'); }
@@ -4024,6 +4150,7 @@ Object.assign(window, {
   runCodeInEditor, resetInvestigateEditor, insertNewLine, breakItDemo,
   skipStep, goBack, goForward,
   openSkipGate, closeSkipGate, confirmSkip, resetModifyEditor, refreshInvTicks,
+  pickCrisis,
 });
 
 // ── Init ──────────────────────────────────────────────

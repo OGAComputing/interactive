@@ -380,9 +380,12 @@ color:  teal
   #i_steps { position: sticky; top: calc(var(--cr-banner-h, 0px) + 10px); z-index: 6; max-height: 55vh; overflow-y: auto; }
   @media (max-height: 640px), (max-width: 640px) { #i_steps { position: static; max-height: none; overflow: visible; } }
   /* Once pinned (.is-stuck, set by syncInvSticky), only the requirement list shows: the step
-     heading, the grey notes and any "Remind me" card hide, so the card stays small. */
+     heading, the grey notes and any "Remind me" card hide, so the card stays small. A "Your
+     call" card stays until an option is picked, and a list inside a wrapper (#i1_task) shows. */
   #i_steps.is-stuck .q-card { padding-top: 0.55rem; padding-bottom: 0.55rem; }
-  #i_steps.is-stuck .q-card > :not(.req-list),
+  #i_steps.is-stuck .q-card > :not(.req-list):not(:has(.req-list)):not(.sz-choice),
+  #i_steps.is-stuck .q-card > :has(> .req-list) > :not(.req-list),
+  #i_steps.is-stuck .q-card > .sz-choice:has(input:checked),
   #i_steps.is-stuck .q-card:not(:has(.req-list)),
   #i_steps.is-stuck .req-list li.req-note { display: none; }
   #i_steps.is-stuck .req-list { margin: 0; }
@@ -1359,11 +1362,26 @@ color:  teal
   <div id="i_steps">
 
     <div class="q-card" id="qcard_i1_prompt" style="border-left-color:var(--stage-i)">
+      <!-- STATION ZERO crisis ("the voice"): a plain pick with no code. It locks when step 1
+           passes (or is skipped), then goes to the story layer (StationZero.choose('voice')) and
+           the short I1 report plays. The step's task appears once an option is picked. Nobody's
+           health changes: it decides whether the thing knows you're awake. -->
+      <div class="sz-choice" id="i_choice" role="radiogroup" aria-labelledby="i_choice_q">
+        <p class="sz-choice-kicker">Your call</p>
+        <p class="sz-choice-q" id="i_choice_q">The intercom by the door crackles, and a voice you know comes through: Engineer Hale’s. “Is anyone awake in there? I’m hurt. Tell me which pod you’re in.”</p>
+        <div class="sz-choice-opts">
+          <label class="sz-opt"><input type="radio" name="i_choice" value="answer" onchange="pickCrisis()"><span><b>Answer it</b><small>The intercom will trace where Hale is. But he’ll know you’re awake, and where you are.</small></span></label>
+          <label class="sz-opt"><input type="radio" name="i_choice" value="silent" onchange="pickCrisis()"><span><b>Stay silent</b><small>He won’t know you’re awake. But you won’t know where he is.</small></span></label>
+        </div>
+        <p class="sz-choice-note">There’s no safe answer. The rest of this chapter is about what you do next. Your choice changes the story, not your score.</p>
+      </div>
+      <div id="i1_task">
       <label class="q-label"><span class="q-num" style="background:var(--stage-i)">1</span> Does the question get stored? In the editor below:</label>
       <ul class="req-list" id="req_i_1">
         <li><span>1</span><span class="req-text">On line 2, change the words <strong>inside the quotes</strong> to a different question — for example <code>"What is your job? "</code></span></li>
         <li class="req-note">Press <strong>▶ Run code</strong>, then type any name and any job.</li>
       </ul>
+      </div>
     </div>
 
     <!-- STANDARD BUG STEP — always the last Investigate step; its Check button calls tryCompleteInvestigate(). -->
@@ -1648,11 +1666,11 @@ color:  teal
 
   <!-- Shown as soon as Make passes: the extension above is optional, the link moves the student on. -->
   <div class="completion-banner" id="completionBanner">
-    <h3>Chapter 1, part 1 complete</h3>
-    <p>The Cryo Bay door is open. You've worked through all five stages of the input refresh — excellent work!
-      The frost trail leads to <strong>Life Support</strong>, where the air is running out.
-      Try the <strong>extension</strong> above first if you have time.</p>
-    <a class="btn btn-next-activity" id="nextActivityLink" href="2_Life_Support_PRIMM.html">Go to Life Support →</a>
+    <h3>Chapter 1 complete</h3>
+    <p>You're out of the Cryo Bay. You've worked through all five stages of the input refresh — excellent work!
+      Hale's tag is heading for <strong>Sensor Ops</strong>: that's Chapter 2, next lesson.
+      Finished early? Try the <strong>extension</strong> above, then the bonus round: <strong>Life Support</strong>, where the air is running out.</p>
+    <a class="btn btn-next-activity" id="nextActivityLink" href="2_Life_Support_PRIMM.html">Bonus round: Life Support →</a>
   </div>
 </section>
 
@@ -1710,11 +1728,13 @@ color:  teal
    as window.StationZero?.… so the page still works if this block is removed:
      start()      — end of the DOMContentLoaded init
      beat(stage, { feed }) — completeStage() (first completion only) and checkMake()
-                  (first pass); feed = what that stage's final action printed, for the live feed
+                  (first pass); feed = what that stage's final action printed, for the live feed.
+                  Also beat('I1'), the short crisis report, when Investigate step 1 passes
      showMap()    — the header's Station map button
    plus two for the Station Zero choices:
-     choose(key, value) — checkMod() when Modification 1 passes (CHOICE in the module), and
-                  checkMake() when Make first passes (MAKE_CHOICE), just before beat('M2')
+     choose(key, value) — Investigate step 1 passing (CRISIS in the module), just before
+                  beat('I1'); checkMod() when Modification 1 passes (CHOICE); and checkMake()
+                  when Make first passes (MAKE_CHOICE), just before beat('M2')
      choices()    — a copy of every choice so far (Make's card reads the door from it)
    ════════════════════════════════════════════════════════════════════════════ */
 (function () {
@@ -1748,7 +1768,7 @@ color:  teal
        seen = the reports already closed, so gate each change on the report that reveals it.
      Optional per beat: variant + variants — a beat that depends on a Station Zero choice
        (a choice the student made in Modify 1 or Make, kept for the whole unit in localStorage
-       'sz_choices': { door: 'open' | 'sealed', lock: 'pod5' | 'bay' (this chapter),
+       'sz_choices': { voice: 'answer' | 'silent', door: 'open' | 'sealed', lock: 'pod5' | 'bay' (this chapter),
        air: 'full' | 'low', transfer: 'pod5' | 'suit' (Life Support) }).
          variant:  choices => the name of one of the variants (handle a missing choice)
          variants: { name: { …beat fields } } — they replace the beat's own fields
@@ -1762,6 +1782,11 @@ color:  teal
   //   sealed + bay: nothing got in, and the bay is locked behind you (good)
   //   sealed + pod5: nothing got in, but the bay is left unlocked (ok)
   const door = c => c.door === 'open' ? 'open' : 'sealed';
+  // The crisis (Investigate step 1, "the voice"): Hale's voice on the intercom asks which pod
+  // you're in. Answering traces the call to the ducts, but it now knows you're awake; staying
+  // silent keeps you hidden, but you lose track of it. Nobody's health changes, so the door and
+  // lock outcomes above stay the same. A missing choice means silent.
+  const voice = c => c.voice === 'answer' ? 'answer' : 'silent';
   const lock = c => c.lock === 'pod5' || c.lock === 'bay' ? c.lock : door(c) === 'open' ? 'pod5' : 'bay';
   // The cliffhanger's reveal, the same on every path.
   const HALE = 'Then the locator picks up a tag you didn’t search for: HALE, moving towards Sensor Ops. Hale died three days ago, and the bio-scan says whatever is carrying his tag is not human.';
@@ -1781,7 +1806,7 @@ color:  teal
     objective: 'Get out of the Cryo Bay',
     // Header crew readout. The crew is unknown until the pod records load (I). Opening the door
     // (M1) puts Pod 5 at risk until Make settles it: locking the bay shuts it in with Patel, who
-    // stays critical until Life Support saves him (or doesn't). The cliffhanger (M2) finds crew
+    // stays critical into Chapter 2, where the crisis (heating Pod 5) can save him. The cliffhanger (M2) finds crew
     // tag HALE moving, not human, so Hale is compromised from then on.
     crew: (c, seen) => {
       if (!seen.includes('I')) return null;
@@ -1833,6 +1858,30 @@ color:  teal
         ],
         map: { you: 'cryo', objective: 'cryo', threat: 'vents', rooms: { cryo: 'unstable', core: 'sealed' } },
       },
+      // The crisis (Investigate step 1): a short report, no live feed or camera still.
+      I1: {
+        variant: voice,
+        variants: {
+          answer: {
+            log: "You press the intercom and say your name. The line goes quiet, then Hale’s voice says, “Stay there. I’m coming to you.” The call came from the ducts, right above the Cryo Bay.",
+            readouts: [
+              { label: 'Intercom · caller', value: 'Maintenance ducts', level: 'danger' },
+              { label: 'It knows', value: 'You’re awake', level: 'danger' },
+            ],
+            map: { you: 'cryo', objective: 'cryo', threat: 'vents', rooms: { cryo: 'unstable', core: 'sealed' } },
+          },
+          silent: {
+            log: "You keep your hand away from the intercom. The voice asks again, then tries the next room, and the next, working its way round the station.",
+            readouts: [
+              { label: 'Intercom', value: 'Calling every room', level: 'warn' },
+              { label: 'Caller', value: 'Location unknown', level: 'warn' },
+            ],
+            map: { you: 'cryo', objective: 'cryo', threat: null, rooms: { cryo: 'unstable', core: 'sealed' } },
+          },
+        },
+        headline: 'The voice',
+        time: '03:13',
+      },
       I: {
         impact: {
           scene: 'pods', device: 'Pod records',
@@ -1845,6 +1894,7 @@ color:  teal
         quote: { who: 'Engineer Hale · Pod 2 · 3 days ago', text: "It came up with the planet samples, and now it’s in me. I can hear it thinking. I’m freezing myself in Pod 2. If my pod is ever open, I’m not Hale any more. And don’t trust WARD—" },
         readouts: [
           { label: 'Hale · heart rate', value: '0', level: 'danger' },
+          { label: 'Intercom · last caller', value: 'Hale · 7 min ago', level: 'danger' },
           { label: 'Pod 2', value: 'Opened from inside', level: 'danger' },
           { label: 'Crew alive', value: '4 of 5', level: 'warn' },
         ],
@@ -1852,9 +1902,9 @@ color:  teal
       },
       // Modification 1 was the student's choice: open the door to the footsteps, or keep it sealed.
       M1: {
-        variant: door,
+        variant: c => door(c) + '_' + voice(c),
         variants: {
-          open: {
+          open_silent: {
             impact: {
               scene: 'slip', device: 'Cryo Bay door',
               caption: "Your door message opened the door, and it stayed open. Nobody was outside, but the door sensor logged something slipping in past you.",
@@ -1871,7 +1921,7 @@ color:  teal
             ],
             map: { you: 'cryo', objective: 'cryo', threat: 'cryo', rooms: { cryo: 'unstable', core: 'sealed' } },
           },
-          sealed: {
+          sealed_silent: {
             impact: {
               scene: 'hold', device: 'Cryo Bay door',
               caption: "Your door message kept the door sealed. Something outside tried it once, waited for a long time, then moved away.",
@@ -1949,7 +1999,7 @@ color:  teal
               { label: 'Crew tag', value: 'HALE · moving', level: 'danger' },
               { label: 'Bio-scan', value: 'Not human', level: 'danger' },
             ],
-            map: { you: 'cryo', objective: 'life', threat: 'cryo', rooms: { cryo: 'online', core: 'sealed' } },
+            map: { you: 'cryo', objective: 'sensors', threat: 'cryo', rooms: { cryo: 'online', core: 'sealed' } },
           },
         },
         impact: {
@@ -1959,11 +2009,18 @@ color:  teal
         },
         headline: 'Crew tag: HALE',
         cam: 'hale',   // the locator finds crew tag HALE, and the Sensor Ops camera catches him walking
-        map: { you: 'cryo', objective: 'life', threat: 'sensors', rooms: { cryo: 'online', core: 'sealed' } },
+        map: { you: 'cryo', objective: 'sensors', threat: 'sensors', rooms: { cryo: 'online', core: 'sealed' } },
         cta: 'Continue',
       },
     },
   };
+  // If you answered the voice, it knew you were in the Cryo Bay: the same door outcomes, told
+  // with that in mind.
+  {
+    const v = STORY.beats.M1.variants;
+    v.open_answer = { ...v.open_silent, log: "You open the door and look out. The corridor is empty, but the thing you answered on the intercom knew where you were, and it got in behind you. Fresh frost is creeping across Pod 5’s glass, where Patel is asleep." };
+    v.sealed_answer = { ...v.sealed_silent, log: "You keep the door sealed. Hale’s voice says your name through it, again and again, then the footsteps slowly move away. The crew are safe, but waiting has cost you air." };
+  }
   /* ═══ end STORY ═══ */
 
   // Station layout — shared by every chapter so students learn one map. A ring station:
@@ -1993,9 +2050,9 @@ color:  teal
   const LEVEL_SR    = { ok: 'normal', warn: 'warning', danger: 'critical' };
   const CTA = {
     intro: 'Begin: Predict →', P: 'Continue to Run →', R: 'Continue to Investigate →',
-    I: 'Continue to Modify →', M1: 'Continue to Make →', M2: 'Continue →',
+    I1: 'Back to Investigate →', I: 'Continue to Modify →', M1: 'Continue to Make →', M2: 'Continue →',
   };
-  const ORDER = ['intro', 'P', 'R', 'I', 'M1', 'M2'];
+  const ORDER = ['intro', 'P', 'R', 'I1', 'I', 'M1', 'M2'];
 
   const KEY = 'sz_story_' + location.pathname;
   const storyOff = new URLSearchParams(location.search).get('story') === 'off';
@@ -2019,7 +2076,7 @@ color:  teal
     if (!raw || typeof raw !== 'object') return out;
     const at = raw._at && typeof raw._at === 'object' ? raw._at : {};
     for (const [k, v] of Object.entries(raw)) {
-      if (k === '_at' || !/^[a-z]\w{0,19}$/.test(k) || typeof v !== 'string' || !/^[a-z_]{1,20}$/.test(v)) continue;
+      if (k === '_at' || !/^[a-z]\w{0,19}$/.test(k) || typeof v !== 'string' || !/^[a-z][a-z0-9_]{0,19}$/.test(v)) continue;
       out[k] = v;
       out._at[k] = Number.isFinite(at[k]) ? at[k] : 0;
     }
@@ -2825,7 +2882,7 @@ const STEP_COUNT_M1 = 4;   // m1_step_1…m1_step_4
 
 // localStorage field lists
 const TEXT_FIELDS  = ['p_text1', 'r_editor', 'r1', 'i_editor', 'm1_editor', 'm2_editor'];
-const RADIO_GROUPS = ['m1_choice', 'm2_choice', 'p_mcq1', 'p_mcq2', 'i1_mcq', 'i2_mcq'];
+const RADIO_GROUPS = ['i_choice', 'm1_choice', 'm2_choice', 'p_mcq1', 'p_mcq2', 'i1_mcq', 'i2_mcq'];
 
 
 // ═══════════════════════════════════════════════════════
@@ -3084,6 +3141,7 @@ function updateStepVisibility() {
   if (skipIWrap) skipIWrap.style.display = !iEditor?.readOnly && (attemptCounts['i' + stepI] || 0) >= 3 ? '' : 'none';
   syncBugLineLabel();   // standard bug step — keep the "line N" label current, no planting
   const m1Revisiting = stepM1 < maxStepM1;
+  renderCrisis();
   renderChoice();
   for (let i = 1; i <= STEP_COUNT_M1; i++) {
     const step = document.getElementById('m1_step_' + i);
@@ -3853,6 +3911,12 @@ function nextStep(stage, n) {
   const card = document.getElementById(field.cardId);
 
   const code = document.getElementById('i_editor')?.value || '';
+  if (n === 1 && !getCrisis()) {
+    card.classList.add('error');
+    fieldHint(card, 'Make your call at the top of step 1 first: answer the voice, or stay silent?');
+    document.getElementById('i_choice')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
   if (!invGate(n, card)) return;
 
   if (field.type === 'mcq') {
@@ -3898,6 +3962,7 @@ function nextStep(stage, n) {
     stepI = n + 1;
     maxStepI = Math.max(maxStepI, stepI);
     submitScore();
+    if (n === 1) lockCrisis();
     const nextField = I_FIELDS[stepI - 1];
     updateStepVisibility();
     saveState();
@@ -3982,6 +4047,50 @@ function renderReqResults(listEl, results) {
     li.classList.toggle('req-fail', ok === false);
     if (icon) icon.textContent = ok === true ? '✓' : ok === false ? '✗' : String(i + 1);
   });
+}
+
+// ── Station Zero crisis (Investigate step 1) ──────────
+// A plain pick, no code: answer Hale's voice on the intercom, or stay silent. It changes how
+// the reports tell the story (and the wording of the door choice), not anyone's health. It
+// locks once step 1 has passed or been skipped.
+const CRISIS = { story: 'voice', fallback: 'silent' };   // stored as sz_choices.voice
+const getCrisis = () => document.querySelector('input[name="i_choice"]:checked')?.value;
+const crisisLocked = () => iCodeSnapshots[1] !== undefined || !!skippedSteps.i1 || maxStepI > 1;
+const M1_QUESTION = {
+  answer: 'Slow footsteps have stopped right outside the Cryo Bay door, and Hale’s voice says your name. It knows you’re in here. Your door program decides what happens next.',
+  silent: 'Slow footsteps have stopped right outside the Cryo Bay door. Your door program decides what happens next.',
+};
+
+// Show the step's task once an option is picked; lock the options once step 1 is done.
+function renderCrisis() {
+  const c = getCrisis(), locked = crisisLocked();
+  document.querySelectorAll('input[name="i_choice"]').forEach(r => { r.disabled = locked; });
+  document.getElementById('i_choice')?.classList.toggle('locked', locked);
+  document.getElementById('i1_task')?.classList.toggle('step-hidden', !c && !locked);
+  const v = c || window.StationZero?.choices?.().voice;
+  const q = document.getElementById('m1_choice_q');
+  if (q) q.textContent = M1_QUESTION[v === 'answer' ? 'answer' : 'silent'];
+}
+
+function pickCrisis() {
+  if (crisisLocked()) return;
+  document.getElementById('qcard_i1')?.classList.remove('error');
+  fieldHint(document.getElementById('qcard_i1'), '');
+  renderCrisis();
+  saveState();
+}
+
+// Step 1 is done: lock the pick (a skipped step with no pick takes the fallback), hand it to
+// the story layer, and play the short crisis report.
+function lockCrisis() {
+  if (!getCrisis()) {
+    const r = document.querySelector(`input[name="i_choice"][value="${CRISIS.fallback}"]`);
+    if (r) r.checked = true;
+  }
+  window.StationZero?.choose(CRISIS.story, getCrisis());   // STATION ZERO hook: the crisis is locked in
+  renderCrisis();
+  saveState();
+  window.StationZero?.beat('I1');
 }
 
 // ── Station Zero choice (Modification 1) ──────────────
@@ -4227,6 +4336,7 @@ function skipStep(stage) {
   markStageSkipped(stage);
   if (stage === 'I') {
     skippedSteps['i' + stepI] = true;
+    if (stepI === 1) lockCrisis();
     if (stepI === STEP_COUNT_I) stripPlantedBugLine();   // don't carry the broken line forward
     if (stepI < STEP_COUNT_I) { stepI++; maxStepI = Math.max(maxStepI, stepI); updateStepVisibility(); saveState(); scrollToActive('qcard_i' + stepI + '_prompt'); }
     else { completeStage('I'); }
@@ -4322,7 +4432,7 @@ Object.assign(window, {
   clearPredictError, checkPredictMCQ, checkPredictText, advancePredict,
   clearRunError, tryCompleteRun,
   tryCompleteInvestigate, nextStep,
-  checkMod, completeStage, pickChoice,
+  checkMod, completeStage, pickCrisis, pickChoice,
   checkMake, checkExt, pickMakeChoice,
   runCodeInEditor, resetInvestigateEditor, insertNewLine, breakItDemo,
   skipStep, goBack, goForward,

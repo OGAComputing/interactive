@@ -1766,27 +1766,24 @@ color:  teal
   // Wake Up's bad ending: the door was opened, then the bay was locked with the thing inside.
   const shutIn = c => door(c) === 'open' && lock(c) === 'bay';
   const transfer = c => c.transfer === 'pod5' || c.transfer === 'suit' ? c.transfer : shutIn(c) || air(c) === 'low' ? 'pod5' : 'suit';
-  // Pod 5 (Patel):
-  //   If Wake Up shut the thing in with the crew, Patel starts this chapter critical, and only
-  //   the canisters (Make's call: transfer pod5) can save him. If they go to your suit, or this
-  //   chapter's Make is never finished, Patel dies. The cliffhanger says so to those who finish;
-  //   everyone else finds out in Lesson 2's "Previously…" recap. So a missing transfer counts as
-  //   "not fixed" here, unlike every other default.
-  //   Otherwise, 40 litres puts Pod 5 on minimum power: if the canisters don't go there, Patel is
-  //   critical (and later chapters can save or lose him). A missing transfer means the better call.
-  const fate = c => shutIn(c) ? (c.transfer === 'pod5' ? 'ok' : 'dead')
-    : air(c) === 'low' && transfer(c) !== 'pod5' ? 'critical' : 'ok';
+  // Pod 5 (Patel). This chapter is an optional round (2026-10-16), so it can only HELP: nothing
+  // here makes Patel worse by the end, and Chapter 2 reads only one thing from it.
+  //   If Wake Up shut the thing in with the crew, Patel starts this chapter critical, and the
+  //   canisters (Make's call: transfer pod5) save him; Chapter 2 then starts with him stable.
+  //   Otherwise he stays critical, and Chapter 2's crisis (heating Pod 5) can still save him.
+  //   40 litres puts Pod 5 on minimum power, but only until the cliffhanger: Patel ends stable.
+  const fate = c => shutIn(c) && c.transfer !== 'pod5' ? 'critical' : 'ok';
   // The cliffhanger (after Make) follows Wake Up's outcome, the rate and the transfer. Patel's
   // fate follows from those three; the last sentence leads into Lesson 2 (proximity sensors).
   const TRANSFER_LOG = {
     out_full_suit: "The spare canisters refill your suit, and for the first time since waking up you can breathe properly.",
     out_full_pod5: "Pod 5 was already at full power, so the canisters do nothing for Patel, and your own suit stays at 19%.",
     out_low_pod5:  "The spare canisters bring Pod 5 back to full power, and Patel’s vitals settle.",
-    out_low_suit:  "You fill your own suit, and Pod 5 stays on minimum power. Patel is alive, but Pod 5’s alarm hasn’t stopped.",
+    out_low_suit:  "You fill your own suit, and Pod 5 stays on minimum power. Patel’s vitals are low, but they’re holding.",
     in_full_pod5:  "The spare canisters flood Pod 5 with warm air, the frost on its glass melts, and Patel’s heart rate steadies.",
     in_low_pod5:   "The spare canisters bring Pod 5 back to full power and flood it with warm air, and Patel’s heart rate steadies.",
-    in_full_suit:  "You fill your own suit. In the Cryo Bay, Pod 5’s alarm sounds once more, and then Patel’s heart monitor goes flat.",
-    in_low_suit:   "You fill your own suit. In the Cryo Bay, Pod 5’s alarm sounds once more, and then Patel’s heart monitor goes flat.",
+    in_full_suit:  "You fill your own suit. In the Cryo Bay, Pod 5’s alarm keeps sounding: Patel is still critical, and the spare canisters are gone.",
+    in_low_suit:   "You fill your own suit. In the Cryo Bay, Pod 5’s alarm keeps sounding: Patel is still critical, and the spare canisters are gone.",
   };
   const ALIVE = { ok: ['4 of 5', 'ok'], critical: ['4 of 5 · 1 critical', 'warn'], dead: ['3 of 5', 'danger'] };
   const M2_VARIANTS = {};
@@ -1810,7 +1807,8 @@ color:  teal
     // Header crew readout. Hale's tag was found at Wake Up's cliffhanger (the recap says so), so
     // he is compromised all chapter. Patel is critical from the start if Wake Up shut the thing in
     // with him; otherwise this chapter's risk starts at M1 (40 L/h puts Pod 5 on minimum power).
-    // The cliffhanger (M2) settles him with fate().
+    // The cliffhanger (M2) settles him with fate(): stable, or still critical if Wake Up left him
+    // critical and the canisters went to your suit. Nobody dies in this optional round.
     crew: (c, seen) => {
       const hale = { 2: 'compromised' };
       if (!seen.includes('M2')) return { ...hale, ...(shutIn(c) ? { 5: 'critical' } : seen.includes('M1') && air(c) === 'low' ? { 5: 'risk' } : {}) };
@@ -2064,7 +2062,7 @@ color:  teal
     if (!raw || typeof raw !== 'object') return out;
     const at = raw._at && typeof raw._at === 'object' ? raw._at : {};
     for (const [k, v] of Object.entries(raw)) {
-      if (k === '_at' || !/^[a-z]\w{0,19}$/.test(k) || typeof v !== 'string' || !/^[a-z_]{1,20}$/.test(v)) continue;
+      if (k === '_at' || !/^[a-z]\w{0,19}$/.test(k) || typeof v !== 'string' || !/^[a-z][a-z0-9_]{0,19}$/.test(v)) continue;
       out[k] = v;
       out._at[k] = Number.isFinite(at[k]) ? at[k] : 0;
     }

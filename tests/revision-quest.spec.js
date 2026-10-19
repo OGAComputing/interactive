@@ -37,7 +37,8 @@ test('Level 1: six right in a row completes it and unlocks Level 2', async ({ pa
   for (let i = 0; i < 6; i++) {
     await page.locator('input[name="chain_opt"][value="0"]').check();
     await page.click('#chain-check');
-    if (i < 5) await expect(page.locator('#chain-card')).toContainText(`Question ${i + 2} of 6`, { timeout: 5000 });
+    // 15 s: the 1.5 s auto-advance timer can be held up while Pyodide boots on the main thread
+    if (i < 5) await expect(page.locator('#chain-card')).toContainText(`Question ${i + 2} of 6`, { timeout: 15000 });
   }
   await expect(page.locator('#chain-area .done-box')).toContainText(/Gold/, { timeout: 5000 });
   await expect(page.locator('#dot-0')).toHaveClass(/gold/);

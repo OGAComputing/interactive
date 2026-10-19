@@ -9,11 +9,12 @@ import { test, expect } from '@playwright/test';
 const PATH = '/Y9/Python/L1_Python_Refresh/2_Life_Support_PRIMM.html';
 const KEY  = 'primm_y9_l1_life_support';
 
+// step=off shows each run at once instead of stepping through it, to keep the tests quick.
 async function openAt(page, state = {}, { story = false } = {}) {
   await page.addInitScript(([k, s]) => {
     if (!sessionStorage.getItem('seeded')) { localStorage.setItem(k, JSON.stringify(s)); sessionStorage.setItem('seeded', '1'); }
   }, [KEY, state]);
-  await page.goto(PATH + (story ? '' : '?story=off'));
+  await page.goto(PATH + '?step=off' + (story ? '' : '&story=off'));
   await expect(page.locator('#pyStatusText')).toHaveText(/ready/, { timeout: 60000 });
 }
 
@@ -389,11 +390,12 @@ test('40 litres left Pod 5 short, and sending the canisters there saves Patel', 
   await expect(page.locator('#szReadouts')).not.toContainText('1 critical');
 });
 
-// Wake Up left Patel critical: only the canisters can save him, at either rate.
-test('a critical Patel from Wake Up dies if the canisters go to your suit, even at 60 litres', async ({ page }) => {
+// Wake Up left Patel critical: only the canisters can save him, at either rate. This round is
+// optional (2026-10-16), so it can only help: missing the canisters leaves him critical, never dead.
+test('a critical Patel from Wake Up stays critical if the canisters go to your suit', async ({ page }) => {
   await makeWith(page, { door: 'open', lock: 'bay', air: 'full' }, 'full', 'suit');
-  await expect(page.locator('#szLogFull')).toContainText('heart monitor goes flat');
-  await expect(page.locator('#szReadouts')).toContainText('3 of 5');
+  await expect(page.locator('#szLogFull')).toContainText('Patel is still critical');
+  await expect(page.locator('#szReadouts')).toContainText('4 of 5 · 1 critical');
 });
 
 test('a critical Patel from Wake Up is saved by sending the canisters to Pod 5', async ({ page }) => {
@@ -403,12 +405,11 @@ test('a critical Patel from Wake Up is saved by sending the canisters to Pod 5',
   await expect(page.locator('#szReadouts')).not.toContainText('1 critical');
 });
 
-// Lesson 2's recap reads the same rule: a critical Patel who never got the canisters (Make not
-// finished, so no transfer was chosen) has died.
-test('a critical Patel with no transfer chosen counts as dead', async ({ page }) => {
+// With no transfer chosen, a critical Patel stays critical (Chapter 2's crisis can still save him).
+test('a critical Patel with no transfer chosen stays critical, not dead', async ({ page }) => {
   await openStory(page, PATH, ['intro', 'P', 'R', 'I', 'M1', 'M2'], { door: 'open', lock: 'bay', air: 'full' });
-  await expect(page.locator('#szCrewCount')).toHaveText('3/5');
-  await expect(page.locator('#szCrewPods .crew-pod').nth(4)).toHaveClass(/dead/);
+  await expect(page.locator('#szCrewCount')).toHaveText('4/5');
+  await expect(page.locator('#szCrewPods .crew-pod').nth(4)).toHaveClass(/critical/);
 });
 
 test('the Make card warns when Wake Up shut something in with Pod 5', async ({ page }) => {
@@ -432,7 +433,7 @@ async function openStory(page, path, seen, choices) {
     localStorage.setItem('sz_story_' + p, JSON.stringify(s));
     localStorage.setItem('sz_choices', JSON.stringify(c));
   }, [path, seen, choices]);
-  await page.goto(path + '?story=off');
+  await page.goto(path + '?step=off&story=off');
 }
 
 test('crew readout: unknown in Wake Up until the pod records, then Patel at risk once the door is opened', async ({ page }) => {
@@ -446,12 +447,13 @@ test('crew readout: unknown in Wake Up until the pod records, then Patel at risk
 
 test('crew readout: hover opens the manifest, Esc closes it, and it follows Patel’s fate', async ({ page }) => {
   await openStory(page, PATH, ['intro', 'P', 'R', 'I', 'M1', 'M2'], { door: 'open', lock: 'bay', air: 'low', transfer: 'suit' });
-  await expect(page.locator('#szCrewCount')).toHaveText('3/5');
-  await expect(page.locator('#szCrewBtn')).toHaveClass(/loss/);
+  // this round can only help (2026-10-16): canisters to your suit leave Patel critical, not dead
+  await expect(page.locator('#szCrewCount')).toHaveText('4/5');
+  await expect(page.locator('#szCrewBtn')).toHaveClass(/warn/);
   await page.hover('#szCrewBtn');
   await expect(page.locator('#szCrewPanel')).toHaveClass(/open/);
-  await expect(page.locator('.crew-card').nth(4)).toHaveClass(/dead/);
-  await expect(page.locator('#szCrewNote')).toContainText('Crew alive: 3 of 5');
+  await expect(page.locator('.crew-card').nth(4)).toHaveClass(/critical/);
+  await expect(page.locator('#szCrewNote')).toContainText('Crew alive: 4 of 5');
   await page.keyboard.press('Escape');
   await expect(page.locator('#szCrewPanel')).not.toHaveClass(/open/);
 });

@@ -1,5 +1,8 @@
 import { test, expect } from '@playwright/test';
 
+// These tests watch animations play, so they opt out of the suite-wide reduced motion (playwright.config.js).
+test.use({ contextOptions: { reducedMotion: 'no-preference' } });
+
 async function loadActivityUI(page) {
   await page.goto('/index.html');
   await page.evaluate(() => {
