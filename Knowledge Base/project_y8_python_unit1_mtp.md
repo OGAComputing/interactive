@@ -89,6 +89,23 @@ Sample across the unit, **weighted toward reading, tracing and spot-and-fix**, w
 
 **Third version (after marking all 54 second-sitting docs; real mean 47%, range 8–96%).** The bottom third (<33%) answered the multiple-choice questions to the end but left 88–94% of the code from Casting onwards untouched; only 7 students ran out of time. Changes: Casting and Selection now OPEN with a guided 1-mark task with a How-to box (`c_guide`: put int() round input() so 5 doubles to 10; `s_guide`: add the else); trace boxes forgive capital letters (20 students lost a mark for "tom"/"jo"); the printed lines now come before the boxes, which ask about "after the last line" (17 of 28 who printed "Al cooks pasta" still put pizza in the box); the input trace names the typed value in the question; `v_order` and `c_str` (near-zero discrimination) are `retired: true` — kept in ITEMS, not shown or marked (`LIVE_ITEMS`). Still 51 marks (L1 8, L2 8, L3 6, L4 10, L5 11, write 8). The assessment now saves `ver: 3`; L7's `SITTINGS` (1, 2, 3) route and number each student on the version they sat, so the 13 Oct classes still get v_order/c_str in L7.
 
+**Fourth version (after the third sitting, 19 Oct 2026: 25 students, mean 38%, median 35%, no one in the 50s).** Questions that didn't change also scored lower than on 13 Oct, so the lower mean is mostly this group (the Selection multiple-choice questions were at or below chance). The 11 students under 33% averaged 12/51, still well under a third. What the third version's changes did:
+- Case-forgiving boxes worked: the box that doesn't change rose from 48% to 88%.
+- Putting the printed lines first backfired. The changing box didn't move (28%), and the printed lines fell from 52% to 22%: students typed the program's line 1 and 2, or a box value.
+- The guided tasks were left untouched by the low group. Make it a number: 0 of 11. Add the else: 3 of 11 changed it.
+
+The teacher also saw students type the answer into the code (`print(5 + 3)`, `print("13")`) instead of using the variables.
+
+Changes, 53 marks (Casting 11, Selection 12):
+- The boxes come first again; the printed rows are labelled "1st print" and "2nd print".
+- New pick-the-line questions (`c_pick`, `s_pick`) open Casting and Selection, before the guided tasks.
+- `c_join` (never separated strong from weak) is retired. `c_total` replaces it: which last line works whatever is typed, with a typed-in-numbers distractor.
+- The add-the-else mark accepts any message in the else.
+- Every code task that starts from code has a worked example in a different program, shown straight under the goal.
+- A program that prints the same thing whatever is typed is told to use the variables.
+
+The assessment saves `ver: 4`; L7 `SITTINGS` has entries 1–4.
+
 ## Lesson 7 (was Lesson 6) — DIRT + creative Make (not a PRIMM cycle; is the unit-level extended Make)
 Ringfenced time to **act on specific feedback** from Lesson 6 (fix the exact things they got wrong), then a short **creative selection program** of their own. Feedback only works when time is ringfenced to use it (Wiliam; Hattie).
 

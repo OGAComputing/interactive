@@ -325,7 +325,7 @@ import {
   markCheckpoint, rightAnswer, applyFor, evalApply, inputPrompts, inputCount, evalMake,
   MAKE_REQS, MAKE_STRETCH, IDEAS, lessonScore, targetDone, realSentence, questionNumber,
   FIX_NOTES, checkTraceValue, checkTraceOutput, showValue, branchChoices, branchAnswer, markSort,
-  SITTINGS, satItems, orderBlocks, orderCode, evalOrder,
+  SITTINGS, LATEST, satItems, orderBlocks, orderCode, evalOrder,
 } from './checkers.js';
 import { preload, runPython } from '../../../pyodide-runner.js';
 import { setupEditors, setEditorOutput, refreshEditor, runCode } from '../../../code-editor.js';
@@ -359,7 +359,7 @@ function save() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(S)); } 
 const targets = () => [...(S.plan || []), ...S.extra];
 // Which version of the assessment they sat (see SITTINGS). A plan saved before sittings were
 // numbered has only `first`; any other student then had sat version 2.
-const first = () => S.snap ? S.snap.sitting ?? (S.snap.first ? 1 : 2) : 3;
+const first = () => S.snap ? S.snap.sitting ?? (S.snap.first ? 1 : 2) : LATEST;
 const qNum = id => questionNumber(id, first());
 const makeUnlocked = () => S.plan && (S.teacherUnlock || S.plan.every(t => targetDone(S, t)));
 
@@ -528,7 +528,7 @@ function renderLookBack(tid) {
   const snap = S.snap;
   if (!snap) {
     return `<p class="muted">Here are the assessment questions on this, with the right answers.</p>` +
-      satItems(t.items, 3).map(id => lookBackItem(id, null)).join('');
+      satItems(t.items, LATEST).map(id => lookBackItem(id, null)).join('');
   }
   const sat = satItems(t.items, first());
   const lost = sat.filter(id => (snap.points[id] || 0) < itemMax(itemById(id)));

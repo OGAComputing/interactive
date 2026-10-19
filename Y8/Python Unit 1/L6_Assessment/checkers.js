@@ -15,6 +15,14 @@
 //     guided 1-mark code task. Trace boxes forgive capital letters (like the printed lines);
 //     two questions that didn't separate strong from weak students (v_order, c_str) are
 //     retired: kept here, unmarked and unshown, so L7 can still use them for that sitting.
+//   • Revised after the third sitting (19 Oct 2026, mean 38%, 25 students): low scorers still
+//     skipped the typed tasks but answered what they could click, so Casting and Selection now
+//     open with a "pick the line" question before the guided task. Students typed answers into
+//     the code (print(5 + 3), print("13")) instead of using the variables, so "4, then 5"
+//     (c_join, which never separated strong from weak) became "which line works whatever is
+//     typed" (c_total); every code task that starts from code has a worked example, and a
+//     program that prints the same thing whatever is typed is told so. The trace shows the
+//     boxes first again (with the printed lines first, half read "line 1" as the program's).
 //   • One section per lesson (L1–L5), so the DIRT lesson (L7) can route students to the
 //     lessons they need. Per-section scores go to Drive via Classroom.submitResults().
 //   • Multiple-choice, trace and sort answers are ONE TRY: they lock when checked, show the
@@ -26,7 +34,8 @@
 //   • Code tasks are judged on what the program DOES (run with several test inputs, one
 //     each side of every boundary), never on one exact way of writing it. They can be
 //     checked as often as needed; the best score is kept.
-//   • No coaching hints: a failed requirement is named, not solved. The bonus extension is
+//   • Few coaching hints: a failed requirement is named, not solved; the worked examples show
+//     the pattern in a different program. The bonus extension is
 //     outside the grade, so 100% is reachable without it.
 //
 // A "run" is what runPython() resolved with, plus the inputs it was given:
@@ -207,6 +216,12 @@ const printsExactly = expect => (raw, runs) => allOk(runs) && runs.every(r => {
   return got.length === want.length && want.every((w, i) => same(got[i], w));
 });
 
+// Different answers were typed but the program printed exactly the same thing: the answer was
+// typed into the code (print(5 + 3), print("13")) instead of worked out from the variables.
+export const sameEveryRun = runs => runs.length > 1 && new Set(runs.map(r => r.inputs.join('|'))).size > 1
+  && new Set(runs.map(r => printedLines(r).join('\n'))).size === 1;
+const SAME_MSG = ' Your program printed the same thing whatever was typed. It is checked with other answers too, so work the answer out from the variables that hold what was typed.';
+
 // Every code item (fix-it, warm-up, write task, extension) has a requirement list:
 // one mark per requirement met.
 // The message names the first requirement still missing — never how to meet it.
@@ -218,6 +233,7 @@ export function evalReqs(item, raw, runs) {
   if (bad >= 0) {
     msg = `Requirement ${bad + 1} is not met yet.`;
     if (firstFailed(runs)) msg += ' ' + crashMsg(runs);
+    else if (sameEveryRun(runs)) msg += SAME_MSG;
     else if (item.extraMsg) msg += item.extraMsg(raw, runs, results) || '';
   }
   return { results, pts, msg };
@@ -277,6 +293,8 @@ export const ITEMS = [
   { id: 'o_fix', section: 'output', kind: 'fix',
     title: 'Fix it: the welcome message',
     goal: 'This program should print the three lines below. It has one bug. Fix it (don\'t delete anything).',
+    howto: { text: 'Text needs a double quote at the start <strong>and</strong> at the end, inside the brackets. Check every line for both. For example:',
+             code: 'print("See you soon")' },
     starter: 'print("Welcome to the quiz!")\nprint("Good luck)\nprint("Question 1 is coming up")',
     tests: [[]],
     reqs: [
@@ -387,8 +405,11 @@ export const ITEMS = [
   { id: 'i_fix', section: 'input', kind: 'fix',
     title: 'Fix it: the favourite animal',
     goal: 'Ask for a favourite animal, then print e.g. I like cats too! (when cat is typed). It has one bug.',
+    howto: { text: 'A variable must be spelt <strong>exactly</strong> the same every time it is used. Join the box into the message, not the word that was typed, so it works whatever the user types. For example:',
+             code: 'colour = input("Favourite colour? ")\nprint("I like " + colour + " too!")' },
     starter: 'animal = input("What is your favourite animal? ")\nprint("I like " + aminal + "s too!")',
     tests: [['cat'], ['owl']],
+    testNote: 'Checked by running it with cat and then owl.',
     reqs: [
       { text: 'Print <code>I like cats too!</code> when <code>cat</code> is typed, and the same for any animal typed',
         test: printsExactly(([a]) => [`I like ${a}s too!`]) },
@@ -410,12 +431,19 @@ export const ITEMS = [
           printedLines(r).some(l => /\b(hello|hi|hey|hiya)\b/i.test(l) && l.includes(r.inputs[0]))) },
     ] },
 
-  // ── 4 · Data types & casting (Lesson 4) ── 10 marks
-  // Guided, and FIRST in the section: in the second sitting the low scorers answered the
+  // ── 4 · Data types & casting (Lesson 4) ── 11 marks
+  // Pick the line, then type it: in the third sitting the low scorers answered what they
+  // could click but left the guided code task untouched (0 of 11).
+  { id: 'c_pick', section: 'casting', kind: 'mcq', pts: 1,
+    q: 'Type <strong>5</strong> and this program prints <strong>55</strong>, not 10. Which <strong>line 1</strong> makes it print <strong>10</strong>?',
+    code: 'num = input("Pick a number: ")\nprint(num * 2)',
+    opts: ['num = int(input("Pick a number: "))', 'num = input(int("Pick a number: "))', 'num = int("Pick a number: ")', 'num = input("Pick a number: ") * 2'],
+    why: 'int() goes round the whole input(...), so the answer typed becomes a number before it is stored. Then num * 2 does maths.' },
+  // Guided, and early in the section: in the second sitting the low scorers answered the
   // multiple-choice questions but never reached the code below them.
   { id: 'c_guide', section: 'casting', kind: 'reqs', resettable: true,
     title: 'Write it: make it a number',
-    goal: 'Type <strong>5</strong> and this program prints <strong>55</strong>, not 10, because <code>input()</code> gives back text. Change <strong>line 1 only</strong> so that typing 5 prints 10.',
+    goal: 'Type <strong>5</strong> and this program prints <strong>55</strong>, not 10, because <code>input()</code> gives back text. Change <strong>line 1 only</strong> so that typing 5 prints 10. Leave line 2, <code>print(num * 2)</code>, exactly as it is.',
     howto: { text: 'Put <code>int( )</code> around the whole <code>input(...)</code>, so the answer becomes a whole number before it is stored. Count the brackets: one more <code>)</code> at the end. For example:',
              code: 'score = int(input("Score? "))' },
     starter: 'num = input("Pick a number: ")\nprint(num * 2)',
@@ -438,7 +466,8 @@ export const ITEMS = [
       { id: 'k5', expr: 'int(num) * 2',     bin: 'maths' },
       { id: 'k6', expr: '"Age: " + 12',     bin: 'error' },
     ] },
-  { id: 'c_join', section: 'casting', kind: 'mcq', pts: 1,
+  // Retired after the third sitting (20% and 33%, separated strong from weak in neither).
+  { id: 'c_join', section: 'casting', kind: 'mcq', pts: 1, retired: true,
     variants: [
       { q: 'The user types <strong>4</strong>, then <strong>5</strong>. What is printed?', opts: ['45', '9', '4 5', 'A TypeError'] },
       { q: 'The user types <strong>2</strong>, then <strong>6</strong>. What is printed?', opts: ['26', '8', '2 6', 'A TypeError'] },
@@ -446,6 +475,19 @@ export const ITEMS = [
     ],
     code: 'a = input("First number? ")\nb = input("Second number? ")\nprint(a + b)',
     why: 'input() always gives back text, and + joins text. Nothing was cast with int().' },
+  // In its place: in the third sitting students typed the numbers into their code
+  // (print(5 + 3), print("13")) instead of using the variables.
+  { id: 'c_total', section: 'casting', kind: 'mcq', pts: 1,
+    variants: [
+      { q: 'The user types <strong>4</strong>, then <strong>5</strong>. The last line must print their total, <strong>9</strong>, and still be right when other numbers are typed. Which line is it?',
+        opts: ['print(int(a) + int(b))', 'print(int(4) + int(5))', 'print(int(a + b))', 'print(a + b)'] },
+      { q: 'The user types <strong>2</strong>, then <strong>6</strong>. The last line must print their total, <strong>8</strong>, and still be right when other numbers are typed. Which line is it?',
+        opts: ['print(int(a) + int(b))', 'print(int(2) + int(6))', 'print(int(a + b))', 'print(a + b)'] },
+      { q: 'The user types <strong>3</strong>, then <strong>7</strong>. The last line must print their total, <strong>10</strong>, and still be right when other numbers are typed. Which line is it?',
+        opts: ['print(int(a) + int(b))', 'print(int(3) + int(7))', 'print(int(a + b))', 'print(a + b)'] },
+    ],
+    code: 'a = input("First number? ")\nb = input("Second number? ")',
+    why: 'a and b hold whatever was typed, so using them works for any numbers; typing the numbers in only works for one pair. Each needs int() before + adds them: int(a + b) joins them first.' },
   { id: 'c_int', section: 'casting', kind: 'mcq', pts: 1,
     q: 'Which of these is an <strong>int</strong> (a whole number)?',
     opts: ['12', '"12"', '12.5', '"twelve"'],
@@ -458,8 +500,11 @@ export const ITEMS = [
   { id: 'c_fix', section: 'casting', kind: 'fix',
     title: 'Fix it: the fruit bowl',
     goal: 'Typing 5 and 3 should print Fruit in the bowl: 8 — but it prints 53. There is no error message. Fix it.',
+    howto: { text: '<code>input()</code> gives back text, and <code>+</code> joins text. Put <code>int( )</code> round an <code>input(...)</code> to store a number instead. Keep using the variables: don\'t type 5 and 3 into the code, because it is checked with other numbers too. For example:',
+             code: 'cats = int(input("How many cats? "))' },
     starter: 'apples = input("How many apples? ")\npears = input("How many pears? ")\ntotal = apples + pears\nprint("Fruit in the bowl:", total)',
     tests: [['5', '3'], ['12', '30']],
+    testNote: 'Checked by running it with 5 and 3, then 12 and 30.',
     reqs: [
       { text: '<strong>Add</strong> the two numbers instead of joining them (5 and 3 should give 8, not 53)',
         test: (raw, runs) => allOk(runs) && runs.every(r => {
@@ -473,6 +518,8 @@ export const ITEMS = [
   { id: 'c_write', section: 'casting', kind: 'reqs', resettable: true,
     title: 'Write it: next year',
     goal: 'This line asks for an age. Add to the program so it prints how old the user will be <strong>next year</strong>.',
+    howto: { text: 'Make the answer a number with <code>int( )</code>, then do the maths with the <strong>variable</strong>, not a number you typed in: it must work for any age. For example, this doubles any score typed:',
+             code: 'score = int(input("Score? "))\nprint("Double is", score * 2)' },
     samples: [[['How old are you? ', '12'], ['Next year you will be 13']]],
     starter: 'age = input("How old are you? ")\n',
     tests: [['12'], ['7']],
@@ -484,8 +531,13 @@ export const ITEMS = [
         test: (raw, runs) => allOk(runs) && runs.every(r => printedNumbers(r).includes(Number(r.inputs[0]) + 1)) },
     ] },
 
-  // ── 5 · Selection (Lesson 5) ── 11 marks
-  // Guided, and first in the section (see c_guide).
+  // ── 5 · Selection (Lesson 5) ── 12 marks
+  // Pick the line, then the guided task (see c_pick and c_guide).
+  { id: 's_pick', section: 'selection', kind: 'mcq', pts: 1,
+    q: 'This program should print <strong>Pass</strong> when the score is 50 or more and <strong>Try again</strong> when it is lower. Which line goes in the gap?',
+    code: 'score = int(input("Score? "))\nif score >= 50:\n    print("Pass")\n_______\n    print("Try again")',
+    opts: ['else:', 'else', 'else score < 50:', 'if else:'],
+    why: 'else: lines up with the if (no indent) and ends with a colon. It needs no test of its own: it runs whenever the if test is False.' },
   { id: 's_guide', section: 'selection', kind: 'reqs', resettable: true,
     title: 'Write it: add the else',
     goal: 'This program prints <strong>Pass</strong> when the score is 50 or more, but prints nothing when it is lower. Add an <code>else</code> so any score <strong>under 50</strong> prints <strong>Try again</strong>',
@@ -494,10 +546,14 @@ export const ITEMS = [
     starter: 'score = int(input("Score? "))\nif score >= 50:\n    print("Pass")\n',
     tests: [['70'], ['50'], ['49']],
     testNote: 'Checked by running it with 70, 50 and 49.',
+    // The mark is for the else: in the third sitting two of the six who wrote one printed
+    // "Fail" or "Try again!" and scored nothing.
     reqs: [
-      { text: 'Use an <code>else</code> so that 50 or more prints <code>Pass</code> and anything lower prints <code>Try again</code>',
-        test: (raw, runs) => /^else\s*:/m.test(normalise(raw))
-          && printsExactly(([n]) => [Number(n) >= 50 ? 'Pass' : 'Try again'])(raw, runs) },
+      { text: 'Use an <code>else</code> so that 50 or more prints <code>Pass</code> and anything lower prints <code>Try again</code> (or another message of your own)',
+        test: (raw, runs) => /^else\s*:/m.test(normalise(raw)) && allOk(runs) && runs.every(r => {
+          const got = printedLines(r);
+          return got.length === 1 && same(got[0], 'Pass') === (Number(r.inputs[0]) >= 50);
+        }) },
     ] },
   // A helper first: what an indent does, before any question that relies on it.
   { id: 's_indented', section: 'selection', kind: 'mcq', pts: 1,
@@ -534,6 +590,9 @@ export const ITEMS = [
   { id: 's_fix', section: 'selection', kind: 'fix',
     title: 'Fix it: the merit checker',
     goal: '60 or more should print Merit! and anything lower should print Keep practising. It has one bug.',
+    howto: { text: 'The line that runs under <code>if</code> or <code>else:</code> must be indented by 4 spaces. For example:',
+             code: 'if age >= 13:\n    print("Welcome")\nelse:\n    print("Too young")' },
+    testNote: 'Checked by running it with 60, 59 and 85.',
     starter: 'mark = int(input("What was your mark? "))\nif mark >= 60:\nprint("Merit!")\nelse:\n    print("Keep practising")',
     tests: [['60'], ['59'], ['85']],
     reqs: [
@@ -543,6 +602,8 @@ export const ITEMS = [
   { id: 's_write', section: 'selection', kind: 'reqs', resettable: true,
     title: 'Write it: the PIN lock',
     goal: 'Finish the program. If the PIN is <strong>1234</strong> print <code>Unlocked</code> and for any other PIN print <code>Wrong PIN</code>',
+    howto: { text: 'Compare the <strong>variable</strong> with <code>==</code> (two equals signs), end the <code>if</code> line with a colon, and indent the line under it. <code>else:</code> catches every other answer. For example:',
+             code: 'if guess == 7:\n    print("Correct")\nelse:\n    print("Wrong")' },
     starter: 'pin = int(input("Enter your PIN: "))\n',
     tests: PIN_TESTS,
     testNote: 'Checked by running it with 1234, 1233 and 1235.',
@@ -556,6 +617,8 @@ export const ITEMS = [
   // ── 6 · Write a program (Lessons 1–5) ── 8 marks
   { id: 'w_warm', section: 'write', kind: 'reqs', resettable: true, title: 'Warm-up: change a program',
     goal: 'This program works. Change it so it meets both requirements.',
+    howto: { text: '<code>&gt;=</code> lets the number itself in; <code>&gt;</code> does not. A line with <strong>no</strong> indent under the if/else runs for everyone. For example:',
+             code: 'if age >= 18:\n    print("Adult ticket")\nelse:\n    print("Child ticket")\nprint("Enjoy the film!")' },
     starter: 'temp = int(input("What is the temperature? "))\nif temp > 20:\n    print("T-shirt weather!")\nelse:\n    print("Take a coat.")',
     tests: WARM_TESTS,
     testNote: 'Checked by running it with 25, 24, 31 and 10.',
@@ -633,8 +696,9 @@ export const itemById = id => ITEMS.find(i => i.id === id);
 // The questions the assessment shows and marks now (retired ones stay in ITEMS for L7).
 export const LIVE_ITEMS = ITEMS.filter(i => !i.retired);
 // Saved with every attempt, so L7 knows which version a student sat (1: 38 marks, first
-// sitting; 2: the 13 Oct 2026 sitting; 3: guided casting/selection tasks, two retired).
-export const VERSION = 3;
+// sitting; 2: the 13 Oct 2026 sitting; 3: guided casting/selection tasks, two retired, sat
+// 19 Oct 2026; 4: pick-the-line questions, c_total for c_join, worked examples; 53 marks).
+export const VERSION = 4;
 
 // Marks available for an item (for this student's version).
 export function itemMax(item, seed = 0) {

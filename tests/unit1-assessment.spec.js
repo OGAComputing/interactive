@@ -31,7 +31,7 @@ test('page shell: six sections, a bonus and a review tab; nothing answered', asy
   await expectNoClassroomBanner(page);
   await expect(page.locator('.tab')).toHaveCount(8);
   await expect(page.locator('#count_output')).toHaveText('0/7');
-  await expect(page.locator('#score-pill')).toHaveText('Score: 0 / 51 (0%)');
+  await expect(page.locator('#score-pill')).toHaveText('Score: 0 / 53 (0%)');
   await expect(page.locator('#intro')).toHaveAttribute('open', '');
 });
 
@@ -71,7 +71,7 @@ test('trace: marked box by box, with the right answers shown', async ({ page }) 
   await expect(page.locator(`#msg_v_trace_v_${a.name}`)).toContainText(a.value);
   await expect(page.locator(`#tr_v_trace_v_${b.name}`)).toHaveClass(/ans-correct/);
   await expect(page.locator('#fb_v_trace')).toContainText('3 of 4');
-  await expect(page.locator('#score-pill')).toContainText('Score: 3 / 51');
+  await expect(page.locator('#score-pill')).toContainText('Score: 3 / 53');
 });
 
 test('selection rows and the sort lock with per-row and per-card marking', async ({ page }) => {
@@ -94,7 +94,7 @@ test('selection rows and the sort lock with per-row and per-card marking', async
   }
   await page.click('#lock_c_sort');
   await expect(page.locator('#fb_c_sort')).toContainText('6 of 6');
-  await expect(page.locator('#score-pill')).toContainText('Score: 6 / 51');
+  await expect(page.locator('#score-pill')).toContainText('Score: 6 / 53');
 });
 
 // classroom.js labels each answer in the evidence report by its data-title, and reads hidden
@@ -210,7 +210,7 @@ test('review lists what is left; answering the last question shows the finished 
   await page.click('#lock_o_print');
   await expect(page.locator('#done-banner')).toHaveClass(/show/);
   await expect(page.locator('#done-banner')).toContainText('full marks');
-  await expect(page.locator('#score-pill')).toHaveText('Score: 51 / 51 (100%)');
+  await expect(page.locator('#score-pill')).toHaveText('Score: 53 / 53 (100%)');
 });
 
 test('review shows a red row for a code question checked but below full marks', async ({ page }) => {

@@ -117,7 +117,7 @@ color:  teal
   .cell-msg { font-size: 0.78rem; color: var(--red); min-height: 1.1em; font-weight: 600; }
   .cell-msg .ans { color: var(--surface); font-family: var(--font-mono); }
   .out-line { display: flex; gap: 8px; align-items: flex-start; margin: 6px 0; }
-  .out-line .n { font-family: var(--font-mono); color: var(--muted); padding-top: 9px; width: 4.5em; flex-shrink: 0; font-size: 0.8rem; }
+  .out-line .n { font-family: var(--font-mono); color: var(--muted); padding-top: 9px; width: 6.5em; flex-shrink: 0; font-size: 0.8rem; }
   .out-line > div { flex: 1; }
   .rule-box { background: #f7fafd; border-radius: 8px; padding: 8px 12px; font-size: 0.85rem; border: 1px solid #c9d8e8; line-height: 1.6; margin-top: 6px; }
 
@@ -334,8 +334,10 @@ function renderMcq(id) {
 function renderTrace(id) {
   const v = V[id];
   const notes = Object.fromEntries(Object.entries(v.typed || {}).map(([i, t]) => [i, `the user types ${t}`]));
-  // The printed lines come first and the boxes ask about "after the last line": with the boxes
-  // first, 17 of 28 students who printed the changed value still put the first value in its box.
+  // Boxes first, then the printed lines. With the printed lines first (third sitting), labelled
+  // "line 1" / "line 2" right under the program, the printed lines fell from 52% to 22%: students
+  // typed the program's line 1 and 2, or a box's value. So they are "1st print" / "2nd print".
+  const ORD = ['1st', '2nd', '3rd'];
   const boxes = v.vars.length ? `
     <span class="q-label" style="margin-top:10px">📦 What is in each box after the <strong>last</strong> line has run?</span>
     <div class="rule-box">Write just what is in the box, like <code>Sam</code> (you can put quotes round text if you like)</div>
@@ -344,15 +346,16 @@ function renderTrace(id) {
       <input type="text" id="tr_${id}_v_${x.name}" data-trace="${id}" data-title="${evTitle(id, 'box ' + x.name)}" autocomplete="off" spellcheck="false" placeholder="?">
       <div class="cell-msg" id="msg_${id}_v_${x.name}"></div></div>`).join('')}</div>` : '';
   const outs = `
-    <span class="q-label" style="margin-top:10px">🖥️ What does it print${v.vars.length ? ', line by line' : ''}?</span>
-    ${v.output.map((_, i) => `<div class="out-line"><span class="n">line ${i + 1}</span><div>
+    <span class="q-label" style="margin-top:10px">🖥️ What does it print?</span>
+    ${v.output.length > 1 ? '<div class="rule-box">Only the <code>print()</code> lines show anything on screen. Write what each one shows, in order.</div>' : ''}
+    ${v.output.map((_, i) => `<div class="out-line"><span class="n">${v.output.length > 1 ? ORD[i] + ' print' : 'printed'}</span><div>
       <input type="text" id="tr_${id}_o_${i}" data-trace="${id}" data-title="${evTitle(id, 'printed line ' + (i + 1))}" autocomplete="off" spellcheck="false" placeholder="exactly what is printed">
       <div class="cell-msg" id="msg_${id}_o_${i}"></div></div></div>`).join('')}`;
   return `<div class="question-card" id="card_${id}">${head(id)}
     <span class="q-label">${v.q}</span>
     ${listing(v.lines.join('\n'), notes)}
     ${isVariant(id) ? evNote(id, 'version shown', v.lines.join('\n') + Object.entries(v.typed || {}).map(([i, t]) => `\n(line ${+i + 1}: the user types ${t})`).join('')) : ''}
-    ${outs}${boxes}
+    ${boxes}${outs}
     ${lockBtn(id, '🔒 Lock in my trace')}
     <div class="feedback" id="fb_${id}"></div></div>`;
 }
@@ -398,7 +401,7 @@ function renderCodeItem(id) {
   return `<div class="question-card" id="card_${id}">${head(id)}
     <div class="code-title">${esc(v.title)}</div>
     <div class="goal-line">🎯 ${v.goal}</div>
-    ${samples}${howto}${reqs}
+    ${howto}${samples}${reqs}
     ${v.testNote || v.note ? `<div class="test-note">${esc(v.testNote || v.note)}</div>` : ''}
     <div class="code-checker">
       <textarea class="checker-textarea" id="ed_${id}" data-title="${evTitle(id, v.title)}">${esc(v.starter)}</textarea>

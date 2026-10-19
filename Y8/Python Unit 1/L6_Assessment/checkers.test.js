@@ -49,9 +49,9 @@ describe('question bank', () => {
     }
   });
 
-  test('marks: 51 in the grade, 4 bonus; writing is no more than a quarter', () => {
+  test('marks: 53 in the grade, 4 bonus; writing is no more than a quarter', () => {
     const s = summarise({}, 0);
-    expect(s.max).toBe(51);
+    expect(s.max).toBe(53);
     expect(s.sections.ext.max).toBe(4);
     expect(s.sections.write.max / s.max).toBeLessThanOrEqual(0.25);
   });
@@ -353,9 +353,10 @@ describe('short write-it tasks (one per lesson section)', () => {
 });
 
 describe('guided tasks that open Casting and Selection (after the second sitting)', () => {
-  test('they come first in their sections, with a how-to', () => {
-    for (const [sec, id] of [['casting', 'c_guide'], ['selection', 's_guide']]) {
-      expect(LIVE_ITEMS.filter(i => i.section === sec)[0].id).toBe(id);
+  test('they open their sections, straight after a pick-the-line question, with a how-to', () => {
+    for (const [sec, pick, id] of [['casting', 'c_pick', 'c_guide'], ['selection', 's_pick', 's_guide']]) {
+      expect(LIVE_ITEMS.filter(i => i.section === sec).slice(0, 2).map(i => i.id)).toEqual([pick, id]);
+      expect(itemById(pick).kind).toBe('mcq');
       expect(itemById(id).howto.code.length).toBeGreaterThan(5);
     }
   });
@@ -377,6 +378,47 @@ describe('guided tasks that open Casting and Selection (after the second sitting
     expect(evalCode(it, it.starter, [run('70', 'Pass'), run('50', 'Pass'), run('49')]).pts).toBe(0);
     const twoIfs = it.starter + 'if score < 50:\n    print("Try again")';      // works, but no else
     expect(evalCode(it, twoIfs, [run('70', 'Pass'), run('50', 'Pass'), run('49', 'Try again')]).pts).toBe(0);
+  });
+
+  test('s_guide: the mark is for the else, so a message of their own counts', () => {
+    const it = itemById('s_guide');
+    const run = (n, ...lines) => ok([n], [`Score? ${n}`, ...lines]);
+    for (const msg of ['Fail', 'Try again!']) {
+      const code = it.starter + `else:\n    print("${msg}")`;
+      expect(evalCode(it, code, [run('70', 'Pass'), run('50', 'Pass'), run('49', msg)]).pts, msg).toBe(1);
+    }
+    const passBoth = it.starter + 'else:\n    print("Pass")';
+    expect(evalCode(it, passBoth, [run('70', 'Pass'), run('50', 'Pass'), run('49', 'Pass')]).pts).toBe(0);
+    const twoLines = it.starter + 'else:\n    print("Try again")\n    print("Bye")';
+    expect(evalCode(it, twoLines, [run('70', 'Pass'), run('50', 'Pass'), run('49', 'Try again', 'Bye')]).pts).toBe(0);
+  });
+});
+
+describe('after the third sitting (19 Oct 2026)', () => {
+  test('c_total replaces c_join: the right line uses the variables, not the typed numbers', () => {
+    expect(itemById('c_join').retired).toBe(true);
+    for (const v of itemById('c_total').variants) {
+      expect(v.opts[0]).toBe('print(int(a) + int(b))');
+      const [x, y] = v.q.match(/<strong>(\d+)<\/strong>, then <strong>(\d+)/).slice(1);
+      expect(v.opts).toContain(`print(int(${x}) + int(${y}))`);
+    }
+  });
+
+  test('a program that prints the same thing whatever is typed is told so', () => {
+    const it = itemById('c_fix');
+    const run = (a, b, line) => ok([a, b], [`How many apples? ${a}`, `How many pears? ${b}`, line]);
+    const typedIn = 'apples = input("How many apples? ")\npears = input("How many pears? ")\nprint("Fruit in the bowl:", 8)';
+    const r = evalCode(it, typedIn, [run('5', '3', 'Fruit in the bowl: 8'), run('12', '30', 'Fruit in the bowl: 8')]);
+    expect(r.pts).toBe(0);
+    expect(r.msg).toMatch(/same thing whatever was typed/);
+    // Different output for different answers: no nudge.
+    const joined = evalCode(it, it.starter, [run('5', '3', 'Fruit in the bowl: 53'), run('12', '30', 'Fruit in the bowl: 1230')]);
+    expect(joined.msg).not.toMatch(/same thing/);
+  });
+
+  test('every code task that starts from code has a worked example', () => {
+    for (const it of LIVE_ITEMS.filter(i => i.reqs && !i.bonus && i.id !== 'w_make' && i.starter && !/^#/.test(i.starter)))
+      expect(it.howto?.code, it.id).toBeTruthy();
   });
 });
 
