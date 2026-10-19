@@ -56,6 +56,18 @@
     'html[data-theme="light"] .theme-toggle:focus-visible{outline-color:#8b2fe0}',
     'html[data-theme="light"] .theme-toggle .tt-sun{display:inline-flex}',
     'html[data-theme="light"] .theme-toggle .tt-moon{display:none}',
+    // The on/off track: the knob sits left when off and slides right (and the track
+    // fills) when on, so the state is visible as well as announced. It is drawn in
+    // currentColor, so it follows whatever colours a page gives the button.
+    '.theme-toggle .tt-track{position:relative;display:inline-block;width:30px;height:16px;flex-shrink:0;',
+    'border:1.5px solid currentColor;border-radius:999px;box-sizing:border-box;margin-left:.15rem}',
+    '.theme-toggle .tt-track::before{content:"";position:absolute;inset:0;border-radius:inherit;',
+    'background:currentColor;opacity:0;transition:opacity .2s}',
+    '.theme-toggle .tt-knob{position:absolute;top:2px;left:2px;width:9px;height:9px;border-radius:50%;',
+    'background:currentColor;transition:transform .2s ease}',
+    '.theme-toggle[aria-checked="true"] .tt-track::before{opacity:.25}',
+    '.theme-toggle[aria-checked="true"] .tt-knob{transform:translateX(14px)}',
+    '@media (prefers-reduced-motion:reduce){.theme-toggle .tt-knob,.theme-toggle .tt-track::before{transition:none}}',
     // Sit at the far right of the header, after the decorative code window
     // (which is hidden on phones, when the toggle takes the auto margin itself).
     '.site-header>.theme-toggle{margin-left:auto}',
@@ -80,7 +92,8 @@
     btn.setAttribute('role', 'switch');
     btn.innerHTML = '<span class="tt-moon" aria-hidden="true">' + MOON + '</span>' +
                     '<span class="tt-sun" aria-hidden="true">' + SUN + '</span>' +
-                    '<span class="theme-toggle-text">Light mode</span>';
+                    '<span class="theme-toggle-text">Light mode</span>' +
+                    '<span class="tt-track" aria-hidden="true"><span class="tt-knob"></span></span>';
     btn.addEventListener('click', function () {
       var next = root.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
       root.classList.add('theme-switching');
