@@ -1,6 +1,7 @@
 import { describe, test, expect } from 'vitest';
 import { evalInv, evalMod, evalMake, evalExt, breakCode, hasBugLine, hasFixedLine, isBugFixed, isBugPairLine,
-         IBUG_LINE, IBUG_FIXED_LINE, MOD_INPUTS, MAKE_INPUTS, RATES, hourTotal, crewTotal } from './checkers_life_support.js';
+         IBUG_LINE, IBUG_FIXED_LINE, MOD_INPUTS, MAKE_INPUTS, RATES, hourTotal, crewTotal,
+         MOD_PROFILES, modInputs, MAKE_PROFILES } from './checkers_life_support.js';
 
 const code = (...lines) => lines.join('\n');
 const out  = (...lines) => lines.join('\n') + '\n';
@@ -283,5 +284,57 @@ describe('Extension — full manifest', () => {
   test('only one str() in the summary line fails', () => {
     const src = code(...MAKE_GOOD, 'cells = int(input("Battery cells: "))', 'print("Cells: " + str(cells))');
     expect(evalExt(src).results).toEqual([true, false]);
+  });
+});
+
+// ─── Answer banks ("typed for you" changes each check) ───────────────────────
+
+describe('answer banks — every set works, and worked-out numbers are caught', () => {
+  const CHOICES = Object.keys(RATES);
+  const echo = p => ['Enter your name: ' + p.name, 'Hours until rescue: ' + p.hours, 'Crew awake: ' + p.crew];
+  const MOD3 = [
+    'name = input("Enter your name: ")', 'hours = int(input("Hours until rescue: "))', 'crew = int(input("Crew awake: "))',
+    'total = hours * crew * 60', 'print(total)',
+  ];
+  const MOD4 = [...MOD3, 'print("Total oxygen: " + str(total) + " litres")'];
+
+  test('5–10 sets, the first is the default, and every set is a name and two whole numbers', () => {
+    expect(MOD_PROFILES.length).toBeGreaterThanOrEqual(5);
+    expect(MOD_PROFILES.length).toBeLessThanOrEqual(10);
+    expect(MAKE_PROFILES.length).toBeGreaterThanOrEqual(5);
+    expect(MAKE_INPUTS).toEqual(MAKE_PROFILES[0]);
+    for (const p of MOD_PROFILES) expect(modInputs('mod3', p)).toEqual([p.name, String(p.hours), String(p.crew)]);
+    for (const set of MAKE_PROFILES) expect(set.every(v => /^[1-9]\d*$/.test(v))).toBe(true);
+  });
+  test('no expected total can be confused with a typed number, the old rate, or the other total', () => {
+    for (const p of MOD_PROFILES) for (const c of CHOICES) {
+      const typed = [p.hours, p.crew];
+      expect(typed).not.toContain(hourTotal(c, p));
+      expect(typed).not.toContain(crewTotal(c, p));
+      expect(hourTotal(c, p)).not.toBe(p.hours * 50);
+      expect([crewTotal(c, p), p.hours * p.crew * 50]).not.toContain(hourTotal(c, p));
+    }
+  });
+  test('a number worked out for the first set fails every other set', () => {
+    for (const c of CHOICES) for (const p of MOD_PROFILES.slice(1)) {
+      expect(hourTotal(c, p)).not.toBe(hourTotal(c));
+      expect([crewTotal(c, p), p.hours * p.crew * 50]).not.toContain(crewTotal(c));
+    }
+  });
+  test('Modify 1, 3 and 4 pass for every set and rate; the hints name the numbers typed', () => {
+    for (const p of MOD_PROFILES) for (const c of CHOICES) {
+      const r = RATES[c];
+      const mod1 = code(...withLine(2, `oxygen = hours * ${r}`));
+      const o1 = ['Enter your name: ' + p.name, 'Hours until rescue: ' + p.hours, `Engineer ${p.name} is awake.`, 'Oxygen needed in litres:'];
+      expect(evalMod('mod1', mod1, out(...o1, String(p.hours * r)), c, p).pass).toBe(true);
+      const wrong = evalMod('mod1', code(...STARTER), out(...o1, String(p.hours * 50)), c, p);
+      expect(wrong.pass).toBe(false);
+      expect(wrong.msg).toContain(`With ${p.hours} hours it should print ${hourTotal(c, p)}`);
+      const total = p.hours * p.crew * r;
+      const src3 = code(...MOD3.map(l => l.replace('60', String(r))));
+      expect(evalMod('mod3', src3, out(...echo(p), String(total)), c, p).pass).toBe(true);
+      const src4 = code(...MOD4.map(l => l.replace('60', String(r))));
+      expect(evalMod('mod4', src4, out(...echo(p), String(total), `Total oxygen: ${total} litres`), c, p).pass).toBe(true);
+    }
   });
 });

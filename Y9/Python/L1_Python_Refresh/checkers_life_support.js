@@ -15,6 +15,10 @@
 // arithmetic requirements are confirmed from the OUTPUT the program printed, not from one
 // expected way of writing the code. Test numbers are chosen so an expected answer can never be
 // confused with a typed one (the runner echoes each prompt + typed answer into the output).
+//
+// The test answers come from banks (MOD_PROFILES / MAKE_PROFILES). Each ⚡ Check picks one
+// set (pickFrom in the HTML), so students see the "typed for you" answers change, and a
+// program that prints a worked-out number instead of calculating it fails on the next set.
 
 // Strip comments and string CONTENTS (leaving "" / '') so tokens inside strings
 // (+, input, print, variable-looking words) can't trigger false positives.
@@ -93,13 +97,13 @@ const joinsWithStr = raw => {
   return printArgs(raw).some(a => strOfNumberVar(a, nv) && /\+/.test(a) && /""|''/.test(a));
 };
 
-// choice = the student's Station Zero choice in Modify (the oxygen rate); hints and passMsg
-// may be functions of it.
-function evalReqs(check, raw, output, choice) {
-  const results = check.reqs.map(r => !!r.test(raw, output, choice));
+// choice = the student's Station Zero choice in Modify (the oxygen rate); given = the answers
+// the check typed (a MOD_PROFILES entry). Hints and passMsg may be functions (choice, given).
+function evalReqs(check, raw, output, choice, given) {
+  const results = check.reqs.map(r => !!r.test(raw, output, choice, given));
   const pass = results.every(Boolean);
   const msg = pass ? check.passMsg : check.reqs[results.findIndex(r => !r)].hint;
-  return { results, pass, msg: typeof msg === 'function' ? msg(choice) : msg };
+  return { results, pass, msg: typeof msg === 'function' ? msg(choice, given) : msg };
 }
 
 // ── Investigate checks ────────────────────────────────────────────────────────
@@ -205,35 +209,44 @@ export function evalInv(n, raw, ctx = {}) {
 }
 
 // ── Modify checks ─────────────────────────────────────────────────────────────
-// Modify starts from STARTER_CODE again. Test answers, in order: name Riley, 6 hours, 3 crew.
-// Modify 1 is a Station Zero choice: the student picks the new oxygen rate before the task
-// appears, and every Modify check then uses THAT rate. Both pass; only the story differs.
+// Modify starts from STARTER_CODE again. Test answers, in order: a name, the hours until
+// rescue, and how many crew are awake — one survivor's answers from MOD_PROFILES (the first
+// is the default). Modify 1 is a Station Zero choice: the student picks the new oxygen rate
+// before the task appears, and every Modify check then uses THAT rate. Both pass; only the
+// story differs. With the first profile (6 hours, 3 crew):
 //   'full' = 60 litres an hour (every cryo pod stays at full power):  6 × 60 = 360,  crew total 1080
 //   'low'  = 40 litres an hour (Pod 5 drops to minimum power):        6 × 40 = 240,  crew total 720
-// The crew total also accepts 900, in case the rate went back to 50.
+// The crew total also accepts hours × crew × 50 (900), in case the rate went back to 50.
+// Every hours/crew pair keeps the totals apart from each other and from the typed numbers:
+// crew is 2 or more, so no crew total can equal an hour total.
+export const MOD_PROFILES = [
+  { name: 'Riley',  hours: 6,  crew: 3 },
+  { name: 'Sam',    hours: 8,  crew: 2 },
+  { name: 'Jordan', hours: 5,  crew: 4 },
+  { name: 'Alex',   hours: 9,  crew: 3 },
+  { name: 'Morgan', hours: 7,  crew: 2 },
+  { name: 'Casey',  hours: 4,  crew: 5 },
+  { name: 'Taylor', hours: 10, crew: 3 },
+  { name: 'Quinn',  hours: 3,  crew: 4 },
+];
 export const RATES = { full: 60, low: 40 };
 export const rateOf = choice => RATES[choice] || RATES.full;
-const HOURS = 6, CREW = 3;
 const withFloat = n => [String(n), n + '.0'];
-export const hourTotal = choice => HOURS * rateOf(choice);          // 360 / 240
-export const crewTotal = choice => HOURS * CREW * rateOf(choice);   // 1080 / 720
-const crewTotals = choice => [...withFloat(crewTotal(choice)), '900', '900.0'];
+export const hourTotal = (choice, p = MOD_PROFILES[0]) => p.hours * rateOf(choice);            // 360 / 240
+export const crewTotal = (choice, p = MOD_PROFILES[0]) => p.hours * p.crew * rateOf(choice);   // 1080 / 720
+const crewTotals = (choice, p) => [...withFloat(crewTotal(choice, p)), ...withFloat(p.hours * p.crew * 50)];
 
-export const MOD_INPUTS = {
-  mod1: ['Riley', '6', '3'],
-  mod2: ['Riley', '6', '3'],
-  mod3: ['Riley', '6', '3'],
-  mod4: ['Riley', '6', '3'],
-};
+export const modInputs = (checkKey, p = MOD_PROFILES[0]) => [p.name, String(p.hours), String(p.crew)];
+export const MOD_INPUTS = Object.fromEntries(['mod1', 'mod2', 'mod3', 'mod4'].map(k => [k, modInputs(k)]));
 
 export const MOD_CHECKS = {
   // Mod 1 — trivial: change one number (to the rate the student chose).
   mod1: {
     reqs: [{
-      hint: c => `❌ Change 50 to ${rateOf(c)} in the calculation on line 3. With 6 hours it should print ${hourTotal(c)}.`,
-      test: (raw, out, c) => printedAny(out, withFloat(hourTotal(c))),
+      hint: (c, p) => `❌ Change 50 to ${rateOf(c)} in the calculation on line 3. With ${p.hours} hours it should print ${hourTotal(c, p)}.`,
+      test: (raw, out, c, p) => printedAny(out, withFloat(hourTotal(c, p))),
     }],
-    passMsg: c => `✅ Rate updated: 6 hours × ${rateOf(c)} litres = ${hourTotal(c)}.`,
+    passMsg: (c, p) => `✅ Rate updated: ${p.hours} hours × ${rateOf(c)} litres = ${hourTotal(c, p)}.`,
   },
 
   // Mod 2 — a new question, cast, printed on its own (no + needed yet).
@@ -259,10 +272,10 @@ export const MOD_CHECKS = {
   // Mod 3 — a calculation that uses the new number.
   mod3: {
     reqs: [{
-      hint: c => `❌ Work out the oxygen for the whole crew — hours × crew × ${rateOf(c)} — and print it. Tested with 6 hours and 3 crew, it should print ${crewTotal(c)}. e.g. total = hours * crew * ${rateOf(c)}`,
-      test: (raw, out, c) => /\*/.test(normalise(raw)) && printedAny(out, crewTotals(c)),
+      hint: (c, p) => `❌ Work out the oxygen for the whole crew — hours × crew × ${rateOf(c)} — and print it. Tested with ${p.hours} hours and ${p.crew} crew, it should print ${crewTotal(c, p)}. e.g. total = hours * crew * ${rateOf(c)}`,
+      test: (raw, out, c, p) => /\*/.test(normalise(raw)) && printedAny(out, crewTotals(c, p)),
     }],
-    passMsg: c => `✅ 6 hours × 3 crew × ${rateOf(c)} litres = ${crewTotal(c)} litres. Life support can plan for everyone.`,
+    passMsg: (c, p) => `✅ ${p.hours} hours × ${p.crew} crew × ${rateOf(c)} litres = ${crewTotal(c, p)} litres. Life support can plan for everyone.`,
   },
 
   // Mod 4 — the number inside a sentence, joined with + and str().
@@ -273,22 +286,34 @@ export const MOD_CHECKS = {
         test: raw => joinsWithStr(raw),
       },
       {
-        hint: c => `❌ Your sentence needs to show the crew total (${crewTotal(c)} when tested with 6 hours and 3 crew) — put str(total) in it, not hours or crew.`,
-        test: (raw, out, c) => sentenceWith(out, crewTotals(c)),
+        hint: (c, p) => `❌ Your sentence needs to show the crew total (${crewTotal(c, p)} when tested with ${p.hours} hours and ${p.crew} crew) — put str(total) in it, not hours or crew.`,
+        test: (raw, out, c, p) => sentenceWith(out, crewTotals(c, p)),
       },
     ],
     passMsg: '✅ One clear sentence — str() turned the number into text so + could join it.',
   },
 };
 
-export function evalMod(checkKey, raw, output = '', choice) {
-  return evalReqs(MOD_CHECKS[checkKey], raw, output, choice);
+// profile = the MOD_PROFILES entry the check typed (default: the first).
+export function evalMod(checkKey, raw, output = '', choice, profile = MOD_PROFILES[0]) {
+  return evalReqs(MOD_CHECKS[checkKey], raw, output, choice, profile);
 }
 
 // ── Make — supply manifest ───────────────────────────────────────────────────
-// The student's own questions, so only the SHAPE is checked. Run with these answers (all
-// numbers, so any int() succeeds whatever order the questions come in).
-export const MAKE_INPUTS = ['4', '5', '3', '2', '6', '1'];
+// The student's own questions, so only the SHAPE is checked. Run with one of these sets of
+// answers: what's left in each supply store, as counted by the survivor. All whole numbers
+// above 0, so any int() succeeds whatever order the questions come in, and dividing by an
+// answer never divides by zero.
+export const MAKE_PROFILES = [
+  ['4', '5', '3', '2', '6', '1'],
+  ['6', '3', '2', '5', '4', '2'],
+  ['8', '2', '4', '3', '5', '1'],
+  ['3', '7', '2', '4', '2', '6'],
+  ['5', '4', '6', '2', '3', '3'],
+  ['2', '6', '3', '5', '7', '4'],
+  ['7', '9', '5', '1', '2', '8'],
+];
+export const MAKE_INPUTS = MAKE_PROFILES[0];
 
 // Make is the second Station Zero choice: where the spare oxygen canisters go. The student
 // picks first, and the last req wants the line for THAT choice. Both pass.
@@ -350,6 +375,7 @@ export function evalMake(raw, output = '', choice) {
 }
 
 // ── Extension — full manifest ────────────────────────────────────────────────
+export const EXT_PROFILES = MAKE_PROFILES;
 export const EXT_INPUTS = MAKE_INPUTS;
 
 export const EXT_CHECK = {

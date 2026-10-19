@@ -14,6 +14,11 @@
 // is confirmed from the OUTPUT. The runner echoes one "prompt + answer" line per input(), and
 // each echo line holds only ONE answer — so a line holding several answers was printed by
 // the student's own code.
+//
+// The test answers come from banks (MOD_PROFILES / MAKE_PROFILES). Each ⚡ Check picks one
+// set (pickFrom in the HTML), so students see the "typed for you" answers change, and a
+// program that prints a typed-in answer instead of the variable fails on the next set.
+// Every set is one person's answers, so they belong together in the story.
 
 // Strip comments and string CONTENTS (leaving "" / '') so tokens inside strings
 // (+, input, print, variable-looking words) can't trigger false positives.
@@ -71,13 +76,18 @@ const printsVars = (raw, n) => {
   return inputVars(raw).filter(v => args.some(a => word(v).test(a))).length >= n;
 };
 
-// choice = the student's Station Zero choice (Modify 1 and Make); hints and passMsg may be functions of it.
-function evalReqs(check, raw, output, choice) {
-  const results = check.reqs.map(r => !!r.test(raw, output, choice));
+// choice = the student's Station Zero choice (Modify 1 and Make); given = the answers the check
+// typed (a MOD_PROFILES entry, or a MAKE_PROFILES list). Hints and passMsg may be functions
+// (choice, given).
+function evalReqs(check, raw, output, choice, given) {
+  const results = check.reqs.map(r => !!r.test(raw, output, choice, given));
   const pass = results.every(Boolean);
   const msg = pass ? check.passMsg : check.reqs[results.findIndex(r => !r)].hint;
-  return { results, pass, msg: typeof msg === 'function' ? msg(choice) : msg };
+  return { results, pass, msg: typeof msg === 'function' ? msg(choice, given) : msg };
 }
+
+// "A, B and C"
+const andList = a => a.length > 1 ? a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1] : a.join('');
 
 // ── Investigate checks ────────────────────────────────────────────────────────
 // One req per CODE-CHANGE bullet in each Investigate prompt card (#req_i_N in the HTML).
@@ -163,14 +173,25 @@ export function evalInv(n, raw, ctx = {}) {
 }
 
 // ── Modify checks ─────────────────────────────────────────────────────────────
-// Modify starts from STARTER_CODE again. Test answers, in order: Riley, Engineer, pod 4.
-export const MOD_INPUTS = {
-  mod1: ['Riley', 'Engineer', '4'],
-  mod2: ['Riley', 'Engineer', '4'],
-  mod3: ['Riley', 'Engineer', '4', 'Dizzy'],
-  mod4: ['Riley', 'Engineer', '4', 'Dizzy'],
-};
-const FEELING = 'Dizzy';   // typed into the "how are you feeling?" question
+// Modify starts from STARTER_CODE again. Test answers, in order: name, job, pod, and (from
+// Modification 3) how they are feeling. Each set is one person checking in at the Cryo Bay
+// door: one of the crew at their own pod, or a survivor in Pod 4 (yours). The first set is
+// the default. Pods are single digits and feelings are words that can't turn up inside a
+// prompt or another answer, so an echo line can never pass as the program printing them.
+export const MOD_PROFILES = [
+  { name: 'Riley',  role: 'Engineer',   pod: '4', feeling: 'Dizzy' },
+  { name: 'Okafor', role: 'Commander',  pod: '1', feeling: 'Cold' },
+  { name: 'Chen',   role: 'Medic',      pod: '3', feeling: 'Shaky' },
+  { name: 'Patel',  role: 'Pilot',      pod: '5', feeling: 'Sick' },
+  { name: 'Sam',    role: 'Technician', pod: '4', feeling: 'Tired' },
+  { name: 'Jordan', role: 'Scientist',  pod: '4', feeling: 'Scared' },
+  { name: 'Alex',   role: 'Mechanic',   pod: '4', feeling: 'Hungry' },
+  { name: 'Morgan', role: 'Navigator',  pod: '4', feeling: 'Numb' },
+];
+// The answers a check types for one profile: Modifications 3 and 4 add the feeling.
+export const modInputs = (checkKey, p = MOD_PROFILES[0]) =>
+  checkKey === 'mod3' || checkKey === 'mod4' ? [p.name, p.role, p.pod, p.feeling] : [p.name, p.role, p.pod];
+export const MOD_INPUTS = Object.fromEntries(['mod1', 'mod2', 'mod3', 'mod4'].map(k => [k, modInputs(k)]));
 
 // A print() that joins its own words with + to one of the given variables.
 const joinsOneOf = (raw, vars) =>
@@ -218,8 +239,8 @@ export const MOD_CHECKS = {
         test: raw => inputCount(raw) >= 3 && inputVars(raw).length >= 3,
       },
       {
-        hint: '❌ Underneath your pod question, print the pod joined to your own words with + — e.g. print("Pod: " + pod)',
-        test: (raw, out) => joinsVarFrom(raw, 2) && printedAnswer(out, '4'),
+        hint: (c, p) => `❌ Underneath your pod question, print the pod joined to your own words with + — e.g. print("Pod: " + pod). The check typed ${p.pod} as the pod.`,
+        test: (raw, out, c, p) => joinsVarFrom(raw, 2) && printedAnswer(out, p.pod),
       },
     ],
     passMsg: '✅ Pod number asked for and printed.',
@@ -234,8 +255,8 @@ export const MOD_CHECKS = {
         test: raw => feelingVars(raw).length >= 1,
       },
       {
-        hint: '❌ Underneath your feeling question, print the answer joined to some words of your own with + (the check types Dizzy as the answer).',
-        test: (raw, out) => joinsOneOf(raw, feelingVars(raw)) && printedAnswer(out, FEELING),
+        hint: (c, p) => `❌ Underneath your feeling question, print the answer joined to some words of your own with + (the check typed ${p.feeling} as the answer).`,
+        test: (raw, out, c, p) => joinsOneOf(raw, feelingVars(raw)) && printedAnswer(out, p.feeling),
       },
     ],
     passMsg: '✅ Feeling question asked and printed — and you wrote it yourself.',
@@ -245,20 +266,34 @@ export const MOD_CHECKS = {
   // Echo lines hold only one answer each, so such a line was printed by the student's code.
   mod4: {
     reqs: [{
-      hint: '❌ Make ONE printed line show the name and how they are feeling, joined with + — tested with Riley and Dizzy.',
-      test: (raw, out) => lineWithAll(out, ['Riley', FEELING]),
+      hint: (c, p) => `❌ Make ONE printed line show the name and how they are feeling, joined with + — tested with ${p.name} and ${p.feeling}.`,
+      test: (raw, out, c, p) => lineWithAll(out, [p.name, p.feeling]),
     }],
     passMsg: '✅ Name and feeling joined into one line — check-in program complete.',
   },
 };
 
-export function evalMod(checkKey, raw, output = '', choice) {
-  return evalReqs(MOD_CHECKS[checkKey], raw, output, choice);
+// profile = the MOD_PROFILES entry the check typed (default: the first).
+export function evalMod(checkKey, raw, output = '', choice, profile = MOD_PROFILES[0]) {
+  return evalReqs(MOD_CHECKS[checkKey], raw, output, choice, profile);
 }
 
 // ── Make — crew locator ──────────────────────────────────────────────────────
-// The student's own questions, so only the SHAPE is checked. Run with word answers.
-export const MAKE_INPUTS = ['Ash', 'Navigation', 'Missing', 'Kai', 'Drone Bay', 'Awake'];
+// The student's own questions, so only the SHAPE is checked. Run with word answers: a crew
+// member, the room they were last seen in and their status, then a second crew member for
+// programs that ask about more than one. The rooms are station rooms (ROOMS in the story
+// script), so the locator in the cliffhanger pings the room that was typed. Never the Cryo Bay
+// or Sensor Ops: the story needs those two.
+export const MAKE_PROFILES = [
+  ['Ash',   'Navigation',   'Missing', 'Kai',   'Drone Bay',    'Awake'],
+  ['Mara',  'Airlock',      'Missing', 'Jonas', 'Maintenance',  'Injured'],
+  ['Wren',  'Drone Bay',    'Unknown', 'Tess',  'Navigation',   'Hiding'],
+  ['Nico',  'Maintenance',  'Missing', 'Ravi',  'Airlock',      'Awake'],
+  ['Jonas', 'Life Support', 'Injured', 'Mara',  'Drone Bay',    'Missing'],
+  ['Tess',  'WARDEN Core',  'Unknown', 'Wren',  'Life Support', 'Hiding'],
+  ['Kai',   'Navigation',   'Hiding',  'Nico',  'WARDEN Core',  'Missing'],
+];
+export const MAKE_INPUTS = MAKE_PROFILES[0];
 
 // Make is the second Station Zero choice: before leaving, the locator locks ONE thing.
 // The student picks first, and the last req wants the line for THAT choice. Both pass.
@@ -282,8 +317,8 @@ export const MAKE_CHECK = {
     {
       // Both answers printed by the program itself — on one line or on separate lines —
       // and through the VARIABLES (any names), so typing "Ash" into a print string fails.
-      hint: '❌ Your report should print both the name and the room using your two variables, not typed-in words — tested with Ash (name) and Navigation (room).',
-      test: (raw, out) => printsVars(raw, 2) && MAKE_INPUTS.slice(0, 2).every(a => printedAnswer(out, a)),
+      hint: (c, given) => `❌ Your report should print both the name and the room using your two variables, not typed-in words — tested with ${given[0]} (name) and ${given[1]} (room).`,
+      test: (raw, out, c, given) => printsVars(raw, 2) && given.slice(0, 2).every(a => printedAnswer(out, a)),
     },
     {
       hint: choice => LOCK_CHOICES[choice]
@@ -297,12 +332,13 @@ export const MAKE_CHECK = {
     : '✅ Crew locator working — and the Cryo Bay door is locked behind you.',
 };
 
-// choice = the student's Make choice (LOCK_CHOICES key).
-export function evalMake(raw, output = '', choice) {
-  return evalReqs(MAKE_CHECK, raw, output, choice);
+// choice = the student's Make choice (LOCK_CHOICES key); inputs = the MAKE_PROFILES set it typed.
+export function evalMake(raw, output = '', choice, inputs = MAKE_INPUTS) {
+  return evalReqs(MAKE_CHECK, raw, output, choice, inputs);
 }
 
 // ── Extension — status report ────────────────────────────────────────────────
+export const EXT_PROFILES = MAKE_PROFILES;
 export const EXT_INPUTS = MAKE_INPUTS;
 
 export const EXT_CHECK = {
@@ -312,13 +348,13 @@ export const EXT_CHECK = {
       test: raw => inputCount(raw) >= 3 && inputVars(raw).length >= 3,
     },
     {
-      hint: '❌ Print ONE line that uses all three answers — tested with Ash, Navigation and Missing, e.g. print(name + " is " + status + " in " + room)',
-      test: (raw, out) => lineWithAll(out, EXT_INPUTS.slice(0, 3)),
+      hint: (c, given) => `❌ Print ONE line that uses all three answers — tested with ${andList(given.slice(0, 3))}, e.g. print(name + " is " + status + " in " + room)`,
+      test: (raw, out, c, given) => lineWithAll(out, given.slice(0, 3)),
     },
   ],
   passMsg: '🌟 Status report complete — three answers in one sentence. Outstanding!',
 };
 
-export function evalExt(raw, output = '') {
-  return evalReqs(EXT_CHECK, raw, output);
+export function evalExt(raw, output = '', inputs = EXT_INPUTS) {
+  return evalReqs(EXT_CHECK, raw, output, undefined, inputs);
 }

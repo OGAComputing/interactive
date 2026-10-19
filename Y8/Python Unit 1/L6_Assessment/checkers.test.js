@@ -3,13 +3,15 @@ import {
   printedLines, mulberry32, shuffle, variantOf, optionOrder,
   ITEMS, LIVE_ITEMS, SECTIONS, itemById, itemMax, summarise,
   checkTraceValue, checkTraceOutput, markSort,
-  evalCode, ifElseLines, branchChoices, branchAnswer,
+  evalCode, ifElseLines, branchChoices, branchAnswer, loose,
 } from './checkers.js';
 
 // A run as runPython() reports it: each input() echoes "prompt + answer" on its own line.
 const ok = (inputs, lines) => ({ inputs, ok: true, output: lines.join('\n') + '\n' });
 const fail = (inputs, msg) => ({ inputs, ok: false, output: msg });
 const mcqs = ITEMS.filter(i => i.kind === 'mcq');
+// The PIN lock run with 1234, 1233 and 1235, printing these lines in turn.
+const PIN_RUNS = lines => ['1234', '1233', '1235'].map((p, i) => ok([p], [`Enter your PIN: ${p}`, lines[i]]));
 
 describe('question bank', () => {
   test('every item belongs to a section, ids are unique', () => {
@@ -286,7 +288,8 @@ describe('short write-it tasks (one per lesson section)', () => {
   test('o_copy: prints Hello, world! exactly', () => {
     const it = itemById('o_copy');
     expect(evalCode(it, '', [ok([], ['Hello, world!'])]).pts).toBe(1);
-    expect(evalCode(it, '', [ok([], ['Hello world'])]).pts).toBe(0);
+    expect(evalCode(it, '', [ok([], ['Hello world'])]).pts).toBe(1);   // punctuation forgiven
+    expect(evalCode(it, '', [ok([], ['Goodbye, world!'])]).pts).toBe(0);
     expect(evalCode(it, it.starter, [ok([], [])]).pts).toBe(0);
   });
 
@@ -419,6 +422,53 @@ describe('after the third sitting (19 Oct 2026)', () => {
   test('every code task that starts from code has a worked example', () => {
     for (const it of LIVE_ITEMS.filter(i => i.reqs && !i.bonus && i.id !== 'w_make' && i.starter && !/^#/.test(i.starter)))
       expect(it.howto?.code, it.id).toBeTruthy();
+  });
+});
+
+describe('printed text: capitals, spaces and punctuation forgiven (after the third sitting)', () => {
+  test('loose keeps only letters and numbers, but 1 2 is not 12', () => {
+    expect(loose('Hello, World!')).toBe(loose('helloworld'));
+    expect(loose('Fruit in the bowl:8')).toBe(loose('fruit in the bowl 8'));
+    expect(loose('1 2')).not.toBe(loose('12'));
+  });
+
+  test('"helloSam" scores, with a note about the space', () => {
+    const it = itemById('i_write'), raw = 'name = input("What is your name? ")\nprint("hello" + name)';
+    const r = evalCode(it, raw, [ok(['Sam'], ['What is your name? Sam', 'helloSam']), ok(['Priya'], ['What is your name? Priya', 'helloPriya'])]);
+    expect(r.pts).toBe(2);
+    expect(r.msg).toMatch(/space inside the quotes/);
+    const fine = evalCode(it, raw, [ok(['Sam'], ['What is your name? Sam', 'Hello Sam']), ok(['Priya'], ['What is your name? Priya', 'Hello Priya'])]);
+    expect(fine.msg).not.toMatch(/space|capitals/);
+  });
+
+  test('a trailing comma or a missing ! still scores, with a note', () => {
+    const r = evalCode(itemById('o_write'), '', [ok([], ['I am learning python', 'It is fun,'])]);
+    expect(r.pts).toBe(2);
+    expect(r.msg).toMatch(/No marks lost/);
+    expect(evalCode(itemById('s_write'), '', PIN_RUNS(['Unlocked!', 'wrong pin.', 'Wrong PIN'])).pts).toBe(2 - 1); // req 1 needs if/else code
+  });
+
+  test('a line a letter or two out gets "Nearly", naming the line it should print', () => {
+    const r = evalCode(itemById('i_fix'), '', [ok(['cat'], ['What is your favourite animal? cat', 'I like cat too!']), ok(['owl'], ['What is your favourite animal? owl', 'I like owl too!'])]);
+    expect(r.pts).toBe(0);
+    expect(r.msg).toMatch(/Nearly: it printed "I like cat too!" where it should print "I like cats too!"/);
+  });
+
+  test('a wrong number is never called a spelling mistake', () => {
+    const r = evalCode(itemById('c_fix'), '', [ok(['5', '3'], ['How many apples? 5', 'How many pears? 3', 'Fruit in the bowl: 53']),
+      ok(['12', '30'], ['How many apples? 12', 'How many pears? 30', 'Fruit in the bowl: 1230'])]);
+    expect(r.pts).toBe(0);
+    expect(r.msg).not.toMatch(/Nearly/);
+  });
+
+  test('an extra line is named', () => {
+    const r = evalCode(itemById('o_fix'), '', [ok([], ['Welcome to the quiz!', 'Good luck', 'Question 1 is coming up', 'Bye'])]);
+    expect(r.pts).toBe(0);
+    expect(r.msg).toMatch(/also prints "Bye"/);
+  });
+
+  test('"an" before an error name that starts with a vowel', () => {
+    expect(evalCode(itemById('s_fix'), '', [fail(['60'], 'IndentationError: expected an indented block')]).msg).toMatch(/with an IndentationError/);
   });
 });
 

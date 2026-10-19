@@ -16,6 +16,10 @@
 // EXT_TESTS and judge what it printed, so any correct shape passes — conditions in any order,
 // >= 50 or > 49, < instead of >=, and so on. Boundary values are always among the tests.
 // The HTML passes evalMod/evalMake/evalExt one output per test, in the same order.
+//
+// Each check's tests come from a bank (MOD_TEST_BANK / MAKE_TEST_BANK / EXT_TEST_BANK). Each
+// ⚡ Check picks one set (pickFrom in the HTML), so students see the "typed for you" numbers
+// change. Only the values in the middle of a band change: the boundary values are in every set.
 
 // Strip comments and string CONTENTS (leaving "" / '') so tokens inside strings
 // (input, print, if, numbers) can't trigger false positives.
@@ -70,21 +74,21 @@ function saidLine(text) {
   return l ? `it printed "${l.trim().slice(0, 60)}"` : 'it printed nothing';
 }
 
-// choice = the student's Station Zero choice; outs = what each test printed (echo lines removed).
-// A hint or passMsg may be a function (choice, outs, raw). show = which test's run the HTML
-// steps through: the failing requirement's, else the first.
-function evalReqs(check, raw, outs, choice) {
+// choice = the student's Station Zero choice; outs = what each test printed (echo lines removed);
+// tests = the answers each test typed. A hint or passMsg may be a function (choice, outs, raw,
+// tests). show = which test's run the HTML steps through: the failing requirement's, else the first.
+function evalReqs(check, raw, outs, choice, tests) {
   const results = check.reqs.map(r => !!r.test(raw, outs, choice));
   const pass = results.every(Boolean);
   const bad = check.reqs[results.findIndex(r => !r)];
   const msg = pass ? check.passMsg : bad.hint;
   const show = pass ? 0 : typeof bad.show === 'function' ? bad.show(outs, choice) : (bad.show || 0);
-  return { results, pass, msg: typeof msg === 'function' ? msg(choice, outs, raw) : msg, show };
+  return { results, pass, msg: typeof msg === 'function' ? msg(choice, outs, raw, tests) : msg, show };
 }
 
 function evalTests(check, tests, raw, outputs, choice) {
   const outs = tests.map((t, i) => ownOutput((outputs || [])[i], t));
-  return evalReqs(check, raw, outs, choice);
+  return evalReqs(check, raw, outs, choice, tests);
 }
 
 // Index of the first test in `idx` whose output fails `ok`, else the first of `idx`.
@@ -217,25 +221,38 @@ const ANY_LOCKDOWN = /lockdown/i;
 export const LOCKDOWN_CHOICES = { cryo: 'LOCKDOWN: CRYO BAY', sensors: 'LOCKDOWN: SENSOR OPS' };
 const LOCKDOWN_RE = { cryo: /lockdown[^\w\n]*cryo\s*bay/i, sensors: /lockdown[^\w\n]*sensor\s*ops/i };
 
-export const MOD_TESTS = {
-  mod1: [['5'], ['30'], ['85']],
-  mod2: [['60'], ['59']],
-  mod3: [['15'], ['10'], ['25'], ['20'], ['9']],
-  mod4: [['5', 'y'], ['5', 'n']],   // distance 5 first, so the alert follows a lockdown
+// Each entry is a list of test sets; a set is one run per test, in the order the checks expect.
+//   mod1: close (under 20, the else), middle (20–49), far (50 or more) — on the starter's bands
+//   mod2: the new boundary, 60 and 59, every time
+//   mod3: inside the new band (11–19), 10, a middle distance (21–59), 20, 9
+//   mod4: a distance under 10 (so the alert follows a lockdown), then y — and again with n
+export const MOD_TEST_BANK = {
+  mod1: [
+    [['5'], ['30'], ['85']], [['12'], ['41'], ['70']], [['3'], ['25'], ['150']], [['17'], ['36'], ['55']],
+    [['8'], ['44'], ['99']], [['1'], ['22'], ['63']], [['14'], ['33'], ['120']],
+  ],
+  mod2: [[['60'], ['59']]],
+  mod3: [
+    [['15'], ['10'], ['25'], ['20'], ['9']], [['12'], ['10'], ['45'], ['20'], ['9']],
+    [['18'], ['10'], ['33'], ['20'], ['9']], [['11'], ['10'], ['58'], ['20'], ['9']],
+    [['16'], ['10'], ['27'], ['20'], ['9']], [['13'], ['10'], ['50'], ['20'], ['9']],
+  ],
+  mod4: ['5', '2', '7', '0', '8', '3'].map(d => [[d, 'y'], [d, 'n']]),
 };
+export const MOD_TESTS = Object.fromEntries(Object.entries(MOD_TEST_BANK).map(([k, bank]) => [k, bank[0]]));
 
 export const MOD_CHECKS = {
   // Mod 1 — trivial: one print line, indented inside the else (the student's chosen room).
   mod1: {
     reqs: [
       {
-        hint: c => LOCKDOWN_CHOICES[c]
-          ? `❌ With 5 typed, the program should print ${LOCKDOWN_CHOICES[c]}. Add print("${LOCKDOWN_CHOICES[c]}") under print("IT'S RIGHT BEHIND YOU"), indented the same amount.`
+        hint: (c, outs, raw, tests) => LOCKDOWN_CHOICES[c]
+          ? `❌ With ${tests[0][0]} typed, the program should print ${LOCKDOWN_CHOICES[c]}. Add print("${LOCKDOWN_CHOICES[c]}") under print("IT'S RIGHT BEHIND YOU"), indented the same amount.`
           : '❌ Make your choice above first.',
         test: (raw, outs, c) => !!LOCKDOWN_RE[c]?.test(outs[0]),
       },
       {
-        hint: (c, outs) => `❌ With ${ANY_LOCKDOWN.test(outs[1]) ? 30 : 85} typed, your program locked down too. The lockdown should only happen when the target is close: indent the line so it sits inside the else, under print("IT'S RIGHT BEHIND YOU").`,
+        hint: (c, outs, raw, tests) => `❌ With ${tests[ANY_LOCKDOWN.test(outs[1]) ? 1 : 2][0]} typed, your program locked down too. The lockdown should only happen when the target is close: indent the line so it sits inside the else, under print("IT'S RIGHT BEHIND YOU").`,
         test: (raw, outs) => !ANY_LOCKDOWN.test(outs[1]) && !ANY_LOCKDOWN.test(outs[2]),
         show: outs => (ANY_LOCKDOWN.test(outs[1]) ? 1 : 2),
       },
@@ -263,19 +280,19 @@ export const MOD_CHECKS = {
   mod3: {
     reqs: [
       {
-        hint: (c, outs) => {
+        hint: (c, outs, raw, tests) => {
           const i = onlyBand(outs[0], SENSOR, 'alert') ? 1 : 0;
-          return `❌ With ${MOD_TESTS.mod3[i][0]} typed, the sensor should say Proximity alert, but ${saidLine(outs[i])}. Add a new elif branch for distances from 10 up to 19.`;
+          return `❌ With ${tests[i][0]} typed, the sensor should say Proximity alert, but ${saidLine(outs[i])}. Add a new elif branch for distances from 10 up to 19.`;
         },
         test: (raw, outs) => onlyBand(outs[0], SENSOR, 'alert') && onlyBand(outs[1], SENSOR, 'alert'),
         show: outs => firstFail(outs, [0, 1], o => onlyBand(o, SENSOR, 'alert')),
       },
       {
-        hint: (c, outs) => {
+        hint: (c, outs, raw, tests) => {
           const i = onlyBand(outs[2], SENSOR, 'move') ? 3 : 2;
           return SENSOR.alert.test(outs[i])
-            ? `❌ With ${MOD_TESTS.mod3[i][0]} typed, your program printed Proximity alert, but it should still be Movement detected. Python stops at the first True condition, so the new branch must come after the Movement detected one.`
-            : `❌ With ${MOD_TESTS.mod3[i][0]} typed, the sensor should still say Movement detected, but ${saidLine(outs[i])}.`;
+            ? `❌ With ${tests[i][0]} typed, your program printed Proximity alert, but it should still be Movement detected. Python stops at the first True condition, so the new branch must come after the Movement detected one.`
+            : `❌ With ${tests[i][0]} typed, the sensor should still say Movement detected, but ${saidLine(outs[i])}.`;
         },
         test: (raw, outs) => onlyBand(outs[2], SENSOR, 'move') && onlyBand(outs[3], SENSOR, 'move'),
         show: outs => firstFail(outs, [2, 3], o => onlyBand(o, SENSOR, 'move')),
@@ -310,9 +327,10 @@ export const MOD_CHECKS = {
   },
 };
 
-// outputs = what each test in MOD_TESTS[checkKey] printed, in order.
-export function evalMod(checkKey, raw, outputs = [], choice) {
-  return evalTests(MOD_CHECKS[checkKey], MOD_TESTS[checkKey], raw, outputs, choice);
+// tests = the set from MOD_TEST_BANK[checkKey] the check ran (default: the first);
+// outputs = what each of its tests printed, in order.
+export function evalMod(checkKey, raw, outputs = [], choice, tests = MOD_TESTS[checkKey]) {
+  return evalTests(MOD_CHECKS[checkKey], tests, raw, outputs, choice);
 }
 
 // ── Make — radiation scanner ─────────────────────────────────────────────────
@@ -324,7 +342,10 @@ const DOSE = {
   caution: /\bcaution\b/i,
   safe:    /\bsafe\b/i,
 };
-export const MAKE_TESTS = [['350'], ['200'], ['199'], ['100'], ['99'], ['50'], ['49'], ['0']];
+// The first dose (well over 200) and the last (under 49) change from set to set.
+export const MAKE_TEST_BANK = [['350', '0'], ['260', '12'], ['475', '31'], ['812', '7'], ['999', '45'], ['230', '20']]
+  .map(([hi, lo]) => [[hi], ['200'], ['199'], ['100'], ['99'], ['50'], ['49'], [lo]]);
+export const MAKE_TESTS = MAKE_TEST_BANK[0];
 
 // Make is the second Station Zero choice: where the last of the power goes. The student picks
 // first, and the last req wants the line for THAT choice, printed on every run (at the end).
@@ -335,9 +356,9 @@ const POWER_RE = { sensors: /power[^\w\n]*sensors?\b/i, pods: /power[^\w\n]*(?:c
 function bandReq(word, key, idx, range) {
   const ok = o => onlyBand(o, DOSE, key);
   return {
-    hint: (c, outs) => {
+    hint: (c, outs, raw, tests) => {
       const i = firstFail(outs, idx, ok);
-      return `❌ A dose of ${MAKE_TESTS[i][0]} (${range}) should print a message with the word ${word} in it, and none of the other band words — but ${saidLine(outs[i])}.`;
+      return `❌ A dose of ${tests[i][0]} (${range}) should print a message with the word ${word} in it, and none of the other band words — but ${saidLine(outs[i])}.`;
     },
     test: (raw, outs) => idx.every(i => ok(outs[i] || '')),
     show: outs => firstFail(outs, idx, ok),
@@ -374,30 +395,34 @@ export const MAKE_CHECK = {
     : '✅ Scanner working at every boundary — and the last of the power is restarting the sensors.',
 };
 
-// outputs = what each test in MAKE_TESTS printed; choice = the student's Make choice (POWER_CHOICES key).
-export function evalMake(raw, outputs = [], choice) {
-  return evalTests(MAKE_CHECK, MAKE_TESTS, raw, outputs, choice);
+// outputs = what each test printed; choice = the student's Make choice (POWER_CHOICES key);
+// tests = the MAKE_TEST_BANK set the check ran (default: the first).
+export function evalMake(raw, outputs = [], choice, tests = MAKE_TESTS) {
+  return evalTests(MAKE_CHECK, tests, raw, outputs, choice);
 }
 
 // ── Extension — scanner faults and evacuation ────────────────────────────────
 const EXT_BANDS = { ...DOSE, fault: /scanner\s*fault/i, evacuate: /\bevacuate\b/i };
-export const EXT_TESTS = [['-5'], ['0'], ['500'], ['900'], ['499']];
+// The impossible dose (below 0) and the second evacuation dose (over 500) change from set to set.
+export const EXT_TEST_BANK = [['-5', '900'], ['-1', '650'], ['-20', '1200'], ['-99', '501'], ['-3', '777'], ['-50', '2000']]
+  .map(([neg, big]) => [[neg], ['0'], ['500'], [big], ['499']]);
+export const EXT_TESTS = EXT_TEST_BANK[0];
 
 export const EXT_CHECK = {
   reqs: [
     {
-      hint: (c, outs) => !onlyBand(outs[0], EXT_BANDS, 'fault')
-        ? `❌ A dose below 0 is impossible: with -5 typed, the scanner should print SCANNER FAULT (and no band word), but ${saidLine(outs[0])}.`
+      hint: (c, outs, raw, tests) => !onlyBand(outs[0], EXT_BANDS, 'fault')
+        ? `❌ A dose below 0 is impossible: with ${tests[0][0]} typed, the scanner should print SCANNER FAULT (and no band word), but ${saidLine(outs[0])}.`
         : `❌ A dose of 0 should still print SAFE, not SCANNER FAULT — but ${saidLine(outs[1])}. Only doses below 0 are faults.`,
       test: (raw, outs) => onlyBand(outs[0], EXT_BANDS, 'fault') && onlyBand(outs[1], EXT_BANDS, 'safe'),
       show: outs => (onlyBand(outs[0], EXT_BANDS, 'fault') ? 1 : 0),
     },
     {
-      hint: (c, outs) => {
+      hint: (c, outs, raw, tests) => {
         const i = firstFail(outs, [2, 3, 4], (o, k) => onlyBand(o, EXT_BANDS, k === 4 ? 'danger' : 'evacuate'));
         return i === 4
           ? `❌ A dose of 499 should still print DANGER, not EVACUATE — but ${saidLine(outs[4])}.`
-          : `❌ A dose of ${EXT_TESTS[i][0]} should print EVACUATE (and no other band word), but ${saidLine(outs[i])}. Think about where this check goes: Python stops at the first True condition.`;
+          : `❌ A dose of ${tests[i][0]} should print EVACUATE (and no other band word), but ${saidLine(outs[i])}. Think about where this check goes: Python stops at the first True condition.`;
       },
       test: (raw, outs) => onlyBand(outs[2], EXT_BANDS, 'evacuate') && onlyBand(outs[3], EXT_BANDS, 'evacuate') && onlyBand(outs[4], EXT_BANDS, 'danger'),
       show: outs => firstFail(outs, [2, 3, 4], (o, k) => onlyBand(o, EXT_BANDS, k === 4 ? 'danger' : 'evacuate')),
@@ -406,6 +431,6 @@ export const EXT_CHECK = {
   passMsg: '🌟 Faults caught and evacuations called — your scanner handles every case. Outstanding!',
 };
 
-export function evalExt(raw, outputs = []) {
-  return evalTests(EXT_CHECK, EXT_TESTS, raw, outputs);
+export function evalExt(raw, outputs = [], tests = EXT_TESTS) {
+  return evalTests(EXT_CHECK, tests, raw, outputs);
 }

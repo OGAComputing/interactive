@@ -103,6 +103,7 @@ Changes, 53 marks (Casting 11, Selection 12):
 - The add-the-else mark accepts any message in the else.
 - Every code task that starts from code has a worked example in a different program, shown straight under the goal.
 - A program that prints the same thing whatever is typed is told to use the variables.
+- What a code task prints is marked on letters and numbers only: capitals, spaces and punctuation are forgiven (`helloSam`, `It is fun,`). A "no marks lost" note says the text isn't quite the same as the task. A line a letter or two out gets "Nearly: it printed … where it should print …", and an extra line is named. Re-marking the third sitting this way gave back 6 marks: 4 from the looser text and 2 from the else change. The trace output (it tests the missing-space trap) and the bonus speed camera ("word for word") stay exact, and so does L7's own practice of `"Hello " + name`.
 
 The assessment saves `ver: 4`; L7 `SITTINGS` has entries 1–4.
 

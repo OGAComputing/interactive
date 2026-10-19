@@ -257,23 +257,20 @@ test('Modify 1 is a choice: the requirement appears once chosen, only that line 
   await expect(page.locator('#m1_choice')).toHaveClass(/locked/);
 });
 
-test('the report after Modify follows the door choice', async ({ page }) => {
-  await page.addInitScript(p => {
-    localStorage.setItem('sz_story_' + p, JSON.stringify(['intro', 'P', 'R', 'I']));
-    localStorage.setItem('sz_choices', JSON.stringify({ door: 'open' }));
-  }, PATH);
-  const done = STARTER.replace('Door unlocking...', 'Cryo Bay door: OPEN')
-    + '\npod = input("Pod number: ")\nprint("Pod: " + pod)\nfeeling = input("How are you feeling? ")\n';
-  await openAt(page, {
-    currentStage: 'M1', completedStages: ['P', 'R', 'I'], stepM1: 4, maxStepM1: 4, radio_m1_choice: 'open',
-    passedChecks: { m1_code1: true, m1_code2: true, m1_code3: true },
-  }, { story: true });
-  await setCode(page, 'm1_editor', done + 'print(name + " is feeling " + feeling)');
+test('the door choice plays its report as soon as Modification 1 passes, then on to Modification 2', async ({ page }) => {
+  await page.addInitScript(p => localStorage.setItem('sz_story_' + p, JSON.stringify(['intro', 'P', 'R', 'I1', 'I'])), PATH);
+  await openAt(page, { currentStage: 'M1', completedStages: ['P', 'R', 'I'], radio_m1_choice: 'open' }, { story: true });
+  await setCode(page, 'm1_editor', STARTER.replace('Door unlocking...', 'Cryo Bay door: OPEN'));
   await page.click('#btn_check_m1');
-  await expect(page.locator('#szOverlay')).toHaveClass(/open/, { timeout: 30000 });
+  await expect(page.locator('#fb_m1')).toHaveClass(/pass/, { timeout: 30000 });
+  await expect(page.locator('#szOverlay')).toHaveClass(/open/, { timeout: 10000 });
   await expect(page.locator('#szTitle')).toHaveText(/Something got in/);
   await expect(page.locator('#szImpact svg')).toContainText('Cryo Bay door: OPEN');
+  await expect(page.locator('#szImpact svg')).toContainText('Checking in:');   // whoever the check typed in
   await expect(page.locator('#szReadouts')).toContainText('Cryo Bay');
+  await expect(page.locator('#szContinue')).toHaveText('Onwards to Modification 2 →');
+  await page.click('#szContinue');
+  await expect(page.locator('#m1_step_2')).toBeVisible({ timeout: 10000 });
 });
 
 test('Modify: door message, pod line, own question, then two answers on one line', async ({ page }) => {

@@ -23,6 +23,10 @@
 //     typed" (c_total); every code task that starts from code has a worked example, and a
 //     program that prints the same thing whatever is typed is told so. The trace shows the
 //     boxes first again (with the printed lines first, half read "line 1" as the program's).
+//     What a code task prints is marked on its letters and numbers only (loose): capitals,
+//     spaces and punctuation are forgiven ("helloSam", "It is fun,"), with a "no marks lost"
+//     note, and a line a letter or two out gets "Nearly: it printed … where it should print …".
+//     The trace output and the bonus extension still check the spaces exactly.
 //   • One section per lesson (L1–L5), so the DIRT lesson (L7) can route students to the
 //     lessons they need. Per-section scores go to Drive via Classroom.submitResults().
 //   • Multiple-choice, trace and sort answers are ONE TRY: they lock when checked, show the
@@ -60,6 +64,25 @@ const intCount   = raw => count(raw, /\b(?:int|float)\s*\(/g);
 export const squash = s => String(s).replace(/\s+/g, ' ').trim();
 const same = (a, b) => squash(a).toLowerCase() === squash(b).toLowerCase();
 
+// Looser still, for marking what a code task prints: only the letters and numbers have to
+// match, so capitals, spaces and punctuation are all forgiven ("helloSam", "It is fun,").
+// A space between two digits still counts, so 1 2 is not 12.
+export const loose = s => String(s).toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim().replace(/(?<!\d) | (?!\d)/g, '');
+const close = (a, b) => loose(a) === loose(b);
+
+// Letters added, dropped or changed to turn one string into the other.
+export function editDistance(a, b) {
+  let prev = [...Array(b.length + 1).keys()];
+  for (let i = 1; i <= a.length; i++) {
+    const cur = [i];
+    for (let j = 1; j <= b.length; j++) {
+      cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    }
+    prev = cur;
+  }
+  return prev[b.length];
+}
+
 // The lines the program PRINTED. runPython echoes each mocked input() as
 // "prompt + answer" on its own line; those echo lines are dropped by matching each
 // answer, in order, against the end of the next line that ends with it.
@@ -88,7 +111,8 @@ const firstFailed = runs => runs.find(r => !r.ok);
 const crashMsg = runs => {
   const f = firstFailed(runs);
   const typed = f.inputs.length ? ` when ${f.inputs.join(' and ')} ${f.inputs.length > 1 ? 'are' : 'is'} typed` : '';
-  return `Python stops with a ${errorName(f) || 'error'}${typed}. Read the last line of the error.`;
+  const name = errorName(f) || 'error';
+  return `Python stops with ${/^[AEIOU]/i.test(name) ? 'an' : 'a'} ${name}${typed}. Read the last line of the error.`;
 };
 
 // ── Seeded randomness (per-student order and versions, stable on reload) ─────
@@ -209,12 +233,49 @@ export function markSort(item, placements) {
 
 // ── Code-task marking ────────────────────────────────────────────────────────
 
-// A requirement test: for every test run, the program prints exactly these lines (case and
-// spacing forgiven) and nothing else. expect(inputs) gives the lines for one run.
-const printsExactly = expect => (raw, runs) => allOk(runs) && runs.every(r => {
+// A requirement test: for every test run, the program prints exactly these lines and nothing
+// else (capitals, spaces and punctuation forgiven). expect(inputs) gives the lines for one run.
+// The test carries expect with it, so evalReqs can say what is nearly right.
+const printsExactly = expect => Object.assign((raw, runs) => allOk(runs) && runs.every(r => {
   const want = expect(r.inputs), got = printedLines(r);
-  return got.length === want.length && want.every((w, i) => same(got[i], w));
-});
+  return got.length === want.length && want.every((w, i) => close(got[i], w));
+}), { expect });
+// Attach the wanted lines to a test that checks them its own way. some: other lines may be printed too.
+const withText = (expect, test, some = false) => Object.assign(test, { expect, some });
+
+const quote = s => `"${squash(s)}"`;
+
+// A check on the printed text failed, but the program ran: say which line is nearly right
+// (a letter or two out, same numbers), or what extra line it prints, so a typo doesn't
+// look like a wrong idea. Students lost marks for "I like cat too!" and "I likecattoo".
+export function textNudge(test, runs) {
+  if (!test?.expect) return '';
+  for (const r of runs) {
+    const want = test.expect(r.inputs), got = printedLines(r);
+    const missing = want.filter(w => !got.some(g => close(g, w)));
+    for (const w of missing) {
+      const near = got.find(g => loose(g).replace(/\D/g, '') === loose(w).replace(/\D/g, '')
+        && editDistance(loose(g), loose(w)) <= Math.max(2, Math.floor(loose(w).length / 6)));
+      if (near) return ` Nearly: it printed ${quote(near)} where it should print ${quote(w)}. Check the spelling.`;
+    }
+    if (missing.length || test.some) continue;
+    const extra = got.find(g => !want.some(w => close(g, w)));
+    if (extra) return ` Nearly: it also prints ${quote(extra)}, which it shouldn't.`;
+    if (got.length === want.length && !want.every((w, i) => close(got[i], w))) return ' The right lines are printed, but in the wrong order.';
+  }
+  return '';
+}
+
+// Every check passed, but a printed line only matched with the capitals, spaces or
+// punctuation forgiven: a gentle note, no mark lost.
+function looseTip(item, runs) {
+  const exact = (a, b) => squash(a) === squash(b);
+  const off = item.reqs.some(q => q.test.expect && runs.some(r => {
+    const got = printedLines(r);
+    return q.test.expect(r.inputs).some(w => got.some(g => close(g, w)) && !got.some(g => exact(g, w)));
+  }));
+  return off ? ' (No marks lost, but some capitals, spaces or punctuation are not quite the same as the task.)' : '';
+}
 
 // Different answers were typed but the program printed exactly the same thing: the answer was
 // typed into the code (print(5 + 3), print("13")) instead of worked out from the variables.
@@ -234,7 +295,9 @@ export function evalReqs(item, raw, runs) {
     msg = `Requirement ${bad + 1} is not met yet.`;
     if (firstFailed(runs)) msg += ' ' + crashMsg(runs);
     else if (sameEveryRun(runs)) msg += SAME_MSG;
-    else if (item.extraMsg) msg += item.extraMsg(raw, runs, results) || '';
+    else msg += textNudge(item.reqs[bad].test, runs) || (item.extraMsg?.(raw, runs, results) || '');
+  } else {
+    msg += looseTip(item, runs) || (item.tipMsg?.(raw, runs) || '');
   }
   return { results, pts, msg };
 }
@@ -262,6 +325,8 @@ const WRITE_TESTS = [['Ava', '15'], ['Ben', '12'], ['Leo', '9'], ['Mia', '11']];
 const PIN_TESTS   = [['1234'], ['1233'], ['1235']];
 const WARM_TESTS  = [['25'], ['24'], ['31'], ['10']];
 const EXT_TESTS   = [['30', '36'], ['30', '30'], ['50', '72'], ['20', '15']];
+const O_WRITE = () => ['I am learning Python', 'It is fun'];
+const GREETING = /hello|hiya|hey|\bhi/i;
 const runFor = (runs, ...inputs) => runs.find(r => r.inputs.join('|') === inputs.join('|'));
 const allOk = runs => runs.length > 0 && runs.every(r => r.ok);
 
@@ -323,9 +388,9 @@ export const ITEMS = [
     tests: [[]],
     reqs: [
       { text: 'The first line printed is exactly <code>I am learning Python</code>',
-        test: (raw, runs) => allOk(runs) && same(printedLines(runs[0])[0] || '', 'I am learning Python') },
+        test: withText(O_WRITE, (raw, runs) => allOk(runs) && close(printedLines(runs[0])[0] || '', 'I am learning Python')) },
       { text: 'The second line printed is exactly <code>It is fun</code>, and nothing else is printed',
-        test: (raw, runs) => allOk(runs) && printedLines(runs[0]).length === 2 && same(printedLines(runs[0])[1], 'It is fun') },
+        test: withText(O_WRITE, (raw, runs) => allOk(runs) && printedLines(runs[0]).length === 2 && close(printedLines(runs[0])[1], 'It is fun')) },
     ] },
 
   // ── 2 · Variables (Lesson 2) ── 8 marks
@@ -365,8 +430,8 @@ export const ITEMS = [
     tests: [[]],
     reqs: [
       { text: 'Print <code>dog</code>, with <code>print(pet)</code> still on line 2',
-        test: (raw, runs) => allOk(runs) && printedLines(runs[0]).length === 1 && same(printedLines(runs[0])[0], 'dog')
-          && /\bprint\s*\(\s*pet\s*\)/.test(normalise(raw)) },
+        test: withText(() => ['dog'], (raw, runs) => allOk(runs) && printedLines(runs[0]).length === 1 && close(printedLines(runs[0])[0], 'dog')
+          && /\bprint\s*\(\s*pet\s*\)/.test(normalise(raw))) },
     ] },
   { id: 'v_write', section: 'variables', kind: 'reqs', resettable: true,
     title: 'Write it: a variable',
@@ -379,7 +444,7 @@ export const ITEMS = [
       { text: 'Make a variable called <code>colour</code> and store the text <code>"blue"</code> in it',
         test: raw => /^\s*colour\s*=\s*(["'])blue\1\s*$/im.test(raw.replace(/#[^\n]*/g, '')) },
       { text: 'Print <code>blue</code> by using the <strong>variable</strong> (not the word in quotes)',
-        test: (raw, runs) => allOk(runs) && printedLines(runs[0]).some(l => same(l, 'blue'))
+        test: (raw, runs) => allOk(runs) && printedLines(runs[0]).some(l => close(l, 'blue'))
           && /\bprint\s*\([^)]*\bcolour\b/.test(normalise(raw)) },
     ] },
 
@@ -428,8 +493,12 @@ export const ITEMS = [
         test: raw => /\b\w+\s*=\s*input\s*\(/.test(normalise(raw)) },
       { text: 'Print a hello message that includes the name that was typed (e.g. <code>Hello Sam</code>)',
         test: (raw, runs) => allOk(runs) && runs.every(r =>
-          printedLines(r).some(l => /\b(hello|hi|hey|hiya)\b/i.test(l) && l.includes(r.inputs[0]))) },
-    ] },
+          printedLines(r).some(l => GREETING.test(l) && l.toLowerCase().includes(r.inputs[0].toLowerCase()))) },
+    ],
+    // "helloSam" gets the mark (2 students in the third sitting), with a note about the space.
+    tipMsg: (raw, runs) => runs.some(r => printedLines(r).some(l => l.toLowerCase().replace(/[^a-z]/g, '').includes(
+      'hello' + r.inputs[0].toLowerCase()) && !/hello\W+\w/i.test(l)))
+      ? ' (The words run together: put a space inside the quotes, like "Hello " + name.)' : '' },
 
   // ── 4 · Data types & casting (Lesson 4) ── 11 marks
   // Pick the line, then type it: in the third sitting the low scorers answered what they
@@ -512,8 +581,8 @@ export const ITEMS = [
           return ns.includes(Number(a) + Number(b)) && !ns.includes(Number(a + b));
         }) },
       { text: 'Print exactly <code>Fruit in the bowl: 8</code> when 5 and 3 are typed',
-        test: (raw, runs) => allOk(runs) && runs.every(r =>
-          printedLines(r).some(l => same(l, `Fruit in the bowl: ${Number(r.inputs[0]) + Number(r.inputs[1])}`))) },
+        test: withText(([a, b]) => [`Fruit in the bowl: ${Number(a) + Number(b)}`], (raw, runs) => allOk(runs) && runs.every(r =>
+          printedLines(r).some(l => close(l, `Fruit in the bowl: ${Number(r.inputs[0]) + Number(r.inputs[1])}`))), true) },
     ] },
   { id: 'c_write', section: 'casting', kind: 'reqs', resettable: true,
     title: 'Write it: next year',
@@ -552,7 +621,7 @@ export const ITEMS = [
       { text: 'Use an <code>else</code> so that 50 or more prints <code>Pass</code> and anything lower prints <code>Try again</code> (or another message of your own)',
         test: (raw, runs) => /^else\s*:/m.test(normalise(raw)) && allOk(runs) && runs.every(r => {
           const got = printedLines(r);
-          return got.length === 1 && same(got[0], 'Pass') === (Number(r.inputs[0]) >= 50);
+          return got.length === 1 && close(got[0], 'Pass') === (Number(r.inputs[0]) >= 50);
         }) },
     ] },
   // A helper first: what an indent does, before any question that relies on it.
@@ -630,7 +699,7 @@ export const ITEMS = [
           return k('25') === k('31') && k('24') === k('10') && k('25') !== k('24');
         } },
       { text: 'After the if/else, print <code>Have a good day!</code> for <strong>everyone</strong>, whatever the temperature',
-        test: (raw, runs) => allOk(runs) && runs.every(r => printedLines(r).some(l => /have a good day/i.test(l))) },
+        test: (raw, runs) => allOk(runs) && runs.every(r => printedLines(r).some(l => loose(l).includes('haveagoodday'))) },
     ] },
   // The starter's comments give the steps, so nobody starts from a blank page (27% from blank).
   { id: 'w_make', section: 'write', kind: 'reqs', resettable: true, title: 'Write it: the game shop',

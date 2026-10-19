@@ -13,6 +13,7 @@ color:  teal
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Station Zero · Chapter 1: Life Support · Year 9</title>
 <link rel="stylesheet" href="../../../shared.css">
+<script src="../../../theme-toggle.js"></script>
 <style>
   /* ════════════════════════════════════════════════════════════════════
      YEAR 9 THEME — "Station Zero": survival-horror variant of the graphite
@@ -527,7 +528,7 @@ color:  teal
      ════════════════════════════════════════════════════════════════════ */
   .info-box { color: #ccfbf1; border-color: rgba(94,234,212,0.3); }
 
-  /* ── Header: station ident, objective, map button ──
+  /* ── Header: station ident, objective, crew readout, light-mode switch ──
      The same 80s green-phosphor terminal as the situation report, so the page
      and the map read as one console. Tokens are shared with .sz-overlay below. */
   .site-header, .sz-overlay {
@@ -576,14 +577,6 @@ color:  teal
   .sz-objective b { color: var(--crt-warn); font-weight: 700; text-shadow: 0 0 4px rgba(255,201,92,0.5); margin-right: 0.35rem; }
   /* the objective is the "waiting for input" line — it keeps the blinking block cursor */
   .sz-objective .sz-obj-text::after { content: '█'; margin-left: 2px; animation: sz-cursor 1.05s steps(1) infinite; }
-  .btn-map {
-    min-height: 44px; background: transparent; color: var(--crt); border: 1px solid var(--crt-faint); border-radius: 6px;
-    font-family: var(--hud-font); font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.1em;
-    text-shadow: var(--crt-glow);
-  }
-  .btn-map:hover { background: rgba(92,255,143,0.1); border-color: var(--crt); color: var(--crt); }
-  .btn-map:focus-visible { outline: 2px solid var(--crt); outline-offset: 3px; }
-  .btn-map svg { width: 18px; height: 18px; flex-shrink: 0; filter: drop-shadow(0 0 3px rgba(92,255,143,0.6)); }
 
   /* ── Crew readout (header) — pod lights, a heart-monitor line and a crew count ──
      Hover, click or Enter opens the crew manifest under it. Colour is never the only
@@ -1103,6 +1096,131 @@ color:  teal
      the two characters, so show them as typed everywhere: code, editors and the reports. */
   html, html * { font-variant-ligatures: none; }
 
+
+  /* ════════════════════════════════════════════════════════════════════
+     LIGHT MODE ("day shift") — switched on by the header toggle (theme-toggle.js
+     sets html[data-theme="light"]). The work area goes light: slate-white cards,
+     near-black ink, a deeper teal accent. Every text pair is at least 4.5:1 (most
+     are 7:1 or more) and input/option borders are 3:1. The station's own screens
+     stay dark, because they ARE screens: the header console, the crew manifest,
+     the situation report, the map, the camera stills and the chapter-done banner.
+     The code editor goes light too (code-editor.js's light palette, re-tinted
+     below from Y8 purple to slate).
+     ════════════════════════════════════════════════════════════════════ */
+  html[data-theme="light"],
+  html[data-theme="light"] body {
+    color-scheme: light;
+    --canvas:       #ecf4ef;   /* page background — life-support green tint */
+    --chrome:       #e6ebf0;   /* runtime status line */
+    --card:         #ffffff;
+    --card-raised:  #f5f7fa;
+    --card-hover:   #e9eef3;
+    --line:         #d3dbe3;
+    --line-strong:  #7f8c9b;   /* input / option borders — 3:1 on white */
+
+    --cobalt:       #0f766e;   /* button fill — white text 5.5:1 */
+    --cobalt-dark:  #115e59;
+    --cobalt-text:  #0f6b63;   /* accent as text — 6.4:1 on white */
+    --cobalt-tint:  rgba(15,118,110,0.10);
+
+    --ink:          #0f172a;
+    --text:         #0f172a;   /* 17.9:1 on white */
+    --muted:        #475569;   /* 7.6:1 on white, 6.7:1 on the canvas */
+    --amber:        #b45309;
+    --amber-bg:     #fff6e5;
+    --amber-text:   #7c3d06;   /* 7.7:1 on --amber-bg */
+    --green:        #15803d;
+    --green-text:   #14532d;   /* 8.3:1 on --green-bg */
+    --green-bg:     #e9f8ef;
+    --red:          #c81e45;
+    --red-text:     #9f1239;   /* 7.0:1 on --red-bg */
+    --red-bg:       #fdecef;
+    --code-bg:      #f1f5f8;
+    --code-text:    #1e293b;   /* 13.3:1 on --code-bg */
+
+    --accent-light: var(--cobalt-text);
+    --surface-mid:  #dbe3ea;
+    --shadow-sm:    0 1px 2px rgba(15,23,42,0.08);
+    --shadow-md:    0 6px 18px rgba(15,23,42,0.08), 0 1px 3px rgba(15,23,42,0.06);
+    --focus-ring:   0 0 0 3px rgba(15,118,110,0.45);
+  }
+  html[data-theme="light"] body {
+    background-image:
+      radial-gradient(ellipse 80% 45% at 50% 0%, rgba(15,118,110,0.06), transparent 70%),
+      radial-gradient(rgba(15,23,42,0.06) 1px, transparent 1.2px);
+  }
+  html[data-theme="light"] strong { color: var(--ink); }
+  html[data-theme="light"] .primm-nav button.active,
+  html[data-theme="light"] .stage-header-text h2 { color: var(--ink); }
+  html[data-theme="light"] .primm-nav button.done .stage-letter::after { color: #fff; }
+  html[data-theme="light"] .progress-strip { background: #d3dbe3; }
+  html[data-theme="light"] .kw  { color: #8b2fb8; }
+  html[data-theme="light"] .fn  { color: #1d4ed8; }
+  html[data-theme="light"] .st  { color: #2f6b1f; }
+  html[data-theme="light"] .num { color: #8a5300; }
+  html[data-theme="light"] .line-num { color: #5f6b7a; }
+  html[data-theme="light"] .q-card.error,
+  html[data-theme="light"] .q-card.is-wrong { background: #fdf0f2; border-color: rgba(200,30,69,0.45); }
+  html[data-theme="light"] .q-card.is-right { background: #ecfdf3; border-color: rgba(21,128,61,0.45); }
+  html[data-theme="light"] .q-card.revisiting { background: #f1f5f9; }
+  html[data-theme="light"] .q-card input[type=text]::placeholder,
+  html[data-theme="light"] .q-card textarea::placeholder { color: #5b6878; }
+  html[data-theme="light"] .q-card input[type=text],
+  html[data-theme="light"] .q-card textarea,
+  html[data-theme="light"] .skip-gate input { background: #ffffff; }
+  html[data-theme="light"] .mcq-fb.pass, html[data-theme="light"] .feedback.pass { border-color: rgba(21,128,61,0.45); }
+  html[data-theme="light"] .mcq-fb.fail, html[data-theme="light"] .feedback.fail { border-color: rgba(200,30,69,0.45); }
+  /* "next" stays the inverse of the page, so it still reads as the step forward */
+  html[data-theme="light"] .btn-next { background: #0f172a; color: #fff; }
+  html[data-theme="light"] .btn-next:hover:not(:disabled) { background: #1e293b; }
+  html[data-theme="light"] .info-box { color: #134e4a; border-color: rgba(15,118,110,0.35); }
+  html[data-theme="light"] .output-panel.spotlight { animation-name: output-spotlight-fade-light; }
+  html[data-theme="light"] .output-panel.spotlight .output-header::after { color: #15803d; }
+  @keyframes output-spotlight-fade-light { 0%, 60% { box-shadow: inset 0 0 0 3px #15803d; } 100% { box-shadow: none; } }
+  /* "Your call" cards: a warm amber sheet instead of the dark console strip */
+  html[data-theme="light"] .sz-choice { background: #fffaf0; border-color: #e3c9a4; border-left-color: var(--amber); }
+  html[data-theme="light"] .sz-choice-kicker,
+  html[data-theme="light"] .sz-choice-report b { color: #a14a07; }
+  html[data-theme="light"] .sz-choice-report { background: #ffffff; }
+  html[data-theme="light"] .sz-opt:has(input:checked) { background: #fff3dc; }
+
+  /* code editor: code-editor.js's light palette is Y8 purple; re-tint it slate / teal */
+  html[data-theme="light"] .code-checker .output-panel { background: #f8fafc; border-left-color: var(--line); border-top-color: var(--line); }
+  html[data-theme="light"] .code-checker .output-header,
+  html[data-theme="light"] .output-header,
+  html[data-theme="light"] .memory-header { color: #475569; }
+  html[data-theme="light"] .code-checker .line-nums { color: #5f6b7a; background: #e9eef3; border-right-color: var(--line); }
+  html[data-theme="light"] .code-checker .checker-header { background: #e9eef3; color: #334155; border-color: var(--line); }
+  html[data-theme="light"] .code-checker .checker-header span:last-child { color: var(--cobalt-text); }
+  html[data-theme="light"] .checker-textarea { caret-color: #0f172a; scrollbar-color: #b4c0cb var(--code-bg); }
+  html[data-theme="light"] .checker-textarea::-webkit-scrollbar-track { background: var(--code-bg); }
+  html[data-theme="light"] .checker-textarea::-webkit-scrollbar-thumb { background: #b4c0cb; }
+  html[data-theme="light"] .highlight-layer { color: #1e293b; }
+  html[data-theme="light"] .output-input-row,
+  html[data-theme="light"] .memory-inner { border-top-color: var(--line); }
+  html[data-theme="light"] .mem-box { border-color: #b4c0cb; }
+  html[data-theme="light"] .step-skip { color: #1e293b; border-color: #b4c0cb; }
+  html[data-theme="light"] .error-helper .eh-plain strong { color: var(--ink); }
+  html[data-theme="light"] .editor-container.loading::after {
+    background-image: linear-gradient(#d3dbe3 0.7rem, transparent 0.7rem, transparent 1.7rem);
+  }
+
+  /* The header switch (theme-toggle.js puts it in .sz-header-right, where the Station map
+     button used to be). The header stays a dark console in both modes, so the switch is a
+     console key: phosphor on black when off, lit up like Continue when on. These selectors
+     out-rank theme-toggle.js's own button styles. */
+  html[data-theme] .site-header .theme-toggle {
+    min-height: 44px; padding: 0 0.85rem; border-radius: 6px; background: #020704; color: var(--crt);
+    border: 1px solid var(--crt-faint); font: 400 0.78rem/1 var(--hud-font); letter-spacing: 0.1em;
+    text-transform: uppercase; text-shadow: var(--crt-glow); margin-left: 0;
+  }
+  html[data-theme] .site-header .theme-toggle:hover { background: rgba(92,255,143,0.08); border-color: var(--crt); }
+  html[data-theme] .site-header .theme-toggle:focus-visible { outline: 2px solid var(--crt); outline-offset: 3px; box-shadow: none; }
+  html[data-theme] .site-header .theme-toggle svg { filter: drop-shadow(0 0 3px rgba(92,255,143,0.6)); }
+  html[data-theme="light"] .site-header .theme-toggle { background: var(--crt); color: #021006; border-color: var(--crt); text-shadow: none; }
+  html[data-theme="light"] .site-header .theme-toggle:hover { background: #8dffb0; border-color: #8dffb0; }
+  html[data-theme="light"] .site-header .theme-toggle svg { filter: none; }
+
 </style>
 </head>
 <body>
@@ -1135,7 +1253,7 @@ color:  teal
     <p id="szChapterLine">Chapter · Python Programming · Year 9</p>
   </div>
 
-  <div class="sz-header-right">
+  <div class="sz-header-right" data-theme-toggle-slot>
     <div class="sz-objective" id="szObjective"><b>Objective:</b> —</div>
     <!-- Crew readout: filled in by the story script (STORY.crew); hover/click opens the manifest -->
     <div class="crew" id="szCrew" hidden>
@@ -1152,12 +1270,6 @@ color:  teal
         <p class="crew-note" id="szCrewNote"></p>
       </div>
     </div>
-    <button class="btn btn-map" type="button" onclick="window.StationZero?.showMap()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 11h18M9 4v7M15 11v9"/>
-      </svg>
-      Station map
-    </button>
   </div>
 </header>
 
@@ -1449,7 +1561,7 @@ color:  teal
 
   <div class="info-box">
     <span class="icon">🧪</span>
-    <span>The editor starts again from the original program. Each check runs your code by typing <strong>Riley</strong>, <strong>6</strong> and <strong>3</strong> into your questions, in that order.</span>
+    <span>The editor starts again from the original program. Each check runs your code by typing one survivor's answers into your questions, in order: a <strong>name</strong>, the <strong>hours</strong> until rescue and the number of <strong>crew</strong> awake. It's a different survivor each time (for example <strong>Riley</strong>, <strong>6</strong> and <strong>3</strong>), so the totals your program prints will change too.</span>
   </div>
 
   <div id="m1_steps">
@@ -1497,7 +1609,7 @@ color:  teal
         <span class="stars">★★</span>
         <div class="task-text">
           <ul class="req-list" id="req_m1_3">
-            <li><span>1</span><span class="req-text">Keep your code so far. Work out the oxygen for the <strong>whole crew</strong> — hours × crew × <span class="v-rate">60</span> — and print it. With 6 hours and 3 crew it should print <span class="v-total">1080</span>. For example <code>total = hours * crew * <span class="v-rate">60</span></code></span></li>
+            <li><span>1</span><span class="req-text">Keep your code so far. Work out the oxygen for the <strong>whole crew</strong> — hours × crew × <span class="v-rate">60</span> — and print it. For example, with 6 hours and 3 crew it should print <span class="v-total">1080</span>. You could write <code>total = hours * crew * <span class="v-rate">60</span></code></span></li>
           </ul>
         </div>
       </div>
@@ -1510,7 +1622,7 @@ color:  teal
         <div class="task-text">
           <ul class="req-list" id="req_m1_4">
             <li><span>1</span><span class="req-text">Keep your code so far. Print the crew total inside a sentence, joining your words and the number with <code>+</code> and <code>str()</code> — for example <code>print("Total oxygen: " + str(total) + " litres")</code></span></li>
-            <li><span>2</span><span class="req-text">The sentence must show the <strong>crew total</strong> (<span class="v-total">1080</span> when tested with 6 hours and 3 crew).</span></li>
+            <li><span>2</span><span class="req-text">The sentence must show the <strong>crew total</strong> (for example <span class="v-total">1080</span> with 6 hours and 3 crew).</span></li>
           </ul>
           <details class="remind" style="margin:0.4rem 0 0">
             <summary>Remind me: why <code>str()</code>?</summary>
@@ -1579,7 +1691,7 @@ color:  teal
       <span class="icon">🔨</span>
       <span>Write a program that asks how much of each supply you have, works out how long it will last, and prints a <strong>manifest</strong>. All the success criteria below must be met.</span>
     </div>
-    <div class="hint-box">Ideas: an oxygen canister lasts <strong>8</strong> hours, a ration pack lasts <strong>12</strong> hours, a battery cell lasts <strong>5</strong> hours. Your program is checked by answering every question with a number.</div>
+    <div class="hint-box">Ideas: an oxygen canister lasts <strong>8</strong> hours, a ration pack lasts <strong>12</strong> hours, a battery cell lasts <strong>5</strong> hours. Your program is checked by answering every question with a number, and the numbers change each time.</div>
 
     <!-- STATION ZERO choice 2: reacts to the oxygen rate (Modification 1). #m2_choice_report
          repeats the fact from the last report that decides which transfer is the better call;
@@ -1709,6 +1821,8 @@ color:  teal
      start()      — end of the DOMContentLoaded init
      beat(stage, { feed }) — completeStage() (first completion only) and checkMake()
                   (first pass); feed = what that stage's final action printed, for the live feed
+                  beat('M1') plays as soon as Modification 1 passes (the consequence of choice 1),
+                  so completeStage('M1') later finds it seen and goes straight to Make.
      showMap()    — the header's Station map button
    plus two for the Station Zero choices:
      choose(key, value) — checkMod() when Modification 1 passes (CHOICE in the module), and
@@ -1919,7 +2033,7 @@ color:  teal
         variant: c => (shutIn(c) ? 'in' : 'out') + '_' + air(c),
         variants: {
           out_full: {
-            log: "You’ve rebuilt life support, and every pod is at full power. The corridor lights die one panel at a time, all the way to the Cryo Bay door, then stop. But your own suit is down to 19%.",
+            log: "The recyclers restart at 60 litres an hour, and every pod stays at full power. The corridor lights die one panel at a time, all the way to the Cryo Bay door, then stop. But your own suit is down to 19%.",
             readouts: [
               { label: 'Oxygen', value: '58%', level: 'warn' },
               { label: 'Cryo pods', value: '3 of 3 stable', level: 'ok' },
@@ -1930,10 +2044,10 @@ color:  teal
           in_full: {
             impact: {
               scene: 'lights', device: 'O2 recycler', motion: 'MOTION · CRYO BAY',
-              caption: "Your crew total reached the recyclers and oxygen climbed fast. Then the corridor lights started going out, and the motion tracker followed them to the Cryo Bay, where something is shut in with the crew.",
-              fallback: ['Oxygen needed in litres:', '360', '3', '1080', 'Total oxygen: 1080 litres'],
+              caption: "Your new rate reached the recyclers and oxygen climbed fast. Then the corridor lights started going out, and the motion tracker followed them to the Cryo Bay, where something is shut in with the crew.",
+              fallback: ['Engineer Riley is awake.', 'Oxygen needed in litres:', '360'],
             },
-            log: "You’ve rebuilt life support, and every pod is at full power. The corridor lights die one panel at a time, all the way to the Cryo Bay, where something is shut in with the crew. Pod 5’s alarm goes off, and only full power is keeping Patel alive.",
+            log: "The recyclers restart at 60 litres an hour, and every pod stays at full power. The corridor lights die one panel at a time, all the way to the Cryo Bay, where something is shut in with the crew. Pod 5’s alarm goes off, and only full power is keeping Patel alive.",
             readouts: [
               { label: 'Oxygen', value: '58%', level: 'warn' },
               { label: 'Pod 5 · Patel', value: 'Critical', level: 'danger' },
@@ -1945,10 +2059,10 @@ color:  teal
           out_low: {
             impact: {
               scene: 'lights', device: 'O2 recycler', g1: 0.64,
-              caption: "Your crew total reached the recyclers, and saving air sent oxygen up fast. Then the corridor lights started going out, one panel at a time, moving towards you.",
-              fallback: ['Oxygen needed in litres:', '240', '3', '720', 'Total oxygen: 720 litres'],
+              caption: "Your new rate reached the recyclers, and saving air sent oxygen up fast. Then the corridor lights started going out, one panel at a time, moving towards you.",
+              fallback: ['Engineer Riley is awake.', 'Oxygen needed in litres:', '240'],
             },
-            log: "You’ve rebuilt life support, and the air is holding. The corridor lights die one panel at a time and stop at the Cryo Bay door. Inside, Pod 5 is on minimum power, and Patel’s vitals keep dropping.",
+            log: "The recyclers restart at 40 litres an hour, and the air is holding. The corridor lights die one panel at a time and stop at the Cryo Bay door. Inside, Pod 5 is on minimum power, and Patel’s vitals keep dropping.",
             readouts: [
               { label: 'Oxygen', value: '64%', level: 'warn' },
               { label: 'Pod 5 · Patel', value: 'Minimum power', level: 'danger' },
@@ -1959,11 +2073,11 @@ color:  teal
           in_low: {
             impact: {
               scene: 'lights', device: 'O2 recycler', motion: 'MOTION · CRYO BAY', g1: 0.64,
-              caption: "Your crew total reached the recyclers, and saving air sent oxygen up fast. Then the corridor lights started going out, and the motion tracker followed them to the Cryo Bay, where something is shut in with Pod 5.",
-              fallback: ['Oxygen needed in litres:', '240', '3', '720', 'Total oxygen: 720 litres'],
+              caption: "Your new rate reached the recyclers, and saving air sent oxygen up fast. Then the corridor lights started going out, and the motion tracker followed them to the Cryo Bay, where something is shut in with Pod 5.",
+              fallback: ['Engineer Riley is awake.', 'Oxygen needed in litres:', '240'],
             },
             headline: 'Pod 5',
-            log: "You’ve rebuilt life support, and the air is holding. The corridor lights die one panel at a time, all the way to the Cryo Bay, where something is shut in with Pod 5 on minimum power. Its alarm is sounding, and Patel’s heart rate is falling fast.",
+            log: "The recyclers restart at 40 litres an hour, and the air is holding. The corridor lights die one panel at a time, all the way to the Cryo Bay, where something is shut in with Pod 5 on minimum power. Its alarm is sounding, and Patel’s heart rate is falling fast.",
             readouts: [
               { label: 'Oxygen', value: '64%', level: 'warn' },
               { label: 'Pod 5 · Patel', value: 'Failing', level: 'danger' },
@@ -1975,8 +2089,8 @@ color:  teal
         },
         impact: {
           scene: 'lights', device: 'O2 recycler',
-          caption: "Your crew total reached the recyclers and oxygen climbed fast. Then the corridor lights started going out, one panel at a time, moving towards you.",
-          fallback: ['Oxygen needed in litres:', '360', '3', '1080', 'Total oxygen: 1080 litres'],
+          caption: "Your new rate reached the recyclers and oxygen climbed fast. Then the corridor lights started going out, one panel at a time, moving towards you.",
+          fallback: ['Engineer Riley is awake.', 'Oxygen needed in litres:', '360'],
         },
         headline: 'Lights out',
         time: '04:08',
@@ -2036,7 +2150,7 @@ color:  teal
   const LEVEL_SR    = { ok: 'normal', warn: 'warning', danger: 'critical' };
   const CTA = {
     intro: 'Begin: Predict →', P: 'Continue to Run →', R: 'Continue to Investigate →',
-    I: 'Continue to Modify →', M1: 'Continue to Make →', M2: 'Continue →',
+    I: 'Continue to Modify →', M1: 'Onwards to Modification 2 →', M2: 'Continue →',
   };
   const ORDER = ['intro', 'P', 'R', 'I', 'M1', 'M2'];
 
@@ -2228,6 +2342,7 @@ color:  teal
   // renderImpact returns how long that takes, so the rest of the report waits for it.
   const clip = (s, n) => s.length > n ? s.slice(0, n - 1) + '…' : s;
   const pick = (lines, re) => [...lines].reverse().find(l => re.test(l)) || lines[lines.length - 1] || '';
+  const OXYGEN_LINE = /^\s*\d{3,}(?:\.\d+)?\s*$|total/i;   // an oxygen figure on its own line, or the crew total's sentence
   const pct = g => Math.round(g * 100) + '%';
 
   function feedLines(feed, fallback) {
@@ -2361,8 +2476,10 @@ color:  teal
       return { hit: /oxygen per hour/i, dd: 3.2, before: ['TypeError: can only concatenate str…'], svg: svg + '</svg>' };
     },
     lights: (lines, imp) => ({
-      hit: /total|1080|720/i, dd: 4.4,
-      svg: corridorSvg({ l1: pick(lines, /total|1080|720/i), g0: 0.34, g1: imp.g1 || 0.58, motion: imp.motion }),
+      // the oxygen figure Modification 1 printed (always 3+ digits, so never the crew count),
+      // or the crew total's sentence if the report plays at the end of Modify instead
+      hit: OXYGEN_LINE, dd: 4.4,
+      svg: corridorSvg({ l1: 'O2 NEEDED: ' + ((pick(lines, OXYGEN_LINE).match(/\d+(?:\.\d+)?/g) || ['?']).pop()) + ' L', g0: 0.34, g1: imp.g1 || 0.58, motion: imp.motion }),
     }),
     tracker: () => ({ dd: 3.8, svg: trackerSvg() }),
   };
@@ -2844,7 +2961,7 @@ color:  teal
   ║  for a complete reference, including the Investigate checks.               ║
   ╚══════════════════════════════════════════════════════════════════════════════╝
 */
-import { normalise, has, MOD_CHECKS, MOD_INPUTS, evalMod, rateOf, hourTotal, crewTotal, MAKE_CHECK, MAKE_INPUTS, evalMake, TRANSFER_CHOICES, EXT_CHECK, EXT_INPUTS, evalExt,
+import { normalise, has, MOD_CHECKS, MOD_PROFILES, modInputs, evalMod, rateOf, hourTotal, crewTotal, MAKE_CHECK, MAKE_PROFILES, evalMake, TRANSFER_CHOICES, EXT_CHECK, EXT_PROFILES, evalExt,
          evalInv, isBugFixed, isBugPairLine, breakCode } from './checkers_life_support.js';
 import { runPython, preload } from '../../../pyodide-runner.js';
 import { setupEditors, clearSyntaxHint, setEditorOutput, refreshEditor, runCode, replayRun } from '../../../code-editor.js';
@@ -2899,7 +3016,7 @@ const P_FAIL_MSG = {
 
 const CHOICE = {
   story: 'air',   // stored as sz_choices.air
-  req: c => `Change the calculation on line 3 to use <strong>${rateOf(c)}</strong> litres an hour instead of 50. With 6 hours it should print ${hourTotal(c)}.`,
+  req: c => `Change the calculation on line 3 to use <strong>${rateOf(c)}</strong> litres an hour instead of 50. For example, with 6 hours it should print ${hourTotal(c)}.`,
 };
 
 // The second choice is on Make, and reacts to the first: 40 litres left Pod 5 on minimum
@@ -3012,6 +3129,21 @@ const storyFeed = {};
 // One consistent auto-advance delay across Predict / Investigate / Modify so the
 // student sees the feedback before the next question appears.
 const AUTO_ADVANCE_MS = 1500;
+
+// "Typed for you" answers: each ⚡ Check types one set from the checker's bank (MOD_PROFILES /
+// MAKE_PROFILES), picked at random but never the same set twice in a row, so students see the
+// answers change. ?answers=fixed always types the first set (for demos and tests).
+const FIXED_ANSWERS = new URLSearchParams(location.search).get('answers') === 'fixed';
+const lastPick = {};
+function pickFrom(bank, key) {
+  if (FIXED_ANSWERS || bank.length < 2) return bank[0];
+  let i;
+  do i = Math.floor(Math.random() * bank.length); while (i === lastPick[key]);
+  lastPick[key] = i;
+  return bank[i];
+}
+// "Riley, 6 and 3"
+const sayList = a => a.length > 1 ? a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1] : a.join('');
 const PREDICT_CARDS = ['qcard_p_mcq1', 'qcard_p_mcq2', 'qcard_p_text1'];
 const PREDICT_NAMES = ['p_mcq1', 'p_mcq2', 'p_text1'];
 const PREDICT_TOTAL = PREDICT_CARDS.length;
@@ -4116,14 +4248,16 @@ async function checkMod() {
   }
   // Run FIRST with the fixed test answers: a real Python error outranks an unmet bullet,
   // and the arithmetic bullets are judged on what the program actually printed.
-  fbEl.className = 'feedback loading'; fbEl.textContent = '⏳ Checking — typing Riley, 6 and 3…';
-  const run = await runPython(raw, { traceLines: true, trackVars: true, inputs: MOD_INPUTS[checkKey] || [], onInputsExhausted: 'error' });
+  const profile = pickFrom(MOD_PROFILES, 'mod');
+  const inputs  = modInputs(checkKey, profile);
+  fbEl.className = 'feedback loading'; fbEl.textContent = '⏳ Checking — typing ' + sayList(inputs) + '…';
+  const run = await runPython(raw, { traceLines: true, trackVars: true, inputs, onInputsExhausted: 'error' });
   if (!(await replayRun(editorEl, run))) return;   // step through the run before judging it (stepThrough)
   if (!run.ok) {
     renderReqResults(reqListEl, null);
     fbEl.className = 'feedback fail'; fbEl.textContent = '❌ Error: ' + run.output; recordM1Attempt(); return;
   }
-  const result = evalMod(checkKey, raw, run.output, getChoice());
+  const result = evalMod(checkKey, raw, run.output, getChoice(), profile);
   renderReqResults(reqListEl, result.results);
   if (!result.pass) {
     fbEl.className = 'feedback fail'; fbEl.textContent = result.msg; recordM1Attempt(); return;
@@ -4134,7 +4268,10 @@ async function checkMod() {
   clearSyntaxHint(editorEl);
   passedChecks[checkId] = true;
   storyFeed.m1_editor = run.output;   // STATION ZERO hook
-  if (stepM1 === 1) { window.StationZero?.choose(CHOICE.story, getChoice()); renderChoice(); }   // STATION ZERO hook: the choice is now locked in
+  if (stepM1 === 1) {
+    window.StationZero?.choose(CHOICE.story, getChoice()); renderChoice();   // STATION ZERO hook: the choice is now locked in
+    window.StationZero?.beat('M1', { feed: run.output });   // STATION ZERO hook: its consequence plays straight away
+  }
   delete skippedSteps['m1_' + stepM1];
   // Lock in the code as it stood for this modification, so Back/Forward can restore it later.
   m1CodeSnapshots[stepM1] = raw;
@@ -4193,14 +4330,15 @@ async function checkMake() {
   if (!getMakeChoice()) {
     fbEl.className = 'feedback fail'; fbEl.textContent = '⚠️ Make your call above first.'; return;
   }
-  fbEl.className = 'feedback loading'; fbEl.textContent = '⏳ Checking — answering every question with a number…';
-  const run = await runPython(raw, { traceLines: true, trackVars: true, inputs: MAKE_INPUTS });
+  const inputs = pickFrom(MAKE_PROFILES, 'make');
+  fbEl.className = 'feedback loading'; fbEl.textContent = '⏳ Checking — answering your questions with ' + sayList(inputs.slice(0, 3)) + '…';
+  const run = await runPython(raw, { traceLines: true, trackVars: true, inputs });
   if (!(await replayRun(editorEl, run))) return;   // step through the run before judging it (stepThrough)
   if (!run.ok) {
     renderReqResults(listEl, null);
     fbEl.className = 'feedback fail'; fbEl.textContent = '❌ Your program has an error: ' + run.output; return;
   }
-  const result = evalMake(raw, run.output, getMakeChoice());
+  const result = evalMake(raw, run.output, getMakeChoice(), inputs);
   renderReqResults(listEl, result.results);
   recordMakeProgress(result.results);
   if (!result.pass) {
@@ -4227,8 +4365,9 @@ async function checkExt() {
   const fbEl = document.getElementById('fb_m2');
   const listEl = document.getElementById('req_m2_ext');
   fbEl.classList.remove('hidden');
-  fbEl.className = 'feedback loading'; fbEl.textContent = '⏳ Checking — answering every question with a number…';
-  const run = await runPython(raw, { traceLines: true, trackVars: true, inputs: EXT_INPUTS });
+  const inputs = pickFrom(EXT_PROFILES, 'make');
+  fbEl.className = 'feedback loading'; fbEl.textContent = '⏳ Checking — answering your questions with ' + sayList(inputs.slice(0, 3)) + '…';
+  const run = await runPython(raw, { traceLines: true, trackVars: true, inputs });
   if (!(await replayRun(editorEl, run))) return;   // step through the run before judging it (stepThrough)
   if (!run.ok) {
     renderReqResults(listEl, null);

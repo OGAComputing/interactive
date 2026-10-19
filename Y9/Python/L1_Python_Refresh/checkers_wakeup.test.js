@@ -1,6 +1,6 @@
 import { describe, test, expect } from 'vitest';
 import { evalInv, evalMod, evalMake, evalExt, breakCode, hasBugLine, hasFixedLine, isBugFixed, isBugPairLine,
-         IBUG_LINE, IBUG_FIXED_LINE, MOD_INPUTS, MAKE_INPUTS } from './checkers_wakeup.js';
+         IBUG_LINE, IBUG_FIXED_LINE, MOD_INPUTS, MAKE_INPUTS, MOD_PROFILES, modInputs, MAKE_PROFILES } from './checkers_wakeup.js';
 
 const code = (...lines) => lines.join('\n');
 const out  = (...lines) => lines.join('\n') + '\n';
@@ -263,5 +263,66 @@ describe('Extension — status report', () => {
   test('the three answers on separate lines fails the second bullet', () => {
     const src = code(...MAKE_GOOD, 'status = input("Status: ")', 'print("Status: " + status)');
     expect(evalExt(src, out(...MAKE_OUT.trim().split('\n'), 'Status: Missing', 'Status: Missing')).results).toEqual([true, false]);
+  });
+});
+
+// ─── Answer banks ("typed for you" changes each check) ───────────────────────
+
+describe('answer banks — every set works, and typed-in answers are caught', () => {
+  // What the runner prints for a Modify program, given one profile's answers.
+  const echo = p => ['Enter your name: ' + p.name, 'Enter your job: ' + p.role];
+  const door = p => ['CRYO BAY DOOR', 'Checking in: ' + p.role + ' ' + p.name, 'Door unlocking...'];
+  const MOD2 = [...STARTER, 'pod = input("Pod number: ")', 'print("Pod: " + pod)'];
+  const MOD3 = [...MOD2, 'feeling = input("How are you feeling? ")', 'print("You feel " + feeling)'];
+  const upToFeeling = p => [...echo(p), ...door(p), 'Pod number: ' + p.pod, 'Pod: ' + p.pod, 'How are you feeling? ' + p.feeling];
+
+  test('5–10 sets, the first is the default, and Modifications 3 and 4 add the feeling', () => {
+    expect(MOD_PROFILES.length).toBeGreaterThanOrEqual(5);
+    expect(MOD_PROFILES.length).toBeLessThanOrEqual(10);
+    expect(MAKE_PROFILES.length).toBeGreaterThanOrEqual(5);
+    expect(MAKE_PROFILES.length).toBeLessThanOrEqual(10);
+    expect(MAKE_INPUTS).toEqual(MAKE_PROFILES[0]);
+    const p = MOD_PROFILES[1];
+    expect(modInputs('mod2', p)).toEqual([p.name, p.role, p.pod]);
+    expect(modInputs('mod4', p)).toEqual([p.name, p.role, p.pod, p.feeling]);
+  });
+  test('every answer in a set is different, so one can never be mistaken for another', () => {
+    for (const p of MOD_PROFILES) {
+      const a = [p.name, p.role, p.pod, p.feeling].map(v => v.toLowerCase());
+      expect(a.every(v => a.filter(w => w.includes(v)).length === 1)).toBe(true);
+    }
+    for (const set of MAKE_PROFILES) {
+      const a = set.slice(0, 3).map(v => v.toLowerCase());
+      expect(a.every(v => a.filter(w => w.includes(v)).length === 1)).toBe(true);
+    }
+  });
+  test('Modify 2–4 pass for every set when the variables are printed', () => {
+    for (const p of MOD_PROFILES) {
+      expect(evalMod('mod2', code(...MOD2), out(...echo(p), ...door(p), 'Pod number: ' + p.pod, 'Pod: ' + p.pod), undefined, p).pass).toBe(true);
+      expect(evalMod('mod3', code(...MOD3), out(...upToFeeling(p), 'You feel ' + p.feeling), undefined, p).pass).toBe(true);
+      expect(evalMod('mod4', code(...MOD3, 'print(name + " is feeling " + feeling)'),
+        out(...upToFeeling(p), 'You feel ' + p.feeling, p.name + ' is feeling ' + p.feeling), undefined, p).pass).toBe(true);
+    }
+  });
+  test('a line with the first set typed in fails every other set, and the hint names the answers typed', () => {
+    const first = MOD_PROFILES[0];
+    for (const p of MOD_PROFILES.slice(1)) {
+      const r = evalMod('mod4', code(...MOD3, 'print("Riley is feeling Dizzy")'),
+        out(...upToFeeling(p), 'You feel ' + p.feeling, first.name + ' is feeling ' + first.feeling), undefined, p);
+      expect(r.pass).toBe(false);
+      expect(r.msg).toContain(`tested with ${p.name} and ${p.feeling}`);
+    }
+  });
+  test('Make and the extension pass for every set, and the hints name the answers typed', () => {
+    const src = code(...MAKE_GOOD, 'print("LOCK: CRYO BAY DOOR")');
+    for (const set of MAKE_PROFILES) {
+      const [name, room, status] = set;
+      const o = ['Crew member: ' + name, 'Last seen in: ' + room, 'CREW LOCATOR', 'Crew member: ' + name, 'Last seen in: ' + room, 'LOCK: CRYO BAY DOOR'];
+      expect(evalMake(src, out(...o), 'bay', set).pass).toBe(true);
+      const typedIn = evalMake(src, out('Crew member: ' + name, 'Last seen in: ' + room, 'CREW LOCATOR', 'Crew member: Ash', 'Last seen in: Navigation'), 'bay', set);
+      if (name !== 'Ash') expect(typedIn.msg).toContain(`tested with ${name} (name) and ${room} (room)`);
+      const ext = code(...MAKE_GOOD, 'status = input("Status: ")', 'print(name + " is " + status + " in " + room)');
+      expect(evalExt(ext, out(...o, 'Status: ' + status, `${name} is ${status} in ${room}`), set).pass).toBe(true);
+    }
   });
 });

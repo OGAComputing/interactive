@@ -14,6 +14,7 @@ color:  blue
 <!-- FILL IN: chapter/topic name -->
 <title>Station Zero · Chapter N · TOPIC · Year 9</title>
 <link rel="stylesheet" href="../../../shared.css">
+<script src="../../../theme-toggle.js"></script>
 <style>
   /* ════════════════════════════════════════════════════════════════════
      YEAR 9 THEME — "Station Zero": survival-horror variant of the graphite
@@ -536,7 +537,7 @@ color:  blue
      ════════════════════════════════════════════════════════════════════ */
   .info-box { color: #ccfbf1; border-color: rgba(94,234,212,0.3); }
 
-  /* ── Header: station ident, objective, map button ──
+  /* ── Header: station ident, objective, crew readout, light-mode switch ──
      The same 80s green-phosphor terminal as the situation report, so the page
      and the map read as one console. Tokens are shared with .sz-overlay below. */
   .site-header, .sz-overlay {
@@ -585,14 +586,6 @@ color:  blue
   .sz-objective b { color: var(--crt-warn); font-weight: 700; text-shadow: 0 0 4px rgba(255,201,92,0.5); margin-right: 0.35rem; }
   /* the objective is the "waiting for input" line — it keeps the blinking block cursor */
   .sz-objective .sz-obj-text::after { content: '█'; margin-left: 2px; animation: sz-cursor 1.05s steps(1) infinite; }
-  .btn-map {
-    min-height: 44px; background: transparent; color: var(--crt); border: 1px solid var(--crt-faint); border-radius: 6px;
-    font-family: var(--hud-font); font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.1em;
-    text-shadow: var(--crt-glow);
-  }
-  .btn-map:hover { background: rgba(92,255,143,0.1); border-color: var(--crt); color: var(--crt); }
-  .btn-map:focus-visible { outline: 2px solid var(--crt); outline-offset: 3px; }
-  .btn-map svg { width: 18px; height: 18px; flex-shrink: 0; filter: drop-shadow(0 0 3px rgba(92,255,143,0.6)); }
 
   /* ── Crew readout (header) — pod lights, a heart-monitor line and a crew count ──
      Hover, click or Enter opens the crew manifest under it. Colour is never the only
@@ -977,6 +970,131 @@ color:  blue
      the two characters, so show them as typed everywhere: code, editors and the reports. */
   html, html * { font-variant-ligatures: none; }
 
+
+  /* ════════════════════════════════════════════════════════════════════
+     LIGHT MODE ("day shift") — switched on by the header toggle (theme-toggle.js
+     sets html[data-theme="light"]). The work area goes light: slate-white cards,
+     near-black ink, a deeper teal accent. Every text pair is at least 4.5:1 (most
+     are 7:1 or more) and input/option borders are 3:1. The station's own screens
+     stay dark, because they ARE screens: the header console, the crew manifest,
+     the situation report, the map, the camera stills and the chapter-done banner.
+     The code editor goes light too (code-editor.js's light palette, re-tinted
+     below from Y8 purple to slate).
+     ════════════════════════════════════════════════════════════════════ */
+  html[data-theme="light"],
+  html[data-theme="light"] body {
+    color-scheme: light;
+    --canvas:       #eef2f5;   /* page background — tint it per chapter, like the dark --canvas */
+    --chrome:       #e6ebf0;   /* runtime status line */
+    --card:         #ffffff;
+    --card-raised:  #f5f7fa;
+    --card-hover:   #e9eef3;
+    --line:         #d3dbe3;
+    --line-strong:  #7f8c9b;   /* input / option borders — 3:1 on white */
+
+    --cobalt:       #0f766e;   /* button fill — white text 5.5:1 */
+    --cobalt-dark:  #115e59;
+    --cobalt-text:  #0f6b63;   /* accent as text — 6.4:1 on white */
+    --cobalt-tint:  rgba(15,118,110,0.10);
+
+    --ink:          #0f172a;
+    --text:         #0f172a;   /* 17.9:1 on white */
+    --muted:        #475569;   /* 7.6:1 on white, 6.7:1 on the canvas */
+    --amber:        #b45309;
+    --amber-bg:     #fff6e5;
+    --amber-text:   #7c3d06;   /* 7.7:1 on --amber-bg */
+    --green:        #15803d;
+    --green-text:   #14532d;   /* 8.3:1 on --green-bg */
+    --green-bg:     #e9f8ef;
+    --red:          #c81e45;
+    --red-text:     #9f1239;   /* 7.0:1 on --red-bg */
+    --red-bg:       #fdecef;
+    --code-bg:      #f1f5f8;
+    --code-text:    #1e293b;   /* 13.3:1 on --code-bg */
+
+    --accent-light: var(--cobalt-text);
+    --surface-mid:  #dbe3ea;
+    --shadow-sm:    0 1px 2px rgba(15,23,42,0.08);
+    --shadow-md:    0 6px 18px rgba(15,23,42,0.08), 0 1px 3px rgba(15,23,42,0.06);
+    --focus-ring:   0 0 0 3px rgba(15,118,110,0.45);
+  }
+  html[data-theme="light"] body {
+    background-image:
+      radial-gradient(ellipse 80% 45% at 50% 0%, rgba(15,118,110,0.06), transparent 70%),
+      radial-gradient(rgba(15,23,42,0.06) 1px, transparent 1.2px);
+  }
+  html[data-theme="light"] strong { color: var(--ink); }
+  html[data-theme="light"] .primm-nav button.active,
+  html[data-theme="light"] .stage-header-text h2 { color: var(--ink); }
+  html[data-theme="light"] .primm-nav button.done .stage-letter::after { color: #fff; }
+  html[data-theme="light"] .progress-strip { background: #d3dbe3; }
+  html[data-theme="light"] .kw  { color: #8b2fb8; }
+  html[data-theme="light"] .fn  { color: #1d4ed8; }
+  html[data-theme="light"] .st  { color: #2f6b1f; }
+  html[data-theme="light"] .num { color: #8a5300; }
+  html[data-theme="light"] .line-num { color: #5f6b7a; }
+  html[data-theme="light"] .q-card.error,
+  html[data-theme="light"] .q-card.is-wrong { background: #fdf0f2; border-color: rgba(200,30,69,0.45); }
+  html[data-theme="light"] .q-card.is-right { background: #ecfdf3; border-color: rgba(21,128,61,0.45); }
+  html[data-theme="light"] .q-card.revisiting { background: #f1f5f9; }
+  html[data-theme="light"] .q-card input[type=text]::placeholder,
+  html[data-theme="light"] .q-card textarea::placeholder { color: #5b6878; }
+  html[data-theme="light"] .q-card input[type=text],
+  html[data-theme="light"] .q-card textarea,
+  html[data-theme="light"] .skip-gate input { background: #ffffff; }
+  html[data-theme="light"] .mcq-fb.pass, html[data-theme="light"] .feedback.pass { border-color: rgba(21,128,61,0.45); }
+  html[data-theme="light"] .mcq-fb.fail, html[data-theme="light"] .feedback.fail { border-color: rgba(200,30,69,0.45); }
+  /* "next" stays the inverse of the page, so it still reads as the step forward */
+  html[data-theme="light"] .btn-next { background: #0f172a; color: #fff; }
+  html[data-theme="light"] .btn-next:hover:not(:disabled) { background: #1e293b; }
+  html[data-theme="light"] .info-box { color: #134e4a; border-color: rgba(15,118,110,0.35); }
+  html[data-theme="light"] .output-panel.spotlight { animation-name: output-spotlight-fade-light; }
+  html[data-theme="light"] .output-panel.spotlight .output-header::after { color: #15803d; }
+  @keyframes output-spotlight-fade-light { 0%, 60% { box-shadow: inset 0 0 0 3px #15803d; } 100% { box-shadow: none; } }
+  /* "Your call" cards: a warm amber sheet instead of the dark console strip */
+  html[data-theme="light"] .sz-choice { background: #fffaf0; border-color: #e3c9a4; border-left-color: var(--amber); }
+  html[data-theme="light"] .sz-choice-kicker,
+  html[data-theme="light"] .sz-choice-report b { color: #a14a07; }
+  html[data-theme="light"] .sz-choice-report { background: #ffffff; }
+  html[data-theme="light"] .sz-opt:has(input:checked) { background: #fff3dc; }
+
+  /* code editor: code-editor.js's light palette is Y8 purple; re-tint it slate / teal */
+  html[data-theme="light"] .code-checker .output-panel { background: #f8fafc; border-left-color: var(--line); border-top-color: var(--line); }
+  html[data-theme="light"] .code-checker .output-header,
+  html[data-theme="light"] .output-header,
+  html[data-theme="light"] .memory-header { color: #475569; }
+  html[data-theme="light"] .code-checker .line-nums { color: #5f6b7a; background: #e9eef3; border-right-color: var(--line); }
+  html[data-theme="light"] .code-checker .checker-header { background: #e9eef3; color: #334155; border-color: var(--line); }
+  html[data-theme="light"] .code-checker .checker-header span:last-child { color: var(--cobalt-text); }
+  html[data-theme="light"] .checker-textarea { caret-color: #0f172a; scrollbar-color: #b4c0cb var(--code-bg); }
+  html[data-theme="light"] .checker-textarea::-webkit-scrollbar-track { background: var(--code-bg); }
+  html[data-theme="light"] .checker-textarea::-webkit-scrollbar-thumb { background: #b4c0cb; }
+  html[data-theme="light"] .highlight-layer { color: #1e293b; }
+  html[data-theme="light"] .output-input-row,
+  html[data-theme="light"] .memory-inner { border-top-color: var(--line); }
+  html[data-theme="light"] .mem-box { border-color: #b4c0cb; }
+  html[data-theme="light"] .step-skip { color: #1e293b; border-color: #b4c0cb; }
+  html[data-theme="light"] .error-helper .eh-plain strong { color: var(--ink); }
+  html[data-theme="light"] .editor-container.loading::after {
+    background-image: linear-gradient(#d3dbe3 0.7rem, transparent 0.7rem, transparent 1.7rem);
+  }
+
+  /* The header switch (theme-toggle.js puts it in .sz-header-right, where the Station map
+     button used to be). The header stays a dark console in both modes, so the switch is a
+     console key: phosphor on black when off, lit up like Continue when on. These selectors
+     out-rank theme-toggle.js's own button styles. */
+  html[data-theme] .site-header .theme-toggle {
+    min-height: 44px; padding: 0 0.85rem; border-radius: 6px; background: #020704; color: var(--crt);
+    border: 1px solid var(--crt-faint); font: 400 0.78rem/1 var(--hud-font); letter-spacing: 0.1em;
+    text-transform: uppercase; text-shadow: var(--crt-glow); margin-left: 0;
+  }
+  html[data-theme] .site-header .theme-toggle:hover { background: rgba(92,255,143,0.08); border-color: var(--crt); }
+  html[data-theme] .site-header .theme-toggle:focus-visible { outline: 2px solid var(--crt); outline-offset: 3px; box-shadow: none; }
+  html[data-theme] .site-header .theme-toggle svg { filter: drop-shadow(0 0 3px rgba(92,255,143,0.6)); }
+  html[data-theme="light"] .site-header .theme-toggle { background: var(--crt); color: #021006; border-color: var(--crt); text-shadow: none; }
+  html[data-theme="light"] .site-header .theme-toggle:hover { background: #8dffb0; border-color: #8dffb0; }
+  html[data-theme="light"] .site-header .theme-toggle svg { filter: none; }
+
 </style>
 </head>
 <body>
@@ -1013,7 +1131,7 @@ color:  blue
     <p id="szChapterLine">Chapter · Python Programming · Year 9</p>
   </div>
 
-  <div class="sz-header-right">
+  <div class="sz-header-right" data-theme-toggle-slot>
     <div class="sz-objective" id="szObjective"><b>Objective:</b> —</div>
     <!-- Crew readout: filled in by the story script (STORY.crew); hover/click opens the manifest -->
     <div class="crew" id="szCrew" hidden>
@@ -1030,12 +1148,6 @@ color:  blue
         <p class="crew-note" id="szCrewNote"></p>
       </div>
     </div>
-    <button class="btn btn-map" type="button" onclick="window.StationZero?.showMap()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 11h18M9 4v7M15 11v9"/>
-      </svg>
-      Station map
-    </button>
   </div>
 </header>
 
@@ -1789,7 +1901,10 @@ color:  blue
    The PRIMM code talks to this layer through exactly three hooks, all called
    as window.StationZero?.… so the page still works if this block is removed:
      start()      — end of the DOMContentLoaded init
-     beat(stage)  — completeStage() (first completion only) and checkMake() (first pass)
+     beat(stage)  — completeStage() (first completion only) and checkMake() (first pass).
+                  beat('M1') plays as soon as Modification 1 passes (the consequence of the
+                  Modify choice), so completeStage('M1') later finds it seen and goes
+                  straight to Make. Write the M1 beat about Modification 1 only.
      showMap()    — the header's Station map button
    plus one for a Station Zero choice (not wired into this template's Modify yet; see the
    two Y9 L1 lessons for the "Your call" card):
@@ -1904,10 +2019,11 @@ color:  blue
         ],
         map: { you: 'cryo', objective: 'cryo', threat: null, rooms: { cryo: 'unstable', core: 'sealed' } },
       },
+      // Plays as soon as Modification 1 passes: the consequence of the Modify choice.
       M1: {
         headline: 'Footsteps',
         time: '03:22',
-        log: "Your check-in program is nearly rebuilt. Out in the corridor, slow footsteps stop right outside the Cryo Bay door. The crew list says you’re the only one awake.",
+        log: "Your door message is in. Out in the corridor, slow footsteps stop right outside the Cryo Bay door. The crew list says you’re the only one awake.",
         readouts: [
           { label: 'Crew awake', value: '1', level: 'warn' },
           { label: 'Motion', value: 'Outside the door', level: 'danger' },
@@ -1957,7 +2073,7 @@ color:  blue
   const LEVEL_SR    = { ok: 'normal', warn: 'warning', danger: 'critical' };
   const CTA = {
     intro: 'Begin: Predict →', P: 'Continue to Run →', R: 'Continue to Investigate →',
-    I1: 'Back to Investigate →', I: 'Continue to Modify →', M1: 'Continue to Make →', M2: 'Continue →',
+    I1: 'Back to Investigate →', I: 'Continue to Modify →', M1: 'Onwards to Modification 2 →', M2: 'Continue →',
   };
   const ORDER = ['intro', 'P', 'R', 'I1', 'I', 'M1', 'M2'];
 
@@ -2537,28 +2653,38 @@ color:  blue
   ║    mod3: { reqs: […], passMsg },                                           ║
   ║    mod4: { reqs: […], passMsg },                                           ║
   ║  }                                                                           ║
-  ║  evalMod(checkKey, raw) → { results: bool[], pass: bool, msg: string }     ║
+  ║  evalMod(checkKey, raw, output, inputs)                                     ║
+  ║    → { results: bool[], pass: bool, msg: string }                           ║
   ║    — runs every req; msg is passMsg if all pass, else the first failing    ║
-  ║    req's hint. Write this helper once in checkers.js:                      ║
-  ║      export function evalMod(checkKey, raw) {                              ║
+  ║    req's hint. output = what the check's run printed; inputs = the answer  ║
+  ║    set it typed, so a req can look for THOSE answers in the output, and a  ║
+  ║    hint can name them. Write this helper once in checkers.js:              ║
+  ║      export function evalMod(checkKey, raw, output = '', inputs = []) {    ║
   ║        const check = MOD_CHECKS[checkKey];                                 ║
-  ║        const results = check.reqs.map(r => !!r.test(raw));                ║
+  ║        const results = check.reqs.map(r => !!r.test(raw, output, inputs));║
   ║        const pass = results.every(Boolean);                                ║
   ║        const hint = pass ? check.passMsg                                   ║
   ║          : check.reqs[results.findIndex(r => !r)].hint;                    ║
-  ║        return { results, pass, msg: hint };                                ║
+  ║        return { results, pass,                                             ║
+  ║          msg: typeof hint === 'function' ? hint(inputs) : hint };          ║
   ║      }                                                                       ║
   ║                                                                              ║
-  ║  MOD_INPUTS = {                                                              ║
-  ║    mod1: ['Alice', '13'],   // mock inputs fed to runPython() for step 1   ║
-  ║    mod2: ['Alice', '13'],   // omit a key entirely if no input() needed    ║
-  ║    ...                                                                       ║
+  ║  MOD_INPUTS = {          // the answers each check types into input()      ║
+  ║    mod1: [               // a BANK: 5–10 sets, one picked per ⚡ Check      ║
+  ║      ['Riley', 'Engineer', '4'],    // keep each set one person's answers  ║
+  ║      ['Chen', 'Medic', '3'],        // so they fit the story together      ║
+  ║      …                                                                       ║
+  ║    ],                                                                        ║
+  ║    mod2: ['60', '59'],   // or ONE fixed set (e.g. boundary values)        ║
+  ║    ...                   // omit a key entirely if no input() needed       ║
   ║  }                                                                           ║
+  ║  A bank never types the same set twice in a row, so students see the      ║
+  ║  "typed for you" answers change. ?answers=fixed always types the first.    ║
   ║                                                                              ║
   ║  MAKE_CHECK = { reqs: […], passMsg }   // one req per Make req-list <li>   ║
-  ║  evalMake(raw) → { results, pass, msg }        // same shape as evalMod()  ║
+  ║  evalMake(raw, output, inputs) → { results, pass, msg }  // like evalMod() ║
   ║  EXT_CHECK  = { reqs: […], passMsg }   // one req per Extension <li>       ║
-  ║  evalExt(raw)  → { results, pass, msg }                                    ║
+  ║  evalExt(raw, output, inputs)  → { results, pass, msg }                    ║
   ║                                                                              ║
   ║  INVESTIGATE (tick-lists on each prompt card, gating each step's Check):   ║
   ║  INV_CHECKS = {                                                              ║
@@ -2791,6 +2917,23 @@ let firstRunShown = false;
 // One consistent auto-advance delay across Predict / Investigate / Modify so the
 // student sees the feedback before the next question appears.
 const AUTO_ADVANCE_MS = 1500;
+
+// "Typed for you" answers: an entry in MOD_INPUTS (or the Make/Extension banks below) is
+// either one list of answers or a bank of answer sets. Each ⚡ Check types one set from a bank,
+// picked at random but never the same set twice in a row, so students see the answers change.
+// ?answers=fixed always types the first set (for demos and tests).
+const FIXED_ANSWERS = new URLSearchParams(location.search).get('answers') === 'fixed';
+const lastPick = {};
+function pickFrom(entry, key) {
+  if (!Array.isArray(entry?.[0])) return entry || [];   // one fixed set
+  if (FIXED_ANSWERS || entry.length < 2) return entry[0];
+  let i;
+  do i = Math.floor(Math.random() * entry.length); while (i === lastPick[key]);
+  lastPick[key] = i;
+  return entry[i];
+}
+// "Riley, Engineer and 4"
+const sayList = a => a.length > 1 ? a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1] : a.join('');
 const PREDICT_CARDS = ['qcard_p_mcq1', 'qcard_p_mcq2', 'qcard_p_text1'];
 const PREDICT_NAMES = ['p_mcq1', 'p_mcq2', 'p_text1'];
 const PREDICT_TOTAL = PREDICT_CARDS.length;
@@ -3881,19 +4024,20 @@ async function checkMod() {
   if (raw.trim().length < 10) {
     fbEl.className = 'feedback fail'; fbEl.textContent = '⚠️ Write some code first.'; return;
   }
-  const structural = evalMod(checkKey, raw);
-  renderReqResults(reqListEl, structural.results);
-  // Run BEFORE checking the structural (regex) requirements — a genuine Python
-  // error (NameError, SyntaxError, ...) is a bigger problem than an unmet
-  // bullet point, and the structural checks never execute the code so they
-  // can't see it. Running first means a crash always outranks a formative hint.
-  fbEl.className = 'feedback loading'; fbEl.textContent = '⏳ Checking…';
-  const inputs = MOD_INPUTS?.[checkKey] || [];
+  // Run BEFORE judging the requirements — a genuine Python error (NameError,
+  // SyntaxError, ...) is a bigger problem than an unmet bullet point, so a crash
+  // always outranks a formative hint. The reqs then see what the run printed.
+  const inputs = pickFrom(MOD_INPUTS?.[checkKey], 'mod');
+  fbEl.className = 'feedback loading';
+  fbEl.textContent = inputs.length ? '⏳ Checking — typing ' + sayList(inputs) + '…' : '⏳ Checking…';
   const run = await runPython(raw, { traceLines: true, inputs });
   if (!(await replayRun(document.getElementById('m1_editor'), run))) return;   // step through the run before judging it (stepThrough)
   if (!run.ok) {
+    renderReqResults(reqListEl, null);
     fbEl.className = 'feedback fail'; fbEl.textContent = '❌ Error: ' + run.output; recordM1Attempt(); return;
   }
+  const structural = evalMod(checkKey, raw, run.output, inputs);
+  renderReqResults(reqListEl, structural.results);
   if (!structural.pass) {
     fbEl.className = 'feedback fail'; fbEl.textContent = structural.msg; recordM1Attempt(); return;
   }
@@ -3902,6 +4046,9 @@ async function checkMod() {
   fbEl.textContent = structural.msg;
   clearSyntaxHint(document.getElementById('m1_editor'));
   passedChecks[checkId] = true;
+  // STATION ZERO hook: the consequence of the Modify choice plays as soon as Modification 1
+  // passes (lock the choice in with StationZero.choose() first, as the Y9 L1 lessons do).
+  if (stepM1 === 1) window.StationZero?.beat('M1');
   delete skippedSteps['m1_' + stepM1];
   // Lock in the code as it stood for this modification, so Back/Forward can restore it later.
   m1CodeSnapshots[stepM1] = raw;
@@ -3954,20 +4101,25 @@ async function checkMake() {
   const raw  = document.getElementById('m2_editor')?.value || '';
   const fbEl = document.getElementById('fb_m2');
   fbEl.classList.remove('hidden');
-  const structural = evalMake(raw);
-  renderReqResults(document.getElementById('req_m2_make'), structural.results);
-  // Run BEFORE checking the structural (regex) requirements — see the comment
-  // in checkMod() above for why a real error must outrank a formative hint.
-  fbEl.className = 'feedback loading'; fbEl.textContent = '⏳ Checking…';
-  // FILL IN ⑦: Representative mock inputs for your Make program.
-  // Supply enough inputs to exercise all main branches without hanging.
-  // e.g. { inputs: ['1', '4'] } for a menu where 1 picks an option and 4 quits.
-  const run = await runPython(raw, { traceLines: true, inputs: [/* FILL IN */] });
+  // Run BEFORE judging the requirements — see the comment in checkMod() above for why
+  // a real error must outrank a formative hint.
+  // FILL IN ⑦: A bank of 5–10 sets of mock inputs for your Make program (one set is typed
+  // per check). Each set must exercise all main branches without hanging, e.g.
+  // ['1', '4'] for a menu where 1 picks an option and 4 quits.
+  const inputs = pickFrom([
+    [/* FILL IN */],
+  ], 'make');
+  fbEl.className = 'feedback loading';
+  fbEl.textContent = inputs.length ? '⏳ Checking — typing ' + sayList(inputs) + '…' : '⏳ Checking…';
+  const run = await runPython(raw, { traceLines: true, inputs });
   if (!(await replayRun(document.getElementById('m2_editor'), run))) return;   // step through the run before judging it (stepThrough)
   if (!run.ok) {
+    renderReqResults(document.getElementById('req_m2_make'), null);
     fbEl.className = 'feedback fail';
     fbEl.textContent = '❌ Your program has an error: ' + run.output; return;
   }
+  const structural = evalMake(raw, run.output, inputs);
+  renderReqResults(document.getElementById('req_m2_make'), structural.results);
   recordMakeProgress(structural.results);
   if (!structural.pass) {
     fbEl.className = 'feedback fail'; fbEl.textContent = structural.msg; return;
@@ -3994,18 +4146,23 @@ async function checkExt() {
   const raw  = document.getElementById('m2_editor')?.value || '';
   const fbEl = document.getElementById('fb_m2');
   fbEl.classList.remove('hidden');
-  const structural = evalExt(raw);
-  renderReqResults(document.getElementById('req_m2_ext'), structural.results);
-  // Run BEFORE checking the structural (regex) requirements — see the comment
-  // in checkMod() above for why a real error must outrank a formative hint.
-  fbEl.className = 'feedback loading'; fbEl.textContent = '⏳ Checking…';
-  // FILL IN ⑧: Mock inputs for the extension (typically just the quit/exit path).
-  const run = await runPython(raw, { traceLines: true, inputs: [/* FILL IN */] });
+  // Run BEFORE judging the requirements — see the comment in checkMod() above for why
+  // a real error must outrank a formative hint.
+  // FILL IN ⑧: A bank of mock input sets for the extension (often the Make bank again).
+  const inputs = pickFrom([
+    [/* FILL IN */],
+  ], 'make');
+  fbEl.className = 'feedback loading';
+  fbEl.textContent = inputs.length ? '⏳ Checking — typing ' + sayList(inputs) + '…' : '⏳ Checking…';
+  const run = await runPython(raw, { traceLines: true, inputs });
   if (!(await replayRun(document.getElementById('m2_editor'), run))) return;   // step through the run before judging it (stepThrough)
   if (!run.ok) {
+    renderReqResults(document.getElementById('req_m2_ext'), null);
     fbEl.className = 'feedback fail';
     fbEl.textContent = '❌ Your program has an error: ' + run.output; return;
   }
+  const structural = evalExt(raw, run.output, inputs);
+  renderReqResults(document.getElementById('req_m2_ext'), structural.results);
   if (!structural.pass) {
     fbEl.className = 'feedback fail'; fbEl.textContent = structural.msg; return;
   }

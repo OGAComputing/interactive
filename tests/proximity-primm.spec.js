@@ -246,7 +246,8 @@ test('Modify 1: the lockdown must be inside the else; the choice is stored for t
   await setCode(page, 'm1_editor', [...STARTER, 'print("LOCKDOWN: CRYO BAY")'].join('\n'));
   await page.click('#btn_check_m1');
   await expect(page.locator('#fb_m1')).toHaveClass(/fail/, { timeout: 30000 });
-  await expect(page.locator('#fb_m1')).toContainText('With 30 typed');
+  // the middle distance changes from check to check (MOD_TEST_BANK.mod1): always 20 to 49
+  await expect(page.locator('#fb_m1')).toContainText(/With [2-4]\d typed/);
   await expect(page.locator('#req_m1_1 li')).toHaveClass([/req-pass/, /req-fail/]);
 
   await setCode(page, 'm1_editor', lockdownProgram('CRYO BAY').join('\n'));
@@ -273,18 +274,10 @@ test('Modify 3: a band above Movement detected fails with an order hint, and the
   await expect(page.locator('#fb_m1')).toHaveClass(/pass/, { timeout: 30000 });
 });
 
-test('Modify 4 passes, and the report shows what the Sensor Ops lockdown cost: Chen', async ({ page }) => {
-  await page.addInitScript(p => {
-    localStorage.setItem('sz_story_' + p, JSON.stringify(['intro', 'P', 'R', 'I']));
-    localStorage.setItem('sz_choices', JSON.stringify({ lockdown: 'sensors' }));
-  }, PATH);
-  await openAt(page, {
-    currentStage: 'M1', completedStages: ['P', 'R', 'I'], stepM1: 4, maxStepM1: 4, radio_m1_choice: 'sensors',
-    passedChecks: { m1_code1: true, m1_code2: true, m1_code3: true },
-  }, { story: true });
-  await setCode(page, 'm1_editor', [...lockdownProgram('SENSOR OPS'),
-    'alert = input("Send alert to the crew? (y/n) ")',
-    'if alert == "y":', '    print("Alert sent")', 'else:', '    print("Alert cancelled")'].join('\n'));
+test('Modify 1 passes, and the report straight away shows what the Sensor Ops lockdown cost: Chen', async ({ page }) => {
+  await page.addInitScript(p => localStorage.setItem('sz_story_' + p, JSON.stringify(['intro', 'P', 'R', 'I1', 'I'])), PATH);
+  await openAt(page, { currentStage: 'M1', completedStages: ['P', 'R', 'I'], radio_m1_choice: 'sensors' }, { story: true });
+  await setCode(page, 'm1_editor', lockdownProgram('SENSOR OPS').join('\n'));
   await page.click('#btn_check_m1');
   await expect(page.locator('#fb_m1')).toHaveClass(/pass/, { timeout: 30000 });
   await expect(page.locator('#szOverlay')).toHaveClass(/open/, { timeout: 10000 });
@@ -293,7 +286,9 @@ test('Modify 4 passes, and the report shows what the Sensor Ops lockdown cost: C
   await expect(page.locator('#szImpact svg')).toContainText('CRYO BAY: MOTION');
   await expect(page.locator('#szReadouts')).toContainText('Chen');
   await expect(page.locator('#szCamLabel')).toHaveText(/Sensor Ops door/);
+  await expect(page.locator('#szContinue')).toHaveText('Onwards to Modification 2 →');
   await page.click('#szContinue');
+  await expect(page.locator('#m1_step_2')).toBeVisible({ timeout: 10000 });
   await expect(page.locator('#szCrewPods .crew-pod').nth(2)).toHaveClass(/critical/);
   // Make's card repeats the deciding fact
   await expect(page.locator('#m2_choice_report')).toContainText('Chen is critical');

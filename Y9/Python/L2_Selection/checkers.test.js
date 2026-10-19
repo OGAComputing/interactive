@@ -1,7 +1,7 @@
 import { describe, test, expect } from 'vitest';
 import { evalInv, evalMod, evalMake, evalExt, breakCode, hasBugLine, hasFixedLine, isBugFixed, isBugPairLine,
          ownOutput, typedNumber, IBUG_LINE, IBUG_FIXED_LINE, MOD_TESTS, MAKE_TESTS, EXT_TESTS,
-         LOCKDOWN_CHOICES, POWER_CHOICES } from './checkers.js';
+         MOD_TEST_BANK, MAKE_TEST_BANK, EXT_TEST_BANK, LOCKDOWN_CHOICES, POWER_CHOICES } from './checkers.js';
 
 const code = (...lines) => lines.join('\n');
 const ran = (src, ok = true) => ({ code: src, ok });
@@ -313,5 +313,71 @@ describe('evalExt — faults and evacuation', () => {
     expect(r.results).toEqual([true, false]);
     expect(r.show).toBe(2);
     expect(r.msg).toMatch(/first True condition/);
+  });
+});
+
+// ─── Test banks ("typed for you" changes each check) ─────────────────────────
+
+describe('test banks — every set works, and the boundaries are in every set', () => {
+  const firsts = sets => sets.map(t => t[0]);
+  test('the first set of each bank is the default', () => {
+    for (const k of Object.keys(MOD_TEST_BANK)) expect(MOD_TESTS[k]).toEqual(MOD_TEST_BANK[k][0]);
+    expect(MAKE_TESTS).toEqual(MAKE_TEST_BANK[0]);
+    expect(EXT_TESTS).toEqual(EXT_TEST_BANK[0]);
+  });
+  test('mod1: every set has a close, a middle and a far distance; hints name the typed numbers', () => {
+    for (const tests of MOD_TEST_BANK.mod1) {
+      const [close, mid, far] = firsts(tests).map(Number);
+      expect(close < 20 && mid >= 20 && mid < 50 && far >= 50).toBe(true);
+      for (const c of Object.keys(LOCKDOWN_CHOICES))
+        expect(evalMod('mod1', '', outputsFor(tests, sensor({ lock: LOCKDOWN_CHOICES[c] })), c, tests).pass).toBe(true);
+      expect(evalMod('mod1', '', outputsFor(tests, sensor()), 'cryo', tests).msg).toContain(`With ${close} typed`);
+      const r = evalMod('mod1', '', outputsFor(tests, sensor({ lock: 'LOCKDOWN: CRYO BAY', lockEverywhere: true })), 'cryo', tests);
+      expect(r.msg).toContain(`With ${mid} typed`);
+    }
+  });
+  test('mod3: 10, 20 and 9 every time, and the changing distances sit inside their bands', () => {
+    for (const tests of MOD_TEST_BANK.mod3) {
+      const [inBand, ten, mid, twenty, nine] = firsts(tests).map(Number);
+      expect([ten, twenty, nine]).toEqual([10, 20, 9]);
+      expect(inBand > 10 && inBand < 20 && mid > 20 && mid < 60).toBe(true);
+      expect(evalMod('mod3', '', outputsFor(tests, sensor({ top: 60, alertBand: true })), undefined, tests).pass).toBe(true);
+      const r = evalMod('mod3', '', outputsFor(tests, sensor({ top: 60, alertBand: true, alertFirst: true })), undefined, tests);
+      expect(r.pass).toBe(false);
+      expect(r.msg).toContain(`With ${mid} typed`);
+    }
+  });
+  test('mod4: a distance under 10, with y then n', () => {
+    const src = code(...STARTER, 'alert = input("Send alert to the crew? (y/n) ")', 'if alert == "y":', '    print("Alert sent")', 'else:', '    print("Alert cancelled")');
+    for (const tests of MOD_TEST_BANK.mod4) {
+      expect(Number(tests[0][0])).toBeLessThan(10);
+      expect(tests.map(t => t[1])).toEqual(['y', 'n']);
+      expect(evalMod('mod4', src, outputsFor(tests, sensor({ top: 60, alertBand: true, alert: true })), undefined, tests).pass).toBe(true);
+    }
+  });
+  test('Make: every boundary in every set; a correct scanner passes and an off-by-one fails', () => {
+    for (const tests of MAKE_TEST_BANK) {
+      const doses = firsts(tests).map(Number);
+      expect(doses.slice(1, 7)).toEqual([200, 199, 100, 99, 50, 49]);
+      expect(doses[0] > 200 && doses[7] >= 0 && doses[7] < 49).toBe(true);
+      expect(evalMake(SCANNER_SRC, outputsFor(tests, scanner(), DOSE_PROMPT), 'sensors', tests).pass).toBe(true);
+      expect(evalMake(SCANNER_SRC, outputsFor(tests, scanner({ dangerAt: 201 }), DOSE_PROMPT), 'sensors', tests).pass).toBe(false);
+    }
+  });
+  test('Extension: 0, 500 and 499 every time; the hints name the typed doses', () => {
+    const ext = (faultAtZero = false) => dose => {
+      const d = Number(dose);
+      if (faultAtZero ? d <= 0 : d < 0) return ['SCANNER FAULT'];
+      if (d >= 500) return ['EVACUATE NOW'];
+      return d >= 200 ? ['DANGER'] : d >= 100 ? ['WARNING'] : d >= 50 ? ['CAUTION'] : ['SAFE'];
+    };
+    for (const tests of EXT_TEST_BANK) {
+      const [neg, zero, fiveHundred, big, justUnder] = firsts(tests).map(Number);
+      expect([zero, fiveHundred, justUnder]).toEqual([0, 500, 499]);
+      expect(neg < 0 && big > 500).toBe(true);
+      expect(evalExt('', outputsFor(tests, ext(), DOSE_PROMPT), tests).pass).toBe(true);
+      const noFault = d => (Number(d) < 0 ? ['SAFE'] : ext()(d));
+      expect(evalExt('', outputsFor(tests, noFault, DOSE_PROMPT), tests).msg).toContain(`with ${neg} typed`);
+    }
   });
 });
