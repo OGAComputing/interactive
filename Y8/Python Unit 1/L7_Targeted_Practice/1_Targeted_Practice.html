@@ -200,6 +200,7 @@ color:  teal
   .err-cap { font-size: 0.75rem; color: var(--muted); font-weight: 700; margin-top: 8px; }
   .terminal { background: #0d1726; color: #d6e4f0; font-family: var(--font-mono); font-size: 0.9rem; border-radius: 8px; padding: 10px 14px; white-space: pre-wrap; line-height: 1.6; margin: 8px 0; }
   .terminal .typed { color: var(--gold); font-weight: 700; }
+  .typed-key { background: #0d1726; color: var(--gold); font-weight: 700; padding: 0 5px; border-radius: 4px; }
   .terminal .cap { display: block; color: #6b8cae; font-family: var(--font-body); font-size: 0.75rem; margin-bottom: 4px; }
   .samples { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px; margin: 8px 0; }
 
@@ -609,9 +610,16 @@ const orderState = tid => (S.order[tid] ||= { placed: [], tries: 0, done: false,
 const orderDone = tid => !!S.order?.[tid]?.done || !!S.reflect[tid];
 function renderOrderStep(tid) {
   const o = targetById(tid).order;
-  const runs = o.tests.map(t => terminal(t.out.join('\n'), null, t.typed.length ? `The user types ${t.typed.join(', then ')}` : 'It should print')).join('');
+  // Each test as a sample run: every input() question with the answer typed (yellow), then the
+  // printed lines, so it is clear what the user types and where.
+  const prompts = inputPrompts(o.lines.join('\n'));
+  const typedAny = o.tests.some(t => t.typed.length);
+  const runs = o.tests.map((t, i) => sampleRun([
+    ...t.typed.map((a, k) => [prompts[k] ?? '', a]),
+    ...t.out.map(l => [l]),
+  ], o.tests.length > 1 ? `Run ${i + 1}: the user types ${t.typed.join(', then ')}` : t.typed.length ? `The user types ${t.typed.join(', then ')}` : 'It should print')).join('');
   return `${o.goal ? `<div class="goal-line">🎯 ${o.goal}</div>` : ''}
-    <p class="goal-line">Use the 📌 rules above. Drag (or click) the blocks into <strong>Your program</strong> so it prints this.
+    <p class="goal-line">Use the 📌 rules above. Drag (or click) the blocks into <strong>Your program</strong> so it runs like this${typedAny ? ' (<span class="typed-key">yellow</span> = typed by the user)' : ''}.
       <strong>${o.traps.length} blocks are traps</strong>: leave them out.</p>
     <div class="samples">${runs}</div>
     <div class="pz" id="pz_${tid}"></div>
