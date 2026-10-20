@@ -639,6 +639,8 @@ function renderPz(tid) {
   if (done && !s.placed.length) s.placed = targetById(tid).order.lines.map((_, i) => 'm' + i);   // done before: show a working order
   const blocks = orderBlocks(tid, S.seed);
   const byId = Object.fromEntries(blocks.map(b => [b.id, b]));
+  // Heal saves holding an id that isn't one of this puzzle's blocks (e.g. dragged-in text).
+  if (s.placed.some(id => !byId[id])) { s.placed = s.placed.filter(id => byId[id]); save(); }
   const bank = blocks.filter(b => !s.placed.includes(b.id));
   box.innerHTML = `
     <div><div class="pz-cap">Blocks</div><div class="pz-zone" data-pz-zone="bank" data-tid="${tid}">${
@@ -654,7 +656,7 @@ function renderPz(tid) {
 // Move a block: into the program at `at` (the end if missing), or back to the blocks (at = -1).
 function movePz(tid, id, at) {
   const s = orderState(tid);
-  if (orderDone(tid) || !id) return;
+  if (orderDone(tid) || !orderBlocks(tid, S.seed).some(b => b.id === id)) return;
   const was = s.placed.indexOf(id);
   if (was >= 0) s.placed.splice(was, 1);
   if (at !== -1) s.placed.splice(at == null ? s.placed.length : Math.min(at - (was >= 0 && was < at ? 1 : 0), s.placed.length), 0, id);
@@ -727,7 +729,7 @@ document.addEventListener('click', e => {
 document.addEventListener('dragstart', e => {
   const b = e.target.closest?.('.pz-block');
   if (!b) return;
-  e.dataTransfer.setData('text/plain', b.dataset.id);
+  e.dataTransfer.setData('text/plain', b.dataset.pz + '|' + b.dataset.id);
   e.dataTransfer.effectAllowed = 'move';
   b.classList.add('dragging');
 });
@@ -747,7 +749,9 @@ document.addEventListener('drop', e => {
   if (!z) return;
   e.preventDefault();
   z.classList.remove('over');
-  const id = e.dataTransfer.getData('text/plain');
+  // Only a block from this same puzzle counts (not dragged text, or a block from another target).
+  const [from, id] = e.dataTransfer.getData('text/plain').split('|');
+  if (from !== z.dataset.tid) return;
   if (z.dataset.pzZone === 'bank') { movePz(z.dataset.tid, id, -1); return; }
   // Dropped in the program: before the first line whose middle is below the pointer.
   const lines = [...z.querySelectorAll('.pz-line')];
