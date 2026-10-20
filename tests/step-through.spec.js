@@ -24,6 +24,10 @@ async function setCode(page, id, src) {
 
 const checker = (page, id) => page.locator('#' + id).locator('xpath=ancestor::div[contains(@class,"code-checker")]');
 const litLine = (page, id) => checker(page, id).locator('.line-nums .exec-num');
+// Each line stays lit for only 0.5 s, and expect() backs off to polling once a second,
+// so after a long wait it can miss a line. Poll fast instead.
+const waitForLit = (page, id, n, timeout = 30000) =>
+  expect.poll(() => litLine(page, id).allTextContents(), { timeout, intervals: [50] }).toEqual([n]);
 
 test('Run lights each line in turn, waits on the input line, and prints output as it goes', async ({ page }) => {
   await openAt(page, { currentStage: 'R', completedStages: ['P'] });
@@ -32,20 +36,20 @@ test('Run lights each line in turn, waits on the input line, and prints output a
 
   // Line 1 is the first input(): it stays lit while the student answers.
   await expect(r.locator('.output-input-field')).toBeVisible({ timeout: 30000 });
-  await expect(litLine(page, 'r_editor')).toHaveText('1');
+  await waitForLit(page, 'r_editor', '1', 5000);
   await expect(r.locator('.exec-line')).toBeVisible();
   await r.locator('.output-input-field').fill('Sam');
   await r.locator('.output-input-field').press('Enter');
 
-  await expect(litLine(page, 'r_editor')).toHaveText('2', { timeout: 5000 });
+  await waitForLit(page, 'r_editor', '2', 5000);
   await r.locator('.output-input-field').fill('6');
   await r.locator('.output-input-field').press('Enter');
 
   // Line 4 prints the name before line 6 prints the oxygen.
-  await expect(litLine(page, 'r_editor')).toHaveText('4', { timeout: 5000 });
+  await waitForLit(page, 'r_editor', '4', 5000);
   await expect(r.locator('.output-content')).toContainText('Engineer Sam is awake.', { timeout: 2000 });
   await expect(r.locator('.output-content')).not.toContainText('300');
-  await expect(litLine(page, 'r_editor')).toHaveText('6', { timeout: 5000 });
+  await waitForLit(page, 'r_editor', '6', 5000);
   await expect(r.locator('.output-content')).toContainText('300', { timeout: 2000 });
 
   // Finished: the bar and status row go, and the run reports success.
@@ -59,7 +63,7 @@ test('Skip jumps a long loop straight to the end', async ({ page }) => {
   await setCode(page, 'i_editor', 'for i in range(20):\n    print(i)\nprint("done")');
   const i = checker(page, 'i_editor');
   await page.click('#stage-I button:has-text("Run code")');
-  await expect(litLine(page, 'i_editor')).toHaveText('2', { timeout: 30000 });
+  await waitForLit(page, 'i_editor', '2', 30000);
   await expect(i.locator('.output-content')).not.toContainText('done');
   await i.locator('.step-skip').click();
   await expect(i.locator('.output-content')).toContainText('19\ndone', { timeout: 2000 });
@@ -76,7 +80,7 @@ test('A crash keeps the output printed before it and marks the failing line in r
   await expect(i.locator('.output-content')).toContainText('NameError');
   await expect(i.locator('.output-content')).not.toContainText('after');
   await expect(i.locator('.exec-line')).toHaveClass(/exec-error/);
-  await expect(litLine(page, 'i_editor')).toHaveText('2');
+  await waitForLit(page, 'i_editor', '2', 5000);
 
   // Editing the code clears the red marker.
   await setCode(page, 'i_editor', 'print("before")\nprint("fixed")');
@@ -88,7 +92,7 @@ test('Typing in the editor mid-replay jumps to the end', async ({ page }) => {
   await setCode(page, 'i_editor', 'for i in range(20):\n    print(i)');
   const i = checker(page, 'i_editor');
   await page.click('#stage-I button:has-text("Run code")');
-  await expect(litLine(page, 'i_editor')).toHaveText('2', { timeout: 30000 });
+  await waitForLit(page, 'i_editor', '2', 30000);
   await page.locator('#i_editor').evaluate(ta => ta.dispatchEvent(new Event('input')));
   await expect(i.locator('.output-content')).toContainText('19', { timeout: 2000 });
   await expect(i.locator('.step-status')).toBeHidden();
@@ -101,7 +105,7 @@ test('A long program speeds up so the replay takes no more than about 5 seconds'
   const i = checker(page, 'i_editor');
   const t0 = Date.now();
   await page.click('#stage-I button:has-text("Run code")');
-  await expect(litLine(page, 'i_editor')).toHaveText('2', { timeout: 30000 });
+  await waitForLit(page, 'i_editor', '2', 30000);
   await expect(i.locator('.output-content')).toContainText('29\ndone', { timeout: 10000 });
   await expect(i.locator('.exec-line')).toBeHidden();
   const ms = Date.now() - t0;
@@ -119,12 +123,12 @@ const LS_STARTER = [
 ].join('\n');
 
 test('A Modify check steps through the run with its test answers before giving feedback', async ({ page }) => {
-  await openAt(page, { currentStage: 'M1', completedStages: ['P', 'R', 'I'] });
+  await openAt(page, { currentStage: 'M1', completedStages: ['P', 'R', 'I'] }, '?story=off&answers=fixed');   // types Riley, 6
   await page.check('input[name="m1_choice"][value="full"]');   // Modification 1 is a choice: 60 litres an hour
   await setCode(page, 'm1_editor', LS_STARTER);
   const m = checker(page, 'm1_editor');
   await page.click('#btn_check_m1');
-  await expect(litLine(page, 'm1_editor')).toHaveText('4', { timeout: 30000 });
+  await waitForLit(page, 'm1_editor', '4');
   await expect(page.locator('#fb_m1')).toHaveClass(/loading/);   // no verdict mid-replay
   await expect(page.locator('#fb_m1')).toHaveClass(/pass/, { timeout: 10000 });
   await expect(m.locator('.output-content')).toContainText('360');
@@ -132,7 +136,7 @@ test('A Modify check steps through the run with its test answers before giving f
 });
 
 test('A Modify check types each test answer into the output, then keeps it highlighted', async ({ page }) => {
-  await openAt(page, { currentStage: 'M1', completedStages: ['P', 'R', 'I'] });
+  await openAt(page, { currentStage: 'M1', completedStages: ['P', 'R', 'I'] }, '?story=off&answers=fixed');   // types Riley, 6
   await page.check('input[name="m1_choice"][value="full"]');   // Modification 1 is a choice: 60 litres an hour
   await setCode(page, 'm1_editor', LS_STARTER);
   const m = checker(page, 'm1_editor');
@@ -141,7 +145,7 @@ test('A Modify check types each test answer into the output, then keeps it highl
   // Mid-typing: the answer box is part-filled, tagged "typed for you", and the status names it.
   await expect(m.locator('.fed-input.fed-typing.fed-active')).toBeVisible({ timeout: 30000 });
   await expect(m.locator('.step-status')).toContainText('typing the answer "Riley"');
-  await expect(litLine(page, 'm1_editor')).toHaveText('1');
+  await waitForLit(page, 'm1_editor', '1', 5000);
 
   // Finished: both answers stay highlighted after their prompts, with no tag or caret left.
   await expect(page.locator('#fb_m1')).toHaveClass(/pass/, { timeout: 15000 });
@@ -160,7 +164,7 @@ test('A Make check that crashes shows the error after stepping to the failing li
   await expect(m.locator('.output-content')).toContainText('Station log');
   await expect(m.locator('.output-content')).toContainText('NameError');
   await expect(m.locator('.exec-line')).toHaveClass(/exec-error/);
-  await expect(litLine(page, 'm2_editor')).toHaveText('2');
+  await waitForLit(page, 'm2_editor', '2', 5000);
 });
 
 test('?step=off runs the whole program at once with no line highlight', async ({ page }) => {

@@ -158,6 +158,7 @@ async function answerCp(page, tid, q, right) {
 
 test('checkpoint: 3 in a row first time unlocks the code task', async ({ page }) => {
   await openWith(page, { assess: ASSESSMENT, state: { seed: SEED, reflect: { print: 'Next time I will check the brackets' } } });
+  await waitForPython(page);   // Pyodide boots on the main thread and can stall the 0.4 s auto-advance
   await tab(page, 'print');
   const draw = drawCheckpoint('print', SEED, 0);
   for (let i = 0; i < draw.length; i++) {

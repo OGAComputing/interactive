@@ -55,8 +55,8 @@ test('chapter title card shows once on first visit and closes with Continue', as
   await page.reload();
   await expect(page.locator('#pyStatusText')).toHaveText(/ready/, { timeout: 60000 });
   await expect(page.locator('#szOverlay')).not.toHaveClass(/open/);
-  // the map button re-opens the latest report in review mode
-  await page.click('.btn-map');
+  // showMap() (no header button now) re-opens the latest report in review mode
+  await page.evaluate(() => window.StationZero.showMap());
   await expect(page.locator('#szOverlay')).toHaveClass(/open/);
   await expect(page.locator('#szContinue')).toHaveText('Back to the task');
   await page.keyboard.press('Escape');
@@ -113,7 +113,7 @@ test("the live feed plays the student's own run output into the recycler", async
   await expect(page.locator('#szImpact svg')).toContainText('O2 NEEDED: 350 L');
   await expect(page.locator('#szImpact .sz-impact-cap')).toContainText('350 litres');
   await page.click('#szContinue');
-  await page.click('.btn-map');
+  await page.evaluate(() => window.StationZero.showMap());
   await expect(page.locator('#szImpact')).toBeHidden();
 });
 

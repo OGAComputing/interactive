@@ -100,8 +100,8 @@ test("the live feed plays the student's own run output into the door", async ({ 
   await expect(page.locator('#szImpact .sz-feed-term .ln.hit')).toHaveText('Checking in: Pilot Sam');
   await expect(page.locator('#szImpact svg')).toContainText('Checking in: Pilot Sam');
   await page.click('#szContinue');
-  // the map button re-opens the report without replaying the feed
-  await page.click('.btn-map');
+  // showMap() (no header button now) re-opens the report without replaying the feed
+  await page.evaluate(() => window.StationZero.showMap());
   await expect(page.locator('#szImpact')).toBeHidden();
 });
 
