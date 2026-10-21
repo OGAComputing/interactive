@@ -756,17 +756,9 @@ color:  teal
   .sz-live-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; box-shadow: 0 0 6px currentColor; animation: sz-blink 1.6s ease-in-out infinite; }
   @keyframes sz-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
   .sz-clock { font-size: 0.76rem; color: var(--crt-dim); letter-spacing: 0.12em; margin-left: auto; text-transform: uppercase; }
-  /* No close button up here: a student who closed the report from the top would never
-     scroll down to the story. "Jump to story" skips the typing and scrolls to the log,
-     and hides itself once the log is in view; Continue (under the story) is the way out. */
-  .sz-jump {
-    min-height: 44px; padding: 0.45rem 0.9rem; border-radius: 6px; border: 1px solid var(--crt-faint); background: transparent;
-    color: var(--crt); font-family: var(--hud-font); font-size: 0.78rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
-    text-shadow: var(--crt-glow); cursor: pointer; flex-shrink: 0; position: relative; z-index: 2;
-  }
-  .sz-jump[hidden] { display: none; }
-  .sz-jump:hover { background: rgba(92,255,143,0.1); border-color: var(--crt); }
-  .sz-jump:focus-visible, .sz-continue:focus-visible { outline: 2px solid var(--crt); outline-offset: 3px; }
+  /* No close button: the story opens the report (over its still), and Continue, at the
+     foot under the live feed and the map, is the way out. */
+  .sz-continue:focus-visible { outline: 2px solid var(--crt); outline-offset: 3px; }
   .sz-title {
     font-size: 1.45rem; font-weight: 700; color: var(--crt);
     text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.9rem; line-height: 1.25; min-height: 1.25em;
@@ -774,20 +766,63 @@ color:  teal
   .sz-title-typed::before { content: '> '; color: var(--crt-dim); }
   .sz-panel.is-threat .sz-title { text-shadow: var(--crt-glow), 2px 0 rgba(255,107,120,0.45), -2px 0 rgba(92,255,143,0.25); }
 
+  /* ── Opening still: every report opens on a picture of its scene (beat field cam). It
+     holds at full brightness for a moment, dims, and the story types in over it in
+     phosphor green, so each report looks different from the one before. A beat with no
+     picture yet (src '') keeps the layout on a dark phosphor screen and types straight
+     away. Map re-opens, reduced motion and a click/key show the dimmed final frame. ── */
+  .sz-hero {
+    position: relative; isolation: isolate; display: flex; flex-direction: column; justify-content: flex-end;
+    margin: 0 -1.4rem 1rem; aspect-ratio: 16 / 9; overflow: hidden;
+    border-block: 1px solid var(--crt-faint);
+    background: radial-gradient(ellipse at 50% 30%, #062012 0%, #010402 75%);
+  }
+  .sz-hero.no-cam { aspect-ratio: auto; }
+  .sz-cam { position: absolute; inset: 0; z-index: -2; margin: 0; overflow: hidden; background: #020704; }
+  .sz-cam[hidden] { display: none; }
+  .sz-cam img {
+    display: block; width: 100%; height: 100%; object-fit: cover; transform-origin: 50% 40%;
+    filter: saturate(0.75) contrast(1.08) brightness(0.34);
+  }
+  .sz-cam::before { content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none; background: repeating-linear-gradient(0deg, rgba(0,0,0,0.22) 0 1px, transparent 1px 3px); box-shadow: inset 0 0 60px rgba(0,0,0,0.8); }
+  .sz-cam figcaption { position: absolute; z-index: 2; left: 1.4rem; top: 0.6rem; right: 1.4rem; display: flex; justify-content: space-between; gap: 1rem; font: 700 0.72rem/1.2 ui-monospace, Consolas, monospace; letter-spacing: 0.08em; text-transform: uppercase; color: var(--crt); text-shadow: 0 0 4px #000, 0 0 2px #000; }
+  .sz-cam figcaption .rec::before { content: ''; display: inline-block; width: 0.55em; height: 0.55em; margin-right: 0.4em; border-radius: 50%; background: #ff4d5e; animation: crew-blink 1.6s steps(1) infinite; }
+  /* a shade behind the text, so the story reads over any picture */
+  .sz-hero::after {
+    content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+    background: linear-gradient(180deg, rgba(1,5,2,0) 18%, rgba(1,5,2,0.7) 58%, rgba(1,5,2,0.9) 100%);
+  }
+  .sz-hero.no-cam::after { display: none; }
+  /* .pending: the picture is still decoding, so the hold has not started */
+  .sz-hero.pending .sz-cam img, .sz-hero.pending .sz-story { opacity: 0; }
+  .sz-story { padding: 4.5rem 1.4rem 1.1rem; text-shadow: 0 1px 3px rgba(0,0,0,0.95), var(--crt-glow); }
+  .sz-hero .sz-title { font-size: 1.7rem; }
+  .sz-hero .sz-prev { background: rgba(2,10,4,0.6); }
+  .sz-hero .sz-quote { background: rgba(24,4,8,0.6); }
+  /* .reveal (set by open()) plays the hold-and-dim; --still is its length */
+  .sz-hero.reveal .sz-cam img { animation: sz-still-in var(--still, 2.6s) ease-in-out both, sz-still-drift 30s linear both; }
+  .sz-hero.reveal::after { animation: sz-shade-in var(--still, 2.6s) ease-in both; }
+  /* the story's empty lines (their > prompts) stay hidden until the still has dimmed */
+  .sz-hero.reveal .sz-story { animation: sz-shade-in var(--still, 2.6s) step-end both; }
+  .sz-hero.done .sz-cam img { animation-delay: 0s, 0s !important; animation-duration: 0s, 30s !important; }
+  .sz-hero.done::after, .sz-hero.done .sz-story { animation-delay: 0s !important; animation-duration: 0s !important; }
+  @keyframes sz-still-in {
+    0%   { opacity: 0; filter: saturate(0.75) contrast(1.08) brightness(1.7); }
+    12%  { opacity: 1; filter: saturate(0.9) contrast(1.08) brightness(1.2); }
+    62%  { filter: saturate(0.9) contrast(1.08) brightness(1.2); }
+    100% { filter: saturate(0.75) contrast(1.08) brightness(0.34); }
+  }
+  @keyframes sz-still-drift { from { transform: scale(1.06); } to { transform: none; } }
+  @keyframes sz-shade-in { 0%, 58% { opacity: 0; } 100% { opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) {
+    .sz-hero .sz-cam img, .sz-hero::after, .sz-hero .sz-story, .sz-cam figcaption .rec::before { animation: none !important; }
+  }
+
   /* ── Station map (SVG drawn by the story script from ROOMS) ──
      A top-down illustration: WARDEN's core at the hub, the rooms as modules round a
      ring corridor, maintenance ducts on an inner ring, solar wing, docking arm,
      starfield and planet. Rooms keep their state colours AND a status word.
      All lettering is terminal phosphor and types itself in with the rest of the report. */
-  /* security-camera still: a generated picture of the scene, shown under the live feed */
-  .sz-cam { position: relative; margin: 0 0 0.9rem; border: 1px solid var(--crt-faint); border-radius: 8px; overflow: hidden; background: #020704; aspect-ratio: 16 / 9; animation: sz-cam-in 0.6s ease-out both; }
-  .sz-cam[hidden] { display: none; }
-  .sz-cam img { display: block; width: 100%; height: 100%; object-fit: cover; filter: saturate(0.75) contrast(1.08) brightness(0.92); }
-  .sz-cam::before { content: ''; position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(0deg, rgba(0,0,0,0.22) 0 1px, transparent 1px 3px); box-shadow: inset 0 0 40px rgba(0,0,0,0.75); }
-  .sz-cam figcaption { position: absolute; left: 0.6rem; top: 0.45rem; right: 0.6rem; display: flex; justify-content: space-between; gap: 1rem; font: 700 0.72rem/1.2 ui-monospace, Consolas, monospace; letter-spacing: 0.08em; text-transform: uppercase; color: var(--crt); text-shadow: 0 0 4px #000, 0 0 2px #000; }
-  .sz-cam figcaption .rec::before { content: ''; display: inline-block; width: 0.55em; height: 0.55em; margin-right: 0.4em; border-radius: 50%; background: #ff4d5e; animation: crew-blink 1.6s steps(1) infinite; }
-  @keyframes sz-cam-in { from { opacity: 0; filter: brightness(2.2); } to { opacity: 1; filter: none; } }
-  @media (prefers-reduced-motion: reduce) { .sz-cam, .sz-cam figcaption .rec::before { animation: none; } }
   .sz-map { background: #020704; border: 1px solid var(--crt-faint); border-radius: 8px; overflow: hidden; }
   .sz-map svg { display: block; width: 100%; height: auto; }
   .sz-map text { font-family: var(--hud-font); filter: drop-shadow(0 0 2px rgba(92,255,143,0.65)); }
@@ -873,9 +908,11 @@ color:  teal
     border-left: 3px solid var(--crt-faint); background: rgba(92,255,143,0.04); border-radius: 0 6px 6px 0;
   }
   .sz-prev-tag {
-    display: inline-block; margin-right: 0.6rem; font-size: 0.7rem; letter-spacing: 0.12em;
+    display: block; margin-bottom: 0.15rem; font-size: 0.7rem; letter-spacing: 0.12em;
     text-transform: uppercase; color: var(--crt-dim); font-weight: 700;
   }
+  .sz-prev-li { display: block; padding-left: 1.1em; text-indent: -1.1em; }
+  .sz-prev-li::before { content: '▸'; display: inline-block; width: 1.1em; text-indent: 0; }
   /* ── Log text + optional crew log ── */
   .sz-log {
     font-size: 1.02rem; line-height: 1.7; color: var(--crt); margin-top: 1rem;
@@ -900,7 +937,7 @@ color:  teal
 
   /* ── Live feed — the student's program output travels down a wire into a station
        device, and the device reacts (the radar finds a blip, the calibration log loads, the tracker pings).
-       Plays at the top of a stage's situation report, before the rest types in.
+       Plays under the story, once the story has typed in and the feed is on screen.
        Every one-shot animation carries .a (lines, pulse, caption) or .dv (device parts:
        delay var(--dev), length var(--dd), keyframes chosen by the .sc-* scene class).
        .done jumps them all to their final frame: a click/key, reduced motion. ── */
@@ -934,6 +971,8 @@ color:  teal
   .sz-impact-cap { margin-top: 0.6rem; font-size: 0.92rem; line-height: 1.55; color: var(--crt); max-width: 68ch; animation: sz-ln 0.3s var(--cap) both; }
   .sz-impact-cap::before { content: '> '; color: var(--crt-dim); }
   .sz-impact.done .a, .sz-impact.done .dv { animation-delay: 0s !important; animation-duration: 0s !important; }
+  /* .wait holds it on its first frame until the story has typed in and the feed is on screen */
+  .sz-impact.wait .a, .sz-impact.wait .dv { animation-play-state: paused; }
 
   .sz-dev text { font-family: var(--hud-font); }
   .sz-dev .wall   { fill: #030a05; }
@@ -1006,7 +1045,7 @@ color:  teal
   html, html * { font-variant-ligatures: none; }
 
   /* ── Selection (Proximity): the worked "recipe" cards under each Predict program, the new
-       elif rows in Program B, the Make band table, and the "Tested by typing…" line ── */
+       elif rows in Modification 2, the Make band table, and the "Tested by typing…" line ── */
   .recipe { background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--cobalt-text); border-radius: var(--radius); padding: 0.85rem 1.1rem 0.9rem; margin: -0.4rem 0 1.2rem; }
   .recipe-title { margin: 0 0 0.45rem; font-weight: 700; color: var(--cobalt-text); font-size: 0.95rem; }
   .recipe ol { margin: 0 0 0 1.3rem; display: grid; gap: 0.35rem; font-size: 0.9rem; color: var(--text); line-height: 1.55; }
@@ -1080,7 +1119,10 @@ color:  teal
     .sz-header-right { margin-left: 0; width: 100%; }
     .sz-objective { flex: 1; max-width: none; }
     .sz-panel { padding: 0.9rem 1rem 1.1rem; }
-    .sz-title { font-size: 1.15rem; }
+    .sz-title, .sz-hero .sz-title { font-size: 1.15rem; }
+    .sz-hero { margin: 0 -1rem 0.9rem; }
+    .sz-story { padding: 3rem 1rem 0.9rem; }
+    .sz-cam figcaption { left: 1rem; right: 1rem; }
     .sz-map, .sz-legend, .sz-skip-hint { display: none; }
     .sz-head { flex-wrap: wrap; }
     .sz-roomlist { display: grid; }
@@ -1296,17 +1338,18 @@ color:  teal
     Line 1 asks how far away the target is and stores the answer as a number.</span>
   </div>
 
-  <!-- Program A (binary if/else): a retrieval attempt first (question 1, no annotations),
-       then the annotations and the worked "How if / else works" card appear (data-reveal="2")
-       so the re-teach lands straight after the attempt (Kornell, Hays & Bjork 2009). -->
-  <div class="section-label">Program A — the old sensor</div>
+  <!-- One binary if/else program for Predict, Run and Investigate (elif waits for Modification 2).
+       A retrieval attempt first (question 1, no annotations), then the annotations and the
+       worked "How if / else works" card appear (data-reveal="2") so the re-teach lands straight
+       after the attempt (Kornell, Hays & Bjork 2009). -->
+  <div class="section-label">The old sensor</div>
   <div class="annotated-code">
     <div class="ann-row"><span class="line-num">1</span><span>distance = <span class="fn">int</span>(<span class="fn">input</span>(<span class="st">"Distance to target in metres: "</span>))</span><span class="ann-label" data-reveal="2" hidden>ask, then store it as a number</span></div>
     <div class="ann-row"><span class="line-num">2</span><span><span class="kw">if</span> distance &gt;= <span class="num">50</span>:</span><span class="ann-label" data-reveal="2" hidden>the condition: True or False?</span></div>
     <div class="ann-row"><span class="line-num">3</span><span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">print</span>(<span class="st">"All clear"</span>)</span><span class="ann-label" data-reveal="2" hidden>indented: runs only if True</span></div>
     <div class="ann-row"><span class="line-num">4</span><span><span class="kw">else</span>:</span><span class="ann-label" data-reveal="2" hidden>no condition: everything else</span></div>
-    <div class="ann-row"><span class="line-num">5</span><span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">print</span>(<span class="st">"Movement detected"</span>)</span><span class="ann-label" data-reveal="2" hidden>indented: runs only if False</span></div>
-    <div class="ann-row"><span class="line-num">6</span><span><span class="fn">print</span>(<span class="st">"Scan complete"</span>)</span><span class="ann-label" data-reveal="2" hidden>not indented</span></div>
+    <div class="ann-row"><span class="line-num">5</span><span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">print</span>(<span class="st">"IT'S RIGHT BEHIND YOU"</span>)</span><span class="ann-label" data-reveal="2" hidden>indented: runs only if False</span></div>
+    <div class="ann-row"><span class="line-num">6</span><span><span class="fn">print</span>(<span class="st">"Scan complete"</span>)</span><span class="ann-label" data-reveal="2" hidden>not indented: always runs</span></div>
   </div>
 
   <div class="recipe" data-reveal="2" hidden>
@@ -1320,33 +1363,9 @@ color:  teal
     <p class="recipe-ops"><code>&gt;=</code> means "more than or equal to", so <code>50 &gt;= 50</code> is True. <code>&gt;</code> means "more than", <code>&lt;</code> "less than", <code>&lt;=</code> "less than or equal to", and <code>==</code> "is equal to".</p>
   </div>
 
-  <!-- Program B: the same program with ONE new branch (variation theory: only one thing
-       changes). Appears for question 3 onwards. -->
-  <div data-reveal="3" hidden>
-    <div class="section-label">Program B — WARDEN's upgrade: one new branch</div>
-    <div class="annotated-code">
-      <div class="ann-row"><span class="line-num">1</span><span>distance = <span class="fn">int</span>(<span class="fn">input</span>(<span class="st">"Distance to target in metres: "</span>))</span><span class="ann-label"></span></div>
-      <div class="ann-row"><span class="line-num">2</span><span><span class="kw">if</span> distance &gt;= <span class="num">50</span>:</span><span class="ann-label">checked first</span></div>
-      <div class="ann-row"><span class="line-num">3</span><span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">print</span>(<span class="st">"All clear"</span>)</span><span class="ann-label"></span></div>
-      <div class="ann-row new"><span class="line-num">4</span><span><span class="kw">elif</span> distance &gt;= <span class="num">20</span>:</span><span class="ann-label">NEW: checked only if line 2 was False</span></div>
-      <div class="ann-row new"><span class="line-num">5</span><span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">print</span>(<span class="st">"Movement detected"</span>)</span><span class="ann-label"></span></div>
-      <div class="ann-row"><span class="line-num">6</span><span><span class="kw">else</span>:</span><span class="ann-label">only if both were False</span></div>
-      <div class="ann-row"><span class="line-num">7</span><span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">print</span>(<span class="st">"IT'S RIGHT BEHIND YOU"</span>)</span><span class="ann-label"></span></div>
-      <div class="ann-row"><span class="line-num">8</span><span><span class="fn">print</span>(<span class="st">"Scan complete"</span>)</span><span class="ann-label">not indented: always runs</span></div>
-    </div>
-    <div class="recipe">
-      <p class="recipe-title">How <code>elif</code> works</p>
-      <ol>
-        <li><code>elif</code> means "else if": another condition, checked <strong>only if every condition above it was False</strong>.</li>
-        <li>Python checks the conditions <strong>from the top</strong>. The <strong>first True one</strong> runs its block, and the rest are skipped, even if they are True too.</li>
-        <li><code>else</code> runs only when <strong>none</strong> of the conditions were True.</li>
-      </ol>
-    </div>
-  </div>
-
   <!-- Card order is fixed by PREDICT_CARDS / PREDICT_NAMES in the JS. -->
   <div class="q-card" id="qcard_p_mcq1">
-    <label class="q-label"><span class="q-num">1</span> <strong>Program A.</strong> The user types <code>30</code> for the distance. What does line 3 or line 5 print?</label>
+    <label class="q-label"><span class="q-num">1</span> The user types <code>30</code> for the distance. What does line 3 or line 5 print?</label>
     <div class="predict-memory" aria-label="Memory after line 1: distance holds 30">
       <div class="memory-header">Memory after line 1</div>
       <ul class="memory-boxes">
@@ -1355,9 +1374,9 @@ color:  teal
     </div>
     <div class="radio-opts" id="ropts_p_mcq1">
       <label class="radio-opt"><input type="radio" name="p_mcq1" value="option_a" onchange="saveState()"> <span>All clear, because 30 is a number and line 2 checks for one</span></label>
-      <label class="radio-opt"><input type="radio" name="p_mcq1" value="option_b" onchange="saveState()"> <span>Both messages, All clear and then Movement detected</span></label>
-      <label class="radio-opt"><input type="radio" name="p_mcq1" value="option_c" onchange="saveState()"> <span>Nothing, because 30 isn't exactly 50</span></label>
-      <label class="radio-opt"><input type="radio" name="p_mcq1" value="option_d" onchange="saveState()"> <span>Movement detected, because 30 &gt;= 50 is False</span></label>
+      <label class="radio-opt"><input type="radio" name="p_mcq1" value="option_b" onchange="saveState()"> <span>Both messages, because line 3 and line 5 both print</span></label>
+      <label class="radio-opt"><input type="radio" name="p_mcq1" value="option_c" onchange="saveState()"> <span>Nothing, because 30 isn't exactly 50 on line 2</span></label>
+      <label class="radio-opt"><input type="radio" name="p_mcq1" value="option_d" onchange="saveState()"> <span>IT'S RIGHT BEHIND YOU, because 30 &gt;= 50 is False</span></label>
     </div>
     <div class="mcq-fb" id="fb_p_mcq1"></div>
     <div style="margin-top:0.8rem;display:flex;gap:0.6rem;flex-wrap:wrap;align-items:center">
@@ -1367,7 +1386,7 @@ color:  teal
   </div>
 
   <div class="q-card step-hidden" id="qcard_p_mcq2">
-    <label class="q-label"><span class="q-num">2</span> <strong>Program A.</strong> Line 6, <code>print("Scan complete")</code>, is not indented. When does it run?</label>
+    <label class="q-label"><span class="q-num">2</span> Line 6, <code>print("Scan complete")</code>, is not indented. When does it run?</label>
     <div class="radio-opts" id="ropts_p_mcq2">
       <label class="radio-opt"><input type="radio" name="p_mcq2" value="option_a" onchange="saveState()"> <span>Only when the distance is 50 or more</span></label>
       <label class="radio-opt"><input type="radio" name="p_mcq2" value="option_b" onchange="saveState()"> <span>Only when the else block has just run</span></label>
@@ -1382,7 +1401,7 @@ color:  teal
   </div>
 
   <div class="q-card step-hidden" id="qcard_p_mcq3">
-    <label class="q-label"><span class="q-num">3</span> <strong>Program B.</strong> The user types <code>85</code> for the distance. Both <code>85 &gt;= 50</code> and <code>85 &gt;= 20</code> are True. What does Program B print?</label>
+    <label class="q-label"><span class="q-num">3</span> The user types <code>85</code> for the distance. What does the program print?</label>
     <div class="predict-memory" aria-label="Memory after line 1: distance holds 85">
       <div class="memory-header">Memory after line 1</div>
       <ul class="memory-boxes">
@@ -1391,8 +1410,8 @@ color:  teal
     </div>
     <div class="radio-opts" id="ropts_p_mcq3">
       <label class="radio-opt"><input type="radio" name="p_mcq3" value="option_a" onchange="saveState()"> <span>All clear, then Scan complete</span></label>
-      <label class="radio-opt"><input type="radio" name="p_mcq3" value="option_b" onchange="saveState()"> <span>All clear, Movement detected, then Scan complete</span></label>
-      <label class="radio-opt"><input type="radio" name="p_mcq3" value="option_c" onchange="saveState()"> <span>Movement detected, then Scan complete</span></label>
+      <label class="radio-opt"><input type="radio" name="p_mcq3" value="option_b" onchange="saveState()"> <span>All clear, IT'S RIGHT BEHIND YOU, then Scan complete</span></label>
+      <label class="radio-opt"><input type="radio" name="p_mcq3" value="option_c" onchange="saveState()"> <span>IT'S RIGHT BEHIND YOU, then Scan complete</span></label>
       <label class="radio-opt"><input type="radio" name="p_mcq3" value="option_d" onchange="saveState()"> <span>All clear only (Scan complete is skipped)</span></label>
     </div>
     <div class="mcq-fb" id="fb_p_mcq3"></div>
@@ -1403,18 +1422,18 @@ color:  teal
   </div>
 
   <div class="q-card step-hidden" id="qcard_p_mcq4">
-    <label class="q-label"><span class="q-num">4</span> <strong>Program B.</strong> The user types <strong>exactly</strong> <code>20</code> for the distance. What is the first line Program B prints?</label>
-    <div class="predict-memory" aria-label="Memory after line 1: distance holds 20">
+    <label class="q-label"><span class="q-num">4</span> The user types <strong>exactly</strong> <code>50</code> for the distance. What is the first line the program prints?</label>
+    <div class="predict-memory" aria-label="Memory after line 1: distance holds 50">
       <div class="memory-header">Memory after line 1</div>
       <ul class="memory-boxes">
-        <li class="mem-box" data-type="int"><span class="mem-label"><span class="mem-name">distance</span><span class="mem-type">int</span></span><span class="mem-value">20</span></li>
+        <li class="mem-box" data-type="int"><span class="mem-label"><span class="mem-name">distance</span><span class="mem-type">int</span></span><span class="mem-value">50</span></li>
       </ul>
     </div>
     <div class="radio-opts" id="ropts_p_mcq4">
-      <label class="radio-opt"><input type="radio" name="p_mcq4" value="option_a" onchange="saveState()"> <span>All clear</span></label>
-      <label class="radio-opt"><input type="radio" name="p_mcq4" value="option_b" onchange="saveState()"> <span>IT'S RIGHT BEHIND YOU</span></label>
-      <label class="radio-opt"><input type="radio" name="p_mcq4" value="option_c" onchange="saveState()"> <span>Movement detected</span></label>
-      <label class="radio-opt"><input type="radio" name="p_mcq4" value="option_d" onchange="saveState()"> <span>Scan complete (no branch matches 20)</span></label>
+      <label class="radio-opt"><input type="radio" name="p_mcq4" value="option_a" onchange="saveState()"> <span>IT'S RIGHT BEHIND YOU</span></label>
+      <label class="radio-opt"><input type="radio" name="p_mcq4" value="option_b" onchange="saveState()"> <span>Scan complete (no block matches 50)</span></label>
+      <label class="radio-opt"><input type="radio" name="p_mcq4" value="option_c" onchange="saveState()"> <span>All clear</span></label>
+      <label class="radio-opt"><input type="radio" name="p_mcq4" value="option_d" onchange="saveState()"> <span>Nothing (Python stops with an error)</span></label>
     </div>
     <div class="mcq-fb" id="fb_p_mcq4"></div>
     <div style="margin-top:0.8rem;display:flex;gap:0.6rem;flex-wrap:wrap;align-items:center">
@@ -1424,15 +1443,15 @@ color:  teal
   </div>
 
   <div class="q-card step-hidden" id="qcard_p_text1">
-    <label class="q-label" for="p_text1"><span class="q-num">5</span> <strong>Program B.</strong> The user types <code>5</code> for the distance. Type the first line Program B prints.</label>
-    <div class="predict-memory" aria-label="Memory after line 1: distance holds 5">
+    <label class="q-label" for="p_text1"><span class="q-num">5</span> The user types <code>49</code> for the distance. Type the first line the program prints.</label>
+    <div class="predict-memory" aria-label="Memory after line 1: distance holds 49">
       <div class="memory-header">Memory after line 1</div>
       <ul class="memory-boxes">
-        <li class="mem-box" data-type="int"><span class="mem-label"><span class="mem-name">distance</span><span class="mem-type">int</span></span><span class="mem-value">5</span></li>
+        <li class="mem-box" data-type="int"><span class="mem-label"><span class="mem-name">distance</span><span class="mem-type">int</span></span><span class="mem-value">49</span></li>
       </ul>
     </div>
     <input type="text" id="p_text1" placeholder="Type the message…" oninput="saveState(); clearPredictError('qcard_p_text1')">
-    <div class="hint-box" style="margin-top:0.6rem">Hint: check each condition from the top. Is <code>5 &gt;= 50</code> True? Is <code>5 &gt;= 20</code> True?</div>
+    <div class="hint-box" style="margin-top:0.6rem">Hint: is <code>49 &gt;= 50</code> True or False?</div>
     <div class="mcq-fb" id="fb_p_text1"></div>
     <div style="margin-top:0.8rem;display:flex;gap:0.6rem;flex-wrap:wrap;align-items:center">
       <button class="btn btn-check" id="btn_check_p_text1" onclick="checkPredictText()">✓ Check answer</button>
@@ -1462,14 +1481,14 @@ color:  teal
 
   <div class="info-box">
     <span class="icon">🖥️</span>
-    <span>This is Program B. Run it <strong>three times</strong>, typing a different distance each time in the output panel and pressing Enter.
+    <span>This is the program you just predicted. Run it <strong>three times</strong>, typing a different distance each time in the output panel and pressing Enter.
     Each one ticks off when you've run it. Compare what appears with your predictions.</span>
   </div>
 
   <!-- Ticked by the typed distance of each successful run (typedNumber in checkers.js). -->
   <ul class="req-list" id="req_r">
     <li><span>1</span><span class="req-text">Run it and type <strong>85</strong></span></li>
-    <li><span>2</span><span class="req-text">Run it and type <strong>20</strong></span></li>
+    <li><span>2</span><span class="req-text">Run it and type <strong>50</strong></span></li>
     <li><span>3</span><span class="req-text">Run it and type <strong>5</strong></span></li>
   </ul>
 
@@ -1482,10 +1501,10 @@ color:  teal
     </div>
   </div>
 
-  <div class="hint-box">💡 Each run printed <strong>one</strong> of the three messages, never two: Python stops at the first True condition. <code>Scan complete</code> printed every time, because it isn't indented.</div>
+  <div class="hint-box">💡 Each run printed <strong>one</strong> of the two messages, never both: the condition is either True or False, so exactly one block runs. <code>Scan complete</code> printed every time, because it isn't indented.</div>
 
   <div class="q-card" id="qcard_r1">
-    <label class="q-label" for="r1"><span class="q-num">1</span> Which message did 20 give, and why? Was it what you predicted?</label>
+    <label class="q-label" for="r1"><span class="q-num">1</span> Which message did 50 give, and why? Was it what you predicted?</label>
     <textarea id="r1" placeholder="Write what appeared, and why…" oninput="saveState(); clearRunError('qcard_r1')"></textarea>
     <button class="btn btn-check" id="btn_check_run" onclick="tryCompleteRun()" style="margin-top:0.8rem">
       ⚡ Check response
@@ -1510,8 +1529,9 @@ color:  teal
     <div class="ac-progress-fill" id="progress-fill-I" style="width: 0%; background: var(--stage-i);"></div>
   </div>
 
-  <!-- Four steps, one selection idea each: order matters (swap the numbers) · elif vs separate
-       ifs · > vs >= at the boundary · the standard bug step (un-cast input → TypeError).
+  <!-- Four steps on the binary if/else, one selection idea each: the condition decides the block
+       (change the threshold) · indentation decides what is inside the else · > vs >= at the
+       boundary · the standard bug step (un-cast input → TypeError). elif waits for Modify.
        Each numbered <li> is checked by INV_CHECKS.invN in checkers.js. -->
   <div id="i_steps">
 
@@ -1529,29 +1549,27 @@ color:  teal
         <p class="sz-choice-note">Either way, someone is in danger. The rest of this chapter is about getting them out. Your choice changes the story, not your score.</p>
       </div>
       <div id="i1_task">
-      <label class="q-label"><span class="q-num" style="background:var(--stage-i)">1</span> Does the order of the conditions matter? In the editor below:</label>
+      <label class="q-label"><span class="q-num" style="background:var(--stage-i)">1</span> The condition decides which block runs. In the editor below:</label>
       <ul class="req-list" id="req_i_1">
         <li><span>1</span><span class="req-text">On line 2, change <code>50</code> to <code>20</code>, so it reads <code>if distance &gt;= 20:</code></span></li>
-        <li><span>2</span><span class="req-text">On line 4, change <code>20</code> to <code>50</code>, so it reads <code>elif distance &gt;= 50:</code></span></li>
-        <li class="req-note">Press <strong>▶ Run code</strong> and type <strong>30</strong>. Is the message right for something 30 metres away?</li>
+        <li class="req-note">Press <strong>▶ Run code</strong> and type <strong>30</strong>. Which block ran this time?</li>
       </ul>
       </div>
     </div>
 
     <div class="q-card step-hidden" id="qcard_i2_prompt" style="border-left-color:var(--stage-i)">
-      <label class="q-label"><span class="q-num" style="background:var(--stage-i)">2</span> What if every branch is its own <code>if</code>?</label>
+      <label class="q-label"><span class="q-num" style="background:var(--stage-i)">2</span> What does indenting a line do?</label>
       <ul class="req-list" id="req_i_2">
-        <li><span>1</span><span class="req-text">Put the numbers back: line 2 reads <code>if distance &gt;= 50:</code> again</span></li>
-        <li><span>2</span><span class="req-text">On line 4, change the word <code>elif</code> to <code>if</code>, so it reads <code>if distance &gt;= 20:</code></span></li>
-        <li class="req-note">Press <strong>▶ Run code</strong> and type <strong>85</strong>. Count the messages.</li>
+        <li><span>1</span><span class="req-text">Put 4 spaces in front of line 6, so <code>print("Scan complete")</code> lines up with line 5, inside the <code>else</code></span></li>
+        <li class="req-note">Press <strong>▶ Run code</strong> and type <strong>85</strong>. Is <strong>Scan complete</strong> still there?</li>
       </ul>
     </div>
 
     <div class="q-card step-hidden" id="qcard_i3_prompt" style="border-left-color:var(--stage-i)">
       <label class="q-label"><span class="q-num" style="background:var(--stage-i)">3</span> What happens exactly on the boundary?</label>
       <ul class="req-list" id="req_i_3">
-        <li><span>1</span><span class="req-text">Change line 4 back to <code>elif</code></span></li>
-        <li><span>2</span><span class="req-text">On line 4, change <code>&gt;=</code> to <code>&gt;</code> (delete the <code>=</code>), so it reads <code>elif distance &gt; 20:</code></span></li>
+        <li><span>1</span><span class="req-text">Move line 6 back to the left edge, so <code>print("Scan complete")</code> has no spaces in front</span></li>
+        <li><span>2</span><span class="req-text">On line 2, change <code>&gt;=</code> to <code>&gt;</code> (delete the <code>=</code>), so it reads <code>if distance &gt; 20:</code></span></li>
         <li class="req-note">Press <strong>▶ Run code</strong> and type <strong>20</strong>.</li>
       </ul>
       <details class="remind" style="margin:0.6rem 0 0">
@@ -1575,8 +1593,8 @@ color:  teal
         <summary>Remind me: <code>input()</code> and <code>int()</code></summary>
         <ul>
           <li><code>input()</code> always gives back <strong>text</strong>, even when you type a number: typing 30 stores <code>"30"</code>.</li>
-          <li>Python can't compare text with a number, so <code>"30" &gt;= 50</code> is a <strong>TypeError</strong>.</li>
-          <li><code>int()</code> turns the text into a whole number: <code>int("30")</code> is <code>30</code>, so <code>30 &gt;= 50</code> works.</li>
+          <li>Python can't compare text with a number, so <code>"30" &gt; 20</code> is a <strong>TypeError</strong>.</li>
+          <li><code>int()</code> turns the text into a whole number: <code>int("30")</code> is <code>30</code>, so <code>30 &gt; 20</code> works.</li>
           <li><code>int()</code> only works on digits. Typing <code>thirty</code> gives a <strong>ValueError</strong>: Python can't turn that word into a number.</li>
         </ul>
       </details>
@@ -1600,10 +1618,10 @@ color:  teal
       <div style="font-size:0.84rem;color:var(--muted);margin-bottom:0.4rem">✍️ Your answer — step 1</div>
       <label class="q-label">You typed 30. What did the program print, and why?</label>
       <div class="radio-opts" id="ropts_i1_mcq">
-        <label class="radio-opt"><input type="radio" name="i1_mcq" value="option_a" onchange="saveState()"> <span>Movement detected, as Python picks the closest number</span></label>
+        <label class="radio-opt"><input type="radio" name="i1_mcq" value="option_a" onchange="saveState()"> <span>IT'S RIGHT BEHIND YOU, as 30 is still under 50</span></label>
         <label class="radio-opt"><input type="radio" name="i1_mcq" value="option_b" onchange="saveState()"> <span>Both messages, as 30 is more than 20 and less than 50</span></label>
-        <label class="radio-opt"><input type="radio" name="i1_mcq" value="option_c" onchange="saveState()"> <span>All clear: 30 &gt;= 20 is checked first, and it's True</span></label>
-        <label class="radio-opt"><input type="radio" name="i1_mcq" value="option_d" onchange="saveState()"> <span>An error, as the bigger number must come first</span></label>
+        <label class="radio-opt"><input type="radio" name="i1_mcq" value="option_c" onchange="saveState()"> <span>All clear: 30 &gt;= 20 is True, so the if block ran</span></label>
+        <label class="radio-opt"><input type="radio" name="i1_mcq" value="option_d" onchange="saveState()"> <span>An error, as the else has no number to check</span></label>
       </div>
       <div class="mcq-fb" id="fb_i1"></div>
       <button class="btn btn-next" id="btn_check_i1" style="margin-top:10px" onclick="nextStep('I', 1)" disabled>✓ Check answer</button>
@@ -1611,18 +1629,18 @@ color:  teal
 
     <div class="q-card step-hidden" id="qcard_i2" style="border-left-color:var(--stage-i)">
       <div style="font-size:0.84rem;color:var(--muted);margin-bottom:0.4rem">✍️ Your answer — step 2</div>
-      <label class="q-label" for="i2">With two separate <code>if</code>s, typing 85 printed more than one message. Why?</label>
-      <textarea id="i2" placeholder="Explain why both messages appeared this time…" oninput="saveState()"></textarea>
+      <label class="q-label" for="i2">With line 6 indented, typing 85 didn't print <strong>Scan complete</strong>. Why not?</label>
+      <textarea id="i2" placeholder="Explain why Scan complete disappeared…" oninput="saveState()"></textarea>
       <button class="btn btn-next" id="btn_check_i2" style="margin-top:10px" onclick="nextStep('I', 2)" disabled>✓ Check answer</button>
     </div>
 
     <div class="q-card step-hidden" id="qcard_i3" style="border-left-color:var(--stage-i)">
       <div style="font-size:0.84rem;color:var(--muted);margin-bottom:0.4rem">✍️ Your answer — step 3</div>
-      <label class="q-label">You typed 20. What did <code>elif distance &gt; 20:</code> do?</label>
+      <label class="q-label">You typed 20. What did <code>if distance &gt; 20:</code> do?</label>
       <div class="radio-opts" id="ropts_i3_mcq">
-        <label class="radio-opt"><input type="radio" name="i3_mcq" value="option_a" onchange="saveState()"> <span>Movement detected, as &gt; and &gt;= mean the same</span></label>
+        <label class="radio-opt"><input type="radio" name="i3_mcq" value="option_a" onchange="saveState()"> <span>All clear, as &gt; and &gt;= mean the same</span></label>
         <label class="radio-opt"><input type="radio" name="i3_mcq" value="option_b" onchange="saveState()"> <span>IT'S RIGHT BEHIND YOU: 20 &gt; 20 is False</span></label>
-        <label class="radio-opt"><input type="radio" name="i3_mcq" value="option_c" onchange="saveState()"> <span>All clear, as 20 is now bigger than every number</span></label>
+        <label class="radio-opt"><input type="radio" name="i3_mcq" value="option_c" onchange="saveState()"> <span>Nothing, as no block matches exactly 20</span></label>
         <label class="radio-opt"><input type="radio" name="i3_mcq" value="option_d" onchange="saveState()"> <span>An error, as &gt; can't be used on its own</span></label>
       </div>
       <div class="mcq-fb" id="fb_i3"></div>
@@ -1636,7 +1654,7 @@ color:  teal
         <label class="radio-opt"><input type="radio" name="i4_mcq" value="option_a" onchange="saveState()"> <span>The distance you typed was too big to store</span></label>
         <label class="radio-opt"><input type="radio" name="i4_mcq" value="option_b" onchange="saveState()"> <span>The if line is missing the colon at its end</span></label>
         <label class="radio-opt"><input type="radio" name="i4_mcq" value="option_c" onchange="saveState()"> <span>The word input is spelt wrong on line 1</span></label>
-        <label class="radio-opt"><input type="radio" name="i4_mcq" value="option_d" onchange="saveState()"> <span>&gt;= can't compare text with a number</span></label>
+        <label class="radio-opt"><input type="radio" name="i4_mcq" value="option_d" onchange="saveState()"> <span>Python can't compare text with a number</span></label>
       </div>
       <div class="mcq-fb" id="fb_i4"></div>
       <button class="btn btn-next" id="btn_check_i4" style="margin-top:10px" onclick="tryCompleteInvestigate()" disabled>✓ Check answer</button>
@@ -1682,7 +1700,7 @@ color:  teal
 
   <div class="info-box">
     <span class="icon">🧪</span>
-    <span>The editor starts again from Program B. Each check runs your program <strong>several times</strong>, typing a different distance each time — the distances are listed in each task.</span>
+    <span>The editor starts again from the sensor program. Each check runs your program <strong>several times</strong>, typing a different distance each time — the distances are listed in each task.</span>
   </div>
 
   <div id="m1_steps">
@@ -1705,23 +1723,45 @@ color:  teal
         <div class="task-text">
           <ul class="req-list" id="req_m1_1">
             <li><span>1</span><span class="req-text" id="req_m1_1_text"></span></li>
-            <li><span>2</span><span class="req-text">It must <strong>only</strong> lock down when the target is close: when a middle or far distance is typed (such as 30 or 85), there's no lockdown line.</span></li>
+            <li><span>2</span><span class="req-text">It must <strong>only</strong> lock down when the target is close: when a far distance is typed (such as 85), there's no lockdown line.</span></li>
           </ul>
-          <p class="task-tests">Tested by typing a close distance (under 20), then a middle one (20 to 49), then a far one (50 or more). The numbers change each time.</p>
+          <p class="task-tests">Tested by typing a close distance (under 20), then a far one (50 or more). The numbers change each time.</p>
         </div>
       </div>
     </div>
 
     <div id="m1_step_2" class="step-hidden">
-      <div class="section-label">★★ Modification 2 — Recalibrate</div>
+      <div class="section-label">★★ Modification 2 — A middle band, with <code>elif</code></div>
+      <!-- The lesson's one new concept. The worked example is the sensor program with ONE new
+           branch (variation theory: only one thing changes), so its code is given in full. -->
+      <div class="info-box"><span class="icon">📡</span><span>Right now the sensor locks down for anything under 50 metres, even a target far down the corridor. It needs a <strong>middle band</strong>, and for that you need <code>elif</code>.</span></div>
+      <div class="annotated-code">
+        <div class="ann-row"><span class="line-num">1</span><span>distance = <span class="fn">int</span>(<span class="fn">input</span>(<span class="st">"Distance to target in metres: "</span>))</span><span class="ann-label"></span></div>
+        <div class="ann-row"><span class="line-num">2</span><span><span class="kw">if</span> distance &gt;= <span class="num">50</span>:</span><span class="ann-label">checked first</span></div>
+        <div class="ann-row"><span class="line-num">3</span><span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">print</span>(<span class="st">"All clear"</span>)</span><span class="ann-label"></span></div>
+        <div class="ann-row new"><span class="line-num">4</span><span><span class="kw">elif</span> distance &gt;= <span class="num">20</span>:</span><span class="ann-label">NEW: checked only if line 2 was False</span></div>
+        <div class="ann-row new"><span class="line-num">5</span><span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">print</span>(<span class="st">"Movement detected"</span>)</span><span class="ann-label"></span></div>
+        <div class="ann-row"><span class="line-num">6</span><span><span class="kw">else</span>:</span><span class="ann-label">only if both were False</span></div>
+        <div class="ann-row"><span class="line-num">7</span><span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">print</span>(<span class="st">"IT'S RIGHT BEHIND YOU"</span>)</span><span class="ann-label">your lockdown line stays under here</span></div>
+        <div class="ann-row"><span class="line-num">8</span><span><span class="fn">print</span>(<span class="st">"Scan complete"</span>)</span><span class="ann-label">not indented: always runs</span></div>
+      </div>
+      <div class="recipe">
+        <p class="recipe-title">How <code>elif</code> works</p>
+        <ol>
+          <li><code>elif</code> means "else if": another condition, checked <strong>only if every condition above it was False</strong>.</li>
+          <li>Python checks the conditions <strong>from the top</strong>. The <strong>first True one</strong> runs its block, and the rest are skipped, even if they are True too.</li>
+          <li><code>else</code> runs only when <strong>none</strong> of the conditions were True.</li>
+        </ol>
+      </div>
       <div class="modify-task">
         <span class="stars">★★</span>
         <div class="task-text">
           <ul class="req-list" id="req_m1_2">
-            <li><span>1</span><span class="req-text">Keep your code so far. The sensor's range has changed: it should say <strong>All clear</strong> only from <strong>60</strong> metres. Change the first condition to <code>if distance &gt;= 60:</code></span></li>
-            <li><span>2</span><span class="req-text">So <strong>59</strong> must now say <strong>Movement detected</strong>.</span></li>
+            <li><span>1</span><span class="req-text">Keep your code so far. Add the two <strong>NEW</strong> lines above between the All clear block and <code>else:</code>, so a distance from <strong>20 to 49</strong> prints <strong>Movement detected</strong> and doesn't lock down.</span></li>
+            <li><span>2</span><span class="req-text">A distance of <strong>50 or more</strong> must still print <strong>All clear</strong>.</span></li>
+            <li><span>3</span><span class="req-text">A distance <strong>under 20</strong> must still print <strong>IT'S RIGHT BEHIND YOU</strong>, and lock down.</span></li>
           </ul>
-          <p class="task-tests">Tested by typing 60, then 59.</p>
+          <p class="task-tests">Tested by typing 50, 49, 20 and 19 every time, plus a far distance and one from 21 to 48 that change each time (such as 85 and 30).</p>
         </div>
       </div>
     </div>
@@ -1733,10 +1773,10 @@ color:  teal
         <div class="task-text">
           <ul class="req-list" id="req_m1_3">
             <li><span>1</span><span class="req-text">Keep your code so far. Add a new band: a distance from <strong>10 to 19</strong> metres prints <strong>Proximity alert</strong>.</span></li>
-            <li><span>2</span><span class="req-text">A distance from <strong>20 to 59</strong> must still print <strong>Movement detected</strong>.</span></li>
+            <li><span>2</span><span class="req-text">A distance from <strong>20 to 49</strong> must still print <strong>Movement detected</strong>.</span></li>
             <li><span>3</span><span class="req-text">A distance <strong>under 10</strong> must still print <strong>IT'S RIGHT BEHIND YOU</strong>.</span></li>
           </ul>
-          <p class="task-tests">Tested by typing 10, 20 and 9 every time, plus a distance inside the new band and one from 21 to 59 that change each time (such as 15 and 25).</p>
+          <p class="task-tests">Tested by typing 10, 20 and 9 every time, plus a distance inside the new band and one from 21 to 49 that change each time (such as 15 and 25).</p>
           <details class="remind" style="margin:0.4rem 0 0">
             <summary>Remind me: where does a new band go?</summary>
             <ul>
@@ -1932,12 +1972,17 @@ else:
     <div class="sz-head">
       <div class="sz-kicker"><span class="sz-live-dot" aria-hidden="true"></span><span id="szKicker">Situation report</span></div>
       <div class="sz-clock" id="szClock"></div>
-      <button class="sz-jump" id="szJump" type="button" hidden>Jump to story ↓</button>
     </div>
-    <h2 class="sz-title" id="szTitle"><span class="sr-only" id="szTitleFull"></span><span class="sz-title-typed" aria-hidden="true" id="szTitleTyped"></span></h2>
-    <p class="sz-prev" id="szPrev" hidden><span class="sz-prev-tag">Previously</span><span class="sr-only" id="szPrevFull"></span><span aria-hidden="true" id="szPrevTyped"></span></p>
+    <div class="sz-hero no-cam" id="szHero">
+      <figure class="sz-cam" id="szCam" hidden><img id="szCamImg" alt="" width="960" height="540" decoding="async"><figcaption aria-hidden="true"><span id="szCamLabel"></span><span class="rec">Rec</span></figcaption></figure>
+      <div class="sz-story">
+        <h2 class="sz-title" id="szTitle"><span class="sr-only" id="szTitleFull"></span><span class="sz-title-typed" aria-hidden="true" id="szTitleTyped"></span></h2>
+        <p class="sz-prev" id="szPrev" hidden><span class="sz-prev-tag">Previously</span><span class="sr-only" id="szPrevFull"></span><span aria-hidden="true" id="szPrevTyped"></span></p>
+        <p class="sz-log" id="szLog"><span class="prompt" aria-hidden="true">&gt;</span><span class="sr-only" id="szLogFull"></span><span aria-hidden="true" id="szLogTyped"></span></p>
+        <blockquote class="sz-quote" id="szQuote" hidden><p id="szQuoteText"></p><cite id="szQuoteWho"></cite></blockquote>
+      </div>
+    </div>
     <div class="sz-impact" id="szImpact" hidden></div>
-    <figure class="sz-cam" id="szCam" hidden><img id="szCamImg" alt="" width="800" height="450" decoding="async"><figcaption aria-hidden="true"><span id="szCamLabel"></span><span class="rec">Rec</span></figcaption></figure>
     <div class="sz-map" id="szMap"></div>
     <div class="sz-legend" aria-hidden="true">
       <span><i class="k-you"></i>You</span>
@@ -1946,8 +1991,6 @@ else:
     </div>
     <ul class="sz-roomlist" id="szRoomList" aria-label="Station rooms"></ul>
     <div class="sz-readouts" id="szReadouts"></div>
-    <p class="sz-log" id="szLog"><span class="prompt" aria-hidden="true">&gt;</span><span class="sr-only" id="szLogFull"></span><span aria-hidden="true" id="szLogTyped"></span></p>
-    <blockquote class="sz-quote" id="szQuote" hidden><p id="szQuoteText"></p><cite id="szQuoteWho"></cite></blockquote>
     <div class="sz-foot"><span class="sz-skip-hint" id="szSkipHint" aria-hidden="true" hidden>Click or press any key to skip</span><button class="btn sz-continue" id="szContinue" type="button">Continue →</button></div>
   </div>
 </div>
@@ -2002,9 +2045,12 @@ else:
      Room ids: cryo, life, sensors, airlock, core, drone, nav, ducts
      Readout level: 'ok' | 'warn' | 'danger'
      Optional per beat: quote: { who, text } (a recovered crew log), cta (button text)
-     Optional per beat: cam — a key of CAMS: a security-camera still of the scene, shown
-       above the map (after the live feed, if there is one), on map re-opens too.
-     Optional per beat: impact — the "live feed" that plays first: the output of the
+     Every beat: cam — a key of CAMS: the picture the report opens on. It shows at full
+       brightness, dims, and the headline and story type in over it (on map re-opens too,
+       already dimmed). Give each beat its own picture, so no two reports look alike; a variant
+       can swap in its own cam. Until a picture is added (src ''), the story types in on a dark
+       screen instead. To add one: python _drafts/story/add_still.py <page> <key> <image>.
+     Optional per beat: impact — the "live feed" that plays under the story: the output of the
        stage's final action (passed in by the PRIMM code) travels into a station device.
          scene:    'sim' (proximity array, prediction only) | 'radar' (proximity array: the
                    blip lands in the band the program chose) | 'log' (calibration log) |
@@ -2028,9 +2074,10 @@ else:
        (this lesson) }).
          variant:  choices => the name of one of the variants (handle a missing choice)
          variants: { name: { …beat fields } } — they replace the beat's own fields
-     Optional on the intro beat: previously — a 1–2 sentence "Previously…" recap of the
-       chapters before, so a student who missed a lesson (or the week) can follow. Use
-       variants to make it follow the student's choices.
+     Optional on the intro beat: previously — a "Previously…" recap of the chapters before, so
+       a student who missed a lesson (or the week) can follow: an array of one or two short
+       bullets (one sentence each; long recaps put students off reading). Use variants to make
+       it follow the student's choices.
      ═══════════════════════════════════════════════════════════════════════ */
   // ── Chapter 1's choices. A missing choice falls back to the safe option or the better call.
   const door = c => c.door === 'open' ? 'open' : 'sealed';
@@ -2064,13 +2111,13 @@ else:
   // "Crew alive" readout: Hale is gone; nobody else dies in this chapter.
   const crewAlive = crit => ({ label: 'Crew alive', value: '4 of 5' + (crit ? ` · ${crit} critical` : ''), level: crit ? 'warn' : 'ok' });
 
-  // The "Previously…" recap retells all of Wake Up (most students never reached its log or its
-  // cliffhanger), says life support is on reserve tanks, and gives the reason to come here.
-  const HALE_RECAP = "Engineer Hale froze himself in Pod 2 with something from the planet inside him. His heart stopped, the pod opened from the inside, and his last log ended: “don’t trust WARD—”. Now his crew tag walks the station, and the bio-scan says it isn’t human.";
-  const WHY_HERE = " Life support is limping along on reserve tanks. Hale’s tag was heading for Sensor Ops: get the proximity sensors working, and you’ll know where it is.";
+  // The "Previously…" recap: two short bullets that retell Wake Up (most students never reached
+  // its log or its cliffhanger) and give the reason to come here. The readouts say life support
+  // is on reserve tanks.
+  const HALE_RECAP = "Engineer Hale died with something from the planet inside him. His last log: “Don’t trust WARD—”";
   const INTRO_VARIANTS = {
-    ok: { previously: HALE_RECAP + WHY_HERE, readouts: [crewAlive(0)] },
-    critical: { previously: HALE_RECAP + " You locked it in the Cryo Bay with the crew, and Pod 5 · Patel is critical." + WHY_HERE, readouts: [crewAlive(1)] },
+    ok: { previously: [HALE_RECAP, "Now his crew tag walks the station, and it isn’t human. It was heading here, to Sensor Ops."], readouts: [crewAlive(0)] },
+    critical: { previously: [HALE_RECAP, "Now his tag walks the station, not human. You shut it in with the crew, and Patel is critical."], readouts: [crewAlive(1)] },
   };
   for (const v of Object.values(INTRO_VARIANTS)) {
     v.readouts.push(
@@ -2190,8 +2237,9 @@ else:
     };
   }
 
-  // Security-camera stills for the reports (beat field cam). Generated images (sources in
-  // _drafts/story/), cropped to 800×450 WebP and inlined so the page needs no other files.
+  // The stills each report opens on (beat field cam). Generated images (sources and prompts in
+  // _drafts/story/), cropped to 16:9 WebP and inlined so the page needs no other files. src ''
+  // until the picture is added: python _drafts/story/add_still.py <this page> <key> <image>.
   // The sealed-door still plays twice in the report after Modify, as the door of whichever room
   // the student locked down, so it's stored once.
   const DOOR_SRC = 'data:image/webp;base64,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';
@@ -2201,6 +2249,16 @@ else:
     opsDoor:  { label: 'Cam 09 · Sensor Ops door', alt: DOOR_ALT('Sensor Ops'), src: DOOR_SRC },
     hale: { label: 'Prox sensor 3 · Ring corridor · 1 frame', alt: 'Black-and-white security camera still: a figure in an engineer’s jumpsuit stands dead still in a metal corridor, seen from behind, head tilted to one side and arms hanging, with frost on the floor around its boots.',
       src: 'data:image/webp;base64,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' },
+    sensorOps: { label: 'Cam 11 · Sensor Ops', alt: 'Sensor Ops, empty: dark consoles and dead screens, frost streaked across the floor, and a vent cover hanging open above the main console.',
+      src: '' },
+    warden: { label: 'Cam 11 · Sensor Ops', alt: 'A dead wall screen flickering with static, filled by a single glowing red camera eye: WARDEN.',
+      src: '' },
+    array: { label: 'Prox array · Sensor Ops', alt: 'A round proximity radar screen with range rings in metres. The centre is empty, and one small blip sits at the very edge.',
+      src: '' },
+    heaters: { label: 'Cam 04 · Cryo Bay', alt: 'Two cryo pods side by side: one glows orange as its frost melts, and the other is dark and icing over, its status light blinking red.',
+      src: '' },
+    thermal: { label: 'Prox array · Thermal · Ring corridor', alt: 'A blue thermal sensor view of the ring corridor outside Life Support. One faint, person-sized smear, colder than the walls, is moving along it.',
+      src: '' },
   };
   const STORY = {
     chapter:   'Chapter 2 — Proximity',
@@ -2220,6 +2278,7 @@ else:
         variant: c => shutIn(c) ? 'critical' : 'ok',
         variants: INTRO_VARIANTS,
         headline: 'Chapter 2 — Proximity',
+        cam: 'sensorOps',
         time: '04:31',
         log: "You reach Sensor Ops. The room is empty, but there’s frost on the floor, and a vent cover hangs open above the console. The proximity sensors that could tell you how close it is are offline, and their program is corrupted.",
         map: { you: 'sensors', objective: 'sensors', threat: 'vents', rooms: { cryo: 'online', life: 'unstable', core: 'sealed' } },
@@ -2231,6 +2290,7 @@ else:
           fallback: ['IT’S RIGHT BEHIND YOU'],
         },
         headline: 'Watched',
+        cam: 'warden',
         time: '04:36',
         log: "You’ve worked out what the sensor program is meant to do. On the wall, a dead screen flickers on: WARDEN’s red eye watches you for a moment, then goes dark.",
         readouts: [
@@ -2246,6 +2306,7 @@ else:
           fallback: ['Distance to target in metres: 5', 'IT’S RIGHT BEHIND YOU', 'Scan complete'],
         },
         headline: 'Range',
+        cam: 'array',
         time: '04:44',
         log: "The proximity array spins up and sweeps Sensor Ops: nothing in the room. Then a blip at the very edge of its range, in the ring corridor. It stops moving, as if it heard the array switch on.",
         readouts: [
@@ -2260,6 +2321,7 @@ else:
         variant: c => `${shield(c)}_${shutIn(c)}`,
         variants: I1_VARIANTS,
         headline: 'Two pods',
+        cam: 'heaters',
         time: '04:50',
         map: { you: 'sensors', objective: 'sensors', threat: 'corridor', rooms: { cryo: 'online', life: 'unstable', sensors: 'unstable', core: 'sealed' } },
       },
@@ -2269,9 +2331,10 @@ else:
         impact: {
           scene: 'log', device: 'Sensor calibration',
           caption: "With int() back, the program could compare the distance with a number, and the sensor array finished calibrating.",
-          fallback: ['Distance to target in metres: 30', 'Movement detected', 'Scan complete'],
+          fallback: ['Distance to target in metres: 30', 'All clear', 'Scan complete'],
         },
         headline: 'Calibrated',
+        cam: 'thermal',
         time: '04:58',
         log: "Repairing the storm damage has shown you how this system breaks. The calibrated array finds the blip again, outside Life Support. It moves along the ring, slow and steady, the way a person walks.",
         map: { you: 'sensors', objective: 'sensors', threat: 'life', rooms: { cryo: 'online', life: 'unstable', sensors: 'unstable', core: 'sealed' } },
@@ -2665,6 +2728,10 @@ else:
     $('szPanel').querySelectorAll('.tw-active').forEach(e => e.classList.remove('tw-active'));
     tw.idleEl?.classList.add('tw-idle');
     $('szImpact').classList.add('done');
+    $('szImpact').classList.remove('wait');
+    stillRun++;   // cancels a hold still waiting to start
+    $('szHero').classList.remove('pending');
+    $('szHero').classList.add('done');
     $('szSkipHint').hidden = true;
     tw = null;
   }
@@ -2672,7 +2739,7 @@ else:
     if (tw) { clearInterval(tw.timer); tw = null; }
     $('szPanel').querySelectorAll('.tw-active, .tw-idle').forEach(e => e.classList.remove('tw-active', 'tw-idle'));
     groups = groups
-      .map(g => ({ cps: g.cps || 2, wait: g.wait || 0, items: (g.items || []).filter(Boolean).map(el => ({ el, text: el.textContent })) }))
+      .map(g => ({ cps: g.cps || 2, wait: g.wait || 0, ready: g.ready, start: g.start, items: (g.items || []).filter(Boolean).map(el => ({ el, text: el.textContent })) }))
       .filter(g => g.items.length || g.wait);
     tw = { groups, idleEl, timer: null };
     if (instant || reduceMotion) { finishTyping(); return; }
@@ -2681,7 +2748,9 @@ else:
     let gi = 0, pos = 0, cursorEl = null;
     tw.timer = setInterval(() => {
       const g = groups[gi];
-      if (g.wait) {   // a pause (the live feed playing) before the next group types
+      if (g.wait) {   // a pause (the opening still, the live feed) before the next group types
+        if (g.ready && !g.ready()) return;   // the live feed waits until it's scrolled into view
+        if (!pos) g.start?.();
         pos += 16;
         if (pos >= g.wait) { gi++; pos = 0; if (gi >= groups.length) finishTyping(); }
         return;
@@ -2703,6 +2772,34 @@ else:
   let returnFocus = null;
   let onCloseCb = null;
 
+  // The hold is played frame by frame, counting at most 50 ms a frame: a chapter's first report
+  // opens while the page is still loading (Python starting up), and a CSS timeline would run on
+  // through those stalls, so the hold would be over before anyone saw it. It starts once the
+  // picture is decoded, and sets .held when it ends (the story waits for that).
+  const HOLD_ANIMS = ['sz-still-in', 'sz-shade-in'];
+  let stillRun = 0;
+  function startStill(hero) {
+    const run = ++stillRun;
+    $('szCamImg').decode().catch(() => {}).then(() => {
+      if (run !== stillRun) return;
+      hero.classList.remove('pending');
+      hero.classList.add('reveal');
+      const anims = hero.getAnimations({ subtree: true }).filter(a => HOLD_ANIMS.includes(a.animationName));
+      anims.forEach(a => a.pause());
+      let t = 0, last = performance.now();
+      requestAnimationFrame(function tick(now) {
+        if (run !== stillRun) return;
+        t = Math.min(STILL_MS, t + Math.min(now - last, 50));
+        last = now;
+        anims.forEach(a => { a.currentTime = t; });
+        if (t < STILL_MS) requestAnimationFrame(tick); else hero.classList.add('held');
+      });
+    });
+  }
+
+  // the opening still shows for this long (full brightness, then dimming) before the story types
+  const STILL_MS = 2600;
+
   function open(key, { review = false, onClose = null, feed = '' } = {}) {
     const b = resolve(STORY.beats[key]);
     if (!b) { onClose?.(); return; }
@@ -2714,23 +2811,33 @@ else:
     $('szKicker').textContent = map.threat ? 'Warning · motion detected' : (key === 'intro' ? 'Station Zero · emergency wake' : 'Situation report');
     $('szClock').textContent = b.time ? 'Station time ' + b.time : '';
     $('szTitleFull').textContent = $('szTitleTyped').textContent = b.headline || '';
+    // the opening still holds at full brightness, dims, then the story types in over it;
+    // a beat whose picture isn't added yet (src '') types in straight away
+    const cam = CAMS[b.cam]?.src ? CAMS[b.cam] : null;
+    $('szCam').hidden = !cam;
+    if (cam) $('szCamImg').src = cam.src; else $('szCamImg').removeAttribute('src');   // src = '' would load the page itself and fire an img error
+    $('szCamImg').alt = cam ? cam.alt : '';
+    $('szCamLabel').textContent = cam ? cam.label : '';
+    const hero = $('szHero'), hold = cam && !review && !reduceMotion ? STILL_MS : 0;
+    hero.classList.toggle('no-cam', !cam);
+    hero.classList.remove('reveal', 'done', 'pending', 'held');
+    hero.style.setProperty('--still', STILL_MS + 'ms');
+    if (hold) { hero.classList.add('pending'); startStill(hero); }
     // the live feed plays only as the stage is completed, not on map re-opens
     const imp = $('szImpact');
     imp.classList.remove('done');
     let feedMs = 0;
     if (b.impact && !review) feedMs = renderImpact(imp, b.impact, feed);
     else { imp.hidden = true; imp.innerHTML = ''; }
-    const cam = CAMS[b.cam];   // the camera still fades in once the live feed has played
-    $('szCam').hidden = !cam;
-    if (cam) $('szCamImg').src = cam.src; else $('szCamImg').removeAttribute('src');   // src = '' would load the page itself and fire an img error
-    $('szCamImg').alt = cam ? cam.alt : '';
-    $('szCamLabel').textContent = cam ? cam.label : '';
-    $('szCam').style.animationDelay = feedMs + 'ms';
+    if (feedMs) imp.classList.add('wait');   // it waits on its first frame until the story has typed in
     $('szMap').innerHTML = renderMap(map);
     $('szRoomList').innerHTML = renderRoomList(map);
     $('szReadouts').innerHTML = renderReadouts(b.readouts);
-    $('szPrev').hidden = !b.previously;
-    $('szPrevFull').textContent = $('szPrevTyped').textContent = b.previously || '';
+    // the recap is one or two short bullets (a string is one bullet)
+    const prev = [].concat(b.previously || []);
+    $('szPrev').hidden = !prev.length;
+    $('szPrevFull').textContent = prev.join(' ');
+    $('szPrevTyped').innerHTML = prev.map(t => `<span class="sz-prev-li">${esc(t)}</span>`).join('');
     $('szLogFull').textContent = $('szLogTyped').textContent = b.log || '';
     const q = $('szQuote');
     q.hidden = !b.quote;
@@ -2747,31 +2854,25 @@ else:
     const rows = [...$('szReadouts').children];
     typeSequence([
       { cps: 3, items: [$('szKicker'), $('szClock')] },
+      ...(hold ? [{ wait: 16, ready: () => hero.classList.contains('held') }] : []),
       { cps: 2, items: [$('szTitleTyped')] },
-      ...(b.previously ? [{ cps: 2, items: [$('szPrevTyped')] }] : []),
-      ...(feedMs ? [{ wait: feedMs }] : []),
-      { cps: 1, items: [...$('szMap').querySelectorAll('text')] },
-      ...rows.map(row => ({ cps: 3, items: [...row.querySelectorAll('[data-tw]')] })),
+      ...[...$('szPrevTyped').children].map(li => ({ cps: 2, items: [li] })),
       { cps: 2, items: [$('szLogTyped')] },
       ...(b.quote ? [{ cps: 2, items: [$('szQuoteText')] }, { cps: 3, items: [$('szQuoteWho')] }] : []),
+      // the live feed plays once the story has typed in and the student can see it
+      ...(feedMs ? [{ wait: feedMs, ready: () => onScreen(imp), start: () => imp.classList.remove('wait') }] : []),
+      { cps: 1, items: [...$('szMap').querySelectorAll('text')] },
+      ...rows.map(row => ({ cps: 3, items: [...row.querySelectorAll('[data-tw]')] })),
     ], b.quote ? $('szQuoteText') : $('szLogTyped'), review);
-    // focus Continue without scrolling to it — a tall report must open at the top (headline + live feed)
+    // focus Continue without scrolling to it — a report must open at the top, on its still
     $('szContinue').focus({ preventScroll: true });
     $('szPanel').scrollTop = 0;
-    updateJump();
   }
 
-  // "Jump to story" shows only while the end of the story is below the fold
-  function updateJump() {
-    const p = $('szPanel'), end = $('szQuote').hidden ? $('szLog') : $('szQuote');
-    // layout offsets, not screen boxes: the power-on flicker scales the panel as it opens
-    $('szJump').hidden = end.offsetTop + end.offsetHeight <= p.scrollTop + p.clientHeight + 4;
-  }
-  function jumpToStory() {
-    finishTyping();
-    const p = $('szPanel');
-    p.scrollTo({ top: p.scrollHeight, behavior: reduceMotion ? 'auto' : 'smooth' });
-    $('szContinue').focus({ preventScroll: true });
+  // true once the top half of el has scrolled into the report's visible area
+  function onScreen(el) {
+    const p = $('szPanel').getBoundingClientRect(), r = el.getBoundingClientRect();
+    return r.top + r.height / 2 <= p.bottom;
   }
 
   function close() {
@@ -2795,9 +2896,6 @@ else:
 
   document.addEventListener('DOMContentLoaded', () => {
     $('szContinue').addEventListener('click', close);
-    $('szJump').addEventListener('click', jumpToStory);
-    $('szPanel').addEventListener('scroll', updateJump, { passive: true });
-    window.addEventListener('resize', () => { if ($('szOverlay').classList.contains('open')) updateJump(); });
     // a click anywhere on the screen (except its buttons) shows the whole report at once
     $('szPanel').addEventListener('click', e => { if (!e.target.closest('button')) finishTyping(); });
     $('szOverlay').addEventListener('keydown', e => {
@@ -3060,11 +3158,10 @@ import { setupEditors, clearSyntaxHint, setEditorOutput, refreshEditor, runCode,
 
 const STORAGE_KEY    = 'primm_y9_l2_proximity';
 const ACTIVITY_TITLE = 'Proximity — Selection';   // must match <!-- ACTIVITY title: --> above
+// A plain if/else: elif first appears in Modification 2.
 const STARTER_CODE   = `distance = int(input("Distance to target in metres: "))
 if distance >= 50:
     print("All clear")
-elif distance >= 20:
-    print("Movement detected")
 else:
     print("IT'S RIGHT BEHIND YOU")
 print("Scan complete")`;
@@ -3076,7 +3173,7 @@ const STEP_COUNT_M1 = 4;   // m1_step_1…m1_step_4
 //   distance = input("…")  →  distance = int(input("…"))   (made in place on line 1 by breakCode)
 
 // The three distances the Run stage asks for, in the order of the #req_r bullets.
-const RUN_DISTANCES = [85, 20, 5];
+const RUN_DISTANCES = [85, 50, 5];
 
 // localStorage field lists
 const TEXT_FIELDS  = ['p_text1', 'r_editor', 'r1', 'i_editor', 'i2', 'm1_editor', 'm2_editor'];
@@ -3091,14 +3188,14 @@ const P_CORRECT = { p_mcq1: 'option_d', p_mcq2: 'option_c', p_mcq3: 'option_a', 
 const P_PASS_MSG = {
   p_mcq1: 'Correct — 30 >= 50 is False, so Python skips the if block and runs the else block.',
   p_mcq2: 'Correct — it is back at the left edge, so it is not part of the if or the else. It runs every time, after whichever block ran.',
-  p_mcq3: 'Correct — line 2 is True, so All clear prints and the rest of the chain is skipped, even though 85 >= 20 is True too. Only the first True branch runs.',
-  p_mcq4: 'Correct — 20 >= 50 is False, so Python checks the elif: 20 >= 20 is True, because >= includes "equal to".',
+  p_mcq3: 'Correct — 85 >= 50 is True, so All clear prints and the else is skipped. Exactly one of the two blocks runs, then Scan complete.',
+  p_mcq4: 'Correct — 50 >= 50 is True, because >= includes "equal to", so the if block runs.',
 };
 const P_FAIL_MSG = {
   p_mcq1: 'Not quite. Work out the condition on line 2 first: is 30 >= 50 True or False? If it is False, which block runs?',
   p_mcq2: 'Look at the indentation: line 6 is not indented, so it isn\'t inside the if or the else. Lines at the left edge run every time.',
-  p_mcq3: 'Not quite. Python checks from the top and stops at the FIRST True condition. Line 2 is True for 85, so is the elif ever checked?',
-  p_mcq4: 'Check each condition from the top. 20 >= 50 is False. What about 20 >= 20? Remember >= means "more than OR equal to".',
+  p_mcq3: 'Not quite. 85 >= 50 is True, so the if block runs. The else only runs when the condition is False, so exactly one block runs. Does line 6 run?',
+  p_mcq4: 'Look at line 2: is 50 >= 50 True or False? Remember >= means "more than OR equal to".',
 };
 
 // ═══════════════════════════════════════════════════════
@@ -3143,25 +3240,25 @@ const mcqStep = (n, correctValue, passMsg, failMsg, extra = {}) => ({
 
 const I_FIELDS = [
   mcqStep(1, 'option_c',
-    'Right — 30 >= 20 is now checked first, and it is True, so All clear runs and the rest is skipped. Wrong message! When conditions overlap, their order matters.',
-    'Run it again and type 30. Then read the conditions from the top: which one is True first?'),
+    'Right — 30 >= 20 is True, so the if block ran and the else was skipped. Same distance, new number in the condition, different block.',
+    'Run it again and type 30. Then work out line 2: is 30 >= 20 True or False? Which block runs when it is True?'),
 
   { id:'i2', cardId:'qcard_i2', type:'text', needsNewLine: false, validate(v) {
     if (v.length < 4)  return 'Explain what happened — even a few words is fine.';
     if (isNonsense(v)) return "That doesn't look like a real answer.";
-    if (!/both|two|separate|each|every|own|also|second|elif|check|true|chain|skip/i.test(v))
-      return 'Think about what elif did: it is only checked when the condition above was False. Two separate ifs are each checked — so what happens when both are True?';
+    if (!/indent|inside|in the else|part of|block|space|skip|false|only|tab/i.test(v))
+      return 'Think about the 4 spaces: they put line 6 inside the else. When you typed 85, did the else block run?';
     return null;
   }},
 
   mcqStep(3, 'option_b',
-    'Exactly — > means "more than", and 20 is not more than 20, so the elif is False and the else runs. On a boundary, > and >= give different answers.',
-    'Type 20 again and look at line 4: is 20 > 20 True? > means "more than", without the "or equal to".'),
+    'Exactly — > means "more than", and 20 is not more than 20, so the condition is False and the else runs. On a boundary, > and >= give different answers.',
+    'Type 20 again and look at line 2: is 20 > 20 True? > means "more than", without the "or equal to".'),
 
   // ── THE STANDARD BUG STEP (always last) ──
   mcqStep(4, 'option_d',
-    'Exactly — without int(), distance holds the text "30", and >= can\'t compare text with the number 50. int() turns the answer into a number first.',
-    'Read the last line of the error again: \'>=\' not supported between instances of \'str\' and \'int\'. str means text, and int means a whole number.'),
+    'Exactly — without int(), distance holds the text "30", and Python can\'t compare text with the number 20. int() turns the answer into a number first.',
+    'Read the last line of the error again: not supported between instances of \'str\' and \'int\'. str means text, and int means a whole number.'),
 ];
 
 
@@ -3218,7 +3315,7 @@ let iBugProgress = state.iBugProgress || {};
 // student ran the code as it stands now.
 let iLastRun = state.iLastRun || null;
 let firstRunShown = false;
-// Run stage: the distances the student has run Program B with (ticks #req_r).
+// Run stage: the distances the student has run the sensor program with (ticks #req_r).
 let rRan = state.rRan || {};
 // STATION ZERO hook: the last successful output per editor, so a stage's situation
 // report can play what the student's code printed into the station (the live feed).
@@ -3960,8 +4057,8 @@ function renderPredict() {
   });
 
   renderStepNav('P');
-  // Worked examples appear as the student reaches them: Program A's annotations and the
-  // if/else recipe after question 1 (the retrieval attempt), Program B from question 3.
+  // Worked examples appear as the student reaches them: the annotations and the if/else
+  // recipe after question 1 (the retrieval attempt).
   // A block that has only just appeared is scrolled to, so it is read before the question.
   const firstRender = revealedUpTo === null;
   let fresh = null;
@@ -4037,8 +4134,8 @@ function evaluatePredictText() {
   if (fb) {
     fb.className = 'mcq-fb ' + (ok ? 'pass' : 'fail');
     fb.textContent = ok
-      ? '✔ Correct — 5 >= 50 is False and 5 >= 20 is False, so neither condition is True and the else runs.'
-      : '✘ Not quite — check each condition from the top. 5 >= 50 is False. Is 5 >= 20 True? If no condition is True, which block runs?';
+      ? '✔ Correct — 49 >= 50 is False (49 is one under the boundary), so the else runs.'
+      : '✘ Not quite — is 49 >= 50 True or False? If it is False, which block runs?';
   }
   // ── End free-text block ──────────────────────────────────────────────────
   return ok;
@@ -4096,10 +4193,10 @@ function tryCompleteRun() {
   const r1val  = (document.getElementById('r1')?.value || '').trim();
   const r1card = document.getElementById('qcard_r1');
   let r1msg = null;
-  if (r1val.split(/\s+/).length < 4) r1msg = 'Write a sentence — what did 20 print, and why?';
+  if (r1val.split(/\s+/).length < 4) r1msg = 'Write a sentence — what did 50 print, and why?';
   else if (isNonsense(r1val))        r1msg = "That doesn't look like a real answer — give it another try.";
-  else if (!/movement|>=|equal|or more|includes|at least|20/i.test(r1val))
-    r1msg = 'Say which message 20 gave, and why: look at the elif on line 4.';
+  else if (!/clear|>=|equal|or more|includes|at least|50/i.test(r1val))
+    r1msg = 'Say which message 50 gave, and why: look at the condition on line 2.';
   if (r1msg) {
     allOk = false;
     r1card?.classList.add('error');

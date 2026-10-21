@@ -2,8 +2,9 @@ import { test, expect } from '@playwright/test';
 
 // Y9 Python · L2 Proximity (Station Zero, Chapter 2: selection with elif) — UI wiring only
 // (checker permutations live in Y9/Python/L2_Selection/checkers.test.js).
+//   • Predict, Run and Investigate use a plain if/else; elif first appears in Modification 2.
 //   • Predict reveals its worked examples as the student reaches them.
-//   • Run is gated until all three distances (85, 20, 5) have been run.
+//   • Run is gated until all three distances (85, 50, 5) have been run.
 //   • Modify / Make are checked by running the program once per test answer and reading the output.
 //   • The story follows Wake Up's choices (Patel) and this chapter's: the crisis on Investigate 1
 //     (which pod the heaters save; the other crew member, X, is critical), then the lockdown and power.
@@ -45,17 +46,21 @@ const STARTER = [
   'distance = int(input("Distance to target in metres: "))',
   'if distance >= 50:',
   '    print("All clear")',
-  'elif distance >= 20:',
-  '    print("Movement detected")',
   'else:',
   '    print("IT\'S RIGHT BEHIND YOU")',
   'print("Scan complete")',
 ];
 const starter = (edit = {}) => STARTER.map((l, i) => (i in edit ? edit[i] : l)).join('\n');
 
+// Modification 1's answer: the lockdown line inside the else.
 const lockdownProgram = room => [
-  ...STARTER.slice(0, 7), `    print("LOCKDOWN: ${room}")`, STARTER[7],
+  ...STARTER.slice(0, 5), `    print("LOCKDOWN: ${room}")`, STARTER[5],
 ];
+// Modification 2's answer: the elif middle band added above the else.
+const middleBandProgram = room => {
+  const p = lockdownProgram(room);
+  return [...p.slice(0, 3), 'elif distance >= 20:', '    print("Movement detected")', ...p.slice(3)];
+};
 
 // ─── Story layer ─────────────────────────────────────────────────────────────
 
@@ -87,34 +92,32 @@ test('the optional Life Support round can save a critical Patel: canisters to Po
   await expect(page.locator('#szCrewPods .crew-pod').nth(4)).not.toHaveClass(/critical/);
 });
 
-test('with no earlier choices, the recap tells all of Wake Up and why you came to Sensor Ops', async ({ page }) => {
+test('with no earlier choices, the recap tells Wake Up and why you came to Sensor Ops, in two short bullets', async ({ page }) => {
   await openAt(page, {}, { story: true });
-  await expect(page.locator('#szPrevFull')).toContainText('Hale froze himself in Pod 2');
-  await expect(page.locator('#szPrevFull')).toContainText('don’t trust WARD');
-  await expect(page.locator('#szPrevFull')).toContainText('reserve tanks');
+  await expect(page.locator('#szPrevTyped .sz-prev-li')).toHaveCount(2);
+  await expect(page.locator('#szPrevFull')).toContainText('Hale died with something from the planet');
+  await expect(page.locator('#szPrevFull')).toContainText('Don’t trust WARD');
   await expect(page.locator('#szPrevFull')).toContainText('Sensor Ops');
+  await expect(page.locator('#szReadouts')).toContainText('Reserve tanks');
   await expect(page.locator('#szReadouts')).toContainText('4 of 5');
 });
 
 // ─── Predict ─────────────────────────────────────────────────────────────────
 
-test('Predict: the worked examples appear as the student reaches them, then on to Run', async ({ page }) => {
+test('Predict: the worked example appears after the first attempt, there is no elif, then on to Run', async ({ page }) => {
   await page.addInitScript(p => localStorage.setItem('sz_story_' + p, '["intro"]'), PATH);
   await openAt(page, {}, { story: true });
-  const progB = page.locator('#stage-P [data-reveal="3"]');
   await expect(page.locator('#stage-P .recipe').first()).toBeHidden();
-  await expect(progB).toBeHidden();
+  await expect(page.locator('#stage-P .annotated-code')).not.toContainText('elif');
 
   await page.check('input[name="p_mcq1"][value="option_d"]');
   await page.click('#btn_check_p_mcq1');
   await expect(page.locator('#qcard_p_mcq2')).toBeVisible({ timeout: 5000 });
   await expect(page.locator('#stage-P .recipe').first()).toBeVisible();
-  await expect(progB).toBeHidden();
 
   await page.check('input[name="p_mcq2"][value="option_c"]');
   await page.click('#btn_check_p_mcq2');
   await expect(page.locator('#qcard_p_mcq3')).toBeVisible({ timeout: 5000 });
-  await expect(progB).toBeVisible();
 
   await page.check('input[name="p_mcq3"][value="option_a"]');
   await page.click('#btn_check_p_mcq3');
@@ -141,18 +144,18 @@ test('Predict: a wrong answer explains, and waits for Continue', async ({ page }
 
 // ─── Run ─────────────────────────────────────────────────────────────────────
 
-test('Run is gated until 85, 20 and 5 have all been run, then the radar plays the last run', async ({ page }) => {
+test('Run is gated until 85, 50 and 5 have all been run, then the radar plays the last run', async ({ page }) => {
   await page.addInitScript(p => localStorage.setItem('sz_story_' + p, '["intro","P"]'), PATH);
   await openAt(page, { currentStage: 'R', completedStages: ['P'] }, { story: true });
-  await page.fill('#r1', '20 printed Movement detected because >= includes equal to');
+  await page.fill('#r1', '50 printed All clear because >= includes equal to');
   await page.click('#btn_check_run');
-  await expect(page.locator('#qcard_r1 .field-hint')).toContainText('85 and 20 and 5');
+  await expect(page.locator('#qcard_r1 .field-hint')).toContainText('85 and 50 and 5');
 
   await runWith(page, 'R', 'r_editor', ['85']);
   await expect(outputOf(page, 'r_editor')).toContainText('All clear', { timeout: 30000 });
   await expect(page.locator('#req_r li').nth(0)).toHaveClass(/req-pass/);
-  await runWith(page, 'R', 'r_editor', ['20']);
-  await expect(outputOf(page, 'r_editor')).toContainText('Movement detected', { timeout: 30000 });
+  await runWith(page, 'R', 'r_editor', ['50']);
+  await expect(outputOf(page, 'r_editor')).toContainText('All clear', { timeout: 30000 });
   await runWith(page, 'R', 'r_editor', ['5']);
   await expect(outputOf(page, 'r_editor')).toContainText('BEHIND YOU', { timeout: 30000 });
   await expect(page.locator('#req_r li')).toHaveClass([/req-pass/, /req-pass/, /req-pass/]);
@@ -166,14 +169,14 @@ test('Run is gated until 85, 20 and 5 have all been run, then the radar plays th
 
 // ─── Investigate ─────────────────────────────────────────────────────────────
 
-test('Investigate 1: the crisis pick comes first, then swapping the numbers makes 30 print All clear', async ({ page }) => {
+test('Investigate 1: the crisis pick comes first, then changing 50 to 20 makes 30 print All clear', async ({ page }) => {
   await openAt(page, { currentStage: 'I', completedStages: ['P', 'R'] });
   await expect(page.locator('#i1_task')).toBeHidden();
   await page.check('input[name="i_choice"][value="pod3"]');
   await expect(page.locator('#i1_task')).toBeVisible();
   await expect(page.locator('#btn_check_i1')).toBeDisabled();
-  await setCode(page, 'i_editor', starter({ 1: 'if distance >= 20:', 3: 'elif distance >= 50:' }));
-  await expect(page.locator('#req_i_1 li:not(.req-note)')).toHaveClass([/req-pass/, /req-pass/]);
+  await setCode(page, 'i_editor', starter({ 1: 'if distance >= 20:' }));
+  await expect(page.locator('#req_i_1 li:not(.req-note)')).toHaveClass([/req-pass/]);
   await runWith(page, 'I', 'i_editor', ['30']);
   await expect(outputOf(page, 'i_editor')).toContainText('All clear', { timeout: 30000 });
   await page.check('input[name="i1_mcq"][value="option_c"]');
@@ -189,7 +192,7 @@ test('Investigate 1: the crisis report names who the heaters could not save', as
   await page.addInitScript(p => localStorage.setItem('sz_story_' + p, '["intro","P","R"]'), PATH);
   await openAt(page, {
     currentStage: 'I', completedStages: ['P', 'R'], radio_i_choice: 'pod5',
-    i_editor: starter({ 1: 'if distance >= 20:', 3: 'elif distance >= 50:' }), radio_i1_mcq: 'option_c',
+    i_editor: starter({ 1: 'if distance >= 20:' }), radio_i1_mcq: 'option_c',
   }, { story: true });
   await runWith(page, 'I', 'i_editor', ['30']);
   await expect(outputOf(page, 'i_editor')).toContainText('All clear', { timeout: 30000 });
@@ -204,12 +207,14 @@ test('Investigate 1: the crisis report names who the heaters could not save', as
   await expect(page.locator('#m1_choice .sz-x').first()).toHaveText('Chen');
 });
 
-test('Investigate 2: two separate ifs print two messages for 85', async ({ page }) => {
-  await openAt(page, { currentStage: 'I', completedStages: ['P', 'R'], stepI: 2, maxStepI: 2, i_editor: starter() });
-  await setCode(page, 'i_editor', starter({ 3: 'if distance >= 20:' }));
+test('Investigate 2: Scan complete indented into the else disappears for 85', async ({ page }) => {
+  await openAt(page, { currentStage: 'I', completedStages: ['P', 'R'], stepI: 2, maxStepI: 2, i_editor: starter({ 1: 'if distance >= 20:' }) });
+  await setCode(page, 'i_editor', starter({ 1: 'if distance >= 20:', 5: '    print("Scan complete")' }));
+  await expect(page.locator('#req_i_2 li:not(.req-note)')).toHaveClass([/req-pass/]);
   await runWith(page, 'I', 'i_editor', ['85']);
-  await expect(outputOf(page, 'i_editor')).toContainText('All clear\nMovement detected', { timeout: 30000 });
-  await page.fill('#i2', 'Both ifs were checked separately and both were true');
+  await expect(outputOf(page, 'i_editor')).toContainText('All clear', { timeout: 30000 });
+  await expect(outputOf(page, 'i_editor')).not.toContainText('Scan complete');
+  await page.fill('#i2', 'It was indented so it was inside the else, and the else did not run');
   await page.click('#btn_check_i2');
   await expect(page.locator('#qcard_i3_prompt')).toBeVisible({ timeout: 10000 });
 });
@@ -217,15 +222,15 @@ test('Investigate 2: two separate ifs print two messages for 85', async ({ page 
 test('Investigate bug step: Break it gives a TypeError; int() back completes Investigate', async ({ page }) => {
   // tryCompleteInvestigate re-checks every step's answer, so seed steps 1–3 as answered
   await openAt(page, {
-    currentStage: 'I', completedStages: ['P', 'R'], stepI: 4, maxStepI: 4, i_editor: starter({ 3: 'elif distance > 20:' }),
-    radio_i1_mcq: 'option_c', i2: 'Both ifs were checked separately and both were true', radio_i3_mcq: 'option_b',
+    currentStage: 'I', completedStages: ['P', 'R'], stepI: 4, maxStepI: 4, i_editor: starter({ 1: 'if distance > 20:' }),
+    radio_i1_mcq: 'option_c', i2: 'It was indented so it was inside the else, and the else did not run', radio_i3_mcq: 'option_b',
   });
   await page.click('#qcard_i4_prompt button:has-text("Break it")');
   await expect(page.locator('#i_editor')).toHaveValue(/^distance = input\(/);
   await answerPrompts(page, 'i_editor', ['30']);
   await expect(page.locator('#i_fb_run')).toContainText('TypeError', { timeout: 30000 });
 
-  await setCode(page, 'i_editor', starter({ 3: 'elif distance > 20:' }));
+  await setCode(page, 'i_editor', starter({ 1: 'if distance > 20:' }));
   await runWith(page, 'I', 'i_editor', ['30']);
   await expect(page.locator('#i_fb_run')).toHaveClass(/pass/, { timeout: 30000 });
   await expect(page.locator('#req_i_4 li:not(.req-note)')).toHaveClass([/req-pass/, /req-pass/]);
@@ -246,8 +251,8 @@ test('Modify 1: the lockdown must be inside the else; the choice is stored for t
   await setCode(page, 'm1_editor', [...STARTER, 'print("LOCKDOWN: CRYO BAY")'].join('\n'));
   await page.click('#btn_check_m1');
   await expect(page.locator('#fb_m1')).toHaveClass(/fail/, { timeout: 30000 });
-  // the middle distance changes from check to check (MOD_TEST_BANK.mod1): always 20 to 49
-  await expect(page.locator('#fb_m1')).toContainText(/With [2-4]\d typed/);
+  // the far distance changes from check to check (MOD_TEST_BANK.mod1): always 50 or more
+  await expect(page.locator('#fb_m1')).toContainText(/With ([5-9]\d|1\d\d) typed/);
   await expect(page.locator('#req_m1_1 li')).toHaveClass([/req-pass/, /req-fail/]);
 
   await setCode(page, 'm1_editor', lockdownProgram('CRYO BAY').join('\n'));
@@ -257,11 +262,25 @@ test('Modify 1: the lockdown must be inside the else; the choice is stored for t
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem('sz_choices')))).toMatchObject({ lockdown: 'cryo' });
 });
 
+test('Modify 2: elif is introduced here, and the middle band stops the lockdown at 20 to 49', async ({ page }) => {
+  await openAt(page, { currentStage: 'M1', completedStages: ['P', 'R', 'I'], stepM1: 2, maxStepM1: 2, radio_m1_choice: 'cryo',
+    passedChecks: { m1_code1: true } });
+  await expect(page.locator('#m1_step_2 .annotated-code')).toContainText('elif distance >= 20:');
+  await setCode(page, 'm1_editor', lockdownProgram('CRYO BAY').join('\n'));
+  await page.click('#btn_check_m1');
+  await expect(page.locator('#fb_m1')).toContainText('between the All clear block and else', { timeout: 30000 });
+  await expect(page.locator('#req_m1_2 li')).toHaveClass([/req-fail/, /req-pass/, /req-pass/]);
+
+  await setCode(page, 'm1_editor', middleBandProgram('CRYO BAY').join('\n'));
+  await page.click('#btn_check_m1');
+  await expect(page.locator('#fb_m1')).toHaveClass(/pass/, { timeout: 30000 });
+  await expect(page.locator('#m1_step_3')).toBeVisible({ timeout: 10000 });
+});
+
 test('Modify 3: a band above Movement detected fails with an order hint, and the right place passes', async ({ page }) => {
   await openAt(page, { currentStage: 'M1', completedStages: ['P', 'R', 'I'], stepM1: 3, maxStepM1: 3, radio_m1_choice: 'cryo',
     passedChecks: { m1_code1: true, m1_code2: true } });
-  const base = lockdownProgram('CRYO BAY');
-  base[1] = 'if distance >= 60:';
+  const base = middleBandProgram('CRYO BAY');
   const wrong = [...base.slice(0, 3), 'elif distance >= 10:', '    print("Proximity alert")', ...base.slice(3)];
   await setCode(page, 'm1_editor', wrong.join('\n'));
   await page.click('#btn_check_m1');

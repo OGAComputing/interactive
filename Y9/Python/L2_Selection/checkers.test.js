@@ -6,12 +6,11 @@ import { evalInv, evalMod, evalMake, evalExt, breakCode, hasBugLine, hasFixedLin
 const code = (...lines) => lines.join('\n');
 const ran = (src, ok = true) => ({ code: src, ok });
 
+// The plain if/else students start from (elif first appears in Modification 2).
 const STARTER = [
   'distance = int(input("Distance to target in metres: "))',
   'if distance >= 50:',
   '    print("All clear")',
-  'elif distance >= 20:',
-  '    print("Movement detected")',
   'else:',
   '    print("IT\'S RIGHT BEHIND YOU")',
   'print("Scan complete")',
@@ -24,15 +23,17 @@ const PROMPT = 'Distance to target in metres: ';
 const outputsFor = (tests, prog, prompts = [PROMPT, 'Send alert to the crew? (y/n) ']) =>
   tests.map(t => [...t.map((v, i) => (prompts[i] || '? ') + v), ...prog(...t)].join('\n') + '\n');
 
-// The sensor program with options for each Modify step.
-function sensor({ top = 50, lock = null, lockEverywhere = false, alertBand = false, alertFirst = false, alert = false } = {}) {
+// The sensor program with options for each Modify step. middle = Modification 2's elif band
+// (distance >= middleAt prints Movement detected); without it, it's the plain if/else.
+function sensor({ top = 50, middle = true, middleAt = 20, lock = null, lockEverywhere = false, lockInMiddle = false,
+                  alertBand = false, alertFirst = false, alert = false } = {}) {
   return (d, answer) => {
     d = Number(d);
     const out = [];
     const band = () => {
       if (d >= top) return out.push('All clear');
       if (alertBand && alertFirst && d >= 10) return out.push('Proximity alert');
-      if (d >= 20) return out.push('Movement detected');
+      if (middle && d >= middleAt) { out.push('Movement detected'); if (lock && lockInMiddle) out.push(lock); return; }
       if (alertBand && !alertFirst && d >= 10) return out.push('Proximity alert');
       out.push("IT'S RIGHT BEHIND YOU");
       if (lock && !lockEverywhere) out.push(lock);
@@ -46,7 +47,8 @@ function sensor({ top = 50, lock = null, lockEverywhere = false, alertBand = fal
 }
 
 test('the test answers cover every boundary', () => {
-  expect(MOD_TESTS.mod1.map(t => t[0])).toEqual(['5', '30', '85']);
+  expect(MOD_TESTS.mod1.map(t => t[0])).toEqual(['5', '85']);
+  expect(MOD_TESTS.mod2.flat()).toEqual(expect.arrayContaining(['50', '49', '20', '19']));
   expect(MOD_TESTS.mod3.flat()).toEqual(expect.arrayContaining(['10', '9', '20']));
   expect(MAKE_TESTS.flat()).toEqual(['350', '200', '199', '100', '99', '50', '49', '0']);
   expect(EXT_TESTS.flat()).toEqual(expect.arrayContaining(['-5', '0', '500', '499']));
@@ -69,41 +71,40 @@ describe('ownOutput / typedNumber', () => {
 
 // ─── Investigate ─────────────────────────────────────────────────────────────
 
-describe('evalInv step 1 — swap the numbers', () => {
-  test('both numbers swapped passes; one at a time shows which is left', () => {
-    expect(evalInv(1, code(...STARTER)).results).toEqual([false, false]);
-    expect(evalInv(1, code(...withLine(1, 'if distance >= 20:'))).results).toEqual([true, false]);
-    const swapped = withLine(1, 'if distance >= 20:');
-    swapped[3] = 'elif distance >= 50:';
-    expect(evalInv(1, code(...swapped)).pass).toBe(true);
+describe('evalInv step 1 — change the threshold', () => {
+  test('if distance >= 20 passes; the starter does not', () => {
+    expect(evalInv(1, code(...STARTER)).results).toEqual([false]);
+    expect(evalInv(1, code(...withLine(1, 'if distance >= 20:'))).pass).toBe(true);
   });
   test('spacing is flexible', () => {
-    const s = withLine(1, 'if distance>=20 :');
-    s[3] = 'elif  distance >=50:';
-    expect(evalInv(1, code(...s)).pass).toBe(true);
+    expect(evalInv(1, code(...withLine(1, 'if distance>=20 :'))).pass).toBe(true);
   });
 });
 
-describe('evalInv step 2 — elif becomes if', () => {
-  test('needs 50 back on line 2 and a plain if on line 4', () => {
-    expect(evalInv(2, code(...STARTER)).results).toEqual([true, false]);
-    expect(evalInv(2, code(...STARTER)).msg).toMatch(/still says elif/);
-    expect(evalInv(2, code(...withLine(3, 'if distance >= 20:'))).pass).toBe(true);
+describe('evalInv step 2 — indent Scan complete into the else', () => {
+  const step1 = withLine(1, 'if distance >= 20:');
+  test('an indented Scan complete passes', () => {
+    expect(evalInv(2, code(...step1)).pass).toBe(false);
+    expect(evalInv(2, code(...step1)).msg).toMatch(/4 spaces/);
+    const indented = step1.map((l, i) => (i === 5 ? '    ' + l : l));
+    expect(evalInv(2, code(...indented)).pass).toBe(true);
   });
-  test('the step-1 swap left in place fails the first bullet', () => {
-    const s = withLine(1, 'if distance >= 20:');
-    s[3] = 'if distance >= 50:';
-    expect(evalInv(2, code(...s)).results[0]).toBe(false);
+  test('a deleted line is told to reset', () => {
+    expect(evalInv(2, code(...step1.slice(0, 5))).msg).toMatch(/Reset/);
   });
 });
 
-describe('evalInv step 3 — elif back, >= becomes >', () => {
-  test('elif distance > 20 passes; >= or if is not enough', () => {
-    expect(evalInv(3, code(...withLine(3, 'elif distance > 20:'))).pass).toBe(true);
-    const r = evalInv(3, code(...STARTER));
+describe('evalInv step 3 — back to the left edge, >= becomes >', () => {
+  const step1 = withLine(1, 'if distance >= 20:');
+  test('if distance > 20 with Scan complete at the left edge passes', () => {
+    expect(evalInv(3, code(...withLine(1, 'if distance > 20:'))).pass).toBe(true);
+    const r = evalInv(3, code(...step1));
     expect(r.results).toEqual([true, false]);
     expect(r.msg).toMatch(/change >= to >/);
-    expect(evalInv(3, code(...withLine(3, 'if distance > 20:'))).results[0]).toBe(false);
+  });
+  test('Scan complete still indented fails the first bullet', () => {
+    const s = withLine(1, 'if distance > 20:').map((l, i) => (i === 5 ? '    ' + l : l));
+    expect(evalInv(3, code(...s)).results).toEqual([false, true]);
   });
 });
 
@@ -156,61 +157,75 @@ describe('Break it / fix it (step 4)', () => {
 
 // ─── Modify ──────────────────────────────────────────────────────────────────
 
-describe('evalMod mod1 — the lockdown choice', () => {
+describe('evalMod mod1 — the lockdown choice (plain if/else)', () => {
   const tests = MOD_TESTS.mod1;
+  const binary = opts => sensor({ middle: false, ...opts });
   test('the chosen line inside the else passes, for either choice', () => {
     for (const c of ['cryo', 'sensors']) {
-      const r = evalMod('mod1', '', outputsFor(tests, sensor({ lock: LOCKDOWN_CHOICES[c] })), c);
+      const r = evalMod('mod1', '', outputsFor(tests, binary({ lock: LOCKDOWN_CHOICES[c] })), c);
       expect(r.pass).toBe(true);
     }
   });
   test('the other room\'s line fails the first bullet', () => {
-    const r = evalMod('mod1', '', outputsFor(tests, sensor({ lock: LOCKDOWN_CHOICES.sensors })), 'cryo');
+    const r = evalMod('mod1', '', outputsFor(tests, binary({ lock: LOCKDOWN_CHOICES.sensors })), 'cryo');
     expect(r.results).toEqual([false, true]);
     expect(r.msg).toMatch(/LOCKDOWN: CRYO BAY/);
   });
-  test('a lockdown line outside the else fails the second bullet and shows the 30 run', () => {
-    const r = evalMod('mod1', '', outputsFor(tests, sensor({ lock: 'LOCKDOWN: CRYO BAY', lockEverywhere: true })), 'cryo');
+  test('a lockdown line outside the else fails the second bullet and shows the 85 run', () => {
+    const r = evalMod('mod1', '', outputsFor(tests, binary({ lock: 'LOCKDOWN: CRYO BAY', lockEverywhere: true })), 'cryo');
     expect(r.results).toEqual([true, false]);
     expect(r.show).toBe(1);
-    expect(r.msg).toMatch(/With 30 typed/);
+    expect(r.msg).toMatch(/With 85 typed/);
   });
 });
 
-describe('evalMod mod2 — new threshold', () => {
+describe('evalMod mod2 — the first elif: a middle band', () => {
   const tests = MOD_TESTS.mod2;
-  test('>= 60 (or > 59) passes', () => {
-    expect(evalMod('mod2', '', outputsFor(tests, sensor({ top: 60 }))).pass).toBe(true);
+  const lock = 'LOCKDOWN: CRYO BAY';
+  test('elif distance >= 20 in the right place passes (the lockdown stays in the else)', () => {
+    expect(evalMod('mod2', '', outputsFor(tests, sensor({ lock }))).pass).toBe(true);
   });
-  test('unchanged program: 59 still all clear', () => {
-    const r = evalMod('mod2', '', outputsFor(tests, sensor()));
-    expect(r.results).toEqual([true, false]);
-    expect(r.show).toBe(1);
-    expect(r.msg).toMatch(/it printed "All clear"/);
+  test('no elif yet: 49 is still "behind you", and the hint says where the lines go', () => {
+    const r = evalMod('mod2', '', outputsFor(tests, sensor({ middle: false, lock })));
+    expect(r.results).toEqual([false, true, true]);
+    expect(r.show).toBe(2);
+    expect(r.msg).toMatch(/between the All clear block and else/);
   });
-  test('> 60 by mistake: 60 is not all clear', () => {
-    expect(evalMod('mod2', '', outputsFor(tests, sensor({ top: 61 }))).results).toEqual([false, true]);
+  test('the lockdown moved under the elif as well', () => {
+    const r = evalMod('mod2', '', outputsFor(tests, sensor({ lock, lockInMiddle: true })));
+    expect(r.results[0]).toBe(false);
+    expect(r.msg).toMatch(/locked down too/);
+  });
+  test('the elif above the if: 50 and over say Movement detected', () => {
+    const r = evalMod('mod2', '', outputsFor(tests, sensor({ top: Infinity })));
+    expect(r.results[1]).toBe(false);
+    expect(r.msg).toMatch(/still say All clear/);
+  });
+  test('>= 19 by mistake: 19 is caught by the new band', () => {
+    const r = evalMod('mod2', '', outputsFor(tests, sensor({ middleAt: 19 })));
+    expect(r.results).toEqual([true, true, false]);
+    expect(r.show).toBe(5);
   });
 });
 
 describe('evalMod mod3 — a new band', () => {
   const tests = MOD_TESTS.mod3;
   test('the band after Movement detected passes', () => {
-    expect(evalMod('mod3', '', outputsFor(tests, sensor({ top: 60, alertBand: true }))).pass).toBe(true);
+    expect(evalMod('mod3', '', outputsFor(tests, sensor({ alertBand: true }))).pass).toBe(true);
   });
   test('the band before Movement detected catches 25 and 20, with an order hint', () => {
-    const r = evalMod('mod3', '', outputsFor(tests, sensor({ top: 60, alertBand: true, alertFirst: true })));
+    const r = evalMod('mod3', '', outputsFor(tests, sensor({ alertBand: true, alertFirst: true })));
     expect(r.results).toEqual([true, false, true]);
     expect(r.show).toBe(2);
     expect(r.msg).toMatch(/first True condition/);
   });
   test('no band yet: 15 is not a proximity alert', () => {
-    const r = evalMod('mod3', '', outputsFor(tests, sensor({ top: 60 })));
+    const r = evalMod('mod3', '', outputsFor(tests, sensor()));
     expect(r.results[0]).toBe(false);
     expect(r.msg).toMatch(/With 15 typed/);
   });
   test('the lockdown line in the else doesn\'t get in the way', () => {
-    expect(evalMod('mod3', '', outputsFor(tests, sensor({ top: 60, alertBand: true, lock: 'LOCKDOWN: CRYO BAY' }))).pass).toBe(true);
+    expect(evalMod('mod3', '', outputsFor(tests, sensor({ alertBand: true, lock: 'LOCKDOWN: CRYO BAY' }))).pass).toBe(true);
   });
 });
 
@@ -325,24 +340,34 @@ describe('test banks — every set works, and the boundaries are in every set', 
     expect(MAKE_TESTS).toEqual(MAKE_TEST_BANK[0]);
     expect(EXT_TESTS).toEqual(EXT_TEST_BANK[0]);
   });
-  test('mod1: every set has a close, a middle and a far distance; hints name the typed numbers', () => {
+  test('mod1: every set has a close and a far distance; hints name the typed numbers', () => {
     for (const tests of MOD_TEST_BANK.mod1) {
-      const [close, mid, far] = firsts(tests).map(Number);
-      expect(close < 20 && mid >= 20 && mid < 50 && far >= 50).toBe(true);
+      const [close, far] = firsts(tests).map(Number);
+      expect(close < 20 && far >= 50).toBe(true);
+      const binary = opts => sensor({ middle: false, ...opts });
       for (const c of Object.keys(LOCKDOWN_CHOICES))
-        expect(evalMod('mod1', '', outputsFor(tests, sensor({ lock: LOCKDOWN_CHOICES[c] })), c, tests).pass).toBe(true);
-      expect(evalMod('mod1', '', outputsFor(tests, sensor()), 'cryo', tests).msg).toContain(`With ${close} typed`);
-      const r = evalMod('mod1', '', outputsFor(tests, sensor({ lock: 'LOCKDOWN: CRYO BAY', lockEverywhere: true })), 'cryo', tests);
-      expect(r.msg).toContain(`With ${mid} typed`);
+        expect(evalMod('mod1', '', outputsFor(tests, binary({ lock: LOCKDOWN_CHOICES[c] })), c, tests).pass).toBe(true);
+      expect(evalMod('mod1', '', outputsFor(tests, binary()), 'cryo', tests).msg).toContain(`With ${close} typed`);
+      const r = evalMod('mod1', '', outputsFor(tests, binary({ lock: 'LOCKDOWN: CRYO BAY', lockEverywhere: true })), 'cryo', tests);
+      expect(r.msg).toContain(`With ${far} typed`);
+    }
+  });
+  test('mod2: 50, 49, 20 and 19 every time, and the changing distances sit inside their bands', () => {
+    for (const tests of MOD_TEST_BANK.mod2) {
+      const [far, fifty, fortyNine, mid, twenty, nineteen] = firsts(tests).map(Number);
+      expect([fifty, fortyNine, twenty, nineteen]).toEqual([50, 49, 20, 19]);
+      expect(far > 50 && mid > 20 && mid < 49).toBe(true);
+      expect(evalMod('mod2', '', outputsFor(tests, sensor({ lock: 'LOCKDOWN: CRYO BAY' })), undefined, tests).pass).toBe(true);
+      expect(evalMod('mod2', '', outputsFor(tests, sensor({ middle: false })), undefined, tests).pass).toBe(false);
     }
   });
   test('mod3: 10, 20 and 9 every time, and the changing distances sit inside their bands', () => {
     for (const tests of MOD_TEST_BANK.mod3) {
       const [inBand, ten, mid, twenty, nine] = firsts(tests).map(Number);
       expect([ten, twenty, nine]).toEqual([10, 20, 9]);
-      expect(inBand > 10 && inBand < 20 && mid > 20 && mid < 60).toBe(true);
-      expect(evalMod('mod3', '', outputsFor(tests, sensor({ top: 60, alertBand: true })), undefined, tests).pass).toBe(true);
-      const r = evalMod('mod3', '', outputsFor(tests, sensor({ top: 60, alertBand: true, alertFirst: true })), undefined, tests);
+      expect(inBand > 10 && inBand < 20 && mid > 20 && mid < 50).toBe(true);
+      expect(evalMod('mod3', '', outputsFor(tests, sensor({ alertBand: true })), undefined, tests).pass).toBe(true);
+      const r = evalMod('mod3', '', outputsFor(tests, sensor({ alertBand: true, alertFirst: true })), undefined, tests);
       expect(r.pass).toBe(false);
       expect(r.msg).toContain(`With ${mid} typed`);
     }
@@ -352,7 +377,7 @@ describe('test banks — every set works, and the boundaries are in every set', 
     for (const tests of MOD_TEST_BANK.mod4) {
       expect(Number(tests[0][0])).toBeLessThan(10);
       expect(tests.map(t => t[1])).toEqual(['y', 'n']);
-      expect(evalMod('mod4', src, outputsFor(tests, sensor({ top: 60, alertBand: true, alert: true })), undefined, tests).pass).toBe(true);
+      expect(evalMod('mod4', src, outputsFor(tests, sensor({ alertBand: true, alert: true })), undefined, tests).pass).toBe(true);
     }
   });
   test('Make: every boundary in every set; a correct scanner passes and an off-by-one fails', () => {

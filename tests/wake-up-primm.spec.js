@@ -64,17 +64,20 @@ test('the terminal report types itself, a click shows it all, and it only shows 
   await expect(page.locator('#szOverlay')).not.toHaveClass(/open/);
 });
 
-test('a tall report has no close button, only "Jump to story", which shows the log and hides itself', async ({ page }) => {
+test('a report opens on its still, and the story only types in over it once it has dimmed', async ({ page }) => {
   await page.setViewportSize({ width: 1024, height: 600 });
   await openAt(page, {}, { story: true, reducedMotion: 'no-preference' });
   await expect(page.locator('#szOverlay')).toHaveClass(/open/);
   await expect(page.locator('#szPanel button[aria-label*="Close"]')).toHaveCount(0);
-  await expect(page.locator('#szJump')).toBeVisible();
-  await page.click('#szJump');
-  await expect(page.locator('#szLogTyped')).toHaveText(await page.locator('#szLogFull').textContent());
+  await expect(page.locator('#szHero')).toHaveClass(/reveal/);
+  await expect(page.locator('#szCamLabel')).toHaveText(/Ext cam/);
+  // the still holds on its own first: no story yet
+  await page.waitForTimeout(1000);
+  await expect(page.locator('#szLogTyped')).toHaveText('');
+  // then the story types in over it, at the top of the report
+  await expect(page.locator('#szLogTyped')).toHaveText(await page.locator('#szLogFull').textContent(), { timeout: 10000 });
   await expect(page.locator('#szLog')).toBeInViewport();
   await expect(page.locator('#szContinue')).toBeFocused();
-  await expect(page.locator('#szJump')).toBeHidden();
 });
 
 test('reduced motion shows the whole report at once', async ({ page }) => {
@@ -94,7 +97,7 @@ test("the live feed plays the student's own run output into the door", async ({ 
   await page.click('#btn_check_run');
   await expect(page.locator('#szOverlay')).toHaveClass(/open/, { timeout: 10000 });
   await expect(page.locator('#szImpact')).toBeVisible();
-  // opens at the top (headline + feed), even though Continue at the bottom has focus
+  // opens at the top (the still and the story), even though Continue at the bottom has focus
   expect(await page.locator('#szPanel').evaluate(p => p.scrollHeight > p.clientHeight && p.scrollTop === 0)).toBe(true);
   await expect(page.locator('#szContinue')).toBeFocused();
   await expect(page.locator('#szImpact .sz-feed-term .ln.hit')).toHaveText('Checking in: Pilot Sam');

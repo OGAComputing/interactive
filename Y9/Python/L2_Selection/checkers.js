@@ -1,15 +1,15 @@
 // Validation logic for 1_Proximity_PRIMM.html — Y9 Python L2 "Proximity" (Station Zero,
 // Chapter 2). Reactivates binary if/else from Y8 and adds one new concept: elif.
 //
-// The proximity-sensor program students start from (STARTER_CODE in the HTML):
+// The proximity-sensor program students start from (STARTER_CODE in the HTML) is a plain
+// if/else, used for Predict, Run and Investigate:
 //   distance = int(input("Distance to target in metres: "))
 //   if distance >= 50:
 //       print("All clear")
-//   elif distance >= 20:
-//       print("Movement detected")
 //   else:
 //       print("IT'S RIGHT BEHIND YOU")
 //   print("Scan complete")
+// elif first appears in Modification 2, which adds a middle band (20 to 49: Movement detected).
 //
 // Checks are BEHAVIOUR-BASED (see the MTP: "Behaviour-based checkers from L2 onwards"): Modify,
 // Make and the extension run the student's program once per test in MOD_TESTS / MAKE_TESTS /
@@ -102,11 +102,10 @@ const firstFail = (outs, idx, ok) => idx.find(i => !ok(outs[i] || '', i)) ?? idx
 
 const cond = (kw, op, n) => new RegExp(`^[ \\t]*${kw}\\s+distance\\s*${op}\\s*${n}\\s*:`, 'm');
 const hasLine = (raw, re) => re.test(normalise(raw));
-// The number in the first `if distance … N:` line (the condition Python checks first).
-const firstIfNumber = raw => {
-  const m = normalise(raw).match(/^[ \t]*if\s+distance\s*>=?\s*(\d+)\s*:/m);
-  return m ? Number(m[1]) : null;
-};
+// How far print("Scan complete") is indented (null if the line has gone). Read from the raw
+// code, since normalise() empties strings.
+const SCAN_LINE = /^([ \t]*)print\s*\(\s*(["'])scan complete\2\s*\)/im;
+const scanIndent = raw => { const m = liveLines(raw).match(SCAN_LINE); return m ? m[1].length : null; };
 
 // The standard bug step: Break it takes int() off line 1, so distance holds TEXT and
 // `distance >= 50` stops with TypeError: '>=' not supported between 'str' and 'int'.
@@ -155,34 +154,32 @@ function fixHint(raw, ctx) {
 }
 
 export const INV_CHECKS = {
-  // Step 1 — swap the two numbers: 20 is now checked first, so 30 prints All clear.
+  // Step 1 — change the threshold: 30 >= 20 is True, so 30 now prints All clear.
   inv1: {
     reqs: [
       { hint: 'On line 2, change 50 to 20, so it reads if distance >= 20:', test: raw => hasLine(raw, cond('if', '>=', 20)) },
-      { hint: 'On line 4, change 20 to 50, so it reads elif distance >= 50:', test: raw => hasLine(raw, cond('elif', '>=', 50)) },
     ],
   },
-  // Step 2 — numbers back, then elif → if: two separate ifs, so 85 prints two messages.
+  // Step 2 — indent print("Scan complete") into the else: 85 runs the if block, so it never prints.
   inv2: {
     reqs: [
-      { hint: 'Put the numbers back: line 2 should read if distance >= 50:', test: raw => firstIfNumber(raw) === 50 },
       {
-        hint: raw => hasLine(raw, /^[ \t]*elif\b/m)
-          ? 'Line 4 still says elif — change the word elif to if, so it reads if distance >= 20:'
-          : 'Line 4 should read if distance >= 20: (with 20, not 50)',
-        test: raw => hasLine(raw, cond('if', '>=', 20)) && !hasLine(raw, /^[ \t]*elif\b/m),
+        hint: raw => scanIndent(raw) === null
+          ? 'The Scan complete line has gone. Press ↺ Reset to original, then indent line 6'
+          : 'Put 4 spaces in front of line 6 (the same as line 5), so it reads     print("Scan complete")',
+        test: raw => scanIndent(raw) > 0,
       },
     ],
   },
-  // Step 3 — elif back, then >= → > on line 4: at exactly 20, 20 > 20 is False.
+  // Step 3 — line 6 back to the left edge, then >= → > on line 2: at exactly 20, 20 > 20 is False.
   inv3: {
     reqs: [
-      { hint: 'Change line 4 back to elif, so it starts elif distance', test: raw => hasLine(raw, /^[ \t]*elif\s+distance\b/m) },
+      { hint: 'Move line 6 back to the left edge, with no spaces in front of print("Scan complete")', test: raw => scanIndent(raw) === 0 },
       {
-        hint: raw => hasLine(raw, cond('elif', '>=', 20))
-          ? 'On line 4, change >= to > (delete the =), so it reads elif distance > 20:'
-          : 'Line 4 should read elif distance > 20:',
-        test: raw => hasLine(raw, cond('elif', '>(?!=)', 20)),
+        hint: raw => hasLine(raw, cond('if', '>=', 20))
+          ? 'On line 2, change >= to > (delete the =), so it reads if distance > 20:'
+          : 'Line 2 should read if distance > 20:',
+        test: raw => hasLine(raw, cond('if', '>(?!=)', 20)),
       },
     ],
   },
@@ -206,7 +203,8 @@ export function evalInv(n, raw, ctx = {}) {
 }
 
 // ── Modify checks ─────────────────────────────────────────────────────────────
-// Modify starts from STARTER_CODE again. Every check runs the program once per test below.
+// Modify starts from STARTER_CODE again (the plain if/else). Every check runs the program once
+// per test below.
 
 const SENSOR = {
   clear:  /all\s*clear/i,
@@ -215,6 +213,8 @@ const SENSOR = {
   alert:  /proximity\s*alert/i,
 };
 const ANY_LOCKDOWN = /lockdown/i;
+// Modification 2's middle band: Movement detected, and no lockdown.
+const MIDDLE_OK = o => onlyBand(o, SENSOR, 'move') && !ANY_LOCKDOWN.test(o);
 
 // Modification 1 is a Station Zero choice: which room the sensor locks down when the target is
 // close. The student picks first; the requirement then wants THAT line, inside the else.
@@ -222,20 +222,21 @@ export const LOCKDOWN_CHOICES = { cryo: 'LOCKDOWN: CRYO BAY', sensors: 'LOCKDOWN
 const LOCKDOWN_RE = { cryo: /lockdown[^\w\n]*cryo\s*bay/i, sensors: /lockdown[^\w\n]*sensor\s*ops/i };
 
 // Each entry is a list of test sets; a set is one run per test, in the order the checks expect.
-//   mod1: close (under 20, the else), middle (20–49), far (50 or more) — on the starter's bands
-//   mod2: the new boundary, 60 and 59, every time
-//   mod3: inside the new band (11–19), 10, a middle distance (21–59), 20, 9
+//   mod1: close (under 20, so it stays in the else after Modification 2), far (50 or more)
+//   mod2: far (over 50), 50, 49, a middle distance (21–48), 20, 19 — the new elif band
+//   mod3: inside the new band (11–19), 10, a middle distance (21–48), 20, 9
 //   mod4: a distance under 10 (so the alert follows a lockdown), then y — and again with n
 export const MOD_TEST_BANK = {
   mod1: [
-    [['5'], ['30'], ['85']], [['12'], ['41'], ['70']], [['3'], ['25'], ['150']], [['17'], ['36'], ['55']],
-    [['8'], ['44'], ['99']], [['1'], ['22'], ['63']], [['14'], ['33'], ['120']],
+    [['5'], ['85']], [['12'], ['70']], [['3'], ['150']], [['17'], ['55']],
+    [['8'], ['99']], [['1'], ['63']], [['14'], ['120']],
   ],
-  mod2: [[['60'], ['59']]],
+  mod2: [['85', '30'], ['70', '41'], ['150', '25'], ['55', '36'], ['99', '44'], ['63', '33']]
+    .map(([far, mid]) => [[far], ['50'], ['49'], [mid], ['20'], ['19']]),
   mod3: [
     [['15'], ['10'], ['25'], ['20'], ['9']], [['12'], ['10'], ['45'], ['20'], ['9']],
-    [['18'], ['10'], ['33'], ['20'], ['9']], [['11'], ['10'], ['58'], ['20'], ['9']],
-    [['16'], ['10'], ['27'], ['20'], ['9']], [['13'], ['10'], ['50'], ['20'], ['9']],
+    [['18'], ['10'], ['33'], ['20'], ['9']], [['11'], ['10'], ['48'], ['20'], ['9']],
+    [['16'], ['10'], ['27'], ['20'], ['9']], [['13'], ['10'], ['39'], ['20'], ['9']],
   ],
   mod4: ['5', '2', '7', '0', '8', '3'].map(d => [[d, 'y'], [d, 'n']]),
 };
@@ -252,28 +253,44 @@ export const MOD_CHECKS = {
         test: (raw, outs, c) => !!LOCKDOWN_RE[c]?.test(outs[0]),
       },
       {
-        hint: (c, outs, raw, tests) => `❌ With ${tests[ANY_LOCKDOWN.test(outs[1]) ? 1 : 2][0]} typed, your program locked down too. The lockdown should only happen when the target is close: indent the line so it sits inside the else, under print("IT'S RIGHT BEHIND YOU").`,
-        test: (raw, outs) => !ANY_LOCKDOWN.test(outs[1]) && !ANY_LOCKDOWN.test(outs[2]),
-        show: outs => (ANY_LOCKDOWN.test(outs[1]) ? 1 : 2),
+        hint: (c, outs, raw, tests) => `❌ With ${tests[1][0]} typed, your program locked down too. The lockdown should only happen when the target is close: indent the line so it sits inside the else, under print("IT'S RIGHT BEHIND YOU").`,
+        test: (raw, outs) => !ANY_LOCKDOWN.test(outs[1]),
+        show: 1,
       },
     ],
     passMsg: c => `✅ Lockdown set: when the target is close, the sensor locks down the ${c === 'sensors' ? 'Sensor Ops' : 'Cryo Bay'} door.`,
   },
 
-  // Mod 2 — change a threshold, checked either side of it.
+  // Mod 2 — the first elif (its code is given): a middle band, so 20 to 49 no longer locks down.
   mod2: {
     reqs: [
       {
-        hint: (c, outs) => `❌ With 60 typed, the sensor should say All clear, but ${saidLine(outs[0])}. Change the number in the first condition (line 2) to 60, keeping >=`,
-        test: (raw, outs) => onlyBand(outs[0], SENSOR, 'clear'),
+        hint: (c, outs, raw, tests) => {
+          const i = firstFail(outs, [2, 3, 4], MIDDLE_OK);
+          if (onlyBand(outs[i], SENSOR, 'move'))
+            return `❌ With ${tests[i][0]} typed, your program said Movement detected, but locked down too. Keep the lockdown line in the else, under print("IT'S RIGHT BEHIND YOU")`;
+          return SENSOR.behind.test(outs[i])
+            ? `❌ With ${tests[i][0]} typed, the sensor should say Movement detected, but ${saidLine(outs[i])}. Add the two new lines between the All clear block and else:`
+            : `❌ With ${tests[i][0]} typed, the sensor should say Movement detected, but ${saidLine(outs[i])}.`;
+        },
+        test: (raw, outs) => [2, 3, 4].every(i => MIDDLE_OK(outs[i] || '')),
+        show: outs => firstFail(outs, [2, 3, 4], MIDDLE_OK),
       },
       {
-        hint: (c, outs) => `❌ With 59 typed, the sensor should say Movement detected, but ${saidLine(outs[1])}. 59 is less than 60, so it isn't all clear.`,
-        test: (raw, outs) => onlyBand(outs[1], SENSOR, 'move'),
-        show: 1,
+        hint: (c, outs, raw, tests) => {
+          const i = firstFail(outs, [0, 1], o => onlyBand(o, SENSOR, 'clear'));
+          return `❌ With ${tests[i][0]} typed, the sensor should still say All clear, but ${saidLine(outs[i])}. The elif goes after the if block, so line 2 is still checked first.`;
+        },
+        test: (raw, outs) => onlyBand(outs[0], SENSOR, 'clear') && onlyBand(outs[1], SENSOR, 'clear'),
+        show: outs => firstFail(outs, [0, 1], o => onlyBand(o, SENSOR, 'clear')),
+      },
+      {
+        hint: (c, outs) => `❌ With 19 typed, the sensor should still say IT'S RIGHT BEHIND YOU, but ${saidLine(outs[5])}. The new band starts at 20, so 19 belongs to the else.`,
+        test: (raw, outs) => onlyBand(outs[5], SENSOR, 'behind'),
+        show: 5,
       },
     ],
-    passMsg: '✅ Recalibrated: 60 is all clear, and 59 is movement detected.',
+    passMsg: '✅ Three bands: 50 or more is all clear, 20 to 49 is movement, and only under 20 locks down.',
   },
 
   // Mod 3 — a new band in the right place (no code given; the hints give none either).

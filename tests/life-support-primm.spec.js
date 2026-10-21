@@ -289,14 +289,14 @@ test('the first report recaps the last chapter, using the default when Wake Up w
 // Hale's story is told in Wake Up, so a student who didn't finish it gets it from the recap.
 test('the recap tells Hale’s story, which this chapter no longer does', async ({ page }) => {
   await openAt(page, {}, { story: true });
-  await expect(page.locator('#szPrevFull')).toContainText('Hale died three days ago');
-  await expect(page.locator('#szPrevFull')).toContainText('not human');
+  await expect(page.locator('#szPrevFull')).toContainText('Hale died with something from the planet');
+  await expect(page.locator('#szPrevFull')).toContainText('isn’t human');
 });
 
 test('the recap follows the door choice', async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem('sz_choices', JSON.stringify({ door: 'open' })));
   await openAt(page, {}, { story: true });
-  await expect(page.locator('#szPrevFull')).toContainText('something slipped in');
+  await expect(page.locator('#szPrevFull')).toContainText('Something slipped into the Cryo Bay');
 });
 
 test('a report that was never closed shows again after a reload', async ({ page }) => {
@@ -323,7 +323,7 @@ test('on another computer, the choices come back from Drive before the first rep
   await openAt(page, {}, { story: true });
   await expect(page.locator('#szOverlay')).toHaveClass(/open/);
   await expect(page.locator('#szReadouts')).toContainText('29%');
-  await expect(page.locator('#szPrevFull')).toContainText('something slipped in');
+  await expect(page.locator('#szPrevFull')).toContainText('Something slipped into the Cryo Bay');
   // stored on this computer too; a value that isn't a valid choice is dropped
   const local = await page.evaluate(() => JSON.parse(localStorage.getItem('sz_choices')));
   expect(local.door).toBe('open');
@@ -336,7 +336,7 @@ test('the most recent choice wins, and a choice Drive is missing is sent to it',
   await page.addInitScript(() => localStorage.setItem('sz_choices',
     JSON.stringify({ door: 'sealed', air: 'low', _at: { door: 50, air: 200 } })));
   await openAt(page, {}, { story: true });
-  await expect(page.locator('#szPrevFull')).toContainText('something slipped in');   // Drive's door is newer
+  await expect(page.locator('#szPrevFull')).toContainText('Something slipped into the Cryo Bay');   // Drive's door is newer
   await expect.poll(() => page.evaluate(() => window.__uploads.length)).toBeGreaterThan(0);
   const up = await page.evaluate(() => window.__uploads.at(-1));
   expect(up.name).toBe('Station Zero');

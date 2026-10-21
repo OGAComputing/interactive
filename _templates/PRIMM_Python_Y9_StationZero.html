@@ -767,17 +767,9 @@ color:  blue
   .sz-live-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; box-shadow: 0 0 6px currentColor; animation: sz-blink 1.6s ease-in-out infinite; }
   @keyframes sz-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
   .sz-clock { font-size: 0.76rem; color: var(--crt-dim); letter-spacing: 0.12em; margin-left: auto; text-transform: uppercase; }
-  /* No close button up here: a student who closed the report from the top would never
-     scroll down to the story. "Jump to story" skips the typing and scrolls to the log,
-     and hides itself once the log is in view; Continue (under the story) is the way out. */
-  .sz-jump {
-    min-height: 44px; padding: 0.45rem 0.9rem; border-radius: 6px; border: 1px solid var(--crt-faint); background: transparent;
-    color: var(--crt); font-family: var(--hud-font); font-size: 0.78rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
-    text-shadow: var(--crt-glow); cursor: pointer; flex-shrink: 0; position: relative; z-index: 2;
-  }
-  .sz-jump[hidden] { display: none; }
-  .sz-jump:hover { background: rgba(92,255,143,0.1); border-color: var(--crt); }
-  .sz-jump:focus-visible, .sz-continue:focus-visible { outline: 2px solid var(--crt); outline-offset: 3px; }
+  /* No close button: the story opens the report (over its still), and Continue, at the
+     foot under the live feed and the map, is the way out. */
+  .sz-continue:focus-visible { outline: 2px solid var(--crt); outline-offset: 3px; }
   .sz-title {
     font-size: 1.45rem; font-weight: 700; color: var(--crt);
     text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.9rem; line-height: 1.25; min-height: 1.25em;
@@ -785,20 +777,63 @@ color:  blue
   .sz-title-typed::before { content: '> '; color: var(--crt-dim); }
   .sz-panel.is-threat .sz-title { text-shadow: var(--crt-glow), 2px 0 rgba(255,107,120,0.45), -2px 0 rgba(92,255,143,0.25); }
 
+  /* ── Opening still: every report opens on a picture of its scene (beat field cam). It
+     holds at full brightness for a moment, dims, and the story types in over it in
+     phosphor green, so each report looks different from the one before. A beat with no
+     picture yet (src '') keeps the layout on a dark phosphor screen and types straight
+     away. Map re-opens, reduced motion and a click/key show the dimmed final frame. ── */
+  .sz-hero {
+    position: relative; isolation: isolate; display: flex; flex-direction: column; justify-content: flex-end;
+    margin: 0 -1.4rem 1rem; aspect-ratio: 16 / 9; overflow: hidden;
+    border-block: 1px solid var(--crt-faint);
+    background: radial-gradient(ellipse at 50% 30%, #062012 0%, #010402 75%);
+  }
+  .sz-hero.no-cam { aspect-ratio: auto; }
+  .sz-cam { position: absolute; inset: 0; z-index: -2; margin: 0; overflow: hidden; background: #020704; }
+  .sz-cam[hidden] { display: none; }
+  .sz-cam img {
+    display: block; width: 100%; height: 100%; object-fit: cover; transform-origin: 50% 40%;
+    filter: saturate(0.75) contrast(1.08) brightness(0.34);
+  }
+  .sz-cam::before { content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none; background: repeating-linear-gradient(0deg, rgba(0,0,0,0.22) 0 1px, transparent 1px 3px); box-shadow: inset 0 0 60px rgba(0,0,0,0.8); }
+  .sz-cam figcaption { position: absolute; z-index: 2; left: 1.4rem; top: 0.6rem; right: 1.4rem; display: flex; justify-content: space-between; gap: 1rem; font: 700 0.72rem/1.2 ui-monospace, Consolas, monospace; letter-spacing: 0.08em; text-transform: uppercase; color: var(--crt); text-shadow: 0 0 4px #000, 0 0 2px #000; }
+  .sz-cam figcaption .rec::before { content: ''; display: inline-block; width: 0.55em; height: 0.55em; margin-right: 0.4em; border-radius: 50%; background: #ff4d5e; animation: crew-blink 1.6s steps(1) infinite; }
+  /* a shade behind the text, so the story reads over any picture */
+  .sz-hero::after {
+    content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+    background: linear-gradient(180deg, rgba(1,5,2,0) 18%, rgba(1,5,2,0.7) 58%, rgba(1,5,2,0.9) 100%);
+  }
+  .sz-hero.no-cam::after { display: none; }
+  /* .pending: the picture is still decoding, so the hold has not started */
+  .sz-hero.pending .sz-cam img, .sz-hero.pending .sz-story { opacity: 0; }
+  .sz-story { padding: 4.5rem 1.4rem 1.1rem; text-shadow: 0 1px 3px rgba(0,0,0,0.95), var(--crt-glow); }
+  .sz-hero .sz-title { font-size: 1.7rem; }
+  .sz-hero .sz-prev { background: rgba(2,10,4,0.6); }
+  .sz-hero .sz-quote { background: rgba(24,4,8,0.6); }
+  /* .reveal (set by open()) plays the hold-and-dim; --still is its length */
+  .sz-hero.reveal .sz-cam img { animation: sz-still-in var(--still, 2.6s) ease-in-out both, sz-still-drift 30s linear both; }
+  .sz-hero.reveal::after { animation: sz-shade-in var(--still, 2.6s) ease-in both; }
+  /* the story's empty lines (their > prompts) stay hidden until the still has dimmed */
+  .sz-hero.reveal .sz-story { animation: sz-shade-in var(--still, 2.6s) step-end both; }
+  .sz-hero.done .sz-cam img { animation-delay: 0s, 0s !important; animation-duration: 0s, 30s !important; }
+  .sz-hero.done::after, .sz-hero.done .sz-story { animation-delay: 0s !important; animation-duration: 0s !important; }
+  @keyframes sz-still-in {
+    0%   { opacity: 0; filter: saturate(0.75) contrast(1.08) brightness(1.7); }
+    12%  { opacity: 1; filter: saturate(0.9) contrast(1.08) brightness(1.2); }
+    62%  { filter: saturate(0.9) contrast(1.08) brightness(1.2); }
+    100% { filter: saturate(0.75) contrast(1.08) brightness(0.34); }
+  }
+  @keyframes sz-still-drift { from { transform: scale(1.06); } to { transform: none; } }
+  @keyframes sz-shade-in { 0%, 58% { opacity: 0; } 100% { opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) {
+    .sz-hero .sz-cam img, .sz-hero::after, .sz-hero .sz-story, .sz-cam figcaption .rec::before { animation: none !important; }
+  }
+
   /* ── Station map (SVG drawn by the story script from ROOMS) ──
      A top-down illustration: WARDEN's core at the hub, the rooms as modules round a
      ring corridor, maintenance ducts on an inner ring, solar wing, docking arm,
      starfield and planet. Rooms keep their state colours AND a status word.
      All lettering is terminal phosphor and types itself in with the rest of the report. */
-  /* security-camera still: a generated picture of the scene, shown under the live feed */
-  .sz-cam { position: relative; margin: 0 0 0.9rem; border: 1px solid var(--crt-faint); border-radius: 8px; overflow: hidden; background: #020704; aspect-ratio: 16 / 9; animation: sz-cam-in 0.6s ease-out both; }
-  .sz-cam[hidden] { display: none; }
-  .sz-cam img { display: block; width: 100%; height: 100%; object-fit: cover; filter: saturate(0.75) contrast(1.08) brightness(0.92); }
-  .sz-cam::before { content: ''; position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(0deg, rgba(0,0,0,0.22) 0 1px, transparent 1px 3px); box-shadow: inset 0 0 40px rgba(0,0,0,0.75); }
-  .sz-cam figcaption { position: absolute; left: 0.6rem; top: 0.45rem; right: 0.6rem; display: flex; justify-content: space-between; gap: 1rem; font: 700 0.72rem/1.2 ui-monospace, Consolas, monospace; letter-spacing: 0.08em; text-transform: uppercase; color: var(--crt); text-shadow: 0 0 4px #000, 0 0 2px #000; }
-  .sz-cam figcaption .rec::before { content: ''; display: inline-block; width: 0.55em; height: 0.55em; margin-right: 0.4em; border-radius: 50%; background: #ff4d5e; animation: crew-blink 1.6s steps(1) infinite; }
-  @keyframes sz-cam-in { from { opacity: 0; filter: brightness(2.2); } to { opacity: 1; filter: none; } }
-  @media (prefers-reduced-motion: reduce) { .sz-cam, .sz-cam figcaption .rec::before { animation: none; } }
   .sz-map { background: #020704; border: 1px solid var(--crt-faint); border-radius: 8px; overflow: hidden; }
   .sz-map svg { display: block; width: 100%; height: auto; }
   .sz-map text { font-family: var(--hud-font); filter: drop-shadow(0 0 2px rgba(92,255,143,0.65)); }
@@ -884,9 +919,11 @@ color:  blue
     border-left: 3px solid var(--crt-faint); background: rgba(92,255,143,0.04); border-radius: 0 6px 6px 0;
   }
   .sz-prev-tag {
-    display: inline-block; margin-right: 0.6rem; font-size: 0.7rem; letter-spacing: 0.12em;
+    display: block; margin-bottom: 0.15rem; font-size: 0.7rem; letter-spacing: 0.12em;
     text-transform: uppercase; color: var(--crt-dim); font-weight: 700;
   }
+  .sz-prev-li { display: block; padding-left: 1.1em; text-indent: -1.1em; }
+  .sz-prev-li::before { content: '▸'; display: inline-block; width: 1.1em; text-indent: 0; }
   /* ── Log text + optional crew log ── */
   .sz-log {
     font-size: 1.02rem; line-height: 1.7; color: var(--crt); margin-top: 1rem;
@@ -956,7 +993,10 @@ color:  blue
     .sz-header-right { margin-left: 0; width: 100%; }
     .sz-objective { flex: 1; max-width: none; }
     .sz-panel { padding: 0.9rem 1rem 1.1rem; }
-    .sz-title { font-size: 1.15rem; }
+    .sz-title, .sz-hero .sz-title { font-size: 1.15rem; }
+    .sz-hero { margin: 0 -1rem 0.9rem; }
+    .sz-story { padding: 3rem 1rem 0.9rem; }
+    .sz-cam figcaption { left: 1rem; right: 1rem; }
     .sz-map, .sz-legend, .sz-skip-hint { display: none; }
     .sz-head { flex-wrap: wrap; }
     .sz-roomlist { display: grid; }
@@ -1859,11 +1899,16 @@ color:  blue
     <div class="sz-head">
       <div class="sz-kicker"><span class="sz-live-dot" aria-hidden="true"></span><span id="szKicker">Situation report</span></div>
       <div class="sz-clock" id="szClock"></div>
-      <button class="sz-jump" id="szJump" type="button" hidden>Jump to story ↓</button>
     </div>
-    <h2 class="sz-title" id="szTitle"><span class="sr-only" id="szTitleFull"></span><span class="sz-title-typed" aria-hidden="true" id="szTitleTyped"></span></h2>
-    <p class="sz-prev" id="szPrev" hidden><span class="sz-prev-tag">Previously</span><span class="sr-only" id="szPrevFull"></span><span aria-hidden="true" id="szPrevTyped"></span></p>
-    <figure class="sz-cam" id="szCam" hidden><img id="szCamImg" alt="" width="800" height="450" decoding="async"><figcaption aria-hidden="true"><span id="szCamLabel"></span><span class="rec">Rec</span></figcaption></figure>
+    <div class="sz-hero no-cam" id="szHero">
+      <figure class="sz-cam" id="szCam" hidden><img id="szCamImg" alt="" width="960" height="540" decoding="async"><figcaption aria-hidden="true"><span id="szCamLabel"></span><span class="rec">Rec</span></figcaption></figure>
+      <div class="sz-story">
+        <h2 class="sz-title" id="szTitle"><span class="sr-only" id="szTitleFull"></span><span class="sz-title-typed" aria-hidden="true" id="szTitleTyped"></span></h2>
+        <p class="sz-prev" id="szPrev" hidden><span class="sz-prev-tag">Previously</span><span class="sr-only" id="szPrevFull"></span><span aria-hidden="true" id="szPrevTyped"></span></p>
+        <p class="sz-log" id="szLog"><span class="prompt" aria-hidden="true">&gt;</span><span class="sr-only" id="szLogFull"></span><span aria-hidden="true" id="szLogTyped"></span></p>
+        <blockquote class="sz-quote" id="szQuote" hidden><p id="szQuoteText"></p><cite id="szQuoteWho"></cite></blockquote>
+      </div>
+    </div>
     <div class="sz-map" id="szMap"></div>
     <div class="sz-legend" aria-hidden="true">
       <span><i class="k-you"></i>You</span>
@@ -1872,8 +1917,6 @@ color:  blue
     </div>
     <ul class="sz-roomlist" id="szRoomList" aria-label="Station rooms"></ul>
     <div class="sz-readouts" id="szReadouts"></div>
-    <p class="sz-log" id="szLog"><span class="prompt" aria-hidden="true">&gt;</span><span class="sr-only" id="szLogFull"></span><span aria-hidden="true" id="szLogTyped"></span></p>
-    <blockquote class="sz-quote" id="szQuote" hidden><p id="szQuoteText"></p><cite id="szQuoteWho"></cite></blockquote>
     <div class="sz-foot"><span class="sz-skip-hint" id="szSkipHint" aria-hidden="true" hidden>Click or press any key to skip</span><button class="btn sz-continue" id="szContinue" type="button">Continue →</button></div>
   </div>
 </div>
@@ -1925,8 +1968,11 @@ color:  blue
      Room ids: cryo, life, sensors, airlock, core, drone, nav, ducts
      Readout level: 'ok' | 'warn' | 'danger'
      Optional per beat: quote: { who, text } (a recovered crew log), cta (button text)
-     Optional per beat: cam — a key of CAMS: a security-camera still of the scene, shown
-       above the map (after the live feed, if there is one), on map re-opens too.
+     Every beat: cam — a key of CAMS: the picture the report opens on. It shows at full
+       brightness, dims, and the headline and story type in over it (on map re-opens too,
+       already dimmed). Give each beat its own picture, so no two reports look alike; a variant
+       can swap in its own cam. Until a picture is added (src ''), the story types in on a dark
+       screen instead. To add one: python _drafts/story/add_still.py <page> <key> <image>.
      Optional: crew(choices, seen) — what the header's crew readout shows. Return null while
        the crew is unknown (only your own vitals show), or { pod: status } for the pods that
        differ from the start of the story (Hale dead, everyone else stable). Statuses:
@@ -1936,7 +1982,7 @@ color:  blue
        seen = the reports already closed, so gate each change on the report that reveals it.
      Optional beat I1 (from Lesson 2) — the crisis report: plays when Investigate step 1 passes
        (or is skipped), straight after the crisis choice (CRISIS in the module) is stored. Keep it
-       short: 2 sentences, a stake readout and one other line, no impact, no cam.
+       short: 2 sentences, a stake readout and one other line, no impact.
      Stake readout (from Lesson 2) — whoever the crisis put in danger gets an ordinary readout
        line on I1 and every later report, worse each time until M2 settles it, e.g.
        { label: 'Pod 3 · Chen', value: '34 bpm · falling', level: 'danger' } → '29 bpm' → …
@@ -1946,13 +1992,20 @@ color:  blue
        for the whole unit in localStorage 'sz_choices', and in their Drive when signed in).
          variant:  choices => the name of one of the variants (handle a missing choice)
          variants: { name: { …beat fields } } — they replace the beat's own fields
-     Optional on the intro beat: previously — a 1–2 sentence "Previously…" recap of the
-       chapters before, so a student who missed a lesson (or the week) can follow. Use
-       variants to make it follow the student's choices.
+     Optional on the intro beat: previously — a "Previously…" recap of the chapters before, so
+       a student who missed a lesson (or the week) can follow: an array of one or two short
+       bullets (one sentence each; long recaps put students off reading). Use variants to make
+       it follow the student's choices.
      ═══════════════════════════════════════════════════════════════════════ */
-  // Security-camera stills for the reports (beat field cam): { key: { label, alt, src } },
-  // src an inlined ~800×450 WebP data URI (keep the generated source in _drafts/story/).
-  const CAMS = {};
+  // FILL IN Ⓢ — the stills each report opens on (beat field cam): { key: { label, alt, src } }.
+  // One per beat. Write the entry with src '' and the beat's cam, then generate the picture
+  // (prompts in _drafts/story/PROMPTS.md, saved in _drafts/story/) and inline it as a 16:9 WebP:
+  //   python _drafts/story/add_still.py <this page> <key> <image>
+  // Until then the report types its story on a dark screen instead.
+  const CAMS = {
+    // frost: { label: 'Cam 04 · Cryo Bay', alt: 'Pod 2’s glass, with RUN written in the frost.',
+    //          src: '' },
+  };
   const STORY = {
     chapter:   'Chapter 1 — Wake Up',
     topic:     'Input refresh',
@@ -2272,6 +2325,9 @@ color:  blue
     for (const g of tw.groups) for (const it of g.items) it.el.textContent = it.text;
     $('szPanel').querySelectorAll('.tw-active').forEach(e => e.classList.remove('tw-active'));
     tw.idleEl?.classList.add('tw-idle');
+    stillRun++;   // cancels a hold still waiting to start
+    $('szHero').classList.remove('pending');
+    $('szHero').classList.add('done');
     $('szSkipHint').hidden = true;
     tw = null;
   }
@@ -2279,8 +2335,8 @@ color:  blue
     if (tw) { clearInterval(tw.timer); tw = null; }
     $('szPanel').querySelectorAll('.tw-active, .tw-idle').forEach(e => e.classList.remove('tw-active', 'tw-idle'));
     groups = groups
-      .map(g => ({ cps: g.cps || 2, items: g.items.filter(Boolean).map(el => ({ el, text: el.textContent })) }))
-      .filter(g => g.items.length);
+      .map(g => ({ cps: g.cps || 2, wait: g.wait || 0, ready: g.ready, start: g.start, items: (g.items || []).filter(Boolean).map(el => ({ el, text: el.textContent })) }))
+      .filter(g => g.items.length || g.wait);
     tw = { groups, idleEl, timer: null };
     if (instant || reduceMotion) { finishTyping(); return; }
     for (const g of groups) for (const it of g.items) it.el.textContent = '';
@@ -2288,6 +2344,13 @@ color:  blue
     let gi = 0, pos = 0, cursorEl = null;
     tw.timer = setInterval(() => {
       const g = groups[gi];
+      if (g.wait) {   // a pause (the opening still) before the next group types
+        if (g.ready && !g.ready()) return;
+        if (!pos) g.start?.();
+        pos += 16;
+        if (pos >= g.wait) { gi++; pos = 0; if (gi >= groups.length) finishTyping(); }
+        return;
+      }
       pos += g.cps;
       let busy = null;
       for (const it of g.items) {
@@ -2305,6 +2368,34 @@ color:  blue
   let returnFocus = null;
   let onCloseCb = null;
 
+  // The hold is played frame by frame, counting at most 50 ms a frame: a chapter's first report
+  // opens while the page is still loading (Python starting up), and a CSS timeline would run on
+  // through those stalls, so the hold would be over before anyone saw it. It starts once the
+  // picture is decoded, and sets .held when it ends (the story waits for that).
+  const HOLD_ANIMS = ['sz-still-in', 'sz-shade-in'];
+  let stillRun = 0;
+  function startStill(hero) {
+    const run = ++stillRun;
+    $('szCamImg').decode().catch(() => {}).then(() => {
+      if (run !== stillRun) return;
+      hero.classList.remove('pending');
+      hero.classList.add('reveal');
+      const anims = hero.getAnimations({ subtree: true }).filter(a => HOLD_ANIMS.includes(a.animationName));
+      anims.forEach(a => a.pause());
+      let t = 0, last = performance.now();
+      requestAnimationFrame(function tick(now) {
+        if (run !== stillRun) return;
+        t = Math.min(STILL_MS, t + Math.min(now - last, 50));
+        last = now;
+        anims.forEach(a => { a.currentTime = t; });
+        if (t < STILL_MS) requestAnimationFrame(tick); else hero.classList.add('held');
+      });
+    });
+  }
+
+  // the opening still shows for this long (full brightness, then dimming) before the story types
+  const STILL_MS = 2600;
+
   function open(key, { review = false, onClose = null } = {}) {
     const b = resolve(STORY.beats[key]);
     if (!b) { onClose?.(); return; }
@@ -2316,16 +2407,26 @@ color:  blue
     $('szKicker').textContent = map.threat ? 'Warning · motion detected' : (key === 'intro' ? 'Station Zero · emergency wake' : 'Situation report');
     $('szClock').textContent = b.time ? 'Station time ' + b.time : '';
     $('szTitleFull').textContent = $('szTitleTyped').textContent = b.headline || '';
-    const cam = CAMS[b.cam];
+    // the opening still holds at full brightness, dims, then the story types in over it;
+    // a beat whose picture isn't added yet (src '') types in straight away
+    const cam = CAMS[b.cam]?.src ? CAMS[b.cam] : null;
     $('szCam').hidden = !cam;
     if (cam) $('szCamImg').src = cam.src; else $('szCamImg').removeAttribute('src');   // src = '' would load the page itself and fire an img error
     $('szCamImg').alt = cam ? cam.alt : '';
     $('szCamLabel').textContent = cam ? cam.label : '';
+    const hero = $('szHero'), hold = cam && !review && !reduceMotion ? STILL_MS : 0;
+    hero.classList.toggle('no-cam', !cam);
+    hero.classList.remove('reveal', 'done', 'pending', 'held');
+    hero.style.setProperty('--still', STILL_MS + 'ms');
+    if (hold) { hero.classList.add('pending'); startStill(hero); }
     $('szMap').innerHTML = renderMap(map);
     $('szRoomList').innerHTML = renderRoomList(map);
     $('szReadouts').innerHTML = renderReadouts(b.readouts);
-    $('szPrev').hidden = !b.previously;
-    $('szPrevFull').textContent = $('szPrevTyped').textContent = b.previously || '';
+    // the recap is one or two short bullets (a string is one bullet)
+    const prev = [].concat(b.previously || []);
+    $('szPrev').hidden = !prev.length;
+    $('szPrevFull').textContent = prev.join(' ');
+    $('szPrevTyped').innerHTML = prev.map(t => `<span class="sz-prev-li">${esc(t)}</span>`).join('');
     $('szLogFull').textContent = $('szLogTyped').textContent = b.log || '';
     const q = $('szQuote');
     q.hidden = !b.quote;
@@ -2342,30 +2443,17 @@ color:  blue
     const rows = [...$('szReadouts').children];
     typeSequence([
       { cps: 3, items: [$('szKicker'), $('szClock')] },
+      ...(hold ? [{ wait: 16, ready: () => hero.classList.contains('held') }] : []),
       { cps: 2, items: [$('szTitleTyped')] },
-      ...(b.previously ? [{ cps: 2, items: [$('szPrevTyped')] }] : []),
-      { cps: 1, items: [...$('szMap').querySelectorAll('text')] },
-      ...rows.map(row => ({ cps: 3, items: [...row.querySelectorAll('[data-tw]')] })),
+      ...[...$('szPrevTyped').children].map(li => ({ cps: 2, items: [li] })),
       { cps: 2, items: [$('szLogTyped')] },
       ...(b.quote ? [{ cps: 2, items: [$('szQuoteText')] }, { cps: 3, items: [$('szQuoteWho')] }] : []),
+      { cps: 1, items: [...$('szMap').querySelectorAll('text')] },
+      ...rows.map(row => ({ cps: 3, items: [...row.querySelectorAll('[data-tw]')] })),
     ], b.quote ? $('szQuoteText') : $('szLogTyped'), review);
-    // focus Continue without scrolling to it — a tall report must open at the top
+    // focus Continue without scrolling to it — a report must open at the top, on its still
     $('szContinue').focus({ preventScroll: true });
     $('szPanel').scrollTop = 0;
-    updateJump();
-  }
-
-  // "Jump to story" shows only while the end of the story is below the fold
-  function updateJump() {
-    const p = $('szPanel'), end = $('szQuote').hidden ? $('szLog') : $('szQuote');
-    // layout offsets, not screen boxes: the power-on flicker scales the panel as it opens
-    $('szJump').hidden = end.offsetTop + end.offsetHeight <= p.scrollTop + p.clientHeight + 4;
-  }
-  function jumpToStory() {
-    finishTyping();
-    const p = $('szPanel');
-    p.scrollTo({ top: p.scrollHeight, behavior: reduceMotion ? 'auto' : 'smooth' });
-    $('szContinue').focus({ preventScroll: true });
   }
 
   function close() {
@@ -2389,9 +2477,6 @@ color:  blue
 
   document.addEventListener('DOMContentLoaded', () => {
     $('szContinue').addEventListener('click', close);
-    $('szJump').addEventListener('click', jumpToStory);
-    $('szPanel').addEventListener('scroll', updateJump, { passive: true });
-    window.addEventListener('resize', () => { if ($('szOverlay').classList.contains('open')) updateJump(); });
     // a click anywhere on the screen (except its buttons) shows the whole report at once
     $('szPanel').addEventListener('click', e => { if (!e.target.closest('button')) finishTyping(); });
     $('szOverlay').addEventListener('keydown', e => {

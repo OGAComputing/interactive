@@ -78,6 +78,7 @@ Everything in the Y8 Unit 1 plan still applies: PRIMM, reading before writing (L
 - **Modify:** change a message, then change a threshold, then add a "Merit" band in the right place, then add a string comparison (`if receipt == "y":`).
 - **Make:** "ride checker" or "ticket price by age band" (child / teen / adult / senior). The checker runs it against boundary inputs and accepts any correct ordering.
 - **Misconceptions to name:** only the first true branch runs; `else` has no condition; condition order matters when conditions overlap.
+- **Revised 2026-10-21 (Proximity, as built):** `elif` was too hard for the first stage, so Predict, Run and Investigate now use one plain `if`/`else` sensor program (`>= 50` → All clear, else IT'S RIGHT BEHIND YOU). Predict: 30, Scan complete, 85, exactly 50, 49. Run: 85, 50, 5. Investigate: change 50 → 20, indent `Scan complete` into the `else`, `>=` → `>` at 20, then the `int()` bug step. `elif` first appears in **Modification 2**: the sensor locks down for anything under 50, so the student adds the worked `elif distance >= 20:` middle band (code given, with the "How elif works" card). Mod 3 (Proximity alert 10–19, no code) and Mod 4 (`== "y"`) follow. The old "recalibrate to 60" modification was dropped to make room.
 
 ## Lesson 3 — Condition-controlled iteration: `while`
 
@@ -286,7 +287,7 @@ Where a lesson's choice 1 has no safe option (L3), the tiers become *recovered* 
 | **Bait** | Something has to draw the creature away. Pick what: the crew's heat or yours. | L7 |
 | *Spares* | **Lose a system:** the storm burns out one of two systems, and the lost one removes an option later (lost cameras → the nest is harder to find). **The voice:** a crew member calls for help over the intercom; go, or don't. (Only fair if the report gives a clue, such as no heartbeat on the readout, so it can be reasoned out and isn't a gotcha.) | If one of the above doesn't land |
 
-**Missed lessons.** Every lesson's first report from L2 on (and Life Support's) opens with a **"Previously…"** recap (1–2 sentences) built from the student's choices, or from the defaults. A student who missed a lesson gets the story so far without having seen it. Each recap should name who is alive, critical or dead, plus anything the next choices depend on (e.g. L7's recap must say whether WARDEN still controls the airlock and whether the nest was found).
+**Missed lessons.** Every lesson's first report from L2 on (and Life Support's) opens with a **"Previously…"** recap (one or two short bullets, one sentence each; longer recaps put students off reading) built from the student's choices, or from the defaults. A student who missed a lesson gets the story so far without having seen it. Each recap should name who is alive, critical or dead, plus anything the next choices depend on (e.g. L7's recap must say whether WARDEN still controls the airlock and whether the nest was found).
 
 #### L1 (built)
 
