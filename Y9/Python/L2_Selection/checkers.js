@@ -106,6 +106,19 @@ const hasLine = (raw, re) => re.test(normalise(raw));
 // code, since normalise() empties strings.
 const SCAN_LINE = /^([ \t]*)print\s*\(\s*(["'])scan complete\2\s*\)/im;
 const scanIndent = raw => { const m = liveLines(raw).match(SCAN_LINE); return m ? m[1].length : null; };
+const indentOf = line => line.match(/^[ \t]*/)[0].replace(/\t/g, '    ').length;
+const leadOf   = line => line.match(/^[ \t]*/)[0];   // the exact whitespace — Python won't match a Tab with 4 spaces
+
+// Step 2: where print("Scan complete") sits next to the else block. scan / body are raw lines
+// (body = the first line inside the else, print("IT'S RIGHT BEHIND YOU") in the starter);
+// above = Scan complete has been moved above the else. null if either line has gone.
+function scanGeometry(raw) {
+  const lines = raw.split('\n').filter(l => l.trim() && !/^\s*#/.test(l));
+  const scanIdx = lines.findIndex(l => SCAN_LINE.test(l));
+  const elseIdx = lines.findIndex(l => /^\s*else\s*:/.test(l));
+  if (scanIdx === -1 || elseIdx === -1 || elseIdx + 1 >= lines.length) return null;
+  return { scan: lines[scanIdx], body: lines[elseIdx + 1], above: scanIdx < elseIdx };
+}
 
 // The standard bug step: Break it takes int() off line 1, so distance holds TEXT and
 // `distance >= 50` stops with TypeError: '>=' not supported between 'str' and 'int'.
@@ -160,14 +173,33 @@ export const INV_CHECKS = {
       { hint: 'On line 2, change 50 to 20, so it reads if distance >= 20:', test: raw => hasLine(raw, cond('if', '>=', 20)) },
     ],
   },
-  // Step 2 — indent print("Scan complete") into the else: 85 runs the if block, so it never prints.
+  // Step 2 — indent print("Scan complete") into the else: 85 runs the if block, so it never
+  // prints; 10 runs the else, so it does. Indentation is where students get stuck, so the one
+  // change is two bullets that tick live (press Tab → lines up with line 5), and each hint
+  // names the exact problem (2 spaces not 4, a Tab character mixed with spaces …).
   inv2: {
     reqs: [
       {
-        hint: raw => scanIndent(raw) === null
-          ? 'The Scan complete line has gone. Press ↺ Reset to original, then indent line 6'
-          : 'Put 4 spaces in front of line 6 (the same as line 5), so it reads     print("Scan complete")',
+        hint: raw => {
+          if (scanIndent(raw) === null) return 'The Scan complete line has gone. Press ↺ Reset to original, then try again';
+          if (scanGeometry(raw)?.above) return 'Keep print("Scan complete") as the last line. Press ↺ Reset to original, then try again';
+          return 'Click at the very start of line 6, just before print("Scan complete"), and press Tab once';
+        },
         test: raw => scanIndent(raw) > 0,
+      },
+      {
+        hint: raw => {
+          const g = scanGeometry(raw);
+          if (!g) return 'Keep the else: from the starting code, with print("IT\'S RIGHT BEHIND YOU") under it';
+          const have = indentOf(g.scan), want = indentOf(g.body);
+          if (have === 0) return 'Once line 6 has spaces in front, check it lines up with print("IT\'S RIGHT BEHIND YOU") above it';
+          if (have === want) return 'Line 6 mixes a Tab character with spaces, which Python can\'t match up. Delete the gap at the start of the line and press Tab once';
+          if (have < want) return `Line 6 has ${have} space${have === 1 ? '' : 's'} in front; line 5 has ${want}. They must match exactly: click at the start of line 6 and add ${want - have} more`;
+          return `Line 6 has ${have} spaces in front; line 5 has ${want}. Too many: click at the start of line 6 and press Shift+Tab to take 4 away`;
+        },
+        test: raw => { const g = scanGeometry(raw); return !!g && !g.above && leadOf(g.scan) === leadOf(g.body); },
+        // indented, but its spaces don't match the line above
+        wrong: raw => { const g = scanGeometry(raw); return !!g && !g.above && indentOf(g.scan) > 0 && leadOf(g.scan) !== leadOf(g.body); },
       },
     ],
   },
@@ -193,13 +225,17 @@ export const INV_CHECKS = {
 };
 
 // Runs every req for Investigate step n (1-based). ctx fields default to "nothing done".
+// A req may also have wrong(raw, ctx): true when the student has made a definite MISTAKE on
+// that bullet (not just "not done yet"). The page shows those as live red crosses, and
+// wrongMsg is the first such bullet's hint, so the live coach names the mistake first.
 export function evalInv(n, raw, ctx = {}) {
   const c = { breaks: 0, fixes: 0, lastRun: null, ...ctx };
   const reqs = INV_CHECKS['inv' + n]?.reqs || [];
   const results = reqs.map(r => !!r.test(raw, c));
+  const wrongs = reqs.map((r, i) => !results[i] && !!r.wrong?.(raw, c));
+  const resolve = i => { const h = i === -1 ? null : reqs[i].hint; return typeof h === 'function' ? h(raw, c) : h; };
   const bad = results.findIndex(r => !r);
-  const hint = bad === -1 ? null : reqs[bad].hint;
-  return { results, pass: bad === -1, msg: typeof hint === 'function' ? hint(raw, c) : hint };
+  return { results, wrongs, pass: bad === -1, msg: resolve(bad), wrongMsg: resolve(wrongs.findIndex(Boolean)) };
 }
 
 // ── Modify checks ─────────────────────────────────────────────────────────────

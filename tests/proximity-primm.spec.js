@@ -207,15 +207,57 @@ test('Investigate 1: the crisis report names who the heaters could not save', as
   await expect(page.locator('#m1_choice .sz-x').first()).toHaveText('Chen');
 });
 
-test('Investigate 2: Scan complete indented into the else disappears for 85', async ({ page }) => {
-  await openAt(page, { currentStage: 'I', completedStages: ['P', 'R'], stepI: 2, maxStepI: 2, i_editor: starter({ 1: 'if distance >= 20:' }) });
-  await setCode(page, 'i_editor', starter({ 1: 'if distance >= 20:', 5: '    print("Scan complete")' }));
-  await expect(page.locator('#req_i_2 li:not(.req-note)')).toHaveClass([/req-pass/]);
+// The indentation question chain, drawn in a fixed order: the first variant of each slot,
+// options unshuffled, so option value 0 is always the right answer.
+const FIXED_I2_CHAIN = { pick: [0, 0, 0, 0], order: Array(4).fill([0, 1, 2, 3]), q: 0, done: false };
+
+test('Investigate 2: live coach counts the spaces; a real Tab key lines it up', async ({ page }) => {
+  const STEP1_CODE = starter({ 1: 'if distance >= 20:' });
+  await openAt(page, { currentStage: 'I', completedStages: ['P', 'R'], stepI: 2, maxStepI: 2, iCodeSnapshots: { 1: STEP1_CODE }, i_editor: STEP1_CODE });
+  const bullets = page.locator('#req_i_2 li:not(.req-note)');
+  const coach = page.locator('#coach_i_2');
+  await expect(coach).toContainText('press Tab');                     // next thing to do, before any typing
+  await expect(page.locator('#i2_chain')).toContainText('Run your code first');
+
+  await setCode(page, 'i_editor', starter({ 1: 'if distance >= 20:', 5: '  print("Scan complete")' }));
+  await expect(bullets.nth(0)).toHaveClass(/req-pass/);
+  await expect(bullets.nth(1)).toHaveClass(/req-fail/);               // red live, no Check needed
+  await expect(coach).toContainText('2 spaces');
+
+  // back to the left edge, then the real Tab key at the start of line 6
+  await setCode(page, 'i_editor', STEP1_CODE);
+  await page.locator('#i_editor').evaluate(ta => {
+    const pos = ta.value.indexOf('print("Scan complete")');
+    ta.focus(); ta.setSelectionRange(pos, pos);
+  });
+  await page.keyboard.press('Tab');
+  await expect(bullets).toHaveClass([/req-pass/, /req-pass/]);
+  await expect(coach).toHaveClass(/done/);
+});
+
+test('Investigate 2: Scan complete vanishes for 85; the question chain restarts on a slip, then moves on', async ({ page }) => {
+  await openAt(page, {
+    currentStage: 'I', completedStages: ['P', 'R'], stepI: 2, maxStepI: 2,
+    i_editor: starter({ 1: 'if distance >= 20:', 5: '    print("Scan complete")' }), i2Chain: FIXED_I2_CHAIN,
+  });
   await runWith(page, 'I', 'i_editor', ['85']);
   await expect(outputOf(page, 'i_editor')).toContainText('All clear', { timeout: 30000 });
   await expect(outputOf(page, 'i_editor')).not.toContainText('Scan complete');
-  await page.fill('#i2', 'It was indented so it was inside the else, and the else did not run');
-  await page.click('#btn_check_i2');
+
+  // a wrong answer explains, and the chain starts again
+  await page.check('input[name="i2c_0"][value="1"]');
+  await expect(page.locator('#fb_i2c_0')).toHaveClass(/fail/);
+  await page.click('#qcard_i2 button:has-text("Start the questions again")');
+  await expect(page.locator('#i2_chain')).toContainText('Question 1 of 4');
+
+  // reseed the fixed draw, then answer all four in a row
+  await page.evaluate(d => { localStorage.setItem('primm_y9_l2_proximity', JSON.stringify({ ...JSON.parse(localStorage.getItem('primm_y9_l2_proximity')), i2Chain: d })); }, FIXED_I2_CHAIN);
+  await page.reload();
+  await expect(page.locator('#pyStatusText')).toHaveText(/ready/, { timeout: 60000 });
+  for (let slot = 0; slot < 4; slot++) {
+    await page.check(`input[name="i2c_${slot}"][value="0"]`);
+    await expect(page.locator('#fb_i2c_' + slot)).toHaveClass(/pass/);
+  }
   await expect(page.locator('#qcard_i3_prompt')).toBeVisible({ timeout: 10000 });
 });
 
@@ -223,7 +265,7 @@ test('Investigate bug step: Break it gives a TypeError; int() back completes Inv
   // tryCompleteInvestigate re-checks every step's answer, so seed steps 1–3 as answered
   await openAt(page, {
     currentStage: 'I', completedStages: ['P', 'R'], stepI: 4, maxStepI: 4, i_editor: starter({ 1: 'if distance > 20:' }),
-    radio_i1_mcq: 'option_c', i2: 'It was indented so it was inside the else, and the else did not run', radio_i3_mcq: 'option_b',
+    radio_i1_mcq: 'option_c', i2Chain: { ...FIXED_I2_CHAIN, q: 3, done: true }, radio_i3_mcq: 'option_b',
   });
   await page.click('#qcard_i4_prompt button:has-text("Break it")');
   await expect(page.locator('#i_editor')).toHaveValue(/^distance = input\(/);

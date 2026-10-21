@@ -81,16 +81,39 @@ describe('evalInv step 1 — change the threshold', () => {
   });
 });
 
-describe('evalInv step 2 — indent Scan complete into the else', () => {
+describe('evalInv step 2 — press Tab → lines up with line 5', () => {
   const step1 = withLine(1, 'if distance >= 20:');
-  test('an indented Scan complete passes', () => {
-    expect(evalInv(2, code(...step1)).pass).toBe(false);
-    expect(evalInv(2, code(...step1)).msg).toMatch(/4 spaces/);
-    const indented = step1.map((l, i) => (i === 5 ? '    ' + l : l));
-    expect(evalInv(2, code(...indented)).pass).toBe(true);
+  const scanAt = lead => step1.map((l, i) => (i === 5 ? lead + l : l));
+
+  test('step 1 code alone: nothing ticked, nothing red, coach says press Tab', () => {
+    const r = evalInv(2, code(...step1));
+    expect(r.results).toEqual([false, false]);
+    expect(r.wrongs).toEqual([false, false]);
+    expect(r.msg).toMatch(/press Tab/);
+  });
+  test('4 spaces, lined up with line 5, passes', () => {
+    expect(evalInv(2, code(...scanAt('    '))).pass).toBe(true);
+  });
+  test('2 spaces or 8 spaces: bullet 2 red, and the hint counts the spaces', () => {
+    const two = evalInv(2, code(...scanAt('  ')));
+    expect(two.results).toEqual([true, false]);
+    expect(two.wrongs).toEqual([false, true]);
+    expect(two.wrongMsg).toMatch(/2 spaces.*line 5 has 4/);
+    expect(evalInv(2, code(...scanAt('        '))).wrongMsg).toMatch(/8 spaces.*Shift\+Tab/);
+  });
+  test('a pasted Tab character next to 4 spaces is red (Python would raise TabError)', () => {
+    const r = evalInv(2, code(...scanAt('\t')));
+    expect(r.wrongs[1]).toBe(true);
+    expect(r.wrongMsg).toMatch(/Tab character/);
   });
   test('a deleted line is told to reset', () => {
     expect(evalInv(2, code(...step1.slice(0, 5))).msg).toMatch(/Reset/);
+  });
+  test('Scan complete moved above the else is not accepted', () => {
+    const moved = [step1[0], step1[1], step1[2], '    print("Scan complete")', step1[3], step1[4]];
+    const r = evalInv(2, code(...moved));
+    expect(r.pass).toBe(false);
+    expect(r.wrongs).toEqual([false, false]);
   });
 });
 
