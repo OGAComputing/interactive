@@ -170,6 +170,12 @@ color:  teal
   .req-list li.req-pass .tick { background: var(--green); color: #fff; }
   .req-list li.req-fail { border-color: var(--red); }
   .req-list li.req-fail .tick { background: var(--red); color: #fff; }
+  .req-diff { margin-top: 6px; font-size: 0.88rem; }
+  .req-diff .k, .req-diff .key { color: var(--muted); font-size: 0.8rem; }
+  .req-diff .words { font-family: var(--font-mono); background: #fff; border: 1.5px solid #c9d8e8; border-radius: 6px; padding: 3px 8px; margin: 3px 0; display: inline-block; line-height: 1.9; }
+  .req-diff .w-ok { color: var(--green-dark); font-weight: 600; }
+  .req-diff .w-extra { color: #b42318; background: var(--red-bg); text-decoration: line-through 2px; border-radius: 3px; padding: 0 2px; }
+  .req-diff .w-missing { color: #b42318; background: var(--red-bg); text-decoration: none; outline: 1.5px dashed #b42318; border-radius: 3px; padding: 0 2px; font-weight: 600; }
 
   .samples { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px; margin: 8px 0; }
   .terminal { background: #0d1726; color: #d6e4f0; font-family: var(--font-mono); font-size: 0.9rem; border-radius: 8px; padding: 10px 14px; white-space: pre-wrap; line-height: 1.6; }
@@ -739,14 +745,28 @@ function showRun(ta, runs) {
   const label = r.inputs.length ? `[test run — typed: ${r.inputs.join(', ')}]\n` : '';
   setEditorOutput(ta, r.ok ? label + (r.output || '(no output)') : r.output, !r.ok, r.ok ? null : (r.line ?? null));
 }
-function applyReqTicks(id, results) {
+// diffs[i] (optional): a nearly-right printed line for a failed requirement, shown word by
+// word inside it: green words are right, red crossed-out ones shouldn't be there, and a
+// dashed red box is a word that is missing.
+function applyReqTicks(id, results, diffs = []) {
   const list = $('#req_' + id);
   if (!list || !results) return;
   list.querySelectorAll('li').forEach((li, i) => {
     li.classList.toggle('req-pass', !!results[i]);
     li.classList.toggle('req-fail', !results[i]);
     li.querySelector('.tick').textContent = results[i] ? '✓' : '✗';
+    li.querySelector('.req-diff')?.remove();
+    const d = !results[i] && diffs?.[i];
+    if (d) li.lastElementChild.insertAdjacentHTML('beforeend', reqDiffHtml(d));
   });
+}
+const DIFF_TAG = { ok: ['span', ''], extra: ['del', ' title="not in the sample: take this out"'], missing: ['ins', ' title="missing: add this"'] };
+function reqDiffHtml(d) {
+  const words = d.words.map(x => { const [tag, attr] = DIFF_TAG[x.kind]; return `<${tag} class="w-${x.kind}"${attr}>${esc(x.w)}</${tag}>`; }).join(' ');
+  const typed = d.typed?.length ? `When the user types ${d.typed.map(t => `<strong>${esc(t)}</strong>`).join(' then ')}, your` : 'Your';
+  const keys = [...new Set(d.words.map(x => x.kind))].filter(k => k !== 'ok')
+    .map(k => k === 'extra' ? '<del class="w-extra">red, crossed out</del> = take it out' : '<ins class="w-missing">red box</ins> = missing, add it').join(' · ');
+  return `<div class="req-diff"><div class="k">${typed} line, word by word:</div><div class="words">${words}</div><div class="key"><span class="w-ok">green</span> = right${keys ? ' · ' + keys : ''}</div></div>`;
 }
 function applyCode(id) {
   if (!S.checked[id]) return;
@@ -776,7 +796,7 @@ async function checkCode(id) {
     if (r.pts >= (S.pts[id] || 0)) { S.pts[id] = r.pts; S.results[id] = r.results || null; }
     save();
     applyCode(id);
-    applyReqTicks(id, r.results);   // this attempt's ticks, even if an earlier attempt scored more
+    applyReqTicks(id, r.results, r.diffs);   // this attempt's ticks, even if an earlier attempt scored more
     const best = S.pts[id], max = MAX[id];
     fb.textContent = `${r.pts === max ? '✅' : r.pts ? '🟡' : '❌'} ${r.msg} This check: ${r.pts}/${max}.${best > r.pts ? ` Your best so far (${best}/${max}) is kept.` : ''}`;
     fb.className = 'feedback ' + (r.pts === max ? 'correct' : r.pts ? 'partial' : 'wrong');

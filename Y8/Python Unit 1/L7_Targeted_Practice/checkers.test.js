@@ -4,7 +4,8 @@ import {
   drawCheckpoint, poolQuestion, cpOptionOrder, markCheckpoint, rightAnswer, applyFor, evalApply,
   writeItemFor, REQ_HINTS, inputPrompts, inputCount, evalMake, MAKE_REQS, MAKE_STRETCH, IDEAS,
   lessonScore, targetDone, realSentence, questionNumber, FIRST_SITTING, SITTINGS, satItems,
-  orderBlocks, orderCode, evalOrder, spotMistake, MISTAKES,
+  orderBlocks, orderCode, evalOrder, spotMistake, MISTAKES, puzzlesFor, puzzleById, warmOptionOrder,
+  tooManyLines,
 } from './checkers.js';
 
 // A fake runPython result: each input() is echoed as "prompt + answer" on its own line,
@@ -54,8 +55,45 @@ describe('targets', () => {
     }
   });
 
+  test('warm-ups: 3–5 well-formed questions per target, each with a reason', () => {
+    for (const t of TARGETS) {
+      expect(t.warm.length, t.id).toBeGreaterThanOrEqual(3);
+      expect(t.warm.length, t.id).toBeLessThanOrEqual(5);
+      for (const q of t.warm) {
+        if (q.kind === 'mcq') expect(new Set(q.opts).size, q.id).toBe(4);
+        else expect(['output', 'number'], q.id).toContain(q.as);
+        expect(q.why, q.id).toBeTruthy();
+        if (q.code) expect(codeOnly(q.code), q.id).not.toMatch(FORBIDDEN);
+      }
+      t.warm.forEach((q, i) => {
+        if (q.kind === 'mcq') expect(warmOptionOrder(t.id, i, 5, 0).slice().sort()).toEqual([0, 1, 2, 3]);
+      });
+    }
+  });
+
+  test('variables is only boxes: no data types to type in, no joining with +', () => {
+    const v = targetById('variables');
+    for (const q of [...v.pool, ...v.warm]) {
+      expect(q.as, q.id).not.toBe('value');
+      if (q.code) expect(q.code, q.id).not.toMatch(/\+/);
+    }
+    expect(v.apply.starter).not.toMatch(/\+/);
+    expect(v.example.code).not.toMatch(/\+/);
+  });
+
+  test('every example is a different program from the task it supports', () => {
+    for (const t of TARGETS) {
+      expect(t.example.code, t.id).not.toBe(t.order.lines.join('\n'));
+      if (t.apply) {
+        expect(t.apply.example?.after, t.id).toBeTruthy();
+        expect(t.apply.example.before, t.id).not.toBe(t.apply.starter);
+      }
+    }
+    expect(applyFor('write', {}).example.code).toBeTruthy();
+  });
+
   test('the right answer is not the longest option on half the questions or more', () => {
-    const mcqs = TARGETS.flatMap(t => t.pool).filter(q => q.kind === 'mcq');
+    const mcqs = TARGETS.flatMap(t => [...t.pool, ...t.warm]).filter(q => q.kind === 'mcq');
     const longest = mcqs.filter(q => q.opts[0].length > Math.max(...q.opts.slice(1).map(o => o.length)));
     expect(longest.length / mcqs.length).toBeLessThan(0.5);
   });
@@ -232,14 +270,15 @@ describe('checkpoints', () => {
   });
 
   test('typed values: text in quotes, numbers without', () => {
-    const txt = poolQuestion('variables', 'v1'), num = poolQuestion('variables', 'v5');
-    expect(markCheckpoint(txt, '"blue"').ok).toBe(true);
-    expect(markCheckpoint(txt, "'blue'").ok).toBe(true);
-    expect(markCheckpoint(txt, 'blue')).toMatchObject({ ok: false, msg: expect.stringMatching(/quotes/) });
-    expect(markCheckpoint(num, '8').ok).toBe(true);
-    expect(markCheckpoint(num, '"8"')).toMatchObject({ ok: false, msg: expect.stringMatching(/no quotes/) });
-    expect(rightAnswer(txt)).toBe('"blue"');
-    expect(rightAnswer(num)).toBe('8');
+    const txt = poolQuestion('cast_str', 'cs10'), num = poolQuestion('cast_int', 'ci9');
+    expect(markCheckpoint(txt, '"Josh"').ok).toBe(true);
+    expect(markCheckpoint(txt, "'Josh'").ok).toBe(true);
+    expect(markCheckpoint(txt, 'Josh')).toMatchObject({ ok: false, msg: expect.stringMatching(/quotes/) });
+    expect(markCheckpoint(num, '4').ok).toBe(true);
+    expect(markCheckpoint(num, '"4"')).toMatchObject({ ok: false, msg: expect.stringMatching(/no quotes/) });
+    expect(rightAnswer(txt)).toBe('"Josh"');
+    expect(rightAnswer(num)).toBe('4');
+    expect(markCheckpoint(poolQuestion('cast_int', 'ci8'), '"4"').ok).toBe(true);   // input() gives text
   });
 
   test('typed output: case and extra spaces forgiven, a missing space is not', () => {
@@ -274,11 +313,12 @@ describe('code tasks (fake runs; tests/unit1-targeted-practice.spec.js runs them
 
   test('variables: the print lines must stay; the new line goes between them', () => {
     const t = task('variables');
-    const good = 'pet = "cat"\nprint("I have a " + pet)\npet = "dog"\nprint("Now I have a " + pet)';
-    expect(evalApply(t, good, [run([], ['I have a cat', 'Now I have a dog'])]).ok).toBe(true);
-    expect(evalApply(t, 'pet = "cat"\nprint("I have a " + pet)\nprint("Now I have a dog")', [run([], ['I have a cat', 'Now I have a dog'])]))
-      .toMatchObject({ ok: false, msg: expect.stringMatching(/stay exactly/) });
-    expect(evalApply(t, '', [run([], ['I have a dog', 'Now I have a dog'])])).toMatchObject({ ok: false, msg: expect.stringMatching(/after the first print/) });
+    const out = pets => [run([], ['My first pet:', pets[0], 'My next pet:', pets[1]])];
+    const good = 'print("My first pet:")\npet = "cat"\nprint(pet)\nprint("My next pet:")\npet = "dog"\nprint(pet)';
+    expect(evalApply(t, good, out(['cat', 'dog'])).ok).toBe(true);
+    expect(evalApply(t, 'print("My first pet:")\npet = "cat"\nprint(pet)\nprint("My next pet:")\nprint("dog")', out(['cat', 'dog'])))
+      .toMatchObject({ ok: false, msg: expect.stringMatching(/print\(pet\) twice/), mistake: { msg: expect.stringMatching(/typed "dog"/) } });
+    expect(evalApply(t, '', out(['dog', 'dog']))).toMatchObject({ ok: false, msg: expect.stringMatching(/after the first print\(pet\)/) });
   });
 
   test('input: both bugs, with the missing space named', () => {
@@ -481,9 +521,26 @@ describe('build it (fake runs; the E2E spec runs every puzzle in real Python)', 
       .toMatchObject({ ok: false, got: ['dog', 'pet', 'dog'], want: ['cat', 'pet', 'dog'] });
   });
 
+  test('too many lines is flagged the moment it happens', () => {
+    expect(tooManyLines('variables', ['m0', 'm1', 'm2', 'm3', 'm4'])).toBe('');
+    expect(tooManyLines('variables', ['m0', 't0'])).toBe('');
+    expect(tooManyLines('variables', ['m0', 'm1', 'm2', 'm3', 'm4', 't1'])).toMatch(/only needs 5 lines, and you have 6.*2 of the blocks are traps/);
+    expect(tooManyLines('variables-a', ['m0', 'm1', 't0'])).toMatch(/only needs 2 lines/);
+  });
+
   test('a crash names the mistake (here: a trap with no quotes)', () => {
     const r = evalOrder('variables', ['m0', 't0'], [{ inputs: [], ok: false, line: 2, output: "NameError: name 'dog' is not defined" }]);
     expect(r).toMatchObject({ ok: false, mistake: { line: 2, msg: expect.stringMatching(/quotes/) } });
+  });
+
+  test('variables starts with a two-line puzzle', () => {
+    expect(puzzlesFor('variables')).toEqual(['variables-a', 'variables']);
+    expect(puzzlesFor('print')).toEqual(['print']);
+    expect(puzzleById('variables-a').lines).toHaveLength(2);
+    expect(orderBlocks('variables-a', 3).map(b => b.id).sort()).toEqual(['m0', 'm1', 't0', 't1']);
+    expect(orderCode('variables-a', ['m0', 'm1'])).toBe('pet = "cat"\nprint(pet)');
+    expect(evalOrder('variables-a', ['m0', 'm1'], [run([], ['cat'])]).ok).toBe(true);
+    expect(evalOrder('variables-a', ['m0', 't0'], [run([], ['pet'])])).toMatchObject({ ok: false, want: ['cat'] });
   });
 
   test('the print puzzle keeps its empty line', () => {
@@ -495,9 +552,10 @@ describe('build it (fake runs; the E2E spec runs every puzzle in real Python)', 
 // ── Spotting common mistakes ─────────────────────────────────────────────────
 
 describe('spotMistake: names what the student did', () => {
-  const pet = raw => spotMistake(raw, [run([], ['I have a cat', 'Now I have a cat'])], MISTAKES.variables);
-  const start = 'pet = "cat"\nprint("I have a " + pet)\n';
-  const end = 'print("Now I have a " + pet)';
+  const catTwice = [run([], ['My first pet:', 'cat', 'My next pet:', 'cat'])];
+  const pet = raw => spotMistake(raw, catTwice, MISTAKES.variables);
+  const start = 'pet = "cat"\nprint(pet)\n';
+  const end = 'print(pet)';
 
   test('variables: no second pet = line', () => {
     expect(pet(start + end).msg).toMatch(/only one `pet =` line/);
@@ -505,17 +563,18 @@ describe('spotMistake: names what the student did', () => {
     expect(pet(start + 'dog = "dog"\n' + end)).toMatchObject({ line: 3, msg: expect.stringMatching(/new box called `dog`/) });
     expect(pet(start + 'pet == "dog"\n' + end)).toMatchObject({ line: 3, msg: expect.stringMatching(/==/) });
     expect(pet(start + 'Pet = "dog"\n' + end)).toMatchObject({ line: 3, msg: expect.stringMatching(/capital P/) });
-    expect(pet(start + 'print("Now I have a dog")')).toMatchObject({ line: 3, msg: expect.stringMatching(/typed dog/) });
+    expect(pet(start + 'print("dog")')).toMatchObject({ line: 3, msg: expect.stringMatching(/typed "dog"/) });
     expect(pet(start + end + '\npet = "dog"')).toMatchObject({ line: 4, msg: expect.stringMatching(/too late/) });
     expect(spotMistake(start + 'pet = dog\n' + end, [{ inputs: [], ok: false, line: 3, output: "NameError: name 'dog' is not defined" }], MISTAKES.variables))
       .toMatchObject({ line: 3, msg: expect.stringMatching(/put it in quotes: `"dog"`/) });
   });
 
   test('evalApply attaches the mistake, and what it printed vs what it should', () => {
-    const r = evalApply(applyFor('variables'), start + end, [run([], ['I have a cat', 'Now I have a cat'])]);
-    expect(r).toMatchObject({ ok: false, got: ['I have a cat', 'Now I have a cat'], want: ['I have a cat', 'Now I have a dog'],
+    const code = 'print("My first pet:")\npet = "cat"\nprint(pet)\nprint("My next pet:")\n';
+    const r = evalApply(applyFor('variables'), code + 'print(pet)', catTwice);
+    expect(r).toMatchObject({ ok: false, got: ['My first pet:', 'cat', 'My next pet:', 'cat'], want: ['My first pet:', 'cat', 'My next pet:', 'dog'],
       mistake: { msg: expect.stringMatching(/only one `pet =`/) } });
-    expect(evalApply(applyFor('variables'), start + 'pet = "dog"\n' + end, [run([], ['I have a cat', 'Now I have a dog'])]).mistake).toBeUndefined();
+    expect(evalApply(applyFor('variables'), code + 'pet = "dog"\nprint(pet)', [run([], ['My first pet:', 'cat', 'My next pet:', 'dog'])]).mistake).toBeUndefined();
   });
 
   test('other targets: their own common mistakes', () => {

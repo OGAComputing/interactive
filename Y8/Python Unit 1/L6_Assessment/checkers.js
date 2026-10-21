@@ -266,6 +266,43 @@ export function textNudge(test, runs) {
   return '';
 }
 
+// A printed line word by word against the line it should be: [{ w, kind: 'ok'|'extra'|'missing' }].
+// Words match as in the marking (capitals and punctuation forgiven), so "over the speed limit"
+// against "over the limit" marks only "speed" as extra.
+export function wordDiff(got, want) {
+  const a = squash(got).split(' ').filter(Boolean), b = squash(want).split(' ').filter(Boolean);
+  const eq = (x, y) => loose(x) === loose(y);
+  const L = Array.from({ length: a.length + 1 }, () => new Array(b.length + 1).fill(0));
+  for (let i = a.length - 1; i >= 0; i--)
+    for (let j = b.length - 1; j >= 0; j--)
+      L[i][j] = eq(a[i], b[j]) ? L[i + 1][j + 1] + 1 : Math.max(L[i + 1][j], L[i][j + 1]);
+  const out = [];
+  let i = 0, j = 0;
+  while (i < a.length || j < b.length) {
+    if (i < a.length && j < b.length && eq(a[i], b[j])) { out.push({ w: a[i], kind: 'ok' }); i++; j++; }
+    else if (i < a.length && (j >= b.length || L[i + 1][j] >= L[i][j + 1])) out.push({ w: a[i++], kind: 'extra' });
+    else out.push({ w: b[j++], kind: 'missing' });
+  }
+  return out;
+}
+
+// For a failed text requirement: the printed line that is nearly a wanted one (at least half
+// its words match), so the page can show which words are wrong. null when no line is close.
+function lineDiff(test, runs) {
+  if (!test?.expect || !allOk(runs)) return null;
+  for (const r of runs) {
+    const want = test.expect(r.inputs), got = printedLines(r).filter(g => !want.some(w => close(g, w)));
+    for (const w of want.filter(w => !printedLines(r).some(g => close(g, w)))) {
+      const scored = got.map(g => ({ g, words: wordDiff(g, w) }))
+        .map(x => ({ ...x, n: x.words.filter(d => d.kind === 'ok').length }));
+      const best = scored.sort((x, y) => y.n - x.n)[0];
+      if (best && best.n * 2 >= squash(w).split(' ').length)
+        return { typed: r.inputs, got: squash(best.g), want: squash(w), words: best.words };
+    }
+  }
+  return null;
+}
+
 // Every check passed, but a printed line only matched with the capitals, spaces or
 // punctuation forgiven: a gentle note, no mark lost.
 function looseTip(item, runs) {
@@ -299,7 +336,9 @@ export function evalReqs(item, raw, runs) {
   } else {
     msg += looseTip(item, runs) || (item.tipMsg?.(raw, runs) || '');
   }
-  return { results, pts, msg };
+  // diffs[i]: a nearly-right printed line for each failed text requirement (see lineDiff).
+  const diffs = item.reqs.map((r, i) => results[i] ? null : lineDiff(r.test, runs));
+  return { results, pts, msg, diffs };
 }
 
 export const evalCode = evalReqs;
@@ -750,12 +789,12 @@ export const ITEMS = [
       { text: 'Ask for the limit, then the speed, and cast both to whole numbers. No errors for any test',
         test: (raw, runs) => inputCount(raw) >= 2 && intCount(raw) >= 2 && allOk(runs) },
       { text: 'Over the limit, print exactly <code>You were N mph over the limit</code> (with the right N)',
-        test: (raw, runs) => allOk(runs) && runs.filter(r => +r.inputs[1] > +r.inputs[0]).every(r =>
-          printedLines(r).some(l => same(l.replace(/[.!]+\s*$/, ''), `You were ${r.inputs[1] - r.inputs[0]} mph over the limit`))) },
+        test: withText(([l, s]) => +s > +l ? [`You were ${s - l} mph over the limit`] : [], (raw, runs) => allOk(runs) && runs.filter(r => +r.inputs[1] > +r.inputs[0]).every(r =>
+          printedLines(r).some(l => same(l.replace(/[.!]+\s*$/, ''), `You were ${r.inputs[1] - r.inputs[0]} mph over the limit`))), true) },
       { text: 'At or under the limit, print exactly <code>Within the limit, thank you</code> — and every run ends with <code>Drive safely</code>',
-        test: (raw, runs) => allOk(runs)
+        test: withText(([l, s]) => +s > +l ? ['Drive safely'] : ['Within the limit, thank you', 'Drive safely'], (raw, runs) => allOk(runs)
           && runs.filter(r => +r.inputs[1] <= +r.inputs[0]).every(r => printedLines(r).some(l => /^within the limit,? thank you[.!]*$/i.test(squash(l))))
-          && runs.every(r => { const ls = printedLines(r); return ls.length && /^drive safely[.!]*$/i.test(squash(ls[ls.length - 1])); }) },
+          && runs.every(r => { const ls = printedLines(r); return ls.length && /^drive safely[.!]*$/i.test(squash(ls[ls.length - 1])); }), true) },
       { text: 'Build the "over the limit" message by joining with <code>+</code>, using <code>str()</code> to turn the number into text',
         test: (raw, runs) => allOk(runs) && count(raw, /\bstr\s*\(/g) >= 1 && codeLines(raw).some(l => /\bprint\s*\(.*\+/.test(l)) },
     ] },

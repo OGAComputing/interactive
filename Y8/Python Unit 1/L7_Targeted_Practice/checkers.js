@@ -135,7 +135,19 @@ export const TARGETS = [
       'Text goes in quotes, with a quote at <strong>both</strong> ends: <code>"Hello"</code>',
       '<code>print()</code> with nothing inside prints an <strong>empty line</strong>. It still counts as a line.',
     ],
-    example: { code: 'print("Ready")\nprint()\nprint("Go!")', out: 'Ready\n\nGo!' },
+    example: { code: 'print("Knock knock")\nprint()\nprint("Who is there?")', out: 'Knock knock\n\nWho is there?',
+      notes: { 1: 'prints an empty line' } },
+    warm: [
+      { id: 'pw1', kind: 'mcq', q: 'Which word starts a line that shows text on the screen?',
+        opts: ['print', 'Print', 'PRINT', 'show'], why: 'print is all lower case. Python does not know Print or PRINT.' },
+      { id: 'pw2', kind: 'mcq', q: 'What does this line show on the screen?', code: 'print("Hi")',
+        opts: ['Hi', '"Hi"', 'print Hi', 'An error'], why: 'The quotes mark where the text starts and ends. They are not printed.' },
+      { id: 'pw3', kind: 'mcq', q: 'What does <code>print()</code> with nothing inside do?',
+        opts: ['Prints an empty line', 'Prints nothing at all', 'Stops with an error', 'Prints the word print'],
+        why: 'print() on its own prints an empty line. It still counts as a line.' },
+      { id: 'pw4', kind: 'type', as: 'number', q: 'How many lines does this print? Count the empty line too.',
+        code: 'print()\nprint("Go")', answer: 2, why: 'An empty line, then Go: 2 lines.' },
+    ],
     order: { keepBlank: true, tests: [{ typed: [], out: ['Ready', '', 'Steady', 'Go!'] }],
       lines: ['print("Ready")', 'print()', 'print("Steady")', 'print("Go!")'],
       traps: ['Print("Steady")', 'print("Go!)'] },
@@ -167,6 +179,9 @@ export const TARGETS = [
     apply: { kind: 'fix', title: 'Fix the disco poster', keepBlank: true,
       goal: 'This program should print the poster below, with an <strong>empty line</strong> under the title. It has 3 bugs, and the empty line is missing. Run it, read each error, fix it, and run it again.',
       starter: 'print("SCHOOL DISCO")\nprint("Friday at 7pm"\nPrint("Tickets cost £2")\nprint("Bring a friend!)',
+      example: { before: 'print("BAKE SALE"\nPrint("Cakes 50p")\nprint("All welcome!)',
+        after: 'print("BAKE SALE")\nprint()\nprint("Cakes 50p")\nprint("All welcome!")',
+        notes: { 0: 'closed the bracket', 1: 'the empty line', 2: 'lower-case print', 3: 'closed the quote' } },
       tests: [[]],
       expect: () => ['SCHOOL DISCO', '', 'Friday at 7pm', 'Tickets cost £2', 'Bring a friend!'],
       diagnose: (raw, runs) => allLines(runs[0]).every(l => l.trim())
@@ -180,7 +195,21 @@ export const TARGETS = [
       'Then find the <strong>line number</strong> it gives, and read that line aloud.',
       '<code>NameError</code> means Python does not know that name: it is <strong>spelt differently</strong>, or it is used <strong>before</strong> the line that makes it.',
     ],
-    example: { code: 'lives = 3\nprint(lifes)', out: 'NameError: name \'lifes\' is not defined', err: true },
+    example: { code: 'lives = 3\nprint(lifes)', out: 'NameError: name \'lifes\' is not defined', err: true,
+      notes: { 1: 'lifes is not spelt like lives' } },
+    warm: [
+      { id: 'ew1', kind: 'mcq', q: 'Read the last line of this error. What kind of error is it?', code: 'score = 10\nprint(scor)',
+        error: NAME_ERR(2, 'print(scor)', 'scor'), opts: ['NameError', 'SyntaxError', 'TypeError', 'ValueError'],
+        why: 'The last line starts with the kind of error: NameError.' },
+      { id: 'ew2', kind: 'type', as: 'number', q: 'Which line number does the error point to? Type the number.', code: 'score = 10\nprint(scor)',
+        error: NAME_ERR(2, 'print(scor)', 'scor'), answer: 2, why: 'The error says line 2.' },
+      { id: 'ew3', kind: 'mcq', q: 'What is wrong with <code>scor</code> on line 2?', code: 'score = 10\nprint(scor)',
+        opts: ['It is spelt differently', 'It needs quotes round it', 'print needs a capital P', 'The 10 needs quotes'],
+        why: 'The box is called score. scor is missing the e, so Python has never seen that name.' },
+      { id: 'ew4', kind: 'mcq', q: 'What happens when this runs?', code: 'print(fruit)\nfruit = "apple"',
+        opts: ['A NameError on line 1', 'It prints apple', 'It prints fruit', 'A SyntaxError'],
+        why: 'Python runs from the top. Line 1 uses fruit before line 2 makes it.' },
+    ],
     order: { tests: [{ typed: [], out: ['Your team is Rovers', 'Come on Rovers!'] }],
       lines: ['team = "Rovers"', 'print("Your team is " + team)', 'print("Come on " + team + "!")'],
       traps: ['print("Come on " + teem + "!")', 'print("Your team is " + Team)'] },
@@ -213,53 +242,80 @@ export const TARGETS = [
     apply: { kind: 'fix', title: 'Fix the team sheet',
       goal: 'This program should print <code>Your team is Rovers</code> and then <code>Come on Rovers!</code>. It has 2 bugs. Keep using the variable <code>team</code> in both print lines.',
       starter: 'print("Your team is " + team)\nteam = "Rovers"\nprint("Come on " + teem + "!")',
+      example: { before: 'print("Our hero is " + hero)\nhero = "Zara"\nprint("Go " + heor + "!")',
+        after: 'hero = "Zara"\nprint("Our hero is " + hero)\nprint("Go " + hero + "!")',
+        notes: { 0: 'moved up: make the box first', 2: 'spelt like line 1' } },
       tests: [[]],
       expect: () => ['Your team is Rovers', 'Come on Rovers!'],
       check: raw => normalise(raw).split('\n').filter(l => /\bprint\s*\(/.test(l) && /\bteam\b/.test(l)).length >= 2
         ? '' : 'It prints the right thing, but both print lines must still use the variable team (not the word Rovers typed in).' } },
 
   // ── Lesson 2 ──────────────────────────────────────────────────────────────
+  // Only boxes: storing, replacing, and print(pet) vs print("pet"). Data types (quotes for text,
+  // none for numbers) and joining with + are practised in the int() and str() targets instead.
   { id: 'variables', short: 'Variables', icon: '📦', title: 'Variables: boxes and new values', lesson: 'Lesson 2',
     items: ['v_trace', 'v_quotes', 'v_change', 'v_write'],
-    pick: 'Tracing what is in each variable, and quotes vs variable names',
+    pick: 'What is in each variable, and print(pet) vs print("pet")',
     rule: [
-      '<code>=</code> stores the value on the right in the box on the left.',
-      'Storing a new value <strong>replaces</strong> the old one. A print() that ran earlier already used the old value.',
-      'With quotes it is text: <code>print("pet")</code> prints the word pet. Without quotes, <code>print(pet)</code> prints what is in the box.',
+      '<code>pet = "cat"</code> puts cat in a box called pet.',
+      'A new <code>pet =</code> line <strong>replaces</strong> what is in the box.',
+      '<code>print(pet)</code> prints what is in the box. <code>print("pet")</code> prints the word pet.',
     ],
-    example: { code: 'pet = "cat"\nprint(pet)\npet = "dog"\nprint("pet")\nprint(pet)', out: 'cat\npet\ndog' },
+    example: { code: 'drink = "tea"\nprint(drink)\ndrink = "milk"\nprint("drink")\nprint(drink)', out: 'tea\ndrink\nmilk',
+      notes: { 1: 'what is in the box', 2: 'replaces tea', 3: 'the word in quotes' } },
+    warm: [
+      { id: 'vw1', kind: 'mcq', q: 'What is in the box called <code>pet</code>?', code: 'pet = "cat"',
+        opts: ['cat', 'pet', 'pet = cat', 'Nothing yet'], why: 'The = puts cat into the box called pet.' },
+      { id: 'vw2', kind: 'mcq', q: 'What does this print?', code: 'pet = "cat"\nprint(pet)',
+        opts: ['cat', 'pet', 'print(pet)', 'An error'], why: 'pet has no quotes, so print() shows what is in the box: cat.' },
+      { id: 'vw3', kind: 'mcq', q: 'What does this print?', code: 'pet = "cat"\nprint("pet")',
+        opts: ['pet', 'cat', 'pet cat', 'An error'], why: '"pet" is in quotes, so print() shows the word pet itself.' },
+      { id: 'vw4', kind: 'mcq', q: 'What does this print?', code: 'pet = "cat"\npet = "dog"\nprint(pet)',
+        opts: ['dog', 'cat', 'cat dog', 'pet'], why: 'Line 2 replaces cat with dog, so the box holds dog.' },
+    ],
+    // A two-line puzzle first, then the five-line one.
+    orderFirst: { tests: [{ typed: [], out: ['cat'] }],
+      lines: ['pet = "cat"', 'print(pet)'],
+      traps: ['print("pet")', 'pet = cat'] },
     order: { tests: [{ typed: [], out: ['cat', 'pet', 'dog'] }],
       lines: ['pet = "cat"', 'print(pet)', 'pet = "dog"', 'print("pet")', 'print(pet)'],
       traps: ['pet = dog', 'print(Pet)'] },
     pool: [
-      { id: 'v1', kind: 'type', as: 'value', q: 'What is in <code>colour</code> at the end?', code: 'colour = "red"\ncolour = "blue"',
-        answer: { type: 'str', value: 'blue' }, why: 'The second line replaces red with blue. It is text, so it is written "blue".' },
+      { id: 'v1', kind: 'mcq', q: 'What is in <code>colour</code> at the end?', code: 'colour = "red"\ncolour = "blue"',
+        opts: ['blue', 'red', 'red blue', 'colour'], why: 'The second line replaces red with blue.' },
       { id: 'v2', kind: 'mcq', q: 'What does this program print?', code: 'band = "Queen"\nprint("band")',
-        opts: ['band', 'Queen', '"Queen"', 'A NameError'], why: 'band is in quotes, so it is printed as the word band, not what is in the box.' },
+        opts: ['band', 'Queen', 'band Queen', 'A NameError'], why: 'band is in quotes, so it is printed as the word band, not what is in the box.' },
       { id: 'v3', kind: 'type', as: 'output', q: 'What does this program print?', code: 'snack = "crisps"\nprint(snack)\nsnack = "apple"',
         answer: 'crisps', why: 'print() ran on line 2, before snack was changed on line 3.' },
-      { id: 'v4', kind: 'type', as: 'value', q: 'What is in <code>name</code> at the end?', code: 'name = "Jo"\nname = name + "sh"',
-        answer: { type: 'str', value: 'Josh' }, why: 'name + "sh" joins Jo and sh, and the answer is stored back in name.' },
-      { id: 'v5', kind: 'type', as: 'value', q: 'What is in <code>score</code> at the end?', code: 'score = 5\nscore = 8',
-        answer: { type: 'int', value: 8 }, why: 'The 5 is replaced by 8. It is a number, so no quotes.' },
-      { id: 'v6', kind: 'type', as: 'output', q: 'What does this program print?', code: 'food = "chips"\ndrink = "cola"\nprint(food + " and " + drink)',
-        answer: 'chips and cola', why: '+ joins the text exactly. The spaces come from " and ".' },
+      { id: 'v5', kind: 'type', as: 'number', q: 'What number is in <code>score</code> at the end?', code: 'score = 5\nscore = 8',
+        answer: 8, why: 'The second line replaces 5 with 8.' },
       { id: 'v7', kind: 'mcq', q: 'What does <code>=</code> do in <code>score = 10</code>?',
-        opts: ['Stores 10 in the box called score', 'Checks if score is the same as 10', 'Prints score and 10 side by side', 'Turns score and 10 into text'],
+        opts: ['Stores 10 in the box called score', 'Checks if score is the same as 10', 'Prints score and 10 side by side', 'Makes 10 bigger than score'],
         why: 'One = stores. Checking if two things are the same needs ==.' },
+      { id: 'v8', kind: 'type', as: 'output', q: 'What does this program print?', code: 'drink = "juice"\ndrink = "water"\nprint(drink)',
+        answer: 'water', why: 'water replaced juice before print() ran.' },
+      { id: 'v9', kind: 'mcq', q: 'Which line prints what is in the box called <code>team</code>?', code: 'team = "Leeds"',
+        opts: ['print(team)', 'print("team")', 'print(Team)', 'print(Leeds)'],
+        why: 'No quotes means the box. "team" is the word team; Team and Leeds are names Python has never seen.' },
+      { id: 'v10', kind: 'type', as: 'output', q: 'What does this program print?', code: 'animal = "fox"\nprint("animal")',
+        answer: 'animal', why: '"animal" is in quotes, so the word animal is printed, not fox.' },
     ],
     apply: { kind: 'fix', title: 'Swap the pet',
-      goal: 'Add <strong>one line</strong> so the program prints <code>I have a cat</code> and then <code>Now I have a dog</code>. Do not change the two print lines.',
-      starter: 'pet = "cat"\nprint("I have a " + pet)\nprint("Now I have a " + pet)',
+      goal: 'Add <strong>one line</strong> so the program prints <code>cat</code> under the first pet, then <code>dog</code> under the next. Do not change the print lines.',
+      starter: 'print("My first pet:")\npet = "cat"\nprint(pet)\nprint("My next pet:")\nprint(pet)',
+      example: { before: 'print("Lunch:")\nfood = "soup"\nprint(food)\nprint("Tea:")\nprint(food)',
+        after: 'print("Lunch:")\nfood = "soup"\nprint(food)\nprint("Tea:")\nfood = "curry"\nprint(food)',
+        notes: { 4: 'the new line: before the last print' } },
       tests: [[]],
-      expect: () => ['I have a cat', 'Now I have a dog'],
+      expect: () => ['My first pet:', 'cat', 'My next pet:', 'dog'],
       check: raw => {
         const lines = raw.split('\n').map(squash);
-        const keep = ['print("I have a " + pet)', 'print("Now I have a " + pet)'].every(k => lines.includes(squash(k)));
-        return keep ? '' : 'It prints the right thing, but the two print lines must stay exactly as they were. Put a new value in pet instead.';
+        const keep = ['print("My first pet:")', 'print("My next pet:")'].every(k => lines.includes(squash(k)))
+          && lines.filter(l => l === squash('print(pet)')).length >= 2;
+        return keep ? '' : 'It prints the right thing, but the print lines must stay as they were, with print(pet) twice. Put a new value in pet instead.';
       },
-      diagnose: (raw, runs) => /dog/.test(printedLines(runs[0])[0] || '')
-        ? 'The first line says dog too. The new line must go after the first print() but before the second.' : '' } },
+      diagnose: (raw, runs) => printedLines(runs[0])[1] === 'dog'
+        ? 'The first pet says dog too. The new line must go after the first print(pet) but before the second.' : '' } },
 
   // ── Lesson 3 ──────────────────────────────────────────────────────────────
   { id: 'input', short: 'input()', icon: '⌨️', title: 'input(): asking and storing', lesson: 'Lesson 3',
@@ -270,7 +326,19 @@ export const TARGETS = [
       'Write it as <code>name = input("Name? ")</code>: the answer goes into the box on the left.',
       '<code>+</code> joins text <strong>exactly</strong>: it never adds a space. Put the space inside the quotes: <code>"Hello " + name</code>',
     ],
-    example: { code: 'name = input("Name? ")\nprint("Hello" + name)\nprint("Hello " + name)', out: 'Name? Sam\nHelloSam\nHello Sam', typed: 'Sam' },
+    example: { code: 'food = input("Food? ")\nprint("Yum" + food)\nprint("Yum " + food)', out: 'Food? pizza\nYumpizza\nYum pizza', typed: 'pizza',
+      notes: { 0: 'the answer goes in food', 1: 'no space: Yumpizza', 2: 'space inside the quotes' } },
+    warm: [
+      { id: 'iw1', kind: 'mcq', q: 'The user types <strong>Sam</strong>. What is stored in <code>name</code>?', code: 'name = input("Name? ")',
+        opts: ['Sam', 'Name?', 'Name? Sam', 'name'], why: 'The question is only shown. Only the answer, Sam, is stored.' },
+      { id: 'iw2', kind: 'mcq', q: '<code>name</code> holds Sam. What does this print?', code: 'print("Hi " + name)',
+        opts: ['Hi Sam', 'HiSam', 'Hi name', 'Hi + Sam'], why: 'The space is inside "Hi ", so + gives Hi Sam.' },
+      { id: 'iw3', kind: 'mcq', q: '<code>name</code> holds Sam. What does this print?', code: 'print("Hi" + name)',
+        opts: ['HiSam', 'Hi Sam', 'Hi name', 'An error'], why: '+ never adds a space. "Hi" has no space at the end, so you get HiSam.' },
+      { id: 'iw4', kind: 'mcq', q: 'Which line asks for a food <strong>and stores the answer</strong>?',
+        opts: ['food = input("Food? ")', 'input("Food? ") = food', 'food = "input(Food?)"', 'print(input("Food? "))'],
+        why: 'The box goes on the left of =, and input() on the right.' },
+    ],
     order: { tests: [{ typed: ['Sam'], out: ['Hello Sam', 'Bye Sam!'] }],
       lines: ['name = input("Name? ")', 'print("Hello " + name)', 'print("Bye " + name + "!")'],
       traps: ['print("Hello" + name)', 'input("Name? ") = name'] },
@@ -297,6 +365,9 @@ export const TARGETS = [
     apply: { kind: 'fix', title: 'Fix the colour question',
       goal: 'Typing <strong>red</strong> should print <code>Your favourite colour is red</code>. The program has 2 bugs on line 2.',
       starter: 'colour = input("What is your favourite colour? ")\nprint("Your favourite colour is" + color)',
+      example: { before: 'town = input("Where do you live? ")\nprint("You live in" + twon)',
+        after: 'town = input("Where do you live? ")\nprint("You live in " + town)',
+        notes: { 1: 'a space before the quote, and town spelt right' } },
       tests: [['red'], ['blue']],
       expect: ([c]) => [`Your favourite colour is ${c}`],
       diagnose: (raw, runs) => runs.some(r => printedLines(r).some(l => /colour is\S/i.test(l)))
@@ -311,7 +382,20 @@ export const TARGETS = [
       '<code>+</code> with text <strong>joins</strong>: <code>"5" + "3"</code> is <code>"53"</code>. There is no error, just the wrong answer.',
       'Wrap the input in <code>int()</code> to make a whole number: <code>apples = int(input("Apples? "))</code>',
     ],
-    example: { code: 'a = input("A? ")\nb = int(input("B? "))\nprint(a + a)\nprint(b + b)', out: 'A? 5\nB? 5\n55\n10', typed: '5' },
+    example: { code: 'cats = int(input("Cats? "))\ndogs = int(input("Dogs? "))\nprint(cats + dogs)', out: 'Cats? 2\nDogs? 3\n5', typed: ['2', '3'],
+      notes: { 0: 'int( ) round the input', 1: 'int( ) round the input', 2: 'numbers, so + adds' } },
+    warm: [
+      { id: 'cw1', kind: 'mcq', q: 'What does this print?', code: 'print(5 + 3)',
+        opts: ['8', '53', '5 + 3', 'An error'], why: 'With no quotes they are numbers, so + adds them: 8.' },
+      { id: 'cw2', kind: 'mcq', q: 'What does this print?', code: 'print("5" + "3")',
+        opts: ['53', '8', '5 + 3', 'An error'], why: 'In quotes they are text, so + joins them: 53.' },
+      { id: 'cw3', kind: 'mcq', q: 'The user types <strong>4</strong>. What is stored in <code>x</code>?', code: 'x = input("Number? ")',
+        opts: ['The text "4"', 'The number 4', 'The text "x"', 'The number 0'],
+        why: 'input() always gives back text, even when the user types a number.' },
+      { id: 'cw4', kind: 'mcq', q: 'Which line turns the answer into a number?',
+        opts: ['x = int(input("Number? "))', 'x = input("Number? ")', 'x = input(int("Number? "))', 'x = "int(input())"'],
+        why: 'int( ) goes round the whole input(...).' },
+    ],
     order: { tests: [{ typed: ['4', '3'], out: ['7'] }, { typed: ['10', '5'], out: ['15'] }],
       lines: ['a = int(input("First? "))', 'b = int(input("Second? "))', 'print(a + b)'],
       traps: ['a = input("First? ")', 'b = input("Second? ")'] },
@@ -334,10 +418,18 @@ export const TARGETS = [
         why: 'int() goes around the whole input(...), so the answer is turned into a number.' },
       { id: 'ci7', kind: 'type', as: 'output', q: 'The user types <strong>6</strong>. What is printed?',
         code: 'x = int(input("Number? "))\nprint(x * 2)', answer: '12', why: 'x holds the number 6, so x * 2 is 12.' },
+      // Data types (from the variables target): text in quotes, numbers without.
+      { id: 'ci8', kind: 'type', as: 'value', q: 'The user types <strong>4</strong>. What is in <code>x</code>?', code: 'x = input("Number? ")',
+        answer: { type: 'str', value: '4' }, why: 'input() gives back text, so x holds "4", in quotes.' },
+      { id: 'ci9', kind: 'type', as: 'value', q: 'The user types <strong>4</strong>. What is in <code>x</code>?', code: 'x = int(input("Number? "))',
+        answer: { type: 'int', value: 4 }, why: 'int() made it a number, so x holds 4, with no quotes.' },
     ],
     apply: { kind: 'fix', title: 'Fix the points total',
       goal: 'Typing <strong>7</strong> and <strong>5</strong> should print <code>Total points: 12</code>, but it prints 75. There is no error message.',
       starter: 'round1 = input("Points in round 1? ")\nround2 = input("Points in round 2? ")\ntotal = round1 + round2\nprint("Total points: " + str(total))',
+      example: { before: 'game1 = input("Goals in game 1? ")\ngame2 = input("Goals in game 2? ")\ngoals = game1 + game2\nprint("Goals: " + str(goals))',
+        after: 'game1 = int(input("Goals in game 1? "))\ngame2 = int(input("Goals in game 2? "))\ngoals = game1 + game2\nprint("Goals: " + str(goals))',
+        notes: { 0: 'int( ) added', 1: 'int( ) added' } },
       tests: [['7', '5'], ['10', '20']],
       expect: ([a, b]) => [`Total points: ${Number(a) + Number(b)}`],
       diagnose: (raw, runs) => runs.some(r => printedLines(r).some(l => l.includes(r.inputs.join(''))))
@@ -351,7 +443,19 @@ export const TARGETS = [
       'Text + number is a <code>TypeError</code>: Python will not mix them.',
       'Use <code>str()</code> to turn a number into text so it can be joined: <code>"Score: " + str(score)</code>',
     ],
-    example: { code: 'score = 7\nprint("Score: " + str(score))\nprint("Next: " + str(score + 1))', out: 'Score: 7\nNext: 8' },
+    example: { code: 'lives = 3\nprint("Lives: " + str(lives))\nprint("Lost one: " + str(lives - 1))', out: 'Lives: 3\nLost one: 2',
+      notes: { 1: 'str( ) turns 3 into text', 2: 'maths first, inside str( )' } },
+    warm: [
+      { id: 'sw1', kind: 'mcq', q: 'What does this print?', code: 'print("Hi " + "Sam")',
+        opts: ['Hi Sam', 'HiSam', 'A TypeError', 'Hi + Sam'], why: 'Text + text joins. The space is inside "Hi ".' },
+      { id: 'sw2', kind: 'mcq', q: 'What does this print?', code: 'print(2 + 3)',
+        opts: ['5', '23', 'A TypeError', '2 + 3'], why: 'Number + number adds: 5.' },
+      { id: 'sw3', kind: 'mcq', q: 'What happens?', code: 'print("Age: " + 12)',
+        opts: ['A TypeError', 'Age: 12', 'Age:12', 'A NameError'], why: 'Text + number is a TypeError. Python will not mix them.' },
+      { id: 'sw4', kind: 'mcq', q: 'Which line prints <strong>Age: 12</strong>?',
+        opts: ['print("Age: " + str(12))', 'print("Age: " + 12)', 'print("Age: " + int(12))', 'print("Age: " + "str(12)")'],
+        why: 'str() turns 12 into text, so it can be joined.' },
+    ],
     order: { tests: [{ typed: [], out: ['Goals: 4', 'Double: 8'] }],
       lines: ['goals = 4', 'print("Goals: " + str(goals))', 'print("Double: " + str(goals * 2))'],
       traps: ['print("Goals: " + goals)', 'print("Double: " + str(goals) * 2)'] },
@@ -377,10 +481,18 @@ export const TARGETS = [
         why: 'str() makes text. int() is the one that makes a whole number.' },
       { id: 'cs8', kind: 'type', as: 'output', q: 'What does this print?', code: 'goals = 4\nprint("Goals: " + str(goals * 2))', answer: 'Goals: 8',
         why: 'goals * 2 is 8, and str() turns it into text to join.' },
+      // Joining text (from the variables target).
+      { id: 'cs9', kind: 'type', as: 'output', q: 'What does this program print?', code: 'food = "chips"\ndrink = "cola"\nprint(food + " and " + drink)',
+        answer: 'chips and cola', why: '+ joins the text exactly. The spaces come from " and ".' },
+      { id: 'cs10', kind: 'type', as: 'value', q: 'What is in <code>name</code> at the end?', code: 'name = "Jo"\nname = name + "sh"',
+        answer: { type: 'str', value: 'Josh' }, why: 'name + "sh" joins Jo and sh, and the answer is stored back in name. It is text, so "Josh".' },
     ],
     apply: { kind: 'fix', title: 'Fix the birthday message',
       goal: 'Typing <strong>12</strong> should print <code>Next year you will be 13</code>. Right now it stops with a TypeError.',
       starter: 'age = int(input("How old are you? "))\nprint("Next year you will be " + age + 1)',
+      example: { before: 'level = int(input("What level are you on? "))\nprint("Next level: " + level + 1)',
+        after: 'level = int(input("What level are you on? "))\nprint("Next level: " + str(level + 1))',
+        notes: { 1: 'maths inside str( ), then join' } },
       tests: [['12'], ['9']],
       expect: ([a]) => [`Next year you will be ${Number(a) + 1}`],
       diagnose: (raw, runs) => runs.some(r => printedLines(r).some(l => l.includes(r.inputs[0] + '1')))
@@ -395,7 +507,18 @@ export const TARGETS = [
       'A line with <strong>no indent</strong> after the if/else is not part of it, so it <strong>always</strong> runs.',
       'Check the number on the boundary: <code>&gt;=</code> includes it, <code>&gt;</code> and <code>&lt;</code> do not.',
     ],
-    example: { code: 'age = int(input("Age? "))\nif age >= 13:\n    print("Welcome")\nelse:\n    print("Too young")\nprint("Bye")', out: 'Age? 13\nWelcome\nBye', typed: '13' },
+    example: { code: 'coins = int(input("Coins? "))\nif coins >= 5:\n    print("Buy a drink")\nelse:\n    print("Not enough")\nprint("Shop closed")', out: 'Coins? 3\nNot enough\nShop closed', typed: '3',
+      notes: { 2: 'only if True', 4: 'only if False', 5: 'no indent: always runs' } },
+    warm: [
+      { id: 'bw1', kind: 'mcq', q: '<code>age</code> holds 15. What is <code>age >= 13</code>?',
+        opts: ['True', 'False', 'A SyntaxError', 'A TypeError'], why: '15 is more than 13, so it is True.' },
+      { id: 'bw2', kind: 'mcq', q: 'What is printed?', code: 'age = 15\nif age >= 13:\n    print("Welcome")\nelse:\n    print("Too young")',
+        opts: ['Welcome', 'Too young', 'Welcome, Too young', 'Nothing'], why: 'The condition is True, so only the line under if runs.' },
+      { id: 'bw3', kind: 'mcq', q: 'What is printed?', code: 'age = 9\nif age >= 13:\n    print("Welcome")\nelse:\n    print("Too young")',
+        opts: ['Too young', 'Welcome', 'Welcome, Too young', 'Nothing'], why: '9 >= 13 is False, so only the line under else runs.' },
+      { id: 'bw4', kind: 'mcq', q: 'What is printed?', code: 'age = 9\nif age >= 13:\n    print("Welcome")\nelse:\n    print("Too young")\nprint("Bye")',
+        opts: ['Too young, then Bye', 'Too young only', 'Welcome, then Bye', 'Bye only'], why: 'else runs, then Bye: it has no indent, so it always runs.' },
+    ],
     order: { tests: [{ typed: ['14'], out: ['Welcome', 'Bye'] }, { typed: ['9'], out: ['Too young', 'Bye'] }],
       lines: ['age = int(input("Age? "))', 'if age >= 13:', '    print("Welcome")', 'else:', '    print("Too young")', 'print("Bye")'],
       traps: ['    print("Bye")', 'print("Welcome")'] },
@@ -415,6 +538,9 @@ export const TARGETS = [
     apply: { kind: 'fix', title: 'Fix the ticket machine',
       goal: '<code>Thanks for visiting</code> should be printed for <strong>everyone</strong>, whatever the answer. There are 2 bugs: one stops the program, and one only shows when you test it.',
       starter: 'tickets = int(input("How many tickets are left? "))\nif tickets > 0:\nprint("Book now!")\nelse:\n    print("Sold out")\n    print("Thanks for visiting")',
+      example: { before: 'seats = int(input("Seats left? "))\nif seats > 0:\nprint("Get on")\nelse:\n    print("Bus is full")\n    print("Have a nice day")',
+        after: 'seats = int(input("Seats left? "))\nif seats > 0:\n    print("Get on")\nelse:\n    print("Bus is full")\nprint("Have a nice day")',
+        notes: { 2: 'indented: inside the if', 5: 'no indent: runs for everyone' } },
       tests: [['5'], ['0'], ['1']],
       testNote: 'Checked with 5, 0 and 1.',
       expect: ([t]) => [Number(t) > 0 ? 'Book now!' : 'Sold out', 'Thanks for visiting'],
@@ -429,7 +555,18 @@ export const TARGETS = [
       '"<strong>11 or older</strong>" / "<strong>at least 11</strong>" means <code>&gt;= 11</code>. "<strong>Over 11</strong>" means <code>&gt; 11</code>.',
       'Test the boundary number itself: it is where most bugs hide.',
     ],
-    example: { code: 'age = 11\nprint(age >= 11)\nprint(age > 11)', out: 'True\nFalse' },
+    example: { code: 'age = 11\nprint(age >= 11)\nprint(age > 11)', out: 'True\nFalse',
+      notes: { 1: '>= includes 11', 2: '> leaves 11 out' } },
+    warm: [
+      { id: 'kw1', kind: 'mcq', q: 'Which sign means <strong>more than or equal to</strong>?',
+        opts: ['>=', '=>', '>', '=='], why: 'It is written >= : the > comes first.' },
+      { id: 'kw2', kind: 'mcq', q: '<code>age</code> holds 11. What is <code>age >= 11</code>?',
+        opts: ['True', 'False', 'A SyntaxError', 'A TypeError'], why: '>= includes 11 itself, so it is True.' },
+      { id: 'kw3', kind: 'mcq', q: '<code>age</code> holds 11. What is <code>age > 11</code>?',
+        opts: ['False', 'True', 'A SyntaxError', 'A TypeError'], why: '11 is not MORE than 11, so it is False.' },
+      { id: 'kw4', kind: 'mcq', q: 'People who are <strong>11 or older</strong> can come in. Which line is right?',
+        opts: ['if age >= 11:', 'if age > 11:', 'if age = 11:', 'if age <= 11:'], why: '"11 or older" includes 11, so it is >= 11.' },
+    ],
     order: { goal: 'Anyone <strong>11 or older</strong> can come in.',
       tests: [{ typed: ['11'], out: ['Come in'] }, { typed: ['10'], out: ['Too young'] }],
       lines: ['age = int(input("Age? "))', 'if age >= 11:', '    print("Come in")', 'else:', '    print("Too young")'],
@@ -456,6 +593,10 @@ export const TARGETS = [
     apply: { kind: 'fix', title: 'Fix the bus pass checker',
       goal: 'Anyone <strong>60 or over</strong> gets a free bus pass; everyone else pays the full fare. There are 2 bugs: fix the first, then test it with different ages.',
       starter: 'age = int(input("How old are you? "))\nif age = 60:\n    print("Free bus pass")\nelse:\n    print("Full fare")',
+      example: { text: 'Here, <strong>50 or more</strong> passes.',
+        before: 'score = int(input("Score? "))\nif score = 50:\n    print("Pass")\nelse:\n    print("Try again")',
+        after: 'score = int(input("Score? "))\nif score >= 50:\n    print("Pass")\nelse:\n    print("Try again")',
+        notes: { 1: '>= lets 50 itself pass' } },
       tests: [['60'], ['59'], ['75']],
       testNote: 'Checked with 60, 59 and 75.',
       expect: ([a]) => [Number(a) >= 60 ? 'Free bus pass' : 'Full fare'],
@@ -475,7 +616,30 @@ export const TARGETS = [
       'Every <code>if</code> and <code>else</code> line ends with a colon, and the lines inside are indented.',
       'Test both paths <strong>and</strong> the boundary number before you say it works.',
     ],
-    example: { code: 'name = input("Name? ")\nage = int(input("Age? "))\nif age >= 12:\n    print("Enjoy, " + name)\nelse:\n    print("Sorry, " + name)', out: 'Name? Zoe\nAge? 12\nEnjoy, Zoe', typed: 'Zoe' },
+    example: { code: 'name = input("Name? ")\nheight = int(input("Height in cm? "))\nif height >= 120:\n    print("Hop on, " + name)\nelse:\n    print("Too short, " + name)',
+      out: 'Name? Zoe\nHeight in cm? 125\nHop on, Zoe', typed: ['Zoe', '125'],
+      notes: { 0: 'ask', 1: 'convert', 2: 'decide', 3: 'tell' } },
+    warm: [
+      { id: 'ww1', kind: 'mcq', q: 'A program asks for an age, then decides. Which line comes <strong>first</strong>?',
+        opts: ['age = int(input("Age? "))', 'if age >= 12:', 'else:', 'print("Enjoy!")'], why: 'Ask first: the if needs the answer before it can decide.' },
+      { id: 'ww2', kind: 'mcq', q: 'Why does the age need <code>int( )</code>?',
+        opts: ['To compare it with a number', 'To show it on the screen', 'To store it in a box', 'To ask the question'],
+        why: 'input() gives text. int() makes it a number, so it can be compared with 12.' },
+      { id: 'ww3', kind: 'mcq', q: 'Which of these lines must end with a colon <code>:</code>?',
+        opts: ['else', 'print("Hi")', 'name = input("Name? ")', 'age = 12'], why: 'if and else lines end with a colon.' },
+      { id: 'ww4', kind: 'mcq', q: '<code>name</code> holds Zoe. Which line prints <strong>Enjoy, Zoe</strong>?',
+        opts: ['print("Enjoy, " + name)', 'print("Enjoy, name")', 'print("Enjoy," + "name")', 'print(Enjoy, + name)'],
+        why: 'name has no quotes, so what is in the box is joined in.' },
+    ],
+    // The code task is the student's own assessment program (see applyFor); these show a similar one.
+    applyExamples: {
+      w_make: { text: 'A similar program (a fair ride, not the game shop):',
+        code: 'name = input("What is your name? ")\nheight = int(input("How tall are you in cm? "))\nif height >= 120:\n    print(name + ", you can ride")\nelse:\n    print("Sorry " + name + ", grow " + str(120 - height) + " more cm")',
+        notes: { 0: 'name first', 1: 'then the number, with int( )', 2: '>= lets 120 in', 5: 'the maths inside str( )' } },
+      w_warm: { text: 'A similar change (a cinema, not the weather):',
+        code: 'age = int(input("Age? "))\nif age >= 15:\n    print("You can watch it")\nelse:\n    print("Pick another film")\nprint("Enjoy your popcorn!")',
+        notes: { 1: '>= lets 15 in', 5: 'no indent: for everyone' } },
+    },
     order: { tests: [{ typed: ['Zoe', '12'], out: ['Enjoy, Zoe'] }, { typed: ['Max', '9'], out: ['Sorry, Max'] }],
       lines: ['name = input("Name? ")', 'age = int(input("Age? "))', 'if age >= 12:', '    print("Enjoy, " + name)', 'else:', '    print("Sorry, " + name)'],
       traps: ['age = input("Age? ")', 'else'] },
@@ -567,6 +731,11 @@ export const poolQuestion = (tid, qid) => targetById(tid).pool.find(q => q.id ==
 export const cpOptionOrder = (tid, qid, seed, attempt) =>
   shuffle([...Array(poolQuestion(tid, qid).opts.length).keys()], rngFor(seed, `${tid}|${attempt}|${qid}`));
 
+// 🪜 Warm-up: the target's `warm` questions, easiest first, in a fixed order. A wrong answer
+// is tried again (after a short wait) with the options shuffled again.
+export const warmOptionOrder = (tid, qi, seed, tries) =>
+  shuffle([...Array(targetById(tid).warm[qi].opts?.length || 0).keys()], rngFor(seed, `warm|${tid}|${qi}|${tries}`));
+
 // Text in quotes, numbers without, so the answer shows the type (as in the assessment).
 function checkValue(expected, typed) {
   const t = String(typed ?? '').trim();
@@ -599,23 +768,36 @@ export const rightAnswer = q => q.kind === 'mcq' ? q.opts[0]
 // target's misconception. The student's arrangement is RUN, so any order that prints the right
 // thing passes, as long as it uses every block except the traps.
 
-export const orderBlocks = (tid, seed) => {
-  const o = targetById(tid).order;
+// A target can have a smaller puzzle first (`orderFirst`). Puzzle ids: the target id for the
+// main one (so saved work keeps its key), `${tid}-a` for the first one.
+export const puzzlesFor = tid => targetById(tid).orderFirst ? [tid + '-a', tid] : [tid];
+export const puzzleById = pid => pid.endsWith('-a') ? targetById(pid.slice(0, -2)).orderFirst : targetById(pid).order;
+
+export const orderBlocks = (pid, seed) => {
+  const o = puzzleById(pid);
   return shuffle([...o.lines.map((text, i) => ({ id: 'm' + i, text })), ...o.traps.map((text, i) => ({ id: 't' + i, text, trap: true }))],
-    rngFor(seed, `order|${tid}`));
+    rngFor(seed, `order|${pid}`));
 };
-const blockText = (tid, id) => {
-  const o = targetById(tid).order, n = Number(id.slice(1));
+const blockText = (pid, id) => {
+  const o = puzzleById(pid), n = Number(id.slice(1));
   return (id[0] === 'm' ? o.lines : o.traps)[n];
 };
-export const orderCode = (tid, placed) => placed.map(id => blockText(tid, id)).join('\n');
+export const orderCode = (pid, placed) => placed.map(id => blockText(pid, id)).join('\n');
+
+// More blocks in the program than the answer has lines: at least one is a trap. Shown the
+// moment it happens (students miss "N blocks are traps"), so → '' or the message.
+export function tooManyLines(pid, placed) {
+  const o = puzzleById(pid), n = o.lines.length;
+  if (placed.length <= n) return '';
+  return `Too many lines: this program only needs ${n} lines, and you have ${placed.length}. ${o.traps.length} of the blocks are traps, so take out the ones that don't belong.`;
+}
 
 // placed: block ids in the student's order. runs: one per order.tests entry, of orderCode().
 // → { ok, msg, got?, want?, typed?, mistake? }
-export function evalOrder(tid, placed, runs) {
-  const o = targetById(tid).order;
+export function evalOrder(pid, placed, runs) {
+  const o = puzzleById(pid);
   if (!placed.length) return { ok: false, msg: 'Drag the blocks into Your program first.' };
-  const code = orderCode(tid, placed);
+  const code = orderCode(pid, placed);
   for (let i = 0; i < o.tests.length; i++) {
     const r = runs[i], t = o.tests[i];
     if (!r.ok) return { ok: false, typed: t.typed, msg: `${typedPhrase(t.typed) || 'When it runs, '}Python stops with an error.`, mistake: spotMistake(code, [r]) };
@@ -661,7 +843,7 @@ export const MISTAKES = {
     onLine(/print\s*\(\s*"[^"]*Rovers/, 'You typed Rovers into the print() line. Use the variable `team` instead, so it still works if the team changes.', true),
   ],
   variables: [
-    onLine(/print\s*\(\s*"Now I have a dog"/, 'You typed dog into the print() line. Leave both print lines alone, and store the new value in the box: `pet = "dog"`', true),
+    onLine(/print\s*\(\s*"dog"/, 'You typed "dog" into a print() line. Leave the print lines alone, and store the new value in the box: `pet = "dog"`', true),
     onLine(/^\s*pet\s*==/, '`==` only checks if two things are the same. To store a new value, use one `=`: `pet = "dog"`'),
     onLine(/^\s*Pet\s*=(?!=)/, '`Pet` with a capital P is a different box from `pet`. Use lower case.'),
     raw => {
@@ -802,6 +984,7 @@ export function applyFor(tid, points = {}, own = {}) {
     const usable = typeof mine === 'string' && mine.trim() && mine.trim() !== item.starter.trim();
     return { kind: 'reqs', item, title: item.title.replace(/^(Write it|Warm-up|Copy the machine): /, ''), goal: item.goal,
              samples: item.samples, tests: item.tests, testNote: item.testNote, reqs: item.reqs, extraMsg: item.extraMsg,
+             example: targetById('write').applyExamples[item.id],
              starter: usable ? mine : item.starter, own: !!usable, original: item.starter };
   }
   return { ...targetById(tid).apply, original: targetById(tid).apply.starter, mistakes: MISTAKES[tid] || [] };
@@ -821,7 +1004,7 @@ function markApply(task, raw, runs) {
     const bad = r.results.findIndex(x => !x);
     if (bad < 0) return { ok: true, results: r.results, msg: `All ${r.results.length} requirements met.` };
     const hints = REQ_HINTS[task.item.id] || [];
-    return { ok: false, results: r.results,
+    return { ok: false, results: r.results, diffs: r.diffs,
              msg: `${r.results.filter(Boolean).length} of ${r.results.length} requirements met. ${r.msg}${hints[bad] ? ` Tip: ${hints[bad]}` : ''}` };
   }
   const f = firstFailed(runs);

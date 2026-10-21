@@ -28,6 +28,11 @@ color:  teal
   .bonus-pill { font-size: 0.8rem; font-weight: 700; color: var(--gold); }
   .score-bar-wrap { flex: 1; min-width: 120px; max-width: 260px; height: 8px; background: var(--surface-dim); border-radius: 4px; overflow: hidden; }
   .score-bar { height: 100%; background: var(--accent); border-radius: 4px; width: 0%; transition: width .5s ease; }
+  /* No progress on the current step for a while (see STUCK_MS in the JS): a quiet nudge to ask
+     for help that a teacher can also spot across the room. The ring shows even at 0%. */
+  .score-bar-wrap.stuck { box-shadow: 0 0 0 2px var(--amber); animation: stuck-pulse 1.6s ease-in-out infinite; }
+  .score-bar-wrap.stuck .score-bar { background: var(--amber); }
+  @keyframes stuck-pulse { 0%, 100% { box-shadow: 0 0 0 2px var(--amber), 0 0 6px rgba(245,158,11,.5); } 50% { box-shadow: 0 0 0 2px var(--amber), 0 0 16px rgba(245,158,11,1); } }
   /* The header shows the progress; activity-ui's corner badge would repeat it. */
   #activity-ui-score { display: none !important; }
 
@@ -123,6 +128,27 @@ color:  teal
   .rule h4 { font-family: var(--font-head); color: var(--surface); margin-bottom: 6px; }
   .rule ul { margin: 0 0 8px 20px; line-height: 1.65; font-size: 0.92rem; }
   .ex-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: start; }
+  .rule { margin: 0 0 4px; }
+  .rule .ex-cap { font-size: 0.78rem; color: var(--muted); font-weight: 700; margin-top: 10px; }
+
+  /* Look back: closed until the student opens it */
+  .lookback { background: #fff; border: 1.5px solid #c9d8e8; border-radius: 10px; margin: 0 0 14px; }
+  .lookback > summary { cursor: pointer; padding: 10px 14px; font-weight: 700; color: var(--surface); list-style: none; }
+  .lookback > summary::-webkit-details-marker { display: none; }
+  .lookback > summary::before { content: '▸ '; color: var(--accent); }
+  .lookback[open] > summary::before { content: '▾ '; }
+  .lookback > summary small { font-weight: 600; color: var(--muted); margin-left: 6px; }
+  .lookback-body { padding: 0 14px 10px; }
+
+  /* Build it in two parts */
+  .pz-part + .pz-part { margin-top: 18px; padding-top: 14px; border-top: 1.5px dashed #c9d8e8; }
+  .pz-part.locked { opacity: .5; pointer-events: none; user-select: none; }
+  .pz-part-title { font-weight: 700; color: var(--surface); }
+  .pz-part-title .muted { font-weight: 600; font-size: 0.82rem; }
+
+  /* A similar fix, before and after */
+  .fix-ex { background: #f7fafd; border: 1.5px solid #c9d8e8; border-radius: 10px; padding: 10px 14px; margin: 10px 0; }
+  .fix-ex-title { font-weight: 700; color: var(--surface); font-size: 0.92rem; }
   @media (max-width: 680px) { .ex-grid { grid-template-columns: 1fr; } .ans-row { grid-template-columns: 1fr; } }
 
   /* Reflect */
@@ -187,6 +213,7 @@ color:  teal
   .pz-line .n { color: #6b8cae; width: 1.4em; text-align: right; font-family: var(--font-mono); font-size: 0.85rem; flex-shrink: 0; }
   .pz-empty { color: var(--muted); font-size: 0.85rem; padding: 8px; }
   .pz-prog .pz-empty { color: #9fb4cc; }
+  .pz-prog.too-many { border-color: var(--red); border-style: solid; box-shadow: 0 0 0 3px rgba(220,38,38,.25); }
   .pz-cap { font-size: 0.75rem; color: var(--muted); font-weight: 700; margin-bottom: 4px; }
   @media (max-width: 680px) { .pz { grid-template-columns: 1fr; } }
 
@@ -229,6 +256,12 @@ color:  teal
   .req-list li.req-fail { border-color: var(--red); }
   .req-list li.req-fail .tick { background: var(--red); color: #fff; }
   .req-list.stretch li .tick { background: var(--gold-bg); }
+  .req-diff { margin-top: 6px; font-size: 0.88rem; }
+  .req-diff .k, .req-diff .key { color: var(--muted); font-size: 0.8rem; }
+  .req-diff .words { font-family: var(--font-mono); background: #fff; border: 1.5px solid #c9d8e8; border-radius: 6px; padding: 3px 8px; margin: 3px 0; display: inline-block; line-height: 1.9; }
+  .req-diff .w-ok { color: var(--green-dark); font-weight: 600; }
+  .req-diff .w-extra { color: #b42318; background: var(--red-bg); text-decoration: line-through 2px; border-radius: 3px; padding: 0 2px; }
+  .req-diff .w-missing { color: #b42318; background: var(--red-bg); text-decoration: none; outline: 1.5px dashed #b42318; border-radius: 3px; padding: 0 2px; font-weight: 600; }
   .target-done { display: none; background: var(--green-bg); border: 1.5px solid var(--green); border-radius: 10px; padding: 12px 16px; font-weight: 700; color: var(--green-dark); margin-top: 14px; }
   .target-done.show { display: block; animation: ac-fade-in .3s ease; }
 
@@ -251,7 +284,7 @@ color:  teal
   .test-plan .path { font-size: 0.8rem; color: var(--muted); }
   .test-plan .res { font-family: var(--font-mono); font-size: 0.82rem; white-space: pre-wrap; color: var(--surface); }
 
-  @media (prefers-reduced-motion: reduce) { .panel.active, .target-done.show { animation: none; } .spinner { animation: none; } }
+  @media (prefers-reduced-motion: reduce) { .panel.active, .target-done.show, .score-bar-wrap.stuck { animation: none; } .spinner { animation: none; } }
   @media (max-width: 600px) {
     .panel, .intro { padding-left: 16px; padding-right: 16px; }
     .header { padding: 14px 16px; }
@@ -285,22 +318,19 @@ color:  teal
   </div>
   <div class="score-row">
     <div class="score-pill" id="score-pill">Progress: 0%</div>
-    <div class="score-bar-wrap"><div class="score-bar" id="score-bar"></div></div>
+    <div class="score-bar-wrap" id="score-bar-wrap"><div class="score-bar" id="score-bar"></div></div>
     <div class="bonus-pill" id="bonus-pill"></div>
   </div>
 </div>
 
 <div class="intro">
-  <p class="intro-short">🎯 Each tab is one thing you found hard in the assessment. Work down its steps: each one unlocks the next.<br>
-    Finish your tabs to unlock <strong>🎨 Make it</strong>, your own program.</p>
+  <p class="intro-short">🎯 One tab for each thing to fix. Do its steps in order.</p>
   <details id="intro">
     <summary>How it works</summary>
     <ul>
-      <li>Your <strong>plan</strong> is made from your Unit 1 assessment: the <strong>3 things you found hardest</strong>, each with its own tab.</li>
-      <li>Each target has 5 steps: <strong>🔍 look back</strong> at your own answers, <strong>🧩 build</strong> a program from blocks using the rules, <strong>✍️ write</strong> what you will do differently, pass a <strong>🧠 checkpoint</strong> (3 right in a row), then <strong>🛠 use it</strong> in a program.</li>
-      <li>In a checkpoint, one wrong answer sends you back to question 1 with new questions. Read the explanation, then try again. Getting it first time counts towards ⭐ gold.</li>
-      <li>This is practice, not a test: <strong>💡 Get help</strong> is on in the code editors, and checks tell you what to change.</li>
-      <li>When your targets are done, <strong>🎨 Make it</strong> unlocks: your own program that makes a decision. Everything saves automatically.</li>
+      <li>Each tab: 🪜 warm up → 🧩 build → ✍️ one sentence → 🧠 checkpoint → 🛠 use it.</li>
+      <li>Checkpoint: get 3 right in a row. A wrong answer starts it again.</li>
+      <li>Finish your tabs to unlock <strong>🎨 Make it</strong>. Everything saves.</li>
     </ul>
   </details>
 </div>
@@ -326,7 +356,8 @@ import {
   markCheckpoint, rightAnswer, applyFor, evalApply, inputPrompts, inputCount, evalMake,
   MAKE_REQS, MAKE_STRETCH, IDEAS, lessonScore, targetDone, realSentence, questionNumber,
   FIX_NOTES, checkTraceValue, checkTraceOutput, showValue, branchChoices, branchAnswer, markSort,
-  SITTINGS, LATEST, satItems, orderBlocks, orderCode, evalOrder,
+  SITTINGS, LATEST, satItems, orderBlocks, orderCode, evalOrder, puzzlesFor, puzzleById, warmOptionOrder,
+  tooManyLines,
 } from './checkers.js';
 import { preload, runPython } from '../../../pyodide-runner.js';
 import { setupEditors, setEditorOutput, refreshEditor, runCode } from '../../../code-editor.js';
@@ -349,7 +380,7 @@ const toast = (msg, kind = '') => {
 // ── State (saved on every change, including a checkpoint restart) ──
 function fresh() {
   return { seed: Math.floor(Math.random() * 2 ** 31), plan: null, snap: null, extra: [], tab: 'plan',
-           reflect: {}, order: {}, cp: {}, applied: {}, code: {}, make: { core: 0, stretch: 0, results: null, stretchResults: null },
+           warm: {}, reflect: {}, order: {}, cp: {}, applied: {}, code: {}, make: { core: 0, stretch: 0, results: null, stretchResults: null },
            idea: null, tests: { A: [], B: [] }, teacherUnlock: false, finished: false };
 }
 let S;
@@ -375,9 +406,13 @@ function listing(code, notes = {}) {
   return `<div class="listing">${code.split('\n').map((l, i) =>
     `<div class="ln"><span class="n">${i + 1}</span><span>${hl(l)}</span>${notes[i] ? `<span class="note">← ${esc(notes[i])}</span>` : ''}</div>`).join('')}</div>`;
 }
+// typed: the answer the user types (or a list of them, one per input line), shown in yellow.
 function terminal(text, typed, cap) {
-  const lines = text.split('\n').map(l => typed && /\?\s/.test(l) && l.endsWith(typed)
-    ? esc(l.slice(0, -typed.length)) + `<span class="typed">${esc(typed)}</span>` : esc(l));
+  const answers = [].concat(typed ?? []);
+  const lines = text.split('\n').map(l => {
+    const a = /\?\s/.test(l) && answers.find(x => x && l.endsWith(x));
+    return a ? esc(l.slice(0, -a.length)) + `<span class="typed">${esc(a)}</span>` : esc(l);
+  });
   return `<div class="terminal">${cap ? `<span class="cap">${esc(cap)}</span>` : ''}${lines.join('\n')}</div>`;
 }
 const sampleRun = (run, cap) => `<div class="terminal">${cap ? `<span class="cap">${esc(cap)}</span>` : ''}${
@@ -413,6 +448,7 @@ function showTab(k) {
   S.tab = k; save();
   $$('.panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + k));
   refreshTabs();
+  checkStuck();
   $$('#panel-' + k + ' .checker-textarea').forEach(ta => { try { refreshEditor(ta); } catch (e) {} });
   window.scrollTo({ top: 0, behavior: reduceMotion ? 'auto' : 'smooth' });
 }
@@ -452,8 +488,8 @@ function renderPlan() {
     <div class="next-row"><button class="ac-btn" data-tab-go="${S.plan[0] || 'make'}">Start: ${S.plan[0] ? esc(targetById(S.plan[0]).title) : 'Make it'} →</button></div>`;
 }
 function stepsLeft(tid) {
-  const n = [orderDone(tid), !!S.reflect[tid], !!S.cp[tid]?.done, !!S.applied[tid]].filter(Boolean).length;
-  return n ? `${n + 1} of 5 steps` : 'To do';
+  const n = [warmDone(tid), orderDone(tid), !!S.reflect[tid], !!S.cp[tid]?.done, !!S.applied[tid]].filter(Boolean).length;
+  return n ? `Step ${n + 1} of 5` : 'To do';
 }
 function renderPicker() {
   return `
@@ -486,12 +522,19 @@ function renderTarget(tid) {
       <div><div class="task-title">${esc(t.title)}</div>
       <div class="task-sub">${esc(t.lesson)}${extra ? ' · extra practice (bonus)' : ''}</div></div></div>
 
-    <div class="step" id="step1_${tid}">
-      <div class="step-head"><span class="step-no">1</span><span class="step-title">🔍 Look back at your answers</span></div>
-      ${renderLookBack(tid)}
-      <div class="rule"><h4>📌 Remember</h4><ul>${t.rule.map(r => `<li>${r}</li>`).join('')}</ul>
-        <div class="ex-grid"><div><div class="err-cap">Example</div>${listing(ex.code)}</div>
-          <div><div class="err-cap">${ex.err ? 'Python shows' : 'It prints'}</div>${ex.err ? `<pre class="err">${esc(ex.out)}</pre>` : terminal(ex.out, ex.typed)}</div></div></div>
+    <details class="lookback" id="lookback_${tid}">
+      <summary>🔍 Look back at your assessment answers <small>(click to open)</small></summary>
+      <div class="lookback-body">${renderLookBack(tid)}</div>
+    </details>
+
+    <div class="rule"><h4>📌 Remember</h4><ul>${t.rule.map(r => `<li>${r}</li>`).join('')}</ul>
+      <div class="ex-cap">An example (a different program, the same idea)</div>
+      <div class="ex-grid"><div>${listing(ex.code, ex.notes)}</div>
+        <div>${ex.err ? `<pre class="err">${esc(ex.out)}</pre>` : terminal(ex.out, ex.typed, 'It prints')}</div></div></div>
+
+    <div class="step" id="stepw_${tid}">
+      <div class="step-head"><span class="step-no">1</span><span class="step-title">🪜 Warm up</span><span class="step-lock" id="lockw_${tid}"></span></div>
+      <div id="warm_${tid}"></div>
     </div>
 
     <div class="step" id="stepb_${tid}">
@@ -501,7 +544,7 @@ function renderTarget(tid) {
 
     <div class="step reflect" id="step2_${tid}">
       <div class="step-head"><span class="step-no">3</span><span class="step-title">✍️ What will you do differently?</span><span class="step-lock" id="lock2_${tid}"></span></div>
-      <p>Look at what went wrong above and the rule. In one sentence: <strong>what will you check, or do differently, next time?</strong></p>
+      <p>In one sentence: <strong>what will you check next time?</strong></p>
       <textarea id="reflect_${tid}" data-reflect="${tid}" data-title="${esc(t.title)}: what I will do differently" placeholder="Next time I will…">${esc(S.reflect[tid] || '')}</textarea>
       <div class="row"><button class="ac-btn" data-save-reflect="${tid}" id="savereflect_${tid}">Save my sentence</button></div>
       <div class="feedback" id="fbreflect_${tid}"></div>
@@ -604,93 +647,115 @@ function lookBackItem(id, snap) {
 // ── Step 2: 🧩 build it — drag the blocks into order, using the 📌 Remember rules ──
 // The arrangement is run in Python, so any order that prints the right thing passes. A wrong
 // try locks the Check button for a few seconds (saved, so a reload can't skip it).
+// A target can have a smaller puzzle first (pid `${tid}-a`); the main puzzle's pid is the tid.
 const ORDER_WAIT = reduceMotion ? 2 : 5;
-const orderState = tid => (S.order[tid] ||= { placed: [], tries: 0, done: false, until: 0 });
+const tidOf = pid => pid.replace(/-a$/, '');
+const orderState = pid => (S.order[pid] ||= { placed: [], tries: 0, done: false, until: 0 });
 // Students who saved their sentence before this step existed have it done already.
 const orderDone = tid => !!S.order?.[tid]?.done || !!S.reflect[tid];
+const puzzleDone = pid => pid === tidOf(pid) ? orderDone(pid) : !!S.order?.[pid]?.done || orderDone(tidOf(pid));
 function renderOrderStep(tid) {
-  const o = targetById(tid).order;
-  // Each test as a sample run: every input() question with the answer typed (yellow), then the
-  // printed lines, so it is clear what the user types and where.
-  const prompts = inputPrompts(o.lines.join('\n'));
-  const typedAny = o.tests.some(t => t.typed.length);
-  const runs = o.tests.map((t, i) => sampleRun([
-    ...t.typed.map((a, k) => [prompts[k] ?? '', a]),
-    ...t.out.map(l => [l]),
-  ], o.tests.length > 1 ? `Run ${i + 1}: the user types ${t.typed.join(', then ')}` : t.typed.length ? `The user types ${t.typed.join(', then ')}` : 'It should print')).join('');
-  return `${o.goal ? `<div class="goal-line">🎯 ${o.goal}</div>` : ''}
-    <p class="goal-line">Use the 📌 rules above. Drag (or click) the blocks into <strong>Your program</strong> so it runs like this${typedAny ? ' (<span class="typed-key">yellow</span> = typed by the user)' : ''}.
-      <strong>${o.traps.length} blocks are traps</strong>: leave them out.</p>
-    <div class="samples">${runs}</div>
-    <div class="pz" id="pz_${tid}"></div>
-    <div class="row" style="margin-top:10px"><button class="ac-btn" data-order-check="${tid}" id="ordercheck_${tid}">▶ Run and check</button>
-      <button class="ac-btn ac-btn-secondary" data-order-clear="${tid}" id="orderclear_${tid}">↺ Start again</button></div>
-    <div class="feedback" id="fborder_${tid}" role="status"></div>`;
+  const pids = puzzlesFor(tid);
+  return pids.map((pid, i) => {
+    const o = puzzleById(pid);
+    // Each test as a sample run: every input() question with the answer typed (yellow), then the
+    // printed lines, so it is clear what the user types and where.
+    const prompts = inputPrompts(o.lines.join('\n'));
+    const typedAny = o.tests.some(t => t.typed.length);
+    const runs = o.tests.map((t, k) => sampleRun([
+      ...t.typed.map((a, j) => [prompts[j] ?? '', a]),
+      ...t.out.map(l => [l]),
+    ], o.tests.length > 1 ? `Run ${k + 1}: the user types ${t.typed.join(', then ')}` : t.typed.length ? `The user types ${t.typed.join(', then ')}` : 'It should print')).join('');
+    const part = pids.length > 1
+      ? `<p class="pz-part-title">Part ${i + 1}: ${o.lines.length} lines <span class="muted" id="pzlock_${pid}"></span></p>` : '';
+    return `<div class="pz-part" id="pzpart_${pid}">${part}
+      ${o.goal ? `<div class="goal-line">🎯 ${o.goal}</div>` : ''}
+      <p class="goal-line">Click the blocks into <strong>Your program</strong> to make it print this${typedAny ? ' (<span class="typed-key">yellow</span> = typed by the user)' : ''}.
+        <strong>${o.traps.length} blocks are traps</strong>: leave them out.</p>
+      <div class="samples">${runs}</div>
+      <div class="pz" id="pz_${pid}"></div>
+      <div class="feedback wrong" id="pzover_${pid}" role="alert" hidden></div>
+      <div class="row" style="margin-top:10px"><button class="ac-btn" data-order-check="${pid}" id="ordercheck_${pid}">▶ Run and check</button>
+        <button class="ac-btn ac-btn-secondary" data-order-clear="${pid}" id="orderclear_${pid}">↺ Start again</button></div>
+      <div class="feedback" id="fborder_${pid}" role="status"></div></div>`;
+  }).join('');
 }
-function pzBlockHtml(tid, b, where, locked) {
+function pzBlockHtml(pid, b, where, locked) {
   const ind = b.text.match(/^ */)[0];
-  return `<button type="button" class="pz-block" draggable="${!locked}" data-pz="${tid}" data-id="${b.id}" data-where="${where}" ${locked ? 'disabled' : ''}
+  return `<button type="button" class="pz-block" draggable="${!locked}" data-pz="${pid}" data-id="${b.id}" data-where="${where}" ${locked ? 'disabled' : ''}
     title="${where === 'bank' ? 'Add to your program' : 'Take out of your program'}">${ind ? `<span class="pz-ind">${ind}</span>` : ''}${hl(b.text.slice(ind.length))}</button>`;
 }
-function renderPz(tid) {
-  const box = $('#pz_' + tid);
+// Draws every puzzle of the target: a later part stays locked until the one before it passes.
+function renderPz(tid) { puzzlesFor(tid).forEach(renderPuzzle); }
+function renderPuzzle(pid) {
+  const box = $('#pz_' + pid);
   if (!box) return;
-  const s = orderState(tid), done = orderDone(tid);
-  if (done && !s.placed.length) s.placed = targetById(tid).order.lines.map((_, i) => 'm' + i);   // done before: show a working order
-  const blocks = orderBlocks(tid, S.seed);
+  const pids = puzzlesFor(tidOf(pid)), before = pids[pids.indexOf(pid) - 1];
+  const locked = !!before && !puzzleDone(before);
+  $('#pzpart_' + pid).classList.toggle('locked', locked);
+  if ($('#pzlock_' + pid)) $('#pzlock_' + pid).textContent = locked ? '🔒 Do part 1 first' : puzzleDone(pid) ? '✓ Done' : '';
+  const s = orderState(pid), done = puzzleDone(pid);
+  if (done && !s.placed.length) s.placed = puzzleById(pid).lines.map((_, i) => 'm' + i);   // done before: show a working order
+  const blocks = orderBlocks(pid, S.seed);
   const byId = Object.fromEntries(blocks.map(b => [b.id, b]));
   // Heal saves holding an id that isn't one of this puzzle's blocks (e.g. dragged-in text).
   if (s.placed.some(id => !byId[id])) { s.placed = s.placed.filter(id => byId[id]); save(); }
   const bank = blocks.filter(b => !s.placed.includes(b.id));
   box.innerHTML = `
-    <div><div class="pz-cap">Blocks</div><div class="pz-zone" data-pz-zone="bank" data-tid="${tid}">${
-      bank.map(b => pzBlockHtml(tid, b, 'bank', done)).join('') || '<span class="pz-empty">Every block is in your program.</span>'}</div></div>
-    <div><div class="pz-cap">Your program</div><div class="pz-zone pz-prog" data-pz-zone="prog" data-tid="${tid}">${
-      s.placed.map((id, i) => `<div class="pz-line"><span class="n">${i + 1}</span>${pzBlockHtml(tid, byId[id], 'prog', done)}</div>`).join('')
+    <div><div class="pz-cap">Blocks</div><div class="pz-zone" data-pz-zone="bank" data-tid="${pid}">${
+      bank.map(b => pzBlockHtml(pid, b, 'bank', done)).join('') || '<span class="pz-empty">Every block is in your program.</span>'}</div></div>
+    <div><div class="pz-cap">Your program</div><div class="pz-zone pz-prog" data-pz-zone="prog" data-tid="${pid}">${
+      s.placed.map((id, i) => `<div class="pz-line"><span class="n">${i + 1}</span>${pzBlockHtml(pid, byId[id], 'prog', done)}</div>`).join('')
       || '<span class="pz-empty">Drag or click blocks here, in order.</span>'}</div></div>`;
-  $('#ordercheck_' + tid).disabled = done || s.until > Date.now();
-  $('#orderclear_' + tid).hidden = done;
-  if (done && !$('#fborder_' + tid).textContent) { $('#fborder_' + tid).textContent = '✅ Done: it prints the right thing.'; $('#fborder_' + tid).className = 'feedback correct'; }
-  if (!done && s.until > Date.now()) orderWait(tid);
+  // Too many blocks: allowed, but flagged at once (students miss "N blocks are traps").
+  const over = done ? '' : tooManyLines(pid, s.placed);
+  box.querySelector('.pz-prog').classList.toggle('too-many', !!over);
+  $('#pzover_' + pid).hidden = !over;
+  $('#pzover_' + pid).textContent = over ? '❌ ' + over : '';
+  $('#ordercheck_' + pid).disabled = done || s.until > Date.now();
+  $('#orderclear_' + pid).hidden = done;
+  if (done && !$('#fborder_' + pid).textContent) { $('#fborder_' + pid).textContent = '✅ Done: it prints the right thing.'; $('#fborder_' + pid).className = 'feedback correct'; }
+  if (!done && s.until > Date.now()) orderWait(pid);
 }
 // Move a block: into the program at `at` (the end if missing), or back to the blocks (at = -1).
-function movePz(tid, id, at) {
-  const s = orderState(tid);
-  if (orderDone(tid) || !orderBlocks(tid, S.seed).some(b => b.id === id)) return;
+function movePz(pid, id, at) {
+  const s = orderState(pid);
+  if (puzzleDone(pid) || !orderBlocks(pid, S.seed).some(b => b.id === id)) return;
   const was = s.placed.indexOf(id);
   if (was >= 0) s.placed.splice(was, 1);
   if (at !== -1) s.placed.splice(at == null ? s.placed.length : Math.min(at - (was >= 0 && was < at ? 1 : 0), s.placed.length), 0, id);
   save();
-  const fb = $('#fborder_' + tid);
+  const fb = $('#fborder_' + pid);
   if (!(s.until > Date.now())) { fb.textContent = ''; fb.className = 'feedback'; }
-  renderPz(tid);
+  renderPuzzle(pid);
 }
-function orderWait(tid) {
-  const btn = $('#ordercheck_' + tid), s = orderState(tid);
-  clearTimeout(orderWait[tid]);
+function orderWait(pid) {
+  const btn = $('#ordercheck_' + pid), s = orderState(pid);
+  clearTimeout(orderWait[pid]);
   const left = Math.ceil((s.until - Date.now()) / 1000);
   if (left > 0) {
     btn.disabled = true;
     btn.textContent = `Read what went wrong… ${left}`;
-    orderWait[tid] = setTimeout(() => orderWait(tid), 1000);
+    orderWait[pid] = setTimeout(() => orderWait(pid), 1000);
   } else {
-    btn.disabled = orderDone(tid);
+    btn.disabled = puzzleDone(pid);
     btn.textContent = '▶ Run and check';
   }
 }
-async function checkOrder(tid) {
-  const s = orderState(tid);
-  if (orderDone(tid) || authBlocked() || s.until > Date.now()) return;
-  const o = targetById(tid).order, fb = $('#fborder_' + tid), btn = $('#ordercheck_' + tid);
+async function checkOrder(pid) {
+  const s = orderState(pid), tid = tidOf(pid);
+  if (puzzleDone(pid) || authBlocked() || s.until > Date.now()) return;
+  const o = puzzleById(pid), fb = $('#fborder_' + pid), btn = $('#ordercheck_' + pid);
   if (!s.placed.length) { fb.textContent = 'Drag the blocks into Your program first.'; fb.className = 'feedback info'; return; }
+  if (tooManyLines(pid, s.placed)) { $('#pzover_' + pid).scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'nearest' }); return; }
   btn.disabled = true;
   fb.textContent = 'Running your program…';
   fb.className = 'feedback info';
   try {
-    const code = orderCode(tid, s.placed);
+    const code = orderCode(pid, s.placed);
     const runs = [];
     for (const t of o.tests) runs.push({ ...(await runPython(code, { inputs: t.typed, onInputsExhausted: 'error' })), inputs: t.typed });
-    const r = evalOrder(tid, s.placed, runs);
+    const r = evalOrder(pid, s.placed, runs);
     s.tries++;
     if (r.ok) {
       s.done = true;
@@ -698,6 +763,11 @@ async function checkOrder(tid) {
       fb.textContent = '✅ ' + r.msg;
       fb.className = 'feedback correct';
       renderPz(tid);
+      if (pid !== tid) {   // part 1 done: on to the main puzzle
+        checkStuck();
+        setTimeout(() => $('#pzpart_' + tid)?.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' }), 600);
+        return;
+      }
       progress(false);
       setTimeout(() => $('#step2_' + tid)?.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' }), 600);
       return;
@@ -706,7 +776,7 @@ async function checkOrder(tid) {
     save();
     fb.innerHTML = failHtml(r, runs.find(x => !x.ok));
     fb.className = 'feedback wrong';
-    orderWait(tid);
+    orderWait(pid);
   } catch (err) {
     window.ErrorReporter?.report('Build it check', err);
     btn.disabled = false;
@@ -718,12 +788,12 @@ document.addEventListener('click', e => {
   const c = e.target.closest('[data-order-check]');
   if (c) { checkOrder(c.dataset.orderCheck); return; }
   const x = e.target.closest('[data-order-clear]');
-  if (x && !orderDone(x.dataset.orderClear)) {
-    const tid = x.dataset.orderClear;
-    orderState(tid).placed = [];
+  if (x && !puzzleDone(x.dataset.orderClear)) {
+    const pid = x.dataset.orderClear;
+    orderState(pid).placed = [];
     save();
-    if (!(orderState(tid).until > Date.now())) { $('#fborder_' + tid).textContent = ''; $('#fborder_' + tid).className = 'feedback'; }
-    renderPz(tid);
+    if (!(orderState(pid).until > Date.now())) { $('#fborder_' + pid).textContent = ''; $('#fborder_' + pid).className = 'feedback'; }
+    renderPuzzle(pid);
   }
 });
 document.addEventListener('dragstart', e => {
@@ -757,6 +827,96 @@ document.addEventListener('drop', e => {
   const lines = [...z.querySelectorAll('.pz-line')];
   const at = lines.findIndex(l => { const r = l.getBoundingClientRect(); return e.clientY < r.top + r.height / 2; });
   movePz(z.dataset.tid, id, at < 0 ? lines.length : at);
+});
+
+// ── Step 1: 🪜 warm up — small questions, easiest first, building up to the puzzle ──
+// One at a time. Right: the reason, then on to the next. Wrong: the reason, a short wait
+// (saved, so a reload can't skip it), then the same question with its options shuffled again.
+const WARM_WAIT = reduceMotion ? 2 : 4;
+const warmState = tid => (S.warm[tid] ||= { pos: 0, tries: 0, done: false, until: 0 });
+// Anyone already past Build it (from before this step existed) has it done.
+const warmDone = tid => !!S.warm?.[tid]?.done || orderDone(tid);
+const warmBusy = {};
+function renderWarm(tid) {
+  const box = $('#warm_' + tid);
+  if (!box) return;
+  const qs = targetById(tid).warm;
+  if (warmDone(tid)) { box.innerHTML = '<div class="cp-done">✔ Warm-up done.</div>'; return; }
+  const s = warmState(tid), q = qs[s.pos];
+  const pips = qs.map((_, k) => `<span class="pip ${k < s.pos ? 'on' : ''} ${k === s.pos ? 'now' : ''}"></span>`).join('');
+  const answer = q.kind === 'mcq'
+    ? `<div class="cp-opts">${warmOptionOrder(tid, s.pos, S.seed, s.tries).map(k => `<button class="cp-opt" data-warm="${tid}" data-k="${k}">${fmt(q.opts[k])}</button>`).join('')}</div>`
+    : `<div class="cp-type"><input type="text" id="warmin_${tid}" autocomplete="off" spellcheck="false" placeholder="${q.as === 'number' ? 'a number' : 'exactly what is printed'}">
+       <button class="ac-btn" data-warm-type="${tid}">Check</button></div>`;
+  box.innerHTML = `
+    <div class="cp-head"><span>Question ${s.pos + 1} of ${qs.length}</span><span class="pips" aria-hidden="true">${pips}</span></div>
+    <div class="cp-q">${q.q}</div>
+    ${q.code ? listing(q.code) : ''}
+    ${q.error ? `<div class="err-cap">Python shows:</div><pre class="err">${esc(q.error)}</pre>` : ''}
+    ${answer}
+    <div class="cp-msg" id="warmmsg_${tid}" role="status"></div>`;
+  warmBusy[tid] = false;
+  if (s.until > Date.now()) warmWait(tid, q);
+}
+// The wait after a wrong answer: the reason stays on screen, then Try again.
+function warmWait(tid, q) {
+  const box = $('#warm_' + tid), msg = $('#warmmsg_' + tid), s = warmState(tid);
+  box.querySelectorAll('.cp-opt, .cp-type input, .cp-type button').forEach(b => { b.disabled = true; });
+  if (!msg.innerHTML) msg.innerHTML = `✗ Not quite.<span class="why">${esc(q.why)}</span>`;
+  msg.className = 'cp-msg bad';
+  msg.insertAdjacentHTML('beforeend', `<button class="ac-btn ac-btn-secondary" id="warmagain_${tid}" disabled style="margin-top:10px"></button>`);
+  const again = $('#warmagain_' + tid);
+  const tick = () => {
+    const left = Math.ceil((s.until - Date.now()) / 1000);
+    if (left > 0) { again.textContent = `Read why… ${left}`; setTimeout(tick, 1000); }
+    else { again.disabled = false; again.textContent = '↺ Try again'; again.focus(); }
+  };
+  tick();
+  again.onclick = () => renderWarm(tid);
+}
+function warmAnswer(tid, answer) {
+  if (warmBusy[tid] || warmDone(tid) || authBlocked()) return;
+  const s = warmState(tid), qs = targetById(tid).warm, q = qs[s.pos];
+  if (s.until > Date.now()) return;
+  if (q.kind !== 'mcq' && !String(answer).trim()) { toast('Type your answer first.', 'warn'); return; }
+  warmBusy[tid] = true;
+  const r = markCheckpoint(q, answer);
+  const box = $('#warm_' + tid), msg = $('#warmmsg_' + tid);
+  box.querySelectorAll('.cp-opt, .cp-type input, .cp-type button').forEach(b => { b.disabled = true; });
+  if (q.kind === 'mcq') box.querySelector(`.cp-opt[data-k="${answer}"]`)?.classList.add(r.ok ? 'right' : 'wrong');
+  else $('#warmin_' + tid)?.classList.add(r.ok ? 'ok' : 'bad');
+  if (r.ok) {
+    s.pos++;
+    s.tries = 0;
+    if (s.pos >= qs.length) s.done = true;
+    save();
+    msg.className = 'cp-msg good';
+    msg.innerHTML = `✓ Correct.<span class="why">${esc(q.why)}</span>`;
+    setTimeout(() => {
+      renderWarm(tid);
+      if (s.done) {
+        refreshTarget(tid);
+        progress(false);
+        toast('✅ Warm-up done. Now build it.', 'success');
+        $('#stepb_' + tid)?.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+      }
+    }, reduceMotion ? 400 : 1500);
+  } else {
+    s.tries++;
+    s.until = Date.now() + WARM_WAIT * 1000;
+    save();
+    msg.innerHTML = `✗ Not quite.${q.kind !== 'mcq' ? answerCompare(answer, rightAnswer(q)) : ''}${r.msg ? esc(r.msg) : ''}<span class="why">${esc(q.why)}</span>`;
+    warmWait(tid, q);
+  }
+}
+document.addEventListener('click', e => {
+  const o = e.target.closest('[data-warm]');
+  if (o && !o.disabled) { warmAnswer(o.dataset.warm, +o.dataset.k); return; }
+  const tb = e.target.closest('[data-warm-type]');
+  if (tb && !tb.disabled) warmAnswer(tb.dataset.warmType, $('#warmin_' + tb.dataset.warmType).value);
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && e.target.id?.startsWith('warmin_')) { e.preventDefault(); warmAnswer(e.target.id.slice(7), e.target.value); }
 });
 
 // ── Step 3: checkpoint (N in a row; a wrong answer restarts with a new draw) ──
@@ -886,8 +1046,15 @@ function renderApply(tid) {
   const reqs = task.reqs ? `<p style="font-weight:700;color:var(--surface);margin-top:10px">Your program must:</p>
     <ul class="req-list" id="req_${tid}">${task.reqs.map((r, i) => `<li><span class="tick">${i + 1}</span><span>${r.text}</span></li>`).join('')}</ul>` : '';
   const own = task.own ? `<div class="own-note">✏️ This is <strong>your own program</strong> from the assessment. Improve it until every requirement has a tick.</div>` : '';
+  // A worked example on a different program: before and after the fix, or one similar program.
+  const ex = task.example;
+  const example = !ex ? '' : `<div class="fix-ex"><div class="fix-ex-title">👀 ${ex.before ? 'A similar fix' : 'A similar program'}</div>
+    ${ex.text ? `<p class="goal-line">${ex.text}</p>` : ''}
+    ${ex.before
+      ? `<div class="ex-grid"><div><div class="err-cap">Before</div>${listing(ex.before)}</div><div><div class="err-cap">After</div>${listing(ex.after, ex.notes)}</div></div>`
+      : listing(ex.code, ex.notes)}</div>`;
   return `<div class="goal-line">🎯 <strong>${esc(task.title)}.</strong> ${task.goal}</div>
-    ${samples}${own}${reqs}
+    ${samples}${example}${own}${reqs}
     ${task.testNote ? `<div class="test-note">${esc(task.testNote)}</div>` : ''}
     <div class="code-checker">
       <textarea class="checker-textarea" id="ed_${tid}" data-title="${esc(task.title)}">${esc(S.code['ed_' + tid] ?? task.starter)}</textarea>
@@ -909,14 +1076,28 @@ function showRun(ta, runs) {
   const label = r.inputs.length ? `[test run — typed: ${r.inputs.join(', ')}]\n` : '';
   setEditorOutput(ta, r.ok ? label + (r.output || '(no output)') : r.output, !r.ok, r.ok ? null : (r.line ?? null));
 }
-function applyReqTicks(listId, results) {
+// diffs[i] (optional): a nearly-right printed line for a failed requirement, shown word by
+// word inside it: green words are right, red crossed-out ones shouldn't be there, and a
+// dashed red box is a word that is missing.
+function applyReqTicks(listId, results, diffs = []) {
   const list = $('#' + listId);
   if (!list || !results) return;
   list.querySelectorAll('li').forEach((li, i) => {
     li.classList.toggle('req-pass', !!results[i]);
     li.classList.toggle('req-fail', !results[i]);
     li.querySelector('.tick').textContent = results[i] ? '✓' : '✗';
+    li.querySelector('.req-diff')?.remove();
+    const d = !results[i] && diffs?.[i];
+    if (d) li.lastElementChild.insertAdjacentHTML('beforeend', reqDiffHtml(d));
   });
+}
+const DIFF_TAG = { ok: ['span', ''], extra: ['del', ' title="not in the sample: take this out"'], missing: ['ins', ' title="missing: add this"'] };
+function reqDiffHtml(d) {
+  const words = d.words.map(x => { const [tag, attr] = DIFF_TAG[x.kind]; return `<${tag} class="w-${x.kind}"${attr}>${esc(x.w)}</${tag}>`; }).join(' ');
+  const typed = d.typed?.length ? `When the user types ${d.typed.map(t => `<strong>${esc(t)}</strong>`).join(' then ')}, your` : 'Your';
+  const keys = [...new Set(d.words.map(x => x.kind))].filter(k => k !== 'ok')
+    .map(k => k === 'extra' ? '<del class="w-extra">red, crossed out</del> = take it out' : '<ins class="w-missing">red box</ins> = missing, add it').join(' · ');
+  return `<div class="req-diff"><div class="k">${typed} line, word by word:</div><div class="words">${words}</div><div class="key"><span class="w-ok">green</span> = right${keys ? ' · ' + keys : ''}</div></div>`;
 }
 async function checkApply(tid) {
   if (S.applied[tid] || authBlocked()) return;
@@ -929,7 +1110,7 @@ async function checkApply(tid) {
     const runs = await runTests(ta.value, task.tests);
     showRun(ta, runs);
     const r = evalApply(task, ta.value, runs);
-    applyReqTicks('req_' + tid, r.results);
+    applyReqTicks('req_' + tid, r.results, r.diffs);
     if (r.ok) fb.textContent = '✅ ' + r.msg;
     else fb.innerHTML = failHtml(r);
     fb.className = 'feedback ' + (r.ok ? 'correct' : 'wrong');
@@ -957,18 +1138,18 @@ function applyStep4(tid) {
   if (task.reqs) applyReqTicks('req_' + tid, task.reqs.map(() => true));
 }
 
-// Steps unlock in order: reflect → checkpoint → use it.
+// Steps unlock in order: warm up → build → reflect → checkpoint → use it.
 function refreshTarget(tid) {
   if (!$('#panel-' + tid)) return;
-  const o = orderDone(tid), r = !!S.reflect[tid], c = !!S.cp[tid]?.done, a = !!S.applied[tid];
+  const w = warmDone(tid), o = orderDone(tid), r = !!S.reflect[tid], c = !!S.cp[tid]?.done, a = !!S.applied[tid];
   const set = (n, done, locked, why) => {
     $(`#step${n}_${tid}`).classList.toggle('done', done);
     $(`#step${n}_${tid}`).classList.toggle('locked', locked);
     const l = $(`#lock${n}_${tid}`);
     if (l) l.textContent = done ? '✓ Done' : locked ? `🔒 ${why}` : '';
   };
-  set(1, true, false);
-  set('b', o, false);
+  set('w', w, false);
+  set('b', o, !w, 'Finish the warm-up first');
   set(2, r, !o, 'Build the program first');
   set(3, c, !r, 'Save your sentence first');
   set(4, a, !c, 'Pass the checkpoint first');
@@ -1131,6 +1312,7 @@ function addTarget(tid) {
   $('#panel-make').before(panel);
   setupEditors(`#ed_${tid}`, { errorHints: true });
   wireEditor($('#ed_' + tid));
+  renderWarm(tid);
   renderPz(tid);
   renderCp(tid);
   refreshTarget(tid);
@@ -1143,6 +1325,7 @@ function addTarget(tid) {
 // refresh(): redraw everything that depends on progress. progress(): after something the
 // student did: refresh, then grade + evidence + results to Classroom (never on page load).
 function refresh() {
+  checkStuck();
   const s = lessonScore(S);
   $('#score-pill').textContent = `Progress: ${s.pct}%`;
   $('#score-bar').style.width = s.pct + '%';
@@ -1157,7 +1340,7 @@ function progress(maybeFinish = true) {
   const s = refresh();
   window.Classroom?.submitGrade(s.pct, ACTIVITY_TITLE);
   window.Classroom?.submitResults({ plan: S.plan, extra: S.extra, source: S.snap?.source || 'picker',
-    targets: Object.fromEntries(targets().map(t => [t, { built: orderDone(t), buildTries: S.order[t]?.tries || 0, reflect: S.reflect[t] || '', checkpointTries: (S.cp[t]?.attempt || 0) + (S.cp[t]?.done ? 1 : 0), checkpoint: !!S.cp[t]?.done, used: !!S.applied[t] }])),
+    targets: Object.fromEntries(targets().map(t => [t, { warmedUp: warmDone(t), warmTries: S.warm[t]?.tries || 0, built: orderDone(t), buildTries: S.order[t]?.tries || 0, reflect: S.reflect[t] || '', checkpointTries: (S.cp[t]?.attempt || 0) + (S.cp[t]?.done ? 1 : 0), checkpoint: !!S.cp[t]?.done, used: !!S.applied[t] }])),
     make: { core: S.make.core, stretch: S.make.stretch }, challenge: !!S.applied.challenge, pct: s.pct }, ACTIVITY_TITLE);
   if (maybeFinish && s.complete && !S.finished) { S.finished = true; save(); showFinished(s, true); }
   return s;
@@ -1170,6 +1353,27 @@ function showFinished(s, celebrate) {
   setTimeout(() => b.classList.remove('show'), 7000);
   if (celebrate) window.ActivityUI?.launchCelebration({ percent: s.pct });
 }
+
+// ── "Stuck" indicator ──
+// The header bar turns amber after STUCK_MS on the same step of a target without finishing it
+// (a new tab, or a step or puzzle part done, restarts the clock). Not on 🎨 Make it or the
+// other tabs, where open-ended time is expected. Not saved: a reload restarts it.
+const STUCK_MS = 8 * 60 * 1000;
+let stuckKey = null, stuckSince = Date.now();
+function stepKey() {
+  const tid = S.tab;
+  if (!S.plan || !targets().includes(tid) || targetDone(S, tid)) return null;
+  return tid + ':' + [warmDone(tid), ...puzzlesFor(tid).map(puzzleDone), !!S.reflect[tid], !!S.cp[tid]?.done].map(Number).join('');
+}
+function checkStuck() {
+  const key = stepKey();
+  if (key !== stuckKey) { stuckKey = key; stuckSince = Date.now(); }
+  const stuck = !!key && Date.now() - stuckSince >= STUCK_MS;
+  const wrap = $('#score-bar-wrap');
+  wrap.classList.toggle('stuck', stuck);
+  wrap.title = stuck ? 'Been a while on this step — ask your teacher if you’re stuck.' : '';
+}
+setInterval(checkStuck, 15000);
 
 // ══ Clicks ═════════════════════════════════════════════
 document.addEventListener('click', e => {
@@ -1235,7 +1439,7 @@ function buildLesson() {
   renderTabs();
   setupEditors('.checker-textarea', { errorHints: true });   // practice, so 💡 Get help is on
   $$('.checker-textarea').forEach(wireEditor);
-  targets().forEach(tid => { renderPz(tid); renderCp(tid); applyStep4(tid); });
+  targets().forEach(tid => { renderWarm(tid); renderPz(tid); renderCp(tid); applyStep4(tid); });
   applyStep4('challenge');
   renderTestPlan(true);
   refresh();

@@ -1,11 +1,12 @@
 import { test, expect } from '@playwright/test';
 import { expectPageTitle, expectNoClassroomBanner } from './helpers/activityHelpers.js';
-import { TARGETS, drawCheckpoint, poolQuestion, rightAnswer } from '../Y8/Python Unit 1/L7_Targeted_Practice/checkers.js';
+import { TARGETS, drawCheckpoint, poolQuestion, rightAnswer, puzzlesFor, puzzleById } from '../Y8/Python Unit 1/L7_Targeted_Practice/checkers.js';
 
 // Y8 Unit 1 · L7 Targeted Practice — UI wiring only (routing and marking permutations live in
 // Y8/Python Unit 1/L7_Targeted_Practice/checkers.test.js).
 //   • The plan comes from the assessment's saved state; with none, the student picks targets.
-//   • Look back shows the student's own wrong answers.
+//   • Look back (a closed toggle) shows the student's own wrong answers.
+//   • The warm-up: a wrong answer waits (and a reload can't skip it); finishing it opens Build it.
 //   • Steps unlock in order; a checkpoint restart is saved at once (survives a reload).
 //   • Build it: every puzzle's lines, in order, pass in real Python; a trap fails and waits.
 //   • Every code task: the starter fails and a model answer passes in real Python.
@@ -40,6 +41,7 @@ async function setCode(page, id, src) {
   await page.locator('#' + id).evaluate((ta, v) => { ta.value = v; ta.dispatchEvent(new Event('input', { bubbles: true })); }, src);
 }
 const tab = (page, key) => page.locator(`.tab[data-tab="${key}"]`).click();
+const warmedUp = tids => Object.fromEntries(tids.map(t => [t, { pos: 0, tries: 0, done: true, until: 0 }]));
 // Steps 2 and 3 already done, so step 4 (the code task) is open.
 const readyToCode = tids => ({
   seed: SEED, plan: tids,
@@ -61,13 +63,13 @@ test('page shell, and the plan built from the assessment', async ({ page }) => {
 test('look back shows the student\'s own wrong answer, the right one and why', async ({ page }) => {
   await openWith(page, { assess: ASSESSMENT, state: { seed: SEED } });
   await tab(page, 'print');
-  const lb = page.locator('#step1_print .lb');
+  const lb = page.locator('#lookback_print .lb');
   await expect(lb).toHaveCount(1);                                   // only o_print was lost
   await expect(lb).toContainText('print(Good morning)');            // what they chose
   await expect(lb.locator('.right')).toContainText('print("Good morning")');
-  await expect(page.locator('#step1_print .got-right')).toContainText('1.2, 1.5, 1.6 and 1.7');
+  await expect(page.locator('#lookback_print .got-right')).toContainText('1.2, 1.5, 1.6 and 1.7');
   await tab(page, 'cast_int');
-  await expect(page.locator('#step1_cast_int')).toContainText('apples = input("How many apples? ")');   // their own code
+  await expect(page.locator('#lookback_cast_int')).toContainText('apples = input("How many apples? ")');   // their own code
 });
 
 // The class that sat the assessment before its revision: no write-it items, no s_indented, and
@@ -81,7 +83,7 @@ test('first sitting: routed on the items they sat; a changed question hides thei
   await expect(page.locator('#panel-plan')).toContainText('You got 1 / 2 on questions 5.2, 5.4');   // their numbering
   await expect(page.locator('#panel-plan .sec-table')).toContainText('6 / 7');       // selection was 7 marks then
   await tab(page, 'conditions');
-  const lb = page.locator('#step1_conditions .lb');
+  const lb = page.locator('#lookback_conditions .lb');
   await expect(lb).toHaveCount(1);
   await expect(lb).toContainText('asked this in a slightly different way');
   await expect(lb.locator('.yours')).toHaveCount(0);
@@ -95,7 +97,7 @@ test('no results: the student picks up to 3 targets', async ({ page }) => {
   await page.click('#pick-start');
   await expect(page.locator('.tab')).toHaveCount(5);
   await expect(page.locator('#panel-print')).toHaveClass(/active/);   // in lesson order
-  await expect(page.locator('#step1_print .lb')).toHaveCount(5);      // every question, with answers
+  await expect(page.locator('#lookback_print .lb')).toHaveCount(5);      // every question, with answers
 });
 
 test('steps unlock in order; a sentence must be a real sentence', async ({ page }) => {
@@ -111,8 +113,31 @@ test('steps unlock in order; a sentence must be a real sentence', async ({ page 
   await expect(page.locator('#step4_print')).toHaveClass(/locked/);
 });
 
-test('build it: locks the sentence; blocks move by click; a trap fails and waits; the right order passes', async ({ page }) => {
+test('warm up: locks Build it; a wrong answer waits, survives a reload, and right answers finish it', async ({ page }) => {
   await openWith(page, { assess: ASSESSMENT, state: { seed: SEED } });
+  await tab(page, 'print');
+  await expect(page.locator('#lookback_print')).not.toHaveAttribute('open');      // closed until clicked
+  await expect(page.locator('#stepb_print')).toHaveClass(/locked/);
+  const warm = TARGETS.find(t => t.id === 'print').warm;
+  await page.locator('#warm_print .cp-opt[data-k="1"]').click();                 // wrong
+  await expect(page.locator('#warmmsg_print')).toHaveClass(/bad/);
+  await expect(page.locator('#warmagain_print')).toBeDisabled();
+  await page.reload();
+  await expect(page.locator('#warmagain_print')).toBeVisible();                  // still waiting after the reload
+  await expect(page.locator('#warmagain_print')).toBeEnabled({ timeout: 8000 });
+  await page.click('#warmagain_print');
+  for (let i = 0; i < warm.length; i++) {
+    await expect(page.locator('#warm_print .cp-head')).toContainText(`Question ${i + 1} of ${warm.length}`);
+    if (warm[i].kind === 'mcq') await page.locator('#warm_print .cp-opt[data-k="0"]').click();
+    else { await page.fill('#warmin_print', String(warm[i].answer)); await page.locator('#warm_print [data-warm-type]').click(); }
+    await expect(page.locator('#warmmsg_print')).toHaveClass(/good/);
+  }
+  await expect(page.locator('#warm_print .cp-done')).toBeVisible();
+  await expect(page.locator('#stepb_print')).not.toHaveClass(/locked/);
+});
+
+test('build it: locks the sentence; blocks move by click; a trap fails and waits; the right order passes', async ({ page }) => {
+  await openWith(page, { assess: ASSESSMENT, state: { seed: SEED, warm: warmedUp(['print']) } });
   await tab(page, 'print');
   await waitForPython(page);
   await expect(page.locator('#step2_print')).toHaveClass(/locked/);
@@ -135,15 +160,32 @@ test('build it: locks the sentence; blocks move by click; a trap fails and waits
   await expect(page.locator('#step2_print')).not.toHaveClass(/locked/);
 });
 
+test('build it: more blocks than the program has lines turns it red at once', async ({ page }) => {
+  await openWith(page, { assess: ASSESSMENT, state: { seed: SEED, warm: warmedUp(['print']) } });
+  await tab(page, 'print');
+  const block = id => page.locator(`#pz_print .pz-block[data-id="${id}"]`);
+  for (const id of ['m0', 'm1', 'm2', 'm3']) await block(id).click();
+  await expect(page.locator('#pzover_print')).toBeHidden();
+  await block('t0').click();                                               // a 5th line: one too many
+  await expect(page.locator('#pzover_print')).toBeVisible();
+  await expect(page.locator('#pzover_print')).toContainText('only needs 4 lines');
+  await expect(page.locator('#pz_print .pz-prog')).toHaveClass(/too-many/);
+  await block('t0').click();                                               // taken out again
+  await expect(page.locator('#pzover_print')).toBeHidden();
+  await expect(page.locator('#pz_print .pz-prog')).not.toHaveClass(/too-many/);
+});
+
 test('build it: every puzzle, in its given order, passes in real Python', async ({ page }) => {
   test.setTimeout(180000);
-  await openWith(page, { state: { seed: SEED, plan: ALL } });
+  await openWith(page, { state: { seed: SEED, plan: ALL, warm: warmedUp(ALL) } });
   await waitForPython(page);
   for (const t of TARGETS) {
     await tab(page, t.id);
-    for (let i = 0; i < t.order.lines.length; i++) await page.locator(`#pz_${t.id} .pz-block[data-id="m${i}"]`).click();
-    await page.click('#ordercheck_' + t.id);
-    await expect(page.locator('#fborder_' + t.id), t.id).toHaveClass(/correct/, { timeout: 30000 });
+    for (const pid of puzzlesFor(t.id)) {   // variables: the two-line puzzle first
+      for (let i = 0; i < puzzleById(pid).lines.length; i++) await page.locator(`#pz_${pid} .pz-block[data-id="m${i}"]`).click();
+      await page.click('#ordercheck_' + pid);
+      await expect(page.locator('#fborder_' + pid), pid).toHaveClass(/correct/, { timeout: 30000 });
+    }
   }
 });
 
@@ -186,7 +228,7 @@ test('checkpoint: a wrong answer restarts with a new draw, and a reload cannot d
 const MODELS = {
   print: 'print("SCHOOL DISCO")\nprint()\nprint("Friday at 7pm")\nprint("Tickets cost £2")\nprint("Bring a friend!")',
   errors: 'team = "Rovers"\nprint("Your team is " + team)\nprint("Come on " + team + "!")',
-  variables: 'pet = "cat"\nprint("I have a " + pet)\npet = "dog"\nprint("Now I have a " + pet)',
+  variables: 'print("My first pet:")\npet = "cat"\nprint(pet)\nprint("My next pet:")\npet = "dog"\nprint(pet)',
   input: 'colour = input("What is your favourite colour? ")\nprint("Your favourite colour is " + colour)',
   cast_int: 'round1 = int(input("Points in round 1? "))\nround2 = int(input("Points in round 2? "))\ntotal = round1 + round2\nprint("Total points: " + str(total))',
   cast_str: 'age = int(input("How old are you? "))\nprint("Next year you will be " + str(age + 1))',
@@ -220,7 +262,7 @@ test('the write target starts from the student\'s own game shop and names what i
   expect(plan).toEqual(['write']);
   await waitForPython(page);
   await tab(page, 'write');
-  await expect(page.locator('#step1_write .req-list li.req-fail')).toHaveCount(2);
+  await expect(page.locator('#lookback_write .req-list li.req-fail')).toHaveCount(2);
   await expect(page.locator('#step4_write .own-note')).toBeVisible();
   await expect(page.locator('#ed_write')).toHaveValue(own);
   await page.click('#check_write');
@@ -282,7 +324,7 @@ test('more practice adds an extra target as a bonus tab', async ({ page }) => {
   await page.click('[data-add="branches"]');
   await expect(page.locator('#panel-branches')).toHaveClass(/active/);
   await expect(page.locator('.tab[data-tab="branches"]')).toContainText('+');
-  await expect(page.locator('#step1_branches')).toContainText('You got every question on this right');
+  await expect(page.locator('#lookback_branches')).toContainText('You got every question on this right');
   await page.reload();
   await expect(page.locator('.tab[data-tab="branches"]')).toHaveCount(1);
 });

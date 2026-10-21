@@ -160,6 +160,18 @@ test('write it: a partial answer keeps its marks and shows which requirement is 
   await expect(page.locator('#req_w_make li.req-pass')).toHaveCount(4);
 });
 
+test('a nearly-right printed line is shown word by word inside the failed requirement', async ({ page }) => {
+  await openWith(page, { seed: SEED, tab: 6 });
+  await waitForPython(page);
+  await setCode(page, 'ed_x_speed', 'limit = int(input("Limit? "))\nspeed = int(input("Speed? "))\nN = speed - limit\nif limit >= speed:\n    print("Within the limit, thank you")\nelse:\n    print("You were " + str(N) + " mph over the speed limit")\nprint("Drive safely")');
+  await page.click('#check_x_speed');
+  await expect(page.locator('#fb_x_speed')).toContainText('Requirement 2', { timeout: 60000 });
+  const req2 = page.locator('#req_x_speed li').nth(1);
+  await expect(req2.locator('.req-diff .words .w-extra')).toHaveText('speed');
+  await expect(req2.locator('.req-diff .words .w-missing')).toHaveCount(0);
+  await expect(page.locator('#req_x_speed .req-diff')).toHaveCount(1);
+});
+
 // Every code question in real Python: the starter scores 0 and a model answer scores full marks.
 const MODELS = {
   o_copy: 'print("Hello, world!")',

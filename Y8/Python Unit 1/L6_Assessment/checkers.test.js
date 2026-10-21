@@ -3,7 +3,7 @@ import {
   printedLines, mulberry32, shuffle, variantOf, optionOrder,
   ITEMS, LIVE_ITEMS, SECTIONS, itemById, itemMax, summarise,
   checkTraceValue, checkTraceOutput, markSort,
-  evalCode, ifElseLines, branchChoices, branchAnswer, loose,
+  evalCode, ifElseLines, branchChoices, branchAnswer, loose, wordDiff,
 } from './checkers.js';
 
 // A run as runPython() reports it: each input() echoes "prompt + answer" on its own line.
@@ -281,6 +281,28 @@ describe('extension: the speed camera', () => {
   });
   test('the same output printed with commas (no str()) loses only the str() mark', () => {
     expect(evalCode(it, commas, good).results).toEqual([true, true, true, false]);
+  });
+  test('an extra word ("over the speed limit") fails requirement 2 and is shown word by word', () => {
+    const runs = good.map(r => ({ ...r, output: r.output.replace('over the limit', 'over the speed limit') }));
+    const r = evalCode(it, code, runs);
+    expect(r.results).toEqual([true, false, true, true]);
+    expect(r.diffs[1]).toMatchObject({ typed: ['30', '36'], got: 'You were 6 mph over the speed limit', want: 'You were 6 mph over the limit' });
+    expect(r.diffs[1].words.filter(w => w.kind !== 'ok')).toEqual([{ w: 'speed', kind: 'extra' }]);
+    expect(r.diffs.filter(Boolean)).toHaveLength(1);
+  });
+  test('a missing line, or one with nothing in common, gets no word diff', () => {
+    const runs = good.map(r => ({ ...r, output: r.output.replace(/You were \d+ mph over the limit/, 'Slow down') }));
+    expect(evalCode(it, code, runs).diffs[1]).toBeNull();
+  });
+});
+
+describe('wordDiff', () => {
+  const marks = (g, w) => wordDiff(g, w).map(x => x.kind[0]).join('');
+  test('marks extra, missing and changed words; forgives capitals and punctuation', () => {
+    expect(marks('You were 6 mph over the speed limit', 'You were 6 mph over the limit')).toBe('ooooooeo');
+    expect(marks('You were 6 over the limit', 'You were 6 mph over the limit')).toBe('ooomooo');
+    expect(marks('You were 7 mph', 'You were 6 mph')).toBe('ooemo');
+    expect(marks('within the limit thank you!', 'Within the limit, thank you')).toBe('ooooo');
   });
 });
 
