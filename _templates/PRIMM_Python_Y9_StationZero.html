@@ -945,6 +945,11 @@ color:  blue
     box-shadow: 0 0 14px rgba(92,255,143,0.35);
   }
   .sz-continue:hover { background: #8dffb0; border-color: #8dffb0; }
+  /* locked until the story has typed in over the still: no scrolling, Continue greyed out
+     (aria-disabled rather than disabled, so it can still hold focus) */
+  .sz-panel.sz-locked { overflow-y: hidden; }
+  .sz-continue[aria-disabled="true"],
+  .sz-continue[aria-disabled="true"]:hover { opacity: 0.35; cursor: not-allowed; background: var(--crt); border-color: var(--crt); box-shadow: none; }
 
   /* ── Completion banner reskin ── */
   .completion-banner { border-top-color: var(--cobalt-text); }
@@ -2319,6 +2324,26 @@ color:  blue
   // block cursor, and the last one keeps it blinking once everything is written.
   // Everything appears at once for reduced motion, map re-opens, and any click or key.
   let tw = null;
+  // The still and the story can't be skipped (students were clicking straight past them):
+  // until the story has typed in, a click or key doesn't skip, Continue and Escape don't
+  // close, and the report doesn't scroll. The live feed, map and readouts after it can still
+  // be skipped. LOCK_MAX_MS frees it anyway if a still never loads.
+  const LOCK_MAX_MS = 10000;
+  let locked = false, lockTimer = null;
+  function lockReport() {
+    locked = true;
+    $('szPanel').classList.add('sz-locked');
+    $('szContinue').setAttribute('aria-disabled', 'true');
+    clearTimeout(lockTimer);
+    lockTimer = setTimeout(unlockReport, LOCK_MAX_MS);
+  }
+  function unlockReport() {
+    clearTimeout(lockTimer);
+    locked = false;
+    $('szPanel').classList.remove('sz-locked');
+    $('szContinue').removeAttribute('aria-disabled');
+    $('szSkipHint').hidden = !tw;   // the rest of the report can be skipped now
+  }
   function finishTyping() {
     if (!tw) return;
     clearInterval(tw.timer);
@@ -2328,8 +2353,8 @@ color:  blue
     stillRun++;   // cancels a hold still waiting to start
     $('szHero').classList.remove('pending');
     $('szHero').classList.add('done');
-    $('szSkipHint').hidden = true;
     tw = null;
+    unlockReport();
   }
   function typeSequence(groups, idleEl, instant) {
     if (tw) { clearInterval(tw.timer); tw = null; }
@@ -2340,7 +2365,7 @@ color:  blue
     tw = { groups, idleEl, timer: null };
     if (instant || reduceMotion) { finishTyping(); return; }
     for (const g of groups) for (const it of g.items) it.el.textContent = '';
-    $('szSkipHint').hidden = false;
+    $('szSkipHint').hidden = locked;
     let gi = 0, pos = 0, cursorEl = null;
     tw.timer = setInterval(() => {
       const g = groups[gi];
@@ -2441,6 +2466,7 @@ color:  blue
     document.documentElement.style.overflow = 'hidden';
     $('szPanel').scrollTop = 0;
     const rows = [...$('szReadouts').children];
+    lockReport();
     typeSequence([
       { cps: 3, items: [$('szKicker'), $('szClock')] },
       ...(hold ? [{ wait: 16, ready: () => hero.classList.contains('held') }] : []),
@@ -2448,6 +2474,7 @@ color:  blue
       ...[...$('szPrevTyped').children].map(li => ({ cps: 2, items: [li] })),
       { cps: 2, items: [$('szLogTyped')] },
       ...(b.quote ? [{ cps: 2, items: [$('szQuoteText')] }, { cps: 3, items: [$('szQuoteWho')] }] : []),
+      { wait: 16, start: unlockReport },   // the story is in: from here it can be skipped and closed
       { cps: 1, items: [...$('szMap').querySelectorAll('text')] },
       ...rows.map(row => ({ cps: 3, items: [...row.querySelectorAll('[data-tw]')] })),
     ], b.quote ? $('szQuoteText') : $('szLogTyped'), review);
@@ -2458,7 +2485,7 @@ color:  blue
 
   function close() {
     const ov = $('szOverlay');
-    if (!ov.classList.contains('open')) return;
+    if (!ov.classList.contains('open') || locked) return;
     finishTyping();
     ov.classList.remove('open');
     ov.setAttribute('aria-hidden', 'true');
@@ -2478,8 +2505,10 @@ color:  blue
   document.addEventListener('DOMContentLoaded', () => {
     $('szContinue').addEventListener('click', close);
     // a click anywhere on the screen (except its buttons) shows the whole report at once
-    $('szPanel').addEventListener('click', e => { if (!e.target.closest('button')) finishTyping(); });
+    $('szPanel').addEventListener('click', e => { if (!locked && !e.target.closest('button')) finishTyping(); });
     $('szOverlay').addEventListener('keydown', e => {
+      // while locked, keys do nothing (no skip, no close, no scroll), but browser shortcuts still work
+      if (locked && e.key !== 'Tab') { if (!e.ctrlKey && !e.metaKey && !/^F\d/.test(e.key)) e.preventDefault(); return; }
       if (e.key === 'Escape') { e.preventDefault(); close(); return; }
       if (e.key !== 'Tab') {
         // the first Enter/Space while it's still typing only skips the typing

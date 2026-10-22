@@ -153,6 +153,57 @@ M1 (the sealed door, `cryoDoor` / `opsDoor`) and M2 (`hale`) already have pictur
 
 ---
 
+## Chapter 3 — Locked In (`Y9/Python/L3_While_Loops/1_Locked_In_PRIMM.html`)
+
+No pictures yet: every `CAMS` entry has `src: ''`.
+
+### Intro — "Chapter 3 — Locked In" → `li_intro_airlock.jpg`
+> The inner door of a heavy station airlock, sealed shut, with a red warning light glowing above
+> it and a small keypad beside it whose screen reads LOCKED. Frost round the door seals. A
+> corridor curves away into darkness behind the camera.
+
+`python _drafts/story/add_still.py Y9/Python/L3_While_Loops/1_Locked_In_PRIMM.html airlock _drafts/story/li_intro_airlock.jpg`
+
+### P — "Watched" → `li_p_keypad.jpg`
+> Close-up of a frosted airlock keypad, its small green screen glowing. Above it, set into the
+> wall, a single glowing red camera eye (the station's AI, WARDEN), its red light falling across
+> the keys.
+
+`python _drafts/story/add_still.py Y9/Python/L3_While_Loops/1_Locked_In_PRIMM.html keypad _drafts/story/li_p_keypad.jpg`
+
+### R — "Cycling" → `li_r_cycle.jpg`
+> Inside an empty airlock chamber: amber cycle lights turning on the walls, and a haze of air
+> draining down through the floor grates. Both doors shut.
+
+`python _drafts/story/add_still.py Y9/Python/L3_While_Loops/1_Locked_In_PRIMM.html cycle _drafts/story/li_r_cycle.jpg`
+
+### I1 — "One power line" → `li_i1_powerline.jpg`
+> A wall power junction in a dim corridor, with two heavy cables leaving it, one stencilled
+> AIRLOCK and one stencilled CRYO BAY. Faint sparks at the junction box.
+
+`python _drafts/story/add_still.py Y9/Python/L3_While_Loops/1_Locked_In_PRIMM.html powerline _drafts/story/li_i1_powerline.jpg`
+
+### I — "Two ways through" → `li_i_override.jpg`
+> The airlock keypad's screen, close up, showing two options in green text: WARDEN CODE and
+> ENGINEER OVERRIDE. A gloved finger hovers just above the keys.
+
+`python _drafts/story/add_still.py Y9/Python/L3_While_Loops/1_Locked_In_PRIMM.html override _drafts/story/li_i_override.jpg`
+
+### M1 — "Something at the door" → `li_m1_outer_door.jpg`
+> The outer airlock door seen from inside the chamber, dented outwards in two places by heavy
+> blows from the other side, frost spreading from its edges. A red warning light. Nothing
+> visible through the small window but darkness.
+
+`python _drafts/story/add_still.py Y9/Python/L3_While_Loops/1_Locked_In_PRIMM.html outerDoor _drafts/story/li_m1_outer_door.jpg`
+
+### M2 — "Let me in" → `li_m2_intercom.jpg`
+> A wall intercom panel in the dark, its speaker grille lit from inside, and beside it a small
+> screen reading VOICEPRINT: NO MATCH in red. Frost on the panel.
+
+`python _drafts/story/add_still.py Y9/Python/L3_While_Loops/1_Locked_In_PRIMM.html intercom _drafts/story/li_m2_intercom.jpg`
+
+---
+
 ## New chapters
 
 Give every beat (intro, P, R, I1, I, M1, M2) its own picture: add a `CAMS` entry with its

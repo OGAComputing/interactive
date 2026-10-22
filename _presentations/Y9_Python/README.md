@@ -11,9 +11,11 @@ PowerPoint decks for the Y9 Python unit, themed for the unit's *Station Zero* su
 | `Y9_Python_Deck_Template.pptx` | The template deck: one example of each slide type, with guidance in the speaker notes |
 | `L1_Python_Refresh.pptx` | Lesson 1 deck (Wake Up, then Life Support, which is now an optional bonus round) |
 | `L2_Selection.pptx` | Lesson 2 deck (Proximity) |
+| `L3_While_Loops.pptx` | Lesson 3 deck (Locked In) |
 | `build_template.cjs` | Builds the template deck (re-reads this README for the rules slides) |
 | `build_deck.cjs` | Builds the Lesson 1 deck: copy this file to start a new lesson's deck |
 | `build_L2.cjs` | Builds the Lesson 2 deck |
+| `build_L3.cjs` | Builds the Lesson 3 deck (draws its loop trace tables by hand: `loopTraceSlide`) |
 | `sz_slides.cjs` | The slide types ("recipes"), one function each |
 | `sz_kit.cjs` | Drawing parts: palette, layouts, code panels, terminals, variable boxes, badges |
 | `clean_icons.py`, `icons/` | The five pillar icons, edges rebuilt from the circle's geometry |
@@ -25,6 +27,7 @@ PowerPoint decks for the Y9 Python unit, themed for the unit's *Station Zero* su
 npm install -g pptxgenjs          (once)
 node build_deck.cjs               → L1_Python_Refresh.pptx
 node build_L2.cjs                 → L2_Selection.pptx
+node build_L3.cjs                 → L3_While_Loops.pptx
 node build_template.cjs           → Y9_Python_Deck_Template.pptx
 ```
 
@@ -97,3 +100,4 @@ Add new feedback at the bottom, dated. `build_template.cjs` turns this list into
 - **2026-10-14 · Worked examples** — Teach selection conditions first (True or False on their own), then "what is printed?" in two rounds: numbers in the condition, then one variable. Each round is I do (1 example) → We do (1) → You do (3) → answers (`whatPrintedSlide`, `whatPrintedGridSlide`).
 - **2026-10-15 · Story** — Before each Predict stage (after the New Information), add a very brief "Story so far" slide: at most 3 short sentences, true for every student whatever their choices (`storySoFarSlide`). Story slides are now the title, these, the chapter cards and the plenary cliffhanger.
 - **2026-10-17 · Pacing** — Lesson 1 overran, so casting moved into Lesson 2's deck (an `int()` slide just before the activity). Recap & Recall asks only about what the class covered; chapter cards name every call (three from Lesson 2).
+- **2026-10-22 · Split attention** — Labels go right beside what they label: fit the code panel to the code so no label is a long arrow away, and mark the part a label names in the code itself (gold colons, spaces drawn as dots), repeated in the same colour in the label. For if / else, a green band behind the True block and an amber one behind the False block, running on behind each label (L2 slide 9, "if and else").

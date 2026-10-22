@@ -7,6 +7,10 @@
 // Teaching order (from the Y8 Lesson 5 Selection deck): conditions first (True or False), then if / else,
 // then two rounds of "what is printed?" — round 1 with numbers in the condition, round 2 with one
 // variable — each as I do (1 example) → We do (1) → You do (3) → answers. Then elif, then the activity.
+// Since 2026-10-21 the activity's Predict, Run and Investigate use one plain if / else program, and
+// Investigate step 2 indents print("Scan complete") into the else, so Round 2 now has an indentation
+// I do. elif first appears in the activity at Modification 2 (code given), so the elif slides prepare
+// for Modify, not Investigate.
 
 const path = require('path');
 const { createDeck } = require('./sz_kit.cjs');
@@ -175,26 +179,47 @@ The boundary is where programs go wrong: > leaves the number itself out; >= lets
 // 9. Anatomy of if / else (one-off: labels beside each line, one per click)
 {
   const s = newSlide('SZ_DARK', C, 'if and else');
+  // Split attention: the labels name a colon and 4 spaces, so those are marked IN the code (gold colons,
+  // the spaces drawn as dots, as the activity's Investigate step 2 draws them), each label repeats its
+  // mark in the same colour, and the panel is only as wide as the code so every label sits by its line.
   const lines = ['if 85 >= 50:', '    print("All clear")', 'else:', '    print("Too close")'];
-  const cp = codePanel(s, lines, { x: M, y: 1.75, w: 6.2, size: 28, lh: 0.85 });
+  const size = 28, lh = 0.85, cy = 1.7, cw = 5.75, pad = 0.22;
+  box(s, { x: M, y: cy, w: cw, h: lines.length * lh + pad * 2, fill: P.code, line: P.line, r: 0.08, name: 'code' });
+  // What runs when: a green band behind the True block and an amber one behind the False block, each
+  // running on out of the panel behind its label. Drawn before the code so the text stays on top.
+  const band = { 1: '1C3A27', 3: '3D3014' };
+  Object.entries(band).forEach(([i, fill]) => box(s, { x: M + 0.06, y: cy + pad + i * lh + 0.04,
+    w: 12.73 - M - 0.06, h: lh - 0.08, fill, name: i === '1' ? 'runs if True' : 'runs if False' }));
+  const ys = lines.map((ln, i) => {
+    const y = cy + pad + i * lh, lead = ln.match(/^ */)[0].length;
+    text(s, String(i + 1), { x: M + 0.12, y, w: 0.3, h: lh, fontFace: MONO, fontSize: size - 4, color: P.dim,
+      align: 'right', valign: 'middle' });
+    const runs = pyRuns(ln.slice(lead), size).map((r) => (r.text === ':'
+      ? { text: ':', options: { ...r.options, color: P.gold, bold: true } } : r));
+    if (lead) runs.unshift({ text: '·'.repeat(lead), options: { color: P.dim, fontFace: MONO, fontSize: size } });
+    s.addText(runs, { isTextBox: true, x: M + 0.7, y, w: cw - 0.8, h: lh, margin: 0, valign: 'middle' });
+    return y + lh / 2;
+  });
+  const colon = { text: ':', options: { fontFace: MONO, bold: true, color: P.gold } };
+  const dots = { text: '····', options: { fontFace: MONO, bold: true, color: P.muted } };
   const labels = [
-    [{ text: 'if', options: { fontFace: MONO, bold: true } }, { text: ' + a condition + a colon ' },
-      { text: ':', options: { fontFace: MONO, bold: true, color: P.gold } }],
-    [{ text: 'Indented 4 spaces: ' }, { text: 'runs only if True', options: { bold: true, color: P.ok } }],
+    [{ text: 'if', options: { fontFace: MONO, bold: true } }, { text: ' + a condition + a colon ' }, colon],
+    [{ text: '4 spaces ' }, dots, { text: ' in front: ' }, { text: 'runs only if True', options: { bold: true, color: P.ok } }],
     [{ text: 'else', options: { fontFace: MONO, bold: true } }, { text: ' has ' }, { text: 'no condition', options: { bold: true } },
-      { text: ', just a colon' }],
-    [{ text: 'Indented 4 spaces: ' }, { text: 'runs only if False', options: { bold: true, color: P.gold } }],
+      { text: ', just a colon ' }, colon],
+    [{ text: '4 spaces ' }, dots, { text: ' in front: ' }, { text: 'runs only if False', options: { bold: true, color: P.gold } }],
   ];
   labels.forEach((l, i) => onClick(s, i + 1, () => {
-    arrow(s, M + 6.35, cp.ys[i], M + 6.85, cp.ys[i], P.dim);
-    text(s, l, { x: M + 7.0, y: cp.ys[i] - 0.4, w: 5.1, h: 0.8, fontSize: 22, valign: 'middle' });
+    arrow(s, M + cw + 0.1, ys[i], M + cw + 0.5, ys[i], band[i] ? P.muted : P.dim);
+    text(s, l, { x: M + cw + 0.6, y: ys[i] - 0.4, w: 12.73 - (M + cw + 0.6), h: 0.8, fontSize: 22, valign: 'middle' });
   }));
   onClick(s, 5, () => R.banner(K, s, [{ text: 'Exactly one block runs: ', options: { bold: true, color: P.gold } },
-    { text: 'never both, never neither.' }], 5.45, 1.0, 24));
+    { text: 'never both, never neither.' }], 5.65, 0.9, 24));
   addIcon(s, 'info');
   s.addNotes(`5 clicks: one label per line, then the rule.
+The coloured bands are on from the start: green = what runs when the condition is True, amber = what runs when it is False. Point at them as you go.
 Line 1: "if", the condition, then a colon. The colon means "a block comes next".
-Line 2: indented = INSIDE the if. It only runs if the condition is True.
+Line 2: indented = INSIDE the if. It only runs if the condition is True. The dots stand for the 4 spaces (one Tab): Python can't see the block without them. The activity draws spaces the same way in Investigate step 2.
 Line 3: else has NO condition — it's "everything else". Students often try to write else 30 < 50: — that's an error.
 Line 4: inside the else. Runs only when the condition was False.
 Ask: 85 >= 50 is True, so what's printed? (All clear — and only All clear.)`);
@@ -310,6 +335,21 @@ Click 4 — What is printed? Too close, then Scan complete.
 Point out: Too close is the same as Round 1 — a variable is just a name for the value in the box. Scan complete is new, and it would print whatever distance was.`,
 });
 
+// Indentation decides the block: the activity's Investigate step 2 (indent print("Scan complete") into the else).
+R.whatPrintedSlide(K, {
+  section: R2, mode: 'I DO', title: 'Spaces decide the block', size: 21,
+  code: ['distance = 85', 'if distance >= 50:', '    print("All clear")', 'else:', '    print("Too close")', '    print("Scan complete")'],
+  memory: { line: 1, name: 'distance', type: 'int', value: '85' },
+  conds: [{ line: 2, expr: '85 >= 50', result: true }], runs: [3], skipped: [5, 6],
+  output: ['All clear'], steps: STEPS_2,
+  notes: `I DO — the same program with one change: line 6 now has 4 spaces in front. Point at the spaces before you start.
+Click 1 — box: 85. Click 2 — 85 >= 50 is True.
+Click 3 — Which lines run? "The if block. Line 6 is indented under else, so it's INSIDE the else block now, and it's skipped with line 5."
+Click 4 — All clear, and that's all: Scan complete is gone.
+Ask: "What would it print if distance were 10?" (Too close, Scan complete: the else block runs, both of its lines.)
+This is exactly Investigate step 2 in today's activity (run it with 85, then 10). Students get stuck on the spaces: line 6 must line up exactly with line 5. Press Tab once; don't mix Tab and spaces.`,
+});
+
 R.whatPrintedSlide(K, {
   section: R2, mode: 'WE DO',
   code: ['oxygen = 20', 'if oxygen < 20:', '    print("Refill now")', 'else:', '    print("Oxygen OK")', 'print("Check done")'],
@@ -326,8 +366,8 @@ Step 4: "What is printed?" Boards up → click. Oxygen OK, Check done.`,
 const YOU_2 = [
   { code: ['level = 3', 'if level > 2:', '    print("Locked")', 'else:', '    print("Open")'], output: ['Locked'],
     why: [{ text: '3 > 2', options: { fontFace: MONO, bold: true } }, { text: ' is True' }] },
-  { code: ['power = 50', 'if power >= 50:', '    print("Systems on")', 'else:', '    print("Backup")', 'print("Done")'],
-    output: ['Systems on', 'Done'],
+  { code: ['power = 50', 'if power >= 50:', '    print("Systems on")', 'else:', '    print("Backup")', '    print("Done")'],
+    output: ['Systems on'],
     why: [{ text: '50 >= 50', options: { fontFace: MONO, bold: true } }, { text: ' is True' }] },
   { code: ['answer = "n"', 'if answer == "y":', '    print("Sent")', 'else:', '    print("Cancelled")', 'print("Done")'],
     output: ['Cancelled', 'Done'],
@@ -337,13 +377,14 @@ R.whatPrintedGridSlide(K, {
   section: R2, items: YOU_2,
   notes: `YOU DO — silent, on your own, 4 minutes. Boards up together.
 Stuck? Four steps on the strip: look in the box, True or False, which lines run, what is printed.
+Number 2 has an indented last line: look at the spaces.
 Number 3 compares text: "n" is not equal to "y". This is exactly Modify 4 in today's activity.`,
 });
 R.whatPrintedGridSlide(K, {
   section: R2, items: YOU_2, reveal: true,
   notes: `Check boards.
 1: 3 > 2, True → Locked. Nothing after the else, so that's all.
-2: 50 >= 50 is True (boundary). Don't forget Done.
+2: 50 >= 50 is True (boundary) → Systems on, and NOT Done: Done is indented, so it's inside the else block and is skipped.
 3: "n" == "y" is False → Cancelled, then Done. Text needs its quotes when you compare it: answer == y (no quotes) would be a NameError.`,
 });
 
@@ -366,7 +407,8 @@ Click 1 — box: 35.
 Click 2 — the if: 35 >= 70? False, so Python moves down to the elif.
 Click 3 — the elif: 35 >= 30? True. Stop checking.
 Click 4 — only the elif block runs. Click 5 — Low.
-else still has no condition: it runs only when NONE of the conditions were True.`,
+else still has no condition: it runs only when NONE of the conditions were True.
+In the activity, elif first appears in Modification 2: the sensor gets a middle band (elif distance >= 20: → Movement detected), with the code given. Predict, Run and Investigate are if / else only.`,
 });
 
 R.whatPrintedSlide(K, {
@@ -378,7 +420,7 @@ R.whatPrintedSlide(K, {
   notes: `Same program, battery = 80.
 Click 1 — box: 80. Click 2 — 80 >= 70 is True, so the elif is NOT CHECKED, even though 80 >= 30 is also True.
 Click 3 — only the if block runs. Click 4 — Full, and only Full.
-This is the big one: Python checks from the top and stops at the FIRST True condition. So the order of the conditions matters — they'll test that in Investigate step 1.`,
+This is the big one: Python checks from the top and stops at the FIRST True condition. So the order of the conditions matters — they'll need that in Modification 3, where the new Proximity alert band (10 to 19) has to go after the Movement detected one.`,
 });
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -423,10 +465,13 @@ R.chapterSlide(K, {
   note: [{ text: 'Three calls this time: ', options: { bold: true, color: P.gold } },
     { text: 'in Investigate, Modify and Make. They change the story, not your score.' }],
   notes: `Students open "Proximity — Selection" from Google Classroom (Y9 › Python › Lesson 2).
-Predict (5 questions: Program A is if / else, Program B adds one elif) → Run (85, 20, 5) → Investigate (4 steps: swap the numbers, elif → if, >= → >, then Break it: int() removed → TypeError) → Modify (4 steps; step 1 is the lockdown choice) → Make (radiation scanner, plus the power choice).
+Predict, Run and Investigate all use one plain if / else sensor program (>= 50 → All clear, else IT'S RIGHT BEHIND YOU, then Scan complete).
+Predict (5 questions: 30, when does Scan complete run, 85, exactly 50, 49) → Run (85, 50, 5) → Investigate (4 steps: change 50 to 20; indent print("Scan complete") into the else and run 85, then 10; move it back and change >= to > at exactly 20; then Break it: int() removed → TypeError) → Modify (4 steps: 1 the lockdown choice; 2 the first elif, a Movement detected band for 20 to 49, code given; 3 a Proximity alert band for 10 to 19, no code; 4 Send alert? y/n with ==) → Make (radiation scanner, plus the power choice).
+Each ⚡ Check types its test numbers into the program for the student ("typed for you"). The boundary values are the same every time, but the others change from check to check, so students can't hard-code an answer.
 The three calls: Investigate step 1 opens with the CRISIS — frost is spreading across Pods 3 and 5, and the heaters can save one. Whoever isn't heated (Chen or Patel) goes critical, and their heart rate falls on every report until the lockdown (Modify 1) and power (Make) calls save them, or don't. There's no right answer to the crisis: let students argue about it. Step 1's task only appears once they've picked.
 Students whose Wake Up choices left Patel critical see that on the crisis card: heating Pod 5 saves him.
-Circulate. During Investigate, point students back to the debugging recipe (Lesson 1) before they press Get help.
+Circulate. Investigate step 2 (indenting) is where most students get stuck: line 6 must line up exactly with line 5, so press Tab once and don't mix Tab and spaces. The page shows dots for the spaces, and Reset to original puts the code back.
+During Investigate, point students back to the debugging recipe (Lesson 1) before they press Get help.
 Anyone who missed Lesson 1, or didn't finish Wake Up: the activity's "Previously…" recap tells them all of it (Hale's pod, his last log, the tag that isn't human). They don't need to go back to Lesson 1. Life Support is now an optional bonus round, not needed for today.
 Fast finishers: the Make extension (SCANNER FAULT below 0, EVACUATE from 500).`,
 });

@@ -45,15 +45,25 @@ const STARTER = [
 
 // ─── Story layer ─────────────────────────────────────────────────────────────
 
-test('the terminal report types itself, a click shows it all, and it only shows once', async ({ page }) => {
+test('the terminal report types itself, the story can\'t be skipped, a click then shows the rest, and it only shows once', async ({ page }) => {
   await openAt(page, {}, { story: true, reducedMotion: 'no-preference' });
   await expect(page.locator('#szOverlay')).toHaveClass(/open/);
   await expect(page.locator('#szObjective')).toContainText('Get out of the Cryo Bay');
-  // still typing: the log is incomplete and the skip hint is showing
-  await expect(page.locator('#szSkipHint')).toBeVisible();
+  // the still and the story are locked: no skip hint, a click, key or Continue does nothing
+  await expect(page.locator('#szPanel')).toHaveClass(/sz-locked/);
+  await expect(page.locator('#szContinue')).toHaveAttribute('aria-disabled', 'true');
+  await expect(page.locator('#szSkipHint')).toBeHidden();
+  await page.locator('#szKicker').click();
+  await page.keyboard.press('Escape');
+  await page.locator('#szContinue').click({ force: true });   // force: Playwright would wait out aria-disabled
+  await expect(page.locator('#szOverlay')).toHaveClass(/open/);
+  expect(await page.locator('#szLogTyped').textContent()).toBe('');
+  // once the story has typed in, it unlocks and the map and readouts can be skipped
   const full = await page.locator('#szLogFull').textContent();
+  await expect(page.locator('#szLogTyped')).toHaveText(full, { timeout: 15000 });
+  await expect(page.locator('#szPanel')).not.toHaveClass(/sz-locked/);
+  await expect(page.locator('#szContinue')).not.toHaveAttribute('aria-disabled');
   await page.locator('#szMap').click();
-  await expect(page.locator('#szLogTyped')).toHaveText(full);
   await expect(page.locator('#szSkipHint')).toBeHidden();
   await expect(page.locator('#szTitleTyped')).toHaveText('Chapter 1 — Wake Up');
   await expect(page.locator('.sz-readout').first()).toContainText('[CRIT]');
