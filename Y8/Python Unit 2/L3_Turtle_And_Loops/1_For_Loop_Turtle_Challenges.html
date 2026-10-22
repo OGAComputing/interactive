@@ -749,13 +749,15 @@ function updateStepVisibility() {
 // ═══════════════════════════════════════════════════════
 function calcScore() {
   let s = 0;
-  if (completedStages.includes('P')) s += 5;
+  if (completedStages.includes('P')) s += 10;
   if (completedStages.includes('R')) s += 5;
-  if (completedStages.includes('I')) s += 10;
-  s += (stepM1 - 1) * 8; // max 40 before Make
-  s += (stepM2 - 1) * 13; // max 39 + 1 extra if complete
+  if (completedStages.includes('I')) s += 35;   // finishing Investigate = 50%
+  for (let i = 1; i <= M1_TASK_COUNT; i++) {   // finishing Modify = 80%
+    if (passedChecks['m1_code' + i]) s += 30 / M1_TASK_COUNT;
+  }
+  s += (stepM2 - 1) * 6; // max 12, then 100 once Make is complete
   if (completedStages.includes('M2')) s = 100;
-  return Math.min(100, s);
+  return Math.min(100, Math.round(s));
 }
 
 function submitScore() {

@@ -1766,27 +1766,48 @@ function scrollToActive(id) {
   document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-// ── Score  P=5 R=5 I=5, Modify=40, Make=25 (part marks per requirement), Ext steps=20 total → max 100 ──
+// ── Score  P=10 R=5 I=35 (part marks per tick and answer), Modify=30, Make=15 (part marks per requirement), Ext=5 → max 100 ──
+// Weighted so finishing Investigate earns 50% and finishing Modify 80%: Make and the extension are stretch marks on top.
 // The Bonus round (input() preview) is deliberately excluded from scoring — it's
 // an optional sneak peek at Lesson 3, never required to reach 100% on this one.
 
-const M2EXT_WEIGHTS = [7, 7, 6]; // one per STEP_COUNT_M2EXT step, sums to 20
+const M2EXT_WEIGHTS = [2, 2, 1]; // one per STEP_COUNT_M2EXT step, sums to 5
 
-// Predict, Investigate and Modify are split evenly across their steps, so every step
-// a student finishes raises the grade (Investigate 2 is worth more than Investigate 1).
-// Steps finished in a one-step-at-a-time stage (Predict, Investigate): every step
-// before the frontier, or all of them once the stage is complete. Steps a teacher
-// skipped earn nothing, as with Modify.
+// Predict and Modify are split evenly across their steps, so every step a student
+// finishes raises the grade. Predict steps finished: every step before the frontier,
+// or all of them once the stage is complete.
 function stepsDone(stage, maxStep, total) {
   let n = 0;
   for (let i = 1; i <= total; i++) {
-    const reached = completedStages.includes(stage) || i < maxStep;
-    if (reached && !(stage === 'I' && skippedSteps['i' + i])) n++;
+    if (completedStages.includes(stage) || i < maxStep) n++;
   }
   return n;
 }
 
-// Make earns part of its 25 marks for each requirement met by a program that runs
+// Investigate is split evenly across its steps, and each step evenly across its
+// code-change ticks plus its answer, so marks come in as each tick goes green. The
+// best tick share is kept, so later edits never lower the grade, and the answer's
+// share only comes when the step passes. A step a teacher skipped keeps the ticks
+// it earned but not the answer.
+function investigateShare() {
+  let s = 0;
+  for (let i = 1; i <= STEP_COUNT_I; i++) {
+    const passed = (completedStages.includes('I') || i < maxStepI) && !skippedSteps['i' + i];
+    s += passed ? 1 : (passedChecks['i_share' + i] || 0);
+  }
+  return s / STEP_COUNT_I;
+}
+
+// r: step n's renderInvReqs() result. Keeps the best share of its ticks met so far.
+function recordInvProgress(n, r) {
+  if (!r?.results?.length || iCodeSnapshots[n] !== undefined) return;
+  const share = r.results.filter(Boolean).length / (r.results.length + 1);
+  if (share <= (passedChecks['i_share' + n] || 0)) return;
+  passedChecks['i_share' + n] = share;
+  saveState(); submitScore();
+}
+
+// Make earns part of its 15 marks for each requirement met by a program that runs
 // without errors. The best share is kept, so later edits never lower the grade, and
 // it stays short of full marks until the whole check passes.
 function recordMakeProgress(results) {
@@ -1800,13 +1821,13 @@ function recordMakeProgress(results) {
 
 function calcScore() {
   let s = 0;
-  s += 5 * stepsDone('P', maxPredictStep, PREDICT_TOTAL) / PREDICT_TOTAL;
+  s += 10 * stepsDone('P', maxPredictStep, PREDICT_TOTAL) / PREDICT_TOTAL;
   if (completedStages.includes('R')) s += 5;
-  s += 5 * stepsDone('I', maxStepI, STEP_COUNT_I) / STEP_COUNT_I;
+  s += 35 * investigateShare();
   for (let i = 1; i <= STEP_COUNT_M1; i++) {
-    if (passedChecks['m1_code' + i]) s += 40 / STEP_COUNT_M1;
+    if (passedChecks['m1_code' + i]) s += 30 / STEP_COUNT_M1;
   }
-  s += passedChecks['m2_make'] ? 25 : 25 * (passedChecks['m2_make_share'] || 0);
+  s += passedChecks['m2_make'] ? 15 : 15 * (passedChecks['m2_make_share'] || 0);
   for (let i = 1; i <= STEP_COUNT_M2EXT; i++) {
     if (passedChecks['m2ext_code' + i]) s += (M2EXT_WEIGHTS[i - 1] || 0);
   }
@@ -1938,7 +1959,7 @@ async function runCodeInEditor(editorId, statusElId, inputs = null) {
     const checkBtn = document.getElementById('btn_check_i' + stepI);
     if (checkBtn) checkBtn.disabled = false;
     // Run alone shows progress: ✓ for each change made, ✗ for each still to do — no MCQ needed first.
-    if (iCodeSnapshots[stepI] === undefined) renderInvReqs(stepI, 'full');
+    if (iCodeSnapshots[stepI] === undefined) recordInvProgress(stepI, renderInvReqs(stepI, 'full'));
     saveState();
   }
 
@@ -2001,7 +2022,7 @@ function renderInvReqs(n, mode) {
 
 // Live ticks while typing — only on the step being worked on (a passed step stays all-ticked).
 function refreshInvTicks() {
-  if (currentStage === 'I' && iCodeSnapshots[stepI] === undefined) renderInvReqs(stepI, 'soft');
+  if (currentStage === 'I' && iCodeSnapshots[stepI] === undefined) recordInvProgress(stepI, renderInvReqs(stepI, 'soft'));
 }
 
 // Wipes an Investigate MCQ's ✔/✘ message and option highlights. Called when the code
@@ -2027,6 +2048,7 @@ document.addEventListener('change', e => {
 // the first unmet bullet's hint, and points the student back at the instructions.
 function invGate(n, card) {
   const r = renderInvReqs(n, 'full');
+  recordInvProgress(n, r);
   if (!r || r.pass) return true;
   clearInvestigateMCQFeedback(I_FIELDS[n - 1]);   // the answer wasn't marked this time
   card?.classList.add('error');

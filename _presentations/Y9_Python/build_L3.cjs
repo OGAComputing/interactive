@@ -116,7 +116,7 @@ const C = 'Iteration';
     node('Next line', 10.6, 4.9, 2.0, 0.75);
     s.addShape(K.pres.shapes.LINE, { x: 11.6, y: dy + dh / 2, w: 0, h: 4.9 - dy - dh / 2, line: { color: P.muted, width: 2.25 } });
     arrow(s, 11.6, 4.5, 11.6, 4.9, P.muted);
-    text(s, 'Checks again before every pass', { x: 6.0, y: 6.0, w: 6.7, h: 0.5, fontSize: 22, color: P.gold, bold: true, align: 'center' });
+    text(s, 'Checks again each time round', { x: 6.0, y: 6.0, w: 6.7, h: 0.5, fontSize: 22, color: P.gold, bold: true, align: 'center' });
   });
   addIcon(s, 'info');
   s.addNotes(`Last lesson: an if checks its condition ONCE. True → the block runs once, then the program moves on.
@@ -301,13 +301,13 @@ R.whatPrintedGridSlide(K, {
   section: R1, items: YOU_1,
   notes: `YOU DO — silent, on your own, 4 minutes. Boards up together at the end.
 Stuck? Draw a trace table like the last two slides: one row per check.
-Number 2 is the trap: the condition is checked BEFORE the first pass. Number 3: look at the spaces in front of print.`,
+Number 2 is the trap: the condition is checked BEFORE the loop runs even once. Number 3: look at the spaces in front of print.`,
 });
 R.whatPrintedGridSlide(K, {
   section: R1, items: YOU_1, reveal: true,
   notes: `Check boards. Most common mistakes:
 1: "1 2 3 4" — after 3 prints, n becomes 4, and 4 <= 3 is False, so it stops.
-2: "5, End" — 5 < 5 is False before the first pass, so the body NEVER runs. A while can run zero times.
+2: "5, End" — 5 < 5 is False straight away, so the body NEVER runs. A while can run zero times.
 3: "2 4 6" — print(n) isn't indented, so it's not in the loop: it runs once, after the loop, when n is 6.
 If most of the class got 2 or 3 wrong, trace one more together before Round 2.`,
 });
@@ -323,7 +323,7 @@ loopTraceSlide({
     'print("Airlock open")'],
   cols: ['Check', 'code', 'code != "4271"', 'Printed'], colW: [0.95, 1.15, 2.4, 2.25],
   rows: [['1', '"1234"', 'True', 'ACCESS DENIED'], ['2', '"0000"', 'True', 'ACCESS DENIED'], ['3', '"4271"', 'False', 'Airlock open']],
-  notes: `I DO — the airlock keypad, the same program as today's activity. Now the variable changes because the USER types something new each pass.
+  notes: `I DO — the airlock keypad, the same program as today's activity. Now the variable changes because the USER types something new each time round.
 Click 1 — "Line 1 asks: 1234. Is "1234" != "4271"? Yes, True. ACCESS DENIED, then line 4 asks again: 0000."
 Click 2 — "0000 != 4271? True. ACCESS DENIED, ask again: 4271."
 Click 3 — "4271 != 4271? False. The loop ends: Airlock open."

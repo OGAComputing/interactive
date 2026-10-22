@@ -155,7 +155,7 @@ M1 (the sealed door, `cryoDoor` / `opsDoor`) and M2 (`hale`) already have pictur
 
 ## Chapter 3 — Locked In (`Y9/Python/L3_While_Loops/1_Locked_In_PRIMM.html`)
 
-No pictures yet: every `CAMS` entry has `src: ''`.
+Every beat has its picture (made with Gemini, 2026-10-22).
 
 ### Intro — "Chapter 3 — Locked In" → `li_intro_airlock.jpg`
 > The inner door of a heavy station airlock, sealed shut, with a red warning light glowing above
@@ -172,8 +172,10 @@ No pictures yet: every `CAMS` entry has `src: ''`.
 `python _drafts/story/add_still.py Y9/Python/L3_While_Loops/1_Locked_In_PRIMM.html keypad _drafts/story/li_p_keypad.jpg`
 
 ### R — "Cycling" → `li_r_cycle.jpg`
-> Inside an empty airlock chamber: amber cycle lights turning on the walls, and a haze of air
-> draining down through the floor grates. Both doors shut.
+> Inside an empty, enclosed airlock chamber with both heavy doors shut. The chamber is lit mainly
+> by several glowing amber rotating warning beacons on the walls (the airlock cycle lights), with
+> cold teal light only as a secondary tone. A thick visible haze of air is draining down through
+> the floor grates. Absolutely no text, signs, labels or lettering anywhere.
 
 `python _drafts/story/add_still.py Y9/Python/L3_While_Loops/1_Locked_In_PRIMM.html cycle _drafts/story/li_r_cycle.jpg`
 
@@ -190,8 +192,8 @@ No pictures yet: every `CAMS` entry has `src: ''`.
 `python _drafts/story/add_still.py Y9/Python/L3_While_Loops/1_Locked_In_PRIMM.html override _drafts/story/li_i_override.jpg`
 
 ### M1 — "Something at the door" → `li_m1_outer_door.jpg`
-> The outer airlock door seen from inside the chamber, dented outwards in two places by heavy
-> blows from the other side, frost spreading from its edges. A red warning light. Nothing
+> The outer airlock door seen from inside the chamber, dented inwards (bulging towards the
+> camera) in two places by heavy blows from the other side, frost spreading from its edges. A red warning light. Nothing
 > visible through the small window but darkness.
 
 `python _drafts/story/add_still.py Y9/Python/L3_While_Loops/1_Locked_In_PRIMM.html outerDoor _drafts/story/li_m1_outer_door.jpg`

@@ -84,13 +84,26 @@ describe('ownOutput / askedCount / Run helpers', () => {
 
 // ─── Investigate ─────────────────────────────────────────────────────────────
 
+// What the page records after an Investigate run: the code run, and its output (the typed codes
+// are echoed after each prompt; only those lines matter to the step 1 check).
+const runOf = (lines, answers) =>
+  ({ lastRun: { code: code(...lines), ok: true, output: answers.map(a => 'Enter airlock code: ' + a).join('\n') + '\n' } });
+
 describe('evalInv step 1 — while becomes if', () => {
   test('if code != "4271" passes; the starter does not', () => {
     expect(evalInv(1, code(...STARTER)).pass).toBe(false);
-    expect(evalInv(1, code(...withLine(1, 'if code != "4271":'))).pass).toBe(true);
+    expect(evalInv(1, code(...withLine(1, 'if code != "4271":')), runOf(withLine(1, 'if code != "4271":'), ['1234', '5678'])).pass).toBe(true);
   });
   test('spacing is flexible', () => {
-    expect(evalInv(1, code(...withLine(1, 'if code!="4271" :'))).pass).toBe(true);
+    expect(evalInv(1, code(...withLine(1, 'if code!="4271" :')), runOf(withLine(1, 'if code!="4271" :'), ['1', '2'])).pass).toBe(true);
+  });
+  test('the run must be of the code on screen, with two wrong codes typed', () => {
+    const ifCode = withLine(1, 'if code != "4271":');
+    expect(evalInv(1, code(...ifCode)).results).toEqual([true, false]);                               // not run yet
+    expect(evalInv(1, code(...ifCode), runOf(STARTER, ['1234', '5678', '4271'])).results).toEqual([true, false]);  // ran the old code
+    expect(evalInv(1, code(...ifCode), runOf(ifCode, ['4271'])).results).toEqual([true, false]);       // right code first
+    expect(evalInv(1, code(...ifCode), runOf(ifCode, ['1234', '4271'])).results).toEqual([true, false]);   // second code right
+    expect(evalInv(1, code(...ifCode), runOf(ifCode, ['1234', '5678'])).pass).toBe(true);
   });
 });
 

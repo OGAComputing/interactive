@@ -5,8 +5,10 @@
 //
 // Output: L2_Selection.pptx beside this file. Activity: Y9/Python/L2_Selection/1_Proximity_PRIMM.html.
 // Teaching order (from the Y8 Lesson 5 Selection deck): conditions first (True or False), then if / else,
-// then two rounds of "what is printed?" — round 1 with numbers in the condition, round 2 with one
-// variable — each as I do (1 example) → We do (1) → You do (3) → answers. Then elif, then the activity.
+// then two rounds of "what is printed?" — round 1 with numbers in the condition (I do → We do → You do
+// (3) → answers), round 2 with one variable (two I dos: an unindented last line, then an indented one).
+// Then int() and the activity. Since 2026-10-22 the class stops before Modify for = / == and elif (both
+// first appear there), and Round 2's You do is feedback after the activity, so Predict starts sooner.
 // Since 2026-10-21 the activity's Predict, Run and Investigate use one plain if / else program, and
 // Investigate step 2 indents print("Scan complete") into the else, so Round 2 now has an indentation
 // I do. elif first appears in the activity at Modification 2 (code given), so the elif slides prepare
@@ -287,37 +289,10 @@ Anyone who wrote both messages for a program: exactly one block runs.
 If most of the class got 2 or 3 wrong, do one more together before Round 2.`,
 });
 
-// ════════════════════════════════════════════════════════════════════════════
-//  = stores, == asks — before the variable appears in a condition
-// ════════════════════════════════════════════════════════════════════════════
 const R2 = 'Round 2 — a variable';
-{
-  const s = newSlide('SZ_DARK', R2, '= stores. == asks.');
-  const rows = [
-    { code: 'distance = 30', head: 'STORES', say: 'puts 30 in the box', color: P.gold },
-    { code: 'distance == 30', head: 'ASKS', say: 'is it 30?  →  True or False', color: P.int },
-  ];
-  rows.forEach((r, i) => {
-    const y = 1.85 + i * 1.6;
-    codePanel(s, [r.code], { x: M, y, w: 4.6, size: 28, nums: false, h: 1.05 });
-    arrow(s, M + 4.75, y + 0.52, M + 5.35, y + 0.52);
-    text(s, [{ text: r.head, options: { bold: true, color: r.color, fontFace: HEAD, fontSize: 26 } },
-      { text: '\n' + r.say, options: { color: P.off, fontSize: 22 } }], { x: M + 5.55, y: y - 0.1, w: 3.6, h: 1.25, valign: 'middle' });
-    if (i === 0) varBox(s, { x: 9.95, y: y + 0.08, w: 2.6, name: 'distance', type: 'int', value: '30' });
-    else R.boolChip(K, s, true, 9.95, y + 0.2, 1.5, 0.65, 26);
-  });
-  R.banner(K, s, [{ text: 'An if must use ==. ', options: { bold: true, color: P.gold } }, { text: 'This crashes:   ' },
-    { text: 'if distance = 30:', options: { fontFace: MONO } }, { text: '  →  ' },
-    { text: 'SyntaxError', options: { fontFace: MONO, bold: true, color: P.red } }], 5.25, 1.05, 24);
-  addIcon(s, 'info');
-  s.addNotes(`This is the answer to Do Now Q1's "keep that in your head".
-One = STORES: it puts 30 in the box called distance. Nothing is printed, nothing is asked.
-Two == ASKS: "is what's in distance equal to 30?" The answer is True or False, so it can go in an if.
-Using one = in an if is a SyntaxError — Python won't even start. They'll need == in Modify 4 of today's activity (answer == "y").`);
-}
 
 // ════════════════════════════════════════════════════════════════════════════
-//  Round 2 — one variable in the condition: I do → We do → You do → answers
+//  Round 2 — one variable in the condition: two I dos (its You do is feedback after the activity)
 // ════════════════════════════════════════════════════════════════════════════
 const STEPS_2 = ['Look in the box', 'True or False?', 'Which lines run?', 'What is printed?'];
 
@@ -348,79 +323,6 @@ Click 3 — Which lines run? "The if block. Line 6 is indented under else, so it
 Click 4 — All clear, and that's all: Scan complete is gone.
 Ask: "What would it print if distance were 10?" (Too close, Scan complete: the else block runs, both of its lines.)
 This is exactly Investigate step 2 in today's activity (run it with 85, then 10). Students get stuck on the spaces: line 6 must line up exactly with line 5. Press Tab once; don't mix Tab and spaces.`,
-});
-
-R.whatPrintedSlide(K, {
-  section: R2, mode: 'WE DO',
-  code: ['oxygen = 20', 'if oxygen < 20:', '    print("Refill now")', 'else:', '    print("Oxygen OK")', 'print("Check done")'],
-  memory: { line: 1, name: 'oxygen', type: 'int', value: '20' },
-  conds: [{ line: 2, expr: '20 < 20', result: false }], runs: [5], skipped: [3], always: [6],
-  output: ['Oxygen OK', 'Check done'], steps: STEPS_2,
-  notes: `WE DO — boards before each click.
-Step 1: "What's in the box?" (20) → click.
-Step 2: "So the condition is 20 < 20. True or False?" Boards up → click. Is 20 LESS than 20? No: False. (Boundary again.)
-Step 3: "Which lines run?" Cold-call → click.
-Step 4: "What is printed?" Boards up → click. Oxygen OK, Check done.`,
-});
-
-const YOU_2 = [
-  { code: ['level = 3', 'if level > 2:', '    print("Locked")', 'else:', '    print("Open")'], output: ['Locked'],
-    why: [{ text: '3 > 2', options: { fontFace: MONO, bold: true } }, { text: ' is True' }] },
-  { code: ['power = 50', 'if power >= 50:', '    print("Systems on")', 'else:', '    print("Backup")', '    print("Done")'],
-    output: ['Systems on'],
-    why: [{ text: '50 >= 50', options: { fontFace: MONO, bold: true } }, { text: ' is True' }] },
-  { code: ['answer = "n"', 'if answer == "y":', '    print("Sent")', 'else:', '    print("Cancelled")', 'print("Done")'],
-    output: ['Cancelled', 'Done'],
-    why: [{ text: '"n" == "y"', options: { fontFace: MONO, bold: true } }, { text: ' is False' }] },
-];
-R.whatPrintedGridSlide(K, {
-  section: R2, items: YOU_2,
-  notes: `YOU DO — silent, on your own, 4 minutes. Boards up together.
-Stuck? Four steps on the strip: look in the box, True or False, which lines run, what is printed.
-Number 2 has an indented last line: look at the spaces.
-Number 3 compares text: "n" is not equal to "y". This is exactly Modify 4 in today's activity.`,
-});
-R.whatPrintedGridSlide(K, {
-  section: R2, items: YOU_2, reveal: true,
-  notes: `Check boards.
-1: 3 > 2, True → Locked. Nothing after the else, so that's all.
-2: 50 >= 50 is True (boundary) → Systems on, and NOT Done: Done is indented, so it's inside the else block and is skipped.
-3: "n" == "y" is False → Cancelled, then Done. Text needs its quotes when you compare it: answer == y (no quotes) would be a NameError.`,
-});
-
-// ════════════════════════════════════════════════════════════════════════════
-//  elif — a third path
-// ════════════════════════════════════════════════════════════════════════════
-const E = 'elif';
-const STEPS_E = ['Look in the box', 'Check from the top', 'Which lines run?', 'What is printed?'];
-const ELIF_CODE = (v) => [`battery = ${v}`, 'if battery >= 70:', '    print("Full")', 'elif battery >= 30:', '    print("Low")',
-  'else:', '    print("Critical")'];
-
-R.whatPrintedSlide(K, {
-  section: E, mode: 'I DO', title: 'elif: a third path',
-  code: ELIF_CODE(35), size: 22, lh: 0.55, stripY: 6.12,
-  memory: { line: 1, name: 'battery', type: 'int', value: '35' },
-  conds: [{ line: 2, expr: '35 >= 70', result: false }, { line: 4, expr: '35 >= 30', result: true }],
-  runs: [5], skipped: [3, 7], output: ['Low'], steps: STEPS_E,
-  notes: `elif means "else if": another condition, checked only if the ones above it were False.
-Click 1 — box: 35.
-Click 2 — the if: 35 >= 70? False, so Python moves down to the elif.
-Click 3 — the elif: 35 >= 30? True. Stop checking.
-Click 4 — only the elif block runs. Click 5 — Low.
-else still has no condition: it runs only when NONE of the conditions were True.
-In the activity, elif first appears in Modification 2: the sensor gets a middle band (elif distance >= 20: → Movement detected), with the code given. Predict, Run and Investigate are if / else only.`,
-});
-
-R.whatPrintedSlide(K, {
-  section: E, mode: 'I DO', title: 'The first True one wins',
-  code: ELIF_CODE(80), size: 22, lh: 0.55, stripY: 6.12,
-  memory: { line: 1, name: 'battery', type: 'int', value: '80' },
-  conds: [{ line: 2, expr: '80 >= 70', result: true }, { line: 4, expr: '80 >= 30', result: true }],
-  runs: [3], skipped: [5, 7], output: ['Full'], steps: STEPS_E,
-  notes: `Same program, battery = 80.
-Click 1 — box: 80. Click 2 — 80 >= 70 is True, so the elif is NOT CHECKED, even though 80 >= 30 is also True.
-Click 3 — only the if block runs. Click 4 — Full, and only Full.
-This is the big one: Python checks from the top and stops at the FIRST True condition. So the order of the conditions matters — they'll need that in Modification 3, where the new Proximity alert band (10 to 19) has to go after the Movement detected one.`,
 });
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -470,14 +372,118 @@ Predict (5 questions: 30, when does Scan complete run, 85, exactly 50, 49) → R
 Each ⚡ Check types its test numbers into the program for the student ("typed for you"). The boundary values are the same every time, but the others change from check to check, so students can't hard-code an answer.
 The three calls: Investigate step 1 opens with the CRISIS — frost is spreading across Pods 3 and 5, and the heaters can save one. Whoever isn't heated (Chen or Patel) goes critical, and their heart rate falls on every report until the lockdown (Modify 1) and power (Make) calls save them, or don't. There's no right answer to the crisis: let students argue about it. Step 1's task only appears once they've picked.
 Students whose Wake Up choices left Patel critical see that on the crisis card: heating Pod 5 saves him.
+Stop the class for the next 3 slides (about 5 minutes) when the first students reach Modify: = / == and elif are both new there. Early finishers of Investigate can start Modification 1 (the lockdown call), which needs neither.
 Circulate. Investigate step 2 (indenting) is where most students get stuck: line 6 must line up exactly with line 5, so press Tab once and don't mix Tab and spaces. The page shows dots for the spaces, and Reset to original puts the code back.
 During Investigate, point students back to the debugging recipe (Lesson 1) before they press Get help.
-Anyone who missed Lesson 1, or didn't finish Wake Up: the activity's "Previously…" recap tells them all of it (Hale's pod, his last log, the tag that isn't human). They don't need to go back to Lesson 1. Life Support is now an optional bonus round, not needed for today.
+Anyone who missed Lesson 1, or didn't finish Wake Up: the activity's "Previously…" recap tells them all of it (Hale's pod, his last log, the tag that isn't human). They don't need to go back to Lesson 1. Life Support is now an optional bonus round, not needed for today.`,
+});
+
+// ════════════════════════════════════════════════════════════════════════════
+//  Before Modify — a mid-activity stop. elif and == first appear in Modify (Modifications 2–4), so they're
+//  taught here, when the class reaches Modify, not before Predict.
+// ════════════════════════════════════════════════════════════════════════════
+const B = 'Before Modify';
+{
+  const s = newSlide('SZ_DARK', B, '= stores. == asks.');
+  const rows = [
+    { code: 'distance = 30', head: 'STORES', say: 'puts 30 in the box', color: P.gold },
+    { code: 'distance == 30', head: 'ASKS', say: 'is it 30?  →  True or False', color: P.int },
+  ];
+  rows.forEach((r, i) => {
+    const y = 1.85 + i * 1.6;
+    codePanel(s, [r.code], { x: M, y, w: 4.6, size: 28, nums: false, h: 1.05 });
+    arrow(s, M + 4.75, y + 0.52, M + 5.35, y + 0.52);
+    text(s, [{ text: r.head, options: { bold: true, color: r.color, fontFace: HEAD, fontSize: 26 } },
+      { text: '\n' + r.say, options: { color: P.off, fontSize: 22 } }], { x: M + 5.55, y: y - 0.1, w: 3.6, h: 1.25, valign: 'middle' });
+    if (i === 0) varBox(s, { x: 9.95, y: y + 0.08, w: 2.6, name: 'distance', type: 'int', value: '30' });
+    else R.boolChip(K, s, true, 9.95, y + 0.2, 1.5, 0.65, 26);
+  });
+  R.banner(K, s, [{ text: 'An if must use ==. ', options: { bold: true, color: P.gold } }, { text: 'This crashes:   ' },
+    { text: 'if distance = 30:', options: { fontFace: MONO } }, { text: '  →  ' },
+    { text: 'SyntaxError', options: { fontFace: MONO, bold: true, color: P.red } }], 5.25, 1.05, 24);
+  addIcon(s, 'info');
+  s.addNotes(`The mid-activity stop: everyone looks up. This is the answer to Do Now Q1's "keep that in your head".
+One = STORES: it puts 30 in the box called distance. Nothing is printed, nothing is asked.
+Two == ASKS: "is what's in distance equal to 30?" The answer is True or False, so it can go in an if.
+Using one = in an if is a SyntaxError — Python won't even start. They'll need == in Modify 4 of today's activity (answer == "y").`);
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  elif — a third path
+// ════════════════════════════════════════════════════════════════════════════
+const E = B;
+const STEPS_E = ['Look in the box', 'Check from the top', 'Which lines run?', 'What is printed?'];
+const ELIF_CODE = (v) => [`battery = ${v}`, 'if battery >= 70:', '    print("Full")', 'elif battery >= 30:', '    print("Low")',
+  'else:', '    print("Critical")'];
+
+R.whatPrintedSlide(K, {
+  section: E, mode: 'I DO', title: 'elif: a third path',
+  code: ELIF_CODE(35), size: 22, lh: 0.55, stripY: 6.12,
+  memory: { line: 1, name: 'battery', type: 'int', value: '35' },
+  conds: [{ line: 2, expr: '35 >= 70', result: false }, { line: 4, expr: '35 >= 30', result: true }],
+  runs: [5], skipped: [3, 7], output: ['Low'], steps: STEPS_E,
+  notes: `elif means "else if": another condition, checked only if the ones above it were False.
+Click 1 — box: 35.
+Click 2 — the if: 35 >= 70? False, so Python moves down to the elif.
+Click 3 — the elif: 35 >= 30? True. Stop checking.
+Click 4 — only the elif block runs. Click 5 — Low.
+else still has no condition: it runs only when NONE of the conditions were True.
+In the activity, elif first appears in Modification 2: the sensor gets a middle band (elif distance >= 20: → Movement detected), with the code given. Predict, Run and Investigate are if / else only.`,
+});
+
+R.whatPrintedSlide(K, {
+  section: E, mode: 'I DO', title: 'The first True one wins',
+  code: ELIF_CODE(80), size: 22, lh: 0.55, stripY: 6.12,
+  memory: { line: 1, name: 'battery', type: 'int', value: '80' },
+  conds: [{ line: 2, expr: '80 >= 70', result: true }, { line: 4, expr: '80 >= 30', result: true }],
+  runs: [3], skipped: [5, 7], output: ['Full'], steps: STEPS_E,
+  notes: `Same program, battery = 80.
+Click 1 — box: 80. Click 2 — 80 >= 70 is True, so the elif is NOT CHECKED, even though 80 >= 30 is also True.
+Click 3 — only the if block runs. Click 4 — Full, and only Full.
+This is the big one: Python checks from the top and stops at the FIRST True condition. So the order of the conditions matters — they'll need that in Modification 3, where the new Proximity alert band (10 to 19) has to go after the Movement detected one.`,
+});
+
+R.chapterSlide(K, {
+  section: A, kicker: 'CHAPTER 2  ·  BACK IN', title: 'Proximity', activity: 'Proximity', time: '≈15 MIN', logLabel: 'SENSOR OPS',
+  log: ['The sensor sees two things:', 'clear, or too close.', '', 'It needs a third.'],
+  note: [{ text: 'Carry on from where you were. ', options: { bold: true, color: P.gold } },
+    { text: 'elif comes in Modification 2, with the code given.' }],
+  notes: `Back to the activity. Leave this up while students work.
+Modification 2 gives the first elif (a Movement detected band for 20 to 49). Modification 3 has no code: the Proximity alert band (10 to 19) goes after it, because the first True one wins. Modification 4 is Send alert? y/n, with ==.
 Fast finishers: the Make extension (SCANNER FAULT below 0, EVACUATE from 500).`,
 });
 
+// ════════════════════════════════════════════════════════════════════════════
+//  Feedback after the activity: Round 2's You do (indentation from Investigate step 2, == from Modification 4)
+// ════════════════════════════════════════════════════════════════════════════
+const F = 'Feedback';
+const YOU_2 = [
+  { code: ['level = 3', 'if level > 2:', '    print("Locked")', 'else:', '    print("Open")'], output: ['Locked'],
+    why: [{ text: '3 > 2', options: { fontFace: MONO, bold: true } }, { text: ' is True' }] },
+  { code: ['power = 50', 'if power >= 50:', '    print("Systems on")', 'else:', '    print("Backup")', '    print("Done")'],
+    output: ['Systems on'],
+    why: [{ text: '50 >= 50', options: { fontFace: MONO, bold: true } }, { text: ' is True' }] },
+  { code: ['answer = "n"', 'if answer == "y":', '    print("Sent")', 'else:', '    print("Cancelled")', 'print("Done")'],
+    output: ['Cancelled', 'Done'],
+    why: [{ text: '"n" == "y"', options: { fontFace: MONO, bold: true } }, { text: ' is False' }] },
+];
+R.whatPrintedGridSlide(K, {
+  section: F, items: YOU_2,
+  notes: `YOU DO, after the activity — silent, on your own, 3 minutes. Boards up together.
+Stuck? Four steps on the strip: look in the box, True or False, which lines run, what is printed.
+Number 2 has an indented last line: look at the spaces (Investigate step 2).
+Number 3 compares text: "n" is not equal to "y" (Modification 4).`,
+});
+R.whatPrintedGridSlide(K, {
+  section: F, items: YOU_2, reveal: true,
+  notes: `Check boards.
+1: 3 > 2, True → Locked. Nothing after the else, so that's all.
+2: 50 >= 50 is True (boundary) → Systems on, and NOT Done: Done is indented, so it's inside the else block and is skipped.
+3: "n" == "y" is False → Cancelled, then Done. Text needs its quotes when you compare it: answer == y (no quotes) would be a NameError.`,
+});
+
 R.errorFeedbackSlide(K, {
-  section: A, title: 'input() gives text, so convert it',
+  section: F, title: 'input() gives text, so convert it',
   code: ['distance = input("Distance: ")', 'if distance >= 50:'], hl: [2],
   error: [[{ text: 'TypeError: ', color: P.red, bold: true },
     { text: "'>=' not supported between instances of 'str' and 'int'", color: P.red }]],

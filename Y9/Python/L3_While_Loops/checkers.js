@@ -193,6 +193,17 @@ export function breakCode(raw) {
   return { code: kept.join('\n') + '\n', lineNo };
 }
 
+// The "Run it" bullets in steps 1–3: the last run was of the code on screen, it finished, and
+// the codes typed fit the step (want(codes) → true). ranThis is the first half, for the hints.
+const ranThis = (raw, ctx) => !!ctx.lastRun?.ok && ctx.lastRun.code.trim() === raw.trim();
+const ranWith = (raw, ctx, want) => ranThis(raw, ctx) && want(typedCodes(ctx.lastRun.output));
+const RUN_HINT = (again, first) => (raw, ctx) => ranThis(raw, ctx) ? again : first;
+
+const twoWrong = c => c.length >= 2 && c[0] !== '4271' && c[1] !== '4271';
+const wrongThenRight = c => c.length >= 2 && c[0] !== '4271';
+const rightThenWrong = c => c.length >= 2 && c[0] === '4271' && c[1] !== '4271';
+const openIndented = raw => { const g = openGeometry(raw); return !!g && !g.above && indentOf(g.open) > 0 && leadOf(g.open) === leadOf(g.body); };
+
 const fixedAndRun = (raw, ctx) =>
   isBugFixed(raw) && !!ctx.lastRun?.ok && ctx.lastRun.code.trim() === raw.trim();
 
@@ -210,11 +221,17 @@ function fixHint(raw, ctx) {
 
 export const INV_CHECKS = {
   // Step 1 — while becomes if: it asks again only once, then opens whatever was typed.
+  // The run is a ticked bullet too: it must be a run of THIS code with two wrong codes typed,
+  // since that is the run that shows the airlock opening on a wrong code.
   inv1: {
     reqs: [
       {
         hint: 'On line 2, change while to if, so it reads if code != "4271":',
         test: raw => hasLine(raw, IF_NE) && !hasLine(raw, ANY_WHILE),
+      },
+      {
+        hint: RUN_HINT('Run it again, and type two wrong codes this time: 1234, then 5678', 'Press ▶ Run code. Type 1234, then 5678'),
+        test: (raw, ctx) => hasLine(raw, IF_NE) && ranWith(raw, ctx, twoWrong),
       },
     ],
   },
@@ -235,8 +252,13 @@ export const INV_CHECKS = {
           if (have < want) return `Line 5 has ${have} space${have === 1 ? '' : 's'} in front; line 4 has ${want}. They must match exactly: click at the start of line 5 and add ${want - have} more`;
           return `Line 5 has ${have} spaces in front; line 4 has ${want}. Too many: click at the start of line 5 and press Shift+Tab to take 4 away`;
         },
-        test: raw => { const g = openGeometry(raw); return !!g && !g.above && indentOf(g.open) > 0 && leadOf(g.open) === leadOf(g.body); },
+        test: openIndented,
         wrong: raw => { const g = openGeometry(raw); return !!g && !g.above && indentOf(g.open) > 0 && leadOf(g.open) !== leadOf(g.body); },
+      },
+      // A wrong code first, so the loop body (now with Airlock open in it) runs at least once.
+      {
+        hint: RUN_HINT('Run it again, and start with a wrong code: 1111, 2222, then 4271', 'Press ▶ Run code. Type 1111, 2222, then 4271'),
+        test: (raw, ctx) => hasLine(raw, WHILE_NE) && openIndented(raw) && ranWith(raw, ctx, wrongThenRight),
       },
     ],
   },
@@ -251,12 +273,22 @@ export const INV_CHECKS = {
           : 'Line 2 should read while code == "4271":',
         test: raw => hasLine(raw, WHILE_EQ),
       },
+      // 4271 first (with == it is denied), then a wrong code (which opens it).
+      {
+        hint: RUN_HINT('Run it again, and type 4271 first, then 1234', 'Press ▶ Run code. Type 4271, then 1234'),
+        test: (raw, ctx) => openIndent(raw) === 0 && hasLine(raw, WHILE_EQ) && ranWith(raw, ctx, rightThenWrong),
+      },
     ],
   },
   // Step 4 — the standard bug step: Break it (an infinite loop), then fix it.
   inv4: {
     reqs: [
       { hint: 'Press 😈 Break it to delete the line that asks again.', test: (raw, ctx) => ctx.breaks >= 1 },
+      // ctx.looped: a run of the broken code was stopped by the 4 s limit (the page sets it).
+      {
+        hint: 'Press 😈 Break it again, and type a wrong code this time, so the loop never ends',
+        test: (raw, ctx) => ctx.breaks >= 1 && !!ctx.looped,
+      },
       { hint: fixHint, test: (raw, ctx) => ctx.breaks >= 1 && fixedAndRun(raw, ctx) },
     ],
   },

@@ -99,23 +99,19 @@ test('Predict: the worked example appears after the first attempt, then on to Ru
     await page.click('#btn_check_' + q);
     await expect(page.locator('#fb_' + q)).toHaveClass(/pass/);
   }
-  await expect(page.locator('#qcard_p_text1')).toBeVisible({ timeout: 5000 });
-  await page.fill('#p_text1', '3');
-  await page.click('#btn_check_p_text1');
-  await expect(page.locator('#fb_p_text1')).toHaveClass(/pass/);
   await expect(page.locator('#szOverlay')).toHaveClass(/open/, { timeout: 5000 });
   await expect(page.locator('#szTitle')).toHaveText(/Watched/);
-  await expect(page.locator('#szImpact svg')).toContainText('ASKS 3 TIMES');
+  await expect(page.locator('#szImpact svg')).toContainText('2 DENIALS');
   await page.click('#szContinue');
   await expect(page.locator('#stage-R')).toHaveClass(/active/);
 });
 
-test('Predict: 4721 is not 4271, so 2 is wrong', async ({ page }) => {
-  await openAt(page, { predictStep: 5, maxPredictStep: 5 });
-  await page.fill('#p_text1', '2');
-  await page.click('#btn_check_p_text1');
-  await expect(page.locator('#fb_p_text1')).toHaveClass(/fail/);
-  await expect(page.locator('#fb_p_text1')).toContainText('4721');
+test('Predict: a wrong answer shows its feedback and waits for Continue', async ({ page }) => {
+  await openAt(page, { predictStep: 1, maxPredictStep: 1 });
+  await page.check('input[name="p_mcq1"][value="option_b"]');
+  await page.click('#btn_check_p_mcq1');
+  await expect(page.locator('#fb_p_mcq1')).toHaveClass(/fail/);
+  await expect(page.locator('#qcard_p_mcq1 .predict-continue')).toBeVisible();
 });
 
 // ─── Run ─────────────────────────────────────────────────────────────────────
@@ -151,9 +147,10 @@ test('Investigate 1: the crisis pick comes first; with if, a wrong second code o
   await page.check('input[name="i_choice"][value="cryo"]');
   await expect(page.locator('#i1_task')).toBeVisible();
   await setCode(page, 'i_editor', starter({ 1: 'if code != "4271":' }));
-  await expect(page.locator('#req_i_1 li:not(.req-note)')).toHaveClass([/req-pass/]);
+  await expect(page.locator('#req_i_1 li:not(.req-note)').nth(0)).toHaveClass(/req-pass/);
   await runWith(page, 'I', 'i_editor', ['1234', '5678']);
   await expect(outputOf(page, 'i_editor')).toContainText('Airlock open', { timeout: 30000 });
+  await expect(page.locator('#req_i_1 li:not(.req-note)')).toHaveClass([/req-pass/, /req-pass/]);
   await page.check('input[name="i1_mcq"][value="option_d"]');
   await page.click('#btn_check_i1');
   await expect(page.locator('#szOverlay')).toHaveClass(/open/, { timeout: 10000 });
@@ -192,6 +189,20 @@ test('Investigate 2: Airlock open indented into the loop prints after a wrong co
   await expect(page.locator('#qcard_i3_prompt')).toBeVisible({ timeout: 10000 });
 });
 
+test('Investigate 2: a run that starts with 4271 does not unlock the questions', async ({ page }) => {
+  const STEP1 = starter({ 1: 'if code != "4271":' });
+  await openAt(page, {
+    currentStage: 'I', completedStages: ['P', 'R'], stepI: 2, maxStepI: 2, radio_i_choice: 'fast',
+    iCodeSnapshots: { 1: STEP1 }, i_editor: STEP1, i2Chain: FIXED_I2_CHAIN,
+  });
+  await setCode(page, 'i_editor', starter({ 4: '    print("Airlock open")' }));
+  await runWith(page, 'I', 'i_editor', ['4271']);
+  await expect(page.locator('#i_fb_run')).toHaveClass(/pass/, { timeout: 30000 });
+  await expect(page.locator('#req_i_2 li:not(.req-note)')).toHaveClass([/req-pass/, /req-pass/, /req-fail/]);
+  await expect(page.locator('#coach_i_2')).toContainText('start with a wrong code');
+  await expect(page.locator('input[name="i2c_0"]').first()).toBeDisabled();
+});
+
 test('Investigate bug step: Break it makes a loop that never ends; putting the line back completes Investigate', async ({ page }) => {
   test.setTimeout(120000);
   // tryCompleteInvestigate re-checks every step's answer, so seed steps 1–3 as answered
@@ -210,7 +221,7 @@ test('Investigate bug step: Break it makes a loop that never ends; putting the l
   await setCode(page, 'i_editor', starter());
   await runWith(page, 'I', 'i_editor', ['1234', '4271']);
   await expect(page.locator('#i_fb_run')).toHaveClass(/pass/, { timeout: 30000 });
-  await expect(page.locator('#req_i_4 li:not(.req-note)')).toHaveClass([/req-pass/, /req-pass/]);
+  await expect(page.locator('#req_i_4 li:not(.req-note)')).toHaveClass([/req-pass/, /req-pass/, /req-pass/]);
   await page.check('input[name="i4_mcq"][value="option_b"]');
   await page.click('#btn_check_i4');
   await expect(page.locator('#stage-M1')).toHaveClass(/active/, { timeout: 10000 });
