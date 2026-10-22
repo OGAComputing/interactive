@@ -113,18 +113,23 @@ describe('evalInv step 2 — back to while, Airlock open indented into the loop'
     const r = evalInv(2, code(...withLine(1, 'if code != "4271":')));
     expect(r.results[0]).toBe(false);
   });
-  test('4 spaces, lined up with line 4, passes', () => {
-    expect(evalInv(2, code(...openAt('    '))).pass).toBe(true);
+  test('4 spaces, lined up with line 4, then a run starting with a wrong code, passes', () => {
+    const ok = openAt('    ');
+    expect(evalInv(2, code(...ok)).results).toEqual([true, true, false]);
+    expect(evalInv(2, code(...ok), runOf(ok, ['4271'])).results).toEqual([true, true, false]);   // loop never ran
+    expect(evalInv(2, code(...ok), runOf(ok, ['4271'])).msg).toMatch(/start with a wrong code/);
+    expect(evalInv(2, code(...ok), runOf(ok, ['1111', '2222', '4271'])).pass).toBe(true);
+    expect(evalInv(2, code(...ok), runOf(STARTER, ['1111', '2222', '4271'])).pass).toBe(false);   // ran before indenting
   });
   test('the starter: coach says press Tab, nothing red', () => {
     const r = evalInv(2, code(...STARTER));
-    expect(r.results).toEqual([true, false]);
-    expect(r.wrongs).toEqual([false, false]);
+    expect(r.results).toEqual([true, false, false]);
+    expect(r.wrongs).toEqual([false, false, false]);
     expect(r.msg).toMatch(/press Tab/);
   });
   test('2 or 8 spaces: red, and the hint counts the spaces', () => {
     const two = evalInv(2, code(...openAt('  ')));
-    expect(two.wrongs).toEqual([false, true]);
+    expect(two.wrongs).toEqual([false, true, false]);
     expect(two.wrongMsg).toMatch(/2 spaces.*line 4 has 4/);
     expect(evalInv(2, code(...openAt('        '))).wrongMsg).toMatch(/8 spaces.*Shift\+Tab/);
   });
@@ -137,15 +142,19 @@ describe('evalInv step 2 — back to while, Airlock open indented into the loop'
 });
 
 describe('evalInv step 3 — back to the left edge, != becomes ==', () => {
-  test('while code == "4271" with Airlock open at the left edge passes', () => {
-    expect(evalInv(3, code(...withLine(1, 'while code == "4271":'))).pass).toBe(true);
+  test('while code == "4271" with Airlock open at the left edge, then 4271 and 1234 typed, passes', () => {
+    const eq = withLine(1, 'while code == "4271":');
+    expect(evalInv(3, code(...eq)).results).toEqual([true, true, false]);
+    expect(evalInv(3, code(...eq), runOf(eq, ['1234'])).msg).toMatch(/4271 first, then 1234/);
+    expect(evalInv(3, code(...eq), runOf(eq, ['4271', '4271', '1234'])).pass).toBe(false);
+    expect(evalInv(3, code(...eq), runOf(eq, ['4271', '1234'])).pass).toBe(true);
     const r = evalInv(3, code(...STARTER));
-    expect(r.results).toEqual([true, false]);
+    expect(r.results).toEqual([true, false, false]);
     expect(r.msg).toMatch(/change != to ==/);
   });
   test('Airlock open still indented fails the first bullet', () => {
     const s = withLine(1, 'while code == "4271":').map((l, i) => (i === 4 ? '    ' + l : l));
-    expect(evalInv(3, code(...s)).results).toEqual([false, true]);
+    expect(evalInv(3, code(...s)).results).toEqual([false, true, false]);
   });
 });
 
@@ -176,18 +185,20 @@ describe('Break it / fix it (step 4)', () => {
   test('the line put back AFTER the loop is not a fix, and the hint says to indent it', () => {
     const after = code(STARTER[0], STARTER[1], STARTER[2], 'code = input("Enter airlock code: ")', STARTER[4]);
     expect(isBugFixed(after)).toBe(false);
-    const r = evalInv(4, after, { breaks: 1, lastRun: ran(after, false) });
+    const r = evalInv(4, after, { breaks: 1, looped: true, lastRun: ran(after, false) });
     expect(r.msg).toMatch(/after the loop/);
   });
   test('a commented-out line does not count', () => {
     expect(hasFixedLine(code(STARTER[0], STARTER[1], STARTER[2], '    # code = input("x")', STARTER[4]))).toBe(false);
   });
-  test('ticks: Break it, then fixed AND run', () => {
+  test('ticks: Break it, the loop that never ends, then fixed AND run', () => {
     const fixed = code(...STARTER);
-    expect(evalInv(4, fixed).results).toEqual([false, false]);
-    expect(evalInv(4, fixed, { breaks: 1 }).results).toEqual([true, false]);
-    expect(evalInv(4, fixed, { breaks: 1, lastRun: ran(fixed) }).pass).toBe(true);
-    expect(evalInv(4, fixed, { breaks: 1, lastRun: ran(fixed + '\n# edited') }).pass).toBe(false);
+    expect(evalInv(4, fixed).results).toEqual([false, false, false]);
+    expect(evalInv(4, fixed, { breaks: 1 }).results).toEqual([true, false, false]);
+    expect(evalInv(4, fixed, { breaks: 1, lastRun: ran(fixed) }).results).toEqual([true, false, true]);   // never saw it loop
+    expect(evalInv(4, fixed, { breaks: 1, lastRun: ran(fixed) }).msg).toMatch(/type a wrong code/);
+    expect(evalInv(4, fixed, { breaks: 1, looped: true, lastRun: ran(fixed) }).pass).toBe(true);
+    expect(evalInv(4, fixed, { breaks: 1, looped: true, lastRun: ran(fixed + '\n# edited') }).pass).toBe(false);
     expect(isBugPairLine('anything')).toBe(false);
   });
 });

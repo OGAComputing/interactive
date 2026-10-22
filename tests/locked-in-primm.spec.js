@@ -175,13 +175,15 @@ test('Investigate 2: Airlock open indented into the loop prints after a wrong co
   });
   const bullets = page.locator('#req_i_2 li:not(.req-note)');
   await setCode(page, 'i_editor', starter({ 4: '  print("Airlock open")' }));
-  await expect(bullets).toHaveClass([/req-pass/, /req-fail/]);
+  await expect(bullets.nth(0)).toHaveClass(/req-pass/);
+  await expect(bullets.nth(1)).toHaveClass(/req-fail/);
   await expect(page.locator('#coach_i_2')).toContainText('2 spaces');
 
   await setCode(page, 'i_editor', starter({ 4: '    print("Airlock open")' }));
-  await expect(bullets).toHaveClass([/req-pass/, /req-pass/]);
+  await expect(bullets.nth(1)).toHaveClass(/req-pass/);
   await runWith(page, 'I', 'i_editor', ['1111', '2222', '4271']);
   await expect(outputOf(page, 'i_editor')).toContainText('Airlock open', { timeout: 30000 });
+  await expect(bullets).toHaveClass([/req-pass/, /req-pass/, /req-pass/]);
   for (let slot = 0; slot < 4; slot++) {
     await page.check(`input[name="i2c_${slot}"][value="0"]`);
     await expect(page.locator('#fb_i2c_' + slot)).toHaveClass(/pass/);
