@@ -188,6 +188,7 @@ const MODELS = {
   s_fix: 'mark = int(input("What was your mark? "))\nif mark >= 60:\n    print("Merit!")\nelse:\n    print("Keep practising")',
   w_warm: 'temp = int(input("What is the temperature? "))\nif temp >= 25:\n    print("T-shirt weather!")\nelse:\n    print("Take a coat.")\nprint("Have a good day!")',
   x_speed: 'limit = int(input("What is the speed limit? "))\nspeed = int(input("How fast were you going? "))\nif speed > limit:\n    print("You were " + str(speed - limit) + " mph over the limit")\nelse:\n    print("Within the limit, thank you")\nprint("Drive safely")',
+  x_shop: 'cookies = int(input("How many cookies? "))\nmoney = int(input("How much money do you have? "))\ncost = cookies * 2\nprint("That costs " + str(cost) + " pounds")\nif money >= cost:\n    print("Your change is " + str(money - cost) + " pounds")\nelse:\n    print("You need " + str(cost - money) + " more pounds")',
 };
 test('every code question: starter scores 0, model answer scores full marks', async ({ page }) => {
   test.setTimeout(300000);

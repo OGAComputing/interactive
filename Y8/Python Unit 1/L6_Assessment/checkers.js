@@ -39,7 +39,7 @@
 //     each side of every boundary), never on one exact way of writing it. They can be
 //     checked as often as needed; the best score is kept.
 //   • Few coaching hints: a failed requirement is named, not solved; the worked examples show
-//     the pattern in a different program. The bonus extension is
+//     the pattern in a different program. The two bonus extensions are
 //     outside the grade, so 100% is reachable without it.
 //
 // A "run" is what runPython() resolved with, plus the inputs it was given:
@@ -364,10 +364,13 @@ const WRITE_TESTS = [['Ava', '15'], ['Ben', '12'], ['Leo', '9'], ['Mia', '11']];
 const PIN_TESTS   = [['1234'], ['1233'], ['1235']];
 const WARM_TESTS  = [['25'], ['24'], ['31'], ['10']];
 const EXT_TESTS   = [['30', '36'], ['30', '30'], ['50', '72'], ['20', '15']];
+const SHOP_TESTS  = [['4', '10'], ['5', '10'], ['5', '7'], ['1', '1']];
 const O_WRITE = () => ['I am learning Python', 'It is fun'];
 const GREETING = /hello|hiya|hey|\bhi/i;
 const runFor = (runs, ...inputs) => runs.find(r => r.inputs.join('|') === inputs.join('|'));
 const allOk = runs => runs.length > 0 && runs.every(r => r.ok);
+// Exact words, but a full stop or ! at the end is forgiven (as in the speed camera).
+const shopSays = (line, want) => same(line.replace(/[.!]+\s*$/, ''), want);
 
 export const ITEMS = [
   // ── 1 · Output & errors (Lesson 1) ── 8 marks
@@ -774,7 +777,7 @@ export const ITEMS = [
     ],
     extraMsg: (raw, runs) => runs.some(r => /ValueError/.test(r.output || '')) ? ' Python tried to turn the name into a number — check the order of your questions.' : '' },
 
-  // ── ★ Extension (bonus, not in the grade) ── 4 bonus marks. The only task that needs str():
+  // ── ★ Extension (bonus, not in the grade) ── 8 bonus marks. The only task that needs str():
   // the fruit bowl fix prints with a comma, so int() alone fixes it.
   { id: 'x_speed', section: 'ext', kind: 'reqs', bonus: true, title: 'Copy the machine: the speed camera',
     goal: 'Someone lost the code for this speed camera. All that is left is two sample runs. Write a program that behaves <strong>exactly</strong> the same way.',
@@ -797,6 +800,36 @@ export const ITEMS = [
           && runs.every(r => { const ls = printedLines(r); return ls.length && /^drive safely[.!]*$/i.test(squash(ls[ls.length - 1])); }), true) },
       { text: 'Build the "over the limit" message by joining with <code>+</code>, using <code>str()</code> to turn the number into text',
         test: (raw, runs) => allOk(runs) && count(raw, /\bstr\s*\(/g) >= 1 && codeLines(raw).some(l => /\bprint\s*\(.*\+/.test(l)) },
+    ] },
+  // Maths in BOTH branches, and the boundary is "exactly enough" (5 cookies with 10 pounds),
+  // which > instead of >= gets wrong. Any way of printing is fine (+ and str(), or commas).
+  { id: 'x_shop', section: 'ext', kind: 'reqs', bonus: true, title: 'Copy the machine: the tuck shop',
+    goal: 'Cookies cost <strong>2 pounds</strong> each. All that is left of the tuck shop till is two sample runs. Write a program that behaves <strong>exactly</strong> the same way.',
+    samples: [
+      [['How many cookies? ', '4'], ['How much money do you have? ', '10'], ['That costs 8 pounds'], ['Your change is 2 pounds']],
+      [['How many cookies? ', '5'], ['How much money do you have? ', '7'], ['That costs 10 pounds'], ['You need 3 more pounds']],
+    ],
+    starter: '# Tuck shop till\n',
+    tests: SHOP_TESTS,
+    testNote: 'Checked with 4 and 10, 5 and 10, 5 and 7, then 1 and 1. The printed lines must match word for word.',
+    reqs: [
+      { text: 'Ask for the number of cookies, then the money, and cast both to whole numbers. No errors for any test',
+        test: (raw, runs) => inputCount(raw) >= 2 && intCount(raw) >= 2 && allOk(runs) },
+      { text: 'Every run prints exactly <code>That costs N pounds</code> (with the right N)',
+        test: withText(([c]) => [`That costs ${2 * c} pounds`], (raw, runs) => allOk(runs)
+          && runs.every(r => printedLines(r).some(l => shopSays(l, `That costs ${2 * r.inputs[0]} pounds`))), true) },
+      { text: 'With enough money (exactly enough counts), print <code>Your change is N pounds</code> and nothing about needing more',
+        test: withText(([c, m]) => +m >= 2 * c ? [`Your change is ${m - 2 * c} pounds`] : [], (raw, runs) => allOk(runs)
+          && runs.filter(r => +r.inputs[1] >= 2 * r.inputs[0]).every(r => {
+            const ls = printedLines(r);
+            return ls.some(l => shopSays(l, `Your change is ${r.inputs[1] - 2 * r.inputs[0]} pounds`)) && !ls.some(l => /^you need/i.test(squash(l)));
+          }), true) },
+      { text: 'Without enough money, print <code>You need N more pounds</code> and no change message',
+        test: withText(([c, m]) => +m < 2 * c ? [`You need ${2 * c - m} more pounds`] : [], (raw, runs) => allOk(runs)
+          && runs.filter(r => +r.inputs[1] < 2 * r.inputs[0]).every(r => {
+            const ls = printedLines(r);
+            return ls.some(l => shopSays(l, `You need ${2 * r.inputs[0] - r.inputs[1]} more pounds`)) && !ls.some(l => /^your change/i.test(squash(l)));
+          }), true) },
     ] },
 ];
 

@@ -51,10 +51,10 @@ describe('question bank', () => {
     }
   });
 
-  test('marks: 53 in the grade, 4 bonus; writing is no more than a quarter', () => {
+  test('marks: 53 in the grade, 8 bonus; writing is no more than a quarter', () => {
     const s = summarise({}, 0);
     expect(s.max).toBe(53);
-    expect(s.sections.ext.max).toBe(4);
+    expect(s.sections.ext.max).toBe(8);
     expect(s.sections.write.max / s.max).toBeLessThanOrEqual(0.25);
   });
 
@@ -293,6 +293,38 @@ describe('extension: the speed camera', () => {
   test('a missing line, or one with nothing in common, gets no word diff', () => {
     const runs = good.map(r => ({ ...r, output: r.output.replace(/You were \d+ mph over the limit/, 'Slow down') }));
     expect(evalCode(it, code, runs).diffs[1]).toBeNull();
+  });
+});
+
+describe('extension: the tuck shop', () => {
+  const it = itemById('x_shop');
+  const code = 'cookies = int(input("How many cookies? "))\nmoney = int(input("How much money do you have? "))\n'
+    + 'cost = cookies * 2\nprint("That costs", cost, "pounds")\nif money >= cost:\n    print("Your change is", money - cost, "pounds")\n'
+    + 'else:\n    print("You need", cost - money, "more pounds")';
+  const run = (c, m, ...lines) => ok([c, m], [`How many cookies? ${c}`, `How much money do you have? ${m}`, ...lines]);
+  const good = [
+    run('4', '10', 'That costs 8 pounds', 'Your change is 2 pounds'),
+    run('5', '10', 'That costs 10 pounds', 'Your change is 0 pounds'),
+    run('5', '7', 'That costs 10 pounds', 'You need 3 more pounds'),
+    run('1', '1', 'That costs 2 pounds', 'You need 1 more pounds'),
+  ];
+  test('an exact copy (printed with commas) gets all 4 bonus marks', () => {
+    expect(evalCode(it, code, good).pts).toBe(4);
+  });
+  test('> instead of >= (exactly enough counted as short) loses the third mark', () => {
+    const runs = [good[0], run('5', '10', 'That costs 10 pounds', 'You need 0 more pounds'), good[2], good[3]];
+    expect(evalCode(it, code, runs).results).toEqual([true, true, false, true]);
+  });
+  test('subtracting the wrong way round loses the fourth mark', () => {
+    const runs = [good[0], good[1], run('5', '7', 'That costs 10 pounds', 'You need -3 more pounds'), run('1', '1', 'That costs 2 pounds', 'You need -1 more pounds')];
+    expect(evalCode(it, code, runs).results).toEqual([true, true, true, false]);
+  });
+  test('printing both messages every time loses both branch marks', () => {
+    const runs = good.map(r => ({ ...r, output: r.output + '\nYour change is 0 pounds\nYou need 0 more pounds' }));
+    expect(evalCode(it, code, runs).results).toEqual([true, true, false, false]);
+  });
+  test('the starter scores nothing', () => {
+    expect(evalCode(it, '# Tuck shop till\n', good.map(r => ok(r.inputs, []))).pts).toBe(0);
   });
 });
 
