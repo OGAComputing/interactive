@@ -70,8 +70,7 @@
       try { sessionStorage.removeItem('oga_return_url'); } catch (_) {}
       location.replace(returnUrl);
     } else {
-      document.getElementById('status').textContent =
-        'Sign-in failed: ' + error + '. Please close this tab and try again.';
+      location.replace('./');
     }
     return;
   }
@@ -79,8 +78,12 @@
   if (!token) {
     authLog('← Back from Google with no token and no error (URL had: ' +
       (location.hash ? 'fragment' : 'no fragment') + ', ' + (location.search ? 'query' : 'no query') + ')');
-    document.getElementById('status').textContent =
-      'No token received. Please go back and try again.';
+    // As with an error: stop the page retrying silent sign-in straight back here.
+    try {
+      sessionStorage.setItem('oga_silent_failed', '1');
+      sessionStorage.removeItem('oga_return_url');
+    } catch (_) {}
+    location.replace(returnUrl || './');
     return;
   }
 
@@ -88,9 +91,12 @@
     (scope.split(' ').filter(Boolean).map(s => s.replace('https://www.googleapis.com/auth/', '')).join(', ') || 'none listed'));
 
   if (!returnUrl) {
-    authLog('Stuck: no return page saved in this tab (sign-in finished in a different tab or window?)');
-    document.getElementById('status').textContent =
-      'Could not determine which page to return to. Please go back manually.';
+    // Usually an old callback URL reopened from browser history (the address bar
+    // autocompletes to it, since every sign-in visits it), so there's no page to
+    // return to and the token may be stale. Drop it and go to the hub instead of
+    // leaving the student on a spinner.
+    authLog('No return page saved in this tab (old callback URL from history, or sign-in finished in a different tab) — going to the hub');
+    location.replace('./');
     return;
   }
 
