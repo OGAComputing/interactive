@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- ACTIVITY
+title:  Substrings and Arrays
+type:   Practice
+stars:  3
+desc:   Twelve OCR pseudocode questions: string handling first, then 1D and 2D arrays, then both combined with selection and iteration, with instant mark-scheme feedback on every Run.
+color:  blue
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Substrings and Arrays — Year 11</title>
+
+<link rel="stylesheet" href="../../shared.css">
+
+<style>
+  /* ── Sticky header ───────────────────────────────────── */
+
+  header {
+    background: var(--surface);
+    border-bottom: 2px solid var(--surface-mid);
+    padding: 12px 20px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.35);
+  }
+  .header-progress { display: flex; align-items: center; gap: 10px; }
+
+  .page-wrap { padding: 28px 16px 60px; }
+
+  .page-title { font-size: 1.35rem; font-weight: 700; text-align: center; color: var(--accent-light); margin-bottom: 4px; }
+  .page-subtitle { text-align: center; font-size: 0.82rem; color: var(--muted); margin-bottom: 28px; }
+
+  /* ── Pill tab bar, split into Part A / Part B ───────── */
+
+  .tab-groups { display: flex; justify-content: center; gap: 18px 28px; flex-wrap: wrap; margin-bottom: 28px; }
+  .tab-group { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .tab-group-label {
+    font-size: 0.68rem;
+    font-family: var(--font-head, monospace);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+  }
+  .tabs { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
+  .tab-btn {
+    padding: 7px 14px;
+    border: 2px solid var(--surface-mid);
+    border-radius: 20px;
+    background: var(--surface);
+    color: var(--muted);
+    font-family: var(--font-body);
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s, color 0.2s;
+    user-select: none;
+  }
+  .tab-btn:hover:not(.active) { border-color: var(--accent); color: var(--text); }
+  .tab-btn.active    { background: var(--accent); border-color: var(--accent); color: var(--text-inv); }
+  .tab-btn.partial   { border-color: var(--gold); }
+  .tab-btn.done-gold { background: var(--gold);   border-color: var(--gold);   color: #111; }
+
+  /* ── Panels ──────────────────────────────────────────── */
+
+  .panel { display: none; max-width: 880px; margin: 0 auto; animation: ac-fade-in 0.2s ease; }
+  .panel.active { display: block; }
+
+  .card { background: var(--surface); border-left: 4px solid var(--accent); border-radius: 8px; padding: 18px 22px; margin-bottom: 22px; }
+  .card h2 { font-size: 0.82rem; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 12px; }
+  .card h2 + p, .card p + h2, .card ul + h2 { margin-top: 0; }
+  .card p { color: var(--text); font-size: 0.9rem; line-height: 1.7; margin-bottom: 10px; }
+  .card ul { margin: 6px 0 12px 1.2em; color: var(--text); font-size: 0.9rem; line-height: 1.8; }
+  .card ul:last-child { margin-bottom: 0; }
+  .card code { background: var(--code-bg, #1a1a2e); color: var(--code-text, #a0c4ff); padding: 1px 6px; border-radius: 4px; font-family: var(--font-head, monospace); font-size: 0.85em; }
+
+  .goal { background: var(--surface); border-left: 4px solid var(--accent); border-radius: 0 8px 8px 0; padding: 10px 16px; font-size: 0.9rem; font-weight: 600; color: var(--text); margin-bottom: 12px; }
+
+  .skills { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 20px; }
+  .skill-chip {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--accent);
+    color: var(--accent-light);
+    letter-spacing: 0.03em;
+  }
+
+  /* ── Pseudocode checker card ─────────────────────────── */
+
+  .code-checker { background: var(--surface); border-radius: 12px; border: 2px solid var(--surface-mid); overflow: hidden; margin: 0 -1rem 14px; }
+  .checker-footer { display: flex; gap: 10px; padding: 10px 14px; background: var(--surface-mid); border-top: 1px solid var(--surface-dim); flex-wrap: wrap; align-items: center; }
+  .checker-footer .ac-btn-secondary { font-size: 0.78rem; padding: 5px 14px; }
+  .checker-footer .ac-btn           { font-size: 0.78rem; padding: 5px 14px; }
+  .code-checker.is-wrong { outline: 2px solid var(--red); background: rgba(220,38,38,.08); }
+
+  /* ── Mark scheme ─────────────────────────────────────── */
+
+  .markscheme { background: var(--surface); border: 2px solid var(--surface-mid); border-radius: 8px; padding: 14px 18px; margin-bottom: 22px; }
+  .ms-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .ms-header h3 { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); }
+  .ms-total { font-size: 0.72rem; font-family: var(--font-head, monospace); color: var(--muted); letter-spacing: 0.06em; }
+  .ms-list { list-style: none; margin: 0 0 10px; padding: 0; display: flex; flex-direction: column; gap: 5px; }
+  .ms-row { display: flex; align-items: flex-start; gap: 10px; padding: 5px 8px; border-radius: 6px; font-size: 0.87rem; transition: background 0.15s; }
+  .ms-tick { font-size: 1rem; width: 1.3em; text-align: center; color: var(--muted); flex-shrink: 0; margin-top: 0.05em; }
+  .ms-text { flex: 1; color: var(--text); line-height: 1.5; }
+  .ms-marks { font-size: 0.7rem; font-family: var(--font-head, monospace); color: var(--muted); white-space: nowrap; margin-top: 0.2em; flex-shrink: 0; }
+  .ms-row.pass { background: rgba(52,211,153,0.08); }
+  .ms-row.pass .ms-tick, .ms-row.pass .ms-text, .ms-row.pass .ms-marks { color: var(--green); }
+  .ms-row.fail { background: rgba(248,113,113,0.06); }
+  .ms-row.fail .ms-tick  { color: var(--red); }
+  .ms-row.fail .ms-text  { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--red); }
+  .ms-divider { border: none; border-top: 1px solid var(--surface-mid); margin: 8px 0; }
+  .ms-score { font-size: 0.88rem; font-weight: 700; color: var(--accent); text-align: right; }
+  .ms-score.full { color: var(--gold); }
+
+  .score-pct { font-family: var(--font-head, monospace); font-size: 0.8rem; color: var(--accent); white-space: nowrap; }
+
+  /* ── Glow overlay ────────────────────────────────────── */
+
+  #glow-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none; z-index: 0; opacity: 0;
+    transition: opacity 1.8s ease;
+  }
+  #glow-overlay.gold { background: radial-gradient(ellipse at 50% 55%, rgba(251,191,36,.24) 0%, transparent 65%); }
+  #glow-overlay.show { opacity: 1; }
+
+  /* ── Data table in a scenario ────────────────────────── */
+
+  .grid { border-collapse: collapse; margin: 4px 0 12px; font-size: 0.85rem; font-family: var(--font-head, monospace); }
+  .grid th, .grid td { border: 1px solid var(--surface-mid); padding: 4px 12px; text-align: center; color: var(--text); }
+  .grid th { color: var(--accent-light); font-weight: 700; }
+</style>
+</head>
+
+<body>
+
+<div id="done-banner" class="ac-banner gold">
+  Full marks — outstanding string and array handling!
+</div>
+<div id="glow-overlay"></div>
+
+<header>
+  <div class="header-progress">
+    <div class="ac-progress-bar" style="flex:1;">
+      <div class="ac-progress-fill" id="progress-fill"></div>
+    </div>
+    <span class="score-pct" id="progress-pct">0 marks</span>
+  </div>
+</header>
+
+<div class="page-wrap">
+  <h2 class="page-title">Substrings and Arrays</h2>
+  <p class="page-subtitle" id="page-subtitle">Substrings → Arrays → Combining them with selection and iteration</p>
+
+  <div class="tab-groups" id="tab-bar">
+    <div class="tab-group">
+      <span class="tab-group-label">Part A · substrings</span>
+      <div class="tabs" id="tabs-a"></div>
+    </div>
+    <div class="tab-group">
+      <span class="tab-group-label">Part B · arrays</span>
+      <div class="tabs" id="tabs-b"></div>
+    </div>
+    <div class="tab-group">
+      <span class="tab-group-label">Part C · combining skills</span>
+      <div class="tabs" id="tabs-c"></div>
+    </div>
+  </div>
+
+  <!-- Question panels are built from the TASKS array below -->
+  <div id="panels"></div>
+</div><!-- /.page-wrap -->
+
+<div class="ac-toast" id="toast"></div>
+
+<script type="module">
+import { setupEditors, runPseudocode } from '../../pseudocode-editor.js';
+import { preload } from '../../pyodide-runner.js';
+import { QUESTIONS, markQuestion, text, hasNum } from './checkers_Strings_and_Arrays.js';
+
+const ACTIVITY_TITLE = 'Substrings and Arrays';
+const STORE_NS = location.pathname;
+const BLANK = '// Write your OCR pseudocode here\n';
+
+// ── Questions ──────────────────────────────────────────────────
+// Each task: id (key into QUESTIONS for its tests and mark scheme), part, title,
+// skills, goal, scenario (HTML), must [], and an optional starter program.
+const TASKS = [
+
+  // ════════════ PART A — substrings ════════════
+
+  {
+    id: 'username',
+    part: 'A',
+    title: 'Network Usernames',
+    skills: ['Substrings', 'Concatenation'],
+    goal: 'Build a username from parts of a person\'s name.',
+    scenario: `<p>A school network creates a username for each new user. The username is made from the <strong>first three letters of the surname</strong> followed by the <strong>first letter of the first name</strong>.</p>
+      <p>Example: first name <code>Grace</code>, surname <code>Hopper</code> → <code>HopG</code></p>`,
+    must: [
+      'Ask the user to enter their first name and their surname',
+      'Extract the first three characters of the surname',
+      'Extract the first character of the first name',
+      'Join them together and output the username',
+    ],
+  },
+
+  {
+    id: 'stockCode',
+    part: 'A',
+    title: 'Stock Codes',
+    skills: ['Substrings'],
+    goal: 'Split a fixed-format code into its three parts.',
+    scenario: `<p>A clothing company gives every item an <strong>8-character stock code</strong>, such as <code>LDN07RED</code>:</p>
+      <ul>
+        <li>the first 3 characters are the <strong>warehouse</strong> (<code>LDN</code>)</li>
+        <li>the next 2 characters are the <strong>aisle</strong> (<code>07</code>)</li>
+        <li>the last 3 characters are the <strong>colour</strong> (<code>RED</code>)</li>
+      </ul>`,
+    must: [
+      'Ask the user to enter a stock code',
+      'Output the warehouse',
+      'Output the aisle',
+      'Output the colour',
+    ],
+  },
+
+  {
+    id: 'postcode',
+    part: 'A',
+    title: 'Postcode Splitter',
+    skills: ['Substrings', 'String length'],
+    goal: 'Split a postcode of any length into its outward and inward codes.',
+    scenario: `<p>A UK postcode has two parts separated by a single space. The <strong>inward code</strong> is always the <strong>last 3 characters</strong>. The <strong>outward code</strong> is everything before the space, and can be 2, 3 or 4 characters long.</p>
+      <p>Examples: <code>LS27 0LE</code> → outward <code>LS27</code>, inward <code>0LE</code> · <code>M1 1AE</code> → outward <code>M1</code>, inward <code>1AE</code></p>`,
+    must: [
+      'Ask the user to enter a postcode',
+      'Output the outward code',
+      'Output the inward code',
+      'Work for postcodes of any length',
+    ],
+  },
+
+  {
+    id: 'middle',
+    part: 'A',
+    title: 'Middle Letter',
+    skills: ['Substrings', 'String length', 'DIV'],
+    goal: 'Find the middle character of a word with an odd number of letters.',
+    scenario: `<p>A word puzzle app highlights the <strong>middle letter</strong> of a word. Every word entered has an <strong>odd</strong> number of letters.</p>
+      <p>Examples: <code>apple</code> → <code>p</code> · <code>monitor</code> → <code>i</code> · <code>cat</code> → <code>a</code></p>`,
+    must: [
+      'Ask the user to enter a word',
+      'Work out the position of the middle character from the length of the word',
+      'Output the middle character',
+    ],
+  },
+
+  // ════════════ PART B — arrays ════════════
+
+  {
+    id: 'lineup',
+    part: 'B',
+    title: 'Team Line-up',
+    skills: ['1D array'],
+    goal: 'Store five names in an array, then output two of them.',
+    scenario: `<p>A five-a-side coach enters the names of the <strong>five players</strong> in a team. The <strong>first</strong> player entered is the captain and the <strong>last</strong> player entered is the goalkeeper.</p>
+      <p>The program stores the names in an array, then outputs the captain and the goalkeeper.</p>`,
+    must: [
+      'Declare an array to store five player names',
+      'Ask the user to enter five names and store them in the array',
+      'Output the captain (the first player) and the goalkeeper (the last player)',
+    ],
+  },
+
+  {
+    id: 'dayFinder',
+    part: 'B',
+    title: 'Day Finder',
+    skills: ['1D array', 'Indexing'],
+    goal: 'Use a number entered by the user to look up an element of an array.',
+    scenario: `<p>The array <code>days</code> stores the days of the week, starting with <code>Monday</code> at index 0. It has been set up for you in the editor.</p>
+      <p>A calendar app asks the user for a day number from <strong>1 to 7</strong> (1 = Monday, 7 = Sunday) and outputs the name of that day.</p>`,
+    must: [
+      'Ask the user to enter a day number from 1 to 7',
+      'Use the array to output the name of that day',
+    ],
+    starter: `array days[7]
+days[0] = "Monday"
+days[1] = "Tuesday"
+days[2] = "Wednesday"
+days[3] = "Thursday"
+days[4] = "Friday"
+days[5] = "Saturday"
+days[6] = "Sunday"
+
+// Write your code below
+`,
+  },
+
+  {
+    id: 'rainfall',
+    part: 'B',
+    title: 'Weekly Rainfall',
+    skills: ['1D array', 'For loop', 'Totalling'],
+    goal: 'Fill an array with a loop, then work out the total and the average.',
+    scenario: `<p>A weather station records the rainfall (in mm) for each of the <strong>7 days</strong> of a week. The rainfall for each day is entered and stored in an array.</p>
+      <p>The program then outputs the <strong>total</strong> rainfall for the week and the <strong>mean average</strong> daily rainfall.</p>`,
+    must: [
+      'Declare an array to store 7 rainfall values',
+      'Ask the user to enter the rainfall for each day and store it in the array',
+      'Output the total rainfall',
+      'Output the mean average rainfall',
+    ],
+  },
+
+  {
+    id: 'marksGrid',
+    part: 'B',
+    title: 'Marks Table',
+    skills: ['2D array'],
+    goal: 'Look up a value in a 2D array using a row and a column.',
+    scenario: `<p>The 2D array <code>marks</code> stores the test marks for <strong>3 students</strong> (rows 0–2) in <strong>4 tests</strong> (columns 0–3). <code>marks[student, test]</code> is one student's mark in one test. It has been set up for you in the editor.</p>
+      <table class="grid">
+        <tr><th></th><th>Test 0</th><th>Test 1</th><th>Test 2</th><th>Test 3</th></tr>
+        <tr><th>Student 0</th><td>45</td><td>52</td><td>60</td><td>58</td></tr>
+        <tr><th>Student 1</th><td>66</td><td>70</td><td>71</td><td>64</td></tr>
+        <tr><th>Student 2</th><td>30</td><td>41</td><td>35</td><td>38</td></tr>
+      </table>`,
+    must: [
+      'Ask the user to enter a student number (0–2)',
+      'Ask the user to enter a test number (0–3)',
+      'Output that student\'s mark for that test',
+    ],
+    starter: `// marks[student, test]
+array marks[3,4]
+marks[0,0] = 45
+marks[0,1] = 52
+marks[0,2] = 60
+marks[0,3] = 58
+marks[1,0] = 66
+marks[1,1] = 70
+marks[1,2] = 71
+marks[1,3] = 64
+marks[2,0] = 30
+marks[2,1] = 41
+marks[2,2] = 35
+marks[2,3] = 38
+
+// Write your code below
+`,
+  },
+
+  // ════════════ PART C — combining skills ════════════
+
+  {
+    id: 'vowels',
+    part: 'C',
+    title: 'Vowel Counter',
+    skills: ['Substrings', 'For loop', 'Selection', 'Counting'],
+    goal: 'Check each character of a word in turn and count the vowels.',
+    scenario: `<p>A spelling game counts how many <strong>vowels</strong> (<code>a</code>, <code>e</code>, <code>i</code>, <code>o</code>, <code>u</code>) are in a word. Every word entered is in lower case.</p>
+      <p>Example: <code>computer</code> → <code>3</code></p>`,
+    must: [
+      'Ask the user to enter a word',
+      'Check each character of the word in turn',
+      'Count how many of the characters are vowels',
+      'Output the number of vowels',
+    ],
+  },
+
+  {
+    id: 'email',
+    part: 'C',
+    title: 'School Email',
+    skills: ['Substrings', 'String length', 'While loop'],
+    goal: 'Keep asking until a valid school email is entered, then pull out the username.',
+    scenario: `<p>A school login page only accepts email addresses that <strong>end in</strong> <code>@school.org</code>. It keeps asking until a valid address is entered.</p>
+      <p>It then outputs the student's <strong>username</strong>, which is everything before the <code>@</code>.</p>
+      <p>Example: <code>sam.jones@school.org</code> → <code>sam.jones</code></p>`,
+    must: [
+      'Ask the user to enter an email address',
+      'Keep asking until the address ends in <code>@school.org</code>',
+      'Output the username (everything before <code>@school.org</code>)',
+    ],
+  },
+
+  {
+    id: 'register',
+    part: 'C',
+    title: 'Register Search',
+    skills: ['1D array', 'For loop', 'Selection', 'Linear search'],
+    goal: 'Search an array for a name and report where it is.',
+    scenario: `<p>The array <code>register</code> stores the names of 8 students in a form group. It has been set up for you in the editor.</p>
+      <p>A teacher enters a name. If the name is in the array, the program outputs its <strong>index</strong> (the first name is at index 0). If it is not in the array, the program outputs <code>Not found</code> once.</p>`,
+    must: [
+      'Ask the user to enter a name',
+      'Check each element of the array in turn',
+      'Output the index of the name if it is in the array',
+      'Output <code>Not found</code> once if the name is not in the array',
+    ],
+    starter: `array register[8]
+register[0] = "Amir"
+register[1] = "Beth"
+register[2] = "Chloe"
+register[3] = "Dev"
+register[4] = "Ellie"
+register[5] = "Finn"
+register[6] = "Grace"
+register[7] = "Zane"
+
+// Write your code below
+`,
+  },
+
+  {
+    id: 'longestWord',
+    part: 'C',
+    title: 'Word Analyser',
+    skills: ['1D array', 'Substrings', 'String length', 'For loop', 'Selection'],
+    goal: 'Store five words in an array, then find the longest and count the "ing" words.',
+    scenario: `<p>A creative writing tool asks the user for <strong>five words</strong> and stores them in an array. It then outputs:</p>
+      <ul>
+        <li>the <strong>longest</strong> word — if two or more words are equally long, the one entered <strong>first</strong></li>
+        <li>how many of the words <strong>end in</strong> <code>ing</code></li>
+      </ul>
+      <p>Example: <code>run, jumping, swimming, cat, sing</code> → longest <code>swimming</code>, <code>3</code> words end in <code>ing</code></p>`,
+    must: [
+      'Declare an array to store five words',
+      'Ask the user to enter five words and store them in the array',
+      'Output the longest word (the first one entered if there is a tie)',
+      'Output how many of the words end in <code>ing</code>',
+    ],
+  },
+
+]; // end TASKS
+
+TASKS.forEach(t => {
+  Object.assign(t, QUESTIONS[t.id]);
+  t.maxMarks = t.criteria.reduce((s, c) => s + c.marks, 0);
+});
+const TASK_COUNT  = TASKS.length;
+const TOTAL_MARKS = TASKS.reduce((s, t) => s + t.maxMarks, 0);
+
+// ── Build tabs and panels ──────────────────────────────────────
+const plural = n => n + ' mark' + (n === 1 ? '' : 's');
+const starterOf = t => t.starter || BLANK;
+const escHtml = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+TASKS.forEach((t, i) => {
+  const tab = document.createElement('button');
+  tab.type = 'button';
+  tab.className = 'tab-btn' + (i === 0 ? ' active' : '');
+  tab.dataset.idx = i;
+  tab.textContent = `Q${i + 1} · ${t.maxMarks}m`;
+  tab.title = t.title;
+  document.getElementById('tabs-' + t.part.toLowerCase()).appendChild(tab);
+
+  const panel = document.createElement('div');
+  panel.className = 'panel' + (i === 0 ? ' active' : '');
+  panel.id = 'panel-' + i;
+  panel.innerHTML = `
+    <div class="goal">Q${i + 1} — ${t.title}: ${t.goal}</div>
+    <div class="skills">${t.skills.map(s => `<span class="skill-chip">${s}</span>`).join('')}</div>
+
+    <div class="card">
+      <h2>Scenario</h2>
+      ${t.scenario}
+      <h2 style="margin-top:14px;">Your algorithm must:</h2>
+      <ul>${t.must.map(m => `<li>${m}</li>`).join('')}</ul>
+    </div>
+
+    <div class="code-checker" id="checker-${i}">
+      <div class="checker-header">
+        <span class="checker-dot dot-r"></span>
+        <span class="checker-dot dot-y"></span>
+        <span class="checker-dot dot-g"></span>
+        <span>Q${i + 1} — Write your pseudocode here</span>
+      </div>
+      <textarea class="pseudocode-textarea" id="editor-${i}" spellcheck="false"
+                autocomplete="off" autocapitalize="off">${escHtml(starterOf(t))}</textarea>
+      <div class="checker-footer">
+        <button class="ac-btn" id="run-${i}" type="button">Run ▶</button>
+        <button class="ac-btn-secondary" id="clear-${i}" type="button">${t.starter ? 'Reset' : 'Clear'}</button>
+        <span id="run-status-${i}" style="font-size:0.75rem;color:var(--muted);"></span>
+      </div>
+    </div>
+
+    <div class="markscheme" id="ms-${i}">
+      <div class="ms-header">
+        <h3>Mark Scheme</h3>
+        <span class="ms-total">${plural(t.maxMarks)} available</span>
+      </div>
+      <ul class="ms-list" id="ms-list-${i}">
+        ${t.criteria.map(c => `
+        <li class="ms-row">
+          <span class="ms-tick">○</span>
+          <span class="ms-text">${c.text}</span>
+          <span class="ms-marks">${plural(c.marks)}</span>
+        </li>`).join('')}
+      </ul>
+      <hr class="ms-divider">
+      <div class="ms-score" id="ms-score-${i}">— / ${plural(t.maxMarks)}</div>
+    </div>`;
+  document.getElementById('panels').appendChild(panel);
+});
+
+document.getElementById('page-subtitle').textContent += ` · ${TOTAL_MARKS} marks total`;
+
+// ── State ──────────────────────────────────────────────────────
+const taskEarned = new Array(TASK_COUNT).fill(0);
+
+// ── Editor setup ───────────────────────────────────────────────
+for (let i = 0; i < TASK_COUNT; i++) {
+  try {
+    const saved = localStorage.getItem(STORE_NS + ':e' + i);
+    if (saved !== null) document.getElementById('editor-' + i).value = saved;
+  } catch (_) {}
+}
+setupEditors('.pseudocode-textarea');
+preload();
+
+// ── Restore mark scheme state ──────────────────────────────────
+for (let i = 0; i < TASK_COUNT; i++) {
+  try {
+    const raw = localStorage.getItem(STORE_NS + ':ms' + i);
+    if (!raw) continue;
+    const { earned, passed } = JSON.parse(raw);
+    if (passed.length !== TASKS[i].criteria.length) continue;
+    taskEarned[i] = earned;
+    applyMarkscheme(i, passed, earned, TASKS[i].maxMarks);
+    updateTabState(i, earned, TASKS[i].maxMarks);
+  } catch (_) {}
+}
+updateProgress();
+
+// ── Tab switching ──────────────────────────────────────────────
+document.getElementById('tab-bar').addEventListener('click', e => {
+  const tab = e.target.closest('.tab-btn');
+  if (!tab) return;
+  const idx = +tab.dataset.idx;
+  document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  tab.classList.add('active');
+  document.getElementById('panel-' + idx).classList.add('active');
+});
+
+// ── Run button wiring ──────────────────────────────────────────
+for (let idx = 0; idx < TASK_COUNT; idx++) {
+  const runBtn   = document.getElementById('run-'        + idx);
+  const clearBtn = document.getElementById('clear-'      + idx);
+  const statusEl = document.getElementById('run-status-' + idx);
+  const editorEl = document.getElementById('editor-'     + idx);
+
+  runBtn.addEventListener('click', () => handleRun(idx, editorEl, runBtn, statusEl));
+
+  // Clear goes back to the starter program (the given array data), not an empty editor.
+  clearBtn.addEventListener('click', () => {
+    editorEl.value = starterOf(TASKS[idx]);
+    editorEl.dispatchEvent(new Event('input'));
+    setAnswerState(editorEl, true);
+    resetMarkscheme(idx);
+    try {
+      localStorage.removeItem(STORE_NS + ':e' + idx);
+      localStorage.removeItem(STORE_NS + ':ms' + idx);
+    } catch (_) {}
+  });
+
+  let saveTimer;
+  editorEl.addEventListener('input', () => {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+      try { localStorage.setItem(STORE_NS + ':e' + idx, editorEl.value); } catch (_) {}
+    }, 500);
+  });
+}
+
+async function handleRun(idx, editorEl, runBtn, statusEl) {
+  const task = TASKS[idx];
+  runBtn.disabled = true;
+  statusEl.textContent = 'Running…';
+
+  const runs = [];
+  for (const test of task.tests) {
+    const r = await runPseudocode(editorEl, { inputs: test.inputs });
+    runs.push({ inputs: test.inputs, output: r.output || '', ok: r.ok });
+  }
+
+  statusEl.textContent = '';
+  runBtn.disabled = false;
+
+  _renderTestOutput(editorEl, task.tests, runs);
+
+  if (!runs[0].ok && !runs[0].output) {
+    window.ActivityUI?.showToast('Fix the syntax error shown in the editor before checking marks.', 'warn');
+  }
+
+  const { earned, passed } = markQuestion(task.id, editorEl.value, runs);
+
+  applyMarkscheme(idx, passed, earned, task.maxMarks);
+  setAnswerState(editorEl, earned === task.maxMarks);
+  try { localStorage.setItem(STORE_NS + ':ms' + idx, JSON.stringify({ earned, passed })); } catch (_) {}
+
+  taskEarned[idx] = earned;
+  updateTabState(idx, earned, task.maxMarks);
+  const pct = updateProgress();
+  window.ActivityUI?.setScore?.(pct);
+  window.Classroom?.submitGrade(pct, ACTIVITY_TITLE);
+
+  if (taskEarned.every((e, i) => e === TASKS[i].maxMarks)) allComplete();
+}
+
+// ── Per-test coloured output ───────────────────────────────────
+// Passing tests show teal; failing tests (wrong output or error) show red.
+function _renderTestOutput(editorEl, tests, runs) {
+  const outputPanel = editorEl.closest('.editor-wrap')?.querySelector('.output-panel');
+  if (!outputPanel) return;
+  outputPanel.classList.remove('error');
+  const content = outputPanel.querySelector('.output-content');
+  const inputRow = outputPanel.querySelector('.output-input-row');
+  if (inputRow) inputRow.hidden = true;
+  if (!content) return;
+
+  const SEP = '─'.repeat(44);
+
+  content.innerHTML = runs.map((run, i) => {
+    const test = tests[i];
+    const label = run.inputs.length === 1
+      ? `input: "${run.inputs[0]}"`
+      : `inputs: ${run.inputs.map(v => `"${v}"`).join(', ')}`;
+
+    let testPassed;
+    if (!run.ok) {
+      testPassed = false;
+    } else if (test.expected !== undefined) {
+      const out = text(run);
+      const needles = Array.isArray(test.expected) ? test.expected : [test.expected];
+      testPassed = needles.every(n => /^-?\d+(\.\d+)?$/.test(n) ? hasNum(run, Number(n)) : out.includes(n.toLowerCase()));
+    } else {
+      testPassed = true;
+    }
+
+    const out = run.ok ? (run.output || '(no output)') : `⚠ ${run.output || 'Error — check syntax'}`;
+    const color = testPassed ? '#5eead4' : '#ff6b6b';
+    return `<span style="color:${color}">${escHtml(`Test ${i + 1}  (${label})\n${SEP}\n${out}`)}</span>`;
+  }).join('\n\n');
+}
+
+// ── Mark scheme DOM updates ────────────────────────────────────
+function applyMarkscheme(idx, passed, earned, maxMarks) {
+  document.getElementById('ms-list-' + idx).querySelectorAll('.ms-row').forEach((row, i) => {
+    row.classList.remove('pass', 'fail');
+    row.classList.add(passed[i] ? 'pass' : 'fail');
+    row.querySelector('.ms-tick').textContent = passed[i] ? '✓' : '✗';
+  });
+  const scoreEl = document.getElementById('ms-score-' + idx);
+  scoreEl.textContent = earned + ' / ' + plural(maxMarks);
+  scoreEl.classList.toggle('full', earned === maxMarks);
+}
+
+function resetMarkscheme(idx) {
+  document.getElementById('ms-list-' + idx).querySelectorAll('.ms-row').forEach(row => {
+    row.classList.remove('pass', 'fail');
+    row.querySelector('.ms-tick').textContent = '○';
+  });
+  const scoreEl = document.getElementById('ms-score-' + idx);
+  scoreEl.textContent = '— / ' + plural(TASKS[idx].maxMarks);
+  scoreEl.classList.remove('full');
+}
+
+// ── Tab state ──────────────────────────────────────────────────
+// Code tasks are always gold when complete; a partly-marked question gets a gold outline.
+function updateTabState(idx, earned, maxMarks) {
+  const tab = document.querySelector('.tab-btn[data-idx="' + idx + '"]');
+  if (!tab) return;
+  tab.classList.toggle('done-gold', earned === maxMarks);
+  tab.classList.toggle('partial', earned > 0 && earned < maxMarks);
+}
+
+// ── Progress bar ───────────────────────────────────────────────
+function updateProgress() {
+  const totalEarned = taskEarned.reduce((s, v) => s + v, 0);
+  const pct = Math.round(totalEarned / TOTAL_MARKS * 100);
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-pct').textContent  = totalEarned + ' / ' + TOTAL_MARKS;
+  return pct;
+}
+
+// ── All tasks complete ─────────────────────────────────────────
+function allComplete() {
+  document.getElementById('done-banner').classList.add('show', 'gold');
+  document.getElementById('glow-overlay')?.classList.add('gold', 'show');
+  window.ActivityUI?.launchCelebration({ percent: 100 });
+}
+
+// Highlight the checker block that needs attention.
+function setAnswerState(target, isOk) {
+  const block = target?.closest('.code-checker');
+  if (block) block.classList.toggle('is-wrong', !isOk);
+}
+
+window.showToast = (msg, type = '') => window.ActivityUI?.showToast(msg, type);
+</script>
+
+<script src="../../activity-ui.js"></script>
+<script src="../../classroom.js"></script>
+</body>
+</html>

@@ -3,7 +3,7 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 
 // Demo/ and Animations/ are teacher demos, not graded activities, so they aren't checked.
-const ACTIVITY_ROOTS = ['Y7', 'Y8', 'Y9', 'Y11', 'Y13', 'RS'];
+const ACTIVITY_ROOTS = ['Y7', 'Y8', 'Y9', 'Y10', 'Y11', 'Y13', 'RS'];
 const EXEMPTION_PATTERN = /^\s*(?:shared-dependencies|sharedDependencies)\s*:\s*exempt\b/i;
 const REASON_PATTERN = /^\s*(?:shared-dependencies-reason|sharedDependenciesReason)\s*:\s*\S+/i;
 // Redirect stubs left at a moved activity's old path (see CLAUDE.md "Moving an Activity")
@@ -74,6 +74,22 @@ describe('activity shared dependencies', () => {
     const external = ACTIVITY_ROOTS.flatMap(findHtmlFiles).flatMap(file =>
       [...readFileSync(file, 'utf8').matchAll(EXTERNAL)].map(m => `${file}: ${m[0]}`));
     expect(external, external.join('\n')).toEqual([]);
+  });
+
+  // The one outside resource allowed: school-only Google Drive video (CLAUDE.md "Key Conventions").
+  // Each embed needs an "Open in Drive" link to the same file in case the embed is blocked.
+  test('iframes only embed Google Drive video, each with an Open in Drive link', () => {
+    const DRIVE_EMBED = /^https:\/\/drive\.google\.com\/file\/d\/([\w-]+)\/preview(?:\?t=\d+(?:\.\d+)?)?$/;
+    const problems = ACTIVITY_ROOTS.flatMap(findHtmlFiles).flatMap(file => {
+      const html = readFileSync(file, 'utf8');
+      return [...html.matchAll(/<iframe\b[^>]*\bsrc=["']([^"']*)["']/gi)].flatMap(([, src]) => {
+        const id = src.match(DRIVE_EMBED)?.[1];
+        if (!id) return [`${file}: iframe must be a Drive /preview embed: ${src}`];
+        return html.includes(`https://drive.google.com/file/d/${id}/view`)
+          ? [] : [`${file}: no Open in Drive (/view) link for ${id}`];
+      });
+    });
+    expect(problems, problems.join('\n')).toEqual([]);
   });
 
   test('every fonts/*.css link points at a font stylesheet that exists', () => {

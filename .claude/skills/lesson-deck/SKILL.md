@@ -24,6 +24,9 @@ Build or update the deck for `$ARGUMENTS`.
   footer, `createDeck({ station: 'L<n+1>' })` and content; keep the slide order. One recipe call
   per slide, with speaker notes. Draw by hand only when no recipe fits, using `sz_kit.cjs`
   parts (`varBox`, `codePanel`, `terminal`, `badge`, `arrow`).
+- Y10 BTEC Component 1: read `_presentations/Y10_BTEC_CDM/README.md` and `Y10/CLAUDE.md`; copy
+  `build_template.cjs` to `build_L<n>.cjs`, keep only the recipes the lesson needs, and send Nick the
+  "Images to supply" list the build prints before filling the slides.
 - Other units: follow §9 of `ppt-guidelines.md` and copy the nearest existing build script.
 - Build: `node build_L<n>.cjs` in the unit folder (needs `npm install -g pptxgenjs`). If it
   can't save, the deck is open in PowerPoint: ask the user to close it.

@@ -329,7 +329,7 @@
       <span id="teacher-status"></span>
       <button id="btn-sync" class="btn-inline-ghost" onclick="onSyncClick()" hidden>⟳ Sync grades</button>
       <span id="sync-status"></span>
-      <a href="getting-started.html" class="guide-link" title="Teacher guide">Getting Started →</a>
+      <a href="getting-started.html" class="guide-link" title="How students' scores reach Classroom">How Grading Works →</a>
     </div>
   </div>
   <nav id="year-tabs" role="tablist" aria-label="Year group"></nav>
@@ -347,7 +347,7 @@
 
 <footer>
   Outwood Grange Academies Trust — CS Activities Hub &nbsp;|&nbsp;
-  <a href="getting-started.html">Getting Started / Teacher Guide</a>
+  <a href="getting-started.html">How Grading Works</a>
   <div id="build-meta"></div>
 </footer>
 
@@ -393,7 +393,7 @@
 
     fetchCourses();
     document.getElementById('btn-sync').hidden = false;
-    syncGrades(null, { sinceDays: AUTO_SYNC_DAYS });
+    syncGrades('changed');
   }
 
   // On page load: restore session if returning from redirect or if tab was reloaded.
@@ -714,11 +714,21 @@
   // only this OAuth client can read or change appProperties, so the hub reads the score
   // and writes draftGrade with the teacher's own token. Classroom allows that because
   // the hub created the assignment (associatedWithDeveloper). Grades are only raised.
-  const AUTO_SYNC_DAYS = 90; // the sign-in sync skips assignments older than this
+  const AUTO_SYNC_DAYS = 90; // the fast sync never looks further back than this
   let syncRunning = false;
 
+  // Retries rate-limit and transient server errors (429/500/503) with backoff,
+  // so running more requests at once can't make a sync fail.
+  async function googleFetch(url, options = {}) {
+    for (let attempt = 0; ; attempt++) {
+      const res = await fetch(url, { ...options, headers: { 'Authorization': `Bearer ${accessToken}`, ...options.headers } });
+      if (![429, 500, 503].includes(res.status) || attempt === 3) return res;
+      await new Promise(r => setTimeout(r, 1000 * 2 ** attempt + Math.random() * 500));
+    }
+  }
+
   async function googleGet(url) {
-    const res = await fetch(url, { headers: { 'Authorization': `Bearer ${accessToken}` } });
+    const res = await googleFetch(url);
     if (!res.ok) throw new Error(`${res.status} ${await res.text().catch(() => '')}`);
     return res.json();
   }
@@ -740,59 +750,132 @@
     await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
   }
 
-  // Highest ogaScore on any Drive file attached to the submission, or -1.
-  async function submissionScore(sub) {
-    const ids = (sub.assignmentSubmission?.attachments || []).map(a => a.driveFile?.id).filter(Boolean);
-    let best = -1;
-    for (const id of ids) {
-      const meta = await googleGet(`https://www.googleapis.com/drive/v3/files/${id}?fields=appProperties`).catch(() => null);
-      const raw = meta?.appProperties?.ogaScore;
-      if (raw != null && Number.isFinite(Number(raw))) best = Math.max(best, Math.min(100, Number(raw)));
-    }
-    return best;
+  function readScore(appProperties) {
+    const raw = appProperties?.ogaScore;
+    return raw != null && Number.isFinite(Number(raw)) ? Math.min(100, Math.max(0, Number(raw))) : -1;
   }
 
-  // courseIds: null = every class this account teaches.
-  async function syncGrades(courseIds, opts = {}) {
+  // Writes score as the draft grade unless the current one is already as high.
+  // Returns 'raised', 'same' or 'failed'.
+  async function raiseGrade(courseId, workId, subId, score, current) {
+    if (score < 0 || score <= (current ?? -1)) return 'same';
+    const res = await googleFetch(`https://classroom.googleapis.com/v1/courses/${courseId}/courseWork/${workId}/studentSubmissions/${subId}?updateMask=draftGrade`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ draftGrade: score })
+    });
+    if (res.ok) return 'raised';
+    console.error('Grade sync: could not write grade', { courseId, workId, subId }, await res.text().catch(() => res.status));
+    return 'failed';
+  }
+
+  // Fast path: one Drive search for evidence files changed since `since` (ms).
+  // classroom.js tags each file with ogaSync=1 and its course/assignment/submission IDs.
+  async function syncChanged(since, counts, statusEl) {
+    const taught = new Set((await listAll('https://classroom.googleapis.com/v1/courses?teacherId=me&courseStates=ACTIVE&fields=courses(id),nextPageToken', 'courses')).map(c => c.id));
+    const q = `appProperties has { key='ogaSync' and value='1' } and modifiedTime > '${new Date(since).toISOString()}' and trashed = false`;
+    const files = await listAll('https://www.googleapis.com/drive/v3/files?corpora=user&fields=files(appProperties),nextPageToken&q=' + encodeURIComponent(q), 'files');
+
+    // One entry per submission, keeping the best score if a student has several files.
+    const subs = new Map();
+    for (const f of files) {
+      const p = f.appProperties || {};
+      if (!taught.has(p.ogaCourse) || !p.ogaWork || !p.ogaSub) continue;
+      const prev = subs.get(p.ogaSub);
+      const score = readScore(p);
+      if (!prev || score > prev.score) subs.set(p.ogaSub, { courseId: p.ogaCourse, workId: p.ogaWork, subId: p.ogaSub, score });
+    }
+
+    // One list call per assignment reads every current draft grade, instead of one
+    // read per submission; then only the grades that go up are written.
+    const byWork = new Map();
+    for (const s of subs.values()) {
+      const key = s.courseId + '/' + s.workId;
+      if (!byWork.has(key)) byWork.set(key, []);
+      byWork.get(key).push(s);
+    }
+    const toWrite = [];
+    await mapLimit([...byWork.values()], 6, async group => {
+      const { courseId, workId } = group[0];
+      try {
+        const current = new Map((await listAll(`https://classroom.googleapis.com/v1/courses/${courseId}/courseWork/${workId}/studentSubmissions?fields=studentSubmissions(id,draftGrade),nextPageToken`, 'studentSubmissions'))
+          .map(sub => [sub.id, sub.draftGrade]));
+        for (const s of group) {
+          if (!current.has(s.subId)) { console.error('Grade sync: submission not found', s); counts.failed++; }
+          else if (s.score > (current.get(s.subId) ?? -1)) toWrite.push(s);
+          else counts.same++;
+        }
+      } catch (e) {
+        console.error('Grade sync: could not read submissions', { courseId, workId }, e);
+        counts.failed += group.length;
+      }
+    });
+
+    let done = 0;
+    await mapLimit(toWrite, 10, async s => {
+      statusEl.textContent = `⟳ Syncing grades… ${++done}/${toWrite.length}`;
+      counts[await raiseGrade(s.courseId, s.workId, s.subId, s.score)]++;
+    });
+  }
+
+  // Full scan of one class: every hub-made assignment, every submission. Slower, but it
+  // also finds evidence saved before the files carried ogaSync tags.
+  async function syncClass(courseId, counts, statusEl) {
+    const works = (await listAll(`https://classroom.googleapis.com/v1/courses/${courseId}/courseWork?fields=courseWork(id,associatedWithDeveloper),nextPageToken`, 'courseWork'))
+      .filter(w => w.associatedWithDeveloper);
+    // One Drive search reads the score of every tagged evidence file in this class;
+    // only older, untagged files need a read each.
+    const q = `appProperties has { key='ogaCourse' and value='${courseId}' } and trashed = false`;
+    const tagged = new Map((await listAll('https://www.googleapis.com/drive/v3/files?corpora=user&fields=files(id,appProperties),nextPageToken&q=' + encodeURIComponent(q), 'files'))
+      .map(f => [f.id, readScore(f.appProperties)]));
+    let done = 0;
+    statusEl.textContent = `⟳ Syncing grades… 0/${works.length} assignments`;
+    await mapLimit(works, 4, async w => {
+      const subs = await listAll(`https://classroom.googleapis.com/v1/courses/${courseId}/courseWork/${w.id}/studentSubmissions?fields=studentSubmissions(id,draftGrade,assignmentSubmission/attachments/driveFile/id),nextPageToken`, 'studentSubmissions');
+      await mapLimit(subs.filter(s => (s.draftGrade ?? -1) < 100), 6, async s => {
+        const ids = (s.assignmentSubmission?.attachments || []).map(a => a.driveFile?.id).filter(Boolean);
+        const scores = await Promise.all(ids.map(id => tagged.has(id) ? tagged.get(id)
+          : googleGet(`https://www.googleapis.com/drive/v3/files/${id}?fields=appProperties`).then(m => readScore(m.appProperties), () => -1)));
+        counts[await raiseGrade(courseId, w.id, s.id, Math.max(-1, ...scores), s.draftGrade)]++;
+      });
+      statusEl.textContent = `⟳ Syncing grades… ${++done}/${works.length} assignments`;
+    });
+  }
+
+  // Last successful fast sync, per Google account, so a shared computer doesn't skip
+  // another teacher's changes.
+  async function lastSyncKey() {
+    const me = await googleGet('https://www.googleapis.com/oauth2/v3/userinfo').catch(() => ({}));
+    return 'oga_hub_last_sync_' + (me.sub || 'unknown');
+  }
+
+  // mode: 'changed' (since the last sync, or AUTO_SYNC_DAYS on a new device),
+  // 'recent' (AUTO_SYNC_DAYS) or { courseId } for a full scan of one class.
+  async function syncGrades(mode) {
     if (syncRunning || !accessToken) return;
     syncRunning = true;
     const statusEl = document.getElementById('sync-status');
     const btn = document.getElementById('btn-sync');
     btn.disabled = true;
-    const since = opts.sinceDays ? Date.now() - opts.sinceDays * 86400000 : 0;
-    let raised = 0, failed = 0;
+    const counts = { raised: 0, same: 0, failed: 0 };
     try {
       statusEl.textContent = '⟳ Checking for new scores…';
-      if (!courseIds) {
-        const taught = await listAll('https://classroom.googleapis.com/v1/courses?teacherId=me&courseStates=ACTIVE&fields=courses(id),nextPageToken', 'courses');
-        courseIds = taught.map(c => c.id);
+      if (mode && mode.courseId) {
+        await syncClass(mode.courseId, counts, statusEl);
+      } else {
+        const startedAt = Date.now();
+        const key = await lastSyncKey();
+        let last = 0;
+        try { last = Number(localStorage.getItem(key)) || 0; } catch (_) {}
+        const floor = startedAt - AUTO_SYNC_DAYS * 86400000;
+        // 10-minute overlap covers clock differences and saves landing mid-sync.
+        const since = mode === 'changed' && last ? Math.max(floor, last - 10 * 60000) : floor;
+        await syncChanged(since, counts, statusEl);
+        // Only move the marker on when everything was written, so failures are retried.
+        if (!counts.failed) { try { localStorage.setItem(key, String(startedAt)); } catch (_) {} }
       }
-      const works = [];
-      await mapLimit(courseIds, 4, async courseId => {
-        const list = await listAll(`https://classroom.googleapis.com/v1/courses/${courseId}/courseWork?fields=courseWork(id,associatedWithDeveloper,creationTime),nextPageToken`, 'courseWork').catch(() => []);
-        list.filter(w => w.associatedWithDeveloper && (!since || Date.parse(w.creationTime) >= since))
-          .forEach(w => works.push({ courseId, id: w.id }));
-      });
-
-      let done = 0;
-      for (const w of works) {
-        statusEl.textContent = `⟳ Syncing grades… ${++done}/${works.length}`;
-        const base = `https://classroom.googleapis.com/v1/courses/${w.courseId}/courseWork/${w.id}/studentSubmissions`;
-        const subs = await listAll(`${base}?fields=studentSubmissions(id,draftGrade,assignmentSubmission/attachments/driveFile/id),nextPageToken`, 'studentSubmissions').catch(() => []);
-        await mapLimit(subs.filter(s => (s.draftGrade ?? -1) < 100), 6, async s => {
-          const score = await submissionScore(s);
-          if (score <= (s.draftGrade ?? -1)) return;
-          const res = await fetch(`${base}/${s.id}?updateMask=draftGrade`, {
-            method: 'PATCH',
-            headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ draftGrade: score })
-          });
-          if (res.ok) raised++;
-          else { failed++; console.error('Grade sync: could not write grade', w, s.id, await res.text().catch(() => res.status)); }
-        });
-      }
-      statusEl.textContent = raised ? `✅ ${raised} grade${raised === 1 ? '' : 's'} synced to Classroom` : '✅ Grades up to date';
-      if (failed) statusEl.textContent += ` · ⚠️ ${failed} failed (see console)`;
+      statusEl.textContent = counts.raised ? `✅ ${counts.raised} grade${counts.raised === 1 ? '' : 's'} synced to Classroom` : '✅ Grades up to date';
+      if (counts.failed) statusEl.textContent += ` · ⚠️ ${counts.failed} failed (see console)`;
     } catch (e) {
       console.error('Grade sync failed:', e);
       statusEl.textContent = '⚠️ Grade sync failed — see console';
@@ -802,9 +885,9 @@
     }
   }
 
-  // The button checks every assignment, however old: just the chosen class, or all classes.
+  // The button rechecks the last AUTO_SYNC_DAYS for every class, or fully scans the chosen class.
   function onSyncClick() {
-    syncGrades(selectedCourseId ? [selectedCourseId] : null);
+    syncGrades(selectedCourseId ? { courseId: selectedCourseId } : 'recent');
   }
 
   // ── Topic colours ────────────────────────────────────────

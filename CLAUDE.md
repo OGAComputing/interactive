@@ -122,7 +122,7 @@ Start from `_templates/Pseudocode_Y11.html`; it wires up `pseudocode-editor.js`.
 ## Key Conventions
 
 - **Self-contained logic**: each activity's HTML, questions and JS stay inline (plus its own `checkers.js`); the shared files above are the only other files it may reference
-- **No external files**: no CDN scripts, stylesheets, fonts or third-party libraries (`activity-dependencies.test.js` fails on any `http(s)://` resource)
+- **No external files**: no CDN scripts, stylesheets, fonts or third-party libraries (`activity-dependencies.test.js` fails on any `http(s)://` resource). One exception: school-only Google Drive video, embedded as `drive.google.com/file/d/<id>/preview` with an "Open in Drive" `/view` link beside it (the test enforces both; details in `Y10/CLAUDE.md`)
 - **Fonts**: pick a system font stack (`'Segoe UI', system-ui, sans-serif`; `'Cascadia Mono', Consolas, monospace`) or a self-hosted font from `fonts/`, and always end with a system fallback. To add a font, see **Adding a font** below
 - **Vanilla JS only**: no frameworks; direct DOM manipulation
 - **Files/folders starting with `_`** are excluded from the manifest (`_drafts/` for WIP, `_templates/` for starters)
