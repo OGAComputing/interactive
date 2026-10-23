@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Grade Sync Probe</title>
+<!--
+  One-off test for proxy-free grade sync. Checks that:
+    1. a student (drive.file) can attach a Drive file carrying appProperties.ogaScore
+       to their submission on a hub-created assignment, and
+    2. the teacher (hub scopes: drive.metadata.readonly + classroom.coursework.students)
+       can read that appProperty back and write draftGrade with their own token.
+  Uses the hub's OAuth client, so it must be served from GitHub Pages
+  (the redirect URI is <origin>/interactive/oauth-callback.html).
+-->
+<style>
+  :root { --bg:#0f1c2e; --surface:#162032; --line:#1e3048; --text:#e8edf2; --muted:#8fa9c2; --accent:#00b4b4; --ok:#2ecc71; --bad:#e05555; --warn:#f5a623; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Trebuchet MS', Calibri, sans-serif; background: var(--bg); color: var(--text); padding: 24px 16px 60px; }
+  main { max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
+  h1 { font-size: 1.4rem; }
+  h2 { font-size: 1.05rem; margin-bottom: 8px; }
+  p, li { font-size: 0.88rem; color: var(--muted); line-height: 1.5; }
+  ol { padding-left: 1.2rem; }
+  section { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 16px; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 10px; }
+  button { background: var(--accent); color: #0a1520; border: none; border-radius: 6px; padding: 7px 14px; font: inherit; font-size: 0.85rem; font-weight: 700; cursor: pointer; }
+  button.ghost { background: transparent; color: var(--muted); border: 1px solid var(--line); }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  select, input { background: #0d1828; color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; font: inherit; font-size: 0.85rem; max-width: 100%; }
+  input[type=number] { width: 80px; }
+  #who { font-size: 0.85rem; color: var(--muted); }
+  table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.8rem; }
+  th, td { text-align: left; padding: 6px; border-bottom: 1px solid var(--line); vertical-align: top; word-break: break-word; }
+  th { color: var(--muted); font-weight: 600; }
+  .ok { color: var(--ok); } .bad { color: var(--bad); } .warn { color: var(--warn); }
+  #log { font-family: 'Courier New', monospace; font-size: 0.75rem; white-space: pre-wrap; color: var(--muted); max-height: 320px; overflow-y: auto; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Grade sync probe</h1>
+  <section>
+    <p>Tests whether grades can be synced without a proxy. You need a test class with a teacher account and a student account, and an assignment in it created with the hub's <strong>Assign</strong> button.</p>
+    <ol>
+      <li>In the <strong>student's</strong> browser: sign in as student, pick the assignment, click <em>Attach probe file</em>.</li>
+      <li>In the <strong>teacher's</strong> browser: sign in as teacher, pick the same assignment, click <em>Read submissions</em>.</li>
+      <li>If the score shows up under <em>appProperties</em>, click <em>Write draft grades</em> and check Classroom.</li>
+    </ol>
+    <div class="row">
+      <button id="btn-student">Sign in as student</button>
+      <button id="btn-teacher">Sign in as teacher</button>
+      <button id="btn-out" class="ghost" hidden>Sign out</button>
+      <span id="who"></span>
+    </div>
+  </section>
+
+  <section id="pick" hidden>
+    <h2>Assignment</h2>
+    <div class="row">
+      <select id="course"><option value="">Select a class…</option></select>
+      <select id="work" disabled><option value="">Select an assignment…</option></select>
+    </div>
+    <p id="work-note" style="margin-top:8px"></p>
+  </section>
+
+  <section id="student" hidden>
+    <h2>Student: attach a probe file</h2>
+    <p>Creates a small Drive file with <code>appProperties.ogaScore</code> set, attaches it to your submission, then changes the score in place (as the real evidence file would be updated).</p>
+    <div class="row">
+      <label>Score <input id="score" type="number" min="0" max="100" value="42"></label>
+      <button id="btn-attach" disabled>Attach probe file</button>
+      <button id="btn-bump" class="ghost" disabled>Update score on attached file</button>
+    </div>
+  </section>
+
+  <section id="teacher" hidden>
+    <h2>Teacher: read scores back</h2>
+    <div class="row">
+      <button id="btn-read" disabled>Read submissions</button>
+      <button id="btn-write" class="ghost" disabled>Write draft grades from ogaScore</button>
+    </div>
+    <div id="results"></div>
+  </section>
+
+  <section>
+    <h2>Log</h2>
+    <div id="log"></div>
+  </section>
+</main>
+
+<script>
+  const CLIENT_ID = '379663437881-iukh6qnkq8jmqtqko3qog0n6ohuhemmq.apps.googleusercontent.com';
+  // Each role asks for exactly what it gets in production: classroom.js for students, index.html for teachers.
+  const SCOPES = {
+    student: 'https://www.googleapis.com/auth/classroom.coursework.me https://www.googleapis.com/auth/classroom.courses.readonly openid email https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.metadata.readonly',
+    teacher: 'https://www.googleapis.com/auth/classroom.courses.readonly https://www.googleapis.com/auth/classroom.coursework.me https://www.googleapis.com/auth/classroom.coursework.students https://www.googleapis.com/auth/drive.metadata.readonly https://www.googleapis.com/auth/userinfo.email'
+  };
+  const ROLE_KEY = 'oga_probe_role', TOKEN_KEY = 'oga_probe_token', FILE_KEY = 'oga_probe_file';
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+  let token = null, role = null;
+  let submissions = [];
+
+  function log(msg) {
+    const line = `[${new Date().toLocaleTimeString()}] ${msg}\n`;
+    $('log').textContent += line;
+    $('log').scrollTop = $('log').scrollHeight;
+  }
+
+  // ── Sign-in (same redirect flow as the hub, via oauth-callback.html) ──
+  function signIn(asRole) {
+    try {
+      sessionStorage.setItem(ROLE_KEY, asRole);
+      sessionStorage.setItem('oga_return_url', location.href.split('#')[0]);
+      sessionStorage.setItem('oga_auth_mode', 'interactive');
+    } catch (_) {}
+    const params = new URLSearchParams({
+      client_id: CLIENT_ID,
+      redirect_uri: location.origin + '/interactive/oauth-callback.html',
+      response_type: 'token',
+      scope: SCOPES[asRole],
+      prompt: 'select_account'
+    });
+    location.href = 'https://accounts.google.com/o/oauth2/v2/auth?' + params;
+  }
+
+  function signOut() {
+    try { [ROLE_KEY, TOKEN_KEY, FILE_KEY].forEach(k => sessionStorage.removeItem(k)); } catch (_) {}
+    location.reload();
+  }
+
+  function restoreToken() {
+    let data = null;
+    try {
+      const fresh = sessionStorage.getItem('oga_oauth_token');
+      if (fresh) {
+        sessionStorage.removeItem('oga_oauth_token');
+        sessionStorage.setItem(TOKEN_KEY, fresh);
+      }
+      data = JSON.parse(sessionStorage.getItem(TOKEN_KEY) || 'null');
+      role = sessionStorage.getItem(ROLE_KEY);
+      const err = sessionStorage.getItem('oga_auth_error');
+      if (err) { sessionStorage.removeItem('oga_auth_error'); log('Sign-in error: ' + err); }
+    } catch (_) {}
+    if (data && data.access_token && data.expires_at > Date.now() + 30000 && role) {
+      token = data.access_token;
+      log(`Signed in as ${role}. Granted: ${(data.scope || '').replace(/https:\/\/www\.googleapis\.com\/auth\//g, '')}`);
+      return true;
+    }
+    return false;
+  }
+
+  async function api(url, opts = {}) {
+    const res = await fetch(url, { ...opts, headers: { Authorization: `Bearer ${token}`, ...(opts.headers || {}) } });
+    const text = await res.text();
+    let body; try { body = JSON.parse(text); } catch (_) { body = text; }
+    if (!res.ok) {
+      const msg = body?.error?.message || text;
+      const err = new Error(`${res.status} ${msg}`);
+      err.status = res.status;
+      throw err;
+    }
+    return body;
+  }
+
+  // ── Course and assignment pickers ──
+  async function loadCourses() {
+    const p = role === 'teacher' ? 'teacherId=me' : 'studentId=me';
+    const data = await api(`https://classroom.googleapis.com/v1/courses?courseStates=ACTIVE&${p}&pageSize=100`);
+    const courses = data.courses || [];
+    $('course').innerHTML = '<option value="">Select a class…</option>' +
+      courses.map(c => `<option value="${esc(c.id)}">${esc(c.name)}</option>`).join('');
+    log(`${courses.length} class(es) found.`);
+  }
+
+  async function loadWork(courseId) {
+    $('work').disabled = true;
+    $('work').innerHTML = '<option value="">Loading…</option>';
+    const data = await api(`https://classroom.googleapis.com/v1/courses/${courseId}/courseWork?pageSize=100`);
+    const work = (data.courseWork || []);
+    $('work').innerHTML = '<option value="">Select an assignment…</option>' +
+      work.map(w => `<option value="${esc(w.id)}" data-dev="${w.associatedWithDeveloper ? 1 : 0}">${w.associatedWithDeveloper ? '★ ' : ''}${esc(w.title)}</option>`).join('');
+    $('work').disabled = false;
+    $('work-note').textContent = '★ = created by the hub (only these can have grades written by this client).';
+  }
+
+  function selected() {
+    const opt = $('work').selectedOptions[0];
+    return { courseId: $('course').value, workId: $('work').value, hubMade: opt?.dataset.dev === '1' };
+  }
+
+  // ── Student half ──
+  async function mySubmission() {
+    const { courseId, workId } = selected();
+    const data = await api(`https://classroom.googleapis.com/v1/courses/${courseId}/courseWork/${workId}/studentSubmissions?userId=me`);
+    const sub = (data.studentSubmissions || [])[0];
+    if (!sub) throw new Error('No submission found for you on this assignment.');
+    return sub;
+  }
+
+  async function attachProbe() {
+    const btn = $('btn-attach');
+    btn.disabled = true;
+    try {
+      const score = String(Math.max(0, Math.min(100, parseInt($('score').value, 10) || 0)));
+      const { courseId, workId } = selected();
+      const sub = await mySubmission();
+      log(`Submission ${sub.id} (state ${sub.state}).`);
+
+      const boundary = 'probe' + Date.now().toString(36);
+      const meta = JSON.stringify({ name: `Grade sync probe (${score}%)`, mimeType: 'text/plain', appProperties: { ogaScore: score, ogaProbe: '1' } });
+      const body = `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${meta}\r\n` +
+        `--${boundary}\r\nContent-Type: text/plain; charset=UTF-8\r\n\r\nGrade sync probe file. Safe to delete.\r\n--${boundary}--`;
+      const file = await api('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,appProperties', {
+        method: 'POST', headers: { 'Content-Type': `multipart/related; boundary=${boundary}` }, body
+      });
+      log(`Created file ${file.id} with appProperties ${JSON.stringify(file.appProperties)}.`);
+      try { sessionStorage.setItem(FILE_KEY, file.id); } catch (_) {}
+
+      await api(`https://classroom.googleapis.com/v1/courses/${courseId}/courseWork/${workId}/studentSubmissions/${sub.id}:modifyAttachments`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ addAttachments: [{ driveFile: { id: file.id } }] })
+      });
+      log('✅ Attached to the submission. Now run the teacher half.');
+      $('btn-bump').disabled = false;
+    } catch (e) {
+      log('❌ ' + e.message);
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  async function bumpScore() {
+    let fileId = null;
+    try { fileId = sessionStorage.getItem(FILE_KEY); } catch (_) {}
+    if (!fileId) { log('No probe file from this session.'); return; }
+    try {
+      const score = String(Math.max(0, Math.min(100, parseInt($('score').value, 10) || 0)));
+      const file = await api(`https://www.googleapis.com/drive/v3/files/${fileId}?fields=id,name,appProperties`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: `Grade sync probe (${score}%)`, appProperties: { ogaScore: score } })
+      });
+      log(`✅ Updated in place: ${file.name}, appProperties ${JSON.stringify(file.appProperties)}.`);
+    } catch (e) {
+      log('❌ ' + e.message);
+    }
+  }
+
+  // ── Teacher half ──
+  async function readSubmissions() {
+    const btn = $('btn-read');
+    btn.disabled = true;
+    $('btn-write').disabled = true;
+    try {
+      const { courseId, workId, hubMade } = selected();
+      if (!hubMade) log('⚠️ This assignment was not created by the hub; draftGrade writes will fail with ProjectPermissionDenied.');
+      const data = await api(`https://classroom.googleapis.com/v1/courses/${courseId}/courseWork/${workId}/studentSubmissions?pageSize=100`);
+      const subs = data.studentSubmissions || [];
+      log(`${subs.length} submission(s).`);
+      submissions = [];
+      for (const s of subs) {
+        const files = (s.assignmentSubmission?.attachments || []).filter(a => a.driveFile).map(a => a.driveFile);
+        if (!files.length) continue;
+        for (const f of files) {
+          const row = { subId: s.id, userId: s.userId, state: s.state, draftGrade: s.draftGrade, title: f.title, fileId: f.id };
+          try {
+            const meta = await api(`https://www.googleapis.com/drive/v3/files/${f.id}?fields=name,owners(emailAddress),appProperties,properties&supportsAllDrives=true`);
+            row.name = meta.name;
+            row.owner = meta.owners?.[0]?.emailAddress || '';
+            row.appProperties = meta.appProperties;
+            row.properties = meta.properties;
+          } catch (e) {
+            row.error = e.message;
+          }
+          submissions.push(row);
+        }
+      }
+      renderResults();
+      const found = submissions.filter(r => r.appProperties?.ogaScore != null);
+      if (found.length) {
+        log(`✅ Read ogaScore on ${found.length} file(s).`);
+        $('btn-write').disabled = false;
+      } else if (submissions.length) {
+        log('❌ Files are visible but no ogaScore came back. Check the "Name" column: the score in the file name is the fallback.');
+      } else {
+        log('No Drive attachments on any submission yet.');
+      }
+    } catch (e) {
+      log('❌ ' + e.message);
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  function renderResults() {
+    if (!submissions.length) { $('results').innerHTML = '<p style="margin-top:10px">No attachments.</p>'; return; }
+    $('results').innerHTML = `<table>
+      <tr><th>Submission</th><th>Classroom title</th><th>Drive name (now)</th><th>Owner</th><th>appProperties</th><th>Draft grade</th></tr>
+      ${submissions.map(r => `<tr>
+        <td>${esc(r.subId)}<br><span style="color:var(--muted)">${esc(r.state)}</span></td>
+        <td>${esc(r.title)}</td>
+        <td>${r.error ? `<span class="bad">${esc(r.error)}</span>` : esc(r.name)}</td>
+        <td>${esc(r.owner)}</td>
+        <td>${r.appProperties ? `<span class="ok">${esc(JSON.stringify(r.appProperties))}</span>` : '<span class="warn">none</span>'}</td>
+        <td>${esc(r.draftGrade ?? '—')}</td>
+      </tr>`).join('')}
+    </table>`;
+  }
+
+  async function writeGrades() {
+    const btn = $('btn-write');
+    btn.disabled = true;
+    const { courseId, workId } = selected();
+    for (const r of submissions) {
+      const score = Number(r.appProperties?.ogaScore);
+      if (!Number.isFinite(score)) continue;
+      try {
+        const res = await api(`https://classroom.googleapis.com/v1/courses/${courseId}/courseWork/${workId}/studentSubmissions/${r.subId}?updateMask=draftGrade`, {
+          method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ draftGrade: score })
+        });
+        r.draftGrade = res.draftGrade;
+        log(`✅ Submission ${r.subId}: draftGrade = ${res.draftGrade}.`);
+      } catch (e) {
+        log(`❌ Submission ${r.subId}: ${e.message}`);
+      }
+    }
+    renderResults();
+    btn.disabled = false;
+  }
+
+  // ── Wiring ──
+  $('btn-student').onclick = () => signIn('student');
+  $('btn-teacher').onclick = () => signIn('teacher');
+  $('btn-out').onclick = signOut;
+  $('btn-attach').onclick = attachProbe;
+  $('btn-bump').onclick = bumpScore;
+  $('btn-read').onclick = readSubmissions;
+  $('btn-write').onclick = writeGrades;
+  $('course').onchange = () => {
+    const id = $('course').value;
+    ['btn-attach', 'btn-read', 'btn-write'].forEach(b => $(b).disabled = true);
+    if (id) loadWork(id).catch(e => log('❌ ' + e.message));
+  };
+  $('work').onchange = () => {
+    const on = !!$('work').value;
+    $('btn-attach').disabled = !on;
+    $('btn-read').disabled = !on;
+  };
+
+  if (restoreToken()) {
+    $('who').textContent = `Signed in as ${role}.`;
+    $('btn-out').hidden = false;
+    $('pick').hidden = false;
+    $(role).hidden = false;
+    try { if (sessionStorage.getItem(FILE_KEY)) $('btn-bump').disabled = false; } catch (_) {}
+    api('https://www.googleapis.com/oauth2/v3/userinfo')
+      .then(u => { $('who').textContent = `Signed in as ${role}: ${u.email}`; })
+      .catch(() => {});
+    loadCourses().catch(e => log('❌ ' + e.message));
+  }
+</script>
+</body>
+</html>
