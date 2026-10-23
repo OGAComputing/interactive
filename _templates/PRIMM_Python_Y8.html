@@ -2253,7 +2253,7 @@ function fieldHint(card, msg) {
   if (!el) {
     el = document.createElement('div');
     el.className = 'field-hint';
-    el.style.cssText = 'font-size:0.8rem;color:#dc2626;margin-top:0.4rem;font-style:italic';
+    el.style.cssText = 'font-size:0.8rem;color:var(--red-text, #dc2626);margin-top:0.4rem;font-style:italic';
     card.appendChild(el);
   }
   el.textContent = msg ? '⚠️ ' + msg : '';
@@ -2291,6 +2291,15 @@ function showPredictFeedback(idx) {
   else applyMCQFeedback(name, P_CORRECT[name]);
 }
 
+// Copy the current question's memory strip into the slot beside the code (hidden if it has none).
+function syncPredictMemory() {
+  const slot = document.getElementById('p_memory_slot');
+  if (!slot) return;
+  const strip = document.getElementById(PREDICT_CARDS[predictStep - 1])?.querySelector('.predict-memory');
+  slot.replaceChildren(...(strip ? [strip.cloneNode(true)] : []));
+  slot.hidden = !strip;
+}
+
 // Show the Predict question at position `predictStep` (1-based).
 function renderPredict() {
   predictStep = Math.min(Math.max(predictStep, 1), PREDICT_TOTAL);
@@ -2309,6 +2318,7 @@ function renderPredict() {
   });
 
   renderStepNav('P');
+  syncPredictMemory();
   scrollToActive(PREDICT_CARDS[predictStep - 1]);
 }
 
@@ -2627,7 +2637,7 @@ function renderReqResults(listEl, results) {
 
 // True between a modification passing and the move to the next one (AUTO_ADVANCE_MS).
 // A second ⚡ Check click in that gap used to pass the same modification again and advance
-// twice, skipping the next task.
+// twice, skipping the next task (Wake Up students reached Mod 3 with no pod question).
 let m1Advancing = false;
 
 async function checkMod() {

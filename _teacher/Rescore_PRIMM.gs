@@ -10,6 +10,15 @@
  * How to run:
  *   1. At script.google.com, open your "OGA Classroom Grade Proxy" project (it
  *      already has the Classroom permissions). Add a script file, paste this in.
+ *      In a new project instead, tick Project Settings → "Show appsscript.json",
+ *      add the oauthScopes below to it, and add the Google Classroom API under
+ *      Services (that switches the API on for the project):
+ *        "oauthScopes": [
+ *          "https://www.googleapis.com/auth/classroom.courses.readonly",
+ *          "https://www.googleapis.com/auth/classroom.coursework.students",
+ *          "https://www.googleapis.com/auth/classroom.rosters.readonly",
+ *          "https://www.googleapis.com/auth/script.external_request"
+ *        ]
  *   2. Set CUTOFF to when the new scoring went live (when it was pushed to main).
  *   3. Run preview(): View → Logs lists every change. Nothing is written.
  *   4. Run apply() to write them.

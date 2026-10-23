@@ -135,12 +135,15 @@ test('Investigate step 1 is gated until int() is deleted; then the 6 is repeated
 test('Investigate step 2: with int() back, print(hours + 1) adds', async ({ page }) => {
   await openAt(page, { currentStage: 'I', completedStages: ['P', 'R'], stepI: 2, maxStepI: 2, i_editor: STARTER,
     i1: 'It repeated the text 6 fifty times because it was a string' });
-  await expect(page.locator('#req_i_2 li:not(.req-note)')).toHaveClass([/req-pass/, /^(?!.*req-pass)/]);
+  await expect(page.locator('#req_i_2 li:not(.req-note)')).toHaveClass([/req-pass/, /^(?!.*req-pass)/, /^(?!.*req-pass)/]);
+  await expect(page.locator('#btn_check_i2')).toBeDisabled();
   await setCode(page, 'i_editor', STARTER + '\nprint(hours + 1)');
-  await expect(page.locator('#req_i_2 li:not(.req-note)')).toHaveClass([/req-pass/, /req-pass/]);
+  await expect(page.locator('#req_i_2 li:not(.req-note)').nth(1)).toHaveClass(/req-pass/);
   await page.click('#stage-I button:has-text("Run code")');
   await answerPrompts(page, 'i_editor', ['Sam', '6']);
   await expect(outputOf(page, 'i_editor')).toContainText('300\n7', { timeout: 30000 });
+  await expect(page.locator('#req_i_2 li:not(.req-note)')).toHaveClass([/req-pass/, /req-pass/, /req-pass/]);
+  await expect(page.locator('#btn_check_i2')).toBeEnabled();
   await page.check('input[name="i2_mcq"][value="option_b"]');
   await page.click('#btn_check_i2');
   await expect(page.locator('#qcard_i3_prompt')).toBeVisible({ timeout: 10000 });
@@ -160,7 +163,7 @@ test('Investigate bug step: Break it gives a TypeError; fixing with str() comple
   await page.click('#stage-I button:has-text("Run code")');
   await answerPrompts(page, 'i_editor', ['Sam', '6']);
   await expect(page.locator('#i_fb_run')).toHaveClass(/pass/, { timeout: 30000 });
-  await expect(page.locator('#req_i_3 li:not(.req-note)')).toHaveClass([/req-pass/, /req-pass/]);
+  await expect(page.locator('#req_i_3 li:not(.req-note)')).toHaveClass([/req-pass/, /req-pass/, /req-pass/]);
   await page.check('input[name="i3_mcq"][value="option_b"]');
   await page.click('#btn_check_i3');
   await expect(page.locator('#stage-M1')).toHaveClass(/active/, { timeout: 10000 });

@@ -2,7 +2,8 @@ import { describe, expect, test } from 'vitest';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 
-const ACTIVITY_ROOTS = ['Y8', 'Y9', 'Y11', 'Y13', 'Other'];
+// Demo/ and Animations/ are teacher demos, not graded activities, so they aren't checked.
+const ACTIVITY_ROOTS = ['Y7', 'Y8', 'Y9', 'Y11', 'Y13', 'RS'];
 const EXEMPTION_PATTERN = /^\s*(?:shared-dependencies|sharedDependencies)\s*:\s*exempt\b/i;
 const REASON_PATTERN = /^\s*(?:shared-dependencies-reason|sharedDependenciesReason)\s*:\s*\S+/i;
 // Redirect stubs left at a moved activity's old path (see CLAUDE.md "Moving an Activity")
@@ -64,5 +65,22 @@ describe('activity shared dependencies', () => {
 
     expect(invalidExemptions, invalidExemptions.join('\n')).toEqual([]);
     expect(missing, missing.join('\n')).toEqual([]);
+  });
+
+  // Fonts, scripts and styles are served from this repo (fonts/ for self-hosted fonts), never a CDN:
+  // school networks block or slow some hosts, and CLAUDE.md allows only local files.
+  test('activities load no scripts, styles or fonts from other sites', () => {
+    const EXTERNAL = /(<script\b[^>]*\bsrc=|<link\b[^>]*\bhref=|@import\s+url\(|url\()\s*["']?(https?:)?\/\/[^"')\s>]+/gi;
+    const external = ACTIVITY_ROOTS.flatMap(findHtmlFiles).flatMap(file =>
+      [...readFileSync(file, 'utf8').matchAll(EXTERNAL)].map(m => `${file}: ${m[0]}`));
+    expect(external, external.join('\n')).toEqual([]);
+  });
+
+  test('every fonts/*.css link points at a font stylesheet that exists', () => {
+    const broken = ACTIVITY_ROOTS.flatMap(findHtmlFiles).flatMap(file =>
+      [...readFileSync(file, 'utf8').matchAll(/href=["']([^"']*fonts\/[^"']+\.css)["']/g)]
+        .filter(m => !existsSync(path.resolve(path.dirname(file), m[1])))
+        .map(m => `${file}: ${m[1]}`));
+    expect(broken, broken.join('\n')).toEqual([]);
   });
 });

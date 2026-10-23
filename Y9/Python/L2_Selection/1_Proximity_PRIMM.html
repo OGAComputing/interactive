@@ -1065,7 +1065,13 @@ color:  teal
   .band-table th { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); background: var(--card-raised); }
   .band-table tr:last-child td { border-bottom: none; }
   .task-tests { margin: 0.4rem 0 0; font-size: 0.82rem; color: var(--muted); font-style: italic; }
-  #req_r { margin-bottom: 1rem; }
+  /* Run stage: run, then question (renderRunChain) */
+  .rc-task { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; font-weight: 600; color: var(--cobalt-text); background: var(--cobalt-tint); border-radius: 6px; padding: 0.5rem 0.75rem; margin: 0.5rem 0 0.2rem; }
+  .rc-task.ran { color: var(--green-text); background: var(--green-bg); }
+  .rc-note { font-size: 0.85rem; color: var(--muted); margin: 0.3rem 0 0; }
+  .rc-q .radio-opt input:disabled + span { cursor: default; }
+  .rc-q.locked .radio-opt { opacity: 0.5; pointer-events: none; }
+  .rc-review { margin-top: 0.8rem; padding-top: 0.6rem; border-top: 1px solid var(--border); }
 
   @media (max-width: 600px) {
     .sz-impact-body { grid-template-columns: 1fr; gap: 0.5rem; }
@@ -1530,16 +1536,9 @@ color:  teal
 
   <div class="info-box">
     <span class="icon">🖥️</span>
-    <span>This is the program you just predicted. Run it <strong>three times</strong>, typing a different distance each time in the output panel and pressing Enter.
-    Each one ticks off when you've run it. Compare what appears with your predictions.</span>
+    <span>This is the program you just predicted. You'll run it <strong>three times</strong>, typing a different distance each time in the output panel and pressing Enter.
+    After each run, answer the question under the editor about what printed, and why.</span>
   </div>
-
-  <!-- Ticked by the typed distance of each successful run (typedNumber in checkers.js). -->
-  <ul class="req-list" id="req_r">
-    <li><span>1</span><span class="req-text">Run it and type <strong>85</strong></span></li>
-    <li><span>2</span><span class="req-text">Run it and type <strong>50</strong></span></li>
-    <li><span>3</span><span class="req-text">Run it and type <strong>5</strong></span></li>
-  </ul>
 
   <div class="code-checker">
     <textarea class="checker-textarea" id="r_editor" data-title="Proximity sensor"></textarea>
@@ -1550,14 +1549,13 @@ color:  teal
     </div>
   </div>
 
-  <div class="hint-box">💡 Each run printed <strong>one</strong> of the two messages, never both: the condition is either True or False, so exactly one block runs. <code>Scan complete</code> printed every time, because it isn't indented.</div>
+  <div class="hint-box" id="r_hint" hidden>💡 Each run printed <strong>one</strong> of the two messages, never both: the condition is either True or False, so exactly one block runs. <code>Scan complete</code> printed every time, because it isn't indented.</div>
 
+  <!-- One run at a time, each followed by a question about it (RUN_ROUNDS / renderRunChain).
+       The question unlocks only after a run with that round's input; a wrong answer means
+       running it again before another try. -->
   <div class="q-card" id="qcard_r1">
-    <label class="q-label" for="r1"><span class="q-num">1</span> Which message did 50 give, and why? Was it what you predicted?</label>
-    <textarea id="r1" placeholder="Write what appeared, and why…" oninput="saveState(); clearRunError('qcard_r1')"></textarea>
-    <button class="btn btn-check" id="btn_check_run" onclick="tryCompleteRun()" style="margin-top:0.8rem">
-      ⚡ Check response
-    </button>
+    <div id="r_chain" aria-live="polite"></div>
   </div>
 </section>
 
@@ -3265,10 +3263,32 @@ const STEP_COUNT_M1 = 4;   // m1_step_1…m1_step_4
 //   distance = input("…")  →  distance = int(input("…"))   (made in place on line 1 by breakCode)
 
 // The three distances the Run stage asks for, in the order of the #req_r bullets.
-const RUN_DISTANCES = [85, 50, 5];
+// The Run stage's rounds, in order (renderRunChain): each key is the distance typed (typedNumber).
+// The boundary, 50, comes last. RUN_FEED_KEY is the run the situation report replays.
+const RUN_ROUNDS = [
+  { key: 85, task: 'Run it and type <strong>85</strong>', redo: 'Run it again and type 85, then answer.',
+    q: 'You typed <strong>85</strong>. What printed, and why?',
+    opts: ['All clear, then Scan complete: 85 >= 50 is True', 'Only All clear, as Scan complete is in the if',
+      "IT'S RIGHT BEHIND YOU, as 85 is a long way off", 'Both messages, as 85 is more than 50'],
+    right: "Yes. 85 >= 50 is True, so the if block ran and the else block was skipped. Scan complete isn't indented, so it runs every time.",
+    wrong: 'Not quite. Look at the output panel: which lines printed? Then check line 2: is 85 >= 50 True or False?' },
+  { key: 5, task: 'Run it again and type <strong>5</strong>', redo: 'Run it again and type 5, then answer.',
+    q: 'You typed <strong>5</strong>. What printed, and why?',
+    opts: ["IT'S RIGHT BEHIND YOU, then Scan complete: 5 >= 50 is False", 'Only Scan complete, as no condition was True',
+      'All clear, as the if is always the one that runs', 'An error, as the else line has no condition'],
+    right: "Yes. 5 >= 50 is False, so Python skipped the if block and ran the else block. Scan complete printed again, because it isn't indented.",
+    wrong: 'Not quite. Look at the output panel: which lines printed? Then check line 2: is 5 >= 50 True or False?' },
+  { key: 50, task: 'Run it once more and type <strong>50</strong>', redo: 'Run it again and type 50, then answer.',
+    q: 'You typed <strong>50</strong>. What printed, and why?',
+    opts: ['All clear: 50 >= 50 is True, as >= includes equal', "IT'S RIGHT BEHIND YOU: 50 is not more than 50",
+      'Both messages, as 50 is exactly on the limit', 'Only Scan complete, as 50 matches neither'],
+    right: 'Yes. >= means "more than or equal to", so 50 >= 50 is True and the if block ran. 50 is the boundary: the value most worth testing.',
+    wrong: 'Not quite. Look at the output panel. Then read line 2 closely: >= means "more than OR equal to". Is 50 >= 50 True?' },
+];
+const RUN_FEED_KEY = 5;
 
 // localStorage field lists
-const TEXT_FIELDS  = ['p_text1', 'r_editor', 'r1', 'i_editor', 'm1_editor', 'm2_editor'];   // Investigate step 2 is a question chain, saved as state.i2Chain
+const TEXT_FIELDS  = ['p_text1', 'r_editor', 'i_editor', 'm1_editor', 'm2_editor'];   // Investigate step 2 is a question chain, saved as state.i2Chain
 const RADIO_GROUPS = ['i_choice', 'm1_choice', 'm2_choice', 'p_mcq1', 'p_mcq2', 'p_mcq3', 'p_mcq4', 'i1_mcq', 'i3_mcq', 'i4_mcq'];
 
 
@@ -3406,8 +3426,13 @@ let iBugProgress = state.iBugProgress || {};
 // student ran the code as it stands now.
 let iLastRun = state.iLastRun || null;
 let firstRunShown = false;
-// Run stage: the distances the student has run the sensor program with (ticks #req_r).
-let rRan = state.rRan || {};
+// Run stage: the run-then-question rounds (RUN_ROUNDS, renderRunChain).
+function newRunChain() {
+  return { q: 0, ran: false, order: RUN_ROUNDS.map(() => shuffled(4)), fb: null, note: '', done: false, feed: '' };
+}
+let rChain = state.rChain && Array.isArray(state.rChain.order) && state.rChain.order.length === RUN_ROUNDS.length
+  ? state.rChain : newRunChain();
+let rBusy = false;   // between a right answer and the next round appearing
 // STATION ZERO hook: the last successful output per editor, so a stage's situation
 // report can play what the student's code printed into the station (the live feed).
 const storyFeed = {};
@@ -3478,7 +3503,7 @@ function saveState() {
   state.i2Chain  = i2Chain;
   state.iBugProgress = iBugProgress;
   state.iLastRun = iLastRun;
-  state.rRan = rRan;
+  state.rChain = rChain;
   state.iCodeSnapshots  = iCodeSnapshots;
   state.iCodeDraft      = iCodeDraft;
   state.m1CodeSnapshots = m1CodeSnapshots;
@@ -3785,7 +3810,7 @@ function showStage(s, persist = true) {
     const ta = document.getElementById('r_editor');
     if (!ta.value) ta.value = STARTER_CODE;
     refreshEditor(ta);
-    renderRunTicks();
+    renderRunChain();
   }
   if (s === 'I') {
     const ta = document.getElementById('i_editor');
@@ -3840,6 +3865,7 @@ function completeStage(s) {
 
 function stageFeed(s) {
   if (s === 'P') return document.getElementById('p_text1')?.value || '';
+  if (s === 'R' && rChain.feed) return rChain.feed;
   return storyFeed[{ R: 'r_editor', I: 'i_editor', M1: 'm1_editor' }[s]] || '';
 }
 
@@ -3883,8 +3909,7 @@ async function runCodeInEditor(editorId, statusElId, inputs = null) {
     setTimeout(() => spotlightOutput(editorId), 150);
   }
   if (editorId === 'r_editor' && result.ok) {
-    const n = typedNumber(result.output);
-    if (RUN_DISTANCES.includes(n)) { rRan[n] = true; renderRunTicks(); saveState(); }
+    runChainRan(typedNumber(result.output), result.output);
   }
 
   if (editorId === 'i_editor') {
@@ -4313,57 +4338,91 @@ function clearRunError(cardId) {
   document.getElementById(cardId)?.classList.remove('error');
 }
 
-// Tick off each distance the Run stage asks for, once a run with it has worked.
-function renderRunTicks() {
-  renderReqResults(document.getElementById('req_r'), RUN_DISTANCES.map(n => (rRan[n] ? true : undefined)));
+// ── Run: run it, then answer ──────────────────────────
+//
+// RUN_ROUNDS, one at a time: the student runs the program with that round's input, then answers
+// a question about what printed and why. The question stays locked until a run whose key
+// (runKey in runCodeInEditor) matches the round. A wrong answer gives a hint that points back at
+// the output (never the answer), reshuffles the options and locks them again until the student
+// runs it with that input again. The first option in every `opts` list is the right one.
+// Called after every successful Run-stage run with that run's key and output.
+function runChainRan(key, output) {
+  if (rChain.done || rBusy) return;
+  const round = RUN_ROUNDS[rChain.q];
+  if (key === RUN_FEED_KEY) rChain.feed = output;   // the run the situation report replays
+  if (key === round.key) { rChain.ran = true; rChain.fb = null; rChain.note = ''; }
+  else if (!rChain.ran) rChain.note = 'That run doesn\'t match this question. ' + round.redo;
+  saveState();
+  renderRunChain();
+}
+
+function renderRunChain() {
+  const box = document.getElementById('r_chain');
+  if (!box) return;
+  const done = rChain.done || completedStages.includes('R');
+  const total = RUN_ROUNDS.length;
+  const hint = document.getElementById('r_hint');
+  if (hint) hint.hidden = !done;
+  const optsHtml = (k, locked, showRight) => rChain.order[k].map(o => `
+      <label class="radio-opt${showRight && o === 0 ? ' correct' : ''}"><input type="radio" name="rc_${k}" value="${o}"
+        ${showRight && o === 0 ? 'checked' : ''} ${locked ? 'disabled' : ''} onchange="answerRun(${k}, ${o})"> <span>${RUN_ROUNDS[k].opts[o]}</span></label>`).join('');
+  if (done) {
+    box.innerHTML = `<div class="q-label"><span class="q-num">✓</span> All ${total} runs done and explained</div>`
+      + RUN_ROUNDS.map((r, k) => `<div class="rc-q rc-review"><div class="q-label">${k + 1}. ${r.q}</div>
+          <div class="radio-opts" style="margin-top:0.4rem">${optsHtml(k, true, true)}</div></div>`).join('');
+    return;
+  }
+  const k = rChain.q, r = RUN_ROUNDS[k];
+  const dots = [...Array(total).keys()].map(i =>
+    `<span class="i2c-dot${i < k ? ' ok' : i === k ? ' now' : ''}"></span>`).join('');
+  const fb = rChain.fb ? `<div class="mcq-fb ${rChain.fb.ok ? 'pass' : 'fail'}">${rChain.fb.ok ? '✔ ' : '✘ '}${rChain.fb.text}</div>` : '';
+  box.innerHTML = `<div class="i2c-progress">${dots}<span>Run ${k + 1} of ${total}</span></div>`
+    + `<div class="rc-task${rChain.ran ? ' ran' : ''}">${rChain.ran ? '✓' : '▶'} ${r.task}${rChain.ran ? '' : ' (in the editor above)'}</div>`
+    + (rChain.note ? `<p class="rc-note">${rChain.note}</p>` : '')
+    + `<div class="rc-q${rChain.ran ? '' : ' locked'}"><div class="q-label" style="margin-top:0.6rem">${r.q}</div>
+        ${rChain.ran ? '' : '<p class="rc-note">The answers unlock once you\'ve done this run.</p>'}
+        <div class="radio-opts" style="margin-top:0.4rem">${optsHtml(k, !rChain.ran || rBusy, false)}</div>${fb}</div>`;
+}
+
+function answerRun(k, opt) {
+  if (window.Classroom?.verifyAuth() === false) return;
+  if (rBusy || rChain.done || k !== rChain.q || !rChain.ran) return;
+  const r = RUN_ROUNDS[k];
+  const card = document.getElementById('qcard_r1');
+  if (opt !== 0) {
+    // Wrong: explain where to look, then lock until it's run again with this input.
+    rChain.fb = { ok: false, text: r.wrong + ' ' + r.redo };
+    rChain.ran = false;
+    rChain.order[k] = shuffled(4);
+    saveState();
+    renderRunChain();
+    card?.classList.add('error');
+    return;
+  }
+  card?.classList.remove('error');
+  rChain.fb = { ok: true, text: r.right };
+  rBusy = true;
+  renderRunChain();
+  document.querySelector(`input[name="rc_${k}"][value="0"]`)?.closest('.radio-opt')?.classList.add('correct');
+  window.ActivityUI?.miniCelebration(card);
+  if (k + 1 >= RUN_ROUNDS.length) {
+    rChain.done = true;
+    saveState();
+    tryCompleteRun();
+    return;
+  }
+  rChain.q = k + 1;
+  rChain.ran = false;
+  saveState();
+  setTimeout(() => { rBusy = false; rChain.fb = null; renderRunChain(); }, AUTO_ADVANCE_MS * 2);
 }
 
 function tryCompleteRun() {
-  if (window.Classroom?.verifyAuth() === false) return;
-  let allOk = true;
-  let firstError = null;
-
-  // All three distances must have been run, so every branch has been seen firing.
-  const missing = RUN_DISTANCES.filter(n => !rRan[n]);
-  if (missing.length) {
-    renderReqResults(document.getElementById('req_r'), RUN_DISTANCES.map(n => !!rRan[n]));
-    const r1c = document.getElementById('qcard_r1');
-    r1c?.classList.add('error');
-    fieldHint(r1c, 'Run the program with ' + missing.join(' and ') + ' first — each run ticks off at the top.');
-    document.getElementById('req_r')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    return;
-  }
-
-  const r1val  = (document.getElementById('r1')?.value || '').trim();
-  const r1card = document.getElementById('qcard_r1');
-  let r1msg = null;
-  if (r1val.split(/\s+/).length < 4) r1msg = 'Write a sentence — what did 50 print, and why?';
-  else if (isNonsense(r1val))        r1msg = "That doesn't look like a real answer — give it another try.";
-  else if (!/clear|>=|equal|or more|includes|at least|50/i.test(r1val))
-    r1msg = 'Say which message 50 gave, and why: look at the condition on line 2.';
-  if (r1msg) {
-    allOk = false;
-    r1card?.classList.add('error');
-    r1card?.classList.remove('is-right');
-    fieldHint(r1card, r1msg);
-    if (!firstError) firstError = r1card;
-  } else {
-    r1card?.classList.remove('error');
-    r1card?.classList.add('is-right');
-    fieldHint(r1card, '');
-    window.ActivityUI?.miniCelebration(r1card);
-  }
-
-  if (allOk) {
-    const btn = document.getElementById('btn_check_run');
-    if (btn) { btn.disabled = true; btn.textContent = '✅ Moving to Investigate…'; }
-    clearSyntaxHint(document.getElementById('r_editor'));
-    window.ActivityUI?.showToast('✅ Great — moving to Investigate!');
-    submitScore();
-    setTimeout(() => completeStage('R'), 1500);
-  } else {
-    firstError?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }
+  if (!rChain.done || completedStages.includes('R')) return;
+  clearSyntaxHint(document.getElementById('r_editor'));
+  window.ActivityUI?.showToast('✅ Great — moving to Investigate!');
+  submitScore();
+  setTimeout(() => { rBusy = false; rChain.fb = null; completeStage('R'); renderRunChain(); }, AUTO_ADVANCE_MS * 2);
 }
 
 // ── Investigate ───────────────────────────────────────
@@ -5139,7 +5198,7 @@ function recordM1Attempt() {
 Object.assign(window, {
   showStage, saveState,
   clearPredictError, checkPredictMCQ, checkPredictText, advancePredict,
-  clearRunError, tryCompleteRun,
+  clearRunError, tryCompleteRun, answerRun,
   tryCompleteInvestigate, nextStep,
   checkMod, completeStage, pickChoice,
   checkMake, checkExt, pickMakeChoice,

@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 // Y9 Python · L3 Locked In (Station Zero, Chapter 3: while loops) — UI wiring only
 // (checker permutations live in Y9/Python/L3_While_Loops/checkers.test.js).
 //   • Predict reveals its worked example (annotations + "How while works") after the first attempt.
-//   • Run is gated until it has been run with 4271 first time, and with 3+ wrong codes first.
+//   • Run: one wrong code, 3+ wrong codes, then 4271 first, each run followed by a question.
 //   • Investigate's bug step is an infinite loop, stopped by the runner after 4 s.
 //   • Modify / Make are checked by running the program once per test answer and reading the output.
 //   • The story follows Proximity's ending (X critical, or the sensors lost) and this chapter's
@@ -116,22 +116,35 @@ test('Predict: a wrong answer shows its feedback and waits for Continue', async 
 
 // ─── Run ─────────────────────────────────────────────────────────────────────
 
-test('Run is gated until both runs are done, then the keypad plays the last run', async ({ page }) => {
+test('Run: three runs, each followed by a question; the report replays the run with 3+ wrong codes', async ({ page }) => {
+  test.setTimeout(120000);
   await page.addInitScript(p => localStorage.setItem('sz_story_' + p, '["intro","P"]'), PATH);
   await openAt(page, { currentStage: 'R', completedStages: ['P'] }, { story: true });
-  await page.fill('#r1', 'No, the condition was False at the top so the loop never ran');
-  await page.click('#btn_check_run');
-  await expect(page.locator('#qcard_r1 .field-hint')).toContainText('4271 the first time');
+  const opt = (k, v) => page.locator(`input[name="rc_${k}"][value="${v}"]`);
+  await expect(page.locator('#r_chain')).toContainText('Run 1 of 3');
+  await expect(opt(0, 0)).toBeDisabled();
 
-  await runWith(page, 'R', 'r_editor', ['4271']);
-  await expect(outputOf(page, 'r_editor')).toContainText('Airlock open', { timeout: 30000 });
-  await expect(page.locator('#req_r li').nth(0)).toHaveClass(/req-pass/);
+  await runWith(page, 'R', 'r_editor', ['4271']);   // not this round's run
+  await expect(page.locator('#r_chain .rc-note').first()).toContainText("doesn't match", { timeout: 30000 });
+  await runWith(page, 'R', 'r_editor', ['1234', '4271']);
+  await expect(opt(0, 0)).toBeEnabled({ timeout: 30000 });
+  await opt(0, 2).click();
+  await expect(page.locator('#r_chain .mcq-fb.fail')).toContainText('Count the ACCESS DENIED lines');
+  await expect(opt(0, 0)).toBeDisabled();
+  await runWith(page, 'R', 'r_editor', ['1234', '4271']);
+  await expect(opt(0, 0)).toBeEnabled({ timeout: 30000 });
+  await opt(0, 0).click();
+
+  await expect(page.locator('#r_chain')).toContainText('Run 2 of 3', { timeout: 10000 });
   await runWith(page, 'R', 'r_editor', ['1111', '2222', '3333', '4271']);
-  await expect(outputOf(page, 'r_editor')).toContainText('Airlock open', { timeout: 30000 });
-  await expect(page.locator('#req_r li')).toHaveClass([/req-pass/, /req-pass/]);
+  await expect(opt(1, 0)).toBeEnabled({ timeout: 30000 });
+  await opt(1, 0).click();
+  await expect(page.locator('#r_chain')).toContainText('Run 3 of 3', { timeout: 10000 });
+  await runWith(page, 'R', 'r_editor', ['4271']);
+  await expect(opt(2, 0)).toBeEnabled({ timeout: 30000 });
+  await opt(2, 0).click();
 
-  await page.click('#btn_check_run');
-  await expect(page.locator('#szOverlay')).toHaveClass(/open/, { timeout: 10000 });
+  await expect(page.locator('#szOverlay')).toHaveClass(/open/, { timeout: 15000 });
   await expect(page.locator('#szTitle')).toHaveText(/Cycling/);
   await expect(page.locator('#szImpact svg')).toContainText('INNER DOOR · OPEN');
   await expect(page.locator('#szImpact svg')).toContainText('DENIED');

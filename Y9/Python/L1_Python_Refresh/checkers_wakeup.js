@@ -135,6 +135,10 @@ export function breakCode(raw) {
 const fixedAndRun = (raw, ctx) =>
   isBugFixed(raw) && !!ctx.lastRun?.ok && ctx.lastRun.code.trim() === raw.trim();
 
+// The "Run it" bullets: the last run was of the code on screen, and it finished. A run from
+// before the change (or of code edited since) doesn't count, so the answer is about what they saw.
+const ranThis = (raw, ctx) => !!ctx.lastRun?.ok && ctx.lastRun.code.trim() === raw.trim();
+
 function fixHint(raw, ctx) {
   if (!ctx.breaks) return 'Press 😈 Break it first to add the broken line.';
   if (hasBugLine(raw)) return 'Fix the broken line: change Name to name (small n) so it matches the variable on line 1.';
@@ -143,6 +147,8 @@ function fixHint(raw, ctx) {
   return 'Now press ▶ Run code to check your fix works.';
 }
 
+const promptChanged = raw => { const p = rolePromptText(raw); return p !== null && p.trim() !== ORIGINAL_PROMPT && p.trim() !== ''; };
+
 export const INV_CHECKS = {
   // Step 1 — the question text is only shown, never stored.
   inv1: {
@@ -150,13 +156,18 @@ export const INV_CHECKS = {
       hint: raw => rolePromptText(raw) === null
         ? 'Keep role = input( exactly as it was on line 2 — only change the words inside the quotes.'
         : 'Change the words inside the quotes on line 2 to a different question.',
-      test: raw => { const p = rolePromptText(raw); return p !== null && p.trim() !== ORIGINAL_PROMPT && p.trim() !== ''; },
+      test: promptChanged,
+    }, {
+      hint: (raw, ctx) => ctx.lastRun?.ok ? 'Run it again after your change, then type any name and any job' : 'Press ▶ Run code, then type any name and any job',
+      test: (raw, ctx) => promptChanged(raw) && ranThis(raw, ctx),
     }],
   },
   // Step 2 — the standard bug step: Break it, then fix the capital N.
   inv2: {
     reqs: [
       { hint: 'Press 😈 Break it to add the broken line.', test: (raw, ctx) => ctx.breaks >= 1 },
+      // ctx.errored: a run of the broken line stopped with the NameError (the page sets it).
+      { hint: 'Press ▶ Run code and type your answers, so the broken line runs and Python stops with a NameError', test: (raw, ctx) => ctx.breaks >= 1 && !!ctx.errored },
       { hint: fixHint, test: (raw, ctx) => ctx.breaks >= 1 && fixedAndRun(raw, ctx) },
     ],
   },

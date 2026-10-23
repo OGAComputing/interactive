@@ -4,7 +4,7 @@ import { test, expect } from '@playwright/test';
 // (checker permutations live in Y9/Python/L2_Selection/checkers.test.js).
 //   • Predict, Run and Investigate use a plain if/else; elif first appears in Modification 2.
 //   • Predict reveals its worked examples as the student reaches them.
-//   • Run is gated until all three distances (85, 50, 5) have been run.
+//   • Run: 85, 5, then 50, each run followed by a question that unlocks only after that run.
 //   • Modify / Make are checked by running the program once per test answer and reading the output.
 //   • The story follows Wake Up's choices (Patel) and this chapter's: the crisis on Investigate 1
 //     (which pod the heaters save; the other crew member, X, is critical), then the lockdown and power.
@@ -144,24 +144,41 @@ test('Predict: a wrong answer explains, and waits for Continue', async ({ page }
 
 // ─── Run ─────────────────────────────────────────────────────────────────────
 
-test('Run is gated until 85, 50 and 5 have all been run, then the radar plays the last run', async ({ page }) => {
+test('Run: each distance is run, then a question about it; a wrong answer needs another run', async ({ page }) => {
+  test.setTimeout(120000);
   await page.addInitScript(p => localStorage.setItem('sz_story_' + p, '["intro","P"]'), PATH);
   await openAt(page, { currentStage: 'R', completedStages: ['P'] }, { story: true });
-  await page.fill('#r1', '50 printed All clear because >= includes equal to');
-  await page.click('#btn_check_run');
-  await expect(page.locator('#qcard_r1 .field-hint')).toContainText('85 and 50 and 5');
+  const opt = (k, v) => page.locator(`input[name="rc_${k}"][value="${v}"]`);
+  await expect(page.locator('#r_chain')).toContainText('Run 1 of 3');
+  await expect(opt(0, 0)).toBeDisabled();
+  await expect(page.locator('#r_hint')).toBeHidden();
+
+  // the wrong distance doesn't unlock the question
+  await runWith(page, 'R', 'r_editor', ['50']);
+  await expect(page.locator('#r_chain .rc-note').first()).toContainText("doesn't match", { timeout: 30000 });
+  await expect(opt(0, 0)).toBeDisabled();
 
   await runWith(page, 'R', 'r_editor', ['85']);
-  await expect(outputOf(page, 'r_editor')).toContainText('All clear', { timeout: 30000 });
-  await expect(page.locator('#req_r li').nth(0)).toHaveClass(/req-pass/);
-  await runWith(page, 'R', 'r_editor', ['50']);
-  await expect(outputOf(page, 'r_editor')).toContainText('All clear', { timeout: 30000 });
-  await runWith(page, 'R', 'r_editor', ['5']);
-  await expect(outputOf(page, 'r_editor')).toContainText('BEHIND YOU', { timeout: 30000 });
-  await expect(page.locator('#req_r li')).toHaveClass([/req-pass/, /req-pass/, /req-pass/]);
+  await expect(opt(0, 0)).toBeEnabled({ timeout: 30000 });
+  await opt(0, 1).click();
+  await expect(page.locator('#r_chain .mcq-fb.fail')).toContainText('Run it again and type 85');
+  await expect(opt(0, 0)).toBeDisabled();
+  await runWith(page, 'R', 'r_editor', ['85']);
+  await expect(opt(0, 0)).toBeEnabled({ timeout: 30000 });
+  await opt(0, 0).click();
+  await expect(page.locator('#r_chain .mcq-fb.pass')).toBeVisible();
 
-  await page.click('#btn_check_run');
-  await expect(page.locator('#szOverlay')).toHaveClass(/open/, { timeout: 10000 });
+  await expect(page.locator('#r_chain')).toContainText('Run 2 of 3', { timeout: 10000 });
+  await runWith(page, 'R', 'r_editor', ['5']);
+  await expect(opt(1, 0)).toBeEnabled({ timeout: 30000 });
+  await opt(1, 0).click();
+  await expect(page.locator('#r_chain')).toContainText('Run 3 of 3', { timeout: 10000 });
+  await runWith(page, 'R', 'r_editor', ['50']);
+  await expect(opt(2, 0)).toBeEnabled({ timeout: 30000 });
+  await opt(2, 0).click();
+
+  // the report replays the run with 5, not the last run
+  await expect(page.locator('#szOverlay')).toHaveClass(/open/, { timeout: 15000 });
   await expect(page.locator('#szImpact .sz-feed-term .ln.hit')).toContainText('BEHIND YOU');
   await expect(page.locator('#szImpact svg')).toContainText('CONTACT · BEHIND YOU');
   await expect(page.locator('#szImpact .sz-impact-cap')).toContainText("IT'S RIGHT BEHIND YOU");

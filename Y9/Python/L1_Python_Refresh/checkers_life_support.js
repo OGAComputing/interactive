@@ -156,6 +156,10 @@ export function breakCode(raw) {
 const fixedAndRun = (raw, ctx) =>
   isBugFixed(raw) && !!ctx.lastRun?.ok && ctx.lastRun.code.trim() === raw.trim();
 
+// The "Run it" bullets: the last run was of the code on screen, and it finished. A run from
+// before the change (or of code edited since) doesn't count, so the answer is about what they saw.
+const ranThis = (raw, ctx) => !!ctx.lastRun?.ok && ctx.lastRun.code.trim() === raw.trim();
+
 // Why the "fix it" bullet is crossed — including the student who deletes the broken line
 // instead of fixing it (the fix bullet only ticks while the FIXED line is present).
 function fixHint(raw, ctx) {
@@ -166,6 +170,8 @@ function fixHint(raw, ctx) {
   return 'Now press ▶ Run code to check your fix works.';
 }
 
+const plusOne = raw => /\bprint\s*\(\s*(?:hours\s*\+\s*1|1\s*\+\s*hours)\s*\)/.test(normalise(raw));
+
 export const INV_CHECKS = {
   // Step 1 — without int(), hours is text, so hours * 50 repeats the text 50 times.
   inv1: {
@@ -174,6 +180,9 @@ export const INV_CHECKS = {
         ? 'Line 2 still has int( in it — delete int( and the ) that closes it, so the line starts hours = input('
         : 'Line 2 should start hours = input( — keep the input( part, just take away the int( and its closing )',
       test: hoursUncast,
+    }, {
+      hint: (raw, ctx) => ctx.lastRun?.ok ? 'Run it again after your change: type any name, then 6' : 'Press ▶ Run code, type any name, then 6',
+      test: (raw, ctx) => hoursUncast(raw) && ranThis(raw, ctx),
     }],
   },
   // Step 2 — int() back; print(hours + 1) shows + now adds (6 → 7), where text would join.
@@ -185,7 +194,11 @@ export const INV_CHECKS = {
       },
       {
         hint: 'At the bottom of the program, add the line print(hours + 1)',
-        test: raw => /\bprint\s*\(\s*(?:hours\s*\+\s*1|1\s*\+\s*hours)\s*\)/.test(normalise(raw)),
+        test: plusOne,
+      },
+      {
+        hint: (raw, ctx) => ctx.lastRun?.ok ? 'Run it again after your changes: type any name, then 6' : 'Press ▶ Run code, type any name, then 6',
+        test: (raw, ctx) => hoursCast(raw) && plusOne(raw) && ranThis(raw, ctx),
       },
     ],
   },
@@ -193,6 +206,8 @@ export const INV_CHECKS = {
   inv3: {
     reqs: [
       { hint: 'Press 😈 Break it to add the broken line.', test: (raw, ctx) => ctx.breaks >= 1 },
+      // ctx.errored: a run of the broken line stopped with the TypeError (the page sets it).
+      { hint: 'Press ▶ Run code and type your answers, so the broken line runs and Python stops with a TypeError', test: (raw, ctx) => ctx.breaks >= 1 && !!ctx.errored },
       { hint: fixHint, test: (raw, ctx) => ctx.breaks >= 1 && fixedAndRun(raw, ctx) },
     ],
   },

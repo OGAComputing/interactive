@@ -16,6 +16,8 @@ const STARTER = [
 ];
 const withLine = (i, line) => STARTER.map((l, k) => (k === i ? line : l));
 const ran = (src, ok = true) => ({ code: src, ok });
+// Steps 1–2 end with a "Run it" bullet: hand evalInv a finished run of the same code.
+const runOf = src => ({ lastRun: ran(src) });
 
 test('test answers match the values the checkers expect', () => {
   expect(MOD_INPUTS.mod1).toEqual(['Riley', '6', '3']);
@@ -26,30 +28,41 @@ test('test answers match the values the checkers expect', () => {
 // ─── Investigate ─────────────────────────────────────────────────────────────
 
 describe('evalInv step 1 — delete int()', () => {
-  test('hours = input(...) passes; still cast fails with a hint', () => {
-    expect(evalInv(1, code(...withLine(1, 'hours = input("Hours left? ")'))).pass).toBe(true);
+  test('hours = input(...) passes once run; still cast fails with a hint', () => {
+    const src = code(...withLine(1, 'hours = input("Hours left? ")'));
+    expect(evalInv(1, src).results).toEqual([true, false]);
+    expect(evalInv(1, src).msg).toMatch(/Press ▶ Run code/);
+    expect(evalInv(1, src, { lastRun: ran(code(...STARTER)) }).msg).toMatch(/Run it again after your change/);
+    expect(evalInv(1, src, runOf(src)).pass).toBe(true);
     const r = evalInv(1, code(...STARTER));
     expect(r.pass).toBe(false);
     expect(r.msg).toMatch(/still has int\(/);
   });
   test('casting on a later line still counts as cast', () => {
-    expect(evalInv(1, code(...withLine(1, 'hours = input("Hours left? ")'), 'hours = int(hours)')).pass).toBe(false);
+    const src = code(...withLine(1, 'hours = input("Hours left? ")'), 'hours = int(hours)');
+    expect(evalInv(1, src, runOf(src)).pass).toBe(false);
   });
 });
 
 describe('evalInv step 2 — int() back on line 2, then print(hours + 1)', () => {
   const PLUS = 'print(hours + 1)';
   test('uncast fails, cast passes (either way of casting)', () => {
-    expect(evalInv(2, code(...withLine(1, 'hours = input("Hours left? ")'), PLUS)).results).toEqual([false, true]);
-    expect(evalInv(2, code(...STARTER, PLUS)).pass).toBe(true);
-    expect(evalInv(2, code(...withLine(1, 'hours = input("Hours left? ")'), 'hours = int(hours)', PLUS)).pass).toBe(true);
+    const uncast = code(...withLine(1, 'hours = input("Hours left? ")'), PLUS);
+    expect(evalInv(2, uncast, runOf(uncast)).results).toEqual([false, true, false]);
+    const cast = code(...STARTER, PLUS);
+    expect(evalInv(2, cast).results).toEqual([true, true, false]);   // not run yet
+    expect(evalInv(2, cast, runOf(cast)).pass).toBe(true);
+    const later = code(...withLine(1, 'hours = input("Hours left? ")'), 'hours = int(hours)', PLUS);
+    expect(evalInv(2, later, runOf(later)).pass).toBe(true);
   });
   test('the print(hours + 1) line is required; spacing and order are flexible', () => {
     const r = evalInv(2, code(...STARTER));
-    expect(r.results).toEqual([true, false]);
+    expect(r.results).toEqual([true, false, false]);
     expect(r.msg).toMatch(/print\(hours \+ 1\)/);
-    expect(evalInv(2, code(...STARTER, 'print( 1+hours )')).pass).toBe(true);
-    expect(evalInv(2, code(...STARTER, '# print(hours + 1)')).pass).toBe(false);
+    const flex = code(...STARTER, 'print( 1+hours )');
+    expect(evalInv(2, flex, runOf(flex)).pass).toBe(true);
+    const commented = code(...STARTER, '# print(hours + 1)');
+    expect(evalInv(2, commented, runOf(commented)).pass).toBe(false);
   });
 });
 
@@ -57,25 +70,28 @@ describe('evalInv step 3 — Break it, fix with str()', () => {
   const broken = code(...STARTER, IBUG_LINE);
   const fixed  = code(...STARTER, IBUG_FIXED_LINE);
 
-  test('needs a Break it press, then a fixed line that has been run', () => {
-    expect(evalInv(3, code(...STARTER)).results).toEqual([false, false]);
-    expect(evalInv(3, broken, { breaks: 1, lastRun: ran(broken, false) }).results).toEqual([true, false]);
-    expect(evalInv(3, fixed, { breaks: 1, lastRun: ran(fixed) }).pass).toBe(true);
+  test('needs a Break it press, the TypeError seen, then a fixed line that has been run', () => {
+    expect(evalInv(3, code(...STARTER)).results).toEqual([false, false, false]);
+    expect(evalInv(3, broken, { breaks: 1 }).results).toEqual([true, false, false]);
+    expect(evalInv(3, broken, { breaks: 1 }).msg).toMatch(/TypeError/);
+    expect(evalInv(3, broken, { breaks: 1, errored: true, lastRun: ran(broken, false) }).results).toEqual([true, true, false]);
+    expect(evalInv(3, fixed, { breaks: 1, lastRun: ran(fixed) }).pass).toBe(false);   // fixed without seeing the error
+    expect(evalInv(3, fixed, { breaks: 1, errored: true, lastRun: ran(fixed) }).pass).toBe(true);
   });
   test('fixed but not yet run asks for a run', () => {
-    const r = evalInv(3, fixed, { breaks: 1, lastRun: ran(broken, false) });
+    const r = evalInv(3, fixed, { breaks: 1, errored: true, lastRun: ran(broken, false) });
     expect(r.pass).toBe(false);
     expect(r.msg).toMatch(/Run code/);
   });
   test('deleting the broken line instead of fixing it is not accepted', () => {
     const src = code(...STARTER);
-    const r = evalInv(3, src, { breaks: 1, lastRun: ran(src) });
+    const r = evalInv(3, src, { breaks: 1, errored: true, lastRun: ran(src) });
     expect(r.pass).toBe(false);
     expect(r.msg).toMatch(/don't delete it/);
   });
   test('a working near-miss gets a "Nearly!" hint, not "has gone"', () => {
     const src = code(...STARTER, 'print("Oxygen per hour: " + "50")');
-    const r = evalInv(3, src, { breaks: 1, lastRun: ran(src) });
+    const r = evalInv(3, src, { breaks: 1, errored: true, lastRun: ran(src) });
     expect(r.pass).toBe(false);
     expect(r.msg).toMatch(/^Nearly!/);
   });

@@ -82,7 +82,7 @@ export const deniedCount = output => lineCount(output, DENIED);
 export function runKind(output) {
   if (!OPEN.test(String(output || ''))) return null;
   const n = deniedCount(output);
-  return n === 0 ? 'first' : n >= 3 ? 'three' : null;
+  return n === 0 ? 'first' : n === 1 ? 'one' : n >= 3 ? 'three' : null;
 }
 
 // The codes typed into a run, read off the echoed prompt lines ("Enter airlock code: 1234").

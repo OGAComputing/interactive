@@ -215,7 +215,7 @@ test('Investigate bug step: Break it gives a NameError; fixing the capital N com
   await page.click('#stage-I button:has-text("Run code")');
   await answerPrompts(page, 'i_editor', ['Sam', 'Pilot']);
   await expect(page.locator('#i_fb_run')).toHaveClass(/pass/, { timeout: 30000 });
-  await expect(page.locator('#req_i_2 li:not(.req-note)')).toHaveClass([/req-pass/, /req-pass/]);
+  await expect(page.locator('#req_i_2 li:not(.req-note)')).toHaveClass([/req-pass/, /req-pass/, /req-pass/]);
   await page.check('input[name="i2_mcq"][value="option_a"]');
   await page.click('#btn_check_i2');
   await expect(page.locator('#stage-M1')).toHaveClass(/active/, { timeout: 10000 });
@@ -234,7 +234,7 @@ test('scrolled down, the pinned bug step shows only its requirements, without mo
   await expect(card.locator('.q-label')).toBeHidden();
   await expect(card.locator('li.req-note')).toBeHidden();
   await expect(card.locator('button:has-text("Break it")')).toBeVisible();
-  await expect(card.locator('#req_i_2 li:not(.req-note)')).toHaveCount(2);
+  await expect(card.locator('#req_i_2 li:not(.req-note)')).toHaveCount(3);
   expect(await editorTop()).toBeCloseTo(before, 0);
   await page.evaluate(() => scrollTo(0, 0));
   await expect(page.locator('#i_steps')).not.toHaveClass(/is-stuck/);

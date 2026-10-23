@@ -71,10 +71,11 @@ describe('ownOutput / askedCount / Run helpers', () => {
   test('a prompt containing Unlocked never counts as the program printing it', () => {
     expect(ownOutput('Guess to get it unlocked: 62\nDone\n', ['62'])).toBe('Done');
   });
-  test('runKind: right first time, or at least three wrong codes', () => {
+  test('runKind: right first time, one wrong code, or at least three wrong codes', () => {
     expect(runKind(run(keypad(), ['4271']))).toBe('first');
     expect(runKind(run(keypad(), ['1', '2', '3', '4271']))).toBe('three');
-    expect(runKind(run(keypad(), ['1', '4271']))).toBe(null);
+    expect(runKind(run(keypad(), ['1', '4271']))).toBe('one');
+    expect(runKind(run(keypad(), ['1', '2', '4271']))).toBe(null);
     expect(deniedCount(run(keypad(), ['1', '2', '4271']))).toBe(2);
   });
   test('typedCodes reads the codes off the echoed prompts', () => {

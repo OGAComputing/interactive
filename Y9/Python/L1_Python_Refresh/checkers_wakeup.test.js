@@ -14,6 +14,8 @@ const STARTER = [
 ];
 const withLine = (i, line) => STARTER.map((l, k) => (k === i ? line : l));
 const ran = (src, ok = true) => ({ code: src, ok });
+// Step 1's change, judged on its first bullet (the second is the run).
+const changed = src => evalInv(1, src).results[0];
 
 test('test answers match the values the checkers expect', () => {
   expect(MOD_INPUTS.mod2).toEqual(['Riley', 'Engineer', '4']);
@@ -24,14 +26,22 @@ test('test answers match the values the checkers expect', () => {
 
 describe('evalInv step 1 — change the question text', () => {
   test('untouched starter code is not accepted', () => {
-    expect(evalInv(1, code(...STARTER)).pass).toBe(false);
+    expect(changed(code(...STARTER))).toBe(false);
   });
-  test('any new question text passes, either quote style', () => {
-    expect(evalInv(1, code(...withLine(1, 'role = input("What is your job? ")'))).pass).toBe(true);
-    expect(evalInv(1, code(...withLine(1, "role = input('Job? ')"))).pass).toBe(true);
+  test('any new question text counts, either quote style', () => {
+    expect(changed(code(...withLine(1, 'role = input("What is your job? ")')))).toBe(true);
+    expect(changed(code(...withLine(1, "role = input('Job? ')")))).toBe(true);
   });
   test('only changing spacing is not a new question', () => {
-    expect(evalInv(1, code(...withLine(1, 'role = input("Enter your job:")'))).pass).toBe(false);
+    expect(changed(code(...withLine(1, 'role = input("Enter your job:")')))).toBe(false);
+  });
+  test('the step needs a run of the changed code', () => {
+    const src = code(...withLine(1, 'role = input("What is your job? ")'));
+    expect(evalInv(1, src).results).toEqual([true, false]);
+    expect(evalInv(1, src).msg).toMatch(/Press ▶ Run code/);
+    expect(evalInv(1, src, { lastRun: ran(code(...STARTER)) }).msg).toMatch(/Run it again after your change/);
+    expect(evalInv(1, src, { lastRun: ran(src, false) }).pass).toBe(false);   // crashed or stopped
+    expect(evalInv(1, src, { lastRun: ran(src) }).pass).toBe(true);
   });
   test('breaking the input line gets a specific hint', () => {
     const r = evalInv(1, code(...withLine(1, 'role = "What is your job? "')));
@@ -44,25 +54,28 @@ describe('evalInv step 2 — Break it, fix the capital N', () => {
   const broken = code(...STARTER, IBUG_LINE);
   const fixed  = code(...STARTER, IBUG_FIXED_LINE);
 
-  test('needs a Break it press, then a fixed line that has been run', () => {
-    expect(evalInv(2, code(...STARTER)).results).toEqual([false, false]);
-    expect(evalInv(2, broken, { breaks: 1, lastRun: ran(broken, false) }).results).toEqual([true, false]);
-    expect(evalInv(2, fixed, { breaks: 1, lastRun: ran(fixed) }).pass).toBe(true);
+  test('needs a Break it press, the NameError seen, then a fixed line that has been run', () => {
+    expect(evalInv(2, code(...STARTER)).results).toEqual([false, false, false]);
+    expect(evalInv(2, broken, { breaks: 1 }).results).toEqual([true, false, false]);
+    expect(evalInv(2, broken, { breaks: 1 }).msg).toMatch(/NameError/);
+    expect(evalInv(2, broken, { breaks: 1, errored: true, lastRun: ran(broken, false) }).results).toEqual([true, true, false]);
+    expect(evalInv(2, fixed, { breaks: 1, lastRun: ran(fixed) }).pass).toBe(false);   // fixed without seeing the error
+    expect(evalInv(2, fixed, { breaks: 1, errored: true, lastRun: ran(fixed) }).pass).toBe(true);
   });
   test('fixed but not yet run asks for a run', () => {
-    const r = evalInv(2, fixed, { breaks: 1, lastRun: ran(broken, false) });
+    const r = evalInv(2, fixed, { breaks: 1, errored: true, lastRun: ran(broken, false) });
     expect(r.pass).toBe(false);
     expect(r.msg).toMatch(/Run code/);
   });
   test('deleting the broken line instead of fixing it is not accepted', () => {
     const src = code(...STARTER);
-    const r = evalInv(2, src, { breaks: 1, lastRun: ran(src) });
+    const r = evalInv(2, src, { breaks: 1, errored: true, lastRun: ran(src) });
     expect(r.pass).toBe(false);
     expect(r.msg).toMatch(/don't delete it/);
   });
   test('a working near-miss gets a "Nearly!" hint', () => {
     const src = code(...STARTER, 'print("Access granted to " + role)');
-    const r = evalInv(2, src, { breaks: 1, lastRun: ran(src) });
+    const r = evalInv(2, src, { breaks: 1, errored: true, lastRun: ran(src) });
     expect(r.pass).toBe(false);
     expect(r.msg).toMatch(/^Nearly!/);
   });

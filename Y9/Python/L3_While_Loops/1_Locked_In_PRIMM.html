@@ -1074,7 +1074,13 @@ color:  teal
   .band-table th { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); background: var(--card-raised); }
   .band-table tr:last-child td { border-bottom: none; }
   .task-tests { margin: 0.4rem 0 0; font-size: 0.82rem; color: var(--muted); font-style: italic; }
-  #req_r { margin-bottom: 1rem; }
+  /* Run stage: run, then question (renderRunChain) */
+  .rc-task { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; font-weight: 600; color: var(--cobalt-text); background: var(--cobalt-tint); border-radius: 6px; padding: 0.5rem 0.75rem; margin: 0.5rem 0 0.2rem; }
+  .rc-task.ran { color: var(--green-text); background: var(--green-bg); }
+  .rc-note { font-size: 0.85rem; color: var(--muted); margin: 0.3rem 0 0; }
+  .rc-q .radio-opt input:disabled + span { cursor: default; }
+  .rc-q.locked .radio-opt { opacity: 0.5; pointer-events: none; }
+  .rc-review { margin-top: 0.8rem; padding-top: 0.6rem; border-top: 1px solid var(--border); }
 
   @media (max-width: 600px) {
     .sz-impact-body { grid-template-columns: 1fr; gap: 0.5rem; }
@@ -1514,15 +1520,9 @@ color:  teal
 
   <div class="info-box">
     <span class="icon">🖥️</span>
-    <span>This is the program you just predicted. Run it <strong>twice</strong>, typing each code in the output panel and pressing Enter.
-    Each run ticks off when you've done it. Compare what appears with your predictions.</span>
+    <span>This is the program you just predicted. You'll run it <strong>three times</strong>, typing each code in the output panel and pressing Enter.
+    After each run, answer the question under the editor about what printed, and why.</span>
   </div>
-
-  <!-- Ticked by what each successful run printed (runKind in checkers.js). -->
-  <ul class="req-list" id="req_r">
-    <li><span>1</span><span class="req-text">Run it and type the right code, <strong>4271</strong>, the first time</span></li>
-    <li><span>2</span><span class="req-text">Run it again: type <strong>at least 3 wrong codes</strong>, then <strong>4271</strong></span></li>
-  </ul>
 
   <div class="code-checker">
     <textarea class="checker-textarea" id="r_editor" data-title="Airlock keypad"></textarea>
@@ -1535,12 +1535,11 @@ color:  teal
 
   <div class="hint-box">💡 Watch the highlight jump <strong>back up</strong> to line 2 after line 4: that's the loop. Python checks the condition again each time round, and stops once it's False.</div>
 
+  <!-- One run at a time, each followed by a question about it (RUN_ROUNDS / renderRunChain).
+       The question unlocks only after a run with that round's input; a wrong answer means
+       running it again before another try. -->
   <div class="q-card" id="qcard_r1">
-    <label class="q-label" for="r1"><span class="q-num">1</span> When you typed 4271 the first time, did ACCESS DENIED print? Why? Was it what you predicted?</label>
-    <textarea id="r1" placeholder="Write what appeared, and why…" oninput="saveState(); clearRunError('qcard_r1')"></textarea>
-    <button class="btn btn-check" id="btn_check_run" onclick="tryCompleteRun()" style="margin-top:0.8rem">
-      ⚡ Check response
-    </button>
+    <div id="r_chain" aria-live="polite"></div>
   </div>
 </section>
 
@@ -3229,11 +3228,35 @@ const STEP_COUNT_M1 = 4;   // m1_step_1…m1_step_4
 // The standard bug step (breakCode in checkers.js) deletes the line inside the loop that asks
 // for the code again: the loop never ends, and the runner stops it after 4 s (InfiniteLoopError).
 
-// The two runs the Run stage asks for, in the order of the #req_r bullets (runKind in checkers.js).
-const RUN_KINDS = ['first', 'three'];
+// The Run stage's rounds, in order (renderRunChain): each key is a runKind (checkers.js). The run
+// that skips the loop comes last. RUN_FEED_KEY is the run the situation report replays.
+const RUN_ROUNDS = [
+  { key: 'one', task: 'Run it: type a wrong code such as <strong>1234</strong>, then <strong>4271</strong>',
+    redo: 'Run it again: one wrong code, then 4271. Then answer.',
+    q: 'You typed one wrong code, then 4271. What printed, and why?',
+    opts: ['ACCESS DENIED once, then Airlock open: the loop ran once', 'Airlock open twice, once for each code typed',
+      'ACCESS DENIED twice, once for each code typed', 'Only Airlock open, as the last code was right'],
+    right: 'Yes. The wrong code made the condition True, so the loop body ran once: ACCESS DENIED, then it asked again. 4271 made it False, so the loop ended and Airlock open printed.',
+    wrong: 'Not quite. Count the ACCESS DENIED lines in your output, then read line 2: is the condition True or False for each code?' },
+  { key: 'three', task: 'Run it again: type <strong>at least 3 wrong codes</strong>, then <strong>4271</strong>',
+    redo: 'Run it again: at least 3 wrong codes, then 4271. Watch the highlight, then answer.',
+    q: 'You typed 3 or more wrong codes before 4271. Which lines repeated?',
+    opts: ['Lines 3 and 4, once for each wrong code typed', 'Lines 1 to 5, once for each code you typed',
+      'Only line 3, as line 4 runs after the loop', 'Line 5, as Airlock open prints after each code'],
+    right: 'Yes. Lines 3 and 4 are indented under the while, so they repeat while the condition is True. Line 1 runs once before the loop, and line 5 once after it.',
+    wrong: 'Not quite. Watch the highlight as it runs: which lines does it jump back to? Check which lines are indented under the while.' },
+  { key: 'first', task: 'Run it once more: type <strong>4271</strong> the first time',
+    redo: 'Run it again and type 4271 the first time, then answer.',
+    q: 'You typed 4271 the first time. Did ACCESS DENIED print? Why?',
+    opts: ['No: 4271 != "4271" was False, so the loop never ran', 'Yes, once: a while loop always runs at least once',
+      'Yes, once: the condition is checked at the end', 'No: Python skipped line 1 as the code was right'],
+    right: 'Yes. Python checks the condition at the top, before the loop body runs. "4271" != "4271" is False, so the body never ran and Python went straight to Airlock open.',
+    wrong: 'Not quite. Look at your output: was there an ACCESS DENIED line? Then work out line 2 for 4271: is "4271" != "4271" True or False?' },
+];
+const RUN_FEED_KEY = 'three';
 
 // localStorage field lists
-const TEXT_FIELDS  = ['r_editor', 'r1', 'i_editor', 'm1_editor', 'm2_editor'];   // Investigate step 2 is a question chain, saved as state.i2Chain
+const TEXT_FIELDS  = ['r_editor', 'i_editor', 'm1_editor', 'm2_editor'];   // Investigate step 2 is a question chain, saved as state.i2Chain
 const RADIO_GROUPS = ['i_choice', 'm1_choice', 'm2_choice', 'p_mcq1', 'p_mcq2', 'p_mcq3', 'p_mcq4', 'i1_mcq', 'i3_mcq', 'i4_mcq'];
 
 
@@ -3370,8 +3393,13 @@ let iBugProgress = state.iBugProgress || {};
 // student ran the code as it stands now.
 let iLastRun = state.iLastRun || null;
 let firstRunShown = false;
-// Run stage: which of the two runs (RUN_KINDS) the student has done (ticks #req_r).
-let rRan = state.rRan || {};
+// Run stage: the run-then-question rounds (RUN_ROUNDS, renderRunChain).
+function newRunChain() {
+  return { q: 0, ran: false, order: RUN_ROUNDS.map(() => shuffled(4)), fb: null, note: '', done: false, feed: '' };
+}
+let rChain = state.rChain && Array.isArray(state.rChain.order) && state.rChain.order.length === RUN_ROUNDS.length
+  ? state.rChain : newRunChain();
+let rBusy = false;   // between a right answer and the next round appearing
 // STATION ZERO hook: the last successful output per editor, so a stage's situation
 // report can play what the student's code printed into the station (the live feed).
 const storyFeed = {};
@@ -3442,7 +3470,7 @@ function saveState() {
   state.i2Chain  = i2Chain;
   state.iBugProgress = iBugProgress;
   state.iLastRun = iLastRun;
-  state.rRan = rRan;
+  state.rChain = rChain;
   state.iCodeSnapshots  = iCodeSnapshots;
   state.iCodeDraft      = iCodeDraft;
   state.m1CodeSnapshots = m1CodeSnapshots;
@@ -3749,7 +3777,7 @@ function showStage(s, persist = true) {
     const ta = document.getElementById('r_editor');
     if (!ta.value) ta.value = STARTER_CODE;
     refreshEditor(ta);
-    renderRunTicks();
+    renderRunChain();
   }
   if (s === 'I') {
     const ta = document.getElementById('i_editor');
@@ -3807,6 +3835,7 @@ const P_DENIALS = { option_a: '1', option_b: '3', option_c: '0', option_d: '2' }
 
 function stageFeed(s) {
   if (s === 'P') return P_DENIALS[document.querySelector('input[name="p_mcq1"]:checked')?.value] || '';
+  if (s === 'R' && rChain.feed) return rChain.feed;
   return storyFeed[{ R: 'r_editor', I: 'i_editor', M1: 'm1_editor' }[s]] || '';
 }
 
@@ -3850,8 +3879,7 @@ async function runCodeInEditor(editorId, statusElId, inputs = null) {
     setTimeout(() => spotlightOutput(editorId), 150);
   }
   if (editorId === 'r_editor' && result.ok) {
-    const kind = runKind(result.output);
-    if (kind) { rRan[kind] = true; renderRunTicks(); saveState(); }
+    runChainRan(runKind(result.output), result.output);
   }
 
   if (editorId === 'i_editor') {
@@ -4246,57 +4274,91 @@ function clearRunError(cardId) {
   document.getElementById(cardId)?.classList.remove('error');
 }
 
-// Tick off each run the Run stage asks for, once a run like it has worked.
-function renderRunTicks() {
-  renderReqResults(document.getElementById('req_r'), RUN_KINDS.map(k => (rRan[k] ? true : undefined)));
+// ── Run: run it, then answer ──────────────────────────
+//
+// RUN_ROUNDS, one at a time: the student runs the program with that round's input, then answers
+// a question about what printed and why. The question stays locked until a run whose key
+// (runKey in runCodeInEditor) matches the round. A wrong answer gives a hint that points back at
+// the output (never the answer), reshuffles the options and locks them again until the student
+// runs it with that input again. The first option in every `opts` list is the right one.
+// Called after every successful Run-stage run with that run's key and output.
+function runChainRan(key, output) {
+  if (rChain.done || rBusy) return;
+  const round = RUN_ROUNDS[rChain.q];
+  if (key === RUN_FEED_KEY) rChain.feed = output;   // the run the situation report replays
+  if (key === round.key) { rChain.ran = true; rChain.fb = null; rChain.note = ''; }
+  else if (!rChain.ran) rChain.note = 'That run doesn\'t match this question. ' + round.redo;
+  saveState();
+  renderRunChain();
+}
+
+function renderRunChain() {
+  const box = document.getElementById('r_chain');
+  if (!box) return;
+  const done = rChain.done || completedStages.includes('R');
+  const total = RUN_ROUNDS.length;
+  const hint = document.getElementById('r_hint');
+  if (hint) hint.hidden = !done;
+  const optsHtml = (k, locked, showRight) => rChain.order[k].map(o => `
+      <label class="radio-opt${showRight && o === 0 ? ' correct' : ''}"><input type="radio" name="rc_${k}" value="${o}"
+        ${showRight && o === 0 ? 'checked' : ''} ${locked ? 'disabled' : ''} onchange="answerRun(${k}, ${o})"> <span>${RUN_ROUNDS[k].opts[o]}</span></label>`).join('');
+  if (done) {
+    box.innerHTML = `<div class="q-label"><span class="q-num">✓</span> All ${total} runs done and explained</div>`
+      + RUN_ROUNDS.map((r, k) => `<div class="rc-q rc-review"><div class="q-label">${k + 1}. ${r.q}</div>
+          <div class="radio-opts" style="margin-top:0.4rem">${optsHtml(k, true, true)}</div></div>`).join('');
+    return;
+  }
+  const k = rChain.q, r = RUN_ROUNDS[k];
+  const dots = [...Array(total).keys()].map(i =>
+    `<span class="i2c-dot${i < k ? ' ok' : i === k ? ' now' : ''}"></span>`).join('');
+  const fb = rChain.fb ? `<div class="mcq-fb ${rChain.fb.ok ? 'pass' : 'fail'}">${rChain.fb.ok ? '✔ ' : '✘ '}${rChain.fb.text}</div>` : '';
+  box.innerHTML = `<div class="i2c-progress">${dots}<span>Run ${k + 1} of ${total}</span></div>`
+    + `<div class="rc-task${rChain.ran ? ' ran' : ''}">${rChain.ran ? '✓' : '▶'} ${r.task}${rChain.ran ? '' : ' (in the editor above)'}</div>`
+    + (rChain.note ? `<p class="rc-note">${rChain.note}</p>` : '')
+    + `<div class="rc-q${rChain.ran ? '' : ' locked'}"><div class="q-label" style="margin-top:0.6rem">${r.q}</div>
+        ${rChain.ran ? '' : '<p class="rc-note">The answers unlock once you\'ve done this run.</p>'}
+        <div class="radio-opts" style="margin-top:0.4rem">${optsHtml(k, !rChain.ran || rBusy, false)}</div>${fb}</div>`;
+}
+
+function answerRun(k, opt) {
+  if (window.Classroom?.verifyAuth() === false) return;
+  if (rBusy || rChain.done || k !== rChain.q || !rChain.ran) return;
+  const r = RUN_ROUNDS[k];
+  const card = document.getElementById('qcard_r1');
+  if (opt !== 0) {
+    // Wrong: explain where to look, then lock until it's run again with this input.
+    rChain.fb = { ok: false, text: r.wrong + ' ' + r.redo };
+    rChain.ran = false;
+    rChain.order[k] = shuffled(4);
+    saveState();
+    renderRunChain();
+    card?.classList.add('error');
+    return;
+  }
+  card?.classList.remove('error');
+  rChain.fb = { ok: true, text: r.right };
+  rBusy = true;
+  renderRunChain();
+  document.querySelector(`input[name="rc_${k}"][value="0"]`)?.closest('.radio-opt')?.classList.add('correct');
+  window.ActivityUI?.miniCelebration(card);
+  if (k + 1 >= RUN_ROUNDS.length) {
+    rChain.done = true;
+    saveState();
+    tryCompleteRun();
+    return;
+  }
+  rChain.q = k + 1;
+  rChain.ran = false;
+  saveState();
+  setTimeout(() => { rBusy = false; rChain.fb = null; renderRunChain(); }, AUTO_ADVANCE_MS * 2);
 }
 
 function tryCompleteRun() {
-  if (window.Classroom?.verifyAuth() === false) return;
-  let allOk = true;
-  let firstError = null;
-
-  // Both runs must have been done, so the loop has been seen both skipped and repeating.
-  const missing = RUN_KINDS.filter(k => !rRan[k]);
-  if (missing.length) {
-    renderReqResults(document.getElementById('req_r'), RUN_KINDS.map(k => !!rRan[k]));
-    const r1c = document.getElementById('qcard_r1');
-    r1c?.classList.add('error');
-    fieldHint(r1c, (missing[0] === 'first' ? 'Run it and type 4271 the first time' : 'Run it with at least 3 wrong codes, then 4271') + ' — each run ticks off at the top.');
-    document.getElementById('req_r')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    return;
-  }
-
-  const r1val  = (document.getElementById('r1')?.value || '').trim();
-  const r1card = document.getElementById('qcard_r1');
-  let r1msg = null;
-  if (r1val.split(/\s+/).length < 4) r1msg = 'Write a sentence — did ACCESS DENIED print when you typed 4271 first, and why?';
-  else if (isNonsense(r1val))        r1msg = "That doesn't look like a real answer — give it another try.";
-  else if (!/\bno\b|not|never|didn|skip|false|right|correct|top|start|before|straight|equal|condition/i.test(r1val))
-    r1msg = 'Say whether ACCESS DENIED printed, and why: look at the condition on line 2.';
-  if (r1msg) {
-    allOk = false;
-    r1card?.classList.add('error');
-    r1card?.classList.remove('is-right');
-    fieldHint(r1card, r1msg);
-    if (!firstError) firstError = r1card;
-  } else {
-    r1card?.classList.remove('error');
-    r1card?.classList.add('is-right');
-    fieldHint(r1card, '');
-    window.ActivityUI?.miniCelebration(r1card);
-  }
-
-  if (allOk) {
-    const btn = document.getElementById('btn_check_run');
-    if (btn) { btn.disabled = true; btn.textContent = '✅ Moving to Investigate…'; }
-    clearSyntaxHint(document.getElementById('r_editor'));
-    window.ActivityUI?.showToast('✅ Great — moving to Investigate!');
-    submitScore();
-    setTimeout(() => completeStage('R'), 1500);
-  } else {
-    firstError?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }
+  if (!rChain.done || completedStages.includes('R')) return;
+  clearSyntaxHint(document.getElementById('r_editor'));
+  window.ActivityUI?.showToast('✅ Great — moving to Investigate!');
+  submitScore();
+  setTimeout(() => { rBusy = false; rChain.fb = null; completeStage('R'); renderRunChain(); }, AUTO_ADVANCE_MS * 2);
 }
 
 // ── Investigate ───────────────────────────────────────
@@ -5073,7 +5135,7 @@ function recordM1Attempt() {
 Object.assign(window, {
   showStage, saveState,
   clearPredictError, checkPredictMCQ, advancePredict,
-  clearRunError, tryCompleteRun,
+  clearRunError, tryCompleteRun, answerRun,
   tryCompleteInvestigate, nextStep,
   checkMod, completeStage, pickChoice,
   checkMake, checkExt, pickMakeChoice,

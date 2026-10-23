@@ -1510,7 +1510,7 @@ color:  teal
       <label class="q-label"><span class="q-num" style="background:var(--stage-i)">1</span> What does <code>int()</code> really do? In the editor below:</label>
       <ul class="req-list" id="req_i_1">
         <li><span>1</span><span class="req-text">On line 2, delete <code>int(</code> and the <code>)</code> that closes it, so the line starts <code>hours = input(</code></span></li>
-        <li class="req-note">Press <strong>▶ Run code</strong>, type any name, then <strong>6</strong>, and look <strong>very</strong> closely at the last line of output.</li>
+        <li><span>2</span><span class="req-text">Press <strong>▶ Run code</strong>, type any name, then <strong>6</strong>, and look <strong>very</strong> closely at the last line of output.</span></li>
       </ul>
     </div>
 
@@ -1519,7 +1519,7 @@ color:  teal
       <ul class="req-list" id="req_i_2">
         <li><span>1</span><span class="req-text">Put <code>int(</code> back on line 2 — with its closing <code>)</code> at the end — so the line starts <code>hours = int(input(</code></span></li>
         <li><span>2</span><span class="req-text">At the <strong>bottom</strong> of the program, add a new line: <code>print(hours + 1)</code></span></li>
-        <li class="req-note">Press <strong>▶ Run code</strong>, type any name, then <strong>6</strong>, and look at the last line of output.</li>
+        <li><span>3</span><span class="req-text">Press <strong>▶ Run code</strong>, type any name, then <strong>6</strong>, and look at the last line of output.</span></li>
       </ul>
     </div>
 
@@ -1528,8 +1528,8 @@ color:  teal
       <label class="q-label"><span class="q-num" style="background:var(--stage-i)">3</span> Storm damage: one more error to read — and this time you fix it.</label>
       <ul class="req-list" id="req_i_3">
         <li><span>1</span><span class="req-text">Press <button class="btn btn-check btn-inline" type="button" onclick="breakItDemo()">😈 Break it</button> It adds one broken line and runs it: <strong>line <span id="ibug_line">the last line</span></strong>, <code>print("Oxygen per hour: " + 50)</code>. It joins text to the <strong>number</strong> 50 with <code>+</code>.</span></li>
-        <li class="req-note">Type <strong>6</strong> this time. Python stops with a red <strong>TypeError</strong>: that's expected. Read it, or click <strong>💡 Get help</strong> for a plain-English hint.</li>
-        <li><span>2</span><span class="req-text"><strong>Fix it</strong> (don't delete it!): wrap the 50 in <code>str()</code>, which turns a number into text, so the line reads <code>print("Oxygen per hour: " + str(50))</code><br>Then press <strong>▶ Run code</strong> again until it works.</span></li>
+        <li><span>2</span><span class="req-text">Type <strong>6</strong> this time. Python stops with a red <strong>TypeError</strong>: that's expected. Read it, or click <strong>💡 Get help</strong> for a plain-English hint.</span></li>
+        <li><span>3</span><span class="req-text"><strong>Fix it</strong> (don't delete it!): wrap the 50 in <code>str()</code>, which turns a number into text, so the line reads <code>print("Oxygen per hour: " + str(50))</code><br>Then press <strong>▶ Run code</strong> again until it works.</span></li>
       </ul>
     </div>
   </div>
@@ -3104,7 +3104,7 @@ color:  teal
   ╚══════════════════════════════════════════════════════════════════════════════╝
 */
 import { normalise, has, MOD_CHECKS, MOD_PROFILES, modInputs, evalMod, rateOf, hourTotal, crewTotal, MAKE_CHECK, MAKE_PROFILES, evalMake, TRANSFER_CHOICES, EXT_CHECK, EXT_PROFILES, evalExt,
-         evalInv, isBugFixed, isBugPairLine, breakCode } from './checkers_life_support.js';
+         evalInv, isBugFixed, isBugPairLine, hasBugLine, breakCode } from './checkers_life_support.js';
 import { runPython, preload } from '../../../pyodide-runner.js';
 import { setupEditors, clearSyntaxHint, setEditorOutput, refreshEditor, runCode, replayRun } from '../../../code-editor.js';
 
@@ -3737,15 +3737,21 @@ async function runCodeInEditor(editorId, statusElId, inputs = null) {
   }
 
   if (editorId === 'i_editor') {
-    iStepRan[stepI] = true;
     iLastRun = { code: codeRun, ok: !!result.ok };
     // A Break it followed by a clean run of fixed code = one break/fix cycle.
     const bp = invBugProgress(stepI);
     if (bp.pending && result.ok && isBugFixed(codeRun)) { bp.fixes++; bp.pending = false; }
-    const checkBtn = document.getElementById('btn_check_i' + stepI);
-    if (checkBtn) checkBtn.disabled = false;
+    if (bp.breaks && !result.ok && hasBugLine(codeRun)) bp.errored = true;   // saw the planted error
     // Run alone shows progress: ✓ for each change made, ✗ for each still to do — no MCQ needed first.
-    if (iCodeSnapshots[stepI] === undefined) recordInvProgress(stepI, renderInvReqs(stepI, 'full'));
+    // Only the run a step asks for (its last bullet) unlocks that step's answer; a passed step stays unlocked.
+    if (iCodeSnapshots[stepI] === undefined) {
+      const r = renderInvReqs(stepI, 'full');
+      recordInvProgress(stepI, r);
+      if (stepI < STEP_COUNT_I && r?.results[r.results.length - 1]) iStepRan[stepI] = true;
+    } else iStepRan[stepI] = true;
+    if (stepI === STEP_COUNT_I) iStepRan[stepI] = true;   // the bug step's ticks gate it already
+    const checkBtn = document.getElementById('btn_check_i' + stepI);
+    if (checkBtn) checkBtn.disabled = !iStepRan[stepI];
     saveState();
   }
 
