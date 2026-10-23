@@ -329,6 +329,23 @@ function rewriteOperators(code, ctx) {
     for (const r of reps) s = s.slice(0, r.start) + r.replacement + s.slice(r.end);
   }
 
+  // Token rewrites must not reach inside string literals: conditions and
+  // assignments arrive here unsegmented, so `x == "false"` would otherwise
+  // become `x == "False"` and never match.
+  s = segment(s).map(seg => seg.kind === 'code' ? _rewriteTokens(seg.text) : seg.text).join('');
+
+  // String methods via receiver-walking tokenizer
+  s = _rewriteStringMethods(s);
+
+  // Inside class methods, unqualified declared attributes mean self.attribute.
+  s = segment(s).map(seg => seg.kind === 'code' ? _rewriteClassAttributes(seg.text, ctx) : seg.text).join('');
+
+  return s;
+}
+
+function _rewriteTokens(code) {
+  let s = code;
+
   // File I/O constructors
   s = s.replace(/\bopenRead\s*\(/g, '_psc_open_read(');
   s = s.replace(/\bopenWrite\s*\(/g, '_psc_open_write(');
@@ -355,12 +372,6 @@ function rewriteOperators(code, ctx) {
   s = s.replace(/\btrue\b/g, 'True');
   s = s.replace(/\bfalse\b/g, 'False');
   s = s.replace(/\bnull\b/g, 'None');
-
-  // String methods via receiver-walking tokenizer
-  s = _rewriteStringMethods(s);
-
-  // Inside class methods, unqualified declared attributes mean self.attribute.
-  s = _rewriteClassAttributes(s, ctx);
 
   return s;
 }

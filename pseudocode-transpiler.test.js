@@ -368,6 +368,13 @@ describe('operator and construct coverage', () => {
     expect(py('x = 2^8')).toContain('**');
   });
 
+  test('literals and operators inside strings in conditions are left alone', () => {
+    const out = py('while finished == "false"\n    print("x AND true")\nendwhile\nif a == "null OR not" then\nendif');
+    expect(out).toContain('while finished == "false":');
+    expect(out).toContain('if a == "null OR not":');
+    expect(out).toContain('"x AND true"');
+  });
+
   test('true false null rewrite to Python', () => {
     const out = py('x = true\ny = false\nz = null');
     expect(out).toContain('True');
