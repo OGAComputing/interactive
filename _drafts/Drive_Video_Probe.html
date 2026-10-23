@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<!-- Throwaway probe: can a school-only Google Drive video play inside a page on github.io,
+     and does a start time work in the embed? Pass the file ID in the URL so none is committed:
+     _drafts/Drive_Video_Probe.html?id=<FILE_ID>&t=8 -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Drive Video Probe</title>
+<style>
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #12151c; color: #e8eaf0; margin: 0; padding: 24px; }
+  h1 { font-size: 1.4rem; margin: 0 0 4px; }
+  p { color: #aab; max-width: 70ch; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 20px; margin-top: 20px; }
+  .card { background: #1c212c; border-radius: 10px; padding: 14px; }
+  .card h2 { font-size: 1rem; margin: 0 0 6px; }
+  .card code { font-size: .8rem; color: #8fd; word-break: break-all; }
+  iframe { width: 100%; aspect-ratio: 16 / 9; border: 0; border-radius: 6px; background: #000; margin-top: 8px; }
+  a { color: #7cc4ff; }
+  .warn { background: #3a2a10; color: #ffd27a; padding: 12px; border-radius: 8px; }
+</style>
+</head>
+<body>
+<h1>Drive Video Probe</h1>
+<p>Open this on a <strong>student account on a school PC</strong>. For each box, note: does it play, or ask you to sign in or request access? Does it start at the start time?</p>
+<div id="out"></div>
+
+<script>
+  const params = new URLSearchParams(location.search);
+  const id = params.get('id');
+  const t = params.get('t') || '8';
+  const out = document.getElementById('out');
+
+  if (!id) {
+    out.innerHTML = '<p class="warn">Add <code>?id=&lt;Drive file ID&gt;&amp;t=8</code> to the address.</p>';
+  } else {
+    const base = `https://drive.google.com/file/d/${encodeURIComponent(id)}`;
+    const embeds = [
+      ['A. Embed, no start time', `${base}/preview`],
+      [`B. Embed with ?t=${t}`, `${base}/preview?t=${t}`],
+      [`C. Embed with #t=${t}`, `${base}/preview#t=${t}`],
+    ];
+    out.innerHTML = '<div class="grid">' + embeds.map(([label, src]) =>
+      `<div class="card"><h2>${label}</h2><code>${src}</code><iframe src="${src}" allow="autoplay; fullscreen" allowfullscreen></iframe></div>`
+    ).join('') + `
+      <div class="card"><h2>D. Fallback link (new tab)</h2>
+        <p><a href="${base}/view?t=${t}" target="_blank" rel="noopener">Open in Google Drive at ${t}s ↗</a></p>
+        <p>This should always work for a signed-in student. If A–C fail but D works, use links rather than embeds.</p>
+      </div></div>`;
+  }
+</script>
+</body>
+</html>

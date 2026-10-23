@@ -91,7 +91,7 @@ Any font with an open licence may be self-hosted: SIL Open Font License (OFL), A
 Links to activities are already posted in Google Classroom, so a moved activity must keep working at its old URL. The `/move-activity` skill does all of this.
 
 1. `git mv` the HTML (and any `checkers.js` / tests beside it) to the new folder; fix test imports and URLs.
-2. Leave a redirect stub at the old path (see `Y9/Databases/Criminal_Database_Investigation.html`). It must contain a `<!-- REDIRECT` comment so the manifest build skips it, and it forwards with `location.replace(newPath + location.search + location.hash)` so `?courseId=…&proxyUrl=…` survive. Add the move to `MOVES` in `tests/redirect-stubs.spec.js`.
+2. Leave a redirect stub at the old path (see `Y9/Databases/Criminal_Database_Investigation.html`). It must contain a `<!-- REDIRECT` comment so the manifest build skips it, and it forwards with `location.replace(newPath + location.search + location.hash)` so `?courseId=…` survives. Add the move to `MOVES` in `tests/redirect-stubs.spec.js`.
 3. Add `<meta name="classroom-former-path" content="Y9/Old_Topic/File.html">` to the moved page's `<head>`. `classroom.js` matches Classroom assignments by link URL, so without it, grades from assignments posted with the old link would not be submitted.
 4. localStorage progress is per-origin, so it carries over by itself.
 
@@ -132,10 +132,9 @@ Start from `_templates/Pseudocode_Y11.html`; it wires up `pseudocode-editor.js`.
 
 ## Mandatory: Grade submission and work evidence
 
-Every activity **must** call `window.Classroom?.submitGrade(percent, activityName)` whenever a student completes a task — not just at the very end. This single call does two things:
+Every activity **must** call `window.Classroom?.submitGrade(percent, activityName)` whenever a student completes a task — not just at the very end. This single call uploads a **work evidence snapshot** (an HTML report of the student's answers, code and choices) to the student's Google Drive and attaches it to their submission. The file is updated in place, so there is always exactly one attachment.
 
-1. **Submits the draft grade** to Classroom via the teacher's proxy (if configured)
-2. **Uploads a work evidence snapshot** — an HTML report of the student's answers, code and choices — to the student's Google Drive and attaches it to their submission. The file is updated in place, so there is always exactly one attachment.
+The score travels on that file as `appProperties.ogaScore` (plus `ogaCourse`/`ogaWork`/`ogaSub`). When a teacher signs in on the hub, `syncGrades()` in `index.html` reads it and writes the draft grade with the teacher's own token. This works because the hub created the assignment with the same OAuth client. There is no grade proxy or per-teacher setup, so only assignments made with the hub's Assign button get grades.
 
 ### Rules for calling `submitGrade`
 

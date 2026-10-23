@@ -84,6 +84,16 @@
     <div id="results"></div>
   </section>
 
+  <section id="teacher-fast" hidden>
+    <h2>Teacher: fast path (one Drive search)</h2>
+    <p>Searches your Drive for files tagged <code>ogaSync=1</code> that changed after the time below, with no class or assignment picked. Attach a <em>new</em> probe file first: older probe files don't carry the tag. Then try a time just after the student's last update: the file should drop out.</p>
+    <div class="row">
+      <label>Changed since <input id="since" type="datetime-local"></label>
+      <button id="btn-fast">Search Drive</button>
+    </div>
+    <div id="fast-results"></div>
+  </section>
+
   <section>
     <h2>Log</h2>
     <div id="log"></div>
@@ -101,7 +111,7 @@
   const $ = id => document.getElementById(id);
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
-  let token = null, role = null;
+  let token = null, role = null, myEmail = '';
   let submissions = [];
 
   function log(msg) {
@@ -211,7 +221,10 @@
       log(`Submission ${sub.id} (state ${sub.state}).`);
 
       const boundary = 'probe' + Date.now().toString(36);
-      const meta = JSON.stringify({ name: `Grade sync probe (${score}%)`, mimeType: 'text/plain', appProperties: { ogaScore: score, ogaProbe: '1' } });
+      // ogaSync + IDs let the teacher find changed files with one Drive search (fast path).
+      const meta = JSON.stringify({ name: `Grade sync probe (${score}%)`, mimeType: 'text/plain', appProperties: {
+        ogaScore: score, ogaProbe: '1', ogaSync: '1', ogaCourse: courseId, ogaWork: workId, ogaSub: sub.id
+      } });
       const body = `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${meta}\r\n` +
         `--${boundary}\r\nContent-Type: text/plain; charset=UTF-8\r\n\r\nGrade sync probe file. Safe to delete.\r\n--${boundary}--`;
       const file = await api('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,appProperties', {
@@ -332,7 +345,51 @@
     btn.disabled = false;
   }
 
+  // Fast path: one paged files.list across everything shared with the teacher.
+  async function fastSearch() {
+    const btn = $('btn-fast');
+    btn.disabled = true;
+    try {
+      const sinceVal = $('since').value;
+      const sinceIso = sinceVal ? new Date(sinceVal).toISOString() : new Date(Date.now() - 86400000).toISOString();
+      const q = `appProperties has { key='ogaSync' and value='1' } and modifiedTime > '${sinceIso}' and trashed = false`;
+      log(`files.list q: ${q}`);
+      const t0 = performance.now();
+      let files = [], pageToken = '';
+      do {
+        const params = new URLSearchParams({
+          q, pageSize: '1000', corpora: 'user',
+          fields: 'files(id,name,modifiedTime,owners(emailAddress),appProperties),nextPageToken'
+        });
+        if (pageToken) params.set('pageToken', pageToken);
+        const data = await api('https://www.googleapis.com/drive/v3/files?' + params);
+        files = files.concat(data.files || []);
+        pageToken = data.nextPageToken;
+      } while (pageToken);
+      const ms = Math.round(performance.now() - t0);
+      const others = files.filter(f => (f.owners?.[0]?.emailAddress || '').toLowerCase() !== myEmail);
+      log(`${files.length} file(s) in ${ms} ms; ${others.length} owned by someone else (i.e. a student).`);
+      log(files.length && others.length
+        ? '✅ Fast path works: student files shared via Classroom are searchable by appProperties.'
+        : '❌ No student-owned files returned. Fast path would need a fallback.');
+      $('fast-results').innerHTML = files.length ? `<table>
+        <tr><th>Name</th><th>Owner</th><th>Modified</th><th>appProperties</th></tr>
+        ${files.map(f => `<tr><td>${esc(f.name)}</td><td>${esc(f.owners?.[0]?.emailAddress)}</td><td>${esc(f.modifiedTime)}</td><td class="ok">${esc(JSON.stringify(f.appProperties))}</td></tr>`).join('')}
+      </table>` : '<p style="margin-top:10px">No files.</p>';
+    } catch (e) {
+      log('❌ ' + e.message);
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
   // ── Wiring ──
+  $('btn-fast').onclick = fastSearch;
+  {
+    // Default "changed since" to 24 hours ago, in local time for datetime-local.
+    const d = new Date(Date.now() - 86400000);
+    $('since').value = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+  }
   $('btn-student').onclick = () => signIn('student');
   $('btn-teacher').onclick = () => signIn('teacher');
   $('btn-out').onclick = signOut;
@@ -356,9 +413,10 @@
     $('btn-out').hidden = false;
     $('pick').hidden = false;
     $(role).hidden = false;
+    if (role === 'teacher') $('teacher-fast').hidden = false;
     try { if (sessionStorage.getItem(FILE_KEY)) $('btn-bump').disabled = false; } catch (_) {}
     api('https://www.googleapis.com/oauth2/v3/userinfo')
-      .then(u => { $('who').textContent = `Signed in as ${role}: ${u.email}`; })
+      .then(u => { myEmail = (u.email || '').toLowerCase(); $('who').textContent = `Signed in as ${role}: ${u.email}`; })
       .catch(() => {});
     loadCourses().catch(e => log('❌ ' + e.message));
   }

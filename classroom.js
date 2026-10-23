@@ -13,17 +13,13 @@
  *      shows a "Teacher mode" panel with a pre-built assignment link to copy
  *   5. Exposes window.Classroom.verifyAuth() — call at the start of Check Answer
  *      handlers to block unauthenticated students when in a Classroom context
- *   6. Exposes window.Classroom.submitGrade(percent, activityName) — posts the
- *      draft grade via the teacher's Apps Script proxy. The proxy URL is resolved
- *      from (in order): ?proxyUrl= URL param → localStorage (set by setup page).
- *      Grade submission is silently skipped when no proxy URL is available.
+ *   6. Exposes window.Classroom.submitGrade(percent, activityName) — saves the
+ *      score on the student's work evidence file (appProperties.ogaScore). The
+ *      teacher's Activities Hub reads it and writes the draft grade (syncGrades
+ *      in index.html), so there is no per-teacher setup.
  *
  * If no courseId URL param is present, nothing is injected and all API calls
  * are no-ops, so activities work identically for students not using Classroom.
- *
- * Teacher setup: open _teacher/setup.html once per teacher account. This
- * deploys a personal Apps Script proxy and saves its URL to localStorage so
- * activity pages on that browser work automatically.
  */
 // Derive data-year and data-topic from the URL path if not already set.
 // Path segments: …/Y11/Legislation/file.html or …/Y11/Legislation/L1_Name/file.html
@@ -51,16 +47,11 @@
   const CLIENT_ID = '379663437881-iukh6qnkq8jmqtqko3qog0n6ohuhemmq.apps.googleusercontent.com';
   // classroom.coursework.me — read/turn-in student's own submissions.
   // classroom.courses.readonly — list courses to detect teacher vs student role.
-  // openid + email — fetch the student's Google user ID for the proxy call.
+  // openid + email — name the student on the work evidence.
   // drive.file — create and update evidence files the app itself creates.
-  // drive.metadata.readonly + script.deployments — auto-discover the proxy URL from Drive after sign-in.
-  const SCOPE = 'https://www.googleapis.com/auth/classroom.coursework.me https://www.googleapis.com/auth/classroom.courses.readonly openid email https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.metadata.readonly https://www.googleapis.com/auth/script.deployments';
+  // drive.metadata.readonly — find the saved results file again on another device.
+  const SCOPE = 'https://www.googleapis.com/auth/classroom.coursework.me https://www.googleapis.com/auth/classroom.courses.readonly openid email https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.metadata.readonly';
 
-  // Minimum proxy version that this classroom.js is compatible with.
-  // Bump this (and PROXY_VERSION in setup.html's PROXY_JS) when making breaking changes.
-  const PROXY_MIN_VERSION = 1;
-
-  // urlParams must be declared before proxyUrl so the reference is valid
   const urlParams   = new URLSearchParams(window.location.search);
   // let (not const) so the fallback course scan can correct a stale courseId from a re-used post
   let courseId      = urlParams.get('courseId');
@@ -75,18 +66,10 @@
     return false;
   }
 
-  // Proxy URL resolution: URL param wins, then localStorage (saved by setup page)
-  let proxyUrl = urlParams.get('proxyUrl') || (() => {
-    try { return localStorage.getItem('oga_proxy_url'); } catch (_) { return null; }
-  })() || null;
-
   // tokenClient removed — sign-in uses a full-page redirect (no popup)
   let accessToken  = null;
   let courseWorkId   = null; // resolved after sign-in
   let submissionId   = null; // resolved after sign-in
-
-  let proxyVersionChecked = false;
-  let proxyVersionOk      = true; // set to false only when version endpoint confirms it is below minimum
 
   let userInfo             = null; // { email, name } fetched from Google userinfo after sign-in
   let isTeacherMode        = false; // true once detectTeacher confirms the signed-in user is a teacher
@@ -141,7 +124,7 @@
     try { document.body.classList.add('cr-auth-problem'); } catch (_) {}
   }
 
-  // Logs a failed Google/proxy response: status, which API, and the start of
+  // Logs a failed Google API response: status, which API, and the start of
   // Google's error body (e.g. "appNotAuthorizedToFile", "rateLimitExceeded").
   // `quiet` is for lookups whose failure is expected and handled (e.g. a re-used
   // post's old course): logged, but not shown to the student as a problem.
@@ -260,19 +243,6 @@
       }
       #classroom-toast.show { transform: translateY(0); opacity: 1; }
 
-      /* Classroom API disabled modal */
-      #cr-api-modal-backdrop {
-        display: none; position: fixed; inset: 0; z-index: 99998;
-        background: rgba(0,0,0,0.7); align-items: center; justify-content: center;
-      }
-      #cr-api-modal-backdrop.open { display: flex; }
-
-      /* Teacher setup modal */
-      #cr-modal-backdrop {
-        display: none; position: fixed; inset: 0; z-index: 99998;
-        background: rgba(0,0,0,0.7); align-items: center; justify-content: center;
-      }
-      #cr-modal-backdrop.open { display: flex; }
       #cr-modal {
         background: #1e293b; border: 1px solid #475569; border-radius: 12px;
         padding: 28px 32px; max-width: 480px; width: calc(100% - 48px);
@@ -282,13 +252,6 @@
       #cr-modal h2 { font-size: 1.1rem; color: #f1f5f9; margin-bottom: 8px; }
       #cr-modal p  { font-size: 0.82rem; color: #94a3b8; line-height: 1.6; margin-bottom: 16px; }
       #cr-modal a  { color: #60a5fa; }
-      #cr-modal input {
-        width: 100%; padding: 8px 12px; border-radius: 6px;
-        background: #0f172a; border: 1px solid #334155; color: #e2e8f0;
-        font-size: 0.82rem; margin-bottom: 12px;
-        font-family: 'Cascadia Code', 'Consolas', monospace;
-      }
-      #cr-modal input:focus { outline: none; border-color: #3b82f6; }
       #cr-modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
       #cr-modal-actions button {
         padding: 7px 18px; border: none; border-radius: 6px;
@@ -298,16 +261,6 @@
       #cr-modal-save:hover { background: #2563eb; }
       #cr-modal-skip   { background: #374151; color: #d1d5db; }
       #cr-modal-skip:hover { background: #4b5563; }
-      #cr-drive-search-btn {
-        display: block; width: 100%;
-        padding: 8px 14px; border: 1px solid #334155; border-radius: 6px;
-        background: #0f172a; color: #94a3b8; font-size: 0.82rem;
-        cursor: pointer; margin-bottom: 10px; text-align: left;
-        transition: background 0.15s, color 0.15s;
-      }
-      #cr-drive-search-btn:hover { background: #1e293b; color: #e2e8f0; }
-      #cr-drive-search-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-
       /* Sign-in reminder modal & flashing banner */
       #cr-reminder-modal-backdrop {
         display: none; position: fixed; inset: 0; z-index: 99998;
@@ -370,49 +323,6 @@
     const toast = document.createElement('div');
     toast.id = 'classroom-toast';
     document.body.appendChild(toast);
-
-    // SERVICE_DISABLED modal — shown when the Classroom API is not enabled in the proxy's Cloud project
-    const apiModal = document.createElement('div');
-    apiModal.id = 'cr-api-modal-backdrop';
-    apiModal.innerHTML = `
-      <div id="cr-modal">
-        <h2>⚙️ Classroom API not enabled</h2>
-        <p>
-          The grade proxy is deployed but the Google Classroom API hasn't been enabled
-          in its Cloud project yet. Click the button below to open Google Cloud Console,
-          click <strong>Enable</strong>, then refresh this page and try again.
-        </p>
-        <div id="cr-modal-actions">
-          <button id="cr-modal-skip" onclick="window._classroomApiModalClose()">Dismiss</button>
-          <a id="cr-api-console-link" href="#" target="_blank" style="background:#f59e0b;color:#111827;padding:7px 18px;border-radius:6px;font-size:0.82rem;font-weight:700;text-decoration:none;">Enable in Cloud Console →</a>
-        </div>
-      </div>
-    `;
-    document.body.appendChild(apiModal);
-
-    // Modal (hidden until teacher needs setup)
-    const modal = document.createElement('div');
-    modal.id = 'cr-modal-backdrop';
-    modal.innerHTML = `
-      <div id="cr-modal">
-        <h2>⚙️ Teacher: grade proxy not configured</h2>
-        <p>
-          To automatically sync student scores to Google Classroom you need a
-          personal grade proxy. Run the one-time setup, then come back here.
-          <br><br>
-          <a href="../../_teacher/setup.html" target="_blank">Open setup page →</a>
-          &nbsp;(opens in a new tab — refresh this page when done)
-        </p>
-        <p>Already set up on another device? Search your Drive or paste the URL below:</p>
-        <button id="cr-drive-search-btn" onclick="window._classroomSearchDriveForProxy()">🔍 Search my Drive for proxy script</button>
-        <input id="cr-proxy-input" type="url" placeholder="https://script.google.com/macros/s/…/exec">
-        <div id="cr-modal-actions">
-          <button id="cr-modal-skip" onclick="window._classroomModalSkip()">Skip for now</button>
-          <button id="cr-modal-save" onclick="window._classroomModalSave()">Save &amp; use</button>
-        </div>
-      </div>
-    `;
-    document.body.appendChild(modal);
 
     // Reminder modal (hidden until 10 mins pass without sign-in)
     const reminderModal = document.createElement('div');
@@ -481,7 +391,6 @@
       'Role:       ' + (accessToken ? (isTeacherMode ? 'teacher' : 'student') : 'unknown'),
       'Scopes:     ' + (grantedScopeList.length ? grantedScopeList.map(shortScope).join(', ') : '—'),
       'Assignment: ' + (courseWorkId ? 'found' : 'not found') + ', submission: ' + (submissionId ? 'found' : 'not found'),
-      'Proxy:      ' + (proxyUrl ? 'set' : 'not set'),
       '',
       '── Log ──'
     ];
@@ -553,19 +462,15 @@
     if (copyBtn) copyBtn.classList.remove('visible');
   }
 
-  function setBannerTeacher(hasProxy) {
+  function setBannerTeacher() {
     const dot      = document.getElementById('classroom-dot');
     const text     = document.getElementById('classroom-text');
     const btn      = document.getElementById('classroom-signin-btn');
     const copyBtn  = document.getElementById('classroom-copy-btn');
     if (dot)  { dot.classList.add('teacher'); }
     if (btn)  btn.classList.add('hidden');
-    if (hasProxy) {
-      if (text) text.textContent = '🎓 Teacher mode — grade proxy configured. Share the assignment link with your class.';
-      if (copyBtn) copyBtn.classList.add('visible');
-    } else {
-      if (text) text.textContent = '🎓 Teacher mode — no grade proxy configured. Students\' scores won\'t sync automatically.';
-    }
+    if (text) text.textContent = '🎓 Teacher mode — students\' scores reach Classroom when you open the Activities Hub.';
+    if (copyBtn) copyBtn.classList.add('visible');
   }
 
   function showClassroomToast(msg) {
@@ -577,22 +482,12 @@
     setTimeout(() => toast.classList.remove('show'), 3500);
   }
 
-  // ── Teacher modal ─────────────────────────────────────────────────────────────
-
-  function isAuthStatus(status) {
-    return status === 401 || status === 403;
-  }
-
   // For direct Google API calls (Drive, Classroom, userinfo) only a 401 means
   // the token itself is dead (expired, revoked, signed out). A 403 is about one
   // file or request — no access to a cached file ID, rate limit, Drive full —
   // and signing in again does not fix it, so it must not drop the sign-in.
   function isTokenRejected(status) {
     return status === 401;
-  }
-
-  function isAuthFailureMessage(text) {
-    return /invalid[_\s-]?token|invalid[_\s-]?grant|unauthorized|unauthenticated|login[_\s-]?required|permission denied|401|403/i.test(String(text || ''));
   }
 
   function clearPendingSyncTimers() {
@@ -721,16 +616,6 @@
     }, AUTH_HEARTBEAT_INTERVAL_MS);
   }
 
-  window._classroomApiModalClose = function () {
-    const el = document.getElementById('cr-api-modal-backdrop');
-    if (el) el.classList.remove('open');
-  };
-
-  window._classroomModalSkip = function () {
-    const el = document.getElementById('cr-modal-backdrop');
-    if (el) el.classList.remove('open');
-  };
-
   window._classroomReminderModalClose = function () {
     const el = document.getElementById('cr-reminder-modal-backdrop');
     if (el) el.classList.remove('open');
@@ -738,80 +623,8 @@
     if (banner) banner.classList.remove('flashing');
   };
 
-  window._classroomModalSave = function () {
-    const input = document.getElementById('cr-proxy-input');
-    const url   = input && input.value.trim();
-    if (!url || !url.startsWith('https://')) {
-      input && (input.style.borderColor = '#ef4444');
-      return;
-    }
-    proxyUrl = url;
-    try { localStorage.setItem('oga_proxy_url', url); } catch (_) {}
-    window._classroomModalSkip();
-    setBannerTeacher(true);
-    showClassroomToast('Proxy URL saved ✅');
-    checkProxyVersion();
-  };
-
-  // Search the signed-in user's Drive for the OGA proxy script and return its web app URL,
-  // or null if not found. Requires drive.metadata.readonly + script.deployments scopes.
-  async function searchDriveForProxy(token) {
-    try {
-      const searchRes = await fetch(
-        'https://www.googleapis.com/drive/v3/files?' + new URLSearchParams({
-          q: "mimeType='application/vnd.google-apps.script' and name='OGA Classroom Grade Proxy' and trashed=false and 'me' in owners",
-          fields: 'files(id,name)',
-          pageSize: 5
-        }),
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      if (!searchRes.ok) noteHttpFailure(searchRes, 'proxy search (Drive)', true);
-      const { files } = await searchRes.json();
-      if (!files || files.length === 0) return null;
-      const depRes = await fetch(
-        `https://script.googleapis.com/v1/projects/${files[0].id}/deployments`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      if (!depRes.ok) noteHttpFailure(depRes, 'proxy deployments (Apps Script)', true);
-      const depData = await depRes.json();
-      // Sort by updateTime descending so the most recently deployed version wins.
-      // Skip the HEAD deployment — its URL ends in /dev and requires editor-level
-      // Google auth.  Students can only call published /exec deployments.
-      // NOTE: index.html has a duplicate of this logic in findProxyInDrive() — keep in sync.
-      const deployments = (depData.deployments || []).sort((a, b) =>
-        new Date(b.updateTime) - new Date(a.updateTime)
-      );
-      for (const dep of deployments) {
-        const ep = (dep.entryPoints || []).find(ep =>
-          ep.entryPointType === 'WEB_APP' && ep.webApp?.url?.endsWith('/exec')
-        );
-        if (ep) return ep.webApp.url;
-      }
-      return null;
-    } catch (e) {
-      console.warn('Classroom: Drive proxy search failed', e);
-      return null;
-    }
-  }
-
-  window._classroomSearchDriveForProxy = async function () {
-    const btn = document.getElementById('cr-drive-search-btn');
-    if (btn) { btn.textContent = '🔍 Searching…'; btn.disabled = true; }
-    const url = await searchDriveForProxy(accessToken);
-    if (btn) { btn.textContent = '🔍 Search my Drive for proxy script'; btn.disabled = false; }
-    if (url) {
-      const input = document.getElementById('cr-proxy-input');
-      if (input) input.value = url;
-      if (btn) btn.textContent = '✅ Found — click Save & use';
-      showClassroomToast('Proxy URL found — click Save & use ✅');
-    } else {
-      showClassroomToast('⚠️ No proxy script found in Drive.');
-    }
-  };
-
   window._classroomCopyLink = function () {
-    if (!proxyUrl) return;
-    const link = `${location.origin}${location.pathname}?courseId=${courseId}&proxyUrl=${encodeURIComponent(proxyUrl)}`;
+    const link = `${location.origin}${location.pathname}?courseId=${courseId}`;
     navigator.clipboard.writeText(link).then(() => {
       const btn = document.getElementById('classroom-copy-btn');
       if (btn) { btn.textContent = 'Copied!'; setTimeout(() => btn.textContent = 'Copy assignment link', 2000); }
@@ -895,8 +708,8 @@
 
   // ── Submission ID lookup ─────────────────────────────────────────────────────
   // Uses the student's own token (classroom.coursework.me) to find their submission
-  // for the resolved courseWorkId. The proxy uses this ID to patch the grade directly
-  // without needing a teacher-level studentSubmissions.list call.
+  // for the resolved courseWorkId. It goes on the evidence file so the hub can
+  // write the grade to the right submission.
 
   async function lookupSubmissionId(token, cwId) {
     if (!cwId) return null;
@@ -915,64 +728,6 @@
     } catch (e) {
       console.warn('Classroom: submission lookup error', e);
       return null;
-    }
-  }
-
-  // ── Proxy version check ───────────────────────────────────────────────────────
-  // Fetches ?action=version from the proxy and warns the teacher if it is outdated.
-  // Old proxies (before the version endpoint was added) return non-numeric text, which
-  // is treated as "unknown version" — a warning is shown but grade sync is not blocked,
-  // since the old proxy still speaks the same protocol.
-  // If the version endpoint returns a number below PROXY_MIN_VERSION, grade sync is
-  // blocked because a breaking change has been made.
-
-  function showProxyOutdatedWarning() {
-    const text = document.getElementById('classroom-text');
-    if (text) text.textContent = '⚠️ Proxy script is outdated — please redeploy from the setup page.';
-    const dot = document.getElementById('classroom-dot');
-    if (dot) { dot.style.background = '#ef4444'; dot.style.boxShadow = '0 0 8px #ef4444'; }
-    showClassroomToast('⚠️ Proxy outdated — please redeploy.');
-  }
-
-  function showProxyCorsWarning() {
-    const text = document.getElementById('classroom-text');
-    if (text) text.textContent = '⚠️ Proxy not accessible — redeploy the Apps Script with "Anyone" access (not "Anyone with Google account").';
-    const dot = document.getElementById('classroom-dot');
-    if (dot) { dot.style.background = '#ef4444'; dot.style.boxShadow = '0 0 8px #ef4444'; }
-    showClassroomToast('⚠️ Proxy blocked — teacher must redeploy with "Anyone" access.');
-  }
-
-  async function checkProxyVersion() {
-    if (!proxyUrl || proxyVersionChecked) return;
-    proxyVersionChecked = true;
-    try {
-      const res  = await fetch(proxyUrl + '?action=version');
-      const text = res.ok ? (await res.text()).trim() : '';
-      const ver  = parseInt(text, 10);
-      if (isNaN(ver)) {
-        // Old proxy with no version endpoint — warn but don't block grade sync
-        showProxyOutdatedWarning();
-      } else if (ver < PROXY_MIN_VERSION) {
-        // Version explicitly below minimum — warn and block grade sync
-        proxyVersionOk = false;
-        showProxyOutdatedWarning();
-      }
-    } catch (_) {
-      // fetch threw — could be a true network error or a CORS block (e.g. proxy deployed with
-      // "Anyone with Google account" access, causing Google to redirect to Sign-In which has
-      // no CORS headers).  A no-cors probe distinguishes the two: if it succeeds with an
-      // opaque response, the URL is reachable but CORS-blocked → deployment issue.
-      try {
-        const probe = await fetch(proxyUrl + '?action=version', { mode: 'no-cors' });
-        if (probe.type === 'opaque') {
-          // URL is reachable but cross-origin access is blocked — proxy needs redeployment
-          proxyVersionOk = false;
-          showProxyCorsWarning();
-          console.error('Classroom: proxy URL is CORS-blocked. The Apps Script must be deployed with "Who has access: Anyone" (not "Anyone with Google account"). Redeploy from the Apps Script editor.');
-        }
-      } catch (_2) {
-        // True network error (offline, bad URL, etc.) — don't warn or block
-      }
     }
   }
 
@@ -1027,7 +782,7 @@
     const seenRadioNames = new Set();
 
     // Exclude the Classroom banner and modal overlays from scraping.
-    const SKIP_SELECTOR = '#classroom-banner,#cr-modal-backdrop,#cr-api-modal-backdrop';
+    const SKIP_SELECTOR = '#classroom-banner';
 
     function isHidden(el) {
       // Skip elements inside modals / banners, or with display:none
@@ -1248,9 +1003,12 @@
 
   // ── Drive API helpers ─────────────────────────────────────────────────────────
 
-  async function driveCreateFile(filename, html) {
+  // appProperties.ogaScore is how the grade reaches Classroom: the teacher's
+  // hub sign-in (same OAuth client) reads it with drive.metadata.readonly and writes
+  // draftGrade itself. Only this OAuth client can see or change appProperties.
+  async function driveCreateFile(filename, html, appProperties) {
     const boundary = 'ev' + Date.now().toString(36);
-    const meta     = JSON.stringify({ name: filename, mimeType: 'application/vnd.google-apps.document' });
+    const meta     = JSON.stringify({ name: filename, mimeType: 'application/vnd.google-apps.document', appProperties });
     const body     =
       `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${meta}\r\n` +
       `--${boundary}\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n${html}\r\n` +
@@ -1275,9 +1033,9 @@
     return (await res.json()).id;
   }
 
-  async function driveUpdateFile(fileId, filename, html) {
+  async function driveUpdateFile(fileId, filename, html, appProperties) {
     const boundary = 'ev' + Date.now().toString(36);
-    const meta     = JSON.stringify({ name: filename, mimeType: 'application/vnd.google-apps.document' });
+    const meta     = JSON.stringify({ name: filename, mimeType: 'application/vnd.google-apps.document', appProperties });
     const body     =
       `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${meta}\r\n` +
       `--${boundary}\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n${html}\r\n` +
@@ -1326,9 +1084,21 @@
 
   // ── Upload orchestrator ───────────────────────────────────────────────────────
 
+  // This is also how the score reaches Classroom (see appProperties below), so a
+  // failure here means the teacher won't get the grade: tell the student.
+  function scoreNotSaved(what, err) {
+    console.error('Classroom: ' + what, err || '');
+    markAuthProblem();
+    authLog('Score not saved: ' + what + (err ? ' — ' + String(err.message || err).replace(/\s+/g, ' ').slice(0, 200) : ''));
+    showClassroomToast('⚠️ Score not saved — tell your teacher (Sign-in log has details).');
+  }
+
   async function doUploadWorkEvidence(activityName, score) {
     if (!accessToken || !isClassroomContext || isTeacherMode) return;
-    if (!courseWorkId || !submissionId) return;
+    if (!courseWorkId || !submissionId) {
+      scoreNotSaved('assignment or submission not found', null);
+      return;
+    }
 
     const storageKey = `oga_ev_${courseId}_${courseWorkId}`;
     let saved = null;
@@ -1347,10 +1117,15 @@
     // in-place — skip them so a proper Google Doc is created instead.
     let fileId = (saved?.fileId && saved?.isGoogleDoc) ? saved.fileId : null;
     let newFile = false;
+    // ogaSync + the IDs let the hub find every changed file with one Drive search.
+    const appProperties = {
+      ogaScore: String(Math.round(Math.min(100, Math.max(0, Number(score) || 0)))),
+      ogaSync: '1', ogaCourse: courseId, ogaWork: courseWorkId, ogaSub: submissionId
+    };
     try {
       if (fileId) {
         try {
-          await driveUpdateFile(fileId, filename, html);
+          await driveUpdateFile(fileId, filename, html, appProperties);
         } catch (e) {
           // 404: file was deleted. 403: this sign-in can't open the cached file
           // (e.g. it was made under another account). Either way, make a new one.
@@ -1359,11 +1134,11 @@
         }
       }
       if (!fileId) {
-        fileId = await driveCreateFile(filename, html);
+        fileId = await driveCreateFile(filename, html, appProperties);
         newFile = true;
       }
     } catch (e) {
-      console.error('Classroom: Drive evidence upload failed', e);
+      scoreNotSaved('Drive evidence upload failed', e);
       return;
     }
 
@@ -1373,15 +1148,17 @@
       try {
         await classroomAddAttachment(fileId);
         try { localStorage.setItem(storageKey, JSON.stringify({ fileId, attachmentAdded: true, isGoogleDoc: true })); } catch (_) {}
-        showClassroomToast('📎 Work evidence attached ✅');
+        showClassroomToast('Score saved for your teacher ✅');
       } catch (e) {
-        console.warn('Classroom: could not attach evidence to submission', e);
+        // Unattached, the teacher can't see the file, so the score can't reach them.
+        // attachmentAdded: false makes the next save try again. A submission that is
+        // already turned in can't take attachments until it is unsubmitted.
         try { localStorage.setItem(storageKey, JSON.stringify({ fileId, attachmentAdded: false, isGoogleDoc: true })); } catch (_) {}
-        showClassroomToast('📎 Work evidence saved to Drive ✅');
+        scoreNotSaved('could not attach work evidence to the submission', e);
       }
     } else {
       try { localStorage.setItem(storageKey, JSON.stringify({ fileId, attachmentAdded: true, isGoogleDoc: true })); } catch (_) {}
-      // File updated silently — grade toast already shown, no second toast needed.
+      showClassroomToast('Score saved for your teacher ✅');
       console.log(`Classroom: evidence updated for "${activityName}" (fileId: ${fileId})`);
     }
   }
@@ -1432,17 +1209,14 @@
   }
 
   async function doClassroomSync(activityName, gradePercent) {
-    await Promise.all([
-      submitGradeNow(gradePercent, activityName),
-      doUploadWorkEvidence(activityName, gradePercent)
-    ]);
+    await doUploadWorkEvidence(activityName, gradePercent);
   }
 
   // ── Per-activity results JSON ──────────────────────────────────────────────
   // Saves a small machine-readable JSON file to Drive alongside the evidence
   // HTML.  Lets a follow-up activity read which questions a student got wrong
   // even when localStorage has been cleared or the student is on a new device.
-  // Independent of the grade proxy — works for any signed-in student.
+  // Works for any signed-in student.
 
   let pendingResultsTimer   = null;
   let pendingResultsPayload = null;
@@ -1670,39 +1444,10 @@
     const blockingModal = document.getElementById('cr-auth-blocking-modal-backdrop');
     if (blockingModal) blockingModal.classList.remove('open');
 
-    // Detect teacher role first so we can make a smarter proxy URL decision below.
+    // Detect teacher role first.
     // Re-evaluated below if findCorrectCourse corrects courseId (re-used post scenario).
     let isTeacher = await detectTeacher(accessToken);
     isTeacherMode = isTeacher;
-
-    // Proxy URL resolution strategy:
-    //   Teachers — always search Drive, even when ?proxyUrl= is in the URL.
-    //              A ?proxyUrl= from an old assignment link may point at a stale
-    //              deployment; Drive is authoritative for the teacher's own proxy.
-    //   Students — skip Drive search when ?proxyUrl= was provided by the teacher
-    //              in the assignment link (students have no proxy of their own).
-    if (isTeacher || !urlParams.get('proxyUrl')) {
-      const discovered = await searchDriveForProxy(accessToken);
-      if (discovered) {
-        if (discovered !== proxyUrl) {
-          proxyUrl = discovered;
-          try { localStorage.setItem('oga_proxy_url', discovered); } catch (_) {}
-          console.log('Classroom: proxy URL updated from Drive');
-        }
-      } else if (isTeacher) {
-        // Teacher's proxy not found in Drive — clear any stale URL so the setup modal shows.
-        if (proxyUrl) {
-          proxyUrl = null;
-          try { localStorage.removeItem('oga_proxy_url'); } catch (_) {}
-          console.log('Classroom: proxy script not found in Drive — teacher will be prompted to redeploy');
-        }
-      } else if (proxyUrl) {
-        // Student, no proxy in Drive, had a cached URL — clear it.
-        proxyUrl = null;
-        try { localStorage.removeItem('oga_proxy_url'); } catch (_) {}
-        console.log('Classroom: proxy script not found in Drive — cached URL cleared');
-      }
-    }
 
     courseWorkId = await lookupCourseWorkId(accessToken, courseId);
     if (!courseWorkId) {
@@ -1718,18 +1463,11 @@
       }
     }
     submissionId = await lookupSubmissionId(accessToken, courseWorkId);
-    authLog(`Role: ${isTeacher ? 'teacher' : 'student'}; assignment ${courseWorkId ? 'found' : 'NOT found'}; submission ${submissionId ? 'found' : 'NOT found'}; proxy ${proxyUrl ? 'set' : 'not set'}`);
+    authLog(`Role: ${isTeacher ? 'teacher' : 'student'}; assignment ${courseWorkId ? 'found' : 'NOT found'}; submission ${submissionId ? 'found' : 'NOT found'}`);
 
     if (isTeacher) {
       stopAuthWatchdog();
-      setBannerTeacher(!!proxyUrl);
-      if (!proxyUrl) {
-        // Show modal so teacher can enter their proxy URL
-        const modal = document.getElementById('cr-modal-backdrop');
-        if (modal) modal.classList.add('open');
-      } else {
-        await checkProxyVersion();
-      }
+      setBannerTeacher();
     } else {
       setBannerStudent();
       await checkAuthHealth('Google sign-in could not be verified. Assessment paused until you sign in again.');
@@ -1883,91 +1621,6 @@
     signInViaRedirect(consentNeeded ? { prompt: 'select_account consent' } : undefined);
   };
 
-  async function submitGradeNow(gradePercent, activityName) {
-    if (!proxyUrl) {
-      console.error('Classroom: grade not submitted — no proxy URL configured.');
-      showClassroomToast('⚠️ Grade not saved — proxy not configured.');
-      return;
-    }
-    await checkProxyVersion();
-    if (!proxyVersionOk) {
-      console.error('Classroom: grade not submitted — proxy version is below minimum required (need v' + PROXY_MIN_VERSION + ').');
-      showClassroomToast('⚠️ Grade not saved — proxy is outdated, please redeploy.');
-      return;
-    }
-    if (!courseWorkId || !submissionId) {
-      console.error('Classroom: grade not submitted — could not find matching assignment or submission.',
-        { courseWorkId, submissionId });
-      showClassroomToast('⚠️ Grade not saved — assignment not found.');
-      return;
-    }
-    try {
-      // Send the student's own OAuth token rather than a self-reported userId.
-      // The proxy calls the userinfo endpoint to verify identity server-side.
-      // submissionId is looked up client-side using the student's own token so
-      // the proxy does not need a teacher-level studentSubmissions.list call.
-      const res = await fetch(proxyUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({
-          courseId,
-          courseWorkId,
-          submissionId,
-          studentToken: accessToken,
-          grade: gradePercent
-        }).toString()
-      });
-
-      if (!res.ok) {
-        const text = await res.text().catch(() => res.status);
-        if (isAuthStatus(res.status) || isAuthFailureMessage(text)) {
-          handleAuthLost('Google Classroom sign-in was rejected while saving. Assessment paused until you sign in again.');
-        }
-        throw new Error(`Proxy returned ${res.status}: ${text}`);
-      }
-      const result = await res.text();
-      if (result !== 'ok') {
-        console.warn(`Classroom proxy responded: "${result}" for "${activityName}"`);
-        markAuthProblem();
-        authLog('Grade proxy replied: ' + String(result).replace(/\s+/g, ' ').slice(0, 220));
-
-        // SERVICE_DISABLED — show actionable modal so the teacher can fix it
-        if (isAuthFailureMessage(result)) {
-          handleAuthLost('Google Classroom sign-in was rejected while saving. Assessment paused until you sign in again.');
-          return;
-        }
-
-        if (result.includes('SERVICE_DISABLED') || result.includes('has not been used')) {
-          let projectNum = null;
-          try {
-            const match = result.match(/"containerInfo":\s*"(\d+)"/);
-            if (match) projectNum = match[1];
-          } catch (_) {}
-          const backdrop = document.getElementById('cr-api-modal-backdrop');
-          if (backdrop) {
-            if (projectNum) {
-              const link = document.getElementById('cr-api-console-link');
-              if (link) link.href = 'https://console.developers.google.com/apis/api/classroom.googleapis.com/overview?project=' + projectNum;
-            }
-            backdrop.classList.add('open');
-          }
-          showClassroomToast('⚠️ Classroom API not enabled — see popup.');
-          return;
-        }
-
-        showClassroomToast('⚠️ Grade sync issue — see console.');
-        return;
-      }
-      showClassroomToast('Grade sent to Classroom! ✅');
-      console.log(`Classroom grade submitted via proxy: ${gradePercent}% for "${activityName}" — proxy said: ${result}`);
-    } catch (err) {
-      console.error('Classroom sync failed:', err);
-      markAuthProblem();
-      authLog('Grade save failed: ' + String(err && err.message || err).replace(/\s+/g, ' ').slice(0, 220));
-      showClassroomToast('⚠️ Grade sync failed — see console.');
-    }
-  }
-
   // ── Public API ────────────────────────────────────────────────────────────────
 
   window.Classroom = {
@@ -2007,7 +1660,7 @@
      * Save a small per-activity results JSON to the student's Drive so a
      * follow-up activity can read which questions were missed even when
      * localStorage is unavailable (different device / cleared browser).
-     * Independent of the grade proxy. Debounced separately from Classroom sync.
+     * Debounced separately from Classroom sync.
      *
      * @param {object} resultsObj  Plain JSON-serialisable object to store.
      * @param {string} activityName  Used to derive the Drive filename.

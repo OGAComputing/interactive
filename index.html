@@ -69,8 +69,8 @@
     }
     .guide-link { font-size: 0.75rem; color: var(--muted); text-decoration: none; white-space: nowrap; }
     .guide-link:hover { color: var(--text); }
-    #teacher-status { font-size: 0.8rem; color: var(--muted); }
-    #teacher-status:empty { display: none; }
+    #teacher-status, #sync-status { font-size: 0.8rem; color: var(--muted); }
+    #teacher-status:empty, #sync-status:empty { display: none; }
     #course-combobox, #topic-combobox {
       position: relative;
       display: none;
@@ -264,32 +264,13 @@
     footer a { color: #3a6080; text-decoration: none; }
     footer a:hover { color: #7a9ab5; }
 
-    /* ── Proxy helpers ── */
-    .btn-inline {
-      background: var(--accent); color: #0a1520;
-      padding: 2px 10px; border-radius: 4px; border: none;
-      font-size: 0.75rem; font-weight: 700; cursor: pointer; vertical-align: middle;
-    }
-    .btn-inline:hover { background: #00ffff; }
-    .btn-inline:disabled { opacity: 0.5; cursor: not-allowed; }
+    /* ── Sync button ── */
     .btn-inline-ghost {
       background: transparent; color: var(--muted);
       padding: 2px 8px; border-radius: 4px; border: 1px solid var(--line);
       font-size: 0.75rem; cursor: pointer; vertical-align: middle;
     }
     .btn-inline-ghost:hover { color: #c8d8e8; border-color: #3a6080; }
-    #hub-proxy-row {
-      display: none; flex-basis: 100%; align-items: center; gap: 8px; flex-wrap: wrap;
-    }
-    #hub-proxy-row.visible { display: flex; }
-    #hub-proxy-input {
-      flex: 1; min-width: 200px;
-      background: var(--surface); color: var(--text); border: 1px solid var(--line);
-      padding: 4px 8px; border-radius: 4px; font-size: 0.78rem;
-      font-family: 'Courier New', monospace;
-    }
-    #hub-proxy-input:focus { outline: none; border-color: var(--accent); }
-
     #build-meta {
       font-size: 0.7rem;
       color: #1e3048;
@@ -346,13 +327,9 @@
         <div id="topic-dropdown"></div>
       </div>
       <span id="teacher-status"></span>
-      <a href="getting-started.html" class="guide-link" title="Teacher setup guide">Getting Started →</a>
-    </div>
-    <div id="hub-proxy-row">
-      <span style="font-size:0.78rem;color:var(--muted);white-space:nowrap">Proxy URL:</span>
-      <input id="hub-proxy-input" type="url" placeholder="https://script.google.com/macros/s/…/exec">
-      <button class="btn-inline" onclick="saveHubProxyUrl()">Save</button>
-      <button class="btn-inline-ghost" onclick="document.getElementById('hub-proxy-row').classList.remove('visible')">Cancel</button>
+      <button id="btn-sync" class="btn-inline-ghost" onclick="onSyncClick()" hidden>⟳ Sync grades</button>
+      <span id="sync-status"></span>
+      <a href="getting-started.html" class="guide-link" title="Teacher guide">Getting Started →</a>
     </div>
   </div>
   <nav id="year-tabs" role="tablist" aria-label="Year group"></nav>
@@ -378,29 +355,12 @@
   // ── Google Classroom Config ──────────────────────────────
   const GOOGLE_CONFIG = {
     clientId: '379663437881-iukh6qnkq8jmqtqko3qog0n6ohuhemmq.apps.googleusercontent.com',
-    // Drive + Script scopes combined so the teacher signs in once and "Search my Drive"
-    // can reuse the same token without triggering a second popup/redirect.
-    scopes: 'https://www.googleapis.com/auth/classroom.courses.readonly https://www.googleapis.com/auth/classroom.coursework.me https://www.googleapis.com/auth/classroom.coursework.students https://www.googleapis.com/auth/classroom.topics https://www.googleapis.com/auth/drive.metadata.readonly https://www.googleapis.com/auth/script.deployments https://www.googleapis.com/auth/userinfo.email'
+    // drive.metadata.readonly reads the score students' pages store on their work
+    // evidence (appProperties); classroom.coursework.students writes it as the draft grade.
+    scopes: 'https://www.googleapis.com/auth/classroom.courses.readonly https://www.googleapis.com/auth/classroom.coursework.me https://www.googleapis.com/auth/classroom.coursework.students https://www.googleapis.com/auth/classroom.topics https://www.googleapis.com/auth/drive.metadata.readonly https://www.googleapis.com/auth/userinfo.email'
   };
 
   let accessToken = null;
-  let userEmail = '';
-  let isOGAMember = false;
-  const OGA_DOMAIN = '@grange.outwood.com';
-
-  async function resolveUserIdentity() {
-    try {
-      const res  = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-        headers: { 'Authorization': `Bearer ${accessToken}` }
-      });
-      const data = await res.json();
-      userEmail   = (data.email || '').toLowerCase();
-      isOGAMember = userEmail.endsWith(OGA_DOMAIN);
-    } catch (_) {
-      isOGAMember = false;
-    }
-  }
-
   // ── Redirect-based sign-in (no popup) ───────────────────
   // Navigates the whole page to Google's consent screen.
   // After sign-in Google redirects to /oauth-callback.html, which stores the
@@ -431,20 +391,9 @@
     document.getElementById('course-combobox').style.display = 'inline-block';
     document.body.classList.add('teacher-mode');
 
-    await resolveUserIdentity();
-
     fetchCourses();
-    if (isOGAMember) {
-      const storedProxy = localStorage.getItem('oga_proxy_url');
-      if (!storedProxy) showNoProxyOptions();
-    } else {
-      const storedProxy = localStorage.getItem('oga_proxy_url');
-      if (!storedProxy) {
-        document.getElementById('teacher-status').innerHTML =
-          '✅ Signed in. Grade sync is coming soon for your school — assignments will work now without it.';
-      }
-      // If a proxy is already stored, grade sync works normally — no message needed.
-    }
+    document.getElementById('btn-sync').hidden = false;
+    syncGrades(null, { sinceDays: AUTO_SYNC_DAYS });
   }
 
   // On page load: restore session if returning from redirect or if tab was reloaded.
@@ -730,80 +679,8 @@
     if (btn) { btn.textContent = '⏳ Assigning…'; btn.disabled = true; }
     const restoreBtn = () => { if (btn) { btn.innerHTML = assignLabel(); btn.disabled = false; } };
 
-    let proxyUrl = localStorage.getItem('oga_proxy_url') || '';
-
-    // ── Pre-flight proxy check ────────────────────────────────────────────────
-    if (!proxyUrl) {
-      if (isOGAMember) {
-        const proceed = await assignModalConfirm(
-          '⚠️ Grade sync not configured',
-          `Students' scores won't be recorded in Classroom without a grade proxy.<br><br>
-          Run the one-time setup first: <a href="_teacher/setup.html" target="_blank">Proxy setup page →</a><br><br>
-          Assign without grade sync anyway?`,
-          [
-            { label: 'Cancel',       primary: false, value: false },
-            { label: 'Assign anyway', primary: true,  value: true  }
-          ]
-        );
-        if (!proceed) { restoreBtn(); return; }
-      }
-      // Non-OGA teachers: grade sync not yet available — proceed without it.
-    } else {
-      let health = await checkProxyHealth(proxyUrl);
-
-      // For URL-level failures, auto-search Drive for a fresher deployment before giving up.
-      if ((health === 'cors-blocked' || health === 'unreachable') && accessToken) {
-        const statusEl = document.getElementById('teacher-status');
-        const prev = statusEl.textContent;
-        statusEl.textContent = '🔍 Checking Drive for an updated proxy URL…';
-        const freshUrl = await searchDriveForProxyUrl();
-        statusEl.textContent = prev;
-        if (freshUrl && freshUrl !== proxyUrl) {
-          const freshHealth = await checkProxyHealth(freshUrl);
-          if (freshHealth === 'ok') {
-            try { localStorage.setItem('oga_proxy_url', freshUrl); } catch (_) {}
-            proxyUrl = freshUrl;
-            health = 'ok';
-          }
-        }
-      }
-
-      if (health === 'cors-blocked') {
-        showAssignModal(
-          '❌ Proxy blocked — assignment cancelled',
-          `Your proxy script was deployed with <strong>"Who has access: Anyone with Google account"</strong>
-          instead of <strong>"Anyone"</strong>. Students would get a grade-sync error on every submission.<br><br>
-          Fix: re-run the proxy setup to deploy a fresh copy with the correct access setting, then assign again.<br><br>
-          <a href="_teacher/setup.html" target="_blank">Proxy setup page →</a>&emsp;
-          <a href="getting-started.html" target="_blank">Getting Started guide →</a>`
-        );
-        restoreBtn(); return;
-      }
-      if (health === 'unreachable') {
-        showAssignModal(
-          '❌ Proxy not reachable — assignment cancelled',
-          `The saved proxy URL returned a 404 or could not be reached.
-          It may have been deleted or is from an old deployment.<br><br>
-          Fix: re-run the proxy setup to create a fresh proxy, then assign again.<br><br>
-          <a href="_teacher/setup.html" target="_blank">Proxy setup page →</a>&emsp;
-          <a href="getting-started.html" target="_blank">Getting Started guide →</a>`
-        );
-        restoreBtn(); return;
-      }
-      if (health === 'version-mismatch') {
-        showAssignModal(
-          '❌ Proxy script outdated — assignment cancelled',
-          `The proxy needs to be updated before it will work with the current version of the activities.<br><br>
-          Fix: re-run the proxy setup to update it, then assign again.<br><br>
-          <a href="_teacher/setup.html" target="_blank">Proxy setup page →</a>`
-        );
-        restoreBtn(); return;
-      }
-    }
-    // ── End proxy check ───────────────────────────────────────────────────────
-
     const baseUrl = window.location.origin + window.location.pathname.replace('index.html', '') + activityPath;
-    const activityUrl = `${baseUrl}?courseId=${courseId}${proxyUrl ? '&proxyUrl=' + encodeURIComponent(proxyUrl) : ''}`;
+    const activityUrl = `${baseUrl}?courseId=${courseId}`;
 
     const res = await fetch(`https://classroom.googleapis.com/v1/courses/${courseId}/courseWork`, {
       method: 'POST',
@@ -823,17 +700,111 @@
     });
 
     if (res.ok) {
-      const syncNote = proxyUrl
-        ? ' with automatic grade sync enabled'
-        : isOGAMember
-          ? ' (no grade sync — proxy not configured)'
-          : ' (grade sync coming soon for your school)';
-      showAssignModal('✅ Assigned!', `"${title}" has been published to your class${syncNote}.`);
+      showAssignModal('✅ Assigned!', `"${title}" has been published to your class. Scores reach Classroom each time you open this hub (or click ⟳ Sync grades).`);
     } else {
       console.error('Assignment creation failed:', await res.text());
       showAssignModal('❌ Assignment failed', 'Could not create the assignment. Check the browser console for details.');
     }
     restoreBtn();
+  }
+
+  // ── Grade sync ───────────────────────────────────────────
+  // classroom.js stores each student's score on their work evidence file
+  // (appProperties.ogaScore). Classroom shares that file with the class's teachers and
+  // only this OAuth client can read or change appProperties, so the hub reads the score
+  // and writes draftGrade with the teacher's own token. Classroom allows that because
+  // the hub created the assignment (associatedWithDeveloper). Grades are only raised.
+  const AUTO_SYNC_DAYS = 90; // the sign-in sync skips assignments older than this
+  let syncRunning = false;
+
+  async function googleGet(url) {
+    const res = await fetch(url, { headers: { 'Authorization': `Bearer ${accessToken}` } });
+    if (!res.ok) throw new Error(`${res.status} ${await res.text().catch(() => '')}`);
+    return res.json();
+  }
+
+  async function listAll(url, key) {
+    let items = [], pageToken = '';
+    do {
+      const data = await googleGet(url + (url.includes('?') ? '&' : '?') + 'pageSize=100' +
+        (pageToken ? '&pageToken=' + encodeURIComponent(pageToken) : ''));
+      items = items.concat(data[key] || []);
+      pageToken = data.nextPageToken;
+    } while (pageToken);
+    return items;
+  }
+
+  async function mapLimit(items, limit, fn) {
+    let next = 0;
+    const worker = async () => { while (next < items.length) await fn(items[next++]); };
+    await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+  }
+
+  // Highest ogaScore on any Drive file attached to the submission, or -1.
+  async function submissionScore(sub) {
+    const ids = (sub.assignmentSubmission?.attachments || []).map(a => a.driveFile?.id).filter(Boolean);
+    let best = -1;
+    for (const id of ids) {
+      const meta = await googleGet(`https://www.googleapis.com/drive/v3/files/${id}?fields=appProperties`).catch(() => null);
+      const raw = meta?.appProperties?.ogaScore;
+      if (raw != null && Number.isFinite(Number(raw))) best = Math.max(best, Math.min(100, Number(raw)));
+    }
+    return best;
+  }
+
+  // courseIds: null = every class this account teaches.
+  async function syncGrades(courseIds, opts = {}) {
+    if (syncRunning || !accessToken) return;
+    syncRunning = true;
+    const statusEl = document.getElementById('sync-status');
+    const btn = document.getElementById('btn-sync');
+    btn.disabled = true;
+    const since = opts.sinceDays ? Date.now() - opts.sinceDays * 86400000 : 0;
+    let raised = 0, failed = 0;
+    try {
+      statusEl.textContent = '⟳ Checking for new scores…';
+      if (!courseIds) {
+        const taught = await listAll('https://classroom.googleapis.com/v1/courses?teacherId=me&courseStates=ACTIVE&fields=courses(id),nextPageToken', 'courses');
+        courseIds = taught.map(c => c.id);
+      }
+      const works = [];
+      await mapLimit(courseIds, 4, async courseId => {
+        const list = await listAll(`https://classroom.googleapis.com/v1/courses/${courseId}/courseWork?fields=courseWork(id,associatedWithDeveloper,creationTime),nextPageToken`, 'courseWork').catch(() => []);
+        list.filter(w => w.associatedWithDeveloper && (!since || Date.parse(w.creationTime) >= since))
+          .forEach(w => works.push({ courseId, id: w.id }));
+      });
+
+      let done = 0;
+      for (const w of works) {
+        statusEl.textContent = `⟳ Syncing grades… ${++done}/${works.length}`;
+        const base = `https://classroom.googleapis.com/v1/courses/${w.courseId}/courseWork/${w.id}/studentSubmissions`;
+        const subs = await listAll(`${base}?fields=studentSubmissions(id,draftGrade,assignmentSubmission/attachments/driveFile/id),nextPageToken`, 'studentSubmissions').catch(() => []);
+        await mapLimit(subs.filter(s => (s.draftGrade ?? -1) < 100), 6, async s => {
+          const score = await submissionScore(s);
+          if (score <= (s.draftGrade ?? -1)) return;
+          const res = await fetch(`${base}/${s.id}?updateMask=draftGrade`, {
+            method: 'PATCH',
+            headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ draftGrade: score })
+          });
+          if (res.ok) raised++;
+          else { failed++; console.error('Grade sync: could not write grade', w, s.id, await res.text().catch(() => res.status)); }
+        });
+      }
+      statusEl.textContent = raised ? `✅ ${raised} grade${raised === 1 ? '' : 's'} synced to Classroom` : '✅ Grades up to date';
+      if (failed) statusEl.textContent += ` · ⚠️ ${failed} failed (see console)`;
+    } catch (e) {
+      console.error('Grade sync failed:', e);
+      statusEl.textContent = '⚠️ Grade sync failed — see console';
+    } finally {
+      syncRunning = false;
+      btn.disabled = false;
+    }
+  }
+
+  // The button checks every assignment, however old: just the chosen class, or all classes.
+  function onSyncClick() {
+    syncGrades(selectedCourseId ? [selectedCourseId] : null);
   }
 
   // ── Topic colours ────────────────────────────────────────
@@ -1123,145 +1094,6 @@
       el.className = 'error';
       el.textContent = 'Could not load activities: ' + err.message;
     });
-
-  // ── Proxy helpers ────────────────────────────────────────
-
-  // Checks the proxy is reachable and returns the correct version.
-  // Returns 'ok' | 'cors-blocked' | 'unreachable' | 'version-mismatch'.
-  async function checkProxyHealth(url) {
-    const PROXY_MIN_VERSION = 1;
-    try {
-      const res  = await fetch(url + '?action=version');
-      const text = res.ok ? (await res.text()).trim() : '';
-      const ver  = parseInt(text, 10);
-      return (!isNaN(ver) && ver >= PROXY_MIN_VERSION) ? 'ok' : 'version-mismatch';
-    } catch (_) {
-      // fetch threw — could be CORS block or true network error.
-      // A no-cors probe distinguishes: opaque response = reachable but CORS-blocked.
-      try {
-        const probe = await fetch(url + '?action=version', { mode: 'no-cors' });
-        if (probe.type === 'opaque') return 'cors-blocked';
-      } catch (_2) {}
-      return 'unreachable';
-    }
-  }
-
-  function showNoProxyOptions() {
-    document.getElementById('teacher-status').innerHTML =
-      '⚠️ No proxy — ' +
-      '<button class="btn-inline" onclick="findProxyInDrive()" id="btn-find-proxy">Search my Drive</button>' +
-      ' &nbsp;·&nbsp; <button class="btn-inline-ghost" onclick="document.getElementById(\'hub-proxy-row\').classList.add(\'visible\')">Paste URL</button>' +
-      ' &nbsp;·&nbsp; <a href="_teacher/setup.html" style="color:#7a9ab5;font-size:0.78rem;">new setup →</a>';
-  }
-
-  // Returns the most recently published /exec URL for the teacher's proxy script, or null.
-  // NOTE: classroom.js has a duplicate of this logic in searchDriveForProxy() — keep in sync.
-  async function searchDriveForProxyUrl() {
-    try {
-      const searchRes = await fetch(
-        'https://www.googleapis.com/drive/v3/files?' + new URLSearchParams({
-          q: "mimeType='application/vnd.google-apps.script' and name='OGA Classroom Grade Proxy' and trashed=false and 'me' in owners",
-          fields: 'files(id,name)',
-          pageSize: 5
-        }),
-        { headers: { Authorization: `Bearer ${accessToken}` } }
-      );
-      const { files } = await searchRes.json();
-      if (!files || files.length === 0) return null;
-      const depRes = await fetch(
-        `https://script.googleapis.com/v1/projects/${files[0].id}/deployments`,
-        { headers: { Authorization: `Bearer ${accessToken}` } }
-      );
-      const depData = await depRes.json();
-      const deployments = (depData.deployments || []).sort((a, b) =>
-        new Date(b.updateTime) - new Date(a.updateTime)
-      );
-      for (const dep of deployments) {
-        const ep = (dep.entryPoints || []).find(ep =>
-          ep.entryPointType === 'WEB_APP' && ep.webApp?.url?.endsWith('/exec')
-        );
-        if (ep) return ep.webApp.url;
-      }
-      return null;
-    } catch (e) {
-      console.error('Drive proxy search failed:', e);
-      return null;
-    }
-  }
-
-  async function findProxyInDrive() {
-    // accessToken already has drive.metadata.readonly + script.deployments granted
-    // at sign-in time, so no second OAuth flow is needed here.
-    const btn      = document.getElementById('btn-find-proxy');
-    const statusEl = document.getElementById('teacher-status');
-    if (btn) { btn.textContent = '🔍 Searching…'; btn.disabled = true; }
-    try {
-      const searchRes = await fetch(
-        'https://www.googleapis.com/drive/v3/files?' + new URLSearchParams({
-          q: "mimeType='application/vnd.google-apps.script' and name='OGA Classroom Grade Proxy' and trashed=false and 'me' in owners",
-          fields: 'files(id,name)',
-          pageSize: 5
-        }),        { headers: { Authorization: `Bearer ${accessToken}` } }
-      );
-      const { files } = await searchRes.json();
-      if (!files || files.length === 0) {
-        statusEl.innerHTML =
-          '⚠️ No proxy found in Drive — ' +
-          '<button class="btn-inline-ghost" onclick="document.getElementById(\'hub-proxy-row\').classList.add(\'visible\')">Paste URL</button>' +
-          ' &nbsp;·&nbsp; <a href="_teacher/setup.html" style="color:#7a9ab5;font-size:0.78rem;">new setup →</a>';
-        return;
-      }
-      const depRes = await fetch(
-        `https://script.googleapis.com/v1/projects/${files[0].id}/deployments`,
-        { headers: { Authorization: `Bearer ${accessToken}` } }
-      );
-      const depData = await depRes.json();
-      // Sort by updateTime descending so the most recently published version wins.
-      // Skip HEAD deployment — its URL ends in /dev and requires editor-level auth.
-      // NOTE: classroom.js has a duplicate of this logic in searchDriveForProxy() — keep in sync.
-      const deployments = (depData.deployments || []).sort((a, b) =>
-        new Date(b.updateTime) - new Date(a.updateTime)
-      );
-      let url = null;
-      for (const dep of deployments) {
-        const ep = (dep.entryPoints || []).find(ep =>
-          ep.entryPointType === 'WEB_APP' && ep.webApp?.url?.endsWith('/exec')
-        );
-        if (ep) { url = ep.webApp.url; break; }
-      }
-      if (url) {
-        try { localStorage.setItem('oga_proxy_url', url); } catch (_) {}
-        document.getElementById('course-combobox').style.display = 'inline-block';
-        document.body.classList.add('teacher-mode');
-        fetchCourses();
-        statusEl.textContent = '✅ Proxy URL found and saved.';
-      } else {
-        statusEl.innerHTML =
-          '⚠️ Proxy script found but not yet deployed — ' +
-          '<a href="_teacher/setup.html" style="color:#00b4b4;font-size:0.78rem;">re-run setup →</a>';
-      }
-    } catch (e) {
-      console.error('Drive proxy search failed:', e);
-      showNoProxyOptions();
-    } finally {
-      if (btn) { btn.textContent = '🔍 Search my Drive'; btn.disabled = false; }
-    }
-  }
-
-  function saveHubProxyUrl() {
-    const input = document.getElementById('hub-proxy-input');
-    const url = input && input.value.trim();
-    if (!url || !url.startsWith('https://')) {
-      if (input) input.style.borderColor = '#e05555';
-      return;
-    }
-    try { localStorage.setItem('oga_proxy_url', url); } catch (_) {}
-    document.getElementById('hub-proxy-row').classList.remove('visible');
-    document.getElementById('course-combobox').style.display = 'inline-block';
-    document.body.classList.add('teacher-mode');
-    fetchCourses();
-    document.getElementById('teacher-status').textContent = '✅ Proxy URL saved.';
-  }
 
   // ── Fetch build metadata for footer ──────────────────────
   fetch('meta.json?v=' + Date.now())

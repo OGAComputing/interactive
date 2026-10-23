@@ -5,8 +5,7 @@
 const SCOPE = 'https://www.googleapis.com/auth/classroom.coursework.me ' +
   'https://www.googleapis.com/auth/classroom.courses.readonly openid email ' +
   'https://www.googleapis.com/auth/drive.file ' +
-  'https://www.googleapis.com/auth/drive.metadata.readonly ' +
-  'https://www.googleapis.com/auth/script.deployments';
+  'https://www.googleapis.com/auth/drive.metadata.readonly';
 
 function seedTokenScript() {
   return `(function() {
@@ -48,15 +47,11 @@ export async function mockAsStudent(page, courseId = 'test-course-123', activity
     route.fulfill({ json: { email: 'student@test.com', name: 'Test Student', sub: '12345' } })
   );
 
-  // Drive metadata search (searchDriveForProxy) — no proxy script found.
+  // Drive: no files found (results lookup); evidence uploads get a dummy reply.
   await page.route('https://www.googleapis.com/drive/**', route =>
     route.fulfill({ json: { files: [] } })
   );
 
-  // Apps Script deployments lookup — no deployments.
-  await page.route('https://script.googleapis.com/**', route =>
-    route.fulfill({ json: { deployments: [] } })
-  );
 
   // Route all classroom.googleapis.com calls through one handler.
   await page.route('https://classroom.googleapis.com/**', async (route) => {
@@ -107,9 +102,6 @@ export async function mockAsStudentReusedPost(page, oldCourseId, newCourseId, ac
     route.fulfill({ json: { files: [] } })
   );
 
-  await page.route('https://script.googleapis.com/**', route =>
-    route.fulfill({ json: { deployments: [] } })
-  );
 
   await page.route('https://classroom.googleapis.com/**', async (route) => {
     const url = route.request().url();
@@ -151,9 +143,6 @@ export async function mockAsTeacherReusedPost(page, oldCourseId, newCourseId, ac
     route.fulfill({ json: { files: [] } })
   );
 
-  await page.route('https://script.googleapis.com/**', route =>
-    route.fulfill({ json: { deployments: [] } })
-  );
 
   await page.route('https://classroom.googleapis.com/**', async (route) => {
     const url = route.request().url();
@@ -188,9 +177,6 @@ export async function mockAsTeacher(page, courseId = 'test-course-123') {
     route.fulfill({ json: { files: [] } })
   );
 
-  await page.route('https://script.googleapis.com/**', route =>
-    route.fulfill({ json: { deployments: [] } })
-  );
 
   await page.route('https://classroom.googleapis.com/**', async (route) => {
     const url = route.request().url();

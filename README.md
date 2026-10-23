@@ -6,8 +6,7 @@ Interactive computing activities for Outwood Grange Academy students (Years 7–
 
 ## For teachers
 
-- **Using an activity:** open the site, find the activity under its year and topic, and post its link as a Google Classroom assignment. Students who open it from Classroom get their grade and a copy of their work submitted automatically.
-- **First time with Classroom grading:** follow [`getting-started.html`](getting-started.html), then [`_teacher/setup.html`](_teacher/setup.html) to set up the grade proxy.
+- **Using an activity:** sign in on the site and use an activity's **Assign** button to post it to a Google Classroom class. Students' work is attached to their submission as they go; the next time you open the site it writes their scores into Classroom as draft grades. No setup is needed: see [`getting-started.html`](getting-started.html).
 - **Unit guides:** [`_teacher/`](_teacher/) holds teacher-only guides and tools, such as the Y8 Python Unit 1 guide.
 - **Lesson decks:** [`_presentations/`](_presentations/) holds the PowerPoint decks that go with the activities.
 
