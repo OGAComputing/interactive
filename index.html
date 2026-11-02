@@ -806,8 +806,17 @@
           else counts.same++;
         }
       } catch (e) {
-        console.error('Grade sync: could not read submissions', { courseId, workId }, e);
-        counts.failed += group.length;
+        // A deleted assignment's submissions list fails with 400, not 404, but the
+        // assignment itself then 404s. Skip it so it can't hold the sync marker back for ever.
+        const deleted = /^(400|404) /.test(e.message) &&
+          await googleGet(`https://classroom.googleapis.com/v1/courses/${courseId}/courseWork/${workId}?fields=id`)
+            .then(() => false, err => /^404 /.test(err.message));
+        if (deleted) {
+          console.info('Grade sync: skipped a deleted assignment', { courseId, workId });
+        } else {
+          console.error('Grade sync: could not read submissions', { courseId, workId }, e);
+          counts.failed += group.length;
+        }
       }
     });
 
