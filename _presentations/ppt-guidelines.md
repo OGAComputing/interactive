@@ -165,6 +165,7 @@ The PNGs are in `C:\Users\n.houlton_grange.out\Pictures\`.
 - **Layout:** `LAYOUT_WIDE` (13.33 × 7.5 in).
 - **Palette:** Charcoal `#1E1E24` · Gold `#D8A73D` · Off-white `#F5F5F3`.
 - **Fonts:** Cambria (headers), Calibri (body).
+- **Design around Google fonts** (Nick, 2026-11-03): decks are taught from Google Slides, so any new deck, kit or theme variant uses fonts from Google Fonts (they show in Slides as they do in PowerPoint). Don't pick a Windows-only font such as Bahnschrift or Segoe UI: Slides swaps it for another. Measure character widths for any `fit: 'shrink'` sizing from the Google font's own file.
 - **Minimum font sizes:** body, bullet and card text **≥ 18pt**; callout banners and Turn & Talk prompts ~19–25pt; small uppercase labels, kickers and timer-chip captions 12–14pt.
 
 ### Icon rendering rules
@@ -177,7 +178,7 @@ The PNGs are in `C:\Users\n.houlton_grange.out\Pictures\`.
 
 A unit with a story layer can restyle the deck to match it, but keeps the slide order, pillar icons, fonts, minimum sizes and Section 5–6 rules above.
 
-- **Y10 BTEC Creative Media — Component 1, *Front Page*** (`_presentations/Y10_BTEC_CDM/`): an editorial / magazine look, chosen so these decks don't resemble the Computing ones. **This variant changes the fonts and palette** (Nick's decision, 2026-10-23): Bahnschrift SemiBold Condensed headlines, Segoe UI body, Georgia italic quotes; paper / ink / one print red; square corners and heavy rules. Slide order, pillar icons and minimum sizes stay. Start from that folder's `README.md` and `C1_Deck_Template.pptx`; recipes are in `c1_kit.cjs`.
+- **Y10 BTEC Creative Media — Component 1, *Front Page*** (`_presentations/Y10_BTEC_CDM/`): an editorial / magazine look, chosen so these decks don't resemble the Computing ones. **This variant changes the fonts and palette** (Nick's decision, 2026-10-23): Oswald headlines, Lato body, Lora italic quotes (Google fonts, since 2026-11-03: the decks are published as Google Slides); paper / ink / one print red; square corners and heavy rules. Slide order, pillar icons and minimum sizes stay. Start from that folder's `README.md` and `C1_Deck_Template.pptx`; recipes are in `c1_kit.cjs`.
 
 - **Y9 Python — *Station Zero*** (survival horror, `Y9/Python/`): charcoal stays the base, gold is used as the station's hazard/warning colour, and a dim phosphor green (Consolas) is kept for story text only: chapter cards and terminal logs. Alarm red appears **only** on error messages. The Recap & Recall starter stays light (off-white) so the answers slide can be the dark one. The story appears in two places only, as in the activities: a chapter card before the task and a cliffhanger at the end. Content slides carry no decorative horror imagery. Code uses Consolas, coloured like the activities' memory view: strings in Okabe-Ito orange (`str`), numbers in sky blue (`int`), so slides and activities use the same type colours.
   - **Start from `_presentations/Y9_Python/README.md` and `Y9_Python_Deck_Template.pptx`** (one example of every slide type, with guidance in the speaker notes). The README holds the unit's rules and the running feedback log; the template's rules slides are generated from it.

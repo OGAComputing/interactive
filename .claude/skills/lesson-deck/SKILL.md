@@ -26,7 +26,8 @@ Build or update the deck for `$ARGUMENTS`.
   parts (`varBox`, `codePanel`, `terminal`, `badge`, `arrow`).
 - Y10 BTEC Component 1: read `_presentations/Y10_BTEC_CDM/README.md` and `Y10/CLAUDE.md`; copy
   `build_template.cjs` to `build_L<n>.cjs`, keep only the recipes the lesson needs, and send Nick the
-  "Images to supply" list the build prints before filling the slides.
+  "Images to supply" list the build prints before filling the slides. One deck per lesson, even in a
+  double.
 - Other units: follow §9 of `ppt-guidelines.md` and copy the nearest existing build script.
 - Build: `node build_L<n>.cjs` in the unit folder (needs `npm install -g pptxgenjs`). If it
   can't save, the deck is open in PowerPoint: ask the user to close it.
@@ -38,6 +39,18 @@ Build or update the deck for `$ARGUMENTS`.
 - Check against the feedback log: whole lines of code, labels right beside what they label,
   ≤ 3 text areas, no split attention, story only on title / story-so-far / chapter cards /
   plenary, damage only in the frame.
+- **Define before use:** read the slides in order. No technical term or concept appears on a slide
+  (labels, prompts, hinge options, task steps) before the slide that introduces or defines it. The
+  lesson-question slide may pose it; speaker notes don't count. Move the defining slide earlier, or
+  reword the earlier slide in plain words.
+- Y10 decks: check in PowerPoint itself with `render_slides.ps1` (the README says how).
 - Fix and rebuild until clean. Report the slide list (number · recipe · one-line purpose).
+
+## Publish (Y10 BTEC only)
+
+Once the deck is clean, run `node publish_to_drive.cjs L<n>_<Name>.pptx` in
+`_presentations/Y10_BTEC_CDM/`. It rebuilds the deck from its builder, then uploads it (and its `resources/<deck name>/`) to the course
+Drive folder as Google Slides. Report the Slides and folder links it prints. If it says the OAuth
+client is missing, point the user to "Publishing to Drive" in that README.
 
 If the user gives feedback on a deck, also run `/log-feedback`.

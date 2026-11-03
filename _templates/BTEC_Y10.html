@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- ACTIVITY
+title:  Activity Title
+type:   Practice
+stars:  2
+desc:   Short description shown on the hub card (one sentence).
+color:  red
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Activity Title — Y10 BTEC Creative Media</title>
+
+<!--
+  Y10 BTEC Component 1 starter ("Front Page" look, as in the decks). Lesson-level page:
+  Y10/Component_1/L<week>.<lesson>_<Name>/<n>_<Name>.html, so shared files are ../../../.
+  Copy _templates/BTEC_Y10_checkers.js beside the page as checkers.js and fill in its data.
+  Real product images are inlined into the IMG-DATA block with Y10/inline_images.py (Y10/CLAUDE.md).
+-->
+<link rel="stylesheet" href="../../../shared.css">
+
+<style>
+  body { background: var(--bg); color: var(--text); font-size: 17px; line-height: 1.5; }
+
+  /* ── Masthead header ────────────────────────────────── */
+  .masthead { background: var(--surface); color: var(--text-inv); padding: 14px 28px 12px; border-bottom: 6px solid var(--accent); }
+  .masthead .folio { display: flex; justify-content: space-between; gap: 12px; font-size: .74rem; font-weight: 700;
+    letter-spacing: .18em; text-transform: uppercase; color: #B9B3A8; border-bottom: 2px solid #3A3A42; padding-bottom: 6px; }
+  .masthead h1 { font-family: var(--font-head); font-weight: 600; font-size: clamp(2rem, 5vw, 3.1rem); line-height: 1.05; margin: 10px 0 2px; }
+  .masthead .standfirst { font-family: var(--font-quote); font-style: italic; color: #D8D2C6; font-size: 1.05rem; }
+  .progress-row { display: flex; gap: 6px; margin-top: 10px; }
+  .pdot { width: 12px; height: 12px; background: transparent; border: 2px solid #6B665E; }
+  .pdot.correct { background: var(--green); border-color: var(--green); }
+  .pdot.gold { background: var(--gold); border-color: var(--gold); }
+
+  /* ── Tabs: section labels, like a contents strip ─────── */
+  .tab-bar { display: flex; gap: 0; overflow-x: auto; border-bottom: 3px solid var(--text); background: var(--bg); padding: 0 20px; }
+  .tab { padding: 11px 16px 9px; border: none; background: transparent; color: var(--muted); font: 700 .86rem var(--font-body);
+    letter-spacing: .06em; text-transform: uppercase; cursor: pointer; border-bottom: 4px solid transparent; margin-bottom: -3px; white-space: nowrap; }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--text); border-bottom-color: var(--accent); }
+  .tab.done::after { content: ' ✓'; color: var(--green); }
+  .tab.done.gold::after { color: var(--gold); }
+  .tab:focus-visible { outline: 3px solid var(--accent); outline-offset: -3px; }
+
+  /* ── Panels ─────────────────────────────────────────── */
+  .panel { display: none; max-width: 980px; margin: 0 auto; padding: 26px 24px 56px; position: relative; z-index: 1; }
+  .panel.active { display: block; }
+  .task-head { display: flex; align-items: baseline; gap: 14px; border-bottom: 3px solid var(--text); padding-bottom: 6px; margin-bottom: 14px; }
+  .task-num { font-family: var(--font-head); font-size: 2.6rem; line-height: 1; color: var(--accent); }
+  .task-title { font-family: var(--font-head); font-weight: 600; font-size: 1.8rem; line-height: 1.1; }
+  .kicker { font-size: .74rem; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--accent); }
+  .goal { border-left: 6px solid var(--accent); background: #fff; padding: 10px 14px; margin: 0 0 18px; font-weight: 600; }
+  .lead { font-family: var(--font-quote); font-style: italic; font-size: 1.12rem; margin: 0 0 14px; }
+  .note { font-size: .9rem; color: var(--muted); }
+  p + p { margin-top: 8px; }
+
+  /* ── Real product image with its source ───────────────── */
+  .product { margin: 0 0 14px; background: #fff; border: 1.5px solid var(--text); padding: 8px; }
+  .product img { display: block; width: 100%; height: auto; }
+  .product figcaption, .credit { font-size: .74rem; color: var(--muted); margin-top: 5px; }
+
+  /* ── Drive video block ──────────────────────────────── */
+  .clip { background: var(--surface); color: var(--text-inv); padding: 12px; margin: 0 0 16px; }
+  .clip-frame { position: relative; aspect-ratio: 16 / 9; background: #000; }
+  .clip-frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+  .clip figcaption { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin-top: 10px; font-size: .92rem; }
+  .clip .watch { background: var(--accent); color: #fff; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; padding: 4px 10px; }
+  .clip a { color: var(--accent-light); font-weight: 700; }
+  .clip .src { color: #B9B3A8; font-size: .8rem; }
+
+  /* ── Questions ──────────────────────────────────────── */
+  .q { background: #fff; border: 1.5px solid var(--text); padding: 12px 14px; margin: 0 0 12px; }
+  .q-text { font-weight: 700; margin-bottom: 8px; }
+  .opts { display: grid; gap: 6px; }
+  .opt { display: flex; gap: 10px; align-items: flex-start; padding: 8px 10px; border: 1.5px solid #CFC8BA; cursor: pointer; background: var(--bg); }
+  .opt:hover { border-color: var(--text); }
+  .opt input { margin-top: 4px; accent-color: var(--accent); }
+  .opt:has(input:checked) { border-color: var(--text); background: #fff; box-shadow: inset 4px 0 0 var(--text); }
+  .is-correct { border-color: var(--green) !important; background: var(--green-bg) !important; }
+  .is-wrong { border-color: var(--red) !important; background: var(--red-bg) !important; }
+  .q.is-correct::after, .chip.is-correct::after { content: '✓'; float: right; color: var(--green); font-weight: 800; }
+
+  /* ── Sort: cards into bins (click, keyboard or drag) ──── */
+  .tray { display: flex; flex-wrap: wrap; gap: 8px; min-height: 64px; padding: 10px; border: 2px dashed #A9A293; margin-bottom: 12px; background: #fff; }
+  .tray:empty::before { content: 'All sorted. Check your answers below.'; color: var(--muted); font-size: .9rem; align-self: center; }
+  .bins { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+  .bin { border: 2px solid var(--text); background: var(--bg); min-height: 120px; padding: 8px; cursor: pointer; }
+  .bin h3 { font-family: var(--font-head); font-weight: 600; font-size: 1.15rem; border-bottom: 2px solid var(--text); margin-bottom: 8px; padding-bottom: 2px; }
+  .bin .slot { display: flex; flex-wrap: wrap; gap: 6px; }
+  .bin.target-on, .bin.drop-on, .tray.drop-on { border-color: var(--accent); background: #fff; }
+  .chip { display: inline-flex; flex-direction: column; align-items: center; gap: 4px; width: 120px; padding: 6px; border: 1.5px solid var(--text);
+    background: #fff; cursor: grab; user-select: none; font-size: .8rem; font-weight: 600; text-align: center; line-height: 1.25; }
+  /* The whole picture always shows (contain, never cropped); the magnifier or a hover opens it bigger. */
+  .chip .thumb { position: relative; width: 100%; height: 104px; background: #E8E2D6; }
+  .chip .thumb img { width: 100%; height: 100%; object-fit: contain; display: block; }
+  .chip .zoom { position: absolute; top: 4px; right: 4px; width: 32px; height: 32px; display: grid; place-items: center; padding: 0;
+    border: 0; background: rgba(22,22,26,.78); color: #fff; cursor: zoom-in; opacity: 0; transition: opacity .15s ease, background .15s ease; }
+  /* Hidden until the card is hovered or focused, so it never covers a title; always shown on touch screens. */
+  .chip:hover .zoom, .chip:focus-within .zoom { opacity: 1; }
+  @media (hover: none) { .chip .zoom { opacity: 1; } }
+  .chip .zoom:hover, .chip .zoom:focus-visible { background: var(--accent); }
+  .chip .zoom:focus-visible { outline: 3px solid var(--text); outline-offset: 1px; }
+  .chip .zoom svg { width: 18px; height: 18px; }
+  .peek { position: fixed; z-index: 50; pointer-events: none; background: #fff; border: 1.5px solid var(--text); padding: 6px;
+    box-shadow: 6px 6px 0 rgba(22,22,26,.25); opacity: 0; transition: opacity .15s ease-out; }
+  .peek.show { opacity: 1; }
+  .peek img { display: block; max-width: min(440px, 45vw); max-height: min(440px, 80vh); }
+  .zoom-dlg { margin: auto; border: 1.5px solid var(--text); padding: 0; background: #fff; max-width: min(92vw, 640px); }
+  .zoom-dlg::backdrop { background: rgba(22,22,26,.6); }
+  .zoom-dlg figure { margin: 0; padding: 52px 14px 14px; }
+  .zoom-dlg img { display: block; margin: 0 auto; max-width: 100%; max-height: 72vh; }
+  .zoom-dlg figcaption { margin-top: 8px; font-weight: 700; }
+  .zoom-dlg figcaption small { display: block; font-weight: 400; color: var(--muted); }
+  .zoom-dlg .close { position: absolute; top: 6px; right: 6px; width: 40px; height: 40px; border: 0; background: var(--text); color: #fff;
+    font-size: 1.4rem; line-height: 1; cursor: pointer; }
+  .zoom-dlg .close:hover, .zoom-dlg .close:focus-visible { background: var(--accent); }
+  @media (prefers-reduced-motion: reduce) { .peek, .chip .zoom { transition: none; } }
+  .chip.picked { outline: 3px solid var(--accent); outline-offset: 1px; }
+  .chip.dragging { opacity: .45; }
+  .chip:focus-visible, .bin:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+  .chip .reveal { font-weight: 800; color: var(--accent); }
+  .sort .credit { margin-top: 10px; }
+  /* A "deal" sort (class="sort deal"): one big card at a time beside the boxes, so the whole sort fits
+     on one screen. Sorted cards shrink to picture tiles; hovering a tile shows it bigger with its name. */
+  .sort.deal { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 14px; align-items: start; }
+  .deal .deck { position: sticky; top: 12px; }
+  .deal .deal-count { font-weight: 700; font-size: .9rem; margin: 0 0 6px; }
+  .deal .tray { display: block; min-height: 320px; margin: 0; padding: 8px; }
+  .deal .tray .chip ~ .chip { display: none; }
+  .deal .tray .chip { display: flex; width: 100%; padding: 8px; font-size: 1rem; }
+  .deal .tray .chip .thumb { height: 250px; }
+  .deal .tray:empty::before { content: 'All sorted! Check your board. To move a card, click it, then its new box.'; display: block; padding: 6px; }
+  .deal .skip { margin-top: 8px; width: 100%; padding: 8px 10px; font: inherit; font-weight: 700; border: 1.5px solid var(--text); border-radius: 0; background: #fff; color: var(--text); cursor: pointer; }
+  .deal .skip:hover, .deal .skip:focus-visible { background: var(--text); color: var(--text-inv); }
+  .deal .bins { align-content: start; }
+  .deal .bin { min-height: 0; padding: 6px 8px 8px; }
+  .deal .bin h3 { font-size: 1.05rem; margin-bottom: 6px; }
+  .deal .bin .slot { min-height: 60px; gap: 5px; }
+  .deal .bin .chip { position: relative; width: 60px; padding: 3px; gap: 2px; font-size: .7rem; }
+  .deal .bin .chip .thumb { height: 52px; }
+  .deal .bin .chip .lbl, .deal .bin .chip .zoom { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; opacity: 0; }
+  .deal .bin .chip.is-correct::after { position: absolute; top: -2px; right: 2px; float: none; text-shadow: 0 0 3px #fff; }
+  .deal .credit { grid-column: 1 / -1; }
+  .peek .peek-lbl { max-width: min(440px, 45vw); margin-top: 4px; font-weight: 700; font-size: .85rem; }
+  @media (max-width: 700px) {
+    .sort.deal { grid-template-columns: 1fr; }
+    .deal .deck { position: static; }
+    .deal .tray { min-height: 0; }
+    .deal .tray .chip .thumb { height: 180px; }
+  }
+
+  /* ── Writing ────────────────────────────────────────── */
+  .write-q { background: #fff; border: 1.5px solid var(--text); padding: 12px 14px; margin: 0 0 12px; }
+  .write-q label { display: block; font-weight: 700; margin-bottom: 6px; }
+  .write-q textarea, .write-q input[type=text] { width: 100%; font: inherit; padding: 8px 10px; border: 1.5px solid #A9A293; background: var(--bg); }
+  .write-q textarea { min-height: 84px; resize: vertical; }
+  .write-q textarea:focus, .write-q input:focus { outline: 3px solid var(--accent); outline-offset: 0; border-color: var(--text); }
+  .starter { font-family: var(--font-quote); font-style: italic; color: var(--muted); font-size: .92rem; margin-bottom: 4px; }
+
+  /* ── Buttons and feedback ───────────────────────────── */
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 12px; }
+  .ac-btn { border-radius: 0; background: var(--text); color: var(--text-inv); font-weight: 700; letter-spacing: .04em; }
+  .ac-btn:hover { background: var(--accent); opacity: 1; }
+  .ac-btn:disabled { background: #8A847A; cursor: not-allowed; }
+  .ac-btn-secondary { border-radius: 0; }
+  .feedback { min-height: 1.5em; margin-top: 10px; font-weight: 700; }
+  .feedback.correct { color: var(--green-dark); }
+  .feedback.wrong { color: var(--red); animation: ac-shake .35s ease; }
+
+  /* ── Optional tasks: Warm-up (support) and Challenge ─── */
+  .pdot.optional { border-radius: 50%; }
+  .tab.support { color: var(--green-dark); }
+  .tab.challenge { color: var(--accent); }
+  .level { display: inline-block; font-size: .72rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase;
+    padding: 3px 8px; margin-bottom: 8px; color: #fff; background: var(--green-dark); }
+  .level.challenge { background: var(--accent); }
+  details.help { background: #fff; border: 1.5px dashed #A9A293; padding: 8px 12px; margin: 0 0 14px; }
+  details.help summary { cursor: pointer; font-weight: 700; }
+  details.help[open] summary { margin-bottom: 6px; }
+  .wordbank { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  .wordbank span { border: 1.5px solid var(--text); background: var(--bg); padding: 2px 8px; font-size: .88rem; }
+
+  #glow-overlay { position: fixed; inset: 0; pointer-events: none; z-index: 0; opacity: 0; transition: opacity 1.8s ease; }
+  #glow-overlay.gold  { background: radial-gradient(ellipse at 50% 55%, rgba(217,154,11,.22) 0%, transparent 65%); }
+  #glow-overlay.green { background: radial-gradient(ellipse at 50% 55%, rgba(46,125,79,.18) 0%, transparent 65%); }
+  #glow-overlay.show  { opacity: 1; }
+
+  @media (max-width: 600px) {
+    .masthead, .panel { padding-left: 16px; padding-right: 16px; }
+    .chip { width: 104px; }
+  }
+</style>
+</head>
+
+<body>
+<div id="done-banner" class="ac-banner gold">🏆 All tasks complete. Great work!</div>
+<div id="glow-overlay"></div>
+
+<header class="masthead">
+  <div class="folio"><span>Component 1 · Exploring Media Products</span><span>Lesson FILL IN</span></div>
+  <h1>Activity Title</h1>
+  <p class="standfirst">FILL IN: one sentence on what students will be able to do.</p>
+  <div class="progress-row" id="progress-row"></div>
+</header>
+
+<nav class="tab-bar" id="tab-bar" aria-label="Tasks">
+  <button class="tab active" data-idx="0">1 · Watch</button>
+  <button class="tab" data-idx="1">2 · Sort</button>
+  <button class="tab" data-idx="2">3 · Write</button>
+</nav>
+
+<!-- ── Task 1: clip + questions ─────────────────────────── -->
+<section class="panel active" id="panel-0">
+  <div class="task-head"><span class="task-num">1</span><h2 class="task-title">FILL IN: task title</h2></div>
+  <p class="goal">🎯 FILL IN: what students do and produce.</p>
+
+  <!-- DRIVE VIDEO BLOCK. Clip IDs and times live in Y10/media.md. The page can only set the start
+       (?t= seconds), so the watch window is written in .watch; questions come after the clip. -->
+  <figure class="clip">
+    <div class="clip-frame">
+      <iframe src="https://drive.google.com/file/d/FILL_IN_FILE_ID/preview?t=0" title="FILL IN: clip name"
+              allow="autoplay; fullscreen" allowfullscreen loading="lazy"></iframe>
+    </div>
+    <figcaption>
+      <span class="watch">Watch 0:00 – 0:45</span>
+      <a href="https://drive.google.com/file/d/FILL_IN_FILE_ID/view?t=0" target="_blank" rel="noopener">Open in Drive ↗</a>
+      <span class="src">FILL IN: product, year, owner (shown for teaching under fair dealing)</span>
+    </figcaption>
+  </figure>
+
+  <div class="qs" data-choices="t0"></div>
+  <div class="row">
+    <button class="ac-btn" id="check-0">Check answers</button>
+    <button class="ac-btn-secondary" id="reset-0" style="display:none">↺ Try for Gold</button>
+  </div>
+  <div class="feedback" id="feedback-0" role="status"></div>
+</section>
+
+<!-- ── Task 2: sort ─────────────────────────────────────── -->
+<section class="panel" id="panel-1">
+  <div class="task-head"><span class="task-num">2</span><h2 class="task-title">FILL IN: task title</h2></div>
+  <p class="goal">🎯 Click a card, then click the box it belongs in (or drag it). Keys: Enter picks a card, 1–9 drops it. Hover over a picture to see it bigger, or click its magnifier.</p>
+  <div class="sort" data-sort="t1">
+    <div class="tray" aria-label="Cards to sort"></div>
+    <div class="bins"></div>
+  </div>
+  <div class="row">
+    <button class="ac-btn" id="check-1">Check answers</button>
+    <button class="ac-btn-secondary" id="reset-1" style="display:none">↺ Try for Gold</button>
+  </div>
+  <div class="feedback" id="feedback-1" role="status"></div>
+</section>
+
+<!-- ── Task 3: writing (sent to Classroom as evidence, not auto-marked) ── -->
+<section class="panel" id="panel-2">
+  <div class="task-head"><span class="task-num">3</span><h2 class="task-title">FILL IN: task title</h2></div>
+  <p class="goal">🎯 FILL IN: what to write. Full sentences: your teacher reads these.</p>
+  <div class="write" data-write="t2"></div>
+  <div class="row"><button class="ac-btn" id="check-2">Save my answers</button></div>
+  <div class="feedback" id="feedback-2" role="status"></div>
+</section>
+
+<div class="ac-toast" id="toast"></div>
+
+<!-- IMG-DATA: generated by Y10/inline_images.py, do not edit by hand -->
+<script>window.IMG = {};</script>
+<!-- /IMG-DATA -->
+
+<script src="../../../error-reporter.js"></script>
+<script src="../../../activity-ui.js"></script>
+<script src="../../../classroom.js"></script>
+
+<script type="module">
+import {
+  TASKS, TASK_COUNT, CHOICES, SORTS, WRITING, markChoices, markSort, markWriting, allCorrect,
+  cooldownSeconds, calcScore, coreDone, coreGold, seededRandom, shuffled,
+} from './checkers.js';
+
+// ── Activity identity ──────────────────────────────────
+const STORAGE_KEY    = 'y10_activity_title';   // unique per activity
+const ACTIVITY_TITLE = 'Activity Title';       // must match <!-- ACTIVITY title: -->
+
+// ═══════════ ENGINE (the same on every BTEC page: change the data in checkers.js, not this) ═══════════
+const state = {
+  seed: null,
+  completed: new Array(TASK_COUNT).fill(false),
+  firstAttempt: new Array(TASK_COUNT).fill(true),
+  answers: {},      // questionId → value (radio key, bin key or text)
+  wrongs: {},       // wrong checks per task
+  coolUntil: {},    // cooldown end times, so a refresh doesn't skip them
+};
+function save() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch {} }
+function load() {
+  try {
+    const s = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    if (s && Array.isArray(s.completed) && s.completed.length === TASK_COUNT) Object.assign(state, s);
+  } catch {}
+}
+const rng = key => seededRandom(state.seed + '|' + key);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+const imgTag = (key, alt) => key && window.IMG?.[key] ? `<img src="${window.IMG[key]}" alt="${esc(alt)}">` : '';
+
+// A sort card's picture, uncropped, with a magnifier button that opens it full size.
+const ZOOM_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21M10.5 7.5v6M7.5 10.5h6"/></svg>';
+const thumbTag = it => it.img && window.IMG?.[it.img] ? `<span class="thumb">${imgTag(it.img, it.label)}<button type="button" class="zoom"
+  aria-label="See the whole picture: ${esc(it.label)}" title="See the whole picture">${ZOOM_ICON}</button></span>` : '';
+
+// Fill every img that has a data-img key from the inlined image data.
+function fillImages() {
+  document.querySelectorAll('img[data-img]').forEach(im => { if (window.IMG?.[im.dataset.img]) im.src = window.IMG[im.dataset.img]; });
+}
+
+// ── Rendering ──────────────────────────────────────────
+function renderChoices(box) {
+  const key = box.dataset.choices;
+  box.innerHTML = Object.entries(CHOICES[key]).map(([id, c], n) => `
+    <div class="q" data-qw="${id}">
+      <p class="q-text">${n + 1}. ${esc(c.q)}</p>
+      <div class="opts">${shuffled(c.opts, rng(id)).map(([k, t]) => `
+        <label class="opt"><input type="radio" name="${id}" value="${k}"${state.answers[id] === k ? ' checked' : ''}><span>${esc(t)}</span></label>`).join('')}
+      </div>
+    </div>`).join('');
+}
+
+function renderSort(box) {
+  const key = box.dataset.sort, sort = SORTS[key];
+  const tray = box.querySelector('.tray'), bins = box.querySelector('.bins');
+  bins.innerHTML = sort.bins.map(([b, label], i) =>
+    `<div class="bin" data-bin="${b}" tabindex="0" aria-label="${esc(label)} (key ${i + 1})"><h3>${esc(label)}</h3><div class="slot"></div></div>`).join('');
+  tray.innerHTML = '';
+  for (const it of shuffled(sort.items, rng(key))) {
+    const chip = document.createElement('div');
+    chip.className = 'chip';
+    chip.dataset.qw = it.id;
+    chip.tabIndex = 0;
+    chip.draggable = true;
+    chip.setAttribute('role', 'button');
+    // The hidden select holds the answer, so the Classroom evidence report lists every card and its bin.
+    chip.innerHTML = `${thumbTag(it)}<span class="lbl">${esc(it.label)}</span>
+      <select class="sr-only" data-q="${it.id}" aria-label="${esc(it.label)}" tabindex="-1"><option value="">Unsorted</option>
+      ${sort.bins.map(([b, l]) => `<option value="${b}">${esc(l)}</option>`).join('')}</select>`;
+    const v = state.answers[it.id] || '';
+    chip.querySelector('select').value = v;
+    (v ? bins.querySelector(`.bin[data-bin="${v}"] .slot`) : tray).appendChild(chip);
+  }
+  // Sources for the real product images (fair dealing for teaching needs an acknowledgement).
+  const credits = sort.items.filter(it => it.credit).map(it => `${it.label}: ${it.credit}`);
+  box.querySelector('.credit')?.remove();
+  if (credits.length) box.insertAdjacentHTML('beforeend', `<p class="credit">Images shown for teaching. ${esc(credits.join(' · '))}.</p>`);
+  if (box.classList.contains('deal') && !box.querySelector('.deck')) {
+    const deck = document.createElement('div');
+    deck.className = 'deck';
+    deck.innerHTML = '<p class="deal-count" aria-live="polite"></p>';
+    box.insertBefore(deck, tray);
+    deck.appendChild(tray);
+    deck.insertAdjacentHTML('beforeend', '<button type="button" class="ac-btn-secondary skip">Skip this one ›</button>');
+  }
+  updateDeal(box);
+}
+
+// A deal sort shows how far through the pile the student is; Skip sends the top card to the bottom.
+function updateDeal(box) {
+  const count = box.querySelector('.deal-count');
+  if (!count) return;
+  const all = box.querySelectorAll('.chip').length, left = box.querySelectorAll('.tray .chip').length;
+  count.textContent = left ? `Card ${all - left + 1} of ${all}` : `All ${all} cards sorted`;
+  box.querySelector('.skip').hidden = left < 2;
+}
+
+// After a sort is done, each card shows its note (e.g. the year it came out).
+function revealNotes(i) {
+  const { key, kind } = TASKS[i];
+  if (kind !== 'sort') return;
+  for (const it of SORTS[key].items) {
+    const chip = document.querySelector(`#panel-${i} .chip[data-qw="${it.id}"]`);
+    if (it.note && chip && !chip.querySelector('.reveal')) chip.insertAdjacentHTML('beforeend', `<small class="reveal">${esc(it.note)}</small>`);
+  }
+}
+
+function renderWriting(box) {
+  const key = box.dataset.write;
+  // short: a one-line name (e.g. a product), not a sentence.
+  box.innerHTML = WRITING[key].map(w => `
+    <div class="write-q" data-qw="${w.id}">
+      <label for="${w.id}">${esc(w.prompt)}</label>
+      ${w.starter ? `<p class="starter">${esc(w.starter)}</p>` : ''}
+      ${w.short
+        ? `<input type="text" id="${w.id}" data-q="${w.id}" value="${esc(state.answers[w.id] || '')}" autocomplete="off">`
+        : `<textarea id="${w.id}" data-q="${w.id}">${esc(state.answers[w.id] || '')}</textarea>`}
+    </div>`).join('');
+}
+
+// ── Picking and placing sort cards ──────────────────────
+let picked = null;
+function pick(chip) {
+  picked?.classList.remove('picked');
+  picked = picked === chip ? null : chip;
+  picked?.classList.add('picked');
+  chip.closest('.sort').querySelectorAll('.bin').forEach(b => b.classList.toggle('target-on', !!picked));
+}
+function place(parent, value) {
+  if (!picked) return;
+  const sel = picked.querySelector('select');
+  sel.value = value;
+  state.answers[sel.dataset.q] = value;
+  picked.classList.remove('picked', 'is-correct', 'is-wrong');
+  const sortBox = picked.closest('.sort');
+  parent.appendChild(picked);
+  picked = null;
+  sortBox.querySelectorAll('.bin').forEach(b => b.classList.remove('target-on'));
+  updateDeal(sortBox);
+  save();
+}
+document.addEventListener('click', e => {
+  const zoomBtn = e.target.closest('.chip .zoom');
+  if (zoomBtn) return openZoom(zoomBtn.closest('.chip'));
+  const skip = e.target.closest('.deal .skip');
+  if (skip) {
+    const tray = skip.closest('.deck').querySelector('.tray');
+    if (picked) pick(picked);
+    if (tray.firstElementChild) tray.appendChild(tray.firstElementChild);
+    return updateDeal(skip.closest('.sort'));
+  }
+  const sortBox = e.target.closest('.sort');
+  if (!sortBox || isLocked(sortBox)) return;
+  const chip = e.target.closest('.chip'), bin = e.target.closest('.bin'), tray = e.target.closest('.tray');
+  if (bin && picked && chip !== picked) return place(bin.querySelector('.slot'), bin.dataset.bin);
+  if (chip) return pick(chip);
+  if (bin) place(bin.querySelector('.slot'), bin.dataset.bin);
+  else if (tray) place(tray, '');
+});
+document.addEventListener('keydown', e => {
+  const sortBox = e.target.closest?.('.sort');
+  if (!sortBox || isLocked(sortBox)) return;
+  if (e.target.closest('.zoom')) return;
+  const chip = e.target.closest('.chip');
+  if (chip && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); pick(chip); return; }
+  const bins = sortBox.querySelectorAll('.bin');
+  if (picked && /^[1-9]$/.test(e.key) && bins[+e.key - 1]) {
+    const bin = bins[+e.key - 1];
+    place(bin.querySelector('.slot'), bin.dataset.bin);
+    sortBox.querySelector('.tray .chip')?.focus();
+  }
+});
+let dragged = null;
+document.addEventListener('dragstart', e => {
+  const chip = e.target.closest?.('.chip');
+  if (!chip || isLocked(chip.closest('.sort'))) return;
+  dragged = chip;
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', chip.dataset.qw);
+  chip.classList.add('dragging');
+  hidePeek();
+});
+document.addEventListener('dragend', () => {
+  dragged?.classList.remove('dragging'); dragged = null;
+  document.querySelectorAll('.drop-on').forEach(x => x.classList.remove('drop-on'));
+});
+const dropTarget = e => dragged && e.target.closest('.bin, .tray')?.closest('.sort') === dragged.closest('.sort') ? e.target.closest('.bin, .tray') : null;
+document.addEventListener('dragover', e => {
+  const t = dropTarget(e);
+  if (!t) return;
+  e.preventDefault();
+  document.querySelectorAll('.drop-on').forEach(x => x !== t && x.classList.remove('drop-on'));
+  t.classList.add('drop-on');
+});
+document.addEventListener('drop', e => {
+  const t = dropTarget(e);
+  if (!t) return;
+  e.preventDefault();
+  t.classList.remove('drop-on');
+  picked = dragged;
+  if (t.classList.contains('bin')) place(t.querySelector('.slot'), t.dataset.bin); else place(t, '');
+});
+
+// ── Seeing the whole picture ───────────────────────────
+// Hovering a card's picture for a moment shows it bigger beside the card (mouse only); the
+// magnifier opens it full size in a dialog, which also works by keyboard and after a task is locked.
+const itemOf = chip => Object.values(SORTS).flatMap(s => s.items).find(it => it.id === chip.dataset.qw);
+function openZoom(chip) {
+  const it = itemOf(chip);
+  if (!it) return;
+  hidePeek();
+  let dlg = document.getElementById('zoom-dlg');
+  if (!dlg) {
+    dlg = document.createElement('dialog');
+    dlg.id = 'zoom-dlg';
+    dlg.className = 'zoom-dlg';
+    dlg.addEventListener('click', e => { if (e.target === dlg || e.target.closest('.close')) dlg.close(); });
+    document.body.appendChild(dlg);
+  }
+  dlg.setAttribute('aria-label', it.label);
+  dlg.innerHTML = `<button type="button" class="close" aria-label="Close">×</button><figure>${imgTag(it.img, it.label)}
+    <figcaption>${esc(it.label)}${it.credit ? `<small>Source: ${esc(it.credit)}</small>` : ''}</figcaption></figure>`;
+  dlg.showModal();
+  dlg.querySelector('.close').focus();
+}
+const peek = Object.assign(document.createElement('div'), { className: 'peek' });
+let peekTimer = 0;
+function hidePeek() { clearTimeout(peekTimer); peek.classList.remove('show'); }
+function showPeek(chip) {
+  const it = itemOf(chip);
+  if (!it || dragged || document.getElementById('zoom-dlg')?.open) return;
+  peek.innerHTML = imgTag(it.img, it.label) + `<div class="peek-lbl">${esc(it.label)}</div>`;
+  if (!peek.isConnected) document.body.appendChild(peek);
+  const r = chip.getBoundingClientRect(), p = peek.getBoundingClientRect(), gap = 10;
+  const left = r.right + gap + p.width <= innerWidth ? r.right + gap : Math.max(gap, r.left - gap - p.width);
+  peek.style.left = left + 'px';
+  peek.style.top = Math.min(Math.max(gap, r.top + r.height / 2 - p.height / 2), innerHeight - p.height - gap) + 'px';
+  peek.classList.add('show');
+}
+if (matchMedia('(hover: hover)').matches) {
+  document.addEventListener('mouseover', e => {
+    const thumb = e.target.closest?.('.chip .thumb');
+    // The dealt card is already big, so only smaller cards get a hover preview.
+    if (!thumb || thumb.contains(e.relatedTarget) || thumb.closest('.deal .tray')) return;
+    hidePeek();
+    peekTimer = setTimeout(() => showPeek(thumb.closest('.chip')), 450);
+  });
+  document.addEventListener('mouseout', e => {
+    const thumb = e.target.closest?.('.chip .thumb');
+    if (thumb && !thumb.contains(e.relatedTarget)) hidePeek();
+  });
+  document.addEventListener('pointerdown', hidePeek);
+  addEventListener('scroll', hidePeek, { passive: true });
+}
+
+// Done tasks are locked until "Try for Gold", so a finished answer can't be changed by accident.
+const taskOf = el => +el.closest('.panel').id.replace('panel-', '');
+const isLocked = el => !!el && state.completed[taskOf(el)];
+
+// Save radio and text answers as students go.
+document.addEventListener('change', e => {
+  if (e.target.matches('.q input[type=radio]')) { state.answers[e.target.name] = e.target.value; e.target.closest('.q').classList.remove('is-correct', 'is-wrong'); save(); }
+});
+document.addEventListener('input', e => {
+  if (e.target.matches('[data-q]') && e.target.tagName !== 'SELECT') { state.answers[e.target.dataset.q] = e.target.value; save(); }
+});
+
+// ── Checking ───────────────────────────────────────────
+const coolLeft = i => Math.max(0, Math.ceil(((state.coolUntil['t' + i] || 0) - Date.now()) / 1000));
+function startCooldown(i) {
+  const btn = document.getElementById('check-' + i);
+  const tick = () => {
+    const s = coolLeft(i);
+    btn.disabled = s > 0;
+    btn.textContent = s > 0 ? `Look again… ${s}s` : btn.dataset.label;
+    if (s > 0) setTimeout(tick, 250);
+  };
+  tick();
+}
+
+function gatherAndMark(i) {
+  const { key, kind } = TASKS[i];
+  if (kind === 'choice') return markChoices(key, state.answers);
+  if (kind === 'sort') return markSort(key, state.answers);
+  return markWriting(key, state.answers);
+}
+
+function highlight(i, res) {
+  const panel = document.getElementById('panel-' + i);
+  for (const [id, ok] of Object.entries(res)) {
+    const el = panel.querySelector(`[data-qw="${id}"]`);
+    if (!el) continue;
+    el.classList.toggle('is-correct', ok);
+    el.classList.toggle('is-wrong', !ok);
+  }
+}
+
+function checkTask(i) {
+  const { kind } = TASKS[i];
+  // Writing can be edited and saved again after it's done (the evidence file updates in place).
+  if ((state.completed[i] && kind !== 'write') || coolLeft(i)) return;
+  if (window.Classroom?.verifyAuth() === false) return;
+  const res = gatherAndMark(i);
+  highlight(i, res);
+  const fb = document.getElementById('feedback-' + i);
+  const right = Object.values(res).filter(Boolean).length, total = Object.keys(res).length;
+  if (allCorrect(res)) {
+    fb.textContent = kind === 'write' ? '✅ Saved and sent to your teacher.' : state.firstAttempt[i] ? '🥇 All correct first time!' : '✅ All correct!';
+    fb.className = 'feedback correct';
+    if (state.completed[i]) submitScore(); else markDone(i);
+    return;
+  }
+  fb.className = 'feedback';
+  void fb.offsetWidth;
+  fb.className = 'feedback wrong';
+  if (kind === 'write') {
+    fb.textContent = `✍ ${total - right} answer${total - right === 1 ? '' : 's'} in red need a full sentence about the product.`;
+    return;   // writing is never penalised: it isn't auto-marked
+  }
+  state.firstAttempt[i] = false;
+  state.wrongs['t' + i] = (state.wrongs['t' + i] || 0) + 1;
+  const secs = cooldownSeconds(state.wrongs['t' + i]);
+  state.coolUntil['t' + i] = Date.now() + secs * 1000;
+  fb.textContent = `❌ ${right} of ${total} right. Fix the ones in red: you can check again in ${secs} seconds.`;
+  save();
+  startCooldown(i);
+}
+
+// ── Scoring and Classroom ──────────────────────────────
+function submitScore() {
+  const pct = calcScore(state.completed, state.firstAttempt);
+  window.ActivityUI?.setScore(pct);
+  window.Classroom?.submitGrade(pct, ACTIVITY_TITLE);
+}
+
+function showDone(i) {
+  const gold = state.firstAttempt[i];
+  document.getElementById('dot-' + i).className = 'pdot ' + (TASKS[i].level ? 'optional ' : '') + (gold ? 'gold' : 'correct');
+  document.querySelector(`.tab[data-idx="${i}"]`).classList.add('done', ...(gold ? ['gold'] : []));
+  const reset = document.getElementById('reset-' + i);
+  if (reset) reset.style.display = gold ? 'none' : '';
+  if (TASKS[i].kind === 'choice') document.querySelectorAll(`#panel-${i} .q input`).forEach(r => { r.disabled = true; });
+  revealNotes(i);
+}
+
+function markDone(i) {
+  if (state.completed[i]) return;
+  state.completed[i] = true;
+  showDone(i);
+  save();
+  submitScore();
+  if (coreDone(state.completed)) allComplete();
+}
+
+function resetTask(i) {
+  const { key, kind } = TASKS[i];
+  state.completed[i] = false;
+  state.firstAttempt[i] = true;
+  state.wrongs['t' + i] = 0;
+  const ids = kind === 'choice' ? Object.keys(CHOICES[key]) : kind === 'sort' ? SORTS[key].items.map(x => x.id) : [];
+  ids.forEach(id => delete state.answers[id]);
+  document.getElementById('dot-' + i).className = 'pdot' + (TASKS[i].level ? ' optional' : '');
+  document.querySelector(`.tab[data-idx="${i}"]`).classList.remove('done', 'gold');
+  document.getElementById('reset-' + i).style.display = 'none';
+  const fb = document.getElementById('feedback-' + i);
+  fb.textContent = ''; fb.className = 'feedback';
+  document.getElementById('done-banner').classList.remove('show', 'gold', 'green');
+  document.getElementById('glow-overlay').classList.remove('show', 'gold', 'green');
+  window.ActivityUI?.resetCelebration();
+  save();
+  renderTask(i);
+  submitScore();
+}
+
+function showAllDone() {
+  const tier = coreGold(state.firstAttempt) ? 'gold' : 'green';
+  const banner = document.getElementById('done-banner');
+  banner.classList.remove('gold', 'green');
+  banner.classList.add('show', tier);
+  document.getElementById('glow-overlay').classList.add(tier, 'show');
+}
+function allComplete() {
+  showAllDone();
+  window.ActivityUI?.launchCelebration({ percent: calcScore(state.completed, state.firstAttempt) });
+}
+
+// ── Tabs ───────────────────────────────────────────────
+document.getElementById('tab-bar').addEventListener('click', e => {
+  const tab = e.target.closest('.tab');
+  if (!tab) return;
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t === tab));
+  document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + tab.dataset.idx));
+  window.scrollTo({ top: 0 });
+});
+
+// ── Start ──────────────────────────────────────────────
+function renderTask(i) {
+  const panel = document.getElementById('panel-' + i);
+  panel.querySelectorAll('[data-choices]').forEach(renderChoices);
+  panel.querySelectorAll('[data-sort]').forEach(renderSort);
+  panel.querySelectorAll('[data-write]').forEach(renderWriting);
+}
+
+function init() {
+  load();
+  if (!state.seed) { state.seed = Math.random().toString(36).slice(2, 10); save(); }
+  fillImages();
+  document.getElementById('progress-row').innerHTML =
+    TASKS.map((t, i) => `<span class="pdot${t.level ? ' optional' : ''}" id="dot-${i}" title="${t.level ? 'Optional' : 'Task ' + (i + 1)}"></span>`).join('');
+  for (let i = 0; i < TASK_COUNT; i++) {
+    renderTask(i);
+    const btn = document.getElementById('check-' + i);
+    btn.dataset.label = btn.textContent;
+    btn.addEventListener('click', () => checkTask(i));
+    document.getElementById('reset-' + i)?.addEventListener('click', () => resetTask(i));
+    if (coolLeft(i)) startCooldown(i);
+    if (state.completed[i]) {
+      showDone(i);
+      highlight(i, gatherAndMark(i));
+      const fb = document.getElementById('feedback-' + i);
+      fb.textContent = TASKS[i].kind === 'write' ? '✅ Saved and sent to your teacher.' : state.firstAttempt[i] ? '🥇 Completed first time' : '✅ Completed';
+      fb.className = 'feedback correct';
+    }
+  }
+  // Restore the finished look without re-firing the celebration or a Classroom upload.
+  if (coreDone(state.completed)) showAllDone();
+  window.ActivityUI?.setScore(calcScore(state.completed, state.firstAttempt));
+}
+init();
+</script>
+</body>
+</html>

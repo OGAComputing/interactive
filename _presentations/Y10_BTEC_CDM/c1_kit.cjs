@@ -24,13 +24,49 @@ const P = {
   ink: '16161A', ink2: '26262C', paper: 'F4EFE6', paper2: 'E8E1D4', white: 'FFFFFF',
   red: 'C8321A', redLt: 'FF6A4D', grey: '5F5A52', greyLt: 'A8A296', rule: '16161A', ruleLt: '3A3A42',
 };
-const HEAD = 'Bahnschrift SemiBold Condensed', BODY = 'Segoe UI', QUOTE = 'Georgia';
+// Google fonts, so the decks look the same after publish_to_drive.cjs converts them to Google Slides.
+const HEAD = 'Oswald', BODY = 'Lato', QUOTE = 'Lora';
 const W = 13.333, M = 0.6, CW = W - 2 * M;
 const ICON = {
   clarity: ['ClarityOfLearningIntentions', 'Clarity of learning intentions'], info: ['NewInformation', 'New information'],
   practice: ['DeliberatePractice', 'Deliberate practice'], recall: ['RecapAndRecall', 'Recap and recall'],
   feedback: ['Feedback', 'Feedback'],
 };
+
+// Character widths in thousandths of an em (ASCII 32–126), measured from Oswald Regular and Lora Italic
+// (google/fonts). PowerPoint ignores "shrink text on overflow" until someone edits the text, so text
+// with fit: 'shrink' is sized here instead, to the largest size whose wrapped lines fit the box.
+const WIDTHS = { [HEAD]: [229,208,266,486,491,891,606,127,298,260,398,415,187,303,188,369,517,378,478,477,483,476,503,386,499,502,197,215,373,415,373,483,904,492,524,515,527,407,391,535,561,248,301,495,397,660,528,539,480,541,519,473,413,543,505,729,482,481,417,340,369,310,443,344,278,409,447,411,442,421,287,441,445,229,230,429,229,680,439,425,446,443,321,374,308,440,385,588,389,392,347,300,239,321,447],
+  [QUOTE]: [263,272,356,808,529,873,683,199,298,298,513,530,237,483,232,654,597,354,525,545,527,523,554,452,564,552,250,271,530,530,530,473,792,631,619,686,738,619,541,753,773,333,367,667,577,917,762,788,597,788,625,566,636,744,665,994,652,641,612,361,785,361,823,710,240,548,511,473,555,477,325,518,572,324,287,520,283,876,615,521,571,518,455,428,364,593,526,801,545,514,471,332,235,332,530] };
+function fitFont(str, face, w, h, max, min = 18) {
+  const em = WIDTHS[face], room = w * 0.95;
+  const width = (t, pt) => [...t].reduce((a, c) => a + (em[c.charCodeAt(0) - 32] ?? 600), 0) / 1000 * pt / 72;
+  for (let pt = max; pt > min; pt -= 2) {
+    let lines = 0;
+    for (const para of String(str).split('\n')) {
+      let line = '';
+      lines++;
+      for (const word of para.split(' ')) {
+        if (width(word, pt) > room) { lines = Infinity; break; }
+        if (line && width(line + ' ' + word, pt) > room) { lines++; line = word; } else line = line ? line + ' ' + word : word;
+      }
+    }
+    if (lines * pt * 1.2 / 72 <= h) return pt;
+  }
+  return min;
+}
+
+// Pixel size of a PNG or JPEG, so imageSlot can fit an image without cropping it.
+function imageSize(file) {
+  const b = fs.readFileSync(file);
+  if (b[0] === 0x89) return { w: b.readUInt32BE(16), h: b.readUInt32BE(20) };
+  for (let i = 2; i + 9 < b.length;) {
+    const marker = b[i + 1];
+    if (marker >= 0xC0 && marker <= 0xCF && ![0xC4, 0xC8, 0xCC].includes(marker)) return { w: b.readUInt16BE(i + 7), h: b.readUInt16BE(i + 5) };
+    i += 2 + b.readUInt16BE(i + 2);
+  }
+  return null;
+}
 
 function createDeck({ lesson, footerText, title = 'Component 1 lesson', author = 'Nicholas Houlton' }) {
   const pres = new pptxgen();
@@ -54,6 +90,9 @@ function createDeck({ lesson, footerText, title = 'Component 1 lesson', author =
     objects: [...folio(P.grey, P.rule), titlePh(P.ink)], slideNumber: num(P.grey) });
   pres.defineSlideMaster({ title: 'C1_INK', background: { color: P.ink },
     objects: [...folio(P.greyLt, P.paper), titlePh(P.paper)], slideNumber: num(P.greyLt) });
+  // For slides whose headline is drawn by the recipe (key terms), so no empty "Click to add title" box shows.
+  pres.defineSlideMaster({ title: 'C1_PAPER_PLAIN', background: { color: P.paper },
+    objects: folio(P.grey, P.rule), slideNumber: num(P.grey) });
   pres.defineSlideMaster({ title: 'C1_COVER', background: { color: P.ink }, objects: [] });
 
   // ── Drawing parts ─────────────────────────────────────────────────────────
@@ -66,14 +105,17 @@ function createDeck({ lesson, footerText, title = 'Component 1 lesson', author =
     if (t) s.addText(t, { placeholder: 'title' });
     return s;
   }
-  const text = (s, t, o) => s.addText(t, { isTextBox: true, margin: 0, fontFace: BODY, color: P.ink, valign: 'top', ...o });
+  const text = (s, t, o) => {
+    if (o.fit === 'shrink' && typeof t === 'string' && WIDTHS[o.fontFace]) o = { ...o, fontSize: fitFont(t, o.fontFace, o.w, o.h, o.fontSize) };
+    return s.addText(t, { isTextBox: true, margin: 0, fontFace: BODY, color: P.ink, valign: 'top', ...o });
+  };
   const box = (s, o) => s.addShape(pres.shapes.RECTANGLE, { x: o.x, y: o.y, w: o.w, h: o.h, fill: { color: o.fill },
     line: o.line ? { color: o.line, width: o.lw || 1.5, dashType: o.dash } : { type: 'none' } });
   const rule = (s, x, y, w, color = P.rule, weight = 2.5) => s.addShape(pres.shapes.LINE, { x, y, w, h: 0, line: { color, width: weight } });
   const kicker = (s, t, o) => text(s, t.toUpperCase(), { fontSize: 13, bold: true, color: P.red, charSpacing: 3, h: 0.3, ...o });
   // Square-cornered label, e.g. the source-lesson tag on a recall question.
   function tag(s, t, o) {
-    const w = o.w || Math.max(1.2, 0.2 + t.length * 0.105);
+    const w = o.w || Math.max(1.2, 0.3 + t.length * 0.125);
     box(s, { x: o.x, y: o.y, w, h: 0.32, fill: o.fill || P.ink });
     text(s, t.toUpperCase(), { x: o.x, y: o.y, w, h: 0.32, fontSize: 12, bold: true, color: o.color || P.paper,
       align: 'center', valign: 'middle', charSpacing: 2 });
@@ -86,11 +128,21 @@ function createDeck({ lesson, footerText, title = 'Component 1 lesson', author =
     const [file, alt] = ICON[kind];
     s.addImage({ path: path.join(__dirname, 'icons', file + '.png'), x: 12.0, y: 0.68, w: 0.75, h: 0.75, altText: alt });
   }
-  // An image the teacher supplies. With img, the picture fills the frame (cropped to fit);
-  // without it, a labelled placeholder is drawn and the image is listed when the deck is written.
+  // An image the teacher supplies. With img, the picture fills the frame (cropped to fit) when its
+  // shape is close to the frame's; a very different shape (a portrait poster in a wide frame) is
+  // fitted whole and centred instead, so a poster never loses its title (on dark slides, on black;
+  // on paper, with no box, so there are no empty bars beside it). Without img, a
+  // labelled placeholder is drawn and the image is listed when the deck is written.
   function imageSlot(s, o) {
     if (o.img && fs.existsSync(o.img)) {
-      s.addImage({ path: o.img, x: o.x, y: o.y, w: o.w, h: o.h, sizing: { type: 'cover', w: o.w, h: o.h }, altText: o.label });
+      const px = imageSize(o.img), ratio = px ? px.w / px.h : o.w / o.h;
+      if (Math.abs(Math.log(ratio / (o.w / o.h))) < 0.15) {
+        s.addImage({ path: o.img, x: o.x, y: o.y, w: o.w, h: o.h, sizing: { type: 'cover', w: o.w, h: o.h }, altText: o.label });
+      } else {
+        if (o.dark) box(s, { x: o.x, y: o.y, w: o.w, h: o.h, fill: '000000' });
+        const w = Math.min(o.w, o.h * ratio), h = w / ratio;
+        s.addImage({ path: o.img, x: o.x + (o.w - w) / 2, y: o.y + (o.h - h) / 2, w, h, altText: o.label });
+      }
       return;
     }
     imagesNeeded.push(`slide ${slideNo}: ${o.label}`);
@@ -114,11 +166,11 @@ function createDeck({ lesson, footerText, title = 'Component 1 lesson', author =
       text(s, String(i + 1), { x, y: y + 0.12, w: 0.6, h: 0.8, fontFace: HEAD, fontSize: 48, color: dark ? P.redLt : P.red });
       tag(s, q.tag, { x: x + 0.7, y: y + 0.22, fill: dark ? P.paper : P.ink, color: dark ? P.ink : P.paper });
       text(s, q.q, { x: x + 0.7, y: y + 0.66, w: cw - 0.7, h: 0.95, fontSize: 20, color: dark ? P.paper : P.ink });
-      if (q.options && !showAnswers) text(s, q.options.join('  ·  ') + '?', { x: x + 0.7, y: y + 1.6, w: cw - 0.7, h: 0.7, fontSize: 18,
+      if (q.options && !showAnswers) text(s, q.options.join('  ·  ') + '?', { x: x + 0.7, y: y + 1.68, w: cw - 0.7, h: 0.62, fontSize: 18,
         bold: true, color: dark ? P.greyLt : P.red });
       if (showAnswers) text(s, [{ text: 'ANSWER  ', options: { fontSize: 13, charSpacing: 2, color: P.greyLt } },
         { text: q.a, options: { fontSize: 20, color: P.redLt } }],
-      { x: x + 0.7, y: y + 1.6, w: cw - 0.7, h: 0.7, bold: true });
+      { x: x + 0.7, y: y + 1.68, w: cw - 0.7, h: 0.62, bold: true });
     });
   }
   function recallStarter({ questions, mins = 4, notes: n }) {
@@ -142,7 +194,8 @@ function createDeck({ lesson, footerText, title = 'Component 1 lesson', author =
     text(s, (issueLine || [issue, 'Y10 BTEC Creative Media Production'].filter(Boolean).join('  ·  ')).toUpperCase(),
       { x: M, y: 2.15, w: 6.9, h: 0.35, fontSize: 13, bold: true, charSpacing: 3, color: P.greyLt });
     box(s, { x: M, y: 3.0, w: 6.9, h: 2.25, fill: P.red });
-    text(s, coverLine, { x: M + 0.3, y: 3.1, w: 6.3, h: 2.05, fontFace: HEAD, fontSize: 54, color: P.white, valign: 'middle', fit: 'shrink' });
+    // With a puff, the cover line stops short of it so the circle never covers a word.
+    text(s, coverLine, { x: M + 0.3, y: 3.1, w: puff ? 5.2 : 6.3, h: 2.05, fontFace: HEAD, fontSize: 54, color: P.white, valign: 'middle', fit: 'shrink' });
     if (standfirst) text(s, standfirst, { x: M, y: 5.5, w: 6.9, h: 1.2, fontFace: QUOTE, italic: true, fontSize: 22, color: P.paper });
     if (puff) {
       s.addShape(pres.shapes.OVAL, { x: 6.2, y: 2.4, w: 1.5, h: 1.5, fill: { color: P.paper }, line: { color: P.ink, width: 3 } });
@@ -181,7 +234,7 @@ function createDeck({ lesson, footerText, title = 'Component 1 lesson', author =
   }
   // Key term or theory card: the word huge, a plain definition, and a real example with its image.
   function keyTerm({ term, say, definition, example, img, imgLabel, notes: n }) {
-    const s = newSlide('C1_PAPER', 'Content');
+    const s = newSlide('C1_PAPER_PLAIN', 'Content');
     kicker(s, 'Key term', { x: M, y: 0.7, w: 4 });
     text(s, term, { x: M, y: 1.0, w: 7.4, h: 1.5, fontFace: HEAD, fontSize: 80, valign: 'middle', fit: 'shrink' });
     if (say) text(s, say, { x: M, y: 2.5, w: 7.4, h: 0.4, fontSize: 16, italic: true, color: P.grey });
@@ -290,6 +343,22 @@ function createDeck({ lesson, footerText, title = 'Component 1 lesson', author =
     addIcon(s, 'practice'); notes(s, n);
     return s;
   }
+  // Turn & Talk: one question in big type, then think → partner A → partner B. Optional image.
+  function turnTalk({ title: t = 'Turn & Talk', prompt, steps = ['Think on your own: 30 seconds', 'Partner A answers. B listens.', 'B adds one thing or disagrees, with a reason.'],
+    img, imgLabel, mins = 3, notes: n }) {
+    const s = newSlide('C1_PAPER', 'Content', t);
+    const tw = img || imgLabel ? 7.0 : CW;
+    text(s, prompt, { x: M, y: 1.75, w: tw, h: 2.0, fontFace: QUOTE, italic: true, fontSize: 30, valign: 'middle', fit: 'shrink' });
+    steps.forEach((st, i) => {
+      const y = 3.95 + i * 0.95;
+      rule(s, M, y, tw, P.rule, 1.25);
+      text(s, String(i + 1), { x: M, y: y + 0.08, w: 0.5, h: 0.7, fontFace: HEAD, fontSize: 32, color: P.red });
+      text(s, st, { x: M + 0.6, y: y + 0.16, w: tw - 0.6, h: 0.7, fontSize: 20 });
+    });
+    if (img || imgLabel) imageSlot(s, { x: 7.95, y: 1.75, w: W - 7.95 - M, h: 5.0, img, label: imgLabel || 'Real product to talk about' });
+    timer(s, mins); addIcon(s, 'practice'); notes(s, n);
+    return s;
+  }
   // Deliberate Practice task: steps, where to find it, success criteria.
   function task({ title: t, steps, where, criteria, mins, notes: n }) {
     const s = newSlide('C1_PAPER', 'Practice', t);
@@ -350,7 +419,7 @@ function createDeck({ lesson, footerText, title = 'Component 1 lesson', author =
 
   return { pres, P, HEAD, BODY, QUOTE, W, M, CW, newSlide, text, box, rule, kicker, tag, timer, addIcon, imageSlot, note,
     recallStarter, recallAnswers, titleSlide, questions, info, keyTerm, annotate, compare, clip, choice, readingScaffold,
-    task, modelAnswer, plenary, write, get slideNo() { return slideNo; } };
+    turnTalk, task, modelAnswer, plenary, write, get slideNo() { return slideNo; } };
 }
 
 module.exports = { createDeck, P, HEAD, BODY, QUOTE };

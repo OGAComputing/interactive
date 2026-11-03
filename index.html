@@ -1008,7 +1008,7 @@
       return { ...a, _year: isYearGroup ? a.year : 'Other', _topic: isYearGroup ? a.topic : `${a.year} / ${a.topic}` };
     });
     ALL.forEach(a => {
-      // lesson_suffix: the letter in a folder like L4R_Revision → key "4R".
+      // lesson_suffix: the letter in L4R_Revision → key "4R", or the lesson in L1.2_Name (week.lesson) → key "1.2".
       const lKey = a.lesson_num != null ? a.lesson_num + (a.lesson_suffix || '') : '__none__';
       const topics  = tree[a._year] || (tree[a._year] = {});
       const lessons = topics[a._topic] || (topics[a._topic] = {});
@@ -1084,7 +1084,7 @@
       const lessonKeys = Object.keys(lessonBuckets).sort((a, b) => {
         if (a === '__none__') return -1;
         if (b === '__none__') return  1;
-        return parseInt(a, 10) - parseInt(b, 10) || a.localeCompare(b);
+        return a.localeCompare(b, undefined, { numeric: true });   // 4 < 4R < 5; 1.2 < 1.10 < 2.1
       });
       const body = '<div class="cards">' + lessonKeys.map(lKey =>
         lessonBuckets[lKey].activities.map(a => renderCard(a, false, lKey === '__none__' ? null : lKey)).join('')

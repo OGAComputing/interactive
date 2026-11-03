@@ -49,10 +49,10 @@ Rules and feedback: README.md in this folder. Rebuild with: node build_template.
     box(s, { x, y: 1.9, w: 1.5, h: 1.5, fill: c, line: P.rule, lw: 1 });
     text(s, n + '\n#' + c, { x: x + 0.1, y: 2.85, w: 1.3, h: 0.5, fontSize: 12, bold: true, color: fg });
   });
-  text(s, 'Bahnschrift Condensed', { x: M, y: 3.75, w: 8, h: 0.9, fontFace: HEAD, fontSize: 48 });
-  text(s, 'Headlines, numbers, the masthead. Windows font: on every school PC.', { x: M, y: 4.6, w: 8.5, h: 0.4, fontSize: 16, color: P.grey });
-  text(s, 'Segoe UI for body text — 18 pt minimum.', { x: M, y: 5.15, w: 8.5, h: 0.5, fontFace: BODY, fontSize: 24 });
-  text(s, 'Georgia italic for quotes, standfirsts and the topic question.', { x: M, y: 5.8, w: 8.5, h: 0.5, fontFace: QUOTE, italic: true, fontSize: 24 });
+  text(s, 'Oswald', { x: M, y: 3.75, w: 8, h: 0.9, fontFace: HEAD, fontSize: 48 });
+  text(s, 'Headlines, numbers, the masthead. Google fonts only (Google Slides).', { x: M, y: 4.6, w: 8.5, h: 0.4, fontSize: 16, color: P.grey });
+  text(s, 'Lato for body text — 18 pt minimum.', { x: M, y: 5.15, w: 8.5, h: 0.5, fontFace: BODY, fontSize: 24 });
+  text(s, 'Lora italic for quotes, standfirsts and the topic question.', { x: M, y: 5.8, w: 8.5, h: 0.5, fontFace: QUOTE, italic: true, fontSize: 24 });
   text(s, 'Different on purpose: the Computing decks use Cambria / Calibri, charcoal and gold, and rounded cards.', {
     x: 9.5, y: 3.75, w: W - 9.5 - M, h: 2.5, fontSize: 18, color: P.grey });
   recipe(s, 'guide');
@@ -107,6 +107,9 @@ recipe(K.annotate({ title: 'Annotate: how does it target its audience?', imgLabe
 recipe(K.compare({ title: 'Same purpose, different audience', a: { name: 'Product A', imgLabel: 'Product A (real)' }, b: { name: 'Product B', imgLabel: 'Product B (real)' },
   rows: [['Audience', '', ''], ['Colours', '', ''], ['Language', '', ''], ['Images', '', '']],
   notes: 'compare — two real products and the same criteria for each. Leave cells blank for students to fill in, or fill them for a worked example.' }), 'compare');
+
+recipe(K.turnTalk({ prompt: 'Who do you think this campaign is really for? What makes you say that?', imgLabel: 'The product you are talking about',
+  notes: 'turnTalk — one open question in big type, then think → partner A → partner B (change steps if needed). Optional image of the product. Use after new information and before a task, so every student has said something before anyone shares.' }), 'turnTalk');
 
 recipe(K.task({ title: 'Profile your audience', mins: 15, where: 'Classroom › Lesson 3 › Audience profile',
   steps: ['Pick one product from today.', 'Fill in its demographics.', 'Fill in two psychographics, each with a clue from the product.'],

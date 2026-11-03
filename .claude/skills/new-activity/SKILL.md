@@ -15,6 +15,7 @@ title is missing, ask for it in one question (with the options you'd suggest).
 |---|---|---|
 | Y7–Y9 general activity | `_templates/Y8.html` (for Y9, the newest Y9 page in the same style may be a better start: e.g. `Y9/Digital_Forensics/L5_Searching_the_Computer/`) | `../../` |
 | Y11/Y13 general activity | `_templates/Y11.html` | `../../` |
+| Y10 BTEC activity | `_templates/BTEC_Y10.html` + `BTEC_Y10_checkers.js` as `checkers.js` (then read `Y10/CLAUDE.md` "Activities") | `../../../` |
 | OCR pseudocode | `_templates/Pseudocode_Y11.html` | `../../` |
 | RS lesson | `_templates/RS_Christianity_USA.html` (or `RS_British_Muslim.html`) | `../../` |
 | Y8 Python PRIMM | `_templates/PRIMM_Python_Y8.html` (then read `_templates/CLAUDE.md`) | `../../../` |

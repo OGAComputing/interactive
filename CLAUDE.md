@@ -12,7 +12,7 @@ Interactive Computing Education Platform — a static web hub serving self-conta
 - **`Y7/` … `Y13/`, `RS/`** — Activity folders: `<Year>/<Topic>/[L<n>_Lesson/]file.html`. `Demo/` and `Animations/` hold teacher demos
 - **`activities.json`** / **`meta.json`** — Rebuilt by `.github/workflows/build-manifest.yml` (from each page's `<!-- ACTIVITY -->` block) in a `[skip ci]` commit after every push to main; never edit them by hand
 - **`.github/workflows/test.yml`** — Runs Vitest and Playwright (4 parallel runners), then deploys to GitHub Pages only if both pass
-- **`_templates/`** — Starter pages (see Adding a New Activity). **`_teacher/`** — teacher-only tools (setup page, unit guide, Apps Script rescoring). **`_presentations/`** — PowerPoint decks and their build scripts. **`_drafts/`** — work in progress and story/crew image sources. **`Knowledge Base/`** — specs, MTPs (`project_*_mtp.md`) and reference material
+- **`_templates/`** — Starter pages (see Adding a New Activity). **`_teacher/`** — teacher-only tools (setup page, unit guide, Apps Script rescoring). **`_presentations/`** — PowerPoint decks and their build scripts (Y10 decks are also published to Drive as Google Slides). **`_drafts/`** — work in progress and story/crew image sources. **`Knowledge Base/`** — specs, MTPs (`project_*_mtp.md`) and reference material
 
 ### Shared files
 
@@ -50,7 +50,7 @@ Y8/Python/Spot_the_Error.html                 ← topic-level (no lesson groupin
 Y8/Python/L1_Variables/1_Spot_the_Error.html  ← lesson-level (grouped under "Lesson 1 — Variables")
 ```
 
-Lesson folders must start with `L<number>` (e.g. `L1`, `L02`, `L1_Variables`). The hub shows them as subheadings within the topic. One letter may follow the number for an in-between lesson, e.g. `L4R_Revision` → "Lesson 4R", sorted straight after Lesson 4 (`lesson_suffix` in `activities.json`).
+Lesson folders must start with `L<number>` (e.g. `L1`, `L02`, `L1_Variables`). The hub shows them as subheadings within the topic. One letter may follow the number for an in-between lesson, e.g. `L4R_Revision` → "Lesson 4R", sorted straight after Lesson 4 (`lesson_suffix` in `activities.json`). Courses numbered week.lesson use `L<week>.<lesson>_Name`, e.g. `L1.2_Know_Your_Audience` → "Lesson 1.2" (Y10 BTEC).
 
 **Naming new folders and files:** use underscores, not spaces (`Digital_Forensics`, `L3_While_Loops`). Existing folders with spaces or spec numbers (`Y11/1.3 Networks`) keep their names, because their URLs are posted in Classroom (`classroom.js` strips the spec number when it derives `data-topic`). Number pages in a lesson folder in teaching order (`1_Wake_Up_PRIMM.html`). A lesson folder with one checked page uses `checkers.js`; with several, `checkers_<page>.js` each.
 
@@ -60,6 +60,7 @@ The `/new-activity` skill does all of this.
 
 1. Copy a template from `_templates/` into the right folder:
    - General: `Y8.html` (Y7–Y9), `Y11.html` (Y11, Y13) · OCR pseudocode: `Pseudocode_Y11.html` · RS: `RS_*.html`
+   - Y10 BTEC: `BTEC_Y10.html` + `BTEC_Y10_checkers.js` (lesson-level `../../../`; see `Y10/CLAUDE.md`)
    - PRIMM Python lesson: `PRIMM_Python_Y8.html`, `PRIMM_Python_Y9.html`, or `PRIMM_Python_Y9_StationZero.html` for the Y9 story chapters (`/new-chapter`)
 2. Fix the shared-file paths for the folder depth (templates assume one depth; PRIMM templates are lesson-level `../../../`, the others topic-level `../../`).
 3. Fill in the `<!-- ACTIVITY -->` block at the top:
