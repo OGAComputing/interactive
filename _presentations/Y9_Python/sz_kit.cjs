@@ -17,7 +17,8 @@ const requireGlobal = (name) => {
 };
 const pptxgen = requireGlobal('pptxgenjs');
 
-function createDeck({ title, footerText, author = 'Nicholas Houlton', station: startState = 'none' }) {
+// fonts: { head, body, mono } to swap the typefaces (other units use Google fonts; Y9 keeps Cambria / Calibri / Consolas).
+function createDeck({ title, footerText, author = 'Nicholas Houlton', station: startState = 'none', fonts = {} }) {
 // ── Palette ─────────────────────────────────────────────────────────────────
 // Approved: charcoal / gold / off-white. Station Zero adds phosphor green (story text only)
 // and alarm red (error messages only).
@@ -29,16 +30,16 @@ const P = {
   red: 'FF6B6B', ok: '7FD99A',
   ink: '1E1E24', paper: 'F5F5F3', card: 'FFFFFF', cardLine: 'D6D5D0', inkMuted: '55555F',
 };
+const HEAD = fonts.head || 'Cambria', BODY = fonts.body || 'Calibri', MONO = fonts.mono || 'Consolas';
 const THEME = {
   name: 'Station Zero',
-  headFontFace: 'Cambria', bodyFontFace: 'Calibri',
+  headFontFace: HEAD, bodyFontFace: BODY,
   colors: {
     dk1: P.charcoal, lt1: P.off, dk2: P.deep, lt2: 'E9E8E4',
     accent1: P.gold, accent2: P.str, accent3: P.int, accent4: P.green, accent5: P.red, accent6: P.muted,
     hlink: P.int, folHlink: P.muted,
   },
 };
-const HEAD = 'Cambria', BODY = 'Calibri', MONO = 'Consolas';
 
 const W = 13.333, M = 0.6;
 const ICON = {
@@ -270,31 +271,31 @@ function recallCards(s, questions, reveal) {
     text(s, q.q, { x: x + 0.25, y: y + 0.7, w: CARD.w - 0.5, h: 0.45, fontSize: 20, bold: true, color: ink });
     // body: code and/or options
     let by = y + 1.15;
-    const codeW = q.type === 'mcq' && q.code ? 2.5 : CARD.w - 0.5;
-    if (q.code) {
+    const codeW = q.type === 'mcq' && q.code?.length ? 2.5 : CARD.w - 0.5;
+    if (q.code?.length) {
       const lh = 0.33;
       box(s, { x: x + 0.25, y: by, w: codeW, h: q.code.length * lh + 0.2, fill: P.code, r: 0.06 });
       q.code.forEach((ln, j) => s.addText(pyRuns(ln, 18), { isTextBox: true, x: x + 0.4, y: by + 0.1 + j * lh,
         w: codeW - 0.3, h: lh, margin: 0, valign: 'middle' }));
     }
     if (q.type === 'mcq') {
-      const ox = q.code ? x + 3.0 : x + 0.25, oy = by;
+      const ox = q.code?.length ? x + 3.0 : x + 0.25, oy = by;
       q.opts.forEach((o, j) => {
         const right = reveal && q.a.startsWith('ABC'[j]);
         text(s, [{ text: 'ABC'[j] + '   ', options: { bold: true, color: right ? P.ok : (reveal ? P.gold : '7A5A12') } },
           { text: o, options: { color: right ? P.ok : (reveal ? P.muted : P.ink), bold: right } }],
-          { x: ox, y: oy + j * 0.36, w: q.code ? 0.75 : 3.3, h: 0.36, fontSize: 18, valign: 'middle' });
+          { x: ox, y: oy + j * 0.36, w: q.code?.length ? 0.75 : 3.3, h: 0.36, fontSize: 18, valign: 'middle' });
       });
     }
     if (reveal && q.type === 'write') {
-      const ay = by + q.code.length * 0.33 + 0.28;
+      const ay = by + (q.code?.length || 0) * 0.33 + (q.code?.length ? 0.28 : 0.05);
       text(s, [{ text: q.a, options: { bold: true, color: P.ok, fontSize: 22,
         fontFace: q.aMono ? MONO : BODY } }, { text: '   ' + q.why, options: { color: P.muted, fontSize: 18,
         fontFace: q.whyMono ? MONO : BODY } }],
         { x: x + 0.25, y: ay, w: CARD.w - 0.5, h: 0.4, valign: 'middle' });
     }
     if (reveal && q.type === 'mcq') {
-      const wx = q.code ? x + 3.85 : x + 3.65;
+      const wx = q.code?.length ? x + 3.85 : x + 3.65;
       text(s, q.why, { x: wx, y: by, w: x + CARD.w - 0.2 - wx, h: 1.08, fontSize: 18, italic: true,
         color: P.muted, valign: 'middle' });
     }

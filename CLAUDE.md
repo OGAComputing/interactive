@@ -156,4 +156,4 @@ The score travels on that file as `appProperties.ogaScore` (plus `ogaCourse`/`og
 ## Git
 
 - `pull.rebase` is on for this repo: the manifest bot commits after every push, and rebasing keeps history free of "Merge branch 'main'" commits. `/ship` runs the related tests, commits, rebases, pushes and watches the deploy.
-- `.claude/skills/` is committed (project skills: `/new-activity`, `/new-chapter`, `/audit-activity`, `/move-activity`, `/test-page`, `/ship`, `/lesson-deck`, `/log-feedback`, `/story-stills`); the rest of `.claude/` is personal and ignored.
+- `.claude/skills/` is committed (project skills: `/new-lesson`, `/new-activity`, `/new-chapter`, `/audit-activity`, `/move-activity`, `/test-page`, `/ship`, `/lesson-deck`, `/log-feedback`, `/story-stills`); the rest of `.claude/` is personal and ignored.
