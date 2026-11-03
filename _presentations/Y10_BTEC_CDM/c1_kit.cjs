@@ -323,7 +323,7 @@ function createDeck({ lesson, footerText, title = 'Component 1 lesson', author =
   // Hinge question: 2–4 lettered options. Students show A/B/C on fingers or whiteboards.
   function choice({ question, options, pillar = 'feedback', notes: n }) {
     const s = newSlide('C1_PAPER', 'Content', 'Which one?');
-    text(s, question, { x: M, y: 1.8, w: CW, h: 1.3, fontFace: QUOTE, italic: true, fontSize: 28 });
+    text(s, question, { x: M, y: 1.8, w: CW, h: 1.3, fontFace: HEAD, fontSize: 32, valign: 'middle', fit: 'shrink' });
     const gap = 0.3, ow = (CW - gap * (options.length - 1)) / options.length;
     options.forEach((o, i) => {
       const x = M + i * (ow + gap);
@@ -354,11 +354,15 @@ function createDeck({ lesson, footerText, title = 'Component 1 lesson', author =
     return s;
   }
   // Turn & Talk: one question in big type, then think → partner A → partner B. Optional image.
-  function turnTalk({ title: t = 'Turn & Talk', prompt, steps = ['Think on your own: 30 seconds', 'Partner A answers. B listens.', 'B adds one thing or disagrees, with a reason.'],
+  // The question is the thing to look at, so it is a headline, not a standfirst. Context the students
+  // need first ("The Jaws poster is print…") goes in lead, in Lora italic above it.
+  function turnTalk({ title: t = 'Turn & Talk', lead, prompt, steps = ['Think on your own: 30 seconds', 'Partner A answers. B listens.', 'B adds one thing or disagrees, with a reason.'],
     img, imgLabel, mins = 3, reveal = true, notes: n }) {
     const s = newSlide('C1_PAPER', 'Content', t);
     const tw = img || imgLabel ? 7.0 : CW;
-    text(s, prompt, { x: M, y: 1.75, w: tw, h: 2.0, fontFace: QUOTE, italic: true, fontSize: 30, valign: 'middle', fit: 'shrink' });
+    if (lead) text(s, lead, { x: M, y: 1.7, w: tw, h: 0.75, fontFace: QUOTE, italic: true, fontSize: 20, color: P.grey, valign: 'top' });
+    const py = lead ? 2.6 : 1.75, ph = 3.75 - py;
+    text(s, prompt, { x: M, y: py, w: tw, h: ph, fontFace: HEAD, fontSize: 40, valign: 'middle', fit: 'shrink' });
     steps.forEach((st, i) => {
       const y = 3.95 + i * 0.95;
       const r = at(reveal, i + 1);

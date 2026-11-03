@@ -58,7 +58,8 @@ K.choice({ question: 'Pokémon Red came out in the UK in 1999. Which box does it
   options: ['Interactive · before 2000', 'Interactive · 2000 onwards', 'Print · before 2000'],
   notes: 'Hinge. Answer A: a Game Boy game (interactive), released 1996 in Japan and 1999 in the UK, so historical. B = era slip; C = thinks the box art makes it print.' });
 
-K.turnTalk({ prompt: 'The Jaws poster is print. Jaws the film is audio / moving image. Name another product that lives in more than one sector.',
+K.turnTalk({ lead: 'The Jaws poster is print. Jaws the film is audio / moving image.',
+  prompt: 'Name another product that lives in more than one sector.',
   img: img('jaws_1975.jpg'), imgLabel: 'Jaws poster (1975)',
   notes: 'Products cross sectors: a film has posters (print) and a website or game (interactive). Good answers: Minecraft (game + film + books), Stranger Things (series + posters + game). On the Media Board, sort the product in the picture.' });
 

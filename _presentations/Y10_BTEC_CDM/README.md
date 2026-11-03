@@ -31,7 +31,7 @@ One-time setup per machine: in the Google Cloud project that owns the hub's OAut
 Editorial / magazine, so Component 1 decks look nothing like the Computing decks (chosen 2026-10-23, with the ui-ux-pro-max skill's "magazine" recommendations mapped to fonts every school PC has).
 
 - **Colours:** paper `#F4EFE6`, ink `#16161A`, print red `#C8321A` (on ink: `#FF6A4D`), grey `#5F5A52`. Red marks the one thing to look at; never body text.
-- **Fonts:** Oswald (headlines, numerals), Lato (body, ≥ 18 pt), Lora italic (quotes, standfirsts, the topic question). All Google fonts, because the decks are taught from Google Slides (see Publishing to Drive). To render in PowerPoint, install them once per machine: `powershell -File install_fonts.ps1`. The first render after installing can still show fallback fonts on the opening slides: render again.
+- **Fonts:** Oswald (headlines, numerals), Lato (body, ≥ 18 pt), Lora italic (quotes, standfirsts, the topic question: the secondary voice). A question students must answer (`turnTalk`, `choice`) is an Oswald headline, never Lora italic. All Google fonts, because the decks are taught from Google Slides (see Publishing to Drive). To render in PowerPoint, install them once per machine: `powershell -File install_fonts.ps1`. The first render after installing can still show fallback fonts on the opening slides: render again.
 - **Shapes:** square corners, heavy rules between items, a folio line across the top of every slide. No rounded cards, no shadows.
 - §9 still applies: slide order, pillar icons top right, Recap starter light and answers dark, plenary revisits the lesson question.
 
@@ -48,7 +48,7 @@ Editorial / magazine, so Component 1 decks look nothing like the Computing decks
 | `clip` | Deliberate Practice | A Drive clip (from `Y10/media.md`): watch window on the slide, questions after |
 | `annotate` | Deliberate Practice (or `info` for a worked example) | A real product with numbered markers and notes |
 | `compare` | Deliberate Practice | Two real products against the same criteria |
-| `turnTalk` | Deliberate Practice | One question in big type, then think → partner A → partner B; optional image |
+| `turnTalk` | Deliberate Practice | One question as an Oswald headline (context before it in `lead`, Lora italic), then think → partner A → partner B; optional image |
 | `task` | Deliberate Practice | Steps, where to find it, success criteria, timer |
 | `choice` | Feedback | Hinge question, 2–4 lettered options of similar length |
 | `modelAnswer` | Feedback | Model analytical paragraph colour-coded Point / Evidence / Explain |
@@ -64,4 +64,5 @@ Newest last. Add feedback here (or with `/log-feedback`), then rebuild the templ
 - **2026-10-23 · Recap** — Recap & Recall questions include an example or a choice of options; no bare open recall.
 - **2026-10-23 · Images** — Real examples, never invented ones; list the images needed before building, and never leave a real example text-only.
 - **2026-11-03 · Google Slides** — Decks are published to the course Drive folder as Google Slides (`publish_to_drive.cjs`), so they use Google fonts only (Oswald / Lato / Lora replaced Bahnschrift / Segoe UI / Georgia). Design every new recipe and deck around Google fonts.
+- **2026-11-03 · Questions** — The Turn & Talk prompt was in Lora italic, the standfirst voice, so the slide's key question read as a side note. Questions in `turnTalk` and `choice` are now Oswald headlines; set-up context goes in `turnTalk`'s `lead`.
 - **2026-11-03 · Reveal** — Dense slides (standfirst + four points + image) were overwhelming at first sight: numbered points now appear one per click (see Click to reveal).
