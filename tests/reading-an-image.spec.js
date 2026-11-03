@@ -5,6 +5,7 @@ const URL = '/Y10/Component_1/L1.2_Reading_an_Image/1_Reading_an_Image.html';
 
 test('the Jaws sort works by drag as well as by click', async ({ page }) => {
   await page.goto(URL);
+  await page.locator('.tab[data-idx="0"]').click();
   await expect(page.locator('#panel-0 .tray .chip')).toHaveCount(8);
   const [first, ...rest] = SORTS.jaws.items;
   await page.locator(`.chip[data-qw="${first.id}"]`).dragTo(page.locator(`#panel-0 .bin[data-bin="${first.bin}"]`));
@@ -64,5 +65,12 @@ test('the warm-up and challenge tabs open their own panels', async ({ page }) =>
   await page.locator('.tab.challenge').click();
   await expect(page.locator('#panel-5')).toBeVisible();
   await expect(page.locator('#panel-5 img[data-img="jaws"]')).toHaveAttribute('src', /^data:image\/jpeg/);
+  await expect(page.locator('#panel-0')).toBeHidden();
+});
+
+test('the page opens on the warm-up tab', async ({ page }) => {
+  await page.goto(URL);
+  await expect(page.locator('.tab.support')).toHaveClass(/active/);
+  await expect(page.locator('#panel-4')).toBeVisible();
   await expect(page.locator('#panel-0')).toBeHidden();
 });

@@ -28,19 +28,19 @@ export const SORTS = {
       { id: 'c_helpless', label: 'The swimmer is weak and helpless', bin: 'con' },
     ],
   },
-  // Warm-up: each term with its meaning and one simple example (two cards per box).
+  // Warm-up: the page shows the five meanings, so students sort two simple examples per word.
   words: {
     bins: [['den', 'Denotation'], ['con', 'Connotation'], ['anc', 'Anchorage'], ['poly', 'Polysemy'], ['enc', 'Encoding']],
     items: [
-      { id: 'w_den_def', label: 'What you can actually see', bin: 'den' },
+      { id: 'w_den_ex2', label: 'A woman is swimming at the top of the sea', bin: 'den' },
       { id: 'w_den_ex', label: 'There is a shark in the water', bin: 'den' },
-      { id: 'w_con_def', label: 'What it makes you think or feel', bin: 'con' },
+      { id: 'w_con_ex2', label: 'The deep, dark water feels scary', bin: 'con' },
       { id: 'w_con_ex', label: 'The shark feels dangerous', bin: 'con' },
-      { id: 'w_anc_def', label: 'Words that fix the meaning', bin: 'anc' },
+      { id: 'w_anc_ex2', label: 'The caption "He’s just Ken" tells us whose film it is', bin: 'anc' },
       { id: 'w_anc_ex', label: 'The tagline says "terrifying"', bin: 'anc' },
-      { id: 'w_poly_def', label: 'A picture that can mean different things', bin: 'poly' },
+      { id: 'w_poly_ex2', label: 'A smile could mean happy, nervous or fake', bin: 'poly' },
       { id: 'w_poly_ex', label: 'A runner could be late, scared or training', bin: 'poly' },
-      { id: 'w_enc_def', label: 'The producer puts a meaning in on purpose', bin: 'enc' },
+      { id: 'w_enc_ex2', label: 'The designers made the swimmer tiny so she looks helpless', bin: 'enc' },
       { id: 'w_enc_ex', label: 'The designers chose red for the title', bin: 'enc' },
     ],
   },

@@ -61,6 +61,23 @@ function deckSig(file) {
   }
   return crypto.createHash('sha256').update(rows.sort().join('\n')).digest('hex');
 }
+// Pictures placed on each slide of a .pptx (from the slide relationship files), e.g. { 3: 1, 5: 2 }.
+function slideImages(b) {
+  const counts = {};
+  let e = b.length - 22;
+  while (b.readUInt32LE(e) !== 0x06054b50) e--;
+  for (let i = 0, p = b.readUInt32LE(e + 16); i < b.readUInt16LE(e + 10); i++) {
+    const nl = b.readUInt16LE(p + 28), name = b.toString('utf8', p + 46, p + 46 + nl);
+    const m = name.match(/^ppt\/slides\/_rels\/slide(\d+)\.xml\.rels$/);
+    if (m) {
+      const lo = b.readUInt32LE(p + 42), data = b.subarray(lo + 30 + b.readUInt16LE(lo + 26) + b.readUInt16LE(lo + 28)).subarray(0, b.readUInt32LE(p + 20));
+      const xml = (b.readUInt16LE(p + 10) ? zlib.inflateRawSync(data) : data).toString('utf8');
+      counts[m[1]] = (xml.match(/Target="\.\.\/media\//g) || []).length;
+    }
+    p += 46 + nl + b.readUInt16LE(p + 30) + b.readUInt16LE(p + 32);
+  }
+  return counts;
+}
 // Runs build_L<n>.cjs, which rewrites L<n>_<Name>.pptx. Shows the builder's warnings (images still to supply).
 function rebuild(builder) {
   try {
@@ -157,6 +174,25 @@ async function upload(file, { parentId, name, existingId }) {
   return drive(`${API}/files/${f.id}?${ALL_DRIVES}&fields=id,name,webViewLink`);
 }
 
+// Google's import sometimes drops pictures from a deck (2026-11-03: most of L1.1's images and icons went, though the
+// upload succeeded). Exports the Slides copy and lists the slides with fewer pictures than the .pptx.
+async function missingImages(file, id) {
+  const r = await fetch(`${API}/files/${id}/export?mimeType=${encodeURIComponent(CONVERT['.pptx'][0])}`, { headers: { Authorization: `Bearer ${TOKEN}` } });
+  if (!r.ok) { console.log(`  (could not export ${path.basename(file)} to check its pictures: ${r.status})`); return []; }
+  const want = slideImages(fs.readFileSync(file)), got = slideImages(Buffer.from(await r.arrayBuffer()));
+  return Object.keys(want).filter((n) => (got[n] || 0) < want[n]).map(Number).sort((a, b) => a - b);
+}
+async function uploadDeck(file, opts) {
+  for (let attempt = 1; ; attempt++) {
+    const f = await upload(file, opts);
+    const missing = await missingImages(file, f.id);
+    if (!missing.length) return f;
+    if (attempt === 3) throw new Error(`Google Slides dropped pictures from ${path.basename(file)} three times (slides ${missing.join(', ')}). Run again later.`);
+    console.log(`  pictures missing on slides ${missing.join(', ')} after import; uploading again`);
+    opts = { ...opts, existingId: f.id };
+  }
+}
+
 // ── Main ───────────────────────────────────────────────────────────────────────
 (async () => {
   const cfg = JSON.parse(fs.readFileSync(CONFIG, 'utf8'));
@@ -192,7 +228,7 @@ async function upload(file, { parentId, name, existingId }) {
     rec.folderId = await folder(cfg.termId, lessonName(deck), rec.folderId);
     for (const t of todo) {
       const prev = t.slot === 'deck' ? rec.slidesId : rec.resources?.[t.slot]?.id;
-      const f = await upload(t.file, { parentId: rec.folderId, name: t.name, existingId: prev });
+      const f = await (t.slot === 'deck' ? uploadDeck : upload)(t.file, { parentId: rec.folderId, name: t.name, existingId: prev });
       if (t.slot === 'deck') Object.assign(rec, { slidesId: f.id, sha: t.sha, link: f.webViewLink });
       else (rec.resources ||= {})[t.slot] = { id: f.id, sha: t.sha };
       console.log(`  ${prev === f.id ? 'updated' : 'uploaded'} ${f.name}: ${f.webViewLink}`);

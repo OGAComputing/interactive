@@ -19,6 +19,7 @@ async function sortAll(page, panel, binOf) {
 
 test('the board loads all 21 products with their images', async ({ page }) => {
   await page.goto(URL);
+  await page.locator('.tab[data-idx="0"]').click();
   await expect(page.locator('#panel-0 .tray .chip')).toHaveCount(21);
   await expect(page.locator('#panel-0 .chip img')).toHaveCount(21);
   await expect(page.locator('#panel-0 .bin')).toHaveCount(6);
@@ -26,6 +27,7 @@ test('the board loads all 21 products with their images', async ({ page }) => {
 
 test('cards are dealt one at a time beside the boxes; Skip sends the top card to the bottom', async ({ page }) => {
   await page.goto(URL);
+  await page.locator('.tab[data-idx="0"]').click();
   await expect(page.locator('#panel-0 .tray .chip:visible')).toHaveCount(1);
   await expect(page.locator('#panel-0 .deal-count')).toHaveText('Card 1 of 21');
   const first = await page.locator('#panel-0 .tray .chip').first().getAttribute('data-qw');
@@ -44,6 +46,7 @@ test('cards are dealt one at a time beside the boxes; Skip sends the top card to
 
 test('pictures are never cropped; the magnifier shows the whole picture; sorted tiles preview on hover', async ({ page }) => {
   await page.goto(URL);
+  await page.locator('.tab[data-idx="0"]').click();
   const top = page.locator('#panel-0 .tray .chip').first();
   const id = await top.getAttribute('data-qw');
   await expect(top.locator('.thumb img')).toHaveCSS('object-fit', 'contain');
@@ -66,6 +69,7 @@ test('pictures are never cropped; the magnifier shows the whole picture; sorted 
 
 test('a wrong board starts a cooldown and marks the wrong card red', async ({ page }) => {
   await page.goto(URL);
+  await page.locator('.tab[data-idx="0"]').click();
   await sortAll(page, '#panel-0', id => (id === 'jaws' ? 'ami-post' : BIN[id]));
   await page.locator('#check-0').click();
   await expect(page.locator('#feedback-0')).toHaveClass(/wrong/);
@@ -77,6 +81,7 @@ test('a wrong board starts a cooldown and marks the wrong card red', async ({ pa
 
 test('a right board is gold, shows the years and survives a reload', async ({ page }) => {
   await page.goto(URL);
+  await page.locator('.tab[data-idx="0"]').click();
   await sortAll(page, '#panel-0', id => BIN[id]);
   await page.locator('#check-0').click();
   await expect(page.locator('#feedback-0')).toHaveClass(/correct/);
@@ -124,4 +129,11 @@ test('the warm-up is optional: finishing it does not finish the page', async ({ 
   await expect(page.locator('#dot-4')).toHaveClass(/optional/);
   await expect(page.locator('#done-banner')).not.toHaveClass(/show/);
   await expect(page.locator('.tab.challenge')).toHaveCount(2);
+});
+
+test('the page opens on the warm-up tab', async ({ page }) => {
+  await page.goto(URL);
+  await expect(page.locator('.tab.support')).toHaveClass(/active/);
+  await expect(page.locator('#panel-4')).toBeVisible();
+  await expect(page.locator('#panel-0')).toBeHidden();
 });

@@ -73,8 +73,9 @@ describe('writing', () => {
 });
 
 describe('warm-up and challenge', () => {
-  test('the warm-up has a meaning and an example for each of the five words', () => {
+  test('the warm-up has two examples (no meaning cards) for each of the five words', () => {
     for (const [bin] of SORTS.words.bins) expect(SORTS.words.items.filter(it => it.bin === bin)).toHaveLength(2);
+    expect(SORTS.words.items.every(it => /_ex2?$/.test(it.id))).toBe(true);
     const key = Object.fromEntries(SORTS.words.items.map(it => [it.id, it.bin]));
     expect(allCorrect(markSort('words', key))).toBe(true);
   });
