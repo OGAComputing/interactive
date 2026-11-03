@@ -45,7 +45,7 @@ Editorial / magazine, so Component 1 decks look nothing like the Computing decks
 | `info` | New Information | Standfirst + up to 4 numbered points, optional image |
 | `keyTerm` | New Information | One term or theory: definition + a real example with its image |
 | `readingScaffold` | Deliberate Practice | Dense text in chunks: Read → Jot → Turn & Talk → Share (`step` = live stage) |
-| `clip` | Deliberate Practice | A Drive clip (from `Y10/media.md`): watch window on the slide, questions after |
+| `clip` | Deliberate Practice | A Drive clip (from `Y10/media.md`): watch window on the slide, questions after. `video: '<Drive file ID>'` makes the picture and a play button open the clip at `from` |
 | `annotate` | Deliberate Practice (or `info` for a worked example) | A real product with numbered markers and notes. A portrait image (poster, magazine cover) gets the **tall** layout: the picture runs the full height of the slide down the left edge, with the title and notes beside it (`C1_PAPER_TALL` master). `tall: true / false` overrides |
 | `compare` | Deliberate Practice | Two real products against the same criteria |
 | `turnTalk` | Deliberate Practice | One question as an Oswald headline (context before it in `lead`, Lora italic), then think → partner A → partner B; optional image |

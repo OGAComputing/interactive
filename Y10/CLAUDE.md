@@ -60,6 +60,7 @@ Rules for everything in `Y10/` and the Y10 decks. They add to the root `CLAUDE.m
 - Clips live in the course's **shared drive folder** (https://drive.google.com/drive/folders/1qs5P8Jj3ZcRDurJtcHiJc8iUX75fa3ey), which is shared **view-only with the Outwood domain**. Never use "anyone with the link", and never put clips in this repo. Tested on a student account on a school PC (2026-10-23). Students use school PCs only (no Chromebooks or iPads).
 - Embed: `<iframe src="https://drive.google.com/file/d/<ID>/preview?t=<seconds>" allow="autoplay; fullscreen" allowfullscreen>`, with an "Open in Drive" link `https://drive.google.com/file/d/<ID>/view?t=<seconds>` underneath. `activity-dependencies.test.js` enforces both.
 - The page can set the start time only. It can't pause, stop at an end time or tell whether a clip was watched, so state "watch 0:45–1:30" in the task, or trim the clip, and put questions after the clip.
+- **Every deck slide that uses a clip links to it** (Nick, 2026-11-03: to get to the media quickly while teaching). Use the `clip` recipe with `video: '<Drive file ID>'`: the picture and a play button open the clip in Drive at the slide's start time. Never just name the clip ("Drive › Clips"); the build lists any `clip` slide with no link.
 - Every clip used goes in `Y10/media.md` (ID, start/end, lessons that use it). Check a new clip's sharing with the Drive connector before using it.
 - Keep clips short, school-only and for teaching (UK fair dealing, CDPA s32).
 

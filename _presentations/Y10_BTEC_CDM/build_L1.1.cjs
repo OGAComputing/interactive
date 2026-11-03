@@ -68,11 +68,11 @@ K.task({ title: 'The Media Board', mins: 15, where: 'Hub › Year 10 › Lesson 
   criteria: ['Every card in a box', 'Sector AND era right', 'Gold if right first time'],
   notes: 'Every card has its real image. Wrong checks cost 10, then 20, then 30 seconds (they survive a refresh). Years appear on the cards once the board is right. Differentiation: Warm-up (Sector snap: 6 products, sectors only, big pictures) and an era-clues hint inside Task 1; ★ Tricky cases (set vs made, brand vs issue, remakes, products in two sectors) and ★ Remake it (extended writing). Optional tabs do not change the grade.' });
 
-K.clip({ title: 'Then: The Lion King, 1994', from: '0:00', to: 'end', where: 'Hub › Lesson 1.1 › Task 2 (or Drive › Clips)',
+K.clip({ title: 'Then: The Lion King, 1994', from: '0:00', to: 'end', where: 'Click the poster to play', video: '1zqWkHbI_M8Z1Gn9lKEJH9mDbydIP0dw_',
   img: img('lion_king_1994.jpg'), imgLabel: 'The Lion King poster (1994)',
   questions: ['Which sector is it in?', 'How was it made: drawn or filmed?', 'Where would people have seen it in 1994?'],
   notes: 'Drive clip "Lion King Cartoon.mp4" (Y10/media.md). Watch the whole clip. Hand-drawn 2D animation: every frame drawn by an artist. Questions after watching.' });
-K.clip({ title: 'Now: The Lion King, 2019', from: '0:00', to: 'end', where: 'Hub › Lesson 1.1 › Task 2 (or Drive › Clips)',
+K.clip({ title: 'Now: The Lion King, 2019', from: '0:00', to: 'end', where: 'Click the poster to play', video: '1T6jlQK6g5ACu4gGk13RtjHxaWHkKS5GT',
   img: img('lion_king_2019.jpg'), imgLabel: 'The Lion King poster (2019)',
   questions: ['What is the same as 1994?', 'What looks different?', 'Why was it released online first?'],
   notes: 'Drive clip "Lion King Digital.mp4", whole clip. Same story, studio and music, 25 years apart, but computer-generated (CGI) to look like real animals. Technology and platforms (YouTube, social media) changed the product; the story did not.' });

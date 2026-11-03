@@ -99,7 +99,7 @@ function createDeck({ lesson, footerText, title = 'Component 1 lesson', author =
 
   // ── Drawing parts ─────────────────────────────────────────────────────────
   let slideNo = 0;
-  const sections = new Set(), imagesNeeded = [];
+  const sections = new Set(), imagesNeeded = [], clipsUnlinked = [];
   function newSlide(master, section, t) {
     if (!sections.has(section)) { pres.addSection({ title: section }); sections.add(section); }
     const s = pres.addSlide({ masterName: master, sectionTitle: section });
@@ -145,12 +145,12 @@ function createDeck({ lesson, footerText, title = 'Component 1 lesson', author =
     if (o.img && fs.existsSync(o.img)) {
       const px = imageSize(o.img), ratio = px ? px.w / px.h : o.w / o.h;
       if (Math.abs(Math.log(ratio / (o.w / o.h))) < 0.15) {
-        s.addImage({ path: o.img, x: o.x, y: o.y, w: o.w, h: o.h, sizing: { type: 'cover', w: o.w, h: o.h }, altText: o.label });
+        s.addImage({ path: o.img, x: o.x, y: o.y, w: o.w, h: o.h, sizing: { type: 'cover', w: o.w, h: o.h }, altText: o.label, hyperlink: o.link });
         return slot;
       }
       if (o.dark) box(s, { x: o.x, y: o.y, w: o.w, h: o.h, fill: '000000' });
       const w = Math.min(o.w, o.h * ratio), h = w / ratio, pic = { x: o.x + (o.w - w) / 2, y: o.y + (o.h - h) / 2, w, h };
-      s.addImage({ path: o.img, ...pic, altText: o.label });
+      s.addImage({ path: o.img, ...pic, altText: o.label, hyperlink: o.link });
       return pic;
     }
     imagesNeeded.push(`slide ${slideNo}: ${o.label}`);
@@ -330,14 +330,26 @@ function createDeck({ lesson, footerText, title = 'Component 1 lesson', author =
     return s;
   }
   // A Drive clip: a film frame with the watch window, then the questions to answer after watching.
-  // The page can't stop the clip, so the window is always written on the slide.
-  function clip({ title: t, from, to, where, img, imgLabel, questions: qs, reveal = true, notes: n }) {
+  // The page can't stop the clip, so the window is always written on the slide. video (the Drive file ID
+  // from Y10/media.md) links the picture and a play button to the clip, opened at `from`, so a click in
+  // the slideshow plays it (Drive's player, in a new tab; school accounts only, like the hub pages).
+  function clip({ title: t, from, to, where, video, img, imgLabel, questions: qs, reveal = true, notes: n }) {
     const s = newSlide('C1_INK', 'Content', t);
     const fx = M, fy = 1.8, fw = 7.2, fh = 4.5;
+    const secs = from.split(':').reduce((a, v) => a * 60 + Number(v), 0);
+    if (!video) clipsUnlinked.push(`slide ${slideNo}: ${t}`);
+    const link = video && { url: `https://drive.google.com/file/d/${video}/view?t=${secs}`, tooltip: `Play: ${t}` };
     box(s, { x: fx, y: fy, w: fw, h: fh, fill: '000000' });
     for (let i = 0; i < 16; i++) [fy + 0.1, fy + fh - 0.3].forEach((y) =>
       box(s, { x: fx + 0.2 + i * 0.43, y, w: 0.24, h: 0.2, fill: P.ink2 }));
-    imageSlot(s, { x: fx + 0.2, y: fy + 0.45, w: fw - 0.4, h: fh - 0.9, img, label: imgLabel || 'Still from the clip', dark: true });
+    const pic = imageSlot(s, { x: fx + 0.2, y: fy + 0.45, w: fw - 0.4, h: fh - 0.9, img, label: imgLabel || 'Still from the clip', dark: true, link });
+    if (link) {
+      const d = 1.1, cx = pic.x + pic.w / 2, cy = pic.y + pic.h / 2;
+      s.addShape(pres.shapes.OVAL, { x: cx - d / 2, y: cy - d / 2, w: d, h: d, fill: { color: P.red, transparency: 10 },
+        line: { color: P.white, width: 2.5 }, hyperlink: link });
+      s.addShape(pres.shapes.ISOSCELES_TRIANGLE, { x: cx - 0.2, y: cy - 0.24, w: 0.48, h: 0.48, rotate: 90,
+        fill: { color: P.white }, line: { type: 'none' }, hyperlink: link });
+    }
     tag(s, `WATCH  ${from} – ${to}`, { x: fx, y: fy + fh + 0.2, w: 2.9, fill: P.red, color: P.white });
     if (where) text(s, where, { x: fx + 3.1, y: fy + fh + 0.2, w: fw - 3.1, h: 0.32, fontSize: 14, color: P.greyLt, valign: 'middle' });
     const qx = 8.25, qw = W - qx - M;
@@ -461,6 +473,7 @@ function createDeck({ lesson, footerText, title = 'Component 1 lesson', author =
     fs.writeFileSync(out, await addReveals(await pres.write({ outputType: 'nodebuffer' })));
     console.log(`Wrote ${out} (${slideNo} slides)`);
     if (imagesNeeded.length) console.log('Images to supply:\n  ' + imagesNeeded.join('\n  '));
+    if (clipsUnlinked.length) console.log('Clips with no video link (add video: <Drive ID> from Y10/media.md):\n  ' + clipsUnlinked.join('\n  '));
   }
 
   return { pres, P, HEAD, BODY, QUOTE, W, M, CW, newSlide, text, box, rule, kicker, tag, timer, addIcon, imageSlot, note,
