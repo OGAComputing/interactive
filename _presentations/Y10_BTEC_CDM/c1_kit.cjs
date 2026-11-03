@@ -110,8 +110,12 @@ function createDeck({ lesson, footerText, title = 'Component 1 lesson', author =
     return s.addText(t, { isTextBox: true, margin: 0, fontFace: BODY, color: P.ink, valign: 'top', ...o });
   };
   const box = (s, o) => s.addShape(pres.shapes.RECTANGLE, { x: o.x, y: o.y, w: o.w, h: o.h, fill: { color: o.fill },
-    line: o.line ? { color: o.line, width: o.lw || 1.5, dashType: o.dash } : { type: 'none' } });
-  const rule = (s, x, y, w, color = P.rule, weight = 2.5) => s.addShape(pres.shapes.LINE, { x, y, w, h: 0, line: { color, width: weight } });
+    line: o.line ? { color: o.line, width: o.lw || 1.5, dashType: o.dash } : { type: 'none' }, objectName: o.objectName });
+  const rule = (s, x, y, w, color = P.rule, weight = 2.5, more) => s.addShape(pres.shapes.LINE, { x, y, w, h: 0, line: { color, width: weight }, ...more });
+  // Click-to-reveal: shapes given at(on, n) fade in on the nth click, so a dense slide builds up one
+  // point at a time. write() turns the names into PowerPoint animations (see addReveals).
+  // Every recipe that uses it takes reveal: false to show everything at once.
+  const at = (on, step) => (on ? { objectName: `reveal-${step}` } : {});
   const kicker = (s, t, o) => text(s, t.toUpperCase(), { fontSize: 13, bold: true, color: P.red, charSpacing: 3, h: 0.3, ...o });
   // Square-cornered label, e.g. the source-lesson tag on a recall question.
   function tag(s, t, o) {
@@ -133,23 +137,26 @@ function createDeck({ lesson, footerText, title = 'Component 1 lesson', author =
   // fitted whole and centred instead, so a poster never loses its title (on dark slides, on black;
   // on paper, with no box, so there are no empty bars beside it). Without img, a
   // labelled placeholder is drawn and the image is listed when the deck is written.
+  // Returns where the picture was drawn, so annotate can put its marks on the picture itself.
   function imageSlot(s, o) {
+    const slot = { x: o.x, y: o.y, w: o.w, h: o.h };
     if (o.img && fs.existsSync(o.img)) {
       const px = imageSize(o.img), ratio = px ? px.w / px.h : o.w / o.h;
       if (Math.abs(Math.log(ratio / (o.w / o.h))) < 0.15) {
         s.addImage({ path: o.img, x: o.x, y: o.y, w: o.w, h: o.h, sizing: { type: 'cover', w: o.w, h: o.h }, altText: o.label });
-      } else {
-        if (o.dark) box(s, { x: o.x, y: o.y, w: o.w, h: o.h, fill: '000000' });
-        const w = Math.min(o.w, o.h * ratio), h = w / ratio;
-        s.addImage({ path: o.img, x: o.x + (o.w - w) / 2, y: o.y + (o.h - h) / 2, w, h, altText: o.label });
+        return slot;
       }
-      return;
+      if (o.dark) box(s, { x: o.x, y: o.y, w: o.w, h: o.h, fill: '000000' });
+      const w = Math.min(o.w, o.h * ratio), h = w / ratio, pic = { x: o.x + (o.w - w) / 2, y: o.y + (o.h - h) / 2, w, h };
+      s.addImage({ path: o.img, ...pic, altText: o.label });
+      return pic;
     }
     imagesNeeded.push(`slide ${slideNo}: ${o.label}`);
     box(s, { x: o.x, y: o.y, w: o.w, h: o.h, fill: o.dark ? P.ink2 : P.paper2, line: o.dark ? P.ruleLt : P.greyLt, dash: 'dash', lw: 1.25 });
     text(s, [{ text: 'IMAGE\n', options: { fontSize: 12, bold: true, charSpacing: 3, color: P.red } },
       { text: o.label, options: { fontSize: 16, color: o.dark ? P.greyLt : P.grey } }],
     { x: o.x + 0.2, y: o.y, w: o.w - 0.4, h: o.h, align: 'center', valign: 'middle' });
+    return slot;
   }
   const notes = (s, n) => n && s.addNotes(n);
   const note = (s, t, dark) => text(s, t, { x: M, y: 7.0, w: 9, h: 0.3, fontSize: 12, italic: true, bold: true,
@@ -216,61 +223,63 @@ function createDeck({ lesson, footerText, title = 'Component 1 lesson', author =
     return s;
   }
   // New Information: a standfirst (the one-sentence idea) and up to 4 numbered points, magazine-column style.
-  function info({ title: t, standfirst, points, img, imgLabel, notes: n }) {
+  function info({ title: t, standfirst, points, img, imgLabel, reveal = true, notes: n }) {
     const s = newSlide('C1_PAPER', 'Content', t);
     const textW = img || imgLabel ? 6.9 : CW;
     if (standfirst) text(s, standfirst, { x: M, y: 1.8, w: textW, h: 1.0, fontFace: QUOTE, italic: true, fontSize: 24 });
     const y0 = standfirst ? 3.0 : 1.95, ph = (6.75 - y0) / points.length;
     points.forEach(([lead, body], i) => {
       const y = y0 + i * ph;
-      rule(s, M, y, textW, P.rule, 1.25);
-      text(s, String(i + 1), { x: M, y: y + 0.08, w: 0.5, h: 0.6, fontFace: HEAD, fontSize: 36, color: P.red });
+      const r = at(reveal, i + 1);
+      rule(s, M, y, textW, P.rule, 1.25, r);
+      text(s, String(i + 1), { x: M, y: y + 0.08, w: 0.5, h: 0.6, fontFace: HEAD, fontSize: 36, color: P.red, ...r });
       text(s, [{ text: lead + '  ', options: { bold: true } }, { text: body }],
-        { x: M + 0.6, y: y + 0.12, w: textW - 0.6, h: ph - 0.2, fontSize: 19 });
+        { x: M + 0.6, y: y + 0.12, w: textW - 0.6, h: ph - 0.2, fontSize: 19, ...r });
     });
     if (img || imgLabel) imageSlot(s, { x: 7.95, y: 1.8, w: W - 7.95 - M, h: 4.95, img, label: imgLabel });
     addIcon(s, 'info'); notes(s, n);
     return s;
   }
   // Key term or theory card: the word huge, a plain definition, and a real example with its image.
-  function keyTerm({ term, say, definition, example, img, imgLabel, notes: n }) {
+  function keyTerm({ term, say, definition, example, img, imgLabel, reveal = true, notes: n }) {
     const s = newSlide('C1_PAPER_PLAIN', 'Content');
     kicker(s, 'Key term', { x: M, y: 0.7, w: 4 });
     text(s, term, { x: M, y: 1.0, w: 7.4, h: 1.5, fontFace: HEAD, fontSize: 80, valign: 'middle', fit: 'shrink' });
     if (say) text(s, say, { x: M, y: 2.5, w: 7.4, h: 0.4, fontSize: 16, italic: true, color: P.grey });
     rule(s, M, 3.05, 7.2, P.rule, 3);
     text(s, definition, { x: M, y: 3.25, w: 7.2, h: 1.6, fontSize: 24 });
-    box(s, { x: M, y: 5.0, w: 7.2, h: 1.75, fill: P.ink });
+    box(s, { x: M, y: 5.0, w: 7.2, h: 1.75, fill: P.ink, ...at(reveal, 1) });
     text(s, [{ text: 'IN THE REAL WORLD\n', options: { fontSize: 12, bold: true, charSpacing: 3, color: P.redLt } },
-      { text: example, options: { fontSize: 19, color: P.paper } }], { x: M + 0.3, y: 5.15, w: 6.6, h: 1.5 });
+      { text: example, options: { fontSize: 19, color: P.paper } }], { x: M + 0.3, y: 5.15, w: 6.6, h: 1.5, ...at(reveal, 1) });
     imageSlot(s, { x: 8.15, y: 1.75, w: W - 8.15 - M, h: 5.0, img, label: imgLabel || 'Real example of this term' });
     addIcon(s, 'info'); notes(s, n);
     return s;
   }
   // Annotated product: numbered markers on the image (x, y as 0–1 across/down it), matching notes beside it.
-  function annotate({ title: t, img, imgLabel, marks, pillar = 'practice', prompt, notes: n }) {
+  function annotate({ title: t, img, imgLabel, marks, pillar = 'practice', prompt, reveal = true, notes: n }) {
     const s = newSlide('C1_PAPER', 'Content', t);
     const ix = M, iy = 1.8, iw = 7.0, ih = prompt ? 4.45 : 4.95;
-    imageSlot(s, { x: ix, y: iy, w: iw, h: ih, img, label: imgLabel || 'Media product to annotate' });
+    const pic = imageSlot(s, { x: ix, y: iy, w: iw, h: ih, img, label: imgLabel || 'Media product to annotate' });
     marks.forEach((m, i) => {
-      const d = 0.5, cx = ix + m.at[0] * iw - d / 2, cy = iy + m.at[1] * ih - d / 2;
-      s.addShape(pres.shapes.OVAL, { x: cx, y: cy, w: d, h: d, fill: { color: P.red }, line: { color: P.white, width: 2 } });
-      text(s, String(i + 1), { x: cx, y: cy, w: d, h: d, fontFace: HEAD, fontSize: 20, color: P.white, align: 'center', valign: 'middle' });
+      const d = 0.5, cx = pic.x + m.at[0] * pic.w - d / 2, cy = pic.y + m.at[1] * pic.h - d / 2;
+      s.addShape(pres.shapes.OVAL, { x: cx, y: cy, w: d, h: d, fill: { color: P.red }, line: { color: P.white, width: 2 }, ...at(reveal, i + 1) });
+      text(s, String(i + 1), { x: cx, y: cy, w: d, h: d, fontFace: HEAD, fontSize: 20, color: P.white, align: 'center', valign: 'middle', ...at(reveal, i + 1) });
     });
     const lx = 8.0, lw = W - lx - M, lh = Math.min(1.25, 4.95 / marks.length);
     marks.forEach((m, i) => {
       const y = iy + i * lh;
-      rule(s, lx, y, lw, P.rule, 1.25);
-      text(s, String(i + 1), { x: lx, y: y + 0.08, w: 0.45, h: 0.5, fontFace: HEAD, fontSize: 28, color: P.red });
+      const r = at(reveal, i + 1);
+      rule(s, lx, y, lw, P.rule, 1.25, r);
+      text(s, String(i + 1), { x: lx, y: y + 0.08, w: 0.45, h: 0.5, fontFace: HEAD, fontSize: 28, color: P.red, ...r });
       text(s, [{ text: m.label + '\n', options: { bold: true, fontSize: 19 } }, { text: m.note || '', options: { fontSize: 18, color: P.grey } }],
-        { x: lx + 0.5, y: y + 0.1, w: lw - 0.5, h: lh - 0.15 });
+        { x: lx + 0.5, y: y + 0.1, w: lw - 0.5, h: lh - 0.15, ...r });
     });
     if (prompt) text(s, prompt, { x: ix, y: iy + ih + 0.12, w: iw, h: 0.4, fontSize: 18, bold: true, color: P.red });
     addIcon(s, pillar); notes(s, n);
     return s;
   }
   // Two products side by side, then the same criteria for each. Blank cells = students fill them in.
-  function compare({ title: t, a, b, rows, notes: n }) {
+  function compare({ title: t, a, b, rows, reveal = true, notes: n }) {
     const s = newSlide('C1_PAPER', 'Content', t);
     const lab = 2.6, cw = (CW - lab) / 2, ih = 2.05;
     [a, b].forEach((p, i) => {
@@ -281,16 +290,17 @@ function createDeck({ lesson, footerText, title = 'Component 1 lesson', author =
     const rh = Math.min(0.62, (6.85 - 4.35) / rows.length);
     rows.forEach(([label, va, vb], i) => {
       const y = 4.35 + i * rh;
-      rule(s, M, y, CW, P.rule, i ? 1 : 2.5);
-      text(s, label.toUpperCase(), { x: M, y, w: lab - 0.1, h: rh, fontSize: 13, bold: true, charSpacing: 2, color: P.red, valign: 'middle' });
-      [va, vb].forEach((v, j) => text(s, v || '', { x: M + lab + j * cw + 0.15, y, w: cw - 0.3, h: rh, fontSize: 18, valign: 'middle' }));
+      const r = at(reveal, i + 1);
+      rule(s, M, y, CW, P.rule, i ? 1 : 2.5, r);
+      text(s, label.toUpperCase(), { x: M, y, w: lab - 0.1, h: rh, fontSize: 13, bold: true, charSpacing: 2, color: P.red, valign: 'middle', ...r });
+      [va, vb].forEach((v, j) => text(s, v || '', { x: M + lab + j * cw + 0.15, y, w: cw - 0.3, h: rh, fontSize: 18, valign: 'middle', ...r }));
     });
     addIcon(s, 'practice'); notes(s, n);
     return s;
   }
   // A Drive clip: a film frame with the watch window, then the questions to answer after watching.
   // The page can't stop the clip, so the window is always written on the slide.
-  function clip({ title: t, from, to, where, img, imgLabel, questions: qs, notes: n }) {
+  function clip({ title: t, from, to, where, img, imgLabel, questions: qs, reveal = true, notes: n }) {
     const s = newSlide('C1_INK', 'Content', t);
     const fx = M, fy = 1.8, fw = 7.2, fh = 4.5;
     box(s, { x: fx, y: fy, w: fw, h: fh, fill: '000000' });
@@ -300,12 +310,12 @@ function createDeck({ lesson, footerText, title = 'Component 1 lesson', author =
     tag(s, `WATCH  ${from} – ${to}`, { x: fx, y: fy + fh + 0.2, w: 2.9, fill: P.red, color: P.white });
     if (where) text(s, where, { x: fx + 3.1, y: fy + fh + 0.2, w: fw - 3.1, h: 0.32, fontSize: 14, color: P.greyLt, valign: 'middle' });
     const qx = 8.25, qw = W - qx - M;
-    kicker(s, 'Then answer', { x: qx, y: 1.8, w: qw, color: P.redLt });
+    kicker(s, 'Then answer', { x: qx, y: 1.8, w: qw, color: P.redLt, ...at(reveal, 1) });
     qs.forEach((q, i) => {
-      const y = 2.25 + i * 1.3;
-      rule(s, qx, y, qw, P.paper, 1.25);
-      text(s, String(i + 1), { x: qx, y: y + 0.08, w: 0.45, h: 0.5, fontFace: HEAD, fontSize: 28, color: P.redLt });
-      text(s, q, { x: qx + 0.5, y: y + 0.12, w: qw - 0.5, h: 1.1, fontSize: 19, color: P.paper });
+      const y = 2.25 + i * 1.3, r = at(reveal, i + 1);
+      rule(s, qx, y, qw, P.paper, 1.25, r);
+      text(s, String(i + 1), { x: qx, y: y + 0.08, w: 0.45, h: 0.5, fontFace: HEAD, fontSize: 28, color: P.redLt, ...r });
+      text(s, q, { x: qx + 0.5, y: y + 0.12, w: qw - 0.5, h: 1.1, fontSize: 19, color: P.paper, ...r });
     });
     addIcon(s, 'practice'); notes(s, n);
     return s;
@@ -345,15 +355,16 @@ function createDeck({ lesson, footerText, title = 'Component 1 lesson', author =
   }
   // Turn & Talk: one question in big type, then think → partner A → partner B. Optional image.
   function turnTalk({ title: t = 'Turn & Talk', prompt, steps = ['Think on your own: 30 seconds', 'Partner A answers. B listens.', 'B adds one thing or disagrees, with a reason.'],
-    img, imgLabel, mins = 3, notes: n }) {
+    img, imgLabel, mins = 3, reveal = true, notes: n }) {
     const s = newSlide('C1_PAPER', 'Content', t);
     const tw = img || imgLabel ? 7.0 : CW;
     text(s, prompt, { x: M, y: 1.75, w: tw, h: 2.0, fontFace: QUOTE, italic: true, fontSize: 30, valign: 'middle', fit: 'shrink' });
     steps.forEach((st, i) => {
       const y = 3.95 + i * 0.95;
-      rule(s, M, y, tw, P.rule, 1.25);
-      text(s, String(i + 1), { x: M, y: y + 0.08, w: 0.5, h: 0.7, fontFace: HEAD, fontSize: 32, color: P.red });
-      text(s, st, { x: M + 0.6, y: y + 0.16, w: tw - 0.6, h: 0.7, fontSize: 20 });
+      const r = at(reveal, i + 1);
+      rule(s, M, y, tw, P.rule, 1.25, r);
+      text(s, String(i + 1), { x: M, y: y + 0.08, w: 0.5, h: 0.7, fontFace: HEAD, fontSize: 32, color: P.red, ...r });
+      text(s, st, { x: M + 0.6, y: y + 0.16, w: tw - 0.6, h: 0.7, fontSize: 20, ...r });
     });
     if (img || imgLabel) imageSlot(s, { x: 7.95, y: 1.75, w: W - 7.95 - M, h: 5.0, img, label: imgLabel || 'Real product to talk about' });
     timer(s, mins); addIcon(s, 'practice'); notes(s, n);
@@ -412,7 +423,7 @@ function createDeck({ lesson, footerText, title = 'Component 1 lesson', author =
   }
 
   async function write(out) {
-    await pres.writeFile({ fileName: out });
+    fs.writeFileSync(out, await addReveals(await pres.write({ outputType: 'nodebuffer' })));
     console.log(`Wrote ${out} (${slideNo} slides)`);
     if (imagesNeeded.length) console.log('Images to supply:\n  ' + imagesNeeded.join('\n  '));
   }
@@ -420,6 +431,46 @@ function createDeck({ lesson, footerText, title = 'Component 1 lesson', author =
   return { pres, P, HEAD, BODY, QUOTE, W, M, CW, newSlide, text, box, rule, kicker, tag, timer, addIcon, imageSlot, note,
     recallStarter, recallAnswers, titleSlide, questions, info, keyTerm, annotate, compare, clip, choice, readingScaffold,
     turnTalk, task, modelAnswer, plenary, write, get slideNo() { return slideNo; } };
+}
+
+// Turns shapes named reveal-<n> into click-to-reveal animations: every shape with the same n fades in
+// together on click n. pptxgenjs can't write animations, so this adds each slide's <p:timing> itself.
+async function addReveals(buf) {
+  const JSZip = requireGlobal('jszip');
+  const zip = await JSZip.loadAsync(buf);
+  for (const name of Object.keys(zip.files).filter((f) => /^ppt\/slides\/slide\d+\.xml$/.test(f))) {
+    let xml = await zip.file(name).async('string');
+    const steps = new Map();
+    for (const [, spid, step] of xml.matchAll(/<p:cNvPr id="(\d+)" name="reveal-(\d+)"/g)) {
+      if (!steps.has(+step)) steps.set(+step, []);
+      steps.get(+step).push(spid);
+    }
+    if (!steps.size) continue;
+    let id = 2;
+    const target = (spid) => `<p:tgtEl><p:spTgt spid="${spid}"/></p:tgtEl>`;
+    const fadeIn = (spid, first) => `<p:par><p:cTn id="${++id}" presetID="10" presetClass="entr" presetSubtype="0" fill="hold" grpId="0" nodeType="${first ? 'clickEffect' : 'withEffect'}">`
+      + `<p:stCondLst><p:cond delay="0"/></p:stCondLst><p:childTnLst>`
+      + `<p:set><p:cBhvr><p:cTn id="${++id}" dur="1" fill="hold"><p:stCondLst><p:cond delay="0"/></p:stCondLst></p:cTn>${target(spid)}`
+      + `<p:attrNameLst><p:attrName>style.visibility</p:attrName></p:attrNameLst></p:cBhvr><p:to><p:strVal val="visible"/></p:to></p:set>`
+      + `<p:animEffect transition="in" filter="fade"><p:cBhvr><p:cTn id="${++id}" dur="400"/>${target(spid)}</p:cBhvr></p:animEffect>`
+      + `</p:childTnLst></p:cTn></p:par>`;
+    const clicks = [...steps.keys()].sort((a, b) => a - b).map((step) => {
+      const outer = ++id, inner = ++id;
+      return `<p:par><p:cTn id="${outer}" fill="hold"><p:stCondLst><p:cond delay="indefinite"/></p:stCondLst><p:childTnLst>`
+        + `<p:par><p:cTn id="${inner}" fill="hold"><p:stCondLst><p:cond delay="0"/></p:stCondLst><p:childTnLst>`
+        + steps.get(step).map((spid, i) => fadeIn(spid, i === 0)).join('')
+        + `</p:childTnLst></p:cTn></p:par></p:childTnLst></p:cTn></p:par>`;
+    }).join('');
+    const all = [...steps.values()].flat();
+    xml = xml.replace('</p:sld>', `<p:timing><p:tnLst><p:par><p:cTn id="1" dur="indefinite" restart="never" nodeType="tmRoot"><p:childTnLst>`
+      + `<p:seq concurrent="1" nextAc="seek"><p:cTn id="2" dur="indefinite" nodeType="mainSeq"><p:childTnLst>${clicks}</p:childTnLst></p:cTn>`
+      + `<p:prevCondLst><p:cond evt="onPrev" delay="0"><p:tgtEl><p:sldTgt/></p:tgtEl></p:cond></p:prevCondLst>`
+      + `<p:nextCondLst><p:cond evt="onNext" delay="0"><p:tgtEl><p:sldTgt/></p:tgtEl></p:cond></p:nextCondLst></p:seq>`
+      + `</p:childTnLst></p:cTn></p:par></p:tnLst>`
+      + `<p:bldLst>${all.map((spid) => `<p:bldP spid="${spid}" grpId="0" animBg="1"/>`).join('')}</p:bldLst></p:timing></p:sld>`);
+    zip.file(name, xml);
+  }
+  return zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' });
 }
 
 module.exports = { createDeck, P, HEAD, BODY, QUOTE };

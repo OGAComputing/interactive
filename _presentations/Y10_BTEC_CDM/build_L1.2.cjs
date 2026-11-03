@@ -44,8 +44,8 @@ K.keyTerm({ term: 'Anchorage', definition: 'Words (a caption, title or tagline) 
   notes: 'Without the caption: two smiling people on a pink B. With it: a joke about who matters.' });
 
 K.annotate({ title: 'Worked model: the Jaws poster', pillar: 'info', img: img('jaws_1975.jpg'), imgLabel: 'Jaws poster (1975)',
-  marks: [{ at: [0.76, 0.07], label: 'Tagline', note: '"Terrifying" → this is horror (anchorage)' }, { at: [0.76, 0.20], label: 'Title', note: 'Red capitals → blood, danger' },
-    { at: [0.76, 0.33], label: 'Swimmer', note: 'Small, relaxed → helpless' }, { at: [0.76, 0.57], label: 'Shark', note: 'Rising, mouth open → a killer coming' }],
+  marks: [{ at: [0.09, 0.105], label: 'Tagline', note: '"Terrifying" → this is horror (anchorage)' }, { at: [0.86, 0.22], label: 'Title', note: 'Red capitals → blood, danger' },
+    { at: [0.76, 0.31], label: 'Swimmer', note: 'Small, relaxed → helpless' }, { at: [0.8, 0.57], label: 'Shark', note: 'Rising, mouth open → a killer coming' }],
   prompt: 'See it (denotation) → read it (connotation) → fix it (anchorage).',
   notes: 'Markers sit beside the feature they label. Model aloud: say the denotation, then "this suggests…", then how the words anchor it. Hub Task 1 repeats this model, then students sort 8 new statements.' });
 

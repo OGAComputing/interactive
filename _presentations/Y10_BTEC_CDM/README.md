@@ -14,7 +14,7 @@ Lesson decks for Component 1 (Exploring Media Products). Course rules are in `Y1
 | `resources/<deck name>/` | Optional files that go in the lesson's Drive folder beside the deck (checklists, worksheets) |
 | `install_fonts.ps1` | Installs Oswald, Lato and Lora for the current user, so PowerPoint renders the real look |
 
-Build: `node build_L<n>.cjs` (needs `npm install -g pptxgenjs`). The builder lists every image slot still waiting for a picture: send that list to Nick before the lesson is built around them. Pass `img: 'images/….jpg'` to a recipe to fill a slot (keep images in `images/` beside the builder). `images/` is git-ignored (full-size copyrighted originals); the master copies are in the course Drive folder's `Images/`. A picture close to its slot's shape fills it; a very different shape (a portrait poster in a wide slot) is fitted whole and centred, with no box behind it on paper slides (black on dark ones), so `annotate` marks are positions in the slot, not the picture.
+Build: `node build_L<n>.cjs` (needs `npm install -g pptxgenjs`). The builder lists every image slot still waiting for a picture: send that list to Nick before the lesson is built around them. Pass `img: 'images/….jpg'` to a recipe to fill a slot (keep images in `images/` beside the builder). `images/` is git-ignored (full-size copyrighted originals); the master copies are in the course Drive folder's `Images/`. A picture close to its slot's shape fills it; a very different shape (a portrait poster in a wide slot) is fitted whole and centred, with no box behind it on paper slides (black on dark ones). `annotate` marks are positions on the picture itself (`at: [across, down]`, 0–1), wherever it lands in the slot.
 
 Lesson decks so far: `build_L1.0.cjs` (course introduction, single-first class only) `build_L1.1.cjs` and `build_L1.2.cjs` (the week 1 double: one deck per lesson, each with its own Recap & Recall).
 
@@ -54,6 +54,8 @@ Editorial / magazine, so Component 1 decks look nothing like the Computing decks
 | `modelAnswer` | Feedback | Model analytical paragraph colour-coded Point / Evidence / Explain |
 | `plenary` | Recap & Recall | Last slide: today's question as an exit task + sentence starter |
 
+**Click to reveal.** `info`, `annotate`, `compare`, `clip` and `turnTalk` show their numbered points one per click (fade in); `keyTerm` shows its real-world example on one click. The title, standfirst or question and the image are there from the start. Pass `reveal: false` to show everything at once. pptxgenjs can't write animations, so `write()` adds them (`addReveals` in `c1_kit.cjs`) to every shape named `reveal-<n>`; give a hand-drawn shape `objectName: 'reveal-2'` to have it appear on click 2. Recap grids, `task`, `choice`, `modelAnswer` and `plenary` stay all-at-once: students need the whole slide while they work.
+
 ## Rules and feedback log
 
 Newest last. Add feedback here (or with `/log-feedback`), then rebuild the template.
@@ -62,3 +64,4 @@ Newest last. Add feedback here (or with `/log-feedback`), then rebuild the templ
 - **2026-10-23 · Recap** — Recap & Recall questions include an example or a choice of options; no bare open recall.
 - **2026-10-23 · Images** — Real examples, never invented ones; list the images needed before building, and never leave a real example text-only.
 - **2026-11-03 · Google Slides** — Decks are published to the course Drive folder as Google Slides (`publish_to_drive.cjs`), so they use Google fonts only (Oswald / Lato / Lora replaced Bahnschrift / Segoe UI / Georgia). Design every new recipe and deck around Google fonts.
+- **2026-11-03 · Reveal** — Dense slides (standfirst + four points + image) were overwhelming at first sight: numbered points now appear one per click (see Click to reveal).
