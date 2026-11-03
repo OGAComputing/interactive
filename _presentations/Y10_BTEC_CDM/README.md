@@ -46,7 +46,7 @@ Editorial / magazine, so Component 1 decks look nothing like the Computing decks
 | `keyTerm` | New Information | One term or theory: definition + a real example with its image |
 | `readingScaffold` | Deliberate Practice | Dense text in chunks: Read → Jot → Turn & Talk → Share (`step` = live stage) |
 | `clip` | Deliberate Practice | A Drive clip (from `Y10/media.md`): watch window on the slide, questions after |
-| `annotate` | Deliberate Practice (or `info` for a worked example) | A real product with numbered markers and notes |
+| `annotate` | Deliberate Practice (or `info` for a worked example) | A real product with numbered markers and notes. A portrait image (poster, magazine cover) gets the **tall** layout: the picture runs the full height of the slide down the left edge, with the title and notes beside it (`C1_PAPER_TALL` master). `tall: true / false` overrides |
 | `compare` | Deliberate Practice | Two real products against the same criteria |
 | `turnTalk` | Deliberate Practice | One question as an Oswald headline (context before it in `lead`, Lora italic), then think → partner A → partner B; optional image |
 | `task` | Deliberate Practice | Steps, where to find it, success criteria, timer |
@@ -64,5 +64,6 @@ Newest last. Add feedback here (or with `/log-feedback`), then rebuild the templ
 - **2026-10-23 · Recap** — Recap & Recall questions include an example or a choice of options; no bare open recall.
 - **2026-10-23 · Images** — Real examples, never invented ones; list the images needed before building, and never leave a real example text-only.
 - **2026-11-03 · Google Slides** — Decks are published to the course Drive folder as Google Slides (`publish_to_drive.cjs`), so they use Google fonts only (Oswald / Lato / Lora replaced Bahnschrift / Segoe UI / Georgia). Design every new recipe and deck around Google fonts.
+- **2026-11-03 · Tall annotate** — The Jaws poster on the L1.2 worked model was too small to see the features being marked. Portrait images in `annotate` now fill the full slide height (new `C1_PAPER_TALL` master); use this layout whenever the point is in the picture's detail.
 - **2026-11-03 · Questions** — The Turn & Talk prompt was in Lora italic, the standfirst voice, so the slide's key question read as a side note. Questions in `turnTalk` and `choice` are now Oswald headlines; set-up context goes in `turnTalk`'s `lead`.
 - **2026-11-03 · Reveal** — Dense slides (standfirst + four points + image) were overwhelming at first sight: numbered points now appear one per click (see Click to reveal).

@@ -93,6 +93,8 @@ function createDeck({ lesson, footerText, title = 'Component 1 lesson', author =
   // For slides whose headline is drawn by the recipe (key terms), so no empty "Click to add title" box shows.
   pres.defineSlideMaster({ title: 'C1_PAPER_PLAIN', background: { color: P.paper },
     objects: folio(P.grey, P.rule), slideNumber: num(P.grey) });
+  // For slides with a full-height picture down the left edge: the recipe draws the folio and headline beside it.
+  pres.defineSlideMaster({ title: 'C1_PAPER_TALL', background: { color: P.paper }, objects: [], slideNumber: num(P.grey) });
   pres.defineSlideMaster({ title: 'C1_COVER', background: { color: P.ink }, objects: [] });
 
   // ── Drawing parts ─────────────────────────────────────────────────────────
@@ -256,27 +258,56 @@ function createDeck({ lesson, footerText, title = 'Component 1 lesson', author =
     return s;
   }
   // Annotated product: numbered markers on the image (x, y as 0–1 across/down it), matching notes beside it.
-  function annotate({ title: t, img, imgLabel, marks, pillar = 'practice', prompt, reveal = true, notes: n }) {
+  // A portrait image (a poster, a magazine cover) gets the tall layout: the picture runs the full height of the
+  // slide down the left edge so the details being marked are big enough to see, with the title and notes beside it.
+  // Pass tall: true / false to choose the layout yourself.
+  function annotate({ title: t, img, imgLabel, marks, pillar = 'practice', prompt, reveal = true, tall, notes: n }) {
+    const px = img && fs.existsSync(img) ? imageSize(img) : null;
+    if (tall ?? (px ? px.w / px.h < 0.9 : false)) return annotateTall({ title: t, img, imgLabel, marks, pillar, prompt, reveal, ratio: px ? px.w / px.h : 0.67, notes: n });
     const s = newSlide('C1_PAPER', 'Content', t);
     const ix = M, iy = 1.8, iw = 7.0, ih = prompt ? 4.45 : 4.95;
     const pic = imageSlot(s, { x: ix, y: iy, w: iw, h: ih, img, label: imgLabel || 'Media product to annotate' });
+    markers(s, pic, marks, reveal);
+    const lx = 8.0, lw = W - lx - M, lh = Math.min(1.25, 4.95 / marks.length);
+    markNotes(s, marks, lx, iy, lw, lh, reveal);
+    if (prompt) text(s, prompt, { x: ix, y: iy + ih + 0.12, w: iw, h: 0.4, fontSize: 18, bold: true, color: P.red });
+    addIcon(s, pillar); notes(s, n);
+    return s;
+  }
+  function annotateTall({ title: t, img, imgLabel, marks, pillar, prompt, reveal, ratio, notes: n }) {
+    const s = newSlide('C1_PAPER_TALL', 'Content');
+    const H = 7.5, pw = Math.min(H * ratio, 6.4);
+    const pic = imageSlot(s, { x: 0, y: 0, w: pw, h: H, img, label: imgLabel || 'Media product to annotate', dark: true });
+    markers(s, pic, marks, reveal);
+    const x0 = pw + 0.5, cw = W - M - x0;
+    text(s, issue || footerText, { x: x0, y: 0.12, w: cw, h: 0.28, fontSize: 11, bold: true, color: P.grey, charSpacing: 3, valign: 'middle' });
+    rule(s, x0, 0.44, cw, P.rule, 2.5);
+    text(s, t, { x: x0, y: 0.62, w: 12.0 - x0 - 0.2, h: 1.0, fontFace: HEAD, fontSize: 40, valign: 'middle', fit: 'shrink' });
+    const y0 = 1.85, yEnd = prompt ? 6.05 : 6.75, lh = Math.min(1.25, (yEnd - y0) / marks.length);
+    markNotes(s, marks, x0, y0, cw, lh, reveal);
+    if (prompt) {
+      rule(s, x0, 6.15, cw, P.red, 2.5);
+      text(s, prompt, { x: x0, y: 6.25, w: cw, h: 0.6, fontSize: 18, bold: true, color: P.red, valign: 'middle' });
+    }
+    addIcon(s, pillar); notes(s, n);
+    return s;
+  }
+  function markers(s, pic, marks, reveal) {
     marks.forEach((m, i) => {
       const d = 0.5, cx = pic.x + m.at[0] * pic.w - d / 2, cy = pic.y + m.at[1] * pic.h - d / 2;
       s.addShape(pres.shapes.OVAL, { x: cx, y: cy, w: d, h: d, fill: { color: P.red }, line: { color: P.white, width: 2 }, ...at(reveal, i + 1) });
       text(s, String(i + 1), { x: cx, y: cy, w: d, h: d, fontFace: HEAD, fontSize: 20, color: P.white, align: 'center', valign: 'middle', ...at(reveal, i + 1) });
     });
-    const lx = 8.0, lw = W - lx - M, lh = Math.min(1.25, 4.95 / marks.length);
+  }
+  function markNotes(s, marks, lx, y0, lw, lh, reveal) {
     marks.forEach((m, i) => {
-      const y = iy + i * lh;
+      const y = y0 + i * lh;
       const r = at(reveal, i + 1);
       rule(s, lx, y, lw, P.rule, 1.25, r);
       text(s, String(i + 1), { x: lx, y: y + 0.08, w: 0.45, h: 0.5, fontFace: HEAD, fontSize: 28, color: P.red, ...r });
       text(s, [{ text: m.label + '\n', options: { bold: true, fontSize: 19 } }, { text: m.note || '', options: { fontSize: 18, color: P.grey } }],
         { x: lx + 0.5, y: y + 0.1, w: lw - 0.5, h: lh - 0.15, ...r });
     });
-    if (prompt) text(s, prompt, { x: ix, y: iy + ih + 0.12, w: iw, h: 0.4, fontSize: 18, bold: true, color: P.red });
-    addIcon(s, pillar); notes(s, n);
-    return s;
   }
   // Two products side by side, then the same criteria for each. Blank cells = students fill them in.
   function compare({ title: t, a, b, rows, reveal = true, notes: n }) {

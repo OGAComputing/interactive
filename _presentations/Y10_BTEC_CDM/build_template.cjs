@@ -104,6 +104,12 @@ recipe(K.annotate({ title: 'Annotate: how does it target its audience?', imgLabe
   prompt: 'Copy the numbers onto your printout and finish each note.',
   notes: 'annotate — a real product with numbered markers; marks[].at is [across, down] from 0 to 1 on the image. Up to 4–5 marks. Use as Deliberate Practice (default) or pillar: "info" for a worked example.' }), 'annotate');
 
+recipe(K.annotate({ title: 'Annotate a poster', imgLabel: 'Portrait poster or magazine cover (full height)', tall: true,
+  marks: [{ at: [0.5, 0.1], label: 'Tagline', note: 'What do the words anchor?' }, { at: [0.5, 0.3], label: 'Title', note: 'Font and colour suggest…' },
+    { at: [0.45, 0.6], label: 'Main image', note: 'What can you see? What does it suggest?' }, { at: [0.5, 0.9], label: 'Credits / date', note: 'Who made it, and when?' }],
+  prompt: 'See it → read it → fix it.',
+  notes: 'annotate, tall layout — a portrait image runs the full height of the slide down the left edge, so the details being marked are big enough to see. Chosen automatically when img is portrait; tall: true / false overrides.' }), 'annotate (tall)');
+
 recipe(K.compare({ title: 'Same purpose, different audience', a: { name: 'Product A', imgLabel: 'Product A (real)' }, b: { name: 'Product B', imgLabel: 'Product B (real)' },
   rows: [['Audience', '', ''], ['Colours', '', ''], ['Language', '', ''], ['Images', '', '']],
   notes: 'compare — two real products and the same criteria for each. Leave cells blank for students to fill in, or fill them for a worked example.' }), 'compare');
