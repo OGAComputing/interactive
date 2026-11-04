@@ -14,7 +14,7 @@ PowerPoint decks for the Y9 Python unit, themed for the unit's *Station Zero* su
 | `L3_While_Loops.pptx` | Lesson 3 deck (Locked In) |
 | `build_template.cjs` | Builds the template deck (re-reads this README for the rules slides) |
 | `build_deck.cjs` | Builds the Lesson 1 deck: copy this file to start a new lesson's deck |
-| `build_L2.cjs` | Builds the Lesson 2 deck |
+| `build_L2.cjs` | Builds the Lesson 2 deck (draws by hand: the selection flowchart, on L3's geometry, and two animated "Watch it run" traces of one if / else, True then False) |
 | `build_L3.cjs` | Builds the Lesson 3 deck (draws by hand: the selection/iteration flowcharts, the animated "Watch it run" trace, "Which line runs next?" (We do and You do)) |
 | `sz_slides.cjs` | The slide types ("recipes"), one function each |
 | `sz_kit.cjs` | Drawing parts: palette, layouts, code panels, terminals, variable boxes, badges |
@@ -40,13 +40,13 @@ A render shows every click at once. To check one moment of an animated slide, bu
 
 ## Publishing to Drive
 
-Lessons are taught from Google Slides in the [Y9 Python Unit 1](https://drive.google.com/drive/folders/19JnPbF7xfcnIQVQkoz4rG7Uv9Mdqja9E) Drive folder. `node publish_to_drive.cjs` rebuilds every `build_L<n>.cjs` deck, then uploads each deck whose slides changed to a folder named after it (`L3_While_Loops/L3_While_Loops`), converted to Google Slides, and writes its Slides ID into `../lesson-slides.json` so the hub's Assign button attaches it. Commit `drive.json` and `lesson-slides.json`. A republish replaces the contents of the same Slides file, so links in Classroom keep working, but **edits made in Slides are lost**: change the builder instead. `--dry-run` lists what would go up; name a deck to publish only that one; `--force` republishes unchanged files. `/ship` and `/lesson-deck` run it. Decks in `drive.json`'s `manual` list (L1, L2) were put on Drive by hand and are left alone. Click animations, exit fades included, and the fonts survive the import (L3 played correctly in Google Slides, 2026-11-04). The script shares `../drive_publish.cjs` and the one-time sign-in setup with Y10 (see `../Y10_BTEC_CDM/README.md`).
+Lessons are taught from Google Slides in the [Y9 Python Unit 1](https://drive.google.com/drive/folders/19JnPbF7xfcnIQVQkoz4rG7Uv9Mdqja9E) Drive folder. `node publish_to_drive.cjs` rebuilds every `build_L<n>.cjs` deck, then uploads each deck whose slides changed to a folder named after it (`L3_While_Loops/L3_While_Loops`), converted to Google Slides, and writes its Slides ID into `../lesson-slides.json` so the hub's Assign button attaches it. Commit `drive.json` and `lesson-slides.json`. A republish replaces the contents of the same Slides file, so links in Classroom keep working, but **edits made in Slides are lost**: change the builder instead. `--dry-run` lists what would go up; name a deck to publish only that one; `--force` republishes unchanged files. `/ship` and `/lesson-deck` run it. Decks in `drive.json`'s `manual` list (L1) were put on Drive by hand and are left alone. Click animations, exit fades included, and the fonts survive the import (L3 played correctly in Google Slides, 2026-11-04). The script shares `../drive_publish.cjs` and the one-time sign-in setup with Y10 (see `../Y10_BTEC_CDM/README.md`).
 
 **Making a new lesson's deck:** copy `build_deck.cjs` to e.g. `build_L2.cjs`, change the output name, footer and content, and keep the slide order. Every slide is one recipe call with its content and speaker notes. Only draw a slide by hand (as L1 does for slides 14–16) when no recipe fits, and use the kit's parts (`varBox`, `codePanel`, `terminal`, `badge`, `arrow`) so it still matches.
 
 ## Slide order
 
-1. **Recap & Recall** starter (light) → 2. **answers** (dark) → 3. **Title** → 4. **Topic + lesson question** → 5. lesson content, repeating New Information → **Story so far** → Deliberate Practice → Feedback, with a chapter card before each activity → 6. **Plenary** (the same lesson question as an exit task).
+1. **Recap & Recall** starter (light) → 2. **answers** (dark) → 3. **Title** → 4. **Topic + lesson question** → 5. lesson content, repeating New Information → Deliberate Practice → Feedback, then **Story so far** and the chapter card just before each activity → 6. **Plenary** (the same lesson question as an exit task).
 
 ## Slide types (recipes in `sz_slides.cjs`)
 
@@ -57,7 +57,7 @@ Lessons are taught from Google Slides in the [Y9 Python Unit 1](https://drive.go
 | `questionsSlide` | Clarity | Topic question (muted) + lesson question (highlighted) |
 | `runLinesSlide` | New Information | A short program run line by line: each row is the whole line → what's on screen → what's in memory, with one plain sentence under the line. Fades in on click: code → screen → memory (6 clicks for 2 lines) |
 | `pairSlide` | New Information | Two lines that differ by one thing (quotes vs no quotes) |
-| `storySoFarSlide` | Deliberate Practice | A 3-sentence story recap between the New Information and the Predict stage (choice-neutral) |
+| `storySoFarSlide` | Deliberate Practice | A 3-sentence story recap, the slide just before the chapter card that opens the activity (choice-neutral) |
 | `predictSlide` / `predictRevealSlide` | Deliberate Practice / Feedback | Mini-whiteboard Predict, then the output and two common mistakes |
 | `traceSlide` | Deliberate Practice / Feedback | Trace table, blank then filled (`reveal`) |
 | `turnTalkSlide` | Deliberate Practice | Two short lines to discuss *before* the explanation |
@@ -87,7 +87,7 @@ Lessons are taught from Google Slides in the [Y9 Python Unit 1](https://drive.go
 - **Week to week:** `createDeck({ station: 'L3', … })` sets the state for the whole deck.
 - **Within a lesson:** `K.station('L1b')` switches it for the slides that follow (e.g. part 2 of Lesson 1).
 - **A story beat:** `K.beat('L2')` switches it as a beat. In Slide Show the next slide fades in through black (the lights go out), then the new damage fades in by itself over 2 seconds. Use it at most once or twice a lesson, on the story moment itself (e.g. the cliffhanger), so it stays a shock.
-- **One layer at a time:** overrides change single layers, e.g. `K.station('L7', { static: false })`. Layers: `frost`, `edge` (`'amber'`/`'red'`), `hazard`, `static`, `cracks`, plus `hud` (the status line) and `dot` (its colour). Light slides (Recap & Recall) skip frost and static.
+- **One layer at a time:** overrides change single layers, e.g. `K.station('L7', { static: false })`. Layers: `frost`, `edge` (`'amber'`/`'red'`), `hazard`, `static`, `cracks`, plus `hud` (the status line) and `dot` (its colour). To tone the alarm edge down for one slide, `K.station('L2', { edgeFade: 70 })` before it (% see-through) and `K.station('L2')` after it (L2 "Watch it run: False", the We do). Light slides (Recap & Recall) skip frost and static.
 - The template's last section shows every state and a beat. To change the art, edit `make_station_art.py` and run it. Keep every layer in the frame (`clip_to_frame` does this for frost, cracks and static).
 
 ## Rules and feedback log
@@ -116,3 +116,5 @@ Add new feedback at the bottom, dated. `build_template.cjs` turns this list into
 - **2026-11-04 · Practice** — After the animated example, no trace tables: they were too complicated and too slow for the class (L3 taught only to the We do trace). Use short questions instead: "Which line runs next?" (the gold line has just run; boards with a line number, one per click), then the You do: the same question on three new loops, each card as on the We do (the gold line, the variable box, a line number to write). Keep the You do to three. Every We do slide says on screen what goes on the board.
 - **2026-11-04 · Recap & Recall** — Keep Q3 easy enough that everyone writes something: e.g. a misspelled variable name to correct (`print(scroe)`).
 - **2026-11-04 · No anatomy slide** — Don't put a slide of labels down the side of the code (L3's "The shape of a while loop" was cut): it was five text areas describing what the animated run then shows. Point at the shape before the animated example starts. The activity's worked example covers the recipe.
+- **2026-11-04 · Station state** — The amber alarm glow reached too far into the slides: it now fades out 0.35" in from the edge (was 0.65"; red is unchanged). On a We do slide where the class must focus, it can be toned down further (`edgeFade`, L2 "Watch it run: False").
+- **2026-11-04 · Story so far** — Put the Story so far slide right before the chapter card that sends the class to the website, not before the practice: the story leads straight into the activity. L2's "Which line runs next?" We do was cut: superfluous after the two animated runs.

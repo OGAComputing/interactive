@@ -82,8 +82,9 @@ def frost():
 
 
 # ── Edge glow: alarm light around the frame (amber = alert, red = lockdown) ──
-def edge(name, rgb, peak):
-    d = np.minimum(np.minimum(xx, W - 1 - xx), np.minimum(yy, H - 1 - yy)) / (0.65 * PPI)
+def edge(name, rgb, peak, reach=0.65):
+    """reach: how far in from the slide's edge the glow fades to nothing (inches)."""
+    d = np.minimum(np.minimum(xx, W - 1 - xx), np.minimum(yy, H - 1 - yy)) / (reach * PPI)
     save(rgba(rgb, peak * np.clip(1 - d, 0, 1) ** 1.8), name)
 
 
@@ -149,7 +150,7 @@ def cracks():
 
 
 frost()
-edge('edge_amber', (230, 159, 0), 0.58)
+edge('edge_amber', (230, 159, 0), 0.58, reach=0.35)  # narrower than the red: L2 slides felt crowded (2026-11-04)
 edge('edge_red', (220, 50, 50), 0.64)
 hazard()
 static()

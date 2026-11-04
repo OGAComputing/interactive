@@ -4,15 +4,15 @@
 //   node build_L2.cjs   (needs `npm install -g pptxgenjs`)
 //
 // Output: L2_Selection.pptx beside this file. Activity: Y9/Python/L2_Selection/1_Proximity_PRIMM.html.
-// Teaching order (from the Y8 Lesson 5 Selection deck): conditions first (True or False), then if / else,
-// then two rounds of "what is printed?" — round 1 with numbers in the condition (I do → We do → You do
-// (3) → answers), round 2 with one variable (two I dos: an unindented last line, then an indented one).
-// Then int() and the activity. Since 2026-10-22 the class stops before Modify for = / == and elif (both
-// first appear there), and Round 2's You do is feedback after the activity, so Predict starts sooner.
-// Since 2026-10-21 the activity's Predict, Run and Investigate use one plain if / else program, and
-// Investigate step 2 indents print("Scan complete") into the else, so Round 2 now has an indentation
-// I do. elif first appears in the activity at Modification 2 (code given), so the elif slides prepare
-// for Modify, not Investigate.
+// Teaching order (from the Y8 Lesson 5 Selection deck): conditions first (True or False), then if / else as two
+// animated runs of one program (I do, "Watch it run": True, then False), then "What is printed?" on three more
+// programs (You do + answers). Since 2026-11-04 this replaces the
+// labelled "if and else" slide and the "What is printed?" I do / We do (README: no anatomy slides, short
+// questions after the animated example). Then an indentation I do (the activity's Investigate step 2
+// indents print("Scan complete") into the else), int() and the activity. Since 2026-10-22 the class stops
+// before Modify for = / == and elif (both first appear there), and the indentation You do is feedback after
+// the activity, so Predict starts sooner. elif first appears in the activity at Modification 2 (code given),
+// so the elif slides prepare for Modify, not Investigate.
 
 const path = require('path');
 const { createDeck } = require('./sz_kit.cjs');
@@ -80,50 +80,58 @@ We come back to this question in the plenary.`,
 // ════════════════════════════════════════════════════════════════════════════
 const C = 'Conditions';
 
-// 5. Sequence vs selection (one-off diagram)
+// 5. Sequence vs selection (one-off diagram). Selection uses L3 slide 5's flowchart geometry, so the two lessons
+// match: the program runs straight down (line before → condition → False → next line) and True goes out to
+// the right, rejoining below. The else's lines sit on the False path, under the diamond.
 {
   const s = newSlide('SZ_DARK', C, 'Sequence and selection');
-  const lab = (t, x, y, w, color = P.dim) => text(s, t, { x, y, w, h: 0.3, fontSize: 13, bold: true, color, charSpacing: 2 });
-  const node = (t, x, y, w, h, o = {}) => {
-    box(s, { x, y, w, h, fill: o.fill || P.panel, line: o.line || P.line, lw: o.lw, r: 0.08 });
-    text(s, t, { x, y, w, h, fontSize: o.size || 22, bold: !!o.bold, color: o.color || P.off, align: 'center',
-      valign: 'middle', fontFace: o.mono ? MONO : undefined });
+  const lab = (t, x, color = P.dim) => text(s, t, { x, y: 1.55, w: 5.6, h: 0.3, fontSize: 13, bold: true, color, charSpacing: 2 });
+  const NH = 0.6, DW = 2.6, DH = 1.2, BW = 2.2, GAP = 0.5;
+  const node = (t, x, y, w, line = P.line) => {
+    box(s, { x, y, w, h: NH, fill: P.panel, line, lw: line === P.line ? 1.25 : 2, r: 0.08 });
+    text(s, t, { x, y, w, h: NH, fontSize: 20, color: P.off, align: 'center', valign: 'middle' });
   };
-  // Left: sequence
-  lab('SO FAR: SEQUENCE', M, 1.6, 4.5);
+  const seg = (x1, y1, x2, y2, color, w = 2.25) => s.addShape(K.pres.shapes.LINE,   // a plain line, no head
+    { x: Math.min(x1, x2), y: Math.min(y1, y2), w: Math.abs(x2 - x1), h: Math.abs(y2 - y1), line: { color, width: w } });
+  // Left: sequence, on the same trunk as the selection's
+  lab('SO FAR: SEQUENCE', M);
+  const lx = M + 1.55;
   ['Line 1', 'Line 2', 'Line 3'].forEach((t, i) => {
-    node(t, M + 0.8, 2.05 + i * 1.3, 2.8, 0.8);
-    if (i < 2) arrow(s, M + 2.2, 2.85 + i * 1.3, M + 2.2, 3.35 + i * 1.3);
+    const y = 1.95 + i * 1.25;
+    node(t, lx - 1.2, y, 2.4);
+    if (i < 2) arrow(s, lx, y + NH, lx, y + 1.25);
   });
-  text(s, 'Every line runs, in order', { x: M, y: 6.0, w: 4.4, h: 0.5, fontSize: 22, color: P.muted, align: 'center' });
-  s.addShape(K.pres.shapes.LINE, { x: 5.35, y: 1.7, w: 0, h: 4.85, line: { color: P.line, width: 1 } });
+  text(s, 'Every line runs, in order', { x: M, y: 6.0, w: 5.6, h: 0.5, fontSize: 22, color: P.muted, align: 'center' });
+  s.addShape(K.pres.shapes.LINE, { x: 6.45, y: 1.6, w: 0, h: 4.9, line: { color: P.line, width: 1 } });
   // Right: selection (appears on click)
   onClick(s, 1, () => {
-    lab('TODAY: SELECTION', 5.75, 1.6, 4.5, P.gold);
-    const cx = 9.3, dl = 7.5, dr = 11.1, dy = 2.0, dh = 1.15;
-    s.addShape(K.pres.shapes.DIAMOND, { x: dl, y: dy, w: dr - dl, h: dh, fill: { color: P.code },
-      line: { color: P.gold, width: 2 } });
-    text(s, [{ text: 'condition', options: { bold: true } }, { text: '\nTrue or False?', options: { color: P.muted, fontSize: 16 } }],
-      { x: dl + 0.6, y: dy, w: dr - dl - 1.2, h: dh, fontSize: 20, align: 'center', valign: 'middle' });
-    const by = 3.65, bw = 2.7, bh = 0.8;
-    arrow(s, dl, dy + dh / 2, dl, by, P.ok);
-    arrow(s, dr, dy + dh / 2, dr, by, P.muted);
-    text(s, 'True', { x: dl - 1.05, y: 2.75, w: 0.95, h: 0.4, fontSize: 20, bold: true, color: P.ok, align: 'right' });
-    text(s, 'False', { x: dr + 0.12, y: 2.75, w: 1.0, h: 0.4, fontSize: 20, bold: true, color: P.muted });
-    node('True path', dl - bw / 2, by, bw, bh, { line: P.ok });
-    node('False path', dr - bw / 2, by, bw, bh);
-    const jy = 5.05, jw = 2.4;
-    s.addShape(K.pres.shapes.LINE, { x: dl, y: by + bh, w: 0, h: jy + bh / 2 - by - bh, line: { color: P.muted, width: 2.25 } });
-    s.addShape(K.pres.shapes.LINE, { x: dr, y: by + bh, w: 0, h: jy + bh / 2 - by - bh, line: { color: P.muted, width: 2.25 } });
-    arrow(s, dl, jy + bh / 2, cx - jw / 2, jy + bh / 2);
-    arrow(s, dr, jy + bh / 2, cx + jw / 2, jy + bh / 2);
-    node('Next line', cx - jw / 2, jy, jw, bh);
-    text(s, 'Only ONE path runs, then they join up', { x: 5.75, y: 6.0, w: 6.98, h: 0.5, fontSize: 22, color: P.gold,
+    const ox = 6.85, cx = ox + 1.55, TOP = 1.95, DY = 2.8, FY = DY + DH + 0.45, NEXT = FY + NH + 0.45;
+    const cy = DY + DH / 2, bx = cx + DW / 2 + GAP, bmid = bx + BW / 2, jy = (FY + NH + NEXT) / 2;
+    lab('TODAY: SELECTION (if / else)', ox, P.gold);
+    node('Line before', cx - 1.2, TOP, 2.4);
+    arrow(s, cx, TOP + NH, cx, DY);
+    s.addShape(K.pres.shapes.DIAMOND, { x: cx - DW / 2, y: DY, w: DW, h: DH, fill: { color: P.code }, line: { color: P.gold, width: 2 } });
+    text(s, [{ text: 'condition', options: { bold: true } }, { text: '\nTrue or False?', options: { color: P.muted, fontSize: 15 } }],
+      { x: cx - DW / 2 + 0.4, y: DY, w: DW - 0.8, h: DH, fontSize: 19, align: 'center', valign: 'middle' });
+    // False: straight down, through the False path, to the next line
+    arrow(s, cx, DY + DH, cx, FY);
+    text(s, 'False', { x: cx + 0.12, y: DY + DH + 0.04, w: 1, h: 0.4, fontSize: 18, bold: true, color: P.muted });
+    node('False path', cx - 1.2, FY, 2.4);
+    arrow(s, cx, FY + NH, cx, NEXT);
+    node('Next line', cx - 1.2, NEXT, 2.4);
+    // True: out to the right, then back in below the False path
+    arrow(s, cx + DW / 2, cy, bx, cy, P.ok);
+    text(s, 'True', { x: cx + DW / 2 - 0.05, y: cy + 0.05, w: GAP + 0.1, h: 0.4, fontSize: 18, bold: true, color: P.ok, align: 'center' });
+    node('True path', bx, cy - NH / 2, BW, P.ok);
+    seg(bmid, cy + NH / 2, bmid, jy, P.muted);
+    arrow(s, bmid, jy, cx, jy, P.muted);
+    text(s, 'Only ONE path runs, then they join up', { x: ox, y: 6.0, w: 5.88, h: 0.5, fontSize: 22, color: P.gold,
       bold: true, align: 'center' });
   });
   addIcon(s, 'info');
   s.addNotes(`So far every program has been a SEQUENCE: every line runs, top to bottom.
-Click: SELECTION. The program asks a question — a condition — and the answer is True or False. True takes one path, False takes the other. Only one of them runs, then the paths join and the program carries on.
+Click: SELECTION. The program asks a question — a condition — and the answer is True or False. Trace it with your finger: False goes straight down, True goes out to the right. Only one path runs, then they join up and the program carries on.
+Next lesson's loop uses this same flowchart, so keep the shape: down for False, right for True.
 Ask: "Where would a proximity sensor need this?" (Close → alarm; far → all clear.)`);
 }
 
@@ -178,93 +186,91 @@ R.trueFalseSlide(K, {
 The boundary is where programs go wrong: > leaves the number itself out; >= lets it in. The activity tests exactly this (a distance of exactly 20).`,
 });
 
-// 9. Anatomy of if / else (one-off: labels beside each line, one per click)
-{
-  const s = newSlide('SZ_DARK', C, 'if and else');
-  // Split attention: the labels name a colon and 4 spaces, so those are marked IN the code (gold colons,
-  // the spaces drawn as dots, as the activity's Investigate step 2 draws them), each label repeats its
-  // mark in the same colour, and the panel is only as wide as the code so every label sits by its line.
-  const lines = ['if 85 >= 50:', '    print("All clear")', 'else:', '    print("Too close")'];
-  const size = 28, lh = 0.85, cy = 1.7, cw = 5.75, pad = 0.22;
-  box(s, { x: M, y: cy, w: cw, h: lines.length * lh + pad * 2, fill: P.code, line: P.line, r: 0.08, name: 'code' });
-  // What runs when: a green band behind the True block and an amber one behind the False block, each
-  // running on out of the panel behind its label. Drawn before the code so the text stays on top.
-  const band = { 1: '1C3A27', 3: '3D3014' };
-  Object.entries(band).forEach(([i, fill]) => box(s, { x: M + 0.06, y: cy + pad + i * lh + 0.04,
-    w: 12.73 - M - 0.06, h: lh - 0.08, fill, name: i === '1' ? 'runs if True' : 'runs if False' }));
-  const ys = lines.map((ln, i) => {
-    const y = cy + pad + i * lh, lead = ln.match(/^ */)[0].length;
-    text(s, String(i + 1), { x: M + 0.12, y, w: 0.3, h: lh, fontFace: MONO, fontSize: size - 4, color: P.dim,
-      align: 'right', valign: 'middle' });
-    const runs = pyRuns(ln.slice(lead), size).map((r) => (r.text === ':'
-      ? { text: ':', options: { ...r.options, color: P.gold, bold: true } } : r));
-    if (lead) runs.unshift({ text: '·'.repeat(lead), options: { color: P.dim, fontFace: MONO, fontSize: size } });
-    s.addText(runs, { isTextBox: true, x: M + 0.7, y, w: cw - 0.8, h: lh, margin: 0, valign: 'middle' });
-    return y + lh / 2;
+// 9–10. Watch it run (one-off, animated, as L3's "Watch it run"): the same program twice, True (I do) then
+// False (We do: boards before each click, on a toned-down alarm edge so the class can focus).
+// A gold bar steps through the code one line per click, the distance box fills, the condition is worked out
+// beside the if line, a gold arrow shows each jump over a block, and the output builds up. The skipped
+// block is never lit. Uses onClick's `until` to fade the bar out when it moves on.
+// No anatomy slide first (README, 2026-11-04): point at the shape before click 1 instead.
+const SENSOR = (v) => [`distance = ${v}`, 'if distance >= 50:', '    print("All clear")', 'else:', '    print("Too close")',
+  'print("Scan complete")'];
+function watchIf(o) {
+  const s = newSlide('SZ_DARK', C, o.title);
+  const cx = 1.35, cw = 7.05, vx = 8.75;
+  const cp = codePanel(s, SENSOR(o.value), { x: cx, y: 1.7, w: cw, size: 22, lh: 0.62 });
+  K.varBox(s, { name: 'distance', type: 'int', value: '', x: vx, y: 1.95, w: 2.4, h: 1.0 });
+  const out = { x: vx, y: 3.3, w: 12.73 - vx, lh: 0.45 };
+  K.terminal(s, ['', ''], { x: out.x, y: out.y, w: out.w, size: 22, lh: out.lh, label: 'OUTPUT' });
+  const lineTop = (n) => cp.ys[n - 1] - cp.lh / 2;
+  let outRow = 0;
+  o.steps.forEach((st, i) => {
+    const k = i + 1, last = k === o.steps.length;
+    onClick(s, k, () => s.addShape(K.pres.shapes.RECTANGLE, { x: cx + 0.06, y: lineTop(st.line), w: cw - 0.12, h: cp.lh,
+      fill: { color: P.gold, transparency: 82 }, line: { color: P.gold, width: 2 } }), last ? undefined : k + 1);
+    onClick(s, k, () => {         // what this line does: it stays, so the whole path is on screen at the end
+      if (st.mem) text(s, st.mem, { x: vx + 0.1, y: 2.15, w: 2.2, h: 0.75, fontFace: MONO, fontSize: 32, color: P.off,
+        align: 'center', valign: 'middle' });
+      if (st.check) {
+        s.addText([{ text: '→ ', options: { color: P.gold, bold: true, fontFace: MONO, fontSize: 22 } }, ...pyRuns(st.check[0], 22)],
+          { isTextBox: true, x: 5.4, y: lineTop(2), w: 1.9, h: cp.lh, margin: 0, valign: 'middle' });
+        R.boolChip(K, s, st.check[1], 7.3, cp.ys[1] - 0.25, 1.0, 0.5, 20);
+      }
+      if (st.from) {                // a jump over a block: round the left of the code, down to this line
+        const lx = cx - 0.4, y1 = cp.ys[st.from - 1], y2 = cp.ys[st.line - 1];
+        s.addShape(K.pres.shapes.LINE, { x: lx, y: y1, w: cx - lx, h: 0, line: { color: P.gold, width: 2.5 } });
+        s.addShape(K.pres.shapes.LINE, { x: lx, y: y1, w: 0, h: y2 - y1, line: { color: P.gold, width: 2.5 } });
+        arrow(s, lx, y2, cx, y2, P.gold);
+      }
+      if (st.out) text(s, st.out, { x: out.x + 0.25, y: out.y + 0.25 + 0.35 + outRow++ * out.lh, w: out.w - 0.5, h: out.lh,
+        fontFace: MONO, fontSize: 22, valign: 'middle' });
+    });
   });
-  const colon = { text: ':', options: { fontFace: MONO, bold: true, color: P.gold } };
-  const dots = { text: '····', options: { fontFace: MONO, bold: true, color: P.muted } };
-  const labels = [
-    [{ text: 'if', options: { fontFace: MONO, bold: true } }, { text: ' + a condition + a colon ' }, colon],
-    [{ text: '4 spaces ' }, dots, { text: ' in front: ' }, { text: 'runs only if True', options: { bold: true, color: P.ok } }],
-    [{ text: 'else', options: { fontFace: MONO, bold: true } }, { text: ' has ' }, { text: 'no condition', options: { bold: true } },
-      { text: ', just a colon ' }, colon],
-    [{ text: '4 spaces ' }, dots, { text: ' in front: ' }, { text: 'runs only if False', options: { bold: true, color: P.gold } }],
-  ];
-  labels.forEach((l, i) => onClick(s, i + 1, () => {
-    arrow(s, M + cw + 0.1, ys[i], M + cw + 0.5, ys[i], band[i] ? P.muted : P.dim);
-    text(s, l, { x: M + cw + 0.6, y: ys[i] - 0.4, w: 12.73 - (M + cw + 0.6), h: 0.8, fontSize: 22, valign: 'middle' });
-  }));
-  onClick(s, 5, () => R.banner(K, s, [{ text: 'Exactly one block runs: ', options: { bold: true, color: P.gold } },
-    { text: 'never both, never neither.' }], 5.65, 0.9, 24));
-  addIcon(s, 'info');
-  s.addNotes(`5 clicks: one label per line, then the rule.
-The coloured bands are on from the start: green = what runs when the condition is True, amber = what runs when it is False. Point at them as you go.
-Line 1: "if", the condition, then a colon. The colon means "a block comes next".
-Line 2: indented = INSIDE the if. It only runs if the condition is True. The dots stand for the 4 spaces (one Tab): Python can't see the block without them. The activity draws spaces the same way in Investigate step 2.
-Line 3: else has NO condition — it's "everything else". Students often try to write else 30 < 50: — that's an error.
-Line 4: inside the else. Runs only when the condition was False.
-Ask: 85 >= 50 is True, so what's printed? (All clear — and only All clear.)`);
+  if (o.prompt) R.banner(K, s, o.prompt, 6.05, 0.7, 22);   // a We do's board prompt: the takeaway covers it at the end
+  onClick(s, o.steps.length + 1, () => R.banner(K, s, o.takeaway, 6.05, 0.7, 22));
+  R.modeChip(K, s, o.mode || 'I DO');
+  addIcon(s, o.mode === 'WE DO' ? 'practice' : 'info');
+  s.addNotes(o.notes);
 }
 
+watchIf({
+  title: 'Watch it run: True', value: 85,
+  steps: [{ line: 1, mem: '85' }, { line: 2, check: ['85 >= 50', true] }, { line: 3, out: 'All clear' },
+    { line: 6, from: 3, out: 'Scan complete' }],
+  takeaway: [{ text: 'True: ', options: { bold: true, color: P.ok } }, { text: 'line 3 runs. Lines 4 and 5 are skipped.' }],
+  notes: `I DO — one line per click. Students just watch; you narrate every click in the same words.
+Before click 1, point at the shape: if, a condition, a colon. The indented line under it runs only if the condition is True. else has no condition, just a colon, and its indented line runs only if it's False. Line 6 isn't indented.
+1 "distance = 85: put 85 in the box."
+2 "Check: swap distance for what's in the box. Is 85 >= 50? True."
+3 "True, so line 3 runs: All clear."
+4 The gold arrow: "That's the end of the if's lines, so Python JUMPS over the else and its line. Line 6 isn't indented, so it runs: Scan complete."
+5 The takeaway. Ask: "Did line 5 run?" (No: it never lit up.)`,
+});
+
+K.station('L2', { edgeFade: 70 });   // this slide only: a fainter amber edge
+watchIf({
+  title: 'Watch it run: False', value: 30, mode: 'WE DO',
+  prompt: [{ text: 'Before each click: ', options: { bold: true, color: P.gold } },
+    { text: 'on your board, the number of the line that runs next.' }],
+  steps: [{ line: 1, mem: '30' }, { line: 2, check: ['30 >= 50', false] }, { line: 5, from: 2, out: 'Too close' },
+    { line: 6, out: 'Scan complete' }],
+  takeaway: [{ text: 'False: ', options: { bold: true, color: P.gold } }, { text: 'line 5 runs, line 3 is skipped. ' },
+    { text: 'Never both, never neither.', options: { bold: true } }],
+  notes: `WE DO — the same program with one change: distance is 30. Students do the narrating: before each click, boards up with the line that runs next (and say what it does), THEN click to check.
+The alarm edge is toned down on this slide only, so the class can focus.
+1 Line 1: "distance = 30: put 30 in the box."
+2 Line 2: "Is 30 >= 50? False."
+3 Line 5, NOT line 3: "False, so Python JUMPS over line 3, to the else's line: Too close." This is the one to check boards on.
+4 Line 6: "It isn't indented: it runs every time. Scan complete."
+5 The takeaway: exactly one of lines 3 and 5 runs, every time. Line 6 runs whatever distance is.
+Ask: "What would it print if distance were exactly 50?" (All clear, Scan complete: 50 >= 50 is True.) The activity's Predict asks this.`,
+});
+K.station('L2');
+
 // ════════════════════════════════════════════════════════════════════════════
-//  Round 1 — numbers in the condition: I do → We do → You do → answers
+//  Practice: what is printed? (You do + answers). The animated runs are the I do (True) and We do (False);
+//  the "Which line runs next?" We do after them was cut as superfluous (Nick, 2026-11-04).
 // ════════════════════════════════════════════════════════════════════════════
-const R1 = 'Round 1 — numbers';
-
-R.storySoFarSlide(K, {
-  section: R1, title: 'Proximity', logLabel: 'SENSOR OPS',
-  log: ['Hale’s tag is walking the station: not human.', 'It was heading for Sensor Ops. So are you.',
-    'The proximity sensors are offline.'],
-  notes: `Read it aloud in 20 seconds, then into "What is printed?". The story so far, for anyone who missed Lesson 1.
-It leaves out Lesson 1's choices (the door, Pod 5): they differ from student to student, and the activity's own "Previously…" recap covers them.
-Link it: a proximity sensor has to choose what to say — that's what we're about to predict.`,
-});
-const STEPS_1 = ['True or False?', 'Which lines run?', 'What is printed?'];
-
-R.whatPrintedSlide(K, {
-  section: R1, mode: 'I DO', lh: 0.8,
-  code: ['if 30 >= 50:', '    print("All clear")', 'else:', '    print("Too close")'],
-  conds: [{ line: 1, expr: '30 >= 50', result: false }], runs: [4], skipped: [2],
-  output: ['Too close'], steps: STEPS_1,
-  notes: `I DO — model it out loud, students just watch. Same three questions every time (the strip at the bottom).
-Click 1 — True or False? "Is 30 more than or equal to 50? No. False."
-Click 2 — Which lines run? "False, so skip the if block and run the else block."
-Click 3 — What is printed? Too close — and only Too close.
-Say the steps every time: "condition, block, print".`,
-});
-
-R.whatPrintedSlide(K, {
-  section: R1, mode: 'WE DO', lh: 0.8,
-  code: ['if 7 == 7:', '    print("Door open")', 'else:', '    print("Door locked")'],
-  conds: [{ line: 1, expr: '7 == 7', result: true }], runs: [2], skipped: [4],
-  output: ['Door open'], steps: STEPS_1,
-  notes: `WE DO — students answer each step on boards BEFORE you click.
-Step 1: "True or False?" Boards up → click. (== asks "are they equal?" 7 equals 7: True.)
-Step 2: "Which lines run?" Cold-call someone to say the line numbers → click.
-Step 3: "What is printed?" Boards up → click. Door open.
-Look for anyone writing Door open AND Door locked: exactly one block runs.`,
-});
+const R1 = 'Practice';
 
 const YOU_1 = [
   { code: ['if 9 < 12:', '    print("Low")', 'else:', '    print("High")'], output: ['Low'],
@@ -276,8 +282,8 @@ const YOU_1 = [
 ];
 R.whatPrintedGridSlide(K, {
   section: R1, items: YOU_1,
-  notes: `YOU DO — silent, on your own, 4 minutes. Boards up together at the end.
-Students who are stuck: point at the strip from the last two slides — True or False? Which lines run? What is printed?
+  notes: `YOU DO — silent, on your own, 3 minutes. Boards up together at the end.
+Students who are stuck: True or False? Then which line runs? Then what is printed? (the same steps as Watch it run).
 Number 2 is the boundary trap (20 > 20).`,
 });
 R.whatPrintedGridSlide(K, {
@@ -285,41 +291,26 @@ R.whatPrintedGridSlide(K, {
   notes: `Check boards. Most common mistakes:
 2: "Alarm" — 20 is not MORE than 20, so it's False.
 3: "Wait" — >= lets 4 equal 4, so it's True.
-Anyone who wrote both messages for a program: exactly one block runs.
-If most of the class got 2 or 3 wrong, do one more together before Round 2.`,
+Anyone who wrote both messages for a program: exactly one of them runs.
+If most of the class got 2 or 3 wrong, do one more together before moving on.`,
 });
 
-const R2 = 'Round 2 — a variable';
-
 // ════════════════════════════════════════════════════════════════════════════
-//  Round 2 — one variable in the condition: two I dos (its You do is feedback after the activity)
+//  Indentation: the activity's Investigate step 2 (its You do is feedback after the activity)
 // ════════════════════════════════════════════════════════════════════════════
+const R2 = 'Indentation';
 const STEPS_2 = ['Look in the box', 'True or False?', 'Which lines run?', 'What is printed?'];
-
-R.whatPrintedSlide(K, {
-  section: R2, mode: 'I DO',
-  code: ['distance = 30', 'if distance >= 50:', '    print("All clear")', 'else:', '    print("Too close")', 'print("Scan complete")'],
-  memory: { line: 1, name: 'distance', type: 'int', value: '30' },
-  conds: [{ line: 2, expr: '30 >= 50', result: false }], runs: [5], skipped: [3], always: [6],
-  output: ['Too close', 'Scan complete'], steps: STEPS_2,
-  notes: `I DO — Round 1's I do program with two changes: the number is now in a variable (one new step: look in the box), and a last line that isn't indented.
-Click 1 — Look in the box: line 1 stores 30 in distance.
-Click 2 — True or False? "Swap distance for what's in the box: 30 >= 50. False."
-Click 3 — Which lines run? "The else block. Line 6 isn't indented, so it isn't inside the if or the else: it runs every time, after them."
-Click 4 — What is printed? Too close, then Scan complete.
-Point out: Too close is the same as Round 1 — a variable is just a name for the value in the box. Scan complete is new, and it would print whatever distance was.`,
-});
 
 // Indentation decides the block: the activity's Investigate step 2 (indent print("Scan complete") into the else).
 R.whatPrintedSlide(K, {
-  section: R2, mode: 'I DO', title: 'Spaces decide the block', size: 21,
+  section: R2, mode: 'I DO', title: 'Spaces decide what is inside the else', size: 21,
   code: ['distance = 85', 'if distance >= 50:', '    print("All clear")', 'else:', '    print("Too close")', '    print("Scan complete")'],
   memory: { line: 1, name: 'distance', type: 'int', value: '85' },
   conds: [{ line: 2, expr: '85 >= 50', result: true }], runs: [3], skipped: [5, 6],
   output: ['All clear'], steps: STEPS_2,
-  notes: `I DO — the same program with one change: line 6 now has 4 spaces in front. Point at the spaces before you start.
+  notes: `I DO — the Watch it run program with one change: line 6 now has 4 spaces in front. Point at the spaces before you start.
 Click 1 — box: 85. Click 2 — 85 >= 50 is True.
-Click 3 — Which lines run? "The if block. Line 6 is indented under else, so it's INSIDE the else block now, and it's skipped with line 5."
+Click 3 — Which lines run? "Line 3. Line 6 is indented under else, so it's INSIDE the else now, and it's skipped with line 5."
 Click 4 — All clear, and that's all: Scan complete is gone.
 Ask: "What would it print if distance were 10?" (Too close, Scan complete: the else block runs, both of its lines.)
 This is exactly Investigate step 2 in today's activity (run it with 85, then 10). Students get stuck on the spaces: line 6 must line up exactly with line 5. Press Tab once; don't mix Tab and spaces.`,
@@ -361,6 +352,16 @@ If someone types a word, like thirty, int() can't convert it: ValueError. The ac
 //  The activity, feedback, plenary
 // ════════════════════════════════════════════════════════════════════════════
 const A = 'Proximity';
+// Story so far: right before the chapter card that sends the class to the activity (Nick, 2026-11-04).
+R.storySoFarSlide(K, {
+  section: A, title: 'Proximity', logLabel: 'SENSOR OPS',
+  log: ['Hale’s tag is walking the station: not human.', 'It was heading for Sensor Ops. So are you.',
+    'The proximity sensors are offline.'],
+  notes: `Read it aloud in 20 seconds, then into the chapter card and the activity. The story so far, for anyone who missed Lesson 1.
+It leaves out Lesson 1's choices (the door, Pod 5): they differ from student to student, and the activity's own "Previously…" recap covers them.
+Link it: a proximity sensor has to choose what to say — that's what you'll program now.`,
+});
+
 R.chapterSlide(K, {
   section: A, kicker: 'CHAPTER 2', title: 'Proximity', activity: 'Proximity', time: '≈30 MIN', logLabel: 'SENSOR OPS',
   log: ['The room is empty.', '', 'Frost on the floor.', 'A vent cover hangs open', 'above the console.'],
@@ -454,7 +455,7 @@ Fast finishers: the Make extension (SCANNER FAULT below 0, EVACUATE from 500).`,
 });
 
 // ════════════════════════════════════════════════════════════════════════════
-//  Feedback after the activity: Round 2's You do (indentation from Investigate step 2, == from Modification 4)
+//  Feedback after the activity: the indentation You do (indentation from Investigate step 2, == from Modification 4)
 // ════════════════════════════════════════════════════════════════════════════
 const F = 'Feedback';
 const YOU_2 = [

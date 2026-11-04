@@ -201,14 +201,6 @@ In today's loop, the condition is code != "4271": it stays True for every wrong 
 // ════════════════════════════════════════════════════════════════════════════
 const R1 = 'Loops in action';
 
-R.storySoFarSlide(K, {
-  section: R1, title: 'Locked In', logLabel: 'AIRLOCK 1',
-  log: ['WARDEN has locked the airlock.', 'It changed the code.', 'Navigation is on the other side.'],
-  notes: `Read it aloud in 20 seconds, then into the first trace. The story so far, for anyone who missed Lesson 2.
-It leaves out Lesson 2's choices (which pod, the lockdown, the power): they differ from student to student, and the activity's own "Previously…" recap covers them.
-Link it: the keypad has to keep asking until the code is right — but first, a loop that just counts.`,
-});
-
 // Watch it run (one-off, animated): a gold bar steps through the code one line per click, the fuel box
 // changes, the output builds up, and a gold arrow shows each jump back to the top. Uses onClick's
 // `until` to fade the bar, the old value and the arrow out again.
@@ -404,6 +396,15 @@ In today's activity, Modification 2 counts the tries at the keypad and prints th
 //  The activity, feedback, plenary
 // ════════════════════════════════════════════════════════════════════════════
 const A = 'Locked In';
+// Story so far: right before the chapter card that sends the class to the activity (Nick, 2026-11-04).
+R.storySoFarSlide(K, {
+  section: A, title: 'Locked In', logLabel: 'AIRLOCK 1',
+  log: ['WARDEN has locked the airlock.', 'It changed the code.', 'Navigation is on the other side.'],
+  notes: `Read it aloud in 20 seconds, then into the chapter card and the activity. The story so far, for anyone who missed Lesson 2.
+It leaves out Lesson 2's choices (which pod, the lockdown, the power): they differ from student to student, and the activity's own "Previously…" recap covers them.
+Link it: the keypad has to keep asking until the code is right — that's the loop you'll write now.`,
+});
+
 R.chapterSlide(K, {
   section: A, kicker: 'CHAPTER 3', title: 'Locked In', activity: 'Locked In', time: '≈30 MIN', logLabel: 'AIRLOCK 1',
   log: ['The airlock is sealed.', '', 'WARDEN changed the code.', 'Something is moving', 'down the ring corridor.'],

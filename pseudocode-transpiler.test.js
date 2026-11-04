@@ -118,6 +118,20 @@ describe('.length and .substring receiver walking', () => {
     expect(py('print(text.substring(3, 3))')).toContain('_psc_substr(text, 3, 3)');
   });
 
+  test('camelCase .subString is accepted too', () => {
+    expect(py('print(text.subString(3, 3))')).toContain('_psc_substr(text, 3, 3)');
+  });
+
+  // input() auto-types "12" to an int; OCR input() is always a string, so
+  // aisle.substring(0, 2) on an answer of 12 must give "12", not a TypeError.
+  test('string helpers turn a number back into text before slicing', () => {
+    const out = py('print(x.substring(0, 2))');
+    expect(out).toContain('def _psc_text(x): return str(x) if isinstance(x, (int, float)) else x');
+    for (const fn of ['_psc_len', '_psc_substr', '_psc_left', '_psc_right']) {
+      expect(out).toMatch(new RegExp(`def ${fn}\\(.*_psc_text\\(`));
+    }
+  });
+
   test('chained call .substring: getName().substring(0,3)', () => {
     const src = 'function getName()\n    return "Alice"\nendfunction\nprint(getName().substring(0,3))';
     expect(py(src)).toContain('_psc_substr(getName(), 0, 3)');
@@ -158,6 +172,47 @@ describe('.length and .substring receiver walking', () => {
     const rightSrc = 'word = "PYTHON"\nprint(word.right(word.length - 2))';
     const rightOut = py(rightSrc).split('\n').find(l => l.startsWith('print('));
     expect(rightOut).toBe('print(_psc_right(word, _psc_len(word) - 2))');
+  });
+});
+
+describe('.upper and .lower', () => {
+  const studentLine = src => py(src).split('\n').find(l => l.startsWith('print('));
+
+  test('OCR form without brackets', () => {
+    expect(studentLine('print(name.upper)')).toBe('print(_psc_upper(name))');
+    expect(studentLine('print(name.lower)')).toBe('print(_psc_lower(name))');
+  });
+
+  test('with empty brackets', () => {
+    expect(studentLine('print(name.upper())')).toBe('print(_psc_upper(name))');
+  });
+
+  test('chained after .left and before .length', () => {
+    expect(studentLine('print(name.left(3).upper)')).toBe('print(_psc_upper(_psc_left(name, 3)))');
+    expect(studentLine('print(name.upper.length)')).toBe('print(_psc_len(_psc_upper(name)))');
+    expect(studentLine('print(word.substring(0, 1).upper + word.right(word.length - 1).lower)'))
+      .toBe('print(_psc_upper(_psc_substr(word, 0, 1)) + _psc_lower(_psc_right(word, _psc_len(word) - 1)))');
+  });
+
+  test('chain of two case conversions', () => {
+    expect(studentLine('print(name.lower.upper)')).toBe('print(_psc_upper(_psc_lower(name)))');
+  });
+
+  test('array element receiver and comparison', () => {
+    const src = 'array names[2]\nnames[0] = "ann"\nif names[0].upper == "ANN" then\n    print("yes")\nendif';
+    expect(py(src)).toContain('_psc_upper(names[0]) == "ANN"');
+    expect(errs(src)).toEqual([]);
+  });
+
+  test('inside a string literal is not rewritten', () => {
+    const line = studentLine('print("call name.upper here", name.upper)');
+    expect(line).toContain('"call name.upper here"');
+    expect(line).toContain('_psc_upper(name))');
+  });
+
+  test('preamble defines the helpers', () => {
+    expect(py('x = 1')).toContain('def _psc_upper');
+    expect(py('x = 1')).toContain('def _psc_lower');
   });
 });
 

@@ -93,7 +93,7 @@ const STATION = {
 let state = {}, stateSlide = 0, beatFrom = null;
 const beatSlides = [];
 // Switch state for the slides that follow. overrides change single layers, e.g. station('L7', { static: false })
-// as each system is repaired.
+// as each system is repaired, or tone the alarm edge down with { edgeFade: 0–100 } (% see-through).
 function station(name, overrides = {}) {
   if (!STATION[name]) throw new Error(`Unknown station state "${name}" (${Object.keys(STATION).join(', ')})`);
   state = { ...STATION[name], ...overrides };
@@ -107,7 +107,8 @@ function drawStation(s, master) {
     ['static', state.static && !light], ['cracks', state.cracks]];
   const isNew = (f) => !!beatFrom && (f.startsWith('edge_') ? f !== 'edge_' + beatFrom.edge : !beatFrom[f]);
   layers.filter(([, on]) => on).forEach(([f]) => s.addImage({ path: path.join(__dirname, 'station', f + '.png'),
-    x: 0, y: 0, w: W, h: 7.5, objectName: (isNew(f) ? 'auto · ' : '') + 'station ' + f, altText: '' }));
+    x: 0, y: 0, w: W, h: 7.5, objectName: (isNew(f) ? 'auto · ' : '') + 'station ' + f, altText: '',
+    transparency: f.startsWith('edge_') ? state.edgeFade : undefined }));
   if (state.hud) {
     const items = state.hud.map((h) => (typeof h === 'function' ? h(stateSlide) : h));
     s.addText([{ text: '●  ', options: { color: state.dot || P.dim } },

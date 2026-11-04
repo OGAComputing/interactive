@@ -15,7 +15,7 @@
 //   function/procedure/endfunction/endprocedure, return, global X = ...
 //   array name[N] (1D),  array name[R,C] (2D with [a,b] access rewrite)
 //   AND OR NOT, MOD DIV, ^
-//   .length, .left(n), .right(n), .substring(start, count)  (receiver-walking tokenizer)
+//   .length, .left(n), .right(n), .substring(start, count), .upper, .lower  (receiver-walking tokenizer)
 //   openRead, openWrite, .readLine(), .writeLine(), .endOfFile(), .close()
 //   class/endclass, inherits, public/private attributes and methods, new, super
 
@@ -27,7 +27,10 @@ const INDENT = '    ';
 const PREAMBLE = `\
 def _psc_rng(a, b, s=1):
     return range(a, b + 1, s) if s > 0 else range(a, b - 1, s)
-def _psc_len(x): return len(x)
+# input() auto-types "12" to 12, but OCR input() always gives a string, so the
+# string functions turn a number back into its text before measuring or slicing.
+def _psc_text(x): return str(x) if isinstance(x, (int, float)) else x
+def _psc_len(x): return len(_psc_text(x))
 class _PscStr(str):
     def __add__(self, other): return _PscStr(str(self) + str(other))
     def __radd__(self, other): return _PscStr(str(other) + str(self))
@@ -38,9 +41,11 @@ class _PscStr(str):
     def __le__(self, other): return False if isinstance(other, (int, float)) else str.__le__(self, other)
     def __gt__(self, other): return False if isinstance(other, (int, float)) else str.__gt__(self, other)
     def __ge__(self, other): return False if isinstance(other, (int, float)) else str.__ge__(self, other)
-def _psc_substr(s, start, count): return _PscStr(s[start:start + count])
-def _psc_left(s, n): return _PscStr(s[:n])
-def _psc_right(s, n): return _PscStr(s[-n:]) if n > 0 else _PscStr('')
+def _psc_substr(s, start, count): return _PscStr(_psc_text(s)[start:start + count])
+def _psc_left(s, n): return _PscStr(_psc_text(s)[:n])
+def _psc_right(s, n): return _PscStr(_psc_text(s)[-n:]) if n > 0 else _PscStr('')
+def _psc_upper(s): return _PscStr(str(s).upper())
+def _psc_lower(s): return _PscStr(str(s).lower())
 _psc_files = globals().get('_psc_files', {})
 _psc_writes = {}
 class _PscReadFile:
@@ -198,6 +203,40 @@ function _applyReps(code, reps) {
   return s;
 }
 
+// OCR writes .upper / .lower with no brackets (name.upper); accept name.upper() too.
+// Runs before the other passes because _walkLeft treats dots as part of the
+// receiver: name.upper.length must become _psc_len(_psc_upper(name)), not
+// _psc_len(name.upper). Rewrites one match at a time, leftmost first, so a
+// chain like name.lower.upper wraps correctly. Matches inside string literals
+// are skipped.
+function _rewriteCase(code) {
+  const strRanges = [];
+  let pos = 0;
+  for (const seg of segment(code)) {
+    if (seg.kind !== 'code') strRanges.push([pos, pos + seg.text.length]);
+    pos += seg.text.length;
+  }
+  const inString = p => strRanges.some(([a, b]) => p >= a && p < b);
+
+  const caseRe = /\.(upper|lower)\b(?:\s*\(\s*\))?/g;
+  let m;
+  while ((m = caseRe.exec(code)) !== null) {
+    const dotPos = m.index;
+    if (inString(dotPos)) continue;
+    const recStart = _walkLeft(code, dotPos);
+    const receiver = code.slice(recStart, dotPos);
+    if (!receiver.trim()) continue;
+    const replacement = `_psc_${m[1]}(${receiver})`;
+    code = code.slice(0, recStart) + replacement + code.slice(dotPos + m[0].length);
+    const shift = replacement.length - (dotPos + m[0].length - recStart);
+    for (const r of strRanges) {
+      if (r[0] >= dotPos) { r[0] += shift; r[1] += shift; }
+    }
+    caseRe.lastIndex = recStart + replacement.length;
+  }
+  return code;
+}
+
 function _rewriteLength(code) {
   const reps = [];
   const lenRe = /\.length\b(?!\()/g;
@@ -235,7 +274,8 @@ function _rewriteLeftRight(code) {
 
 function _rewriteSubstring(code) {
   const reps = [];
-  const subRe = /\.[sS]ubstring\s*\(/g;
+  // OCR's guide spells it both substring and subString; accept either.
+  const subRe = /\.[sS]ub[sS]tring\s*\(/g;
   let m;
   while ((m = subRe.exec(code)) !== null) {
     const dotPos = m.index;
@@ -258,6 +298,7 @@ function _rewriteSubstring(code) {
 }
 
 function _rewriteStringMethods(code) {
+  code = _rewriteCase(code);
   code = _rewriteLength(code);
   code = _rewriteLeftRight(code);
   code = _rewriteSubstring(code);
