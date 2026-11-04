@@ -70,6 +70,9 @@
     .guide-link { font-size: 0.75rem; color: var(--muted); text-decoration: none; white-space: nowrap; }
     .guide-link:hover { color: var(--text); }
     #teacher-status, #sync-status { font-size: 0.8rem; color: var(--muted); }
+    .attach-slides { display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.8rem; color: var(--muted); cursor: pointer; white-space: nowrap; }
+    .attach-slides[hidden] { display: none; }
+    .attach-slides input { accent-color: var(--accent); margin: 0; }
     #teacher-status:empty, #sync-status:empty { display: none; }
     #course-combobox, #topic-combobox {
       position: relative;
@@ -326,6 +329,9 @@
         <span id="topic-chevron">▼</span>
         <div id="topic-dropdown"></div>
       </div>
+      <label id="attach-slides-label" class="attach-slides" title="Add the lesson's Google Slides deck to the Classroom post (first page of each lesson that has one)" hidden>
+        <input id="attach-slides" type="checkbox" checked> Attach lesson slides
+      </label>
       <span id="teacher-status"></span>
       <button id="btn-sync" class="btn-inline-ghost" onclick="onSyncClick()" hidden>⟳ Sync grades</button>
       <span id="sync-status"></span>
@@ -393,6 +399,7 @@
 
     fetchCourses();
     document.getElementById('btn-sync').hidden = false;
+    document.getElementById('attach-slides-label').hidden = false;
     syncGrades('changed');
   }
 
@@ -446,6 +453,13 @@
 
   let allTopics = [];
   let selectedTopicId = '';
+
+  // "Attach lesson slides" is remembered per browser (on by default).
+  const attachSlides = document.getElementById('attach-slides');
+  try { attachSlides.checked = localStorage.getItem('oga_hub_attach_slides') !== '0'; } catch (_) {}
+  attachSlides.addEventListener('change', () => {
+    try { localStorage.setItem('oga_hub_attach_slides', attachSlides.checked ? '1' : '0'); } catch (_) {}
+  });
   let topicFocusedIndex = -1;
 
   async function fetchCourses() {
@@ -669,7 +683,7 @@
     });
   }
 
-  async function assignToClassroom(activityPath, title, btn) {
+  async function assignToClassroom(activityPath, title, btn, slidesId) {
     const courseId = selectedCourseId;
     if (!courseId) {
       showAssignModal('⚠️ No class selected', 'Please select a class from the dropdown before assigning.');
@@ -682,7 +696,10 @@
     const baseUrl = window.location.origin + window.location.pathname.replace('index.html', '') + activityPath;
     const activityUrl = `${baseUrl}?courseId=${courseId}`;
 
-    const res = await fetch(`https://classroom.googleapis.com/v1/courses/${courseId}/courseWork`, {
+    // The lesson's deck (activities.json 'slides') goes on the post too. As a Drive file Classroom
+    // shows its thumbnail and shares it with the class; if Classroom refuses that (e.g. the teacher
+    // can't share files in that shared drive), fall back to a plain link to the deck.
+    const post = (deck) => fetch(`https://classroom.googleapis.com/v1/courses/${courseId}/courseWork`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${accessToken}`,
@@ -691,7 +708,7 @@
       body: JSON.stringify({
         title: title,
         description: "Complete this interactive activity. Your grade will be automatically recorded.",
-        materials: [{ link: { url: activityUrl } }],
+        materials: [{ link: { url: activityUrl } }, ...(deck ? [deck] : [])],
         workType: "ASSIGNMENT",
         state: "PUBLISHED",
         maxPoints: 100,
@@ -699,8 +716,16 @@
       })
     });
 
+    let res = await post(slidesId && { driveFile: { driveFile: { id: slidesId }, shareMode: 'VIEW' } });
+    let deckNote = slidesId ? ' The lesson slides are attached.' : '';
+    if (!res.ok && slidesId) {
+      console.warn('Attaching the slides as a Drive file failed, retrying as a link:', await res.text());
+      res = await post({ link: { url: `https://docs.google.com/presentation/d/${slidesId}/view` } });
+      deckNote = ' The lesson slides are attached as a link: check students can open them.';
+    }
+
     if (res.ok) {
-      showAssignModal('✅ Assigned!', `"${title}" has been published to your class. Scores reach Classroom each time you open this hub (or click ⟳ Sync grades).`);
+      showAssignModal('✅ Assigned!', `"${esc(title)}" has been published to your class.${deckNote} Scores reach Classroom each time you open this hub (or click ⟳ Sync grades).`);
     } else {
       console.error('Assignment creation failed:', await res.text());
       showAssignModal('❌ Assignment failed', 'Could not create the assignment. Check the browser console for details.');
@@ -974,7 +999,8 @@
       search.focus();
       return;
     }
-    assignToClassroom(btn.dataset.path, btn.dataset.title, btn);
+    const withSlides = document.getElementById('attach-slides').checked;
+    assignToClassroom(btn.dataset.path, btn.dataset.title, btn, withSlides ? btn.dataset.slides : '');
   }
 
   // ── Cards ────────────────────────────────────────────────
@@ -990,7 +1016,7 @@
           <span class="pill${isChallenge ? ' challenge' : ''}">${esc(a.type)}</span>
           ${stars(a.stars)}
         </div>
-        <button class="btn-assign" data-path="${esc(a.path)}" data-title="${esc(a.title)}">${assignLabel()}</button>
+        <button class="btn-assign" data-path="${esc(a.path)}" data-title="${esc(a.title)}" data-slides="${esc(a.slides || '')}">${assignLabel()}</button>
       </div>`;
   }
 

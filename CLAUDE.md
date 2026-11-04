@@ -12,6 +12,7 @@ Interactive Computing Education Platform — a static web hub serving self-conta
 - **`Y7/` … `Y13/`, `RS/`** — Activity folders: `<Year>/<Topic>/[L<n>_Lesson/]file.html`. `Demo/` and `Animations/` hold teacher demos
 - **`activities.json`** / **`meta.json`** — Rebuilt by `.github/workflows/build-manifest.yml` (from each page's `<!-- ACTIVITY -->` block) in a `[skip ci]` commit after every push to main; never edit them by hand
 - **`.github/workflows/test.yml`** — Runs Vitest and Playwright (4 parallel runners), then deploys to GitHub Pages only if both pass
+- **Lesson slides on Classroom posts** — the manifest build gives the first page in each lesson folder a `slides` ID, and the hub's Assign button attaches that Google Slides deck to the post. IDs come from `_presentations/lesson-slides.json` (add a line when a deck goes on Drive; `lesson-slides.test.js` checks each folder exists) and from Y10's `drive.json`
 - **`_templates/`** — Starter pages (see Adding a New Activity). **`_teacher/`** — teacher-only tools (setup page, unit guide, Apps Script rescoring). **`_presentations/`** — PowerPoint decks and their build scripts (Y10 decks are also published to Drive as Google Slides). **`_drafts/`** — work in progress and story/crew image sources. **`Knowledge Base/`** — specs, MTPs (`project_*_mtp.md`) and reference material
 
 ### Shared files

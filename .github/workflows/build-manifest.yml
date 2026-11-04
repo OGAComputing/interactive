@@ -203,6 +203,37 @@ jobs:
               lesson_info = f" / L{lesson_num}{lesson_suffix} {lesson_name}" if lesson_num is not None else ""
               print(f"  Found: {rel_path} → {year_label} / {topic_label}{lesson_info} / {activity['title']}")
 
+          # ── Lesson decks ─────────────────────────────────────────
+          # The first page in each lesson folder gets 'slides' (a Google Slides file ID),
+          # which the hub's Assign button attaches to the Classroom post. IDs come from
+          # _presentations/lesson-slides.json (keyed by lesson folder path) and from each
+          # _presentations/*/drive.json written by a publish_to_drive script (keyed by
+          # lesson folder name, e.g. L1.1_Media_Everywhere).
+          import glob
+          slides_by_path, slides_by_name = {}, {}
+          with open('_presentations/lesson-slides.json', encoding='utf-8') as fh:
+            for key, deck in json.load(fh).items():
+              if not key.startswith('_'):
+                slides_by_path[key] = deck['id']
+          for cfg in sorted(glob.glob('_presentations/*/drive.json')):
+            with open(cfg, encoding='utf-8') as fh:
+              for name, lesson in json.load(fh).get('lessons', {}).items():
+                if lesson.get('slidesId'):
+                  slides_by_name[name] = lesson['slidesId']
+
+          seen_lessons = set()
+          for activity in activities:
+            if activity['lesson_num'] is None:
+              continue
+            folder = '/'.join(activity['path'].split('/')[:3])
+            if folder in seen_lessons:
+              continue
+            seen_lessons.add(folder)
+            deck = slides_by_path.get(folder) or slides_by_name.get(folder.split('/')[-1])
+            if deck:
+              activity['slides'] = deck
+              print(f"  Slides: {activity['path']} → {deck}")
+
           with open('activities.json', 'w', encoding='utf-8') as fh:
             json.dump(activities, fh, indent=2)
 
