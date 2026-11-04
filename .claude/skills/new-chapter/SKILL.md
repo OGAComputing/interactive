@@ -48,6 +48,12 @@ into the MTP's proposed path, then replace, in this order:
 
 ## 2. Content rules (from the user's feedback)
 
+- **An unfixed danger is fatal.** A danger left by the crisis or a risky choice 1, with no good
+  choice afterwards (including never reaching Make), kills a crew member or injures you: one bad
+  call is enough. Test the raw stored choice, not the defaulted one; safe defaults only cover a
+  student who never reached the danger. Add a spec test for "danger made, later choice missing
+  → death/injury", in this chapter and in the next chapter's recap/crew readout.
+
 - Each Modify step adds code at the bottom and never asks for a variable to be used above where
   it's made. Fade the scaffold: early steps show the code; later steps name the exact task and
   check it, with no code in the task or its hints. Start Modify with a trivial step.
