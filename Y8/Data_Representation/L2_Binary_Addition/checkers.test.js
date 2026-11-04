@@ -247,46 +247,54 @@ describe('Carry Rush (extension game)', () => {
     const b = Array.from({ length: 10 }, (_, i) => gameSum('OTHER', i));
     expect(a).not.toEqual(b);
   });
-  it('sums grow: 4 bits, then a final carry, then 6 bits, then 8', () => {
+  it('sums grow: no carries, then 1 + 1, then a final carry, then 1 + 1 + 1, then 6 and 8 bits', () => {
     const at = i => gameSum('x', i);
-    expect(at(0).width).toBe(4);
-    for (let i = 0; i < 5; i++) expect(carryCount(at(i).a, at(i).b, 4)).toBeLessThanOrEqual(1);
-    for (let i = 20; i < 30; i++) expect(at(i).width).toBe(6);
-    for (let i = 30; i < 60; i++) expect(at(i).width).toBe(8);
-    for (let i = 0; i < 60; i++) {
+    const final = s => s.a + s.b >= 2 ** s.width;
+    for (let i = 0; i < 5; i++) expect(carryCount(at(i).a, at(i).b, 4)).toBe(0);
+    for (let i = 5; i < 12; i++) expect(carryCount(at(i).a, at(i).b, 4)).toBeGreaterThan(0);
+    for (let i = 5; i < 20; i++) expect(hasTriple(at(i).a, at(i).b, 4)).toBe(false);
+    for (let i = 5; i < 12; i++) expect(final(at(i))).toBe(false);
+    for (let i = 0; i < 28; i++) expect(at(i).width).toBe(4);
+    expect(Array.from({ length: 8 }, (_, k) => at(20 + k)).some(s => hasTriple(s.a, s.b, 4))).toBe(true);
+    for (let i = 28; i < 36; i++) expect(at(i).width).toBe(6);
+    for (let i = 36; i < 80; i++) expect(at(i).width).toBe(8);
+    for (let i = 0; i < 80; i++) {
       const s = at(i);
       expect(s.a).toBeLessThan(2 ** s.width);
       expect(s.b).toBeLessThan(2 ** s.width);
       expect(checkTyped({ type: 'add', ...s }, fullAnswer(s.a, s.b, s.width))).toBe('ok');
     }
-    const over8 = Array.from({ length: 40 }, (_, k) => at(40 + k)).filter(s => s.a + s.b >= 256);
-    expect(over8.length).toBeGreaterThan(0);
+    expect(Array.from({ length: 40 }, (_, k) => at(46 + k)).some(final)).toBe(true);
   });
   it('game pools fit their widths', () => {
+    for (const [a, b] of GAME_POOLS.carry2) { expect(a + b).toBeLessThan(16); expect(hasTriple(a, b, 4)).toBe(false); }
+    for (const [a, b] of GAME_POOLS.over2) { expect(a + b).toBeGreaterThanOrEqual(16); expect(hasTriple(a, b, 4)).toBe(false); }
+    expect(GAME_POOLS.carry2.length).toBeGreaterThan(10);
+    expect(GAME_POOLS.over2.length).toBeGreaterThan(5);
     for (const [a, b] of GAME_POOLS.add6) expect(a + b).toBeLessThan(64);
     for (const [a, b] of GAME_POOLS.over8) { expect(a).toBeLessThan(256); expect(a + b).toBeGreaterThanOrEqual(256); }
   });
-  it('time shrinks only at the last level, never below 20 s', () => {
-    expect(gameTime(0)).toBe(20);
-    expect(gameTime(30)).toBe(40);
-    expect(gameTime(40)).toBe(36);
-    expect(gameTime(45)).toBe(34);
-    expect(gameTime(500)).toBe(20);
+  it('generous time at the start; it shrinks only at the last level, never below 25 s', () => {
+    expect(gameTime(0)).toBe(45);
+    expect(gameTime(36)).toBe(60);
+    expect(gameTime(46)).toBe(55);
+    expect(gameTime(51)).toBe(52);
+    expect(gameTime(500)).toBe(25);
   });
   it('points: base + speed bonus, times the streak', () => {
     expect(gamePoints(0, 20, 20, 1)).toBe(200);         // full speed bonus
     expect(gamePoints(0, 0, 20, 1)).toBe(100);
     expect(gamePoints(0, 10, 20, 3)).toBe(300);         // ×2 at 3 in a row
-    expect(gamePoints(30, 40, 40, 10)).toBe(1600);      // 8 bits, ×4
+    expect(gamePoints(36, 60, 60, 10)).toBe(1600);      // 8 bits, ×4
     expect([0, 2, 3, 6, 10].map(multiplier)).toEqual([1, 1, 2, 3, 4]);
   });
   it('ranks and badges', () => {
     expect(rankFor(0)).toBe('Trainee');
     expect(rankFor(3000)).toBe('Carry Cadet');
     expect(RANKS.every(([m], k) => k === 0 || m > RANKS[k - 1][0])).toBe(true);
-    const b = runBadges({ played: 31, maxStreak: 5, fast: 5, perfect: true, overflow: 1, score: 10000 });
+    const b = runBadges({ played: 37, maxStreak: 5, fast: 5, perfect: true, overflow: 1, score: 10000 });
     expect(b).toMatchObject({ first: true, streak5: true, streak10: false, overflow: true, eight: true, speed: true, perfect: true, score10k: true });
-    expect(runBadges({ played: 30, maxStreak: 0, fast: 0, perfect: true, overflow: 0, score: 0 }).eight).toBe(false);
+    expect(runBadges({ played: 36, maxStreak: 0, fast: 0, perfect: true, overflow: 0, score: 0 }).eight).toBe(false);
     expect(runBadges({ played: 10, maxStreak: 0, fast: 0, perfect: true, overflow: 0, score: 0 }).perfect).toBe(false);
     expect(new Set(GAME_BADGES.map(g => g[0]))).toEqual(new Set(Object.keys(b)));
   });

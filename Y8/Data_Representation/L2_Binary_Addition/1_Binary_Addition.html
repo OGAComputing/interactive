@@ -354,7 +354,14 @@ color:  indigo
   .hud .hud-best { font-size: .8rem; color: #B8CCE0; }
   .rush-card { background: #fff; color: var(--surface); border-radius: 12px; padding: 16px 18px; }
   .rush-card .bgrid { margin: 0 0 10px; }
-  .rush-card .bgrid .rl { min-width: 64px; }   /* the sum stays put when the worked answer adds its row labels */
+  .rush-card .bgrid .rl { min-width: 64px; }   /* the sum stays put when the worked answer adds a row */
+  .rush-card button.rans { height: 46px; font: 700 1.15rem var(--font-mono); }
+  .rush-card button.rans.is-right { border: 2px solid var(--green); }
+  .rush-card button.rans.is-wrong { border: 2px solid var(--red); }
+  .rush-card button.rans.extra { border-color: #C9D6E4; }
+  .rush-card button.rans.cur { border-style: solid; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-light); }
+  .rush-card button.rans:disabled, .rush-card button.rc:disabled { cursor: default; }
+  .rush-how { font-size: .82rem; color: var(--muted); margin: 0; }
   .tbar { height: 8px; border-radius: 4px; background: #D5E3F0; overflow: hidden; margin-bottom: 12px; }
   .tbar > div { height: 100%; width: 100%; background: var(--gold); }
   .tbar > div.low { background: var(--red); }
@@ -584,7 +591,7 @@ color:  indigo
       </div>
       <div class="rush-sub">🏅 Badges</div>
       <div class="badges" id="rush-badges"></div>
-      <p class="rush-rules">Scoring: a right answer scores the level's points plus a speed bonus (the faster, the more), × your streak (×2 at 3 in a row, ×3 at 6, ×4 at 10). The sums grow: 4 bits, then a final carry, then 6 bits, then 8 bits. Type <b>0</b> and <b>1</b> and press <b>Enter</b>. Remember the new bit on the left when there's a final carry.</p>
+      <p class="rush-rules">Scoring: a right answer scores the level's points plus a speed bonus (the faster, the more), × your streak (×2 at 3 in a row, ×3 at 6, ×4 at 10). The sums grow: no carries, then 1 + 1, then a final carry, then 1 + 1 + 1, then 6 bits and 8 bits. Type <b>0</b> and <b>1</b> from the right, the way you work the sum; <b>C</b> marks a carry; <b>Enter</b> checks. A final carry goes in the box on the far left.</p>
     </div>
 
     <!-- Game -->
@@ -600,13 +607,11 @@ color:  indigo
       <div class="rush-card">
         <div class="tbar"><div id="tbar"></div></div>
         <div id="rush-sum"></div>
-        <div class="answer-line">
-          <input class="num-in wide" id="rush-in" maxlength="11" inputmode="numeric" autocomplete="off"
-            aria-label="Your answer in binary" data-title="Carry Rush: current answer">
-        </div>
+        <p class="rush-how" id="rush-how">Type <b>0</b> or <b>1</b>: each one goes in the next column to the left. <b>C</b> (or a tap) marks a carry. <b>Enter</b> to check.</p>
         <div class="keypad" aria-hidden="true">
           <button type="button" data-key="0" tabindex="-1">0</button>
           <button type="button" data-key="1" tabindex="-1">1</button>
+          <button type="button" data-key="carry" tabindex="-1">Carry</button>
           <button type="button" data-key="back" tabindex="-1">⌫</button>
           <button type="button" class="go" data-key="go" tabindex="-1">Go ⏎</button>
         </div>
@@ -1370,33 +1375,77 @@ function rushHud() {
   $('hud-best').textContent = `Best: ${fmt(best)}`;
 }
 
-// The sum, or after an answer the sum worked out: carries lit, and the full answer underneath.
+// The answer boxes sit under the columns: box 0 is the extra column on the left (for a final carry),
+// boxes 1..W line up with the bits. Typing fills them right to left, the way the sum is worked.
+// Carry boxes are the student's own working: they are never marked.
 function rushSumHtml(s, solved = false) {
   const W = s.width;
   const r = addColumns(s.a, s.b, W);
-  const cols = W + 1;
   const cell = (v, cls = 'bit') => `<div class="cell ${v === '' ? 'none' : cls}">${v}</div>`;
-  const ans = fullAnswer(s.a, s.b, W).padStart(cols, ' ');
-  return `<div class="bgrid" style="${gridStyle(cols, W)}">
-      ${solved ? `<span class="rl">Carry</span>${cell('')}${r.carryIn.map(c => `<div class="cell carry ${c ? 'lit' : ''}">${c ? '1' : ''}</div>`).join('')}` : ''}
+  const carryRow = solved
+    ? r.carryIn.map(c => `<div class="cell carry ${c ? 'lit' : ''}">${c ? '1' : ''}</div>`).join('')
+    : r.carryIn.map((_, k) => k < W - 1
+        ? `<button type="button" class="carry-toggle slim rc" data-c="${k}" aria-label="Carry above column ${k + 1}"></button>`
+        : cell('')).join('');
+  const boxes = game.ans.map((v, j) =>
+    `<button type="button" class="bit-toggle rans ${j === 0 ? 'extra' : ''}" data-a="${j}" ${solved ? 'disabled' : ''}
+       aria-label="${j === 0 ? 'Extra column for a final carry' : `Answer column ${j}`}">${v}</button>`).join('');
+  const right = fullAnswer(s.a, s.b, W).padStart(W + 1, ' ');
+  return `<div class="bgrid" style="${gridStyle(W + 1, W)}">
+      <span class="rl">Carry</span>${cell('')}${carryRow}
       <span class="rl"></span>${cell('')}${[...r.A].map(c => cell(c)).join('')}
       <span class="rl op">+</span>${cell('')}${[...r.B].map(c => cell(c)).join('')}
       <div class="sum-line"></div>
-      ${solved ? `<span class="rl">Answer</span>${[...ans].map(c => c === ' ' ? cell('') : `<div class="cell carry lit">${c}</div>`).join('')}` : ''}
+      <span class="rl">${solved ? 'You' : 'Answer'}</span>${boxes}
+      ${solved ? `<span class="rl">Answer</span>${[...right].map(c => c === ' ' ? cell('') : `<div class="cell carry lit">${c}</div>`).join('')}` : ''}
     </div>`;
+}
+
+// Redraw the answer boxes and carry marks after a key press (the grid itself stays).
+function rushPaint() {
+  document.querySelectorAll('#rush-sum .rans').forEach(b => {
+    const j = +b.dataset.a;
+    b.textContent = game.ans[j];
+    b.classList.toggle('set', game.ans[j] !== '');
+    b.classList.toggle('cur', j === game.cur && !game.locked);
+  });
+  document.querySelectorAll('#rush-sum .rc').forEach(b => {
+    const on = game.carries[+b.dataset.c];
+    b.textContent = on ? '1' : '';
+    b.classList.toggle('set', on);
+  });
+}
+
+// One key: '0', '1', 'carry', 'back', 'left', 'right' or 'go'.
+function rushKey(key) {
+  if (!game || game.locked || game.over) return;
+  const W = game.sum.width;
+  if (key === 'go') return rushAnswer();
+  if (key === '0' || key === '1') {
+    game.ans[game.cur] = key;
+    if (game.cur > 0) game.cur--;
+  } else if (key === 'back') {
+    if (game.ans[game.cur] === '' && game.cur < W) game.cur++;
+    game.ans[game.cur] = '';
+  } else if (key === 'carry') {
+    const k = game.cur - 1;                    // the carry sits above the column about to be written
+    if (k >= 0 && k < W - 1) game.carries[k] = !game.carries[k];
+  } else if (key === 'left') game.cur = Math.max(0, game.cur - 1);
+  else if (key === 'right') game.cur = Math.min(W, game.cur + 1);
+  $('verdict').innerHTML = '';
+  rushPaint();
 }
 
 function rushNext() {
   const s = game.sum = gameSum(game.seed, game.i);
   game.limit = gameTime(game.i);
   game.locked = false;
+  game.ans = new Array(s.width + 1).fill('');
+  game.cur = s.width;
+  game.carries = new Array(s.width).fill(false);
   $('rush-sum').innerHTML = rushSumHtml(s);
+  rushPaint();
   $('verdict').innerHTML = '';
-  const input = $('rush-in');
-  input.value = '';
-  input.disabled = false;
-  input.classList.remove('is-right', 'is-wrong');
-  input.focus();
   rushHud();
   game.start = performance.now();
   const bar = $('tbar');
@@ -1414,18 +1463,27 @@ function rushNext() {
 function rushAnswer(timedOut = false) {
   if (!game || game.locked || game.over) return;
   const s = game.sum;
-  const input = $('rush-in');
-  const verdict = timedOut ? 'wrong' : checkTyped({ type: 'add', ...s }, input.value);
-  if (verdict === 'format') {
-    $('verdict').innerHTML = `<span class="why">${esc(formatHint({ type: 'add', ...s }))}</span>`;
+  if (!timedOut && game.ans.slice(1).includes('')) {
+    $('verdict').innerHTML = `<span class="why">Fill every column under the sum: write 0 where a column makes 0. The box on the far left is only for a final carry.</span>`;
     return;
   }
+  const verdict = timedOut ? 'wrong' : checkTyped({ type: 'add', ...s }, game.ans.join(''));
   game.locked = true;
   cancelAnimationFrame(game.raf);
-  input.disabled = true;
   const used = (performance.now() - game.start) / 1000;
   const v = $('verdict');
   const answer = fullAnswer(s.a, s.b, s.width);
+  // Mark each box: the extra column is right when it's empty or 0 without a final carry.
+  const markBoxes = () => {
+    const want = answer.padStart(s.width + 1, '0');
+    document.querySelectorAll('#rush-sum .rans').forEach(b => {
+      const j = +b.dataset.a;
+      const ok = (game.ans[j] || '0') === want[j];
+      b.disabled = true;
+      b.classList.remove('cur');
+      if (game.ans[j] !== '' || !ok) b.classList.add(ok ? 'is-right' : 'is-wrong');
+    });
+  };
   if (verdict === 'ok') {
     game.streak++;
     game.right++;
@@ -1434,15 +1492,15 @@ function rushAnswer(timedOut = false) {
     if (answer.length > s.width) game.overflow++;
     const pts = gamePoints(game.i, game.limit - used, game.limit, game.streak);
     game.score += pts;
-    input.classList.add('is-right');
+    markBoxes();
     v.innerHTML = `✅ Right! <span class="pts">+${fmt(pts)}</span>`;
   } else {
     game.streak = 0;
     game.lives--;
     if (game.i < 20) game.perfect = false;
     game.missed.push(s);
-    input.classList.add('is-wrong');
     $('rush-sum').innerHTML = rushSumHtml(s, true);
+    markBoxes();
     v.innerHTML = `${timedOut ? '⏱ Too slow!' : '💥 Not quite.'} You lose a life. The answer is <b>${answer}</b>.
       <span class="why">${esc(addWorking(s.a, s.b, s.width))}</span>`;
   }
@@ -1509,17 +1567,27 @@ document.addEventListener('click', e => {
   }
   if (act === 'again') rushStart(game?.code || '');
   if (act === 'menu') rushMenu();
-  const key = b.dataset.key;
-  if (key && game && !game.locked && !game.over) {
-    const input = $('rush-in');
-    if (key === 'go') rushAnswer();
-    else if (key === 'back') input.value = input.value.slice(0, -1);
-    else if (input.value.length < input.maxLength) input.value += key;
-    if (key !== 'go') $('verdict').innerHTML = '';
-    input.focus();
-  }
+  if (b.dataset.key) rushKey(b.dataset.key);
 });
-$('rush-in').addEventListener('keydown', e => { if (e.key === 'Enter') rushAnswer(); });
+// Tapping an answer box moves the cursor there; tapping a carry box marks or clears it.
+$('rush-sum').addEventListener('click', e => {
+  if (!game || game.locked || game.over) return;
+  const box = e.target.closest('.rans, .rc');
+  if (!box) return;
+  if (box.dataset.a !== undefined) game.cur = +box.dataset.a;
+  else game.carries[+box.dataset.c] = !game.carries[+box.dataset.c];
+  rushPaint();
+});
+const RUSH_KEYS = { '0': '0', '1': '1', c: 'carry', C: 'carry', Backspace: 'back', Delete: 'back',
+                    ArrowLeft: 'left', ArrowRight: 'right', Enter: 'go' };
+document.addEventListener('keydown', e => {
+  if (!game || game.over || !$('rush-game').classList.contains('on') || e.ctrlKey || e.metaKey || e.altKey) return;
+  if (e.target.closest?.('input, textarea')) return;
+  const key = RUSH_KEYS[e.key];
+  if (!key) return;
+  e.preventDefault();
+  rushKey(key);
+});
 $('rush-code').addEventListener('keydown', e => { if (e.key === 'Enter') $('rush').querySelector('[data-rush="challenge"]').click(); });
 
 // ═══════════════ EVENTS ═══════════════

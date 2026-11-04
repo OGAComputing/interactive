@@ -213,12 +213,12 @@ function errorFeedbackSlide(K, o) {
   const { P, M } = K;
   const s = K.newSlide('SZ_DARK', o.section, o.title);
   const cp = K.codePanel(s, o.code, { x: M, y: 1.75, w: 8.2, size: 22, hl: o.hl });
-  K.terminal(s, o.error, { x: M, y: 1.75 + cp.h + 0.25, w: 12.13, size: 18, label: 'ERROR — LAST LINE' });
+  const ey = 1.75 + cp.h + 0.25, err = K.terminal(s, o.error, { x: M, y: ey, w: 12.13, size: 18, label: 'ERROR — LAST LINE' });
   if (o.memory) {
     K.text(s, 'IN MEMORY', { x: 9.2, y: 1.7, w: 3, h: 0.3, fontSize: 13, bold: true, color: P.dim, charSpacing: 2 });
     K.varBox(s, { x: 9.2, y: 2.3, w: 3.0, ...o.memory });
   }
-  banner(K, s, o.takeaway, 5.0, 1.3, 24);
+  banner(K, s, o.takeaway, Math.max(5.0, ey + err.h + 0.2), 1.3, 24);   // below the error, however long the code
   K.addIcon(s, 'feedback');
   if (o.notes) s.addNotes(o.notes);
   return s;
@@ -303,7 +303,9 @@ function trueFalseSlide(K, o) {
     const x = M + (i % 3) * (tw + gx), y = 1.7 + Math.floor(i / 3) * (th + 0.25);
     K.box(s, { x, y, w: tw, h: th, fill: P.code, line: P.line, r: 0.08 });
     K.badge(s, i + 1, x + 0.18, y + 0.18, 0.42);
-    s.addText(K.pyRuns(it.expr, 34), { isTextBox: true, x: x + 0.7, y, w: o.reveal ? 1.95 : tw - 0.9, h: th, margin: 0,
+    // Beside the chip there is ~1.85 in: a long expression shrinks to stay on one line, with a little room to spare
+    const size = o.reveal ? Math.min(34, Math.floor(1.85 * 72 / (0.6 * it.expr.length))) : 34;
+    s.addText(K.pyRuns(it.expr, size), { isTextBox: true, x: x + 0.7, y, w: o.reveal ? 1.95 : tw - 0.9, h: th, margin: 0,
       align: o.reveal ? 'left' : 'center', valign: 'middle' });
     if (o.reveal) boolChip(K, s, it.value, x + tw - 1.3, y + (th - 0.6) / 2, 1.1, 0.6, 24);
   });

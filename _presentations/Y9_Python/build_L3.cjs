@@ -7,6 +7,8 @@
 // Teaching order (as Lesson 2): the condition first (!= joins the True or False operators), then
 // the shape of a while loop, then two rounds of tracing — round 1 a counting loop, round 2 a loop
 // that asks with input() — each as I do (1 example) → We do (1), with a You do grid after round 1.
+// Round 1's I do is an animated run first ("Watch it run": a bar steps through the lines), then the
+// same run as a trace table.
 // Then str() (the activity's Modification 2 needs it), then the activity.
 
 const path = require('path');
@@ -73,55 +75,73 @@ We come back to this question in the plenary.`,
 // ════════════════════════════════════════════════════════════════════════════
 const C = 'Iteration';
 
-// 5. Selection vs iteration (one-off diagram): an if checks once; a while goes back and checks again
+// 5. Selection vs iteration (one-off diagram): the same flowchart twice. The program runs straight
+// down the middle (line before → condition → False → next line); True goes out to the right. The only
+// difference is where the True path comes back in: below the diamond (if) or above it (while).
 {
   const s = newSlide('SZ_DARK', C, 'Selection and iteration');
-  const lab = (t, x, y, w, color = P.dim) => text(s, t, { x, y, w, h: 0.3, fontSize: 13, bold: true, color, charSpacing: 2 });
-  const node = (t, x, y, w, h, o = {}) => {
-    box(s, { x, y, w, h, fill: o.fill || P.panel, line: o.line || P.line, lw: o.lw, r: 0.08 });
-    text(s, t, { x, y, w, h, fontSize: o.size || 22, bold: !!o.bold, color: o.color || P.off, align: 'center', valign: 'middle' });
+  const lab = (t, x, color = P.dim) => text(s, t, { x, y: 1.55, w: 5.6, h: 0.3, fontSize: 13, bold: true, color, charSpacing: 2 });
+  const node = (t, x, y, w, line = P.line) => {
+    box(s, { x, y, w, h: NH, fill: P.panel, line, lw: line === P.line ? 1.25 : 2, r: 0.08 });
+    text(s, t, { x, y, w, h: NH, fontSize: 20, color: P.off, align: 'center', valign: 'middle' });
   };
-  const diamond = (x, y, w, h, line) => {
-    s.addShape(K.pres.shapes.DIAMOND, { x, y, w, h, fill: { color: P.code }, line: { color: line, width: 2 } });
+  const seg = (x1, y1, x2, y2, color, w = 2.25) => s.addShape(K.pres.shapes.LINE,   // a plain line, no head
+    { x: Math.min(x1, x2), y: Math.min(y1, y2), w: Math.abs(x2 - x1), h: Math.abs(y2 - y1), line: { color, width: w } });
+  // Geometry shared by both halves (ox = the half's left edge)
+  const NH = 0.6, DW = 2.6, DH = 1.2, TOP = 1.95, DY = 2.95, NEXT = 5.0, BW = 2.2, GAP = 0.5;
+  const geo = (ox) => {
+    const cx = ox + 1.55, cy = DY + DH / 2, bx = cx + DW / 2 + GAP;
+    return { cx, cy, bx, bmid: bx + BW / 2 };
+  };
+  // The trunk: line before → condition → (False) → next line. drawn in `line` colour.
+  const trunk = (ox, line) => {
+    const { cx, cy } = geo(ox);
+    node('Line before', cx - 1.2, TOP, 2.4);
+    arrow(s, cx, TOP + NH, cx, DY);
+    s.addShape(K.pres.shapes.DIAMOND, { x: cx - DW / 2, y: DY, w: DW, h: DH, fill: { color: P.code }, line: { color: line, width: 2 } });
     text(s, [{ text: 'condition', options: { bold: true } }, { text: '\nTrue or False?', options: { color: P.muted, fontSize: 15 } }],
-      { x: x + 0.45, y, w: w - 0.9, h, fontSize: 19, align: 'center', valign: 'middle' });
+      { x: cx - DW / 2 + 0.4, y: DY, w: DW - 0.8, h: DH, fontSize: 19, align: 'center', valign: 'middle' });
+    arrow(s, cx, DY + DH, cx, NEXT);
+    text(s, 'False', { x: cx + 0.12, y: DY + DH + 0.12, w: 1, h: 0.4, fontSize: 18, bold: true, color: P.muted });
+    node('Next line', cx - 1.2, NEXT, 2.4);
+    return cx;
   };
-  // Left: selection (last lesson) — checked once
-  lab('LAST LESSON: SELECTION (if)', M, 1.6, 5);
-  diamond(M + 0.9, 2.0, 3.0, 1.1, P.muted);
-  arrow(s, M + 2.4, 3.1, M + 2.4, 3.6, P.ok);
-  text(s, 'True', { x: M + 2.5, y: 3.15, w: 1, h: 0.4, fontSize: 18, bold: true, color: P.ok });
-  node('Run the block', M + 1.15, 3.6, 2.5, 0.75);
-  arrow(s, M + 2.4, 4.35, M + 2.4, 4.9);
-  node('Next line', M + 1.15, 4.9, 2.5, 0.75);
-  text(s, 'Checks once, runs once', { x: M, y: 6.0, w: 4.8, h: 0.5, fontSize: 22, color: P.muted, align: 'center' });
-  s.addShape(K.pres.shapes.LINE, { x: 5.55, y: 1.7, w: 0, h: 4.85, line: { color: P.line, width: 1 } });
-  // Right: iteration (today) — the arrow goes back up to the condition (appears on click)
-  onClick(s, 1, () => {
-    lab('TODAY: ITERATION (while)', 6.0, 1.6, 5, P.gold);
-    const dx = 7.0, dy = 2.0, dw = 3.0, dh = 1.1, cx = dx + dw / 2;
-    diamond(dx, dy, dw, dh, P.gold);
-    arrow(s, cx, dy + dh, cx, 3.6, P.ok);
-    text(s, 'True', { x: cx + 0.1, y: 3.15, w: 1, h: 0.4, fontSize: 18, bold: true, color: P.ok });
-    node('Run the body', cx - 1.25, 3.6, 2.5, 0.75, { line: P.ok });
-    // back up: left of the body, up to the diamond's left point
-    const lx = dx - 0.55;
-    s.addShape(K.pres.shapes.LINE, { x: cx - 1.25 - 0.55, y: 3.975, w: 0.55, h: 0, line: { color: P.gold, width: 2.5 } });
-    s.addShape(K.pres.shapes.LINE, { x: lx, y: dy + dh / 2, w: 0, h: 3.975 - dy - dh / 2, line: { color: P.gold, width: 2.5 } });
-    arrow(s, lx, dy + dh / 2, dx, dy + dh / 2, P.gold);
-    text(s, 'back to the top', { x: lx - 1.6, y: 2.95, w: 1.55, h: 0.4, fontSize: 16, italic: true, color: P.gold, align: 'right' });
-    // False: carry on
-    arrow(s, dx + dw, dy + dh / 2, 11.6, dy + dh / 2, P.muted);
-    text(s, 'False', { x: dx + dw + 0.1, y: dy + 0.1, w: 1, h: 0.4, fontSize: 18, bold: true, color: P.muted });
-    node('Next line', 10.6, 4.9, 2.0, 0.75);
-    s.addShape(K.pres.shapes.LINE, { x: 11.6, y: dy + dh / 2, w: 0, h: 4.9 - dy - dh / 2, line: { color: P.muted, width: 2.25 } });
-    arrow(s, 11.6, 4.5, 11.6, 4.9, P.muted);
-    text(s, 'Checks again each time round', { x: 6.0, y: 6.0, w: 6.7, h: 0.5, fontSize: 22, color: P.gold, bold: true, align: 'center' });
+  // The True branch: out to the right of the diamond into the indented lines.
+  const branch = (ox, line) => {
+    const { cx, cy, bx } = geo(ox);
+    arrow(s, cx + DW / 2, cy, bx, cy, P.ok);
+    text(s, 'True', { x: cx + DW / 2 - 0.05, y: cy + 0.05, w: GAP + 0.1, h: 0.4, fontSize: 18, bold: true, color: P.ok, align: 'center' });
+    node('Indented lines', bx, cy - NH / 2, BW, line);
+  };
+
+  // Left: selection (last lesson): the True path rejoins BELOW the diamond, so it runs once
+  const L = M, Rx = 6.85;
+  lab('LAST LESSON: SELECTION (if)', L);
+  trunk(L, P.muted);
+  branch(L, P.line);
+  { const { cx, cy, bmid } = geo(L), jy = NEXT - 0.4;
+    seg(bmid, cy + NH / 2, bmid, jy, P.muted);
+    arrow(s, bmid, jy, cx, jy, P.muted); }
+  text(s, 'Checks once, runs once', { x: L, y: 6.0, w: 5.6, h: 0.5, fontSize: 22, color: P.muted, align: 'center' });
+  s.addShape(K.pres.shapes.LINE, { x: 6.45, y: 1.6, w: 0, h: 4.9, line: { color: P.line, width: 1 } });
+
+  // Right: iteration (today), built up on click
+  onClick(s, 1, () => { lab('TODAY: ITERATION (while)', Rx, P.gold); trunk(Rx, P.gold); branch(Rx, P.ok); });
+  onClick(s, 2, () => {           // back up and round: rejoins ABOVE the diamond, so the condition is checked again
+    const { cx, cy, bmid } = geo(Rx), jy = (TOP + NH + DY) / 2;
+    seg(bmid, cy - NH / 2, bmid, jy, P.gold, 2.5);
+    arrow(s, bmid, jy, cx, jy, P.gold);
+    text(s, 'back up: check again', { x: cx + 0.6, y: jy + 0.05, w: bmid - cx - 0.7, h: 0.32, fontSize: 16, italic: true,
+      bold: true, color: P.gold, align: 'right' });
   });
+  onClick(s, 3, () => text(s, 'Checks again each time round', { x: Rx, y: 6.0, w: 5.6, h: 0.5, fontSize: 22,
+    color: P.gold, bold: true, align: 'center' }));
   addIcon(s, 'info');
-  s.addNotes(`Last lesson: an if checks its condition ONCE. True → the block runs once, then the program moves on.
-Click: a while loop. Same diamond, same True or False. But after the body runs, the program goes BACK TO THE TOP and checks again. It keeps going round while the condition is True. Only when it's False does the program carry on.
-"A while is an if that keeps checking."
+  s.addNotes(`Trace each flowchart with your finger, top to bottom.
+Left, last lesson: an if checks its condition ONCE. True → the indented lines run once, then come back in BELOW the diamond and the program carries on. False → straight down to the next line.
+Click 1: a while loop. Same shape: same diamond, same True to the right, same False straight down.
+Click 2: the one difference. After the indented lines run, the arrow goes back UP, above the diamond — so the condition is checked again. Round and round while it's True. Only False gets you down to the next line.
+Click 3: "A while is an if that keeps checking."
 Ask: "Where would an airlock keypad need this?" (Keep asking for the code until it's right.)`);
 }
 
@@ -135,7 +155,6 @@ Ask: "Where would an airlock keypad need this?" (Keep asking for the code until 
     text(s, op, { x: M, y, w: 1.15, h: 0.75, fontFace: MONO, fontSize: 30, bold: true, align: 'center', valign: 'middle' });
     text(s, say, { x: M + 1.4, y, w: 4.3, h: 0.75, fontSize: 24, valign: 'middle', bold: !!i });
   });
-  text(s, 'Last lesson: ==   Today: != too', { x: M, y: 4.25, w: 5.5, h: 0.45, fontSize: 18, italic: true, color: P.muted });
   text(s, 'TRUE OR FALSE?', { x: 7.0, y: 1.6, w: 5, h: 0.3, fontSize: 13, bold: true, color: P.dim, charSpacing: 2 });
   [['"1234" != "4271"', true, 'Is 1234 different from 4271? Yes'], ['"4271" != "4271"', false, 'Is 4271 different from 4271? No']]
     .forEach(([expr, val, say], i) => {
@@ -188,8 +207,8 @@ In today's loop, the condition is code != "4271": it stays True for every wrong 
     [{ text: '① Set up the variable: ', options: { bold: true, color: P.gold } }, { text: 'ask first' }],
     [{ text: '② ', options: { bold: true, color: P.gold } }, { text: 'while', options: { fontFace: MONO, bold: true } },
       { text: ' + a condition + a colon ' }, { text: ':', options: { fontFace: MONO, bold: true, color: P.gold } }],
-    [{ text: '③ Indented: ', options: { bold: true, color: P.gold } }, { text: 'repeats ', options: { bold: true, color: P.ok } },
-      { text: 'while True' }],
+    [{ text: '③ Indented = the body:', options: { bold: true, color: P.gold, breakLine: true } },
+      { text: 'repeats ', options: { bold: true, color: P.ok } }, { text: 'while True' }],
     [{ text: '④ Change the variable ', options: { bold: true, color: P.gold } }, { text: 'inside: ask again' }],
     [{ text: 'Not indented: ', options: { bold: true } }, { text: 'runs once, after the loop' }],
   ];
@@ -263,17 +282,74 @@ It leaves out Lesson 2's choices (which pod, the lockdown, the power): they diff
 Link it: the keypad has to keep asking until the code is right — but first, a loop that just counts.`,
 });
 
+// Watch it run (one-off, animated): a gold bar steps through the code one line per click, the fuel box
+// changes, the output builds up, and a gold arrow shows each jump back to the top. Uses onClick's
+// `until` to fade the bar, the old value and the arrow out again.
+const FUEL = ['fuel = 0', 'while fuel < 3:', '    fuel = fuel + 1', '    print(fuel)', 'print("Full")'];
+{
+  const s = newSlide('SZ_DARK', R1, 'Watch it run');
+  const cx = 1.35, cw = 6.4;
+  const cp = codePanel(s, FUEL, { x: cx, y: 1.7, w: cw, size: 24, lh: 0.74 });
+  K.varBox(s, { name: 'fuel', type: 'int', value: '', x: 8.2, y: 1.95, w: 2.4, h: 1.0 });
+  const out = { x: 8.2, y: 3.3, w: 4.53, lh: 0.42 };
+  K.terminal(s, ['', '', '', ''], { x: out.x, y: out.y, w: out.w, size: 22, lh: out.lh, label: 'OUTPUT' });
+  // One step per click: the line that runs, and what it does
+  const steps = [{ line: 1, mem: '0' }, { line: 2, check: ['0 < 3', true] }, { line: 3, mem: '1' }, { line: 4, out: '1' },
+    { line: 2, back: 1, check: ['1 < 3', true] }, { line: 3, mem: '2' }, { line: 4, out: '2' },
+    { line: 2, back: 1, check: ['2 < 3', true] }, { line: 3, mem: '3' }, { line: 4, out: '3' },
+    { line: 2, back: 1, check: ['3 < 3', false] }, { line: 5, out: 'Full' }];
+  const lineTop = (n) => cp.ys[n - 1] - cp.lh / 2;
+  const nextMem = (i) => { const j = steps.findIndex((st, k) => k > i && st.mem); return j < 0 ? undefined : j + 1; };
+  let outRow = 0;
+  steps.forEach((st, i) => {
+    const k = i + 1, last = k === steps.length;
+    onClick(s, k, () => {         // the gold bar on the line that runs now (gone on the next click)
+      s.addShape(K.pres.shapes.RECTANGLE, { x: cx + 0.06, y: lineTop(st.line), w: cw - 0.12, h: cp.lh,
+        fill: { color: P.gold, transparency: 82 }, line: { color: P.gold, width: 2 } });
+      if (st.check) {
+        s.addText([{ text: '→  ', options: { color: P.gold, bold: true, fontFace: MONO, fontSize: 22 } }, ...pyRuns(st.check[0], 22)],
+          { isTextBox: true, x: 5.05, y: lineTop(2), w: 1.45, h: cp.lh, margin: 0, valign: 'middle' });
+        R.boolChip(K, s, st.check[1], 6.55, cp.ys[1] - 0.25, 1.05, 0.5, 20);
+      }
+      if (st.back) {                // round the left of the code, from the end of the body back up to line 2
+        const lx = cx - 0.4, y4 = cp.ys[3], y2 = cp.ys[1];
+        s.addShape(K.pres.shapes.LINE, { x: lx, y: y4, w: cx - lx, h: 0, line: { color: P.gold, width: 2.5 } });
+        s.addShape(K.pres.shapes.LINE, { x: lx, y: y2, w: 0, h: y4 - y2, line: { color: P.gold, width: 2.5 } });
+        arrow(s, lx, y2, cx, y2, P.gold);
+      }
+    }, last ? undefined : k + 1);
+    if (st.mem) onClick(s, k, () => text(s, st.mem, { x: 8.3, y: 2.15, w: 2.2, h: 0.75, fontFace: MONO, fontSize: 32,
+      color: P.off, align: 'center', valign: 'middle' }), nextMem(i));
+    if (st.out) {
+      const row = outRow++;
+      onClick(s, k, () => text(s, st.out, { x: out.x + 0.25, y: out.y + 0.25 + 0.35 + row * out.lh, w: out.w - 0.5, h: out.lh,
+        fontFace: MONO, fontSize: 22, valign: 'middle' }));
+    }
+  });
+  onClick(s, steps.length + 1, () => R.banner(K, s, [{ text: '4 checks, 3 times round. ', options: { bold: true, color: P.gold } },
+    { text: 'The loop stops at the first False.' }], 6.0, 0.7, 22));
+  R.modeChip(K, s, 'I DO');
+  addIcon(s, 'info');
+  s.addNotes(`I DO — the whole loop, one line per click. Students just watch; you narrate every click in the same words.
+The gold bar is the line Python is running. The fuel box holds ONE value: each new one replaces the old. The output builds up.
+1 "fuel = 0: put 0 in the box."  2 "Check: is 0 < 3? True, so into the body."  3 "fuel = fuel + 1: 0 + 1 is 1."  4 "print(fuel): 1."
+5 The gold arrow: "End of the body, so BACK TO THE TOP. Check again: 1 < 3? True."  6–7: 2 and print 2.
+8 "Back up. 2 < 3? True."  9–10: 3 and print 3.
+11 "Back up. 3 < 3? FALSE." Pause here: ask "Which line runs next?" (line 5: Python skips the body and carries on below the loop.)
+12 "print("Full"): once, because it isn't indented."  13 The takeaway: four checks, but only three times round, because the last check is False.
+Common slip to name now: "Doesn't it print 0 first?" No: line 3 adds 1 before line 4 prints.`);
+}
+
 loopTraceSlide({
-  section: R1, mode: 'I DO',
-  code: ['fuel = 0', 'while fuel < 3:', '    fuel = fuel + 1', '    print("Pump")', 'print("Full")'],
+  section: R1, mode: 'I DO', title: 'The same run, as a trace table',
+  code: FUEL,
   cols: ['Check', 'fuel', 'fuel < 3', 'Printed'], colW: [1.05, 1.15, 1.75, 2.55],
-  rows: [['1', '0', 'True', 'Pump'], ['2', '1', 'True', 'Pump'], ['3', '2', 'True', 'Pump'], ['4', '3', 'False', 'Full']],
-  notes: `I DO — model it out loud, students just watch. The same four steps every time (the strip at the bottom).
-Each ROW is one time Python checks the condition on line 2.
-Click 1 — "fuel is 0. Is 0 < 3? True. Run the body: fuel becomes 1, print Pump. Back to the top."
-Click 2 — "fuel is 1. 1 < 3? True. fuel becomes 2, Pump." Click 3 — "2 < 3, True. fuel becomes 3, Pump."
+  rows: [['1', '0', 'True', '1'], ['2', '1', 'True', '2'], ['3', '2', 'True', '3'], ['4', '3', 'False', 'Full']],
+  notes: `I DO — the run they just watched, written down. One ROW for every time Python checks the condition on line 2. The four steps (the strip at the bottom) are the same every time.
+Click 1 — "fuel is 0. Is 0 < 3? True. Run the body: fuel becomes 1, print 1. Back to the top."
+Click 2 — "fuel is 1. 1 < 3? True. fuel becomes 2, print 2." Click 3 — "2 < 3, True. fuel becomes 3, print 3."
 Click 4 — "fuel is 3. 3 < 3? FALSE. Carry on after the loop: Full."
-Read the Printed column down: that's the output. Point out: 3 Pumps, and Full only once, because line 5 isn't indented.
+Read the Printed column down: that's the output. The fuel column shows the value at each CHECK (before the body changes it).
 This counting shape is next lesson's for loop in disguise.`,
 });
 

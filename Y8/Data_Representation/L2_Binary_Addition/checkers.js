@@ -466,7 +466,11 @@ export function drawPlenary(seed, attempt) {
 // Not scored for Classroom. Sums get bigger as the run goes on (by sum number, not score,
 // so a class challenge code gives everyone the same sums in the same order).
 
+// Levels 2–3 carry with 1 + 1 only; 1 + 1 + 1 comes in at Level 4.
+const plain = (a, b) => !hasTriple(a, b, 4);
 export const GAME_POOLS = {
+  carry2: [...POOLS.onecarry4, ...carry4.filter(([a, b]) => plain(a, b))],
+  over2:  over4.filter(([a, b]) => plain(a, b)),
   add6:  pairs(range(8, 63), range(8, 63), (a, b) =>
            a + b <= 63 && ones(a) >= 2 && ones(b) >= 2 && carryCount(a, b, 6) >= 2),
   over8: pairs(range(129, 250), range(129, 250), (a, b) =>
@@ -476,12 +480,13 @@ const gamePool = name => POOLS[name] ?? GAME_POOLS[name];
 
 // from: the first sum (0-based) at this level. Each sum picks one of the level's pools at random.
 export const GAME_LEVELS = [
-  { from: 0,  name: 'Level 1', width: 4, pools: ['nocarry4', 'onecarry4'], time: 20, base: 100 },
-  { from: 5,  name: 'Level 2', width: 4, pools: ['carry4', 'triple4'],     time: 20, base: 100 },
-  { from: 12, name: 'Level 3', width: 4, pools: ['carry4', 'over4'],       time: 20, base: 120 },
-  { from: 20, name: 'Level 4', width: 6, pools: ['add6'],                  time: 30, base: 150 },
-  { from: 30, name: 'Level 5', width: 8, pools: ['add8'],                  time: 40, base: 200 },
-  { from: 40, name: 'Level 6', width: 8, pools: ['add8', 'over8'],         time: 36, base: 250 },
+  { from: 0,  name: 'Level 1', width: 4, pools: ['nocarry4'],              time: 45, base: 100 },  // no carries
+  { from: 5,  name: 'Level 2', width: 4, pools: ['carry2'],                time: 40, base: 100 },  // 1 + 1 = 0, carry 1
+  { from: 12, name: 'Level 3', width: 4, pools: ['carry2', 'over2'],       time: 40, base: 120 },  // + a final carry
+  { from: 20, name: 'Level 4', width: 4, pools: ['triple4', 'over4'],      time: 40, base: 140 },  // 1 + 1 + 1 = 1, carry 1
+  { from: 28, name: 'Level 5', width: 6, pools: ['add6'],                  time: 45, base: 160 },
+  { from: 36, name: 'Level 6', width: 8, pools: ['add8'],                  time: 60, base: 200 },
+  { from: 46, name: 'Level 7', width: 8, pools: ['add8', 'over8'],         time: 55, base: 250 },
 ];
 
 export const GAME_LIVES = 3;
@@ -492,11 +497,11 @@ export function gameLevel(i) {
   return lvl;
 }
 
-// Seconds for sum i: the level's time, and from Level 6 it shrinks by 2 s every 5 sums, never below 20.
+// Seconds for sum i: the level's time, and at the last level it shrinks by 3 s every 5 sums, never below 25.
 export function gameTime(i) {
   const lvl = gameLevel(i);
   if (lvl !== GAME_LEVELS.at(-1)) return lvl.time;
-  return Math.max(20, lvl.time - 2 * Math.floor((i - lvl.from) / 5));
+  return Math.max(25, lvl.time - 3 * Math.floor((i - lvl.from) / 5));
 }
 
 function rawSum(seed, i, salt = 0) {
@@ -548,7 +553,7 @@ export const GAME_BADGES = [
   ['streak5',  '🔥 On a Roll',      '5 right in a row'],
   ['streak10', '⚡ Unstoppable',    '10 right in a row'],
   ['overflow', '🚀 Overflow',       'Get a sum with a final carry right'],
-  ['eight',    '🧮 Eight Columns',  'Reach the 8-bit sums (Level 5)'],
+  ['eight',    '🧮 Eight Columns',  'Reach the 8-bit sums (Level 6)'],
   ['speed',    '🏎 Lightning',      '5 sums right in under 5 seconds each, in one run'],
   ['perfect',  '💎 Flawless 20',    'The first 20 sums all right'],
   ['score10k', '🏛 10,000 Club',    '10,000+ points in one run'],

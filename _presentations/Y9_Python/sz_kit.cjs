@@ -131,11 +131,16 @@ function newSlide(master, section, title) {
   if (title) s.addText(title, { placeholder: 'title' });
   return s;
 }
-// Click animation: everything draw() adds to the slide fades in on click k (1, 2, 3 …).
-// pptxgenjs can't write animations, so this only names the shapes "click<k>"; write() adds the timing XML.
-function onClick(s, k, draw) {
+// Click animation: everything draw() adds to the slide fades in on click k (1, 2, 3 …), and fades out
+// again on click `until` if given (a moving highlight, a value that gets replaced).
+// pptxgenjs can't write animations, so this only names the shapes "click<k>[ hide<until>]"; write() adds the timing XML.
+// DECK_CLICK=n (checking only) builds every slide as it looks after click n, so a render shows that state.
+function onClick(s, k, draw, until) {
+  const at = +process.env.DECK_CLICK;
+  if (at && (k > at || (until && until <= at))) return;
   const orig = { addText: s.addText, addShape: s.addShape, addImage: s.addImage };
-  const tag = (o = {}) => ({ ...o, objectName: `click${k}` + (o.objectName ? ' · ' + o.objectName : '') });
+  const tag = (o = {}) => ({ ...o, objectName: `click${k}` + (until ? ` hide${until}` : '')
+    + (o.objectName ? ' · ' + o.objectName : '') });
   s.addText = (t, o) => orig.addText.call(s, t, tag(o));
   s.addShape = (type, o) => orig.addShape.call(s, type, tag(o));
   s.addImage = (o) => orig.addImage.call(s, tag(o));
@@ -365,7 +370,7 @@ return { pres, P, THEME, HEAD, BODY, MONO, W, M, newSlide, addIcon, text, box, c
 }
 
 // Adds a fade-in on click for every shape named "click<k>" (see onClick): click 1 shows all the
-// click1 shapes together, then click 2, and so on. Shapes named "auto…" (new station damage on a
+// click1 shapes together, then click 2, and so on; "hide<j>" in a name also fades it out on click j. Shapes named "auto…" (new station damage on a
 // story beat) fade in by themselves as the slide opens, before any click. Beat slides (1-based
 // numbers in beats) also get a slow fade-through-black transition: the lights go out.
 async function addClickAnimations(file, beats = []) {
@@ -385,16 +390,27 @@ async function addClickAnimations(file, beats = []) {
     });
     zip.file(f, xml);
     const isBeat = beats.includes(+f.match(/slide(\d+)\.xml$/)[1]);
-    const groups = new Map();   // click number → shape ids; 0 = auto (plays as the slide opens)
-    const textIds = new Set();
-    for (const m of xml.matchAll(/<p:(sp|pic|cxnSp)>\s*<p:nv\w+Pr>\s*<p:cNvPr id="(\d+)" name="(?:click(\d+)|(auto))[^"]*"[\s\S]*?<\/p:\1>/g)) {
-      const k = m[4] ? 0 : +m[3];
-      if (!groups.has(k)) groups.set(k, []);
-      groups.get(k).push(m[2]);
-      if (m[1] === 'sp' && m[0].includes('<p:txBody>')) textIds.add(m[2]);
+    const groups = new Map();   // click number → [shape id, 'in' | 'out']; 0 = auto (plays as the slide opens)
+    const textIds = new Set(), exitTextIds = new Set();
+    const put = (k, spid, dir) => { if (!groups.has(k)) groups.set(k, []); groups.get(k).push([spid, dir]); };
+    for (const m of xml.matchAll(/<p:(sp|pic|cxnSp)>\s*<p:nv\w+Pr>\s*<p:cNvPr id="(\d+)" name="(?:click(\d+)(?: hide(\d+))?|(auto))[^"]*"[\s\S]*?<\/p:\1>/g)) {
+      const hasText = m[1] === 'sp' && m[0].includes('<p:txBody>');
+      put(m[5] ? 0 : +m[3], m[2], 'in');
+      if (hasText) textIds.add(m[2]);
+      if (m[4]) { put(+m[4], m[2], 'out'); if (hasText) exitTextIds.add(m[2]); }
     }
     if (!groups.size && !isBeat) continue;
     let id = 2;
+    const exit = (spid, node, dur) => {
+      const g = exitTextIds.has(spid) ? ' grpId="1"' : '';
+      return `<p:par><p:cTn id="${++id}" presetID="10" presetClass="exit" presetSubtype="0" fill="hold"${g} nodeType="${node}">`
+        + '<p:stCondLst><p:cond delay="0"/></p:stCondLst><p:childTnLst>'
+        + `<p:animEffect transition="out" filter="fade"><p:cBhvr><p:cTn id="${++id}" dur="${dur}"/>`
+        + `<p:tgtEl><p:spTgt spid="${spid}"/></p:tgtEl></p:cBhvr></p:animEffect>`
+        + `<p:set><p:cBhvr><p:cTn id="${++id}" dur="1" fill="hold"><p:stCondLst><p:cond delay="${dur - 1}"/></p:stCondLst></p:cTn>`
+        + `<p:tgtEl><p:spTgt spid="${spid}"/></p:tgtEl><p:attrNameLst><p:attrName>style.visibility</p:attrName></p:attrNameLst></p:cBhvr>`
+        + '<p:to><p:strVal val="hidden"/></p:to></p:set></p:childTnLst></p:cTn></p:par>';
+    };
     const effect = (spid, node, delay, dur) => {
       const g = textIds.has(spid) ? ' grpId="0"' : '';
       return `<p:par><p:cTn id="${++id}" presetID="10" presetClass="entr" presetSubtype="0" fill="hold"${g} nodeType="${node}">`
@@ -407,14 +423,17 @@ async function addClickAnimations(file, beats = []) {
     };
     const clicks = [...groups.keys()].sort((a, b) => a - b).map((k) => {
       const outer = ++id, inner = ++id, auto = k === 0;
-      const fx = groups.get(k).map((spid, i) => effect(spid, i > 0 ? 'withEffect' : auto ? 'afterEffect' : 'clickEffect',
-        auto ? 700 : 0, auto ? 2000 : 500)).join('');
+      const fx = groups.get(k).map(([spid, dir], i) => {
+        const node = i > 0 ? 'withEffect' : auto ? 'afterEffect' : 'clickEffect';
+        return dir === 'out' ? exit(spid, node, 300) : effect(spid, node, auto ? 700 : 0, auto ? 2000 : 500);
+      }).join('');
       const start = '<p:cond delay="indefinite"/>' + (auto ? '<p:cond evt="onBegin" delay="0"><p:tn val="2"/></p:cond>' : '');
       return `<p:par><p:cTn id="${outer}" fill="hold"><p:stCondLst>${start}</p:stCondLst><p:childTnLst>`
         + `<p:par><p:cTn id="${inner}" fill="hold"><p:stCondLst><p:cond delay="0"/></p:stCondLst><p:childTnLst>${fx}`
         + '</p:childTnLst></p:cTn></p:par></p:childTnLst></p:cTn></p:par>';
     }).join('');
-    const bld = [...textIds].map((spid) => `<p:bldP spid="${spid}" grpId="0" animBg="1"/>`).join('');
+    const bld = [...textIds].map((spid) => `<p:bldP spid="${spid}" grpId="0" animBg="1"/>`).join('')
+      + [...exitTextIds].map((spid) => `<p:bldP spid="${spid}" grpId="1" animBg="1"/>`).join('');
     const timing = !groups.size ? '' : '<p:timing><p:tnLst><p:par><p:cTn id="1" dur="indefinite" restart="never" nodeType="tmRoot"><p:childTnLst>'
       + '<p:seq concurrent="1" nextAc="seek"><p:cTn id="2" dur="indefinite" nodeType="mainSeq"><p:childTnLst>' + clicks
       + '</p:childTnLst></p:cTn><p:prevCondLst><p:cond evt="onPrev" delay="0"><p:tgtEl><p:sldTgt/></p:tgtEl></p:cond></p:prevCondLst>'

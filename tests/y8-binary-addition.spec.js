@@ -226,9 +226,14 @@ async function answerRush(page, i, code, { right = true } = {}) {
   await expect(page.locator('#hud-sum')).toHaveText(String(i + 1));
   const s = gameSum(code, i);
   const ans = fullAnswer(s.a, s.b, s.width);
-  await page.locator('#rush-in').fill(right ? ans : ans.slice(0, -1) + (ans.at(-1) === '1' ? '0' : '1'));
-  await page.locator('#rush-in').press('Enter');
+  const typed = right ? ans : ans.slice(0, -1) + (ans.at(-1) === '1' ? '0' : '1');
+  // Typed right to left, the way the sum is worked: each bit goes in the next column to the left
+  for (const c of [...typed].reverse()) await page.keyboard.press(c);
+  await page.keyboard.press('Enter');
 }
+
+// The answer boxes under the sum, left (extra column) to right.
+const rushBoxes = page => page.locator('#rush-sum .rans').allTextContents();
 
 test('Carry Rush: a class challenge, badges, game over and the best score in the header', async ({ page }) => {
   test.setTimeout(60_000);
@@ -245,11 +250,13 @@ test('Carry Rush: a class challenge, badges, game over and the best score in the
   await answerRush(page, 1, 'BIN7');
   await expect(page.locator('#verdict')).toContainText('Right');
 
-  // A badly formed answer costs nothing
+  // A part-filled answer costs nothing
   await expect(page.locator('#hud-sum')).toHaveText('3');
-  await page.locator('#rush-in').fill('12');
-  await page.locator('#rush-in').press('Enter');
+  await page.keyboard.press('1');
+  await page.keyboard.press('Enter');
+  await expect(page.locator('#verdict')).toContainText('Fill every column');
   await expect(page.locator('#hud-lives')).toHaveText('❤️❤️❤️');
+  await page.keyboard.press('Backspace');
 
   // Three wrong answers end the run; each shows the worked answer
   for (const i of [2, 3, 4]) {
@@ -274,14 +281,20 @@ test('Carry Rush: a class challenge, badges, game over and the best score in the
   await expect(page.locator('#ev-rush')).toHaveValue(/BIN7/);
 });
 
-test('Carry Rush: the on-screen keypad types and leaving the tab ends the run', async ({ page }) => {
+test('Carry Rush: answers fill right to left under the columns; the keypad; leaving the tab ends the run', async ({ page }) => {
   await openRush(page);
   await page.locator('[data-rush="solo"]').click();
+  await expect(page.locator('#rush-sum .rans')).toHaveCount(5);          // 4 columns + the extra one
   await page.locator('[data-key="1"]').click();
   await page.locator('[data-key="0"]').click();
+  await page.locator('[data-key="carry"]').click();                      // a carry above the third column
   await page.locator('[data-key="1"]').click();
   await page.locator('[data-key="back"]').click();
-  await expect(page.locator('#rush-in')).toHaveValue('10');
+  expect(await rushBoxes(page)).toEqual(['', '', '', '0', '1']);
+  await expect(page.locator('#rush-sum .rc[data-c="1"]')).toHaveText('1');
+  await page.locator('#rush-sum .rans[data-a="0"]').click();             // tap a box to move there
+  await page.keyboard.press('1');
+  expect(await rushBoxes(page)).toEqual(['1', '', '', '0', '1']);
   await openTab(page, 0);
   await openTab(page, 7);
   await expect(page.locator('#rush-menu')).toBeVisible();
