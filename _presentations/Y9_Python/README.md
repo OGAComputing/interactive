@@ -18,6 +18,7 @@ PowerPoint decks for the Y9 Python unit, themed for the unit's *Station Zero* su
 | `build_L3.cjs` | Builds the Lesson 3 deck (draws by hand: the selection/iteration flowcharts, the animated "Watch it run" trace, "Which line runs next?" (We do and You do)) |
 | `sz_slides.cjs` | The slide types ("recipes"), one function each |
 | `sz_kit.cjs` | Drawing parts: palette, layouts, code panels, terminals, variable boxes, badges |
+| `publish_to_drive.cjs` + `drive.json` | Uploads lesson decks to the "Y9 Python Unit 1" Drive folder as Google Slides (see Publishing to Drive) |
 | `clean_icons.py`, `icons/` | The five pillar icons, edges rebuilt from the circle's geometry |
 | `make_station_art.py`, `station/` | The station-state damage layers (frost, alarm edges, hazard stripes, static, cracks) as see-through PNGs |
 
@@ -36,6 +37,10 @@ Close the `.pptx` in PowerPoint first, or the build can't save over it. To check
 A render shows every click at once. To check one moment of an animated slide, build with `DECK_CLICK=<n>` (and `DECK_OUT=<somewhere else>.pptx`): every slide is then built as it looks after click n.
 
 **Animation:** `K.onClick(s, k, draw)` fades in what `draw` adds on click k; `K.onClick(s, k, draw, until)` also fades it out again on click `until`. Use that for a highlight that moves from line to line, or a value in a box that gets replaced (L3 slide 10, "Watch it run").
+
+## Publishing to Drive
+
+Lessons are taught from Google Slides in the [Y9 Python Unit 1](https://drive.google.com/drive/folders/19JnPbF7xfcnIQVQkoz4rG7Uv9Mdqja9E) Drive folder. `node publish_to_drive.cjs` rebuilds every `build_L<n>.cjs` deck, then uploads each deck whose slides changed to a folder named after it (`L3_While_Loops/L3_While_Loops`), converted to Google Slides, and writes its Slides ID into `../lesson-slides.json` so the hub's Assign button attaches it. Commit `drive.json` and `lesson-slides.json`. A republish replaces the contents of the same Slides file, so links in Classroom keep working, but **edits made in Slides are lost**: change the builder instead. `--dry-run` lists what would go up; name a deck to publish only that one; `--force` republishes unchanged files. `/ship` and `/lesson-deck` run it. Decks in `drive.json`'s `manual` list (L1, L2) were put on Drive by hand and are left alone. Click animations, exit fades included, and the fonts survive the import (L3 played correctly in Google Slides, 2026-11-04). The script shares `../drive_publish.cjs` and the one-time sign-in setup with Y10 (see `../Y10_BTEC_CDM/README.md`).
 
 **Making a new lesson's deck:** copy `build_deck.cjs` to e.g. `build_L2.cjs`, change the output name, footer and content, and keep the slide order. Every slide is one recipe call with its content and speaker notes. Only draw a slide by hand (as L1 does for slides 14–16) when no recipe fits, and use the kit's parts (`varBox`, `codePanel`, `terminal`, `badge`, `arrow`) so it still matches.
 
