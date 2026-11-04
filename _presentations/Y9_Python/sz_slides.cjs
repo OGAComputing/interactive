@@ -6,7 +6,7 @@
 // you will SAY there, not on the slide — redundancy effect).
 
 // ── Recap & Recall ──────────────────────────────────────────────────────────
-// questions: 4 × { pill, q, type: 'mcq'|'write', code?: [lines], opts?: [3], a, why, aMono?, whyMono? }
+// questions: 4 × { pill, q, type: 'mcq'|'write', code?: [lines], opts?: [3], a, why, aMono?, whyMono?, optsMono? }
 // For an MCQ, `a` starts with the correct letter ('B — 9').
 function recallStarter(K, o) {
   const { P, M } = K;

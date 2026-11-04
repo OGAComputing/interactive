@@ -5,11 +5,9 @@
 //
 // Output: L3_While_Loops.pptx beside this file. Activity: Y9/Python/L3_While_Loops/1_Locked_In_PRIMM.html.
 // Teaching order (as Lesson 2): the condition first (!= joins the True or False operators), then
-// the shape of a while loop, then two rounds of tracing — round 1 a counting loop, round 2 a loop
-// that asks with input() — each as I do (1 example) → We do (1), with a You do grid after round 1.
-// Round 1's I do is an animated run first ("Watch it run": a bar steps through the lines), then the
-// same run as a trace table.
-// Then str() (the activity's Modification 2 needs it), then the activity.
+// the flowchart, then one animated run of a counting loop (I do, "Watch it run"), then
+// short questions, not trace tables: which line runs next? on the keypad loop (We do), and the same question on three new loops
+// (You do + answers). Then str() (the activity's Modification 2 needs it), then the activity.
 
 const path = require('path');
 const { createDeck } = require('./sz_kit.cjs');
@@ -29,23 +27,23 @@ const RR = [
   { pill: 'LAST LESSON', q: 'x holds 30. Which one is True?', type: 'mcq',
     opts: ['x > 30', 'x < 30', 'x >= 30'],
     a: 'C — x >= 30', why: '>= includes "equal to"' },
-  { pill: 'LAST LESSON', q: 'Which line has no condition?', type: 'mcq',
-    opts: ['elif x > 5:', 'else:', 'if x > 5:'],
-    a: 'B — else:', why: 'else runs when nothing above was True' },
-  { pill: 'LAST LESSON', q: 'This line crashes. Write it correctly.', type: 'write',
-    code: ['if answer = "y":'], a: 'if answer == "y":', why: '= stores, == asks', aMono: true },
+  { pill: 'LAST LESSON', q: 'Which if statement is correct?', type: 'mcq',
+    opts: ['if: x == 5', 'if x == 5:', 'if x = 5:'], optsMono: true,
+    a: 'B — if x == 5:', why: '== to compare, colon at the end' },
+  { pill: 'LESSON 1', q: 'This crashes. Write the last line correctly.', type: 'write',
+    code: ['score = 10', 'print(scroe)'], a: 'print(score)', why: 'the name must match exactly', aMono: true },
   { pill: 'LAST LESSON', q: 'They type 14. What is printed?', type: 'write',
     code: ['age = int(input("Age? "))', 'print(age + 1)'], a: '15', why: 'int() made it a number, so + adds', aMono: true },
 ];
 R.recallStarter(K, { section: 'Recap & Recall', questions: RR, notes: `DO NOW — 5 minutes, silent, no notes. Mini-whiteboards or books.
-All four are from last lesson, Proximity: conditions, if / elif / else, == and int().
+Q1, 2 and 4 are from last lesson, Proximity: conditions, if / elif / else and int(). Q3 (variables) is from Lesson 1.
 Q1–2 are multiple choice (everyone commits to an answer). Q3–4 need a written answer.
 Confidence rating 1–3 next to each answer — confident-but-wrong is the one most worth correcting.` });
 
 R.recallAnswers(K, { section: 'Recap & Recall', questions: RR, notes: `Reveal and self-mark. Hands up for "confident and wrong" on each.
 Q1: >= means "more than OR equal to", so 30 >= 30 is True. 30 > 30 is False: the boundary again.
-Q2: else: has no condition: it runs when none of the conditions above it were True. elif means "else if": it has its own condition, checked only if everything above it was False.
-Q3: one = STORES, two == ASK. An if needs a question, so ==. The one-= version is a SyntaxError.
+Q2: the condition comes straight after if, and the colon goes at the END of the line (A puts it in the wrong place). A single = STORES a value; == COMPARES two values, so C is a SyntaxError. Today's while lines follow the same pattern: while, a condition, a colon.
+Q3: scroe is not score. Python has no box called scroe, so it stops with a NameError. Names must match exactly, letter for letter: today's loops need the same name in the condition and inside the loop.
 Q4: int() turned the text "14" into the number 14, so + ADDS: 15. Keep this in your head: today we'll need to go the other way, a number back into text.` });
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -197,82 +195,11 @@ R.trueFalseSlide(K, {
 In today's loop, the condition is code != "4271": it stays True for every wrong code, and turns False the moment the right one is typed.`,
 });
 
-// 9. Anatomy of while (one-off: labels beside each line, one per click — the 4-step recipe)
-{
-  const s = newSlide('SZ_DARK', C, 'The shape of a while loop');
-  const lines = ['code = input("Code: ")', 'while code != "4271":', '    print("ACCESS DENIED")', '    code = input("Code: ")',
-    'print("Airlock open")'];
-  const cp = codePanel(s, lines, { x: M, y: 1.75, w: 6.4, size: 24, lh: 0.78 });
-  const labels = [
-    [{ text: '① Set up the variable: ', options: { bold: true, color: P.gold } }, { text: 'ask first' }],
-    [{ text: '② ', options: { bold: true, color: P.gold } }, { text: 'while', options: { fontFace: MONO, bold: true } },
-      { text: ' + a condition + a colon ' }, { text: ':', options: { fontFace: MONO, bold: true, color: P.gold } }],
-    [{ text: '③ Indented = the body:', options: { bold: true, color: P.gold, breakLine: true } },
-      { text: 'repeats ', options: { bold: true, color: P.ok } }, { text: 'while True' }],
-    [{ text: '④ Change the variable ', options: { bold: true, color: P.gold } }, { text: 'inside: ask again' }],
-    [{ text: 'Not indented: ', options: { bold: true } }, { text: 'runs once, after the loop' }],
-  ];
-  labels.forEach((l, i) => onClick(s, i + 1, () => {
-    arrow(s, M + 6.55, cp.ys[i], M + 7.05, cp.ys[i], P.dim);
-    text(s, l, { x: M + 7.2, y: cp.ys[i] - 0.38, w: 4.95, h: 0.76, fontSize: 21, valign: 'middle' });
-  }));
-  onClick(s, 6, () => R.banner(K, s, [{ text: 'Forget ④ and the loop never ends: ', options: { bold: true, color: P.gold } },
-    { text: 'the condition stays True for ever.' }], 6.0, 0.8, 22));
-  addIcon(s, 'info');
-  s.addNotes(`6 clicks: one label per line, then the warning. These four steps are the recipe on the wall and in the activity.
-① The variable needs a value BEFORE the loop, or line 2 has nothing to check (NameError).
-② while, the condition, a colon. Same shape as an if.
-③ The indented lines are the BODY. They run while the condition is True — then Python goes back up to line 2.
-④ Something inside must change code, or the condition can never become False.
-Line 5 isn't indented: it runs once, when the loop ends.
-Ask: "What happens if I delete line 4?" (Infinite loop — they'll do exactly this in Investigate's Break it step.)`);
-}
-
 // ════════════════════════════════════════════════════════════════════════════
-//  Tracing a loop (one-off layout: code on the left; the trace table fills in one check per
-//  click). Each row is one time Python checks the condition; the Printed column, read down, is
-//  the output (the last row's is printed after the loop ends).
+//  Loops in action: watch one run (I do), then short questions instead of trace tables
+//  (Nick, 2026-11-04: trace tables after the example were too complicated and too slow).
 // ════════════════════════════════════════════════════════════════════════════
-const STEPS_LOOP = ['Check the condition', 'True: run the body', 'Back to the top', 'False: carry on'];
-const cell = (t, o = {}) => ({ text: t, options: { fontFace: o.mono ? MONO : BODY, fontSize: 18, color: o.color || P.off,
-  bold: !!o.bold, fill: { color: o.fill || P.charcoal }, align: 'center', valign: 'middle', border: { type: 'solid', color: P.line, pt: 1 } } });
-
-function loopTraceSlide(o) {
-  const s = newSlide('SZ_DARK', o.section, o.title || 'Trace the loop');
-  const cp = codePanel(s, o.code, { x: M, y: 1.7, w: 5.3, size: 20, lh: 0.56 });
-  if (o.typed) {
-    const y = 1.7 + cp.h + 0.25;
-    text(s, [{ text: 'THE USER TYPES   ', options: { fontSize: 13, bold: true, color: P.dim, charSpacing: 2, fontFace: BODY } },
-      { text: o.typed.join('   '), options: { fontFace: MONO, fontSize: 24, bold: true, color: P.str } }],
-      { x: M, y, w: 5.3, h: 0.5, valign: 'middle' });
-  }
-  const tx = 5.95, colW = o.colW, rh = 0.55, tw = colW.reduce((a, b) => a + b);
-  s.addTable([o.cols.map((c, i) => cell(c, { bold: true, fill: P.panel, color: i === 1 ? P.int : P.gold, mono: i > 0 && i < 3 }))],
-    { x: tx, y: 1.7, w: tw, colW, rowH: rh, margin: [0.04, 0.1, 0.04, 0.1] });
-  o.rows.forEach((r, i) => onClick(s, i + 1, () => {
-    const isTrue = r[2] === 'True';
-    s.addTable([r.map((v, j) => cell(v, {
-      mono: j > 0, bold: j === 2,
-      color: j === 0 ? P.muted : j === 1 ? (v.startsWith('"') ? P.str : P.int) : j === 2 ? (isTrue ? P.ok : P.muted) : P.gold,
-    }))], { x: tx, y: 1.7 + rh * (i + 1), w: tw, colW, rowH: rh, margin: [0.04, 0.1, 0.04, 0.1] });
-  }));
-  // Sub-goal strip: the same four steps every time, so students learn the routine.
-  const sy = 6.12, sh = 0.62, iw = 12.13 / STEPS_LOOP.length, bd = 0.36;
-  box(s, { x: M, y: sy, w: 12.13, h: sh, fill: P.panel, r: 0.08 });
-  STEPS_LOOP.forEach((t, i) => {
-    badge(s, i + 1, M + 0.2 + i * iw, sy + (sh - bd) / 2, bd);
-    text(s, t, { x: M + 0.68 + i * iw, y: sy, w: iw - 0.75, h: sh, fontSize: 18, valign: 'middle' });
-  });
-  R.modeChip(K, s, o.mode);
-  addIcon(s, o.mode === 'I DO' ? 'info' : 'practice');
-  if (o.notes) s.addNotes(o.notes);
-  return s;
-}
-
-// ════════════════════════════════════════════════════════════════════════════
-//  Round 1 — a counting loop: I do → We do → You do → answers
-// ════════════════════════════════════════════════════════════════════════════
-const R1 = 'Round 1 — counting';
+const R1 = 'Loops in action';
 
 R.storySoFarSlide(K, {
   section: R1, title: 'Locked In', logLabel: 'AIRLOCK 1',
@@ -332,7 +259,8 @@ const FUEL = ['fuel = 0', 'while fuel < 3:', '    fuel = fuel + 1', '    print(f
   addIcon(s, 'info');
   s.addNotes(`I DO — the whole loop, one line per click. Students just watch; you narrate every click in the same words.
 The gold bar is the line Python is running. The fuel box holds ONE value: each new one replaces the old. The output builds up.
-1 "fuel = 0: put 0 in the box."  2 "Check: is 0 < 3? True, so into the body."  3 "fuel = fuel + 1: 0 + 1 is 1."  4 "print(fuel): 1."
+Before click 1, point at the shape: while, a condition, a colon (like an if); the indented lines are the body.
+1 "fuel = 0: put 0 in the box."  2 "Check: is 0 < 3? True, so into the body."  3 "fuel = fuel + 1: 0 + 1 is 1. This line changes fuel: without it, 0 < 3 is True for ever."  4 "print(fuel): 1."
 5 The gold arrow: "End of the body, so BACK TO THE TOP. Check again: 1 < 3? True."  6–7: 2 and print 2.
 8 "Back up. 2 < 3? True."  9–10: 3 and print 3.
 11 "Back up. 3 < 3? FALSE." Pause here: ask "Which line runs next?" (line 5: Python skips the body and carries on below the loop.)
@@ -340,82 +268,107 @@ The gold bar is the line Python is running. The fuel box holds ONE value: each n
 Common slip to name now: "Doesn't it print 0 first?" No: line 3 adds 1 before line 4 prints.`);
 }
 
-loopTraceSlide({
-  section: R1, mode: 'I DO', title: 'The same run, as a trace table',
-  code: FUEL,
-  cols: ['Check', 'fuel', 'fuel < 3', 'Printed'], colW: [1.05, 1.15, 1.75, 2.55],
-  rows: [['1', '0', 'True', '1'], ['2', '1', 'True', '2'], ['3', '2', 'True', '3'], ['4', '3', 'False', 'Full']],
-  notes: `I DO — the run they just watched, written down. One ROW for every time Python checks the condition on line 2. The four steps (the strip at the bottom) are the same every time.
-Click 1 — "fuel is 0. Is 0 < 3? True. Run the body: fuel becomes 1, print 1. Back to the top."
-Click 2 — "fuel is 1. 1 < 3? True. fuel becomes 2, print 2." Click 3 — "2 < 3, True. fuel becomes 3, print 3."
-Click 4 — "fuel is 3. 3 < 3? FALSE. Carry on after the loop: Full."
-Read the Printed column down: that's the output. The fuel column shows the value at each CHECK (before the body changes it).
-This counting shape is next lesson's for loop in disguise.`,
-});
+// Which line runs next? (one-off, We do): the keypad loop. Each question is a click (the gold bar = the
+// line that has just run, plus what's in code), then a click for the answer (the next line outlined in
+// green, an arrow when Python jumps, and why). Each question fades out when the next one starts.
+const KEYPAD = ['code = input("Code: ")', 'while code != "4271":', '    print("ACCESS DENIED")', '    code = input("Code: ")',
+  'print("Airlock open")'];
+{
+  const s = newSlide('SZ_DARK', R1, 'Which line runs next?');
+  const cx = 1.35, cw = 6.4;
+  const cp = codePanel(s, KEYPAD, { x: cx, y: 1.7, w: cw, size: 22, lh: 0.7 });
+  K.varBox(s, { name: 'code', type: 'str', value: '', x: 8.2, y: 1.95, w: 2.6, h: 1.0 });
+  box(s, { x: 8.2, y: 3.35, w: 4.53, h: 2.15, fill: P.panel, line: P.line, r: 0.08 });
+  text(s, 'NEXT LINE', { x: 8.45, y: 3.5, w: 3, h: 0.3, fontSize: 13, bold: true, color: P.dim, charSpacing: 2 });
+  const qs = [
+    { line: 1, mem: '"1234"', next: 2, why: 'The loop starts: check the condition' },
+    { line: 2, mem: '"1234"', next: 3, why: [{ text: '"1234" != "4271"', options: { fontFace: MONO, bold: true } },
+      { text: ' is True: into the body' }] },
+    { line: 4, mem: '"4271"', next: 2, why: 'End of the body: back to the top' },
+    { line: 2, mem: '"4271"', next: 5, why: [{ text: '"4271" != "4271"', options: { fontFace: MONO, bold: true } },
+      { text: ' is False: skip the body' }] },
+  ];
+  const top = (n) => cp.ys[n - 1] - cp.lh / 2;
+  qs.forEach((q, i) => {
+    const ask = 2 * i + 1, ans = ask + 1, gone = i < qs.length - 1 ? ask + 2 : undefined;
+    onClick(s, ask, () => {
+      s.addShape(K.pres.shapes.RECTANGLE, { x: cx + 0.06, y: top(q.line), w: cw - 0.12, h: cp.lh,
+        fill: { color: P.gold, transparency: 82 }, line: { color: P.gold, width: 2 } });
+      text(s, q.mem, { x: 8.3, y: 2.15, w: 2.4, h: 0.75, fontFace: MONO, fontSize: 30, color: P.off, align: 'center', valign: 'middle' });
+    }, gone);
+    onClick(s, ans, () => {
+      s.addShape(K.pres.shapes.RECTANGLE, { x: cx + 0.06, y: top(q.next), w: cw - 0.12, h: cp.lh,
+        fill: { type: 'none' }, line: { color: P.ok, width: 2.5 } });
+      if (Math.abs(q.next - q.line) > 1) {       // a jump: round the left of the code, from this line to the next
+        const lx = cx - 0.4, y1 = cp.ys[q.line - 1], y2 = cp.ys[q.next - 1];
+        s.addShape(K.pres.shapes.LINE, { x: lx, y: y1, w: cx - lx, h: 0, line: { color: P.ok, width: 2.5 } });
+        s.addShape(K.pres.shapes.LINE, { x: lx, y: Math.min(y1, y2), w: 0, h: Math.abs(y2 - y1), line: { color: P.ok, width: 2.5 } });
+        arrow(s, lx, y2, cx, y2, P.ok);
+      }
+      text(s, String(q.next), { x: 8.45, y: 3.8, w: 4.0, h: 0.8, fontFace: MONO, fontSize: 44, bold: true, color: P.ok, valign: 'middle' });
+      text(s, q.why, { x: 8.45, y: 4.6, w: 4.05, h: 0.8, fontSize: 19, color: P.off, valign: 'middle' });
+    }, gone);
+  });
+  R.banner(K, s, [{ text: 'The gold line has just run. ', options: { bold: true, color: P.gold } },
+    { text: 'On your board: the number of the line that runs next.' }], 6.0, 0.75, 22);
+  R.modeChip(K, s, 'WE DO');
+  addIcon(s, 'practice');
+  s.addNotes(`WE DO — the airlock keypad, the same program as today's activity. 8 clicks: a question, then its answer, four times.
+Each question: the gold line has JUST run, and the box shows what's in code. Boards up with a line number, THEN click for the answer.
+Q1 (line 1 ran, they typed 1234) → line 2: the loop starts by checking the condition.
+Q2 (line 2, code is "1234") → line 3: "1234" != "4271" is True, so into the body.
+Q3 (line 4 ran, they typed 4271) → line 2, NOT line 5: the end of the body always goes back to the top. This is the one most of the class gets wrong.
+Q4 (line 2, code is "4271") → line 5: False, so Python skips the whole body.
+Follow-up: "How many times did the program ASK?" (twice here: line 1 and line 4.) The activity's Predict asks exactly this.`);
+}
 
-loopTraceSlide({
-  section: R1, mode: 'WE DO',
-  code: ['oxygen = 10', 'while oxygen > 7:', '    oxygen = oxygen - 1', '    print(oxygen)', 'print("Refill")'],
-  cols: ['Check', 'oxygen', 'oxygen > 7', 'Printed'], colW: [1.05, 1.3, 1.85, 2.3],
-  rows: [['1', '10', 'True', '9'], ['2', '9', 'True', '8'], ['3', '8', 'True', '7'], ['4', '7', 'False', 'Refill']],
-  notes: `WE DO — students answer each row on boards BEFORE you click.
-For each row ask: "What's in oxygen? True or False? What's printed?" Boards up → click.
-Row 1: 10 > 7 True → oxygen becomes 9, print 9 (it prints AFTER the subtraction, so 9, not 10).
-Row 4: 7 > 7 is False (boundary again: 7 is not MORE than 7) → Refill.
-Common mistakes: printing 10 first (line 3 runs before line 4), or printing 6 (forgetting the check is at the top).`,
-});
-
-const YOU_1 = [
-  { code: ['n = 1', 'while n <= 3:', '    print(n)', '    n = n + 1'], output: ['1', '2', '3'],
-    why: [{ text: '4 <= 3', options: { fontFace: MONO, bold: true } }, { text: ' is False' }] },
-  { code: ['n = 5', 'while n < 5:', '    print(n)', '    n = n + 1', 'print("End")'], output: ['End'],
-    why: [{ text: '5 < 5', options: { fontFace: MONO, bold: true } }, { text: ' at once' }] },
-  { code: ['n = 0', 'while n < 6:', '    n = n + 2', 'print(n)'], output: ['6'],
-    why: [{ text: 'print', options: { fontFace: MONO, bold: true } }, { text: ' is not in the loop' }] },
+// Your turn: which line runs next? (Deliberate Practice / Feedback): the We do question on three new loops.
+// The gold line has just run and the box shows the variable; the answers outline the next line in green.
+const NEXT3 = [
+  { code: ['n = 1', 'while n <= 3:', '    print(n)', '    n = n + 1', 'print("Launch")'], name: 'n', mem: '3', line: 2, next: 3 },
+  { code: ['hp = 3', 'while hp > 0:', '    print("Hit!")', '    hp = hp - 1', 'print("Game over")'], name: 'hp', mem: '2', line: 4, next: 2 },
+  { code: ['fuel = 5', 'while fuel < 5:', '    print(fuel)', '    fuel = fuel + 1', 'print("Full")'], name: 'fuel', mem: '5', line: 2, next: 5 },
 ];
-R.whatPrintedGridSlide(K, {
-  section: R1, items: YOU_1,
-  notes: `YOU DO — silent, on your own, 4 minutes. Boards up together at the end.
-Stuck? Draw a trace table like the last two slides: one row per check.
-Number 2 is the trap: the condition is checked BEFORE the loop runs even once. Number 3: look at the spaces in front of print.`,
-});
-R.whatPrintedGridSlide(K, {
-  section: R1, items: YOU_1, reveal: true,
-  notes: `Check boards. Most common mistakes:
-1: "1 2 3 4" — after 3 prints, n becomes 4, and 4 <= 3 is False, so it stops.
-2: "5, End" — 5 < 5 is False straight away, so the body NEVER runs. A while can run zero times.
-3: "2 4 6" — print(n) isn't indented, so it's not in the loop: it runs once, after the loop, when n is 6.
-If most of the class got 2 or 3 wrong, trace one more together before Round 2.`,
-});
-
-// ════════════════════════════════════════════════════════════════════════════
-//  Round 2 — a loop that asks: I do → We do
-// ════════════════════════════════════════════════════════════════════════════
-const R2 = 'Round 2 — input()';
-
-loopTraceSlide({
-  section: R2, mode: 'I DO', typed: ['1234', '0000', '4271'],
-  code: ['code = input("Code: ")', 'while code != "4271":', '    print("ACCESS DENIED")', '    code = input("Code: ")',
-    'print("Airlock open")'],
-  cols: ['Check', 'code', 'code != "4271"', 'Printed'], colW: [0.95, 1.15, 2.4, 2.25],
-  rows: [['1', '"1234"', 'True', 'ACCESS DENIED'], ['2', '"0000"', 'True', 'ACCESS DENIED'], ['3', '"4271"', 'False', 'Airlock open']],
-  notes: `I DO — the airlock keypad, the same program as today's activity. Now the variable changes because the USER types something new each time round.
-Click 1 — "Line 1 asks: 1234. Is "1234" != "4271"? Yes, True. ACCESS DENIED, then line 4 asks again: 0000."
-Click 2 — "0000 != 4271? True. ACCESS DENIED, ask again: 4271."
-Click 3 — "4271 != 4271? False. The loop ends: Airlock open."
-Read the Printed column down: two denials for two wrong codes. We don't know in advance how many times it will loop — that's what a while is for.`,
-});
-
-loopTraceSlide({
-  section: R2, mode: 'WE DO', typed: ['40', '48', '42'],
-  code: ['answer = input("6 x 7? ")', 'while answer != "42":', '    print("Not quite")', '    answer = input("6 x 7? ")',
-    'print("Correct!")'],
-  cols: ['Check', 'answer', 'answer != "42"', 'Printed'], colW: [0.95, 1.15, 2.4, 2.25],
-  rows: [['1', '"40"', 'True', 'Not quite'], ['2', '"48"', 'True', 'Not quite'], ['3', '"42"', 'False', 'Correct!']],
-  notes: `WE DO — boards before each click: "What's in answer? True or False? What's printed?"
-Then: "How many times did the program ASK?" (3: once on line 1, twice on line 4.) The activity's Predict asks exactly this.
-Follow-up: "What if they typed 42 first?" (Correct! only — the body never runs.)`,
-});
+function nextSlide(reveal) {
+  const s = newSlide('SZ_DARK', R1, reveal ? 'Which line runs next? — answers' : 'Which line runs next? Your turn');
+  const tw = 3.84, th = 4.25, gx = 0.3, y = 1.7;
+  NEXT3.forEach((it, i) => {
+    const x = M + i * (tw + gx);
+    box(s, { x, y, w: tw, h: th, fill: P.panel, line: P.line, r: 0.08 });
+    badge(s, i + 1, x + 0.15, y + 0.15, 0.4);
+    const cx = x + 0.15, cw = tw - 0.3;
+    const cp = codePanel(s, it.code, { x: cx, y: y + 0.65, w: cw, size: 16, lh: 0.4 });
+    const top = (n) => cp.ys[n - 1] - cp.lh / 2;
+    s.addShape(K.pres.shapes.RECTANGLE, { x: cx + 0.06, y: top(it.line), w: cw - 0.12, h: cp.lh,
+      fill: { color: P.gold, transparency: 82 }, line: { color: P.gold, width: 2 } });
+    K.varBox(s, { name: it.name, type: 'int', value: it.mem, x: x + 0.2, y: y + 3.4, w: 1.7, h: 0.7, size: 24 });
+    text(s, 'NEXT LINE', { x: x + 2.15, y: y + 3.15, w: 1.5, h: 0.3, fontSize: 13, bold: true, color: P.dim, charSpacing: 2 });
+    if (reveal) {
+      s.addShape(K.pres.shapes.RECTANGLE, { x: cx + 0.06, y: top(it.next), w: cw - 0.12, h: cp.lh,
+        fill: { type: 'none' }, line: { color: P.ok, width: 2.5 } });
+      text(s, String(it.next), { x: x + 2.15, y: y + 3.45, w: 1.5, h: 0.65, fontFace: MONO, fontSize: 40, bold: true,
+        color: P.ok, valign: 'middle' });
+    } else text(s, '?', { x: x + 2.15, y: y + 3.45, w: 1.5, h: 0.65, fontFace: MONO, fontSize: 40, bold: true,
+      color: P.dim, valign: 'middle' });
+  });
+  R.banner(K, s, reveal
+    ? [{ text: 'End of the body? ', options: { bold: true, color: P.gold } }, { text: 'Back to the while line. ' },
+      { text: 'False? ', options: { bold: true, color: P.gold } }, { text: 'Skip the body.' }]
+    : [{ text: 'The gold line has just run. ', options: { bold: true, color: P.gold } },
+      { text: 'On your board: the next line number for 1, 2 and 3.' }],
+  6.15, 0.7, 22);
+  if (reveal) addIcon(s, 'feedback');
+  else { K.timer(s, '2 MIN'); R.modeChip(K, s, 'YOU DO', true); addIcon(s, 'practice'); }
+  return s;
+}
+nextSlide(false).addNotes(`YOU DO — silent, 2 minutes. The same question as the keypad, on three new loops.
+The gold line has JUST run; the box shows what's in the variable now. Write three line numbers: 1, 2, 3.
+Boards up together on 3-2-1.`);
+nextSlide(true).addNotes(`Go through any the class split on.
+1 → 3: 3 <= 3 is True (<= includes equal), so into the body.
+2 → 2, NOT 5: line 4 is the end of the body, so Python goes back up to check hp > 0 again. Same slip as the keypad question.
+3 → 5: 5 < 5 is False straight away, so the body is skipped: it runs ZERO times.
+Link: in the activity, the right code first time means "ACCESS DENIED" never prints.`);
 
 // ════════════════════════════════════════════════════════════════════════════
 //  str(): a number back into text (moved here from Lesson 1's Life Support round; the activity's

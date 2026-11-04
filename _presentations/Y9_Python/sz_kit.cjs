@@ -291,7 +291,8 @@ function recallCards(s, questions, reveal) {
       q.opts.forEach((o, j) => {
         const right = reveal && q.a.startsWith('ABC'[j]);
         text(s, [{ text: 'ABC'[j] + '   ', options: { bold: true, color: right ? P.ok : (reveal ? P.gold : P.pillInk) } },
-          { text: o, options: { color: right ? P.ok : (reveal ? P.muted : P.ink), bold: right } }],
+          { text: o, options: { color: right ? P.ok : (reveal ? P.muted : P.ink), bold: right,
+            fontFace: q.optsMono ? MONO : BODY } }],
           { x: ox, y: oy + j * 0.36, w: q.code?.length ? 0.75 : 3.3, h: 0.36, fontSize: 18, valign: 'middle' });
       });
     }

@@ -15,7 +15,7 @@ PowerPoint decks for the Y9 Python unit, themed for the unit's *Station Zero* su
 | `build_template.cjs` | Builds the template deck (re-reads this README for the rules slides) |
 | `build_deck.cjs` | Builds the Lesson 1 deck: copy this file to start a new lesson's deck |
 | `build_L2.cjs` | Builds the Lesson 2 deck |
-| `build_L3.cjs` | Builds the Lesson 3 deck (draws by hand: the selection/iteration flowcharts, the animated "Watch it run" trace, and its loop trace tables, `loopTraceSlide`) |
+| `build_L3.cjs` | Builds the Lesson 3 deck (draws by hand: the selection/iteration flowcharts, the animated "Watch it run" trace, "Which line runs next?" (We do and You do)) |
 | `sz_slides.cjs` | The slide types ("recipes"), one function each |
 | `sz_kit.cjs` | Drawing parts: palette, layouts, code panels, terminals, variable boxes, badges |
 | `clean_icons.py`, `icons/` | The five pillar icons, edges rebuilt from the circle's geometry |
@@ -35,7 +35,7 @@ Close the `.pptx` in PowerPoint first, or the build can't save over it. To check
 
 A render shows every click at once. To check one moment of an animated slide, build with `DECK_CLICK=<n>` (and `DECK_OUT=<somewhere else>.pptx`): every slide is then built as it looks after click n.
 
-**Animation:** `K.onClick(s, k, draw)` fades in what `draw` adds on click k; `K.onClick(s, k, draw, until)` also fades it out again on click `until`. Use that for a highlight that moves from line to line, or a value in a box that gets replaced (L3 slide 11, "Watch it run").
+**Animation:** `K.onClick(s, k, draw)` fades in what `draw` adds on click k; `K.onClick(s, k, draw, until)` also fades it out again on click `until`. Use that for a highlight that moves from line to line, or a value in a box that gets replaced (L3 slide 10, "Watch it run").
 
 **Making a new lesson's deck:** copy `build_deck.cjs` to e.g. `build_L2.cjs`, change the output name, footer and content, and keep the slide order. Every slide is one recipe call with its content and speaker notes. Only draw a slide by hand (as L1 does for slides 14–16) when no recipe fits, and use the kit's parts (`varBox`, `codePanel`, `terminal`, `badge`, `arrow`) so it still matches.
 
@@ -107,4 +107,7 @@ Add new feedback at the bottom, dated. `build_template.cjs` turns this list into
 - **2026-10-22 · Split attention** — Labels go right beside what they label: fit the code panel to the code so no label is a long arrow away, and mark the part a label names in the code itself (gold colons, spaces drawn as dots), repeated in the same colour in the label. For if / else, a green band behind the True block and an amber one behind the False block, running on behind each label (L2 slide 9, "if and else").
 - **2026-10-22 · Pacing** — Get to Predict fast: before the activity, teach only what Predict, Run and Investigate need. Ideas that first appear in Modify go in a short mid-activity stop when the class reaches Modify (L2: = / == and elif), followed by a "Back in" chapter card; a round's You do can move to feedback after the activity (L2's Round 2: two I dos before, You do after).
 - **2026-11-04 · Flowcharts** — Draw selection and iteration as the same flowchart: the program runs straight down (line before → condition → False → next line, under the diamond) and True goes out to the right. The if's True path rejoins below the diamond; the while's goes back up and joins the line above it. Every line meets the next with no gaps (L3 slide 5).
-- **2026-11-04 · Animation** — A new kind of loop gets a clean animated trace before any trace table: a bar steps through the code one line per click, the memory box changes, the output builds up, and an arrow shows each jump back to the top (L3 "Watch it run"). Then the same run as a trace table.
+- **2026-11-04 · Animation** — A new kind of loop gets a clean animated trace before any trace table: a bar steps through the code one line per click, the memory box changes, the output builds up, and an arrow shows each jump back to the top (L3 "Watch it run").
+- **2026-11-04 · Practice** — After the animated example, no trace tables: they were too complicated and too slow for the class (L3 taught only to the We do trace). Use short questions instead: "Which line runs next?" (the gold line has just run; boards with a line number, one per click), then the You do: the same question on three new loops, each card as on the We do (the gold line, the variable box, a line number to write). Keep the You do to three. Every We do slide says on screen what goes on the board.
+- **2026-11-04 · Recap & Recall** — Keep Q3 easy enough that everyone writes something: e.g. a misspelled variable name to correct (`print(scroe)`).
+- **2026-11-04 · No anatomy slide** — Don't put a slide of labels down the side of the code (L3's "The shape of a while loop" was cut): it was five text areas describing what the animated run then shows. Point at the shape before the animated example starts. The activity's worked example covers the recipe.
