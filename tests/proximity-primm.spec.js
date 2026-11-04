@@ -382,6 +382,24 @@ const SCANNER = [
   'else:', '    print("SAFE")',
 ];
 
+test('Make: after a Sensor Ops lockdown, power to the sensors means X dies', async ({ page }) => {
+  await page.addInitScript(p => {
+    localStorage.setItem('sz_story_' + p, '["intro","P","R","I1","I","M1"]');
+    localStorage.setItem('sz_choices', JSON.stringify({ shield: 'pod5', lockdown: 'sensors' }));
+  }, PATH);
+  await openAt(page, { currentStage: 'M2', completedStages: ['P', 'R', 'I', 'M1'] }, { story: true });
+  await expect(page.locator('#m2_choice_report')).toContainText('Chen won’t last');
+  await page.check('input[name="m2_choice"][value="sensors"]');
+  await setCode(page, 'm2_editor', [...SCANNER, 'print("POWER: SENSORS")'].join('\n'));
+  await page.click('#btn_check_m2');
+  await expect(page.locator('#fb_m2')).toHaveClass(/pass/, { timeout: 60000 });
+  await expect(page.locator('#szOverlay')).toHaveClass(/open/, { timeout: 5000 });
+  await expect(page.locator('#szLogFull')).toContainText('flat line');
+  await expect(page.locator('#szReadouts')).toContainText('3 of 5');
+  await page.click('#szContinue');
+  await expect(page.locator('#szCrewPods .crew-pod').nth(2)).toHaveClass(/dead/);
+});
+
 test('Make: a wrong boundary fails on that band, then the right scanner plays the cliffhanger', async ({ page }) => {
   await page.addInitScript(p => {
     localStorage.setItem('sz_story_' + p, '["intro","P","R","I","M1"]');

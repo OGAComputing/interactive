@@ -73,12 +73,19 @@ test('chapter title card shows once, with a two-bullet recap; ?story=off stops i
   await expect(page.locator('#szOverlay')).not.toHaveClass(/open/);
 });
 
-test('the recap follows Proximity: X is still critical on its bad path', async ({ page }) => {
+test('the recap follows Proximity: X died on its bad path', async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem('sz_choices', JSON.stringify({ shield: 'pod3', lockdown: 'sensors', power: 'sensors' })));
   await openAt(page, {}, { story: true });
-  await expect(page.locator('#szPrevFull')).toContainText('Patel is still critical');
-  await expect(page.locator('#szReadouts')).toContainText('4 of 5 · 1 critical');
-  await expect(page.locator('#szCrewPods .crew-pod').nth(4)).toHaveClass(/critical/);
+  await expect(page.locator('#szPrevFull')).toContainText('Patel died');
+  await expect(page.locator('#szReadouts')).toContainText('3 of 5');
+  await expect(page.locator('#szCrewPods .crew-pod').nth(4)).toHaveClass(/dead/);
+});
+
+test('X also died if Proximity\'s Sensor Ops lockdown was never followed by Make', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('sz_choices', JSON.stringify({ shield: 'pod5', lockdown: 'sensors' })));
+  await openAt(page, {}, { story: true });
+  await expect(page.locator('#szPrevFull')).toContainText('Chen died');
+  await expect(page.locator('#szCrewPods .crew-pod').nth(2)).toHaveClass(/dead/);
 });
 
 // ─── Predict ─────────────────────────────────────────────────────────────────

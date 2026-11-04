@@ -2123,13 +2123,14 @@ print("Tank full after " + str(count) + " readings")</pre>
      ═══════════════════════════════════════════════════════════════════════ */
   // ── Chapter 2's choices (Proximity). A missing choice falls back to its default there: the
   // heaters save Pod 5, the Cryo Bay is locked down, and the power goes to the better call.
-  // X = the crew member the heaters skipped; they are still critical only on Proximity's bad
-  // path (Sensor Ops locked down, then the power sent to the sensors). Nothing here changes X.
+  // X = the crew member the heaters skipped. X died on Proximity's bad path: Sensor Ops locked
+  // down, and the power never sent to the pods (sent to the sensors, or Make never reached; a
+  // missing lockdown means the Cryo Bay, so an absent student never loses X). Nothing here changes X.
   const shield = c => c.shield === 'pod3' ? 'pod3' : 'pod5';
   const X = c => shield(c) === 'pod5' ? { pod: 3, name: 'Chen' } : { pod: 5, name: 'Patel' };
   const lockdown = c => c.lockdown === 'sensors' ? 'sensors' : 'cryo';
   const power = c => c.power === 'sensors' || c.power === 'pods' ? c.power : lockdown(c) === 'cryo' ? 'sensors' : 'pods';
-  const xCritical = c => lockdown(c) === 'sensors' && power(c) !== 'pods';
+  const xDead = c => lockdown(c) === 'sensors' && c.power !== 'pods';
   const sensorsLost = c => lockdown(c) === 'cryo' && power(c) === 'pods';
 
   // ── This chapter's choices ──
@@ -2157,8 +2158,8 @@ print("Tank full after " + str(count) + " readings")</pre>
     ? { label: 'Contact', value: STAKE.cryo[i], level: 'danger' }
     : { label: 'Cryo Bay', value: STAKE.fast[i], level: 'danger' };
 
-  // "Crew alive" readout: Hale is gone; nobody dies in this chapter.
-  const crewAlive = c => ({ label: 'Crew alive', value: '4 of 5' + (xCritical(c) ? ' · 1 critical' : ''), level: xCritical(c) ? 'warn' : 'ok' });
+  // "Crew alive" readout: Hale is gone, and X too if Proximity lost them; nobody dies in this chapter.
+  const crewAlive = c => ({ label: 'Crew alive', value: xDead(c) ? '3 of 5' : '4 of 5', level: xDead(c) ? 'danger' : 'ok' });
 
   // Rooms as Proximity left them (sensors lost on one path), plus the airlock.
   const ROOMS_NOW = (c, extra = {}) => ({ cryo: 'online', life: 'unstable', sensors: sensorsLost(c) ? 'unstable' : 'online', core: 'sealed', airlock: 'sealed', ...extra });
@@ -2166,9 +2167,9 @@ print("Tank full after " + str(count) + " readings")</pre>
   // The "Previously…" recap: Hale's story in one line, then how Proximity ended.
   const HALE_RECAP = 'Hale died three days ago. Something now walks the station in his body, and his last log said: “Don’t trust WARD—”';
   const INTRO_VARIANTS = {};
-  for (const s of ['pod3', 'pod5']) for (const end of ['ok', 'critical', 'lost']) {
-    const c = { shield: s, ...(end === 'critical' ? { lockdown: 'sensors', power: 'sensors' } : end === 'lost' ? { lockdown: 'cryo', power: 'pods' } : {}) };
-    const second = end === 'critical' ? `You got the sensors working, but ${X(c).name} is still critical. Then WARDEN locked the airlock and changed the code.`
+  for (const s of ['pod3', 'pod5']) for (const end of ['ok', 'dead', 'lost']) {
+    const c = { shield: s, ...(end === 'dead' ? { lockdown: 'sensors', power: 'sensors' } : end === 'lost' ? { lockdown: 'cryo', power: 'pods' } : {}) };
+    const second = end === 'dead' ? `No power reached Pod ${X(c).pod} in time, and ${X(c).name} died. Then WARDEN locked the airlock and changed the code.`
       : end === 'lost' ? 'The crew are safe, but the sensors were smashed. Then WARDEN locked the airlock and changed the code.'
       : 'You got the proximity sensors working. Then WARDEN locked the airlock and changed the code.';
     INTRO_VARIANTS[`${s}_${end}`] = {
@@ -2182,7 +2183,7 @@ print("Tank full after " + str(count) + " readings")</pre>
       map: { you: 'airlock', objective: 'airlock', threat: 'corridor', rooms: ROOMS_NOW(c) },
     };
   }
-  const introEnd = c => xCritical(c) ? 'critical' : sensorsLost(c) ? 'lost' : 'ok';
+  const introEnd = c => xDead(c) ? 'dead' : sensorsLost(c) ? 'lost' : 'ok';
 
   // The crisis report (I1).
   const I1_VARIANTS = {
@@ -2307,12 +2308,12 @@ print("Tank full after " + str(count) + " readings")</pre>
     chapter:   'Chapter 3 — Locked In',
     topic:     'While loops',
     objective: 'Get through the airlock',
-    // Header crew readout. Hale has been compromised since Wake Up, and X stays critical only on
-    // Proximity's bad path. On the warm path the crisis puts you at risk (hunted) until the
+    // Header crew readout. Hale has been compromised since Wake Up, and X is dead on Proximity's
+    // bad path. On the warm path the crisis puts you at risk (hunted) until the
     // cliffhanger (M2), which leaves you injured if the seals stayed on your override.
     crew: (c, seen) => {
       const out = { 2: 'compromised' };
-      if (xCritical(c)) out[X(c).pod] = 'critical';
+      if (xDead(c)) out[X(c).pod] = 'dead';
       if (heat(c) === 'cryo' && ['I1', 'I', 'M1', 'M2'].some(k => seen.includes(k))) {
         if (!seen.includes('M2')) out[4] = 'hunted';
         else if (seals(c) === 'override') out[4] = 'injured';

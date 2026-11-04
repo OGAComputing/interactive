@@ -2165,17 +2165,20 @@ else:
   // choice means the Cryo Bay.
   // Choice 2 (Make): where the last of the power goes. The better call recovers choice 1: the
   // sensors after a Cryo Bay lockdown (X is warming anyway), the pods after a Sensor Ops lockdown
-  // (X is failing). A missing choice means the better call.
+  // (X is failing). A missing choice means the better call, except for X (below).
   const lockdown = c => c.lockdown === 'sensors' ? 'sensors' : 'cryo';
   const power = c => c.power === 'sensors' || c.power === 'pods' ? c.power : lockdown(c) === 'cryo' ? 'sensors' : 'pods';
-  const xCritical = c => lockdown(c) === 'sensors' && power(c) !== 'pods';
+  // X dies if the Sensor Ops lockdown is never fixed: the power went to the sensors, or Make was
+  // never reached (2026-11-04). A missing lockdown means the Cryo Bay, so only a student who made
+  // the risky call can lose X; an absent one never does.
+  const xDead = c => lockdown(c) === 'sensors' && c.power !== 'pods';
   const sensorsLost = c => lockdown(c) === 'cryo' && power(c) === 'pods';
 
   // The stake readout: X's heart rate, worse at each report until the cliffhanger settles it.
   const stake = (x, value, level = 'danger') => ({ label: `Pod ${x.pod} · ${x.name}`, value, level });
 
-  // "Crew alive" readout: Hale is gone; nobody else dies in this chapter.
-  const crewAlive = crit => ({ label: 'Crew alive', value: '4 of 5' + (crit ? ` · ${crit} critical` : ''), level: crit ? 'warn' : 'ok' });
+  // "Crew alive" readout: Hale is gone, and X too on the bad path.
+  const crewAlive = (crit, dead = 0) => ({ label: 'Crew alive', value: `${4 - dead} of 5` + (crit ? ` · ${crit} critical` : ''), level: dead ? 'danger' : crit ? 'warn' : 'ok' });
 
   // The "Previously…" recap: two short bullets that retell Wake Up (most students never reached
   // its log or its cliffhanger) and give the reason to come here. The readouts say life support
@@ -2268,7 +2271,7 @@ else:
     cryo_sensors: x => `You restart the sensors on backup power, and the smashed array flickers back to life. In the sealed Cryo Bay, ${x.name}’s pod has warmed through, and the heart rate is steady again. For one frame the array catches a figure in Hale’s overalls in the ring corridor, moving wrong.`,
     cryo_pods: x => `The power reaches the pods, and ${x.name}’s heart rate settles, but the smashed sensors stay dark. The last camera still working catches one frame: a figure in Hale’s overalls, moving wrong.`,
     sensors_pods: x => `Power floods the Cryo Bay, and ${x.name}’s heart rate climbs back up. On the proximity screen, for one frame, a figure in Hale’s overalls walks past the Cryo Bay door, moving wrong.`,
-    sensors_sensors: x => `The sensors get the power, so you can watch it, but nothing reaches Pod ${x.pod}, and ${x.name}’s alarm keeps sounding. For one frame the screen shows a figure in Hale’s overalls, moving wrong.`,
+    sensors_sensors: x => `The sensors get the power, so you can watch it, but nothing reaches Pod ${x.pod}. ${x.name}’s heart rate slows, then the alarm stops: a flat line. For one frame the screen shows a figure in Hale’s overalls, moving wrong.`,
   };
   const SENSOR_STATE = {
     cryo_sensors: { label: 'Proximity sensors', value: 'Backup power', level: 'warn' },
@@ -2278,13 +2281,13 @@ else:
   };
   const M2_VARIANTS = {};
   for (const l of ['cryo', 'sensors']) for (const pw of ['sensors', 'pods']) for (const s of ['pod3', 'pod5']) {
-    const c = { lockdown: l, power: pw, shield: s }, x = X(c), crit = xCritical(c);
+    const c = { lockdown: l, power: pw, shield: s }, x = X(c), dead = xDead(c);
     M2_VARIANTS[`${l}_${pw}_${s}`] = {
       log: POWER_LOG[`${l}_${pw}`](x) + ' ' + AIRLOCK,
       readouts: [
         SENSOR_STATE[`${l}_${pw}`],
-        crit ? stake(x, '22 bpm · critical') : stake(x, 'Stable', 'ok'),
-        crewAlive(crit ? 1 : 0),
+        dead ? stake(x, '0 bpm · flatline') : stake(x, 'Stable', 'ok'),
+        crewAlive(0, dead ? 1 : 0),
         { label: 'Airlock', value: 'Locked by WARDEN', level: 'danger' },
       ],
       impact: {
@@ -2332,11 +2335,13 @@ else:
     objective: 'Restore the proximity sensors',
     // Header crew readout. Hale has been compromised since Wake Up. Until the crisis (I1), Patel
     // is critical only if Wake Up locked it in with him. From the crisis on, X (the pod the
-    // heaters skipped) is critical, and the other is stable; the cliffhanger (M2) settles X.
+    // heaters skipped) is critical, and the other is stable; the cliffhanger (M2) settles X:
+    // stable, or dead after a Sensor Ops lockdown without power to the pods.
     crew: (c, seen) => {
       const out = { 2: 'compromised' };
       if (!['I1', 'I', 'M1', 'M2'].some(k => seen.includes(k))) { if (shutIn(c)) out[5] = 'critical'; return out; }
-      if (!seen.includes('M2') || xCritical(c)) out[X(c).pod] = 'critical';
+      if (!seen.includes('M2')) out[X(c).pod] = 'critical';
+      else if (xDead(c)) out[X(c).pod] = 'dead';
       return out;
     },
     beats: {
@@ -3330,7 +3335,7 @@ const MAKE_CHOICE = {
   story: 'power',   // stored as sz_choices.power
   req: c => `Add one more line at the very end, not indented, that prints <code>${POWER_CHOICES[c]}</code>`,
   report: (lockdown, x) => '<b>Last report:</b> ' + (lockdown === 'sensors'
-    ? `it got into the Cryo Bay, and Pod ${x.pod} · ${x.name} is critical. The sensors are still working.`
+    ? `it got into the Cryo Bay, and Pod ${x.pod} · ${x.name} is critical. Without power, ${x.name} won’t last. The sensors are still working.`
     : `the sensor array is smashed, but ${x.name}’s pod is sealed in and warming by itself: the pods don’t need the power.`),
 };
 
