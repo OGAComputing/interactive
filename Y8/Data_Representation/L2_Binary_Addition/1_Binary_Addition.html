@@ -1,0 +1,1598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- ACTIVITY
+title:  Binary Addition
+type:   Practice
+stars:  2
+desc:   Add binary numbers in columns, right to left, carrying 1s: the four rules, 4-bit sums with the help fading, the final carry, then 8 bits.
+color:  indigo
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Binary Addition — Year 8</title>
+
+<link rel="stylesheet" href="../../../shared.css">
+
+<style>
+  /* ── Activity header ─────────────────────────────────── */
+
+  .header {
+    background: var(--surface);
+    padding: 18px 28px 14px;
+    border-bottom: 4px solid var(--accent);
+  }
+  .header-title {
+    font-family: var(--font-head);
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-inv);
+  }
+  .header-sub {
+    font-size: 0.85rem;
+    color: var(--accent-light);
+    margin-top: 3px;
+  }
+  .header-q {
+    font-size: 0.9rem;
+    color: #fff;
+    margin-top: 6px;
+  }
+  .progress-row {
+    display: flex;
+    gap: 6px;
+    margin-top: 10px;
+    align-items: center;
+  }
+  .pdot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--surface-dim);
+    border: 2px solid #3a5a7a;
+    transition: background 0.3s, border-color 0.3s;
+  }
+  .pdot.correct { background: var(--green);  border-color: var(--green); }
+  .pdot.gold    { background: var(--gold);   border-color: var(--gold);  }
+
+  /* ── Glow overlay (green = green tier, gold = gold tier) ── */
+
+  #glow-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none; z-index: 0; opacity: 0;
+    transition: opacity 1.8s ease;
+  }
+  #glow-overlay.gold  { background: radial-gradient(ellipse at 50% 55%, rgba(251,191,36,.24) 0%, transparent 65%); }
+  #glow-overlay.green { background: radial-gradient(ellipse at 50% 55%, rgba(16,185,129,.20) 0%, transparent 65%); }
+  #glow-overlay.show  { opacity: 1; }
+
+  /* ── Tab bar (underline style — Year 8 standard) ─────── */
+
+  .tab-bar {
+    display: flex;
+    background: var(--surface-mid);
+    padding: 0 20px;
+    gap: 2px;
+    overflow-x: auto;
+    border-bottom: 1px solid #2a4060;
+  }
+  .tab {
+    padding: 10px 16px 9px;
+    border: none;
+    background: transparent;
+    color: #B8CCE0;
+    font-family: var(--font-body);
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: color 0.15s, border-color 0.15s;
+    white-space: nowrap;
+    user-select: none;
+  }
+  .tab:hover          { color: var(--accent-light); }
+  .tab.active         { color: var(--text-inv); border-bottom-color: var(--accent); }
+  .tab.done           { color: var(--gold);     border-bottom-color: var(--gold); }
+  .tab .lock { font-size: .8em; margin-left: 4px; }
+
+  /* ── Panels ──────────────────────────────────────────── */
+
+  .panel {
+    display: none;
+    position: relative;
+    z-index: 1;
+    padding: 28px 20px 48px;
+    max-width: 920px;
+    margin: 0 auto;
+  }
+  .panel.active { display: block; animation: ac-fade-in .2s ease; }
+
+  .task-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 16px;
+  }
+  .task-badge {
+    width: 42px; height: 42px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-head);
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-inv);
+    background: var(--accent);
+    flex-shrink: 0;
+  }
+  .task-title {
+    font-family: var(--font-head);
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--surface);
+  }
+
+  .goal {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    background: #fff;
+    border-left: 4px solid var(--accent);
+    padding: 10px 14px;
+    border-radius: 0 6px 6px 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--surface);
+    margin-bottom: 18px;
+  }
+
+  /* The method, as a list students can fold away once they know it */
+  details.method {
+    background: #fff;
+    border: 1.5px solid #D5E3F0;
+    border-radius: 10px;
+    padding: 10px 16px;
+    margin-bottom: 18px;
+  }
+  details.method summary { cursor: pointer; font-weight: 700; color: var(--accent-dark); }
+  details.method ol, details.method ul { margin: 8px 0 2px 22px; line-height: 1.6; }
+  details.method p { margin: 8px 0 2px; line-height: 1.5; }
+  .rules { font-family: var(--font-mono); font-weight: 700; color: var(--surface); }
+  .keyword {
+    background: #EEF0FF; border-radius: 8px; padding: 8px 12px; margin-top: 10px;
+  }
+
+  .feedback {
+    min-height: 1.4em;
+    font-size: 0.92rem;
+    font-weight: 600;
+    margin-top: 10px;
+  }
+  .feedback.correct { color: var(--green-dark); }
+  .feedback.wrong   { color: var(--red); animation: ac-shake 0.35s ease; }
+
+  .q-card {
+    border: 2px solid #D5E3F0;
+    border-radius: 12px;
+    padding: 18px;
+    margin: 10px 0;
+    background: #fff;
+    transition: border-color .25s, background .25s;
+  }
+  .q-card > h3 {
+    font-family: var(--font-head);
+    font-size: 1.1rem;
+    color: var(--surface);
+    margin-bottom: 14px;
+  }
+  .q-card.is-wrong { border-color: var(--red);   background: var(--red-bg); }
+  .q-card.is-right { border-color: var(--green); background: var(--green-bg); animation: success-pulse 0.8s ease forwards; }
+  @keyframes success-pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(16,185,129,0); }
+    40%  { box-shadow: 0 0 0 8px rgba(16,185,129,.45); }
+    70%  { box-shadow: 0 0 0 14px rgba(16,185,129,.18); }
+    100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .q-card.is-right { animation: none; }
+  }
+
+  .big-num {
+    font-family: var(--font-mono);
+    font-size: 1.35em;
+    font-weight: 700;
+    color: var(--accent-dark);
+    letter-spacing: .06em;
+  }
+
+  .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 12px; }
+
+  /* Hidden copy of each task's answers, so the Classroom evidence report can read them */
+  .ev { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; left: 0; top: 0; }
+
+  /* ── Step header (ladder tasks) and chain header ─────── */
+
+  .step-head {
+    display: flex; justify-content: space-between; align-items: center; gap: 10px;
+    font-size: .85rem; font-weight: 700; color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .pips { display: flex; gap: 5px; }
+  .pip { width: 22px; height: 8px; border-radius: 4px; background: #D5E3F0; }
+  .pip.on  { background: var(--green); }
+  .pip.now { background: var(--accent); }
+  .help {
+    font-size: .95rem; color: var(--text);
+    background: #EEF0FF; border-radius: 8px; padding: 9px 14px; margin-bottom: 6px;
+  }
+
+  /* ── Column sums (carry row / two numbers / answer) ──── */
+
+  .bgrid {
+    display: grid;
+    gap: 6px;
+    align-items: center;
+    justify-content: start;
+    margin: 4px 0 14px;
+  }
+  .bgrid .rl {
+    font-size: .8rem; font-weight: 700; color: var(--muted);
+    text-transform: uppercase; letter-spacing: .05em; padding-right: 6px;
+    text-align: right;
+  }
+  .bgrid .rl.op { font-family: var(--font-mono); font-size: 1.3rem; color: var(--surface); }
+  .bgrid .colhead { font-size: .72rem; font-weight: 700; color: var(--muted); text-align: center; line-height: 1.2; }
+  .sum-line { grid-column: 2 / -1; height: 3px; background: var(--surface); border-radius: 2px; }
+  .cell, .cell-in {
+    height: 46px; width: 100%;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 8px;
+    font-family: var(--font-mono); font-size: 1.15rem; font-weight: 700;
+    text-align: center;
+  }
+  .cell.bit  { background: #F3F7FB; border: 2px solid #D5E3F0; color: var(--surface); }
+  .cell.none { background: transparent; }
+  .cell.carry { height: 34px; font-size: 1rem; color: var(--accent-dark); }
+  .cell.carry.lit { background: #EEF0FF; border: 2px solid var(--accent); }
+  .cell-in {
+    border: 2px solid #B9CCE0; background: #fff; color: var(--surface);
+    padding: 0 2px;
+  }
+  .cell-in:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-light); }
+  button.bit-toggle, button.carry-toggle {
+    border: 2px dashed #8FA9C4; background: #fff; color: var(--surface); cursor: pointer;
+  }
+  button.carry-toggle { color: var(--accent-dark); }
+  button.carry-toggle.slim { height: 34px; font-size: 1rem; }
+  button.bit-toggle.set, button.carry-toggle.set { border-style: solid; border-color: var(--accent); }
+  button.carry-toggle.lit { box-shadow: 0 0 0 3px var(--accent-light); border-color: var(--accent); }
+  button.bit-toggle:focus-visible, button.carry-toggle:focus-visible { outline: 3px solid var(--accent-light); }
+  .is-right.cell-in, .is-right.bit-toggle, .is-right.carry-toggle, .is-right.num-in { border-color: var(--green); background: var(--green-bg); }
+  .is-wrong.cell-in, .is-wrong.bit-toggle, .is-wrong.carry-toggle, .is-wrong.num-in { border-color: var(--red);   background: var(--red-bg); }
+
+  .num-in {
+    width: 110px; height: 44px; padding: 0 10px;
+    border: 2px solid #B9CCE0; border-radius: 8px;
+    font-family: var(--font-mono); font-size: 1.15rem; font-weight: 700; color: var(--surface);
+  }
+  .num-in.wide { width: 190px; letter-spacing: .08em; }
+  .num-in:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-light); }
+  .answer-line { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-weight: 600; margin-top: 6px; }
+  .dec-check { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-weight: 600; margin-top: 8px; }
+  .dec-check .num-in { width: 80px; }
+  .tap-note { font-size: .85rem; color: var(--muted); margin: -4px 0 8px; }
+
+  /* ── Checkpoint chains ───────────────────────────────── */
+
+  .cp-bar { height: 10px; background: #D5E3F0; border-radius: 999px; overflow: hidden; margin-bottom: 14px; }
+  .cp-bar div { height: 100%; background: var(--accent); transition: width .3s; }
+  .cp-q { font-family: var(--font-head); font-size: 1.2rem; font-weight: 700; color: var(--surface); margin: 6px 0 14px; line-height: 1.4; }
+  .cp-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  @media (max-width: 560px) { .cp-opts { grid-template-columns: 1fr; } }
+  .cp-opt {
+    padding: 13px 14px; border-radius: 10px; cursor: pointer; text-align: left;
+    background: #fff; border: 2px solid #D5E3F0; color: var(--surface);
+    font-family: var(--font-body); font-size: 1rem; font-weight: 600;
+    transition: border-color .15s, background .15s;
+  }
+  .cp-opt:hover:not(:disabled) { border-color: var(--accent); background: #F4F6FF; }
+  .cp-opt:disabled { cursor: default; }
+  .cp-opt.right { border-color: var(--green); background: var(--green-bg); }
+  .cp-opt.wrong { border-color: var(--red);   background: var(--red-bg); }
+  .cp-msg { min-height: 1.4em; margin-top: 12px; font-weight: 700; font-size: .98rem; }
+  .cp-msg.good { color: var(--green-dark); }
+  .cp-msg.bad  { color: var(--red); }
+  .cp-msg .why { display: block; font-weight: 400; color: var(--text); margin-top: 4px; }
+  .cp-done, .lock-card {
+    text-align: center; padding: 26px 16px; border-radius: 12px;
+    font-family: var(--font-head); font-size: 1.1rem; font-weight: 700;
+  }
+  .cp-done { background: var(--green-bg); border: 2px solid var(--green); color: var(--green-dark); }
+  .cp-done .big { display: block; font-size: 2.4rem; margin-bottom: 6px; }
+  .lock-card { background: #fff; border: 2px dashed #B9CCE0; color: var(--muted); }
+  .lock-card p { font-family: var(--font-body); font-weight: 400; font-size: .95rem; margin-top: 6px; color: var(--text); }
+
+  /* ── Carry Rush (extension game) ─────────────────────── */
+
+  .best-chip {
+    display: none; margin-left: 10px; padding: 3px 12px; border-radius: 999px;
+    background: var(--gold); color: #1a1a1a; font-family: var(--font-head); font-weight: 700; font-size: .85rem;
+  }
+  .best-chip.show { display: inline-block; }
+  .rush {
+    border: 2px solid var(--gold); border-radius: 14px; padding: 22px; color: #fff;
+    background: radial-gradient(ellipse at top, rgba(251,191,36,.16), transparent 60%), var(--surface);
+  }
+  .rush h2 { font-family: var(--font-head); color: var(--gold); letter-spacing: 3px; font-size: 1.3rem; margin-bottom: 8px; }
+  .rush p { line-height: 1.5; }
+  .rush .muted { color: #B8CCE0; }
+  .rush-screen { display: none; }
+  .rush-screen.on { display: block; animation: ac-fade-in .25s; }
+  .rush-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 12px 0 16px; }
+  .rush-stat { background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.15); border-radius: 8px; padding: 8px 10px; text-align: center; }
+  .rush-stat .v { font: 700 1.25rem var(--font-head); }
+  .rush-stat .k { font-size: .68rem; color: #B8CCE0; text-transform: uppercase; letter-spacing: .08em; }
+  .rush-modes { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 16px 0; }
+  .rush-mode { border: 1px solid rgba(255,255,255,.18); border-radius: 10px; padding: 14px; background: rgba(255,255,255,.04); }
+  .rush-mode h3 { font-size: 1rem; margin-bottom: 4px; }
+  .rush-mode p { font-size: .86rem; color: #B8CCE0; margin-bottom: 10px; }
+  .rush-mode input {
+    padding: 8px 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,.3); background: #0d1b2e; color: #fff;
+    font: 700 1rem var(--font-mono); text-transform: uppercase; letter-spacing: 2px; width: 130px;
+  }
+  .rush-sub { font-family: var(--font-head); font-weight: 700; margin: 6px 0 8px; }
+  .badges { display: flex; flex-wrap: wrap; gap: 8px; }
+  .badge { border: 1px solid rgba(255,255,255,.25); border-radius: 20px; padding: 5px 11px; font-size: .8rem; color: #B8CCE0; opacity: .55; }
+  .badge.got { opacity: 1; color: #fff; border-color: var(--gold); background: rgba(251,191,36,.15); }
+  .badge.new { animation: ac-pulse-gold 1.2s 2; }
+  .rush-rules { font-size: .8rem; color: #B8CCE0; margin-top: 14px; }
+
+  .hud { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; font-family: var(--font-head); margin-bottom: 12px; }
+  .hud .score { font-size: 1.6rem; color: var(--gold); font-weight: 700; }
+  .hud .mult { padding: 3px 10px; border-radius: 12px; background: rgba(255,255,255,.12); }
+  .hud .mult.hot { background: var(--gold); color: #111; animation: ac-pulse-gold 1s infinite; }
+  .hud .lvl { font-size: .75rem; letter-spacing: 2px; padding: 3px 10px; border-radius: 12px; border: 1px solid #B8CCE0; color: #B8CCE0; }
+  .hud .lives { font-size: 1.15rem; letter-spacing: 3px; }
+  .hud .hud-best { font-size: .8rem; color: #B8CCE0; }
+  .rush-card { background: #fff; color: var(--surface); border-radius: 12px; padding: 16px 18px; }
+  .rush-card .bgrid { margin: 0 0 10px; }
+  .rush-card .bgrid .rl { min-width: 64px; }   /* the sum stays put when the worked answer adds its row labels */
+  .tbar { height: 8px; border-radius: 4px; background: #D5E3F0; overflow: hidden; margin-bottom: 12px; }
+  .tbar > div { height: 100%; width: 100%; background: var(--gold); }
+  .tbar > div.low { background: var(--red); }
+  .keypad { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  .keypad button { min-width: 54px; height: 44px; font: 700 1.1rem var(--font-mono); border-radius: 8px; border: 2px solid var(--surface); background: #F3F7FB; color: var(--surface); cursor: pointer; }
+  .keypad button.go { background: var(--accent); border-color: var(--accent-dark); color: #fff; font-family: var(--font-body); padding: 0 16px; }
+  .verdict { min-height: 3.2em; margin-top: 12px; font-weight: 600; line-height: 1.5; }
+  .verdict .pts { font-family: var(--font-head); color: var(--gold); }
+  .verdict .why { display: block; font-weight: 400; color: #D5E3F0; font-size: .9rem; }
+  .final { text-align: center; }
+  .final .big { font: 700 3rem var(--font-head); color: var(--gold); }
+  .final .rank { font-size: 1.2rem; font-weight: 700; margin: 4px 0; }
+  .final .pb { color: var(--accent-light); font-weight: 700; min-height: 1.4em; }
+  .ladder { list-style: none; margin: 14px auto; max-width: 340px; text-align: left; font-size: .85rem; }
+  .ladder li { display: flex; justify-content: space-between; padding: 4px 10px; border-radius: 6px; color: #B8CCE0; }
+  .ladder li.me { background: rgba(251,191,36,.18); color: #fff; font-weight: 700; }
+  .missed { text-align: left; max-width: 640px; margin: 10px auto; font-size: .86rem; }
+  .missed li { margin: 6px 0 6px 18px; line-height: 1.45; }
+  @media (max-width: 560px) {
+    .rush { padding: 14px 10px; }
+    .rush-stats { grid-template-columns: 1fr 1fr; }
+    .rush-modes { grid-template-columns: 1fr; }
+  }
+
+  /* Phones: 9 columns must fit beside the row labels */
+  @media (max-width: 560px) {
+    .panel { padding: 20px 12px 40px; }
+    .q-card { padding: 14px 10px; }
+    .bgrid { gap: 3px; }
+    .bgrid .rl { font-size: .62rem; padding-right: 2px; letter-spacing: 0; }
+    .cell, .cell-in, .bit-toggle, .carry-toggle { font-size: .95rem; height: 40px; border-radius: 6px; }
+  }
+</style>
+</head>
+
+<body>
+
+<div id="done-banner" class="ac-banner gold">
+  🏆 All tasks complete: you can add binary numbers!
+</div>
+<div id="glow-overlay"></div>
+
+<div class="header">
+  <div class="header-title">Binary Addition</div>
+  <div class="header-sub">Year 8 · Data Representation · Lesson 2<span class="best-chip" id="best-chip" title="Your best Carry Rush score"></span></div>
+  <div class="header-q">❓ How do I add two binary numbers?</div>
+  <div class="progress-row" id="progress-row">
+    <span class="pdot" id="dot-0"></span>
+    <span class="pdot" id="dot-1"></span>
+    <span class="pdot" id="dot-2"></span>
+    <span class="pdot" id="dot-3"></span>
+    <span class="pdot" id="dot-4"></span>
+    <span class="pdot" id="dot-5"></span>
+    <span class="pdot" id="dot-6"></span>
+  </div>
+</div>
+
+<div class="tab-bar" id="tab-bar">
+  <button class="tab active" data-idx="0">1 · Remember Lesson 1</button>
+  <button class="tab" data-idx="1">2 · The four rules</button>
+  <button class="tab" data-idx="2">3 · Add with 4 bits</button>
+  <button class="tab" data-idx="3">4 · The final carry</button>
+  <button class="tab" data-idx="4">5 · No help</button>
+  <button class="tab" data-idx="5">6 · 8 bits<span class="lock" id="lock-5">🔒</span></button>
+  <button class="tab" data-idx="6">7 · Plenary<span class="lock" id="lock-6">🔒</span></button>
+  <button class="tab" data-idx="7">🎮 Carry Rush<span class="lock" id="lock-7">🔒</span></button>
+</div>
+
+<!-- ── Task 1 ───────────────────────────────────────────── -->
+<div class="panel active" id="panel-0">
+  <div class="task-header">
+    <div class="task-badge">1</div>
+    <div class="task-title">Remember Lesson 1</div>
+  </div>
+  <div class="goal">🎯 4 in a row: two conversions and two questions from Lesson 1. Write the headings 8 4 2 1 on paper first. One wrong answer starts you again with new questions.</div>
+  <div id="area-0"></div>
+  <div class="feedback" id="feedback-0"></div>
+  <div class="row"><button class="ac-btn-secondary" id="reset-0" data-action="reset" data-task="0" style="display:none;font-size:0.8rem;">&#8634; Try for Gold</button></div>
+  <input type="text" class="ev" id="ev-0" readonly tabindex="-1" data-title="Task 1 Remember Lesson 1: answers">
+</div>
+
+<!-- ── Task 2 ───────────────────────────────────────────── -->
+<div class="panel" id="panel-1">
+  <div class="task-header">
+    <div class="task-badge">2</div>
+    <div class="task-title">The four rules</div>
+  </div>
+  <div class="goal">🎯 6 in a row: add one column at a time, and two questions about carrying. One wrong answer starts you again.</div>
+  <details class="method" id="method-1" open>
+    <summary>The four rules</summary>
+    <p>Binary addition works like denary column addition: right to left, carrying into the next column. In denary you carry when a column reaches 10. In binary you carry when a column reaches <strong>2</strong>.</p>
+    <ul class="rules">
+      <li>0 + 0 = 0</li>
+      <li>0 + 1 = 1</li>
+      <li>1 + 1 = 0, carry 1 &nbsp;<span style="font-weight:400">(2 in binary is 10)</span></li>
+      <li>1 + 1 + 1 = 1, carry 1 &nbsp;<span style="font-weight:400">(3 in binary is 11)</span></li>
+    </ul>
+    <p class="keyword">🔑 <strong>carry</strong>: when a column adds up to 2 or more, a 1 moves into the next column on the left. Write it above that column and add it in.</p>
+  </details>
+  <div id="area-1"></div>
+  <div class="feedback" id="feedback-1"></div>
+  <div class="row"><button class="ac-btn-secondary" id="reset-1" data-action="reset" data-task="1" style="display:none;font-size:0.8rem;">&#8634; Try for Gold</button></div>
+  <input type="text" class="ev" id="ev-1" readonly tabindex="-1" data-title="Task 2 The four rules: answers">
+</div>
+
+<!-- ── Task 3 ───────────────────────────────────────────── -->
+<div class="panel" id="panel-2">
+  <div class="task-header">
+    <div class="task-badge">3</div>
+    <div class="task-title">Add with 4 bits</div>
+  </div>
+  <div class="goal">🎯 Add two 4-bit numbers. The help fades as you go: from step 3 you write the carries yourself. Tap an answer box to set it: ? → 0 → 1. Tap a carry box to add a carry.</div>
+  <details class="method" id="method-2" open>
+    <summary>The method</summary>
+    <ol>
+      <li>Write the two numbers in columns, one above the other.</li>
+      <li>Start at the <strong>rightmost</strong> column. Add its two bits and any carry above it.</li>
+      <li>Write the answer bit underneath. If the column made 2 or 3, write a <strong>carry 1</strong> above the next column on the left.</li>
+      <li>Move one column left and repeat.</li>
+    </ol>
+  </details>
+  <div id="area-2"></div>
+  <div class="feedback" id="feedback-2"></div>
+  <div class="row"><button class="ac-btn-secondary" id="reset-2" data-action="reset" data-task="2" style="display:none;font-size:0.8rem;">&#8634; Try for Gold</button></div>
+  <input type="text" class="ev" id="ev-2" readonly tabindex="-1" data-title="Task 3 Add with 4 bits: answers">
+</div>
+
+<!-- ── Task 4 ───────────────────────────────────────────── -->
+<div class="panel" id="panel-3">
+  <div class="task-header">
+    <div class="task-badge">4</div>
+    <div class="task-title">The final carry</div>
+  </div>
+  <div class="goal">🎯 When the leftmost column makes a carry, the answer gets one bit longer.</div>
+  <details class="method" id="method-3" open>
+    <summary>The final carry</summary>
+    <ol>
+      <li>Add right to left, carrying as before.</li>
+      <li>If the <strong>leftmost</strong> column makes a carry, there is no column for it. Write it as a <strong>new bit on the left</strong>.</li>
+      <li>So two 4-bit numbers can make a 5-bit answer: 1000 + 1000 = 10000 (8 + 8 = 16).</li>
+    </ol>
+  </details>
+  <div id="area-3"></div>
+  <div class="feedback" id="feedback-3"></div>
+  <div class="row"><button class="ac-btn-secondary" id="reset-3" data-action="reset" data-task="3" style="display:none;font-size:0.8rem;">&#8634; Try for Gold</button></div>
+  <input type="text" class="ev" id="ev-3" readonly tabindex="-1" data-title="Task 4 The final carry: answers">
+</div>
+
+<!-- ── Task 5 ───────────────────────────────────────────── -->
+<div class="panel" id="panel-4">
+  <div class="task-header">
+    <div class="task-badge">5</div>
+    <div class="task-title">No help</div>
+  </div>
+  <div class="goal">🎯 5 additions in a row with nothing on screen to help. Write each sum in columns on paper, with the carries. One wrong answer starts you again with new sums.</div>
+  <div id="area-4"></div>
+  <div class="feedback" id="feedback-4"></div>
+  <div class="row"><button class="ac-btn-secondary" id="reset-4" data-action="reset" data-task="4" style="display:none;font-size:0.8rem;">&#8634; Try for Gold</button></div>
+  <input type="text" class="ev" id="ev-4" readonly tabindex="-1" data-title="Task 5 No help: answers">
+</div>
+
+<!-- ── Task 6 ───────────────────────────────────────────── -->
+<div class="panel" id="panel-5">
+  <div class="task-header">
+    <div class="task-badge">6</div>
+    <div class="task-title">8 bits</div>
+  </div>
+  <div class="goal">🎯 The same method with 8 columns. Line the numbers up, add, then check your answer in denary.</div>
+  <details class="method" id="method-5" open>
+    <summary>Same method, more columns</summary>
+    <ol>
+      <li>If a number is shorter than 8 bits, put <strong>0s on the left</strong> until it has 8. The value doesn't change.</li>
+      <li>Add right to left, writing every carry above the next column.</li>
+      <li>Check: convert both numbers and the answer to denary. The first two add up to the answer.</li>
+    </ol>
+  </details>
+  <div id="area-5"></div>
+  <div class="feedback" id="feedback-5"></div>
+  <div class="row"><button class="ac-btn-secondary" id="reset-5" data-action="reset" data-task="5" style="display:none;font-size:0.8rem;">&#8634; Try for Gold</button></div>
+  <input type="text" class="ev" id="ev-5" readonly tabindex="-1" data-title="Task 6 8 bits: answers">
+</div>
+
+<!-- ── Task 7 ───────────────────────────────────────────── -->
+<div class="panel" id="panel-6">
+  <div class="task-header">
+    <div class="task-badge">7</div>
+    <div class="task-title">Plenary</div>
+  </div>
+  <div class="goal">🎯 5 in a row: 8-bit additions and the big ideas. One wrong answer starts you again.</div>
+  <div id="area-6"></div>
+  <div class="feedback" id="feedback-6"></div>
+  <div class="row"><button class="ac-btn-secondary" id="reset-6" data-action="reset" data-task="6" style="display:none;font-size:0.8rem;">&#8634; Try for Gold</button></div>
+  <input type="text" class="ev" id="ev-6" readonly tabindex="-1" data-title="Task 7 Plenary: answers">
+</div>
+
+<!-- ── Extension: Carry Rush (not scored) ───────────────── -->
+<div class="panel" id="panel-7">
+  <div class="task-header">
+    <div class="task-badge">🎮</div>
+    <div class="task-title">Carry Rush</div>
+  </div>
+  <div id="rush-lock"></div>
+  <div class="rush" id="rush">
+    <!-- Menu -->
+    <div class="rush-screen on" id="rush-menu">
+      <h2>⚡ CARRY RUSH</h2>
+      <p>Sums are coming at you. Type each answer in binary before the timer runs out. Build a streak to multiply your score. Three wrong and you're out.</p>
+      <div class="rush-stats">
+        <div class="rush-stat"><div class="v" id="rush-best">0</div><div class="k">Solo best</div></div>
+        <div class="rush-stat"><div class="v" id="rush-rank">Trainee</div><div class="k">Rank</div></div>
+        <div class="rush-stat"><div class="v" id="rush-streak">0</div><div class="k">Best streak</div></div>
+        <div class="rush-stat"><div class="v" id="rush-runs">0</div><div class="k">Runs played</div></div>
+      </div>
+      <div class="rush-modes">
+        <div class="rush-mode">
+          <h3>🎲 Solo run</h3>
+          <p>New sums every time. Climb the ranks and beat your personal best.</p>
+          <button type="button" class="ac-btn" data-rush="solo">Start solo run</button>
+        </div>
+        <div class="rush-mode">
+          <h3>🏆 Class challenge</h3>
+          <p>Type the code on the board. Everyone with the same code gets the <b>same sums in the same order</b>, so it's a fair race for the top score.</p>
+          <input id="rush-code" maxlength="8" placeholder="CODE" aria-label="Class challenge code" autocomplete="off">
+          <button type="button" class="ac-btn" data-rush="challenge">Start challenge</button>
+          <p class="muted" id="rush-code-best" style="margin-top:8px;font-size:.8rem"></p>
+        </div>
+      </div>
+      <div class="rush-sub">🏅 Badges</div>
+      <div class="badges" id="rush-badges"></div>
+      <p class="rush-rules">Scoring: a right answer scores the level's points plus a speed bonus (the faster, the more), × your streak (×2 at 3 in a row, ×3 at 6, ×4 at 10). The sums grow: 4 bits, then a final carry, then 6 bits, then 8 bits. Type <b>0</b> and <b>1</b> and press <b>Enter</b>. Remember the new bit on the left when there's a final carry.</p>
+    </div>
+
+    <!-- Game -->
+    <div class="rush-screen" id="rush-game">
+      <div class="hud">
+        <div class="score" id="hud-score">0</div>
+        <div class="mult" id="hud-mult">×1</div>
+        <div class="muted">Sum <b id="hud-sum">1</b> · Streak <b id="hud-streak">0</b></div>
+        <div class="lvl" id="hud-lvl">LEVEL 1</div>
+        <div class="lives" id="hud-lives">❤️❤️❤️</div>
+        <div class="hud-best" id="hud-best"></div>
+      </div>
+      <div class="rush-card">
+        <div class="tbar"><div id="tbar"></div></div>
+        <div id="rush-sum"></div>
+        <div class="answer-line">
+          <input class="num-in wide" id="rush-in" maxlength="11" inputmode="numeric" autocomplete="off"
+            aria-label="Your answer in binary" data-title="Carry Rush: current answer">
+        </div>
+        <div class="keypad" aria-hidden="true">
+          <button type="button" data-key="0" tabindex="-1">0</button>
+          <button type="button" data-key="1" tabindex="-1">1</button>
+          <button type="button" data-key="back" tabindex="-1">⌫</button>
+          <button type="button" class="go" data-key="go" tabindex="-1">Go ⏎</button>
+        </div>
+      </div>
+      <div class="verdict" id="verdict" aria-live="polite"></div>
+    </div>
+
+    <!-- Game over -->
+    <div class="rush-screen" id="rush-over">
+      <div class="final">
+        <div class="muted" id="over-mode">SOLO RUN</div>
+        <div class="big" id="over-score">0</div>
+        <div class="rank" id="over-rank"></div>
+        <div class="pb" id="over-pb"></div>
+        <div class="rush-stats">
+          <div class="rush-stat"><div class="v" id="over-sums">0</div><div class="k">Sums faced</div></div>
+          <div class="rush-stat"><div class="v" id="over-acc">0%</div><div class="k">Right</div></div>
+          <div class="rush-stat"><div class="v" id="over-streak">0</div><div class="k">Longest streak</div></div>
+          <div class="rush-stat"><div class="v" id="over-next">—</div><div class="k">To next rank</div></div>
+        </div>
+        <div class="badges" id="over-badges" style="justify-content:center"></div>
+        <ol class="ladder" id="over-ladder"></ol>
+        <div id="over-missed"></div>
+        <div class="row" style="justify-content:center">
+          <button type="button" class="ac-btn" data-rush="again">↻ Play again</button>
+          <button type="button" class="ac-btn ac-btn-secondary" data-rush="menu">Menu</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <input type="text" class="ev" id="ev-rush" readonly tabindex="-1" data-title="Carry Rush (extension game): best scores">
+</div>
+
+<div class="ac-toast" id="toast"></div>
+
+<script src="../../../error-reporter.js"></script>
+<script src="../../../activity-ui.js"></script>
+<script src="../../../classroom.js"></script>
+
+<script type="module">
+import {
+  TASK_COUNT, toBinary,
+  STEP_COUNT, ladderQuestion, checkAdd, checkColumn,
+  checkTyped, formatHint, workingFor, cooldownSeconds,
+  STARTER_LENGTH, drawStarter, starterQuestion,
+  RULES_LENGTH, drawRules, rulesQuestion,
+  NOHELP_LENGTH, drawNoHelp,
+  PLENARY_LENGTH, drawPlenary, plenaryQuestion,
+  optionOrder, addColumns, fullAnswer, addWorking,
+  gameSum, gameLevel, gameTime, gamePoints, multiplier, GAME_LIVES, RANKS, rankFor,
+  GAME_BADGES, runBadges, cleanCode,
+} from './checkers.js';
+
+// ── Activity identity ──────────────────────────────────
+const STORAGE_KEY    = 'y8_datarep_l2_binary_addition';
+const ACTIVITY_TITLE = 'Binary Addition';   // must match <!-- ACTIVITY title: --> above
+
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const CHAINS  = { 0: 'starter', 1: 'rules', 4: 'nohelp', 6: 'plenary' };
+const LADDER_TASKS = [2, 3, 5];
+const UNLOCKED_BY = { 5: 4, 6: 5, 7: 6 };  // 8 bits only after Task 5 (no help); then the plenary; then the game
+const RUSH_TAB = 7;
+
+// ── State (saved on every change) ──────────────────────
+function blankState() {
+  return {
+    seed: Math.random().toString(36).slice(2, 10),   // per-student numbers and order
+    tab: 0,
+    completed:    new Array(TASK_COUNT).fill(false),
+    firstAttempt: new Array(TASK_COUNT).fill(true),
+    passed: [],                                      // tasks ever completed (keeps later tasks open after a gold retry)
+    cp: { 0: { attempt: 0, pos: 0 }, 1: { attempt: 0, pos: 0 }, 4: { attempt: 0, pos: 0 }, 6: { attempt: 0, pos: 0 } },
+    ld: { 2: { step: 0, retry: 0 }, 3: { step: 0, retry: 0 }, 5: { step: 0, retry: 0 } },
+    draft: { 2: {}, 3: {}, 5: {} },                  // answers so far on the current question
+    chainDraft: {},                                  // answer so far in a chain question
+    wait: {},                                        // task → { until, text, why, label }: the wait after a wrong answer (survives a refresh)
+    wrongRun: {},                                    // task → wrong answers in a row (sets the wait: 10, 20, 30 s)
+    log: { 0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] },
+  };
+}
+
+function loadState() {
+  const b = blankState();
+  let s;
+  try { s = JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch (e) {}
+  if (!s || typeof s !== 'object') return b;
+  const merge = (def, got) => Object.fromEntries(Object.entries(def).map(([k, v]) => [k, { ...v, ...got?.[k] }]));
+  return {
+    ...b, ...s,
+    completed:    b.completed.map((_, i) => !!s.completed?.[i]),
+    firstAttempt: b.firstAttempt.map((_, i) => s.firstAttempt?.[i] ?? true),
+    passed: Array.isArray(s.passed) ? s.passed : [],
+    cp: merge(b.cp, s.cp),
+    ld: merge(b.ld, s.ld),
+    draft: merge(b.draft, s.draft),
+    log: Object.fromEntries(Object.keys(b.log).map(k => [k, Array.isArray(s.log?.[k]) ? s.log[k] : []])),
+  };
+}
+
+const state = loadState();
+function save() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
+}
+
+// Each task keeps a short log of what the student answered, for the evidence report.
+function logAnswer(i, line) {
+  state.log[i].push(line);
+  if (state.log[i].length > 16) state.log[i].shift();
+  $('ev-' + i).value = state.log[i].join(' | ');
+}
+
+// ── Tabs ───────────────────────────────────────────────
+function showTab(idx) {
+  // Leaving Carry Rush mid-run ends it (not recorded), so the timer can't take lives in the background.
+  if (idx !== RUSH_TAB && game && !game.over) rushMenu();
+  state.tab = idx;
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', +t.dataset.idx === idx));
+  document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + idx));
+  save();
+}
+$('tab-bar').addEventListener('click', e => {
+  const tab = e.target.closest('.tab');
+  if (tab) showTab(+tab.dataset.idx);
+});
+
+function isLocked(i) {
+  const need = UNLOCKED_BY[i];
+  return need !== undefined && !state.completed[need] && !state.passed.includes(need);
+}
+function renderLocks() {
+  for (const i of Object.keys(UNLOCKED_BY)) $('lock-' + i).style.display = isLocked(+i) ? '' : 'none';
+}
+const LOCK_TEXT = {
+  5: ['Pass Task 5 first', 'Task 5 checks you can add 4-bit numbers with no help. Then you are ready for 8 bits.'],
+  6: ['Pass Task 6 first', 'The plenary has 8-bit additions in it, so finish Task 6 first.'],
+  7: ['Pass the plenary first', 'Finish all 7 tasks to unlock Carry Rush, then race the class for the top score.'],
+};
+const lockHtml = i => `<div class="lock-card">🔒 ${LOCK_TEXT[i][0]}<p>${LOCK_TEXT[i][1]}</p></div>`;
+
+function doneHtml(i, what) {
+  return `<div class="cp-done"><span class="big">${state.firstAttempt[i] ? '🥇' : '🎉'}</span>
+    ${what}${state.firstAttempt[i] ? ', first time' : ''}!</div>`;
+}
+
+// After a wrong answer: show the working and hold the button for 10, 20 then 30 s (wrong answers in a row).
+// The deadline is saved, so a refresh shows the same wait instead of skipping it.
+const waitLeft = i => Math.max(0, Math.ceil(((state.wait[i]?.until || 0) - Date.now()) / 1000));
+
+function msgBad(i, text, why, label) {
+  state.wrongRun[i] = (state.wrongRun[i] || 0) + 1;
+  state.wait[i] = { until: Date.now() + cooldownSeconds(state.wrongRun[i]) * 1000, text, why, label };
+  save();
+  showWait(i);
+}
+
+function showWait(i) {
+  const w = state.wait[i];
+  const box = $('msg-' + i);
+  box.className = 'cp-msg bad';
+  box.innerHTML = `${esc(w.text)}<span class="why">${esc(w.why)}</span>
+    <button type="button" class="ac-btn ac-btn-secondary" disabled style="margin-top:10px">Read the working…</button>`;
+  const btn = box.querySelector('button');
+  const tick = () => {
+    if (!btn.isConnected) return;
+    const left = waitLeft(i);
+    if (left > 0) { btn.textContent = `Read the working… ${left}`; setTimeout(tick, 250); }
+    else { btn.disabled = false; btn.textContent = w.label; btn.focus(); }
+  };
+  tick();
+  btn.onclick = () => {
+    delete state.wait[i];
+    save();
+    CHAINS[i] ? renderChain(i) : renderLadder(i);
+  };
+}
+
+// While a wait is running (e.g. after a refresh), the task shows only the working and the countdown.
+function renderWaiting(i) {
+  if (!state.wait[i]) return false;
+  if (!waitLeft(i)) { delete state.wait[i]; save(); return false; }
+  $('area-' + i).innerHTML = `<div class="cp-msg" id="msg-${i}" role="status"></div>`;
+  showWait(i);
+  return true;
+}
+
+// ── A sum laid out in columns ──────────────────────────
+// Columns: an optional extra one on the left (for a final carry), then one per bit.
+const colPx = width => width === 8 ? 58 : 64;
+const gridStyle = (cols, width) => `grid-template-columns:auto repeat(${cols}, minmax(0, ${colPx(width)}px))`;
+
+function bitCells(bits) {
+  return [...bits].map(c => `<div class="cell bit">${c}</div>`).join('');
+}
+
+// The two numbers stacked, read-only (chains): no carry or answer rows.
+function stackedSum(a, b, width) {
+  return `<div class="bgrid" style="${gridStyle(width, width)}">
+      <span class="rl"></span>${bitCells(toBinary(a, width))}
+      <span class="rl op">+</span>${bitCells(toBinary(b, width))}
+      <div class="sum-line"></div>
+    </div>`;
+}
+
+// ═══════════════ LADDERS (Tasks 3, 4 and 6) ═══════════════
+// One question at a time. A right answer moves on a step (with less help); a wrong one
+// shows the working and gives a new sum at the same step. Wrong answers cost gold.
+const busy = {};
+
+function ladderQ(i) {
+  const s = state.ld[i];
+  return ladderQuestion(i, s.step, state.seed, s.retry);
+}
+
+// The draft belongs to one question; a new question starts with empty boxes.
+function draftFor(i) {
+  const s = state.ld[i];
+  const key = `${s.step}|${s.retry}`;
+  if (state.draft[i].key !== key) state.draft[i] = { key, carries: [], bits: [], extra: '', rowA: [], rowB: [], dec: {} };
+  return state.draft[i];
+}
+
+function stepHead(i, step, label = 'Step') {
+  const n = STEP_COUNT[i];
+  const pips = Array.from({ length: n }, (_, k) => `<span class="pip ${k < step ? 'on' : ''} ${k === step ? 'now' : ''}"></span>`).join('');
+  return `<div class="step-head"><span>${label} ${step + 1} of ${n}</span><span class="pips" aria-hidden="true">${pips}</span></div>`;
+}
+
+function promptFor(q) {
+  if (q.pad) return `Add <span class="big-num">${toBinary(q.a)}</span> and <span class="big-num">${toBinary(q.b)}</span>.`;
+  return `Add <span class="big-num">${q.bitsA}</span> and <span class="big-num">${q.bitsB}</span>.`;
+}
+
+function bodyFor(i, q, d) {
+  const W = q.width;
+  const extraCell = html => q.extra ? html : '';
+  const blank = '<div class="cell none"></div>';
+
+  // Carry row: a box above every column except the rightmost (nothing carries into it).
+  const carryRow = Array.from({ length: W }, (_, k) => {
+    if (k === W - 1) return blank;
+    if (q.carry === 'given') {
+      const c = q.carryIn[k];
+      return `<div class="cell carry ${c ? 'lit' : ''}">${c ? '1' : ''}</div>`;
+    }
+    const v = d.carries[k] ?? '';
+    return `<button type="button" class="cell carry-toggle slim ${v ? 'set' : ''}" data-action="toggle" data-task="${i}" data-field="carries" data-k="${k}"
+      data-part="c${k}" aria-label="Carry above column ${k + 1}: ${v ? '1' : 'none'}">${v}</button>`;
+  }).join('');
+
+  const numRow = (bits, field, part, name) => q.pad
+    ? Array.from({ length: W }, (_, k) => `<input class="cell-in" data-field="${field}" data-k="${k}" data-part="${part}${k}" maxlength="1"
+        inputmode="numeric" autocomplete="off" aria-label="${name}, bit ${k + 1}" data-title="Current question: ${name} bit ${k + 1}"
+        value="${esc(d[field][k] ?? '')}">`).join('')
+    : bitCells(bits);
+
+  const answerRow = Array.from({ length: W }, (_, k) => {
+    const v = d.bits[k] ?? '';
+    return `<button type="button" class="cell bit-toggle ${v ? 'set' : ''}" data-action="toggle" data-task="${i}" data-field="bits" data-k="${k}"
+      data-part="s${k}" aria-label="Answer bit ${k + 1}: ${v || 'not set'}">${v || '?'}</button>`;
+  }).join('');
+  const finalBox = `<button type="button" class="cell carry-toggle ${d.extra ? 'set' : ''} ${q.lightFinal ? 'lit' : ''}" data-action="toggle" data-task="${i}"
+    data-field="extra" data-part="x" aria-label="New bit on the left for a final carry: ${d.extra || 'none'}">${d.extra}</button>`;
+
+  const cols = W + (q.extra ? 1 : 0);
+  const notes = [];
+  if (q.carry === 'write') notes.push('Tap a box in the carry row to write a carry 1 there (tap again to clear it).');
+  if (q.extra) notes.push('The dashed box on the left of the answer is for a final carry. Leave it empty if there isn\'t one.');
+  if (q.pad) notes.push('Type each number as 8 bits in the white boxes first.');
+
+  const dec = q.dec ? `<div class="dec-check">Check in denary:
+      <input class="num-in" data-field="dec" data-sub="a" data-part="da" maxlength="3" inputmode="numeric" autocomplete="off"
+        aria-label="First number in denary" data-title="Current question: first number in denary" value="${esc(d.dec.a ?? '')}"> +
+      <input class="num-in" data-field="dec" data-sub="b" data-part="db" maxlength="3" inputmode="numeric" autocomplete="off"
+        aria-label="Second number in denary" data-title="Current question: second number in denary" value="${esc(d.dec.b ?? '')}"> =
+      <input class="num-in" data-field="dec" data-sub="sum" data-part="ds" maxlength="3" inputmode="numeric" autocomplete="off"
+        aria-label="Answer in denary" data-title="Current question: answer in denary" value="${esc(d.dec.sum ?? '')}">
+    </div>` : '';
+
+  return `${notes.length ? `<p class="tap-note">${notes.join(' ')}</p>` : ''}
+    <div class="bgrid" style="${gridStyle(cols, W)}">
+      <span class="rl">Carry</span>${extraCell(blank)}${carryRow}
+      <span class="rl"></span>${extraCell(blank)}${numRow(q.bitsA, 'rowA', 'ra', 'First number')}
+      <span class="rl op">+</span>${extraCell(blank)}${numRow(q.bitsB, 'rowB', 'rb', 'Second number')}
+      <div class="sum-line"></div>
+      <span class="rl">Answer</span>${extraCell(finalBox)}${answerRow}
+    </div>
+    ${dec}
+    <input type="text" class="ev" readonly tabindex="-1" data-title="Current question: carries and answer"
+      value="${esc(`carries ${q.carry === 'write' ? (d.carries.map(c => c || '·').join('') || 'none') : 'given'}, answer ${d.extra}${d.bits.join('')}`)}">`;
+}
+
+function renderLadder(i) {
+  const box = $('area-' + i);
+  if (isLocked(i)) { box.innerHTML = lockHtml(i); return; }
+  if (state.completed[i]) { box.innerHTML = doneHtml(i, `All ${STEP_COUNT[i]} steps done`); return; }
+  if (renderWaiting(i)) return;
+  const s = state.ld[i];
+  const q = ladderQ(i);
+  const d = draftFor(i);
+  const m = $('method-' + i);
+  // Fold the method away on a "fold" step (the student can open it again).
+  if (m && q.fold && m.dataset.closedFor !== String(s.step)) { m.open = false; m.dataset.closedFor = String(s.step); }
+  box.innerHTML = `${stepHead(i, s.step)}
+    <p class="help">${esc(q.help)}</p>
+    <div class="q-card" id="qc-${i}" data-a="${q.a}" data-b="${q.b}" data-width="${q.width}" data-carry="${q.carry}"
+      data-extra="${q.extra ? 1 : 0}" data-pad="${q.pad ? 1 : 0}" data-dec="${q.dec ? 1 : 0}">
+      <h3>${promptFor(q)}</h3>
+      ${bodyFor(i, q, d)}
+    </div>
+    <div class="row"><button type="button" class="ac-btn" id="check-${i}" data-action="ladder-check" data-task="${i}">Check</button></div>
+    <div class="cp-msg" id="msg-${i}" role="status"></div>`;
+  busy[i] = false;
+}
+
+// Boxes that must be filled before a check. Carry boxes and the final-carry box may be empty.
+function missing(q, d) {
+  const blank = v => String(v ?? '').trim() === '';
+  let n = 0;
+  for (let k = 0; k < q.width; k++) {
+    if (blank(d.bits[k])) n++;
+    if (q.pad && (blank(d.rowA[k]) || blank(d.rowB[k]))) n++;
+  }
+  if (q.dec) n += ['a', 'b', 'sum'].filter(f => blank(d.dec[f])).length;
+  return n;
+}
+
+const answerText = (q, d) =>
+  `${q.pad ? `${toBinary(q.a)} + ${toBinary(q.b)} → ${d.rowA.join('')} + ${d.rowB.join('')}` : `${q.bitsA} + ${q.bitsB}`} = ${d.extra}${d.bits.join('')}`
+  + (q.dec ? ` (${d.dec.a} + ${d.dec.b} = ${d.dec.sum})` : '');
+
+function highlightParts(i, results) {
+  const card = $('qc-' + i);
+  for (const [part, ok] of Object.entries(results)) {
+    const el = card.querySelector(`[data-part="${part}"]`);
+    if (el) { el.classList.toggle('is-right', ok); el.classList.toggle('is-wrong', !ok); }
+  }
+  const all = Object.values(results).every(Boolean);
+  card.classList.toggle('is-right', all);
+  card.classList.toggle('is-wrong', !all);
+}
+
+function checkLadder(i) {
+  if (busy[i] || state.completed[i] || isLocked(i)) return;
+  // `=== false`, not `!…`: if classroom.js is missing, verifyAuth is undefined and must not block the check.
+  if (window.Classroom?.verifyAuth() === false) return;
+  const q = ladderQ(i);
+  const d = draftFor(i);
+  const msg = $('msg-' + i);
+  if (missing(q, d)) {
+    msg.className = 'cp-msg bad';
+    msg.textContent = 'Fill in every box first: every answer column gets a 1 or a 0.';
+    return;
+  }
+  busy[i] = true;
+  const { ok, results } = checkAdd(q, d);
+  highlightParts(i, results);
+  $('check-' + i).disabled = true;
+  $('qc-' + i).querySelectorAll('input, button').forEach(el => { el.disabled = true; });
+  const s = state.ld[i];
+
+  if (ok) {
+    logAnswer(i, `Step ${s.step + 1}: ${answerText(q, d)} ✓`);
+    window.ActivityUI?.miniCelebration($('qc-' + i));
+    msg.className = 'cp-msg good';
+    msg.innerHTML = `✓ Correct.<span class="why">${esc(workingFor(q))}</span>`;
+    s.step++;
+    s.retry = 0;
+    state.wrongRun[i] = 0;
+    save();
+    if (s.step >= STEP_COUNT[i]) {
+      setTimeout(() => {
+        $('feedback-' + i).textContent = state.firstAttempt[i] ? '🥇 Every step right first time!' : '✅ All steps done.';
+        $('feedback-' + i).className = 'feedback correct';
+        markDone(i);
+      }, reduceMotion ? 300 : 1200);
+    } else {
+      setTimeout(() => renderLadder(i), reduceMotion ? 600 : 1500);
+    }
+    return;
+  }
+
+  logAnswer(i, `Step ${s.step + 1}: ${answerText(q, d)} ✗`);
+  state.firstAttempt[i] = false;
+  s.retry++;            // saved now, so a refresh gives the new sum rather than another go at this one
+  save();
+  msgBad(i, '✗ Not quite: the boxes in red are wrong. Here is the working:', workingFor(q), '↻ Try another sum');
+}
+
+// Answer bits go ? → 0 → 1 → 0 …; carry boxes and the final-carry box go empty → 1 → empty.
+function toggleBit(i, field, k) {
+  if (busy[i] || state.completed[i]) return;
+  const d = draftFor(i);
+  const card = $('qc-' + i);
+  let v;
+  if (field === 'bits')    v = d.bits[k] = d.bits[k] === '0' ? '1' : '0';
+  if (field === 'carries') v = d.carries[k] = d.carries[k] === '1' ? '' : '1';
+  if (field === 'extra')   v = d.extra = d.extra === '1' ? '' : '1';
+  save();
+  const sel = field === 'extra' ? '[data-field="extra"]' : `[data-field="${field}"][data-k="${k}"]`;
+  const btn = card.querySelector(`[data-action="toggle"]${sel}`);
+  btn.textContent = v;
+  btn.classList.toggle('set', v !== '');
+  btn.classList.remove('is-right', 'is-wrong');
+  btn.setAttribute('aria-label', btn.getAttribute('aria-label').replace(/: [^:]*$/, `: ${v || 'none'}`));
+  card.classList.remove('is-wrong');
+  $('msg-' + i).textContent = '';
+  const ev = card.querySelector('input.ev');
+  if (ev) ev.value = `carries ${d.carries.map(c => c || '·').join('') || 'none'}, answer ${d.extra}${d.bits.join('')}`;
+}
+
+// ═══════════════ CHAINS (Tasks 1, 2, 5 and 7) ═══════════════
+// N in a row, one at a time. A wrong answer is saved straight away as a restart
+// (so refreshing doesn't dodge it), shows why, then starts again with a new draw.
+const CHAIN_LEN = { 0: STARTER_LENGTH, 1: RULES_LENGTH, 4: NOHELP_LENGTH, 6: PLENARY_LENGTH };
+const MCQ_OF = { starter: starterQuestion, rules: rulesQuestion, plenary: plenaryQuestion };
+
+function chainItems(i) {
+  const a = state.cp[i].attempt;
+  if (i === 0) return drawStarter(state.seed, a);
+  if (i === 1) return drawRules(state.seed, a);
+  if (i === 4) return drawNoHelp(state.seed, a);
+  return drawPlenary(state.seed, a);
+}
+const mcqOf = item => MCQ_OF[item.pool](item.id);
+
+// The draft for the chain question on screen, or a fresh one.
+function chainDraftFor(i) {
+  const s = state.cp[i];
+  const key = `${s.attempt}|${s.pos}`;
+  if (state.chainDraft[i]?.key !== key) state.chainDraft[i] = { key, text: '', write: '', carry: '' };
+  return state.chainDraft[i];
+}
+
+function typedPrompt(item) {
+  if (item.type === 'b2d') return `Convert the binary number <span class="big-num">${toBinary(item.value, item.width)}</span> to denary.`;
+  if (item.type === 'd2b') return `Convert the denary number <span class="big-num">${item.value}</span> to binary. Write ${item.width} bits.`;
+  return `Add these two numbers. Type the answer in bits.`;
+}
+
+// One column: this column on the right, the next column on the left (where a carry goes).
+function columnBody(i, item, d) {
+  const box = (field, v, label, extra = '') => `<button type="button" class="cell ${field === 'write' ? 'bit-toggle' : 'carry-toggle slim'} ${v ? 'set' : ''} ${extra}"
+    data-action="col-toggle" data-task="${i}" data-field="${field}" data-part="${field}" aria-label="${label}: ${v || (field === 'write' ? 'not set' : 'none')}">${v || (field === 'write' ? '?' : '')}</button>`;
+  return `<p class="cp-q">Add this column${item.cin ? ', with the carry 1 above it' : ''}.</p>
+    <p class="tap-note">Set the answer bit (? → 0 → 1). If the column makes 2 or 3, tap the carry box above the next column to write a carry 1.</p>
+    <div class="bgrid" style="grid-template-columns:auto 76px 76px">
+      <span class="rl"></span><span class="colhead">Next column</span><span class="colhead">This column</span>
+      <span class="rl">Carry</span>${box('carry', d.carry, 'Carry above the next column')}<div class="cell carry ${item.cin ? 'lit' : ''}">${item.cin ? '1' : ''}</div>
+      <span class="rl"></span><div class="cell none"></div><div class="cell bit">${item.x}</div>
+      <span class="rl op">+</span><div class="cell none"></div><div class="cell bit">${item.y}</div>
+      <div class="sum-line"></div>
+      <span class="rl">Answer</span><div class="cell none"></div>${box('write', d.write, 'Answer bit')}
+    </div>
+    <div class="row"><button type="button" class="ac-btn" id="check-${i}" data-action="chain-col" data-task="${i}">Check</button></div>`;
+}
+
+function renderChain(i) {
+  const box = $('area-' + i);
+  if (isLocked(i)) { box.innerHTML = lockHtml(i); return; }
+  const len = CHAIN_LEN[i];
+  if (state.completed[i]) { box.innerHTML = doneHtml(i, `${len} in a row`); return; }
+  if (renderWaiting(i)) return;
+  const s = state.cp[i];
+  const item = chainItems(i)[s.pos];
+  const d = chainDraftFor(i);
+  let body;
+  if (item.type === 'mcq') {
+    const q = mcqOf(item);
+    body = `<p class="cp-q">${esc(q.q)}</p>
+      <div class="cp-opts">${optionOrder(q, state.seed, s.attempt).map(k =>
+        `<button type="button" class="cp-opt" data-action="chain-mcq" data-task="${i}" data-k="${k}">${esc(q.opts.find(o => o[0] === k)[1])}</button>`).join('')}</div>`;
+  } else if (item.type === 'col') {
+    body = columnBody(i, item, d);
+  } else {
+    const isAdd = item.type === 'add';
+    const max = isAdd ? item.width + 2 : item.type === 'd2b' ? item.width + 1 : 3;
+    body = `<p class="cp-q">${typedPrompt(item)}</p>
+      ${isAdd ? stackedSum(item.a, item.b, item.width) : ''}
+      <div class="answer-line">
+        <input class="num-in ${isAdd || item.width === 8 ? 'wide' : ''}" id="typed-${i}" data-chain="${i}" data-part="typed"
+          maxlength="${max}" inputmode="numeric" autocomplete="off"
+          aria-label="Your answer" data-title="Current question: your answer" value="${esc(d.text)}">
+        <button type="button" class="ac-btn" id="check-${i}" data-action="chain-typed" data-task="${i}">Check</button>
+      </div>`;
+  }
+  box.innerHTML = `<div class="step-head"><span>Question ${s.pos + 1} of ${len}</span><span>${s.pos} / ${len} right</span></div>
+    <div class="cp-bar"><div style="width:${s.pos / len * 100}%"></div></div>
+    <div class="q-card" id="qc-${i}" data-type="${item.type}" data-value="${item.value ?? ''}" data-width="${item.width ?? ''}"
+      data-id="${item.id ?? ''}" data-a="${item.a ?? item.x ?? ''}" data-b="${item.b ?? item.y ?? ''}" data-cin="${item.cin ?? ''}">
+      <h3>Question ${s.pos + 1}</h3>${body}
+    </div>
+    <div class="cp-msg" id="msg-${i}" role="status"></div>`;
+  busy[i] = false;
+}
+
+function chainRight(i, why) {
+  const s = state.cp[i];
+  const len = CHAIN_LEN[i];
+  const msg = $('msg-' + i);
+  $('qc-' + i).classList.add('is-right');
+  msg.className = 'cp-msg good';
+  msg.innerHTML = `✓ Correct.<span class="why">${esc(why)}</span>`;
+  state.wrongRun[i] = 0;
+  s.pos++;
+  save();
+  if (s.pos >= len) {
+    setTimeout(() => {
+      $('feedback-' + i).textContent = state.firstAttempt[i] ? `🥇 ${len} in a row, first time!` : `✅ ${len} in a row: passed.`;
+      $('feedback-' + i).className = 'feedback correct';
+      markDone(i);
+    }, reduceMotion ? 300 : 1200);
+  } else {
+    setTimeout(() => renderChain(i), reduceMotion ? 600 : 1500);
+  }
+}
+
+function chainWrong(i, why) {
+  const s = state.cp[i];
+  $('qc-' + i).classList.add('is-wrong');
+  state.firstAttempt[i] = false;
+  s.attempt++;
+  s.pos = 0;
+  delete state.chainDraft[i];
+  save();
+  msgBad(i, '✗ Not quite. Back to question 1 with new questions.', why, '↺ Start again from question 1');
+}
+
+function answerMcq(i, k) {
+  if (busy[i] || state.completed[i]) return;
+  if (window.Classroom?.verifyAuth() === false) return;
+  busy[i] = true;
+  const item = chainItems(i)[state.cp[i].pos];
+  const q = mcqOf(item);
+  const box = $('qc-' + i);
+  box.querySelectorAll('.cp-opt').forEach(b => { b.disabled = true; });
+  const chosen = q.opts.find(o => o[0] === k)[1];
+  if (k === q.a) {
+    box.querySelector(`[data-k="${k}"]`).classList.add('right');
+    logAnswer(i, `${q.q} ${chosen} ✓`);
+    chainRight(i, q.why);
+  } else {
+    box.querySelector(`[data-k="${k}"]`).classList.add('wrong');
+    box.querySelector(`[data-k="${q.a}"]`).classList.add('right');
+    logAnswer(i, `${q.q} ${chosen} ✗`);
+    chainWrong(i, q.why);
+  }
+}
+
+function answerTyped(i) {
+  if (busy[i] || state.completed[i]) return;
+  if (window.Classroom?.verifyAuth() === false) return;
+  const item = chainItems(i)[state.cp[i].pos];
+  const input = $('typed-' + i);
+  const msg = $('msg-' + i);
+  const verdict = checkTyped(item, input.value);
+  if (verdict === 'format') {
+    msg.className = 'cp-msg bad';
+    msg.textContent = formatHint(item);
+    return;
+  }
+  busy[i] = true;
+  input.disabled = true;
+  $('check-' + i).disabled = true;
+  input.classList.add(verdict === 'ok' ? 'is-right' : 'is-wrong');
+  const shown = item.type === 'add' ? `${toBinary(item.a, item.width)} + ${toBinary(item.b, item.width)}`
+    : item.type === 'b2d' ? toBinary(item.value, item.width) : item.value;
+  logAnswer(i, `${shown} → ${input.value.trim()} ${verdict === 'ok' ? '✓' : '✗'}`);
+  if (verdict === 'ok') chainRight(i, workingFor(item));
+  else chainWrong(i, workingFor(item));
+}
+
+function toggleColumn(i, field) {
+  if (busy[i] || state.completed[i]) return;
+  const d = chainDraftFor(i);
+  const v = d[field] = field === 'write' ? (d.write === '0' ? '1' : '0') : (d.carry === '1' ? '' : '1');
+  save();
+  const btn = $('qc-' + i).querySelector(`[data-action="col-toggle"][data-field="${field}"]`);
+  btn.textContent = v || (field === 'write' ? '?' : '');
+  btn.classList.toggle('set', v !== '');
+  btn.setAttribute('aria-label', btn.getAttribute('aria-label').replace(/: [^:]*$/, `: ${v || 'none'}`));
+  $('msg-' + i).textContent = '';
+}
+
+function answerColumn(i) {
+  if (busy[i] || state.completed[i]) return;
+  if (window.Classroom?.verifyAuth() === false) return;
+  const item = chainItems(i)[state.cp[i].pos];
+  const d = chainDraftFor(i);
+  const msg = $('msg-' + i);
+  if (!d.write) {
+    msg.className = 'cp-msg bad';
+    msg.textContent = 'Set the answer bit first: tap it to make it 0 or 1.';
+    return;
+  }
+  busy[i] = true;
+  const { ok, results } = checkColumn(item, d);
+  const card = $('qc-' + i);
+  for (const [part, good] of Object.entries(results)) {
+    const el = card.querySelector(`[data-part="${part}"]`);
+    el.classList.add(good ? 'is-right' : 'is-wrong');
+  }
+  card.querySelectorAll('button').forEach(b => { b.disabled = true; });
+  const sum = `${item.x} + ${item.y}${item.cin ? ' + 1' : ''}`;
+  logAnswer(i, `${sum}: write ${d.write}, ${d.carry ? 'carry 1' : 'no carry'} ${ok ? '✓' : '✗'}`);
+  if (ok) chainRight(i, workingFor(item));
+  else chainWrong(i, workingFor(item));
+}
+
+// ═══════════════ SCORING AND COMPLETION ═══════════════
+// Mastery scoring: 0–80 for completing tasks, +20 bonus for first-attempt correctness
+function calcScore() {
+  const done     = state.completed.filter(Boolean).length;
+  const mastered = state.completed.filter((c, i) => c && state.firstAttempt[i]).length;
+  return Math.round((done / TASK_COUNT * 80) + (mastered / TASK_COUNT * 20));
+}
+
+function submitScore() {
+  const pct = calcScore();
+  window.ActivityUI?.setScore(pct);
+  window.Classroom?.submitGrade(pct, ACTIVITY_TITLE);
+}
+
+function showDone(i) {
+  const isGold = state.firstAttempt[i];
+  $('dot-' + i).className = 'pdot ' + (isGold ? 'gold' : 'correct');
+  document.querySelector(`.tab[data-idx="${i}"]`).classList.add('done');
+  $('reset-' + i).style.display = isGold ? 'none' : '';
+}
+
+function markDone(i) {
+  if (state.completed[i]) return;
+  state.completed[i] = true;
+  if (!state.passed.includes(i)) state.passed.push(i);
+  showDone(i);
+  save();
+  submitScore();
+  renderAll();
+  if (state.completed.every(Boolean)) allComplete();
+}
+
+// Start a task again for gold: new sums and questions, from the start.
+function resetTask(i) {
+  state.completed[i] = false;
+  state.firstAttempt[i] = true;
+  delete state.wait[i];
+  state.wrongRun[i] = 0;
+  if (CHAINS[i]) { state.cp[i].attempt++; state.cp[i].pos = 0; delete state.chainDraft[i]; }
+  else { state.ld[i].step = 0; state.ld[i].retry++; }
+  $('dot-' + i).className = 'pdot';
+  document.querySelector(`.tab[data-idx="${i}"]`).classList.remove('done');
+  $('feedback-' + i).textContent = '';
+  $('feedback-' + i).className = 'feedback';
+  $('reset-' + i).style.display = 'none';
+  const m = $('method-' + i);
+  if (m) { m.open = true; delete m.dataset.closedFor; }
+
+  $('done-banner').classList.remove('show', 'gold', 'green');
+  $('glow-overlay').classList.remove('show', 'gold', 'green');
+  window.ActivityUI?.resetCelebration();
+
+  save();
+  renderAll();
+  submitScore();
+}
+
+function showAllDone() {
+  const tier = state.firstAttempt.every(Boolean) ? 'gold' : 'green';
+  $('done-banner').classList.add('show', tier);
+  $('glow-overlay').classList.add(tier, 'show');
+}
+
+function allComplete() {
+  showAllDone();
+  window.ActivityUI?.launchCelebration({ percent: calcScore() });
+}
+
+// ═══════════════ CARRY RUSH (extension game, not scored) ═══════════════
+// Saved apart from the lesson, so "Try for Gold" never wipes a high score.
+const RUSH_KEY = 'y8_datarep_l2_carry_rush';
+const rush = { best: 0, bestStreak: 0, runs: 0, codes: {}, badges: {}, lastCode: '' };
+try { Object.assign(rush, JSON.parse(localStorage.getItem(RUSH_KEY)) || {}); } catch (e) {}
+const rushSave = () => { try { localStorage.setItem(RUSH_KEY, JSON.stringify(rush)); } catch (e) {} };
+
+let game = null;
+const fmt = n => n.toLocaleString('en-GB');
+
+function rushShow(id) {
+  document.querySelectorAll('.rush-screen').forEach(s => s.classList.toggle('on', s.id === id));
+}
+function rushStop() {
+  if (game) { cancelAnimationFrame(game.raf); clearTimeout(game.next); game.over = true; }
+}
+
+// The best score stays in the page header on every tab, so the teacher can see it at a glance.
+// It shows the class challenge best if the student last played a code, otherwise the solo best.
+function renderBestChip() {
+  const code = rush.lastCode;
+  const best = code ? rush.codes[code] || 0 : rush.best;
+  const chip = $('best-chip');
+  chip.classList.toggle('show', rush.runs > 0);
+  chip.textContent = code ? `🏆 Carry Rush ${code}: ${fmt(best)}` : `🏆 Carry Rush best: ${fmt(best)}`;
+  const codes = Object.entries(rush.codes).map(([c, s]) => `${c} ${fmt(s)}`).join(', ');
+  $('ev-rush').value = rush.runs
+    ? `Solo best ${fmt(rush.best)} (${rankFor(rush.best)}), best streak ${rush.bestStreak}, ${rush.runs} runs${codes ? `. Class challenges: ${codes}` : ''}`
+    : '';
+}
+
+function badgeHtml(fresh = []) {
+  return GAME_BADGES.map(([id, name, how]) =>
+    `<span class="badge ${rush.badges[id] ? 'got' : ''} ${fresh.includes(id) ? 'new' : ''}" title="${esc(how)}">${name}</span>`).join('');
+}
+
+function rushMenu() {
+  rushStop();
+  $('rush-best').textContent = fmt(rush.best);
+  $('rush-rank').textContent = rankFor(rush.best);
+  $('rush-streak').textContent = rush.bestStreak;
+  $('rush-runs').textContent = rush.runs;
+  $('rush-badges').innerHTML = badgeHtml();
+  const codes = Object.entries(rush.codes);
+  $('rush-code-best').textContent = codes.length
+    ? 'Your challenge bests: ' + codes.slice(-3).map(([c, s]) => `${c} ${fmt(s)}`).join(' · ') : '';
+  if (rush.lastCode && !$('rush-code').value) $('rush-code').value = rush.lastCode;
+  rushShow('rush-menu');
+}
+
+function renderRush() {
+  const locked = isLocked(RUSH_TAB);
+  $('rush-lock').innerHTML = locked ? lockHtml(RUSH_TAB) : '';
+  $('rush').style.display = locked ? 'none' : '';
+  if (locked) rushStop();
+  else if (!game || game.over) rushMenu();
+  renderBestChip();
+}
+
+function rushStart(code) {
+  rushStop();
+  game = {
+    code, seed: code || Math.random().toString(36).slice(2, 10),
+    i: 0, score: 0, lives: GAME_LIVES, streak: 0, maxStreak: 0, right: 0, fast: 0, perfect: true, overflow: 0,
+    missed: [], locked: false, over: false, raf: 0, next: 0,
+  };
+  rush.lastCode = code;
+  rushSave();
+  rushShow('rush-game');
+  rushNext();
+}
+
+function rushHud() {
+  $('hud-score').textContent = fmt(game.score);
+  const m = multiplier(game.streak);
+  $('hud-mult').textContent = '×' + m;
+  $('hud-mult').classList.toggle('hot', m >= 2);
+  $('hud-sum').textContent = game.i + 1;
+  $('hud-streak').textContent = game.streak;
+  $('hud-lvl').textContent = gameLevel(game.i).name.toUpperCase();
+  $('hud-lives').textContent = '❤️'.repeat(game.lives) + '🖤'.repeat(GAME_LIVES - game.lives);
+  const best = game.code ? rush.codes[game.code] || 0 : rush.best;
+  $('hud-best').textContent = `Best: ${fmt(best)}`;
+}
+
+// The sum, or after an answer the sum worked out: carries lit, and the full answer underneath.
+function rushSumHtml(s, solved = false) {
+  const W = s.width;
+  const r = addColumns(s.a, s.b, W);
+  const cols = W + 1;
+  const cell = (v, cls = 'bit') => `<div class="cell ${v === '' ? 'none' : cls}">${v}</div>`;
+  const ans = fullAnswer(s.a, s.b, W).padStart(cols, ' ');
+  return `<div class="bgrid" style="${gridStyle(cols, W)}">
+      ${solved ? `<span class="rl">Carry</span>${cell('')}${r.carryIn.map(c => `<div class="cell carry ${c ? 'lit' : ''}">${c ? '1' : ''}</div>`).join('')}` : ''}
+      <span class="rl"></span>${cell('')}${[...r.A].map(c => cell(c)).join('')}
+      <span class="rl op">+</span>${cell('')}${[...r.B].map(c => cell(c)).join('')}
+      <div class="sum-line"></div>
+      ${solved ? `<span class="rl">Answer</span>${[...ans].map(c => c === ' ' ? cell('') : `<div class="cell carry lit">${c}</div>`).join('')}` : ''}
+    </div>`;
+}
+
+function rushNext() {
+  const s = game.sum = gameSum(game.seed, game.i);
+  game.limit = gameTime(game.i);
+  game.locked = false;
+  $('rush-sum').innerHTML = rushSumHtml(s);
+  $('verdict').innerHTML = '';
+  const input = $('rush-in');
+  input.value = '';
+  input.disabled = false;
+  input.classList.remove('is-right', 'is-wrong');
+  input.focus();
+  rushHud();
+  game.start = performance.now();
+  const bar = $('tbar');
+  const tick = () => {
+    if (game.over || game.locked) return;
+    const left = game.limit - (performance.now() - game.start) / 1000;
+    bar.style.width = Math.max(0, left / game.limit * 100) + '%';
+    bar.classList.toggle('low', left < 5);
+    if (left <= 0) { rushAnswer(true); return; }
+    game.raf = requestAnimationFrame(tick);
+  };
+  tick();
+}
+
+function rushAnswer(timedOut = false) {
+  if (!game || game.locked || game.over) return;
+  const s = game.sum;
+  const input = $('rush-in');
+  const verdict = timedOut ? 'wrong' : checkTyped({ type: 'add', ...s }, input.value);
+  if (verdict === 'format') {
+    $('verdict').innerHTML = `<span class="why">${esc(formatHint({ type: 'add', ...s }))}</span>`;
+    return;
+  }
+  game.locked = true;
+  cancelAnimationFrame(game.raf);
+  input.disabled = true;
+  const used = (performance.now() - game.start) / 1000;
+  const v = $('verdict');
+  const answer = fullAnswer(s.a, s.b, s.width);
+  if (verdict === 'ok') {
+    game.streak++;
+    game.right++;
+    game.maxStreak = Math.max(game.maxStreak, game.streak);
+    if (used < 5) game.fast++;
+    if (answer.length > s.width) game.overflow++;
+    const pts = gamePoints(game.i, game.limit - used, game.limit, game.streak);
+    game.score += pts;
+    input.classList.add('is-right');
+    v.innerHTML = `✅ Right! <span class="pts">+${fmt(pts)}</span>`;
+  } else {
+    game.streak = 0;
+    game.lives--;
+    if (game.i < 20) game.perfect = false;
+    game.missed.push(s);
+    input.classList.add('is-wrong');
+    $('rush-sum').innerHTML = rushSumHtml(s, true);
+    v.innerHTML = `${timedOut ? '⏱ Too slow!' : '💥 Not quite.'} You lose a life. The answer is <b>${answer}</b>.
+      <span class="why">${esc(addWorking(s.a, s.b, s.width))}</span>`;
+  }
+  rushHud();
+  game.next = setTimeout(() => {
+    if (game.lives <= 0) return rushOver();
+    game.i++;
+    rushNext();
+  }, verdict === 'ok' ? (reduceMotion ? 500 : 900) : 4500);
+}
+
+function rushOver() {
+  rushStop();
+  const g = game;
+  const played = g.i + 1;
+  const earned = runBadges({ played, maxStreak: g.maxStreak, fast: g.fast, perfect: g.perfect, overflow: g.overflow, score: g.score });
+  const fresh = Object.keys(earned).filter(k => earned[k] && !rush.badges[k]);
+  fresh.forEach(k => { rush.badges[k] = true; });
+  rush.runs++;
+  rush.bestStreak = Math.max(rush.bestStreak, g.maxStreak);
+  let pb;
+  if (g.code) {
+    const prev = rush.codes[g.code] || 0;
+    if (g.score > prev) { rush.codes[g.code] = g.score; pb = prev ? `🏆 New best on challenge ${g.code}!` : `Challenge ${g.code}: score recorded`; }
+    else pb = `Your best on ${g.code}: ${fmt(prev)}`;
+  } else if (g.score > rush.best) {
+    pb = rush.best ? '🏆 New personal best!' : 'First score recorded!';
+    rush.best = g.score;
+  } else pb = `Personal best: ${fmt(rush.best)}`;
+  rushSave();
+  renderBestChip();
+
+  $('over-mode').textContent = g.code ? `CLASS CHALLENGE · ${g.code}` : 'SOLO RUN';
+  $('over-score').textContent = fmt(g.score);
+  $('over-rank').textContent = rankFor(g.score);
+  $('over-pb').textContent = pb;
+  $('over-sums').textContent = played;
+  $('over-acc').textContent = Math.round(g.right / played * 100) + '%';
+  $('over-streak').textContent = g.maxStreak;
+  const next = RANKS.find(([min]) => min > g.score);
+  $('over-next').textContent = next ? fmt(next[0] - g.score) : 'MAX';
+  $('over-badges').innerHTML = badgeHtml(fresh);
+  const mine = rankFor(g.score);
+  $('over-ladder').innerHTML = RANKS.slice().reverse().map(([min, name]) =>
+    `<li class="${name === mine ? 'me' : ''}"><span>${name}</span><span>${fmt(min)}+</span></li>`).join('');
+  $('over-missed').innerHTML = g.missed.length
+    ? `<div class="rush-sub">📚 Learn from the ones you missed</div><ul class="missed">${g.missed.slice(-4).map(s =>
+        `<li><b>${toBinary(s.a, s.width)} + ${toBinary(s.b, s.width)} = ${fullAnswer(s.a, s.b, s.width)}</b><br>
+         <span class="muted">${esc(addWorking(s.a, s.b, s.width))}</span></li>`).join('')}</ul>`
+    : '';
+  rushShow('rush-over');
+  if (fresh.length) window.ActivityUI?.showToast('🏅 New badge: ' + fresh.map(k => GAME_BADGES.find(b => b[0] === k)[1]).join(', '));
+}
+
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-rush], [data-key]');
+  if (!b) return;
+  const act = b.dataset.rush;
+  if (act === 'solo') rushStart('');
+  if (act === 'challenge') {
+    const code = cleanCode($('rush-code').value);
+    if (!code) { window.ActivityUI?.showToast('Type the challenge code from the board first'); return; }
+    rushStart(code);
+  }
+  if (act === 'again') rushStart(game?.code || '');
+  if (act === 'menu') rushMenu();
+  const key = b.dataset.key;
+  if (key && game && !game.locked && !game.over) {
+    const input = $('rush-in');
+    if (key === 'go') rushAnswer();
+    else if (key === 'back') input.value = input.value.slice(0, -1);
+    else if (input.value.length < input.maxLength) input.value += key;
+    if (key !== 'go') $('verdict').innerHTML = '';
+    input.focus();
+  }
+});
+$('rush-in').addEventListener('keydown', e => { if (e.key === 'Enter') rushAnswer(); });
+$('rush-code').addEventListener('keydown', e => { if (e.key === 'Enter') $('rush').querySelector('[data-rush="challenge"]').click(); });
+
+// ═══════════════ EVENTS ═══════════════
+document.addEventListener('click', e => {
+  const btn = e.target.closest('[data-action]');
+  if (!btn) return;
+  const i = +btn.dataset.task;
+  const act = btn.dataset.action;
+  if (act === 'ladder-check') checkLadder(i);
+  if (act === 'toggle')       toggleBit(i, btn.dataset.field, +btn.dataset.k);
+  if (act === 'col-toggle')   toggleColumn(i, btn.dataset.field);
+  if (act === 'chain-col')    answerColumn(i);
+  if (act === 'chain-mcq')    answerMcq(i, btn.dataset.k);
+  if (act === 'chain-typed')  answerTyped(i);
+  if (act === 'reset')        resetTask(i);
+});
+
+// Typing: save the draft, clear the red/green marks, and hop to the next one-bit box.
+document.addEventListener('input', e => {
+  const el = e.target;
+  if (el.dataset.chain !== undefined) {
+    const i = +el.dataset.chain;
+    chainDraftFor(i).text = el.value;
+    $('msg-' + i).textContent = '';
+    save();
+    return;
+  }
+  const card = el.closest('.q-card');
+  if (!card || !el.dataset.field) return;
+  const i = +card.id.replace('qc-', '');
+  const d = draftFor(i);
+  if (el.dataset.sub) d.dec[el.dataset.sub] = el.value;
+  else d[el.dataset.field][+el.dataset.k] = el.value;
+  el.classList.remove('is-right', 'is-wrong');
+  card.classList.remove('is-wrong');
+  $('msg-' + i).textContent = '';
+  save();
+  if (el.maxLength === 1 && el.value) {
+    const next = [...card.querySelectorAll(`input[data-field="${el.dataset.field}"]`)][+el.dataset.k + 1];
+    next?.focus();
+  }
+});
+
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter' || e.target.tagName !== 'INPUT') return;
+  const chain = e.target.dataset.chain;
+  if (chain !== undefined) { answerTyped(+chain); return; }
+  const card = e.target.closest('.q-card');
+  if (card && LADDER_TASKS.includes(+card.id.replace('qc-', ''))) checkLadder(+card.id.replace('qc-', ''));
+});
+
+// ═══════════════ START UP ═══════════════
+function renderAll() {
+  renderLocks();
+  for (const i of Object.keys(CHAINS)) renderChain(+i);
+  for (const i of LADDER_TASKS) renderLadder(i);
+  renderRush();
+}
+
+renderAll();
+
+// Restore the finished look without re-firing the celebration or a Classroom upload.
+for (let i = 0; i < TASK_COUNT; i++) {
+  $('ev-' + i).value = state.log[i].join(' | ');
+  if (!state.completed[i]) continue;
+  showDone(i);
+  $('feedback-' + i).textContent = '✅ Done!';
+  $('feedback-' + i).className = 'feedback correct';
+}
+if (state.completed.every(Boolean)) showAllDone();
+window.ActivityUI?.setScore(calcScore());
+showTab(Math.min(Math.max(+state.tab || 0, 0), RUSH_TAB));
+save();   // keeps the seed, so the sums stay the same after a reload
+</script>
+</body>
+</html>

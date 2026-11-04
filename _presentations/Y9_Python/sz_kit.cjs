@@ -18,7 +18,8 @@ const requireGlobal = (name) => {
 const pptxgen = requireGlobal('pptxgenjs');
 
 // fonts: { head, body, mono } to swap the typefaces (other units use Google fonts; Y9 keeps Cambria / Calibri / Consolas).
-function createDeck({ title, footerText, author = 'Nicholas Houlton', station: startState = 'none', fonts = {} }) {
+// palette: overrides any of P's colours below, so another unit can have its own look (Y9 keeps the defaults).
+function createDeck({ title, footerText, author = 'Nicholas Houlton', station: startState = 'none', fonts = {}, palette = {} }) {
 // ── Palette ─────────────────────────────────────────────────────────────────
 // Approved: charcoal / gold / off-white. Station Zero adds phosphor green (story text only)
 // and alarm red (error messages only).
@@ -29,13 +30,15 @@ const P = {
   green: '7FD99A', termBg: '0D1310', termLine: '2C4434',
   red: 'FF6B6B', ok: '7FD99A',
   ink: '1E1E24', paper: 'F5F5F3', card: 'FFFFFF', cardLine: 'D6D5D0', inkMuted: '55555F',
+  pillBg: 'EDE6D3', pillInk: '7A5A12', paperDim: '8A8A93', hlBg: '2B2618', outBg: '0A0A0D', lt2: 'E9E8E4',
+  ...palette,
 };
 const HEAD = fonts.head || 'Cambria', BODY = fonts.body || 'Calibri', MONO = fonts.mono || 'Consolas';
 const THEME = {
   name: 'Station Zero',
   headFontFace: HEAD, bodyFontFace: BODY,
   colors: {
-    dk1: P.charcoal, lt1: P.off, dk2: P.deep, lt2: 'E9E8E4',
+    dk1: P.charcoal, lt1: P.off, dk2: P.deep, lt2: P.lt2,
     accent1: P.gold, accent2: P.str, accent3: P.int, accent4: P.green, accent5: P.red, accent6: P.muted,
     hlink: P.int, folHlink: P.muted,
   },
@@ -66,8 +69,8 @@ pres.defineSlideMaster({
 });
 pres.defineSlideMaster({
   title: 'SZ_LIGHT', background: { color: P.paper },
-  objects: [...footer('8A8A93'), titlePh(P.ink)],
-  slideNumber: { x: 12.2, y: 6.98, w: 0.55, h: 0.3, fontFace: BODY, fontSize: 12, color: '8A8A93', align: 'right' },
+  objects: [...footer(P.paperDim), titlePh(P.ink)],
+  slideNumber: { x: 12.2, y: 6.98, w: 0.55, h: 0.3, fontFace: BODY, fontSize: 12, color: P.paperDim, align: 'right' },
 });
 pres.defineSlideMaster({ title: 'SZ_COVER', background: { color: P.deep }, objects: [] });
 
@@ -108,7 +111,7 @@ function drawStation(s, master) {
   if (state.hud) {
     const items = state.hud.map((h) => (typeof h === 'function' ? h(stateSlide) : h));
     s.addText([{ text: '●  ', options: { color: state.dot || P.dim } },
-      { text: items.join('   ·   '), options: { color: light ? '8A8A93' : P.dim } }],
+      { text: items.join('   ·   '), options: { color: light ? P.paperDim : P.dim } }],
     { isTextBox: true, x: M, y: 0.08, w: 11.2, h: 0.26, margin: 0, fontFace: MONO, fontSize: 11, charSpacing: 1,
       valign: 'middle', objectName: 'station status' });
   }
@@ -200,7 +203,7 @@ function codePanel(s, lines, o) {
   const ys = [];
   lines.forEach((ln, i) => {
     const y = o.y + padY + i * lh;
-    if (o.hl && o.hl.includes(i + 1)) box(s, { x: o.x + 0.06, y, w: o.w - 0.12, h: lh, fill: '2B2618' });
+    if (o.hl && o.hl.includes(i + 1)) box(s, { x: o.x + 0.06, y, w: o.w - 0.12, h: lh, fill: P.hlBg });
     if (gut) text(s, String(i + (o.first || 1)), { x: o.x + 0.12, y, w: 0.3, h: lh, fontFace: MONO, fontSize: size - 4,
       color: P.dim, align: 'right', valign: 'middle' });
     s.addText(pyRuns(ln, size), { isTextBox: true, x: o.x + 0.2 + gut, y, w: o.w - 0.3 - gut, h: lh,
@@ -214,7 +217,7 @@ function terminal(s, lines, o) {
   const size = o.size || 20, lh = o.lh || size * 1.6 / 72, pad = 0.25;
   const story = o.story;
   const h = o.h || lines.length * lh + pad * 2 + (o.label ? 0.35 : 0);
-  box(s, { x: o.x, y: o.y, w: o.w, h, fill: story ? P.termBg : '0A0A0D', line: story ? P.termLine : P.line, r: 0.08,
+  box(s, { x: o.x, y: o.y, w: o.w, h, fill: story ? P.termBg : P.outBg, line: story ? P.termLine : P.line, r: 0.08,
     name: o.name || 'terminal' });
   let y = o.y + pad;
   if (o.label) {
@@ -264,8 +267,8 @@ function recallCards(s, questions, reveal) {
       name: `q${i + 1}` });
     const ink = reveal ? P.off : P.ink;
     badge(s, i + 1, x + 0.25, y + 0.22, 0.42, reveal ? P.gold : P.ink, reveal ? P.charcoal : P.paper);
-    chip(s, q.pill, { x: x + 0.8, y: y + 0.25, w: 1.75, h: 0.34, size: 12, fill: reveal ? P.charcoal : 'EDE6D3',
-      color: reveal ? P.gold : '7A5A12', line: reveal ? P.gold : undefined });
+    chip(s, q.pill, { x: x + 0.8, y: y + 0.25, w: 1.75, h: 0.34, size: 12, fill: reveal ? P.charcoal : P.pillBg,
+      color: reveal ? P.gold : P.pillInk, line: reveal ? P.gold : undefined });
     chip(s, q.type === 'mcq' ? 'CHOOSE A, B OR C' : 'WRITE IT', { x: x + 2.65, y: y + 0.25, w: 1.95, h: 0.34, size: 12,
       fill: reveal ? P.charcoal : P.paper, color: reveal ? P.muted : P.inkMuted, line: reveal ? P.line : P.cardLine });
     text(s, q.q, { x: x + 0.25, y: y + 0.7, w: CARD.w - 0.5, h: 0.45, fontSize: 20, bold: true, color: ink });
@@ -282,7 +285,7 @@ function recallCards(s, questions, reveal) {
       const ox = q.code?.length ? x + 3.0 : x + 0.25, oy = by;
       q.opts.forEach((o, j) => {
         const right = reveal && q.a.startsWith('ABC'[j]);
-        text(s, [{ text: 'ABC'[j] + '   ', options: { bold: true, color: right ? P.ok : (reveal ? P.gold : '7A5A12') } },
+        text(s, [{ text: 'ABC'[j] + '   ', options: { bold: true, color: right ? P.ok : (reveal ? P.gold : P.pillInk) } },
           { text: o, options: { color: right ? P.ok : (reveal ? P.muted : P.ink), bold: right } }],
           { x: ox, y: oy + j * 0.36, w: q.code?.length ? 0.75 : 3.3, h: 0.36, fontSize: 18, valign: 'middle' });
       });
@@ -343,7 +346,7 @@ function traceTable(s, o) {
 // Template deck only: a one-line note in the footer row saying which recipe this is (see README.md).
 function templateNote(s, t, light = false) {
   text(s, t, { x: 4.6, y: 6.95, w: 7.45, h: 0.35, fontSize: 13, italic: true, bold: true,
-    color: light ? '7A5A12' : P.gold, align: 'right', valign: 'middle' });
+    color: light ? P.pillInk : P.gold, align: 'right', valign: 'middle' });
 }
 
 async function write(out, theme = THEME) {

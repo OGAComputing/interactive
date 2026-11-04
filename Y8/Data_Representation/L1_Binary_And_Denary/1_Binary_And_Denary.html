@@ -1,0 +1,1237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- ACTIVITY
+title:  Binary and Denary
+type:   Practice
+stars:  2
+desc:   Convert between binary and denary with 4 bits, with the help fading step by step, then do it with no help and extend to 8 bits.
+color:  indigo
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Binary and Denary — Year 8</title>
+
+<link rel="stylesheet" href="../../../shared.css">
+
+<style>
+  /* ── Activity header ─────────────────────────────────── */
+
+  .header {
+    background: var(--surface);
+    padding: 18px 28px 14px;
+    border-bottom: 4px solid var(--accent);
+  }
+  .header-title {
+    font-family: var(--font-head);
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-inv);
+  }
+  .header-sub {
+    font-size: 0.85rem;
+    color: var(--accent-light);
+    margin-top: 3px;
+  }
+  .header-q {
+    font-size: 0.9rem;
+    color: #fff;
+    margin-top: 6px;
+  }
+  .progress-row {
+    display: flex;
+    gap: 6px;
+    margin-top: 10px;
+    align-items: center;
+  }
+  .pdot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--surface-dim);
+    border: 2px solid #3a5a7a;
+    transition: background 0.3s, border-color 0.3s;
+  }
+  .pdot.correct { background: var(--green);  border-color: var(--green); }
+  .pdot.gold    { background: var(--gold);   border-color: var(--gold);  }
+
+  /* ── Glow overlay (green = green tier, gold = gold tier) ── */
+
+  #glow-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none; z-index: 0; opacity: 0;
+    transition: opacity 1.8s ease;
+  }
+  #glow-overlay.gold  { background: radial-gradient(ellipse at 50% 55%, rgba(251,191,36,.24) 0%, transparent 65%); }
+  #glow-overlay.green { background: radial-gradient(ellipse at 50% 55%, rgba(16,185,129,.20) 0%, transparent 65%); }
+  #glow-overlay.show  { opacity: 1; }
+
+  /* ── Tab bar (underline style — Year 8 standard) ─────── */
+
+  .tab-bar {
+    display: flex;
+    background: var(--surface-mid);
+    padding: 0 20px;
+    gap: 2px;
+    overflow-x: auto;
+    border-bottom: 1px solid #2a4060;
+  }
+  .tab {
+    padding: 10px 16px 9px;
+    border: none;
+    background: transparent;
+    color: #B8CCE0;
+    font-family: var(--font-body);
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: color 0.15s, border-color 0.15s;
+    white-space: nowrap;
+    user-select: none;
+  }
+  .tab:hover          { color: var(--accent-light); }
+  .tab.active         { color: var(--text-inv); border-bottom-color: var(--accent); }
+  .tab.done           { color: var(--gold);     border-bottom-color: var(--gold); }
+  .tab .lock { font-size: .8em; margin-left: 4px; }
+
+  /* ── Panels ──────────────────────────────────────────── */
+
+  .panel {
+    display: none;
+    position: relative;
+    z-index: 1;
+    padding: 28px 20px 48px;
+    max-width: 920px;
+    margin: 0 auto;
+  }
+  .panel.active { display: block; animation: ac-fade-in .2s ease; }
+
+  .task-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 16px;
+  }
+  .task-badge {
+    width: 42px; height: 42px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-head);
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-inv);
+    background: var(--accent);
+    flex-shrink: 0;
+  }
+  .task-title {
+    font-family: var(--font-head);
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--surface);
+  }
+
+  .goal {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    background: #fff;
+    border-left: 4px solid var(--accent);
+    padding: 10px 14px;
+    border-radius: 0 6px 6px 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--surface);
+    margin-bottom: 18px;
+  }
+
+  /* The method, as a numbered list students can fold away once they know it */
+  details.method {
+    background: #fff;
+    border: 1.5px solid #D5E3F0;
+    border-radius: 10px;
+    padding: 10px 16px;
+    margin-bottom: 18px;
+  }
+  details.method summary { cursor: pointer; font-weight: 700; color: var(--accent-dark); }
+  details.method ol { margin: 8px 0 2px 22px; line-height: 1.6; }
+
+  .feedback {
+    min-height: 1.4em;
+    font-size: 0.92rem;
+    font-weight: 600;
+    margin-top: 10px;
+  }
+  .feedback.correct { color: var(--green-dark); }
+  .feedback.wrong   { color: var(--red); animation: ac-shake 0.35s ease; }
+
+  .q-card {
+    border: 2px solid #D5E3F0;
+    border-radius: 12px;
+    padding: 18px;
+    margin: 10px 0;
+    background: #fff;
+    transition: border-color .25s, background .25s;
+  }
+  .q-card > h3 {
+    font-family: var(--font-head);
+    font-size: 1.1rem;
+    color: var(--surface);
+    margin-bottom: 14px;
+  }
+  .q-card.is-wrong { border-color: var(--red);   background: var(--red-bg); }
+  .q-card.is-right { border-color: var(--green); background: var(--green-bg); animation: success-pulse 0.8s ease forwards; }
+  @keyframes success-pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(16,185,129,0); }
+    40%  { box-shadow: 0 0 0 8px rgba(16,185,129,.45); }
+    70%  { box-shadow: 0 0 0 14px rgba(16,185,129,.18); }
+    100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .q-card.is-right { animation: none; }
+  }
+
+  .big-num {
+    font-family: var(--font-mono);
+    font-size: 1.35em;
+    font-weight: 700;
+    color: var(--accent-dark);
+    letter-spacing: .06em;
+  }
+
+  .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 12px; }
+
+  /* Hidden copy of each task's answers, so the Classroom evidence report can read them */
+  .ev { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; left: 0; top: 0; }
+
+  /* ── Step header (ladder tasks) and chain header ─────── */
+
+  .step-head {
+    display: flex; justify-content: space-between; align-items: center; gap: 10px;
+    font-size: .85rem; font-weight: 700; color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .pips { display: flex; gap: 5px; }
+  .pip { width: 22px; height: 8px; border-radius: 4px; background: #D5E3F0; }
+  .pip.on  { background: var(--green); }
+  .pip.now { background: var(--accent); }
+  .help {
+    font-size: .95rem; color: var(--text);
+    background: #EEF0FF; border-radius: 8px; padding: 9px 14px; margin-bottom: 6px;
+  }
+
+  /* ── Column grid (headings / bits / what's left) ─────── */
+
+  .bgrid {
+    display: grid;
+    gap: 6px;
+    align-items: center;
+    margin: 4px 0 14px;
+    max-width: 640px;
+  }
+  .bgrid .rl {
+    font-size: .8rem; font-weight: 700; color: var(--muted);
+    text-transform: uppercase; letter-spacing: .05em; padding-right: 6px;
+  }
+  .cell, .cell-in {
+    height: 46px; width: 100%;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 8px;
+    font-family: var(--font-mono); font-size: 1.15rem; font-weight: 700;
+    text-align: center;
+  }
+  .cell.head { background: var(--surface); color: #fff; }
+  .cell.head.lit { background: var(--accent); box-shadow: 0 0 0 3px var(--accent-light); }
+  .cell.bit  { background: #F3F7FB; border: 2px solid #D5E3F0; color: var(--surface); }
+  .cell.bit.lit { border-color: var(--accent); background: #EEF0FF; }
+  .cell-in {
+    border: 2px solid #B9CCE0; background: #fff; color: var(--surface);
+    padding: 0 2px;
+  }
+  .cell-in:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-light); }
+  .cell-in.head-in { background: #F4F6FF; }
+  button.bit-toggle {
+    border: 2px dashed #8FA9C4; background: #fff; color: var(--surface); cursor: pointer;
+  }
+  button.bit-toggle.set { border-style: solid; border-color: var(--accent); }
+  button.bit-toggle:focus-visible { outline: 3px solid var(--accent-light); }
+  .is-right.cell-in, .is-right.bit-toggle, .is-right.num-in, .is-right.dd-slot { border-color: var(--green); background: var(--green-bg); }
+  .is-wrong.cell-in, .is-wrong.bit-toggle, .is-wrong.num-in, .is-wrong.dd-slot { border-color: var(--red);   background: var(--red-bg); }
+
+  .num-in {
+    width: 110px; height: 44px; padding: 0 10px;
+    border: 2px solid #B9CCE0; border-radius: 8px;
+    font-family: var(--font-mono); font-size: 1.15rem; font-weight: 700; color: var(--surface);
+  }
+  .num-in.wide { width: 170px; letter-spacing: .08em; }
+  .num-in:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-light); }
+  .answer-line { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-weight: 600; margin-top: 6px; }
+  .start-note { font-size: .9rem; color: var(--muted); margin: -6px 0 10px; }
+
+  /* ── Checkpoint chains ───────────────────────────────── */
+
+  .cp-bar { height: 10px; background: #D5E3F0; border-radius: 999px; overflow: hidden; margin-bottom: 14px; }
+  .cp-bar div { height: 100%; background: var(--accent); transition: width .3s; }
+  .cp-q { font-family: var(--font-head); font-size: 1.2rem; font-weight: 700; color: var(--surface); margin: 6px 0 14px; line-height: 1.4; }
+  .cp-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  @media (max-width: 560px) { .cp-opts { grid-template-columns: 1fr; } }
+  .cp-opt {
+    padding: 13px 14px; border-radius: 10px; cursor: pointer; text-align: left;
+    background: #fff; border: 2px solid #D5E3F0; color: var(--surface);
+    font-family: var(--font-body); font-size: 1rem; font-weight: 600;
+    transition: border-color .15s, background .15s;
+  }
+  .cp-opt:hover:not(:disabled) { border-color: var(--accent); background: #F4F6FF; }
+  .cp-opt:disabled { cursor: default; }
+  .cp-opt.right { border-color: var(--green); background: var(--green-bg); }
+  .cp-opt.wrong { border-color: var(--red);   background: var(--red-bg); }
+  .cp-msg { min-height: 1.4em; margin-top: 12px; font-weight: 700; font-size: .98rem; }
+  .cp-msg.good { color: var(--green-dark); }
+  .cp-msg.bad  { color: var(--red); }
+  .cp-msg .why { display: block; font-weight: 400; color: var(--text); margin-top: 4px; }
+  .cp-done, .lock-card {
+    text-align: center; padding: 26px 16px; border-radius: 12px;
+    font-family: var(--font-head); font-size: 1.1rem; font-weight: 700;
+  }
+  .cp-done { background: var(--green-bg); border: 2px solid var(--green); color: var(--green-dark); }
+  .cp-done .big { display: block; font-size: 2.4rem; margin-bottom: 6px; }
+  .lock-card { background: #fff; border: 2px dashed #B9CCE0; color: var(--muted); }
+  .lock-card p { font-family: var(--font-body); font-weight: 400; font-size: .95rem; margin-top: 6px; color: var(--text); }
+
+  /* ── Drag and drop (Task 5, step 1) ──────────────────── */
+
+  .tray {
+    display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;
+    padding: 12px; border-radius: 10px; min-height: 60px;
+    background: #F3F7FB; border: 2px dashed #B9CCE0; margin-top: 4px;
+  }
+  .dd-tile {
+    min-width: 58px; padding: 9px 14px; border-radius: 8px;
+    border: 2px solid var(--surface); background: var(--surface); color: #fff;
+    font-family: var(--font-mono); font-size: 1.1rem; font-weight: 700;
+    cursor: grab; user-select: none; touch-action: none;
+  }
+  .dd-tile.picked { background: var(--accent); border-color: var(--accent-dark); box-shadow: 0 0 0 3px var(--accent-light); }
+  .dd-tile.dragging { opacity: .3; }
+  .dd-tile.used { display: none; }
+  .dd-ghost { position: fixed; z-index: 9999; pointer-events: none; transform: translate(-50%, -50%) rotate(-3deg); box-shadow: 0 10px 24px rgba(0,0,0,.35); }
+  .dd-slot {
+    height: 46px; width: 100%; border-radius: 8px;
+    border: 2px dashed #8FA9C4; background: #fff; color: var(--muted);
+    font-family: var(--font-mono); font-size: 1.1rem; font-weight: 700; cursor: pointer;
+  }
+  .dd-slot.filled { border-style: solid; border-color: var(--accent); color: var(--surface); }
+  .dd-slot.is-over { border-color: var(--amber); background: var(--amber-bg); }
+
+  /* ── What next: the Cisco Binary Game, once everything is done ── */
+  .banner-btn {
+    display: inline-block; margin-left: 10px; padding: 4px 12px; border-radius: 8px;
+    background: var(--surface); color: #fff; text-decoration: none; font-size: .9rem;
+  }
+  .banner-btn:hover { background: var(--accent-dark); }
+  .next-card {
+    display: none; margin-top: 18px; padding: 18px 20px; border-radius: 12px;
+    background: #fff; border: 2px solid var(--accent);
+  }
+  .next-card.show { display: block; }
+  .next-card h3 { font-family: var(--font-head); color: var(--surface); margin-bottom: 6px; }
+  .next-card p { margin-bottom: 12px; }
+  .next-card .ac-btn { display: inline-block; text-decoration: none; }
+
+  /* Phones: 8 columns must fit beside the row labels */
+  @media (max-width: 560px) {
+    .panel { padding: 20px 12px 40px; }
+    .q-card { padding: 14px 10px; }
+    .bgrid { gap: 3px; }
+    .bgrid .rl { font-size: .62rem; padding-right: 2px; letter-spacing: 0; }
+    .cell, .cell-in, .dd-slot { font-size: .95rem; height: 40px; border-radius: 6px; }
+  }
+</style>
+</head>
+
+<body>
+
+<div id="done-banner" class="ac-banner gold">
+  🏆 All tasks complete: you can convert between binary and denary!
+  <a class="banner-btn" href="https://learningcontent.cisco.com/games/binary/index.html" target="_blank" rel="noopener">🎮 Play the Cisco Binary Game ↗</a>
+</div>
+<div id="glow-overlay"></div>
+
+<div class="header">
+  <div class="header-title">Binary and Denary</div>
+  <div class="header-sub">Year 8 · Data Representation · Lesson 1</div>
+  <div class="header-q">❓ How are denary numbers represented in binary using 1s and 0s?</div>
+  <div class="progress-row" id="progress-row">
+    <span class="pdot" id="dot-0"></span>
+    <span class="pdot" id="dot-1"></span>
+    <span class="pdot" id="dot-2"></span>
+    <span class="pdot" id="dot-3"></span>
+    <span class="pdot" id="dot-4"></span>
+    <span class="pdot" id="dot-5"></span>
+    <span class="pdot" id="dot-6"></span>
+  </div>
+</div>
+
+<div class="tab-bar" id="tab-bar">
+  <button class="tab active" data-idx="0">1 · Binary basics</button>
+  <button class="tab" data-idx="1">2 · Binary → denary</button>
+  <button class="tab" data-idx="2">3 · Denary → binary</button>
+  <button class="tab" data-idx="3">4 · No help</button>
+  <button class="tab" data-idx="4">5 · 8 bits: binary → denary<span class="lock" id="lock-4">🔒</span></button>
+  <button class="tab" data-idx="5">6 · 8 bits: denary → binary<span class="lock" id="lock-5">🔒</span></button>
+  <button class="tab" data-idx="6">7 · Plenary<span class="lock" id="lock-6">🔒</span></button>
+</div>
+
+<!-- ── Task 1 ───────────────────────────────────────────── -->
+<div class="panel active" id="panel-0">
+  <div class="task-header">
+    <div class="task-badge">1</div>
+    <div class="task-title">Binary basics</div>
+  </div>
+  <div class="goal">🎯 Answer 4 questions in a row. One wrong answer starts you again with new questions.</div>
+  <div id="area-0"></div>
+  <div class="feedback" id="feedback-0"></div>
+  <div class="row"><button class="ac-btn-secondary" id="reset-0" data-action="reset" data-task="0" style="display:none;font-size:0.8rem;">&#8634; Try for Gold</button></div>
+  <input type="text" class="ev" id="ev-0" readonly tabindex="-1" data-title="Task 1 Binary basics: answers">
+</div>
+
+<!-- ── Task 2 ───────────────────────────────────────────── -->
+<div class="panel" id="panel-1">
+  <div class="task-header">
+    <div class="task-badge">2</div>
+    <div class="task-title">Binary → denary (4 bits)</div>
+  </div>
+  <div class="goal">🎯 Turn binary numbers into denary. The help fades away as you go: by step 4 you write the headings yourself.</div>
+  <details class="method" id="method-1" open>
+    <summary>The method</summary>
+    <ol>
+      <li>Write the headings: <strong>8 4 2 1</strong></li>
+      <li>Write each bit under its heading, one bit per heading.</li>
+      <li>Add up the headings that have a <strong>1</strong> under them.</li>
+    </ol>
+  </details>
+  <div id="area-1"></div>
+  <div class="feedback" id="feedback-1"></div>
+  <div class="row"><button class="ac-btn-secondary" id="reset-1" data-action="reset" data-task="1" style="display:none;font-size:0.8rem;">&#8634; Try for Gold</button></div>
+  <input type="text" class="ev" id="ev-1" readonly tabindex="-1" data-title="Task 2 Binary to denary: answers">
+</div>
+
+<!-- ── Task 3 ───────────────────────────────────────────── -->
+<div class="panel" id="panel-2">
+  <div class="task-header">
+    <div class="task-badge">3</div>
+    <div class="task-title">Denary → binary (4 bits)</div>
+  </div>
+  <div class="goal">🎯 Turn denary numbers into binary. Tap a bit box to set it: ? → 0 → 1.</div>
+  <details class="method" id="method-2" open>
+    <summary>The method</summary>
+    <ol>
+      <li>Write the headings: <strong>8 4 2 1</strong></li>
+      <li>Start at the <strong>biggest</strong> heading. Does it fit into what's left?</li>
+      <li>Fits: write <strong>1</strong> and take it away. Doesn't fit: write <strong>0</strong>.</li>
+      <li>Move to the next heading. Carry on until nothing is left.</li>
+    </ol>
+  </details>
+  <div id="area-2"></div>
+  <div class="feedback" id="feedback-2"></div>
+  <div class="row"><button class="ac-btn-secondary" id="reset-2" data-action="reset" data-task="2" style="display:none;font-size:0.8rem;">&#8634; Try for Gold</button></div>
+  <input type="text" class="ev" id="ev-2" readonly tabindex="-1" data-title="Task 3 Denary to binary: answers">
+</div>
+
+<!-- ── Task 4 ───────────────────────────────────────────── -->
+<div class="panel" id="panel-3">
+  <div class="task-header">
+    <div class="task-badge">4</div>
+    <div class="task-title">No help</div>
+  </div>
+  <div class="goal">🎯 6 conversions in a row, both ways, with nothing on screen to help. Write the headings on paper first. One wrong answer starts you again with new numbers.</div>
+  <div id="area-3"></div>
+  <div class="feedback" id="feedback-3"></div>
+  <div class="row"><button class="ac-btn-secondary" id="reset-3" data-action="reset" data-task="3" style="display:none;font-size:0.8rem;">&#8634; Try for Gold</button></div>
+  <input type="text" class="ev" id="ev-3" readonly tabindex="-1" data-title="Task 4 No help: answers">
+</div>
+
+<!-- ── Task 5 ───────────────────────────────────────────── -->
+<div class="panel" id="panel-4">
+  <div class="task-header">
+    <div class="task-badge">5</div>
+    <div class="task-title">8 bits: binary → denary</div>
+  </div>
+  <div class="goal">🎯 The same method as Task 2, with 8 headings instead of 4.</div>
+  <details class="method" id="method-4" open>
+    <summary>Same method, more headings</summary>
+    <ol>
+      <li>The headings keep <strong>doubling</strong> to the left: <strong>128 64 32 16 8 4 2 1</strong></li>
+      <li>Write each bit under its heading, one bit per heading.</li>
+      <li>Add up the headings that have a <strong>1</strong> under them.</li>
+    </ol>
+  </details>
+  <div id="area-4"></div>
+  <div class="feedback" id="feedback-4"></div>
+  <div class="row"><button class="ac-btn-secondary" id="reset-4" data-action="reset" data-task="4" style="display:none;font-size:0.8rem;">&#8634; Try for Gold</button></div>
+  <input type="text" class="ev" id="ev-4" readonly tabindex="-1" data-title="Task 5 8 bits, binary to denary: answers">
+</div>
+
+<!-- ── Task 6 ───────────────────────────────────────────── -->
+<div class="panel" id="panel-5">
+  <div class="task-header">
+    <div class="task-badge">6</div>
+    <div class="task-title">8 bits: denary → binary</div>
+  </div>
+  <div class="goal">🎯 The same method as Task 3, with 8 headings. Every answer is written as 8 bits. Tap a bit box to set it: ? → 0 → 1.</div>
+  <details class="method" id="method-5" open>
+    <summary>Same method, more headings</summary>
+    <ol>
+      <li>Write the headings: <strong>128 64 32 16 8 4 2 1</strong></li>
+      <li>Biggest heading first. Fits: write <strong>1</strong> and take it away. Doesn't fit: write <strong>0</strong>.</li>
+      <li>Write answers as 8 bits by putting 0s on the left. The value doesn't change.</li>
+    </ol>
+  </details>
+  <div id="area-5"></div>
+  <div class="feedback" id="feedback-5"></div>
+  <div class="row"><button class="ac-btn-secondary" id="reset-5" data-action="reset" data-task="5" style="display:none;font-size:0.8rem;">&#8634; Try for Gold</button></div>
+  <input type="text" class="ev" id="ev-5" readonly tabindex="-1" data-title="Task 6 8 bits, denary to binary: answers">
+</div>
+
+<!-- ── Task 7 ───────────────────────────────────────────── -->
+<div class="panel" id="panel-6">
+  <div class="task-header">
+    <div class="task-badge">7</div>
+    <div class="task-title">Plenary</div>
+  </div>
+  <div class="goal">🎯 5 in a row: 8-bit conversions and the big ideas. One wrong answer starts you again.</div>
+  <div id="area-6"></div>
+  <div class="feedback" id="feedback-6"></div>
+  <div class="next-card" id="next-card">
+    <h3>🎮 What next: the Cisco Binary Game</h3>
+    <p>Rows of bits rise up the screen. Convert each one, binary to denary or denary to binary, before the stack reaches the top. It gets faster as you go.</p>
+    <a class="ac-btn" href="https://learningcontent.cisco.com/games/binary/index.html" target="_blank" rel="noopener">Play the Cisco Binary Game ↗</a>
+  </div>
+  <div class="row"><button class="ac-btn-secondary" id="reset-6" data-action="reset" data-task="6" style="display:none;font-size:0.8rem;">&#8634; Try for Gold</button></div>
+  <input type="text" class="ev" id="ev-6" readonly tabindex="-1" data-title="Task 7 Plenary: answers">
+</div>
+
+<div class="ac-toast" id="toast"></div>
+
+<script src="../../../error-reporter.js"></script>
+<script src="../../../activity-ui.js"></script>
+<script src="../../../classroom.js"></script>
+
+<script type="module">
+import {
+  TASK_COUNT, HEADINGS4, HEADINGS8, seededRandom, shuffled, toBinary,
+  LADDERS, STEP_COUNT, ladderQuestion, checkB2D, checkD2B, checkPad, checkBuild, BUILD_TILES,
+  checkTyped, formatHint, workingFor, cooldownSeconds,
+  BASICS_LENGTH, drawBasics, basicsQuestion, optionOrder,
+  NOHELP_LENGTH, drawNoHelp,
+  PLENARY_LENGTH, drawPlenary, plenaryQuestion, itemKey,
+} from './checkers.js';
+
+// ── Activity identity ──────────────────────────────────
+const STORAGE_KEY    = 'y8_datarep_l1_binary_denary';
+const ACTIVITY_TITLE = 'Binary and Denary';   // must match <!-- ACTIVITY title: --> above
+
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const CHAINS  = { 0: 'basics', 3: 'nohelp', 6: 'plenary' };
+const LADDER_TASKS = [1, 2, 4, 5];
+const UNLOCKED_BY = { 4: 3, 5: 4, 6: 5 };  // 8 bits only after Task 4 (no help); then each task opens the next
+
+// ── State (saved on every change) ──────────────────────
+function blankState() {
+  return {
+    seed: Math.random().toString(36).slice(2, 10),   // per-student numbers and order
+    tab: 0,
+    completed:    new Array(TASK_COUNT).fill(false),
+    firstAttempt: new Array(TASK_COUNT).fill(true),
+    passed: [],                                      // tasks ever completed (keeps later tasks open after a gold retry)
+    cp: { 0: { attempt: 0, pos: 0 }, 3: { attempt: 0, pos: 0 }, 6: { attempt: 0, pos: 0 } },
+    ld: { 1: { step: 0, retry: 0 }, 2: { step: 0, retry: 0 }, 4: { step: 0, retry: 0 }, 5: { step: 0, retry: 0 } },
+    draft: { 1: {}, 2: {}, 4: {}, 5: {} },                  // answers typed so far on the current question
+    chainDraft: {},                                  // typed answer in a chain question
+    wait: {},                                        // task → { until, text, why, label }: the wait after a wrong answer (survives a refresh)
+    wrongRun: {},                                    // task → wrong answers in a row (sets the wait: 10, 20, 30 s)
+    log: { 0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] },
+  };
+}
+
+function loadState() {
+  const b = blankState();
+  let s;
+  try { s = JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch (e) {}
+  if (!s || typeof s !== 'object') return b;
+  const merge = (def, got) => Object.fromEntries(Object.entries(def).map(([k, v]) => [k, { ...v, ...got?.[k] }]));
+  return {
+    ...b, ...s,
+    completed:    b.completed.map((_, i) => !!s.completed?.[i]),
+    firstAttempt: b.firstAttempt.map((_, i) => s.firstAttempt?.[i] ?? true),
+    passed: Array.isArray(s.passed) ? s.passed : [],
+    cp: merge(b.cp, s.cp),
+    ld: merge(b.ld, s.ld),
+    draft: merge(b.draft, s.draft),
+    log: Object.fromEntries(Object.keys(b.log).map(k => [k, Array.isArray(s.log?.[k]) ? s.log[k] : []])),
+  };
+}
+
+const state = loadState();
+function save() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
+}
+
+// Each task keeps a short log of what the student answered, for the evidence report.
+function logAnswer(i, line) {
+  state.log[i].push(line);
+  if (state.log[i].length > 16) state.log[i].shift();
+  $('ev-' + i).value = state.log[i].join(' | ');
+}
+
+// ── Tabs ───────────────────────────────────────────────
+function showTab(idx) {
+  state.tab = idx;
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', +t.dataset.idx === idx));
+  document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + idx));
+  save();
+}
+$('tab-bar').addEventListener('click', e => {
+  const tab = e.target.closest('.tab');
+  if (tab) showTab(+tab.dataset.idx);
+});
+
+function isLocked(i) {
+  const need = UNLOCKED_BY[i];
+  return need !== undefined && !state.completed[need] && !state.passed.includes(need);
+}
+function renderLocks() {
+  for (const i of Object.keys(UNLOCKED_BY)) $('lock-' + i).style.display = isLocked(+i) ? '' : 'none';
+}
+const LOCK_TEXT = {
+  4: ['Pass Task 4 first', 'Task 4 checks you can convert both ways with 4 bits and no help. Then you are ready for 8 bits.'],
+  5: ['Pass Task 5 first', 'Convert 8-bit binary to denary first, then come back to go the other way.'],
+  6: ['Pass Task 6 first', 'The plenary uses 8-bit numbers both ways, so finish Tasks 5 and 6 first.'],
+};
+const lockHtml = i => `<div class="lock-card">🔒 ${LOCK_TEXT[i][0]}<p>${LOCK_TEXT[i][1]}</p></div>`;
+
+function doneHtml(i, what) {
+  return `<div class="cp-done"><span class="big">${state.firstAttempt[i] ? '🥇' : '🎉'}</span>
+    ${what}${state.firstAttempt[i] ? ', first time' : ''}!</div>`;
+}
+
+// After a wrong answer: show the working and hold the button for 10, 20 then 30 s (wrong answers in a row).
+// The deadline is saved, so a refresh shows the same wait instead of skipping it.
+const waitLeft = i => Math.max(0, Math.ceil(((state.wait[i]?.until || 0) - Date.now()) / 1000));
+
+function msgBad(i, text, why, label) {
+  state.wrongRun[i] = (state.wrongRun[i] || 0) + 1;
+  state.wait[i] = { until: Date.now() + cooldownSeconds(state.wrongRun[i]) * 1000, text, why, label };
+  save();
+  showWait(i);
+}
+
+function showWait(i) {
+  const w = state.wait[i];
+  const box = $('msg-' + i);
+  box.className = 'cp-msg bad';
+  box.innerHTML = `${esc(w.text)}<span class="why">${esc(w.why)}</span>
+    <button type="button" class="ac-btn ac-btn-secondary" disabled style="margin-top:10px">Read the working…</button>`;
+  const btn = box.querySelector('button');
+  const tick = () => {
+    if (!btn.isConnected) return;
+    const left = waitLeft(i);
+    if (left > 0) { btn.textContent = `Read the working… ${left}`; setTimeout(tick, 250); }
+    else { btn.disabled = false; btn.textContent = w.label; btn.focus(); }
+  };
+  tick();
+  btn.onclick = () => {
+    delete state.wait[i];
+    save();
+    CHAINS[i] ? renderChain(i) : renderLadder(i);
+  };
+}
+
+// While a wait is running (e.g. after a refresh), the task shows only the working and the countdown.
+function renderWaiting(i) {
+  if (!state.wait[i]) return false;
+  if (!waitLeft(i)) { delete state.wait[i]; save(); return false; }
+  $('area-' + i).innerHTML = `<div class="cp-msg" id="msg-${i}" role="status"></div>`;
+  showWait(i);
+  return true;
+}
+
+// ═══════════════ LADDERS (Tasks 2, 3, 5 and 6) ═══════════════
+// One question at a time. A right answer moves on a step (with less help); a wrong one
+// shows the working and gives a new number at the same step. Wrong answers cost gold.
+const busy = {};
+
+function ladderQ(i) {
+  const s = state.ld[i];
+  return ladderQuestion(i, s.step, state.seed, s.retry);
+}
+
+// The draft belongs to one question; a new question starts with empty boxes.
+function draftFor(i) {
+  const s = state.ld[i];
+  const key = `${s.step}|${s.retry}`;
+  if (state.draft[i].key !== key) state.draft[i] = { key, headings: [], bits: [], left: [], total: '', bits8: '', placed: {} };
+  return state.draft[i];
+}
+
+function stepHead(i, step, label = 'Step') {
+  const n = STEP_COUNT[i];
+  const pips = Array.from({ length: n }, (_, k) => `<span class="pip ${k < step ? 'on' : ''} ${k === step ? 'now' : ''}"></span>`).join('');
+  return `<div class="step-head"><span>${label} ${step + 1} of ${n}</span><span class="pips" aria-hidden="true">${pips}</span></div>`;
+}
+
+const gridStyle = (width, labels) => `grid-template-columns:${labels ? 'auto ' : ''}repeat(${width}, minmax(0, ${width === 8 ? 64 : 1}${width === 8 ? 'px' : 'fr'}))`;
+
+function headingsRow(q, d, lit = []) {
+  const heads = q.width === 8 ? HEADINGS8 : HEADINGS4;
+  if (q.show === 'blank') {
+    return heads.map((_, k) => `<input class="cell-in head-in" data-field="headings" data-k="${k}" data-part="h${k}" maxlength="3"
+      inputmode="numeric" autocomplete="off" aria-label="Heading ${k + 1} from the left" data-title="Current question: heading ${k + 1}"
+      value="${esc(d.headings[k] ?? '')}">`).join('');
+  }
+  return heads.map((h, k) => `<div class="cell head ${lit[k] ? 'lit' : ''}">${h}</div>`).join('');
+}
+
+function promptFor(q) {
+  if (q.kind === 'b2d') return `Convert the binary number <span class="big-num">${q.bits}</span> to denary.`;
+  if (q.kind === 'd2b') return `Convert the denary number <span class="big-num">${q.value}</span> to binary.`;
+  if (q.kind === 'pad') return `Write the binary number <span class="big-num">${q.bits}</span> as 8 bits.`;
+  return 'Finish the 8 headings.';
+}
+
+function bodyFor(i, q, d) {
+  const heads = q.width === 8 ? HEADINGS8 : HEADINGS4;
+
+  if (q.kind === 'b2d') {
+    const shown = q.bits;
+    const lit = [...shown].map(c => q.light && c === '1');
+    const bitsRow = q.show === 'blank'
+      ? heads.map((_, k) => `<input class="cell-in" data-field="bits" data-k="${k}" data-part="b${k}" maxlength="1"
+          inputmode="numeric" autocomplete="off" aria-label="Bit under heading ${k + 1}" data-title="Current question: bit ${k + 1}"
+          value="${esc(d.bits[k] ?? '')}">`).join('')
+      : [...shown].map((c, k) => `<div class="cell bit ${lit[k] ? 'lit' : ''}">${c.trim()}</div>`).join('');
+    return `<div class="bgrid" style="${gridStyle(q.width, true)}">
+        <span class="rl">Heading</span>${headingsRow(q, d, lit)}
+        <span class="rl">Bit</span>${bitsRow}
+      </div>
+      <label class="answer-line">Denary value:
+        <input class="num-in" data-field="total" data-part="total" maxlength="3" inputmode="numeric" autocomplete="off"
+          data-title="Current question: denary value" value="${esc(d.total)}"></label>`;
+  }
+
+  if (q.kind === 'd2b') {
+    const bitsRow = heads.map((_, k) => {
+      const v = d.bits[k] ?? '';
+      return `<button type="button" class="cell bit-toggle ${v ? 'set' : ''}" data-action="toggle" data-task="${i}" data-k="${k}"
+        data-part="b${k}" aria-label="Bit under heading ${k + 1}: ${v || 'not set'}">${v || '?'}</button>`;
+    }).join('');
+    const leftRow = q.guided
+      ? `<span class="rl">Left</span>${heads.map((_, k) => `<input class="cell-in" data-field="left" data-k="${k}" data-part="l${k}" maxlength="3"
+          inputmode="numeric" autocomplete="off" aria-label="What's left after heading ${k + 1}" data-title="Current question: left after heading ${k + 1}"
+          value="${esc(d.left[k] ?? '')}">`).join('')}`
+      : '';
+    return `${q.guided ? `<p class="start-note">Start with ${q.value}. For each heading: set the bit, then write what's left.</p>` : ''}
+      <div class="bgrid" style="${gridStyle(q.width, true)}">
+        <span class="rl">Heading</span>${headingsRow(q, d)}
+        <span class="rl">Bit</span>${bitsRow}
+        ${leftRow}
+      </div>`;
+  }
+
+  if (q.kind === 'pad') {
+    return `<label class="answer-line">As 8 bits:
+        <input class="num-in wide" data-field="bits8" data-part="bits8" maxlength="9" inputmode="numeric" autocomplete="off"
+          data-title="Current question: as 8 bits" value="${esc(d.bits8)}"></label>
+      <label class="answer-line">Denary value:
+        <input class="num-in" data-field="total" data-part="total" maxlength="3" inputmode="numeric" autocomplete="off"
+          data-title="Current question: denary value" value="${esc(d.total)}"></label>`;
+  }
+
+  // build: four empty slots to the left of 8 4 2 1, and a tray of heading cards
+  const slots = [0, 1, 2, 3].map(k => {
+    const v = d.placed['h' + k];
+    return `<button type="button" class="dd-slot ${v ? 'filled' : ''}" data-slot="h${k}" data-part="h${k}"
+      aria-label="Empty heading ${k + 1}${v ? ': ' + v : ''}">${v ?? '?'}</button>`;
+  }).join('');
+  const used = new Set(Object.values(d.placed).map(String));
+  const tiles = shuffled(BUILD_TILES, seededRandom(`${state.seed}|tiles`))
+    .map(t => `<button type="button" class="dd-tile ${used.has(String(t)) ? 'used' : ''}" data-val="${t}">${t}</button>`).join('');
+  return `<div class="bgrid" style="${gridStyle(8, false)}">
+      ${slots}${HEADINGS4.map(h => `<div class="cell head">${h}</div>`).join('')}
+    </div>
+    <div class="tray" id="tray">${tiles}</div>
+    <input type="text" class="ev" readonly tabindex="-1" data-title="Current question: headings placed"
+      value="${esc([0, 1, 2, 3].map(k => d.placed['h' + k] ?? '?').join(' '))}">`;
+}
+
+function renderLadder(i) {
+  const box = $('area-' + i);
+  if (isLocked(i)) { box.innerHTML = lockHtml(i); return; }
+  if (state.completed[i]) { box.innerHTML = doneHtml(i, `All ${STEP_COUNT[i]} steps done`); return; }
+  if (renderWaiting(i)) return;
+  const s = state.ld[i];
+  const q = ladderQ(i);
+  const d = draftFor(i);
+  const m = $('method-' + i);
+  // Fold the method away when the student starts writing the headings themselves (they can open it again).
+  if (m && q.show === 'blank' && m.dataset.closedFor !== String(s.step)) { m.open = false; m.dataset.closedFor = String(s.step); }
+  box.innerHTML = `${stepHead(i, s.step)}
+    <p class="help">${esc(q.help)}</p>
+    <div class="q-card" id="qc-${i}" data-kind="${q.kind}" data-value="${q.value ?? ''}" data-width="${q.width ?? 8}"
+      data-show="${q.show ?? ''}" data-guided="${q.guided ? 1 : 0}">
+      <h3>${promptFor(q)}</h3>
+      ${bodyFor(i, q, d)}
+    </div>
+    <div class="row"><button type="button" class="ac-btn" id="check-${i}" data-action="ladder-check" data-task="${i}">Check</button></div>
+    <div class="cp-msg" id="msg-${i}" role="status"></div>`;
+  busy[i] = false;
+}
+
+// Boxes that must be filled before a check (an empty bit on the left is fine for binary → denary).
+function missing(q, d) {
+  const width = q.width ?? 8;
+  const blank = v => String(v ?? '').trim() === '';
+  const n = [];
+  if (q.kind === 'build') return [0, 1, 2, 3].filter(k => !d.placed['h' + k]).length;
+  if (q.show === 'blank') for (let k = 0; k < width; k++) if (blank(d.headings[k])) n.push('h');
+  if (q.kind === 'b2d' || q.kind === 'pad') if (blank(d.total)) n.push('t');
+  if (q.kind === 'b2d' && q.show === 'blank') for (let k = 0; k < width; k++) if (blank(d.bits[k])) n.push('b');
+  if (q.kind === 'pad' && blank(d.bits8)) n.push('p');
+  if (q.kind === 'd2b') {
+    for (let k = 0; k < width; k++) if (blank(d.bits[k])) n.push('b');
+    if (q.guided) for (let k = 0; k < width; k++) if (blank(d.left[k])) n.push('l');
+  }
+  return n.length;
+}
+
+function markLadder(q, d) {
+  if (q.kind === 'b2d')   return checkB2D(q, d);
+  if (q.kind === 'd2b')   return checkD2B(q, d);
+  if (q.kind === 'pad')   return checkPad(q, d);
+  return checkBuild(d.placed);
+}
+
+function answerText(q, d) {
+  if (q.kind === 'b2d')   return `${q.bits} → ${d.total}`;
+  if (q.kind === 'd2b')   return `${q.value} → ${d.bits.join('')}`;
+  if (q.kind === 'pad')   return `${q.bits} → ${d.bits8} = ${d.total}`;
+  return `headings ${[0, 1, 2, 3].map(k => d.placed['h' + k]).join(' ')} 8 4 2 1`;
+}
+
+function highlightParts(i, results) {
+  const card = $('qc-' + i);
+  for (const [part, ok] of Object.entries(results)) {
+    const el = card.querySelector(`[data-part="${part}"]`);
+    if (el) { el.classList.toggle('is-right', ok); el.classList.toggle('is-wrong', !ok); }
+  }
+  const all = Object.values(results).every(Boolean);
+  card.classList.toggle('is-right', all);
+  card.classList.toggle('is-wrong', !all);
+}
+
+function checkLadder(i) {
+  if (busy[i] || state.completed[i] || isLocked(i)) return;
+  // `=== false`, not `!…`: if classroom.js is missing, verifyAuth is undefined and must not block the check.
+  if (window.Classroom?.verifyAuth() === false) return;
+  const q = ladderQ(i);
+  const d = draftFor(i);
+  const msg = $('msg-' + i);
+  const gaps = missing(q, d);
+  if (gaps) {
+    msg.className = 'cp-msg bad';
+    msg.textContent = q.kind === 'd2b' ? 'Fill in every box first: every heading gets a 1 or a 0.' : 'Fill in every box first.';
+    return;
+  }
+  busy[i] = true;
+  const { ok, results } = markLadder(q, d);
+  highlightParts(i, results);
+  $('check-' + i).disabled = true;
+  $('qc-' + i).querySelectorAll('input, button').forEach(el => { el.disabled = true; });
+  const s = state.ld[i];
+
+  if (ok) {
+    logAnswer(i, `Step ${s.step + 1}: ${answerText(q, d)} ✓`);
+    window.ActivityUI?.miniCelebration($('qc-' + i));
+    msg.className = 'cp-msg good';
+    msg.innerHTML = `✓ Correct.<span class="why">${esc(workingFor(q))}</span>`;
+    s.step++;
+    s.retry = 0;
+    state.wrongRun[i] = 0;
+    save();
+    if (s.step >= STEP_COUNT[i]) {
+      setTimeout(() => {
+        $('feedback-' + i).textContent = state.firstAttempt[i] ? '🥇 Every step right first time!' : '✅ All steps done.';
+        $('feedback-' + i).className = 'feedback correct';
+        markDone(i);
+      }, reduceMotion ? 300 : 1200);
+    } else {
+      setTimeout(() => renderLadder(i), reduceMotion ? 600 : 1500);
+    }
+    return;
+  }
+
+  logAnswer(i, `Step ${s.step + 1}: ${answerText(q, d)} ✗`);
+  state.firstAttempt[i] = false;
+  s.retry++;            // saved now, so a refresh gives the new number rather than another go at this one
+  save();
+  msgBad(i, '✗ Not quite: the parts in red are wrong. Here is the working:', workingFor(q), '↻ Try another number');
+}
+
+function toggleBit(i, k) {
+  if (busy[i] || state.completed[i]) return;
+  const d = draftFor(i);
+  d.bits[k] = d.bits[k] === '0' ? '1' : '0';     // ? → 0 → 1 → 0 …
+  save();
+  const btn = $('qc-' + i).querySelector(`[data-action="toggle"][data-k="${k}"]`);
+  btn.textContent = d.bits[k];
+  btn.classList.add('set');
+  btn.classList.remove('is-right', 'is-wrong');
+  btn.setAttribute('aria-label', `Bit under heading ${k + 1}: ${d.bits[k]}`);
+  $('qc-' + i).classList.remove('is-wrong');
+}
+
+// ── Drag and drop for the 8-heading build (Task 5, step 1) ──
+let picked = null;
+function pick(tile) {
+  picked = tile;
+  document.querySelectorAll('.dd-tile').forEach(t => t.classList.toggle('picked', t === tile));
+}
+function placeTile(slot, tile) {
+  if (busy[4] || state.completed[4]) return;
+  const d = draftFor(4);
+  // A card sits in one box only, so moving it empties the box it came from.
+  for (const [k, v] of Object.entries(d.placed)) if (String(v) === tile.dataset.val) delete d.placed[k];
+  d.placed[slot.dataset.slot] = +tile.dataset.val;
+  save();
+  renderLadder(4);
+}
+function unplace(slot) {
+  if (busy[4] || state.completed[4]) return;
+  delete draftFor(4).placed[slot.dataset.slot];
+  save();
+  renderLadder(4);
+}
+
+// Pointer drag (mouse and touch). A press without movement falls through to tap-to-place.
+let drag = null;
+let suppressClickUntil = 0;
+document.addEventListener('pointerdown', e => {
+  const tile = e.target.closest('.dd-tile');
+  if (!tile || e.button !== 0) return;
+  drag = { tile, x: e.clientX, y: e.clientY, ghost: null, over: null };
+});
+document.addEventListener('pointermove', e => {
+  if (!drag) return;
+  if (!drag.ghost) {
+    if (Math.hypot(e.clientX - drag.x, e.clientY - drag.y) < 6) return;
+    drag.ghost = drag.tile.cloneNode(true);
+    drag.ghost.classList.add('dd-ghost');
+    drag.ghost.classList.remove('picked');
+    document.body.appendChild(drag.ghost);
+    drag.tile.classList.add('dragging');
+  }
+  drag.ghost.style.left = e.clientX + 'px';
+  drag.ghost.style.top  = e.clientY + 'px';
+  const over = document.elementFromPoint(e.clientX, e.clientY)?.closest('.dd-slot') || null;
+  if (over !== drag.over) {
+    drag.over?.classList.remove('is-over');
+    over?.classList.add('is-over');
+    drag.over = over;
+  }
+});
+function endDrag(drop) {
+  const d = drag;
+  drag = null;
+  if (!d?.ghost) return;
+  d.ghost.remove();
+  d.tile.classList.remove('dragging');
+  d.over?.classList.remove('is-over');
+  suppressClickUntil = Date.now() + 150;
+  if (drop && d.over) { pick(null); placeTile(d.over, d.tile); }
+}
+document.addEventListener('pointerup', () => endDrag(true));
+document.addEventListener('pointercancel', () => endDrag(false));
+
+// ═══════════════ CHAINS (Tasks 1, 4 and 7) ═══════════════
+// N in a row, one at a time. A wrong answer is saved straight away as a restart
+// (so refreshing doesn't dodge it), shows why, then starts again with a new draw.
+const CHAIN_LEN = { 0: BASICS_LENGTH, 3: NOHELP_LENGTH, 6: PLENARY_LENGTH };
+
+function chainItems(i) {
+  const a = state.cp[i].attempt;
+  if (i === 0) return drawBasics(state.seed, a).map(id => ({ type: 'mcq', id, pool: 'basics' }));
+  if (i === 3) return drawNoHelp(state.seed, a);
+  return drawPlenary(state.seed, a).map(x => x.type === 'mcq' ? { ...x, pool: 'plenary' } : x);
+}
+const mcqOf = item => item.pool === 'basics' ? basicsQuestion(item.id) : plenaryQuestion(item.id);
+
+function typedPrompt(item) {
+  return item.type === 'b2d'
+    ? `Convert the binary number <span class="big-num">${toBinary(item.value, item.width)}</span> to denary.`
+    : `Convert the denary number <span class="big-num">${item.value}</span> to binary. Write ${item.width} bits.`;
+}
+
+function renderChain(i) {
+  const box = $('area-' + i);
+  if (isLocked(i)) { box.innerHTML = lockHtml(i); return; }
+  const len = CHAIN_LEN[i];
+  if (state.completed[i]) { box.innerHTML = doneHtml(i, `${len} in a row`); return; }
+  if (renderWaiting(i)) return;
+  const s = state.cp[i];
+  const item = chainItems(i)[s.pos];
+  let body;
+  if (item.type === 'mcq') {
+    const q = mcqOf(item);
+    body = `<p class="cp-q">${esc(q.q)}</p>
+      <div class="cp-opts">${optionOrder(q, state.seed, s.attempt).map(k =>
+        `<button type="button" class="cp-opt" data-action="chain-mcq" data-task="${i}" data-k="${k}">${esc(q.opts.find(o => o[0] === k)[1])}</button>`).join('')}</div>`;
+  } else {
+    const key = `${s.attempt}|${s.pos}`;
+    const val = state.chainDraft[i]?.key === key ? state.chainDraft[i].text : '';
+    body = `<p class="cp-q">${typedPrompt(item)}</p>
+      <div class="answer-line">
+        <input class="num-in ${item.type === 'd2b' && item.width === 8 ? 'wide' : ''}" id="typed-${i}" data-chain="${i}" data-part="typed"
+          maxlength="${item.type === 'd2b' ? item.width + 1 : 3}" inputmode="numeric" autocomplete="off"
+          aria-label="Your answer" data-title="Current question: your answer" value="${esc(val)}">
+        <button type="button" class="ac-btn" id="check-${i}" data-action="chain-typed" data-task="${i}">Check</button>
+      </div>`;
+  }
+  box.innerHTML = `<div class="step-head"><span>Question ${s.pos + 1} of ${len}</span><span>${s.pos} / ${len} right</span></div>
+    <div class="cp-bar"><div style="width:${s.pos / len * 100}%"></div></div>
+    <div class="q-card" id="qc-${i}" data-type="${item.type}" data-value="${item.value ?? ''}" data-width="${item.width ?? ''}" data-id="${item.id ?? ''}">
+      <h3>Question ${s.pos + 1}</h3>${body}
+    </div>
+    <div class="cp-msg" id="msg-${i}" role="status"></div>`;
+  busy[i] = false;
+}
+
+function chainRight(i, why) {
+  const s = state.cp[i];
+  const len = CHAIN_LEN[i];
+  const msg = $('msg-' + i);
+  $('qc-' + i).classList.add('is-right');
+  msg.className = 'cp-msg good';
+  msg.innerHTML = `✓ Correct.<span class="why">${esc(why)}</span>`;
+  state.wrongRun[i] = 0;
+  s.pos++;
+  save();
+  if (s.pos >= len) {
+    setTimeout(() => {
+      $('feedback-' + i).textContent = state.firstAttempt[i] ? `🥇 ${len} in a row, first time!` : `✅ ${len} in a row: passed.`;
+      $('feedback-' + i).className = 'feedback correct';
+      markDone(i);
+    }, reduceMotion ? 300 : 1200);
+  } else {
+    setTimeout(() => renderChain(i), reduceMotion ? 600 : 1500);
+  }
+}
+
+function chainWrong(i, why) {
+  const s = state.cp[i];
+  $('qc-' + i).classList.add('is-wrong');
+  state.firstAttempt[i] = false;
+  s.attempt++;
+  s.pos = 0;
+  save();
+  msgBad(i, '✗ Not quite. Back to question 1 with new questions.', why, '↺ Start again from question 1');
+}
+
+function answerMcq(i, k) {
+  if (busy[i] || state.completed[i]) return;
+  if (window.Classroom?.verifyAuth() === false) return;
+  busy[i] = true;
+  const item = chainItems(i)[state.cp[i].pos];
+  const q = mcqOf(item);
+  const box = $('qc-' + i);
+  box.querySelectorAll('.cp-opt').forEach(b => { b.disabled = true; });
+  const chosen = q.opts.find(o => o[0] === k)[1];
+  if (k === q.a) {
+    box.querySelector(`[data-k="${k}"]`).classList.add('right');
+    logAnswer(i, `${q.q} ${chosen} ✓`);
+    chainRight(i, q.why);
+  } else {
+    box.querySelector(`[data-k="${k}"]`).classList.add('wrong');
+    box.querySelector(`[data-k="${q.a}"]`).classList.add('right');
+    logAnswer(i, `${q.q} ${chosen} ✗`);
+    chainWrong(i, q.why);
+  }
+}
+
+function answerTyped(i) {
+  if (busy[i] || state.completed[i]) return;
+  if (window.Classroom?.verifyAuth() === false) return;
+  const item = chainItems(i)[state.cp[i].pos];
+  const input = $('typed-' + i);
+  const msg = $('msg-' + i);
+  const verdict = checkTyped(item, input.value);
+  if (verdict === 'format') {
+    msg.className = 'cp-msg bad';
+    msg.textContent = formatHint(item);
+    return;
+  }
+  busy[i] = true;
+  input.disabled = true;
+  $('check-' + i).disabled = true;
+  input.classList.add(verdict === 'ok' ? 'is-right' : 'is-wrong');
+  const shown = item.type === 'b2d' ? toBinary(item.value, item.width) : item.value;
+  logAnswer(i, `${shown} → ${input.value.trim()} ${verdict === 'ok' ? '✓' : '✗'}`);
+  delete state.chainDraft[i];
+  if (verdict === 'ok') chainRight(i, workingFor(item));
+  else chainWrong(i, workingFor(item));
+}
+
+// ═══════════════ SCORING AND COMPLETION ═══════════════
+// Mastery scoring: 0–80 for completing tasks, +20 bonus for first-attempt correctness
+function calcScore() {
+  const done     = state.completed.filter(Boolean).length;
+  const mastered = state.completed.filter((c, i) => c && state.firstAttempt[i]).length;
+  return Math.round((done / TASK_COUNT * 80) + (mastered / TASK_COUNT * 20));
+}
+
+function submitScore() {
+  const pct = calcScore();
+  window.ActivityUI?.setScore(pct);
+  window.Classroom?.submitGrade(pct, ACTIVITY_TITLE);
+}
+
+function showDone(i) {
+  const isGold = state.firstAttempt[i];
+  $('dot-' + i).className = 'pdot ' + (isGold ? 'gold' : 'correct');
+  document.querySelector(`.tab[data-idx="${i}"]`).classList.add('done');
+  $('reset-' + i).style.display = isGold ? 'none' : '';
+}
+
+function markDone(i) {
+  if (state.completed[i]) return;
+  state.completed[i] = true;
+  if (!state.passed.includes(i)) state.passed.push(i);
+  showDone(i);
+  save();
+  submitScore();
+  renderAll();
+  if (state.completed.every(Boolean)) allComplete();
+}
+
+// Start a task again for gold: new numbers and questions, from the start.
+function resetTask(i) {
+  state.completed[i] = false;
+  state.firstAttempt[i] = true;
+  delete state.wait[i];
+  state.wrongRun[i] = 0;
+  if (CHAINS[i]) { state.cp[i].attempt++; state.cp[i].pos = 0; delete state.chainDraft[i]; }
+  else { state.ld[i].step = 0; state.ld[i].retry++; }
+  $('dot-' + i).className = 'pdot';
+  document.querySelector(`.tab[data-idx="${i}"]`).classList.remove('done');
+  $('feedback-' + i).textContent = '';
+  $('feedback-' + i).className = 'feedback';
+  $('reset-' + i).style.display = 'none';
+  const m = $('method-' + i);
+  if (m) { m.open = true; delete m.dataset.closedFor; }
+
+  $('done-banner').classList.remove('show', 'gold', 'green');
+  $('glow-overlay').classList.remove('show', 'gold', 'green');
+  $('next-card').classList.remove('show');
+  window.ActivityUI?.resetCelebration();
+
+  save();
+  renderAll();
+  submitScore();
+}
+
+function showAllDone() {
+  const tier = state.firstAttempt.every(Boolean) ? 'gold' : 'green';
+  $('done-banner').classList.add('show', tier);
+  $('glow-overlay').classList.add(tier, 'show');
+  $('next-card').classList.add('show');
+}
+
+function allComplete() {
+  showAllDone();
+  window.ActivityUI?.launchCelebration({ percent: calcScore() });
+}
+
+// ═══════════════ EVENTS ═══════════════
+document.addEventListener('click', e => {
+  if (Date.now() < suppressClickUntil) return;
+
+  const tile = e.target.closest('.dd-tile');
+  if (tile) { pick(picked === tile ? null : tile); return; }
+  const slot = e.target.closest('.dd-slot');
+  if (slot) {
+    if (picked) { const t = picked; pick(null); placeTile(slot, t); }
+    else if (draftFor(4).placed[slot.dataset.slot]) unplace(slot);
+    else window.ActivityUI?.showToast('Tap a heading card first, then tap this box.');
+    return;
+  }
+
+  const btn = e.target.closest('[data-action]');
+  if (!btn) return;
+  const i = +btn.dataset.task;
+  const act = btn.dataset.action;
+  if (act === 'ladder-check') checkLadder(i);
+  if (act === 'toggle')       toggleBit(i, +btn.dataset.k);
+  if (act === 'chain-mcq')    answerMcq(i, btn.dataset.k);
+  if (act === 'chain-typed')  answerTyped(i);
+  if (act === 'reset')        resetTask(i);
+});
+
+// Typing: save the draft, clear the red/green marks, and hop to the next one-bit box.
+document.addEventListener('input', e => {
+  const el = e.target;
+  if (el.dataset.chain !== undefined) {
+    const i = +el.dataset.chain;
+    const s = state.cp[i];
+    state.chainDraft[i] = { key: `${s.attempt}|${s.pos}`, text: el.value };
+    $('msg-' + i).textContent = '';
+    save();
+    return;
+  }
+  const card = el.closest('.q-card');
+  if (!card || !el.dataset.field) return;
+  const i = +card.id.replace('qc-', '');
+  const d = draftFor(i);
+  if (el.dataset.k !== undefined) d[el.dataset.field][+el.dataset.k] = el.value;
+  else d[el.dataset.field] = el.value;
+  el.classList.remove('is-right', 'is-wrong');
+  card.classList.remove('is-wrong');
+  $('msg-' + i).textContent = '';
+  save();
+  if (el.maxLength === 1 && el.value) {
+    const next = [...card.querySelectorAll(`input[data-field="${el.dataset.field}"]`)][+el.dataset.k + 1];
+    next?.focus();
+  }
+});
+
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter' || e.target.tagName !== 'INPUT') return;
+  const chain = e.target.dataset.chain;
+  if (chain !== undefined) { answerTyped(+chain); return; }
+  const card = e.target.closest('.q-card');
+  if (card && LADDER_TASKS.includes(+card.id.replace('qc-', ''))) checkLadder(+card.id.replace('qc-', ''));
+});
+
+// ═══════════════ START UP ═══════════════
+function renderAll() {
+  renderLocks();
+  for (const i of Object.keys(CHAINS)) renderChain(+i);
+  for (const i of LADDER_TASKS) renderLadder(i);
+}
+
+renderAll();
+
+// Restore the finished look without re-firing the celebration or a Classroom upload.
+for (let i = 0; i < TASK_COUNT; i++) {
+  $('ev-' + i).value = state.log[i].join(' | ');
+  if (!state.completed[i]) continue;
+  showDone(i);
+  $('feedback-' + i).textContent = '✅ Done!';
+  $('feedback-' + i).className = 'feedback correct';
+}
+if (state.completed.every(Boolean)) showAllDone();
+window.ActivityUI?.setScore(calcScore());
+showTab(Math.min(Math.max(+state.tab || 0, 0), TASK_COUNT - 1));
+save();   // keeps the seed, so the numbers stay the same after a reload
+</script>
+</body>
+</html>

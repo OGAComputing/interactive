@@ -15,6 +15,10 @@ restate or shortcut its rules here.
 - Find the unit's MTP in `Knowledge Base/` (`project_*_mtp.md`) and read the lesson's section.
   If there's no MTP section for the lesson, or the unit or lesson number is missing, ask in one
   question before building anything.
+- Design from the MTP, not from earlier versions. Don't read removed or older versions of the
+  lesson (git history, `git show` of deleted files, old decks, the department's Drive folder or
+  slides) for content or ideas. If the folder or deck already exists, say so and ask before
+  reading it.
 - Pick the page skill:
   - Y9 Python (Station Zero) → `/new-chapter <n>`
   - everything else → `/new-activity <path> "<title>"`, with the path from the MTP's build

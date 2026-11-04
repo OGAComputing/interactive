@@ -69,13 +69,18 @@ Each teaching lesson (1–4) runs a **complete PRIMM cycle**: Predict → Run �
 |------|--------------------|-----|
 | **Split attention effect** | Code on one slide, explanation on the next; labels separated from the thing they label | Integrate explanation *into* the code (inline comments or callout arrows); keep related elements together on the same slide |
 | **Redundancy effect** | Reading text aloud word-for-word while it is on screen; restating in text what a diagram already shows | Put on the slide only what you *won't* say — key terms, a diagram, a short prompt. Say the rest. |
+| **Expertise reversal effect** | Support that helps novices gets in the way once students know the material: a full worked example of something they can already do, labels on syntax they have mastered, step-by-step prompts for a routine task | Fade support when retrieval shows the class is secure, not by lesson number. Drop labels and sub-goal prompts for anything already mastered; swap a full worked example for a completion problem or a straight "you do". Keep full support for whatever is new this lesson. |
+| **Transient information** | A long explanation on one animated slide or spoken in one go, so earlier steps are gone before the last one lands | Leave each step on screen as the next one builds (e.g. a strip of steps along the bottom) so students can look back. |
 
 ### Lean into these
 
 | Strategy | How to apply |
 |----------|-------------|
 | **Dual coding** | Pair a concept with a visual — a variable as a labelled box, execution as a numbered arrow, an error trace diagram. Visual and text together, not text alone. |
-| **Worked examples** | Show a complete, annotated piece of code before asking students to write. Use **faded guidance** across the unit: full example (L1) → partially complete (L2–3) → prompt only (L4). |
+| **Modality** | Explain a diagram or code *out loud* while students look at it, rather than adding on-screen text beside it. Eyes take in the picture while ears take the explanation. |
+| **Segmenting** | Build complex slides up on click, one part at a time (code → screen → memory), so students only see the step being explained. Pause between segments for a quick check. |
+| **Signalling** | Point attention at what matters: highlight the line being discussed, colour-match a label to the part it names, dim what is not in play yet. |
+| **Worked examples** | Show a complete, annotated piece of code before asking students to write. Use **faded guidance** across the unit: full example (L1) → partially complete (L2–3) → prompt only (L4). Fading is the fix for the expertise reversal effect: move on to the next stage when the class shows it is secure, not just because the lesson number has changed. |
 | **Sub-goal labels** | Name the steps: *"Step 1: ask for input. Step 2: cast it. Step 3: do the maths."* These become the cognitive hooks students reuse when writing their own code. |
 | **Notional machine** | Use explicit tracing — a table of variable values at each line — to build a shared mental model of execution. Slides can show a blank trace table; completing it is the deliberate practice. |
 
@@ -179,6 +184,8 @@ The PNGs are in `C:\Users\n.houlton_grange.out\Pictures\`.
 A unit with a story layer can restyle the deck to match it, but keeps the slide order, pillar icons, fonts, minimum sizes and Section 5–6 rules above.
 
 - **Y10 BTEC Creative Media — Component 1, *Front Page*** (`_presentations/Y10_BTEC_CDM/`): an editorial / magazine look, chosen so these decks don't resemble the Computing ones. **This variant changes the fonts and palette** (Nick's decision, 2026-10-23): Oswald headlines, Lato body, Lora italic quotes (Google fonts, since 2026-11-03: the decks are published as Google Slides); paper / ink / one print red; square corners and heavy rules. Slide order, pillar icons and minimum sizes stay. Start from that folder's `README.md` and `C1_Deck_Template.pptx`; recipes are in `c1_kit.cjs`.
+
+- **Y8 Data Representation** (`_presentations/Y8_Data_Representation/`): **not charcoal and gold** (Nick, 2026-11-03: don't reuse the black and amber look). Deep indigo `#1E1B4B` with a sky-blue accent `#38BDF8`, matching the activity pages' indigo; correct answers green `#4ADE80`; the light Recap slide is pale indigo `#EEF2FF`. Lora / Lato / Ubuntu Mono. Built with the Y9 kit (`createDeck({ palette, fonts, station: 'none' })`); the palette is in `build_L1.cjs`, so copy it for later lessons. Slide order, pillar icons and minimum sizes stay.
 
 - **Y9 Python — *Station Zero*** (survival horror, `Y9/Python/`): charcoal stays the base, gold is used as the station's hazard/warning colour, and a dim phosphor green (Consolas) is kept for story text only: chapter cards and terminal logs. Alarm red appears **only** on error messages. The Recap & Recall starter stays light (off-white) so the answers slide can be the dark one. The story appears in two places only, as in the activities: a chapter card before the task and a cliffhanger at the end. Content slides carry no decorative horror imagery. Code uses Consolas, coloured like the activities' memory view: strings in Okabe-Ito orange (`str`), numbers in sky blue (`int`), so slides and activities use the same type colours.
   - **Start from `_presentations/Y9_Python/README.md` and `Y9_Python_Deck_Template.pptx`** (one example of every slide type, with guidance in the speaker notes). The README holds the unit's rules and the running feedback log; the template's rules slides are generated from it.

@@ -37,8 +37,11 @@ Build or update the deck for `$ARGUMENTS`.
 - Render: `soffice --headless --convert-to pdf <deck>.pptx`, then turn pages into images with
   Python `pdfplumber` (pdftoppm isn't installed on this machine) and look at every slide.
 - Check against the feedback log: whole lines of code, labels right beside what they label,
-  ≤ 3 text areas, no split attention, story only on title / story-so-far / chapter cards /
-  plenary, damage only in the frame.
+  ≤ 3 text areas, no split attention, no redundancy (nothing on screen that you will say), story
+  only on title / story-so-far / chapter cards / plenary, damage only in the frame.
+- **Expertise reversal:** check the support against what the class already knows (the MTP and
+  earlier decks). No full worked example, labels or step prompts for anything taught and secured in
+  an earlier lesson; keep them for what is new. See `ppt-guidelines.md` §5.
 - **Define before use:** read the slides in order. No technical term or concept appears on a slide
   (labels, prompts, hinge options, task steps) before the slide that introduces or defines it. The
   lesson-question slide may pose it; speaker notes don't count. Move the defining slide earlier, or

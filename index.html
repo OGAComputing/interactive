@@ -831,11 +831,12 @@
           else counts.same++;
         }
       } catch (e) {
-        // A deleted assignment's submissions list fails with 400, not 404, but the
-        // assignment itself then 404s. Skip it so it can't hold the sync marker back for ever.
+        // A deleted assignment's submissions list fails with 400 FAILED_PRECONDITION, not 404,
+        // and the assignment itself may 404, fail too, or come back with state DELETED.
+        // Skip it so it can't hold the sync marker back for ever.
         const deleted = /^(400|404) /.test(e.message) &&
-          await googleGet(`https://classroom.googleapis.com/v1/courses/${courseId}/courseWork/${workId}?fields=id`)
-            .then(() => false, err => /^404 /.test(err.message));
+          await googleGet(`https://classroom.googleapis.com/v1/courses/${courseId}/courseWork/${workId}?fields=state`)
+            .then(w => w.state === 'DELETED', err => /^(400|403|404) /.test(err.message));
         if (deleted) {
           console.info('Grade sync: skipped a deleted assignment', { courseId, workId });
         } else {
