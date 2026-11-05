@@ -266,9 +266,9 @@ Follow-up: "How many times did the program ASK?" (twice here: line 1 and line 4.
 // Your turn: which line runs next? (Deliberate Practice / Feedback): the We do question on three new loops.
 // The gold line has just run and the box shows the variable; the answers outline the next line in green.
 const NEXT3 = [
-  { code: ['n = 1', 'while n <= 3:', '    print(n)', '    n = n + 1', 'print("Launch")'], name: 'n', mem: '3', line: 2, next: 3 },
+  { code: ['go = "no"', 'while go == "no":', '    print("Wait")', '    go = input("Go? ")', 'print("Launch")'], name: 'go', type: 'str', mem: '"no"', line: 2, next: 3 },
   { code: ['hp = 3', 'while hp > 0:', '    print("Hit!")', '    hp = hp - 1', 'print("Game over")'], name: 'hp', mem: '2', line: 4, next: 2 },
-  { code: ['fuel = 5', 'while fuel < 5:', '    print(fuel)', '    fuel = fuel + 1', 'print("Full")'], name: 'fuel', mem: '5', line: 2, next: 5 },
+  { code: ['fuel = 9', 'while fuel < 5:', '    print(fuel)', '    fuel = fuel + 1', 'print("Full")'], name: 'fuel', mem: '9', line: 2, next: 5 },
 ];
 function nextSlide(reveal) {
   const s = newSlide('SZ_DARK', R1, reveal ? 'Which line runs next? — answers' : 'Which line runs next? Your turn');
@@ -282,7 +282,7 @@ function nextSlide(reveal) {
     const top = (n) => cp.ys[n - 1] - cp.lh / 2;
     s.addShape(K.pres.shapes.RECTANGLE, { x: cx + 0.06, y: top(it.line), w: cw - 0.12, h: cp.lh,
       fill: { color: P.gold, transparency: 82 }, line: { color: P.gold, width: 2 } });
-    K.varBox(s, { name: it.name, type: 'int', value: it.mem, x: x + 0.2, y: y + 3.4, w: 1.7, h: 0.7, size: 24 });
+    K.varBox(s, { name: it.name, type: it.type || 'int', value: it.mem, x: x + 0.2, y: y + 3.4, w: 1.7, h: 0.7, size: 24 });
     text(s, 'NEXT LINE', { x: x + 2.15, y: y + 3.15, w: 1.5, h: 0.3, fontSize: 13, bold: true, color: P.dim, charSpacing: 2 });
     if (reveal) {
       s.addShape(K.pres.shapes.RECTANGLE, { x: cx + 0.06, y: top(it.next), w: cw - 0.12, h: cp.lh,
@@ -306,9 +306,9 @@ nextSlide(false).addNotes(`YOU DO — silent, 2 minutes. The same question as th
 The gold line has JUST run; the box shows what's in the variable now. Write three line numbers: 1, 2, 3.
 Boards up together on 3-2-1.`);
 nextSlide(true).addNotes(`Go through any the class split on.
-1 → 3: 3 <= 3 is True (<= includes equal), so into the body.
+1 → 3: go is "no", and "no" == "no" is True, so into the body.
 2 → 2, NOT 5: line 4 is the end of the body, so Python goes back up to check hp > 0 again. Same slip as the alarm question.
-3 → 5: 5 < 5 is False straight away, so the body is skipped: it runs ZERO times.
+3 → 5: 9 < 5 is False straight away (the tank is already more than full), so the body is skipped: it runs ZERO times.
 Link: in the activity, the right code first time means "ACCESS DENIED" never prints.`);
 
 // ════════════════════════════════════════════════════════════════════════════
