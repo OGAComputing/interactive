@@ -88,6 +88,39 @@ test('X also died if Proximity\'s Sensor Ops lockdown was never followed by Make
   await expect(page.locator('#szCrewPods .crew-pod').nth(2)).toHaveClass(/dead/);
 });
 
+test('X also died if the Proximity crisis was picked but Modify 1 was never reached', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('sz_choices', JSON.stringify({ shield: 'pod3' })));
+  await openAt(page, {}, { story: true });
+  await expect(page.locator('#szPrevFull')).toContainText('Patel died');
+  await expect(page.locator('#szCrewPods .crew-pod').nth(4)).toHaveClass(/dead/);
+});
+
+// An unfixed crisis costs you (2026-11-04): only the seals handed to WARDEN settle it.
+async function crewAfter(page, seen, choices) {
+  await page.addInitScript(([p, s, c]) => {
+    localStorage.setItem('sz_story_' + p, JSON.stringify(s));
+    localStorage.setItem('sz_choices', JSON.stringify(c));
+  }, [PATH, seen, choices]);
+  await page.goto(PATH + '?step=off&story=off');
+  return page.locator('#szCrewPods .crew-pod');
+}
+const ALL_SEEN = ['intro', 'P', 'R', 'I1', 'I', 'M1', 'M2'];
+
+test('warm path: without the seals going to WARDEN, you end up injured', async ({ page }) => {
+  const pods = await crewAfter(page, ALL_SEEN, { heat: 'cryo', airlock: 'warden' });
+  await expect(pods.nth(3)).toHaveClass(/injured/);
+});
+
+test('fast path: the crew in cryo are at risk from the crisis, and stay so when the heaters burn out', async ({ page }) => {
+  const pods = await crewAfter(page, ALL_SEEN, { heat: 'fast', airlock: 'warden', seals: 'override' });
+  for (const i of [0, 2, 4]) await expect(pods.nth(i)).toHaveClass(/risk/);
+});
+
+test('fast path: handing the seals to WARDEN brings the heaters back, and the crew are stable', async ({ page }) => {
+  const pods = await crewAfter(page, ALL_SEEN, { heat: 'fast', airlock: 'override', seals: 'warden' });
+  for (const i of [0, 2, 4]) await expect(pods.nth(i)).not.toHaveClass(/risk/);
+});
+
 // ─── Predict ─────────────────────────────────────────────────────────────────
 
 test('Predict: the worked example appears after the first attempt, then on to Run', async ({ page }) => {

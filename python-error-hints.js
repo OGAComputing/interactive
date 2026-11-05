@@ -89,6 +89,22 @@ const HINTS = [
                 + `or wrap it in speech marks if you meant it as text, e.g. "${m[1]}".`,
   },
   {
+    // turtle-canvas.js's turtle: a colour name the turtle doesn't know.
+    id: 'turtle-colour',
+    match: /bad colou?r (?:string|arguments|sequence)/i,
+    title: "Turtle doesn't know that colour",
+    plain: 'the turtle **doesn\'t know that colour name**.',
+    fix: 'Check the spelling, or try a simple colour such as "red", "blue" or "orange".',
+  },
+  {
+    // turtle-canvas.js's turtle, like Python's: t.forward("50") or t.left(input(...)).
+    id: 'turtle-text-number',
+    match: /can't multiply sequence by non-int of type 'float'/i,
+    title: 'A move needs a number',
+    plain: 'a turtle **move or turn was given text, not a number**.',
+    fix: 'Use a number, or wrap input() in int(), e.g. int(input("Sides: ")).',
+  },
+  {
     id: 'type-concat',
     match: /can only concatenate str|unsupported operand type\(s\)/i,
     title: 'Mixing text and numbers',

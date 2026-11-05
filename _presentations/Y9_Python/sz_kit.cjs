@@ -182,8 +182,8 @@ function arrow(s, x1, y1, x2, y2, color = P.muted) {
 
 // Python syntax colouring → pptxgenjs runs. Strings = str colour, numbers = int colour.
 // Keywords (if, elif, else …) and comparison operators (>=, == …) are bold, so a condition stands out.
-const BUILTINS = new Set(['print', 'input', 'int', 'str']);
-const KEYWORDS = new Set(['if', 'elif', 'else', 'while', 'for', 'in', 'def', 'return', 'True', 'False']);
+const BUILTINS = new Set(['print', 'input', 'int', 'str', 'range']);
+const KEYWORDS = new Set(['if', 'elif', 'else', 'while', 'for', 'in', 'def', 'return', 'True', 'False', 'import']);
 function pyRuns(src, size, base = P.off) {
   const runs = [];
   const re = /("[^"\n]*"?|'[^'\n]*'?)|(\b\d+\b)|([A-Za-z_]\w*)|(\s+)|(>=|<=|==|!=|<|>)|(.)/g;

@@ -30,6 +30,7 @@ Reached by relative path: `../../` from a topic-level page, `../../../` from a l
 | `code-editor.js` | Python editor widget (`setupEditors`, `runCode`, `setEditorOutput`, `replayRun`) with opt-in `errorHints`, `memoryView`, `stepThrough` | Python pages, PRIMM lessons |
 | `python-error-hints.js` | Year-8-friendly error explanations; imported only by `code-editor.js` | (indirect) |
 | `pseudocode-transpiler.js` / `pseudocode-editor.js` | OCR pseudocode → Python (procedural subset, file I/O, classes) and its editor (a fork of `code-editor.js`) | Pseudocode pages only |
+| `turtle-canvas.js` | Python's `turtle` in the browser: installs a `turtle` module in Pyodide that records every line drawn (`turtleReady`, `readDrawing`), and `attachTurtle(ta)` adds a screen that draws in step with the step-through replay (`code-editor.js`'s `exec-start` / `exec-step` / `exec-done` events). It takes the output panel's place when the code has no `print`/`input`, and sits under the editor row when it has, or when a run prints or fails | Y9 Python L4 |
 | `fonts/<family>.css` + `fonts/<family>/` | Self-hosted web fonts: one stylesheet of `@font-face` rules per family, its `.woff2` files and its licence. Link it in `<head>`: `<link rel="stylesheet" href="../../fonts/outfit.css">` | Pages that want a non-system font (now: Baloo 2, Comic Neue, Fredoka, Outfit) |
 
 These are the only files an activity may reference. They are allowed because activities are always served from the hub/GitHub Pages, and the presentation files degrade gracefully when absent (call them with `?.`).

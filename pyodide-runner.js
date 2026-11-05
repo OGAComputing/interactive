@@ -364,6 +364,14 @@ export async function runPython(code, {
   return result;
 }
 
+// For helpers that keep their own state in the shared interpreter between runs (e.g.
+// turtle-canvas.js installs a `turtle` module and reads back what the last run drew).
+// Runs `src` as it is: no loop guard, no input mock, no output capture. Returns the value
+// of its last expression, or undefined while Python is still loading.
+export function pyEval(src) {
+  return _pyodide ? _pyodide.runPython(src) : undefined;
+}
+
 export async function analyzeCode(code) {
   if (!_loading) _loading = _init();
   const py = await _loading;

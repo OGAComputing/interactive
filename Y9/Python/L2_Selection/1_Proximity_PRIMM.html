@@ -2147,10 +2147,12 @@ else:
      ═══════════════════════════════════════════════════════════════════════ */
   // ── Chapter 1's choices. A missing choice falls back to the safe option or the better call.
   const door = c => c.door === 'open' ? 'open' : 'sealed';
-  const lock = c => c.lock === 'pod5' || c.lock === 'bay' ? c.lock : door(c) === 'open' ? 'pod5' : 'bay';
-  // Patel starts this chapter critical if Wake Up opened the door and then locked the bay with
-  // it inside, unless the optional Life Support round sent its canisters to Pod 5 (that round
-  // can only help, so it's the one Life Support choice read here).
+  // An open door is only fixed by locking Pod 5, so a missing lock (Make never reached) leaves
+  // the bay as it was: the danger stands (2026-11-04).
+  const lock = c => c.lock === 'pod5' ? 'pod5' : 'bay';
+  // Patel starts this chapter critical if Wake Up opened the door and didn't then lock Pod 5,
+  // unless the optional Life Support round sent its canisters to Pod 5 (that round can only
+  // help, so it's the one Life Support choice read here).
   const shutIn = c => door(c) === 'open' && lock(c) === 'bay' && c.transfer !== 'pod5';
 
   // ── This chapter's choices ──
@@ -2168,10 +2170,14 @@ else:
   // (X is failing). A missing choice means the better call, except for X (below).
   const lockdown = c => c.lockdown === 'sensors' ? 'sensors' : 'cryo';
   const power = c => c.power === 'sensors' || c.power === 'pods' ? c.power : lockdown(c) === 'cryo' ? 'sensors' : 'pods';
-  // X dies if the Sensor Ops lockdown is never fixed: the power went to the sensors, or Make was
-  // never reached (2026-11-04). A missing lockdown means the Cryo Bay, so only a student who made
-  // the risky call can lose X; an absent one never does.
-  const xDead = c => lockdown(c) === 'sensors' && c.power !== 'pods';
+  // X dies if the crisis is never fixed (2026-11-04): only sealing the Cryo Bay (choice 1) or
+  // power to the pods (choice 2) saves them. So a Sensor Ops lockdown with the power sent to the
+  // sensors, or the crisis picked and Modify 1 or Make never reached, kills X. A missing crisis
+  // means the student never got here, and an absent student never loses X.
+  const xDead = c => !!c.shield && c.lockdown !== 'cryo' && c.power !== 'pods';
+  // The cliffhanger's lockdown: a crisis left without a lockdown (Modify 1 skipped) plays as an
+  // unsealed bay, so the report matches xDead.
+  const m2Lockdown = c => c.shield && !c.lockdown ? 'sensors' : lockdown(c);
   const sensorsLost = c => lockdown(c) === 'cryo' && power(c) === 'pods';
 
   // The stake readout: X's heart rate, worse at each report until the cliffhanger settles it.
@@ -2186,7 +2192,7 @@ else:
   const HALE_RECAP = "Engineer Hale died with something from the planet inside him. His last log: “Don’t trust WARD—”";
   const INTRO_VARIANTS = {
     ok: { previously: [HALE_RECAP, "Now his crew tag walks the station, and it isn’t human. It was heading here, to Sensor Ops."], readouts: [crewAlive(0)] },
-    critical: { previously: [HALE_RECAP, "Now his tag walks the station, not human. You shut it in with the crew, and Patel is critical."], readouts: [crewAlive(1)] },
+    critical: { previously: [HALE_RECAP, "Now his tag walks the station, not human. It got in with the crew, and Patel is critical."], readouts: [crewAlive(1)] },
   };
   for (const v of Object.values(INTRO_VARIANTS)) {
     v.readouts.push(
@@ -2419,7 +2425,7 @@ else:
         time: '05:10',
       },
       M2: {
-        variant: c => `${lockdown(c)}_${power(c)}_${shield(c)}`,
+        variant: c => `${m2Lockdown(c)}_${power(c)}_${shield(c)}`,
         variants: M2_VARIANTS,
         headline: 'One frame',
         time: '05:22',
@@ -4802,7 +4808,7 @@ function renderCrisis() {
   document.getElementById('i_choice')?.classList.toggle('locked', locked);
   document.getElementById('i1_task')?.classList.toggle('step-hidden', !c && !locked);
   const wu = window.StationZero?.choices?.() || {};
-  const patelCritical = wu.door === 'open' && wu.lock === 'bay' && wu.transfer !== 'pod5';   // same rule as shutIn() in the story script
+  const patelCritical = wu.door === 'open' && wu.lock !== 'pod5' && wu.transfer !== 'pod5';   // same rule as shutIn() in the story script
   const t3 = document.getElementById('i_choice_pod3'), t5 = document.getElementById('i_choice_pod5');
   if (t3) t3.textContent = patelCritical ? 'Chen will be safe. Patel, already critical, gets worse.' : 'Chen will be safe. Patel’s pod freezes.';
   if (t5) t5.textContent = patelCritical ? 'Patel is already critical: this saves him. Chen’s pod freezes.' : 'Patel will be safe. Chen’s pod freezes.';

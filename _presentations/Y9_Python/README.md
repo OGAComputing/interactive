@@ -12,10 +12,12 @@ PowerPoint decks for the Y9 Python unit, themed for the unit's *Station Zero* su
 | `L1_Python_Refresh.pptx` | Lesson 1 deck (Wake Up, then Life Support, which is now an optional bonus round) |
 | `L2_Selection.pptx` | Lesson 2 deck (Proximity) |
 | `L3_While_Loops.pptx` | Lesson 3 deck (Locked In) |
+| `L4_For_Loops.pptx` | Lesson 4 deck (Distress Signal) |
 | `build_template.cjs` | Builds the template deck (re-reads this README for the rules slides) |
 | `build_deck.cjs` | Builds the Lesson 1 deck: copy this file to start a new lesson's deck |
 | `build_L2.cjs` | Builds the Lesson 2 deck (draws by hand: the selection flowchart, on L3's geometry, and two animated "Watch it run" traces of one if / else, True then False) |
 | `build_L3.cjs` | Builds the Lesson 3 deck (draws by hand: the selection/iteration flowcharts, the animated "Watch it run" trace, "Which line runs next?" (We do and You do)) |
+| `build_L4.cjs` | Builds the Lesson 4 deck (draws by hand: a beacon display where the turtle draws in step with the animated "Watch it run", the eight-lines-to-a-loop slide, the We do / You do with sketched answers, the logic-error feedback) |
 | `sz_slides.cjs` | The slide types ("recipes"), one function each |
 | `sz_kit.cjs` | Drawing parts: palette, layouts, code panels, terminals, variable boxes, badges |
 | `publish_to_drive.cjs` + `drive.json` | Uploads lesson decks to the "Y9 Python Unit 1" Drive folder as Google Slides (see Publishing to Drive) |
@@ -29,6 +31,7 @@ npm install -g pptxgenjs          (once)
 node build_deck.cjs               → L1_Python_Refresh.pptx
 node build_L2.cjs                 → L2_Selection.pptx
 node build_L3.cjs                 → L3_While_Loops.pptx
+node build_L4.cjs                 → L4_For_Loops.pptx
 node build_template.cjs           → Y9_Python_Deck_Template.pptx
 ```
 

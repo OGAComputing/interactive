@@ -2130,7 +2130,8 @@ print("Tank full after " + str(count) + " readings")</pre>
   const X = c => shield(c) === 'pod5' ? { pod: 3, name: 'Chen' } : { pod: 5, name: 'Patel' };
   const lockdown = c => c.lockdown === 'sensors' ? 'sensors' : 'cryo';
   const power = c => c.power === 'sensors' || c.power === 'pods' ? c.power : lockdown(c) === 'cryo' ? 'sensors' : 'pods';
-  const xDead = c => lockdown(c) === 'sensors' && c.power !== 'pods';
+  // Proximity's rule (2026-11-04): only sealing the Cryo Bay or power to the pods saved X.
+  const xDead = c => !!c.shield && c.lockdown !== 'cryo' && c.power !== 'pods';
   const sensorsLost = c => lockdown(c) === 'cryo' && power(c) === 'pods';
 
   // ── This chapter's choices ──
@@ -2148,6 +2149,12 @@ print("Tank full after " + str(count) + " readings")</pre>
   // (fast path). Keeping the override: You: injured (warm), or the heaters burn out (fast, read
   // by Lesson 7's bait choice). A missing choice means WARDEN.
   const seals = c => c.seals === 'override' ? 'override' : 'warden';
+  // An unfixed crisis costs you (2026-11-04): only handing the seals to WARDEN settles it, so the
+  // crisis picked and the seals kept on override, or Make never reached, leaves you injured (warm
+  // path) or the heaters burnt out for good (fast path; the crew in cryo stay at risk, and later
+  // chapters read it). These test the raw choices, so an absent student is never hurt.
+  const injured = c => c.heat === 'cryo' && c.seals !== 'warden';
+  const heatersOut = c => c.heat === 'fast' && c.seals !== 'warden';
 
   // The stake readout, worse at each report until the cliffhanger settles it.
   const STAKE = {
@@ -2168,7 +2175,7 @@ print("Tank full after " + str(count) + " readings")</pre>
   const HALE_RECAP = 'Hale died three days ago. Something now walks the station in his body, and his last log said: “Don’t trust WARD—”';
   const INTRO_VARIANTS = {};
   for (const s of ['pod3', 'pod5']) for (const end of ['ok', 'dead', 'lost']) {
-    const c = { shield: s, ...(end === 'dead' ? { lockdown: 'sensors', power: 'sensors' } : end === 'lost' ? { lockdown: 'cryo', power: 'pods' } : {}) };
+    const c = { shield: s, ...(end === 'dead' ? { lockdown: 'sensors', power: 'sensors' } : end === 'lost' ? { lockdown: 'cryo', power: 'pods' } : { lockdown: 'cryo', power: 'sensors' }) };
     const second = end === 'dead' ? `No power reached Pod ${X(c).pod} in time, and ${X(c).name} died. Then WARDEN locked the airlock and changed the code.`
       : end === 'lost' ? 'The crew are safe, but the sensors were smashed. Then WARDEN locked the airlock and changed the code.'
       : 'You got the proximity sensors working. Then WARDEN locked the airlock and changed the code.';
@@ -2251,13 +2258,13 @@ print("Tank full after " + str(count) + " readings")</pre>
     warden_cryo: lead => `${lead} The thing outside hits the door again and again, and WARDEN holds it every time. Then the hits stop.`,
     warden_fast: lead => `${lead} WARDEN takes them, then sends the airlock’s spare power back down the line, and in the Cryo Bay the heaters come back on.`,
     override_cryo: lead => `${lead} The next hit forces the inner door open a hand’s width. Something cold catches your arm before you slam it shut, and your suit logs the damage.`,
-    override_fast: lead => `${lead} They pull every bit of power the line has, and in the Cryo Bay the heaters burn out for good.`,
+    override_fast: lead => `${lead} They pull every bit of power the line has, and in the Cryo Bay the heaters burn out for good. Nothing can warm the crew now, and that will cost you later.`,
   };
   const SETTLED = {
     warden_cryo: { label: 'You', value: 'Safe', level: 'ok' },
     warden_fast: { label: 'Cryo Bay heaters', value: 'Back on', level: 'ok' },
     override_cryo: { label: 'You', value: 'Injured', level: 'danger' },
-    override_fast: { label: 'Cryo Bay heaters', value: 'Damaged', level: 'danger' },
+    override_fast: { label: 'Cryo Bay heaters', value: 'Burnt out · for good', level: 'danger' },
   };
   const M2_VARIANTS = {};
   for (const a of ['warden', 'override']) for (const sl of ['warden', 'override']) for (const h of ['cryo', 'fast']) {
@@ -2271,6 +2278,7 @@ print("Tank full after " + str(count) + " readings")</pre>
       readouts: [
         sl === 'warden' ? { label: 'Seals', value: 'WARDEN', level: 'ok' } : { label: 'Seals', value: 'Override · 40%', level: 'danger' },
         SETTLED[`${sl}_${h}`],
+        ...(sl === 'override' && h === 'fast' ? [{ label: 'Crew in cryo', value: 'At risk', level: 'danger' }] : []),
         { label: 'Voiceprint', value: 'NO MATCH', level: 'danger' },
         { label: 'Navigation', value: 'Offline', level: 'warn' },
       ],
@@ -2310,13 +2318,20 @@ print("Tank full after " + str(count) + " readings")</pre>
     objective: 'Get through the airlock',
     // Header crew readout. Hale has been compromised since Wake Up, and X is dead on Proximity's
     // bad path. On the warm path the crisis puts you at risk (hunted) until the
-    // cliffhanger (M2), which leaves you injured if the seals stayed on your override.
+    // cliffhanger (M2), which leaves you injured if the seals stayed on your override. On the
+    // fast path the crew in cryo are at risk until M2, and stay so if the heaters burnt out.
     crew: (c, seen) => {
       const out = { 2: 'compromised' };
       if (xDead(c)) out[X(c).pod] = 'dead';
-      if (heat(c) === 'cryo' && ['I1', 'I', 'M1', 'M2'].some(k => seen.includes(k))) {
-        if (!seen.includes('M2')) out[4] = 'hunted';
-        else if (seals(c) === 'override') out[4] = 'injured';
+      if (!['I1', 'I', 'M1', 'M2'].some(k => seen.includes(k))) return out;
+      const settled = seen.includes('M2');
+      if (heat(c) === 'cryo') {
+        if (!settled) out[4] = 'hunted';
+        else if (injured(c)) out[4] = 'injured';
+      } else if (!settled || heatersOut(c)) {
+        // Fast path: the crew in cryo are cooling until WARDEN sends the power back, and stay at
+        // risk if the heaters burnt out.
+        for (const pod of [1, 3, 5]) if (!out[pod]) out[pod] = 'risk';
       }
       return out;
     },

@@ -84,6 +84,13 @@ test('the recap says Patel is critical when Wake Up shut it in with him (nobody 
   await expect(page.locator('#szCrewPods .crew-pod').nth(4)).toHaveClass(/critical/);
 });
 
+test('Patel is also critical when Wake Up opened the door and never locked Pod 5', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('sz_choices', JSON.stringify({ door: 'open' })));
+  await openAt(page, {}, { story: true });
+  await expect(page.locator('#szPrevFull')).toContainText('Patel is critical');
+  await expect(page.locator('#szCrewPods .crew-pod').nth(4)).toHaveClass(/critical/);
+});
+
 test('the optional Life Support round can save a critical Patel: canisters to Pod 5', async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem('sz_choices', JSON.stringify({ door: 'open', lock: 'bay', transfer: 'pod5' })));
   await openAt(page, {}, { story: true });

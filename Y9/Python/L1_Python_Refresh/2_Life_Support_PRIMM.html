@@ -1942,9 +1942,11 @@ color:  teal
   // option (door sealed, 60 litres) or, for choice 2, the better call after choice 1, so a
   // missed lesson never costs crew.
   const door = c => c.door === 'open' ? 'open' : 'sealed';
-  const lock = c => c.lock === 'pod5' || c.lock === 'bay' ? c.lock : door(c) === 'open' ? 'pod5' : 'bay';
+  // An open door is only fixed by locking Pod 5, so a missing lock (Make never reached) leaves
+  // the bay as it was: the danger stands (2026-11-04).
+  const lock = c => c.lock === 'pod5' ? 'pod5' : 'bay';
   const air = c => c.air === 'low' ? 'low' : 'full';
-  // Wake Up's bad ending: the door was opened, then the bay was locked with the thing inside.
+  // Wake Up's bad ending: the door was opened, and Pod 5 was never locked against the thing inside.
   const shutIn = c => door(c) === 'open' && lock(c) === 'bay';
   const transfer = c => c.transfer === 'pod5' || c.transfer === 'suit' ? c.transfer : shutIn(c) || air(c) === 'low' ? 'pod5' : 'suit';
   // Pod 5 (Patel). This chapter is an optional round (2026-10-16), so it can only HELP: nothing
@@ -2023,7 +2025,7 @@ color:  teal
             ],
           },
           open_bay: {
-            previously: ["Engineer Hale died with something from the planet inside him. Now his crew tag walks the station, and it isn’t human.", "Something slipped into the Cryo Bay, and you locked the bay with it still inside."],
+            previously: ["Engineer Hale died with something from the planet inside him. Now his crew tag walks the station, and it isn’t human.", "Something slipped into the Cryo Bay, and it’s still in there with the crew."],
             time: '03:31',
             log: "You reach Life Support. The recyclers are silent, and the program that runs them has been wiped. Behind you, something is shut in the Cryo Bay with the sleeping crew, and Pod 5 · Patel won’t last long without help.",
             readouts: [
@@ -4389,7 +4391,7 @@ function renderMakeChoice() {
   document.getElementById('m2_choice')?.classList.toggle('locked', locked);
   const story = window.StationZero?.choices?.() || {};
   const air = getChoice() || story.air || 'full';
-  const shutIn = story.door === 'open' && story.lock === 'bay';   // Wake Up shut something in with the crew
+  const shutIn = story.door === 'open' && story.lock !== 'pod5';   // Wake Up left something in with the crew
   const report = document.getElementById('m2_choice_report');
   if (report) report.innerHTML = MAKE_CHOICE.report(air, shutIn);
   const text = document.getElementById('req_m2_choice_text');

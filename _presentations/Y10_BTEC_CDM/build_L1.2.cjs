@@ -67,7 +67,7 @@ K.turnTalk({ prompt: 'Spider-Verse: name one thing you can SEE. Then say what it
 K.modelAnswer({ title: 'What a good analysis sounds like', question: 'How does the Jaws poster make the audience feel?', key: ['Point', 'Evidence', 'Explain'],
   parts: [['Point', 'The Jaws poster makes the audience feel that danger is close.'],
     ['Evidence', 'A huge shark rises from the dark water towards a swimmer who cannot see it.'],
-    ['Explain', 'This connotes that she is helpless and the threat is hidden, so we feel tense, and the word "terrifying" anchors it as a horror film.']],
+    ['Explain', 'The connotation of this is that she is helpless and the threat is hidden, so we feel tense, and the word "terrifying" anchors it as a horror film.']],
   notes: 'Point → evidence (denotation) → explain (connotation + anchorage). Students use this shape in hub Task 3 on Spider-Verse.' });
 
 K.task({ title: 'Read the posters', mins: 20, where: 'Hub › Year 10 › Lesson 1.2 › Reading an Image',

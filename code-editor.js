@@ -1056,6 +1056,7 @@ async function _runLive(ta) {
       _liveRuns.delete(ta);
       if (r.ok) setEditorOutput(ta, r.output || '(no output)', false, null, r.vars);
       else setEditorOutput(ta, r.output, true, r.line, r.vars);
+      _emitRun(ta, 'exec-done', r);
       return r;
     }
     setEditorOutput(ta, r.output, false, null, r.vars);
@@ -1139,6 +1140,15 @@ function _stopStepping(ta) {
   run.fast = true;
   run.wake?.();
   _stepStatus(ta, null);
+}
+
+// Run events on the textarea, for helpers that draw a run as it plays (turtle-canvas.js):
+//   'exec-start' {}            — a run is starting (runCode or replayRun), before any output
+//   'exec-step' { run, index } — trace step `index` of `run` has just been shown (stepThrough)
+//   'exec-done' { run }        — `run`'s final output is on screen (every way of running)
+// `run` is runPython's result. Nothing in this file listens to them.
+function _emitRun(ta, type, run, index) {
+  ta.dispatchEvent(new CustomEvent(type, { detail: index === undefined ? { run } : { run, index } }));
 }
 
 function _stepPause(run, ms) {
@@ -1246,6 +1256,7 @@ async function _replaySteps(ta, run, r, from, trackVars, fed = null) {
     if (!(await _typeFedInputs(ta, run, out, fed, trace[i].at, upTo, trace[i].line))) return false;
     _writeStepOutput(ta, out.slice(0, upTo), fed);
     if (trackVars) _renderMemory(ta, next ? next.vars : r.vars);
+    _emitRun(ta, 'exec-step', r, i);
     await _stepPause(run, stepMs * (1 - STEP_OUTPUT_AT));
     if (_stepRuns.get(ta) !== run) return false;
   }
@@ -1270,6 +1281,7 @@ function _finishStepping(ta, run, r, fed = null) {
     }
     if (r.line && !run.edited) _showExecLine(ta, r.line, 'error');
   }
+  _emitRun(ta, 'exec-done', r);
 }
 
 /**
@@ -1282,8 +1294,10 @@ function _finishStepping(ta, run, r, fed = null) {
  *   caller should stop, as its result is no longer the one on screen.
  */
 export async function replayRun(ta, run) {
+  _emitRun(ta, 'exec-start', null);
   if (!_stepEnabled(ta) || !run.trace) {
     setEditorOutput(ta, run.output, !run.ok, run.ok ? null : run.line, run.vars);
+    _emitRun(ta, 'exec-done', run);
     return true;
   }
   const trackVars = run.vars !== undefined;
@@ -1344,6 +1358,7 @@ async function _runStepped(ta, inputs) {
  * @returns {Promise<{ ok: boolean, output: string }>}
  */
 export async function runCode(ta, { inputs = null } = {}) {
+  _emitRun(ta, 'exec-start', null);
   if (_stepEnabled(ta)) return _runStepped(ta, inputs);
   // The memory view always runs live, even for straight-line code, so each
   // answer drops into its box the moment it's typed (not all at the end).
@@ -1389,6 +1404,7 @@ export async function runCode(ta, { inputs = null } = {}) {
       setEditorOutput(ta, msg, true, r.line);
     }
   }
+  _emitRun(ta, 'exec-done', r);
   return r;
 }
 

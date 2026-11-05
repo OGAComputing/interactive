@@ -204,6 +204,55 @@ Every beat has its picture (made with Gemini, 2026-10-22).
 
 `python _drafts/story/add_still.py Y9/Python/L3_While_Loops/1_Locked_In_PRIMM.html intercom _drafts/story/li_m2_intercom.jpg`
 
+## Chapter 4 — Distress Signal (`Y9/Python/L4_For_Loops/1_Distress_Signal_PRIMM.html`)
+
+All seven stills made with Gemini and inlined (2026-11-05).
+
+### Intro — "Chapter 4 — Distress Signal" → `ds_intro_nav.jpg`
+> The station's navigation room in the dark: rows of dead consoles, a large cracked star chart
+> on the back wall, and a single screen flickering faint green. Frost on the consoles.
+
+`python _drafts/story/add_still.py Y9/Python/L4_For_Loops/1_Distress_Signal_PRIMM.html navDark _drafts/story/ds_intro_nav.jpg`
+
+### P — "Signal code" → `ds_p_dish.jpg`
+> Outside the station: a large beacon dish mounted on the hull, pointing out into black space
+> full of stars, its rim lights switched off. The edge of a stormy planet glows far below.
+
+`python _drafts/story/add_still.py Y9/Python/L4_For_Loops/1_Distress_Signal_PRIMM.html dish _drafts/story/ds_p_dish.jpg`
+
+### R — "Transmitting" → `ds_r_pulse.jpg`
+> The same beacon dish on the hull, now lit up, sending a square-shaped pulse of bright green
+> light out into space, the square ring spreading and fading as it travels away.
+
+`python _drafts/story/add_still.py Y9/Python/L4_For_Loops/1_Distress_Signal_PRIMM.html pulse _drafts/story/ds_r_pulse.jpg`
+
+### I1 — "Countdown" → `ds_i1_storm.jpg`
+> Through a thick station window, a huge swirling storm on the planet below, lit by lightning,
+> much closer than it should be. Frost round the window frame, and a red warning light
+> reflected in the glass.
+
+`python _drafts/story/add_still.py Y9/Python/L4_For_Loops/1_Distress_Signal_PRIMM.html storm _drafts/story/ds_i1_storm.jpg`
+
+### I — "Clean signal" → `ds_i_garbled.jpg`
+> Close-up of a beacon console screen full of green static, with one single straight green line
+> across the middle of it instead of a shape. A gloved hand rests on the console beside it.
+
+`python _drafts/story/add_still.py Y9/Python/L4_For_Loops/1_Distress_Signal_PRIMM.html garbled _drafts/story/ds_i_garbled.jpg`
+
+### M1 — "Someone heard" → `ds_m1_reply.jpg`
+> A comms panel in the navigation room, its small screen lit with a short incoming message in
+> green text, "RESCUE SHIP KESTREL", and a blinking reply light. Everything else in shadow.
+
+`python _drafts/story/add_still.py Y9/Python/L4_For_Loops/1_Distress_Signal_PRIMM.html reply _drafts/story/ds_m1_reply.jpg`
+
+### M2 — "Two life signs" → `ds_m2_life_signs.jpg`
+> A bio-scan screen showing a simple outline map of a ring-shaped space station. On the ring
+> there are exactly two glowing green dots, no more: one at the far left of the ring and one at
+> the far right, on opposite sides. No other dots, markers or lights on the map. Under the map,
+> the words "2 LIFE SIGNS" in green.
+
+`python _drafts/story/add_still.py Y9/Python/L4_For_Loops/1_Distress_Signal_PRIMM.html lifeSigns _drafts/story/ds_m2_life_signs.jpg`
+
 ---
 
 ## New chapters

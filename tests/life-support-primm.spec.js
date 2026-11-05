@@ -300,6 +300,8 @@ test('the recap follows the door choice', async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem('sz_choices', JSON.stringify({ door: 'open' })));
   await openAt(page, {}, { story: true });
   await expect(page.locator('#szPrevFull')).toContainText('Something slipped into the Cryo Bay');
+  // Make never reached in Wake Up: Pod 5 was never locked, so Patel is critical (2026-11-04).
+  await expect(page.locator('#szCrewPods .crew-pod').nth(4)).toHaveClass(/critical/);
 });
 
 test('a report that was never closed shows again after a reload', async ({ page }) => {
@@ -420,7 +422,7 @@ test('the Make card warns when Wake Up shut something in with Pod 5', async ({ p
 test('the recap follows both Wake Up calls', async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem('sz_choices', JSON.stringify({ door: 'open', lock: 'bay' })));
   await openAt(page, {}, { story: true });
-  await expect(page.locator('#szPrevFull')).toContainText('with it still inside');
+  await expect(page.locator('#szPrevFull')).toContainText('still in there with the crew');
 });
 
 // ─── Crew readout (header) ───────────────────────────────────────────────────
