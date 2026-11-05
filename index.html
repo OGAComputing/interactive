@@ -330,7 +330,7 @@
         <div id="topic-dropdown"></div>
       </div>
       <label id="attach-slides-label" class="attach-slides" title="Add the lesson's Google Slides deck to the Classroom post (first page of each lesson that has one)" hidden>
-        <input id="attach-slides" type="checkbox" checked> Attach lesson slides
+        <input id="attach-slides" type="checkbox"> Attach lesson slides
       </label>
       <span id="teacher-status"></span>
       <button id="btn-sync" class="btn-inline-ghost" onclick="onSyncClick()" hidden>⟳ Sync grades</button>
@@ -454,9 +454,10 @@
   let allTopics = [];
   let selectedTopicId = '';
 
-  // "Attach lesson slides" is remembered per browser (on by default).
+  // "Attach lesson slides" is remembered per browser (off by default: the decks are shared with
+  // named staff and classes only, so teachers at other schools can't attach them).
   const attachSlides = document.getElementById('attach-slides');
-  try { attachSlides.checked = localStorage.getItem('oga_hub_attach_slides') !== '0'; } catch (_) {}
+  try { attachSlides.checked = localStorage.getItem('oga_hub_attach_slides') === '1'; } catch (_) {}
   attachSlides.addEventListener('change', () => {
     try { localStorage.setItem('oga_hub_attach_slides', attachSlides.checked ? '1' : '0'); } catch (_) {}
   });
@@ -698,7 +699,10 @@
 
     // The lesson's deck (activities.json 'slides') goes on the post too. As a Drive file Classroom
     // shows its thumbnail and shares it with the class; if Classroom refuses that (e.g. the teacher
-    // can't share files in that shared drive), fall back to a plain link to the deck.
+    // can't share files in that shared drive), fall back to a plain link to the deck. A teacher who
+    // can't see the deck at all (another school: it's shared with named people/classes only) gets
+    // @AttachmentNotVisible, then 403 on the link too (Classroom resolves docs.google.com links as
+    // Drive items), so the last try posts the activity without the deck.
     const post = (deck) => fetch(`https://classroom.googleapis.com/v1/courses/${courseId}/courseWork`, {
       method: 'POST',
       headers: {
@@ -718,14 +722,21 @@
 
     let res = await post(slidesId && { driveFile: { driveFile: { id: slidesId }, shareMode: 'VIEW' } });
     let deckNote = slidesId ? ' The lesson slides are attached.' : '';
+    let deckMissing = false;
     if (!res.ok && slidesId) {
       console.warn('Attaching the slides as a Drive file failed, retrying as a link:', await res.text());
       res = await post({ link: { url: `https://docs.google.com/presentation/d/${slidesId}/view` } });
       deckNote = ' The lesson slides are attached as a link: check students can open them.';
+      if (!res.ok) {
+        console.warn('Attaching the slides as a link failed, posting without them:', await res.text());
+        res = await post(null);
+        deckMissing = true;
+        deckNote = '<br><br><strong>The lesson slides could not be attached</strong>: your Google account doesn\'t have access to that deck, so the post has the activity only. Untick "Attach lesson slides" to stop trying.';
+      }
     }
 
     if (res.ok) {
-      showAssignModal('✅ Assigned!', `"${esc(title)}" has been published to your class.${deckNote} Scores reach Classroom each time you open this hub (or click ⟳ Sync grades).`);
+      showAssignModal(deckMissing ? '⚠️ Assigned without slides' : '✅ Assigned!', `"${esc(title)}" has been published to your class. Scores reach Classroom each time you open this hub (or click ⟳ Sync grades).${deckNote}`);
     } else {
       console.error('Assignment creation failed:', await res.text());
       showAssignModal('❌ Assignment failed', 'Could not create the assignment. Check the browser console for details.');
