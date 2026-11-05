@@ -24,7 +24,9 @@
 // A drawing is plain JSON (see _rq_dump below):
 //   { used, segs: [[x1, y1, x2, y2, colour, width, step]], fills: [[[x, y]…], colour, step],
 //     dots: [[x, y, size, colour, step]], texts: [[x, y, text, colour, step]],
-//     poses: [[step, x, y, heading, shown]], bg }
+//     poses: [[step, x, y, heading, shown, spin]], bg }
+// (spin is the heading without % 360: left(270) and right(90) end at the same heading, but the
+// screen turns the turtle the way the code did.)
 // Turtle coordinates: (0, 0) in the middle, y upwards, heading 0 = east, degrees anticlockwise.
 // Colours are stored as typed, in lower case without spaces ("red", "#ff8800").
 
@@ -146,6 +148,7 @@ class Turtle:
         self._x = 0.0
         self._y = 0.0
         self._h = 0.0
+        self._spin = 0.0   # heading without the % 360, so the screen knows which way it turned
         self._down = True
         self._pc = 'black'
         self._fc = 'black'
@@ -159,7 +162,7 @@ class Turtle:
 
     def _pose(self):
         if len(_log['poses']) < _MAX:
-            _log['poses'].append([_step(), _r(self._x), _r(self._y), _r(self._h % 360), self._shown])
+            _log['poses'].append([_step(), _r(self._x), _r(self._y), _r(self._h % 360), self._shown, _r(self._spin)])
 
     def _move_to(self, x, y):
         _sync()
@@ -173,6 +176,7 @@ class Turtle:
     def _turn(self, a):
         _sync()
         self._h = (self._h + a) % 360
+        self._spin += a
         self._pose()
 
     def forward(self, distance):
@@ -207,7 +211,9 @@ class Turtle:
 
     def setheading(self, to_angle):
         _sync()
-        self._h = _num(to_angle) % 360
+        to = _num(to_angle) % 360
+        self._spin += (to - self._h + 180) % 360 - 180   # the short way round, as Python's turtle turns
+        self._h = to
         self._pose()
     seth = setheading
 
@@ -471,7 +477,9 @@ function paintSpace(ctx, k) {
 
 // Draw `d` as it stood after trace step `upTo` (Infinity = all of it). Returns how many lines
 // are on screen, and whether any black line was shown in green.
-export function paintDrawing(canvas, d, upTo = Infinity, { look = 'paper' } = {}) {
+// `heading` (degrees) draws the turtle pointing that way instead of along its pose, for a turn
+// that is being animated.
+export function paintDrawing(canvas, d, upTo = Infinity, { look = 'paper', heading } = {}) {
   const dpr = window.devicePixelRatio || 1;
   const cssW = canvas.clientWidth || VIEW_W;
   const px = Math.round(cssW * dpr);
@@ -516,9 +524,9 @@ export function paintDrawing(canvas, d, upTo = Infinity, { look = 'paper' } = {}
   ctx.font = `${12 * k}px 'Segoe UI', system-ui, sans-serif`;
   for (const [x, y, text, c] of d.texts.filter(shown)) { ctx.fillStyle = ink(c); ctx.fillText(text, X(x), Y(y)); }
   // the turtle: Python's "classic" arrow, pointing along its heading
-  const pose = d.poses.filter(p => p[0] <= upTo).pop() || (d.used ? null : [0, 0, 0, 0, true]);
+  const pose = poseAt(d, upTo);
   if (pose && pose[4]) {
-    const [, x, y, h] = pose, a = -h * Math.PI / 180, r = 9 * k;
+    const [, x, y, h0] = pose, h = heading ?? h0, a = -h * Math.PI / 180, r = 9 * k;
     ctx.save(); ctx.translate(X(x), Y(y)); ctx.rotate(a);
     ctx.fillStyle = space ? '#e2f8ea' : '#0f172a'; ctx.strokeStyle = space ? SIGNAL_GREEN : '#fff'; ctx.lineWidth = 1.2 * k;
     if (space) { ctx.shadowColor = SIGNAL_GREEN; ctx.shadowBlur = 8 * k; }
@@ -527,6 +535,18 @@ export function paintDrawing(canvas, d, upTo = Infinity, { look = 'paper' } = {}
   }
   return { lines: segs.length, greened };
 }
+
+// The turtle's pose after trace step `upTo`: [step, x, y, heading, shown, spin], or null.
+function poseAt(d, upTo) {
+  return d.poses.filter(p => p[0] <= upTo).pop() || (d.used ? null : [0, 0, 0, 0, true, 0]);
+}
+
+// A turn is animated rather than jumped: the turtle swings round the way the code turned it,
+// TURN_MS for a quarter turn (longer turns take a little longer, never more than TURN_MAX_MS),
+// so it is done well before the next step-through line. Not with reduced motion.
+const TURN_MS = 260, TURN_MAX_MS = 420;
+const reducedMotion = () => !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+const ease = t => t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2;
 
 const linesNote = n => n === 1 ? '1 line drawn' : `${n} lines drawn`;
 
@@ -565,10 +585,34 @@ export function attachTurtle(ta, { title = 'Turtle screen', look = 'paper' } = {
   setTimeout(() => place(usesConsole(ta.value)), 0);   // after any saved code is restored
   const canvas = wrap.querySelector('canvas');
   const note = wrap.querySelector('.ts-note');
-  let current = EMPTY;
+  let current = EMPTY, shownUpTo = Infinity;
+  let turning = null;   // { frame, to: pose } while a turn is being animated
+  const paint = heading => paintDrawing(canvas, current, shownUpTo, { look, heading });
   const show = (d, upTo = Infinity) => {
-    current = d;
-    const { lines, greened } = paintDrawing(canvas, d, upTo, { look });
+    const before = d === current ? poseAt(current, shownUpTo) : null;
+    const after = poseAt(d, upTo);
+    current = d; shownUpTo = upTo;
+    const same = (p, q) => p && q && p[1] === q[1] && p[2] === q[2] && (p[5] ?? p[3]) === (q[5] ?? q[3]);
+    if (turning && !same(turning.to, after)) { cancelAnimationFrame(turning.frame); turning = null; }
+    let lines, greened;
+    if (turning) ({ lines, greened } = paint(turning.at));
+    else {
+      const from = before?.[5] ?? before?.[3], to = after?.[5] ?? after?.[3];
+      const turns = before && after && after[4] && before[1] === after[1] && before[2] === after[2]
+        && from !== to && !reducedMotion();
+      ({ lines, greened } = paint(turns ? from : undefined));
+      if (turns) {
+        const ms = Math.min(TURN_MAX_MS, TURN_MS * Math.max(1, Math.sqrt(Math.abs(to - from) / 90)));
+        const t0 = performance.now();
+        const tick = now => {
+          const t = Math.min(1, Math.max(0, (now - t0) / ms));
+          turning.at = from + (to - from) * ease(t);
+          paint(t < 1 ? turning.at : undefined);
+          if (t < 1) turning.frame = requestAnimationFrame(tick); else turning = null;
+        };
+        turning = { to: after, at: from, frame: requestAnimationFrame(tick) };
+      }
+    }
     note.textContent = !d.used ? 'This run didn\'t use the turtle'
       : linesNote(lines) + (greened ? ' · black shows as green here' : '');
     canvas.setAttribute('aria-label', `${title}: ${d.used ? linesNote(lines) : 'nothing drawn'}`);
@@ -582,6 +626,6 @@ export function attachTurtle(ta, { title = 'Turtle screen', look = 'paper' } = {
     show(drawingOf(run));
   });
   paintDrawing(canvas, EMPTY, Infinity, { look });
-  window.addEventListener('resize', () => paintDrawing(canvas, current, Infinity, { look }));
+  window.addEventListener('resize', () => { if (!turning) paint(); });
   return { show };
 }
