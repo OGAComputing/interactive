@@ -4,10 +4,10 @@
 //   node build_L3.cjs   (needs `npm install -g pptxgenjs`)
 //
 // Output: L3_While_Loops.pptx beside this file. Activity: Y9/Python/L3_While_Loops/1_Locked_In_PRIMM.html.
-// Teaching order (as Lesson 2): the condition first (!= joins the True or False operators), then
-// the flowchart, then one animated run of a counting loop (I do, "Watch it run"), then
-// short questions, not trace tables: which line runs next? on the keypad loop (We do), and the same question on three new loops
-// (You do + answers). Then str() (the activity's Modification 2 needs it), then the activity.
+// Teaching order: the flowchart, then one animated run of a counting loop (I do, "Watch it run"), then
+// short questions, not trace tables: which line runs next? on an alarm loop with == (We do), and the same question on three new loops
+// (You do + answers). All loop examples use known operators; only then != (the activity's keypad loop
+// needs it) with True or False practice, then str() (the activity's Modification 2 needs it), then the activity.
 
 const path = require('path');
 const { createDeck } = require('./sz_kit.cjs');
@@ -143,58 +143,6 @@ Click 3: "A while is an if that keeps checking."
 Ask: "Where would an airlock keypad need this?" (Keep asking for the code until it's right.)`);
 }
 
-// 6. != (one-off: the two "equal" operators + two examples)
-{
-  const s = newSlide('SZ_DARK', C, 'One new operator: !=');
-  text(s, 'EQUAL, OR NOT EQUAL?', { x: M, y: 1.6, w: 5, h: 0.3, fontSize: 13, bold: true, color: P.dim, charSpacing: 2 });
-  [['==', 'is equal to', P.dim], ['!=', 'is NOT equal to', P.gold]].forEach(([op, say, line], i) => {
-    const y = 2.05 + i * 1.0;
-    box(s, { x: M, y, w: 1.15, h: 0.75, fill: P.code, line, lw: i ? 2 : 1, r: 0.08 });
-    text(s, op, { x: M, y, w: 1.15, h: 0.75, fontFace: MONO, fontSize: 30, bold: true, align: 'center', valign: 'middle' });
-    text(s, say, { x: M + 1.4, y, w: 4.3, h: 0.75, fontSize: 24, valign: 'middle', bold: !!i });
-  });
-  text(s, 'TRUE OR FALSE?', { x: 7.0, y: 1.6, w: 5, h: 0.3, fontSize: 13, bold: true, color: P.dim, charSpacing: 2 });
-  [['"1234" != "4271"', true, 'Is 1234 different from 4271? Yes'], ['"4271" != "4271"', false, 'Is 4271 different from 4271? No']]
-    .forEach(([expr, val, say], i) => {
-      const y = 2.0 + i * 1.95;
-      box(s, { x: 7.0, y, w: 3.6, h: 1.0, fill: P.code, line: P.line, r: 0.08 });
-      s.addText(pyRuns(expr, 24), { isTextBox: true, x: 7.0, y, w: 3.6, h: 1.0, margin: 0, align: 'center', valign: 'middle' });
-      onClick(s, i + 1, () => {
-        arrow(s, 10.7, y + 0.5, 11.1, y + 0.5);
-        R.boolChip(K, s, val, 11.2, y + 0.2, 1.5, 0.6, 26);
-        text(s, say, { x: 7.0, y: y + 1.1, w: 5.7, h: 0.45, fontSize: 18, italic: true, color: P.muted });
-      });
-    });
-  R.banner(K, s, [{ text: 'A keypad loop keeps going ', options: { bold: true, color: P.gold } },
-    { text: 'while the code typed != the right code.' }], 5.95, 0.8, 22);
-  addIcon(s, 'info');
-  s.addNotes(`!= is new this year (Year 8 only had == < > <= >=). Read it as "is not equal to". Like ==, it's two characters, typed with no space.
-Before each click, ask the class "True or False?" and get a show of hands.
-Click 1: "1234" != "4271" → True: they ARE different.
-Click 2: "4271" != "4271" → False: they're the same, so "not equal" is False.
-The double negative trips people up: say it as a question. "Are these different?"
-They're in quotes because input() gives text — the codes are text, not numbers.`);
-}
-
-// 7–8. True or False? practice + answers (mixing last lesson's operators with !=)
-const TF = [{ expr: '"a" != "b"', value: true }, { expr: '5 != 5', value: false }, { expr: '3 < 3', value: false },
-  { expr: '7 == 7', value: true }, { expr: '"y" != "y"', value: false }, { expr: '9 != 6', value: true }];
-R.trueFalseSlide(K, {
-  section: C, items: TF,
-  takeaway: [{ text: 'On your board: ', options: { bold: true, color: P.gold } }, { text: 'write T or F for all six. Boards up together.' }],
-  notes: `Silent, 2 minutes. Boards up on 3-2-1.
-Number 2 (5 != 5) and number 5 ("y" != "y") are the ones to watch: the same value on both sides makes != False.
-Number 3 (3 < 3) is retrieval from last lesson's boundary work.`,
-});
-R.trueFalseSlide(K, {
-  section: C, items: TF, reveal: true,
-  takeaway: [{ text: 'Watch out: ', options: { bold: true, color: P.gold } },
-    { text: 'x != x', options: { fontFace: MONO, bold: true } }, { text: ' is always False. Ask: "are they different?"' }],
-  notes: `Go through any the class split on.
-5 != 5: are they different? No → False. "y" != "y": same text → False.
-In today's loop, the condition is code != "4271": it stays True for every wrong code, and turns False the moment the right one is typed.`,
-});
-
 // ════════════════════════════════════════════════════════════════════════════
 //  Loops in action: watch one run (I do), then short questions instead of trace tables
 //  (Nick, 2026-11-04: trace tables after the example were too complicated and too slow).
@@ -260,24 +208,25 @@ Before click 1, point at the shape: while, a condition, a colon (like an if); th
 Common slip to name now: "Doesn't it print 0 first?" No: line 3 adds 1 before line 4 prints.`);
 }
 
-// Which line runs next? (one-off, We do): the keypad loop. Each question is a click (the gold bar = the
+// Which line runs next? (one-off, We do): an alarm loop with == (not the keypad's !=, so the class
+// focuses on how the loop runs; Nick, 2026-11-05). Each question is a click (the gold bar = the
 // line that has just run, plus what's in code), then a click for the answer (the next line outlined in
 // green, an arrow when Python jumps, and why). Each question fades out when the next one starts.
-const KEYPAD = ['code = input("Code: ")', 'while code != "4271":', '    print("ACCESS DENIED")', '    code = input("Code: ")',
-  'print("Airlock open")'];
+const ALARM = ['alarm = input("Alarm: ")', 'while alarm == "on":', '    print("WARNING")', '    alarm = input("Alarm: ")',
+  'print("All clear")'];
 {
   const s = newSlide('SZ_DARK', R1, 'Which line runs next?');
   const cx = 1.35, cw = 6.4;
-  const cp = codePanel(s, KEYPAD, { x: cx, y: 1.7, w: cw, size: 22, lh: 0.7 });
-  K.varBox(s, { name: 'code', type: 'str', value: '', x: 8.2, y: 1.95, w: 2.6, h: 1.0 });
+  const cp = codePanel(s, ALARM, { x: cx, y: 1.7, w: cw, size: 22, lh: 0.7 });
+  K.varBox(s, { name: 'alarm', type: 'str', value: '', x: 8.2, y: 1.95, w: 2.6, h: 1.0 });
   box(s, { x: 8.2, y: 3.35, w: 4.53, h: 2.15, fill: P.panel, line: P.line, r: 0.08 });
   text(s, 'NEXT LINE', { x: 8.45, y: 3.5, w: 3, h: 0.3, fontSize: 13, bold: true, color: P.dim, charSpacing: 2 });
   const qs = [
-    { line: 1, mem: '"1234"', next: 2, why: 'The loop starts: check the condition' },
-    { line: 2, mem: '"1234"', next: 3, why: [{ text: '"1234" != "4271"', options: { fontFace: MONO, bold: true } },
+    { line: 1, mem: '"on"', next: 2, why: 'The loop starts: check the condition' },
+    { line: 2, mem: '"on"', next: 3, why: [{ text: '"on" == "on"', options: { fontFace: MONO, bold: true } },
       { text: ' is True: into the body' }] },
-    { line: 4, mem: '"4271"', next: 2, why: 'End of the body: back to the top' },
-    { line: 2, mem: '"4271"', next: 5, why: [{ text: '"4271" != "4271"', options: { fontFace: MONO, bold: true } },
+    { line: 4, mem: '"off"', next: 2, why: 'End of the body: back to the top' },
+    { line: 2, mem: '"off"', next: 5, why: [{ text: '"off" == "on"', options: { fontFace: MONO, bold: true } },
       { text: ' is False: skip the body' }] },
   ];
   const top = (n) => cp.ys[n - 1] - cp.lh / 2;
@@ -305,13 +254,13 @@ const KEYPAD = ['code = input("Code: ")', 'while code != "4271":', '    print("A
     { text: 'On your board: the number of the line that runs next.' }], 6.0, 0.75, 22);
   R.modeChip(K, s, 'WE DO');
   addIcon(s, 'practice');
-  s.addNotes(`WE DO — the airlock keypad, the same program as today's activity. 8 clicks: a question, then its answer, four times.
-Each question: the gold line has JUST run, and the box shows what's in code. Boards up with a line number, THEN click for the answer.
-Q1 (line 1 ran, they typed 1234) → line 2: the loop starts by checking the condition.
-Q2 (line 2, code is "1234") → line 3: "1234" != "4271" is True, so into the body.
-Q3 (line 4 ran, they typed 4271) → line 2, NOT line 5: the end of the body always goes back to the top. This is the one most of the class gets wrong.
-Q4 (line 2, code is "4271") → line 5: False, so Python skips the whole body.
-Follow-up: "How many times did the program ASK?" (twice here: line 1 and line 4.) The activity's Predict asks exactly this.`);
+  s.addNotes(`WE DO — an alarm loop: it keeps printing WARNING while the alarm is "on". It uses == from last lesson, so the only new thing is the loop. 8 clicks: a question, then its answer, four times.
+Each question: the gold line has JUST run, and the box shows what's in alarm. Boards up with a line number, THEN click for the answer.
+Q1 (line 1 ran, they typed on) → line 2: the loop starts by checking the condition.
+Q2 (line 2, alarm is "on") → line 3: "on" == "on" is True, so into the body.
+Q3 (line 4 ran, they typed off) → line 2, NOT line 5: the end of the body always goes back to the top. This is the one most of the class gets wrong.
+Q4 (line 2, alarm is "off") → line 5: "off" == "on" is False, so Python skips the whole body.
+Follow-up: "How many times did the program ASK?" (twice here: line 1 and line 4.) The activity's Predict asks exactly this about the keypad.`);
 }
 
 // Your turn: which line runs next? (Deliberate Practice / Feedback): the We do question on three new loops.
@@ -353,14 +302,72 @@ function nextSlide(reveal) {
   else { K.timer(s, '2 MIN'); R.modeChip(K, s, 'YOU DO', true); addIcon(s, 'practice'); }
   return s;
 }
-nextSlide(false).addNotes(`YOU DO — silent, 2 minutes. The same question as the keypad, on three new loops.
+nextSlide(false).addNotes(`YOU DO — silent, 2 minutes. The same question as the alarm loop, on three new loops.
 The gold line has JUST run; the box shows what's in the variable now. Write three line numbers: 1, 2, 3.
 Boards up together on 3-2-1.`);
 nextSlide(true).addNotes(`Go through any the class split on.
 1 → 3: 3 <= 3 is True (<= includes equal), so into the body.
-2 → 2, NOT 5: line 4 is the end of the body, so Python goes back up to check hp > 0 again. Same slip as the keypad question.
+2 → 2, NOT 5: line 4 is the end of the body, so Python goes back up to check hp > 0 again. Same slip as the alarm question.
 3 → 5: 5 < 5 is False straight away, so the body is skipped: it runs ZERO times.
 Link: in the activity, the right code first time means "ACCESS DENIED" never prints.`);
+
+// ════════════════════════════════════════════════════════════════════════════
+//  != (the activity's keypad loop needs it). Taught after the loop examples, which use only
+//  operators from Year 8 and Lesson 2, so the class learns how a loop runs first (Nick, 2026-11-05).
+// ════════════════════════════════════════════════════════════════════════════
+const NE = 'Not equal';
+
+// != (one-off: the two "equal" operators + two examples)
+{
+  const s = newSlide('SZ_DARK', NE, 'One new operator: !=');
+  text(s, 'EQUAL, OR NOT EQUAL?', { x: M, y: 1.6, w: 5, h: 0.3, fontSize: 13, bold: true, color: P.dim, charSpacing: 2 });
+  [['==', 'is equal to', P.dim], ['!=', 'is NOT equal to', P.gold]].forEach(([op, say, line], i) => {
+    const y = 2.05 + i * 1.0;
+    box(s, { x: M, y, w: 1.15, h: 0.75, fill: P.code, line, lw: i ? 2 : 1, r: 0.08 });
+    text(s, op, { x: M, y, w: 1.15, h: 0.75, fontFace: MONO, fontSize: 30, bold: true, align: 'center', valign: 'middle' });
+    text(s, say, { x: M + 1.4, y, w: 4.3, h: 0.75, fontSize: 24, valign: 'middle', bold: !!i });
+  });
+  text(s, 'TRUE OR FALSE?', { x: 7.0, y: 1.6, w: 5, h: 0.3, fontSize: 13, bold: true, color: P.dim, charSpacing: 2 });
+  [['"1234" != "4271"', true, 'Is 1234 different from 4271? Yes'], ['"4271" != "4271"', false, 'Is 4271 different from 4271? No']]
+    .forEach(([expr, val, say], i) => {
+      const y = 2.0 + i * 1.95;
+      box(s, { x: 7.0, y, w: 3.6, h: 1.0, fill: P.code, line: P.line, r: 0.08 });
+      s.addText(pyRuns(expr, 24), { isTextBox: true, x: 7.0, y, w: 3.6, h: 1.0, margin: 0, align: 'center', valign: 'middle' });
+      onClick(s, i + 1, () => {
+        arrow(s, 10.7, y + 0.5, 11.1, y + 0.5);
+        R.boolChip(K, s, val, 11.2, y + 0.2, 1.5, 0.6, 26);
+        text(s, say, { x: 7.0, y: y + 1.1, w: 5.7, h: 0.45, fontSize: 18, italic: true, color: P.muted });
+      });
+    });
+  R.banner(K, s, [{ text: 'A keypad loop keeps going ', options: { bold: true, color: P.gold } },
+    { text: 'while the code typed != the right code.' }], 5.95, 0.8, 22);
+  addIcon(s, 'info');
+  s.addNotes(`!= is new this year (Year 8 only had == < > <= >=). Read it as "is not equal to". Like ==, it's two characters, typed with no space.
+Before each click, ask the class "True or False?" and get a show of hands.
+Click 1: "1234" != "4271" → True: they ARE different.
+Click 2: "4271" != "4271" → False: they're the same, so "not equal" is False.
+The double negative trips people up: say it as a question. "Are these different?"
+They're in quotes because input() gives text — the codes are text, not numbers.`);
+}
+
+// True or False? practice + answers (mixing last lesson's operators with !=)
+const TF = [{ expr: '"a" != "b"', value: true }, { expr: '5 != 5', value: false }, { expr: '3 < 3', value: false },
+  { expr: '7 == 7', value: true }, { expr: '"y" != "y"', value: false }, { expr: '9 != 6', value: true }];
+R.trueFalseSlide(K, {
+  section: NE, items: TF,
+  takeaway: [{ text: 'On your board: ', options: { bold: true, color: P.gold } }, { text: 'write T or F for all six. Boards up together.' }],
+  notes: `Silent, 2 minutes. Boards up on 3-2-1.
+Number 2 (5 != 5) and number 5 ("y" != "y") are the ones to watch: the same value on both sides makes != False.
+Number 3 (3 < 3) is retrieval from last lesson's boundary work.`,
+});
+R.trueFalseSlide(K, {
+  section: NE, items: TF, reveal: true,
+  takeaway: [{ text: 'Watch out: ', options: { bold: true, color: P.gold } },
+    { text: 'x != x', options: { fontFace: MONO, bold: true } }, { text: ' is always False. Ask: "are they different?"' }],
+  notes: `Go through any the class split on.
+5 != 5: are they different? No → False. "y" != "y": same text → False.
+In today's loop, the condition is code != "4271": it stays True for every wrong code, and turns False the moment the right one is typed.`,
+});
 
 // ════════════════════════════════════════════════════════════════════════════
 //  str(): a number back into text (moved here from Lesson 1's Life Support round; the activity's
