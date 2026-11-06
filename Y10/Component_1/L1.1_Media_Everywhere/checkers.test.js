@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import {
   TASKS, TASK_COUNT, BINS, PRODUCTS, SORTS, CHOICES, WRITING, markSort, markChoices, markWriting, allCorrect,
   isRealSentence, isRealName, cooldownSeconds, calcScore, coreDone, coreGold, seededRandom, shuffled, SNAP,
+  GLOSSARY, glossaryDef, UNLOCK, unlockedBy, partOf,
 } from './checkers.js';
 
 const html = readFileSync(new URL('./1_Media_Everywhere.html', import.meta.url), 'utf8');
@@ -141,5 +142,41 @@ describe('engine', () => {
     const ids = PRODUCTS.map(p => p.id);
     expect(shuffled(ids, seededRandom('abc|board'))).toEqual(shuffled(ids, seededRandom('abc|board')));
     expect(shuffled(ids, seededRandom('abc|board'))).not.toEqual(shuffled(ids, seededRandom('xyz|board')));
+  });
+});
+
+describe('lesson parts', () => {
+  test('Part 2 is locked behind its word; each part has a challenge to wait with', () => {
+    expect(TASKS.filter(t => !t.level).map(t => t.part || 1)).toEqual([1, 2, 2, 2]);
+    for (const p of [1, 2]) expect(TASKS.some(t => (t.part || 1) === p && t.level === 'challenge'), `part ${p}`).toBe(true);
+    expect(TASKS.filter(t => t.level === 'challenge').map(t => t.key + ':' + (t.part || 1))).toEqual(['tricky:1', 'remake:2']);
+    expect(UNLOCK[2]).toBe('simba');
+    expect(unlockedBy(' Simba! ')).toBe(2);
+    expect(unlockedBy('outwood')).toBe(2);
+    expect(unlockedBy('lion')).toBe(0);
+    expect(unlockedBy('')).toBe(0);
+    expect(partOf(0)).toBe(1);
+  });
+});
+
+describe('glossary', () => {
+  // Everything students read in the tasks: data text plus the page's goals and paragraphs.
+  const studentText = [
+    JSON.stringify([CHOICES, WRITING, SORTS]),
+    html.slice(html.indexOf('<body>'), html.indexOf('<!-- IMG-DATA')),
+  ].join(' ');
+
+  test('every word is used on the page and has a short, plain meaning', () => {
+    expect(GLOSSARY.length).toBeGreaterThan(8);
+    for (const [p, def] of GLOSSARY) {
+      expect(new RegExp(`\\b(?:${p})\\b`, 'i').test(studentText), p).toBe(true);
+      expect(def.length, p).toBeLessThanOrEqual(80);
+      expect(p, 'use (?:…), not capture groups').not.toMatch(/\((?!\?:)/);
+    }
+  });
+
+  test('each matched form finds its meaning', () => {
+    for (const w of ['sector', 'Sectors', 'historical', 'Contemporary', 'era', 'CGI', 'computer-generated', 'remake', 'remade', 'billboard', 'frame by frame']) expect(glossaryDef(w), w).toBeTruthy();
+    for (const w of ['film', 'print', 'trailer']) expect(glossaryDef(w), w).toBeUndefined();
   });
 });

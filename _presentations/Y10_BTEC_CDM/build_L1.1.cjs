@@ -64,9 +64,9 @@ K.turnTalk({ lead: 'The Jaws poster is print. Jaws the film is audio / moving im
   notes: 'Products cross sectors: a film has posters (print) and a website or game (interactive). Good answers: Minecraft (game + film + books), Stranger Things (series + posters + game). On the Media Board, sort the product in the picture.' });
 
 K.task({ title: 'The Media Board', mins: 15, where: 'Hub › Year 10 › Lesson 1.1 › Media Everywhere',
-  steps: ['Open Media Everywhere. Unsure about sectors? Do the Warm-up tab first.', 'Task 1: put all 21 real products in the right box: sector, then before or after 2000.', 'Check. Red cards are wrong: wait for the timer, then fix them.', 'Finished? Try the ★ Challenge tabs: Tricky cases, then Remake it.'],
+  steps: ['Open Media Everywhere. Unsure about sectors? Do the Warm-up tab first.', 'Task 1: put all 21 real products in the right box: sector, then before or after 2000.', 'Check. Red cards are wrong: wait for the timer, then fix them.', 'Finished? Try the ★ Tricky cases tab. Tasks 2–4 open in Part 2.'],
   criteria: ['Every card in a box', 'Sector AND era right', 'Gold if right first time'],
-  notes: 'Every card has its real image. Wrong checks cost 10, then 20, then 30 seconds (they survive a refresh). Years appear on the cards once the board is right. Differentiation: Warm-up (Sector snap: 6 products, sectors only, big pictures) and an era-clues hint inside Task 1; ★ Tricky cases (set vs made, brand vs issue, remakes, products in two sectors) and ★ Remake it (extended writing). Optional tabs do not change the grade.' });
+  notes: 'Every card has its real image. Wrong checks cost 10, then 20, then 30 seconds (they survive a refresh). Years appear on the cards once the board is right. Differentiation: Warm-up (Sector snap: 6 products, sectors only, big pictures) and an era-clues hint inside Task 1; early finishers do ★ Tricky cases (set vs made, brand vs issue, remakes, products in two sectors). Tasks 2–4 are locked (Part 2): the unlock word is on the Then and now task slide, so nobody starts them before the clips. Dotted words on the page show their meaning on hover or tap. Optional tabs do not change the grade.' });
 
 K.clip({ title: 'Then: The Lion King, 1994', from: '0:00', to: 'end', where: 'Click the poster to play', video: '1zqWkHbI_M8Z1Gn9lKEJH9mDbydIP0dw_',
   img: img('lion_king_1994.jpg'), imgLabel: 'The Lion King poster (1994)',
@@ -77,10 +77,10 @@ K.clip({ title: 'Now: The Lion King, 2019', from: '0:00', to: 'end', where: 'Cli
   questions: ['What is the same as 1994?', 'What looks different?', 'Why was it released online first?'],
   notes: 'Drive clip "Lion King Digital.mp4", whole clip. Same story, studio and music, 25 years apart, but computer-generated (CGI) to look like real animals. Technology and platforms (YouTube, social media) changed the product; the story did not.' });
 
-K.task({ title: 'Then and now', mins: 15, where: 'Hub › Lesson 1.1 › Tasks 2–4',
-  steps: ['Task 2: watch both trailers, then answer the questions.', 'Task 3: write one difference, and why you think they changed.', 'Task 4: name one product YOU used from each sector.'],
+K.task({ title: 'Then and now', mins: 15, unlock: 'simba', where: 'Hub › Lesson 1.1 › Tasks 2–4',
+  steps: ['Task 2: watch both trailers, then answer the questions.', 'Task 3: write one difference, and why you think they changed.', 'Task 4: name one product YOU used from each sector.', 'Finished? ★ Remake it, the last tab.'],
   criteria: ['Full sentences in Tasks 3 and 4', 'Real product names, not "a game"', 'Says WHY, not just what'],
-  notes: 'Tasks 3–4 are writing: not auto-marked, sent to Classroom as evidence.' });
+  notes: 'Unlock word SIMBA: students type it on any locked tab to open Tasks 2–4 and ★ Remake it (it stays open after a refresh). A teacher signed in through Classroom, or anyone typing "outwood", gets every part. Tasks 3–4 are writing: not auto-marked, sent to Classroom as evidence. ★ Remake it is optional extended writing and does not change the grade.' });
 
 K.plenary({ lesson: LESSON, task: 'Name the three media sectors, with one product from each. Then give one way The Lion King changed between 1994 and 2019.',
   starter: '"The three sectors are… One change since 1994 is…"',

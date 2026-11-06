@@ -49,7 +49,7 @@ Editorial / magazine, so Component 1 decks look nothing like the Computing decks
 | `annotate` | Deliberate Practice (or `info` for a worked example) | A real product with numbered markers and notes. A portrait image (poster, magazine cover) gets the **tall** layout: the picture runs the full height of the slide down the left edge, with the title and notes beside it (`C1_PAPER_TALL` master). `tall: true / false` overrides |
 | `compare` | Deliberate Practice | Two real products against the same criteria |
 | `turnTalk` | Deliberate Practice | One question as an Oswald headline (context before it in `lead`, Lora italic), then think → partner A → partner B; optional image |
-| `task` | Deliberate Practice | Steps, where to find it, success criteria, timer |
+| `task` | Deliberate Practice | Steps, where to find it, success criteria, timer; `unlock: 'word'` adds the red Unlock word box for a lesson part (see Y10/CLAUDE.md, Lesson parts) |
 | `choice` | Feedback | Hinge question, 2–4 lettered options of similar length |
 | `modelAnswer` | Feedback | Model analytical paragraph colour-coded Point / Evidence / Explain |
 | `plenary` | Recap & Recall | Last slide: today's question as an exit task + sentence starter |
@@ -67,3 +67,4 @@ Newest last. Add feedback here (or with `/log-feedback`), then rebuild the templ
 - **2026-11-03 · Tall annotate** — The Jaws poster on the L1.2 worked model was too small to see the features being marked. Portrait images in `annotate` now fill the full slide height (new `C1_PAPER_TALL` master); use this layout whenever the point is in the picture's detail.
 - **2026-11-03 · Questions** — The Turn & Talk prompt was in Lora italic, the standfirst voice, so the slide's key question read as a side note. Questions in `turnTalk` and `choice` are now Oswald headlines; set-up context goes in `turnTalk`'s `lead`.
 - **2026-11-03 · Reveal** — Dense slides (standfirst + four points + image) were overwhelming at first sight: numbered points now appear one per click (see Click to reveal).
+- **2026-11-06 · Lesson parts** — Students rushed ahead to tasks that hadn't been taught yet. The hub page now locks each later part's tabs until the unlock word from that part's task slide (`task({ unlock })`); the Part 1 task slide points early finishers to the Part 1 ★ challenge.

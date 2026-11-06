@@ -3,15 +3,35 @@
 // The marking functions at the bottom are copied from _templates/BTEC_Y10_checkers.js.
 
 // ── Task list ───────────────────────────────────────────────────────────────
+// Part 1 (producer types) is open from the start; Part 2 (purpose, motivation, aim) opens with UNLOCK[2].
 export const TASKS = [
-  { key: 'who', kind: 'reveal' },     // 1 · Mystery producer: guess the producer type clue by clue
-  { key: 'slip', kind: 'spot' },      // 2 · Worked model (McCrispy), then spot and fix Sam's slips
-  { key: 'name', kind: 'choice' },    // 3 · Name the exact word: which purpose, motivation or aim?
-  { key: 'yours', kind: 'write' },    // 4 · Your turn: one product per sector
-  { key: 'kinds', kind: 'sort', level: 'support' },      // Warm-up · Four kinds of producer
-  { key: 'tricky', kind: 'write', level: 'challenge' },  // ★ Tricky cases
+  { key: 'who', kind: 'reveal' },              // 1 · Mystery producer: guess the producer type clue by clue
+  { key: 'slip', kind: 'spot', part: 2 },      // 2 · Worked model (McCrispy), then spot and fix Sam's slips
+  { key: 'name', kind: 'choice', part: 2 },    // 3 · Name the exact word: which purpose, motivation or aim?
+  { key: 'yours', kind: 'write', part: 2 },    // 4 · Your turn: one product per sector
+  { key: 'kinds', kind: 'sort', level: 'support' },               // Warm-up · Four kinds of producer
+  { key: 'tricky', kind: 'write', level: 'challenge', part: 2 },  // ★ Tricky cases (Part 2)
+  { key: 'owns', kind: 'write', level: 'challenge' },             // ★ Who really owns it? (Part 1, while waiting)
 ];
 export const TASK_COUNT = TASKS.length;
+
+// ── Lesson parts: teach → tasks → teach → tasks (Nick, 2026-11-06) ──
+// Give a task part: 2 (3, …) and it stays locked until the student types that part's word from UNLOCK,
+// shown on the part's task slide (the deck kit's task recipe takes unlock: '…'). Part 1 needs no word.
+// Every part except the last should end with an optional ★ challenge (level: 'challenge'), so students who
+// finish early have work on what has been taught while they wait: the lock box links to it.
+// TEACHER_WORD (or teacher mode in classroom.js) opens every part.
+export const UNLOCK = { 2: 'motive' };   // shown on the Part 2 task slide
+export const TEACHER_WORD = 'outwood';
+export const partOf = i => TASKS[i]?.part || 1;
+// The highest part this word opens (0 if none). Case, spaces and punctuation don't matter.
+export function unlockedBy(word) {
+  const w = String(word || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  if (!w) return 0;
+  if (w === TEACHER_WORD) return Math.max(1, ...TASKS.map(t => t.part || 1));
+  return Number(Object.entries(UNLOCK).find(([, x]) => x.toLowerCase().replace(/[^a-z0-9]/g, '') === w)?.[0] || 0);
+}
+
 
 // ── 1 · Mystery producer. Each round names the product and its producer from the start (showFirst),
 // so students make one leap: from facts about how the producer works to its type. Clues go from
@@ -110,26 +130,42 @@ export const CHOICES = {
 };
 
 // ── 4 and ★ · Writing (evidence for Classroom; checked for real sentences only) ──
+const PRODUCER_TYPES = ['media conglomerate', 'public service broadcaster', 'independent producer', 'community media'];
+const PURPOSES = ['entertain', 'inform', 'educate', 'persuade', 'inspire', 'challenge'];
+const MOTIVATIONS = ['generate profit', 'raise awareness', 'benefit a community', 'self-expression', 'innovation', 'public service responsibilities'];
+const AIMS = ['high quality', 'distinctive', 'accessible', 'diverse', 'inclusive', 'impartial'];
+
 export const WRITING = {
+  // Each sector: the product, then one box each for purpose, motivation and aim, coloured like the deck's
+  // "The words to use" slide, with the question to ask and the word bank beside it (Nick, 2026-11-06).
   yours: [
-    { id: 'ami_prod', prompt: 'Audio/moving image: a product you know (a film, TV show, YouTube channel or podcast) and who made it', short: true },
-    { id: 'ami_why', prompt: 'What type of producer made it? What is the product\'s purpose? Say why.',
-      starter: '… was made by …, which is a … . Its purpose is to … because …', minWords: 15 },
-    { id: 'print_prod', prompt: 'Print: a product you know (a magazine, comic, newspaper or poster) and who made it', short: true, differentFrom: 'ami_prod' },
-    { id: 'print_why', prompt: 'What type of producer made it? What is the product\'s purpose? Say why.',
-      starter: '… was made by …, which is a … . Its purpose is to … because …', minWords: 15, differentFrom: 'ami_why' },
-    { id: 'int_prod', prompt: 'Interactive: a product you know (a game, app or website) and who made it', short: true, differentFrom: 'print_prod' },
-    { id: 'int_why', prompt: 'What type of producer made it? What is the product\'s purpose? Say why.',
-      starter: '… was made by …, which is a … . Its purpose is to … because …', minWords: 15, differentFrom: 'print_why' },
-    { id: 'one_mot', prompt: 'Pick one of your three products. What is its producer\'s motivation? Give a reason.',
-      starter: 'The motivation of … is to … because …', minWords: 12 },
-    { id: 'one_aim', prompt: 'What is one aim the producer had for that product? What on the product shows it?',
-      starter: 'One aim was to make it … . You can see this because …', minWords: 12 },
+    ...[['ami', 'Audio/moving image', 'a film, TV show, YouTube channel or podcast'],
+      ['print', 'Print', 'a magazine, comic, newspaper or poster'],
+      ['int', 'Interactive', 'a game, app or website']].flatMap(([s, sector, eg], n, all) => {
+      const prev = n ? all[n - 1][0] : null, diff = f => prev ? { differentFrom: `${prev}_${f}` } : {};
+      return [
+        { id: `${s}_prod`, group: sector, prompt: `A product you know (${eg}) and who made it`, short: true, ...diff('prod') },
+        { id: `${s}_pur`, tone: 'pur', prompt: 'Producer and purpose', ask: 'What does the audience get from it?',
+          starter: '… was made by …, which is a … . Its purpose is to … because …', minWords: 15,
+          words: [PRODUCER_TYPES, PURPOSES], ...diff('pur') },
+        { id: `${s}_mot`, tone: 'mot', prompt: 'Motivation', ask: 'What does the producer get from making it?',
+          starter: 'The motivation of … is to … because …', minWords: 12, words: [MOTIVATIONS], ...diff('mot') },
+        { id: `${s}_aim`, tone: 'aim', prompt: 'Aim', ask: 'What did the producer want it to be like?',
+          starter: 'One aim was to make it … . You can see this because …', minWords: 12, words: [AIMS], ...diff('aim') },
+      ];
+    }),
   ],
-  // ★ Challenge: cases where the labels don't fit neatly.
-  tricky: [
+  // ★ Part 1 challenge: producers that don't fit one box (for students waiting for Part 2).
+  owns: [
     { id: 'ch_beast', prompt: 'MrBeast started on his own on YouTube. Now his show Beast Games is on Amazon Prime Video, and Amazon is a giant company. Is MrBeast still an independent producer? Give a reason for yes and a reason for no, then decide.',
       starter: 'Yes, because … But no, because … I think …', minWords: 30 },
+    { id: 'ch_mojang', prompt: 'Mojang was a small Swedish studio when Minecraft came out. In 2014 Microsoft, a giant company, bought Mojang. What type of producer made Minecraft at the start, and what type makes it now? Give a reason for each.',
+      starter: 'At the start, Mojang was … because … Now …', minWords: 30 },
+    { id: 'ch_bbcbig', prompt: 'The BBC is huge: TV channels, radio stations, websites and iPlayer. So why is it a public service broadcaster and not a media conglomerate? Think about how it is paid for and who it has to serve.',
+      starter: 'The BBC is big, but it is not a conglomerate because …', minWords: 25 },
+  ],
+  // ★ Part 2 challenge: purposes and motivations that don't fit neatly.
+  tricky: [
     { id: 'ch_free', prompt: 'Metro is a free newspaper. How can a free paper still generate profit? Name one purpose and one motivation behind its Lionesses front page.',
       starter: 'Metro makes money by … The purpose of the front page is to … but the motivation is …', minWords: 30 },
     { id: 'ch_bbc', prompt: 'Bitesize earns the BBC no money. Why does the BBC make it, when a conglomerate like Warner Bros. probably would not? Use the words motivation and public service responsibilities.',
@@ -200,10 +236,19 @@ export function markWriting(taskKey, given) {
   return Object.fromEntries(WRITING[taskKey].map(w => {
     const real = w.short ? isRealName(given[w.id]) : isRealSentence(given[w.id], w.minWords);
     const differs = !w.differentFrom || squash(given[w.id]) !== squash(given[w.differentFrom]);
-    return [w.id, real && differs];
+    const worded = (w.words || []).every(bank => bank.some(x => usesWord(given[w.id], x)));
+    return [w.id, real && differs && worded];
   }));
 }
 const squash = t => String(t || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+
+// Does the text use this word or phrase in any form? Each word of 3+ letters must appear as the start
+// of a word ("generating a profit" uses "generate profit"; "accessibility" uses "accessible").
+export function usesWord(text, phrase) {
+  const words = String(text || '').toLowerCase().split(/[^a-z]+/);
+  return phrase.toLowerCase().split(/[^a-z]+/).filter(x => x.length >= 3)
+    .every(x => words.some(w => w.startsWith(x.slice(0, Math.max(4, Math.min(x.length - 3, 5))))));
+}
 
 export function allCorrect(result) {
   const v = Object.values(result);

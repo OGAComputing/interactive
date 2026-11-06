@@ -2,16 +2,36 @@
 // The marking functions at the bottom are copied from _templates/BTEC_Y10_checkers.js.
 
 // ── Task list ───────────────────────────────────────────────────────────────
+// Part 1 (sectors and eras: the Media Board) is open from the start; Part 2 (The Lion King, then and now)
+// opens with UNLOCK[2], shown on the deck's "Then and now" task slide after the two clips.
 export const TASKS = [
   { key: 'board', kind: 'sort' },    // 1 · The Media Board
-  { key: 'then', kind: 'choice' },   // 2 · Then and now: watch
-  { key: 'compare', kind: 'write' }, // 3 · Then and now: write
-  { key: 'day', kind: 'write' },     // 4 · My media day
+  { key: 'then', kind: 'choice', part: 2 },   // 2 · Then and now: watch
+  { key: 'compare', kind: 'write', part: 2 }, // 3 · Then and now: write
+  { key: 'day', kind: 'write', part: 2 },     // 4 · My media day
   { key: 'snap', kind: 'sort', level: 'support' },        // Warm-up · Sector snap
   { key: 'tricky', kind: 'choice', level: 'challenge' },  // ★ Tricky cases
-  { key: 'remake', kind: 'write', level: 'challenge' },   // ★ Remake it
+  { key: 'remake', kind: 'write', level: 'challenge', part: 2 }, // ★ Remake it
 ];
 export const TASK_COUNT = TASKS.length;
+
+// ── Lesson parts: teach → tasks → teach → tasks (Nick, 2026-11-06) ──
+// Give a task part: 2 (3, …) and it stays locked until the student types that part's word from UNLOCK,
+// shown on the part's task slide (the deck kit's task recipe takes unlock: '…'). Part 1 needs no word.
+// Every part except the last should end with an optional ★ challenge (level: 'challenge'), so students who
+// finish early have work on what has been taught while they wait: the lock box links to it.
+// TEACHER_WORD (or teacher mode in classroom.js) opens every part.
+export const UNLOCK = { 2: 'simba' };   // shown on the Part 2 task slide
+export const TEACHER_WORD = 'outwood';
+export const partOf = i => TASKS[i]?.part || 1;
+// The highest part this word opens (0 if none). Case, spaces and punctuation don't matter.
+export function unlockedBy(word) {
+  const w = String(word || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  if (!w) return 0;
+  if (w === TEACHER_WORD) return Math.max(1, ...TASKS.map(t => t.part || 1));
+  return Number(Object.entries(UNLOCK).find(([, x]) => x.toLowerCase().replace(/[^a-z0-9]/g, '') === w)?.[0] || 0);
+}
+
 
 // ── 1 · The Media Board: 21 real products by sector and era ──────────────────
 // Era = when the product in the picture first came out: before 2000 is historical,
@@ -112,7 +132,56 @@ export const WRITING = {
   ],
 };
 
-// ── Marking (from the template) ─────────────────────────────────────────────
+// No reveal or spot tasks in this lesson (the engine imports both).
+export const REVEALS = {};
+export const SPOTS = {};
+
+// ── Glossary: [pattern, meaning] for every word a typical 13-year-old might not know ──
+// The page underlines each match in the task content (questions, options, clues, paragraphs, prompts,
+// goals) and shows the meaning on hover, focus or tap; the .terms boxes and help panels are skipped.
+// pattern is a case-insensitive regex fragment matched as whole words: 'shareholders?', 'TV licence|licence fee'.
+// Use (?:…) for groups, never (…). Keep each meaning under about 80 characters and in plain words.
+// Include the lesson's spec terms wherever they turn up as answer options, plus everyday-but-tricky words
+// (shareholders, poverty, box office); leave out words students know (entertain, volunteers, streaming).
+export const GLOSSARY = [
+  // Lesson terms
+  ['sectors?', 'One of the three kinds of media: audio/moving image, print or interactive'],
+  ['historical', 'In this course: a media product first made before 2000'],
+  ['contemporary', 'In this course: a media product made in 2000 or later'],
+  ['eras?', 'A period of time, such as "before 2000"'],
+  ['producers?', 'The company or person who makes a media product'],
+  ['CGI|computer-generated', 'Pictures made on a computer, often to look real'],
+  ['remakes?|remade', 'A new version of an old film, show or game'],
+  // Everyday-but-tricky words
+  ['catalogue', 'A printed book of everything a shop sells'],
+  ['billboards?', 'A giant poster beside a road, used for adverts'],
+  ['arcade', 'Coin-operated video game machines, found in arcades'],
+  ['frame by frame', 'One still picture at a time: many in a row make it move'],
+  ['studio', 'A company that makes films'],
+  ['brand', 'The name a company puts on its products so people know them'],
+  ['issue', "One copy of a magazine or comic, such as this week's"],
+];
+export function glossaryDef(word) {
+  return GLOSSARY.find(([p]) => new RegExp(`^(?:${p})$`, 'i').test(word))?.[1];
+}
+
+// ── Marking (from the template) ─────────────────────────────────────────────────────────────────
+// Each returns { questionId: true/false } so the page can colour every question.
+export function markReveal(taskKey, given) {
+  return Object.fromEntries(REVEALS[taskKey].rounds.map(r => [r.id, given[r.id] === r.a]));
+}
+// Stars for solving a round after seeing `shown` clues: 3 on the first clue, 2 on the second, then 1.
+export const starsFor = shown => Math.max(1, 4 - shown);
+
+export function markSpotFlags(taskKey, given) {
+  return Object.fromEntries(SPOTS[taskKey].parts.map(p => [p.id, !!given[p.id] === !!p.fix]));
+}
+export function markSpot(taskKey, given) {
+  const res = markSpotFlags(taskKey, given);
+  for (const p of SPOTS[taskKey].parts) if (p.fix) res[p.id + '_fix'] = given[p.id + '_fix'] === p.fix.a;
+  return res;
+}
+
 export function markChoices(taskKey, given) {
   return Object.fromEntries(Object.entries(CHOICES[taskKey]).map(([id, c]) => [id, given[id] === c.a]));
 }
@@ -125,16 +194,32 @@ export function markWriting(taskKey, given) {
   return Object.fromEntries(WRITING[taskKey].map(w => {
     const real = w.short ? isRealName(given[w.id]) : isRealSentence(given[w.id], w.minWords);
     const differs = !w.differentFrom || squash(given[w.id]) !== squash(given[w.differentFrom]);
-    return [w.id, real && differs];
+    const worded = (w.words || []).every(bank => bank.some(x => usesWord(given[w.id], x)));
+    return [w.id, real && differs && worded];
   }));
 }
 const squash = t => String(t || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+
+// Does the text use this word or phrase in any form? Each word of 3+ letters must appear as the start
+// of a word ("generating a profit" uses "generate profit"; "accessibility" uses "accessible").
+export function usesWord(text, phrase) {
+  const words = String(text || '').toLowerCase().split(/[^a-z]+/);
+  return phrase.toLowerCase().split(/[^a-z]+/).filter(x => x.length >= 3)
+    .every(x => words.some(w => w.startsWith(x.slice(0, Math.max(4, Math.min(x.length - 3, 5))))));
+}
+
+// A name such as "EA FC 25" or "Metro": at least two letters, not one key held down.
+export function isRealName(text) {
+  const t = String(text || '').trim();
+  return (t.match(/[a-z]/gi) || []).length >= 2 && new Set(t.toLowerCase().replace(/\s/g, '')).size >= 2;
+}
 
 export function allCorrect(result) {
   const v = Object.values(result);
   return v.length > 0 && v.every(Boolean);
 }
 
+// A real answer, not "asdf asdf asdf": enough words, mostly different, mostly made of letters.
 export function isRealSentence(text, minWords = 4) {
   const words = String(text || '').toLowerCase().match(/[a-z][a-z'’-]*/g) || [];
   if (words.length < minWords) return false;
@@ -143,15 +228,12 @@ export function isRealSentence(text, minWords = 4) {
   return words.filter(w => /[aeiouy]/.test(w)).length >= Math.ceil(words.length * 0.8);
 }
 
-export function isRealName(text) {
-  const t = String(text || '').trim();
-  return (t.match(/[a-z]/gi) || []).length >= 2 && new Set(t.toLowerCase().replace(/\s/g, '')).size >= 2;
-}
-
+// Wrong checks cost time, and more each time: 10 s, 20 s, then 30 s.
 export function cooldownSeconds(wrongCount) {
   return Math.min(30, 10 * Math.max(1, wrongCount));
 }
 
+// House scoring: 80 for finishing every task, 20 more for getting them right first time.
 export function calcScore(completed, firstAttempt) {
   const idx = coreTasks(), n = idx.length;
   const done = idx.filter(i => completed[i]).length;
@@ -165,6 +247,7 @@ const coreTasks = () => TASKS.map((t, i) => (t.level ? -1 : i)).filter(i => i >=
 export const coreDone = completed => coreTasks().every(i => completed[i]);
 export const coreGold = firstAttempt => coreTasks().every(i => firstAttempt[i]);
 
+// ── Per-student order (seeded, so neighbours see different orders) ──────────
 export function seededRandom(seed) {
   let s = 0;
   for (const ch of String(seed).toUpperCase()) s = (s * 31 + ch.charCodeAt(0)) >>> 0;

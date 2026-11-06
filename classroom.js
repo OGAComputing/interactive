@@ -471,6 +471,8 @@
     if (btn)  btn.classList.add('hidden');
     if (text) text.textContent = '🎓 Teacher mode — students\' scores reach Classroom when you open the Activities Hub.';
     if (copyBtn) copyBtn.classList.add('visible');
+    // Pages can open teacher-only content (e.g. locked lesson parts on BTEC pages).
+    document.dispatchEvent(new CustomEvent('classroom:teacher'));
   }
 
   function showClassroomToast(msg) {
@@ -1626,6 +1628,7 @@
   window.Classroom = {
     get isClassroomContext() { return isClassroomContext; },
     get isAuthenticated()    { return !!accessToken; },
+    get isTeacher()          { return isTeacherMode; },
 
     verifyAuth() {
       if (isClassroomContext && !accessToken) {

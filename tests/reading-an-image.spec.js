@@ -1,7 +1,42 @@
 import { test, expect } from '@playwright/test';
-import { SORTS, CHOICES } from '../Y10/Component_1/L1.2_Reading_an_Image/checkers.js';
+import { SORTS, CHOICES, UNLOCK } from '../Y10/Component_1/L1.2_Reading_an_Image/checkers.js';
 
 const URL = '/Y10/Component_1/L1.2_Reading_an_Image/1_Reading_an_Image.html';
+
+// Part 2 (Task 4 and A third meaning) opens with the word from the deck's Part 2 task slide.
+async function unlockPart2(page) {
+  await page.locator('.tab[data-idx="3"]').click();
+  await page.locator('#panel-3 .unlock-word').fill(UNLOCK[2]);
+  await page.locator('#panel-3 .unlock-form button').click();
+  await expect(page.locator('#panel-3 .lockbox')).toHaveCount(0);
+}
+
+test('part 2 stays locked until the word from the slide; the lock box points to Rewrite the meaning', async ({ page }) => {
+  await page.goto(URL);
+  for (const i of [3, 6]) await expect(page.locator(`.tab[data-idx="${i}"]`)).toHaveClass(/locked/);
+  for (const i of [0, 1, 2, 4, 5]) await expect(page.locator(`.tab[data-idx="${i}"]`)).not.toHaveClass(/locked/);
+  await page.locator('.tab[data-idx="3"]').click();
+  await expect(page.locator('#panel-3 .previews')).toBeHidden();
+  await page.locator('#panel-3 .unlock-word').fill('layer');
+  await page.locator('#panel-3 .unlock-form button').click();
+  await expect(page.locator('#panel-3 .unlock-msg')).toContainText('not the word');
+  await page.locator('#panel-3 .lockbox [data-goto="5"]').click();
+  await expect(page.locator('#panel-5')).toBeVisible();
+  await page.locator('.tab[data-idx="6"]').click();
+  await page.locator('#panel-6 .unlock-word').fill('LAYERS');
+  await page.locator('#panel-6 .unlock-word').press('Enter');
+  await expect(page.locator('#th_cap')).toBeVisible();
+  await expect(page.locator('.tab[data-idx="3"]')).not.toHaveClass(/locked/);
+});
+
+test('glossary words show their meaning on hover', async ({ page }) => {
+  await page.goto(URL);
+  await page.locator('.tab[data-idx="1"]').click();
+  await page.locator('#panel-1 .opt .gl', { hasText: /^Polysemy$/ }).first().hover();
+  await expect(page.locator('.gl-tip')).toHaveClass(/show/);
+  await expect(page.locator('.gl-tip')).toContainText('more than one way');
+  await expect(page.locator('#panel-1 .terms .gl')).toHaveCount(0);
+});
 
 test('the Jaws sort works by drag as well as by click', async ({ page }) => {
   await page.goto(URL);
@@ -38,6 +73,7 @@ test('one wrong answer is red, the rest green, and the cooldown survives a reloa
 
 test('the caption preview shows the chosen photo and both captions', async ({ page }) => {
   await page.goto(URL);
+  await unlockPart2(page);
   await page.locator('.tab[data-idx="3"]').click();
   await page.locator('input[name="cap_photo"][value="stairs"]').check();
   await page.locator('#cap_poly').fill('He could be upset about bad news or he could be hiding from someone');
@@ -62,7 +98,7 @@ test('the warm-up and challenge tabs open their own panels', async ({ page }) =>
   await page.locator('.tab.support').click();
   await expect(page.locator('#panel-4')).toBeVisible();
   await expect(page.locator('#panel-4 .tray .chip')).toHaveCount(SORTS.words.items.length);
-  await page.locator('.tab.challenge').click();
+  await page.locator('.tab[data-idx="5"]').click();
   await expect(page.locator('#panel-5')).toBeVisible();
   await expect(page.locator('#panel-5 img[data-img="jaws"]')).toHaveAttribute('src', /^data:image\/jpeg/);
   await expect(page.locator('#panel-0')).toBeHidden();

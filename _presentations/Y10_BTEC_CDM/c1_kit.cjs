@@ -418,7 +418,8 @@ function createDeck({ lesson, footerText, title = 'Component 1 lesson', author =
     return s;
   }
   // Deliberate Practice task: steps, where to find it, success criteria.
-  function task({ title: t, steps, where, criteria, mins, notes: n }) {
+  // unlock: the word that opens this part's tabs on the hub page (lesson parts, Nick 2026-11-06).
+  function task({ title: t, steps, where, criteria, mins, unlock, notes: n }) {
     const s = newSlide('C1_PAPER', 'Practice', t);
     const lw = 7.3;
     steps.forEach((st, i) => {
@@ -433,7 +434,12 @@ function createDeck({ lesson, footerText, title = 'Component 1 lesson', author =
     box(s, { x: cx, y: 1.85, w: cw, h: 4.9, fill: P.ink });
     kicker(s, 'Success looks like', { x: cx + 0.3, y: 2.05, w: cw - 0.6, color: P.redLt });
     text(s, criteria.map((c) => ({ text: c, options: { bullet: { code: '25A0' }, paraSpaceAfter: 10 } })),
-      { x: cx + 0.3, y: 2.5, w: cw - 0.6, h: 4.1, fontSize: 19, color: P.paper });
+      { x: cx + 0.3, y: 2.5, w: cw - 0.6, h: unlock ? 2.6 : 4.1, fontSize: 19, color: P.paper });
+    if (unlock) {
+      box(s, { x: cx + 0.3, y: 5.2, w: cw - 0.6, h: 1.3, fill: P.red });
+      text(s, 'UNLOCK WORD', { x: cx + 0.5, y: 5.28, w: cw - 1, h: 0.35, fontSize: 13, bold: true, charSpacing: 2, color: P.white });
+      text(s, unlock.toUpperCase(), { x: cx + 0.5, y: 5.6, w: cw - 1, h: 0.8, fontFace: HEAD, fontSize: 40, color: P.white, valign: 'middle' });
+    }
     if (mins) timer(s, mins);
     addIcon(s, 'practice'); notes(s, n);
     return s;

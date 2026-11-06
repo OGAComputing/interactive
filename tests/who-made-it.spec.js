@@ -1,7 +1,39 @@
 import { test, expect } from '@playwright/test';
-import { SORTS, CHOICES, REVEALS, SPOTS } from '../Y10/Component_1/L1.3_Who_Made_It_and_Why/checkers.js';
+import { SORTS, CHOICES, REVEALS, SPOTS, UNLOCK } from '../Y10/Component_1/L1.3_Who_Made_It_and_Why/checkers.js';
 
 const URL = '/Y10/Component_1/L1.3_Who_Made_It_and_Why/1_Who_Made_It_and_Why.html';
+
+// Part 2 (Tasks 2–4 and Tricky cases) opens with the word from the deck's Part 2 task slide.
+async function unlockPart2(page) {
+  await page.locator('.tab[data-idx="1"]').click();
+  await page.locator('#panel-1 .unlock-word').fill(UNLOCK[2]);
+  await page.locator('#panel-1 .unlock-form button').click();
+  await expect(page.locator('#panel-1 .lockbox')).toHaveCount(0);
+}
+
+test('part 2 stays locked until the word from the slide; the lock box points to the part 1 challenge', async ({ page }) => {
+  await page.goto(URL);
+  for (const i of [1, 2, 3, 5]) await expect(page.locator(`.tab[data-idx="${i}"]`)).toHaveClass(/locked/);
+  await expect(page.locator('.tab[data-idx="6"]')).not.toHaveClass(/locked/);
+  await page.locator('.tab[data-idx="2"]').click();
+  await expect(page.locator('#panel-2 .lockbox')).toBeVisible();
+  await expect(page.locator('#panel-2 .qs')).toBeHidden();
+
+  await page.locator('#panel-2 .unlock-word').fill('motivation');
+  await page.locator('#panel-2 .unlock-form button').click();
+  await expect(page.locator('#panel-2 .unlock-msg')).toContainText('not the word');
+
+  await page.locator('#panel-2 .lockbox [data-goto="6"]').click();
+  await expect(page.locator('#panel-6')).toBeVisible();
+
+  await page.locator('.tab[data-idx="2"]').click();
+  await page.locator('#panel-2 .unlock-word').fill('Motive');
+  await page.locator('#panel-2 .unlock-word').press('Enter');
+  await expect(page.locator('#panel-2 .qs')).toBeVisible();
+  for (const i of [1, 2, 3, 5]) await expect(page.locator(`.tab[data-idx="${i}"]`)).not.toHaveClass(/locked/);
+  await page.reload();
+  await expect(page.locator('.tab[data-idx="3"]')).not.toHaveClass(/locked/);   // stays open after a refresh
+});
 
 test('the page opens on the warm-up tab', async ({ page }) => {
   await page.goto(URL);
@@ -55,6 +87,7 @@ test('mystery producer: a wrong guess shows the next clue and waits; solving eve
 
 test('spot the slip: wrong flags go red, then all four slips unlock the fixes', async ({ page }) => {
   await page.goto(URL);
+  await unlockPart2(page);
   await page.locator('.tab[data-idx="1"]').click();
   const slips = SPOTS.slip.parts.filter(p => p.fix);
   // Flag three slips and one correct sentence.
@@ -89,6 +122,7 @@ test('spot the slip: wrong flags go red, then all four slips unlock the fixes', 
 
 test('all right answers in Task 3 go green', async ({ page }) => {
   await page.goto(URL);
+  await unlockPart2(page);
   await page.locator('.tab[data-idx="2"]').click();
   const entries = Object.entries(CHOICES.name);
   for (const [id, c] of entries) await page.locator(`input[name="${id}"][value="${c.a}"]`).check();
@@ -99,6 +133,7 @@ test('all right answers in Task 3 go green', async ({ page }) => {
 
 test('glossary words show their meaning on hover and on keyboard focus', async ({ page }) => {
   await page.goto(URL);
+  await unlockPart2(page);
   await page.locator('.tab[data-idx="2"]').click();
   const tip = page.locator('.gl-tip');
   await page.locator('#panel-2 .opt .gl', { hasText: /^Innovation$/ }).first().hover();
@@ -118,9 +153,36 @@ test('glossary words show their meaning on hover and on keyboard focus', async (
   await expect(tip).toContainText('audio/moving image');
 });
 
-test('the challenge tab shows its pictures', async ({ page }) => {
+test('your turn: each sector has purpose, motivation and aim boxes; a box without a spec word goes red', async ({ page }) => {
   await page.goto(URL);
-  await page.locator('.tab.challenge').click();
-  await expect(page.locator('#panel-5')).toBeVisible();
-  await expect(page.locator('#panel-5 img[data-img="mrbeast"]')).toHaveAttribute('src', /^data:image\/jpeg/);
+  await unlockPart2(page);
+  await page.locator('.tab[data-idx="3"]').click();
+  await expect(page.locator('#panel-3 .write-group')).toHaveText(['Audio/moving image', 'Print', 'Interactive']);
+  await expect(page.locator('#panel-3 .write-q.mot')).toHaveCount(3);
+  await expect(page.locator('#panel-3 .write-q[data-qw="ami_aim"] .wordbank')).toContainText('distinctive');
+
+  const fill = {
+    prod: s => `${s} product by Somebody`,
+    pur: s => `The ${s} one was made by a media conglomerate. Its purpose is to entertain people because it is very funny`,
+    mot: s => `The motivation of the ${s} company is to generate profit because people pay for it`,
+    aim: s => `One aim was to make the ${s} one distinctive. You can see this because the colours are bold`,
+  };
+  for (const s of ['ami', 'print', 'int']) for (const [f, text] of Object.entries(fill)) await page.locator(`#${s}_${f}`).fill(text(s));
+  await page.locator('#print_mot').fill('The company made it because they wanted lots and lots of money from it');
+  await page.locator('#check-3').click();
+  await expect(page.locator('.write-q[data-qw="print_mot"]')).toHaveClass(/is-wrong/);
+  await expect(page.locator('#feedback-3')).toContainText('using a word from each box');
+
+  await page.locator('#print_mot').fill(fill.mot('print'));
+  await page.locator('#check-3').click();
+  await expect(page.locator('#feedback-3')).toHaveClass(/correct/);
+});
+
+test('the challenge tabs show their pictures', async ({ page }) => {
+  await page.goto(URL);
+  await page.locator('.tab[data-idx="6"]').click();
+  await expect(page.locator('#panel-6 img[data-img="mrbeast"]')).toHaveAttribute('src', /^data:image\/jpeg/);
+  await unlockPart2(page);
+  await page.locator('.tab[data-idx="5"]').click();
+  await expect(page.locator('#panel-5 img[data-img="lionesses"]')).toHaveAttribute('src', /^data:image\/jpeg/);
 });

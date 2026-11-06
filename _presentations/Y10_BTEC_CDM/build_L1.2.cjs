@@ -71,14 +71,14 @@ K.modelAnswer({ title: 'What a good analysis sounds like', question: 'How does t
   notes: 'Point → evidence (denotation) → explain (connotation + anchorage). Students use this shape in hub Task 3 on Spider-Verse.' });
 
 K.task({ title: 'Read the posters', mins: 20, where: 'Hub › Year 10 › Lesson 1.2 › Reading an Image',
-  steps: ['New words feel tricky? Warm-up tab first: match each word to its meaning.', 'Task 1: Jaws. Read the worked model, then sort 8 statements.', 'Tasks 2–3: Barbie questions, then Spider-Verse in full sentences, ending with encoding.', 'Finished? ★ Rewrite the meaning: a new genre and tagline for Jaws.'],
+  steps: ['New words feel tricky? Warm-up tab first: match each word to its meaning.', 'Task 1: Jaws. Read the worked model, then sort 8 statements.', 'Tasks 2–3: Barbie questions, then Spider-Verse in full sentences, ending with encoding.', 'Finished? ★ Rewrite the meaning: a new genre and tagline for Jaws. Task 4 opens in Part 2.'],
   criteria: ['Denotation = only what you see', 'Connotation points to a detail', 'Says how the words fix the meaning'],
-  notes: 'Tasks 1–2 are auto-marked with cooldowns; Task 3 is writing sent to Classroom. Each task has a 💡 help panel (how to tell denotation from connotation, things to look for, a word bank). Differentiation: Warm-up (Match the words) and ★ Rewrite the meaning (change the anchorage of Jaws; two readings of Spider-Verse). Optional tabs do not change the grade.' });
+  notes: 'Tasks 1–2 are auto-marked with cooldowns; Task 3 is writing sent to Classroom. Each task has a 💡 help panel (how to tell denotation from connotation, things to look for, a word bank). Differentiation: Warm-up (Match the words) and ★ Rewrite the meaning (change the anchorage of Jaws; two readings of Spider-Verse) for early finishers. Task 4 is locked (Part 2): the unlock word is on the Photoshop task slide, so nobody starts it before the demo. Dotted words on the page show their meaning on hover or tap. Optional tabs do not change the grade.' });
 
-K.task({ title: 'One photo, two captions', mins: 20, where: 'Hub › Lesson 1.2 › Task 4 · photos in Drive › Photo Bank',
-  steps: ['Pick a photo on the hub and download it from the Photo Bank.', 'Photoshop: File › Open, then the Type Tool (T): add caption 1.', 'File › Export › Export As… JPG. Change the text to caption 2 and export again.', 'Hub: polysemy (two things it could mean), then each caption and the meaning it anchors.'],
+K.task({ title: 'One photo, two captions', mins: 20, unlock: 'layers', where: 'Hub › Lesson 1.2 › Task 4 · photos in Drive › Photo Bank',
+  steps: ['Pick a photo on the hub and download it from the Photo Bank.', 'Photoshop: File › Open, then the Type Tool (T): add caption 1.', 'File › Export › Export As… JPG. Change the text to caption 2 and export again.', 'Hub: polysemy (two things it could mean), then each caption and the meaning it anchors.', 'Finished? ★ A third meaning, the last tab.'],
   criteria: ['Same photo, two opposite meanings', 'Captions are short, like real ones', 'Both JPGs attached in Classroom'],
-  notes: 'Polysemy + anchorage made practical. The hub previews each caption on the photo as they type. Photos: Pexels (free, no attribution).' });
+  notes: 'Unlock word LAYERS: students type it on the locked Task 4 tab to open it and ★ A third meaning (it stays open after a refresh). A teacher signed in through Classroom, or anyone typing "outwood", gets every part. Polysemy + anchorage made practical. The hub previews each caption on the photo as they type. ★ A third meaning (a third caption, then which one a newspaper would print) is optional. Photos: Pexels (free, no attribution).' });
 
 K.plenary({ lesson: LESSON, task: 'Pick one poster from today. Write one denotation, one connotation, and one thing the designers chose to encode.',
   starter: '"On the ___ poster I can see ___, which suggests ___. The designers chose it to…"',

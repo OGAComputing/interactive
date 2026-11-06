@@ -1,9 +1,54 @@
 import { test, expect } from '@playwright/test';
-import { PRODUCTS, CHOICES } from '../Y10/Component_1/L1.1_Media_Everywhere/checkers.js';
+import { PRODUCTS, CHOICES, UNLOCK } from '../Y10/Component_1/L1.1_Media_Everywhere/checkers.js';
 
 const URL = '/Y10/Component_1/L1.1_Media_Everywhere/1_Media_Everywhere.html';
 
 const BIN = Object.fromEntries(PRODUCTS.map(p => [p.id, p.bin]));
+
+// Part 2 (Tasks 2–4 and Remake it) opens with the word from the deck's Part 2 task slide.
+async function unlockPart2(page) {
+  await page.locator('.tab[data-idx="1"]').click();
+  await page.locator('#panel-1 .unlock-word').fill(UNLOCK[2]);
+  await page.locator('#panel-1 .unlock-form button').click();
+  await expect(page.locator('#panel-1 .lockbox')).toHaveCount(0);
+}
+
+test('part 2 stays locked until the word from the slide; the lock box points to Tricky cases', async ({ page }) => {
+  await page.goto(URL);
+  for (const i of [1, 2, 3, 6]) await expect(page.locator(`.tab[data-idx="${i}"]`)).toHaveClass(/locked/);
+  for (const i of [0, 4, 5]) await expect(page.locator(`.tab[data-idx="${i}"]`)).not.toHaveClass(/locked/);
+  await page.locator('.tab[data-idx="1"]').click();
+  await expect(page.locator('#panel-1 .lockbox')).toBeVisible();
+  await expect(page.locator('#panel-1 iframe').first()).toBeHidden();
+  await page.locator('#panel-1 .unlock-word').fill('lion');
+  await page.locator('#panel-1 .unlock-form button').click();
+  await expect(page.locator('#panel-1 .unlock-msg')).toContainText('not the word');
+  await page.locator('#panel-1 .lockbox [data-goto="5"]').click();
+  await expect(page.locator('#panel-5')).toBeVisible();
+  await page.locator('.tab[data-idx="3"]').click();
+  await page.locator('#panel-3 .unlock-word').fill('Simba');
+  await page.locator('#panel-3 .unlock-word').press('Enter');
+  await expect(page.locator('#day_ami')).toBeVisible();
+  await page.reload();
+  await expect(page.locator('.tab[data-idx="2"]')).not.toHaveClass(/locked/);   // stays open after a refresh
+});
+
+test('a part the student already finished work in stays open', async ({ page }) => {
+  await page.goto(URL);
+  await page.evaluate(() => localStorage.setItem('y10_c1_l1_1_media_everywhere',
+    JSON.stringify({ completed: [false, false, true, false, false, false, false], firstAttempt: [], answers: {}, wrongs: {}, coolUntil: {} })));
+  await page.reload();
+  await expect(page.locator('.tab[data-idx="1"]')).not.toHaveClass(/locked/);
+});
+
+test('glossary words show their meaning on hover', async ({ page }) => {
+  await page.goto(URL);
+  await page.locator('.tab[data-idx="0"]').click();
+  await page.locator('#panel-0 .goal .gl', { hasText: /^sector$/ }).hover();
+  await expect(page.locator('.gl-tip')).toHaveClass(/show/);
+  await expect(page.locator('.gl-tip')).toContainText('audio/moving image');
+  await expect(page.locator('#panel-0 .key .gl')).toHaveCount(0);   // the definition boxes already explain them
+});
 
 // The cards are dealt one at a time: sort whichever card is on top, the way a student does
 // (click it, then click its box), until the pile is empty.
@@ -94,6 +139,7 @@ test('a right board is gold, shows the years and survives a reload', async ({ pa
 
 test('then and now: right answers complete the task; clips have Drive links', async ({ page }) => {
   await page.goto(URL);
+  await unlockPart2(page);
   await page.locator('.tab[data-idx="1"]').click();
   await expect(page.locator('#panel-1 iframe')).toHaveCount(2);
   await expect(page.locator('#panel-1 a[href*="/view?t="]')).toHaveCount(2);
@@ -105,6 +151,7 @@ test('then and now: right answers complete the task; clips have Drive links', as
 
 test('writing needs real sentences, then saves', async ({ page }) => {
   await page.goto(URL);
+  await unlockPart2(page);
   await page.locator('.tab[data-idx="3"]').click();
   await page.locator('#day_ami').fill('Stranger Things');
   await page.locator('#day_print').fill('Metro');

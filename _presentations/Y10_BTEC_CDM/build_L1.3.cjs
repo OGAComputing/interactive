@@ -51,9 +51,10 @@ K.choice({ question: 'BBC Radio 1 is paid for by the TV licence and plays no adv
 K.task({ title: 'Name the producer', mins: 12, where: 'Hub › Year 10 › Lesson 1.3 › Who Made It and Why?',
   steps: ['The page opens on the Warm-up tab: sort 8 examples, two per kind of producer.',
     'Task 1 · Mystery producer: each round names a real producer. Read the clue and name its type.',
-    'Guess on clue 1 for ★★★. A wrong guess shows the next clue, but loses gold and makes you wait.'],
+    'Guess on clue 1 for ★★★. A wrong guess shows the next clue, but loses gold and makes you wait.',
+    'Finished? Try the ★ Who really owns it? tab. Tasks 2–4 open in Part 2.'],
   criteria: ['Ask: who owns it?', 'Ask: how is it paid for?', 'All seven rounds solved'],
-  notes: 'Warm-up is optional: its definitions are open on the page. Confident students can go straight to Task 1. Clues go from vague to clear: who owns it, how it is paid for, how big it is. Dotted words on the page show their meaning on hover or tap.' });
+  notes: 'Warm-up is optional: its definitions are open on the page. Confident students can go straight to Task 1. Tasks 2–4 are locked (Part 2): the unlock word is on the Part 2 task slide, so nobody starts them before purpose, motivation and aim are taught. Early finishers do ★ Who really owns it? (MrBeast, Mojang, the BBC), which only needs producer types. Clues go from vague to clear: who owns it, how it is paid for, how big it is. Dotted words on the page show their meaning on hover or tap.' });
 
 // ── Part 2: purpose, motivation, aim (Tasks 2–4) ──
 K.info({ title: 'Purpose, motivation, aim', standfirst: 'Three questions to ask about every product.',
@@ -102,18 +103,18 @@ K.modelAnswer({ title: 'What a good answer sounds like', question: 'Who made Sta
   parts: [['Producer', 'Stardew Valley was made by ConcernedApe, which is an independent producer.'],
     ['Purpose', 'Its purpose is to entertain,'],
     ['Reason', 'because you relax by running your own farm at your own pace.']],
-  notes: 'This is the shape for hub Task 4: name the producer and its type, give the purpose in the spec word, then say why with something from the product. Then go deeper on one product: its motivation and one aim.' });
+  notes: 'This is the shape for hub Task 4: name the producer and its type, give the purpose in the spec word, then say why with something from the product. Task 4 asks for this, then a motivation and an aim, for all three products: each box on the page has its question and word bank, and the help panel has the full Stardew example.' });
 
 K.turnTalk({ lead: 'Think of a game, show or app you used this week.', prompt: 'Who made it? What kind of producer are they, and why did they make it?',
   notes: 'Everyone says one product out loud before writing Task 4. Push for the spec words: "a conglomerate", "to generate profit". If no one knows who made it: search "<name> made by", or check the credits or app store page (the page\'s help panel says the same).' });
 
-K.task({ title: 'Spot it, name it, use it', mins: 25, where: 'Hub › Year 10 › Lesson 1.3 › Who Made It and Why?',
+K.task({ title: 'Spot it, name it, use it', mins: 30, unlock: 'motive', where: 'Hub › Year 10 › Lesson 1.3 › Who Made It and Why?',
   steps: ['Task 2 · Spot the slip: click each wrong sentence in Sam\'s paragraph, check, then pick each fix.',
     'Task 3 · Name the reason: pick the exact word for each real product.',
-    'Task 4 · Your turn: one product per sector, in full sentences.',
-    'Finished? ★ Tricky cases, the last tab: MrBeast, Metro and the BBC.'],
+    'Task 4 · Your turn: one product per sector. For each: its producer, purpose, motivation and aim.',
+    'Finished? ★ Tricky cases, the last tab: Metro and the BBC.'],
   criteria: ['Purpose = what the audience gets', 'Motivation = what the producer gets', "Uses today's exact words"],
-  notes: 'Tasks 2–3 are auto-marked with cooldowns; Task 4 is writing sent to Classroom. A wrong check in Task 2 marks only the sentences students flagged, so they have to find the missed slips themselves. ★ Tricky cases is optional and doesn\'t change the grade.' });
+  notes: 'Unlock word MOTIVE: students type it on any locked tab to open Tasks 2–4 and Tricky cases (it stays open after a refresh). A teacher signed in through Classroom, or anyone typing "outwood", gets every part. Tasks 2–3 are auto-marked with cooldowns; Task 4 is writing sent to Classroom. A wrong check in Task 2 marks only the sentences students flagged, so they have to find the missed slips themselves. ★ Tricky cases is optional and doesn\'t change the grade.' });
 
 K.plenary({ lesson: LESSON, task: 'Pick one product from today. Name its producer, the kind of producer, one purpose and one motivation.',
   starter: '"___ was made by ___, a ___. Its purpose is to ___, and the motivation is to ___."',
