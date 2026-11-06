@@ -70,6 +70,18 @@ test('Skip jumps a long loop straight to the end', async ({ page }) => {
   await expect(i.locator('.exec-line')).toBeHidden();
 });
 
+test('A loop that never ends scrolls inside the output box, showing its newest line, instead of stretching the page', async ({ page }) => {
+  test.setTimeout(90000);
+  await openAt(page, { currentStage: 'I', completedStages: ['P', 'R'] });
+  await setCode(page, 'i_editor', 'while True:\n    print("ACCESS DENIED")');
+  const out = checker(page, 'i_editor').locator('.output-content');
+  await page.click('#stage-I button:has-text("Run code")');
+  await expect(out).toContainText('InfiniteLoopError', { timeout: 60000 });
+  // ~5,000 lines printed: the page stays short, and the box is scrolled to the error at its foot
+  expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBeLessThan(6000);
+  await expect.poll(() => out.evaluate(el => el.scrollHeight - el.scrollTop - el.clientHeight)).toBeLessThan(30);
+});
+
 test('A crash keeps the output printed before it and marks the failing line in red', async ({ page }) => {
   await openAt(page, { currentStage: 'I', completedStages: ['P', 'R'] });
   await setCode(page, 'i_editor', 'print("before")\nprint(oxygen)\nprint("after")');

@@ -1069,6 +1069,14 @@ color:  teal
     font-family: var(--font-mono); padding: 0.05rem 0.35rem; border-radius: 5px; font-size: 0.86em;
   }
   .ann-row.new { background: var(--cobalt-tint); box-shadow: inset 3px 0 0 var(--cobalt-text); border-radius: 4px; margin: 0 -0.6rem; padding: 0 0.6rem; }
+  /* Code given as a checklist inside a Modify task: each NEW line shows ☐, then ✓ in green
+     once it's in the student's code (refreshCodeChecklist). */
+  .task-lead { margin: 0 0 0.2rem; color: var(--muted); font-size: 0.9rem; }
+  .code-checklist { margin: 0.6rem 0 0.1rem; padding: 0.7rem 1.1rem; box-shadow: none; }
+  .code-checklist .ann-row.new .ann-label::before { content: '☐ '; }
+  .code-checklist .ann-row.new.added { background: var(--green-bg); box-shadow: inset 3px 0 0 var(--green); }
+  .code-checklist .ann-row.new.added .ann-label { color: var(--green-text); background: transparent; }
+  .code-checklist .ann-row.new.added .ann-label::before { content: '✓ '; }
   .band-table { width: 100%; max-width: 30rem; border-collapse: collapse; margin: 0 0 1rem; font-size: 0.9rem; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
   .band-table th, .band-table td { text-align: left; padding: 0.45rem 0.9rem; border-bottom: 1px solid var(--line); color: var(--text); }
   .band-table th { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); background: var(--card-raised); }
@@ -1783,35 +1791,39 @@ color:  teal
     <div id="m1_step_2" class="step-hidden">
       <div class="section-label">★★ Modification 2 — Count the tries</div>
       <!-- The code is given in full (scaffold fading: early steps show code). str() is annotated:
-           it moved here from Lesson 1 (MTP, 2026-10-16). -->
-      <div class="info-box"><span class="icon">🔢</span><span>WARDEN logs every try at the keypad. Count them too: a variable that goes up by 1 each time the loop asks again.</span></div>
-      <div class="annotated-code" id="m1_mod2_code">
-        <div class="ann-row new"><span class="line-num">1</span><span>attempts = <span class="num">1</span></span><span class="ann-label">NEW: the first try</span></div>
-        <div class="ann-row"><span class="line-num">2</span><span>code = <span class="fn">input</span>(<span class="st">"Enter airlock code: "</span>)</span><span class="ann-label"></span></div>
-        <div class="ann-row"><span class="line-num">3</span><span><span class="kw">while</span> code != <span class="st" id="m1_mod2_code_val">"9013"</span>:</span><span class="ann-label">your code from Modification 1</span></div>
-        <div class="ann-row"><span class="line-num">4</span><span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">print</span>(<span class="st">"ACCESS DENIED"</span>)</span><span class="ann-label"></span></div>
-        <div class="ann-row"><span class="line-num">5</span><span>&nbsp;&nbsp;&nbsp;&nbsp;code = <span class="fn">input</span>(<span class="st">"Enter airlock code: "</span>)</span><span class="ann-label"></span></div>
-        <div class="ann-row new"><span class="line-num">6</span><span>&nbsp;&nbsp;&nbsp;&nbsp;attempts = attempts + <span class="num">1</span></span><span class="ann-label">NEW: inside the loop, one more try</span></div>
-        <div class="ann-row"><span class="line-num">7</span><span><span class="fn">print</span>(<span class="st">"Airlock open"</span>)</span><span class="ann-label"></span></div>
-        <div class="ann-row new"><span class="line-num">8</span><span><span class="fn">print</span>(<span class="st">"Tries: "</span> + <span class="fn">str</span>(attempts))</span><span class="ann-label">NEW: str() turns the number into text</span></div>
-      </div>
-      <details class="remind" style="margin:0 0 0.8rem">
-        <summary>Remind me: why <code>str()</code>?</summary>
-        <ul>
-          <li><code>+</code> can join text to text, or add a number to a number, but it can't do both at once.</li>
-          <li><code>"Tries: " + attempts</code> mixes text with a number, so Python stops with a <strong>TypeError</strong>: <code>can only concatenate str (not "int") to str</code></li>
-          <li><code>str(attempts)</code> turns the number 3 into the text <code>"3"</code>, so <code>+</code> can join it.</li>
-        </ul>
-      </details>
+           it moved here from Lesson 1 (MTP, 2026-10-16). The code sits INSIDE the task card as its
+           first requirement, and each NEW line ticks live as it's typed (mod2LinesAdded): quick
+           students went straight to the task card and missed the code when it sat above it
+           (feedback, 2026-11-06). -->
       <div class="modify-task">
         <span class="stars">★★</span>
         <div class="task-text">
+          <p class="task-lead">WARDEN logs every try at the keypad. Count them too.</p>
           <ul class="req-list" id="req_m1_2">
-            <li><span>1</span><span class="req-text">Keep your code so far. Add the three <strong>NEW</strong> lines above, so after some wrong codes the program prints how many tries it took (e.g. <strong>Tries: 3</strong>).</span></li>
+            <li><span>1</span><div class="req-text">Keep your code so far and <strong>add the 3 NEW lines</strong>, in the same places as here. Each one ticks as soon as it's in your code (<span id="m1_mod2_code_count">0 of 3 added</span>).
+              <div class="annotated-code code-checklist" id="m1_mod2_code">
+                <div class="ann-row new" data-line="top"><span class="line-num">1</span><span>attempts = <span class="num">1</span></span><span class="ann-label">NEW: the first try</span></div>
+                <div class="ann-row"><span class="line-num">2</span><span>code = <span class="fn">input</span>(<span class="st">"Enter airlock code: "</span>)</span><span class="ann-label"></span></div>
+                <div class="ann-row"><span class="line-num">3</span><span><span class="kw">while</span> code != <span class="st" id="m1_mod2_code_val">"9013"</span>:</span><span class="ann-label">your code from Modification 1</span></div>
+                <div class="ann-row"><span class="line-num">4</span><span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">print</span>(<span class="st">"ACCESS DENIED"</span>)</span><span class="ann-label"></span></div>
+                <div class="ann-row"><span class="line-num">5</span><span>&nbsp;&nbsp;&nbsp;&nbsp;code = <span class="fn">input</span>(<span class="st">"Enter airlock code: "</span>)</span><span class="ann-label"></span></div>
+                <div class="ann-row new" data-line="loop"><span class="line-num">6</span><span>&nbsp;&nbsp;&nbsp;&nbsp;attempts = attempts + <span class="num">1</span></span><span class="ann-label">NEW: inside the loop, one more try</span></div>
+                <div class="ann-row"><span class="line-num">7</span><span><span class="fn">print</span>(<span class="st">"Airlock open"</span>)</span><span class="ann-label"></span></div>
+                <div class="ann-row new" data-line="end"><span class="line-num">8</span><span><span class="fn">print</span>(<span class="st">"Tries: "</span> + <span class="fn">str</span>(attempts))</span><span class="ann-label">NEW: str() turns the number into text</span></div>
+              </div>
+            </div></li>
             <li><span>2</span><span class="req-text">The right code first time must print <strong>Tries: 1</strong></span></li>
             <li><span>3</span><span class="req-text">It must still print <strong>Airlock open</strong> once the loop ends.</span></li>
           </ul>
           <p class="task-tests">Tested by typing 2 to 4 wrong codes before your code (they change each time), then your code first time.</p>
+          <details class="remind" style="margin:0.4rem 0 0">
+            <summary>Remind me: why <code>str()</code>?</summary>
+            <ul>
+              <li><code>+</code> can join text to text, or add a number to a number, but it can't do both at once.</li>
+              <li><code>"Tries: " + attempts</code> mixes text with a number, so Python stops with a <strong>TypeError</strong>: <code>can only concatenate str (not "int") to str</code></li>
+              <li><code>str(attempts)</code> turns the number 3 into the text <code>"3"</code>, so <code>+</code> can join it.</li>
+            </ul>
+          </details>
         </div>
       </div>
     </div>
@@ -1871,7 +1883,7 @@ color:  teal
 
   <!-- Shared editor — carries state across all Modify steps. -->
   <div class="code-checker">
-    <textarea class="checker-textarea" id="m1_editor" data-title="Python Editor" oninput="saveState()"></textarea>
+    <textarea class="checker-textarea" id="m1_editor" data-title="Python Editor" oninput="saveState(); refreshCodeChecklist()"></textarea>
     <div class="checker-footer">
       <button class="btn btn-check" id="btn_check_m1" onclick="checkMod()">⚡ Check modification 1</button>
       <button class="btn btn-reset" id="btn_reset_m1" onclick="resetModifyEditor()">↺ Reset to original</button>
@@ -3221,7 +3233,8 @@ print("Tank full after " + str(count) + " readings")</pre>
   Investigate: evalInv(n, raw, ctx) ticks #req_i_N; the bug step uses breakCode / isBugFixed.
 */
 import { MOD_CHECKS, MOD_TEST_BANK, evalMod, AIRLOCK_CODES, codeIn, fillCode, MAKE_CHECK, MAKE_TEST_BANK, evalMake,
-         SEALS_CHOICES, EXT_CHECK, EXT_TEST_BANK, evalExt, evalInv, isBugFixed, isBugPairLine, breakCode, runKind } from './checkers.js';
+         SEALS_CHOICES, EXT_CHECK, EXT_TEST_BANK, evalExt, evalInv, isBugFixed, isBugPairLine, breakCode, runKind,
+         mod2LinesAdded } from './checkers.js';
 import { runPython, preload } from '../../../pyodide-runner.js';
 import { setupEditors, clearSyntaxHint, setEditorOutput, refreshEditor, runCode, replayRun } from '../../../code-editor.js';
 
@@ -3597,6 +3610,7 @@ function updateStepVisibility() {
       ? 'Put the editor back to the original starting code'
       : 'Put the editor back to how it was when you finished the previous modification';
   }
+  refreshCodeChecklist();   // the editor may hold another step's code now
   closeSkipGate('m1');   // the step just changed (or was refreshed) — never leave a half-open gate behind
   const skipM1Wrap = document.getElementById('m1_skip_wrap');
   if (skipM1Wrap) skipM1Wrap.style.display = (attemptCounts['m1_' + stepM1] || 0) >= 3 ? '' : 'none';
@@ -5113,6 +5127,24 @@ function m1BaselineCode(step) {
   return STARTER_CODE;
 }
 
+// ── Modify: code given as a checklist ─────────────────
+// A step whose code is given shows it inside the task card (.code-checklist), and each NEW
+// line (data-line) ticks as soon as it's in the editor. Keyed by the checklist's id.
+const CHECKLISTS = { m1_mod2_code: mod2LinesAdded };
+function refreshCodeChecklist() {
+  const code = document.getElementById('m1_editor')?.value || '';
+  for (const [id, linesAdded] of Object.entries(CHECKLISTS)) {
+    const box = document.getElementById(id);
+    if (!box) continue;
+    const got = linesAdded(code);
+    const rows = [...box.querySelectorAll('[data-line]')];
+    rows.forEach(r => r.classList.toggle('added', !!got[r.dataset.line]));
+    const n = rows.filter(r => got[r.dataset.line]).length;
+    const count = document.getElementById(id + '_count');
+    if (count) count.textContent = `${n} of ${rows.length} added`;
+  }
+}
+
 function resetModifyEditor() {
   const ta = document.getElementById('m1_editor');
   if (!ta || ta.readOnly) return;
@@ -5123,6 +5155,7 @@ function resetModifyEditor() {
   // Wipe the last check's result for this task — it described the code that was just discarded.
   document.getElementById('fb_m1')?.classList.add('hidden');
   if (!passedChecks['m1_code' + stepM1]) renderReqResults(document.getElementById('req_m1_' + stepM1), null);
+  refreshCodeChecklist();
   saveState();
 }
 
@@ -5157,7 +5190,7 @@ Object.assign(window, {
   checkMake, checkExt, pickMakeChoice,
   runCodeInEditor, resetInvestigateEditor, insertNewLine, breakItDemo,
   skipStep, goBack, goForward,
-  openSkipGate, closeSkipGate, confirmSkip, resetModifyEditor, refreshInvTicks, answerI2,
+  openSkipGate, closeSkipGate, confirmSkip, resetModifyEditor, refreshCodeChecklist, refreshInvTicks, answerI2,
   pickCrisis,
 });
 

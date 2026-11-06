@@ -419,3 +419,19 @@ export const EXT_CHECK = {
 export function evalExt(raw, runs = [], tests = EXT_TESTS) {
   return evalTests(EXT_CHECK, raw, withInputs(runs, tests), undefined);
 }
+
+// ── Modification 2's checklist ───────────────────────────────────────────────
+// Its code is given, and each of its 2 NEW lines ticks on the page as soon as it's in the
+// student's code, at the left edge before the first for loop (live, while they type). Only a
+// guide: the check itself looks at the drawing, so any turtle name, spacing, quotes, or
+// color()/width() tick too.
+//   colour: t.pencolor("red")      size: t.pensize(3)
+export function mod2LinesAdded(code) {
+  const lines = String(code || '').replace(/\r/g, '').split('\n');
+  const at = lines.findIndex(l => /^for\b/.test(l));
+  const before = at >= 0 ? lines.slice(0, at) : [];
+  return {
+    colour: before.some(l => /^\w+\.(pencolor|color)\s*\(\s*(["'])red\2\s*\)\s*$/.test(l)),
+    size: before.some(l => /^\w+\.(pensize|width)\s*\(\s*3\s*\)\s*$/.test(l)),
+  };
+}

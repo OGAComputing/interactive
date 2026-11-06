@@ -2,7 +2,7 @@ import { describe as group, it, expect } from 'vitest';
 import {
   paths, polygonOf, polygonsIn, describe, runKind, breakCode, isBugFixed, hasBugLine, evalInv,
   evalMod, MOD_TEST_BANK, MOD_CHECKS, evalMake, MAKE_TEST_BANK, MAKE_CHECK, FLARE_CHOICES,
-  evalExt, EXT_TEST_BANK, EXT_CHECK, ownOutput,
+  evalExt, EXT_TEST_BANK, EXT_CHECK, ownOutput, mod2LinesAdded,
 } from './checkers.js';
 
 // A tiny turtle that records drawings in the same shape as turtle-canvas.js's turtle module.
@@ -273,5 +273,27 @@ group('Extension: a growing burst', () => {
     for (let i = 0; i < 40; i++) t.fd(i + 5).lt(91);
     expect(evalExt('', [run(t.drawing())], [['red']]).pass).toBe(true);
     expect(EXT_CHECK.reqs).toHaveLength(3);
+  });
+});
+
+group('mod2LinesAdded: Modification 2 checklist ticks', () => {
+  const sig = ['import turtle', 't = turtle.Turtle()', 'for i in range(8):', '    t.forward(100)', '    t.left(45)'];
+  const add = (...extra) => [...sig.slice(0, 2), ...extra, ...sig.slice(2)].join('\n');
+  it('neither NEW line in the Modification 1 code', () => {
+    expect(mod2LinesAdded(sig.join('\n'))).toEqual({ colour: false, size: false });
+  });
+  it('both in the given code, each on its own, and with Windows line endings', () => {
+    expect(mod2LinesAdded(add('t.pencolor("red")', 't.pensize(3)'))).toEqual({ colour: true, size: true });
+    expect(mod2LinesAdded(add('t.pencolor("red")'))).toEqual({ colour: true, size: false });
+    expect(mod2LinesAdded(add('t.pensize(3)'))).toEqual({ colour: false, size: true });
+    expect(mod2LinesAdded(add('t.pencolor("red")', 't.pensize(3)').replace(/\n/g, '\r\n'))).toEqual({ colour: true, size: true });
+  });
+  it("any turtle name, quotes, spacing, color() and width() tick", () => {
+    expect(mod2LinesAdded(add("pen.color('red')", 'pen.width( 3 )'))).toEqual({ colour: true, size: true });
+  });
+  it('inside or after the loop, or another colour, does not tick', () => {
+    expect(mod2LinesAdded([...sig, 't.pencolor("red")', 't.pensize(3)'].join('\n'))).toEqual({ colour: false, size: false });
+    expect(mod2LinesAdded([...sig.slice(0, 3), '    t.pencolor("red")', '    t.pensize(3)', ...sig.slice(3)].join('\n'))).toEqual({ colour: false, size: false });
+    expect(mod2LinesAdded(add('t.pencolor("blue")', 't.pensize(5)'))).toEqual({ colour: false, size: false });
   });
 });

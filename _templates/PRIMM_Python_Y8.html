@@ -197,6 +197,15 @@ color:  purple
   .ann-row { display: grid; grid-template-columns: 1.6rem 1fr auto; align-items: center; gap: 0.5rem 1rem; }
   .ann-label { font-family: var(--font-body); font-size: 0.72rem; color: #ff7eb6; font-style: italic; text-align: right; white-space: nowrap; }
   .line-num  { color: #4a4570; text-align: right; user-select: none; font-size: 0.8rem; }
+  /* Code given as a checklist inside a Modify task (the code box stays dark in both themes):
+     each NEW line shows ☐, then ✓ in green once it's in the student's code (refreshCodeChecklist). */
+  .ann-row.new { background: rgba(47,243,224,0.12); box-shadow: inset 3px 0 0 var(--teal); border-radius: 4px; margin: 0 -0.6rem; padding: 0 0.6rem; }
+  .task-lead { margin: 0 0 0.2rem; color: var(--muted); font-size: 0.9rem; }
+  .code-checklist { margin: 0.6rem 0 0.1rem; padding: 0.7rem 1.1rem; }
+  .code-checklist .ann-row.new .ann-label::before { content: '☐ '; }
+  .code-checklist .ann-row.new.added { background: rgba(43,217,107,0.18); box-shadow: inset 3px 0 0 var(--green); }
+  .code-checklist .ann-row.new.added .ann-label { color: #6ee7a0; }
+  .code-checklist .ann-row.new.added .ann-label::before { content: '✓ '; }
 
   /* ── Q-CARDS (light "data cards" with neon edge) ── */
   .q-card {
@@ -1129,11 +1138,29 @@ color:  purple
 
     <div id="m1_step_2" class="step-hidden">
       <div class="section-label">★★ Modification 2 — FILL IN: short label</div>
+      <!-- CODE GIVEN AS A CHECKLIST (scaffold fading: early Modify steps show the code). When a step
+           gives code, it goes INSIDE the task card as requirement 1, never above the card: quick
+           students go straight to the task card and miss code above it (Y9 L3 feedback, 2026-11-06).
+           Mark each line to add with class "new" and a data-line key; checkers.js exports a pure
+           function returning { key: true/false } for whether that line is in the code, in the
+           right place (e.g. Y9 L3's mod2LinesAdded), and CHECKLISTS in the module maps this box's
+           id to it. Each line ticks live as the student types; #<box id>_count shows "1 of 2 added".
+           The ticks only guide: the check itself stays behaviour-based, so accept any spacing and
+           equivalent forms. A step with no code given uses step 3's plain card instead (and if no
+           step gives code, delete this box and leave CHECKLISTS empty). -->
       <div class="modify-task">
         <span class="stars">★★</span>
         <div class="task-text">
+          <p class="task-lead">FILL IN: one short line on why this change.</p>
           <ul class="req-list" id="req_m1_2">
-            <li><span>1</span><span class="req-text">FILL IN: Keep your code so far, and … [additive instruction referencing what was done in step 1].</span></li>
+            <li><span>1</span><div class="req-text">Keep your code so far and <strong>add the 2 NEW lines</strong>, in the same places as here. Each one ticks as soon as it's in your code (<span id="m1_mod2_code_count">0 of 2 added</span>).
+              <div class="annotated-code code-checklist" id="m1_mod2_code">
+                <div class="ann-row new" data-line="FILL_IN_key1"><span class="line-num">1</span><span>FILL IN: new line</span><span class="ann-label">NEW: FILL IN what it does</span></div>
+                <div class="ann-row"><span class="line-num">2</span><span>FILL IN: their code so far</span><span class="ann-label">your code from Modification 1</span></div>
+                <div class="ann-row new" data-line="FILL_IN_key2"><span class="line-num">3</span><span>FILL IN: new line</span><span class="ann-label">NEW: FILL IN what it does</span></div>
+              </div>
+            </div></li>
+            <li><span>2</span><span class="req-text">FILL IN: what the program must now do (the output the check looks for).</span></li>
           </ul>
         </div>
       </div>
@@ -1181,7 +1208,7 @@ color:  purple
 
   <!-- Shared editor — carries state from Investigate and across all Modify steps. -->
   <div class="code-checker">
-    <textarea class="checker-textarea" id="m1_editor" data-title="Python Editor" oninput="saveState()"></textarea>
+    <textarea class="checker-textarea" id="m1_editor" data-title="Python Editor" oninput="saveState(); refreshCodeChecklist()"></textarea>
     <div class="checker-footer">
       <button class="btn btn-check" id="btn_check_m1" onclick="checkMod()">⚡ Check modification 1</button>
       <button class="btn btn-reset" id="btn_reset_m1" onclick="resetModifyEditor()">↺ Reset to original</button>
@@ -1742,6 +1769,7 @@ function updateStepVisibility() {
       ? 'Put the editor back to the original starting code'
       : 'Put the editor back to how it was when you finished the previous modification';
   }
+  refreshCodeChecklist();   // the editor may hold another step's code now
   closeSkipGate('m1');   // the step just changed (or was refreshed) — never leave a half-open gate behind
   const skipM1Wrap = document.getElementById('m1_skip_wrap');
   if (skipM1Wrap) skipM1Wrap.style.display = (attemptCounts['m1_' + stepM1] || 0) >= 3 ? '' : 'none';
@@ -2874,6 +2902,26 @@ function m1BaselineCode(step) {
   return STARTER_CODE;
 }
 
+// ── Modify: code given as a checklist ─────────────────
+// A step whose code is given shows it inside the task card (.code-checklist), and each NEW
+// line (data-line) ticks as soon as it's in the editor. Keyed by the checklist's id.
+// FILL IN: import the step's lines-added function from checkers.js and list it, e.g.
+// const CHECKLISTS = { m1_mod2_code: mod2LinesAdded };   (Y9 L2 Proximity, L3 Locked In, L4 Distress Signal)
+const CHECKLISTS = {};
+function refreshCodeChecklist() {
+  const code = document.getElementById('m1_editor')?.value || '';
+  for (const [id, linesAdded] of Object.entries(CHECKLISTS)) {
+    const box = document.getElementById(id);
+    if (!box) continue;
+    const got = linesAdded(code);
+    const rows = [...box.querySelectorAll('[data-line]')];
+    rows.forEach(r => r.classList.toggle('added', !!got[r.dataset.line]));
+    const n = rows.filter(r => got[r.dataset.line]).length;
+    const count = document.getElementById(id + '_count');
+    if (count) count.textContent = `${n} of ${rows.length} added`;
+  }
+}
+
 function resetModifyEditor() {
   const ta = document.getElementById('m1_editor');
   if (!ta || ta.readOnly) return;
@@ -2884,6 +2932,7 @@ function resetModifyEditor() {
   // Wipe the last check's result for this task — it described the code that was just discarded.
   document.getElementById('fb_m1')?.classList.add('hidden');
   if (!passedChecks['m1_code' + stepM1]) renderReqResults(document.getElementById('req_m1_' + stepM1), null);
+  refreshCodeChecklist();
   saveState();
 }
 
@@ -2918,7 +2967,7 @@ Object.assign(window, {
   checkMake, checkExt,
   runCodeInEditor, resetInvestigateEditor, insertNewLine, breakItDemo,
   skipStep, goBack, goForward,
-  openSkipGate, closeSkipGate, confirmSkip, resetModifyEditor, refreshInvTicks,
+  openSkipGate, closeSkipGate, confirmSkip, resetModifyEditor, refreshCodeChecklist, refreshInvTicks,
 });
 
 // ── Init ──────────────────────────────────────────────

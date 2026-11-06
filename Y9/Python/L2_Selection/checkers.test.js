@@ -1,7 +1,7 @@
 import { describe, test, expect } from 'vitest';
 import { evalInv, evalMod, evalMake, evalExt, breakCode, hasBugLine, hasFixedLine, isBugFixed, isBugPairLine,
          ownOutput, typedNumber, IBUG_LINE, IBUG_FIXED_LINE, MOD_TESTS, MAKE_TESTS, EXT_TESTS,
-         MOD_TEST_BANK, MAKE_TEST_BANK, EXT_TEST_BANK, LOCKDOWN_CHOICES, POWER_CHOICES } from './checkers.js';
+         MOD_TEST_BANK, MAKE_TEST_BANK, EXT_TEST_BANK, LOCKDOWN_CHOICES, POWER_CHOICES, mod2LinesAdded } from './checkers.js';
 
 const code = (...lines) => lines.join('\n');
 const ran = (src, ok = true) => ({ code: src, ok });
@@ -427,5 +427,28 @@ describe('test banks — every set works, and the boundaries are in every set', 
       const noFault = d => (Number(d) < 0 ? ['SAFE'] : ext()(d));
       expect(evalExt('', outputsFor(tests, noFault, DOSE_PROMPT), tests).msg).toContain(`with ${neg} typed`);
     }
+  });
+});
+
+describe('mod2LinesAdded: Modification 2 checklist ticks', () => {
+  const before = ['distance = int(input("Distance to target in metres: "))', 'if distance >= 50:', '    print("All clear")'];
+  const after = ['else:', '    print("IT\'S RIGHT BEHIND YOU")', '    print("Seal the Cryo Bay")', 'print("Scan complete")'];
+  const withNew = (...mid) => code(...before, ...mid, ...after);
+  test('neither NEW line in the if/else', () => {
+    expect(mod2LinesAdded(withNew())).toEqual({ elif: false, print: false });
+  });
+  test('both in the given code, the elif on its own, and with Windows line endings', () => {
+    expect(mod2LinesAdded(withNew('elif distance >= 20:', '    print("Movement detected")'))).toEqual({ elif: true, print: true });
+    expect(mod2LinesAdded(withNew('elif distance >= 20:', '    print("All clear")'))).toEqual({ elif: true, print: false });
+    expect(mod2LinesAdded(withNew('elif distance >= 20:', '    print("Movement detected")').replace(/\n/g, '\r\n'))).toEqual({ elif: true, print: true });
+  });
+  test('> 19, 20 <= distance, spacing and quotes tick too', () => {
+    expect(mod2LinesAdded(withNew('elif distance>19 :', "    print('Movement detected')"))).toEqual({ elif: true, print: true });
+    expect(mod2LinesAdded(withNew('elif 20 <= distance:', '  print( "Movement detected" )'))).toEqual({ elif: true, print: true });
+  });
+  test('in the wrong place does not tick', () => {
+    // after the else, and the print not indented under the elif
+    expect(mod2LinesAdded(code(...before, ...after, 'elif distance >= 20:', '    print("Movement detected")'))).toEqual({ elif: false, print: false });
+    expect(mod2LinesAdded(withNew('elif distance >= 20:', 'print("Movement detected")'))).toEqual({ elif: true, print: false });
   });
 });

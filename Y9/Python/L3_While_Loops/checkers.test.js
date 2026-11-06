@@ -2,7 +2,7 @@ import { describe, test, expect } from 'vitest';
 import { evalInv, evalMod, evalMake, evalExt, breakCode, hasBugLine, hasFixedLine, isBugFixed, isBugPairLine,
          ownOutput, askedCount, deniedCount, runKind, typedCodes, codeIn, fillCode,
          MOD_TESTS, MAKE_TESTS, EXT_TESTS, MOD_TEST_BANK, MAKE_TEST_BANK, EXT_TEST_BANK,
-         AIRLOCK_CODES, SEALS_CHOICES } from './checkers.js';
+         AIRLOCK_CODES, SEALS_CHOICES, mod2LinesAdded } from './checkers.js';
 
 const code = (...lines) => lines.join('\n');
 const ran = (src, ok = true) => ({ code: src, ok });
@@ -357,5 +357,31 @@ describe('evalExt — Too high / Too low', () => {
   });
   test('every set in the bank works', () => {
     for (const set of EXT_TEST_BANK) expect(ext(lock({ hints: true }), set).pass).toBe(true);
+  });
+});
+
+describe('mod2LinesAdded: Modification 2 checklist ticks', () => {
+  const given = ['attempts = 1', 'code = input("Enter airlock code: ")', 'while code != "9013":',
+    '    print("ACCESS DENIED")', '    code = input("Enter airlock code: ")', '    attempts = attempts + 1',
+    'print("Airlock open")', 'print("Tries: " + str(attempts))'];
+  test('none of the NEW lines in the Modification 1 code', () => {
+    expect(mod2LinesAdded(code(...given.filter(l => !/attempts/.test(l))))).toEqual({ top: false, loop: false, end: false });
+  });
+  test('all three in the given code (and with Windows line endings)', () => {
+    expect(mod2LinesAdded(code(...given))).toEqual({ top: true, loop: true, end: true });
+    expect(mod2LinesAdded(given.join('\r\n'))).toEqual({ top: true, loop: true, end: true });
+  });
+  test('each one ticks on its own', () => {
+    expect(mod2LinesAdded(code(...given.filter(l => !/attempts \+|Tries/.test(l))))).toEqual({ top: true, loop: false, end: false });
+    expect(mod2LinesAdded(code(...given.filter(l => !/^attempts = 1|Tries/.test(l))))).toEqual({ top: false, loop: true, end: false });
+  });
+  test('any spacing, += 1, and the increment above the input still tick', () => {
+    const alt = ['attempts=1', given[1], given[2], '    attempts += 1', given[3], given[4], given[6], 'print("Tries:"+str( attempts ))'];
+    expect(mod2LinesAdded(code(...alt))).toEqual({ top: true, loop: true, end: true });
+  });
+  test('a line in the wrong place does not tick', () => {
+    // the counter set inside the loop, the increment after it, the print indented inside it
+    const wrong = [given[1], given[2], '    attempts = 1', given[3], given[4], '    print("Tries: " + str(attempts))', given[6], 'attempts = attempts + 1'];
+    expect(mod2LinesAdded(code(...wrong))).toEqual({ top: false, loop: false, end: false });
   });
 });

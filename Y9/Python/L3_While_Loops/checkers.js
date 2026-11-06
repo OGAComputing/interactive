@@ -581,3 +581,26 @@ export const EXT_CHECK = {
 export function evalExt(raw, outputs = [], tests = EXT_TESTS) {
   return evalTests(EXT_CHECK, tests, raw, outputs);
 }
+
+// ── Modification 2's checklist ───────────────────────────────────────────────
+// Its code is given, and each of its 3 NEW lines ticks on the page as soon as it's in the
+// student's code, in the right part of the program (live, while they type). Only a guide:
+// the check itself is behaviour-based, so any spacing or `attempts += 1` ticks too.
+//   top:  attempts = 1, at the left edge before the while
+//   loop: attempts goes up by 1, indented inside the while
+//   end:  a print of str(attempts), at the left edge after the loop
+export function mod2LinesAdded(code) {
+  const lines = String(code || '').replace(/\r/g, '').split('\n');
+  const at = lines.findIndex(l => /^while\b/.test(l));
+  const indented = l => /^\s+\S/.test(l);
+  let bodyEnd = at;
+  if (at >= 0) while (bodyEnd + 1 < lines.length && (indented(lines[bodyEnd + 1]) || !lines[bodyEnd + 1].trim())) bodyEnd++;
+  const before = at >= 0 ? lines.slice(0, at) : [];
+  const body = at >= 0 ? lines.slice(at + 1, bodyEnd + 1) : [];
+  const after = at >= 0 ? lines.slice(bodyEnd + 1) : [];
+  return {
+    top: before.some(l => /^attempts\s*=\s*1\s*$/.test(l)),
+    loop: body.some(l => /^\s+attempts\s*(\+=\s*1|=\s*attempts\s*\+\s*1|=\s*1\s*\+\s*attempts)\s*$/.test(l)),
+    end: after.some(l => /^print\s*\(.*str\s*\(\s*attempts\s*\)/.test(l)),
+  };
+}

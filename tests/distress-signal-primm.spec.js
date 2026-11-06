@@ -278,7 +278,11 @@ test('Modify 1: the square fails and says so; the MAYDAY hexagon passes and play
 test('Modify 2: red and thick passes; a misspelt colour is a TurtleGraphicsError', async ({ page }) => {
   await openAt(page, { currentStage: 'M1', completedStages: ['P', 'R', 'I'], stepM1: 2, maxStepM1: 2, radio_m1_choice: 'quarantine',
     passedChecks: { m1_code1: true }, m1CodeSnapshots: { 1: poly(8, 45).join('\n') } });
+  // The given code is the task's first requirement: each NEW line ticks as it's typed.
+  await expect(page.locator('#m1_mod2_code_count')).toHaveText('0 of 2 added');
   await setCode(page, 'm1_editor', poly(8, 45, ['t.pencolor("rde")', 't.pensize(3)']).join('\n'));
+  await expect(page.locator('#req_m1_2 #m1_mod2_code [data-line]')).toHaveClass([/^(?!.*added)/, /added/]);
+  await expect(page.locator('#m1_mod2_code_count')).toHaveText('1 of 2 added');
   await page.click('#btn_check_m1');
   await expect(page.locator('#fb_m1')).toContainText('bad color string', { timeout: 30000 });
 

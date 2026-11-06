@@ -202,9 +202,16 @@ function _injectStyles() {
       user-select: none;
       letter-spacing: 0.05em;
     }
+    /* A long run (a loop that never ends prints up to 5,000 lines) scrolls inside
+       the box instead of making the page ~100,000 px tall: the error, Get help and
+       Run stay just under the code. _followOutput keeps it on the newest line. */
     :where(.output-content) {
       white-space: pre-wrap;
       word-break: break-all;
+      max-height: max(16rem, 55vh);
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      scrollbar-width: thin;
     }
     :where(.output-input-row) {
       display: flex;
@@ -932,6 +939,23 @@ export function setEditorOutput(ta, text, isError = false, lineNo = null, vars) 
   }
 }
 
+// Keep a capped output box on its newest line while a program prints, like a
+// terminal, unless the student has scrolled up in it to read; a new run (the
+// text gets shorter) follows the newest line again.
+function _followOutput(content) {
+  if (!content) return;
+  let follow = true, lastLen = 0;
+  content.addEventListener('scroll', () => {
+    follow = content.scrollHeight - content.scrollTop - content.clientHeight < 24;
+  }, { passive: true });
+  new MutationObserver(() => {
+    const len = content.textContent.length;
+    if (len < lastLen) follow = true;
+    lastLen = len;
+    if (follow) content.scrollTop = content.scrollHeight;
+  }).observe(content, { childList: true, characterData: true, subtree: true });
+}
+
 // ── Interactive input collection ──────────────────────────────────────────────
 
 function _extractPythonPrompts(src) {
@@ -1492,6 +1516,7 @@ export function setupEditors(selector = '.checker-textarea', opts = {}) {
       '</div>';
     wrap.appendChild(output);
     _outputMap.set(ta, output);
+    _followOutput(output.querySelector('.output-content'));
 
     if (_stepEnabled(ta)) {
       const status = document.createElement('div');

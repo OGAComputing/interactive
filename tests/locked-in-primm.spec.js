@@ -318,7 +318,14 @@ test('Modify 1: the old code fails with a plain hint; the chosen code passes and
 test('Modify 2: without str() it is a TypeError; the given code passes', async ({ page }) => {
   await openAt(page, { currentStage: 'M1', completedStages: ['P', 'R', 'I'], stepM1: 2, maxStepM1: 2, radio_m1_choice: 'warden',
     passedChecks: { m1_code1: true }, m1CodeSnapshots: { 1: withCode('9013') } });
+  // The given code is the task's first requirement: each NEW line ticks as it's typed.
+  const newRows = page.locator('#req_m1_2 #m1_mod2_code [data-line]');
+  await setCode(page, 'm1_editor', withCode('9013'));
+  await expect(page.locator('#m1_mod2_code_count')).toHaveText('0 of 3 added');
+  await setCode(page, 'm1_editor', ['attempts = 1', withCode('9013')].join('\n'));
+  await expect(newRows).toHaveClass([/added/, /^(?!.*added)/, /^(?!.*added)/]);
   await setCode(page, 'm1_editor', counted('9013').map(l => l.replace('str(attempts)', 'attempts')).join('\n'));
+  await expect(page.locator('#m1_mod2_code_count')).toHaveText('2 of 3 added');
   await page.click('#btn_check_m1');
   await expect(page.locator('#fb_m1')).toContainText('TypeError', { timeout: 30000 });
 

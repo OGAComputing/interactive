@@ -331,13 +331,16 @@ test('Modify 1: the lockdown must be inside the else; the choice is stored for t
 test('Modify 2: elif is introduced here, and the middle band stops the lockdown at 20 to 49', async ({ page }) => {
   await openAt(page, { currentStage: 'M1', completedStages: ['P', 'R', 'I'], stepM1: 2, maxStepM1: 2, radio_m1_choice: 'cryo',
     passedChecks: { m1_code1: true } });
-  await expect(page.locator('#m1_step_2 .annotated-code')).toContainText('elif distance >= 20:');
+  // The given code is the task's first requirement: each NEW line ticks as it's typed.
+  await expect(page.locator('#req_m1_2 #m1_mod2_code')).toContainText('elif distance >= 20:');
   await setCode(page, 'm1_editor', lockdownProgram('CRYO BAY').join('\n'));
+  await expect(page.locator('#m1_mod2_code_count')).toHaveText('0 of 2 added');
   await page.click('#btn_check_m1');
   await expect(page.locator('#fb_m1')).toContainText('between the All clear block and else', { timeout: 30000 });
   await expect(page.locator('#req_m1_2 li')).toHaveClass([/req-fail/, /req-pass/, /req-pass/]);
 
   await setCode(page, 'm1_editor', middleBandProgram('CRYO BAY').join('\n'));
+  await expect(page.locator('#m1_mod2_code_count')).toHaveText('2 of 2 added');
   await page.click('#btn_check_m1');
   await expect(page.locator('#fb_m1')).toHaveClass(/pass/, { timeout: 30000 });
   await expect(page.locator('#m1_step_3')).toBeVisible({ timeout: 10000 });

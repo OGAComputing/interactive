@@ -487,3 +487,24 @@ export const EXT_CHECK = {
 export function evalExt(raw, outputs = [], tests = EXT_TESTS) {
   return evalTests(EXT_CHECK, tests, raw, outputs);
 }
+
+// ── Modification 2's checklist ───────────────────────────────────────────────
+// Its code is given, and each of its 2 NEW lines ticks on the page as soon as it's in the
+// student's code, in the right place (live, while they type). Only a guide: the check itself
+// is behaviour-based, so any spacing, > 19 or 20 <= distance tick too.
+//   elif:  an elif about 20 (or 19), at the left edge, after an if and before the else
+//   print: print("Movement detected"), indented in that elif's block
+export function mod2LinesAdded(code) {
+  const lines = String(code || '').replace(/\r/g, '').split('\n');
+  const ifAt = lines.findIndex(l => /^if\b/.test(l));
+  const elseAt = lines.findIndex((l, i) => i > ifAt && /^else\s*:/.test(l));
+  const elifAt = lines.findIndex((l, i) => ifAt >= 0 && i > ifAt && (elseAt < 0 || i < elseAt)
+    && /^elif\b.*\b(20|19)\b.*:\s*$/.test(l));
+  let print = false;
+  if (elifAt >= 0) {
+    for (let i = elifAt + 1; i < lines.length && (/^\s+\S/.test(lines[i]) || !lines[i].trim()); i++) {
+      if (/^\s+print\s*\(\s*(["'])movement detected\1\s*\)\s*$/i.test(lines[i])) print = true;
+    }
+  }
+  return { elif: elifAt >= 0, print };
+}
