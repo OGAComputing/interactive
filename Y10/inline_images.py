@@ -27,7 +27,11 @@ BLOCK = re.compile(r'<!-- IMG-DATA:.*?<!-- /IMG-DATA -->', re.S)
 
 
 def encode(path, width):
-    im = Image.open(path).convert('RGB')
+    im = Image.open(path)
+    if im.mode in ('RGBA', 'LA', 'P'):  # transparent logos: flatten onto white, not black
+        im = im.convert('RGBA')
+        im = Image.alpha_composite(Image.new('RGBA', im.size, 'white'), im)
+    im = im.convert('RGB')
     if width.startswith('fit'):
         scale = min(1, int(width[3:]) / max(im.size))
     else:

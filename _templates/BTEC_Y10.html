@@ -117,11 +117,58 @@ color:  red
     font-size: 1.4rem; line-height: 1; cursor: pointer; }
   .zoom-dlg .close:hover, .zoom-dlg .close:focus-visible { background: var(--accent); }
   @media (prefers-reduced-motion: reduce) { .peek, .chip .zoom { transition: none; } }
+
+  /* ── Glossary: dotted words show their meaning on hover, focus or tap ── */
+  .gl { border-bottom: 2px dotted currentColor; cursor: help; }
+  .spot .sent .gl { border-bottom-color: var(--accent); }   /* the sentences are already dotted */
+  .gl:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .gl-tip { position: fixed; z-index: 60; pointer-events: none; max-width: min(300px, 90vw); background: var(--surface); color: var(--text-inv);
+    border-left: 5px solid var(--accent); padding: 8px 12px; font: 400 .92rem/1.4 var(--font-body); box-shadow: 4px 4px 0 rgba(22,22,26,.25);
+    opacity: 0; transition: opacity .12s ease-out; }
+  .gl-tip b { display: block; color: var(--accent-light); font-weight: 700; }
+  .gl-tip.show { opacity: 1; }
+  @media (prefers-reduced-motion: reduce) { .gl-tip { transition: none; } }
   .chip.picked { outline: 3px solid var(--accent); outline-offset: 1px; }
   .chip.dragging { opacity: .45; }
   .chip:focus-visible, .bin:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
   .chip .reveal { font-weight: 800; color: var(--accent); }
   .sort .credit { margin-top: 10px; }
+
+  /* ── Reveal: one round at a time, clue by clue (kind 'reveal') ── */
+  .reveal-game .round { background: #fff; border: 1.5px solid var(--text); padding: 14px 16px; margin: 0 0 16px; }
+  .reveal-game .round-head { display: flex; justify-content: space-between; gap: 10px; font-size: .78rem; font-weight: 800; letter-spacing: .12em;
+    text-transform: uppercase; color: var(--accent); margin-bottom: 8px; }
+  .reveal-game .subject { display: flex; align-items: center; gap: 14px; margin: 0 0 12px; font-family: var(--font-head); font-size: 1.3rem; }
+  .reveal-game .subject img { width: 140px; max-height: 110px; object-fit: contain; background: var(--bg); }
+  .reveal-game .clues { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 6px; }
+  .reveal-game .clues li { background: var(--surface); color: var(--text-inv); padding: 8px 12px; }
+  .reveal-game .clues li:last-child { animation: clue-in .35s ease; }   /* only the newest clue slides in */
+  .reveal-game .clues li b { color: var(--accent-light); margin-right: 10px; }
+  @keyframes clue-in { from { opacity: 0; transform: translateY(-4px); } }
+  .reveal-game .guesses { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 8px; }
+  .reveal-game .guess { padding: 10px; font: inherit; font-weight: 700; border: 1.5px solid var(--text); background: var(--bg); color: var(--text); cursor: pointer; }
+  .reveal-game .guess:hover:not(:disabled), .reveal-game .guess:focus-visible { background: var(--text); color: var(--text-inv); }
+  .reveal-game .guess:disabled { cursor: not-allowed; opacity: .6; }
+  .reveal-game .more { margin-top: 10px; padding: 8px 14px; font: inherit; font-weight: 700; border: 1.5px solid var(--text); border-radius: 0;
+    background: #fff; color: var(--text); cursor: pointer; }
+  .reveal-game .more:hover, .reveal-game .more:focus-visible { background: var(--text); color: var(--text-inv); }
+  .reveal-game .cool-msg { font-weight: 700; color: var(--red); margin-top: 8px; min-height: 1.2em; }
+  .reveal-game .files { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; margin-top: 6px; }
+  .reveal-game .file { background: #fff; border: 1.5px solid var(--text); padding: 8px; font-size: .85rem; display: grid; gap: 3px; align-content: start; }
+  .reveal-game .file img { width: 100%; height: 140px; object-fit: contain; background: #E8E2D6; display: block; }
+  .reveal-game .file .ans { font-weight: 800; color: var(--green-dark); }
+  .reveal-game .file .stars { color: var(--gold); letter-spacing: .12em; }
+  .reveal-game .file small { color: var(--muted); }
+  @media (prefers-reduced-motion: reduce) { .reveal-game .clues li { animation: none; } }
+
+  /* ── Spot the slip: click the wrong sentences, then fix them (kind 'spot') ── */
+  .spot-text { background: #fff; border: 1.5px solid var(--text); padding: 16px 18px; font-family: var(--font-quote); font-size: 1.1rem; line-height: 1.9; margin: 0 0 14px; }
+  .spot-text .by { display: block; font-family: var(--font-body); font-size: .78rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+  .spot .sent { cursor: pointer; padding: 2px 1px; border-bottom: 2px dotted #A9A293; }
+  .spot .sent:hover, .spot .sent:focus-visible { background: #FFF1C7; outline: none; }
+  .spot .sent.flagged { background: #FDE3DE; text-decoration: line-through 2px var(--red); border-bottom-color: var(--red); }
+  .spot.fixing .sent { cursor: default; }
+  .spot .count { font-weight: 700; margin: 0 0 8px; }
   /* A "deal" sort (class="sort deal"): one big card at a time beside the boxes, so the whole sort fits
      on one screen. Sorted cards shrink to picture tiles; hovering a tile shows it bigger with its name. */
   .sort.deal { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 14px; align-items: start; }
@@ -274,8 +321,8 @@ color:  red
 
 <script type="module">
 import {
-  TASKS, TASK_COUNT, CHOICES, SORTS, WRITING, markChoices, markSort, markWriting, allCorrect,
-  cooldownSeconds, calcScore, coreDone, coreGold, seededRandom, shuffled,
+  TASKS, TASK_COUNT, CHOICES, SORTS, WRITING, REVEALS, SPOTS, GLOSSARY, glossaryDef, markChoices, markSort, markWriting, markReveal,
+  markSpot, markSpotFlags, starsFor, allCorrect, cooldownSeconds, calcScore, coreDone, coreGold, seededRandom, shuffled,
 } from './checkers.js';
 
 // ── Activity identity ──────────────────────────────────
@@ -311,6 +358,59 @@ const thumbTag = it => it.img && window.IMG?.[it.img] ? `<span class="thumb">${i
 function fillImages() {
   document.querySelectorAll('img[data-img]').forEach(im => { if (window.IMG?.[im.dataset.img]) im.src = window.IMG[im.dataset.img]; });
 }
+
+// ── Glossary: words from GLOSSARY get a dotted underline and show their meaning on hover, focus or tap ──
+// Task content only: the definition boxes (.terms) and help panels already explain the words.
+const GL_RE = GLOSSARY.length ? new RegExp(`\\b(?:${GLOSSARY.map(g => g[0]).join('|')})\\b`, 'gi') : null;
+const GL_SKIP = '.terms, .help, .gl, textarea, select, button, summary, figcaption, .credit, .level, .task-head';
+function glossify(root) {
+  if (!GL_RE) return;
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT,
+    { acceptNode: n => (n.parentElement.closest(GL_SKIP) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT) });
+  const nodes = [];
+  while (walker.nextNode()) nodes.push(walker.currentNode);
+  for (const n of nodes) {
+    const hits = [...n.data.matchAll(GL_RE)];
+    if (!hits.length) continue;
+    // Inside a radio label or a clickable sentence the word is hover-only, so Tab still goes option to option.
+    const focusable = !n.parentElement.closest('label, .sent, [role="button"]');
+    const frag = document.createDocumentFragment();
+    let last = 0;
+    for (const m of hits) {
+      frag.append(n.data.slice(last, m.index));
+      const s = Object.assign(document.createElement('span'), { className: 'gl', textContent: m[0] });
+      s.dataset.def = glossaryDef(m[0]);
+      if (focusable) s.tabIndex = 0;
+      frag.append(s);
+      last = m.index + m[0].length;
+    }
+    frag.append(n.data.slice(last));
+    n.replaceWith(frag);
+  }
+}
+const glTip = Object.assign(document.createElement('div'), { className: 'gl-tip', id: 'gl-tip', role: 'tooltip' });
+let glAnchor = null;
+function showTip(el) {
+  glTip.innerHTML = `<b>${esc(el.textContent)}</b>${esc(el.dataset.def)}`;
+  if (!glTip.isConnected) document.body.appendChild(glTip);
+  el.setAttribute('aria-describedby', 'gl-tip');
+  glAnchor = el;
+  placeTip();
+  glTip.classList.add('show');
+}
+function placeTip() {
+  const r = glAnchor.getBoundingClientRect(), t = glTip.getBoundingClientRect(), gap = 8;
+  if (r.bottom < 0 || r.top > innerHeight) return hideTip();
+  const below = r.bottom + gap + t.height < innerHeight;
+  glTip.style.top = (below ? r.bottom + gap : Math.max(4, r.top - gap - t.height)) + 'px';
+  glTip.style.left = Math.max(4, Math.min(r.left, innerWidth - t.width - 4)) + 'px';
+}
+function hideTip() { glTip.classList.remove('show'); glAnchor = null; }
+for (const ev of ['mouseover', 'focusin']) document.addEventListener(ev, e => { const g = e.target.closest?.('.gl'); if (g) showTip(g); });
+for (const ev of ['mouseout', 'focusout']) document.addEventListener(ev, e => { if (e.target.closest?.('.gl')) hideTip(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') hideTip(); });
+// Scrolling keeps the tip beside its word, and hides it once the word is off screen.
+addEventListener('scroll', () => { if (glAnchor) placeTip(); }, { passive: true, capture: true });
 
 // ── Rendering ──────────────────────────────────────────
 function renderChoices(box) {
@@ -391,6 +491,114 @@ function renderWriting(box) {
         : `<textarea id="${w.id}" data-q="${w.id}">${esc(state.answers[w.id] || '')}</textarea>`}
     </div>`).join('');
 }
+
+// ── Reveal: one round at a time, clue by clue ───────────
+// Guessing early earns more stars; a wrong guess shows the next clue, costs gold and starts the cooldown.
+function renderReveal(box) {
+  const key = box.dataset.reveal, game = REVEALS[key];
+  const rounds = shuffled(game.rounds, rng(key));
+  const solved = rounds.filter(r => state.answers[r.id] === r.a);
+  const cur = rounds.find(r => state.answers[r.id] !== r.a);
+  const optText = k => game.opts.find(o => o[0] === k)[1];
+  const shownOf = r => Math.min(r.clues.length, state.answers[r.id + '_clues'] || 1);
+  const stars = n => `<span class="stars" aria-label="${n} star${n === 1 ? '' : 's'}">${'★'.repeat(n)}</span>`;
+  let html = '';
+  if (cur) {
+    const shown = shownOf(cur), tried = state.answers[cur.id + '_tried'] || [];
+    html += `<div class="round" data-qw="${cur.id}">
+      <div class="round-head"><span>Round ${solved.length + 1} of ${rounds.length}</span><span>Guess now for ${'★'.repeat(starsFor(shown))}</span></div>
+      ${game.showFirst ? `<div class="subject">${imgTag(cur.img, cur.label)}<b>${esc(cur.label)}</b></div>` : ''}
+      <ol class="clues">${cur.clues.slice(0, shown).map((c, n) => `<li><b>Clue ${n + 1}</b>${esc(c)}</li>`).join('')}</ol>
+      <p class="q-text">${esc(game.prompt.replace('{who}', cur.who || 'it'))}</p>
+      <div class="guesses">${shuffled(game.opts, rng(cur.id)).map(([k, t]) => `
+        <button type="button" class="guess${tried.includes(k) ? ' is-wrong' : ''}" data-guess="${k}"${tried.includes(k) ? ' disabled' : ''}>${esc(t)}</button>`).join('')}</div>
+      ${shown < cur.clues.length ? '<button type="button" class="more">Show the next clue ›</button>' : ''}
+      <p class="cool-msg" aria-live="polite"></p>
+    </div>`;
+  }
+  // Solved rounds stay on the page as case files; the hidden select puts each answer in the Classroom evidence.
+  if (solved.length) html += `<p class="kicker">Solved: ${solved.length} of ${rounds.length}</p><div class="files">${solved.map(r => `
+    <div class="file" data-qw="${r.id}">${imgTag(r.img, r.label)}<b>${esc(r.label)}</b>
+      <span class="ans">${esc(optText(r.a))}</span>${stars(starsFor(shownOf(r)))}${r.note ? `<small>${esc(r.note)}</small>` : ''}
+      <select class="sr-only" data-q="${r.id}" aria-label="${esc(r.label)}" tabindex="-1"><option>${esc(optText(r.a))}</option></select></div>`).join('')}</div>`;
+  const credits = game.rounds.filter(r => r.credit).map(r => `${r.label}: ${r.credit}`);
+  if (credits.length) html += `<p class="credit">Images shown for teaching. ${esc(credits.join(' · '))}.</p>`;
+  box.innerHTML = html;
+  glossify(box);
+  const i = taskOf(box);
+  if (coolLeft(i)) startCooldown(i);
+}
+document.addEventListener('click', e => {
+  const btn = e.target.closest('.reveal-game .guess, .reveal-game .more');
+  if (!btn) return;
+  const box = btn.closest('.reveal-game'), i = taskOf(box), key = box.dataset.reveal;
+  const r = REVEALS[key].rounds.find(x => x.id === btn.closest('.round').dataset.qw);
+  const nextClue = () => { state.answers[r.id + '_clues'] = Math.min(r.clues.length, (state.answers[r.id + '_clues'] || 1) + 1); };
+  const fb = document.getElementById('feedback-' + i);
+  if (btn.classList.contains('more')) {
+    nextClue(); save(); renderReveal(box);
+    return box.querySelector('.guess:not(:disabled)')?.focus();
+  }
+  if (state.completed[i] || coolLeft(i)) return;
+  if (window.Classroom?.verifyAuth() === false) return;
+  if (btn.dataset.guess === r.a) {
+    state.answers[r.id] = r.a;
+    save(); renderReveal(box);
+    if (allCorrect(markReveal(key, state.answers))) {
+      fb.textContent = state.firstAttempt[i] ? '🥇 Every round solved, no wrong guesses!' : '✅ Every round solved!';
+      fb.className = 'feedback correct';
+      markDone(i);
+    } else {
+      fb.textContent = `✅ Solved: ${r.label}. Next round!`;
+      fb.className = 'feedback correct';
+      box.querySelector('.guess')?.focus();
+    }
+    return;
+  }
+  state.answers[r.id + '_tried'] = [...(state.answers[r.id + '_tried'] || []), btn.dataset.guess];
+  nextClue();
+  const secs = penalise(i);
+  renderReveal(box);
+  fb.className = 'feedback';
+  void fb.offsetWidth;
+  fb.className = 'feedback wrong';
+  fb.textContent = `❌ Not that one. Here's another clue: you can guess again in ${secs} seconds.`;
+});
+
+// ── Spot the slip: flag the wrong sentences, then (once all are found) pick each fix ──
+const spotStage = key => state.answers[key + '_stage'];
+function renderSpot(box) {
+  const key = box.dataset.spot, sp = SPOTS[key], fixing = spotStage(key) === 'fix';
+  const slips = sp.parts.filter(p => p.fix);
+  box.classList.toggle('fixing', fixing);
+  box.innerHTML = `
+    <p class="count">${fixing ? `🔍 You found all ${slips.length} slips. Now choose the right fix for each one.`
+      : `🔍 There ${slips.length === 1 ? 'is 1 slip' : `are ${slips.length} slips`}. Click each sentence that's wrong (click again to un-flag it).`}</p>
+    <div class="spot-text">${sp.by ? `<span class="by">${esc(sp.by)}</span>` : ''}${sp.parts.map(p => `<span class="sent${state.answers[p.id] ? ' flagged' : ''}"
+      data-qw="${p.id}" tabindex="0" role="button" aria-pressed="${!!state.answers[p.id]}">${esc(p.text)}</span>`).join(' ')}</div>
+    ${fixing ? `<div class="fixes">${slips.map(p => `
+      <div class="q" data-qw="${p.id}_fix">
+        <p class="q-text">"${esc(p.text)}" Which correction is right?</p>
+        <div class="opts">${shuffled(p.fix.opts, rng(p.id)).map(([k, t]) => `
+          <label class="opt"><input type="radio" name="${p.id}_fix" value="${k}"${state.answers[p.id + '_fix'] === k ? ' checked' : ''}><span>${esc(t)}</span></label>`).join('')}
+        </div>
+      </div>`).join('')}</div>` : ''}`;
+}
+function toggleSentence(sent) {
+  const box = sent.closest('.spot');
+  if (isLocked(box) || spotStage(box.dataset.spot) === 'fix') return;
+  const id = sent.dataset.qw;
+  if (state.answers[id]) delete state.answers[id]; else state.answers[id] = 'flag';
+  sent.classList.toggle('flagged', !!state.answers[id]);
+  sent.setAttribute('aria-pressed', String(!!state.answers[id]));
+  box.querySelectorAll('.sent').forEach(s => s.classList.remove('is-correct', 'is-wrong'));
+  save();
+}
+document.addEventListener('click', e => { const s = e.target.closest('.spot .sent'); if (s) toggleSentence(s); });
+document.addEventListener('keydown', e => {
+  const s = e.target.closest?.('.spot .sent');
+  if (s && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); toggleSentence(s); }
+});
 
 // ── Picking and placing sort cards ──────────────────────
 let picked = null;
@@ -542,20 +750,38 @@ document.addEventListener('input', e => {
 // ── Checking ───────────────────────────────────────────
 const coolLeft = i => Math.max(0, Math.ceil(((state.coolUntil['t' + i] || 0) - Date.now()) / 1000));
 function startCooldown(i) {
-  const btn = document.getElementById('check-' + i);
+  const btn = document.getElementById('check-' + i);   // reveal tasks have no Check button: their guesses wait instead
   const tick = () => {
     const s = coolLeft(i);
-    btn.disabled = s > 0;
-    btn.textContent = s > 0 ? `Look again… ${s}s` : btn.dataset.label;
+    if (btn) {
+      btn.disabled = s > 0;
+      btn.textContent = s > 0 ? `Look again… ${s}s` : btn.dataset.label;
+    }
+    document.querySelectorAll(`#panel-${i} .guess:not(.is-wrong)`).forEach(g => { g.disabled = s > 0; });
+    const msg = document.querySelector(`#panel-${i} .cool-msg`);
+    if (msg) msg.textContent = s > 0 ? `Read the clues again… you can guess in ${s}s` : '';
     if (s > 0) setTimeout(tick, 250);
   };
   tick();
+}
+
+// A wrong check or guess: no gold for this task, and a cooldown that grows each time.
+function penalise(i) {
+  state.firstAttempt[i] = false;
+  state.wrongs['t' + i] = (state.wrongs['t' + i] || 0) + 1;
+  const secs = cooldownSeconds(state.wrongs['t' + i]);
+  state.coolUntil['t' + i] = Date.now() + secs * 1000;
+  save();
+  startCooldown(i);
+  return secs;
 }
 
 function gatherAndMark(i) {
   const { key, kind } = TASKS[i];
   if (kind === 'choice') return markChoices(key, state.answers);
   if (kind === 'sort') return markSort(key, state.answers);
+  if (kind === 'reveal') return markReveal(key, state.answers);
+  if (kind === 'spot') return spotStage(key) === 'fix' ? markSpot(key, state.answers) : markSpotFlags(key, state.answers);
   return markWriting(key, state.answers);
 }
 
@@ -570,14 +796,25 @@ function highlight(i, res) {
 }
 
 function checkTask(i) {
-  const { kind } = TASKS[i];
+  const { key, kind } = TASKS[i];
   // Writing can be edited and saved again after it's done (the evidence file updates in place).
   if ((state.completed[i] && kind !== 'write') || coolLeft(i)) return;
   if (window.Classroom?.verifyAuth() === false) return;
   const res = gatherAndMark(i);
-  highlight(i, res);
   const fb = document.getElementById('feedback-' + i);
+  if (kind === 'spot' && spotStage(key) !== 'fix' && !allCorrect(res)) return spotFlagFeedback(i, key, fb);
+  highlight(i, res);
   const right = Object.values(res).filter(Boolean).length, total = Object.keys(res).length;
+  if (allCorrect(res) && kind === 'spot' && spotStage(key) !== 'fix') {
+    // Every slip found and nothing else flagged: now the fixes appear.
+    state.answers[key + '_stage'] = 'fix';
+    save();
+    renderTask(i);
+    highlight(i, res);
+    fb.textContent = '🔍 All slips found! Now pick the fix for each one, then check again.';
+    fb.className = 'feedback correct';
+    return;
+  }
   if (allCorrect(res)) {
     fb.textContent = kind === 'write' ? '✅ Saved and sent to your teacher.' : state.firstAttempt[i] ? '🥇 All correct first time!' : '✅ All correct!';
     fb.className = 'feedback correct';
@@ -591,13 +828,26 @@ function checkTask(i) {
     fb.textContent = `✍ ${total - right} answer${total - right === 1 ? '' : 's'} in red need a full sentence about the product.`;
     return;   // writing is never penalised: it isn't auto-marked
   }
-  state.firstAttempt[i] = false;
-  state.wrongs['t' + i] = (state.wrongs['t' + i] || 0) + 1;
-  const secs = cooldownSeconds(state.wrongs['t' + i]);
-  state.coolUntil['t' + i] = Date.now() + secs * 1000;
+  const secs = penalise(i);
   fb.textContent = `❌ ${right} of ${total} right. Fix the ones in red: you can check again in ${secs} seconds.`;
-  save();
-  startCooldown(i);
+}
+
+// Spot the slip, stage 1: only the flagged sentences turn green or red, so a wrong check
+// never shows where the missed slips are; the message says how many are still to find.
+function spotFlagFeedback(i, key, fb) {
+  const parts = SPOTS[key].parts, flagged = parts.filter(p => state.answers[p.id]);
+  highlight(i, Object.fromEntries(flagged.map(p => [p.id, !!p.fix])));
+  const found = flagged.filter(p => p.fix).length, wrongFlags = flagged.length - found;
+  const missing = parts.filter(p => p.fix).length - found;
+  const bits = [];
+  if (found) bits.push(`${found} in green ${found === 1 ? 'is a slip' : 'are slips'}`);
+  if (wrongFlags) bits.push(`${wrongFlags} in red ${wrongFlags === 1 ? 'is' : 'are'} fine, so un-flag ${wrongFlags === 1 ? 'it' : 'them'}`);
+  if (missing) bits.push(`${missing} ${missing === 1 ? 'slip is' : 'slips are'} still hiding`);
+  fb.className = 'feedback';
+  void fb.offsetWidth;
+  fb.className = 'feedback wrong';
+  const secs = penalise(i);
+  fb.textContent = `❌ ${bits.join('; ')}. You can check again in ${secs} seconds.`;
 }
 
 // ── Scoring and Classroom ──────────────────────────────
@@ -613,7 +863,7 @@ function showDone(i) {
   document.querySelector(`.tab[data-idx="${i}"]`).classList.add('done', ...(gold ? ['gold'] : []));
   const reset = document.getElementById('reset-' + i);
   if (reset) reset.style.display = gold ? 'none' : '';
-  if (TASKS[i].kind === 'choice') document.querySelectorAll(`#panel-${i} .q input`).forEach(r => { r.disabled = true; });
+  if (TASKS[i].kind === 'choice' || TASKS[i].kind === 'spot') document.querySelectorAll(`#panel-${i} .q input`).forEach(r => { r.disabled = true; });
   revealNotes(i);
 }
 
@@ -631,7 +881,10 @@ function resetTask(i) {
   state.completed[i] = false;
   state.firstAttempt[i] = true;
   state.wrongs['t' + i] = 0;
-  const ids = kind === 'choice' ? Object.keys(CHOICES[key]) : kind === 'sort' ? SORTS[key].items.map(x => x.id) : [];
+  const ids = kind === 'choice' ? Object.keys(CHOICES[key])
+    : kind === 'sort' ? SORTS[key].items.map(x => x.id)
+    : kind === 'reveal' ? REVEALS[key].rounds.flatMap(r => [r.id, r.id + '_clues', r.id + '_tried'])
+    : kind === 'spot' ? [key + '_stage', ...SPOTS[key].parts.flatMap(p => [p.id, p.id + '_fix'])] : [];
   ids.forEach(id => delete state.answers[id]);
   document.getElementById('dot-' + i).className = 'pdot' + (TASKS[i].level ? ' optional' : '');
   document.querySelector(`.tab[data-idx="${i}"]`).classList.remove('done', 'gold');
@@ -673,6 +926,9 @@ function renderTask(i) {
   panel.querySelectorAll('[data-choices]').forEach(renderChoices);
   panel.querySelectorAll('[data-sort]').forEach(renderSort);
   panel.querySelectorAll('[data-write]').forEach(renderWriting);
+  panel.querySelectorAll('[data-reveal]').forEach(renderReveal);
+  panel.querySelectorAll('[data-spot]').forEach(renderSpot);
+  glossify(panel);
 }
 
 function init() {
@@ -683,9 +939,11 @@ function init() {
     TASKS.map((t, i) => `<span class="pdot${t.level ? ' optional' : ''}" id="dot-${i}" title="${t.level ? 'Optional' : 'Task ' + (i + 1)}"></span>`).join('');
   for (let i = 0; i < TASK_COUNT; i++) {
     renderTask(i);
-    const btn = document.getElementById('check-' + i);
-    btn.dataset.label = btn.textContent;
-    btn.addEventListener('click', () => checkTask(i));
+    const btn = document.getElementById('check-' + i);   // a reveal task has none: each guess is checked as it's made
+    if (btn) {
+      btn.dataset.label = btn.textContent;
+      btn.addEventListener('click', () => checkTask(i));
+    }
     document.getElementById('reset-' + i)?.addEventListener('click', () => resetTask(i));
     if (coolLeft(i)) startCooldown(i);
     if (state.completed[i]) {

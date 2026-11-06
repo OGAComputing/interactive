@@ -4,7 +4,9 @@
 
 // ── Task list ───────────────────────────────────────────────────────────────
 // One entry per tab, in order. kind: 'choice' (radio questions), 'sort' (cards into bins),
-// 'write' (open writing: completion only, never auto-marked, always gold).
+// 'write' (open writing: completion only, never auto-marked, always gold), 'reveal' (clue-by-clue
+// rounds) or 'spot' (find and fix the slips in a paragraph). Vary them: no lesson should run the
+// same kind in two tabs in a row (Y10/CLAUDE.md).
 // Optional extra tabs take level: 'support' (a Warm-up for students who need a way in) or
 // 'challenge' (an extension). They don't count towards the score; put them at the END of this
 // list so the core tasks keep indexes 0, 1, 2…, and give their tabs class="tab support|challenge".
@@ -43,8 +45,55 @@ export const WRITING = {
   t2: [{ id: 'w1', prompt: 'FILL IN: prompt', starter: 'FILL IN: sentence starter…', minWords: 6 }],
 };
 
+// ── Reveals (kind 'reveal'): clue-by-clue rounds, one at a time, no Check button ──
+// { taskKey: { prompt, opts: [[key, text], …], rounds: [{ id, clues: [3+, vaguest first], a, label, img?, credit?, note? }] } }
+// showFirst: true shows each round's img and label from the start, and {who} in the prompt becomes the round's who.
+// Use it when the thing is easy to name and the task is to classify it ("What type of producer is {who}?"):
+// clues should then be facts that decide the answer, so students make one leap, not two (Nick, 2026-11-06).
+// Students guess after any clue: earlier = more stars (starsFor); a wrong guess shows the next clue, costs
+// gold and starts the cooldown. Solved rounds become "case files" showing img, label, answer and note.
+// Markup: <div class="reveal-game" data-reveal="t3"></div>, a feedback div and a reset button, but no check-N button.
+// Use for: identifying from evidence (producer type, genre from the first shot, audience from clues).
+export const REVEALS = {};
+
+// ── Spot the slip (kind 'spot'): a paragraph with planted mistakes ──
+// { taskKey: { by, parts: [{ id, text, fix?: { a, opts: [[key, text], …] } }] } }; parts with a fix are the slips.
+// Stage 1: click every wrong sentence and nothing else, then Check. A wrong check marks only the flagged
+// sentences (green = a slip, red = fine) and says how many slips are still hiding. Stage 2: the fixes appear as radio questions.
+// Say on the page who "wrote" it (an imaginary student) and keep each fix's options a similar length.
+// Markup: <div class="spot" data-spot="t4"></div> with the usual check, reset and feedback.
+// Use for: the common slips (profit as a purpose, wrong producer type, leading survey questions, weak evidence).
+export const SPOTS = {};
+
+// ── Glossary: [pattern, meaning] for every word a typical 13-year-old might not know ──
+// The page underlines each match in the task content (questions, options, clues, paragraphs, prompts,
+// goals) and shows the meaning on hover, focus or tap; the .terms boxes and help panels are skipped.
+// pattern is a case-insensitive regex fragment matched as whole words: 'shareholders?', 'TV licence|licence fee'.
+// Use (?:…) for groups, never (…). Keep each meaning under about 80 characters and in plain words.
+// Include the lesson's spec terms wherever they turn up as answer options, plus everyday-but-tricky words
+// (shareholders, poverty, box office); leave out words students know (entertain, volunteers, streaming).
+export const GLOSSARY = [];
+export function glossaryDef(word) {
+  return GLOSSARY.find(([p]) => new RegExp(`^(?:${p})$`, 'i').test(word))?.[1];
+}
+
 // ── Marking ─────────────────────────────────────────────────────────────────
 // Each returns { questionId: true/false } so the page can colour every question.
+export function markReveal(taskKey, given) {
+  return Object.fromEntries(REVEALS[taskKey].rounds.map(r => [r.id, given[r.id] === r.a]));
+}
+// Stars for solving a round after seeing `shown` clues: 3 on the first clue, 2 on the second, then 1.
+export const starsFor = shown => Math.max(1, 4 - shown);
+
+export function markSpotFlags(taskKey, given) {
+  return Object.fromEntries(SPOTS[taskKey].parts.map(p => [p.id, !!given[p.id] === !!p.fix]));
+}
+export function markSpot(taskKey, given) {
+  const res = markSpotFlags(taskKey, given);
+  for (const p of SPOTS[taskKey].parts) if (p.fix) res[p.id + '_fix'] = given[p.id + '_fix'] === p.fix.a;
+  return res;
+}
+
 export function markChoices(taskKey, given) {
   return Object.fromEntries(Object.entries(CHOICES[taskKey]).map(([id, c]) => [id, given[id] === c.a]));
 }
