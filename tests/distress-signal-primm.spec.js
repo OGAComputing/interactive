@@ -86,8 +86,16 @@ async function crewAfter(page, seen, choices) {
 const ALL_SEEN = ['intro', 'P', 'R', 'I1', 'I', 'M1', 'M2'];
 
 test('holding the orbit with QUARANTINE and Make never reached: the pod you saved runs out', async ({ page }) => {
-  const pods = await crewAfter(page, ALL_SEEN, { shield: 'pod5', fuel: 'orbit', signal: 'quarantine' });
+  const pods = await crewAfter(page, ALL_SEEN, { shield: 'pod5', lockdown: 'cryo', fuel: 'orbit', signal: 'quarantine' });
   await expect(pods.nth(4)).toHaveClass(/dead/);
+});
+
+test('one death at a time: Proximity lost Chen, so the slow ship leaves Patel injured, not dead', async ({ page }) => {
+  const pods = await crewAfter(page, ALL_SEEN, { shield: 'pod5', lockdown: 'sensors', power: 'sensors', fuel: 'orbit', signal: 'quarantine' });
+  await expect(pods.nth(2)).toHaveClass(/dead/);
+  await expect(pods.nth(4)).toHaveClass(/injured/);
+  await expect(pods.nth(4)).not.toHaveClass(/dead/);
+  await expect(page.locator('#szCrewCount')).toHaveText('3/5');
 });
 
 test('keeping the pods powered with a slow ship: the station clips the storm and you are injured', async ({ page }) => {
@@ -315,7 +323,7 @@ test('Make: a fixed colour fails; QUARANTINE + warning flare is slow, so the sav
   test.setTimeout(120000);
   await page.addInitScript(p => {
     localStorage.setItem('sz_story_' + p, '["intro","P","R","I1","I","M1"]');
-    localStorage.setItem('sz_choices', JSON.stringify({ shield: 'pod5', fuel: 'orbit', signal: 'quarantine' }));
+    localStorage.setItem('sz_choices', JSON.stringify({ shield: 'pod5', lockdown: 'cryo', fuel: 'orbit', signal: 'quarantine' }));
   }, PATH);
   await openAt(page, { currentStage: 'M2', completedStages: ['P', 'R', 'I', 'M1'] }, { story: true });
   await expect(page.locator('#m2_editor')).toHaveValue(/^import turtle\nt = turtle\.Turtle\(\)/);

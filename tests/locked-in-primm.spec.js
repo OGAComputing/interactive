@@ -77,6 +77,7 @@ test('the recap follows Proximity: X died on its bad path', async ({ page }) => 
   await page.addInitScript(() => localStorage.setItem('sz_choices', JSON.stringify({ shield: 'pod3', lockdown: 'sensors', power: 'sensors' })));
   await openAt(page, {}, { story: true });
   await expect(page.locator('#szPrevFull')).toContainText('Patel died');
+  await expect(page.locator('#szPrevFull')).toContainText('You chose to save Chen’s pod');
   await expect(page.locator('#szReadouts')).toContainText('3 of 5');
   await expect(page.locator('#szCrewPods .crew-pod').nth(4)).toHaveClass(/dead/);
 });
@@ -85,6 +86,7 @@ test('X also died if Proximity\'s Sensor Ops lockdown was never followed by Make
   await page.addInitScript(() => localStorage.setItem('sz_choices', JSON.stringify({ shield: 'pod5', lockdown: 'sensors' })));
   await openAt(page, {}, { story: true });
   await expect(page.locator('#szPrevFull')).toContainText('Chen died');
+  await expect(page.locator('#szPrevFull')).toContainText('You chose to save Patel’s pod');
   await expect(page.locator('#szCrewPods .crew-pod').nth(2)).toHaveClass(/dead/);
 });
 
@@ -218,7 +220,7 @@ test('Investigate 1: the crisis pick comes first; with if, a wrong second code o
 
 // The loop question chain, drawn in a fixed order: the first variant of each slot, options
 // unshuffled, so option value 0 is always the right answer.
-const FIXED_I2_CHAIN = { pick: [0, 0, 0, 0], order: Array(4).fill([0, 1, 2, 3]), q: 0, done: false };
+const FIXED_I2_CHAIN = { pick: [0, 0, 0], order: Array(3).fill([0, 1, 2, 3]), q: 0, done: false };
 
 test('Investigate 2: Airlock open indented into the loop prints after a wrong code; the chain moves on', async ({ page }) => {
   const STEP1 = starter({ 1: 'if code != "4271":' });
@@ -237,7 +239,7 @@ test('Investigate 2: Airlock open indented into the loop prints after a wrong co
   await runWith(page, 'I', 'i_editor', ['1111', '2222', '4271']);
   await expect(outputOf(page, 'i_editor')).toContainText('Airlock open', { timeout: 30000 });
   await expect(bullets).toHaveClass([/req-pass/, /req-pass/, /req-pass/]);
-  for (let slot = 0; slot < 4; slot++) {
+  for (let slot = 0; slot < 3; slot++) {
     await page.check(`input[name="i2c_${slot}"][value="0"]`);
     await expect(page.locator('#fb_i2c_' + slot)).toHaveClass(/pass/);
   }
@@ -264,7 +266,7 @@ test('Investigate bug step: Break it makes a loop that never ends; putting the l
   await openAt(page, {
     currentStage: 'I', completedStages: ['P', 'R'], stepI: 4, maxStepI: 4, radio_i_choice: 'cryo',
     i_editor: starter({ 1: 'while code == "4271":' }),
-    radio_i1_mcq: 'option_d', i2Chain: { ...FIXED_I2_CHAIN, q: 3, done: true }, radio_i3_mcq: 'option_c',
+    radio_i1_mcq: 'option_d', i2Chain: { ...FIXED_I2_CHAIN, q: 2, done: true }, radio_i3_mcq: 'option_c',
   });
   await page.click('#qcard_i4_prompt button:has-text("Break it")');
   await expect(page.locator('#i_editor')).toHaveValue(/while code != "4271":/);

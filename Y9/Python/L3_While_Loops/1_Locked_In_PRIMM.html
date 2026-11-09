@@ -1686,7 +1686,7 @@ color:  teal
       <!-- Loop checkpoint chain: I2_CHAIN slots in a row, one on screen at a time.
            Rendered by renderI2Chain(); a wrong answer explains why, then restarts with a
            fresh draw. Finishing the chain calls nextStep('I', 2). -->
-      <label class="q-label">Which lines does a loop <strong>repeat</strong>? Answer <strong id="i2c_total">4</strong> questions in a row.</label>
+      <label class="q-label">Which lines does a loop <strong>repeat</strong>? Answer <strong id="i2c_total">3</strong> questions in a row.</label>
       <div style="font-size:0.8rem;color:var(--muted);margin-bottom:0.4rem">Get one wrong and you'll see why, then start again with new questions.</div>
       <div id="i2_chain"></div>
       <button class="btn btn-next" id="btn_check_i2" style="margin-top:10px;display:none" onclick="nextStep('I', 2)" disabled>✓ Check answer</button>
@@ -2186,11 +2186,18 @@ print("Tank full after " + str(count) + " readings")</pre>
   // The "Previously…" recap: Hale's story in one line, then how Proximity ended.
   const HALE_RECAP = 'Hale died three days ago. Something now walks the station in his body, and his last log said: “Don’t trust WARD—”';
   const INTRO_VARIANTS = {};
-  for (const s of ['pod3', 'pod5']) for (const end of ['ok', 'dead', 'lost']) {
-    const c = { shield: s, ...(end === 'dead' ? { lockdown: 'sensors', power: 'sensors' } : end === 'lost' ? { lockdown: 'cryo', power: 'pods' } : { lockdown: 'cryo', power: 'sensors' }) };
-    const second = end === 'dead' ? `No power reached Pod ${X(c).pod} in time, and ${X(c).name} died. Then WARDEN locked the airlock and changed the code.`
-      : end === 'lost' ? 'The crew are safe, but the sensors were smashed. Then WARDEN locked the airlock and changed the code.'
-      : 'You got the proximity sensors working. Then WARDEN locked the airlock and changed the code.';
+  // The second bullet names the student's own Proximity pick (2026-11-09: students who saw a
+  // crew member die were unsure what they had chosen). 'none' = never reached the crisis.
+  for (const s of ['pod3', 'pod5', 'none']) for (const end of ['ok', 'dead', 'lost']) {
+    if (s === 'none' && end === 'dead') continue;   // xDead needs a crisis pick
+    const c = { ...(s === 'none' ? {} : { shield: s }), ...(end === 'dead' ? { lockdown: 'sensors', power: 'sensors' } : end === 'lost' ? { lockdown: 'cryo', power: 'pods' } : { lockdown: 'cryo', power: 'sensors' }) };
+    const x = X(c), safe = s === 'pod3' ? 'Chen' : 'Patel';
+    const second = s === 'none'
+      ? (end === 'lost' ? 'The crew are safe, but the sensors were smashed. Then WARDEN locked the airlock and changed the code.'
+        : 'You got the proximity sensors working. Then WARDEN locked the airlock and changed the code.')
+      : end === 'dead' ? `You chose to save ${safe}’s pod, so ${x.name}’s froze. No power reached Pod ${x.pod} in time, and ${x.name} died. Then WARDEN locked the airlock.`
+      : end === 'lost' ? `You chose to save ${safe}’s pod, and kept ${x.name} alive too, but the sensors were smashed. Then WARDEN locked the airlock.`
+      : `You chose to save ${safe}’s pod, and kept ${x.name} alive too. Then WARDEN locked the airlock and changed the code.`;
     INTRO_VARIANTS[`${s}_${end}`] = {
       previously: [HALE_RECAP, second],
       readouts: [
@@ -2203,6 +2210,7 @@ print("Tank full after " + str(count) + " readings")</pre>
     };
   }
   const introEnd = c => xDead(c) ? 'dead' : sensorsLost(c) ? 'lost' : 'ok';
+  const introPick = c => c.shield ? shield(c) : 'none';
 
   // The crisis report (I1).
   const I1_VARIANTS = {
@@ -2349,7 +2357,7 @@ print("Tank full after " + str(count) + " readings")</pre>
     },
     beats: {
       intro: {
-        variant: c => `${shield(c)}_${introEnd(c)}`,
+        variant: c => `${introPick(c)}_${introEnd(c)}`,
         variants: INTRO_VARIANTS,
         headline: 'Chapter 3 — Locked In',
         cam: 'airlock',
@@ -4427,7 +4435,8 @@ const C = s => `<code>${s}</code>`;
 const DOT4 = '<span class="sp">····</span>';
 const pic = lines => `<div class="indent-pic"><pre>${lines.join('\n')}</pre></div>`;
 const I2_CHAIN = [
-  // 1 — which lines are in the loop now
+  // 1 — Airlock open is in the loop now, so it repeats (was two slots; merged 2026-11-09
+  //     because the 4-question chain kept even strong students stuck too long)
   [
     { q: `You typed 1111, 2222, then 4271. How many times did <strong>Airlock open</strong> print?`,
       opts: ['2 times', '1 time', '3 times', '0 times'],
@@ -4437,9 +4446,6 @@ const I2_CHAIN = [
       opts: ['Lines 3, 4 and 5', 'Lines 3 and 4 only', 'Line 5 only', 'Lines 1 to 5'],
       right: 'Yes. All three have 4 spaces in front and sit under the while line, so all three repeat.',
       wrong: 'Lines 3, 4 and 5 all have 4 spaces in front and sit under while, so they are all in the loop. Line 1 runs once, before it.' },
-  ],
-  // 2 — what that did to the airlock
-  [
     { q: `Straight after you typed <strong>2222</strong>, what did the program print?`,
       opts: ['Airlock open', 'ACCESS DENIED', 'Nothing: it stopped', 'Enter airlock code:'],
       right: 'Yes. Line 5 is in the loop now, so it ran straight after line 4 asked, before the condition was checked again.',
@@ -4449,7 +4455,7 @@ const I2_CHAIN = [
       right: 'Yes. Every indented line runs every time round the loop. Python only checks the condition again when it gets back to the top.',
       wrong: 'The 4 spaces put it inside the loop, so it runs every time round. Python only checks the code again at the top, on line 2.' },
   ],
-  // 3 — the condition is checked at the top, each time round the loop
+  // 2 — the condition is checked at the top, each time round the loop
   [
     { q: `If you typed <strong>4271</strong> the very first time, what would this program print?`,
       opts: ['Nothing at all', 'Airlock open', 'ACCESS DENIED, Airlock open', 'ACCESS DENIED'],
@@ -4460,7 +4466,7 @@ const I2_CHAIN = [
       right: 'Yes. It checks on line 2, each time round the loop. In between, every line in the loop runs, whatever code holds.',
       wrong: 'Python checks the condition at the top, on line 2, each time round the loop. That\'s why Airlock open could print after a wrong code.' },
   ],
-  // 4 — transfer: a counting loop (the bridge to next lesson's for loops)
+  // 3 — transfer: a counting loop (the bridge to next lesson's for loops)
   [
     { q: `A new program. What does it print?${pic([
         `fuel = <span class="num">0</span>`,

@@ -587,7 +587,8 @@ color:  teal
      signal: every state has its own light shape, and a word on its manifest card.
        alive = solid square · risk = amber square · critical = blinking amber square
        dead = hollow square with a cross · you = ring · unknown = dashed outline
-       hunted = amber ring (you, with it closing in) · injured = blinking red ring (you, hurt) */
+       hunted = amber ring (you, with it closing in) · injured = blinking red ring (you, hurt)
+       injured crew (.mate) = red square outline with a bar across, not blinking */
   .site-header.crew-open { z-index: 50; }   /* lift the open manifest over the progress strip */
   /* let the chapter line wrap before the objective / crew / map group drops to a second row */
   .site-header .header-text { flex: 1 1 14rem; min-width: 0; }
@@ -617,6 +618,8 @@ color:  teal
   .crew-pod.you      { border: 1.5px solid var(--crt); border-radius: 50%; }
   .crew-pod.hunted   { border: 1.5px solid var(--crt-warn); border-radius: 50%; box-shadow: 0 0 5px rgba(255,201,92,0.6); }
   .crew-pod.injured  { border: 2px solid var(--crt-crit); border-radius: 50%; box-shadow: 0 0 6px rgba(255,107,120,0.7); animation: crew-blink 1.2s steps(1) infinite; }
+  .crew-pod.injured.mate { border-radius: 2px; animation: none; }
+  .crew-pod.injured.mate::before { content: ''; position: absolute; left: 1px; right: 1px; top: 2px; height: 2px; background: var(--crt-crit); }
   .crew-pod.unknown  { border: 1.5px dashed var(--crt-faint); }
   /* compromised = a red diamond: the crew member is dead, but their tag is moving */
   .crew-pod.compromised { width: 8px; height: 8px; margin: 0 1px; border-radius: 1px; background: var(--crt-crit);
@@ -2130,7 +2133,11 @@ for i in range(3):
   // station clips the storm: Sensor Ops tears open and you're thrown into a bulkhead (pods).
   // An absent student (no crisis picked) never loses anyone here.
   const lands = c => !!c.fuel && !fast(c);
-  const savedDead = c => lands(c) && fuel(c) === 'orbit';
+  // One death at a time (2026-11-09): after a crew member dies, the next two chapters can only
+  // injure. So if Proximity lost X, the slow ship can't take the last of Chen and Patel too:
+  // their pod runs dry, you thaw them early, and they live with cryo burns (crew state injured).
+  const savedDead = c => lands(c) && fuel(c) === 'orbit' && !xDead(c);
+  const savedHurt = c => lands(c) && fuel(c) === 'orbit' && xDead(c);
   const clipped = c => lands(c) && fuel(c) === 'pods';
 
   // The stake readout: a countdown, worse at each report until the cliffhanger settles it.
@@ -2260,19 +2267,22 @@ for i in range(3):
     fast_orbit: c => `With the ship this close, the reserve will last. Pod ${SAVED(c).pod} · ${SAVED(c).name} holds on.`,
     fast_pods: () => 'The ship will be here before the orbit gives out. The station holds.',
     slow_orbit: c => `Three days is too long. Pod ${SAVED(c).pod}’s reserve runs out first, and ${SAVED(c).name}’s heart monitor goes flat.`,
+    // after Proximity lost X: one death at a time, so the last of Chen and Patel lives, hurt
+    slow_orbit_hurt: c => `Three days is too long. Pod ${SAVED(c).pod}’s reserve runs dry, so you thaw ${SAVED(c).name} out early. ${SAVED(c).name} is alive, but the cold has burnt both hands.`,
     slow_pods: () => 'Three days is too long. The station clips the storm, Sensor Ops tears open, and you’re thrown into a bulkhead.',
   };
   const M2_VARIANTS = {};
   for (const sg of ['mayday', 'quarantine']) for (const fl of ['warning', 'medical']) for (const f of ['orbit', 'pods'])
-  for (const s of ['pod3', 'pod5']) for (const raw of [true, false]) {
-    // raw: the crisis was picked (so the countdown can land); false: a student who skipped it
-    const c = { signal: sg, flare: fl, shield: s, ...(raw ? { fuel: f } : {}) };
+  for (const s of ['pod3', 'pod5']) for (const raw of [true, false]) for (const xd of [false, true]) {
+    // raw: the crisis was picked (so the countdown can land); false: a student who skipped it.
+    // xd: Proximity lost X, so this chapter can only injure (one death at a time).
+    const c = { signal: sg, flare: fl, shield: s, ...(raw ? { fuel: f } : {}), ...(xd ? { lockdown: 'sensors', power: 'sensors' } : { lockdown: 'cryo' }) };
     const isFast = fast(c), isPrepared = prepared(c);
-    const key = raw ? `${isFast ? 'fast' : 'slow'}_${f}` : `fast_${f}`;
+    const key = raw ? `${isFast ? 'fast' : 'slow'}_${f}${savedHurt(c) ? '_hurt' : ''}` : `fast_${f}`;
     const settled = { label: '', value: '', level: 'ok' };
-    if (f === 'orbit') Object.assign(settled, { label: `Pod ${SAVED(c).pod} · ${SAVED(c).name}`, ...(raw && !isFast ? { value: 'Lost', level: 'danger' } : { value: 'Stable', level: 'ok' }) });
+    if (f === 'orbit') Object.assign(settled, { label: `Pod ${SAVED(c).pod} · ${SAVED(c).name}`, ...(raw && !isFast ? { value: savedHurt(c) ? 'Injured' : 'Lost', level: 'danger' } : { value: 'Stable', level: 'ok' }) });
     else Object.assign(settled, raw && !isFast ? { label: 'You', value: 'Injured', level: 'danger' } : { label: 'Orbit', value: 'Holding', level: 'ok' });
-    M2_VARIANTS[`${sg}_${fl}_${f}_${s}_${raw ? 'raw' : 'none'}`] = {
+    M2_VARIANTS[`${sg}_${fl}_${f}_${s}_${raw ? 'raw' : 'none'}_${xd ? 'xdead' : 'x'}`] = {
       log: `${FLARE_LEAD[`${sg}_${fl}`]} ${SETTLE[key](c)} Then the ship sends one more message.`,
       quote: { who: 'Rescue ship Kestrel', text: 'Your beacon says one survivor awake. We’re reading two life signs moving aboard.' },
       readouts: [
@@ -2327,6 +2337,7 @@ for i in range(3):
         const p = SAVED(c).pod;
         if (!settled) out[p] = 'critical';
         else if (savedDead(c)) out[p] = 'dead';
+        else if (savedHurt(c)) out[p] = 'injured';
         else if (!heatersOut(c)) delete out[p];
       } else if (settled && clipped(c)) {
         out[4] = 'injured';
@@ -2402,7 +2413,7 @@ for i in range(3):
         time: '07:24',
       },
       M2: {
-        variant: c => `${signal(c)}_${flare(c)}_${fuel(c)}_${shield(c)}_${c.fuel ? 'raw' : 'none'}`,
+        variant: c => `${signal(c)}_${flare(c)}_${fuel(c)}_${shield(c)}_${c.fuel ? 'raw' : 'none'}_${xDead(c) ? 'xdead' : 'x'}`,
         variants: M2_VARIANTS,
         headline: 'Two life signs',
         time: '07:40',
@@ -3096,7 +3107,7 @@ for i in range(3):
     const btn = $('szCrewBtn');
     btn.classList.toggle('warn', !unknown && crit > 0);
     btn.classList.toggle('loss', lost);
-    $('szCrewPods').innerHTML = crew.map(m => `<span class="crew-pod ${m.st}"></span>`).join('');
+    $('szCrewPods').innerHTML = crew.map(m => `<span class="crew-pod ${m.st}${m.pod !== 4 ? ' mate' : ''}"></span>`).join('');
     $('szCrewCount').innerHTML = (unknown ? '?' : alive) + '<small>/5</small>';
     $('szCrewSr').textContent = unknown
       ? 'Crew: pod records offline. Show crew manifest.'
@@ -3130,7 +3141,7 @@ for i in range(3):
     const notes = crew.map(m =>
       m.st === 'critical' ? `WARNING: Pod ${m.pod} alarm. ${m.name}’s vitals are falling.`
       : m.st === 'hunted' ? 'WARNING: motion closing on your position.'
-      : m.st === 'injured' ? 'You are injured. Your suit is logging the damage.'
+      : m.st === 'injured' ? (m.pod === 4 ? 'You are injured. Your suit is logging the damage.' : `Pod ${m.pod}: ${m.name} was thawed early and is injured.`)
       : m.st === 'risk' ? `Pod ${m.pod}: ${m.name}’s vitals are unstable.`
       : m.st === 'compromised' ? `Pod ${m.pod}: ${m.name}’s heart stopped, but crew tag ${m.name.toUpperCase()} is moving. Bio-scan: not human.`
       : m.st === 'dead' && m.pod !== 2 ? `Pod ${m.pod}: ${m.name}, no life signs.` : '').filter(Boolean);
