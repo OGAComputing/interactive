@@ -233,7 +233,7 @@ test('Investigate 1: the crisis report names who the heaters could not save', as
 
 // The indentation question chain, drawn in a fixed order: the first variant of each slot,
 // options unshuffled, so option value 0 is always the right answer.
-const FIXED_I2_CHAIN = { pick: [0, 0, 0, 0], order: Array(4).fill([0, 1, 2, 3]), q: 0, done: false };
+const FIXED_I2_CHAIN = { pick: [0, 0, 0], order: Array(3).fill([0, 1, 2, 3]), q: 0, done: false };
 
 test('Investigate 2: live coach counts the spaces; a real Tab key lines it up', async ({ page }) => {
   const STEP1_CODE = starter({ 1: 'if distance >= 20:' });
@@ -272,13 +272,13 @@ test('Investigate 2: Scan complete vanishes for 85; the question chain restarts 
   await page.check('input[name="i2c_0"][value="1"]');
   await expect(page.locator('#fb_i2c_0')).toHaveClass(/fail/);
   await page.click('#qcard_i2 button:has-text("Start the questions again")');
-  await expect(page.locator('#i2_chain')).toContainText('Question 1 of 4');
+  await expect(page.locator('#i2_chain')).toContainText('Question 1 of 3');
 
-  // reseed the fixed draw, then answer all four in a row
+  // reseed the fixed draw, then answer all three in a row
   await page.evaluate(d => { localStorage.setItem('primm_y9_l2_proximity', JSON.stringify({ ...JSON.parse(localStorage.getItem('primm_y9_l2_proximity')), i2Chain: d })); }, FIXED_I2_CHAIN);
   await page.reload();
   await expect(page.locator('#pyStatusText')).toHaveText(/ready/, { timeout: 60000 });
-  for (let slot = 0; slot < 4; slot++) {
+  for (let slot = 0; slot < 3; slot++) {
     await page.check(`input[name="i2c_${slot}"][value="0"]`);
     await expect(page.locator('#fb_i2c_' + slot)).toHaveClass(/pass/);
   }
@@ -289,7 +289,7 @@ test('Investigate bug step: Break it gives a TypeError; int() back completes Inv
   // tryCompleteInvestigate re-checks every step's answer, so seed steps 1–3 as answered
   await openAt(page, {
     currentStage: 'I', completedStages: ['P', 'R'], stepI: 4, maxStepI: 4, i_editor: starter({ 1: 'if distance > 20:' }),
-    radio_i1_mcq: 'option_c', i2Chain: { ...FIXED_I2_CHAIN, q: 3, done: true }, radio_i3_mcq: 'option_b',
+    radio_i1_mcq: 'option_c', i2Chain: { ...FIXED_I2_CHAIN, q: 2, done: true }, radio_i3_mcq: 'option_b',
   });
   await page.click('#qcard_i4_prompt button:has-text("Break it")');
   await expect(page.locator('#i_editor')).toHaveValue(/^distance = input\(/);

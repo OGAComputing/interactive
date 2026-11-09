@@ -204,7 +204,7 @@ test('Investigate 1: the crisis pick comes first; range(8) goes round the square
 
 // The shape question chain, drawn in a fixed order: the first variant of each slot, options
 // unshuffled, so option value 0 is always the right answer.
-const FIXED_I2_CHAIN = { pick: [0, 0, 0, 0], order: Array(4).fill([0, 1, 2, 3]), q: 0, done: false };
+const FIXED_I2_CHAIN = { pick: [0, 0, 0], order: Array(3).fill([0, 1, 2, 3]), q: 0, done: false };
 
 test('Investigate 2: the triangle, then four shape questions in a row', async ({ page }) => {
   const STEP1 = STARTER.replace('range(4)', 'range(8)');
@@ -217,7 +217,7 @@ test('Investigate 2: the triangle, then four shape questions in a row', async ({
   await run(page, 'I');
   await expect(screenNote(page, 'i_editor')).toContainText('3 lines drawn', { timeout: 30000 });
   await expect(page.locator('#req_i_2 li')).toHaveClass([/req-pass/, /req-pass/, /req-pass/]);
-  for (let slot = 0; slot < 4; slot++) {
+  for (let slot = 0; slot < 3; slot++) {
     await page.check(`input[name="i2c_${slot}"][value="0"]`);
     await expect(page.locator('#fb_i2c_' + slot)).toHaveClass(/pass/);
   }
@@ -229,7 +229,7 @@ test('Investigate bug step: Break it draws a straight line with no error; the tu
   // tryCompleteInvestigate re-checks every step's answer, so seed steps 1–3 as answered
   await openAt(page, {
     currentStage: 'I', completedStages: ['P', 'R'], stepI: 4, maxStepI: 4, radio_i_choice: 'orbit',
-    i_editor: TRIANGLE, radio_i1_mcq: 'option_b', i2Chain: { ...FIXED_I2_CHAIN, q: 3, done: true }, radio_i3_mcq: 'option_c',
+    i_editor: TRIANGLE, radio_i1_mcq: 'option_b', i2Chain: { ...FIXED_I2_CHAIN, q: 2, done: true }, radio_i3_mcq: 'option_c',
   });
   await page.click('#qcard_i4_prompt button:has-text("Break it")');
   await expect(page.locator('#i_editor')).toHaveValue(/print\(i\)\nt\.left\(120\)$/);
