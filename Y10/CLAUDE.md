@@ -59,6 +59,7 @@ Rules for everything in `Y10/` and the Y10 decks. They add to the root `CLAUDE.m
 
 ## Software and assets
 
+- **Screen recording** (Nick, 2026-11-10): the school PCs' Snipping Tool is an old version with no video, so students record with **PowerPoint 2024 LTS**: Insert › Screen Recording (Windows + Shift + Q stops), then right-click the video › Save Media As (MP4). Screenshots: Windows + Shift + S.
 - Students use **Photoshop 2024**, with only its standard fonts: no Google Fonts or other installed fonts. Menu paths in instructions should be Photoshop's.
 - Print documents: choose A4 from the templates rather than typing pixel sizes.
 - Free image sources students can use: Unsplash and Pexels (no login; Pexels needs no attribution).
