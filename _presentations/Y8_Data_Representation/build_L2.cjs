@@ -118,7 +118,7 @@ S.recallAnswers(K, { section: 'Recap & Recall', questions: RECALL,
 S.questionsSlide(K, { section: 'Intro', topic: TOPIC, lesson: LESSON,
   notes: 'Same topic question as Lesson 1; today\'s lesson question underneath.' });
 
-// 5–9 · The four rules
+// 5–8 · The four rules (modelled here; the page starts with whole sums)
 addSlide({ section: 'The four rules', title: 'Adding in columns: denary', a: '47', b: '38', base: 10,
   end: [{ text: 'Carry: ', options: { bold: true, color: P.gold } },
     { text: 'the column reached 10, so a 1 moves into the next column on the left.' }],
@@ -161,13 +161,7 @@ youDoSlide({ section: 'The four rules', items: RULES_YOU, prompt: 'what do you w
 youDoSlide({ section: 'The four rules', items: RULES_YOU, reveal: true,
   takeaway: [{ text: 'A column that makes 2 or 3 ', options: { bold: true, color: P.gold } }, { text: 'carries 1 into the next column on the left.' }],
   notes: 'The common slip: writing 2, or writing 10 in one column. One column holds one bit.' });
-taskSlide({ section: 'The four rules', time: '12 MIN',
-  tasks: [[1, 'Remember Lesson 1', '4 in a row: conversions and questions'], [2, 'The four rules', '6 in a row: one column at a time']],
-  note: 'One wrong answer starts the task again with new questions.',
-  notes: 'Tasks 1 and 2 only, then stop: whole sums need the next slides. Task 1 is Lesson 1 recall (headings 8 4 2 1 on paper). '
-    + 'Task 2 adds single columns, including ones with a carry coming in, and asks two questions about carrying. Gold = right first time.' });
-
-// 10–15 · Adding 4-bit numbers, and the final carry
+// 9–14 · Adding 4-bit numbers, and the final carry
 addSlide({ section: 'Adding with 4 bits', title: 'Adding two 4-bit numbers', mode: 'I DO', a: '0110', b: '0011', steps: true,
   end: [{ text: 'Check in denary:  ', options: { bold: true, color: P.gold } },
     { text: '6 + 3 = 9,  and 1001 = 9', options: { fontFace: MONO, bold: true } }],
@@ -197,14 +191,14 @@ addSlide({ section: 'Adding with 4 bits', title: 'The final carry', mode: 'I DO'
     + 'so the answer is 10010, five bits. Last click: 18 is too big for 4 bits (the biggest is 15, from the starter), so the answer '
     + 'needs a fifth bit. Leaving the final carry off gives 0010 = 2: wrong.' });
 taskSlide({ section: 'Adding with 4 bits', time: '20 MIN',
-  tasks: [[3, 'Add with 4 bits', '5 steps, the help fades'], [4, 'The final carry', '3 sums with a new box on the left'],
-    [5, 'No help', '5 sums in a row, on paper first']],
-  note: 'From step 3 of Task 3 you write the carries yourself. Task 5 has nothing on screen to help.',
-  notes: 'Task 3: the carries are given at first, then students write them. Task 4: the final carry; its last sum may not have one, '
-    + 'so the box stays empty. Task 5 is the gate: 5 sums in a row with no help; one wrong restarts it with new sums. '
-    + 'Task 6 stays locked until it is passed.' });
+  tasks: [[1, 'Add with 4 bits', '5 steps, the help fades'], [2, 'The final carry', '3 sums with a new box on the left'],
+    [3, 'No help', '5 sums in a row, on paper first']],
+  note: 'From step 3 of Task 1 you write the carries yourself. Task 3 has nothing on screen to help.',
+  notes: 'Task 1: the carries are given at first, then students write them. Task 2: the final carry; its last sum may not have one, '
+    + 'so the box stays empty. Task 3 is the gate: 5 sums in a row with no help; one wrong restarts it with new sums. '
+    + 'Task 4 stays locked until it is passed.' });
 
-// 16–18 · Eight bits
+// 15–17 · Eight bits
 {
   const s = K.newSlide('SZ_DARK', 'Eight bits', 'Lining up: write both numbers with 8 bits');
   K.text(s, [{ text: 'Add  ' }, { text: '101101', options: { fontFace: MONO, bold: true, color: P.gold } }, { text: '  +  ' },
@@ -222,24 +216,24 @@ taskSlide({ section: 'Adding with 4 bits', time: '20 MIN',
   K.addIcon(s, 'info');
   s.addNotes('Ask first: how would you line these up? Click 1: write both as 8 bits by putting 0s on the left, as in Lesson 1. '
     + 'Now the right-hand bits sit in the same column. Lining them up on the left instead (1011 under 1011…) adds the wrong columns. '
-    + 'Click 2: the 0s change nothing: still 45 and 11. Task 6 has a step just like this.');
+    + 'Click 2: the 0s change nothing: still 45 and 11. Task 4 has a step just like this.');
 }
 addSlide({ section: 'Eight bits', title: 'Adding two 8-bit numbers', mode: 'WE DO', a: '00101101', b: '00001011', steps: true,
   end: [{ text: 'Check in denary:  ', options: { bold: true, color: P.gold } },
     { text: '45 + 11 = 56,  and 00111000 = 56', options: { fontFace: MONO, bold: true } }],
   notes: 'We do, the class leads: same method, more columns. 1 + 1: write 0, carry 1. 0 + 1 + carry: 0, carry 1. 1 + 0 + carry: 0, '
     + 'carry 1. 1 + 1 + carry: three 1s: 1, carry 1. Then 0 + 0 + carry = 1, 1 + 0 = 1, and 0 + 0 twice. 00111000. Last click: '
-    + '32 + 16 + 8 = 56 = 45 + 11. Task 6\'s last step asks for exactly this check.' });
+    + '32 + 16 + 8 = 56 = 45 + 11. Task 4\'s last step asks for exactly this check.' });
 taskSlide({ section: 'Eight bits', time: '15 MIN',
-  tasks: [[6, '8 bits', 'line up, add, check in denary'], [7, 'Plenary', '5 in a row'],
+  tasks: [[4, '8 bits', 'line up, add, check in denary'], [5, 'Plenary', '5 in a row'],
     ['★', 'Carry Rush', 'the class challenge: type code BIN7']],
-  note: 'Carry Rush opens when Task 7 is done. The same code gives everyone the same sums: highest score wins.',
-  notes: 'Tasks 6 and 7 open one after the other. Carry Rush is the extension: it opens when Task 7 is passed. Write a class code on '
+  note: 'Carry Rush opens when Task 5 is done. The same code gives everyone the same sums: highest score wins.',
+  notes: 'Tasks 4 and 5 open one after the other. Carry Rush is the extension: it opens when Task 5 is passed. Write a class code on '
     + 'the board (BIN7, or any code up to 8 letters and digits): everyone on that code gets the same sums in the same order, so scores '
     + 'compare fairly. Each student\'s best shows in a gold chip at the top of the page on every tab, so at the end ask for chips up '
     + 'to find the class winner. The game does not change their grade.' });
 
-// 19 · Plenary
+// 18 · Plenary
 {
   const s = S.plenarySlide(K, { section: 'Plenary', lesson: LESSON,
     tasks: ['Add 01011011 + 00110110.', 'Add 1111 + 0001.'],

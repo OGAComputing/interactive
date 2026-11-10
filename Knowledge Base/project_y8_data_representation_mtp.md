@@ -76,6 +76,8 @@ step where adding the 0s is the task.
 **Lesson question:** How do I add two binary numbers?
 **Keywords:** carry (binary and bit are retrieval from L1)
 
+*Decision (Nick, 2026-11-10): the activity page starts at whole 4-bit sums. Lesson 1 recall is done in the deck's starter, and the four rules are modelled from the deck, so the page has no tasks for either.*
+
 ### Declarative
 - Binary addition works like denary column addition: right to left, carrying into the next column.
 - In denary you carry when a column reaches 10. In binary you carry when a column reaches 2.

@@ -1,18 +1,15 @@
 // Binary Addition (Y8 Data Representation L2): pure checking logic, no DOM.
 //
 // Tasks (all scored):
-//   0  Remember Lesson 1   checkpoint chain: 2 conversions (4 bits) + 2 questions, 4 in a row
-//   1  The four rules      checkpoint chain: 4 one-column sums (one per rule) + 2 questions on carry
-//   2  Add with 4 bits     5 steps; the help fades step by step
-//   3  The final carry     3 steps: the answer can be one bit longer
-//   4  No help             5 additions in a row (4 bits), nothing on screen
-//   5  8 bits              4 steps: add, add, pad to 8 bits and add, add and check in denary
-//   6  Plenary             5 in a row: 8-bit additions and key ideas
+//   0  Add with 4 bits     5 steps; the help fades step by step
+//   1  The final carry     3 steps: the answer can be one bit longer
+//   2  No help             5 additions in a row (4 bits), nothing on screen
+//   3  8 bits              4 steps: add, add, pad to 8 bits and add, add and check in denary
+//   4  Plenary             5 in a row: 8-bit additions and key ideas
+// Lesson 1 recall and the four rules are done in the deck's starter and modelling, not here.
 
-export const TASK_COUNT = 7;
+export const TASK_COUNT = 5;
 
-export const HEADINGS4 = [8, 4, 2, 1];
-export const HEADINGS8 = [128, 64, 32, 16, 8, 4, 2, 1];
 
 // ── Random numbers (seeded per student, so a reload shows the same question) ──
 export function seededRandom(seed) {
@@ -56,7 +53,6 @@ export const ones = n => toBinary(n).split('').filter(b => b === '1').length;
 export const cleanBits = s => String(s ?? '').replace(/\s+/g, '');
 export const isBits = s => /^[01]+$/.test(s);
 export const cleanNumber = s => String(s ?? '').trim();
-export const isWholeNumber = s => /^\d+$/.test(s);
 
 // ── Column addition ──
 // Works right to left. carryIn[k] is the carry written above column k (0 = leftmost);
@@ -100,8 +96,6 @@ const carry4 = pairs(n4, n4, (a, b) => busy4(a, b) && fits4(a, b) && carryCount(
 const over4  = pairs(n4, n4, (a, b) => busy4(a, b) && a + b >= 16 && carryCount(a, b, 4) >= 2);
 
 export const POOLS = {
-  b2d4:      range(3, 15).filter(n => ones(n) >= 2),                           // Lesson 1 recall
-  d2b4:      range(5, 14).filter(n => ones(n) >= 2),
   nocarry4:  pairs(n4, n4, (a, b) => busy4(a, b) && (a & b) === 0),            // no column has two 1s
   onecarry4: pairs(n4, n4, (a, b) => busy4(a, b) && fits4(a, b) && carryCount(a, b, 4) === 1),
   carry4,
@@ -129,14 +123,14 @@ function pickFrom(pool, seed) {
 // dec:        after adding, the student converts all three numbers to denary to check
 // fold:       the method box is folded away
 export const LADDERS = {
-  2: [
+  0: [
     { pool: 'nocarry4',  width: 4, carry: 'given', help: 'No column has two 1s, so there are no carries. Add each column, right to left: 0 + 0 = 0, 0 + 1 = 1.' },
     { pool: 'onecarry4', width: 4, carry: 'given', help: 'One column has 1 + 1, so the carry is written in for you. Add it in when you reach its column.' },
     { pool: 'carry4',    width: 4, carry: 'write', help: 'Now you write the carries. When a column makes 2, write 0 and tap the box above the next column on the left.' },
     { pool: 'triple4',   width: 4, carry: 'write', help: 'One column here has three 1s with its carry: 1 + 1 + 1 = 1, carry 1.' },
     { pool: 'carry4',    width: 4, carry: 'write', fold: true, help: 'On your own: carries and answer, right to left. The method is folded away (you can still open it).' },
   ],
-  3: [
+  1: [
     { pool: 'over4',  width: 4, carry: 'write', extra: true, lightFinal: true,
       help: 'The leftmost column makes a carry, but there is no column left to put it in. It becomes a new bit on the left (lit up), so the answer has 5 bits.' },
     { pool: 'over4',  width: 4, carry: 'write', extra: true,
@@ -144,7 +138,7 @@ export const LADDERS = {
     { pool: 'mixed4', width: 4, carry: 'write', extra: true,
       help: 'This one might not have a final carry. If it doesn\'t, leave the new box on the left empty.' },
   ],
-  5: [
+  3: [
     { pool: 'add8', width: 8, carry: 'write', help: 'Same method, more columns: right to left, writing every carry above the next column.' },
     { pool: 'add8', width: 8, carry: 'write', help: 'Same again with 8 bits.' },
     { pool: 'pad8', width: 8, carry: 'write', pad: true,
@@ -197,26 +191,10 @@ export const fullAnswer = (a, b, width) => {
   return (r.final ? '1' : '') + toBinary(r.sum % (1 << width), width);
 };
 
-// One column of a sum (Task 2). item = { x, y, cin }; a = { write, carry } with carry '1' or ''.
-export function checkColumn(item, a) {
-  const s = item.x + item.y + item.cin;
-  const results = { write: a?.write === String(s % 2), carry: (a?.carry === '1') === (s >= 2) };
-  return { ok: results.write && results.carry, results };
-}
-
 // A typed answer in a chain. 'format' answers aren't marked wrong:
 // the student is told what shape the answer needs and tries again.
 export function checkTyped(q, text) {
-  if (q.type === 'b2d') {
-    const t = cleanNumber(text);
-    if (!isWholeNumber(t)) return 'format';
-    return t === String(q.value) ? 'ok' : 'wrong';
-  }
   const t = cleanBits(text);
-  if (q.type === 'd2b') {
-    if (!isBits(t) || t.length !== q.width) return 'format';
-    return t === toBinary(q.value, q.width) ? 'ok' : 'wrong';
-  }
   // add: the answer has width bits, or one more when there is a final carry.
   // Dropping the final carry is the mistake this lesson is about: those 4 bits have the wrong value, so it's marked wrong.
   if (!isBits(t) || t.length < q.width || t.length > q.width + 1) return 'format';
@@ -224,8 +202,6 @@ export function checkTyped(q, text) {
 }
 
 export function formatHint(q) {
-  if (q.type === 'b2d') return 'Type a denary number, using the digits 0–9.';
-  if (q.type === 'd2b') return `Type exactly ${q.width} bits: one 1 or 0 for each heading.`;
   return `Type the answer in bits (1s and 0s): ${q.width} bits, or ${q.width + 1} if there is a final carry.`;
 }
 
@@ -254,125 +230,17 @@ export function addWorking(a, b, width) {
   return `${steps.join('. ')}.${fin} Answer: ${ans} (${a} + ${b} = ${a + b}).`;
 }
 
-export function b2dWorking(value, width) {
-  const heads = width === 8 ? HEADINGS8 : HEADINGS4;
-  const bits = toBinary(value, width);
-  const used = heads.filter((_, i) => bits[i] === '1');
-  return `${bits} has a 1 under ${used.join(', ')}. ${used.join(' + ')} = ${value}.`;
-}
-
-export function d2bWorking(value, width) {
-  const heads = width === 8 ? HEADINGS8 : HEADINGS4;
-  let left = value;
-  const steps = heads.map(h => {
-    if (h <= left) { left -= h; return `${h} fits: 1, ${left} left`; }
-    return `${h} doesn't fit: 0`;
-  });
-  return `${value}: ${steps.join('. ')}. So ${value} = ${toBinary(value, width)}.`;
-}
-
 export function padWorking(q) {
   return `${toBinary(q.a)} as 8 bits is ${q.bitsA}, and ${toBinary(q.b)} is ${q.bitsB}. ${addWorking(q.a, q.b, 8)}`;
 }
 
 export function workingFor(q) {
-  if (q.type === 'b2d') return b2dWorking(q.value, q.width);
-  if (q.type === 'd2b') return d2bWorking(q.value, q.width);
-  if (q.type === 'col') return columnWorking(q.x, q.y, q.cin);
   if (q.pad) return padWorking(q);
   return addWorking(q.a, q.b, q.width);
 }
 
 // ── Checkpoint chains ──
 // MCQ item: { id, q, opts: [[key, text] ×4], a: correctKey, why }.
-
-export const STARTER_LENGTH = 4;
-export const STARTER_POOL = [
-  { id: 'bit', q: 'What is a bit?', a: 'd', opts: [
-    ['a', 'Eight binary digits together'],
-    ['b', 'Any number written in denary'],
-    ['c', 'The heading above a column'],
-    ['d', 'One binary digit, a 0 or a 1']],
-    why: 'A bit is one binary digit: a 0 or a 1.' },
-  { id: 'heads', q: 'Which are the 8 binary headings, left to right?', a: 'b', opts: [
-    ['a', '80 70 60 50 40 30 20 10'],
-    ['b', '128 64 32 16 8 4 2 1'],
-    ['c', '1 2 4 8 16 32 64 128'],
-    ['d', '100 50 25 12 6 3 2 1']],
-    why: 'The headings double from right to left: 1, 2, 4, 8, 16, 32, 64, 128.' },
-  { id: 'zero', q: 'In 0110, what does the 0 on the left add to the value?', a: 'a', opts: [
-    ['a', 'Nothing: the 8 is not added'],
-    ['b', 'It adds 8 to the value'],
-    ['c', 'It makes the value negative'],
-    ['d', 'It adds 1 to the value']],
-    why: 'A 0 means "don\'t add this heading". 0110 = 4 + 2 = 6.' },
-  { id: 'max4', q: 'What is the biggest number you can write with 4 bits?', a: 'c', opts: [
-    ['a', '4'],
-    ['b', '16'],
-    ['c', '15'],
-    ['d', '8']],
-    why: '1111 = 8 + 4 + 2 + 1 = 15.' },
-  { id: 'pad', q: 'What is 101 written as 8 bits?', a: 'b', opts: [
-    ['a', '10100000'],
-    ['b', '00000101'],
-    ['c', '10101010'],
-    ['d', '00101000']],
-    why: 'Put 0s on the left until there are 8 bits. The value stays 5.' },
-  { id: 'fit', q: 'Converting 6 to binary: does the 8 heading fit?', a: 'a', opts: [
-    ['a', 'No, so write 0 under the 8'],
-    ['b', 'Yes, so write 1 under the 8'],
-    ['c', 'No, so skip it and write nothing'],
-    ['d', 'Yes, and 2 is left over']],
-    why: '8 is bigger than 6, so it doesn\'t fit: write 0 and move to the 4.' },
-];
-
-// One column of each rule: 0 + 0, 0 + 1 (in any order, or 0 + 0 + carry), 1 + 1 (or with a carry), 1 + 1 + 1.
-export const COLUMN_GROUPS = [
-  [[0, 0, 0]],
-  [[0, 1, 0], [1, 0, 0], [0, 0, 1]],
-  [[1, 1, 0], [1, 0, 1], [0, 1, 1]],
-  [[1, 1, 1]],
-];
-
-export const RULES_LENGTH = 6;
-export const RULES_POOL = [
-  { id: 'when', q: 'When do you carry in binary addition?', a: 'b', opts: [
-    ['a', 'When a column adds up to 10'],
-    ['b', 'When a column adds up to 2 or 3'],
-    ['c', 'Every time a column has a 1'],
-    ['d', 'Only in the leftmost column']],
-    why: 'Binary only has the digits 0 and 1, so as soon as a column makes 2 you carry.' },
-  { id: 'denary', q: 'In denary, 7 + 5 = 12. Why do you write 2 and carry 1?', a: 'c', opts: [
-    ['a', 'Because 7 and 5 are both odd'],
-    ['b', 'Because 12 has two digits'],
-    ['c', 'The column reached 10, so 10 moves left'],
-    ['d', 'Because you always carry with a 5']],
-    why: 'In denary a column carries when it reaches 10. Binary works the same way, but carries at 2.' },
-  { id: 'where', q: 'Where do you write a carry?', a: 'a', opts: [
-    ['a', 'Above the next column on the left'],
-    ['b', 'Above the next column on the right'],
-    ['c', 'At the very end of the answer'],
-    ['d', 'Under the column you just added']],
-    why: 'You add right to left, so the carry goes above the next column to the left, ready to add in.' },
-  { id: 'ten', q: 'Why is 1 + 1 written as "0, carry 1"?', a: 'd', opts: [
-    ['a', 'Because 1 + 1 makes 0 in binary'],
-    ['b', 'Because binary columns always carry'],
-    ['c', 'Because the 1s cancel each other out'],
-    ['d', 'Because 2 in binary is written 10']],
-    why: '1 + 1 = 2, and 2 in binary is 10: a 0 in this column and a 1 carried to the next.' },
-  { id: 'first', q: 'Which column do you add first?', a: 'c', opts: [
-    ['a', 'The leftmost column'],
-    ['b', 'The column with most 1s'],
-    ['c', 'The rightmost column'],
-    ['d', 'Any column you like']],
-    why: 'Always right to left, so each carry is ready before you add the next column.' },
-  { id: 'carry', q: 'What is a carry?', a: 'b', opts: [
-    ['a', 'A 0 added to the start of an answer'],
-    ['b', 'A 1 moved into the next column left'],
-    ['c', 'The last bit of the answer on the right'],
-    ['d', 'A column that has no 1s in it at all']],
-    why: 'When a column makes 2 or more, a 1 is carried into the next column on the left.' },
-];
 
 export const NOHELP_LENGTH = 5;
 
@@ -416,35 +284,13 @@ export const PLENARY_POOL = [
     why: '0110 = 6, 0011 = 3 and 1001 = 9. 6 + 3 = 9, so the addition is right.' },
 ];
 
-export const starterQuestion = id => STARTER_POOL.find(q => q.id === id);
-export const rulesQuestion   = id => RULES_POOL.find(q => q.id === id);
 export const plenaryQuestion = id => PLENARY_POOL.find(q => q.id === id);
 
 export function optionOrder(item, seed, attempt) {
   return shuffled(item.opts.map(o => o[0]), seededRandom(`${seed}|${item.id}|${attempt}`));
 }
 
-// Task 1: one conversion each way (4 bits) and 2 questions, shuffled.
-export function drawStarter(seed, attempt) {
-  const rnd = seededRandom(`${seed}|starter|${attempt}`);
-  const mcq = shuffled(STARTER_POOL.map(q => q.id), rnd).slice(0, 2).map(id => ({ type: 'mcq', id, pool: 'starter' }));
-  const b2d = shuffled(POOLS.b2d4, rnd)[0];
-  const d2b = shuffled(POOLS.d2b4.filter(n => n !== b2d), rnd)[0];
-  return shuffled([...mcq, { type: 'b2d', value: b2d, width: 4 }, { type: 'd2b', value: d2b, width: 4 }], rnd);
-}
-
-// Task 2: one column for each of the four rules and 2 questions on carrying, shuffled.
-export function drawRules(seed, attempt) {
-  const rnd = seededRandom(`${seed}|rules|${attempt}`);
-  const cols = COLUMN_GROUPS.map(g => {
-    const [x, y, cin] = g[Math.floor(rnd() * g.length)];
-    return { type: 'col', x, y, cin };
-  });
-  const mcq = shuffled(RULES_POOL.map(q => q.id), rnd).slice(0, 2).map(id => ({ type: 'mcq', id, pool: 'rules' }));
-  return shuffled([...cols, ...mcq], rnd);
-}
-
-// Task 5: 5 additions with 4 bits, all different: 3 with carries, 2 with a final carry.
+// Task 3: 5 additions with 4 bits, all different: 3 with carries, 2 with a final carry.
 export function drawNoHelp(seed, attempt) {
   const rnd = seededRandom(`${seed}|nohelp|${attempt}`);
   const inner = shuffled([...POOLS.carry4, ...POOLS.triple4], rnd);
@@ -454,7 +300,7 @@ export function drawNoHelp(seed, attempt) {
   return shuffled([...picked, ...over].map(([a, b]) => ({ type: 'add', a, b, width: 4 })), rnd);
 }
 
-// Task 7 plenary: 3 key-idea questions and 2 eight-bit additions, shuffled.
+// Task 5 plenary: 3 key-idea questions and 2 eight-bit additions, shuffled.
 export function drawPlenary(seed, attempt) {
   const rnd = seededRandom(`${seed}|plenary|${attempt}`);
   const mcq = shuffled(PLENARY_POOL.map(q => q.id), rnd).slice(0, 3).map(id => ({ type: 'mcq', id, pool: 'plenary' }));
@@ -592,4 +438,4 @@ export function glossaryDef(word) {
   return GLOSSARY.find(([p]) => new RegExp(`^(?:${p})$`, 'i').test(word))?.[1];
 }
 // Questions that test what a word means, or that its meaning would answer: no definitions on these cards.
-export const NO_GLOSS = ['bit', 'heads', 'carry', 'when', 'where', 'denary', 'lq'];
+export const NO_GLOSS = ['lq'];

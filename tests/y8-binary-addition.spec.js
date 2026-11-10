@@ -1,9 +1,9 @@
 import { test, expect } from '@playwright/test';
 import { expectPageTitle, expectNoClassroomBanner } from './helpers/activityHelpers.js';
-import { toBinary, addColumns, fullAnswer, gameSum, STARTER_POOL, RULES_POOL, PLENARY_POOL } from '../Y8/Data_Representation/L2_Binary_Addition/checkers.js';
+import { toBinary, addColumns, fullAnswer, gameSum, PLENARY_POOL } from '../Y8/Data_Representation/L2_Binary_Addition/checkers.js';
 
 const URL = '/Y8/Data_Representation/L2_Binary_Addition/1_Binary_Addition.html';
-const KEY = 'y8_datarep_l2_binary_addition';
+const KEY = 'y8_datarep_l2_binary_addition_v2';
 
 async function openTab(page, i) {
   await page.locator(`.tab[data-idx="${i}"]`).click();
@@ -72,21 +72,11 @@ async function passChain(page, i) {
     const type = await card.getAttribute('data-type');
     if (type === 'mcq') {
       const id = await card.getAttribute('data-id');
-      const q = [...STARTER_POOL, ...RULES_POOL, ...PLENARY_POOL].find(x => x.id === id);
+      const q = PLENARY_POOL.find(x => x.id === id);
       await card.locator(`.cp-opt[data-k="${q.a}"]`).click();
-    } else if (type === 'col') {
-      const s = +(await card.getAttribute('data-a')) + +(await card.getAttribute('data-b')) + +(await card.getAttribute('data-cin'));
-      await setToggle(card.locator('[data-field="write"]'), String(s % 2));
-      await setToggle(card.locator('[data-field="carry"]'), s >= 2 ? '1' : '');
-      await page.locator(`#check-${i}`).click();
     } else {
       const width = +(await card.getAttribute('data-width'));
-      let answer;
-      if (type === 'add') answer = fullAnswer(+(await card.getAttribute('data-a')), +(await card.getAttribute('data-b')), width);
-      else {
-        const value = +(await card.getAttribute('data-value'));
-        answer = type === 'b2d' ? String(value) : toBinary(value, width);
-      }
+      const answer = fullAnswer(+(await card.getAttribute('data-a')), +(await card.getAttribute('data-b')), width);
       await page.locator(`#typed-${i}`).fill(answer);
       await page.locator(`#typed-${i}`).press('Enter');
     }
@@ -98,7 +88,7 @@ async function passChain(page, i) {
 
 const saved = page => page.evaluate(k => JSON.parse(localStorage.getItem(k)), KEY);
 
-test('loads with eight tabs, Tasks 6, 7 and the game locked, no external resources and no errors', async ({ page }) => {
+test('loads with six tabs, Tasks 4, 5 and the game locked, no external resources and no errors', async ({ page }) => {
   const errors = [];
   const external = [];
   page.on('pageerror', e => errors.push(e.message));
@@ -106,105 +96,83 @@ test('loads with eight tabs, Tasks 6, 7 and the game locked, no external resourc
   await page.goto(URL);
   await expectPageTitle(page, /Binary Addition/);
   await expectNoClassroomBanner(page);
-  await expect(page.locator('.tab')).toHaveCount(8);
-  await expect(page.locator('#lock-7')).toBeVisible();
-  await expect(page.locator('#best-chip')).toBeHidden();
+  await expect(page.locator('.tab')).toHaveCount(6);
   await expect(page.locator('#lock-5')).toBeVisible();
-  await openTab(page, 5);
-  await expect(page.locator('#area-5 .lock-card')).toContainText('Pass Task 5 first');
+  await expect(page.locator('#best-chip')).toBeHidden();
+  await expect(page.locator('#lock-3')).toBeVisible();
+  await openTab(page, 3);
+  await expect(page.locator('#area-3 .lock-card')).toContainText('Pass Task 3 first');
   expect(errors).toEqual([]);
   expect(external).toEqual([]);
+});
+
+test('hover definitions: a dotted word shows its meaning; none in the method box', async ({ page }) => {
+  await page.goto(URL);
+  await openTab(page, 1);
+  const word = page.locator('#panel-1 .goal .gl').first();
+  await expect(word).toHaveText(/carry/i);
+  await word.hover();
+  await expect(page.locator('#gl-tip')).toHaveClass(/show/);
+  await expect(page.locator('#gl-tip')).toContainText('next column on the left');
+  await expect(page.locator('#method-1 .gl')).toHaveCount(0);
 });
 
 test('the whole lesson first time: gold, 100 % and the locks open in order', async ({ page }) => {
   test.setTimeout(180_000);
   await page.goto(URL);
-  await passChain(page, 0);
-  await passChain(page, 1);
-  await passLadder(page, 2);
+  await passLadder(page, 0);
+  await passLadder(page, 1);
+  await passChain(page, 2);
+  await expect(page.locator('#lock-3')).toBeHidden();
+  await expect(page.locator('#lock-4')).toBeVisible();
   await passLadder(page, 3);
+  await expect(page.locator('#lock-4')).toBeHidden();
   await passChain(page, 4);
-  await expect(page.locator('#lock-5')).toBeHidden();
-  await expect(page.locator('#lock-6')).toBeVisible();
-  await passLadder(page, 5);
-  await expect(page.locator('#lock-6')).toBeHidden();
-  await passChain(page, 6);
   await expect(page.locator('#done-banner')).toHaveClass(/show/);
   await expect(page.locator('#done-banner')).toHaveClass(/gold/);
   const s = await saved(page);
   expect(s.completed.every(Boolean)).toBe(true);
   expect(s.firstAttempt.every(Boolean)).toBe(true);
-  await expect(page.locator('#ev-2')).toHaveValue(/✓/);
+  await expect(page.locator('#ev-0')).toHaveValue(/✓/);
 });
 
 test('a wrong ladder answer marks the bit red, costs gold and gives a new sum', async ({ page }) => {
   await page.goto(URL);
-  await openTab(page, 2);
-  const before = await page.locator('#qc-2').getAttribute('data-a') + '+' + await page.locator('#qc-2').getAttribute('data-b');
-  await fillLadder(page, 2, { wrong: true });
-  await expect(page.locator('#qc-2 [data-part="s3"]')).toHaveClass(/is-wrong/);
-  await expect(page.locator('#msg-2')).toContainText('working');
-  await expect(page.locator('#msg-2 button')).toBeDisabled();
+  await openTab(page, 0);
+  const before = await page.locator('#qc-0').getAttribute('data-a') + '+' + await page.locator('#qc-0').getAttribute('data-b');
+  await fillLadder(page, 0, { wrong: true });
+  await expect(page.locator('#qc-0 [data-part="s3"]')).toHaveClass(/is-wrong/);
+  await expect(page.locator('#msg-0')).toContainText('working');
+  await expect(page.locator('#msg-0 button')).toBeDisabled();
 
   // The wait survives a refresh: the working and the countdown come back, not a new question
   await page.reload();
-  await openTab(page, 2);
-  await expect(page.locator('#qc-2')).toHaveCount(0);
-  const again = page.locator('#msg-2 button');
+  await openTab(page, 0);
+  await expect(page.locator('#qc-0')).toHaveCount(0);
+  const again = page.locator('#msg-0 button');
   await expect(again).toContainText('Read the working');
   await expect(again).toBeEnabled({ timeout: 15000 });
   await again.click();
-  const after = await page.locator('#qc-2').getAttribute('data-a') + '+' + await page.locator('#qc-2').getAttribute('data-b');
+  const after = await page.locator('#qc-0').getAttribute('data-a') + '+' + await page.locator('#qc-0').getAttribute('data-b');
   expect(after).not.toBe(before);
-  await expect(page.locator('#area-2 .step-head')).toContainText('Step 1 of 5');
-  expect((await saved(page)).firstAttempt[2]).toBe(false);
-});
-
-test('a forgotten carry in the rules chain restarts from question 1', async ({ page }) => {
-  await page.goto(URL);
-  await openTab(page, 1);
-  // Answer until a column that needs a carry comes up, then leave the carry out.
-  for (;;) {
-    const card = page.locator('#qc-1');
-    const type = await card.getAttribute('data-type');
-    const s = +(await card.getAttribute('data-a')) + +(await card.getAttribute('data-b')) + +(await card.getAttribute('data-cin'));
-    if (type === 'col' && s >= 2) {
-      await setToggle(card.locator('[data-field="write"]'), String(s % 2));
-      await page.locator('#check-1').click();
-      await expect(card.locator('[data-part="carry"]')).toHaveClass(/is-wrong/);
-      break;
-    }
-    const head = await page.locator('#area-1 .step-head span').first().textContent();
-    if (type === 'mcq') {
-      const id = await card.getAttribute('data-id');
-      const q = RULES_POOL.find(x => x.id === id);
-      await card.locator(`.cp-opt[data-k="${q.a}"]`).click();
-    } else {
-      await setToggle(card.locator('[data-field="write"]'), String(s % 2));
-      await page.locator('#check-1').click();
-    }
-    await waitForNext(page, 1, head);
-  }
-  await expect(page.locator('#msg-1')).toHaveClass(/bad/);
-  const s = await saved(page);
-  expect(s.cp[1]).toEqual({ attempt: 1, pos: 0 });
-  expect(s.firstAttempt[1]).toBe(false);
+  await expect(page.locator('#area-0 .step-head')).toContainText('Step 1 of 5');
+  expect((await saved(page)).firstAttempt[0]).toBe(false);
 });
 
 test('empty boxes and badly formed answers are not marked wrong', async ({ page }) => {
   await page.goto(URL);
-  await openTab(page, 2);
-  await page.locator('#check-2').click();
-  await expect(page.locator('#msg-2')).toContainText('Fill in every box first');
+  await openTab(page, 0);
+  await page.locator('#check-0').click();
+  await expect(page.locator('#msg-0')).toContainText('Fill in every box first');
 
-  await openTab(page, 4);
-  await page.locator('#typed-4').fill('12');
-  await page.locator('#check-4').click();
-  await expect(page.locator('#msg-4')).toContainText('in bits');
+  await openTab(page, 2);
+  await page.locator('#typed-2').fill('12');
+  await page.locator('#check-2').click();
+  await expect(page.locator('#msg-2')).toContainText('in bits');
 
   const s = await saved(page);
+  expect(s.firstAttempt[0]).toBe(true);
   expect(s.firstAttempt[2]).toBe(true);
-  expect(s.firstAttempt[4]).toBe(true);
 });
 
 // ── Carry Rush ──
@@ -214,11 +182,11 @@ async function openRush(page) {
   await page.evaluate(k => {
     const s = JSON.parse(localStorage.getItem(k));
     s.completed = s.completed.map(() => true);
-    s.passed = [0, 1, 2, 3, 4, 5, 6];
+    s.passed = [0, 1, 2, 3, 4];
     localStorage.setItem(k, JSON.stringify(s));
   }, KEY);
   await page.reload();
-  await openTab(page, 7);
+  await openTab(page, 5);
   await expect(page.locator('#rush-menu')).toBeVisible();
 }
 
@@ -296,7 +264,7 @@ test('Carry Rush: answers fill right to left under the columns; the keypad; leav
   await page.keyboard.press('1');
   expect(await rushBoxes(page)).toEqual(['1', '', '', '0', '1']);
   await openTab(page, 0);
-  await openTab(page, 7);
+  await openTab(page, 5);
   await expect(page.locator('#rush-menu')).toBeVisible();
   const r = await page.evaluate(() => JSON.parse(localStorage.getItem('y8_datarep_l2_carry_rush')));
   expect(r.runs ?? 0).toBe(0);

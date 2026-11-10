@@ -1,11 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import {
   TASK_COUNT, toBinary, toDenary, addColumns, carryCount, hasTriple, POOLS,
-  LADDERS, STEP_COUNT, ladderQuestion, checkAdd, checkColumn, fullAnswer,
+  LADDERS, STEP_COUNT, ladderQuestion, checkAdd, fullAnswer,
   checkTyped, formatHint, workingFor, addWorking, columnWorking, cooldownSeconds,
-  STARTER_POOL, STARTER_LENGTH, drawStarter, COLUMN_GROUPS, RULES_POOL, RULES_LENGTH, drawRules,
   NOHELP_LENGTH, drawNoHelp, PLENARY_POOL, PLENARY_LENGTH, drawPlenary, optionOrder,
   GAME_POOLS, gameSum, gameTime, gamePoints, multiplier, RANKS, rankFor, GAME_BADGES, runBadges, cleanCode,
+  GLOSSARY, glossaryDef, NO_GLOSS,
 } from './checkers.js';
 
 // The draft a student who answers q correctly would have.
@@ -60,19 +60,19 @@ describe('pools', () => {
 
 describe('ladders', () => {
   it('step counts and fading', () => {
-    expect(STEP_COUNT).toEqual({ 2: 5, 3: 3, 5: 4 });
-    expect(LADDERS[2].slice(0, 2).every(s => s.carry === 'given')).toBe(true);
-    expect(LADDERS[2].slice(2).every(s => s.carry === 'write')).toBe(true);
-    expect(LADDERS[3].every(s => s.extra)).toBe(true);
-    expect(LADDERS[5].some(s => s.pad) && LADDERS[5].some(s => s.dec)).toBe(true);
+    expect(STEP_COUNT).toEqual({ 0: 5, 1: 3, 3: 4 });
+    expect(LADDERS[0].slice(0, 2).every(s => s.carry === 'given')).toBe(true);
+    expect(LADDERS[0].slice(2).every(s => s.carry === 'write')).toBe(true);
+    expect(LADDERS[1].every(s => s.extra)).toBe(true);
+    expect(LADDERS[3].some(s => s.pad) && LADDERS[3].some(s => s.dec)).toBe(true);
   });
   it('questions are stable for a seed and a retry never repeats the sum just got wrong', () => {
-    expect(ladderQuestion(2, 2, 'abc', 0)).toEqual(ladderQuestion(2, 2, 'abc', 0));
-    for (const seed of ['a1', 'k3j9x', 'zz9']) for (const t of [2, 3, 5]) for (let st = 0; st < STEP_COUNT[t]; st++)
+    expect(ladderQuestion(0, 2, 'abc', 0)).toEqual(ladderQuestion(0, 2, 'abc', 0));
+    for (const seed of ['a1', 'k3j9x', 'zz9']) for (const t of [0, 1, 3]) for (let st = 0; st < STEP_COUNT[t]; st++)
       for (let r = 1; r < 10; r++) expect(ladderQuestion(t, st, seed, r).key).not.toBe(ladderQuestion(t, st, seed, r - 1).key);
   });
   it('every step accepts the right answer', () => {
-    for (const seed of ['a1', 'b2', 'c3']) for (const t of [2, 3, 5]) for (let st = 0; st < STEP_COUNT[t]; st++) {
+    for (const seed of ['a1', 'b2', 'c3']) for (const t of [0, 1, 3]) for (let st = 0; st < STEP_COUNT[t]; st++) {
       const q = ladderQuestion(t, st, seed);
       expect(checkAdd(q, rightDraft(q)).ok).toBe(true);
     }
@@ -80,7 +80,7 @@ describe('ladders', () => {
 });
 
 describe('checkAdd', () => {
-  const q = ladderQuestion(2, 4, 'seed');           // carries written by the student
+  const q = ladderQuestion(0, 4, 'seed');           // carries written by the student
   it('marks a missing carry, and only that box', () => {
     const d = rightDraft(q);
     const k = q.carryIn.findIndex(Boolean);
@@ -103,43 +103,32 @@ describe('checkAdd', () => {
     expect(checkAdd(q, d).results.s3).toBe(false);
   });
   it('given carries are not marked', () => {
-    const g = ladderQuestion(2, 1, 'seed');
+    const g = ladderQuestion(0, 1, 'seed');
     const d = { ...rightDraft(g), carries: [] };
     expect(checkAdd(g, d).ok).toBe(true);
   });
   it('the final-carry box: dropped, or written when there is none', () => {
-    const o = ladderQuestion(3, 0, 'seed');
+    const o = ladderQuestion(1, 0, 'seed');
     expect(o.final).toBe(1);
     expect(checkAdd(o, { ...rightDraft(o), extra: '' }).results.x).toBe(false);
-    const n = { ...ladderQuestion(2, 4, 'seed'), extra: true };
+    const n = { ...ladderQuestion(0, 4, 'seed'), extra: true };
     expect(checkAdd(n, { ...rightDraft(n), extra: '1' }).results.x).toBe(false);
   });
   it('the pad step needs both numbers as 8 bits', () => {
-    const p = ladderQuestion(5, 2, 'seed');
+    const p = ladderQuestion(3, 2, 'seed');
     const d = rightDraft(p);
     d.rowB = [...toBinary(p.b).padEnd(8, '0')];        // 0s on the wrong side
     expect(checkAdd(p, d).ok).toBe(false);
   });
   it('the denary check needs all three numbers', () => {
-    const c = ladderQuestion(5, 3, 'seed');
+    const c = ladderQuestion(3, 3, 'seed');
     const d = rightDraft(c);
     d.dec.sum = String(c.sum + 1);
     expect(checkAdd(c, d).results.ds).toBe(false);
   });
 });
 
-describe('one column (Task 2)', () => {
-  it('follows the four rules', () => {
-    expect(checkColumn({ x: 0, y: 0, cin: 0 }, { write: '0', carry: '' }).ok).toBe(true);
-    expect(checkColumn({ x: 0, y: 1, cin: 0 }, { write: '1', carry: '' }).ok).toBe(true);
-    expect(checkColumn({ x: 1, y: 1, cin: 0 }, { write: '0', carry: '1' }).ok).toBe(true);
-    expect(checkColumn({ x: 1, y: 1, cin: 1 }, { write: '1', carry: '1' }).ok).toBe(true);
-  });
-  it('catches the usual mistakes', () => {
-    expect(checkColumn({ x: 1, y: 1, cin: 0 }, { write: '0', carry: '' }).results.carry).toBe(false);   // forgot the carry
-    expect(checkColumn({ x: 1, y: 1, cin: 1 }, { write: '0', carry: '1' }).results.write).toBe(false);  // ignored the carry in
-    expect(checkColumn({ x: 0, y: 1, cin: 0 }, { write: '1', carry: '1' }).results.carry).toBe(false);
-  });
+describe('one column', () => {
   it('the working names the rule', () => {
     expect(columnWorking(1, 1, 1)).toBe('1 + 1 + 1 = 3: write 1, carry 1.');
     expect(columnWorking(0, 1, 0)).toBe('0 + 1 = 1: write 1, no carry.');
@@ -165,11 +154,6 @@ describe('typed answers', () => {
     expect(checkTyped(add, '1010000')).toBe('format');
     expect(formatHint(add)).toMatch(/4 bits, or 5/);
   });
-  it('Lesson 1 conversions', () => {
-    expect(checkTyped({ type: 'b2d', value: 11, width: 4 }, '11')).toBe('ok');
-    expect(checkTyped({ type: 'd2b', value: 6, width: 4 }, '0110')).toBe('ok');
-    expect(checkTyped({ type: 'd2b', value: 6, width: 4 }, '110')).toBe('format');
-  });
 });
 
 describe('working', () => {
@@ -177,7 +161,7 @@ describe('working', () => {
     expect(addWorking(6, 14, 4)).toBe('Right column: 0 + 0 = 0: write 0, no carry. Next: 1 + 1 = 2: write 0, carry 1. '
       + 'Next: 1 + 1 + 1 = 3: write 1, carry 1. Next: 0 + 1 + 1 = 2: write 0, carry 1. '
       + 'The final carry becomes a new bit on the left. Answer: 10100 (6 + 14 = 20).');
-    expect(workingFor(ladderQuestion(5, 2, 'seed'))).toMatch(/as 8 bits is/);
+    expect(workingFor(ladderQuestion(3, 2, 'seed'))).toMatch(/as 8 bits is/);
   });
   it('waits get longer: 5, 10, then 15 s (never more than 15 s)', () => {
     expect([1, 2, 3, 7].map(cooldownSeconds)).toEqual([5, 10, 15, 15]);
@@ -186,13 +170,7 @@ describe('working', () => {
 
 describe('chains', () => {
   it('lengths and contents', () => {
-    expect(TASK_COUNT).toBe(7);
-    const s = drawStarter('x', 0);
-    expect(s).toHaveLength(STARTER_LENGTH);
-    expect(s.map(i => i.type).sort()).toEqual(['b2d', 'd2b', 'mcq', 'mcq']);
-    const r = drawRules('x', 0);
-    expect(r).toHaveLength(RULES_LENGTH);
-    expect(r.filter(i => i.type === 'col')).toHaveLength(4);
+    expect(TASK_COUNT).toBe(5);
     const n = drawNoHelp('x', 0);
     expect(n).toHaveLength(NOHELP_LENGTH);
     expect(n.filter(i => i.a + i.b >= 16)).toHaveLength(2);
@@ -201,20 +179,13 @@ describe('chains', () => {
     expect(p).toHaveLength(PLENARY_LENGTH);
     expect(p.filter(i => i.type === 'add')).toHaveLength(2);
   });
-  it('the rules chain has one column for each of the four rules', () => {
-    for (const seed of ['a', 'b', 'c']) {
-      const sums = drawRules(seed, 0).filter(i => i.type === 'col').map(i => i.x + i.y + i.cin).sort();
-      expect(sums).toEqual([0, 1, 2, 3]);
-    }
-    expect(COLUMN_GROUPS.flat().every(c => c.length === 3)).toBe(true);
-  });
   it('a new attempt gives a new draw', () => {
     expect(drawNoHelp('x', 1)).not.toEqual(drawNoHelp('x', 0));
   });
 });
 
 describe('multiple-choice questions', () => {
-  const all = [...STARTER_POOL, ...RULES_POOL, ...PLENARY_POOL];
+  const all = PLENARY_POOL;
   it('ids are unique and every answer key exists', () => {
     expect(new Set(all.map(q => q.id)).size).toBe(all.length);
     for (const q of all) expect(q.opts.map(o => o[0])).toContain(q.a);
@@ -231,7 +202,7 @@ describe('multiple-choice questions', () => {
     expect(keys.size).toBe(4);
   });
   it('option order is shuffled per student', () => {
-    const q = RULES_POOL[0];
+    const q = PLENARY_POOL[0];
     const orders = new Set(['a', 'b', 'c', 'd', 'e', 'f'].map(seed => optionOrder(q, seed, 0).join('')));
     expect(orders.size).toBeGreaterThan(1);
   });
@@ -301,5 +272,20 @@ describe('Carry Rush (extension game)', () => {
   it('class codes are cleaned', () => {
     expect(cleanCode(' bin-7 ')).toBe('BIN7');
     expect(cleanCode('abcdefghijk')).toBe('ABCDEFGH');
+  });
+});
+
+describe('hover definitions', () => {
+  it('plain meanings of 80 characters at most, and every form of each word is found', () => {
+    for (const [, def] of GLOSSARY) expect(def.length).toBeLessThanOrEqual(80);
+    for (const w of ['Binary', 'denary', 'bit', 'bits', 'heading', 'headings', 'carry', 'carries', 'carrying', 'convert'])
+      expect(glossaryDef(w)).toBeTruthy();
+    expect(glossaryDef('final carry')).toMatch(/leftmost/);
+    expect(glossaryDef('carry')).not.toMatch(/leftmost/);
+  });
+  it('the questions with no definitions exist (the lesson question: its answer is the meaning of carry)', () => {
+    const ids = PLENARY_POOL.map(q => q.id);
+    for (const id of NO_GLOSS) expect(ids).toContain(id);
+    expect(NO_GLOSS).toContain('lq');
   });
 });
