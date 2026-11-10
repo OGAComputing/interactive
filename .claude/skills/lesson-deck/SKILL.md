@@ -49,11 +49,11 @@ Build or update the deck for `$ARGUMENTS`.
 - Y10 decks: check in PowerPoint itself with `render_slides.ps1` (the README says how).
 - Fix and rebuild until clean. Report the slide list (number · recipe · one-line purpose).
 
-## Publish (Y10 BTEC and Y9 Python)
+## Publish (any unit with a `publish_to_drive.cjs`: Y10 BTEC, Y9 Python, Y8 Data Representation)
 
 Once the deck is clean, run `node publish_to_drive.cjs L<n>_<Name>.pptx` in the unit folder
-(`_presentations/Y10_BTEC_CDM/` or `_presentations/Y9_Python/`). It rebuilds the deck from its builder, then uploads it (and its `resources/<deck name>/`) to the unit's
-Drive folder as Google Slides (Y9 also records it in `lesson-slides.json`). Report the Slides and folder links it prints. If it says the OAuth
+(`_presentations/Y10_BTEC_CDM/`, `_presentations/Y9_Python/` or `_presentations/Y8_Data_Representation/`). It rebuilds the deck from its builder, then uploads it (and its `resources/<deck name>/`) to the unit's
+Drive folder as Google Slides (Y9 and Y8 also record it in `lesson-slides.json`). Report the Slides and folder links it prints. If it says the OAuth
 client is missing, point the user to "Publishing to Drive" in `Y10_BTEC_CDM/README.md`.
 
 If the user gives feedback on a deck, also run `/log-feedback`.

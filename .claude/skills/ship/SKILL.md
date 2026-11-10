@@ -14,11 +14,14 @@ Pushing to `main` deploys to students, so stop and report at the first failure.
    ask which files to include before staging.
 2. **Test what changed:** `npx vitest run` (always; it's seconds), plus the Playwright specs for
    each changed page (as `/test-page` finds them). If a spec fails, stop and report.
-3. **Publish decks:** if anything in `_presentations/Y10_BTEC_CDM/` or `_presentations/Y9_Python/` is
-   in the change (a deck, builder, kit, `images/` or `resources/`), or `_presentations/drive_publish.cjs`,
-   run `node publish_to_drive.cjs` in each of those unit folders. It rebuilds every deck, then uploads only
+3. **Publish decks:** every `_presentations/<unit>/` folder with a `publish_to_drive.cjs` publishes
+   (`ls _presentations/*/publish_to_drive.cjs`: now Y10_BTEC_CDM, Y9_Python, Y8_Data_Representation).
+   If anything in such a folder is in the change (a deck, builder, kit, `images/` or `resources/`), run
+   `node publish_to_drive.cjs` in that folder. A change to `_presentations/drive_publish.cjs` means every
+   such folder; a change to the Y9 kit (`Y9_Python/sz_kit.cjs`, `sz_slides.cjs`) also means
+   `Y8_Data_Representation/`, whose decks are built with it. It rebuilds every deck, then uploads only
    those whose slides changed, as Google Slides, to the unit's Drive folder, and updates `drive.json`
-   (Y9 also `_presentations/lesson-slides.json`): include `drive.json`, `lesson-slides.json` and any
+   (Y9 and Y8 also `_presentations/lesson-slides.json`): include `drive.json`, `lesson-slides.json` and any
    rebuilt deck whose slides changed in the commit; `git restore` decks that differ only by the rebuild. If a build fails because a deck is open in PowerPoint, ask the user to close it and rerun.
    If publishing fails (no OAuth client, sign-in refused), report it and carry on shipping the site; the
    decks can be published later with the same command.
