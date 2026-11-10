@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import {
   TASK_COUNT, HEADINGS4, HEADINGS8, toBinary, toDenary, ones, POOLS,
-  LADDERS, STEP_COUNT, ladderQuestion, checkB2D, checkD2B, checkPad, checkBuild, BUILD_TILES,
-  leftAfter, checkTyped, workingFor, cooldownSeconds, d2bWorking, b2dWorking, padWorking,
+  LADDERS, STEP_COUNT, ladderQuestion, checkB2D, checkD2B, checkBuild, BUILD_TILES,
+  leftAfter, checkTyped, workingFor, cooldownSeconds, d2bWorking, b2dWorking,
   BASICS_POOL, BASICS_LENGTH, drawBasics, optionOrder,
   NOHELP_LENGTH, drawNoHelp, PLENARY_POOL, PLENARY_LENGTH, drawPlenary,
 } from './checkers.js';
@@ -30,17 +30,18 @@ describe('conversions', () => {
 describe('number pools', () => {
   it('fit their bit widths and are never single-1 numbers', () => {
     for (const n of [...POOLS.b2d4, ...POOLS.d2b4]) { expect(n).toBeLessThan(16); expect(ones(n)).toBeGreaterThanOrEqual(2); }
-    for (const n of [...POOLS.b2d8, ...POOLS.d2b8]) { expect(n).toBeLessThan(256); expect(ones(n)).toBeGreaterThanOrEqual(3); }
-    for (const n of POOLS.d2b8small) expect(n).toBeLessThan(128);
+    for (const n of [...POOLS.b2d8, ...POOLS.d2b8]) { expect(n).toBeLessThanOrEqual(120); expect(ones(n)).toBeGreaterThanOrEqual(3); }
+    expect(POOLS.b2d8.length).toBeGreaterThan(10);
+    expect(POOLS.d2b8.length).toBeGreaterThan(10);
   });
 });
 
 describe('ladders', () => {
   it('Task 5 opens with the heading build, and step counts match', () => {
     expect(LADDERS[4][0].kind).toBe('build');
-    expect(STEP_COUNT).toEqual({ 1: 5, 2: 5, 4: 4, 5: 4 });
+    expect(STEP_COUNT).toEqual({ 1: 5, 2: 5, 4: 4, 5: 3 });
     expect(LADDERS[4].every(s => s.kind === 'build' || s.kind === 'b2d')).toBe(true);
-    expect(LADDERS[5].every(s => s.kind === 'd2b' || s.kind === 'pad')).toBe(true);
+    expect(LADDERS[5].every(s => s.kind === 'd2b')).toBe(true);
   });
   it('help fades: the last steps of Tasks 2 and 3 have blank headings', () => {
     for (const t of [1, 2]) {
@@ -118,14 +119,7 @@ describe('checkD2B', () => {
   });
 });
 
-describe('checkPad and checkBuild', () => {
-  it('pads to 8 bits and keeps the value', () => {
-    const q = { kind: 'pad', value: 13, bits: '1101', width: 8 };
-    expect(checkPad(q, { bits8: '00001101', total: '13' }).ok).toBe(true);
-    expect(checkPad(q, { bits8: '0000 1101', total: '13' }).ok).toBe(true);
-    expect(checkPad(q, { bits8: '11010000', total: '13' }).ok).toBe(false);
-    expect(checkPad(q, { bits8: '00001101', total: '1101' }).results.total).toBe(false);
-  });
+describe('checkBuild', () => {
   it('builds 128 64 32 16 in order', () => {
     expect(checkBuild({ h0: 128, h1: 64, h2: 32, h3: 16 }).ok).toBe(true);
     expect(checkBuild({ h0: 256, h1: 64, h2: 32, h3: 16 }).results.h0).toBe(false);
@@ -149,8 +143,8 @@ describe('checkTyped', () => {
 });
 
 describe('cooldownSeconds', () => {
-  it('escalates 10, 20, 30 and stays at 30', () => {
-    expect([1, 2, 3, 4, 9].map(cooldownSeconds)).toEqual([10, 20, 30, 30, 30]);
+  it('escalates 5, 10, 15 and stays at 15 (never more than 15 s)', () => {
+    expect([1, 2, 3, 4, 9].map(cooldownSeconds)).toEqual([5, 10, 15, 15, 15]);
   });
 });
 
@@ -159,7 +153,6 @@ describe('working', () => {
     expect(b2dWorking(11, 4)).toBe('1011 has a 1 under 8, 2, 1. 8 + 2 + 1 = 11.');
     expect(d2bWorking(11, 4)).toContain("4 doesn't fit: 0");
     expect(d2bWorking(11, 4)).toContain('So 11 = 1011.');
-    expect(padWorking(5)).toContain('00000101');
     expect(workingFor({ type: 'd2b', value: 6, width: 4 })).toContain('0110');
   });
 });

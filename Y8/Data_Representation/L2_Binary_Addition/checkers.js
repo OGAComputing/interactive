@@ -231,7 +231,7 @@ export function formatHint(q) {
 
 // Wait after a wrong answer (wrong answers in a row on this task: 1, 2, 3+), so guessing is slow.
 export function cooldownSeconds(wrongInARow) {
-  return [10, 20, 30][Math.min(Math.max(wrongInARow, 1), 3) - 1];
+  return [5, 10, 15][Math.min(Math.max(wrongInARow, 1), 3) - 1];
 }
 
 // ── Working shown after an answer ──
@@ -575,3 +575,21 @@ export function runBadges(run) {
 
 // A class challenge code: letters and digits only, upper case, at most 8.
 export const cleanCode = s => String(s ?? '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8);
+
+// ── Hover definitions ──
+// [pattern, meaning]: the page dotted-underlines these words in task text and shows the meaning on hover, focus or tap.
+// Longer phrases first, so "final carry" wins over "carry". Meanings: plain words, 80 characters at most.
+export const GLOSSARY = [
+  ['final carry', 'A carry out of the leftmost column. It becomes a new bit on the left.'],
+  ['carry|carries|carrying', 'A 1 moved into the next column on the left, when a column adds up to 2 or more.'],
+  ['binary', 'A number system with only two digits, 0 and 1. Computers use it.'],
+  ['denary', 'The number system we use every day, with ten digits, 0 to 9.'],
+  ['bits?', 'One binary digit: a 0 or a 1.'],
+  ['headings?', 'The number written above a column. It tells you what that column is worth.'],
+  ['convert', 'Change a number from one number system into another.'],
+];
+export function glossaryDef(word) {
+  return GLOSSARY.find(([p]) => new RegExp(`^(?:${p})$`, 'i').test(word))?.[1];
+}
+// Questions that test what a word means, or that its meaning would answer: no definitions on these cards.
+export const NO_GLOSS = ['bit', 'heads', 'carry', 'when', 'where', 'denary', 'lq'];

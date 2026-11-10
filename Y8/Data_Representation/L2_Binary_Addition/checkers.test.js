@@ -179,8 +179,8 @@ describe('working', () => {
       + 'The final carry becomes a new bit on the left. Answer: 10100 (6 + 14 = 20).');
     expect(workingFor(ladderQuestion(5, 2, 'seed'))).toMatch(/as 8 bits is/);
   });
-  it('waits get longer: 10, 20, then 30 s', () => {
-    expect([1, 2, 3, 7].map(cooldownSeconds)).toEqual([10, 20, 30, 30]);
+  it('waits get longer: 5, 10, then 15 s (never more than 15 s)', () => {
+    expect([1, 2, 3, 7].map(cooldownSeconds)).toEqual([5, 10, 15, 15]);
   });
 });
 

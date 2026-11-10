@@ -36,12 +36,10 @@ async function fillLadder(page, i, { wrong = false } = {}) {
       await expect(btn).toHaveText(bits[k]);
     }
     if (guided) {
+      await expect(card.locator('.cell.start')).toHaveText(String(value));   // the first Left box holds the start number
       const left = leftAfter(value, heads);
       for (let k = 0; k < width; k++) await card.locator(`[data-field="left"][data-k="${k}"]`).fill(String(left[k]));
     }
-  } else if (kind === 'pad') {
-    await card.locator('[data-field="bits8"]').fill(toBinary(value, 8));
-    await card.locator('[data-field="total"]').fill(String(value));
   } else {
     for (const [k, h] of [128, 64, 32, 16].entries()) {
       await page.locator(`.dd-tile[data-val="${h}"]`).click();

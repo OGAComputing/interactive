@@ -6,7 +6,7 @@
 //   2  Denary → binary   4 bits, 5 steps; the help fades step by step
 //   3  No help           6 conversions in a row (both ways, 4 bits), nothing on screen
 //   4  8 bits: B → D     4 steps: build the 8 headings, then binary → denary
-//   5  8 bits: D → B     4 steps: denary → binary, padding with leading zeros
+//   5  8 bits: D → B     3 steps: denary → binary
 //   6  Plenary           5 in a row: 8-bit conversions and key ideas
 
 export const TASK_COUNT = 7;
@@ -62,13 +62,13 @@ export const isWholeNumber = s => /^\d+$/.test(s);
 
 // ── Number pools (no single-1 numbers like 8 or 4, which you can read off without adding) ──
 const range = (a, b) => Array.from({ length: b - a + 1 }, (_, i) => a + i);
+export const MAX_8BIT = 120;
 export const POOLS = {
   b2d4:      range(3, 15).filter(n => ones(n) >= 2),                         // 4-bit, read and add
   d2b4:      range(5, 14).filter(n => ones(n) >= 2),                         // needs at least one 0 column
-  b2d8:      range(33, 254).filter(n => ones(n) >= 3 && ones(n) <= 5),
-  d2b8:      range(20, 250).filter(n => ones(n) >= 3 && ones(n) <= 5),
-  d2b8small: range(20, 127).filter(n => ones(n) >= 3 && ones(n) <= 5),        // under 128: needs a leading 0
-  pad:       [5, 6, 9, 10, 11, 13],                                          // 3–4 bits to pad to 8
+  // 8-bit numbers stop at 120 (MAX_8BIT): bigger ones make the adding and taking away too hard for Y8.
+  b2d8:      range(33, MAX_8BIT).filter(n => ones(n) >= 3 && ones(n) <= 5),
+  d2b8:      range(20, MAX_8BIT).filter(n => ones(n) >= 3 && ones(n) <= 5),  // under 128, so the 128 column is always 0
 };
 
 function pickFrom(pool, seed) {
@@ -103,9 +103,8 @@ export const LADDERS = {
   ],
   5: [
     { kind: 'd2b', pool: 'd2b8',      width: 8, show: 'headings', guided: false, help: 'Same method, more columns: biggest heading first. Fits? 1 and take it away. Doesn\'t fit? 0.' },
-    { kind: 'pad', pool: 'pad',       width: 8, help: 'Write this number as 8 bits by putting 0s on the left. Then give its denary value.' },
-    { kind: 'd2b', pool: 'd2b8small', width: 8, show: 'headings', guided: false, help: 'This one is under 128, so the 128 column gets a 0. Every column gets a 1 or a 0.' },
-    { kind: 'd2b', pool: 'd2b8small', width: 8, show: 'blank',    guided: false, help: 'Write all 8 headings yourself, then the bits. Every column gets a 1 or a 0.' },
+    { kind: 'd2b', pool: 'd2b8',      width: 8, show: 'headings', guided: false, help: 'This one is under 128, so the 128 column gets a 0. Every column gets a 1 or a 0.' },
+    { kind: 'd2b', pool: 'd2b8',      width: 8, show: 'blank',    guided: false, help: 'Write all 8 headings yourself, then the bits. Every column gets a 1 or a 0.' },
   ],
 };
 
@@ -117,8 +116,8 @@ export function ladderQuestion(task, step, seed, retry = 0) {
   // A retry never repeats the number the student just got wrong.
   const prev = retry > 0 ? ladderQuestion(task, step, seed, retry - 1).value : null;
   const value = pickFrom(POOLS[s.pool].filter(n => n !== prev), `${seed}|L${task}|${step}|${retry}`);
-  // Every conversion shows all its bits (0s included); only the padding step shows a short number to pad.
-  const bits = s.kind === 'pad' ? toBinary(value) : toBinary(value, s.width);
+  // Every conversion shows all its bits (0s included).
+  const bits = toBinary(value, s.width);
   return { ...s, task, step, value, bits };
 }
 
@@ -164,15 +163,6 @@ export function leftAfter(value, headings) {
   return headings.map(h => { if (h <= left) left -= h; return left; });
 }
 
-// Pad to 8 bits. a = { bits8, total }.
-export function checkPad(q, a) {
-  const results = {
-    bits8: cleanBits(a.bits8) === toBinary(q.value, 8),
-    total: cleanNumber(a.total) === String(q.value),
-  };
-  return { ok: results.bits8 && results.total, results };
-}
-
 // Build the 8 headings. placed = { 'h0'..'h3': value } for the four empty left-hand slots.
 export const BUILD_TILES = [128, 64, 32, 16, 10, 12, 24, 100, 256];
 export function checkBuild(placed) {
@@ -202,7 +192,7 @@ export function formatHint(q) {
 
 // Wait after a wrong answer (wrong answers in a row on this task: 1, 2, 3+), so guessing is slow.
 export function cooldownSeconds(wrongInARow) {
-  return [10, 20, 30][Math.min(Math.max(wrongInARow, 1), 3) - 1];
+  return [5, 10, 15][Math.min(Math.max(wrongInARow, 1), 3) - 1];
 }
 
 // ── Working shown after a wrong answer ──
@@ -223,16 +213,10 @@ export function d2bWorking(value, width) {
   return `${value}: ${steps.join('. ')}. So ${value} = ${toBinary(value, width)}.`;
 }
 
-export function padWorking(value) {
-  const short = toBinary(value);
-  return `${short} has ${short.length} bits, so put ${8 - short.length} zeros on the left: ${toBinary(value, 8)}. The zeros are under headings with nothing added, so the value is still ${value}.`;
-}
-
 export const BUILD_WORKING = 'Each heading is double the one on its right: 8 → 16 → 32 → 64 → 128.';
 
 export function workingFor(q) {
   if (q.kind === 'build') return BUILD_WORKING;
-  if (q.kind === 'pad') return padWorking(q.value);
   const kind = q.kind || q.type;
   return kind === 'b2d' ? b2dWorking(q.value, q.width) : d2bWorking(q.value, q.width);
 }
@@ -361,7 +345,7 @@ export function drawPlenary(seed, attempt) {
   const rnd = seededRandom(`${seed}|plenary|${attempt}`);
   const mcq = shuffled(PLENARY_POOL.map(q => q.id), rnd).slice(0, 3).map(id => ({ type: 'mcq', id }));
   const b2d = shuffled(POOLS.b2d8, rnd)[0];
-  const d2b = shuffled(POOLS.d2b8small.filter(n => n !== b2d), rnd)[0];
+  const d2b = shuffled(POOLS.d2b8.filter(n => n !== b2d), rnd)[0];
   return shuffled([...mcq, { type: 'b2d', value: b2d, width: 8 }, { type: 'd2b', value: d2b, width: 8 }], rnd);
 }
 

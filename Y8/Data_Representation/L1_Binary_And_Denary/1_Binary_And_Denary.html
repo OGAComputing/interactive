@@ -243,6 +243,9 @@ color:  indigo
   .cell.head.lit { background: var(--accent); box-shadow: 0 0 0 3px var(--accent-light); }
   .cell.bit  { background: #F3F7FB; border: 2px solid #D5E3F0; color: var(--surface); }
   .cell.bit.lit { border-color: var(--accent); background: #EEF0FF; }
+  .cell.start { background: #F4F6FF; border: 2px dashed #8FA9C4; color: var(--surface); }
+  .start-cap { align-self: end; text-align: center; font-size: .75rem; font-weight: 700; color: var(--muted);
+    text-transform: uppercase; letter-spacing: .05em; }
   .cell-in {
     border: 2px solid #B9CCE0; background: #fff; color: var(--surface);
     padding: 0 2px;
@@ -483,7 +486,7 @@ color:  indigo
     <ol>
       <li>Write the headings: <strong>128 64 32 16 8 4 2 1</strong></li>
       <li>Biggest heading first. Fits: write <strong>1</strong> and take it away. Doesn't fit: write <strong>0</strong>.</li>
-      <li>Write answers as 8 bits by putting 0s on the left. The value doesn't change.</li>
+      <li>Every heading gets a 1 or a 0, so a number under 128 starts with 0.</li>
     </ol>
   </details>
   <div id="area-5"></div>
@@ -519,7 +522,7 @@ color:  indigo
 <script type="module">
 import {
   TASK_COUNT, HEADINGS4, HEADINGS8, seededRandom, shuffled, toBinary,
-  LADDERS, STEP_COUNT, ladderQuestion, checkB2D, checkD2B, checkPad, checkBuild, BUILD_TILES,
+  LADDERS, STEP_COUNT, ladderQuestion, checkB2D, checkD2B, checkBuild, BUILD_TILES,
   checkTyped, formatHint, workingFor, cooldownSeconds,
   BASICS_LENGTH, drawBasics, basicsQuestion, optionOrder,
   NOHELP_LENGTH, drawNoHelp,
@@ -550,7 +553,7 @@ function blankState() {
     draft: { 1: {}, 2: {}, 4: {}, 5: {} },                  // answers typed so far on the current question
     chainDraft: {},                                  // typed answer in a chain question
     wait: {},                                        // task → { until, text, why, label }: the wait after a wrong answer (survives a refresh)
-    wrongRun: {},                                    // task → wrong answers in a row (sets the wait: 10, 20, 30 s)
+    wrongRun: {},                                    // task → wrong answers in a row (sets the wait: 5, 10, 15 s)
     log: { 0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] },
   };
 }
@@ -616,7 +619,7 @@ function doneHtml(i, what) {
     ${what}${state.firstAttempt[i] ? ', first time' : ''}!</div>`;
 }
 
-// After a wrong answer: show the working and hold the button for 10, 20 then 30 s (wrong answers in a row).
+// After a wrong answer: show the working and hold the button for 5, 10 then 15 s (wrong answers in a row).
 // The deadline is saved, so a refresh shows the same wait instead of skipping it.
 const waitLeft = i => Math.max(0, Math.ceil(((state.wait[i]?.until || 0) - Date.now()) / 1000));
 
@@ -671,7 +674,7 @@ function ladderQ(i) {
 function draftFor(i) {
   const s = state.ld[i];
   const key = `${s.step}|${s.retry}`;
-  if (state.draft[i].key !== key) state.draft[i] = { key, headings: [], bits: [], left: [], total: '', bits8: '', placed: {} };
+  if (state.draft[i].key !== key) state.draft[i] = { key, headings: [], bits: [], left: [], total: '', placed: {} };
   return state.draft[i];
 }
 
@@ -681,7 +684,8 @@ function stepHead(i, step, label = 'Step') {
   return `<div class="step-head"><span>${label} ${step + 1} of ${n}</span><span class="pips" aria-hidden="true">${pips}</span></div>`;
 }
 
-const gridStyle = (width, labels) => `grid-template-columns:${labels ? 'auto ' : ''}repeat(${width}, minmax(0, ${width === 8 ? 64 : 1}${width === 8 ? 'px' : 'fr'}))`;
+// start: one more column before the headings, for the starting number in the Left row.
+const gridStyle = (width, labels, start = false) => `grid-template-columns:${labels ? 'auto ' : ''}repeat(${width + (start ? 1 : 0)}, minmax(0, ${width === 8 ? 64 : 1}${width === 8 ? 'px' : 'fr'}))`;
 
 function headingsRow(q, d, lit = []) {
   const heads = q.width === 8 ? HEADINGS8 : HEADINGS4;
@@ -696,7 +700,6 @@ function headingsRow(q, d, lit = []) {
 function promptFor(q) {
   if (q.kind === 'b2d') return `Convert the binary number <span class="big-num">${q.bits}</span> to denary.`;
   if (q.kind === 'd2b') return `Convert the denary number <span class="big-num">${q.value}</span> to binary.`;
-  if (q.kind === 'pad') return `Write the binary number <span class="big-num">${q.bits}</span> as 8 bits.`;
   return 'Finish the 8 headings.';
 }
 
@@ -726,26 +729,19 @@ function bodyFor(i, q, d) {
       return `<button type="button" class="cell bit-toggle ${v ? 'set' : ''}" data-action="toggle" data-task="${i}" data-k="${k}"
         data-part="b${k}" aria-label="Bit under heading ${k + 1}: ${v || 'not set'}">${v || '?'}</button>`;
     }).join('');
-    const leftRow = q.guided
-      ? `<span class="rl">Left</span>${heads.map((_, k) => `<input class="cell-in" data-field="left" data-k="${k}" data-part="l${k}" maxlength="3"
+    // Guided: the Left row starts with the number itself, so every heading is compared with the Left box just before it.
+    const g = q.guided;
+    const leftRow = g
+      ? `<span class="rl">Left</span><div class="cell start" aria-label="Starting number: ${q.value}">${q.value}</div>${heads.map((_, k) => `<input class="cell-in" data-field="left" data-k="${k}" data-part="l${k}" maxlength="3"
           inputmode="numeric" autocomplete="off" aria-label="What's left after heading ${k + 1}" data-title="Current question: left after heading ${k + 1}"
           value="${esc(d.left[k] ?? '')}">`).join('')}`
       : '';
-    return `${q.guided ? `<p class="start-note">Start with ${q.value}. For each heading: set the bit, then write what's left.</p>` : ''}
-      <div class="bgrid" style="${gridStyle(q.width, true)}">
-        <span class="rl">Heading</span>${headingsRow(q, d)}
-        <span class="rl">Bit</span>${bitsRow}
+    return `${g ? `<p class="start-note">${q.value} is already in the first Left box. For each heading: does it fit into the Left box before it? Set the bit, then write what's left.</p>` : ''}
+      <div class="bgrid" style="${gridStyle(q.width, true, g)}">
+        <span class="rl">Heading</span>${g ? '<span></span>' : ''}${headingsRow(q, d)}
+        <span class="rl">Bit</span>${g ? '<span class="start-cap">Start</span>' : ''}${bitsRow}
         ${leftRow}
       </div>`;
-  }
-
-  if (q.kind === 'pad') {
-    return `<label class="answer-line">As 8 bits:
-        <input class="num-in wide" data-field="bits8" data-part="bits8" maxlength="9" inputmode="numeric" autocomplete="off"
-          data-title="Current question: as 8 bits" value="${esc(d.bits8)}"></label>
-      <label class="answer-line">Denary value:
-        <input class="num-in" data-field="total" data-part="total" maxlength="3" inputmode="numeric" autocomplete="off"
-          data-title="Current question: denary value" value="${esc(d.total)}"></label>`;
   }
 
   // build: four empty slots to the left of 8 4 2 1, and a tray of heading cards
@@ -795,9 +791,8 @@ function missing(q, d) {
   const n = [];
   if (q.kind === 'build') return [0, 1, 2, 3].filter(k => !d.placed['h' + k]).length;
   if (q.show === 'blank') for (let k = 0; k < width; k++) if (blank(d.headings[k])) n.push('h');
-  if (q.kind === 'b2d' || q.kind === 'pad') if (blank(d.total)) n.push('t');
+  if (q.kind === 'b2d' && blank(d.total)) n.push('t');
   if (q.kind === 'b2d' && q.show === 'blank') for (let k = 0; k < width; k++) if (blank(d.bits[k])) n.push('b');
-  if (q.kind === 'pad' && blank(d.bits8)) n.push('p');
   if (q.kind === 'd2b') {
     for (let k = 0; k < width; k++) if (blank(d.bits[k])) n.push('b');
     if (q.guided) for (let k = 0; k < width; k++) if (blank(d.left[k])) n.push('l');
@@ -808,14 +803,12 @@ function missing(q, d) {
 function markLadder(q, d) {
   if (q.kind === 'b2d')   return checkB2D(q, d);
   if (q.kind === 'd2b')   return checkD2B(q, d);
-  if (q.kind === 'pad')   return checkPad(q, d);
   return checkBuild(d.placed);
 }
 
 function answerText(q, d) {
   if (q.kind === 'b2d')   return `${q.bits} → ${d.total}`;
   if (q.kind === 'd2b')   return `${q.value} → ${d.bits.join('')}`;
-  if (q.kind === 'pad')   return `${q.bits} → ${d.bits8} = ${d.total}`;
   return `headings ${[0, 1, 2, 3].map(k => d.placed['h' + k]).join(' ')} 8 4 2 1`;
 }
 
