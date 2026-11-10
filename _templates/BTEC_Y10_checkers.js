@@ -6,7 +6,7 @@
 // One entry per tab, in order. kind: 'choice' (radio questions), 'sort' (cards into bins),
 // 'write' (open writing: completion only, never auto-marked, always gold), 'reveal' (clue-by-clue
 // rounds), 'spot' (find and fix the slips in a paragraph), 'spectrum' (cards placed on a line between
-// two ends) or 'hunt' (live research: find a fact, paste its link). Vary them: no lesson should run the
+// two ends), 'hunt' (live research: find a fact, paste its link) or 'profile' (an audience profile card). Vary them: no lesson should run the
 // same kind in two tabs in a row (Y10/CLAUDE.md).
 // Optional extra tabs take level: 'support' (a Warm-up for students who need a way in) or
 // 'challenge' (an extension). They don't count towards the score; put them at the END of this
@@ -112,6 +112,18 @@ export const SPECTRUMS = {};
 // Markup: <div class="hunt" data-hunt="t6"></div> with the usual check, reset and feedback.
 export const HUNTS = {};
 
+// ── Profile (kind 'profile'): build an audience profile card for a real product, field by field ──
+// { taskKey: { cards: [{ id, label, sector?, img?, credit?, evidence: [fact, …],
+//   fields: [{ id, group?, label, ask?, opts: [[key, text], …], ok: [key, …] }] }], why?: [writing] } }
+// The evidence file (facts about the product and its audience) is what students reason from, so every
+// accepted answer must follow from it. group = a heading before the field ('Primary audience', 'Secondary
+// audience', 'Lifestyle'); ok = the accepted options (more than one where the evidence allows it).
+// Lifestyle fields work best with distractors from the wrong field (an attitude offered as an interest), so
+// students have to know what each term means, not just what fits the product. A wrong field costs gold and
+// starts the cooldown; why boxes (as in a spectrum) are soft. Markup: <div class="profile" data-profile="t7"></div>
+// with the usual check, reset and feedback. Use for: audience profiles (2.2), and any "fill in the card" analysis.
+export const PROFILES = {};
+
 // ── Glossary: [pattern, meaning] for every word a typical 13-year-old might not know ──
 // The page underlines each match in the task content (questions, options, clues, paragraphs, prompts,
 // goals) and shows the meaning on hover, focus or tap; the .terms boxes and help panels are skipped.
@@ -168,6 +180,13 @@ export function markSpectrum(taskKey, given) {
   return res;
 }
 
+export function markProfile(taskKey, given) {
+  const pr = PROFILES[taskKey], res = {};
+  for (const c of pr.cards) for (const f of c.fields) res[f.id] = f.ok.includes(given[f.id]);
+  for (const w of pr.why || []) res[w.id] = markWriteQ(w, given);
+  return res;
+}
+
 export function markHunt(taskKey, given) {
   const hunt = HUNTS[taskKey], res = {}, seen = new Set();
   for (const r of hunt.rows) {
@@ -191,6 +210,7 @@ export function markHunt(taskKey, given) {
 // The answers that are writing, links or names: they go red when missing but never cost gold or time.
 export function softIds(task) {
   if (task.kind === 'spectrum') return new Set((SPECTRUMS[task.key].why || []).map(w => w.id));
+  if (task.kind === 'profile') return new Set((PROFILES[task.key].why || []).map(w => w.id));
   if (task.kind === 'hunt') return new Set(HUNTS[task.key].rows.flatMap(r =>
     ['_prod', '_url', '_who', '_note', ...(r.accept ? [] : ['_fact'])].map(f => r.id + f)));
   return new Set();

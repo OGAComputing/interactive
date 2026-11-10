@@ -200,6 +200,22 @@ color:  red
   .refs h3 { font-family: var(--font-head); font-weight: 600; font-size: 1.2rem; margin: 0 0 6px; }
   .refs ol { margin: 0; padding-left: 22px; display: grid; gap: 4px; overflow-wrap: anywhere; }
   @media (max-width: 600px) { .hunt-row { grid-template-columns: 1fr; } .hunt-row > img { max-height: 160px; } }
+
+  /* ── Profile: an audience profile card built field by field from an evidence file (kind 'profile') ── */
+  .profile-card { background: #fff; border: 1.5px solid var(--text); padding: 14px 16px; margin: 0 0 20px; }
+  .profile-card .pc-head { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 16px; align-items: start; margin: 0 0 6px; }
+  .profile-card .pc-head.no-img { grid-template-columns: 1fr; }
+  .profile-card .pc-head > img { width: 100%; max-height: 240px; object-fit: contain; background: var(--bg); }
+  .profile-card h3 { font-family: var(--font-head); font-weight: 600; font-size: 1.5rem; line-height: 1.1; margin: 0 0 6px; }
+  .profile-card .evidence { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 5px; }
+  .profile-card .evidence li { background: var(--surface); color: var(--text-inv); padding: 6px 10px; font-size: .92rem; }
+  .profile-card .evidence li b { color: var(--accent-light); margin-right: 8px; }
+  .profile-card .pf-group { font-family: var(--font-head); font-weight: 600; font-size: 1.2rem; border-bottom: 2px solid var(--text); margin: 16px 0 8px; }
+  .profile-card .pf { margin: 0 0 10px; padding: 8px 12px; border-color: #CFC8BA; }
+  .profile-card .pf .ask { font-weight: 400; color: var(--muted); }
+  .profile-card .pf .opts { grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
+  .profile-card .credit { margin: 6px 0 0; }
+  @media (max-width: 600px) { .profile-card .pc-head { grid-template-columns: 1fr; } .profile-card .pc-head > img { max-height: 180px; } }
   /* A "deal" sort (class="sort deal"): one big card at a time beside the boxes, so the whole sort fits
      on one screen. Sorted cards shrink to picture tiles; hovering a tile shows it bigger with its name. */
   .sort.deal { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 14px; align-items: start; }
@@ -369,8 +385,8 @@ color:  red
 
 <script type="module">
 import {
-  TASKS, TASK_COUNT, CHOICES, SORTS, WRITING, REVEALS, SPOTS, SPECTRUMS, HUNTS, GLOSSARY, glossaryDef, partOf, unlockedBy,
-  markChoices, markSort, markWriting, markReveal, markSpectrum, markHunt, softIds, isSearchLink,
+  TASKS, TASK_COUNT, CHOICES, SORTS, WRITING, REVEALS, SPOTS, SPECTRUMS, HUNTS, PROFILES, GLOSSARY, glossaryDef, partOf, unlockedBy,
+  markChoices, markSort, markWriting, markReveal, markSpectrum, markHunt, markProfile, softIds, isSearchLink,
   markSpot, markSpotFlags, starsFor, allCorrect, cooldownSeconds, calcScore, coreDone, coreGold, seededRandom, shuffled,
 } from './checkers.js';
 
@@ -412,7 +428,7 @@ function fillImages() {
 // ── Glossary: words from GLOSSARY get a dotted underline and show their meaning on hover, focus or tap ──
 // Task content only: the definition boxes (.terms) and help panels already explain the words.
 const GL_RE = GLOSSARY.length ? new RegExp(`\\b(?:${GLOSSARY.map(g => g[0]).join('|')})\\b`, 'gi') : null;
-const GL_SKIP = '.lockbox, .terms, .key, .help, .wordbank, .gl, textarea, select, button, summary, figcaption, .credit, .level, .task-head';
+const GL_SKIP = '.lockbox, .terms, .key, .help, .wordbank, .gl, textarea, select, button, summary, figcaption, .credit, .level, .task-head, .pf-group';
 function glossify(root) {
   if (!GL_RE) return;
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT,
@@ -600,6 +616,32 @@ function showRefs(i) {
   document.querySelector(`#panel-${i} .refs-box`).innerHTML = `<div class="refs"><h3>Your references</h3>
     <ol>${refs.map(x => `<li>${esc(x)}</li>`).join('')}</ol>
     <p class="note">Copy these into your research log. In your own writing, name the source whenever you use one of these facts.</p></div>`;
+}
+
+// ── Profile: an audience profile card for a real product, built field by field ──
+// Each card shows the product, its picture and an evidence file; each field (age, gender, socio-economic group,
+// secondary audience, lifestyle…) is a set of options with its accepted answers. A wrong field costs gold and starts
+// the cooldown; any "why" boxes underneath are writing (soft). The fields are .q blocks, so radios save and colour
+// like a choice task, and the Classroom evidence report names each one by its label.
+function renderProfile(box) {
+  const key = box.dataset.profile, pr = PROFILES[key];
+  box.innerHTML = pr.cards.map(c => {
+    const pic = imgTag(c.img, c.label);
+    return `<div class="profile-card" data-card="${c.id}">
+      <div class="pc-head${pic ? '' : ' no-img'}">${pic}<div>
+        ${c.sector ? `<p class="kicker">${esc(c.sector)}</p>` : ''}<h3>${esc(c.label)}</h3>
+        <p class="kicker">Evidence file</p>
+        <ul class="evidence">${c.evidence.map((e, n) => `<li><b>${n + 1}</b>${esc(e)}</li>`).join('')}</ul>
+        ${c.credit ? `<p class="credit">Image: ${esc(c.credit)}. Shown for teaching.</p>` : ''}</div></div>
+      ${c.fields.map(f => `${f.group ? `<h4 class="pf-group">${esc(f.group)}</h4>` : ''}
+        <div class="q pf" data-qw="${f.id}">
+          <p class="q-text">${esc(f.label)}${f.ask ? ` <span class="ask">${esc(f.ask)}</span>` : ''}</p>
+          <div class="opts">${shuffled(f.opts, rng(f.id)).map(([k, t]) => `
+            <label class="opt"><input type="radio" name="${f.id}" value="${k}"${state.answers[f.id] === k ? ' checked' : ''}><span>${esc(t)}</span></label>`).join('')}
+          </div>
+        </div>`).join('')}
+    </div>`;
+  }).join('') + (pr.why ? `<div class="write why">${pr.why.map(writeQ).join('')}</div>` : '');
 }
 
 // ── Reveal: one round at a time, clue by clue ───────────
@@ -894,6 +936,7 @@ function gatherAndMark(i) {
   if (kind === 'spot') return spotStage(key) === 'fix' ? markSpot(key, state.answers) : markSpotFlags(key, state.answers);
   if (kind === 'spectrum') return markSpectrum(key, state.answers);
   if (kind === 'hunt') return markHunt(key, state.answers);
+  if (kind === 'profile') return markProfile(key, state.answers);
   return markWriting(key, state.answers);
 }
 
@@ -901,6 +944,7 @@ function gatherAndMark(i) {
 function softMessage(i, res) {
   const { key, kind } = TASKS[i], bad = id => res[id] === false;
   if (kind === 'spectrum') return '✍ Every card is in a good place. Now the boxes in red need a full sentence, using a word from the box above each one.';
+  if (kind === 'profile') return '✍ Every field is right. Now the boxes in red need a full sentence, using a word from the box above each one.';
   const rows = HUNTS[key].rows, bits = [];
   if (rows.some(r => r.accept && bad(r.id + '_fact'))) bits.push('find every fact');
   if (rows.some(r => bad(r.id + '_prod'))) bits.push('name your product');
@@ -1001,7 +1045,7 @@ function showDone(i) {
   document.querySelector(`.tab[data-idx="${i}"]`).classList.add('done', ...(gold ? ['gold'] : []));
   const reset = document.getElementById('reset-' + i);
   if (reset) reset.style.display = gold ? 'none' : '';
-  if (TASKS[i].kind === 'choice' || TASKS[i].kind === 'spot') document.querySelectorAll(`#panel-${i} .q input`).forEach(r => { r.disabled = true; });
+  if (['choice', 'spot', 'profile'].includes(TASKS[i].kind)) document.querySelectorAll(`#panel-${i} .q input`).forEach(r => { r.disabled = true; });
   revealNotes(i);
   // A hunt remembers the day its sources were looked at, for the references.
   const dateKey = TASKS[i].key + '_date';
@@ -1028,6 +1072,7 @@ function resetTask(i) {
     : kind === 'reveal' ? REVEALS[key].rounds.flatMap(r => [r.id, r.id + '_clues', r.id + '_tried'])
     : kind === 'spot' ? [key + '_stage', ...SPOTS[key].parts.flatMap(p => [p.id, p.id + '_fix'])]
     : kind === 'spectrum' ? SPECTRUMS[key].items.map(x => x.id)
+    : kind === 'profile' ? PROFILES[key].cards.flatMap(c => c.fields.map(f => f.id))
     // A hunt keeps the student's research: only the checked facts are cleared, to find again.
     : kind === 'hunt' ? HUNTS[key].rows.filter(r => r.accept).map(r => r.id + '_fact') : [];
   ids.forEach(id => delete state.answers[id]);
@@ -1135,6 +1180,7 @@ function renderTask(i) {
   panel.querySelectorAll('[data-spot]').forEach(renderSpot);
   panel.querySelectorAll('[data-spectrum]').forEach(renderSort);
   panel.querySelectorAll('[data-hunt]').forEach(renderHunt);
+  panel.querySelectorAll('[data-profile]').forEach(renderProfile);
   glossify(panel);
 }
 
