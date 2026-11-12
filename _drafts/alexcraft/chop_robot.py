@@ -2,7 +2,7 @@
 
     python chop_robot.py <repo>/_side/AlexCraft/robot [preview.png]
 
-Writes robot/<skin>/<part>.webp (+ head_off.webp: eyes unlit) for wooden, iron and steel,
+Writes robot/<skin>/<part>.webp (+ head_off.webp: eyes unlit, covered by googly eyes on the page) for wooden, iron and steel,
 and robot/layout.json. The page copies layout.json into its LAYOUT constant.
 
 All tiers share the wooden robot's frame (476 x 737 px), so parts of different tiers can be
@@ -53,10 +53,12 @@ SKINS = {
         eyes=[(647, 217, 27), (760, 220, 27)], gem=(704, 421, 33),
         off_eye=(52, 36, 22), socket=(60, 38, 22)),
     'iron': dict(src='iron_robot_source.jpg',
-        parts=dict(leg_left=box(300, 760, 512, 995), leg_right=box(512, 760, 725, 995), body=box(300, 420, 725, 755),
-                   arm_left=box(130, 420, 305, 900), arm_right=box(720, 420, 895, 900), head=box(300, 162, 725, 415),
-                   antenna=box(440, 20, 580, 162)),
-        eyes=[(432, 275, 24), (590, 275, 24)], gem=(513, 545, 40),
+        # legs: narrow beside the hands (so the arms' copper bands stay out), full width below them
+        parts=dict(leg_left=lambda yy, xx: box(548, 550, 705, 755)(yy, xx) | box(525, 625, 705, 755)(yy, xx),
+                   leg_right=lambda yy, xx: box(705, 550, 862, 755)(yy, xx) | box(705, 625, 885, 755)(yy, xx), body=box(560, 312, 850, 500),
+                   arm_left=box(425, 312, 560, 630), arm_right=box(850, 312, 985, 630), head=box(570, 118, 840, 312),
+                   antenna=box(655, 15, 755, 118)),
+        eyes=[(649, 205, 21), (758, 206, 21)], gem=(706, 401, 21),
         off_eye=(40, 34, 30), socket=(34, 28, 24)),
     'steel': dict(src='steel_robot_source.jpg',
         parts=dict(leg_left=steel_leg(330, 512), leg_right=steel_leg(512, 700), body=steel_body,
@@ -65,6 +67,9 @@ SKINS = {
         eyes=[(437, 275, 34), (587, 275, 34)], gem=(511, 545, 44),
         off_eye=(26, 40, 66), socket=(22, 34, 58)),
 }
+# Stretch some parts taller before scaling, so their shape is close to the wooden part's
+# (the iron body is wider and the arms stubbier than wood's; unstretched they crowd each other)
+STRETCH = dict(iron=dict(body=1.12, arm_left=1.2, arm_right=1.2))
 # where each part is pinned to the wooden part's box: (horizontal, vertical)
 ANCHOR = dict(leg_left=('centre', 'top'), leg_right=('centre', 'top'), body=('centre', 'top'),
               arm_left=('right', 'top'), arm_right=('left', 'top'), head=('centre', 'top'),
@@ -144,10 +149,14 @@ for skin, cfg in SKINS.items():
             for ex, ey, er in cfg['eyes']:
                 dark_glass(off, ex, ey, er, cfg['off_eye'])
             variants['head_off'] = off
+        f = STRETCH.get(skin, {}).get(part, 1)
+        pw, ph = x1 - x0, round((y1 - y0) * f)
         for name, v in variants.items():
-            Image.fromarray(v[y0:y1, x0:x1]).save(f'{OUT}/{skin}/{name}.webp', 'WEBP', quality=86, method=6)
+            im = Image.fromarray(v[y0:y1, x0:x1])
+            if f != 1:
+                im = im.resize((pw, ph), Image.LANCZOS)
+            im.save(f'{OUT}/{skin}/{name}.webp', 'WEBP', quality=86, method=6)
 
-        pw, ph = x1 - x0, y1 - y0
         if skin == 'wooden':
             wooden_boxes[part] = (x0 - FRAME[0], y0 - FRAME[1], pw, ph)
             L, T, W = x0 - FRAME[0], y0 - FRAME[1], pw
@@ -160,8 +169,11 @@ for skin, cfg in SKINS.items():
             T = by if ay == 'top' else by + bh - H
         entry = dict(left=round(L / FW * 100, 3), top=round(T / FH * 100, 3), width=round(W / FW * 100, 3),
                      ratio=round(ph / pw, 4))
+        if part == 'head':   # eye centres and size as fractions of the head image (the page puts googly eyes there)
+            entry['eyes'] = [dict(x=round((ex - x0) / pw, 4), y=round((ey - y0) / (y1 - y0), 4), d=round(2 * er / pw, 4))
+                             for ex, ey, er in cfg['eyes']]
         if part == 'body':   # socket centre and size as fractions of the body image
-            entry['socket'] = dict(x=round((gx - x0) / pw, 4), y=round((gy - y0) / ph, 4), d=round(2 * gr / pw, 4))
+            entry['socket'] = dict(x=round((gx - x0) / pw, 4), y=round((gy - y0) / (y1 - y0), 4), d=round(2 * gr / pw, 4))
         layout[skin][part] = entry
 
     # gem: just the glass, square, cut from the original image

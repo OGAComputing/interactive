@@ -158,6 +158,15 @@ h2 { font-size: 1.8rem; }
 @keyframes glow-iron { 50% { filter: drop-shadow(0 0 14px rgba(255,160,70,.85)); } }
 @keyframes glow-steel { 50% { filter: drop-shadow(0 0 16px rgba(90,200,255,.9)); } }
 @keyframes blink { 50% { opacity: .2; } }
+/* Googly eyes over the unlit head's eye sockets (until the power gem lights them up) */
+.stage .googly { position: absolute; aspect-ratio: 1; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle at 50% 40%, #fff 0 60%, #e4ebf0 100%); border: 2px solid #4a3220;
+  box-shadow: inset 0 -3px 4px rgba(0,0,0,.18), 0 2px 2px rgba(0,0,0,.3); }
+.stage .googly i { position: absolute; left: 22%; top: 22%; width: 56%; height: 56%; border-radius: 50%;
+  background: radial-gradient(circle at 38% 34%, #4a4a4a 0 12%, #111 34%); will-change: transform; }
+.stage .googly::after { content: ''; position: absolute; left: 18%; top: 12%; width: 30%; height: 20%; border-radius: 50%;
+  background: rgba(255,255,255,.85); transform: rotate(-25deg); z-index: 1; }
+@media (prefers-reduced-motion: no-preference) { .stage .googly.drop { animation: drop 650ms var(--ease-spring) both; } }
 @keyframes drop { from { transform: translateY(-60px) scale(1.1); opacity: 0; } to { transform: none; opacity: 1; } }
 @keyframes glow { 50% { filter: drop-shadow(0 0 14px rgba(110,255,110,.8)); } }
 .blueprint {
@@ -180,6 +189,8 @@ h2 { font-size: 1.8rem; }
 .pips { display: flex; gap: 10px; }
 .pip { width: 20px; height: 20px; transform: rotate(45deg); border: 3px solid var(--wood-edge); background: var(--paper); border-radius: 4px; transition: background 200ms, transform 200ms var(--ease-spring); }
 .pip.on { background: #3ddc5a; transform: rotate(45deg) scale(1.15); }
+.pip.bonus { border-color: var(--gold-dark); box-shadow: 0 0 0 2px var(--gold); }
+.pip.bonus.on { background: var(--gold); }
 .question { text-align: center; padding: 18px 12px 14px; }
 .sum { font: 800 clamp(3rem, 12vw, 4.6rem)/1 var(--display); font-variant-numeric: tabular-nums; display: flex; justify-content: center; align-items: center; gap: .2em; flex-wrap: wrap; }
 .answer-box { min-width: 2.4em; padding: 0 .2em; border-radius: 16px; border: 4px dashed var(--wood-edge); background: #fff; color: var(--blue-dark); min-height: 1.15em; display: inline-block; }
@@ -357,7 +368,7 @@ table.days th { font-size: .85rem; color: var(--ink-soft); font-weight: 600; }
     <div class="home">
       <div class="panel">
         <h1 class="hello" id="helloTitle">Ready, Alex?</h1>
-        <p class="lead">Answer as many as you can in <b>3 minutes</b>. Every right answer earns a coin, and <b>5 in a row</b> earns bonus coins!</p>
+        <p class="lead">Answer as many as you can in <b>3 minutes</b>. Every right answer earns a coin, and <b>3 or 5 in a row</b> earns bonus coins!</p>
         <div class="home-actions">
           <button class="btn big" id="startBtn" type="button"><svg aria-hidden="true"><use href="#i-play"/></svg>Start quest</button>
           <button class="btn blue" id="workshopBtn" type="button"><svg aria-hidden="true"><use href="#i-wrench"/></svg>Robot workshop</button>
@@ -384,7 +395,7 @@ table.days th { font-size: .85rem; color: var(--ink-soft); font-weight: 600; }
     </div>
     <div class="panel play-grid">
       <div>
-      <div class="combo"><span>Combo</span><div class="pips" id="pips" aria-hidden="true"><i class="pip"></i><i class="pip"></i><i class="pip"></i><i class="pip"></i><i class="pip"></i></div><span id="streakText" class="sr-only"></span></div>
+      <div class="combo"><span>Combo</span><div class="pips" id="pips" aria-hidden="true"><i class="pip"></i><i class="pip"></i><i class="pip bonus"></i><i class="pip"></i><i class="pip bonus"></i></div><span id="streakText" class="sr-only"></span></div>
       <div class="card question" id="qCard">
         <div class="sum" aria-live="off"><span id="qA">7</span><span aria-hidden="true">×</span><span class="sr-only">times</span><span id="qB">8</span><span>=</span><span class="answer-box" id="answer" aria-label="Your answer"></span></div>
         <div class="feedback" id="feedback" aria-live="assertive"></div>
@@ -515,6 +526,8 @@ const COINS = {
   perRight: 1,
   comboEvery: 5,       // right answers in a row
   comboBonus: 3,
+  miniComboAt: 3,      // a smaller bonus part-way through each run of 5 (3, 8, 13 ... in a row)
+  miniComboBonus: 2,
   accuracy: [[95, 10], [85, 6], [70, 3]],   // [min %, bonus]
   accuracyMinAnswered: 8,                   // so 1 out of 1 doesn't earn the 100% bonus
   newBest: 5,
@@ -537,7 +550,7 @@ const STORE_KEY = 'alexcraft-v1';
 // tier 0 = not built, 1 = wood, 2 = iron, 3 = steel. Upgrade cost = the wood cost x mult (to the nearest 5).
 const TIERS = [null,
   { skin: 'wooden', name: 'Wood',  mult: 1 },
-  { skin: 'iron',   name: 'Iron',  mult: 1.5, blurb: 'Heavy old iron, built to last.' },
+  { skin: 'iron',   name: 'Iron',  mult: 1.5, blurb: 'Tough polished iron with copper trim.' },
   { skin: 'steel',  name: 'Steel', mult: 2.5, blurb: 'Super shiny steel. Maximum cool!' },
 ];
 const MAX_TIER = TIERS.length - 1;
@@ -552,7 +565,8 @@ const PARTS = [
   { id: 'gem',       name: 'Power gem', cost: 140, blurb: 'Powers the robot up!' },
 ];
 // From robot/layout.json (made by _drafts/alexcraft/chop_robot.py). Percent of the 476 x 737 robot frame;
-// ratio = image height / width; socket = where the gem sits, as fractions of that body image.
+// ratio = image height / width; socket = where the gem sits, as fractions of that body image;
+// eyes = where the googly eyes go on the unlit head, as fractions of that head image.
 const FRAME_W_OVER_H = 476 / 737;
 const LAYOUT = {
   wooden: {
@@ -561,17 +575,17 @@ const LAYOUT = {
     body: {left: 17.437, top: 42.334, width: 65.126, ratio: 0.7419, socket: {x: 0.5, y: 0.4087, d: 0.2129}},
     arm_left: {left: 1.681, top: 44.233, width: 15.756, ratio: 3.7333},
     arm_right: {left: 82.563, top: 44.233, width: 15.756, ratio: 3.7333},
-    head: {left: 24.58, top: 15.468, width: 50.63, ratio: 0.8216},
+    head: {left: 24.58, top: 15.468, width: 50.63, ratio: 0.8216, eyes: [{x: 0.2656, y: 0.4444, d: 0.2241}, {x: 0.7344, y: 0.4596, d: 0.2241}]},
     antenna: {left: 43.277, top: 1.085, width: 13.445, ratio: 1.6562},
   },
   iron: {
-    leg_left: {left: 18.824, top: 73.541, width: 29.369, ratio: 1.164},
-    leg_right: {left: 51.973, top: 73.541, width: 29.247, ratio: 1.164},
-    body: {left: 18.497, top: 42.334, width: 63.007, ratio: 0.7927, socket: {x: 0.5024, y: 0.3631, d: 0.1951}},
-    arm_left: {left: -0.662, top: 44.233, width: 18.099, ratio: 2.8293},
-    arm_right: {left: 82.563, top: 44.233, width: 18.044, ratio: 2.8466},
-    head: {left: 21.285, top: 15.468, width: 57.22, ratio: 0.6432},
-    antenna: {left: 41.157, top: 4.534, width: 17.687, ratio: 0.9571},
+    leg_left: {left: 19.552, top: 73.541, width: 27.913, ratio: 1.2886},
+    leg_right: {left: 52.745, top: 73.541, width: 27.704, ratio: 1.2973},
+    body: {left: 15.951, top: 42.334, width: 68.099, ratio: 0.6786, socket: {x: 0.5071, y: 0.5059, d: 0.15}},
+    arm_left: {left: -0.189, top: 44.233, width: 17.626, ratio: 2.9835},
+    arm_right: {left: 82.563, top: 44.233, width: 17.698, ratio: 2.959},
+    head: {left: 23.839, top: 15.468, width: 52.112, ratio: 0.7755, eyes: [{x: 0.2735, y: 0.4579, d: 0.1714}, {x: 0.7184, y: 0.4632, d: 0.1714}]},
+    antenna: {left: 42.507, top: 2.564, width: 14.985, ratio: 1.3333},
   },
   steel: {
     leg_left: {left: 21.165, top: 73.541, width: 24.687, ratio: 1.6474},
@@ -579,7 +593,7 @@ const LAYOUT = {
     body: {left: 21.044, top: 42.334, width: 57.912, ratio: 0.9383, socket: {x: 0.4961, y: 0.3973, d: 0.2262}},
     arm_left: {left: -0.333, top: 44.233, width: 17.77, ratio: 2.9351},
     arm_right: {left: 82.563, top: 44.233, width: 17.712, ratio: 2.9542},
-    head: {left: 21.258, top: 15.468, width: 57.273, ratio: 0.642},
+    head: {left: 21.258, top: 15.468, width: 57.273, ratio: 0.642, eyes: [{x: 0.2869, y: 0.4469, d: 0.1932}, {x: 0.7131, y: 0.4469, d: 0.1932}]},
     antenna: {left: 40.966, top: 4.765, width: 18.067, ratio: 0.9172},
   },
 };
@@ -672,8 +686,8 @@ function renderCoins() { $('coinCount').textContent = S.coins; }
 // ── Robot drawing ────────────────────────────────────────
 const tierOf = id => S.tier[id] || 0;
 const costFor = (p, tier) => Math.round(p.cost * TIERS[tier].mult / 5) * 5;
-function partSrc(id, tier = Math.max(1, tierOf(id))) {
-  const file = id === 'head' && !tierOf('gem') ? 'head_off' : id;
+function partSrc(id, tier = Math.max(1, tierOf(id)), lit = false) {
+  const file = id === 'head' && !tierOf('gem') && !lit ? 'head_off' : id;
   return `robot/${TIERS[tier].skin}/${file}.webp`;
 }
 function nextPart() { return PARTS.find(p => !tierOf(p.id)); }
@@ -709,9 +723,84 @@ function drawRobot(stage, changed) {
     if (id === changed) img.classList.add(t > 1 ? 'upgraded' : 'drop');
     stage.appendChild(img);
   });
+  if (tierOf('head') && !tierOf('gem')) addGooglyEyes(stage, partBox('head'), id => id === changed);
   const built = PARTS.filter(p => tierOf(p.id)).map(p => `${TIERS[tierOf(p.id)].name.toLowerCase()} ${p.name.toLowerCase()}`);
   stage.setAttribute('aria-label', built.length ? `${S.robotName} so far: ${built.join(', ')}` : `${S.robotName} hasn't been started yet`);
 }
+
+// ── Googly eyes ──────────────────────────────────────────
+// The unlit head gets googly eyes: the pupils flop to the bottom, look at the pointer and
+// rattle about when it moves over the robot. Positions are fractions of the eye's travel (1 = rim).
+const GOOGLY = { size: 1.3, k: 0.07, damp: 0.87, kick: 0.02, bounce: 0.6, travel: 40 };
+const googlies = [];
+let gaze = null, googlyRAF = 0;
+function addGooglyEyes(stage, L, isNew) {
+  const headH = L.width * FRAME_W_OVER_H * L.ratio;
+  (L.eyes || []).forEach(e => {
+    const d = e.d * L.width * GOOGLY.size;
+    const el = document.createElement('span');
+    el.className = 'googly' + (isNew('head') ? ' drop' : '');
+    Object.assign(el.style, { left: L.left + e.x * L.width - d / 2 + '%', top: L.top + e.y * headH - d * FRAME_W_OVER_H / 2 + '%', width: d + '%' });
+    const pupil = document.createElement('i');
+    el.appendChild(pupil);
+    stage.appendChild(el);
+    // each eye is a little different, so they don't move in step
+    googlies.push({ el, pupil, x: 0, y: 1, vx: 0, vy: 0, k: GOOGLY.k * (0.8 + Math.random() * 0.4), damp: GOOGLY.damp + (Math.random() - 0.5) * 0.04 });
+  });
+  wakeGooglies();
+}
+function wakeGooglies() { if (!googlyRAF && googlies.length) googlyRAF = requestAnimationFrame(stepGooglies); }
+function stepGooglies() {
+  googlyRAF = 0;
+  let busy = false;
+  for (let i = googlies.length - 1; i >= 0; i--) {
+    const g = googlies[i];
+    if (!g.el.isConnected) { googlies.splice(i, 1); continue; }
+    let tx = 0, ty = 1;   // nothing to look at: the pupil flops to the bottom
+    const r = g.el.getBoundingClientRect();
+    if (gaze && r.width) {
+      const dx = gaze.x - (r.left + r.width / 2), dy = gaze.y - (r.top + r.height / 2), dist = Math.hypot(dx, dy) || 1;
+      const m = Math.min(1, dist / (r.width * 1.5));
+      tx = dx / dist * m; ty = dy / dist * m;
+    }
+    if (reduceMotion.matches) { g.x = tx; g.y = ty; g.vx = g.vy = 0; }
+    else {
+      g.vx = (g.vx + (tx - g.x) * g.k) * g.damp;
+      g.vy = (g.vy + (ty - g.y) * g.k) * g.damp;
+      g.x += g.vx; g.y += g.vy;
+      const len = Math.hypot(g.x, g.y);
+      if (len > 1) {   // hit the rim: bounce off it
+        const nx = g.x / len, ny = g.y / len, vn = g.vx * nx + g.vy * ny;
+        g.x = nx; g.y = ny;
+        if (vn > 0) { g.vx -= (1 + GOOGLY.bounce) * vn * nx; g.vy -= (1 + GOOGLY.bounce) * vn * ny; }
+      }
+      if (Math.abs(g.vx) + Math.abs(g.vy) > 0.002 || Math.hypot(tx - g.x, ty - g.y) > 0.01) busy = true;
+    }
+    g.pupil.style.transform = `translate(${(g.x * GOOGLY.travel).toFixed(1)}%, ${(g.y * GOOGLY.travel).toFixed(1)}%)`;
+  }
+  if (busy) googlyRAF = requestAnimationFrame(stepGooglies);
+}
+function rattleGooglies(dx, dy, extra) {
+  if (reduceMotion.matches) return;
+  googlies.forEach(g => {
+    g.vx += dx * GOOGLY.kick + (Math.random() - 0.5) * extra;
+    g.vy += dy * GOOGLY.kick + (Math.random() - 0.5) * extra;
+  });
+}
+document.addEventListener('pointermove', ev => {
+  if (!googlies.length) return;
+  gaze = { x: ev.clientX, y: ev.clientY };
+  if (ev.target.closest && ev.target.closest('.stage')) rattleGooglies(ev.movementX || 0, ev.movementY || 0, 0.12);
+  wakeGooglies();
+});
+document.addEventListener('pointerdown', ev => {
+  if (!googlies.length || !(ev.target.closest && ev.target.closest('.stage'))) return;
+  gaze = { x: ev.clientX, y: ev.clientY };
+  rattleGooglies(0, 0, 0.9);   // a tap shakes them hard (touch screens have no hover)
+  wakeGooglies();
+});
+document.documentElement.addEventListener('pointerleave', () => { gaze = null; wakeGooglies(); });
+
 function nextPartHTML() {
   const g = nextGoal();
   if (!g) return `<b>${esc(S.robotName)} is pure steel!</b> The ultimate robot. Legendary work, ${PLAYER}!`;
@@ -849,9 +938,11 @@ function submit() {
     $('feedback').innerHTML = `<svg aria-hidden="true"><use href="#i-check"/></svg>${PRAISE[Math.floor(Math.random() * PRAISE.length)]}`;
     $('roundRight').textContent = R.right;
     SFX.right();
-    if (R.streak % COINS.comboEvery === 0) {
-      R.comboCoins += COINS.comboBonus;
-      setTimeout(() => { SFX.coin(); toast(`${R.streak} in a row! +${COINS.comboBonus} coins`); flyCoins($('pips'), 4); }, 150);
+    const pos = R.streak % COINS.comboEvery;
+    const bonus = pos === 0 ? COINS.comboBonus : pos === COINS.miniComboAt ? COINS.miniComboBonus : 0;
+    if (bonus) {
+      R.comboCoins += bonus;
+      setTimeout(() => { SFX.coin(); toast(`${R.streak} in a row! +${bonus} coins`); flyCoins($('pips'), bonus + 1); }, 150);
     }
     $('roundCoins').textContent = R.right * COINS.perRight + R.comboCoins;
     renderPips();
@@ -881,7 +972,7 @@ function endRound() {
   const pct = R.answered ? Math.round(R.right / R.answered * 100) : 0;
   const loot = [];
   if (R.right) loot.push([`${R.right} right answer${R.right === 1 ? '' : 's'}`, R.right * COINS.perRight]);
-  if (R.comboCoins) loot.push([`Combo bonuses (5 in a row)`, R.comboCoins]);
+  if (R.comboCoins) loot.push([`Combo bonuses`, R.comboCoins]);
   if (R.answered >= COINS.accuracyMinAnswered) {
     const tier = COINS.accuracy.find(([min]) => pct >= min);
     if (tier) loot.push([`Accuracy bonus (${pct}%)`, tier[1]]);
@@ -941,7 +1032,7 @@ function renderWorkshop(justBuilt) {
     }
     const chip = t ? `<span class="chip t${t}">${TIERS[t].name}</span>` : '';
     return `<div class="part-row ${cls}">
-      <div class="thumb"><img src="${partSrc(p.id)}" alt=""></div>
+      <div class="thumb"><img src="${partSrc(p.id, undefined, true)}" alt=""></div>
       <div><h3>${p.name} ${chip}</h3><p>${blurb}</p></div>${action}</div>`;
   }).join('');
   const lowest = Math.min(...PARTS.map(p => tierOf(p.id)));
