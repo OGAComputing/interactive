@@ -103,9 +103,15 @@ jobs:
 
       - uses: actions/configure-pages@v4
 
+      # Name the artifact per attempt: a re-run keeps the earlier attempt's
+      # artifact, and deploy-pages refuses to choose between two with the
+      # same name ("Multiple artifacts named github-pages").
       - uses: actions/upload-pages-artifact@v3
         with:
           path: '.'
+          name: github-pages-${{ github.run_attempt }}
 
       - uses: actions/deploy-pages@v4
         id: deployment
+        with:
+          artifact_name: github-pages-${{ github.run_attempt }}

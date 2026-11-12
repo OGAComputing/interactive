@@ -6,7 +6,8 @@
 // One entry per tab, in order. kind: 'choice' (radio questions), 'sort' (cards into bins),
 // 'write' (open writing: completion only, never auto-marked, always gold), 'reveal' (clue-by-clue
 // rounds), 'spot' (find and fix the slips in a paragraph), 'spectrum' (cards placed on a line between
-// two ends), 'hunt' (live research: find a fact, paste its link) or 'profile' (an audience profile card). Vary them: no lesson should run the
+// two ends), 'hunt' (live research: find a fact, paste its link), 'profile' (an audience profile card) or
+// 'numbers' (questions answered from a real table of statistics). Vary them: no lesson should run the
 // same kind in two tabs in a row (Y10/CLAUDE.md).
 // Optional extra tabs take level: 'support' (a Warm-up for students who need a way in) or
 // 'challenge' (an extension). They don't count towards the score; put them at the END of this
@@ -106,7 +107,8 @@ export const SPECTRUMS = {};
 // and write the note (why the source can be trusted). accept = accepted answers (a match anywhere, ignoring case,
 // spaces and punctuation): a wrong fact costs gold and starts the cooldown. Without accept the fact must be a
 // real sentence. primary: a primary-research row (what a person said; no link; uses the primary… note fields).
-// pick: the student chooses the product, and pick is the label of that box. Links must be real web addresses,
+// pick: the student chooses the product, and pick is the label of that box. number: true = the fact must
+// contain a number (a statistic), checked softly like any fact without accept. Links must be real web addresses,
 // different on each row, and not a search results page. Done hunts show a reference list; the task can be saved
 // again, and Try for Gold clears only the checked facts.
 // Markup: <div class="hunt" data-hunt="t6"></div> with the usual check, reset and feedback.
@@ -123,6 +125,28 @@ export const HUNTS = {};
 // starts the cooldown; why boxes (as in a spectrum) are soft. Markup: <div class="profile" data-profile="t7"></div>
 // with the usual check, reset and feedback. Use for: audience profiles (2.2), and any "fill in the card" analysis.
 export const PROFILES = {};
+
+// ── Numbers (kind 'numbers'): real tables of audience statistics, then questions answered from them ──
+// { taskKey: { tables: [{ id, title, sector?, img?, head: [col, …], rows: [[cell, …], …], source }],
+//   qs: [{ id, q, a: number, tol?: number, before?: '£', unit?: 'million' } | { id, q, a: key, opts: [[key, text], …] }] } }
+// A number question takes what the student types ("56.9", "£56.9m", "1,200") and accepts it within tol of a
+// (default 0: exact). opts makes it a radio question instead (what the table does and doesn't tell you).
+// Columns whose cells are all numbers are right-aligned. Every table needs its real source (who, report, date).
+// A wrong answer costs gold and starts the cooldown. Markup: <div class="numbers" data-numbers="t8"></div> with the
+// usual check, reset and feedback. Use for: box office, circulation, subscribers, survey results (2.3, 7.3).
+export const NUMBERS = {};
+
+// ── Test a survey (kind 'pilot'): run an imaginary student's survey, spot the useless results, rewrite them ──
+// { taskKey: { by, run: button label, lines: [{ id, text, result, slip?: { prompt, rules: [{ must | not: regex, msg }],
+//   again: [{ when?: regex, show }] } }] } }
+// result / show = { title?, bars: [[label, count], …] } | { title?, quotes: [text, …] } | { title?, people: [text, …] },
+// or a list of them. Stage 1: Run (free) shows each line's results; the student clicks the ones that are no use to
+// the researcher (a wrong check costs time; only flagged cards go green or red). Stage 2: each slip is rewritten in a
+// box that starts as the original line. Rules are tested in order (ignoring case) and the first one broken shows its
+// msg under the box; a rewrite that works "runs again" and shows the first `again` whose `when` matches it. A rewrite
+// that doesn't work costs time. Markup: <div class="pilot" data-pilot="t5"></div>, with the usual check, reset and
+// feedback. Built for 2.3 (Jay's Fortnite survey); use for any question-writing slip (surveys, interviews).
+export const PILOTS = {};
 
 // ── Glossary: [pattern, meaning] for every word a typical 13-year-old might not know ──
 // The page underlines each match in the task content (questions, options, clues, paragraphs, prompts,
@@ -180,6 +204,41 @@ export function markSpectrum(taskKey, given) {
   return res;
 }
 
+export function markPilotFlags(taskKey, given) {
+  return Object.fromEntries(PILOTS[taskKey].lines.map(l => [l.id, !!given[l.id] === !!l.slip]));
+}
+export function markPilot(taskKey, given) {
+  const res = markPilotFlags(taskKey, given);
+  for (const l of PILOTS[taskKey].lines) if (l.slip) res[l.id + '_re'] = !pilotProblem(l, given[l.id + '_re'] ?? l.text);
+  return res;
+}
+// What's still wrong with a rewritten line ('' when it works).
+export function pilotProblem(line, text) {
+  const t = String(text ?? '');
+  if (squash(t) === squash(line.text)) return 'This is still the original: change it.';
+  if (!isRealSentence(t, 4)) return 'Write it out in full.';
+  for (const r of line.slip.rules) {
+    const hit = new RegExp(r.must ?? r.not, 'i').test(t);
+    if (r.must ? !hit : hit) return r.msg;
+  }
+  return '';
+}
+// The new results a working rewrite gets when it runs again.
+export function pilotAgain(line, text) {
+  const a = line.slip.again.find(x => !x.when || new RegExp(x.when, 'i').test(String(text ?? '')));
+  return a ? [].concat(a.show) : [];
+}
+
+export function markNumbers(taskKey, given) {
+  return Object.fromEntries(NUMBERS[taskKey].qs.map(q => [q.id, q.opts ? given[q.id] === q.a
+    : Math.abs(parseNumber(given[q.id]) - q.a) <= (q.tol || 0)]));
+}
+// The first number in what was typed, ignoring £, %, spaces and thousands commas ("£56.9m" → 56.9); NaN if none.
+export function parseNumber(text) {
+  const m = String(text ?? '').replace(/(\d),(?=\d{3}\b)/g, '$1').match(/-?\d+(?:\.\d+)?/);
+  return m ? Number(m[0]) : NaN;
+}
+
 export function markProfile(taskKey, given) {
   const pr = PROFILES[taskKey], res = {};
   for (const c of pr.cards) for (const f of c.fields) res[f.id] = f.ok.includes(given[f.id]);
@@ -192,7 +251,8 @@ export function markHunt(taskKey, given) {
   for (const r of hunt.rows) {
     const g = f => given[`${r.id}_${f}`], note = r.note || hunt.note;
     if (r.pick) res[r.id + '_prod'] = isRealName(g('prod'));
-    res[r.id + '_fact'] = r.accept ? factMatches(g('fact'), r.accept) : isRealSentence(g('fact'), r.minWords || 5);
+    res[r.id + '_fact'] = r.accept ? factMatches(g('fact'), r.accept)
+      : isRealSentence(g('fact'), r.minWords || 5) && (!r.number || /\d/.test(g('fact') || ''));
     if (!r.primary) {
       const u = linkKey(g('url'));
       res[r.id + '_url'] = isRealUrl(g('url')) && !seen.has(u);

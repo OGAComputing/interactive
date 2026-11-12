@@ -1285,6 +1285,9 @@ function init() {
   // A part the student has already worked in stays open (pages that gained parts after students began).
   const started = Math.max(1, ...TASKS.map((t, i) => (state.completed[i] || state.wrongs['t' + i] ? partOf(i) : 1)));
   unlockUpTo(window.Classroom?.isTeacher ? maxPart() : started);
+  // A link can open one task by its key: page.html#log opens the 'log' task (2.3 links to 2.1's research log).
+  const linked = TASKS.findIndex(t => '#' + t.key === location.hash);
+  if (linked >= 0) document.querySelector(`.tab[data-idx="${linked}"]`)?.click();
   // Restore the finished look without re-firing the celebration or a Classroom upload.
   if (coreDone(state.completed)) showAllDone();
   window.ActivityUI?.setScore(calcScore(state.completed, state.firstAttempt));

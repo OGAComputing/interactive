@@ -103,6 +103,19 @@ Each lesson teaches through real products students know (see "Examples" below). 
 | 7.2 | Putting It Together | B1–B2 | How genre, narrative, representation and techniques combine | Worked model on one trailer, then a second together |
 | 7.3 | Knowledge Check | All | Retrieval quiz across the term; fix gaps | Quiz → targeted re-teach |
 
+## Photoshop filler
+
+An optional Photoshop task (10–15 minutes) at the end of each week's lightest lesson, for students who finish early; the exported JPG and a Layers-panel screenshot go to Classroom as evidence. Photoshop 2024 in school, Photopea at home. Phase 1 only. Weeks 1 and 6 already have Photoshop tasks (1.2, 6.3).
+
+| Week | Lesson | Why this one | Skill | Used for |
+|---|---|---|---|---|
+| 2 | — | All three are full: 2.1 and 2.2 are the longest pages yet, and 2.3 has the audio interview | — | — |
+| 3 | 3.2 Why We Watch | One theory (uses & gratifications), applied to the diary they already have | Adjustment layers (Hue/Saturation, Brightness/Contrast) | Recolour a real thumbnail to promise a different gratification |
+| 4 | 4.1 Spot the Genre | Three linked terms; 4.2 and 4.3 carry more (4.3 has six story structures) | Layers: order, name and group them; Place Embedded | Build a genre poster from iconography pieces |
+| 5 | 5.3 How Are We Positioned? | Builds on 5.2's ideas; 5.1 is the heaviest lesson in the unit | Object Selection tool and a layer mask | Cut a person out and put them in a new setting: how does the representation change? |
+| 6 | — | 6.3's main task is already Photoshop (put the Type tool and Character panel in it) | — | — |
+| 7 | 7.3 Knowledge Check | Students with no gaps after the quiz skip the re-teach | Crop with the rule-of-thirds overlay; Export As (JPG vs PSD) | Re-crop a still from the term two ways |
+
 ## Examples
 
 - **Familiar first.** Every point is shown with real products students know, not abstract or invented ones: e.g. Minecraft, Fortnite, EA FC, Roblox; Stranger Things, Wednesday, Spider-Verse, Inside Out 2, Barbie; MrBeast, TikTok, Match of the Day; Nike / McDonald's / JD adverts; plus historical ones with a hook (Jaws, Jurassic Park, Toy Story, The Simpsons, Pac-Man, Pokémon Red, Smash Hits).
@@ -158,3 +171,4 @@ Each lesson teaches through real products students know (see "Examples" below). 
 - 2026-11-02: Two classes; the single-first class runs one lesson behind so both follow the same sequence.
 - 2026-11-02: The single-first class's first lesson is **1.0 Course Introduction**: what the course is, how Component 1 is assessed (no live-PSA details), and a baseline hub page (their media + reading the A Minecraft Movie poster), completion-scored. The double-first class does not do the baseline.
 - 2026-11-02: Hub activities are as interactive as possible, in the repo's usual style (drag-drop, per-question feedback, cooldowns, seeded order, `submitGrade` per task). Built: 1.0, 1.1 (Media Board: 21 real products by sector and era; Jurassic Park 1993 vs Dominion 2022), 1.2 (Jaws worked model, Barbie anchorage, Spider-Verse, Photoshop one photo two captions).
+- 2026-11-10: Optional Photoshop filler in each week's lightest lesson (Phase 1) to keep software skills sharp, not a fixed weekly slot (Photopea at home); see the table above.
