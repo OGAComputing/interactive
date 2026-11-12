@@ -239,9 +239,9 @@ export function isRealSentence(text, minWords = 4) {
   return words.filter(w => /[aeiouy]/.test(w)).length >= Math.ceil(words.length * 0.8);
 }
 
-// Wrong checks cost time, and more each time: 10 s, 20 s, then 30 s.
-export function cooldownSeconds(wrongCount) {
-  return Math.min(30, 10 * Math.max(1, wrongCount));
+// A wrong check costs 10 s, every time: enough to stop guessing, not so long it punishes (Nick, 2026-11-12).
+export function cooldownSeconds() {
+  return 10;
 }
 
 // House scoring: 80 for finishing every task, 20 more for getting them right first time.

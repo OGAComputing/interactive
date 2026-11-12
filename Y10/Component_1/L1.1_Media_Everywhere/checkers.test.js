@@ -134,8 +134,8 @@ describe('engine', () => {
     expect(calcScore([false, false, false, false], [true, true, true, true])).toBe(0);
   });
 
-  test('cooldowns grow 10, 20, 30 s and stop there', () => {
-    expect([1, 2, 3, 4].map(cooldownSeconds)).toEqual([10, 20, 30, 30]);
+  test('every wrong check costs 10 s, never more', () => {
+    expect([1, 2, 3, 4].map(cooldownSeconds)).toEqual([10, 10, 10, 10]);
   });
 
   test('card order is the same for one student and different between students', () => {

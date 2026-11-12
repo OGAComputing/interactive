@@ -41,7 +41,7 @@ when `--fix` was passed or the user asks; then fix, re-run tests, and re-report.
 10. **MCQ lengths:** for each question, compare option lengths. ❌ if the correct option is the
     longest in ≥ 50% of questions. List each offending question.
 11. **Real understanding checks:** no step passes on a button press alone. Guessing costs
-    something (checkpoint chains, escalating 10/20/30 s cooldowns that survive refresh,
+    something (checkpoint chains, escalating 10/20/30 s cooldowns that survive refresh (Y10 BTEC: a flat 10 s),
     lockouts). Order of options/cards is randomised per student (seeded, saved) and never in
     question order. Drag-and-drop preferred over dropdowns. Open text needs a "real sentence"
     check (4+ words, not repeated or mashed).

@@ -268,8 +268,9 @@ export function isRealName(text) {
   return (t.match(/[a-z]/gi) || []).length >= 2 && new Set(t.toLowerCase().replace(/\s/g, '')).size >= 2;
 }
 
-export function cooldownSeconds(wrongCount) {
-  return Math.min(30, 10 * Math.max(1, wrongCount));
+// A wrong check costs 10 s, every time: enough to stop guessing, not so long it punishes (Nick, 2026-11-12).
+export function cooldownSeconds() {
+  return 10;
 }
 
 export function calcScore(completed, firstAttempt) {
