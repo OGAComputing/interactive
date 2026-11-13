@@ -26,7 +26,7 @@ Iron and steel start with "Generate an image of exactly one robot, a single char
 `python chop_robot.py <repo>/_side/AlexCraft/robot [preview.png]` cuts all three into
 `robot/<skin>/<part>.webp` (+ `head_off.webp`, eyes unlit; the body gets an empty dark socket)
 and writes `robot/layout.json` (including each head's eye positions, where the page puts googly
-eyes until the power gem is built). Copy its numbers into `LAYOUT` in the page. `STRETCH` makes a
+eyes, which glow once the power gem is built). Copy its numbers into `LAYOUT` in the page. `STRETCH` makes a
 part taller before scaling when its shape is far from the wooden part's (the iron body and arms).
 
 The part regions, eye circles and gem circle for each image are hard-coded in `SKINS`. A new

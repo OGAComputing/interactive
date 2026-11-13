@@ -158,7 +158,7 @@ h2 { font-size: 1.8rem; }
 @keyframes glow-iron { 50% { filter: drop-shadow(0 0 14px rgba(255,160,70,.85)); } }
 @keyframes glow-steel { 50% { filter: drop-shadow(0 0 16px rgba(90,200,255,.9)); } }
 @keyframes blink { 50% { opacity: .2; } }
-/* Googly eyes over the unlit head's eye sockets (until the power gem lights them up) */
+/* Googly eyes over the head's eye sockets; the power gem lights them up in the head's colour */
 .stage .googly { position: absolute; aspect-ratio: 1; border-radius: 50%; pointer-events: none;
   background: radial-gradient(circle at 50% 40%, #fff 0 60%, #e4ebf0 100%); border: 2px solid #4a3220;
   box-shadow: inset 0 -3px 4px rgba(0,0,0,.18), 0 2px 2px rgba(0,0,0,.3); }
@@ -166,7 +166,15 @@ h2 { font-size: 1.8rem; }
   background: radial-gradient(circle at 38% 34%, #4a4a4a 0 12%, #111 34%); will-change: transform; }
 .stage .googly::after { content: ''; position: absolute; left: 18%; top: 12%; width: 30%; height: 20%; border-radius: 50%;
   background: rgba(255,255,255,.85); transform: rotate(-25deg); z-index: 1; }
-@media (prefers-reduced-motion: no-preference) { .stage .googly.drop { animation: drop 650ms var(--ease-spring) both; } }
+.stage .googly.lit { --glow: #6dff6d; --deep: #1fa83a; box-shadow: 0 0 10px 3px var(--glow), inset 0 -3px 4px rgba(0,0,0,.18); }
+.stage .googly.lit.t2 { --glow: #ffb35a; --deep: #d9651a; border-color: #3a3a3a; }
+.stage .googly.lit.t3 { --glow: #8fdcff; --deep: #1d7fd6; border-color: #1d4f86; }
+.stage .googly.lit i { background: radial-gradient(circle, #111 0 26%, var(--glow) 31%, var(--deep) 72%, #111 76%); box-shadow: 0 0 8px 2px var(--glow); }
+@media (prefers-reduced-motion: no-preference) {
+  .stage .googly.drop { animation: drop 650ms var(--ease-spring) both; }
+  .stage .googly.lit:not(.drop) { animation: eye-glow 2.4s ease-in-out infinite; }
+}
+@keyframes eye-glow { 50% { box-shadow: 0 0 18px 6px var(--glow), inset 0 -3px 4px rgba(0,0,0,.18); } }
 @keyframes drop { from { transform: translateY(-60px) scale(1.1); opacity: 0; } to { transform: none; opacity: 1; } }
 @keyframes glow { 50% { filter: drop-shadow(0 0 14px rgba(110,255,110,.8)); } }
 .blueprint {
@@ -560,13 +568,13 @@ const PARTS = [
   { id: 'body',      name: 'Body',      cost: 50,  blurb: 'Solid oak, with an empty socket.' },
   { id: 'arm_left',  name: 'Left arm',  cost: 60,  blurb: 'Bolted on with brass.' },
   { id: 'arm_right', name: 'Right arm', cost: 75,  blurb: 'Ready for a high five.' },
-  { id: 'head',      name: 'Head',      cost: 90,  blurb: 'Its eyes are dark... for now.' },
+  { id: 'head',      name: 'Head',      cost: 90,  blurb: 'Googly eyes! The power gem will light them up.' },
   { id: 'antenna',   name: 'Antenna',   cost: 110, blurb: 'Picks up signals from far away.' },
   { id: 'gem',       name: 'Power gem', cost: 140, blurb: 'Powers the robot up!' },
 ];
 // From robot/layout.json (made by _drafts/alexcraft/chop_robot.py). Percent of the 476 x 737 robot frame;
 // ratio = image height / width; socket = where the gem sits, as fractions of that body image;
-// eyes = where the googly eyes go on the unlit head, as fractions of that head image.
+// eyes = where the googly eyes go on the head, as fractions of that head image.
 const FRAME_W_OVER_H = 476 / 737;
 const LAYOUT = {
   wooden: {
@@ -723,14 +731,14 @@ function drawRobot(stage, changed) {
     if (id === changed) img.classList.add(t > 1 ? 'upgraded' : 'drop');
     stage.appendChild(img);
   });
-  if (tierOf('head') && !tierOf('gem')) addGooglyEyes(stage, partBox('head'), id => id === changed);
+  if (tierOf('head')) addGooglyEyes(stage, partBox('head'), id => id === changed);
   const built = PARTS.filter(p => tierOf(p.id)).map(p => `${TIERS[tierOf(p.id)].name.toLowerCase()} ${p.name.toLowerCase()}`);
   stage.setAttribute('aria-label', built.length ? `${S.robotName} so far: ${built.join(', ')}` : `${S.robotName} hasn't been started yet`);
 }
 
 // ── Googly eyes ──────────────────────────────────────────
-// The unlit head gets googly eyes: the pupils flop to the bottom, look at the pointer and
-// rattle about when it moves over the robot. Positions are fractions of the eye's travel (1 = rim).
+// The head has googly eyes: the pupils flop to the bottom, look at the pointer and rattle about
+// when it moves over the robot. Once the power gem is built they glow in the head's colour. Positions are fractions of the eye's travel (1 = rim).
 const GOOGLY = { size: 1.3, k: 0.07, damp: 0.87, kick: 0.02, bounce: 0.6, travel: 40 };
 const googlies = [];
 let gaze = null, googlyRAF = 0;
@@ -739,7 +747,7 @@ function addGooglyEyes(stage, L, isNew) {
   (L.eyes || []).forEach(e => {
     const d = e.d * L.width * GOOGLY.size;
     const el = document.createElement('span');
-    el.className = 'googly' + (isNew('head') ? ' drop' : '');
+    el.className = 'googly' + (tierOf('gem') ? ` lit t${tierOf('head')}` : '') + (isNew('head') ? ' drop' : '');
     Object.assign(el.style, { left: L.left + e.x * L.width - d / 2 + '%', top: L.top + e.y * headH - d * FRAME_W_OVER_H / 2 + '%', width: d + '%' });
     const pupil = document.createElement('i');
     el.appendChild(pupil);
@@ -747,6 +755,7 @@ function addGooglyEyes(stage, L, isNew) {
     // each eye is a little different, so they don't move in step
     googlies.push({ el, pupil, x: 0, y: 1, vx: 0, vy: 0, k: GOOGLY.k * (0.8 + Math.random() * 0.4), damp: GOOGLY.damp + (Math.random() - 0.5) * 0.04 });
   });
+  if (isNew('gem')) setTimeout(() => { rattleGooglies(0, 0, 1.4); wakeGooglies(); }, 350);   // powering up makes them spin
   wakeGooglies();
 }
 function wakeGooglies() { if (!googlyRAF && googlies.length) googlyRAF = requestAnimationFrame(stepGooglies); }
