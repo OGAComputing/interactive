@@ -275,8 +275,19 @@ color:  indigo
   .num-in.wide { width: 190px; letter-spacing: .08em; }
   .num-in:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-light); }
   .answer-line { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-weight: 600; margin-top: 6px; }
-  .dec-check { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-weight: 600; margin-top: 8px; }
-  .dec-check .num-in { width: 80px; }
+  /* Denary check: place-value headings, and a box at the end of each row */
+  .pv-head { font-family: var(--font-mono); font-size: .75rem; font-weight: 700; color: var(--muted); text-align: center; }
+  .pv-head.dec-head { font-family: inherit; text-transform: uppercase; letter-spacing: .05em; padding-left: 22px; }
+  .dec-cell { display: flex; align-items: center; gap: 6px; padding-left: 8px; font-family: var(--font-mono); font-weight: 700; color: var(--muted); }
+  .dec-cell .num-in { width: 72px; padding: 0 6px; text-align: center; }
+  .sum-line.dec-line { grid-column: auto; margin-left: 22px; }
+  /* Scaffold: each 1 shows its place value underneath (the answer row's update as the bits are set) */
+  .show-pv [data-pv] { position: relative; }
+  .show-pv [data-pv][data-on="1"]::after {
+    content: attr(data-pv); position: absolute; bottom: 1px; left: 0; right: 0;
+    font-size: .6rem; line-height: 1; color: var(--accent-dark); font-weight: 700;
+  }
+  .show-pv [data-pv][data-on="1"] { padding-bottom: 8px; }
   .tap-note { font-size: .85rem; color: var(--muted); margin: -4px 0 8px; }
 
   /* ── Checkpoint chains ───────────────────────────────── */
@@ -392,6 +403,11 @@ color:  indigo
     .bgrid { gap: 3px; }
     .bgrid .rl { font-size: .62rem; padding-right: 2px; letter-spacing: 0; }
     .cell, .cell-in, .bit-toggle, .carry-toggle { font-size: .95rem; height: 40px; border-radius: 6px; }
+    .pv-head { font-size: .55rem; }
+    .pv-head.dec-head { padding-left: 4px; }
+    .dec-cell { padding-left: 2px; gap: 2px; }
+    .dec-cell .num-in { width: 46px; height: 40px; padding: 0 2px; font-size: .95rem; }
+    .sum-line.dec-line { margin-left: 8px; }
   }
 
   /* ── Hover definitions: dotted words show their meaning on hover, focus or tap ── */
@@ -509,7 +525,7 @@ color:  indigo
     <ol>
       <li>If a number is shorter than 8 bits, put <strong>0s on the left</strong> until it has 8. The value doesn't change.</li>
       <li>Add right to left, writing every carry above the next column.</li>
-      <li>Check: convert both numbers and the answer to denary. The first two add up to the answer.</li>
+      <li>Check: convert each row to denary (add the place values of its 1s) and write it in the box at the end of that row. The two numbers add up to the answer.</li>
     </ol>
   </details>
   <div id="area-3"></div>
@@ -777,9 +793,11 @@ function renderWaiting(i) {
 const colPx = width => width === 8 ? 58 : 64;
 const gridStyle = (cols, width) => `grid-template-columns:auto repeat(${cols}, minmax(0, ${colPx(width)}px))`;
 
-function bitCells(bits) {
-  return [...bits].map(c => `<div class="cell bit">${c}</div>`).join('');
+// pv: the column place values, shown under each 1 on the scaffolded denary step.
+function bitCells(bits, pv) {
+  return [...bits].map((c, k) => `<div class="cell bit"${pv ? ` data-pv="${pv[k]}" data-on="${c}"` : ''}>${c}</div>`).join('');
 }
+const placeValues = width => Array.from({ length: width }, (_, k) => 2 ** (width - 1 - k));
 
 // The two numbers stacked, read-only (chains): no carry or answer rows.
 function stackedSum(a, b, width) {
@@ -821,6 +839,7 @@ function promptFor(q) {
 
 function bodyFor(i, q, d) {
   const W = q.width;
+  const pv = q.dec === 'scaffold' ? placeValues(W) : null;   // place value under each 1 (first denary step only)
   const extraCell = html => q.extra ? html : '';
   const blank = '<div class="cell none"></div>';
 
@@ -840,12 +859,12 @@ function bodyFor(i, q, d) {
     ? Array.from({ length: W }, (_, k) => `<input class="cell-in" data-field="${field}" data-k="${k}" data-part="${part}${k}" maxlength="1"
         inputmode="numeric" autocomplete="off" aria-label="${name}, bit ${k + 1}" data-title="Current question: ${name} bit ${k + 1}"
         value="${esc(d[field][k] ?? '')}">`).join('')
-    : bitCells(bits);
+    : bitCells(bits, pv);
 
   const answerRow = Array.from({ length: W }, (_, k) => {
     const v = d.bits[k] ?? '';
     return `<button type="button" class="cell bit-toggle ${v ? 'set' : ''}" data-action="toggle" data-task="${i}" data-field="bits" data-k="${k}"
-      data-part="s${k}" aria-label="Answer bit ${k + 1}: ${v || 'not set'}">${v || '?'}</button>`;
+      ${pv ? `data-pv="${pv[k]}" data-on="${v}"` : ''} data-part="s${k}" aria-label="Answer bit ${k + 1}: ${v || 'not set'}">${v || '?'}</button>`;
   }).join('');
   const finalBox = `<button type="button" class="cell carry-toggle ${d.extra ? 'set' : ''} ${q.lightFinal ? 'lit' : ''}" data-action="toggle" data-task="${i}"
     data-field="extra" data-part="x" aria-label="New bit on the left for a final carry: ${d.extra || 'none'}">${d.extra}</button>`;
@@ -856,24 +875,24 @@ function bodyFor(i, q, d) {
   if (q.extra) notes.push('The dashed box on the left of the answer is for a final carry. Leave it empty if there isn\'t one.');
   if (q.pad) notes.push('Type each number as 8 bits in the white boxes first.');
 
-  const dec = q.dec ? `<div class="dec-check">Check in denary:
-      <input class="num-in" data-field="dec" data-sub="a" data-part="da" maxlength="3" inputmode="numeric" autocomplete="off"
-        aria-label="First number in denary" data-title="Current question: first number in denary" value="${esc(d.dec.a ?? '')}"> +
-      <input class="num-in" data-field="dec" data-sub="b" data-part="db" maxlength="3" inputmode="numeric" autocomplete="off"
-        aria-label="Second number in denary" data-title="Current question: second number in denary" value="${esc(d.dec.b ?? '')}"> =
-      <input class="num-in" data-field="dec" data-sub="sum" data-part="ds" maxlength="3" inputmode="numeric" autocomplete="off"
-        aria-label="Answer in denary" data-title="Current question: answer in denary" value="${esc(d.dec.sum ?? '')}">
-    </div>` : '';
-
+  // Denary check: a box at the end of each row, so each row's total goes beside that row,
+  // with the place values as headings over the columns.
+  const decBox = (sub, part, name) => `<div class="dec-cell"><span aria-hidden="true">=</span><input class="num-in" data-field="dec" data-sub="${sub}"
+      data-part="${part}" maxlength="3" inputmode="numeric" autocomplete="off" aria-label="${name} in denary"
+      data-title="Current question: ${name.toLowerCase()} in denary" value="${esc(d.dec[sub] ?? '')}"></div>`;
+  const decCol = html => q.dec ? html : '';
+  const pvRow = q.dec ? `<span class="rl"></span>${extraCell(blank)}${placeValues(W).map(v => `<div class="pv-head">${v}</div>`).join('')}<div class="pv-head dec-head">Denary</div>` : '';
+  if (q.dec === 'scaffold') notes.push('Small numbers under each 1 show its place value. Add them up for each row and write the total in the box at the end of the row.');
+  else if (q.dec) notes.push('Work out each row in denary and write it in the box at the end of that row.');
   return `${notes.length ? `<p class="tap-note">${notes.join(' ')}</p>` : ''}
-    <div class="bgrid" style="${gridStyle(cols, W)}">
-      <span class="rl">Carry</span>${extraCell(blank)}${carryRow}
-      <span class="rl"></span>${extraCell(blank)}${numRow(q.bitsA, 'rowA', 'ra', 'First number')}
-      <span class="rl op">+</span>${extraCell(blank)}${numRow(q.bitsB, 'rowB', 'rb', 'Second number')}
-      <div class="sum-line"></div>
-      <span class="rl">Answer</span>${extraCell(finalBox)}${answerRow}
+    <div class="bgrid ${pv ? 'show-pv' : ''}" style="${gridStyle(cols, W)}${q.dec ? ' auto' : ''}">
+      ${pvRow}
+      <span class="rl">Carry</span>${extraCell(blank)}${carryRow}${decCol(blank)}
+      <span class="rl"></span>${extraCell(blank)}${numRow(q.bitsA, 'rowA', 'ra', 'First number')}${decCol(decBox('a', 'da', 'First number'))}
+      <span class="rl op">+</span>${extraCell(blank)}${numRow(q.bitsB, 'rowB', 'rb', 'Second number')}${decCol(decBox('b', 'db', 'Second number'))}
+      <div class="sum-line" style="grid-column: 2 / span ${cols}"></div>${decCol('<div class="sum-line dec-line"></div>')}
+      <span class="rl">Answer</span>${extraCell(finalBox)}${answerRow}${decCol(decBox('sum', 'ds', 'Answer'))}
     </div>
-    ${dec}
     <input type="text" class="ev" readonly tabindex="-1" data-title="Current question: carries and answer"
       value="${esc(`carries ${q.carry === 'write' ? (d.carries.map(c => c || '·').join('') || 'none') : 'given'}, answer ${d.extra}${d.bits.join('')}`)}">`;
 }
@@ -989,6 +1008,7 @@ function toggleBit(i, field, k) {
   const sel = field === 'extra' ? '[data-field="extra"]' : `[data-field="${field}"][data-k="${k}"]`;
   const btn = card.querySelector(`[data-action="toggle"]${sel}`);
   btn.textContent = v;
+  if (btn.dataset.pv) btn.dataset.on = v;
   btn.classList.toggle('set', v !== '');
   btn.classList.remove('is-right', 'is-wrong');
   btn.setAttribute('aria-label', btn.getAttribute('aria-label').replace(/: [^:]*$/, `: ${v || 'none'}`));

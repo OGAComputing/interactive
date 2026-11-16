@@ -60,11 +60,14 @@ describe('pools', () => {
 
 describe('ladders', () => {
   it('step counts and fading', () => {
-    expect(STEP_COUNT).toEqual({ 0: 5, 1: 3, 3: 4 });
+    expect(STEP_COUNT).toEqual({ 0: 5, 1: 3, 3: 5 });
     expect(LADDERS[0].slice(0, 2).every(s => s.carry === 'given')).toBe(true);
     expect(LADDERS[0].slice(2).every(s => s.carry === 'write')).toBe(true);
     expect(LADDERS[1].every(s => s.extra)).toBe(true);
     expect(LADDERS[3].some(s => s.pad) && LADDERS[3].some(s => s.dec)).toBe(true);
+    // The denary check is scaffolded (place values under the 1s, smaller numbers) before it is done unaided.
+    const decSteps = LADDERS[3].filter(s => s.dec).map(s => s.dec);
+    expect(decSteps).toEqual(['scaffold', true]);
   });
   it('questions are stable for a seed and a retry never repeats the sum just got wrong', () => {
     expect(ladderQuestion(0, 2, 'abc', 0)).toEqual(ladderQuestion(0, 2, 'abc', 0));

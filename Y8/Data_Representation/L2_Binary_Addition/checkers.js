@@ -104,6 +104,8 @@ export const POOLS = {
   mixed4:    [...carry4.slice(0, over4.length), ...over4.slice(0, carry4.length)], // half with a final carry, half without
   add8:      pairs(range(20, 230), range(20, 230), (a, b) =>
                a + b <= 255 && ones(a) >= 3 && ones(b) >= 3 && carryCount(a, b, 8) >= 2 && carryCount(a, b, 8) <= 4),
+  dec8:      pairs(range(17, 99), range(17, 99), (a, b) =>                    // smaller numbers for the first denary check
+               ones(a) >= 3 && ones(b) >= 3 && carryCount(a, b, 8) >= 2 && carryCount(a, b, 8) <= 3),
   pad8:      pairs(range(32, 127), range(5, 15), (a, b) =>                     // 6–7 bits + 3–4 bits, padded to 8
                ones(a) >= 3 && ones(b) >= 2 && carryCount(a, b, 8) >= 2),
 };
@@ -121,6 +123,7 @@ function pickFrom(pool, seed) {
 // lightFinal: that box is lit up
 // pad:        the numbers are shown short; the student writes both as 8 bits first
 // dec:        after adding, the student converts all three numbers to denary to check
+//             (a box at the end of each row; 'scaffold' also shows each 1's place value under it)
 // fold:       the method box is folded away
 export const LADDERS = {
   0: [
@@ -143,8 +146,10 @@ export const LADDERS = {
     { pool: 'add8', width: 8, carry: 'write', help: 'Same again with 8 bits.' },
     { pool: 'pad8', width: 8, carry: 'write', pad: true,
       help: 'These numbers are shorter than 8 bits. Write each one as 8 bits by putting 0s on the left, then add.' },
+    { pool: 'dec8', width: 8, carry: 'write', dec: 'scaffold',
+      help: 'Add, then check in denary, one row at a time. Under every 1 is its place value: add those up and write the total in the box at the end of that row. The two numbers should add up to your answer.' },
     { pool: 'add8', width: 8, carry: 'write', dec: true,
-      help: 'Add, then check: convert both numbers and your answer to denary. The first two should add up to the third.' },
+      help: 'Same check, without the place values under the 1s: use the headings at the top. Each row total goes in the box at the end of that row.' },
   ],
 };
 
