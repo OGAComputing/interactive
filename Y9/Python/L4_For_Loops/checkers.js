@@ -144,10 +144,10 @@ export const runKind = d => (polygonWith(d, 4) ? 'square' : segsOf(d).length ? '
 // ── Investigate ──────────────────────────────────────────────────────────────
 
 const FOR_N = n => new RegExp(`^[ \\t]*for\\s+\\w+\\s+in\\s+range\\s*\\(\\s*${n}\\s*\\)\\s*:`, 'm');
-const FOR_1_4 = /^[ \t]*for\s+\w+\s+in\s+range\s*\(\s*1\s*,\s*4\s*\)\s*:/m;
 const TURN_RE = n => new RegExp(`^[ \\t]+\\w+\\s*\\.\\s*(?:left|lt|right|rt)\\s*\\(\\s*${n}\\s*\\)`, 'm');
 const TURN_LINE = /^\s*\w+\s*\.\s*(?:left|lt|right|rt)\s*\(/;
-const PRINT_I = /^\s*print\s*\(\s*i\s*\)\s*$/;
+const PRINT_PING = /^\s*print\s*\(\s*(["'])PING\1\s*\)\s*$/i;
+const PRINT_SENT = /^\s*print\s*\(\s*(["'])SENT\1\s*\)\s*$/i;
 
 // The first for loop: its line, and the lines indented under it (blank lines skipped).
 function loopParts(raw) {
@@ -195,7 +195,7 @@ const ranThis = (raw, ctx) => !!ctx.lastRun?.ok && ctx.lastRun.code.trim() === r
 const RUN_HINT = (again, first) => (raw, ctx) => (ranThis(raw, ctx) ? again : first);
 
 // Investigate starts from the beacon program and each step builds on the last:
-//   1 range(4) → range(8)    2 range(3) and a 120° turn    3 print(i) in the loop, range(1, 4)
+//   1 range(4) → range(8)    2 range(3) and a 120° turn    3 print("PING") in the loop, print("SENT") after it
 //   4 the bug step (the turn moved out of the loop)
 export const INV_CHECKS = {
   inv1: {
@@ -214,11 +214,13 @@ export const INV_CHECKS = {
   },
   inv3: {
     reqs: [
-      { test: raw => { const p = loopParts(raw); return !!p && p.body.some(l => PRINT_I.test(l)) && indentOf(p.body.find(l => PRINT_I.test(l))) === indentOf(p.body[0]); },
-        hint: 'Add print(i) as the last line of the loop, indented the same as the lines above it.',
-        wrong: raw => { const p = loopParts(raw); return !!p && !p.body.some(l => PRINT_I.test(l)) && liveLines(raw).split('\n').some(l => PRINT_I.test(l)); } },
-      { test: raw => hasLine(raw, FOR_1_4), hint: 'On line 3, change range(3) to range(1, 4)' },
-      { test: (raw, ctx) => ranThis(raw, ctx), hint: RUN_HINT('Press ▶ Run code again: the code has changed since you last ran it.', 'Press ▶ Run code and read the numbers it prints.') },
+      { test: raw => { const p = loopParts(raw); return !!p && p.body.some(l => PRINT_PING.test(l)) && indentOf(p.body.find(l => PRINT_PING.test(l))) === indentOf(p.body[0]); },
+        hint: 'Add print("PING") as the last line of the loop, indented the same as the lines above it.',
+        wrong: raw => { const p = loopParts(raw); return !!p && !p.body.some(l => PRINT_PING.test(l)) && liveLines(raw).split('\n').some(l => PRINT_PING.test(l)); } },
+      { test: raw => { const p = loopParts(raw); return !!p && p.after.some(l => PRINT_SENT.test(l) && indentOf(l) === p.head); },
+        hint: 'Add print("SENT") at the very bottom, at the left edge: not indented, so it is not part of the loop.',
+        wrong: raw => { const p = loopParts(raw); return !!p && p.body.some(l => PRINT_SENT.test(l)); } },
+      { test: (raw, ctx) => ranThis(raw, ctx), hint: RUN_HINT('Press ▶ Run code again: the code has changed since you last ran it.', 'Press ▶ Run code and count how many times each word prints.') },
     ],
   },
   inv4: {
@@ -433,5 +435,56 @@ export function mod2LinesAdded(code) {
   return {
     colour: before.some(l => /^\w+\.(pencolor|color)\s*\(\s*(["'])red\2\s*\)\s*$/.test(l)),
     size: before.some(l => /^\w+\.(pensize|width)\s*\(\s*3\s*\)\s*$/.test(l)),
+  };
+}
+
+// ── Modification 3 and 4's checklists ─────────────────────────────────────────
+// Students struggled to start the pentagon and forgot how to write input(), so both steps
+// show a skeleton inside the task card, and each row ticks once it's in the code. Only a
+// guide: the checks still look at the drawing. Any loop variable, turtle name or spacing.
+
+// The for loops at the left edge: where each is, its line, and the indented lines under it.
+function topLoops(code) {
+  const lines = String(code || '').replace(/\r/g, '').split('\n');
+  const loops = [];
+  lines.forEach((line, at) => {
+    if (!/^for\b.*:\s*$/.test(line)) return;
+    const body = [];
+    for (let k = at + 1; k < lines.length; k++) {
+      if (!lines[k].trim()) continue;
+      if (!/^\s/.test(lines[k])) break;
+      body.push(lines[k]);
+    }
+    loops.push({ at, line, body });
+  });
+  return { lines, loops };
+}
+const inRange = (line, arg) => new RegExp(`^for\\s+\\w+\\s+in\\s+range\\s*\\(\\s*${arg}\\s*\\)\\s*:\\s*$`).test(line);
+const FWD_IN = /^\s+\w+\s*\.\s*(?:forward|fd)\s*\(/;
+const turnBy = (line, arg) => new RegExp(`^\\s+\\w+\\s*\\.\\s*(?:left|lt|right|rt)\\s*\\(\\s*${arg}\\s*\\)\\s*$`).test(line);
+
+//   loop: a second for loop at the left edge, with range(5)
+//   fwd:  a forward() indented under it        turn: a 72° turn indented under it
+export function mod3LinesAdded(code) {
+  const penta = topLoops(code).loops.slice(1).find(L => inRange(L.line, '5'));
+  return {
+    loop: !!penta,
+    fwd: !!penta && penta.body.some(l => FWD_IN.test(l)),
+    turn: !!penta && penta.body.some(l => turnBy(l, '72(?:\\.0+)?')),
+  };
+}
+
+//   ask:  name = int(input(...)) at the left edge, below the first two loops
+//   loop: a for loop after it with range(name)  turn: a turn of 360 / name indented under it
+export function mod4LinesAdded(code) {
+  const { lines, loops } = topLoops(code);
+  const below = loops.length >= 2 ? loops[1].at : Infinity;
+  const askAt = lines.findIndex((l, i) => i > below && /^\w+\s*=\s*int\s*\(\s*input\s*\(.*\)\s*\)\s*$/.test(l));
+  const name = askAt === -1 ? null : lines[askAt].match(/^\w+/)[0];
+  const L = name ? loops.find(x => x.at > askAt && inRange(x.line, name)) : null;
+  return {
+    ask: !!name,
+    loop: !!L,
+    turn: !!L && L.body.some(l => turnBy(l, `360\\s*/\\s*${name}`)),
   };
 }

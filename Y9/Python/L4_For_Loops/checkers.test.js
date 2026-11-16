@@ -2,7 +2,7 @@ import { describe as group, it, expect } from 'vitest';
 import {
   paths, polygonOf, polygonsIn, describe, runKind, breakCode, isBugFixed, hasBugLine, evalInv,
   evalMod, MOD_TEST_BANK, MOD_CHECKS, evalMake, MAKE_TEST_BANK, MAKE_CHECK, FLARE_CHOICES,
-  evalExt, EXT_TEST_BANK, EXT_CHECK, ownOutput, mod2LinesAdded,
+  evalExt, EXT_TEST_BANK, EXT_CHECK, ownOutput, mod2LinesAdded, mod3LinesAdded, mod4LinesAdded,
 } from './checkers.js';
 
 // A tiny turtle that records drawings in the same shape as turtle-canvas.js's turtle module.
@@ -100,27 +100,34 @@ group('Investigate ticks', () => {
     const wrongAngle = code.replace('120', '100');
     expect(evalInv(2, wrongAngle, ran(wrongAngle)).wrongs[1]).toBe(true);
   });
-  it('step 3: print(i) inside the loop and range(1, 4)', () => {
-    const tri = STARTER.replace('range(4)', 'range(1, 4)').replace('left(90)', 'left(120)');
-    const code = tri + '\n    print(i)';
+  it('step 3: print("PING") inside the loop, print("SENT") after it', () => {
+    const tri = STARTER.replace('range(4)', 'range(3)').replace('left(90)', 'left(120)');
+    const code = tri + '\n    print("PING")\nprint("SENT")';
     expect(evalInv(3, code, ran(code)).pass).toBe(true);
-    const outside = tri + '\nprint(i)';
-    const r = evalInv(3, outside, ran(outside));
+    const single = code.replace(/"/g, "'");
+    expect(evalInv(3, single, ran(single)).pass).toBe(true);
+    const pingOutside = tri + '\nprint("PING")\nprint("SENT")';
+    const r = evalInv(3, pingOutside, ran(pingOutside));
     expect(r.results[0]).toBe(false);
     expect(r.wrongs[0]).toBe(true);
+    const sentInside = tri + '\n    print("PING")\n    print("SENT")';
+    const r2 = evalInv(3, sentInside, ran(sentInside));
+    expect(r2.results[1]).toBe(false);
+    expect(r2.wrongs[1]).toBe(true);
   });
 });
 
 group('the bug step', () => {
   const tri = `import turtle
 t = turtle.Turtle()
-for i in range(1, 4):
+for i in range(3):
     t.forward(100)
     t.left(120)
-    print(i)`;
-  it('Break it moves the turn out of the loop, keeping print(i) inside', () => {
+    print("PING")
+print("SENT")`;
+  it('Break it moves the turn out of the loop, keeping PING inside and SENT last', () => {
     const { code, lineNo } = breakCode(tri);
-    expect(code.split('\n')).toEqual(['import turtle', 't = turtle.Turtle()', 'for i in range(1, 4):', '    t.forward(100)', '    print(i)', 't.left(120)']);
+    expect(code.split('\n')).toEqual(['import turtle', 't = turtle.Turtle()', 'for i in range(3):', '    t.forward(100)', '    print("PING")', 't.left(120)', 'print("SENT")']);
     expect(lineNo).toBe(6);
     expect(hasBugLine(code)).toBe(true);
     expect(isBugFixed(code)).toBe(false);
@@ -128,9 +135,9 @@ for i in range(1, 4):
   it('putting the turn back anywhere in the loop fixes it; deleting it does not', () => {
     const { code } = breakCode(tri);
     expect(isBugFixed(tri)).toBe(true);
-    const back = code.replace('    print(i)\nt.left(120)', '    t.left(120)\n    print(i)');
+    const back = code.replace('    print("PING")\nt.left(120)', '    t.left(120)\n    print("PING")');
     expect(isBugFixed(back)).toBe(true);
-    const first = 'import turtle\nt = turtle.Turtle()\nfor i in range(1, 4):\n    t.left(120)\n    t.forward(100)\n    print(i)';
+    const first = 'import turtle\nt = turtle.Turtle()\nfor i in range(3):\n    t.left(120)\n    t.forward(100)\n    print("PING")\nprint("SENT")';
     expect(isBugFixed(first)).toBe(true);
     expect(isBugFixed(code.replace('\nt.left(120)', ''))).toBe(false);
   });
@@ -295,5 +302,29 @@ group('mod2LinesAdded: Modification 2 checklist ticks', () => {
     expect(mod2LinesAdded([...sig, 't.pencolor("red")', 't.pensize(3)'].join('\n'))).toEqual({ colour: false, size: false });
     expect(mod2LinesAdded([...sig.slice(0, 3), '    t.pencolor("red")', '    t.pensize(3)', ...sig.slice(3)].join('\n'))).toEqual({ colour: false, size: false });
     expect(mod2LinesAdded(add('t.pencolor("blue")', 't.pensize(5)'))).toEqual({ colour: false, size: false });
+  });
+});
+
+group('mod3LinesAdded / mod4LinesAdded: Modification 3 and 4 checklist ticks', () => {
+  const sig = 'import turtle\nt = turtle.Turtle()\nfor i in range(8):\n    t.forward(100)\n    t.left(45)';
+  const penta = sig + '\nfor i in range(5):\n    t.forward(100)\n    t.left(72)';
+  it('nothing ticks in the Modification 2 code; the pentagon loop ticks every row', () => {
+    expect(mod3LinesAdded(sig)).toEqual({ loop: false, fwd: false, turn: false });
+    expect(mod3LinesAdded(penta)).toEqual({ loop: true, fwd: true, turn: true });
+    expect(mod3LinesAdded(penta.replace(/\n/g, '\r\n').replace('left(72)', 'rt(72.0)'))).toEqual({ loop: true, fwd: true, turn: true });
+  });
+  it('the wrong turn, or range(5) in the first loop, does not tick', () => {
+    expect(mod3LinesAdded(penta.replace('72', '60')).turn).toBe(false);
+    expect(mod3LinesAdded(sig.replace('range(8)', 'range(5)')).loop).toBe(false);
+  });
+  const ask = penta + '\nsides = int(input("How many sides? "))\nfor k in range(sides):\n    t.forward(80)\n    t.left(360 / sides)';
+  it('the input line, the loop and the turn each tick; any variable name', () => {
+    expect(mod4LinesAdded(penta)).toEqual({ ask: false, loop: false, turn: false });
+    expect(mod4LinesAdded(ask)).toEqual({ ask: true, loop: true, turn: true });
+    expect(mod4LinesAdded(ask.replace(/sides/g, 'n'))).toEqual({ ask: true, loop: true, turn: true });
+  });
+  it('input() without int(), or a fixed number in range(), does not tick', () => {
+    expect(mod4LinesAdded(ask.replace('int(input("How many sides? "))', 'input("How many sides? ")')).ask).toBe(false);
+    expect(mod4LinesAdded(ask.replace('range(sides)', 'range(7)'))).toEqual({ ask: true, loop: false, turn: false });
   });
 });

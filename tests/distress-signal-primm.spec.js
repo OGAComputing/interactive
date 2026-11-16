@@ -32,7 +32,7 @@ const run = (page, stage) => page.click(`#stage-${stage} button:has-text("Run co
 const poly = (n, turn = 360 / n, extra = []) => ['import turtle', 't = turtle.Turtle()', ...extra,
   `for i in range(${n}):`, '    t.forward(100)', `    t.left(${turn})`];
 const STARTER = poly(4, 90).join('\n');
-const TRIANGLE = ['import turtle', 't = turtle.Turtle()', 'for i in range(1, 4):', '    t.forward(100)', '    t.left(120)', '    print(i)'].join('\n');
+const TRIANGLE = ['import turtle', 't = turtle.Turtle()', 'for i in range(3):', '    t.forward(100)', '    t.left(120)', '    print("PING")', 'print("SENT")'].join('\n');
 
 // ─── Story layer ─────────────────────────────────────────────────────────────
 
@@ -232,15 +232,21 @@ test('Investigate bug step: Break it draws a straight line with no error; the tu
     i_editor: TRIANGLE, radio_i1_mcq: 'option_b', i2Chain: { ...FIXED_I2_CHAIN, q: 2, done: true }, radio_i3_mcq: 'option_c',
   });
   await page.click('#qcard_i4_prompt button:has-text("Break it")');
-  await expect(page.locator('#i_editor')).toHaveValue(/print\(i\)\nt\.left\(120\)$/);
+  const BROKEN = /print\("PING"\)\nt\.left\(120\)\nprint\("SENT"\)$/;
+  await expect(page.locator('#i_editor')).toHaveValue(BROKEN);
   await expect(page.locator('#ibug_line')).toHaveText('6');
   await expect(page.locator('#i_fb_run')).toHaveClass(/pass/, { timeout: 30000 });
   await expect(screenNote(page, 'i_editor')).toContainText('3 lines drawn');
-  // print(i) from step 3: the console stays and the display sits under the editor row
-  await expect(checker(page, 'i_editor').locator('.output-content')).toContainText('1');
+  // the prints from step 3: the console stays and the display sits under the editor row
+  await expect(checker(page, 'i_editor').locator('.output-content')).toContainText('PING');
   await expect(checker(page, 'i_editor').locator('.output-panel .turtle-screen')).toHaveCount(0);
   await expect(checker(page, 'i_editor').locator('.editor-wrap + .turtle-screen')).toBeVisible();
   await expect(page.locator('#req_i_4 li')).toHaveClass([/req-pass/, /req-pass/, /./]);
+  // Reset can't be used to dodge the fix: once broken, it goes back to the broken code
+  await setCode(page, 'i_editor', TRIANGLE);
+  await expect(page.locator('#btn_reset_i')).toHaveText(/Reset to broken code/);
+  await page.click('#btn_reset_i');
+  await expect(page.locator('#i_editor')).toHaveValue(BROKEN);
 
   await setCode(page, 'i_editor', TRIANGLE);
   await run(page, 'I');
