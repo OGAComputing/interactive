@@ -151,16 +151,20 @@ addSlide({ section: 'The four rules', title: 'Adding in columns: denary', a: '47
     + 'in 47 + 38. Click 4: a column can have 1 + 1 and a carry, three 1s. 3 is 11 in binary: write 1, carry 1. Click 5: same idea as '
     + 'denary, it just carries at 2 instead of 10. These four rules are all of binary addition.');
 }
+// Three small sums in columns: no carries, one carry, then two carries (the second column is 1 + 1 + 1).
 const RULES_YOU = [
-  { q: '1 + 0', a: '1', why: 'No carry' },
-  { q: '1 + 1', a: '0, carry 1', why: '2 in binary is 10' },
-  { q: '1 + 1 + 1', a: '1, carry 1', why: '3 in binary is 11' },
+  { sum: ['01', '10'], why: 'No carries: 1 + 2 = 3' },
+  { sum: ['01', '01'], why: 'One carry: 1 + 1 = 2' },
+  { sum: ['011', '011'], why: 'Two carries: 3 + 3 = 6' },
 ];
-youDoSlide({ section: 'The four rules', items: RULES_YOU, prompt: 'what do you write in this column? Is there a carry?', time: '1 MIN',
-  notes: 'Quick fire on boards: the bit to write, and whether there is a carry. Hide the rules slide.' });
+youDoSlide({ section: 'The four rules', items: RULES_YOU, prompt: 'copy each sum, add right to left. Write any carry above the next column.', time: '3 MIN',
+  notes: 'Boards: copy each sum in columns. Q1 has no carries, Q2 one, Q3 two. Hide the rules slide. '
+    + 'Watch for anyone starting on the left, or writing 2 or 10 in one column.' });
 youDoSlide({ section: 'The four rules', items: RULES_YOU, reveal: true,
   takeaway: [{ text: 'A column that makes 2 or 3 ', options: { bold: true, color: P.gold } }, { text: 'carries 1 into the next column on the left.' }],
-  notes: 'The common slip: writing 2, or writing 10 in one column. One column holds one bit.' });
+  notes: 'Carries in green above the columns. Q2: 1 + 1 = 2 = 10 in binary: write 0, carry 1; then 0 + 0 + the carry = 1. '
+    + 'Q3: 1 + 1: write 0, carry 1. Then 1 + 1 + the carry: three 1s, 11: write 1, carry 1. Then 0 + 0 + the carry = 1. '
+    + 'The common slip: writing 2, or writing 10 in one column. One column holds one bit.' });
 // 9–14 · Adding 4-bit numbers, and the final carry
 addSlide({ section: 'Adding with 4 bits', title: 'Adding two 4-bit numbers', mode: 'I DO', a: '0110', b: '0011', steps: true,
   end: [{ text: 'Check in denary:  ', options: { bold: true, color: P.gold } },
