@@ -15,6 +15,7 @@ PowerPoint decks for the Y8 Data Representation unit (`Knowledge Base/project_y8
 | `dr_kit.cjs` | The unit's drawing parts and slide types (above) |
 | `build_L1.cjs` | Builds `L1_Binary_And_Denary.pptx` from the L1 activity page and MTP section |
 | `build_L2.cjs` | Builds `L2_Binary_Addition.pptx` from the L2 activity page and MTP section |
+| `build_L3.cjs` | Builds `L3_Hexadecimal.pptx` from the L3 activity page and MTP section. Lesson-only slide types: `b2hSlide` (4 or 8 bits → hex in the page's grid: split, 8 4 2 1, denary, hex digit, join) and `h2bSlide` (hex → 8 bits). Never says "nibble" (MTP decision, 2026-11-16) |
 | `publish_to_drive.cjs` + `drive.json` | Uploads lesson decks to the "Data Representation" Drive folder as Google Slides (see Publishing to Drive) |
 
 ## Building

@@ -1,0 +1,1614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- ACTIVITY
+title:  Hexadecimal
+type:   Practice
+stars:  2
+desc:   Write binary with fewer digits: the hex digits A–F, 4 bits → one hex digit, then binary → hex and hex → binary with the help fading.
+color:  indigo
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hexadecimal — Year 8</title>
+
+<link rel="stylesheet" href="../../../shared.css">
+
+<style>
+  /* ── Activity header ─────────────────────────────────── */
+
+  .header {
+    background: var(--surface);
+    padding: 18px 28px 14px;
+    border-bottom: 4px solid var(--accent);
+  }
+  .header-title {
+    font-family: var(--font-head);
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-inv);
+  }
+  .header-sub {
+    font-size: 0.85rem;
+    color: var(--accent-light);
+    margin-top: 3px;
+  }
+  .header-q {
+    font-size: 0.9rem;
+    color: #fff;
+    margin-top: 6px;
+  }
+  .progress-row {
+    display: flex;
+    gap: 6px;
+    margin-top: 10px;
+    align-items: center;
+  }
+  .pdot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--surface-dim);
+    border: 2px solid #3a5a7a;
+    transition: background 0.3s, border-color 0.3s;
+  }
+  .pdot.correct { background: var(--green);  border-color: var(--green); }
+  .pdot.gold    { background: var(--gold);   border-color: var(--gold);  }
+
+  /* ── Glow overlay (green = green tier, gold = gold tier) ── */
+
+  #glow-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none; z-index: 0; opacity: 0;
+    transition: opacity 1.8s ease;
+  }
+  #glow-overlay.gold  { background: radial-gradient(ellipse at 50% 55%, rgba(251,191,36,.24) 0%, transparent 65%); }
+  #glow-overlay.green { background: radial-gradient(ellipse at 50% 55%, rgba(16,185,129,.20) 0%, transparent 65%); }
+  #glow-overlay.show  { opacity: 1; }
+
+  /* ── Tab bar (underline style — Year 8 standard) ─────── */
+
+  .tab-bar {
+    display: flex;
+    background: var(--surface-mid);
+    padding: 0 20px;
+    gap: 2px;
+    overflow-x: auto;
+    border-bottom: 1px solid #2a4060;
+  }
+  .tab {
+    padding: 10px 16px 9px;
+    border: none;
+    background: transparent;
+    color: #B8CCE0;
+    font-family: var(--font-body);
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: color 0.15s, border-color 0.15s;
+    white-space: nowrap;
+    user-select: none;
+  }
+  .tab:hover          { color: var(--accent-light); }
+  .tab.active         { color: var(--text-inv); border-bottom-color: var(--accent); }
+  .tab.done           { color: var(--gold);     border-bottom-color: var(--gold); }
+  .tab .lock { font-size: .8em; margin-left: 4px; }
+
+  /* ── Panels ──────────────────────────────────────────── */
+
+  .panel {
+    display: none;
+    position: relative;
+    z-index: 1;
+    padding: 28px 20px 48px;
+    max-width: 920px;
+    margin: 0 auto;
+  }
+  .panel.active { display: block; animation: ac-fade-in .2s ease; }
+
+  .task-header { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
+  .task-badge {
+    width: 42px; height: 42px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-head);
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-inv);
+    background: var(--accent);
+    flex-shrink: 0;
+  }
+  .task-title { font-family: var(--font-head); font-size: 1.25rem; font-weight: 700; color: var(--surface); }
+
+  .goal {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    background: #fff;
+    border-left: 4px solid var(--accent);
+    padding: 10px 14px;
+    border-radius: 0 6px 6px 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--surface);
+    margin-bottom: 18px;
+  }
+
+  /* The method, as a list students can fold away once they know it */
+  details.method {
+    background: #fff;
+    border: 1.5px solid #D5E3F0;
+    border-radius: 10px;
+    padding: 10px 16px;
+    margin-bottom: 18px;
+  }
+  details.method summary { cursor: pointer; font-weight: 700; color: var(--accent-dark); }
+  details.method ol, details.method ul { margin: 8px 0 2px 22px; line-height: 1.6; }
+  details.method p { margin: 8px 0 2px; line-height: 1.5; }
+  .mono { font-family: var(--font-mono); font-weight: 700; color: var(--surface); }
+  .keyword { background: #EEF0FF; border-radius: 8px; padding: 8px 12px; margin-top: 10px; }
+
+  .feedback { min-height: 1.4em; font-size: 0.92rem; font-weight: 600; margin-top: 10px; }
+  .feedback.correct { color: var(--green-dark); }
+  .feedback.wrong   { color: var(--red); animation: ac-shake 0.35s ease; }
+
+  .q-card {
+    border: 2px solid #D5E3F0;
+    border-radius: 12px;
+    padding: 18px;
+    margin: 10px 0;
+    background: #fff;
+    transition: border-color .25s, background .25s;
+  }
+  .q-card > h3 { font-family: var(--font-head); font-size: 1.1rem; color: var(--surface); margin-bottom: 14px; line-height: 1.5; }
+  .q-card.is-wrong { border-color: var(--red);   background: var(--red-bg); }
+  .q-card.is-right { border-color: var(--green); background: var(--green-bg); animation: success-pulse 0.8s ease forwards; }
+  @keyframes success-pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(16,185,129,0); }
+    40%  { box-shadow: 0 0 0 8px rgba(16,185,129,.45); }
+    70%  { box-shadow: 0 0 0 14px rgba(16,185,129,.18); }
+    100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); }
+  }
+  @media (prefers-reduced-motion: reduce) { .q-card.is-right { animation: none; } }
+
+  .big-num { font-family: var(--font-mono); font-size: 1.35em; font-weight: 700; color: var(--accent-dark); letter-spacing: .06em; }
+  .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 12px; }
+
+  /* Hidden copy of each task's answers, so the Classroom evidence report can read them */
+  .ev { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; left: 0; top: 0; }
+
+  /* ── Step header (ladder tasks) ──────────────────────── */
+
+  .step-head {
+    display: flex; justify-content: space-between; align-items: center; gap: 10px;
+    font-size: .85rem; font-weight: 700; color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .pips { display: flex; gap: 5px; }
+  .pip { width: 22px; height: 8px; border-radius: 4px; background: #D5E3F0; }
+  .pip.on  { background: var(--green); }
+  .pip.now { background: var(--accent); }
+  .help { font-size: .95rem; color: var(--text); background: #EEF0FF; border-radius: 8px; padding: 9px 14px; margin-bottom: 6px; }
+
+  /* ── Hex digit table (Task 1) ────────────────────────── */
+
+  .hex-table {
+    display: grid; grid-template-columns: auto repeat(16, minmax(0, 40px));
+    gap: 3px; margin: 0 0 16px; max-width: 100%;
+  }
+  .hex-table .rl { font-size: .72rem; font-weight: 700; color: var(--muted); text-transform: uppercase; padding-right: 6px; align-self: center; text-align: right; }
+  .hex-table .ht {
+    height: 34px; display: flex; align-items: center; justify-content: center;
+    border-radius: 6px; background: #F3F7FB; border: 1.5px solid #D5E3F0;
+    font: 700 1rem var(--font-mono); color: var(--surface);
+  }
+  .hex-table .ht.hx { color: var(--accent-dark); }
+  .hex-table .ht.letter { background: #EEF0FF; border-color: var(--accent); }
+  .a-only { display: inline-block; margin: 0 0 14px; padding: 6px 14px; border-radius: 8px; background: #EEF0FF; border: 1.5px solid var(--accent);
+    font: 700 1.05rem var(--font-mono); color: var(--accent-dark); }
+
+  .digit-rows { display: grid; gap: 10px; }
+  .digit-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-weight: 600; font-size: 1.05rem; }
+  .digit-row .lbl { min-width: 190px; }
+
+  /* ── Nibbles: headings over bits, boxes under ────────── */
+
+  .nibbles { display: flex; gap: 26px; flex-wrap: wrap; align-items: flex-start; margin: 4px 0 14px; }
+  .nib { display: grid; grid-template-columns: repeat(4, 48px); gap: 6px; }
+  .nib .span4 { grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: .92rem; margin-top: 4px; }
+  .nib .cap { grid-column: 1 / -1; font-size: .78rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+
+  /* One grid for a conversion: row labels on the left, each nibble in 4 columns,
+     every box centred under its own nibble and the answer centred under both. */
+  .conv { --cw: 48px; display: grid; gap: 8px 6px; align-items: center; justify-content: start; margin: 4px 0 6px; }
+  .conv.two { grid-template-columns: auto repeat(4, var(--cw)) 34px repeat(4, var(--cw)); }
+  .conv.one { grid-template-columns: auto repeat(4, var(--cw)); }
+  .conv .rl { font-size: .78rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .05em;
+    text-align: right; padding-right: 10px; white-space: nowrap; }
+  .conv .sp { display: flex; justify-content: center; }
+  .conv .cap { font-size: .78rem; font-weight: 700; color: var(--accent-dark); text-transform: uppercase; letter-spacing: .05em; }
+  .conv .join { border-top: 2px dashed #D5E3F0; margin-top: 6px; }
+  .cell {
+    height: 46px; width: 100%;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 8px;
+    font-family: var(--font-mono); font-size: 1.15rem; font-weight: 700;
+  }
+  .cell.bit  { background: #F3F7FB; border: 2px solid #D5E3F0; color: var(--surface); }
+  .cell.head { height: 30px; font-size: .95rem; color: var(--muted); }
+  .cell.head.lit { background: #EEF0FF; border: 2px solid var(--accent); color: var(--accent-dark); }
+  .cell.hexd { font-size: 1.8rem; color: var(--accent-dark); background: #EEF0FF; border: 2px solid var(--accent); height: 56px; }
+
+  /* 8 bits in a row with gaps to tap (Task 3, step 3) */
+  .byte { display: flex; align-items: center; margin: 4px 0 14px; flex-wrap: nowrap; }
+  .byte .cell.bit { width: 46px; flex-shrink: 0; }
+  .gap-btn {
+    width: 22px; height: 52px; border: none; background: transparent; cursor: pointer; position: relative; flex-shrink: 0; padding: 0;
+  }
+  .gap-btn::after { content: ''; position: absolute; left: 9px; top: 6px; bottom: 6px; width: 4px; border-radius: 2px; background: #D5E3F0; }
+  .gap-btn:hover::after { background: var(--accent-light); }
+  .gap-btn.on::after { background: var(--accent); width: 6px; left: 8px; top: 0; bottom: 0; }
+  .gap-btn:focus-visible { outline: 3px solid var(--accent-light); border-radius: 4px; }
+  .gap-btn.is-right::after { background: var(--green); }
+  .gap-btn.is-wrong::after { background: var(--red); }
+  .byte.plain { gap: 6px; }
+
+  button.bit-toggle {
+    height: 46px; width: 100%; border-radius: 8px;
+    font-family: var(--font-mono); font-size: 1.15rem; font-weight: 700;
+    border: 2px dashed #8FA9C4; background: #fff; color: var(--surface); cursor: pointer;
+  }
+  button.bit-toggle.set { border-style: solid; border-color: var(--accent); }
+  button.bit-toggle:focus-visible { outline: 3px solid var(--accent-light); }
+
+  .num-in {
+    width: 70px; height: 44px; padding: 0 10px;
+    border: 2px solid #B9CCE0; border-radius: 8px; background: #fff;
+    font-family: var(--font-mono); font-size: 1.15rem; font-weight: 700; color: var(--surface);
+    text-transform: uppercase; text-align: center;
+  }
+  .num-in.wide { width: 190px; letter-spacing: .08em; text-align: left; }
+  .num-in:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-light); }
+  .is-right.num-in, .is-right.bit-toggle { border-color: var(--green); background: var(--green-bg); }
+  .is-wrong.num-in, .is-wrong.bit-toggle { border-color: var(--red);   background: var(--red-bg); }
+  .answer-line { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-weight: 600; margin-top: 8px; }
+  .tap-note { font-size: .85rem; color: var(--muted); margin: -4px 0 8px; }
+
+  /* ── Checkpoint chains ───────────────────────────────── */
+
+  .cp-bar { height: 10px; background: #D5E3F0; border-radius: 999px; overflow: hidden; margin-bottom: 14px; }
+  .cp-bar div { height: 100%; background: var(--accent); transition: width .3s; }
+  .cp-q { font-family: var(--font-head); font-size: 1.2rem; font-weight: 700; color: var(--surface); margin: 6px 0 14px; line-height: 1.4; }
+  .cp-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  @media (max-width: 560px) { .cp-opts { grid-template-columns: 1fr; } }
+  .cp-opt {
+    padding: 13px 14px; border-radius: 10px; cursor: pointer; text-align: left;
+    background: #fff; border: 2px solid #D5E3F0; color: var(--surface);
+    font-family: var(--font-body); font-size: 1rem; font-weight: 600;
+    transition: border-color .15s, background .15s;
+  }
+  .cp-opt:hover:not(:disabled) { border-color: var(--accent); background: #F4F6FF; }
+  .cp-opt:disabled { cursor: default; }
+  .cp-opt.right { border-color: var(--green); background: var(--green-bg); }
+  .cp-opt.wrong { border-color: var(--red);   background: var(--red-bg); }
+  .cp-msg { min-height: 1.4em; margin-top: 12px; font-weight: 700; font-size: .98rem; }
+  .cp-msg.good { color: var(--green-dark); }
+  .cp-msg.bad  { color: var(--red); }
+  .cp-msg .why { display: block; font-weight: 400; color: var(--text); margin-top: 4px; }
+  .cp-done, .lock-card {
+    text-align: center; padding: 26px 16px; border-radius: 12px;
+    font-family: var(--font-head); font-size: 1.1rem; font-weight: 700;
+  }
+  .cp-done { background: var(--green-bg); border: 2px solid var(--green); color: var(--green-dark); }
+  .cp-done .big { display: block; font-size: 2.4rem; margin-bottom: 6px; }
+  .lock-card { background: #fff; border: 2px dashed #B9CCE0; color: var(--muted); }
+  .lock-card p { font-family: var(--font-body); font-weight: 400; font-size: .95rem; margin-top: 6px; color: var(--text); }
+
+  /* ── Hex Rush (extension game) ───────────────────────── */
+
+  .best-chip {
+    display: none; margin-left: 10px; padding: 3px 12px; border-radius: 999px;
+    background: var(--gold); color: #1a1a1a; font-family: var(--font-head); font-weight: 700; font-size: .85rem;
+  }
+  .best-chip.show { display: inline-block; }
+  .rush {
+    border: 2px solid var(--gold); border-radius: 14px; padding: 22px; color: #fff;
+    background: radial-gradient(ellipse at top, rgba(251,191,36,.16), transparent 60%), var(--surface);
+  }
+  .rush h2 { font-family: var(--font-head); color: var(--gold); letter-spacing: 3px; font-size: 1.3rem; margin-bottom: 8px; }
+  .rush p { line-height: 1.5; }
+  .rush .muted { color: #B8CCE0; }
+  .rush-screen { display: none; }
+  .rush-screen.on { display: block; animation: ac-fade-in .25s; }
+  .rush-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 12px 0 16px; }
+  .rush-stat { background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.15); border-radius: 8px; padding: 8px 10px; text-align: center; }
+  .rush-stat .v { font: 700 1.25rem var(--font-head); }
+  .rush-stat .k { font-size: .68rem; color: #B8CCE0; text-transform: uppercase; letter-spacing: .08em; }
+  .rush-modes { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 16px 0; }
+  .rush-mode { border: 1px solid rgba(255,255,255,.18); border-radius: 10px; padding: 14px; background: rgba(255,255,255,.04); }
+  .rush-mode h3 { font-size: 1rem; margin-bottom: 4px; }
+  .rush-mode p { font-size: .86rem; color: #B8CCE0; margin-bottom: 10px; }
+  .rush-mode input {
+    padding: 8px 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,.3); background: #0d1b2e; color: #fff;
+    font: 700 1rem var(--font-mono); text-transform: uppercase; letter-spacing: 2px; width: 130px;
+  }
+  .rush-sub { font-family: var(--font-head); font-weight: 700; margin: 6px 0 8px; }
+  .badges { display: flex; flex-wrap: wrap; gap: 8px; }
+  .badge { border: 1px solid rgba(255,255,255,.25); border-radius: 20px; padding: 5px 11px; font-size: .8rem; color: #B8CCE0; opacity: .55; }
+  .badge.got { opacity: 1; color: #fff; border-color: var(--gold); background: rgba(251,191,36,.15); }
+  .badge.new { animation: ac-pulse-gold 1.2s 2; }
+  .rush-rules { font-size: .8rem; color: #B8CCE0; margin-top: 14px; }
+
+  .hud { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; font-family: var(--font-head); margin-bottom: 12px; }
+  .hud .score { font-size: 1.6rem; color: var(--gold); font-weight: 700; }
+  .hud .mult { padding: 3px 10px; border-radius: 12px; background: rgba(255,255,255,.12); }
+  .hud .mult.hot { background: var(--gold); color: #111; animation: ac-pulse-gold 1s infinite; }
+  .hud .lvl { font-size: .75rem; letter-spacing: 2px; padding: 3px 10px; border-radius: 12px; border: 1px solid #B8CCE0; color: #B8CCE0; }
+  .hud .lives { font-size: 1.15rem; letter-spacing: 3px; }
+  .hud .hud-best { font-size: .8rem; color: #B8CCE0; }
+  .rush-card { background: #fff; color: var(--surface); border-radius: 12px; padding: 16px 18px; }
+  .rush-ask { font-family: var(--font-head); font-weight: 700; font-size: 1.05rem; margin-bottom: 8px; }
+  .rush-show { font: 700 2.2rem var(--font-mono); letter-spacing: .12em; color: var(--accent-dark); margin: 4px 0 12px; }
+  .rush-card .num-in.wide { width: 220px; }
+  .tbar { height: 8px; border-radius: 4px; background: #D5E3F0; overflow: hidden; margin-bottom: 12px; }
+  .tbar > div { height: 100%; width: 100%; background: var(--gold); }
+  .tbar > div.low { background: var(--red); }
+  .verdict { min-height: 3.2em; margin-top: 12px; font-weight: 600; line-height: 1.5; }
+  .verdict .pts { font-family: var(--font-head); color: var(--gold); }
+  .verdict .why { display: block; font-weight: 400; color: #D5E3F0; font-size: .9rem; }
+  .final { text-align: center; }
+  .final .big { font: 700 3rem var(--font-head); color: var(--gold); }
+  .final .rank { font-size: 1.2rem; font-weight: 700; margin: 4px 0; }
+  .final .pb { color: var(--accent-light); font-weight: 700; min-height: 1.4em; }
+  .ladder { list-style: none; margin: 14px auto; max-width: 340px; text-align: left; font-size: .85rem; }
+  .ladder li { display: flex; justify-content: space-between; padding: 4px 10px; border-radius: 6px; color: #B8CCE0; }
+  .ladder li.me { background: rgba(251,191,36,.18); color: #fff; font-weight: 700; }
+  .missed { text-align: left; max-width: 640px; margin: 10px auto; font-size: .86rem; }
+  .missed li { margin: 6px 0 6px 18px; line-height: 1.45; }
+
+  /* Phones */
+  @media (max-width: 560px) {
+    .panel { padding: 20px 12px 40px; }
+    .q-card { padding: 14px 10px; }
+    .hex-table { grid-template-columns: auto repeat(16, minmax(0, 1fr)); gap: 2px; }
+    .hex-table .rl { font-size: .55rem; padding-right: 2px; }
+    .hex-table .ht { font-size: .72rem; height: 28px; border-radius: 4px; }
+    .nib { grid-template-columns: repeat(4, 40px); gap: 4px; }
+    .nibbles { gap: 14px; }
+    .conv { --cw: 28px; gap: 6px 3px; }
+    .conv.two { grid-template-columns: minmax(0, 52px) repeat(4, var(--cw)) 12px repeat(4, var(--cw)); }
+    .conv .rl { font-size: .6rem; padding-right: 4px; letter-spacing: 0; white-space: normal; line-height: 1.15; }
+    .conv .cell, .conv button.bit-toggle { font-size: .9rem; }
+    .conv .cell.hexd { font-size: 1.5rem; height: 48px; }
+    .conv .cap { font-size: .62rem; letter-spacing: 0; }
+    .conv .num-in { width: 56px; }
+    .byte .cell.bit { width: 34px; }
+    .gap-btn { width: 14px; }
+    .gap-btn::after { left: 5px; }
+    .cell, button.bit-toggle { font-size: .95rem; height: 40px; }
+    .digit-row .lbl { min-width: 0; }
+    .rush { padding: 14px 10px; }
+    .rush-stats { grid-template-columns: 1fr 1fr; }
+    .rush-modes { grid-template-columns: 1fr; }
+    .rush-show { font-size: 1.6rem; }
+  }
+
+  /* ── Hover definitions: dotted words show their meaning on hover, focus or tap ── */
+  .gl { border-bottom: 2px dotted currentColor; cursor: help; }
+  .gl:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
+  .gl-tip { position: fixed; z-index: 60; pointer-events: none; max-width: min(300px, 90vw); background: var(--surface); color: var(--text-inv);
+    border-left: 5px solid var(--accent); border-radius: 6px; padding: 8px 12px; font: 400 .92rem/1.4 var(--font-body);
+    box-shadow: 0 6px 18px rgba(0,0,0,.25); opacity: 0; transition: opacity .12s ease-out; }
+  .gl-tip b { display: block; color: var(--accent-light); font-weight: 700; }
+  .gl-tip.show { opacity: 1; }
+  @media (prefers-reduced-motion: reduce) { .gl-tip { transition: none; } }
+</style>
+</head>
+
+<body>
+
+<div id="done-banner" class="ac-banner gold">
+  🏆 All tasks complete: you can convert between binary and hex!
+</div>
+<div id="glow-overlay"></div>
+
+<div class="header">
+  <div class="header-title">Hexadecimal</div>
+  <div class="header-sub">Year 8 · Data Representation · Lesson 3<span class="best-chip" id="best-chip" title="Your best Hex Rush score"></span></div>
+  <div class="header-q">❓ How do I represent binary numbers with fewer digits using hexadecimal?</div>
+  <div class="progress-row" id="progress-row">
+    <span class="pdot" id="dot-0"></span>
+    <span class="pdot" id="dot-1"></span>
+    <span class="pdot" id="dot-2"></span>
+    <span class="pdot" id="dot-3"></span>
+    <span class="pdot" id="dot-4"></span>
+    <span class="pdot" id="dot-5"></span>
+  </div>
+</div>
+
+<div class="tab-bar" id="tab-bar">
+  <button class="tab active" data-idx="0">1 · Hex digits</button>
+  <button class="tab" data-idx="1">2 · 4-bit binary → hex</button>
+  <button class="tab" data-idx="2">3 · 8-bit binary → hex</button>
+  <button class="tab" data-idx="3">4 · Hex → 8-bit binary</button>
+  <button class="tab" data-idx="4">5 · No help<span class="lock" id="lock-4">🔒</span></button>
+  <button class="tab" data-idx="5">6 · Plenary<span class="lock" id="lock-5">🔒</span></button>
+  <button class="tab" data-idx="6">🎮 Hex Rush<span class="lock" id="lock-6">🔒</span></button>
+</div>
+
+<!-- ── Task 1 ───────────────────────────────────────────── -->
+<div class="panel active" id="panel-0">
+  <div class="task-header">
+    <div class="task-badge">1</div>
+    <div class="task-title">Hex digits</div>
+  </div>
+  <div class="goal">🎯 Turn denary numbers into hex digits and back. The table fades as you go: by step 4 it's gone.</div>
+  <details class="method" id="method-0" open>
+    <summary>The hex digits</summary>
+    <ol>
+      <li>Hex has <strong>sixteen</strong> digits. The first ten, <span class="mono">0–9</span>, are the same as denary.</li>
+      <li>After 9, hex uses letters: <span class="mono">A = 10</span>, and each letter after it is one more, up to <span class="mono">F = 15</span>.</li>
+      <li>So every number from 0 to 15 fits in <strong>one</strong> hex digit.</li>
+    </ol>
+    <p class="keyword"><strong>Hexadecimal</strong> (hex): a number system with sixteen digits, 0–9 then A–F.</p>
+  </details>
+  <div id="area-0"></div>
+  <div class="feedback" id="feedback-0"></div>
+  <div class="row"><button class="ac-btn-secondary" id="reset-0" data-action="reset" data-task="0" style="display:none;font-size:0.8rem;">&#8634; Try for Gold</button></div>
+  <input type="text" class="ev" id="ev-0" readonly tabindex="-1" data-title="Task 1 Hex digits: answers">
+</div>
+
+<!-- ── Task 2 ───────────────────────────────────────────── -->
+<div class="panel" id="panel-1">
+  <div class="task-header">
+    <div class="task-badge">2</div>
+    <div class="task-title">4-bit binary → hex</div>
+  </div>
+  <div class="goal">🎯 Turn 4 bits of binary into one hex digit: binary to denary with 8 4 2 1, then denary to hex. Every answer is a letter, A–F.</div>
+  <details class="method" id="method-1" open>
+    <summary>4-bit binary → hex</summary>
+    <ol>
+      <li>Write the headings <span class="mono">8 4 2 1</span> above the 4 bits.</li>
+      <li>Add up the headings that have a <span class="mono">1</span> under them.</li>
+      <li>0–9 stay the same. 10–15 become a letter: <span class="mono">A B C D E F</span>.</li>
+    </ol>
+    <p class="keyword"><strong>Key fact</strong>: one hex digit stands for exactly 4 bits, from 0000 (0) to 1111 (F).</p>
+  </details>
+  <div id="area-1"></div>
+  <div class="feedback" id="feedback-1"></div>
+  <div class="row"><button class="ac-btn-secondary" id="reset-1" data-action="reset" data-task="1" style="display:none;font-size:0.8rem;">&#8634; Try for Gold</button></div>
+  <input type="text" class="ev" id="ev-1" readonly tabindex="-1" data-title="Task 2 4-bit binary to hex: answers">
+</div>
+
+<!-- ── Task 3 ───────────────────────────────────────────── -->
+<div class="panel" id="panel-2">
+  <div class="task-header">
+    <div class="task-badge">3</div>
+    <div class="task-title">8-bit binary → hex</div>
+  </div>
+  <div class="goal">🎯 Write 8 bits as 2 hex digits. From step 3 you split the bits yourself; by step 4 it's just the answer.</div>
+  <details class="method" id="method-2" open>
+    <summary>8-bit binary → hex</summary>
+    <ol>
+      <li>Split the 8 bits down the middle into two groups of 4.</li>
+      <li>Convert each group of 4 to denary using <span class="mono">8 4 2 1</span>.</li>
+      <li>Turn 10–15 into <span class="mono">A–F</span>.</li>
+      <li>Join the two digits, first group first: <span class="mono">1011 0101</span> → <span class="mono">B</span> and <span class="mono">5</span> → <span class="mono">B5</span>.</li>
+    </ol>
+  </details>
+  <div id="area-2"></div>
+  <div class="feedback" id="feedback-2"></div>
+  <div class="row"><button class="ac-btn-secondary" id="reset-2" data-action="reset" data-task="2" style="display:none;font-size:0.8rem;">&#8634; Try for Gold</button></div>
+  <input type="text" class="ev" id="ev-2" readonly tabindex="-1" data-title="Task 3 8-bit binary to hex: answers">
+</div>
+
+<!-- ── Task 4 ───────────────────────────────────────────── -->
+<div class="panel" id="panel-3">
+  <div class="task-header">
+    <div class="task-badge">4</div>
+    <div class="task-title">Hex → 8-bit binary</div>
+  </div>
+  <div class="goal">🎯 Write 2 hex digits as 8 bits. Every hex digit gets all 4 bits, so small digits start with 0s.</div>
+  <details class="method" id="method-3" open>
+    <summary>Hex → 8-bit binary</summary>
+    <ol>
+      <li>Take each hex digit on its own. Turn a letter into its denary value (<span class="mono">A = 10</span> … <span class="mono">F = 15</span>).</li>
+      <li>Write each value as 4 bits under <span class="mono">8 4 2 1</span>, with 0s on the left if needed: <span class="mono">3</span> → <span class="mono">0011</span>.</li>
+      <li>Join the two groups of 4: <span class="mono">B5</span> → <span class="mono">1011</span> and <span class="mono">0101</span> → <span class="mono">10110101</span>.</li>
+    </ol>
+  </details>
+  <div id="area-3"></div>
+  <div class="feedback" id="feedback-3"></div>
+  <div class="row"><button class="ac-btn-secondary" id="reset-3" data-action="reset" data-task="3" style="display:none;font-size:0.8rem;">&#8634; Try for Gold</button></div>
+  <input type="text" class="ev" id="ev-3" readonly tabindex="-1" data-title="Task 4 Hex to 8-bit binary: answers">
+</div>
+
+<!-- ── Task 5 ───────────────────────────────────────────── -->
+<div class="panel" id="panel-4">
+  <div class="task-header">
+    <div class="task-badge">5</div>
+    <div class="task-title">No help</div>
+  </div>
+  <div class="goal">🎯 6 conversions in a row, both ways, with nothing on screen to help. Work on paper: split, 8 4 2 1, join. One wrong answer starts you again with new numbers.</div>
+  <div id="area-4"></div>
+  <div class="feedback" id="feedback-4"></div>
+  <div class="row"><button class="ac-btn-secondary" id="reset-4" data-action="reset" data-task="4" style="display:none;font-size:0.8rem;">&#8634; Try for Gold</button></div>
+  <input type="text" class="ev" id="ev-4" readonly tabindex="-1" data-title="Task 5 No help: answers">
+</div>
+
+<!-- ── Task 6 ───────────────────────────────────────────── -->
+<div class="panel" id="panel-5">
+  <div class="task-header">
+    <div class="task-badge">6</div>
+    <div class="task-title">Plenary</div>
+  </div>
+  <div class="goal">🎯 5 in a row: conversions and the big ideas. One wrong answer starts you again.</div>
+  <div id="area-5"></div>
+  <div class="feedback" id="feedback-5"></div>
+  <div class="row"><button class="ac-btn-secondary" id="reset-5" data-action="reset" data-task="5" style="display:none;font-size:0.8rem;">&#8634; Try for Gold</button></div>
+  <input type="text" class="ev" id="ev-5" readonly tabindex="-1" data-title="Task 6 Plenary: answers">
+</div>
+
+<!-- ── Extension: Hex Rush (not scored) ─────────────────── -->
+<div class="panel" id="panel-6">
+  <div class="task-header">
+    <div class="task-badge">🎮</div>
+    <div class="task-title">Hex Rush</div>
+  </div>
+  <div id="rush-lock"></div>
+  <div class="rush" id="rush">
+    <!-- Menu -->
+    <div class="rush-screen on" id="rush-menu">
+      <h2>⚡ HEX RUSH</h2>
+      <p>Conversions are coming at you. Type each answer before the timer runs out. Build a streak to multiply your score. Three wrong and you're out.</p>
+      <div class="rush-stats">
+        <div class="rush-stat"><div class="v" id="rush-best">0</div><div class="k">Solo best</div></div>
+        <div class="rush-stat"><div class="v" id="rush-rank">Trainee</div><div class="k">Rank</div></div>
+        <div class="rush-stat"><div class="v" id="rush-streak">0</div><div class="k">Best streak</div></div>
+        <div class="rush-stat"><div class="v" id="rush-runs">0</div><div class="k">Runs played</div></div>
+      </div>
+      <div class="rush-modes">
+        <div class="rush-mode">
+          <h3>🎲 Solo run</h3>
+          <p>New numbers every time. Climb the ranks and beat your personal best.</p>
+          <button type="button" class="ac-btn" data-rush="solo">Start solo run</button>
+        </div>
+        <div class="rush-mode">
+          <h3>🏆 Class challenge</h3>
+          <p>Type the code on the board. Everyone with the same code gets the <b>same questions in the same order</b>, so it's a fair race for the top score.</p>
+          <input id="rush-code" maxlength="8" placeholder="CODE" aria-label="Class challenge code" autocomplete="off">
+          <button type="button" class="ac-btn" data-rush="challenge">Start challenge</button>
+          <p class="muted" id="rush-code-best" style="margin-top:8px;font-size:.8rem"></p>
+        </div>
+      </div>
+      <div class="rush-sub">🏅 Badges</div>
+      <div class="badges" id="rush-badges"></div>
+      <p class="rush-rules">Scoring: a right answer scores the level's points plus a speed bonus (the faster, the more), × your streak (×2 at 3 in a row, ×3 at 6, ×4 at 10). The questions grow: 4 bits → hex digit, hex digit → 4 bits, then 8 bits → hex, hex → 8 bits, then both mixed and faster. <b>Enter</b> checks.</p>
+    </div>
+
+    <!-- Game -->
+    <div class="rush-screen" id="rush-game">
+      <div class="hud">
+        <div class="score" id="hud-score">0</div>
+        <div class="mult" id="hud-mult">×1</div>
+        <div class="muted">Question <b id="hud-q">1</b> · Streak <b id="hud-streak">0</b></div>
+        <div class="lvl" id="hud-lvl">LEVEL 1</div>
+        <div class="lives" id="hud-lives">❤️❤️❤️</div>
+        <div class="hud-best" id="hud-best"></div>
+      </div>
+      <div class="rush-card">
+        <div class="tbar"><div id="tbar"></div></div>
+        <div class="rush-ask" id="rush-ask"></div>
+        <div class="rush-show" id="rush-show"></div>
+        <div class="answer-line">
+          <input class="num-in wide" id="rush-in" autocomplete="off" aria-label="Your answer" data-title="Hex Rush answer">
+          <button type="button" class="ac-btn" id="rush-go">Go ⏎</button>
+        </div>
+      </div>
+      <div class="verdict" id="verdict" aria-live="polite"></div>
+    </div>
+
+    <!-- Game over -->
+    <div class="rush-screen" id="rush-over">
+      <div class="final">
+        <div class="muted" id="over-mode">SOLO RUN</div>
+        <div class="big" id="over-score">0</div>
+        <div class="rank" id="over-rank"></div>
+        <div class="pb" id="over-pb"></div>
+        <div class="rush-stats">
+          <div class="rush-stat"><div class="v" id="over-qs">0</div><div class="k">Questions</div></div>
+          <div class="rush-stat"><div class="v" id="over-acc">0%</div><div class="k">Right</div></div>
+          <div class="rush-stat"><div class="v" id="over-streak">0</div><div class="k">Longest streak</div></div>
+          <div class="rush-stat"><div class="v" id="over-next">—</div><div class="k">To next rank</div></div>
+        </div>
+        <div class="badges" id="over-badges" style="justify-content:center"></div>
+        <ol class="ladder" id="over-ladder"></ol>
+        <div id="over-missed"></div>
+        <div class="row" style="justify-content:center">
+          <button type="button" class="ac-btn" data-rush="again">↻ Play again</button>
+          <button type="button" class="ac-btn ac-btn-secondary" data-rush="menu">Menu</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <input type="text" class="ev" id="ev-rush" readonly tabindex="-1" data-title="Hex Rush (extension game): best scores">
+</div>
+
+<div class="ac-toast" id="toast"></div>
+
+<script src="../../../error-reporter.js"></script>
+<script src="../../../activity-ui.js"></script>
+<script src="../../../classroom.js"></script>
+
+<script type="module">
+import {
+  TASK_COUNT, HEADINGS4, HEX_DIGITS, toBinary, toHex, hexDigit, hi, lo,
+  STEP_COUNT, ladderQuestion, checkLadder as markLadder, shapeHint, workingFor, cooldownSeconds,
+  itemShown, itemAnswer, itemWorking, checkTyped, formatHint,
+  NOHELP_LENGTH, drawNoHelp, PLENARY_LENGTH, drawPlenary, plenaryQuestion, optionOrder,
+  gameQuestion, gameLevel, gameTime, gamePoints, multiplier, GAME_LIVES, RANKS, rankFor,
+  GAME_BADGES, runBadges, cleanCode,
+  GLOSSARY, glossaryDef, NO_GLOSS,
+} from './checkers.js';
+
+// ── Activity identity ──────────────────────────────────
+const STORAGE_KEY    = 'y8_datarep_l3_hexadecimal';
+const ACTIVITY_TITLE = 'Hexadecimal';   // must match <!-- ACTIVITY title: --> above
+
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const CHAINS  = { 4: 'nohelp', 5: 'plenary' };
+const LADDER_TASKS = [0, 1, 2, 3];
+const UNLOCKED_BY = { 4: 3, 5: 4, 6: 5 };  // no help only after Task 4 (both directions); then the plenary; then the game
+const RUSH_TAB = 6;
+
+// ── State (saved on every change) ──────────────────────
+function blankState() {
+  return {
+    seed: Math.random().toString(36).slice(2, 10),   // per-student numbers and order
+    tab: 0,
+    completed:    new Array(TASK_COUNT).fill(false),
+    firstAttempt: new Array(TASK_COUNT).fill(true),
+    passed: [],                                      // tasks ever completed (keeps later tasks open after a gold retry)
+    cp: { 4: { attempt: 0, pos: 0 }, 5: { attempt: 0, pos: 0 } },
+    ld: { 0: { step: 0, retry: 0 }, 1: { step: 0, retry: 0 }, 2: { step: 0, retry: 0 }, 3: { step: 0, retry: 0 } },
+    draft: { 0: {}, 1: {}, 2: {}, 3: {} },           // answers so far on the current question
+    chainDraft: {},                                  // answer so far in a chain question
+    wait: {},                                        // task → { until, text, why, label }: the wait after a wrong answer (survives a refresh)
+    wrongRun: {},                                    // task → wrong answers in a row (sets the wait: 5, 10, 15 s)
+    log: { 0: [], 1: [], 2: [], 3: [], 4: [], 5: [] },
+  };
+}
+
+function loadState() {
+  const b = blankState();
+  let s;
+  try { s = JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch (e) {}
+  if (!s || typeof s !== 'object') return b;
+  const merge = (def, got) => Object.fromEntries(Object.entries(def).map(([k, v]) => [k, { ...v, ...got?.[k] }]));
+  return {
+    ...b, ...s,
+    completed:    b.completed.map((_, i) => !!s.completed?.[i]),
+    firstAttempt: b.firstAttempt.map((_, i) => s.firstAttempt?.[i] ?? true),
+    passed: Array.isArray(s.passed) ? s.passed : [],
+    cp: merge(b.cp, s.cp),
+    ld: merge(b.ld, s.ld),
+    draft: merge(b.draft, s.draft),
+    log: Object.fromEntries(Object.keys(b.log).map(k => [k, Array.isArray(s.log?.[k]) ? s.log[k] : []])),
+  };
+}
+
+const state = loadState();
+function save() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
+}
+
+// Each task keeps a short log of what the student answered, for the evidence report.
+function logAnswer(i, line) {
+  state.log[i].push(line);
+  if (state.log[i].length > 16) state.log[i].shift();
+  $('ev-' + i).value = state.log[i].join(' | ');
+}
+
+// ── Tabs ───────────────────────────────────────────────
+function showTab(idx) {
+  // Leaving Hex Rush mid-run ends it (not recorded), so the timer can't take lives in the background.
+  if (idx !== RUSH_TAB && game && !game.over) rushMenu();
+  state.tab = idx;
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', +t.dataset.idx === idx));
+  document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + idx));
+  save();
+}
+$('tab-bar').addEventListener('click', e => {
+  const tab = e.target.closest('.tab');
+  if (tab) showTab(+tab.dataset.idx);
+});
+
+function isLocked(i) {
+  const need = UNLOCKED_BY[i];
+  return need !== undefined && !state.completed[need] && !state.passed.includes(need);
+}
+function renderLocks() {
+  for (const i of Object.keys(UNLOCKED_BY)) $('lock-' + i).style.display = isLocked(+i) ? '' : 'none';
+}
+const LOCK_TEXT = {
+  4: ['Pass Task 4 first', 'No help mixes binary → hex and hex → binary, so finish Task 4 first.'],
+  5: ['Pass Task 5 first', 'Task 5 checks you can convert both ways with no help. Then you are ready for the plenary.'],
+  6: ['Pass the plenary first', 'Finish all 6 tasks to unlock Hex Rush, then race the class for the top score.'],
+};
+const lockHtml = i => `<div class="lock-card">🔒 ${LOCK_TEXT[i][0]}<p>${LOCK_TEXT[i][1]}</p></div>`;
+
+function doneHtml(i, what) {
+  return `<div class="cp-done"><span class="big">${state.firstAttempt[i] ? '🥇' : '🎉'}</span>
+    ${what}${state.firstAttempt[i] ? ', first time' : ''}!</div>`;
+}
+
+// After a wrong answer: show the working and hold the button for 5, 10 then 15 s (wrong answers in a row).
+// The deadline is saved, so a refresh shows the same wait instead of skipping it.
+const waitLeft = i => Math.max(0, Math.ceil(((state.wait[i]?.until || 0) - Date.now()) / 1000));
+
+function msgBad(i, text, why, label) {
+  state.wrongRun[i] = (state.wrongRun[i] || 0) + 1;
+  state.wait[i] = { until: Date.now() + cooldownSeconds(state.wrongRun[i]) * 1000, text, why, label };
+  save();
+  showWait(i);
+}
+
+function showWait(i) {
+  const w = state.wait[i];
+  const box = $('msg-' + i);
+  box.className = 'cp-msg bad';
+  box.innerHTML = `${esc(w.text)}<span class="why">${esc(w.why)}</span>
+    <button type="button" class="ac-btn ac-btn-secondary" disabled style="margin-top:10px">Read the working…</button>`;
+  const btn = box.querySelector('button');
+  const tick = () => {
+    if (!btn.isConnected) return;
+    const left = waitLeft(i);
+    if (left > 0) { btn.textContent = `Read the working… ${left}`; setTimeout(tick, 250); }
+    else { btn.disabled = false; btn.textContent = w.label; btn.focus(); }
+  };
+  tick();
+  btn.onclick = () => {
+    delete state.wait[i];
+    save();
+    CHAINS[i] ? renderChain(i) : renderLadder(i);
+  };
+}
+
+// While a wait is running (e.g. after a refresh), the task shows only the working and the countdown.
+function renderWaiting(i) {
+  if (!state.wait[i]) return false;
+  if (!waitLeft(i)) { delete state.wait[i]; save(); return false; }
+  $('area-' + i).innerHTML = `<div class="cp-msg" id="msg-${i}" role="status"></div>`;
+  showWait(i);
+  return true;
+}
+
+// ── Drawing parts ──────────────────────────────────────
+const bitCells = bits => [...bits].map(c => `<div class="cell bit">${c}</div>`).join('');
+const headCells = (bits, lit = false) => HEADINGS4.map((h, k) =>
+  `<div class="cell head ${lit && bits[k] === '1' ? 'lit' : ''}">${h}</div>`).join('');
+
+function box(attrs, value, { len = 2, label, title, cls = '' } = {}) {
+  return `<input class="num-in ${cls}" ${attrs} maxlength="${len}" autocomplete="off" spellcheck="false"
+    aria-label="${esc(label)}" data-title="Current question: ${esc(title || label)}" value="${esc(value ?? '')}">`;
+}
+
+// The 16 hex digits with their denary values. 'a' mode shows only A = 10.
+function hexTable(mode) {
+  if (mode === 'none') return '';
+  if (mode === 'a') return `<div class="a-only">A = 10</div>`;
+  const cells = (fn, cls) => [...HEX_DIGITS].map((c, n) => `<div class="ht ${cls} ${n >= 10 ? 'letter' : ''}">${fn(c, n)}</div>`).join('');
+  return `<div class="hex-table" aria-label="Hex digits 0 to F with their denary values">
+      <span class="rl">Hex</span>${cells(c => c, 'hx')}
+      <span class="rl">Denary</span>${cells((c, n) => n, '')}
+    </div>`;
+}
+
+// ═══════════════ LADDERS (Tasks 1–4) ═══════════════
+// One question at a time. A right answer moves on a step (with less help); a wrong one
+// shows the working and gives a new question at the same step. Wrong answers cost gold.
+const busy = {};
+
+function ladderQ(i) {
+  const s = state.ld[i];
+  return ladderQuestion(i, s.step, state.seed, s.retry);
+}
+
+// The draft belongs to one question; a new question starts with empty boxes.
+function draftFor(i) {
+  const s = state.ld[i];
+  const key = `${s.step}|${s.retry}`;
+  if (state.draft[i].key !== key) state.draft[i] = { key, items: [], dec: {}, nib: {}, hex: '', ans: '', split: 0, bits: [], typed: '' };
+  return state.draft[i];
+}
+
+function stepHead(i, step) {
+  const n = STEP_COUNT[i];
+  const pips = Array.from({ length: n }, (_, k) => `<span class="pip ${k < step ? 'on' : ''} ${k === step ? 'now' : ''}"></span>`).join('');
+  return `<div class="step-head"><span>Step ${step + 1} of ${n}</span><span class="pips" aria-hidden="true">${pips}</span></div>`;
+}
+
+function promptFor(q) {
+  if (q.task === 0) return 'Fill in each box.';
+  if (q.task === 1) return `Convert <span class="big-num">${q.bits}</span> to one hex digit.`;
+  if (q.task === 2) return `Convert <span class="big-num">${q.bits}</span> to hex.`;
+  return `Convert <span class="big-num">${q.hex}</span> to binary.`;
+}
+
+function digitBody(q, d) {
+  const rows = q.items.map((it, k) => {
+    const label = it.dir === 'd2h' ? `${it.n} in hex is` : `${hexDigit(it.n)} in denary is`;
+    const shown = it.dir === 'd2h' ? `<span class="big-num">${it.n}</span> in hex is` : `<span class="big-num">${hexDigit(it.n)}</span> in denary is`;
+    return `<div class="digit-row"><span class="lbl">${shown}</span>
+      ${box(`data-field="items" data-k="${k}" data-part="i${k}"`, d.items[k], { label })}</div>`;
+  }).join('');
+  return `${hexTable(q.table)}<div class="digit-rows">${rows}</div>`;
+}
+
+// A conversion laid out as one grid. rows: { label, cells: [html, html] } puts 4 cells under
+// each nibble; { label, each: [html, html] } centres one thing under each nibble;
+// { label, whole: html } centres one thing under all of them (the joined answer).
+function convGrid(count, rows) {
+  const at = k => `grid-column:${2 + k * 5} / span 4`;
+  const body = rows.filter(Boolean).map(r => {
+    const lab = `<div class="rl">${r.label || ''}</div>`;
+    if (r.whole !== undefined) return `<div class="join" style="grid-column:1 / -1"></div>${lab}<div class="sp" style="grid-column:2 / -1">${r.whole}</div>`;
+    if (r.each) return lab + r.each.map((h, k) => `<div class="sp" style="${at(k)}">${h}</div>`).join('');
+    return lab + r.cells.map((h, k) => (k ? '<span></span>' : '') + h).join('');
+  }).join('');
+  return `<div class="conv ${count === 2 ? 'two' : 'one'}">${body}</div>`;
+}
+
+function nibbleBody(q, d) {
+  return convGrid(1, [
+    q.headings && { label: 'Place value', cells: [headCells(q.bits, q.lit)] },
+    { label: 'Bits', cells: [bitCells(q.bits)] },
+    { label: 'Denary', each: [box('data-field="dec" data-sub="n" data-part="d"', d.dec.n, { len: 2, label: 'The 4 bits in denary' })] },
+    { label: 'Hex', each: [box('data-field="hex" data-part="h"', d.hex, { label: 'The 4 bits as one hex digit' })] },
+  ]);
+}
+
+function b2hBody(q, d) {
+  const L = q.bits.slice(0, 4), R = q.bits.slice(4);
+  const ansBox = box('data-field="ans" data-part="ans"', d.ans, { len: 4, label: 'The answer in hex' });
+  const ansLine = `<div class="answer-line">Answer in hex: ${ansBox}</div>`;
+  if (q.split === 'shown') {
+    const sides = ['l', 'r'], names = ['First', 'Second'];
+    return convGrid(2, [
+      { label: '', each: names.map(n => `<span class="cap">${n} 4 bits</span>`) },
+      { label: 'Place value', cells: [headCells(L), headCells(R)] },
+      { label: 'Bits', cells: [bitCells(L), bitCells(R)] },
+      q.dec && { label: 'Denary', each: sides.map((s, k) => box(`data-field="dec" data-sub="${s}" data-part="d${s}"`, d.dec[s], { len: 2, label: `${names[k]} 4 bits in denary` })) },
+      { label: 'Hex', each: sides.map((s, k) => box(`data-field="nib" data-sub="${s}" data-part="h${s}"`, d.nib[s], { label: `${names[k]} 4 bits as a hex digit` })) },
+      { label: 'Answer in hex', whole: ansBox },
+    ]);
+  }
+  if (q.split === 'tap') {
+    const cells = [...q.bits].map((c, k) => `<div class="cell bit">${c}</div>${k < 7
+      ? `<button type="button" class="gap-btn ${d.split === k + 1 ? 'on' : ''}" data-action="split" data-task="2" data-k="${k + 1}"
+          aria-pressed="${d.split === k + 1}" aria-label="Split after bit ${k + 1}"></button>` : ''}`).join('');
+    return `<p class="tap-note">Tap the gap between two bits to split the number there (tap another gap to move it).</p>
+      <div class="byte">${cells}</div>
+      <div class="answer-line">First 4 bits in hex ${box('data-field="nib" data-sub="l" data-part="hl"', d.nib.l, { label: 'First 4 bits as a hex digit' })}
+        Second 4 bits in hex ${box('data-field="nib" data-sub="r" data-part="hr"', d.nib.r, { label: 'Second 4 bits as a hex digit' })}</div>
+      ${ansLine}`;
+  }
+  return `<div class="byte plain">${bitCells(q.bits)}</div>${ansLine}`;
+}
+
+function h2bBody(q, d) {
+  const digits = [hexDigit(hi(q.n)), hexDigit(lo(q.n))];
+  const sides = ['l', 'r'], names = ['First', 'Second'];
+  if (q.entry === 'typed') {
+    return `<div class="nibbles">${digits.map(c => `<div class="cell hexd" style="width:56px">${c}</div>`).join('')}</div>
+      <div class="answer-line">Answer in binary (8 bits):
+        ${box('data-field="typed" data-part="typed" inputmode="numeric"', d.typed, { len: 10, cls: 'wide', label: 'The answer in binary' })}</div>`;
+  }
+  const toggles = k => Array.from({ length: 4 }, (_, j) => {
+    const b = k * 4 + j, v = d.bits[b] ?? '';
+    return `<button type="button" class="bit-toggle ${v ? 'set' : ''}" data-action="toggle" data-task="3" data-k="${b}"
+      data-part="b${b}" aria-label="${names[k]} digit, bit ${j + 1}: ${v || 'not set'}">${v || '?'}</button>`;
+  }).join('');
+  const heads = HEADINGS4.map(h => `<div class="cell head">${h}</div>`).join('');
+  return `<p class="tap-note">Tap a bit box to set it: ? → 0 → 1.</p>` + convGrid(2, [
+    { label: '', each: names.map(n => `<span class="cap">${n} digit</span>`) },
+    { label: 'Hex', cells: digits.map(c => `<div class="cell hexd" style="grid-column:span 4">${c}</div>`) },
+    q.dec && { label: 'Denary', each: sides.map((s, k) => box(`data-field="dec" data-sub="${s}" data-part="d${s}"`, d.dec[s], { len: 2, label: `${names[k]} digit in denary` })) },
+    { label: 'Place value', cells: [heads, heads] },
+    { label: 'Bits', cells: [toggles(0), toggles(1)] },
+  ]);
+}
+
+const BODY = [digitBody, nibbleBody, b2hBody, h2bBody];
+
+function renderLadder(i) {
+  const area = $('area-' + i);
+  if (isLocked(i)) { area.innerHTML = lockHtml(i); return; }
+  if (state.completed[i]) { area.innerHTML = doneHtml(i, `All ${STEP_COUNT[i]} steps done`); return; }
+  if (renderWaiting(i)) return;
+  const s = state.ld[i];
+  const q = ladderQ(i);
+  const d = draftFor(i);
+  const m = $('method-' + i);
+  // Fold the method away on a "fold" step (the student can open it again).
+  if (m && q.fold && m.dataset.closedFor !== String(s.step)) { m.open = false; m.dataset.closedFor = String(s.step); }
+  area.innerHTML = `${stepHead(i, s.step)}
+    <p class="help">${esc(q.help)}</p>
+    <div class="q-card" id="qc-${i}" data-key="${esc(q.key)}" data-n="${q.n ?? ''}" data-step="${s.step}">
+      <h3>${promptFor(q)}</h3>
+      ${BODY[i](q, d)}
+    </div>
+    <div class="row"><button type="button" class="ac-btn" id="check-${i}" data-action="ladder-check" data-task="${i}">Check</button></div>
+    <div class="cp-msg" id="msg-${i}" role="status"></div>`;
+  busy[i] = false;
+  glossify(area.querySelector('.help'));
+}
+
+function answerText(q, d) {
+  if (q.task === 0) return q.items.map((it, k) => `${it.dir === 'd2h' ? it.n : hexDigit(it.n)} → ${d.items[k] ?? ''}`).join(', ');
+  if (q.task === 1) return `${q.bits} → ${d.dec.n} → ${String(d.hex).toUpperCase()}`;
+  if (q.task === 2) return `${q.bits} → ${String(d.ans).toUpperCase()}`;
+  return `${q.hex} → ${q.entry === 'typed' ? d.typed : d.bits.join('')}`;
+}
+
+function highlightParts(i, results) {
+  const card = $('qc-' + i);
+  for (const [part, ok] of Object.entries(results)) {
+    let el = card.querySelector(`[data-part="${part}"]`);
+    if (part === 'split') el = card.querySelector('.gap-btn.on');
+    if (el) { el.classList.toggle('is-right', ok); el.classList.toggle('is-wrong', !ok); }
+  }
+  const all = Object.values(results).every(Boolean);
+  card.classList.toggle('is-right', all);
+  card.classList.toggle('is-wrong', !all);
+}
+
+function checkLadder(i) {
+  if (busy[i] || state.completed[i] || isLocked(i)) return;
+  // `=== false`, not `!…`: if classroom.js is missing, verifyAuth is undefined and must not block the check.
+  if (window.Classroom?.verifyAuth() === false) return;
+  const q = ladderQ(i);
+  const d = draftFor(i);
+  const msg = $('msg-' + i);
+  const hint = shapeHint(q, d);
+  if (hint) {
+    msg.className = 'cp-msg bad';
+    msg.textContent = hint;
+    return;
+  }
+  busy[i] = true;
+  const { ok, results } = markLadder(q, d);
+  highlightParts(i, results);
+  $('check-' + i).disabled = true;
+  $('qc-' + i).querySelectorAll('input, button').forEach(el => { el.disabled = true; });
+  const s = state.ld[i];
+
+  if (ok) {
+    logAnswer(i, `Step ${s.step + 1}: ${answerText(q, d)} ✓`);
+    window.ActivityUI?.miniCelebration($('qc-' + i));
+    msg.className = 'cp-msg good';
+    msg.innerHTML = `✓ Correct.<span class="why">${esc(workingFor(q))}</span>`;
+    s.step++;
+    s.retry = 0;
+    state.wrongRun[i] = 0;
+    save();
+    if (s.step >= STEP_COUNT[i]) {
+      setTimeout(() => {
+        $('feedback-' + i).textContent = state.firstAttempt[i] ? '🥇 Every step right first time!' : '✅ All steps done.';
+        $('feedback-' + i).className = 'feedback correct';
+        markDone(i);
+      }, reduceMotion ? 300 : 1200);
+    } else {
+      setTimeout(() => renderLadder(i), reduceMotion ? 600 : 1500);
+    }
+    return;
+  }
+
+  logAnswer(i, `Step ${s.step + 1}: ${answerText(q, d)} ✗`);
+  state.firstAttempt[i] = false;
+  s.retry++;            // saved now, so a refresh gives a new question rather than another go at this one
+  save();
+  msgBad(i, '✗ Not quite: the boxes in red are wrong. Here is the working:', workingFor(q), '↻ Try another one');
+}
+
+// Bit boxes go ? → 0 → 1 → 0 …
+function toggleBit(i, k) {
+  if (busy[i] || state.completed[i]) return;
+  const d = draftFor(i);
+  const v = d.bits[k] = d.bits[k] === '0' ? '1' : '0';
+  save();
+  const card = $('qc-' + i);
+  const btn = card.querySelector(`[data-action="toggle"][data-k="${k}"]`);
+  btn.textContent = v;
+  btn.classList.add('set');
+  btn.classList.remove('is-right', 'is-wrong');
+  btn.setAttribute('aria-label', btn.getAttribute('aria-label').replace(/: [^:]*$/, `: ${v}`));
+  card.classList.remove('is-wrong');
+  $('msg-' + i).textContent = '';
+}
+
+// Task 3, step 3: the student taps the gap where the nibbles split.
+function setSplit(i, k) {
+  if (busy[i] || state.completed[i]) return;
+  const d = draftFor(i);
+  d.split = k;
+  save();
+  const card = $('qc-' + i);
+  card.querySelectorAll('.gap-btn').forEach(g => {
+    const on = +g.dataset.k === k;
+    g.classList.toggle('on', on);
+    g.classList.remove('is-right', 'is-wrong');
+    g.setAttribute('aria-pressed', on);
+  });
+  card.classList.remove('is-wrong');
+  $('msg-' + i).textContent = '';
+}
+
+// ═══════════════ CHAINS (Tasks 5 and 6) ═══════════════
+// N in a row, one at a time. A wrong answer is saved straight away as a restart
+// (so refreshing doesn't dodge it), shows why, then starts again with a new draw.
+const CHAIN_LEN = { 4: NOHELP_LENGTH, 5: PLENARY_LENGTH };
+
+function chainItems(i) {
+  const a = state.cp[i].attempt;
+  return i === 4 ? drawNoHelp(state.seed, a) : drawPlenary(state.seed, a);
+}
+
+function chainDraftFor(i) {
+  const s = state.cp[i];
+  const key = `${s.attempt}|${s.pos}`;
+  if (state.chainDraft[i]?.key !== key) state.chainDraft[i] = { key, text: '' };
+  return state.chainDraft[i];
+}
+
+function convertPrompt(item) {
+  return item.type === 'b2h'
+    ? `<p class="cp-q">Convert this binary number to hex.</p><div class="byte plain">${bitCells(itemShown(item))}</div>`
+    : `<p class="cp-q">Convert this hex number to binary. Type all 8 bits.</p><div class="nibbles">${[...itemShown(item)].map(c => `<div class="cell hexd" style="width:56px">${c}</div>`).join('')}</div>`;
+}
+
+function renderChain(i) {
+  const area = $('area-' + i);
+  if (isLocked(i)) { area.innerHTML = lockHtml(i); return; }
+  const len = CHAIN_LEN[i];
+  if (state.completed[i]) { area.innerHTML = doneHtml(i, `${len} in a row`); return; }
+  if (renderWaiting(i)) return;
+  const s = state.cp[i];
+  const item = chainItems(i)[s.pos];
+  const d = chainDraftFor(i);
+  let body;
+  if (item.type === 'mcq') {
+    const q = plenaryQuestion(item.id);
+    body = `<p class="cp-q">${esc(q.q)}</p>
+      <div class="cp-opts">${optionOrder(q, state.seed, s.attempt).map(k =>
+        `<button type="button" class="cp-opt" data-action="chain-mcq" data-task="${i}" data-k="${k}">${esc(q.opts.find(o => o[0] === k)[1])}</button>`).join('')}</div>`;
+  } else {
+    const toHexQ = item.type === 'b2h';
+    body = `${convertPrompt(item)}
+      <div class="answer-line">
+        <input class="num-in wide" id="typed-${i}" data-chain="${i}" data-part="typed"
+          maxlength="${toHexQ ? 4 : 10}" ${toHexQ ? '' : 'inputmode="numeric"'} autocomplete="off" spellcheck="false"
+          aria-label="Your answer" data-title="Current question: your answer" value="${esc(d.text)}">
+        <button type="button" class="ac-btn" id="check-${i}" data-action="chain-typed" data-task="${i}">Check</button>
+      </div>`;
+  }
+  area.innerHTML = `<div class="step-head"><span>Question ${s.pos + 1} of ${len}</span><span>${s.pos} / ${len} right</span></div>
+    <div class="cp-bar"><div style="width:${s.pos / len * 100}%"></div></div>
+    <div class="q-card" id="qc-${i}" data-type="${item.type}" data-id="${item.id ?? ''}" data-n="${item.n ?? ''}">
+      <h3>Question ${s.pos + 1}</h3>${body}
+    </div>
+    <div class="cp-msg" id="msg-${i}" role="status"></div>`;
+  busy[i] = false;
+  glossify(area.querySelector('.q-card'));
+}
+
+function chainRight(i, why) {
+  const s = state.cp[i];
+  const len = CHAIN_LEN[i];
+  const msg = $('msg-' + i);
+  $('qc-' + i).classList.add('is-right');
+  msg.className = 'cp-msg good';
+  msg.innerHTML = `✓ Correct.<span class="why">${esc(why)}</span>`;
+  state.wrongRun[i] = 0;
+  s.pos++;
+  save();
+  if (s.pos >= len) {
+    setTimeout(() => {
+      $('feedback-' + i).textContent = state.firstAttempt[i] ? `🥇 ${len} in a row, first time!` : `✅ ${len} in a row: passed.`;
+      $('feedback-' + i).className = 'feedback correct';
+      markDone(i);
+    }, reduceMotion ? 300 : 1200);
+  } else {
+    setTimeout(() => renderChain(i), reduceMotion ? 600 : 1500);
+  }
+}
+
+function chainWrong(i, why) {
+  const s = state.cp[i];
+  $('qc-' + i).classList.add('is-wrong');
+  state.firstAttempt[i] = false;
+  s.attempt++;
+  s.pos = 0;
+  delete state.chainDraft[i];
+  save();
+  msgBad(i, '✗ Not quite. Back to question 1 with new questions.', why, '↺ Start again from question 1');
+}
+
+function answerMcq(i, k) {
+  if (busy[i] || state.completed[i]) return;
+  if (window.Classroom?.verifyAuth() === false) return;
+  busy[i] = true;
+  const q = plenaryQuestion(chainItems(i)[state.cp[i].pos].id);
+  const card = $('qc-' + i);
+  card.querySelectorAll('.cp-opt').forEach(b => { b.disabled = true; });
+  const chosen = q.opts.find(o => o[0] === k)[1];
+  if (k === q.a) {
+    card.querySelector(`[data-k="${k}"]`).classList.add('right');
+    logAnswer(i, `${q.q} ${chosen} ✓`);
+    chainRight(i, q.why);
+  } else {
+    card.querySelector(`[data-k="${k}"]`).classList.add('wrong');
+    card.querySelector(`[data-k="${q.a}"]`).classList.add('right');
+    logAnswer(i, `${q.q} ${chosen} ✗`);
+    chainWrong(i, q.why);
+  }
+}
+
+function answerTyped(i) {
+  if (busy[i] || state.completed[i]) return;
+  if (window.Classroom?.verifyAuth() === false) return;
+  const item = chainItems(i)[state.cp[i].pos];
+  const input = $('typed-' + i);
+  const msg = $('msg-' + i);
+  const verdict = checkTyped(item, input.value);
+  if (verdict === 'format') {
+    msg.className = 'cp-msg bad';
+    msg.textContent = formatHint(item);
+    return;
+  }
+  busy[i] = true;
+  input.disabled = true;
+  $('check-' + i).disabled = true;
+  input.classList.add(verdict === 'ok' ? 'is-right' : 'is-wrong');
+  logAnswer(i, `${itemShown(item)} → ${input.value.trim().toUpperCase()} ${verdict === 'ok' ? '✓' : '✗'}`);
+  if (verdict === 'ok') chainRight(i, itemWorking(item));
+  else chainWrong(i, itemWorking(item));
+}
+
+// ═══════════════ SCORING AND COMPLETION ═══════════════
+// Mastery scoring: 0–80 for completing tasks, +20 bonus for first-attempt correctness
+function calcScore() {
+  const done     = state.completed.filter(Boolean).length;
+  const mastered = state.completed.filter((c, i) => c && state.firstAttempt[i]).length;
+  return Math.round((done / TASK_COUNT * 80) + (mastered / TASK_COUNT * 20));
+}
+
+function submitScore() {
+  const pct = calcScore();
+  window.ActivityUI?.setScore(pct);
+  window.Classroom?.submitGrade(pct, ACTIVITY_TITLE);
+}
+
+function showDone(i) {
+  const isGold = state.firstAttempt[i];
+  $('dot-' + i).className = 'pdot ' + (isGold ? 'gold' : 'correct');
+  document.querySelector(`.tab[data-idx="${i}"]`).classList.add('done');
+  $('reset-' + i).style.display = isGold ? 'none' : '';
+}
+
+function markDone(i) {
+  if (state.completed[i]) return;
+  state.completed[i] = true;
+  if (!state.passed.includes(i)) state.passed.push(i);
+  showDone(i);
+  save();
+  submitScore();
+  renderAll();
+  if (state.completed.every(Boolean)) allComplete();
+}
+
+// Start a task again for gold: new questions, from the start.
+function resetTask(i) {
+  state.completed[i] = false;
+  state.firstAttempt[i] = true;
+  delete state.wait[i];
+  state.wrongRun[i] = 0;
+  if (CHAINS[i]) { state.cp[i].attempt++; state.cp[i].pos = 0; delete state.chainDraft[i]; }
+  else { state.ld[i].step = 0; state.ld[i].retry++; }
+  $('dot-' + i).className = 'pdot';
+  document.querySelector(`.tab[data-idx="${i}"]`).classList.remove('done');
+  $('feedback-' + i).textContent = '';
+  $('feedback-' + i).className = 'feedback';
+  $('reset-' + i).style.display = 'none';
+  const m = $('method-' + i);
+  if (m) { m.open = true; delete m.dataset.closedFor; }
+
+  $('done-banner').classList.remove('show', 'gold', 'green');
+  $('glow-overlay').classList.remove('show', 'gold', 'green');
+  window.ActivityUI?.resetCelebration();
+
+  save();
+  renderAll();
+  submitScore();
+}
+
+function showAllDone() {
+  const tier = state.firstAttempt.every(Boolean) ? 'gold' : 'green';
+  $('done-banner').classList.add('show', tier);
+  $('glow-overlay').classList.add(tier, 'show');
+}
+
+function allComplete() {
+  showAllDone();
+  window.ActivityUI?.launchCelebration({ percent: calcScore() });
+}
+
+// ═══════════════ HEX RUSH (extension game, not scored) ═══════════════
+// Saved apart from the lesson, so "Try for Gold" never wipes a high score.
+const RUSH_KEY = 'y8_datarep_l3_hex_rush';
+const rush = { best: 0, bestStreak: 0, runs: 0, codes: {}, badges: {}, lastCode: '' };
+try { Object.assign(rush, JSON.parse(localStorage.getItem(RUSH_KEY)) || {}); } catch (e) {}
+const rushSave = () => { try { localStorage.setItem(RUSH_KEY, JSON.stringify(rush)); } catch (e) {} };
+
+let game = null;
+const fmt = n => n.toLocaleString('en-GB');
+const ASK = {
+  nib2h: 'Turn these 4 bits into one hex digit:',
+  h2nib: 'Turn this hex digit into 4 bits:',
+  b2h:   'Convert to hex:',
+  h2b:   'Convert to binary (8 bits):',
+};
+
+function rushShow(id) {
+  document.querySelectorAll('.rush-screen').forEach(s => s.classList.toggle('on', s.id === id));
+}
+function rushStop() {
+  if (game) { cancelAnimationFrame(game.raf); clearTimeout(game.next); game.over = true; }
+}
+
+// The best score stays in the page header on every tab, so the teacher can see it at a glance.
+// It shows the class challenge best if the student last played a code, otherwise the solo best.
+function renderBestChip() {
+  const code = rush.lastCode;
+  const best = code ? rush.codes[code] || 0 : rush.best;
+  const chip = $('best-chip');
+  chip.classList.toggle('show', rush.runs > 0);
+  chip.textContent = code ? `🏆 Hex Rush ${code}: ${fmt(best)}` : `🏆 Hex Rush best: ${fmt(best)}`;
+  const codes = Object.entries(rush.codes).map(([c, s]) => `${c} ${fmt(s)}`).join(', ');
+  $('ev-rush').value = rush.runs
+    ? `Solo best ${fmt(rush.best)} (${rankFor(rush.best)}), best streak ${rush.bestStreak}, ${rush.runs} runs${codes ? `. Class challenges: ${codes}` : ''}`
+    : '';
+}
+
+function badgeHtml(fresh = []) {
+  return GAME_BADGES.map(([id, name, how]) =>
+    `<span class="badge ${rush.badges[id] ? 'got' : ''} ${fresh.includes(id) ? 'new' : ''}" title="${esc(how)}">${name}</span>`).join('');
+}
+
+function rushMenu() {
+  rushStop();
+  $('rush-best').textContent = fmt(rush.best);
+  $('rush-rank').textContent = rankFor(rush.best);
+  $('rush-streak').textContent = rush.bestStreak;
+  $('rush-runs').textContent = rush.runs;
+  $('rush-badges').innerHTML = badgeHtml();
+  const codes = Object.entries(rush.codes);
+  $('rush-code-best').textContent = codes.length
+    ? 'Your challenge bests: ' + codes.slice(-3).map(([c, s]) => `${c} ${fmt(s)}`).join(' · ') : '';
+  if (rush.lastCode && !$('rush-code').value) $('rush-code').value = rush.lastCode;
+  rushShow('rush-menu');
+}
+
+function renderRush() {
+  const locked = isLocked(RUSH_TAB);
+  $('rush-lock').innerHTML = locked ? lockHtml(RUSH_TAB) : '';
+  $('rush').style.display = locked ? 'none' : '';
+  if (locked) rushStop();
+  else if (!game || game.over) rushMenu();
+  renderBestChip();
+}
+
+function rushStart(code) {
+  rushStop();
+  game = {
+    code, seed: code || Math.random().toString(36).slice(2, 10),
+    i: 0, score: 0, lives: GAME_LIVES, streak: 0, maxStreak: 0, right: 0, fast: 0, perfect: true,
+    missed: [], locked: false, over: false, raf: 0, next: 0,
+  };
+  rush.lastCode = code;
+  rushSave();
+  rushShow('rush-game');
+  rushNext();
+}
+
+function rushHud() {
+  $('hud-score').textContent = fmt(game.score);
+  const m = multiplier(game.streak);
+  $('hud-mult').textContent = '×' + m;
+  $('hud-mult').classList.toggle('hot', m >= 2);
+  $('hud-q').textContent = game.i + 1;
+  $('hud-streak').textContent = game.streak;
+  $('hud-lvl').textContent = gameLevel(game.i).name.toUpperCase();
+  $('hud-lives').textContent = '❤️'.repeat(game.lives) + '🖤'.repeat(GAME_LIVES - game.lives);
+  const best = game.code ? rush.codes[game.code] || 0 : rush.best;
+  $('hud-best').textContent = `Best: ${fmt(best)}`;
+}
+
+function rushNext() {
+  const q = game.q = gameQuestion(game.seed, game.i);
+  game.limit = gameTime(game.i);
+  game.locked = false;
+  $('rush-ask').textContent = ASK[q.type];
+  $('rush-show').textContent = itemShown(q);
+  const input = $('rush-in');
+  input.value = '';
+  input.disabled = false;
+  input.classList.remove('is-right', 'is-wrong');
+  input.maxLength = q.type === 'h2b' ? 10 : q.type === 'b2h' ? 4 : q.type === 'h2nib' ? 6 : 2;
+  input.inputMode = (q.type === 'h2b' || q.type === 'h2nib') ? 'numeric' : 'text';
+  $('rush-go').disabled = false;
+  input.focus();
+  $('verdict').innerHTML = '';
+  rushHud();
+  game.start = performance.now();
+  const bar = $('tbar');
+  const tick = () => {
+    if (game.over || game.locked) return;
+    const left = game.limit - (performance.now() - game.start) / 1000;
+    bar.style.width = Math.max(0, left / game.limit * 100) + '%';
+    bar.classList.toggle('low', left < 5);
+    if (left <= 0) { rushAnswer(true); return; }
+    game.raf = requestAnimationFrame(tick);
+  };
+  tick();
+}
+
+function rushAnswer(timedOut = false) {
+  if (!game || game.locked || game.over) return;
+  const q = game.q;
+  const input = $('rush-in');
+  const verdict = timedOut ? 'wrong' : checkTyped(q, input.value);
+  if (verdict === 'format') {
+    $('verdict').innerHTML = `<span class="why">${esc(formatHint(q))}</span>`;
+    return;
+  }
+  game.locked = true;
+  cancelAnimationFrame(game.raf);
+  input.disabled = true;
+  $('rush-go').disabled = true;
+  const used = (performance.now() - game.start) / 1000;
+  const v = $('verdict');
+  if (verdict === 'ok') {
+    game.streak++;
+    game.right++;
+    game.maxStreak = Math.max(game.maxStreak, game.streak);
+    if (used < 5) game.fast++;
+    const pts = gamePoints(game.i, game.limit - used, game.limit, game.streak);
+    game.score += pts;
+    input.classList.add('is-right');
+    v.innerHTML = `✅ Right! <span class="pts">+${fmt(pts)}</span>`;
+  } else {
+    game.streak = 0;
+    game.lives--;
+    if (game.i < 20) game.perfect = false;
+    game.missed.push(q);
+    input.classList.add('is-wrong');
+    v.innerHTML = `${timedOut ? '⏱ Too slow!' : '💥 Not quite.'} You lose a life. The answer is <b>${itemAnswer(q)}</b>.
+      <span class="why">${esc(itemWorking(q))}</span>`;
+  }
+  rushHud();
+  game.next = setTimeout(() => {
+    if (game.lives <= 0) return rushOver();
+    game.i++;
+    rushNext();
+  }, verdict === 'ok' ? (reduceMotion ? 500 : 900) : 4500);
+}
+
+function rushOver() {
+  rushStop();
+  const g = game;
+  const played = g.i + 1;
+  const earned = runBadges({ played, maxStreak: g.maxStreak, fast: g.fast, perfect: g.perfect, score: g.score });
+  const fresh = Object.keys(earned).filter(k => earned[k] && !rush.badges[k]);
+  fresh.forEach(k => { rush.badges[k] = true; });
+  rush.runs++;
+  rush.bestStreak = Math.max(rush.bestStreak, g.maxStreak);
+  let pb;
+  if (g.code) {
+    const prev = rush.codes[g.code] || 0;
+    if (g.score > prev) { rush.codes[g.code] = g.score; pb = prev ? `🏆 New best on challenge ${g.code}!` : `Challenge ${g.code}: score recorded`; }
+    else pb = `Your best on ${g.code}: ${fmt(prev)}`;
+  } else if (g.score > rush.best) {
+    pb = rush.best ? '🏆 New personal best!' : 'First score recorded!';
+    rush.best = g.score;
+  } else pb = `Personal best: ${fmt(rush.best)}`;
+  rushSave();
+  renderBestChip();
+
+  $('over-mode').textContent = g.code ? `CLASS CHALLENGE · ${g.code}` : 'SOLO RUN';
+  $('over-score').textContent = fmt(g.score);
+  $('over-rank').textContent = rankFor(g.score);
+  $('over-pb').textContent = pb;
+  $('over-qs').textContent = played;
+  $('over-acc').textContent = Math.round(g.right / played * 100) + '%';
+  $('over-streak').textContent = g.maxStreak;
+  const next = RANKS.find(([min]) => min > g.score);
+  $('over-next').textContent = next ? fmt(next[0] - g.score) : 'MAX';
+  $('over-badges').innerHTML = badgeHtml(fresh);
+  const mine = rankFor(g.score);
+  $('over-ladder').innerHTML = RANKS.slice().reverse().map(([min, name]) =>
+    `<li class="${name === mine ? 'me' : ''}"><span>${name}</span><span>${fmt(min)}+</span></li>`).join('');
+  $('over-missed').innerHTML = g.missed.length
+    ? `<div class="rush-sub">📚 Learn from the ones you missed</div><ul class="missed">${g.missed.slice(-4).map(q =>
+        `<li><b>${itemShown(q)} → ${itemAnswer(q)}</b><br><span class="muted">${esc(itemWorking(q))}</span></li>`).join('')}</ul>`
+    : '';
+  rushShow('rush-over');
+  if (fresh.length) window.ActivityUI?.showToast('🏅 New badge: ' + fresh.map(k => GAME_BADGES.find(b => b[0] === k)[1]).join(', '));
+}
+
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-rush]');
+  if (!b) return;
+  const act = b.dataset.rush;
+  if (act === 'solo') rushStart('');
+  if (act === 'challenge') {
+    const code = cleanCode($('rush-code').value);
+    if (!code) { window.ActivityUI?.showToast('Type the challenge code from the board first'); return; }
+    rushStart(code);
+  }
+  if (act === 'again') rushStart(game?.code || '');
+  if (act === 'menu') rushMenu();
+});
+$('rush-go').addEventListener('click', () => rushAnswer());
+$('rush-in').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); rushAnswer(); } });
+$('rush-in').addEventListener('input', () => { $('verdict').innerHTML = ''; });
+$('rush-code').addEventListener('keydown', e => { if (e.key === 'Enter') $('rush').querySelector('[data-rush="challenge"]').click(); });
+
+// ═══════════════ HOVER DEFINITIONS ═══════════════
+// Words from GLOSSARY get a dotted underline and show their meaning on hover, focus or tap: once per word in each
+// goal, help line or question, so a sentence about nibbles isn't all dots. Never in the method boxes (they explain the
+// words), the numbers, or Hex Rush (it's timed), nor on a question that tests what a word means (NO_GLOSS).
+const GL_RE = new RegExp(`\\b(?:${GLOSSARY.map(g => g[0]).join('|')})\\b`, 'gi');
+const GL_SKIP = '.method, .nibbles, .conv,.byte, .hex-table, .rush, .cp-msg, .lock-card, .step-head, .gl, input, .ev, .big-num';
+function glossify(root) {
+  if (glAnchor && !glAnchor.isConnected) hideTip();   // the word was re-rendered away
+  if (!root || root.closest(GL_SKIP)) return;
+  const card = root.matches('.q-card[data-id]') ? root : root.querySelector('.q-card[data-id]');
+  if (card && NO_GLOSS.includes(card.dataset.id)) return;
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT,
+    { acceptNode: n => (n.parentElement.closest(GL_SKIP) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT) });
+  const nodes = [];
+  while (walker.nextNode()) nodes.push(walker.currentNode);
+  const seen = new Set();
+  for (const n of nodes) {
+    const hits = [...n.data.matchAll(GL_RE)].filter(m => {
+      const def = glossaryDef(m[0]);
+      if (seen.has(def)) return false;
+      seen.add(def);
+      return true;
+    });
+    if (!hits.length) continue;
+    // Inside an answer button the word is hover-only: a tap still answers, and Tab still goes button to button.
+    const focusable = !n.parentElement.closest('button');
+    const frag = document.createDocumentFragment();
+    let last = 0;
+    for (const m of hits) {
+      frag.append(n.data.slice(last, m.index));
+      const s = Object.assign(document.createElement('span'), { className: 'gl', textContent: m[0] });
+      s.dataset.def = glossaryDef(m[0]);
+      if (focusable) s.tabIndex = 0;
+      frag.append(s);
+      last = m.index + m[0].length;
+    }
+    frag.append(n.data.slice(last));
+    n.replaceWith(frag);
+  }
+}
+const glTip = Object.assign(document.createElement('div'), { className: 'gl-tip', id: 'gl-tip', role: 'tooltip' });
+let glAnchor = null;
+function showTip(el) {
+  glTip.innerHTML = `<b>${esc(el.textContent)}</b>${esc(el.dataset.def)}`;
+  if (!glTip.isConnected) document.body.appendChild(glTip);
+  el.setAttribute('aria-describedby', 'gl-tip');
+  glAnchor = el;
+  placeTip();
+  glTip.classList.add('show');
+}
+function placeTip() {
+  const r = glAnchor.getBoundingClientRect(), t = glTip.getBoundingClientRect(), gap = 8;
+  if (r.bottom < 0 || r.top > innerHeight) return hideTip();
+  const below = r.bottom + gap + t.height < innerHeight;
+  glTip.style.top = (below ? r.bottom + gap : Math.max(4, r.top - gap - t.height)) + 'px';
+  glTip.style.left = Math.max(4, Math.min(r.left, innerWidth - t.width - 4)) + 'px';
+}
+function hideTip() { glTip.classList.remove('show'); glAnchor = null; }
+for (const ev of ['mouseover', 'focusin']) document.addEventListener(ev, e => { const g = e.target.closest?.('.gl'); if (g) showTip(g); });
+for (const ev of ['mouseout', 'focusout']) document.addEventListener(ev, e => { if (e.target.closest?.('.gl')) hideTip(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') hideTip(); });
+// Scrolling keeps the tip beside its word, and hides it once the word is off screen.
+addEventListener('scroll', () => { if (glAnchor) placeTip(); }, { passive: true, capture: true });
+
+// ═══════════════ EVENTS ═══════════════
+document.addEventListener('click', e => {
+  const btn = e.target.closest('[data-action]');
+  if (!btn) return;
+  const i = +btn.dataset.task;
+  const act = btn.dataset.action;
+  if (act === 'ladder-check') checkLadder(i);
+  if (act === 'toggle')       toggleBit(i, +btn.dataset.k);
+  if (act === 'split')        setSplit(i, +btn.dataset.k);
+  if (act === 'chain-mcq')    answerMcq(i, btn.dataset.k);
+  if (act === 'chain-typed')  answerTyped(i);
+  if (act === 'reset')        resetTask(i);
+});
+
+// Typing: save the draft, clear the red/green marks, and hop to the next box once a one-character box is filled.
+document.addEventListener('input', e => {
+  const el = e.target;
+  if (el.dataset.chain !== undefined) {
+    const i = +el.dataset.chain;
+    chainDraftFor(i).text = el.value;
+    $('msg-' + i).textContent = '';
+    save();
+    return;
+  }
+  const card = el.closest('.q-card');
+  if (!card || !el.dataset.field) return;
+  const i = +card.id.replace('qc-', '');
+  const d = draftFor(i);
+  const f = el.dataset.field;
+  if (el.dataset.sub) d[f][el.dataset.sub] = el.value;
+  else if (el.dataset.k !== undefined) d[f][+el.dataset.k] = el.value;
+  else d[f] = el.value;
+  el.classList.remove('is-right', 'is-wrong');
+  card.classList.remove('is-wrong');
+  $('msg-' + i).textContent = '';
+  save();
+  if (/^[A-Fa-f]$/.test(el.value)) {   // a letter is a whole hex digit; a number might have a second digit coming
+    const inputs = [...card.querySelectorAll('input.num-in')];
+    inputs[inputs.indexOf(el) + 1]?.focus();
+  }
+});
+
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter' || e.target.tagName !== 'INPUT') return;
+  const chain = e.target.dataset.chain;
+  if (chain !== undefined) { answerTyped(+chain); return; }
+  const card = e.target.closest('.q-card');
+  if (card && LADDER_TASKS.includes(+card.id.replace('qc-', ''))) checkLadder(+card.id.replace('qc-', ''));
+});
+
+// ═══════════════ START UP ═══════════════
+function renderAll() {
+  renderLocks();
+  for (const i of Object.keys(CHAINS)) renderChain(+i);
+  for (const i of LADDER_TASKS) renderLadder(i);
+  renderRush();
+}
+
+renderAll();
+// The goal box is a flex row (icon + text), so its text goes in one span first; a dotted word would otherwise be its own flex item.
+document.querySelectorAll('.goal').forEach(g => {
+  const text = document.createElement('span');
+  text.append(...g.childNodes);
+  g.append(text);
+  glossify(text);
+});
+
+// Restore the finished look without re-firing the celebration or a Classroom upload.
+for (let i = 0; i < TASK_COUNT; i++) {
+  $('ev-' + i).value = state.log[i].join(' | ');
+  if (!state.completed[i]) continue;
+  showDone(i);
+  $('feedback-' + i).textContent = '✅ Done!';
+  $('feedback-' + i).className = 'feedback correct';
+}
+if (state.completed.every(Boolean)) showAllDone();
+window.ActivityUI?.setScore(calcScore());
+showTab(Math.min(Math.max(+state.tab || 0, 0), RUSH_TAB));
+save();   // keeps the seed, so the numbers stay the same after a reload
+</script>
+</body>
+</html>

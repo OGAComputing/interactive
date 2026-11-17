@@ -29,7 +29,7 @@ L1–L3 are about **doing** the conversions and the addition. Teach the method w
   |---|---|---|
   | binary, denary, bit | L1 | Needed to name what is being converted |
   | carry | L2 | The one new word in the addition method |
-  | hexadecimal, nibble | L3 | Binary → hex works by splitting into 4-bit nibbles |
+  | hexadecimal | L3 | Binary → hex works by splitting the bits into groups of 4 ("nibble" is not used, see L3) |
   | AND, OR, NOT, truth table | L4 | Needed to name and complete the gates' tables |
   | ASCII, pixel, bit depth, byte | L5 | Byte's first real use: 1 byte per colour channel |
   | sample, sample rate | L6 | Bit depth comes back from L5, now for sound |
@@ -97,17 +97,19 @@ step where adding the 0s is the task.
 
 ## Lesson 3 — Hexadecimal
 **Lesson question:** How do I represent binary numbers with fewer digits using hexadecimal?
-**Keywords:** hexadecimal, nibble
+**Keywords:** hexadecimal
+
+*Decision (Nick, 2026-11-16): don't use the word "nibble" with students; they won't understand it. Say "4 bits" or "a group of 4 bits" on the page and the slides. Every 4-bit and 8-bit conversion question has at least one hex letter (A–F) in its answer.*
 
 ### Declarative
 - Hexadecimal (hex) has sixteen digits: 0–9, then A–F.
 - A = 10, B = 11, C = 12, D = 13, E = 14, F = 15, so 10–15 each fit in one character.
-- A nibble is 4 bits. One hex digit stands for exactly one nibble, so 8 bits are two hex digits.
+- One hex digit stands for exactly 4 bits, so 8 bits are two hex digits.
 - People use hex because it is a shorter way to write binary, so it is easier to read and remember. The computer still stores binary.
 
 ### Procedural
-- **Binary → hex:** split the 8 bits into two nibbles, convert each nibble to denary using 8 4 2 1, turn 10–15 into A–F, then join the two digits.
-- **Hex → binary:** take each hex digit, turn any letter into its denary value, write each as a 4-bit nibble with leading zeros, then join them.
+- **Binary → hex:** split the 8 bits into two groups of 4, convert each group to denary using 8 4 2 1, turn 10–15 into A–F, then join the two digits.
+- **Hex → binary:** take each hex digit, turn any letter into its denary value, write each as 4 bits with leading zeros, then join them.
 
 ---
 
@@ -174,7 +176,7 @@ step where adding the 0s is the task.
 **Lesson question:** How can I improve my understanding of Data Representation?
 
 ### Declarative
-- No new content. Retrieval of the unit keywords: binary, denary, bit, carry, hexadecimal, nibble, AND, OR, NOT, truth table, ASCII, pixel, bit depth, byte, sample, sample rate.
+- No new content. Retrieval of the unit keywords: binary, denary, bit, carry, hexadecimal, AND, OR, NOT, truth table, ASCII, pixel, bit depth, byte, sample, sample rate.
 
 ### Procedural
 - Use every procedure from L1–L6 independently under timed conditions.
