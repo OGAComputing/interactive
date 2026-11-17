@@ -68,45 +68,13 @@ module.exports = function drKit(K, S, { activity }) {
     });
   }
 
-  // A small binary sum written in columns, one number under the other (an item with sum: ['01', '10']).
-  // Reveal adds the carries above, the answer under the line and it.why.
-  function stackedSum(s, x, cw, it, i, reveal) {
-    const [a, b] = it.sum, W = Math.max(a.length, b.length);
-    const A = a.padStart(W, '0'), B = b.padStart(W, '0');
-    let c = 0; const ans = [], carry = new Array(W + 1).fill('');
-    for (let k = W - 1; k >= 0; k--) {
-      const t = +A[k] + +B[k] + c; ans.unshift(t % 2); c = t >= 2 ? 1 : 0;
-      if (c) carry[k] = '1';                       // carry sits above column k-1, i.e. index k in the padded row
-    }
-    const answer = (c ? '1' : '') + ans.join('');
-    const cols = W + 2, dw = 0.62, x0 = x + (cw - cols * dw) / 2;   // col 0 = '+', col 1 = room for a final carry
-    const cx = (j) => x0 + j * dw;
-    const row = (str, y, h, size, color) => [...str].forEach((d, k) => K.text(s, d,
-      { x: cx(cols - str.length + k), y, w: dw, h, fontFace: MONO, fontSize: size, bold: true, color, align: 'center', valign: 'middle' }));
-    K.box(s, { x, y: 1.7, w: cw, h: 3.0, fill: P.panel, line: P.line, r: 0.08 });
-    K.badge(s, i + 1, x + 0.2, 1.88, 0.42);
-    row(A, 2.4, 0.55, 34, P.gold);
-    row(B, 2.95, 0.55, 34, P.gold);
-    K.text(s, '+', { x: cx(1), y: 2.95, w: dw, h: 0.55, fontFace: MONO, fontSize: 34, bold: true, color: P.off, align: 'center', valign: 'middle' });
-    K.box(s, { x: cx(1), y: 3.55, w: (cols - 1) * dw, h: 0.04, fill: P.off });
-    if (reveal) {
-      // carry[k] (k ≥ 1) goes above column k-1 of the number; carry[0] is a final carry (a new answer bit)
-      carry.forEach((v, k) => { if (v && k > 0) K.text(s, '1', { x: cx(cols - W + k - 1), y: 1.98, w: dw, h: 0.4,
-        fontFace: MONO, fontSize: 20, bold: true, color: P.ok, align: 'center', valign: 'middle' }); });
-      row(answer, 3.63, 0.55, 34, P.ok);
-      K.text(s, it.why, { x: x + 0.15, y: 4.18, w: cw - 0.3, h: 0.48, fontSize: 16, color: P.muted, align: 'center', valign: 'middle' });
-    }
-  }
-
   // You do: three questions on mini-whiteboards; reveal adds the answer and its working.
   // qSize: font size of the questions (44 by default; smaller for a whole sum)
-  // An item with sum: [top, bottom] is drawn as a column sum instead of it.q (see stackedSum).
   function youDoSlide(o) {
     const s = K.newSlide('SZ_DARK', o.section, o.title || (o.reveal ? 'Answers' : 'Your turn'));
     const cw = 3.84, gx = 0.3;
     o.items.forEach((it, i) => {
       const x = M + i * (cw + gx);
-      if (it.sum) { stackedSum(s, x, cw, it, i, o.reveal); return; }
       K.box(s, { x, y: 1.7, w: cw, h: 2.75, fill: P.panel, line: P.line, r: 0.08 });
       K.badge(s, i + 1, x + 0.2, 1.88, 0.42);
       K.text(s, it.q, { x, y: 2.1, w: cw, h: 1.0, fontFace: MONO, fontSize: o.qSize || 44, bold: true, color: P.gold, align: 'center', valign: 'middle' });

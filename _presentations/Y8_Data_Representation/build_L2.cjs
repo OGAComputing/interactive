@@ -118,7 +118,7 @@ S.recallAnswers(K, { section: 'Recap & Recall', questions: RECALL,
 S.questionsSlide(K, { section: 'Intro', topic: TOPIC, lesson: LESSON,
   notes: 'Same topic question as Lesson 1; today\'s lesson question underneath.' });
 
-// 5–8 · The four rules (modelled here; the page starts with whole sums)
+// 5–6 · The four rules (modelled here, then straight into a worked example; the page starts with whole sums)
 addSlide({ section: 'The four rules', title: 'Adding in columns: denary', a: '47', b: '38', base: 10,
   end: [{ text: 'Carry: ', options: { bold: true, color: P.gold } },
     { text: 'the column reached 10, so a 1 moves into the next column on the left.' }],
@@ -151,21 +151,7 @@ addSlide({ section: 'The four rules', title: 'Adding in columns: denary', a: '47
     + 'in 47 + 38. Click 4: a column can have 1 + 1 and a carry, three 1s. 3 is 11 in binary: write 1, carry 1. Click 5: same idea as '
     + 'denary, it just carries at 2 instead of 10. These four rules are all of binary addition.');
 }
-// Three small sums in columns: no carries, one carry, then two carries (the second column is 1 + 1 + 1).
-const RULES_YOU = [
-  { sum: ['01', '10'], why: 'No carries: 1 + 2 = 3' },
-  { sum: ['01', '01'], why: 'One carry: 1 + 1 = 2' },
-  { sum: ['011', '011'], why: 'Two carries: 3 + 3 = 6' },
-];
-youDoSlide({ section: 'The four rules', items: RULES_YOU, prompt: 'copy each sum, add right to left. Write any carry above the next column.', time: '3 MIN',
-  notes: 'Boards: copy each sum in columns. Q1 has no carries, Q2 one, Q3 two. Hide the rules slide. '
-    + 'Watch for anyone starting on the left, or writing 2 or 10 in one column.' });
-youDoSlide({ section: 'The four rules', items: RULES_YOU, reveal: true,
-  takeaway: [{ text: 'A column that makes 2 or 3 ', options: { bold: true, color: P.gold } }, { text: 'carries 1 into the next column on the left.' }],
-  notes: 'Carries in green above the columns. Q2: 1 + 1 = 2 = 10 in binary: write 0, carry 1; then 0 + 0 + the carry = 1. '
-    + 'Q3: 1 + 1: write 0, carry 1. Then 1 + 1 + the carry: three 1s, 11: write 1, carry 1. Then 0 + 0 + the carry = 1. '
-    + 'The common slip: writing 2, or writing 10 in one column. One column holds one bit.' });
-// 9–14 · Adding 4-bit numbers, and the final carry
+// 7–12 · Adding 4-bit numbers, and the final carry
 addSlide({ section: 'Adding with 4 bits', title: 'Adding two 4-bit numbers', mode: 'I DO', a: '0110', b: '0011', steps: true,
   end: [{ text: 'Check in denary:  ', options: { bold: true, color: P.gold } },
     { text: '6 + 3 = 9,  and 1001 = 9', options: { fontFace: MONO, bold: true } }],
@@ -202,7 +188,7 @@ taskSlide({ section: 'Adding with 4 bits', time: '20 MIN',
     + 'so the box stays empty. Task 3 is the gate: 5 sums in a row with no help; one wrong restarts it with new sums. '
     + 'Task 4 stays locked until it is passed.' });
 
-// 15–17 · Eight bits
+// 13–15 · Eight bits
 {
   const s = K.newSlide('SZ_DARK', 'Eight bits', 'Lining up: write both numbers with 8 bits');
   K.text(s, [{ text: 'Add  ' }, { text: '101101', options: { fontFace: MONO, bold: true, color: P.gold } }, { text: '  +  ' },
@@ -237,7 +223,7 @@ taskSlide({ section: 'Eight bits', time: '15 MIN',
     + 'compare fairly. Each student\'s best shows in a gold chip at the top of the page on every tab, so at the end ask for chips up '
     + 'to find the class winner. The game does not change their grade.' });
 
-// 18 · Plenary
+// 16 · Plenary
 {
   const s = S.plenarySlide(K, { section: 'Plenary', lesson: LESSON,
     tasks: ['Add 01011011 + 00110110.', 'Add 1111 + 0001.'],
