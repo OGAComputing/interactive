@@ -105,20 +105,26 @@ Each lesson teaches through real products students know (see "Examples" below). 
 
 ## Photoshop filler
 
-An optional Photoshop task (10–15 minutes) at the end of each week's lightest lesson, for students who finish early; the exported JPG and a Layers-panel screenshot go to Classroom as evidence. Photoshop 2024 in school, Photopea at home. Phase 1 only. Weeks 1 and 6 already have Photoshop tasks (1.2, 6.3).
+An optional Photoshop task (10–15 minutes) at the end of each week's **second lesson (x.2)**, the later half of the double, for students who finish early; the exported JPG and a Layers-panel screenshot go to Classroom as evidence. Photoshop 2024 in school, Photopea at home. Phase 1 only. Weeks 1 and 6 already have Photoshop tasks (1.2, 6.3).
 
-| Week | Lesson | Why this one | Skill | Used for |
-|---|---|---|---|---|
-| 2 | — | All three are full: 2.1 and 2.2 are the longest pages yet, and 2.3 has the audio interview | — | — |
-| 3 | 3.2 Why We Watch | One theory (uses & gratifications), applied to the diary they already have | Adjustment layers (Hue/Saturation, Brightness/Contrast) | Recolour a real thumbnail to promise a different gratification |
-| 4 | 4.1 Spot the Genre | Three linked terms; 4.2 and 4.3 carry more (4.3 has six story structures) | Layers: order, name and group them; Place Embedded | Build a genre poster from iconography pieces |
-| 5 | 5.3 How Are We Positioned? | Builds on 5.2's ideas; 5.1 is the heaviest lesson in the unit | Object Selection tool and a layer mask | Cut a person out and put them in a new setting: how does the representation change? |
-| 6 | — | 6.3's main task is already Photoshop (put the Type tool and Character panel in it) | — | — |
-| 7 | 7.3 Knowledge Check | Students with no gaps after the quiz skip the re-teach | Crop with the rule-of-thirds overlay; Export As (JPG vs PSD) | Re-crop a still from the term two ways |
+| Week | Lesson | Skill | Used for |
+|---|---|---|---|
+| 1 | 1.2 Reading an Image | (main task is already Photoshop: one photo, two captions) | — |
+| 2 | — | 2.2 was built before this plan | — |
+| 3 | 3.2 Why We Watch | **Core task, not filler (2026-11-17):** adjustment layers, Type tool, and a cut-out from a second image (Object Selection + layer mask) | Task 4 "Two thumbnails, two needs": two versions of the Planet Earth III trailer thumbnail, each promising a different gratification (~25 min, Part 3) |
+| 4 | 4.2 Genres Change | Layers: order, name and group them; Place Embedded | Bring a pre-2000 genre poster up to date with today's iconography |
+| 5 | 5.2 Who Gets Shown? | Object Selection tool and a layer mask | Cut a person out and add them to a cover or advert: who was left out, and what changes? |
+| 6 | — | 6.3's main task is already Photoshop (put the Type tool and Character panel in it); 6.2 has the sound recording | — |
+| 7 | 7.2 Putting It Together | Crop with the rule-of-thirds overlay; Export As (JPG vs PSD) | Re-crop a still from the trailer two ways |
 
 ## Examples
 
-- **Familiar first.** Every point is shown with real products students know, not abstract or invented ones: e.g. Minecraft, Fortnite, EA FC, Roblox; Stranger Things, Wednesday, Spider-Verse, Inside Out 2, Barbie; MrBeast, TikTok, Match of the Day; Nike / McDonald's / JD adverts; plus historical ones with a hook (Jaws, Jurassic Park, Toy Story, The Simpsons, Pac-Man, Pokémon Red, Smash Hits).
+- **Familiar first.** Every point is shown with real products students know, not abstract or invented ones: e.g. Mario Kart World, EA FC, Roblox, Among Us, Animal Crossing; Wednesday, Spider-Verse, Inside Out 2, Wicked, Paddington in Peru, The Traitors, Strictly, Eurovision; Sidemen, TikTok, Spotify, Match of the Day; John Lewis / Coca-Cola / McDonald's / JD adverts; plus historical ones with a hook (Jaws, Jurassic Park, Toy Story, The Simpsons, Pac-Man, Pokémon Red, Smash Hits, the Walkman, War of the Worlds 1938).
+- **Spread them out** (students, 2026-11-12: "tired of Stranger Things and Fortnite"). Before choosing a lesson's examples, check which products the built lessons already use (grep `Y10/Component_1` and `_presentations/Y10_BTEC_CDM`). A product is the main example in at most one lesson a week and three in the whole of Phase 1; platforms (YouTube, Netflix, TikTok) only count when they *are* the example. **Rested for weeks 3–7:** Fortnite, Stranger Things, Minecraft (in 6 of the first 7 lessons), Aldi. Only bring one back when it is clearly the best fit, and not as the lead example.
+- **Week 3 bank** (fresh: none used in weeks 1–2 except where marked; check each against the live brief by eye):
+  - *3.1 Where, When, Who With:* situation: Mario Kart World on a Switch 2 on the bus vs docked with mates; Spotify on headphones on the walk to school; The Traitors live with the family vs on iPlayer the next day; the Sidemen Charity Match at Wembley vs on YouTube; Wallace & Gromit: Vengeance Most Fowl on Christmas Day. Involvement: voting on Strictly and Eurovision; UGC in Super Mario Maker 2 levels and Blue Peter viewers' drawings; interactive features in Duolingo streaks and Spotify Wrapped. Historical: the Sony Walkman (1979, first private music on the move), Game Boy (1989), Who Wants to Be a Millionaire's "Ask the Audience" (1998).
+  - *3.2 Why We Watch:* information: Newsround, Planet Earth III; diversion: Paddington in Peru, Animal Crossing; personal identity: Taylor Swift: The Eras Tour, Sidemen; social interaction: The Traitors (talked about at school the next day), Eurovision parties, Among Us (used once in 2.3). Photoshop filler: recolour a Planet Earth III or Sidemen thumbnail.
+  - *3.3 Same Text, Different Readings:* Coca-Cola's AI-made "Holidays Are Coming" (2024: many viewers rejected it, so oppositional readings are easy to find) and John Lewis's "Snapper, the Perfect Tree" (2023: it divided viewers). Hypodermic needle: War of the Worlds (1938 radio), where the "mass panic" turned out to be exaggerated by newspapers, which is the theory's weakness in one story.
 - **Keep away from the live theme.** Don't use products about the live PSA's theme, or aimed at its target audience, as teaching or mock examples, and never analyse any product through that theme. Students choose their own PSA products; worked models on those would be guiding them to the answer. Check each example bank against the brief before using it (Nick: the brief stays out of AI tools, so do this by eye).
 
 ## Guard rails (Pearson)
@@ -172,3 +178,6 @@ An optional Photoshop task (10–15 minutes) at the end of each week's lightest 
 - 2026-11-02: The single-first class's first lesson is **1.0 Course Introduction**: what the course is, how Component 1 is assessed (no live-PSA details), and a baseline hub page (their media + reading the A Minecraft Movie poster), completion-scored. The double-first class does not do the baseline.
 - 2026-11-02: Hub activities are as interactive as possible, in the repo's usual style (drag-drop, per-question feedback, cooldowns, seeded order, `submitGrade` per task). Built: 1.0, 1.1 (Media Board: 21 real products by sector and era; Jurassic Park 1993 vs Dominion 2022), 1.2 (Jaws worked model, Barbie anchorage, Spider-Verse, Photoshop one photo two captions).
 - 2026-11-10: Optional Photoshop filler in each week's lightest lesson (Phase 1) to keep software skills sharp, not a fixed weekly slot (Photopea at home); see the table above.
+- 2026-11-12: The Photoshop filler moves to each week's second lesson (x.2), the later half of the double, instead of the lightest lesson.
+- 2026-11-12: Students said they're tired of Stranger Things and Fortnite. Examples are now spread out (one lesson a week, three per phase per product), Fortnite, Stranger Things, Minecraft and Aldi are rested for weeks 3–7, and week 3 has a fresh bank (see "Examples").
+- 2026-11-17: 3.2's Photoshop work became a core Part 3 task for everyone (~25 min) instead of a 10–15 min early-finisher filler, and uses adjustment layers, the Type tool and a cut-out with a layer mask (Nick: one tool alone wasn't engaging). To make room, Part 1 was trimmed (Task 1 four rounds, Task 2 two diary products) and Task 4's writing (one product, two needs) became a Part 2 ★ challenge. Weeks 4 (Place Embedded), 5 (selection + mask) and 6.3 (Type) now revisit skills first met here: build on them rather than introduce them.

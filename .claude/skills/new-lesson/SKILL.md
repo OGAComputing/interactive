@@ -31,6 +31,8 @@ restate or shortcut its rules here.
 - Run the page skill. With `/new-activity`, write the content from the MTP section rather than
   leaving `FILL IN`s, following `/audit-activity`'s rules.
 - Run `/test-page <page>` and fix what fails.
+- Y10 (and any page with real product images): list the images it needs and offer to find them
+  with `/find-images <page>`, so the checkpoint shows the page with its pictures.
 
 ## 2. Checkpoint
 
@@ -55,6 +57,6 @@ before building the deck. If they ask for changes, make them and re-run `/test-p
   - the deck file
   - the test results
   - the audit result
-  - what's left for the user: `/story-stills <page>` for Y9 Station Zero, the "Images to
-    supply" list for Y10, any `FILL IN`s
+  - what's left for the user: `/story-stills <page>` for Y9 Station Zero, any Y10 images
+    still to supply (`/find-images <page>`), any `FILL IN`s
 - Commit only if asked (`/ship` does it).

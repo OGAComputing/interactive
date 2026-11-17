@@ -1,0 +1,154 @@
+// Y10 BTEC Component 1 — Lesson 3.2 Why We Watch (spec A1: audience uses and gratifications: information,
+// entertainment, escapism, personal identity, social interaction).
+// Hub page: Y10/Component_1/L3.2_Why_We_Watch/.
+// The deck follows the page's three parts: the five needs (Warm-up, Tasks 1–2, ★ Spot the slip); one product,
+// many needs (Task 3, ★ One product, two needs; unlock word GRATIFY); and the Photoshop task, two thumbnails
+// promising two needs (Task 4, ★ A third promise; unlock word THUMBNAIL).
+// The page's own examples (Newsround, Planet Earth III, Paddington in Peru, the Eras Tour film, Animal Crossing,
+// Wordle, the Sidemen, The Traitors, Taskmaster, Wicked, Among Us) are not worked through here, so the deck never
+// gives away a task's answer; the worked models are Stardew Valley, Duolingo, Space Jam, Pokémon Red, Vogue,
+// Mario Kart World and Strictly. The Photoshop before-and-after is made by make_thumb_example.py.
+//
+//   node build_L3.2.cjs   → L3.2_Why_We_Watch.pptx
+
+const path = require('path');
+const { createDeck } = require('./c1_kit.cjs');
+
+const OUT = process.env.DECK_OUT || path.join(__dirname, 'L3.2_Why_We_Watch.pptx');
+const K = createDeck({ lesson: '3.2', footerText: 'COMPONENT 1  ·  EXPLORING MEDIA PRODUCTS', title: 'Lesson 3.2: Why We Watch' });
+const img = (f) => path.join(__dirname, 'images', f);
+
+const TOPIC = 'How are media products made to reach and engage their audiences?';
+const LESSON = 'Why do we choose the media we use, and how can one product meet different needs?';
+const WHERE = 'Hub › Year 10 › Lesson 3.2 › Why We Watch';
+
+// Recap: 3.1 (situation; consumer-generated content), 2.2 (primary audience), then a bridge into today.
+const RECALL = [
+  { tag: 'Lesson 3.1', q: 'Listening to Spotify on the bus. Is "on the bus" where, when or who with?', options: ['where', 'when', 'who with'], a: 'Where: part of its situation' },
+  { tag: 'Lesson 3.1', q: 'Players build a Roblox game that other players can play. Which kind of involvement?', options: ['interactive features', 'online voting', 'consumer-generated content'], a: 'Consumer-generated content' },
+  { tag: 'Lesson 2.2', q: 'The main group a product is made for is its…', options: ['primary audience', 'secondary audience'], a: 'Primary audience' },
+  { tag: 'Bridge', q: 'The last time you opened YouTube, why?', options: ['to learn', 'to laugh', 'to chat'], a: 'Any answer: your reason is a need. Today.' },
+];
+K.recallStarter({ questions: RECALL, mins: 4,
+  notes: 'Q1–2 look back at 3.1, Q3 at 2.2. Q4 has no wrong answer: take a show of hands for each reason and move on.' });
+K.recallAnswers({ questions: RECALL,
+  notes: 'Tick or fix. Q2: consumer = the audience, generated = made. Q4: whatever you said, you had a reason for opening it. Those reasons are today\'s lesson.' });
+
+K.titleSlide({ coverLine: 'Why We Watch', issueLine: 'Lesson 3.2  ·  Y10 BTEC Creative Media',
+  standfirst: 'Nobody makes you watch, play or listen. So why do you?', puff: 'Lesson 3.2',
+  img: img('planet_earth_iii_thumb.jpg'), imgLabel: 'Planet Earth III trailer thumbnail · BBC Earth',
+  notes: 'Cover: the Planet Earth III trailer thumbnail. Students will remake this picture in Photoshop at the end of the lesson, twice, so it promises two different reasons to click. Three parts today: the five needs, one product with many needs, then the Photoshop task.' });
+
+K.questions({ topic: TOPIC, lesson: LESSON,
+  notes: 'Topic question for the whole of Component 1; today\'s question comes back in the plenary. Three parts: the five needs, one product with many needs, then making two thumbnails that promise different needs.' });
+
+// ── Part 1: the five needs (Warm-up, Tasks 1–2, ★ Spot the slip) ──
+K.keyTerm({ term: 'Uses and gratifications', say: 'gra-ti-fi-KAY-shuns',
+  definition: 'A theory: the audience is active. People choose media to meet their own needs. The need it meets is their gratification: their reward.',
+  example: 'Stardew Valley: one player farms to relax after school, another to share a farm with friends online. Same game, different rewards.',
+  img: img('stardew_valley.png'), imgLabel: 'Stardew Valley · ConcernedApe',
+  notes: 'Spec A1: audience uses and gratifications. Example on click. The big idea: the audience chooses. Nobody forces you to open Stardew Valley; you open it because it gives you something. Ask: what does it give the first player? (calm, an escape) The second? (time with friends).' });
+
+K.info({ title: 'Three needs: learn, laugh, get away', standfirst: 'Ask: what does this product give the person using it?',
+  points: [['Information', 'Finding out facts, or what is happening in the world: learning Spanish on Duolingo before a holiday.'],
+    ['Entertainment', 'Enjoyment: fun, a laugh, a good time. Space Jam (1996) is just a good laugh.'],
+    ['Escapism', 'Getting away from real life and its worries: exploring the Pokémon world in Pokémon Red, far from homework.']],
+  img: img('duolingo_home.png'), imgLabel: 'Duolingo',
+  notes: 'One per click. These three are the most common. Entertainment and escapism can feel close: entertainment is about the fun; escapism is about getting AWAY from something (stress, boredom, school). Pokémon Red (1996) is an old one with a hook: a whole world to wander off into.' });
+
+K.info({ title: 'Two more: be you, be together', standfirst: 'Some needs are about who you are, and who you\'re with.',
+  points: [['Personal identity', 'Showing or finding who you are: reading Vogue to find your own style, or wearing your team\'s shirt.'],
+    ['Social interaction', 'Something to share, play or talk about with others: racing your mates in Mario Kart World on one sofa.']],
+  img: img('vogue.jpg'), imgLabel: 'Vogue',
+  notes: 'One per click. Personal identity: media that says "this is me" or helps you work out who you are (fans, styles, people like you on screen). Social interaction: the product gives you something to do or talk about WITH other people. These five are the Warm-up\'s five boxes, and the definitions stay open on the page.' });
+
+K.choice({ question: 'Aisha streams KPop Demon Hunters songs on repeat and dresses as Rumi on non-uniform day, so everyone knows she\'s a fan. Which need?',
+  options: ['Personal identity', 'Entertainment', 'Information'],
+  notes: 'Answer A: dressing up so people know she\'s a fan shows who she is. She may also enjoy the songs (entertainment), but the clue that decides it is "so everyone knows". That is how Task 1 works: wait for the clue that tells you WHY.' });
+
+K.turnTalk({ lead: 'Think of one thing you watched, played or listened to yesterday.',
+  prompt: 'Which of the five needs did it meet for you? How do you know?',
+  notes: `Take three or four answers and push for the reason: "I watched it because…". Expect lots of entertainment; ask whether any were escapism (to get away from something) or social interaction (to talk about it or play with someone).
+This is Task 2: they classify two products from their Lesson 3.1 media diary.` });
+
+K.task({ title: 'Why are they watching?', mins: 15, where: WHERE,
+  steps: ['The page opens on the Warm-up: which need does each card meet? The five meanings are open.',
+    'Task 1 · Why are they watching? Four people, clue by clue. Guess early for more stars.',
+    'Task 2 · Classify my diary: two products from your 3.1 diary, and the need each one met.',
+    'Finished? ★ Spot the slip: Kai\'s three mistakes. Tasks 3 and 4 open later.'],
+  criteria: ['The need comes from the person\'s reason, not the product', 'A need word in every diary answer', 'A reason with "because"'],
+  notes: 'Warm-up is optional. Task 1: a wrong guess shows the next clue and makes them wait 10 s, so guessing early is a real risk. Task 2 links to the 3.1 diary (it opens in a new tab); anyone without a diary uses two products from yesterday. Tasks 3 and 4 are locked until the Part 2 and Part 3 words.' });
+
+// ── Part 2: one product, many needs (Task 3, ★ One product, two needs) ──
+K.info({ title: 'One product, many needs', standfirst: 'The need belongs to the person, not the product.',
+  points: [['Different people', 'Strictly: Gran watches for the dancing and the sparkle (entertainment); a dancer watches to learn the steps (information).'],
+    ['Different situations', 'Watching Strictly alone is entertainment; watching with the family, arguing about the scores, is social interaction.'],
+    ['Producers plan for it', 'The BBC adds the Strictly app vote and It Takes Two, so the show meets even more needs.']],
+  img: img('strictly_title.jpg'), imgLabel: 'Strictly Come Dancing · BBC',
+  notes: 'One per click. Point 2 links back to 3.1: where, when and who with can change the need. Point 3 links to producers (1.3): more needs met = a bigger audience. Task 3 asks about eight people like these.' });
+
+K.choice({ question: 'Ben usually plays Stardew Valley alone to relax. Tonight he plays online with two friends, building one farm together. Which need tonight?',
+  options: ['Social interaction', 'Escapism', 'Information'],
+  notes: 'Answer A. Usually it is escapism (alone, to relax); tonight the situation (who with) changes it. Some Task 3 questions name two people or two situations: read which one the question asks about.' });
+
+K.turnTalk({ lead: 'Pick a product you love.',
+  prompt: 'Could it meet a different need for someone else? Who, and which need?',
+  notes: `Listen for a named person and a named need: "For my little brother, Minecraft is social interaction because he plays with his friends, but for me it's escapism."
+Early finishers write this up in ★ One product, two needs.` });
+
+K.task({ title: 'Same product, different needs', mins: 10, unlock: 'gratify', where: WHERE,
+  steps: ['Task 3 · Same product, different needs: eight questions about real people.',
+    'Read who each question is about: some name two people.',
+    'Finished? ★ One product, two needs: write about one of your diary products.'],
+  criteria: ['The need for THAT person, in THAT situation', 'All eight right first time for gold'],
+  notes: 'Unlock word GRATIFY opens Task 3 and ★ One product, two needs. Teacher mode or "outwood" opens every part. Every question offers all five needs, in a different order for each student. A wrong check makes them wait 10 s.' });
+
+// ── Part 3: two thumbnails, two needs (Task 4, ★ A third promise) ──
+K.info({ title: 'A thumbnail makes a promise', standfirst: 'The small picture that sells a video before you click. Producers design it to promise a need.',
+  points: [['Colour', 'Adjustment layers change colour and light without spoiling the photo: Layer › New Adjustment Layer.'],
+    ['A cut-out', 'Part of another picture on its own: select it with the Object Selection Tool (W), then add a layer mask, which hides the rest.'],
+    ['A title', 'Two to four big words with the Type Tool (T), outlined with Layer › Layer Style › Stroke.']],
+  img: img('paddington_in_peru_thumb.jpg'), imgLabel: 'Starting picture, option 2 · StudioCanal',
+  notes: `One per click. Demo each in Photoshop on one of the two starting pictures (Planet Earth III or Paddington in Peru) as you go (2–3 minutes each):
+1. Layer › New Adjustment Layer › Vibrance, then Gradient Map: watch the mood change. A layer mask on an adjustment layer is white: the change shows everywhere.
+2. File › Place Embedded… a Photo Bank picture; Object Selection Tool around the subject; Layer › Layer Mask › Reveal Selection; Ctrl + T to resize. Black on a mask hides, white shows.
+3. Type Tool, click, type; Character panel for font and size; Layer Style › Stroke for the outline.` });
+
+K.compare({ title: 'Before and after',
+  a: { name: 'Before', img: img('thumb_example_before.jpg'), imgLabel: 'The Traitors still · BBC' },
+  b: { name: 'After', img: img('thumb_example_after.jpg'), imgLabel: 'The same still, edited' },
+  rows: [['Colour', 'Warm wood, natural light', 'Darker, purple shadows, more contrast'],
+    ['Cut-out', 'None', 'A suspicious face from the Photo Bank'],
+    ['Title', 'None', '"WHO\'S THE TRAITOR?" asks you to guess'],
+    ['Promises', 'Nothing yet', 'Social interaction: guess along together']],
+  notes: 'One row per click. Made for this lesson on a different picture from theirs. Every choice serves the one need: the question in the title invites you to guess, the cut-out face is someone suspecting, "Guess together" says who with. Ask: what would you change to make it promise escapism instead? (soft, dreamy colours; a calm title; no reacting face).' });
+
+K.info({ title: 'Tag lines: Planet Earth III', standfirst: 'Don’t spend long on the words: pick one, then get into Photoshop.', reveal: false,
+  points: [['Information', 'How Do Rays Fly?  ·  Ocean Secrets Revealed  ·  Wild Facts Inside'],
+    ['Entertainment', 'Nature’s Wildest Jumps!  ·  WAIT FOR IT…  ·  You Won’t Believe This!'],
+    ['Escapism', 'Escape to the Wild  ·  Lose Yourself at Sea  ·  Breathe. Drift. Dream.'],
+    ['Personal identity', 'For True Nature Fans  ·  Made for Ocean Lovers  ·  Wild at Heart'],
+    ['Social interaction', 'Watch It Together  ·  Tag Your Ocean Buddy  ·  Who’s Watching Tonight?']],
+  notes: 'Option 1 of the two starting pictures. The same tag lines are on the page in Task 4.' });
+
+K.info({ title: 'Tag lines: Paddington in Peru', standfirst: 'Don’t spend long on the words: pick one, then get into Photoshop.', reveal: false,
+  points: [['Information', 'Meet the Cast  ·  How Paddington Was Made  ·  Behind the Scenes in Peru'],
+    ['Entertainment', 'Marmalade Mayhem!  ·  Chaos in the Jungle!  ·  The Funniest Bear Is Back!'],
+    ['Escapism', 'Escape to Peru  ·  Into the Jungle  ·  Adventure Awaits'],
+    ['Personal identity', 'For Real Paddington Fans  ·  Be More Paddington  ·  Kind Is Cool'],
+    ['Social interaction', 'A Family Day Out  ·  Bring the Whole Family  ·  Who’s Coming With You?']],
+  notes: 'Option 2. The same tag lines are on the page in Task 4. The point of the task is the Photoshop skills and matching the look to the need, not copywriting: students pick a line in seconds. Anyone who wants to write their own can, in two to four words.' });
+
+K.task({ title: 'Two thumbnails, two needs', mins: 25, unlock: 'thumbnail', where: WHERE,
+  steps: ['Open Planet Earth III or Paddington in Peru from the Drive folder\'s Images. Pick a need.',
+    'Add two or more adjustment layers, a cut-out from Photo Bank › Cut-outs, and a tag line.',
+    'Export thumbnail 1 as a JPG; screenshot the Layers panel. Remake it for a new need: thumbnail 2.',
+    'Upload both, then answer Task 4. Finished? ★ A third promise.'],
+  criteria: ['Two thumbnails, two different needs', 'Adjustment layers, a cut-out and a title in each', 'Each answer names the need and the tools'],
+  notes: 'Unlock word THUMBNAIL opens Task 4 and ★ A third promise. The full steps, with menu paths, are on the page, plus a "Which look promises which need?" help panel. Photopea (free, in the browser) works at home with nearly the same menus. Students upload two JPGs and two Layers-panel screenshots to Classroom.' });
+
+K.plenary({ lesson: LESSON, task: 'Hold up one of your thumbnails (or describe it). Which need does it promise, and who would it make click?',
+  starter: '"My thumbnail promises ___ to people who ___, because I used ___."',
+  notes: 'Exit ticket. Listen for a need word, a type of viewer, and one technique (colour, cut-out or title) linked to the need.' });
+
+K.write(OUT);
