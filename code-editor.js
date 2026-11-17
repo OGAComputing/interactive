@@ -491,6 +491,20 @@ function _injectStyles() {
       padding: 0.2rem 0.6rem;
     }
     :where(.step-skip:hover) { border-color: #5eead4; color: #5eead4; }
+    :where(.step-buttons) { display: flex; gap: 0.4rem; }
+    :where(.step-next) {
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: #0f172a;
+      background: #5eead4;
+      border: 1px solid #5eead4;
+      border-radius: 5px;
+      padding: 0.25rem 0.8rem;
+    }
+    :where(.step-next[hidden]) { display: none; }
+    :where(.step-next:hover) { background: #99f6e4; }
     /* An answer a check fed to input() — typed in during the replay, then kept
        highlighted, so it reads as an input rather than as printed output. */
     :where(.fed-input) {
@@ -1164,6 +1178,8 @@ function _stopStepping(ta) {
   run.fast = true;
   run.wake?.();
   _stepStatus(ta, null);
+  const nextBtn = _outputMap.get(ta)?.querySelector('.step-next');
+  if (nextBtn) nextBtn.hidden = true;
 }
 
 // Run events on the textarea, for helpers that draw a run as it plays (turtle-canvas.js):
@@ -1179,7 +1195,7 @@ function _stepPause(run, ms) {
   if (run.fast) return Promise.resolve();
   return new Promise(resolve => {
     const done = () => { clearTimeout(t); run.wake = null; resolve(); };
-    const t = setTimeout(done, ms);
+    const t = ms === Infinity ? null : setTimeout(done, ms);
     run.wake = done;
   });
 }
@@ -1247,10 +1263,10 @@ async function _typeFedInputs(ta, run, out, fed, start, end, line) {
 }
 
 // Start a replay on `ta`: abandon any earlier one and clear the panel.
-function _beginStepping(ta, trackVars) {
+function _beginStepping(ta, trackVars, manual = false) {
   _stopStepping(ta);
   _inputAbort.get(ta)?.();   // a prompt still waiting from an earlier run
-  const run = { fast: false, edited: false, wake: null };
+  const run = { fast: false, edited: false, wake: null, manual };
   _stepRuns.set(ta, run);
   _writeStepOutput(ta, '');
   if (_errHelperEnabled(ta)) _hideErrHelper(ta);
@@ -1267,6 +1283,7 @@ async function _replaySteps(ta, run, r, from, trackVars, fed = null) {
   const trace = r.trace || [];
   if (from >= trace.length) return true;
   const stepMs = Math.min(STEP_MS, MAX_REPLAY_MS / (trace.length - from));
+  const nextBtn = _outputMap.get(ta)?.querySelector('.step-next');
   // Output from before the first new step (e.g. the echo of the answer just
   // typed) belongs to the input line, which has already been shown.
   _writeStepOutput(ta, out.slice(0, trace[from].at), fed);
@@ -1281,9 +1298,18 @@ async function _replaySteps(ta, run, r, from, trackVars, fed = null) {
     _writeStepOutput(ta, out.slice(0, upTo), fed);
     if (trackVars) _renderMemory(ta, next ? next.vars : r.vars);
     _emitRun(ta, 'exec-step', r, i);
-    await _stepPause(run, stepMs * (1 - STEP_OUTPUT_AT));
+    if (run.manual && nextBtn && !run.fast) {
+      // Manual stepping: the line stays lit until the student clicks Next line.
+      _stepStatus(ta, '▶ Line ' + trace[i].line + ' ran (step ' + (i + 1) + ' of ' + trace.length + ')');
+      nextBtn.hidden = false;
+      if (i === from) nextBtn.focus({ preventScroll: true });
+      await _stepPause(run, Infinity);
+    } else {
+      await _stepPause(run, stepMs * (1 - STEP_OUTPUT_AT));
+    }
     if (_stepRuns.get(ta) !== run) return false;
   }
+  if (nextBtn) nextBtn.hidden = true;
   return true;
 }
 
@@ -1332,14 +1358,14 @@ export async function replayRun(ta, run) {
   return true;
 }
 
-async function _runStepped(ta, inputs) {
+async function _runStepped(ta, inputs, manual = false) {
   const cancelled = { ok: true, output: '', cancelled: true };
   const code = ta.value;
   const live = inputs === null;
   const answers = live ? [] : inputs;
   const seed = Math.floor(Math.random() * 2 ** 31);
   const trackVars = _memEnabled(ta);
-  const run = _beginStepping(ta, trackVars);
+  const run = _beginStepping(ta, trackVars, manual);
 
   let shown = 0;   // trace steps already replayed (re-runs after input() repeat them)
   for (;;) {
@@ -1378,12 +1404,15 @@ async function _runStepped(ta, inputs) {
  * inputs = [...] → use supplied values directly
  *
  * @param {HTMLTextAreaElement} ta
- * @param {{ inputs?: string[]|null }} opts
+ * manual = true  → with stepThrough on, the replay waits on each line for a
+ *                   "Next line ▶" click instead of moving on every STEP_MS
+ *
+ * @param {{ inputs?: string[]|null, manual?: boolean }} opts
  * @returns {Promise<{ ok: boolean, output: string }>}
  */
-export async function runCode(ta, { inputs = null } = {}) {
+export async function runCode(ta, { inputs = null, manual = false } = {}) {
   _emitRun(ta, 'exec-start', null);
-  if (_stepEnabled(ta)) return _runStepped(ta, inputs);
+  if (_stepEnabled(ta)) return _runStepped(ta, inputs, manual);
   // The memory view always runs live, even for straight-line code, so each
   // answer drops into its box the moment it's typed (not all at the end).
   if (inputs === null && (_needsLiveInput(ta.value) || _memEnabled(ta))) return _runLive(ta);
@@ -1524,8 +1553,10 @@ export function setupEditors(selector = '.checker-textarea', opts = {}) {
       status.hidden = true;
       status.innerHTML =
         '<span class="step-label" aria-live="polite"></span>' +
-        '<button type="button" class="step-skip">⏩ Skip to end</button>';
+        '<span class="step-buttons"><button type="button" class="step-next" hidden>Next line ▶</button>' +
+        '<button type="button" class="step-skip">⏩ Skip to end</button></span>';
       status.querySelector('.step-skip').addEventListener('click', () => _skipStepping(ta));
+      status.querySelector('.step-next').addEventListener('click', () => _stepRuns.get(ta)?.wake?.());
       output.querySelector('.output-header').insertAdjacentElement('afterend', status);
     }
 

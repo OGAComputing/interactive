@@ -387,6 +387,11 @@ color:  teal
   #i_steps.is-stuck .q-card > :not(.req-list),
   #i_steps.is-stuck .q-card:not(:has(.req-list)),
   #i_steps.is-stuck .req-list li.req-note { display: none; }
+  /* Pinned, a bullet that went green without ever going red hides too (one that was red
+     stays, so the student sees it got fixed). Once every bullet is green the card stops
+     pinning (.reqs-met, set by syncInvSticky) and scrolls away like normal content. */
+  #i_steps.is-stuck .req-list li.req-pass:not(.req-was-fail) { display: none; }
+  #i_steps.reqs-met { position: static; max-height: none; overflow: visible; }
   #i_steps.is-stuck .req-list { margin: 0; }
   #i_steps.is-stuck .req-list li:last-child { margin-bottom: 0; }
   .btn.btn-inline { min-height: 34px; padding: 0.25rem 0.75rem; margin: 0 0.15rem; vertical-align: middle; }
@@ -3907,16 +3912,23 @@ function stripPlantedBugLine() {
 }
 
 // The Investigate instructions are pinned to the top of the screen (CSS sticky on #i_steps).
-// Once pinned, .is-stuck trims the card to its requirement list. The bottom margin keeps the
-// space the hidden text took up, so the editor below doesn't jump up as the card shrinks.
-function syncInvSticky() {
+// Once pinned, .is-stuck trims the card to its unmet (or once-red) requirements. The bottom
+// margin keeps the space the hidden text took up, so the editor below doesn't jump up as the
+// card shrinks. When every bullet on the current step is green, .reqs-met stops the pinning.
+// refit = true (after the ticks change) re-measures a card that is already pinned.
+function syncInvSticky(refit) {
   const el = document.getElementById('i_steps');
   if (!el) return;
+  const list = document.getElementById('req_i_' + stepI);
+  const reqs = list ? [...list.children].filter(li => !li.classList.contains('req-note')) : [];
+  el.classList.toggle('reqs-met', reqs.length > 0 && reqs.every(li => li.classList.contains('req-pass')));
   const cs = getComputedStyle(el);
   const stuck = cs.position === 'sticky' && el.offsetParent !== null
     && el.getBoundingClientRect().top <= parseFloat(cs.top) + 1;
-  if (stuck === el.classList.contains('is-stuck')) return;
+  if (stuck === el.classList.contains('is-stuck') && !(stuck && refit === true)) return;
   if (stuck) {
+    el.classList.remove('is-stuck');
+    el.style.marginBottom = '';
     const full = el.getBoundingClientRect().height;
     el.classList.add('is-stuck');
     // + the next block's top margin, which this margin would otherwise collapse into
@@ -4349,8 +4361,10 @@ function renderReqResults(listEl, results) {
     const ok = results ? results[i] : undefined;
     li.classList.toggle('req-pass', ok === true);
     li.classList.toggle('req-fail', ok === false);
+    if (ok === false) li.classList.add('req-was-fail');   // pinned card keeps it in view once fixed
     if (icon) icon.textContent = ok === true ? '✓' : ok === false ? '✗' : String(i + 1);
   });
+  if (listEl.closest('#i_steps')) syncInvSticky(true);   // re-fit or unpin the pinned card
 }
 
 // ── Station Zero choice (Modification 1) ──────────────

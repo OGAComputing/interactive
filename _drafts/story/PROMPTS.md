@@ -253,6 +253,61 @@ All seven stills made with Gemini and inlined (2026-11-05).
 
 `python _drafts/story/add_still.py Y9/Python/L4_For_Loops/1_Distress_Signal_PRIMM.html lifeSigns _drafts/story/ds_m2_life_signs.jpg`
 
+## Chapter 5 — The Drone (`Y9/Python/L5_Functions/1_The_Drone_PRIMM.html`)
+
+All eight inlined: `nest` from `l5_drone_duct_feed.png` (2026-11-16), the other seven made with Gemini (2026-11-17).
+
+### Intro — "Chapter 5 — The Drone" → `dr_intro_bay.jpg`
+> The station's drone bay in the dark: a long charging rack along the wall with every slot empty
+> except one, where a small boxy repair drone rests with its lights off. Frost on the floor, one
+> amber warning light, a dark maintenance grille high on the back wall.
+
+`python _drafts/story/add_still.py Y9/Python/L5_Functions/1_The_Drone_PRIMM.html bay _drafts/story/dr_intro_bay.jpg`
+
+### P — "First command" → `dr_p_rack.jpg`
+> Close-up of the repair drone's small control screen on the charging rack, a single line of green
+> text glowing on it, "1 COMMAND", and a blinking cursor. A gloved hand rests on the rack beside it.
+
+`python _drafts/story/add_still.py Y9/Python/L5_Functions/1_The_Drone_PRIMM.html rack _drafts/story/dr_p_rack.jpg`
+
+### R — "Lift-off" → `dr_r_lift.jpg`
+> The small boxy repair drone lifting off its charging rack, hovering in mid-air, its lights on, a
+> white beam from its camera sweeping across the dark drone bay and the frost on the floor.
+
+`python _drafts/story/add_still.py Y9/Python/L5_Functions/1_The_Drone_PRIMM.html lift _drafts/story/dr_r_lift.jpg`
+
+### I1 — "Pod 1" → `dr_i1_pod1.jpg`
+> A cryo pod with a large "1" stencilled on its side (the only marking). Its glass window is
+> completely frosted over with thick white ice, fully opaque: nothing at all can be seen inside, no
+> person, no face, no body shape. A heart-monitor screen beside it glows amber with a slow line.
+>
+> *(The first prompt, "the sleeper inside is only a dim shape", showed a face through the glass.)*
+
+`python _drafts/story/add_still.py Y9/Python/L5_Functions/1_The_Drone_PRIMM.html pod1 _drafts/story/dr_i1_pod1.jpg`
+
+### I — "Define, then call" → `dr_i_ducts.jpg`
+> The open mouth of a maintenance duct in a corridor wall, at chest height, its grille hanging off
+> one hinge, pitch dark inside, with a trail of frost leading up the wall from the floor and into it.
+
+`python _drafts/story/add_still.py Y9/Python/L5_Functions/1_The_Drone_PRIMM.html ducts _drafts/story/dr_i_ducts.jpg`
+
+### M1 (guard) — "One job" → `dr_m1_guard.jpg`
+> High-angle security-camera view: the small boxy repair drone hovering in front of a heavy sealed
+> door, a vent grille in the wall above it hanging open. The picture is breaking up with static and
+> torn horizontal lines, as if the feed is about to cut out. (Style ending: "No text anywhere: no
+> timestamps, labels or on-screen overlays.")
+>
+> *(Gemini draws only faint static. Asking for "heavy analogue static, thick bands of tearing"
+> didn't help and lost the open grille, so the first image is used.)*
+
+`python _drafts/story/add_still.py Y9/Python/L5_Functions/1_The_Drone_PRIMM.html guard _drafts/story/dr_m1_guard.jpg`
+
+### M2 — "WARDEN" → `dr_m2_warden.jpg`
+> The station AI's core room: a circular chamber walled with dark screens, and every screen shows
+> the same single red glowing eye. Red light on the frosted floor. No people.
+
+`python _drafts/story/add_still.py Y9/Python/L5_Functions/1_The_Drone_PRIMM.html warden _drafts/story/dr_m2_warden.jpg`
+
 ---
 
 ## New chapters

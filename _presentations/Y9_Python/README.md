@@ -13,11 +13,13 @@ PowerPoint decks for the Y9 Python unit, themed for the unit's *Station Zero* su
 | `L2_Selection.pptx` | Lesson 2 deck (Proximity) |
 | `L3_While_Loops.pptx` | Lesson 3 deck (Locked In) |
 | `L4_For_Loops.pptx` | Lesson 4 deck (Distress Signal) |
+| `L5_Functions.pptx` | Lesson 5 deck (The Drone) |
 | `build_template.cjs` | Builds the template deck (re-reads this README for the rules slides) |
 | `build_deck.cjs` | Builds the Lesson 1 deck: copy this file to start a new lesson's deck |
-| `build_L2.cjs` | Builds the Lesson 2 deck (draws by hand: the selection flowchart, on L3's geometry, and two animated "Watch it run" traces of one if / else, True then False) |
+| `build_L2.cjs` | Builds the Lesson 2 deck (draws by hand: the selection flowchart, on L3's geometry, and two animated "Watch it run" models of one if / else, True then False, and a "Which line runs next?" We do on a new one) |
 | `build_L3.cjs` | Builds the Lesson 3 deck (draws by hand: the selection/iteration flowcharts, the animated "Watch it run" trace, "Which line runs next?" (We do and You do)) |
 | `build_L4.cjs` | Builds the Lesson 4 deck (draws by hand: a beacon display where the turtle draws in step with the animated "Watch it run", the eight-lines-to-a-loop slide, the We do / You do with sketched answers, the logic-error feedback) |
+| `build_L5.cjs` | Builds the Lesson 5 deck (draws by hand: an animated "Watch it run" of a def and its call (Python learns the name, the call jumps in, then carries on), an animated I do with two functions (the bar jumps between them, an arrow for each jump in and back), a "Which line runs next?" We do on two functions, and the mid-activity stop on a loop inside a function and one function calling another) |
 | `sz_slides.cjs` | The slide types ("recipes"), one function each |
 | `sz_kit.cjs` | Drawing parts: palette, layouts, code panels, terminals, variable boxes, badges |
 | `publish_to_drive.cjs` + `drive.json` | Uploads lesson decks to the "Y9 Python Unit 1" Drive folder as Google Slides (see Publishing to Drive) |
@@ -32,6 +34,7 @@ node build_deck.cjs               → L1_Python_Refresh.pptx
 node build_L2.cjs                 → L2_Selection.pptx
 node build_L3.cjs                 → L3_While_Loops.pptx
 node build_L4.cjs                 → L4_For_Loops.pptx
+node build_L5.cjs                 → L5_Functions.pptx
 node build_template.cjs           → Y9_Python_Deck_Template.pptx
 ```
 
@@ -90,7 +93,7 @@ Lessons are taught from Google Slides in the [Y9 Python Unit 1](https://drive.go
 - **Week to week:** `createDeck({ station: 'L3', … })` sets the state for the whole deck.
 - **Within a lesson:** `K.station('L1b')` switches it for the slides that follow (e.g. part 2 of Lesson 1).
 - **A story beat:** `K.beat('L2')` switches it as a beat. In Slide Show the next slide fades in through black (the lights go out), then the new damage fades in by itself over 2 seconds. Use it at most once or twice a lesson, on the story moment itself (e.g. the cliffhanger), so it stays a shock.
-- **One layer at a time:** overrides change single layers, e.g. `K.station('L7', { static: false })`. Layers: `frost`, `edge` (`'amber'`/`'red'`), `hazard`, `static`, `cracks`, plus `hud` (the status line) and `dot` (its colour). To tone the alarm edge down for one slide, `K.station('L2', { edgeFade: 70 })` before it (% see-through) and `K.station('L2')` after it (L2 "Watch it run: False", the We do). Light slides (Recap & Recall) skip frost and static.
+- **One layer at a time:** overrides change single layers, e.g. `K.station('L7', { static: false })`. Layers: `frost`, `edge` (`'amber'`/`'red'`), `hazard`, `static`, `cracks`, plus `hud` (the status line) and `dot` (its colour). To tone the alarm edge down for one slide, `K.station('L2', { edgeFade: 70 })` before it (% see-through) and `K.station('L2')` after it (L2 "Watch it run: False"). Light slides (Recap & Recall) skip frost and static.
 - The template's last section shows every state and a beat. To change the art, edit `make_station_art.py` and run it. Keep every layer in the frame (`clip_to_frame` does this for frost, cracks and static).
 
 ## Rules and feedback log
@@ -122,3 +125,6 @@ Add new feedback at the bottom, dated. `build_template.cjs` turns this list into
 - **2026-11-04 · Station state** — The amber alarm glow reached too far into the slides: it now fades out 0.35" in from the edge (was 0.65"; red is unchanged). On a We do slide where the class must focus, it can be toned down further (`edgeFade`, L2 "Watch it run: False").
 - **2026-11-04 · Story so far** — Put the Story so far slide right before the chapter card that sends the class to the website, not before the practice: the story leads straight into the activity. L2's "Which line runs next?" We do was cut: superfluous after the two animated runs.
 - **2026-11-05 · Worked examples** — A worked example of a new idea uses only operators the class already knows, so the new idea is the only new thing: L3's "Which line runs next?" We do was the keypad loop with `!=`, which confused students, so it is now an alarm loop with `==`. `!=` is taught after the loop examples, just before the activity that needs it.
+- **2026-11-17 · Recap & Recall** — Don't ask what range() gives: it was never taught explicitly. Ask how many times a loop with code on the card repeats (L5 Q1: a three-line while loop, from Lesson 3). No separate "while or for?" slide after the Recap; it's cut from L5. A write-it card with 3+ code lines puts its answer beside the code (sz_kit `recallCards`), since underneath it ran off the card.
+- **2026-11-17 · Functions** — After the first animated call, show two functions defined and called in a different order, so the run visibly jumps between them (I do: an arrow in, an arrow back), then a "Which line runs next?" We do on the same shape (L5 slides 6–7). Order the We do easiest first: a call (jump in, as in the I do) → the next line inside a two-line function → back after the call → the next call. "After a def, skip to the first call" was too hard to open on.
+- **2026-11-17 · Selection** — Model both paths before practice: two I do "Watch it run" slides on one if / else, the condition True, then False, narrated in the same words so only the path changes (L2 slides 9–10). The False run used to be a We do, before the class had seen a False path modelled. Then a We do on a new if / else with ordinary values (no boundary), boards with the next line number before each click (slide 11).

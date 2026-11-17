@@ -38,6 +38,10 @@ describe('evalInv step 1 — delete int()', () => {
     expect(r.pass).toBe(false);
     expect(r.msg).toMatch(/still has int\(/);
   });
+  test('int( deleted but its ) left behind does not tick yet (a SyntaxError; the pinned card would hide the bullet)', () => {
+    const half = code(...withLine(1, 'hours = input("Hours until rescue: "))'));
+    expect(evalInv(1, half).results[0]).toBe(false);
+  });
   test('casting on a later line still counts as cast', () => {
     const src = code(...withLine(1, 'hours = input("Hours left? ")'), 'hours = int(hours)');
     expect(evalInv(1, src, runOf(src)).pass).toBe(false);
@@ -54,6 +58,10 @@ describe('evalInv step 2 — int() back on line 2, then print(hours + 1)', () =>
     expect(evalInv(2, cast, runOf(cast)).pass).toBe(true);
     const later = code(...withLine(1, 'hours = input("Hours left? ")'), 'hours = int(hours)', PLUS);
     expect(evalInv(2, later, runOf(later)).pass).toBe(true);
+  });
+  test('int( typed back before its closing ) does not tick yet', () => {
+    const half = code(...withLine(1, 'hours = int(input("Hours until rescue: ")'), PLUS);
+    expect(evalInv(2, half).results[0]).toBe(false);
   });
   test('the print(hours + 1) line is required; spacing and order are flexible', () => {
     const r = evalInv(2, code(...STARTER));

@@ -314,6 +314,12 @@ export async function runPython(code, {
     `    visit_While = visit_For = _tick\n` +
     `_rq_names = []\n` +
     `_rq_tree = _RqAddTicks().visit(_ast.parse(${JSON.stringify(code)}, '<student>'))\n` +
+    // Forget the functions and classes this code defines at the top level, left
+    // over from an earlier run. Otherwise a call above its def (the "call before
+    // def" bug step) still finds the old function and runs, where real Python
+    // gives a NameError. Only names this code defines itself are dropped.
+    `for _n in [n.name for n in _rq_tree.body if isinstance(n, (_ast.FunctionDef, _ast.AsyncFunctionDef, _ast.ClassDef))]:\n` +
+    `    globals().pop(_n, None)\n` +
     (trackVars ? trackPreamble : '') +
     `_ast.fix_missing_locations(_rq_tree)\n` +
     (traceLines ? traceExec : `exec(compile(_rq_tree, '<student>', 'exec'), globals())\n`);

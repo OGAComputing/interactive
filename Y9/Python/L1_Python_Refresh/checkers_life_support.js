@@ -113,14 +113,21 @@ function evalReqs(check, raw, output, choice, given) {
 // step; ctx.lastRun = { code, ok } of the last Investigate run.
 
 // hours is a real number again: hours = int(input(…)), or hours = input(…) then int(hours).
+// Both also need the hours line's brackets to balance. These tick live, and a pinned card hides a
+// green bullet, so int( taken off with its ) still there, or int( put back before its ), must
+// not tick: either way the line is a SyntaxError (2026-11-17).
+const hoursLineClosed = s => {
+  const line = (s.match(/^[ \t]*hours\s*=.*$/m) || [''])[0];
+  return (line.match(/\(/g) || []).length === (line.match(/\)/g) || []).length;
+};
 const hoursCast = raw => {
   const s = normalise(raw);
-  return /^[ \t]*hours\s*=\s*int\s*\(\s*input\s*\(/m.test(s) ||
-    (/^[ \t]*hours\s*=\s*input\s*\(/m.test(s) && /\bint\s*\(\s*hours\s*\)/.test(s));
+  return hoursLineClosed(s) && (/^[ \t]*hours\s*=\s*int\s*\(\s*input\s*\(/m.test(s) ||
+    (/^[ \t]*hours\s*=\s*input\s*\(/m.test(s) && /\bint\s*\(\s*hours\s*\)/.test(s)));
 };
 const hoursUncast = raw => {
   const s = normalise(raw);
-  return /^[ \t]*hours\s*=\s*input\s*\(/m.test(s) && !/\bint\s*\(\s*hours\s*\)/.test(s);
+  return hoursLineClosed(s) && /^[ \t]*hours\s*=\s*input\s*\(/m.test(s) && !/\bint\s*\(\s*hours\s*\)/.test(s);
 };
 
 // The standard bug-pair line, broken and fixed. Matched loosely (spacing, quote style,

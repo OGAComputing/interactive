@@ -241,6 +241,39 @@ test('scrolled down, the pinned bug step shows only its requirements, without mo
   await expect(card.locator('.q-label')).toBeVisible();
 });
 
+test('pinned, a bullet that goes straight to green hides, a red one stays once fixed, and all green unpins', async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 768 });
+  await openAt(page, { currentStage: 'I', completedStages: ['P', 'R'], stepI: 2, maxStepI: 2,
+    i_editor: STARTER.replace('Enter your job: ', 'Job? '), radio_i1_mcq: 'option_c' });
+  const steps = page.locator('#i_steps');
+  const reqs = page.locator('#req_i_2 li:not(.req-note)');
+  const editorTop = () => page.locator('#stage-I .code-checker').evaluate(e => e.getBoundingClientRect().top + scrollY);
+  const before = await editorTop();
+  await page.locator('#qcard_i2').scrollIntoViewIfNeeded();
+  await expect(steps).toHaveClass(/is-stuck/);
+
+  // Break it: bullets 1-2 tick (never red) and hide; 3 goes red and stays
+  await page.click('#qcard_i2_prompt button:has-text("Break it")');
+  await answerPrompts(page, 'i_editor', ['Sam', 'Pilot']);
+  await expect(page.locator('#i_fb_run')).toContainText('NameError', { timeout: 30000 });
+  await page.locator('#qcard_i2').scrollIntoViewIfNeeded();
+  await expect(steps).toHaveClass(/is-stuck/);
+  await expect(reqs.nth(0)).toBeHidden();
+  await expect(reqs.nth(1)).toBeHidden();
+  await expect(reqs.nth(2)).toHaveClass(/req-fail/);
+  await expect(reqs.nth(2)).toBeVisible();
+  expect(Math.abs(await editorTop() - before)).toBeLessThan(2);   // sub-pixel rounding only
+
+  // Fixed: every bullet green, so the card stops pinning
+  await setCode(page, 'i_editor', STARTER.replace('Enter your job: ', 'Job? ') + '\nprint("Access granted to " + name)');
+  await page.click('#stage-I button:has-text("Run code")');
+  await answerPrompts(page, 'i_editor', ['Sam', 'Pilot']);
+  await expect(page.locator('#i_fb_run')).toHaveClass(/pass/, { timeout: 30000 });
+  await expect(steps).toHaveClass(/reqs-met/);
+  await expect(steps).not.toHaveClass(/is-stuck/);
+  expect(await steps.evaluate(e => getComputedStyle(e).position)).toBe('static');
+});
+
 // ─── Modify ──────────────────────────────────────────────────────────────────
 
 test('Modify 1 is a choice: the requirement appears once chosen, only that line passes, then it locks', async ({ page }) => {

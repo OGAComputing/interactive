@@ -280,7 +280,9 @@ function recallCards(s, questions, reveal) {
     text(s, q.q, { x: x + 0.25, y: y + 0.7, w: CARD.w - 0.5, h: 0.45, fontSize: 20, bold: true, color: ink });
     // body: code and/or options
     let by = y + 1.15;
-    const codeW = q.type === 'mcq' && q.code?.length ? 2.5 : CARD.w - 0.5;
+    // a write-it card with 3+ code lines has no room for the answer underneath: code on the left, answer beside it
+    const side = q.type === 'write' && (q.code?.length || 0) >= 3;
+    const codeW = q.type === 'mcq' && q.code?.length ? 2.5 : side ? 3.1 : CARD.w - 0.5;
     if (q.code?.length) {
       const lh = 0.33;
       box(s, { x: x + 0.25, y: by, w: codeW, h: q.code.length * lh + 0.2, fill: P.code, r: 0.06 });
@@ -297,7 +299,11 @@ function recallCards(s, questions, reveal) {
           { x: ox, y: oy + j * 0.36, w: q.code?.length ? 0.75 : 3.3, h: 0.36, fontSize: 18, valign: 'middle' });
       });
     }
-    if (reveal && q.type === 'write') {
+    if (reveal && side) {
+      text(s, [{ text: q.a, options: { bold: true, color: P.ok, fontSize: 22, fontFace: q.aMono ? MONO : BODY, breakLine: true } },
+        { text: q.why, options: { color: P.muted, fontSize: 18, italic: true, fontFace: q.whyMono ? MONO : BODY } }],
+        { x: x + 3.55, y: by, w: CARD.w - 3.75, h: q.code.length * 0.33 + 0.2, valign: 'middle' });
+    } else if (reveal && q.type === 'write') {
       const ay = by + (q.code?.length || 0) * 0.33 + (q.code?.length ? 0.28 : 0.05);
       text(s, [{ text: q.a, options: { bold: true, color: P.ok, fontSize: 22,
         fontFace: q.aMono ? MONO : BODY } }, { text: '   ' + q.why, options: { color: P.muted, fontSize: 18,

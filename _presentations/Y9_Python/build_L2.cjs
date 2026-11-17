@@ -5,7 +5,8 @@
 //
 // Output: L2_Selection.pptx beside this file. Activity: Y9/Python/L2_Selection/1_Proximity_PRIMM.html.
 // Teaching order (from the Y8 Lesson 5 Selection deck): conditions first (True or False), then if / else as two
-// animated runs of one program (I do, "Watch it run": True, then False), then "What is printed?" on three more
+// animated runs of one program (two I do models, "Watch it run": True, then False), a We do on a new
+// if / else with ordinary values ("Which line runs next?"), then "What is printed?" on three more
 // programs (You do + answers). Since 2026-11-04 this replaces the
 // labelled "if and else" slide and the "What is printed?" I do / We do (README: no anatomy slides, short
 // questions after the animated example). Then an indentation I do (the activity's Investigate step 2
@@ -186,8 +187,9 @@ R.trueFalseSlide(K, {
 The boundary is where programs go wrong: > leaves the number itself out; >= lets it in. The activity tests exactly this (a distance of exactly 20).`,
 });
 
-// 9–10. Watch it run (one-off, animated, as L3's "Watch it run"): the same program twice, True (I do) then
-// False (We do: boards before each click, on a toned-down alarm edge so the class can focus).
+// 9–10. Watch it run (one-off, animated, as L3's "Watch it run"): the same program twice, both modelled (I do):
+// True, then False (on a toned-down alarm edge). Since 2026-11-17 the False run is a model too, not a We do
+// (Nick: one model where the condition is True and one where it is False, as L3 / L4 model their loops).
 // A gold bar steps through the code one line per click, the distance box fills, the condition is worked out
 // beside the if line, a gold arrow shows each jump over a block, and the output builds up. The skipped
 // block is never lit. Uses onClick's `until` to fade the bar out when it moves on.
@@ -197,8 +199,8 @@ const SENSOR = (v) => [`distance = ${v}`, 'if distance >= 50:', '    print("All 
 function watchIf(o) {
   const s = newSlide('SZ_DARK', C, o.title);
   const cx = 1.35, cw = 7.05, vx = 8.75;
-  const cp = codePanel(s, SENSOR(o.value), { x: cx, y: 1.7, w: cw, size: 22, lh: 0.62 });
-  K.varBox(s, { name: 'distance', type: 'int', value: '', x: vx, y: 1.95, w: 2.4, h: 1.0 });
+  const cp = codePanel(s, o.code || SENSOR(o.value), { x: cx, y: 1.7, w: cw, size: 22, lh: 0.62 });
+  K.varBox(s, { name: o.name || 'distance', type: 'int', value: '', x: vx, y: 1.95, w: 2.4, h: 1.0 });
   const out = { x: vx, y: 3.3, w: 12.73 - vx, lh: 0.45 };
   K.terminal(s, ['', ''], { x: out.x, y: out.y, w: out.w, size: 22, lh: out.lh, label: 'OUTPUT' });
   const lineTop = (n) => cp.ys[n - 1] - cp.lh / 2;
@@ -248,26 +250,45 @@ Before click 1, point at the shape: if, a condition, a colon. The indented line 
 
 K.station('L2', { edgeFade: 70 });   // this slide only: a fainter amber edge
 watchIf({
-  title: 'Watch it run: False', value: 30, mode: 'WE DO',
-  prompt: [{ text: 'Before each click: ', options: { bold: true, color: P.gold } },
-    { text: 'on your board, the number of the line that runs next.' }],
+  title: 'Watch it run: False', value: 30,
   steps: [{ line: 1, mem: '30' }, { line: 2, check: ['30 >= 50', false] }, { line: 5, from: 2, out: 'Too close' },
     { line: 6, out: 'Scan complete' }],
   takeaway: [{ text: 'False: ', options: { bold: true, color: P.gold } }, { text: 'line 5 runs, line 3 is skipped. ' },
     { text: 'Never both, never neither.', options: { bold: true } }],
-  notes: `WE DO — the same program with one change: distance is 30. Students do the narrating: before each click, boards up with the line that runs next (and say what it does), THEN click to check.
-The alarm edge is toned down on this slide only, so the class can focus.
-1 Line 1: "distance = 30: put 30 in the box."
-2 Line 2: "Is 30 >= 50? False."
-3 Line 5, NOT line 3: "False, so Python JUMPS over line 3, to the else's line: Too close." This is the one to check boards on.
-4 Line 6: "It isn't indented: it runs every time. Scan complete."
-5 The takeaway: exactly one of lines 3 and 5 runs, every time. Line 6 runs whatever distance is.
+  notes: `I DO, the second model — the same program with one change: distance is 30. Students just watch; narrate every click in the SAME words as the True run, so the only thing that changes is the path.
+Before click 1: "Same program. Only line 1 is different. Watch which line runs after line 2."
+1 "distance = 30: put 30 in the box."
+2 "Check: swap distance for what's in the box. Is 30 >= 50? False."
+3 The gold arrow: "False, so Python JUMPS over line 3, to the else's line. Line 5 runs: Too close."
+4 "Line 6 isn't indented, so it runs every time: Scan complete."
+5 The takeaway. Ask: "Did line 3 run?" (No: it never lit up.) Then compare the two runs: exactly one of lines 3 and 5 runs, every time; lines 1, 2 and 6 run whatever distance is.
 Ask: "What would it print if distance were exactly 50?" (All clear, Scan complete: 50 >= 50 is True.) The activity's Predict asks this.`,
+});
+
+// We do: a new program with ordinary values (not a boundary), so the class applies the two models rather than
+// repeating them. Boards before each click: the line that runs next (Nick, 2026-11-17).
+watchIf({
+  title: 'Which line runs next?', mode: 'WE DO', name: 'oxygen',
+  code: ['oxygen = 12', 'if oxygen > 40:', '    print("Air OK")', 'else:', '    print("Find a mask")', 'print("Check done")'],
+  prompt: [{ text: 'Before each click: ', options: { bold: true, color: P.gold } },
+    { text: 'on your board, the number of the line that runs next.' }],
+  steps: [{ line: 1, mem: '12' }, { line: 2, check: ['12 > 40', false] }, { line: 5, from: 2, out: 'Find a mask' },
+    { line: 6, out: 'Check done' }],
+  takeaway: [{ text: 'False: ', options: { bold: true, color: P.gold } }, { text: 'the else’s line runs. Then line 6, every time.' }],
+  notes: `WE DO — a new program, ordinary numbers, nothing on the boundary: the class applies the two models they just watched. Students do the narrating: before each click, boards up (3-2-1) with the number of the line that runs next, and someone says what it does. THEN click to check.
+The alarm edge stays toned down, so the class can focus.
+Before click 1: "Which line runs first?" (1 — easy start, everyone gets it.)
+1 Line 1: "oxygen = 12: put 12 in the box." Boards: what runs next? (2)
+2 Line 2: "Swap oxygen for 12. Is 12 > 40? False." Boards: what runs next? This is the one to check: 5, NOT 3.
+3 Line 5, the gold arrow: "False, so Python jumps over line 3 to the else's line: Find a mask." Boards: next? (6)
+4 Line 6: "Not indented, so it runs every time: Check done."
+5 The takeaway. Follow-up on boards: "Change line 1 to oxygen = 90. What is printed now?" (Air OK, Check done.)
+If most boards said 3 at step 2, go back to "Watch it run: False" before the You do.`,
 });
 K.station('L2');
 
 // ════════════════════════════════════════════════════════════════════════════
-//  Practice: what is printed? (You do + answers). The animated runs are the I do (True) and We do (False);
+//  Practice: what is printed? (You do + answers). The animated runs are two I do models (True, then False);
 //  the "Which line runs next?" We do after them was cut as superfluous (Nick, 2026-11-04).
 // ════════════════════════════════════════════════════════════════════════════
 const R1 = 'Practice';
