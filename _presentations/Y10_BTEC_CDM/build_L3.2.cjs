@@ -6,8 +6,9 @@
 // promising two needs (Task 4, ★ A third promise; unlock word THUMBNAIL).
 // The page's own examples (Newsround, Planet Earth III, Paddington in Peru, the Eras Tour film, Animal Crossing,
 // Wordle, the Sidemen, The Traitors, Taskmaster, Wicked, Among Us) are not worked through here, so the deck never
-// gives away a task's answer; the worked models are Stardew Valley, Duolingo, Space Jam, Pokémon Red, Vogue,
-// Mario Kart World and Strictly. The Photoshop before-and-after is made by make_thumb_example.py.
+// gives away a task's answer; Part 1 starts from five people's
+// reasons for opening YouTube, then the worked model is Mario Kart World (one game, five needs); Stardew Valley
+// and Strictly in Part 2. The Photoshop before-and-after is made by make_thumb_example.py.
 //
 //   node build_L3.2.cjs   → L3.2_Why_We_Watch.pptx
 
@@ -43,28 +44,42 @@ K.questions({ topic: TOPIC, lesson: LESSON,
   notes: 'Topic question for the whole of Component 1; today\'s question comes back in the plenary. Three parts: the five needs, one product with many needs, then making two thumbnails that promise different needs.' });
 
 // ── Part 1: the five needs (Warm-up, Tasks 1–2, ★ Spot the slip) ──
+// Concrete first (Y10/CLAUDE.md: abstract terms need a worked model): five real reasons, then the five needs,
+// then the theory's name, then one game meeting all five needs for five players (Nick, 2026-11-17).
+K.info({ title: 'Why did they open YouTube?', standfirst: 'Five people, five reasons. Which ones are alike, and which are different?',
+  points: [['Amir', '"To learn how to do a skin fade."'],
+    ['Jess', '"It\'s funny. I just want a laugh."'],
+    ['Kai', '"To forget about my maths test for a bit."'],
+    ['Priya', '"I watch gaming creators who are like me."'],
+    ['Leo', '"So I can talk about it with my mates at school."']],
+  notes: 'One per click. Before any labels: ask the class what each person GETS from YouTube. Link back to Recall Q4: their own reasons were like these. Everyone chose YouTube; nobody made them. The reasons are what differ.' });
+
+K.info({ title: 'Five needs', standfirst: 'Each reason is a need that the product meets.',
+  points: [['Information', 'Finding something out: Amir and his skin fade.'],
+    ['Entertainment', 'Fun, a laugh, a good time: Jess.'],
+    ['Escapism', 'Getting away from real life and its worries for a while: Kai.'],
+    ['Personal identity', 'Showing or finding who you are, people like you: Priya.'],
+    ['Social interaction', 'Something to share, play or talk about with others: Leo.']],
+  notes: 'One per click: name each need, then point back to the person. Entertainment and escapism feel close: entertainment is about the fun; escapism is about getting AWAY from something (stress, boredom, a test). These five are the Warm-up\'s five boxes, and the definitions stay open on the page.' });
+
 K.keyTerm({ term: 'Uses and gratifications', say: 'gra-ti-fi-KAY-shuns',
-  definition: 'A theory: the audience is active. People choose media to meet their own needs. The need it meets is their gratification: their reward.',
+  definition: 'The theory behind the five needs: the audience is active. People choose media to meet their own needs. The need it meets is their gratification: their reward.',
   example: 'Stardew Valley: one player farms to relax after school, another to share a farm with friends online. Same game, different rewards.',
   img: img('stardew_valley.png'), imgLabel: 'Stardew Valley · ConcernedApe',
-  notes: 'Spec A1: audience uses and gratifications. Example on click. The big idea: the audience chooses. Nobody forces you to open Stardew Valley; you open it because it gives you something. Ask: what does it give the first player? (calm, an escape) The second? (time with friends).' });
+  notes: 'Spec A1: audience uses and gratifications. Now the label goes on what they have just seen. "Uses" = what people use media for; "gratifications" = what they get out of it. Example on click: like Amir, Jess, Kai, Priya and Leo, nobody makes a Stardew Valley player open it; each chooses it for their own reward. Ben comes back in the Part 2 hinge question.' });
 
-K.info({ title: 'Three needs: learn, laugh, get away', standfirst: 'Ask: what does this product give the person using it?',
-  points: [['Information', 'Finding out facts, or what is happening in the world: learning Spanish on Duolingo before a holiday.'],
-    ['Entertainment', 'Enjoyment: fun, a laugh, a good time. Space Jam (1996) is just a good laugh.'],
-    ['Escapism', 'Getting away from real life and its worries: exploring the Pokémon world in Pokémon Red, far from homework.']],
-  img: img('duolingo_home.png'), imgLabel: 'Duolingo',
-  notes: 'One per click. These three are the most common. Entertainment and escapism can feel close: entertainment is about the fun; escapism is about getting AWAY from something (stress, boredom, school). Pokémon Red (1996) is an old one with a hook: a whole world to wander off into.' });
-
-K.info({ title: 'Two more: be you, be together', standfirst: 'Some needs are about who you are, and who you\'re with.',
-  points: [['Personal identity', 'Showing or finding who you are: reading Vogue to find your own style, or wearing your team\'s shirt.'],
-    ['Social interaction', 'Something to share, play or talk about with others: racing your mates in Mario Kart World on one sofa.']],
-  img: img('vogue.jpg'), imgLabel: 'Vogue',
-  notes: 'One per click. Personal identity: media that says "this is me" or helps you work out who you are (fans, styles, people like you on screen). Social interaction: the product gives you something to do or talk about WITH other people. These five are the Warm-up\'s five boxes, and the definitions stay open on the page.' });
+K.info({ title: 'One game, five needs', standfirst: 'Five players, one Mario Kart World. The need belongs to the player, not the game.',
+  points: [['Information', 'Mo checks the kart stats to find the fastest set-up.'],
+    ['Entertainment', 'Ella laughs when a blue shell wrecks the last lap.'],
+    ['Escapism', 'Sam races Rainbow Road to forget a bad day.'],
+    ['Personal identity', 'Zak always picks Bowser: "I\'m a Bowser main."'],
+    ['Social interaction', 'Four mates on one sofa, shouting at each other.']],
+  img: img('mario_kart_world.png'), imgLabel: 'Mario Kart World · Nintendo',
+  notes: 'The worked model: one product, all five needs. One per click; before each reveal, read the person\'s line and ask which need it is. The point to land: you can\'t tell the need from the product, only from the person\'s reason. That is how Task 1 works: wait for the clue that tells you WHY.' });
 
 K.choice({ question: 'Aisha streams KPop Demon Hunters songs on repeat and dresses as Rumi on non-uniform day, so everyone knows she\'s a fan. Which need?',
   options: ['Personal identity', 'Entertainment', 'Information'],
-  notes: 'Answer A: dressing up so people know she\'s a fan shows who she is. She may also enjoy the songs (entertainment), but the clue that decides it is "so everyone knows". That is how Task 1 works: wait for the clue that tells you WHY.' });
+  notes: 'Answer A: dressing up so people know she\'s a fan shows who she is. She may also enjoy the songs (entertainment), but the clue that decides it is "so everyone knows". ' });
 
 K.turnTalk({ lead: 'Think of one thing you watched, played or listened to yesterday.',
   prompt: 'Which of the five needs did it meet for you? How do you know?',
@@ -80,7 +95,7 @@ K.task({ title: 'Why are they watching?', mins: 15, where: WHERE,
   notes: 'Warm-up is optional. Task 1: a wrong guess shows the next clue and makes them wait 10 s, so guessing early is a real risk. Task 2 links to the 3.1 diary (it opens in a new tab); anyone without a diary uses two products from yesterday. Tasks 3 and 4 are locked until the Part 2 and Part 3 words.' });
 
 // ── Part 2: one product, many needs (Task 3, ★ One product, two needs) ──
-K.info({ title: 'One product, many needs', standfirst: 'The need belongs to the person, not the product.',
+K.info({ title: 'Same product, different needs', standfirst: 'Different people, and different situations, change the need.',
   points: [['Different people', 'Strictly: Gran watches for the dancing and the sparkle (entertainment); a dancer watches to learn the steps (information).'],
     ['Different situations', 'Watching Strictly alone is entertainment; watching with the family, arguing about the scores, is social interaction.'],
     ['Producers plan for it', 'The BBC adds the Strictly app vote and It Takes Two, so the show meets even more needs.']],
