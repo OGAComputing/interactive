@@ -39,7 +39,7 @@ Editorial / magazine, so Component 1 decks look nothing like the Computing decks
 
 | Recipe | Pillar | Use for |
 |--------|--------|---------|
-| `recallStarter` / `recallAnswers` | Recap & Recall | First two slides. 2–4 questions, source tag, choices or an example in each question |
+| `recallStarter` / `recallAnswers` | Recap & Recall | First two slides. 4 questions from 4 different earlier lessons (2 from a while ago), 4 options each, none giving its answer away (see the 2026-11-17 Recap rule) |
 | `titleSlide` | — | The lesson as a magazine cover: masthead, cover line (lesson title), cover image, optional puff |
 | `questions` | Clarity | Topic question (muted, every lesson) + today's question |
 | `info` | New Information | Standfirst + up to 4 numbered points, optional image |
@@ -70,3 +70,4 @@ Newest last. Add feedback here (or with `/log-feedback`), then rebuild the templ
 - **2026-11-06 · Lesson parts** — Students rushed ahead to tasks that hadn't been taught yet. The hub page now locks each later part's tabs until the unlock word from that part's task slide (`task({ unlock })`); the Part 1 task slide points early finishers to the Part 1 ★ challenge.
 - **2026-11-10 · Screen recording** — The school PCs' Snipping Tool can't record video (old version). Screen recordings use PowerPoint 2024: Insert › Screen Recording (L2.1 slide 16 and its hub page say so).
 - **2026-11-17 · Concrete first** — The L3.2 deck opened on the theory's name ("Uses and gratifications") and gave each of the five needs a different product, so it didn't land. Teach a theory from students' own experience first (real reasons, then the categories, then the name), then one worked model that shows every category in a single product (Mario Kart World: five players, five needs). Examples must be products students know now: Space Jam (1996) meant nothing to them.
+- **2026-11-17 · Recap** — The L3.2 recall had two questions from the same lesson, a "Bridge" question about today, only two or three options, and wording that gave answers away ("the *main* group…" → primary). Every Recap & Recall now has four questions from four different earlier lessons, at least two from a while ago, four options each (real terms from that lesson), and no question that contains its answer or a word from its definition.

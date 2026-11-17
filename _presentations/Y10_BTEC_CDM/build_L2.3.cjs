@@ -18,17 +18,18 @@ const TOPIC = 'How are media products made to reach and engage their audiences?'
 const LESSON = 'How can you find out how big an audience is, and what it thinks?';
 const WHERE = 'Hub › Year 10 › Lesson 2.3 › Counting and Asking Audiences';
 
-// Recap: 2.2 (secondary audience; socio-economic group), 2.1 (primary research), then a bridge into today.
+// Recap: 2.2 (socio-economic group), 2.1 (the four checks), 1.3 (purpose), 1.1 (sectors): two from week 1.
+// Four options each; no question names its answer or lifts a phrase from its definition (Nick, 2026-11-17).
 const RECALL = [
-  { tag: 'Lesson 2.2', q: 'Parents who buy Match of the Day magazine for their children. Primary or secondary audience?', options: ['primary', 'secondary'], a: 'Secondary: it isn\'t mainly made for them' },
-  { tag: 'Lesson 2.2', q: 'A plumber. Which socio-economic group?', options: ['C1', 'C2', 'D/E'], a: 'C2: skilled trades' },
-  { tag: 'Lesson 2.1', q: 'You ask your friends what they think of a film. Primary or secondary research?', options: ['primary', 'secondary'], a: 'Primary: you collected it yourself' },
-  { tag: 'Bridge', q: 'How could a film company prove its film was a hit?', options: ['money from tickets', 'the director\'s opinion'], a: 'Money from tickets: a number that counts the audience. Today.' },
+  { tag: 'Lesson 2.2', q: 'Sam is an electrician. Which socio-economic group?', options: ['A/B', 'C1', 'C2', 'D/E'], a: 'C2: skilled trades' },
+  { tag: 'Lesson 2.1', q: 'A website says Wicked is "the best film ever made". Which check does that fail?', options: ['who made it?', 'fact or opinion?', 'when?', 'can you check it?'], a: 'Fact or opinion? "Best ever" is an opinion' },
+  { tag: 'Lesson 1.3', q: 'A Newsround report on a storm that hit the UK last night. Which purpose?', options: ['entertain', 'inspire', 'persuade', 'inform'], a: 'To inform: it gives facts' },
+  { tag: 'Lesson 1.1', q: 'Which of these is audio / moving image?', options: ['a comic', 'a podcast', 'an app', 'a billboard'], a: 'A podcast: you listen to it' },
 ];
 K.recallStarter({ questions: RECALL, mins: 4,
-  notes: 'Q1–2 look back at 2.2, Q3 at 2.1. Q4 bridges into today: take a few ideas, then move on.' });
+  notes: 'One question from each of four earlier lessons: Q1 2.2, Q2 2.1, Q3 1.3, Q4 1.1 (two from week 1). Four options each; no notes.' });
 K.recallAnswers({ questions: RECALL,
-  notes: 'Tick or fix. Q3: primary research matters again in Part 2 today, when they interview a partner. Q4: ticket money is a box office figure, one of six kinds of audience statistic.' });
+  notes: 'Tick or fix. Q1: electricians are a skilled trade, like plumbers. Q2: an opinion can\'t be checked. Then ask aloud: how could a film company prove its film was a hit? Ticket money is a box office figure, one of six kinds of audience statistic: today.' });
 
 K.titleSlide({ coverLine: 'Counting and Asking Audiences', issueLine: 'Lesson 2.3  ·  Y10 BTEC Creative Media',
   standfirst: 'Count an audience with real numbers. Then ask them yourself.', puff: 'Lesson 2.3',

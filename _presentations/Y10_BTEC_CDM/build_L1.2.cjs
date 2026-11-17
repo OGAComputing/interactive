@@ -13,17 +13,18 @@ const img = (f) => path.join(__dirname, 'images', f);
 const TOPIC = 'How are media products made to reach and engage their audiences?';
 const LESSON = 'How do images and words work together to make meaning?';
 
-// Recap looks back at 1.1 (sectors, eras, the Lion King pair), then bridges from the C3 cover to anchorage.
+// Recap: 1.1 (sectors; then and now) and the Component 3 mock. Only two earlier lessons exist for both classes.
+// Four options each; no question names its answer or lifts a phrase from its definition (Nick, 2026-11-17).
 const RECALL = [
-  { tag: 'Lesson 1.1', q: 'Minecraft belongs in which media sector?', options: ['interactive', 'print', 'audio / moving image'], a: 'Interactive: the player makes the choices' },
-  { tag: 'Lesson 1.1', q: 'The Lion King (1994) was made before 2000, so it is…', options: ['historical', 'contemporary'], a: 'Historical: made before 2000' },
-  { tag: 'Lesson 1.1', q: "One change from the 1994 to the 2019 Lion King? E.g. 'how it was made'.", a: 'Hand-drawn → computer-generated (CGI)' },
-  { tag: 'Bridge', q: 'On your FIZZIKAL cover, the words around the cover star are…', options: ['cover lines', 'the masthead', 'the folio'], a: 'Cover lines: words that steer what the picture means' },
+  { tag: 'Lesson 1.1', q: 'Which of these is a print product?', options: ['a podcast', 'a billboard', 'a music video', 'a website'], a: 'A billboard: printed, you look at it' },
+  { tag: 'Lesson 1.1', q: 'The Lion King (1994) was drawn by hand. How was the 2019 Lion King made?', options: ['stop-motion', 'puppets', 'CGI', 'real animals'], a: 'Computer-generated (CGI)' },
+  { tag: 'C3 mock', q: '"5 moves for a stronger team", printed beside the FIZZIKAL cover star. Which cover feature?', options: ['masthead', 'puff', 'folio', 'cover line'], a: 'Cover line: it says what is inside' },
+  { tag: 'C3 mock', q: '"WIN a free year at the gym!" in a bright circle on the FIZZIKAL cover. Which cover feature?', options: ['puff', 'cover line', 'masthead', 'folio'], a: 'Puff' },
 ];
 K.recallStarter({ questions: RECALL, mins: 4,
-  notes: 'Q1–3 look back at 1.1. Q4 bridges from the Component 3 mock into today: words change what a picture means (anchorage).' });
+  notes: 'Q1–2 look back at 1.1, Q3–4 at the Component 3 mock (week 1: nothing older to go back to). Four options each; no notes.' });
 K.recallAnswers({ questions: RECALL,
-  notes: 'Tick or fix. Q4 is the hook: today we look at how words and pictures work together.' });
+  notes: 'Tick or fix. Q2: same story, new way of making it: computer-generated. Q3 is the hook: the words beside a picture change what it means. Today we look at how words and pictures work together.' });
 
 K.titleSlide({ coverLine: 'Reading an Image', issueLine: 'Lesson 1.2  ·  Y10 BTEC Creative Media', standfirst: 'Every poster is built from choices. Today you learn to read them.', puff: 'Lesson 1.2',
   img: img('barbie_ken_2023.jpg'), imgLabel: 'Barbie poster (2023)',

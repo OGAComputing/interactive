@@ -15,17 +15,18 @@ const img = (f) => path.join(__dirname, 'images', f);
 const TOPIC = 'How are media products made to reach and engage their audiences?';
 const LESSON = 'Who makes media products, and why do they make them?';
 
-// Recap: 1.2 (anchorage, connotation), 1.1 (sectors), then a bridge into today's question: who made it?
+// Recap: 1.2 (anchorage, connotation), 1.1 (historical), the Component 3 mock (hierarchy).
+// Four options each; no question names its answer or lifts a phrase from its definition (Nick, 2026-11-17).
 const RECALL = [
-  { tag: 'Lesson 1.2', q: 'Words that fix what a picture means are called…', options: ['anchorage', 'polysemy', 'denotation'], a: 'Anchorage: e.g. "He\'s just Ken."' },
-  { tag: 'Lesson 1.2', q: '"The shark suggests danger." Denotation or connotation?', options: ['denotation', 'connotation'], a: 'Connotation: it is suggested, not seen' },
-  { tag: 'Lesson 1.1', q: 'A magazine belongs in which media sector?', options: ['print', 'interactive', 'audio / moving image'], a: 'Print' },
-  { tag: 'Bridge', q: 'Which company made A Minecraft Movie (2025)?', options: ['Mojang', 'Warner Bros.', 'Netflix'], a: 'Warner Bros. Mojang made the game' },
+  { tag: 'Lesson 1.2', q: '"He\'s just Ken." under Ryan Gosling\'s photo on a Barbie poster. Which term is that tagline?', options: ['denotation', 'polysemy', 'anchorage', 'encoding'], a: 'Anchorage: it fixes how we read the picture' },
+  { tag: 'Lesson 1.2', q: '"Danger is coming." Which is this sentence about the Jaws poster?', options: ['connotation', 'denotation', 'anchorage', 'polysemy'], a: 'Connotation: an idea, not something you can see' },
+  { tag: 'Lesson 1.1', q: 'Which of these is a historical product?', options: ['Shrek (2001)', 'Frozen (2013)', 'Toy Story (1995)', 'Moana (2016)'], a: 'Toy Story (1995): made before 2000' },
+  { tag: 'C3 mock', q: 'The main cover line is bigger and bolder than all the others. Which design principle?', options: ['alignment', 'white space', 'contrast', 'hierarchy'], a: 'Hierarchy' },
 ];
 K.recallStarter({ questions: RECALL, mins: 4,
-  notes: 'Q1–2 look back at 1.2, Q3 at 1.1. Q4 bridges into today: the game and the film have different producers. Who are they, and why do they make things?' });
+  notes: 'Q1–2 look back at 1.2, Q3 at 1.1, Q4 at the Component 3 mock. Four options each; no notes.' });
 K.recallAnswers({ questions: RECALL,
-  notes: 'Tick or fix. Q4: Mojang (owned by Microsoft) made the game; Warner Bros. made the film. Today: what kind of company is Warner Bros., and why did it make the film?' });
+  notes: 'Tick or fix. Q2: nothing on the poster says "danger"; it is what the picture makes us think. Then ask aloud: who made A Minecraft Movie (2025)? Mojang made the game; Warner Bros. made the film. Today: what kind of company is Warner Bros., and why did it make the film?' });
 
 K.titleSlide({ coverLine: 'Who Made It and Why?', issueLine: 'Lesson 1.3  ·  Y10 BTEC Creative Media',
   standfirst: 'Every media product has a producer, and a reason.', puff: 'Lesson 1.3',

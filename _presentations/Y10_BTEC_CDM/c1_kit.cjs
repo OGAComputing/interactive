@@ -166,7 +166,11 @@ function createDeck({ lesson, footerText, title = 'Component 1 lesson', author =
 
   // ── Recipes ───────────────────────────────────────────────────────────────
   // Recap & Recall: up to 4 questions in a 2 × 2 grid. Each has a source tag ("Last lesson") and,
-  // where possible, choices or an example so it isn't bare recall (README rule).
+  // where possible, choices or an example so it isn't bare recall (README rule). Since 2026-11-17: four questions from
+  // four different earlier lessons, four options each, none giving its answer away (Y10/CLAUDE.md).
+  // Options never break inside themselves ("white / space"): no-break spaces within each one, and a '?' only
+  // when the last option doesn't already end with one.
+  const optionLine = (opts) => { const t = opts.map((o) => o.replace(/ /g, ' ')).join('  ·  '); return /\?$/.test(t) ? t : t + '?'; };
   function recallGrid(s, qs, dark, showAnswers) {
     const cw = (CW - 0.5) / 2, ch = 2.35;
     qs.forEach((q, i) => {
@@ -175,7 +179,7 @@ function createDeck({ lesson, footerText, title = 'Component 1 lesson', author =
       text(s, String(i + 1), { x, y: y + 0.12, w: 0.6, h: 0.8, fontFace: HEAD, fontSize: 48, color: dark ? P.redLt : P.red });
       tag(s, q.tag, { x: x + 0.7, y: y + 0.22, fill: dark ? P.paper : P.ink, color: dark ? P.ink : P.paper });
       text(s, q.q, { x: x + 0.7, y: y + 0.66, w: cw - 0.7, h: 0.95, fontSize: 20, color: dark ? P.paper : P.ink });
-      if (q.options && !showAnswers) text(s, q.options.join('  ·  ') + '?', { x: x + 0.7, y: y + 1.68, w: cw - 0.7, h: 0.62, fontSize: 18,
+      if (q.options && !showAnswers) text(s, optionLine(q.options), { x: x + 0.7, y: y + 1.68, w: cw - 0.7, h: 0.62, fontSize: 18,
         bold: true, color: dark ? P.greyLt : P.red });
       if (showAnswers) text(s, [{ text: 'ANSWER  ', options: { fontSize: 13, charSpacing: 2, color: P.greyLt } },
         { text: q.a, options: { fontSize: 20, color: P.redLt } }],

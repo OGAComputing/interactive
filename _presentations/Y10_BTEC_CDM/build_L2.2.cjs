@@ -18,17 +18,18 @@ const TOPIC = 'How are media products made to reach and engage their audiences?'
 const LESSON = 'Who is a media product made for, and how can you tell?';
 const WHERE = 'Hub › Year 10 › Lesson 2.2 › Who Is It For?';
 
-// Recap: 2.1 (survey; check before you trust), 1.3 (purpose), then a bridge into today's question.
+// Recap: 2.1 (observation), 1.3 (purpose), 1.2 (polysemy), 1.1 (contemporary): two from week 1.
+// Four options each; no question names its answer or lifts a phrase from its definition (Nick, 2026-11-17).
 const RECALL = [
-  { tag: 'Lesson 2.1', q: 'You ask 20 classmates which streaming service they use. Survey or interview?', options: ['survey', 'interview'], a: 'Survey: the same questions to lots of people' },
-  { tag: 'Lesson 2.1', q: 'A Wikipedia page with no references. Trust it, or check it first?', options: ['trust it', 'check it first'], a: 'Check it first: fact-check it in a second source' },
-  { tag: 'Lesson 1.3', q: 'Beano wants to make you laugh. Which purpose is that?', options: ['inform', 'entertain', 'persuade'], a: 'To entertain' },
-  { tag: 'Bridge', q: 'Who do you think Match of the Day magazine is made for?', options: ['children', 'adults', 'everyone'], a: 'Mostly children who love football. How can we tell? Today.' },
+  { tag: 'Lesson 2.1', q: 'You sit in the cinema and note when the audience laughs during Wicked. Which kind of primary research?', options: ['survey', 'interview', 'observation', 'discussion'], a: 'Observation: watch and note' },
+  { tag: 'Lesson 1.3', q: 'Beano: Dennis and Gnasher cause chaos in every issue. Which purpose?', options: ['inform', 'entertain', 'persuade', 'educate'], a: 'To entertain' },
+  { tag: 'Lesson 1.2', q: 'The pink Barbie poster: some see a toy film for kids, others a comedy for adults. Which term?', options: ['anchorage', 'polysemy', 'denotation', 'encoding'], a: 'Polysemy: more than one meaning' },
+  { tag: 'Lesson 1.1', q: 'Which of these is a contemporary product?', options: ['Jurassic Park (1993)', 'Titanic (1997)', 'Toy Story 2 (1999)', 'Shrek (2001)'], a: 'Shrek (2001): made in 2000 or later' },
 ];
 K.recallStarter({ questions: RECALL, mins: 4,
-  notes: 'Q1–2 look back at 2.1, Q3 at 1.3. Q4 bridges into today: don\'t settle the answer yet, just collect hands for each option.' });
+  notes: 'One question from each of four earlier lessons: Q1 2.1, Q2 1.3, Q3 1.2, Q4 1.1 (two from week 1). Four options each; no notes.' });
 K.recallAnswers({ questions: RECALL,
-  notes: 'Tick or fix. Q4: ask two students WHY they chose their answer. Whatever they point at (the free cards, the jokes, the price) is evidence about the audience. Today: reading that evidence to say exactly who a product is for.' });
+  notes: 'Tick or fix. Q1: no questions asked, just watching, so observation. Q4: Toy Story 2 (1999) is the trap: 1999 is still before 2000. Then ask aloud: who is Match of the Day magazine made for? Children, adults or everyone? Ask two students WHY: whatever they point at (the free cards, the jokes, the price) is evidence about the audience. Today: reading that evidence.' });
 
 K.titleSlide({ coverLine: 'Who Is It For?', issueLine: 'Lesson 2.2  ·  Y10 BTEC Creative Media',
   standfirst: 'Every media product is made for someone. Read the evidence and say exactly who.', puff: 'Lesson 2.2',

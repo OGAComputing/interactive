@@ -13,17 +13,18 @@ const img = (f) => path.join(__dirname, 'images', f);
 const TOPIC = 'How are media products made to reach and engage their audiences?';
 const LESSON = 'What are the three media sectors, and how has media changed since 2000?';
 
-// Recap bridges from the Component 3 mock (the FIZZIKAL magazine cover), with choices.
+// Recap: the Component 3 mock (the FIZZIKAL magazine cover). Lesson 1.0 was taught to one class only, so it isn't recalled here.
+// Four options each; no question names its answer or lifts a phrase from its definition (Nick, 2026-11-17).
 const RECALL = [
-  { tag: 'C3 mock', q: 'On your FIZZIKAL cover, the big brand name across the top is the…', options: ['masthead', 'cover line', 'puff'], a: 'Masthead' },
-  { tag: 'C3 mock', q: 'The short lines of text around your cover image are…', options: ['cover lines', 'mastheads', 'captions'], a: "Cover lines: they tell readers what's inside" },
-  { tag: 'C3 mock', q: "Who was FIZZIKAL for? Example: 'teenagers who play team sports'.", a: 'Its target audience: who every choice was for' },
-  { tag: 'Bridge', q: 'Your cover was a print product. Which of these is also print?', options: ['a billboard', 'a podcast', 'a website'], a: 'A billboard (a podcast is audio, a website is interactive)' },
+  { tag: 'C3 mock', q: 'The word FIZZIKAL across the top of your cover. Which cover feature?', options: ['cover line', 'puff', 'masthead', 'folio'], a: 'Masthead: the magazine\'s name' },
+  { tag: 'C3 mock', q: 'Every photo and font on your cover had to appeal to teenagers who play team sports. They were the…', options: ['client', 'target audience', 'producer', 'brief'], a: 'Target audience' },
+  { tag: 'C3 mock', q: 'You kept the edges of the cover and the gap around the cover star clear of text. Which design principle?', options: ['hierarchy', 'alignment', 'white space', 'contrast'], a: 'White space: room to breathe' },
+  { tag: 'C3 mock', q: 'Every cover line starts on the same left edge. Which design principle?', options: ['alignment', 'hierarchy', 'contrast', 'white space'], a: 'Alignment' },
 ];
 K.recallStarter({ questions: RECALL, mins: 4,
-  notes: 'Bridge from the Component 3 mock: they made a FIZZIKAL magazine cover, a print product. Q4 previews today: the three sectors. Choices on screen, so no bare recall.' });
+  notes: 'All four look back at the Component 3 mock: Lesson 1.0 was only taught to one class. Four options each; no notes.' });
 K.recallAnswers({ questions: RECALL,
-  notes: 'Tick or fix. Q4 is the hook into today: print is one of three media sectors.' });
+  notes: 'Tick or fix. Q2: the client set the brief; the target audience is who it was made for. Then ask aloud: your cover was a print product. What else is print? (a billboard, a comic). That is the hook into today: print is one of three media sectors.' });
 
 K.titleSlide({ coverLine: 'Media Everywhere', issueLine: 'Lesson 1.1  ·  Y10 BTEC Creative Media', standfirst: 'Films, games, magazines, apps: what kind of media is each one, and when was it made?', puff: 'Lesson 1.1',
   img: img('stranger_things.jpg'), imgLabel: 'Stranger Things poster (Netflix, 2016)',

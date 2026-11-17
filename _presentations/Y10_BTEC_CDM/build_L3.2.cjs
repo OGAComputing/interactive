@@ -23,17 +23,18 @@ const TOPIC = 'How are media products made to reach and engage their audiences?'
 const LESSON = 'Why do we choose the media we use, and how can one product meet different needs?';
 const WHERE = 'Hub › Year 10 › Lesson 3.2 › Why We Watch';
 
-// Recap: 3.1 (situation; consumer-generated content), 2.2 (primary audience), then a bridge into today.
+// Recap: four earlier lessons, one question each: 3.1 and 2.3 (recent), 1.3 and 1.2 (a while ago).
+// Four options each, and no question names its answer or a word from that answer's definition (Nick, 2026-11-17).
 const RECALL = [
-  { tag: 'Lesson 3.1', q: 'Listening to Spotify on the bus. Is "on the bus" where, when or who with?', options: ['where', 'when', 'who with'], a: 'Where: part of its situation' },
-  { tag: 'Lesson 3.1', q: 'Players build a Roblox game that other players can play. Which kind of involvement?', options: ['interactive features', 'online voting', 'consumer-generated content'], a: 'Consumer-generated content' },
-  { tag: 'Lesson 2.2', q: 'The main group a product is made for is its…', options: ['primary audience', 'secondary audience'], a: 'Primary audience' },
-  { tag: 'Bridge', q: 'The last time you opened YouTube, why?', options: ['to learn', 'to laugh', 'to chat'], a: 'Any answer: your reason is a need. Today.' },
+  { tag: 'Lesson 3.1', q: 'Duolingo shows your streak and reminds you before it breaks. Which kind of audience involvement?', options: ['passive', 'interactive features', 'online voting', 'consumer-generated content'], a: 'Interactive features: the app responds to you' },
+  { tag: 'Lesson 2.3', q: 'BBC News wants to show how many people read its website. Which audience statistic?', options: ['circulation', 'followers', 'hits', 'sales'], a: 'Hits: visits to a website or page' },
+  { tag: 'Lesson 1.3', q: 'Disney owns Pixar, Marvel and Star Wars. Which kind of producer is Disney?', options: ['public service broadcaster', 'independent', 'community media', 'media conglomerate'], a: 'Media conglomerate: one giant company, many businesses' },
+  { tag: 'Lesson 1.2', q: '"A woman swims; a huge shark rises below her." Which is this sentence about the Jaws poster?', options: ['denotation', 'connotation', 'anchorage', 'polysemy'], a: 'Denotation: it only says what you can see' },
 ];
 K.recallStarter({ questions: RECALL, mins: 4,
-  notes: 'Q1–2 look back at 3.1, Q3 at 2.2. Q4 has no wrong answer: take a show of hands for each reason and move on.' });
+  notes: 'One question from each of four earlier lessons: Q1 looks back at 3.1, Q2 at 2.3, Q3 at 1.3 and Q4 at 1.2, so two come from a while ago. Each has four options; no notes.' });
 K.recallAnswers({ questions: RECALL,
-  notes: 'Tick or fix. Q2: consumer = the audience, generated = made. Q4: whatever you said, you had a reason for opening it. Those reasons are today\'s lesson.' });
+  notes: 'Tick or fix. Q1: liking or streaks = the product responds to you (interactive features); voting changes what happens; consumer-generated content is made by the audience. Q2: circulation counts copies of papers and magazines; hits count website visits. Q3: Disney owns lots of media businesses. Q4: no "suggests" or "feels", just what is on the poster, so it is denotation. The connotation would be "danger is coming".' });
 
 K.titleSlide({ coverLine: 'Why We Watch', issueLine: 'Lesson 3.2  ·  Y10 BTEC Creative Media',
   standfirst: 'Nobody makes you watch, play or listen. So why do you?', puff: 'Lesson 3.2',
@@ -52,7 +53,7 @@ K.info({ title: 'Why did they open YouTube?', standfirst: 'Five people, five rea
     ['Kai', '"To forget about my maths test for a bit."'],
     ['Priya', '"I watch gaming creators who are like me."'],
     ['Leo', '"So I can talk about it with my mates at school."']],
-  notes: 'One per click. Before any labels: ask the class what each person GETS from YouTube. Link back to Recall Q4: their own reasons were like these. Everyone chose YouTube; nobody made them. The reasons are what differ.' });
+  notes: 'One per click. Before any labels: ask the class what each person GETS from YouTube. Then ask: the last time YOU opened YouTube, why? Their reasons will be like these. Everyone chose YouTube; nobody made them. The reasons are what differ.' });
 
 K.info({ title: 'Five needs', standfirst: 'Each reason is a need that the product meets.',
   points: [['Information', 'Finding something out: Amir and his skin fade.'],

@@ -20,17 +20,18 @@ const TOPIC = 'How are media products made to reach and engage their audiences?'
 const LESSON = 'How do where, when and who with change how we use media, and how involved we get?';
 const WHERE = 'Hub › Year 10 › Lesson 3.1 › Where, When, Who With';
 
-// Recap: 2.3 (audience statistics; interview), 2.2 (socio-economic group), then a bridge into today.
+// Recap: 2.3 (audience statistics), 2.2 (lifestyle profile), 1.3 (producer type), 1.1 (historical): two from week 1.
+// Four options each; no question names its answer or lifts a phrase from its definition (Nick, 2026-11-17).
 const RECALL = [
-  { tag: 'Lesson 2.3', q: 'A film company wants to show how big its audience is. Which statistic?', options: ['box office', 'circulation', 'followers'], a: 'Box office: money from cinema tickets' },
-  { tag: 'Lesson 2.3', q: 'You ask one person questions and listen to their answers in detail. Which method?', options: ['interview', 'focus group', 'survey'], a: 'Interview' },
-  { tag: 'Lesson 2.2', q: 'A teacher. Which socio-economic group?', options: ['AB', 'C2', 'DE'], a: 'AB: professional jobs' },
-  { tag: 'Bridge', q: 'Where do you watch YouTube most?', options: ['bedroom', 'bus', 'living room'], a: 'Any answer: where you use it is part of its situation. Today.' },
+  { tag: 'Lesson 2.3', q: 'Nintendo wants to prove Mario Kart World is a hit. Which audience statistic should it use?', options: ['box office', 'circulation', 'sales', 'hits'], a: 'Sales: copies bought' },
+  { tag: 'Lesson 2.2', q: '"Watches every Arsenal Women match on BBC iPlayer." Which part of a lifestyle profile?', options: ['interests', 'attitudes', 'values', 'behaviour'], a: 'Behaviour: what they actually do' },
+  { tag: 'Lesson 1.3', q: 'Toby Fox made Undertale almost on his own. Which kind of producer?', options: ['public service broadcaster', 'conglomerate', 'independent', 'community media'], a: 'Independent producer' },
+  { tag: 'Lesson 1.1', q: 'Which of these is a historical product?', options: ['Titanic (1997)', 'Finding Nemo (2003)', 'Shrek 2 (2004)', 'Frozen (2013)'], a: 'Titanic (1997): made before 2000' },
 ];
 K.recallStarter({ questions: RECALL, mins: 4,
-  notes: 'Q1–2 look back at 2.3, Q3 at 2.2. Q4 has no wrong answer: take a show of hands for each place and move on.' });
+  notes: 'One question from each of four earlier lessons: Q1 2.3, Q2 2.2, Q3 1.3, Q4 1.1 (two from week 1). Four options each; no notes.' });
 K.recallAnswers({ questions: RECALL,
-  notes: 'Tick or fix. Q3: teachers are in group B, so AB. Q4: the place, the time and who you are with make up a product\'s situation, the first idea today.' });
+  notes: 'Tick or fix. Q1: box office is cinema tickets, circulation is papers and magazines, hits are website visits; a game counts sales. Then ask aloud: where do you watch YouTube most? Bedroom, bus, living room? The place, the time and who you are with make up a product\'s situation, the first idea today.' });
 
 K.titleSlide({ coverLine: 'Where, When, Who With', issueLine: 'Lesson 3.1  ·  Y10 BTEC Creative Media',
   standfirst: 'The same product feels different on the bus, at Wembley or on Christmas Day.', puff: 'Lesson 3.1',

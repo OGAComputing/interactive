@@ -17,17 +17,18 @@ const TOPIC = 'How are media products made to reach and engage their audiences?'
 const LESSON = 'How do you find information about a media product that you can trust?';
 const WHERE = 'Hub › Year 10 › Lesson 2.1 › Research Like a Pro';
 
-// Recap: 1.3 (producer type, motivation), 1.1 (historical vs contemporary), then a bridge: where would you find a fact?
+// Recap: 1.3 (producer type), 1.2 (encoding), 1.1 (sectors), the Component 3 mock (brief).
+// Four options each; no question names its answer or lifts a phrase from its definition (Nick, 2026-11-17).
 const RECALL = [
-  { tag: 'Lesson 1.3', q: 'Rhubarb Radio is run by volunteers for Wakefield, not for profit. What kind of producer?', options: ['conglomerate', 'community media', 'independent'], a: 'Community media' },
-  { tag: 'Lesson 1.3', q: '"To make money." Purpose or motivation?', options: ['purpose', 'motivation'], a: 'Motivation: the producer gets the money' },
-  { tag: 'Lesson 1.1', q: 'Toy Story came out in 1995. Contemporary or historical?', options: ['contemporary', 'historical'], a: 'Historical: made before 2000' },
-  { tag: 'Bridge', q: 'How would you find out how many copies Minecraft has sold?', options: ['ask your class', 'look it up online', 'guess'], a: 'Look it up, in a source you can trust' },
+  { tag: 'Lesson 1.3', q: 'Rhubarb Radio: volunteers play music and news for Wakefield. Which kind of producer?', options: ['public service broadcaster', 'conglomerate', 'independent', 'community media'], a: 'Community media' },
+  { tag: 'Lesson 1.2', q: 'The Jaws team picked a red title and a hidden shark so viewers would sense danger. What were they doing?', options: ['decoding', 'encoding', 'polysemy', 'denotation'], a: 'Encoding: putting a meaning in' },
+  { tag: 'Lesson 1.1', q: 'Which of these belongs in the interactive sector?', options: ['a podcast', 'a magazine', 'a film trailer', 'the BBC Sport app'], a: 'The BBC Sport app: you make choices' },
+  { tag: 'C3 mock', q: 'FIZZIKAL\'s written list of what to make, who for and by when. What was it called?', options: ['mood board', 'masthead', 'brief', 'storyboard'], a: 'The brief' },
 ];
 K.recallStarter({ questions: RECALL, mins: 4,
-  notes: 'Q1–2 look back at 1.3, Q3 at 1.1. Q4 bridges into today: some things you find out by asking people, some by looking them up. And not everything online is true.' });
+  notes: 'One question from each of four earlier lessons: Q1 1.3, Q2 1.2, Q3 1.1, Q4 the Component 3 mock. Four options each; no notes.' });
 K.recallAnswers({ questions: RECALL,
-  notes: 'Tick or fix. Q4: your class can tell you what THEY think of Minecraft, but not how many copies it has sold worldwide. That is already written down somewhere, but where, and can you trust it? That is today.' });
+  notes: 'Tick or fix. Q2: the producer encodes; the audience decodes. Then ask aloud: how would you find out how many copies Mario Kart World has sold? Ask your class, look it up, or guess? Your class can tell you what THEY think, but not worldwide sales. That is written down somewhere, but where, and can you trust it? That is today.' });
 
 K.titleSlide({ coverLine: 'Research Like a Pro', issueLine: 'Lesson 2.1  ·  Y10 BTEC Creative Media',
   standfirst: 'Ask people yourself. Check who you can trust. Log where it all came from.', puff: 'Lesson 2.1',

@@ -14,15 +14,19 @@ const img = (f) => path.join(__dirname, 'images', f);
 const TOPIC = 'How are media products made to reach and engage their audiences?';
 const LESSON = 'What is this course, and how is Component 1 assessed?';
 
-// Different recall questions from 1.1's, as this class sees 1.1 straight after.
+// Recap: the Component 3 mock (the FIZZIKAL magazine cover) is all that comes before this lesson.
+// Different questions from 1.1's, as this class sees 1.1 straight after.
+// Four options each; no question names its answer or lifts a phrase from its definition (Nick, 2026-11-17).
 const RECALL = [
-  { tag: 'C3 mock', q: "The client's instructions for your FIZZIKAL cover are called the…", options: ['brief', 'masthead', 'mood board'], a: 'Brief: what to make, and who it is for' },
-  { tag: 'C3 mock', q: 'Which design principle makes the most important thing on a page the biggest?', options: ['hierarchy', 'alignment', 'white space'], a: 'Hierarchy' },
-  { tag: 'C3 mock', q: "One thing to improve on your FIZZIKAL cover? E.g. 'clearer cover lines'.", a: 'Any real improvement, with a reason' },
+  { tag: 'C3 mock', q: 'What to make, who it is for and the deadline: where did the FIZZIKAL client set all that out?', options: ['masthead', 'mood board', 'brief', 'folio'], a: 'Brief: the client\'s instructions' },
+  { tag: 'C3 mock', q: 'Before designing, you gathered pictures, colours and fonts on one page for ideas. What is that page?', options: ['brief', 'mood board', 'storyboard', 'masthead'], a: 'Mood board' },
+  { tag: 'C3 mock', q: 'FIZZIKAL is biggest, then the main cover line, then the smaller ones. Which design principle?', options: ['alignment', 'white space', 'contrast', 'hierarchy'], a: 'Hierarchy: most important first' },
+  { tag: 'C3 mock', q: '"FREE workout plan inside!" in a bright starburst on the cover. Which cover feature?', options: ['puff', 'masthead', 'cover line', 'folio'], a: 'Puff: a bright badge selling a freebie or offer' },
 ];
 K.recallStarter({ questions: RECALL, mins: 4,
-  notes: 'Bridge from the Component 3 mock (the FIZZIKAL magazine cover). Choices or an example in each question.' });
-K.recallAnswers({ questions: RECALL, notes: 'Tick or fix. Q3: take two or three answers aloud.' });
+  notes: 'Bridge from the Component 3 mock: nothing else comes before Lesson 1.0. Four options each; no notes.' });
+K.recallAnswers({ questions: RECALL,
+  notes: 'Tick or fix. Q2: a mood board is for ideas; the brief is the client\'s instructions. Q3: hierarchy = size and position show what matters most. Then ask aloud: one thing you would improve on your FIZZIKAL cover, and why?' });
 
 K.titleSlide({ coverLine: 'Welcome to Creative Media', issueLine: 'Lesson 1.0  ·  Y10 BTEC Creative Media', standfirst: 'Films, games, magazines, apps: this course is about how they are made, and who for.',
   puff: 'Start here', img: img('spiderverse_2023.jpg'), imgLabel: 'Spider-Verse poster (2023)',
