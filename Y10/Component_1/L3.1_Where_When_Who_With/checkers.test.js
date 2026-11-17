@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import {
   TASKS, TASK_COUNT, SORTS, CHOICES, WRITING, SPOTS, SPECTRUMS, markSort, markChoices, markWriting, markSpectrum,
   markSpot, markSpotFlags, allCorrect, calcScore, GLOSSARY, glossaryDef, UNLOCK, unlockedBy, partOf,
+  sortBlocker, tooManyWrong,
 } from './checkers.js';
 
 const html = readFileSync(new URL('./1_Where_When_Who_With.html', import.meta.url), 'utf8');
@@ -128,14 +129,17 @@ describe('writing: diary, compare and the Part 1 challenge', () => {
   test('compare needs the spec words in every box', () => {
     const c = {
       me_prod: 'The Traitors',
-      me_sit: 'I used it at home on Wednesday night with my family. This situation meant we argued about who the traitor was.',
+      me_where: 'At home', me_when: 'Wednesday night, live', me_who: 'My family',
+      me_sit: 'Because we watched it live together, this situation meant we argued about who the traitor was.',
       me_inv: 'I was an active audience because we talked about it all the way through, but there was no voting.',
       pa_prod: 'Spotify',
-      pa_sit: 'My partner used it on the bus on their own. This situation meant they only half listened to it.',
+      pa_where: 'On the bus', pa_when: 'Before school', pa_who: 'On their own',
+      pa_sit: 'Being on a noisy bus on their own, this situation meant they only half listened to it.',
       pa_inv: 'They were a passive audience because it was on in the background, though Spotify Wrapped is an interactive feature.',
       cmp_diff: 'The biggest difference is that I was an active audience at home, whereas my partner was passive on the bus.',
     };
     expect(allCorrect(markWriting('compare', c))).toBe(true);
+    expect(markWriting('compare', { ...c, pa_who: '' }).pa_who).toBe(false);
     expect(markWriting('compare', { ...c, me_sit: 'I watched it at home on Wednesday night with my mum and my sister, which was fun.' }).me_sit).toBe(false);
     expect(markWriting('compare', { ...c, pa_inv: 'They just listened to it in the background and did not really care about it much.' }).pa_inv).toBe(false);
   });
@@ -171,4 +175,25 @@ describe('glossary and scoring', () => {
     expect(calcScore(done, first)).toBe(100);
     expect(calcScore(TASKS.map(() => true), first)).toBe(100);
   });
+});
+
+// The trick seen in class (2026-11-17): every card in the first box, check, the red ones in the second, check,
+// the rest in the third. Now the first check can't run, and a random 3/3/3 guess doesn't say which are wrong.
+describe("sorting can't be done without reading the cards", () => {
+  for (const key of ['kinds', 'warm']) {
+    test(`${key}: every card in one box can't be checked`, () => {
+      const firstBin = SORTS[key].bins[0][0];
+      const dump = Object.fromEntries(SORTS[key].items.map(it => [it.id, firstBin]));
+      expect(sortBlocker(SORTS[key], dump)).not.toBe('');
+    });
+    test(`${key}: the right answer can be checked, and a rotated (all wrong) one hides which cards are wrong`, () => {
+      const right = Object.fromEntries(SORTS[key].items.map(it => [it.id, it.bin]));
+      expect(sortBlocker(SORTS[key], right)).toBe('');
+      const bins = SORTS[key].bins.map(b => b[0]);
+      const rotated = Object.fromEntries(SORTS[key].items.map(it => [it.id, bins[(bins.indexOf(it.bin) + 1) % bins.length]]));
+      expect(sortBlocker(SORTS[key], rotated)).toBe('');
+      const res = markSort(key, rotated);
+      expect(tooManyWrong(res, Object.keys(res))).toBe(true);
+    });
+  }
 });

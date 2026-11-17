@@ -97,6 +97,9 @@ color:  red
   .bins { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
   .bin { border: 2px solid var(--text); background: var(--bg); min-height: 120px; padding: 8px; cursor: pointer; }
   .bin h3 { font-family: var(--font-head); font-weight: 600; font-size: 1.15rem; border-bottom: 2px solid var(--text); margin-bottom: 8px; padding-bottom: 2px; }
+  .bin h3 .bin-count { float: right; font-family: var(--font-body); font-size: .85rem; font-weight: 700; color: var(--muted); }
+  .bin.full h3 .bin-count { color: var(--green-dark, var(--green)); }
+  .bin.over h3 .bin-count { color: var(--red, #c0392b); }
   .bin .slot { display: flex; flex-wrap: wrap; gap: 6px; }
   .bin.target-on, .bin.drop-on, .tray.drop-on { border-color: var(--accent); background: #fff; }
   .chip { display: inline-flex; flex-direction: column; align-items: center; gap: 4px; width: 120px; padding: 6px; border: 1.5px solid var(--text);
@@ -641,6 +644,7 @@ import {
   TASKS, TASK_COUNT, CHOICES, SORTS, WRITING, REVEALS, SPOTS, FIXES, markFix, fixLeft, SPECTRUMS, HUNTS, PROFILES, NUMBERS, PILOTS, GLOSSARY, glossaryDef, partOf, unlockedBy,
   markChoices, markSort, markWriting, markReveal, markSpectrum, markHunt, markProfile, markNumbers, softIds, isSearchLink,
   markSpot, markSpotFlags, markPilot, markPilotFlags, pilotProblem, pilotAgain, starsFor, allCorrect, cooldownSeconds, calcScore, coreDone, coreGold, seededRandom, shuffled,
+  binCounts, sortBlocker, unansweredBlocker, overBlocker, tooManyWrong,
 } from './checkers.js';
 
 // ── Activity identity ──────────────────────────────────
@@ -795,6 +799,7 @@ function renderSort(box) {
 
 // A deal sort shows how far through the pile the student is; Skip sends the top card to the bottom.
 function updateDeal(box) {
+  updateBinCounts(box);
   const count = box.querySelector('.deal-count');
   if (!count) return;
   const all = box.querySelectorAll('.chip').length, left = box.querySelectorAll('.tray .chip').length;
@@ -1146,6 +1151,17 @@ function checkFix(i, key, fb) {
   const box = document.querySelector(`#panel-${i} [data-fix="${key}"]`), lines = FIXES[key].lines;
   const res = markFix(key, state.answers), left = fixLeft(key, state.answers);
   closeFixTray(box);
+  // Most changes wrong: say how many are right, not which (and lock none).
+  const changed = Object.keys(res);
+  if (tooManyWrong(res, changed)) {
+    for (const l of lines) paintFixLine(box.querySelector(`.fline[data-qw="${l.id}"]`), l);
+    fb.className = 'feedback';
+    void fb.offsetWidth;
+    fb.className = 'feedback wrong';
+    const secs = penalise(i);
+    fb.textContent = `❌ Only ${changed.filter(id => res[id]).length} of the ${changed.length} lines you changed are right: too many wrong to show which. Read them again, then check in ${secs} seconds.`;
+    return;
+  }
   for (const l of lines) {
     if (res[l.id]) state.answers[l.id + '_ok'] = 1;
     paintFixLine(box.querySelector(`.fline[data-qw="${l.id}"]`), l);
@@ -1457,13 +1473,78 @@ function highlight(i, res) {
   }
 }
 
+// ── Guards against gaming a check (Nick, 2026-11-17) ──
+// '' when task i can be checked; otherwise what to do first (no time lost): every card placed and each box
+// full, every question answered, no more flagged or changed than there are slips.
+function blocker(i) {
+  const { key, kind } = TASKS[i], a = state.answers;
+  if (kind === 'sort') return sortBlocker(SORTS[key], a);
+  if (kind === 'spectrum') return sortBlocker(SPECTRUMS[key], a);
+  if (kind === 'choice') return unansweredBlocker(Object.keys(CHOICES[key]), a);
+  if (kind === 'profile') return unansweredBlocker(PROFILES[key].cards.flatMap(c => c.fields.map(f => f.id)), a);
+  if (kind === 'numbers') return unansweredBlocker(NUMBERS[key].qs.map(q => q.id), a);
+  if (kind === 'spot') {
+    const parts = SPOTS[key].parts;
+    return spotStage(key) === 'fix' ? unansweredBlocker(parts.filter(p => p.fix).map(p => p.id + '_fix'), a)
+      : overBlocker(parts.filter(p => a[p.id]).length, parts.filter(p => p.fix).length, 'slip');
+  }
+  if (kind === 'pilot' && pilotStage(key) === 'flag') {
+    const lines = PILOTS[key].lines;
+    return overBlocker(lines.filter(l => a[l.id]).length, lines.filter(l => l.slip).length, 'useless result');
+  }
+  if (kind === 'fix') {
+    const lines = FIXES[key].lines;
+    return overBlocker(lines.filter(l => a[l.id]).length, lines.filter(l => l.a !== 'keep').length, 'slip',
+      'changed', ' lines', 'Put back the ones you are least sure of.');
+  }
+  return '';
+}
+// The marked answers a check may hide (null: always show them). Writing, links and names are never hidden.
+function blindIds(i, res) {
+  const { key, kind } = TASKS[i];
+  if (kind === 'spot') return spotStage(key) === 'fix' ? Object.keys(res).filter(id => id.endsWith('_fix')) : null;
+  if (!['choice', 'sort', 'spectrum', 'profile', 'numbers'].includes(kind)) return null;
+  const soft = typeof softIds === 'function' ? softIds(TASKS[i]) : new Set();
+  return Object.keys(res).filter(id => !soft.has(id));
+}
+const clearMarks = i => document.querySelectorAll(`#panel-${i} .is-correct, #panel-${i} .is-wrong`)
+  .forEach(el => el.classList.remove('is-correct', 'is-wrong'));
+// More than half wrong: say how many, not which, so moving the red ones round can't stand in for reading.
+function blindFeedback(i, res, ids, fb) {
+  clearMarks(i);
+  const right = ids.filter(id => res[id]).length, noun = ['sort', 'spectrum'].includes(TASKS[i].kind) ? 'card' : 'answer';
+  fb.className = 'feedback';
+  void fb.offsetWidth;
+  fb.className = 'feedback wrong';
+  const secs = penalise(i);
+  fb.textContent = `❌ Only ${right} of ${ids.length} right: too many wrong to show which. Read each ${noun} again, then check in ${secs} seconds.`;
+}
+// Each sort box shows how many cards it takes and how many it holds now.
+function updateBinCounts(box) {
+  const sort = SORTS[box.dataset.sort];
+  if (!sort) return;   // spectrum zones take any number
+  const want = binCounts(sort.items);
+  box.querySelectorAll('.bin').forEach(bin => {
+    const h = bin.querySelector('h3');
+    let c = h.querySelector('.bin-count');
+    if (!c) { c = Object.assign(document.createElement('span'), { className: 'bin-count' }); h.append(c); }
+    const n = bin.querySelectorAll('.chip').length, w = want[bin.dataset.bin] || 0;
+    c.textContent = `${n} / ${w}`;
+    bin.classList.toggle('full', n === w);
+    bin.classList.toggle('over', n > w);
+  });
+}
+
 function checkTask(i) {
   const { key, kind } = TASKS[i];
   // Writing and research logs can be edited and saved again after they're done (the evidence file updates in place).
   if ((state.completed[i] && kind !== 'write' && kind !== 'hunt') || coolLeft(i)) return;
   if (window.Classroom?.verifyAuth() === false) return;
-  const res = gatherAndMark(i);
   const fb = document.getElementById('feedback-' + i);
+  // Not a real attempt yet (cards left over, a box too full, a question blank, too many flagged): no time lost.
+  const notYet = blocker(i);
+  if (notYet) { fb.textContent = notYet; fb.className = 'feedback'; return; }
+  const res = gatherAndMark(i);
   if (kind === 'spot' && spotStage(key) !== 'fix' && !allCorrect(res)) return spotFlagFeedback(i, key, fb);
   if (kind === 'fix') return checkFix(i, key, fb);
   if (kind === 'pilot') {
@@ -1484,6 +1565,8 @@ function checkTask(i) {
     save();
     renderTask(i);
   }
+  const blind = blindIds(i, res);
+  if (blind && tooManyWrong(res, blind)) return blindFeedback(i, res, blind, fb);
   highlight(i, res);
   const right = Object.values(res).filter(Boolean).length, total = Object.keys(res).length;
   if (allCorrect(res) && kind === 'spot' && spotStage(key) !== 'fix') {
@@ -1535,13 +1618,16 @@ function spotFlagFeedback(i, key, fb) {
 }
 function flagFeedback(i, fb, parts, noun) {
   const flagged = parts.filter(p => state.answers[p.id]);
-  highlight(i, Object.fromEntries(flagged.map(p => [p.id, p.slip])));
   const found = flagged.filter(p => p.slip).length, wrongFlags = flagged.length - found;
+  // Most flags wrong: say how many are right, not which.
+  const hide = wrongFlags * 2 > flagged.length;
+  if (hide) clearMarks(i); else highlight(i, Object.fromEntries(flagged.map(p => [p.id, p.slip])));
   const missing = parts.filter(p => p.slip).length - found;
   const bits = [];
   if (found) bits.push(`${found} in green ${found === 1 ? `is a ${noun}` : `are ${noun}s`}`);
   if (wrongFlags) bits.push(`${wrongFlags} in red ${wrongFlags === 1 ? 'is' : 'are'} fine, so un-flag ${wrongFlags === 1 ? 'it' : 'them'}`);
   if (missing) bits.push(`${missing} ${missing === 1 ? `${noun} is` : `${noun}s are`} still hiding`);
+  if (hide) bits.splice(0, bits.length, `only ${found} of the ${flagged.length} you flagged ${found === 1 ? `is a ${noun}` : `are ${noun}s`}: too many wrong to show which`);
   fb.className = 'feedback';
   void fb.offsetWidth;
   fb.className = 'feedback wrong';

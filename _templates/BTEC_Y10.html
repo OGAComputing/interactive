@@ -73,6 +73,15 @@ color:  red
   /* ── Questions ──────────────────────────────────────── */
   .q { background: #fff; border: 1.5px solid var(--text); padding: 12px 14px; margin: 0 0 12px; }
   .q-text { font-weight: 700; margin-bottom: 8px; }
+  /* A question with its own picture (CHOICES img): the picture on the left, the question and options beside it. */
+  .q.has-pic { display: grid; grid-template-columns: 220px minmax(0, 1fr); grid-template-rows: auto 1fr; gap: 0 16px; position: relative; }
+  .q.has-pic .q-pic { grid-row: 1 / span 2; margin: 0; align-self: start; }
+  .q.has-pic .q-pic img { display: block; width: 100%; max-height: 240px; object-fit: contain; }
+  .q.has-pic .q-pic figcaption { font-size: .74rem; color: var(--muted); margin-top: 4px; }
+  .q.has-pic .q-text { padding-right: 22px; }
+  .q.has-pic .opts { align-content: start; }
+  .q.has-pic.is-correct::after { position: absolute; top: 12px; right: 14px; float: none; }
+  @media (max-width: 600px) { .q.has-pic { grid-template-columns: 1fr; } .q.has-pic .q-pic { grid-row: auto; margin-bottom: 8px; } .q.has-pic .q-pic img { max-height: 180px; } }
   .opts { display: grid; gap: 6px; }
   .opt { display: flex; gap: 10px; align-items: flex-start; padding: 8px 10px; border: 1.5px solid #CFC8BA; cursor: pointer; background: var(--bg); }
   .opt:hover { border-color: var(--text); }
@@ -88,6 +97,9 @@ color:  red
   .bins { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
   .bin { border: 2px solid var(--text); background: var(--bg); min-height: 120px; padding: 8px; cursor: pointer; }
   .bin h3 { font-family: var(--font-head); font-weight: 600; font-size: 1.15rem; border-bottom: 2px solid var(--text); margin-bottom: 8px; padding-bottom: 2px; }
+  .bin h3 .bin-count { float: right; font-family: var(--font-body); font-size: .85rem; font-weight: 700; color: var(--muted); }
+  .bin.full h3 .bin-count { color: var(--green-dark, var(--green)); }
+  .bin.over h3 .bin-count { color: var(--red, #c0392b); }
   .bin .slot { display: flex; flex-wrap: wrap; gap: 6px; }
   .bin.target-on, .bin.drop-on, .tray.drop-on { border-color: var(--accent); background: #fff; }
   .chip { display: inline-flex; flex-direction: column; align-items: center; gap: 4px; width: 120px; padding: 6px; border: 1.5px solid var(--text);
@@ -170,6 +182,41 @@ color:  red
   .spot.fixing .sent { cursor: default; }
   .spot .count { font-weight: 700; margin: 0 0 8px; }
   .spot-text.lines .sent { display: block; margin: 3px 0; line-height: 1.5; padding: 4px 6px; }   /* a log or list: one sentence per line */
+
+  /* ── Fix the slip: click any line, choose what it should say (kind 'fix') ── */
+  .fix .count { font-weight: 700; margin: 0 0 8px; }
+  .fix .count .tally { font-weight: 400; color: var(--muted); margin-left: 8px; font-variant-numeric: tabular-nums; }
+  .fix .spot-text { line-height: 1.5; }
+  .fline { border-left: 5px solid transparent; margin: 3px 0; }
+  .fline .sent { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 10px; min-height: 44px; padding: 6px 8px;
+    cursor: pointer; border-bottom: 2px dotted #A9A293; touch-action: manipulation; }
+  .fline .sent:hover, .fline .sent:focus-visible { background: #FFF1C7; }
+  .fline .sent:focus-visible { outline: 3px solid var(--accent); outline-offset: 1px; }
+  .fline .sent[aria-expanded="true"] { background: #FFF1C7; }
+  .fline .sent[aria-disabled="true"] { cursor: default; }
+  .fline .sent::after { grid-column: 2; grid-row: 1; align-self: start; font: 800 .7rem/1 var(--font-body); letter-spacing: .08em;
+    text-transform: uppercase; padding: 4px 6px; margin-top: 3px; white-space: nowrap; }
+  .fline.changed { border-left-color: var(--gold); }
+  .fline.changed .sent { background: #FFF6DC; }
+  .fline.changed .sent::after { content: 'Changed'; color: #7A5A00; border: 1.5px solid currentColor; }
+  .fline.is-correct .sent::after { content: '✓ Right'; color: var(--green); border: 0; }
+  .fline.is-wrong .sent::after { content: '✗ Wrong'; color: var(--red); border: 0; }
+  .fline.is-correct .sent, .fline.is-wrong .sent { background: transparent; }
+  .fline .now { grid-column: 1; }
+  .fline mark { background: #FFE38A; color: inherit; padding: 0 1px; }
+  .fline .was, .fline .why { grid-column: 1; font-family: var(--font-body); font-size: .85rem; }
+  .fline .was { color: var(--muted); }
+  .fline .why { font-weight: 800; }
+  .fline.is-correct .why { color: var(--green); }
+  .fline.is-wrong .why { color: var(--red); }
+  .fline .was:empty, .fline .why:empty { display: none; }
+  .fline .fix-menu { margin: 4px 0 10px 12px; padding: 10px 12px 12px; border: 1.5px solid var(--text); background: #fff; font-family: var(--font-body); }
+  .fline .fix-menu fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
+  .fline .fix-menu legend { font-weight: 700; padding: 0; margin: 0 0 8px; }
+  .fline .fix-menu .opt { min-height: 44px; align-items: center; font-family: var(--font-quote); font-size: 1.02rem; line-height: 1.4; }
+  .fline .fix-menu .opt.keep { font-family: var(--font-body); font-weight: 700; }
+  .fline .fix-close { display: block; margin: 8px 0 0 auto; background: none; border: 0; padding: 8px 4px; font: 700 .9rem var(--font-body);
+    color: var(--accent); cursor: pointer; }
 
   /* ── Spectrum: cards placed on a line between two ends (kind 'spectrum') ── */
   .spectrum .ends { display: flex; justify-content: space-between; gap: 10px; font-size: .8rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; margin: 0 0 4px; }
@@ -431,9 +478,10 @@ color:  red
 
 <script type="module">
 import {
-  TASKS, TASK_COUNT, CHOICES, SORTS, WRITING, REVEALS, SPOTS, SPECTRUMS, HUNTS, PROFILES, NUMBERS, PILOTS, GLOSSARY, glossaryDef, partOf, unlockedBy,
+  TASKS, TASK_COUNT, CHOICES, SORTS, WRITING, REVEALS, SPOTS, FIXES, markFix, fixLeft, SPECTRUMS, HUNTS, PROFILES, NUMBERS, PILOTS, GLOSSARY, glossaryDef, partOf, unlockedBy,
   markChoices, markSort, markWriting, markReveal, markSpectrum, markHunt, markProfile, markNumbers, softIds, isSearchLink,
   markSpot, markSpotFlags, markPilot, markPilotFlags, pilotProblem, pilotAgain, starsFor, allCorrect, cooldownSeconds, calcScore, coreDone, coreGold, seededRandom, shuffled,
+  binCounts, sortBlocker, unansweredBlocker, overBlocker, tooManyWrong,
 } from './checkers.js';
 
 // ── Activity identity ──────────────────────────────────
@@ -528,7 +576,8 @@ addEventListener('scroll', () => { if (glAnchor) placeTip(); }, { passive: true,
 function renderChoices(box) {
   const key = box.dataset.choices;
   box.innerHTML = Object.entries(CHOICES[key]).map(([id, c], n) => `
-    <div class="q" data-qw="${id}">
+    <div class="q${c.img && window.IMG?.[c.img] ? ' has-pic' : ''}" data-qw="${id}">
+      ${c.img && window.IMG?.[c.img] ? `<figure class="q-pic">${imgTag(c.img, c.alt || '')}${c.credit ? `<figcaption>${esc(c.credit)}</figcaption>` : ''}</figure>` : ''}
       <p class="q-text">${n + 1}. ${esc(c.q)}</p>
       <div class="opts">${shuffled(c.opts, rng(id)).map(([k, t]) => `
         <label class="opt"><input type="radio" name="${id}" value="${k}"${state.answers[id] === k ? ' checked' : ''}><span>${esc(t)}</span></label>`).join('')}
@@ -587,6 +636,7 @@ function renderSort(box) {
 
 // A deal sort shows how far through the pile the student is; Skip sends the top card to the bottom.
 function updateDeal(box) {
+  updateBinCounts(box);
   const count = box.querySelector('.deal-count');
   if (!count) return;
   const all = box.querySelectorAll('.chip').length, left = box.querySelectorAll('.tray .chip').length;
@@ -825,6 +875,154 @@ document.addEventListener('keydown', e => {
   const s = e.target.closest?.('.spot .sent');
   if (s && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); toggleSentence(s); }
 });
+
+// ── Fix the slip: click any line, choose what it should say (it replaces the line), then check ──
+// Every line opens the same menu (keep it + three versions), so opening one never shows it's a slip.
+// The menus stay in the page (hidden when shut), so the evidence file records every line's choice.
+const fixOpen = {};   // taskKey → the line whose menu is open
+const fixNow = l => l.opts.find(o => o[0] === state.answers[l.id])?.[1] ?? l.text;
+// The version with the words it changes highlighted (everything between the shared start and the shared end).
+function fixMark(orig, alt) {
+  const a = orig.split(' '), b = alt.split(' ');
+  let s = 0; while (s < a.length && s < b.length && a[s] === b[s]) s++;
+  let e = 0; while (e < a.length - s && e < b.length - s && a[a.length - 1 - e] === b[b.length - 1 - e]) e++;
+  const mid = b.slice(s, b.length - e).join(' ');
+  return [esc(b.slice(0, s).join(' ')), mid ? `<mark>${esc(mid)}</mark>` : '', esc(b.slice(b.length - e).join(' '))].filter(Boolean).join(' ');
+}
+function renderFix(box) {
+  const key = box.dataset.fix, fx = FIXES[key], slips = fx.lines.filter(l => l.a !== 'keep').length;
+  box.innerHTML = `
+    <p class="count">✏ There ${slips === 1 ? 'is 1 slip' : `are ${slips} slips`}. Click a line to change what it says, then check.
+      <span class="tally"></span></p>
+    <div class="spot-text">${fx.by ? `<span class="by">${esc(fx.by)}</span>` : ''}${fx.lines.map((l, n) => {
+      const k = state.answers[l.id], ok = !!state.answers[l.id + '_ok'];
+      return `<div class="fline" data-qw="${l.id}">
+        <div class="sent" role="button" tabindex="0" aria-expanded="false" aria-controls="fx-${l.id}">
+          <span class="now"></span><span class="was"></span><span class="why"></span>
+        </div>
+        <div class="fix-menu" id="fx-${l.id}" hidden>
+          <fieldset><legend><span class="sr-only">Line ${n + 1}: "${esc(l.text)}" </span>What should this line say?</legend>
+            <div class="opts">
+              <label class="opt keep"><input type="radio" name="${l.id}" value=""${k ? '' : ' checked'}><span>Keep it as it is</span></label>
+              ${shuffled(l.opts, rng(l.id)).map(([o, t]) => `
+              <label class="opt"><input type="radio" name="${l.id}" value="${o}"${k === o ? ' checked' : ''}><span>${fixMark(l.text, t)}</span></label>`).join('')}
+            </div>
+          </fieldset>
+          <button type="button" class="fix-close">Close</button>
+        </div>
+      </div>`;
+    }).join('')}</div>`;
+  fx.lines.forEach(l => paintFixLine(box.querySelector(`.fline[data-qw="${l.id}"]`), l));
+  fixTally(box);
+}
+// Show a line as it now reads; a line already checked right stays locked green.
+function paintFixLine(fl, l) {
+  const k = state.answers[l.id], ok = !!state.answers[l.id + '_ok'];
+  fl.classList.toggle('changed', !!k);
+  fl.classList.toggle('is-correct', ok);
+  fl.classList.remove('is-wrong');
+  fl.querySelector('.now').innerHTML = k ? fixMark(l.text, fixNow(l)) : esc(l.text);
+  fl.querySelector('.was').innerHTML = k ? `was: <s>${esc(l.text)}</s>` : '';
+  fl.querySelector('.why').textContent = ok ? 'Fixed.' : '';
+  const sent = fl.querySelector('.sent');
+  if (ok) sent.setAttribute('aria-disabled', 'true'); else sent.removeAttribute('aria-disabled');
+  fl.querySelectorAll('.fix-menu input').forEach(r => { r.disabled = ok; });
+  glossify(fl.querySelector('.now'));
+}
+function fixTally(box) {
+  const n = FIXES[box.dataset.fix].lines.filter(l => state.answers[l.id]).length;
+  box.querySelector('.tally').textContent = `${n} line${n === 1 ? '' : 's'} changed`;
+}
+const fixParts = el => {
+  const fl = el.closest('.fline'), box = fl?.closest('.fix');
+  return fl && box && { fl, box, key: box.dataset.fix, l: FIXES[box.dataset.fix].lines.find(x => x.id === fl.dataset.qw) };
+};
+function closeFixTray(box, refocus) {
+  const id = fixOpen[box.dataset.fix];
+  if (!id) return;
+  delete fixOpen[box.dataset.fix];
+  const fl = box.querySelector(`.fline[data-qw="${id}"]`);
+  if (!fl) return;
+  fl.querySelector('.fix-menu').hidden = true;
+  fl.querySelector('.sent').setAttribute('aria-expanded', 'false');
+  if (refocus) fl.querySelector('.sent').focus();
+}
+function toggleFixTray(sent) {
+  const f = fixParts(sent);
+  if (!f || isLocked(f.box) || state.answers[f.l.id + '_ok']) return;
+  const wasOpen = fixOpen[f.key] === f.l.id;
+  closeFixTray(f.box);
+  if (wasOpen) return;
+  fixOpen[f.key] = f.l.id;
+  f.fl.querySelector('.fix-menu').hidden = false;
+  sent.setAttribute('aria-expanded', 'true');
+  f.fl.querySelector('.fix-menu input:checked')?.focus();
+}
+// A click picks a version and shuts the menu; arrow keys move through the versions and leave it open.
+let fixByPointer = false;
+document.addEventListener('pointerdown', e => { fixByPointer = !!e.target.closest('.fix .fix-menu'); });
+document.addEventListener('change', e => {
+  if (!e.target.matches('.fix .fix-menu input[type=radio]')) return;
+  const f = fixParts(e.target);
+  if (isLocked(f.box)) return;
+  if (e.target.value) state.answers[f.l.id] = e.target.value; else delete state.answers[f.l.id];
+  save();
+  paintFixLine(f.fl, f.l);
+  fixTally(f.box);
+  if (fixByPointer) closeFixTray(f.box, true);
+  fixByPointer = false;
+});
+document.addEventListener('click', e => {
+  if (e.target.closest('.fix .fix-close')) return closeFixTray(e.target.closest('.fix'), true);
+  const s = e.target.closest('.fix .sent');
+  if (s) toggleFixTray(s);
+});
+document.addEventListener('keydown', e => {
+  const s = e.target.closest?.('.fix .sent');
+  if (s && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); toggleFixTray(s); }
+  const box = e.target.closest?.('.fix');
+  if (box && e.key === 'Escape') closeFixTray(box, true);
+});
+// Check: changed lines go green (and lock) or red with the reason; a slip left alone isn't marked.
+function checkFix(i, key, fb) {
+  const box = document.querySelector(`#panel-${i} [data-fix="${key}"]`), lines = FIXES[key].lines;
+  const res = markFix(key, state.answers), left = fixLeft(key, state.answers);
+  closeFixTray(box);
+  // Most changes wrong: say how many are right, not which (and lock none).
+  const changed = Object.keys(res);
+  if (tooManyWrong(res, changed)) {
+    for (const l of lines) paintFixLine(box.querySelector(`.fline[data-qw="${l.id}"]`), l);
+    fb.className = 'feedback';
+    void fb.offsetWidth;
+    fb.className = 'feedback wrong';
+    const secs = penalise(i);
+    fb.textContent = `❌ Only ${changed.filter(id => res[id]).length} of the ${changed.length} lines you changed are right: too many wrong to show which. Read them again, then check in ${secs} seconds.`;
+    return;
+  }
+  for (const l of lines) {
+    if (res[l.id]) state.answers[l.id + '_ok'] = 1;
+    paintFixLine(box.querySelector(`.fline[data-qw="${l.id}"]`), l);
+  }
+  highlight(i, res);
+  for (const l of lines) if (res[l.id] === false) {
+    box.querySelector(`.fline[data-qw="${l.id}"] .why`).textContent = l.a === 'keep' ? 'This line was right. Put it back.' : 'Right line, wrong fix.';
+  }
+  save();
+  if (!left && allCorrect(res)) {
+    fb.textContent = state.firstAttempt[i] ? '🥇 All slips fixed first time!' : '✅ All slips fixed!';
+    fb.className = 'feedback correct';
+    markDone(i);
+    return;
+  }
+  const wrong = Object.values(res).filter(ok => !ok).length, bits = [];
+  if (wrong) bits.push(`${wrong} change${wrong === 1 ? ' is' : 's are'} wrong (in red)`);
+  if (left) bits.push(`${left} slip${left === 1 ? ' is' : 's are'} still hiding`);
+  fb.className = 'feedback';
+  void fb.offsetWidth;
+  fb.className = 'feedback wrong';
+  const secs = penalise(i);
+  fb.textContent = `❌ ${bits.join(' and ')}. You can check again in ${secs} seconds.`;
+}
 
 // ── Test a survey: run it, click the results that are no use, rewrite those questions, run them again ──
 const pilotStage = key => state.answers[key + '_stage'];
@@ -1076,6 +1274,7 @@ function gatherAndMark(i) {
   if (kind === 'sort') return markSort(key, state.answers);
   if (kind === 'reveal') return markReveal(key, state.answers);
   if (kind === 'spot') return spotStage(key) === 'fix' ? markSpot(key, state.answers) : markSpotFlags(key, state.answers);
+  if (kind === 'fix') return markFix(key, state.answers);
   if (kind === 'pilot') return pilotStage(key) === 'fix' ? markPilot(key, state.answers) : markPilotFlags(key, state.answers);
   if (kind === 'spectrum') return markSpectrum(key, state.answers);
   if (kind === 'hunt') return markHunt(key, state.answers);
@@ -1111,14 +1310,80 @@ function highlight(i, res) {
   }
 }
 
+// ── Guards against gaming a check (Nick, 2026-11-17) ──
+// '' when task i can be checked; otherwise what to do first (no time lost): every card placed and each box
+// full, every question answered, no more flagged or changed than there are slips.
+function blocker(i) {
+  const { key, kind } = TASKS[i], a = state.answers;
+  if (kind === 'sort') return sortBlocker(SORTS[key], a);
+  if (kind === 'spectrum') return sortBlocker(SPECTRUMS[key], a);
+  if (kind === 'choice') return unansweredBlocker(Object.keys(CHOICES[key]), a);
+  if (kind === 'profile') return unansweredBlocker(PROFILES[key].cards.flatMap(c => c.fields.map(f => f.id)), a);
+  if (kind === 'numbers') return unansweredBlocker(NUMBERS[key].qs.map(q => q.id), a);
+  if (kind === 'spot') {
+    const parts = SPOTS[key].parts;
+    return spotStage(key) === 'fix' ? unansweredBlocker(parts.filter(p => p.fix).map(p => p.id + '_fix'), a)
+      : overBlocker(parts.filter(p => a[p.id]).length, parts.filter(p => p.fix).length, 'slip');
+  }
+  if (kind === 'pilot' && pilotStage(key) === 'flag') {
+    const lines = PILOTS[key].lines;
+    return overBlocker(lines.filter(l => a[l.id]).length, lines.filter(l => l.slip).length, 'useless result');
+  }
+  if (kind === 'fix') {
+    const lines = FIXES[key].lines;
+    return overBlocker(lines.filter(l => a[l.id]).length, lines.filter(l => l.a !== 'keep').length, 'slip',
+      'changed', ' lines', 'Put back the ones you are least sure of.');
+  }
+  return '';
+}
+// The marked answers a check may hide (null: always show them). Writing, links and names are never hidden.
+function blindIds(i, res) {
+  const { key, kind } = TASKS[i];
+  if (kind === 'spot') return spotStage(key) === 'fix' ? Object.keys(res).filter(id => id.endsWith('_fix')) : null;
+  if (!['choice', 'sort', 'spectrum', 'profile', 'numbers'].includes(kind)) return null;
+  const soft = typeof softIds === 'function' ? softIds(TASKS[i]) : new Set();
+  return Object.keys(res).filter(id => !soft.has(id));
+}
+const clearMarks = i => document.querySelectorAll(`#panel-${i} .is-correct, #panel-${i} .is-wrong`)
+  .forEach(el => el.classList.remove('is-correct', 'is-wrong'));
+// More than half wrong: say how many, not which, so moving the red ones round can't stand in for reading.
+function blindFeedback(i, res, ids, fb) {
+  clearMarks(i);
+  const right = ids.filter(id => res[id]).length, noun = ['sort', 'spectrum'].includes(TASKS[i].kind) ? 'card' : 'answer';
+  fb.className = 'feedback';
+  void fb.offsetWidth;
+  fb.className = 'feedback wrong';
+  const secs = penalise(i);
+  fb.textContent = `❌ Only ${right} of ${ids.length} right: too many wrong to show which. Read each ${noun} again, then check in ${secs} seconds.`;
+}
+// Each sort box shows how many cards it takes and how many it holds now.
+function updateBinCounts(box) {
+  const sort = SORTS[box.dataset.sort];
+  if (!sort) return;   // spectrum zones take any number
+  const want = binCounts(sort.items);
+  box.querySelectorAll('.bin').forEach(bin => {
+    const h = bin.querySelector('h3');
+    let c = h.querySelector('.bin-count');
+    if (!c) { c = Object.assign(document.createElement('span'), { className: 'bin-count' }); h.append(c); }
+    const n = bin.querySelectorAll('.chip').length, w = want[bin.dataset.bin] || 0;
+    c.textContent = `${n} / ${w}`;
+    bin.classList.toggle('full', n === w);
+    bin.classList.toggle('over', n > w);
+  });
+}
+
 function checkTask(i) {
   const { key, kind } = TASKS[i];
   // Writing and research logs can be edited and saved again after they're done (the evidence file updates in place).
   if ((state.completed[i] && kind !== 'write' && kind !== 'hunt') || coolLeft(i)) return;
   if (window.Classroom?.verifyAuth() === false) return;
-  const res = gatherAndMark(i);
   const fb = document.getElementById('feedback-' + i);
+  // Not a real attempt yet (cards left over, a box too full, a question blank, too many flagged): no time lost.
+  const notYet = blocker(i);
+  if (notYet) { fb.textContent = notYet; fb.className = 'feedback'; return; }
+  const res = gatherAndMark(i);
   if (kind === 'spot' && spotStage(key) !== 'fix' && !allCorrect(res)) return spotFlagFeedback(i, key, fb);
+  if (kind === 'fix') return checkFix(i, key, fb);
   if (kind === 'pilot') {
     const stage = pilotStage(key);
     if (!stage) { fb.textContent = '▶ Run the survey first, then look at what comes back.'; fb.className = 'feedback'; return; }
@@ -1137,6 +1402,8 @@ function checkTask(i) {
     save();
     renderTask(i);
   }
+  const blind = blindIds(i, res);
+  if (blind && tooManyWrong(res, blind)) return blindFeedback(i, res, blind, fb);
   highlight(i, res);
   const right = Object.values(res).filter(Boolean).length, total = Object.keys(res).length;
   if (allCorrect(res) && kind === 'spot' && spotStage(key) !== 'fix') {
@@ -1188,13 +1455,16 @@ function spotFlagFeedback(i, key, fb) {
 }
 function flagFeedback(i, fb, parts, noun) {
   const flagged = parts.filter(p => state.answers[p.id]);
-  highlight(i, Object.fromEntries(flagged.map(p => [p.id, p.slip])));
   const found = flagged.filter(p => p.slip).length, wrongFlags = flagged.length - found;
+  // Most flags wrong: say how many are right, not which.
+  const hide = wrongFlags * 2 > flagged.length;
+  if (hide) clearMarks(i); else highlight(i, Object.fromEntries(flagged.map(p => [p.id, p.slip])));
   const missing = parts.filter(p => p.slip).length - found;
   const bits = [];
   if (found) bits.push(`${found} in green ${found === 1 ? `is a ${noun}` : `are ${noun}s`}`);
   if (wrongFlags) bits.push(`${wrongFlags} in red ${wrongFlags === 1 ? 'is' : 'are'} fine, so un-flag ${wrongFlags === 1 ? 'it' : 'them'}`);
   if (missing) bits.push(`${missing} ${missing === 1 ? `${noun} is` : `${noun}s are`} still hiding`);
+  if (hide) bits.splice(0, bits.length, `only ${found} of the ${flagged.length} you flagged ${found === 1 ? `is a ${noun}` : `are ${noun}s`}: too many wrong to show which`);
   fb.className = 'feedback';
   void fb.offsetWidth;
   fb.className = 'feedback wrong';
@@ -1217,6 +1487,11 @@ function showDone(i) {
   if (reset) reset.style.display = gold ? 'none' : '';
   if (['choice', 'spot', 'profile', 'numbers'].includes(TASKS[i].kind)) document.querySelectorAll(`#panel-${i} .q input`).forEach(r => { r.disabled = true; });
   if (TASKS[i].kind === 'pilot') document.querySelectorAll(`#panel-${i} .pilot textarea`).forEach(t => { t.disabled = true; });
+  if (TASKS[i].kind === 'fix') document.querySelectorAll(`#panel-${i} .fix`).forEach(box => {
+    closeFixTray(box);
+    box.querySelectorAll('.fix-menu input').forEach(r => { r.disabled = true; });
+    box.querySelectorAll('.sent').forEach(s => s.setAttribute('aria-disabled', 'true'));
+  });
   revealNotes(i);
   // A hunt remembers the day its sources were looked at, for the references.
   const dateKey = TASKS[i].key + '_date';
@@ -1242,6 +1517,7 @@ function resetTask(i) {
     : kind === 'sort' ? SORTS[key].items.map(x => x.id)
     : kind === 'reveal' ? REVEALS[key].rounds.flatMap(r => [r.id, r.id + '_clues', r.id + '_tried'])
     : kind === 'spot' ? [key + '_stage', ...SPOTS[key].parts.flatMap(p => [p.id, p.id + '_fix'])]
+    : kind === 'fix' ? FIXES[key].lines.flatMap(l => [l.id, l.id + '_ok'])
     : kind === 'pilot' ? [key + '_stage', ...PILOTS[key].lines.flatMap(l => [l.id, l.id + '_re', l.id + '_ran'])]
     : kind === 'spectrum' ? SPECTRUMS[key].items.map(x => x.id)
     : kind === 'profile' ? PROFILES[key].cards.flatMap(c => c.fields.map(f => f.id))
@@ -1351,6 +1627,7 @@ function renderTask(i) {
   panel.querySelectorAll('[data-write]').forEach(renderWriting);
   panel.querySelectorAll('[data-reveal]').forEach(renderReveal);
   panel.querySelectorAll('[data-spot]').forEach(renderSpot);
+  panel.querySelectorAll('[data-fix]').forEach(renderFix);
   panel.querySelectorAll('[data-pilot]').forEach(renderPilot);
   panel.querySelectorAll('[data-spectrum]').forEach(renderSort);
   panel.querySelectorAll('[data-hunt]').forEach(renderHunt);

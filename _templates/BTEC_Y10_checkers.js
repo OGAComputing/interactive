@@ -5,7 +5,8 @@
 // ── Task list ───────────────────────────────────────────────────────────────
 // One entry per tab, in order. kind: 'choice' (radio questions), 'sort' (cards into bins),
 // 'write' (open writing: completion only, never auto-marked, always gold), 'reveal' (clue-by-clue
-// rounds), 'spot' (find and fix the slips in a paragraph), 'spectrum' (cards placed on a line between
+// rounds), 'spot' (find and fix the slips in a paragraph), 'fix' (the harder spot: change any line to the
+// right version), 'spectrum' (cards placed on a line between
 // two ends), 'hunt' (live research: find a fact, paste its link), 'profile' (an audience profile card) or
 // 'numbers' (questions answered from a real table of statistics). Vary them: no lesson should run the
 // same kind in two tabs in a row (Y10/CLAUDE.md).
@@ -37,7 +38,9 @@ export function unlockedBy(word) {
 }
 
 
-// ── Multiple choice: { taskKey: { questionId: { q, a, opts: [[key, text], …] } } } ──
+// ── Multiple choice: { taskKey: { questionId: { q, a, opts: [[key, text], …], img?, alt?, credit? } } } ──
+// img = a key in the page's IMG-DATA block: the question shows that picture beside it (alt = its description,
+// credit = its source, shown under it). Use it when each question is about a different real product.
 // Keep the options a similar length: the right answer must not be the longest.
 export const CHOICES = {
   t0: {
@@ -88,6 +91,21 @@ export const REVEALS = {};
 // lines: true puts each sentence on its own line (a research log, a list of survey questions).
 // Use for: the common slips (profit as a purpose, wrong producer type, leading survey questions, weak evidence).
 export const SPOTS = {};
+
+// ── Fix the slip (kind 'fix'): the harder spot the slip; swap each wrong line for the right version ──
+// { taskKey: { by, lines: [{ id, text, a, opts: [[key, whole replacement line], …] }] } }
+// a = the key of the right version, or 'keep' when the line is already right. Every line has exactly three
+// opts, each the WHOLE line rewritten, so opening a line never shows whether it is a slip: on a slip one opt
+// is the fix and two add other mistakes; on a right line all three add a mistake. The page adds "Keep it as
+// it is" and highlights the words each version changes. Students click a line, pick a version (it replaces
+// the line at once), then Check. Only changed lines are marked: a right change locks green; a wrong one goes
+// red with the reason ("This line was right. Put it back." or "Right line, wrong fix."), and the message says
+// how many slips are still hiding. A wrong check costs the cooldown. Make each wrong version a slip students
+// really make, and keep a line's four versions a similar length. Always one sentence per line.
+// Markup: <div class="fix" data-fix="t9"></div> with the usual check, reset and feedback.
+// Use for: a later lesson that comes back to an idea first met in a 'spot' task (both kinds stay available).
+// fixDataProblems(FIXES.t9.lines) in checkers.test.js catches a line without three opts or with a bad answer key.
+export const FIXES = {};
 
 // ── Spectrum (kind 'spectrum'): place cards on a line between two ends ──
 // { taskKey: { ends: [left, right], zones: [[key, label], …], items: [{ id, label, ok: [zoneKey, …], note? }], why?: [writing] } }
@@ -177,6 +195,84 @@ export function markSpot(taskKey, given) {
   return res;
 }
 
+// Fix the slip: given[lineId] = the chosen version's key (absent = kept as it is).
+// Marks only the changed lines; a slip left alone isn't marked, so a check never shows where it is.
+export function markFixLines(lines, given) {
+  return Object.fromEntries(lines.filter(l => given[l.id]).map(l => [l.id, given[l.id] === l.a]));
+}
+export const markFix = (taskKey, given) => markFixLines(FIXES[taskKey].lines, given);
+// How many slips haven't been changed yet.
+export const fixLeftLines = (lines, given) => lines.filter(l => l.a !== 'keep' && !given[l.id]).length;
+export const fixLeft = (taskKey, given) => fixLeftLines(FIXES[taskKey].lines, given);
+// Data mistakes that would give the slips away or make a line impossible: [] when the lines are fine.
+export function fixDataProblems(lines) {
+  const out = [];
+  for (const l of lines) {
+    const keys = l.opts.map(o => o[0]);
+    if (l.opts.length !== 3) out.push(`${l.id}: needs exactly 3 opts, has ${l.opts.length}`);
+    if (new Set(keys).size !== keys.length || keys.includes('keep')) out.push(`${l.id}: opt keys must be different and not 'keep'`);
+    if (l.a !== 'keep' && !keys.includes(l.a)) out.push(`${l.id}: answer '${l.a}' isn't one of its opts`);
+    if (l.opts.some(o => o[1].trim() === l.text.trim())) out.push(`${l.id}: an opt is the same as the line`);
+  }
+  if (!lines.some(l => l.a !== 'keep')) out.push('no line is a slip');
+  return out;
+}
+
+// ── Guards against gaming a check (Nick, 2026-11-17) ─────────────────────────
+// Seen in 3.1: every card into the first box, check, every red card into the second, check, the rest into the
+// third. That finishes a sort without reading a card. So a check can't run until the task is really attempted
+// (no time lost), and a check with more than half wrong says how many, not which.
+const wordsOf = t => String(t || '').toLowerCase().match(/[a-z][a-z'’-]*/g) || [];
+// How many cards each box of a sort takes (each box shows it: "2 / 3").
+export function binCounts(items) {
+  const n = {};
+  for (const it of items) n[it.bin] = (n[it.bin] || 0) + 1;
+  return n;
+}
+// '' when a sort or spectrum can be checked: every card placed and, in a sort, each box holding its share.
+export function sortBlocker(sort, given) {
+  if (sort.items.some(it => !given[it.id])) return sort.zones ? '📥 Place every card on the line first.' : '📥 Put every card in a box first.';
+  if (!sort.bins) return '';
+  const want = binCounts(sort.items);
+  const off = sort.bins.some(([b]) => sort.items.filter(it => given[it.id] === b).length !== (want[b] || 0));
+  return off ? '📥 Each box takes the number of cards shown on it. Move cards until every box is full.' : '';
+}
+// '' when every question has an answer.
+export const unansweredBlocker = (ids, given) =>
+  ids.some(id => !String(given[id] ?? '').trim()) ? '📥 Answer every question first.' : '';
+// '' unless more are flagged (or changed) than there are slips: flagging everything would show where they are.
+export function overBlocker(n, slips, noun, verb = 'flagged', thing = '', undo = 'Un-flag the ones you are least sure of.') {
+  if (n <= slips) return '';
+  return `📥 You've ${verb} ${n}${thing}, but there ${slips === 1 ? `is only 1 ${noun}` : `are only ${slips} ${noun}s`}. ${undo}`;
+}
+// More than half of these marked answers wrong: the check says how many, not which.
+export const tooManyWrong = (res, ids) => ids.length > 0 && ids.filter(id => res[id] === false).length * 2 > ids.length;
+// Writing must be mostly the student's own words: at least half its minimum length outside any run of four
+// words copied from the question, its "ask" line or its starter (pasting the question back in isn't an answer;
+// reusing its key words is fine).
+export function ownWords(w, text) {
+  if (w.short) return true;
+  const runs = new Set();
+  for (const part of [w.prompt, w.ask, w.starter].join('.').split(/[.,;:?!…()"“”]+/)) {
+    const ws = wordsOf(part);
+    for (let k = 0; k + 4 <= ws.length; k++) runs.add(ws.slice(k, k + 4).join(' '));
+  }
+  const ws = wordsOf(text), copied = new Array(ws.length).fill(false);
+  for (let k = 0; k + 4 <= ws.length; k++) if (runs.has(ws.slice(k, k + 4).join(' '))) copied.fill(true, k, k + 4);
+  return copied.filter(c => !c).length >= Math.ceil((w.minWords || 4) / 2);
+}
+// The same answer pasted into two boxes of one task: the later box doesn't count.
+export function pastedTwice(list, given) {
+  const seen = new Set(), out = new Set();
+  for (const w of list) {
+    if (w.short) continue;
+    const s = String(given[w.id] || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    if (!s) continue;
+    if (seen.has(s)) out.add(w.id); else seen.add(s);
+  }
+  return out;
+}
+
 export function markChoices(taskKey, given) {
   return Object.fromEntries(Object.entries(CHOICES[taskKey]).map(([id, c]) => [id, given[id] === c.a]));
 }
@@ -186,11 +282,12 @@ export function markSort(taskKey, given) {
 }
 
 export function markWriting(taskKey, given) {
-  return Object.fromEntries(WRITING[taskKey].map(w => [w.id, markWriteQ(w, given)]));
+  const twice = pastedTwice(WRITING[taskKey], given);
+  return Object.fromEntries(WRITING[taskKey].map(w => [w.id, markWriteQ(w, given) && !twice.has(w.id)]));
 }
 // One writing question: a real sentence (or name), not a copy of another answer, with a word from each bank.
 export function markWriteQ(w, given) {
-  const real = w.short ? isRealName(given[w.id]) : isRealSentence(given[w.id], w.minWords);
+  const real = w.short ? isRealName(given[w.id]) : isRealSentence(given[w.id], w.minWords) && ownWords(w, given[w.id]);
   const differs = !w.differentFrom || squash(given[w.id]) !== squash(given[w.differentFrom]);
   const worded = (w.words || []).every(bank => bank.some(x => usesWord(given[w.id], x)));
   return real && differs && worded;

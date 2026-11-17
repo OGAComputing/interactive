@@ -77,6 +77,31 @@ test('Task 3 sort: nine involvement cards into three boxes, all right first time
   await expect(page.locator('.tab[data-idx="2"]')).toHaveClass(/done/);
 });
 
+// Seen in class (2026-11-17): every card in box 1, check, the reds in box 2, check, the rest in box 3.
+test('Task 3 sort: every card in one box cannot be checked, and a mostly wrong board does not say which', async ({ page }) => {
+  await page.goto(URL);
+  await unlock(page, 2);
+  const panel = page.locator('#panel-2'), bins = SORTS.kinds.bins.map(b => b[0]);
+  for (const it of SORTS.kinds.items) {
+    await panel.locator(`.chip[data-qw="${it.id}"]`).click();
+    await panel.locator(`.bin[data-bin="${bins[0]}"]`).click();
+  }
+  await expect(panel.locator(`.bin[data-bin="${bins[0]}"] .bin-count`)).toHaveText('9 / 3');
+  await page.locator('#check-2').click();
+  await expect(page.locator('#feedback-2')).toContainText('number of cards shown');
+  await expect(panel.locator('.chip.is-wrong')).toHaveCount(0);
+  await expect(page.locator('#check-2')).toBeEnabled();   // no time lost
+  // Every card one box along: each box is full, but all nine are wrong.
+  for (const it of SORTS.kinds.items) {
+    await panel.locator(`.chip[data-qw="${it.id}"]`).click();
+    await panel.locator(`.bin[data-bin="${bins[(bins.indexOf(it.bin) + 1) % 3]}"]`).click();
+  }
+  await page.locator('#check-2').click();
+  await expect(page.locator('#feedback-2')).toContainText('Only 0 of 9 right');
+  await expect(panel.locator('.chip.is-wrong, .chip.is-correct')).toHaveCount(0);
+  await expect(page.locator('#check-2')).toBeDisabled();
+});
+
 test('Task 4 spectrum: a passive card at the active end goes red and waits; then it finishes', async ({ page }) => {
   await page.goto(URL);
   await unlock(page, 3);

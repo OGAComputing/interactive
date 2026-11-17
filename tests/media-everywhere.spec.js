@@ -115,10 +115,12 @@ test('pictures are never cropped; the magnifier shows the whole picture; sorted 
 test('a wrong board starts a cooldown and marks the wrong card red', async ({ page }) => {
   await page.goto(URL);
   await page.locator('.tab[data-idx="0"]').click();
-  await sortAll(page, '#panel-0', id => (id === 'jaws' ? 'ami-post' : BIN[id]));
+  // Jaws and Stranger Things swap boxes, so every box still holds its share and the check can run.
+  await sortAll(page, '#panel-0', id => (id === 'jaws' ? 'ami-post' : id === 'stranger' ? 'ami-pre' : BIN[id]));
   await page.locator('#check-0').click();
   await expect(page.locator('#feedback-0')).toHaveClass(/wrong/);
   await expect(page.locator('.chip[data-qw="jaws"]')).toHaveClass(/is-wrong/);
+  await expect(page.locator('.chip[data-qw="stranger"]')).toHaveClass(/is-wrong/);
   await expect(page.locator('.chip[data-qw="tiktok"]')).toHaveClass(/is-correct/);
   await expect(page.locator('#check-0')).toBeDisabled();
   await expect(page.locator('#check-0')).toContainText('Look again');
