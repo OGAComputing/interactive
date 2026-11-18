@@ -5,7 +5,7 @@ import {
   digitWorking, nibbleWorking, b2hWorking, h2bWorking, cooldownSeconds,
   checkTyped, formatHint, itemAnswer, itemShown, itemWorking,
   NOHELP_LENGTH, drawNoHelp, PLENARY_POOL, PLENARY_LENGTH, drawPlenary, optionOrder,
-  GAME_LEVELS, gameQuestion, gameTime, gamePoints, multiplier, rankFor, runBadges, cleanCode,
+  GAME_LEVELS, TYPE_TIME, typeWidth, gameQuestion, gameTime, gamePoints, multiplier, rankFor, runBadges, cleanCode,
   GLOSSARY, glossaryDef, NO_GLOSS,
 } from './checkers.js';
 
@@ -189,19 +189,55 @@ describe('chains', () => {
 });
 
 describe('Hex Rush', () => {
-  it('a code gives the same questions, never the same one twice running', () => {
+  it('a code gives the same questions, never the same kind twice running', () => {
     for (let i = 0; i < 40; i++) expect(gameQuestion('HEX1', i)).toEqual(gameQuestion('HEX1', i));
-    for (let i = 1; i < 60; i++) {
-      const a = gameQuestion('HEX1', i - 1), b = gameQuestion('HEX1', i);
-      expect(a.n === b.n && a.type === b.type).toBe(false);
+    for (let i = 1; i < 60; i++) expect(gameQuestion('HEX1', i).type).not.toBe(gameQuestion('HEX1', i - 1).type);
+  });
+  it('opens with hex both ways, a 4-bit sum, then 4 bits → denary, for every seed', () => {
+    for (const s of ['A', 'B', 'HEX1', 'XYZ']) {
+      expect([0, 1, 2, 3].map(i => gameQuestion(s, i).type)).toEqual(['nib2h', 'h2nib', 'add4', 'b2d4']);
+      const q = gameQuestion(s, 2);
+      expect(q.a + q.b).toBeLessThanOrEqual(15);
     }
   });
-  it('levels grow from nibbles to bytes to both ways', () => {
-    expect(gameQuestion('X', 0).type).toBe('nib2h');
-    expect(gameQuestion('X', GAME_LEVELS[1].from).type).toBe('h2nib');
-    expect(gameQuestion('X', GAME_LEVELS[2].from).type).toBe('b2h');
-    expect(gameQuestion('X', GAME_LEVELS[3].from).type).toBe('h2b');
-    expect(gameTime(GAME_LEVELS[4].from + 200)).toBe(20);
+  it('mixes kinds, then grows from 4 bits to 8 bits', () => {
+    const types = (from, to) => new Set(Array.from({ length: to - from }, (_, k) => gameQuestion('MIX', from + k).type));
+    expect(types(4, 12).size).toBeGreaterThanOrEqual(4);
+    expect(types(4, 20).has('d2b4')).toBe(true);
+    for (const t of types(GAME_LEVELS[4].from, 80)) expect(['b2h', 'h2b', 'add8', 'b2d8', 'd2b8']).toContain(t);
+    for (let i = 0; i < GAME_LEVELS[3].from; i++) expect(typeWidth(gameQuestion('MIX', i).type)).toBe(4);
+  });
+  it('the last level speeds up, to 60% of the time at most', () => {
+    const last = GAME_LEVELS.at(-1).from;
+    expect(gameTime(last, 'add8')).toBe(TYPE_TIME.add8);
+    expect(gameTime(last + 200, 'add8')).toBe(36);
+    expect(gameTime(0, 'nib2h')).toBe(TYPE_TIME.nib2h);
+  });
+  it('marks adding and denary answers', () => {
+    const add = { type: 'add4', a: 11, b: 6, n: 17 };
+    expect(itemAnswer(add)).toBe('10001');
+    expect(checkTyped(add, '1 0001')).toBe('ok');
+    expect(checkTyped(add, '0001')).toBe('wrong');         // dropped the final carry
+    expect(checkTyped(add, '11')).toBe('format');
+    expect(itemShown(add)).toBe('1011 + 0110');
+    expect(itemWorking(add)).toContain('final carry');
+    expect(checkTyped({ type: 'add8', a: 45, b: 60 }, '01101001')).toBe('ok');
+    expect(checkTyped({ type: 'b2d4', n: 11 }, ' 11 ')).toBe('ok');
+    expect(checkTyped({ type: 'b2d4', n: 11 }, '1011')).toBe('wrong');
+    expect(checkTyped({ type: 'b2d8', n: 90 }, 'ninety')).toBe('format');
+    expect(itemShown({ type: 'b2d8', n: 90 })).toBe('01011010');
+    expect(checkTyped({ type: 'd2b4', n: 6 }, '0110')).toBe('ok');
+    expect(checkTyped({ type: 'd2b4', n: 6 }, '110')).toBe('format');
+    expect(checkTyped({ type: 'd2b8', n: 90 }, '01011010')).toBe('ok');
+    expect(itemWorking({ type: 'd2b8', n: 90 })).toContain('64 fits');
+    expect(itemWorking({ type: 'b2d4', n: 11 })).toBe('1011 has a 1 under 8, 2, 1. 8 + 2 + 1 = 11.');
+  });
+  it('every question type has a time, a question and a well-formed answer', () => {
+    for (let i = 0; i < 80; i++) {
+      const q = gameQuestion('ALL', i);
+      expect(q.time).toBeGreaterThan(0);
+      expect(checkTyped(q, itemAnswer(q))).toBe('ok');
+    }
   });
   it('scoring, ranks, badges and codes', () => {
     expect([0, 3, 6, 10].map(multiplier)).toEqual([1, 2, 3, 4]);
@@ -209,8 +245,9 @@ describe('Hex Rush', () => {
     expect(gamePoints(0, 0, 20, 3)).toBe(200);
     expect(rankFor(0)).toBe('Trainee');
     expect(rankFor(6500)).toBe('Hex Hacker');
-    const b = runBadges({ played: 30, maxStreak: 6, fast: 5, perfect: true, score: 12000 });
+    const b = runBadges({ played: 31, maxStreak: 6, fast: 5, perfect: true, score: 12000 });
     expect(b).toMatchObject({ first: true, streak5: true, streak10: false, bytes: true, mixed: true, speed: true, perfect: true, score10k: true });
+    expect(runBadges({ played: 30, maxStreak: 0, fast: 0, perfect: false, score: 0 }).mixed).toBe(false);
     expect(cleanCode(' hex-7 ')).toBe('HEX7');
   });
 });

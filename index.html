@@ -4,7 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>CS Activities</title>
+  <!-- Year-group fonts, for the Live view's lesson themes (downloaded only when used). -->
+  <link rel="stylesheet" href="fonts/baloo-2.css">
+  <link rel="stylesheet" href="fonts/comic-neue.css">
   <style>
+    /* shared.css's year themes and topic accents dress the Live view in the look of the
+       lesson being watched. In a layer, so none of its rules can restyle the hub itself. */
+    @import url('shared.css') layer(shared);
     :root {
       --bg: #0f1c2e;
       --bar: #0a1520;
@@ -274,6 +280,145 @@
       font-size: 0.75rem; cursor: pointer; vertical-align: middle;
     }
     .btn-inline-ghost:hover { color: #c8d8e8; border-color: #3a6080; }
+    /* ── Live view (hub-live.js) ──
+       Built on --lv-* tokens. With no lesson look they take the hub's colours; the panel's
+       data-year / data-topic (set from the assignment's link) bring in that year's theme and
+       topic accent from shared.css, and data-skin a unit's own story look. */
+    #live-panel {
+      --lv-bg: var(--bg); --lv-card: var(--surface); --lv-line: var(--line); --lv-text: var(--text);
+      --lv-muted: var(--muted); --lv-accent: var(--accent); --lv-gold: var(--star);
+      --lv-ok: #6ee7b7; --lv-warn: #fcd34d;
+      --lv-head-bg: var(--bar); --lv-head-text: #fff; --lv-head-dim: var(--muted); --lv-control: rgba(255,255,255,0.06);
+      --lv-font: 'Segoe UI', system-ui, sans-serif; --lv-font-head: var(--lv-font);
+      position: fixed; inset: 0; z-index: 9000; overflow-y: auto;
+      background: var(--lv-bg); color: var(--lv-text); font-family: var(--lv-font);
+    }
+    #live-panel[data-year] {
+      --lv-card: var(--surface); --lv-line: var(--surface-dim); --lv-gold: var(--gold);
+      --lv-ok: var(--green); --lv-warn: var(--amber);
+      --lv-head-bg: var(--surface); --lv-head-text: var(--text); --lv-head-dim: var(--accent-light);
+      --lv-font: var(--font-body); --lv-font-head: var(--font-head);
+    }
+    /* Light years: white cards on a pale page under a dark header, as their lessons are. */
+    #live-panel:is([data-year="7"], [data-year="8"], [data-year="10"]) {
+      --lv-card: #fff; --lv-line: color-mix(in srgb, var(--text) 14%, transparent);
+      --lv-ok: var(--green-dark); --lv-warn: var(--amber-dark);
+      --lv-head-text: var(--text-inv);
+    }
+    #live-panel[hidden] { display: none; }
+    body.live-open { overflow: hidden; }
+    .live-top { background: var(--lv-head-bg); border-bottom: 4px solid var(--lv-accent); padding: 0.9rem 1.5rem; position: relative; }
+    .live-head { display: flex; align-items: center; gap: 0.6rem 0.9rem; flex-wrap: wrap; max-width: 1280px; margin: 0 auto; position: relative; z-index: 1; }
+    .live-head h2 { font-family: var(--lv-font-head); font-size: 1.2rem; color: var(--lv-head-text); margin-right: auto; }
+    #live-class { color: var(--lv-head-dim); }
+    .live-head select, .live-head .btn-inline-ghost, .live-tabs {
+      background: var(--lv-control); color: var(--lv-head-text);
+      border: 1px solid color-mix(in srgb, var(--lv-head-text) 22%, transparent); border-radius: 6px;
+      font-family: var(--lv-font); font-size: 0.85rem;
+    }
+    .live-head select { padding: 0.35rem 0.5rem; max-width: 100%; }
+    .live-head select option { color: #111; background: #fff; }
+    .live-head .btn-inline-ghost { padding: 0.35rem 0.7rem; }
+    .live-head .btn-inline-ghost:hover { border-color: var(--lv-accent); color: var(--lv-head-text); }
+    #live-work { min-width: 0; flex: 0 1 340px; }
+    #live-order[hidden] { display: none; }
+    .live-tabs { display: inline-flex; overflow: hidden; border-radius: 8px; }
+    .live-tabs button { background: transparent; color: var(--lv-head-dim); border: 0; padding: 0.4rem 0.8rem; font: inherit; cursor: pointer; }
+    .live-tabs button.on { background: var(--lv-accent); color: #fff; font-weight: 700; }
+    .live-tabs button[hidden] { display: none; }
+    .live-main { padding: 1rem 1.5rem 2rem; }
+    .live-sub { display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; max-width: 1280px; margin: 0 auto; font-size: 0.85rem; }
+    #live-summary { font-weight: 700; }
+    #live-status { color: var(--lv-muted); }
+    #live-status.err { color: var(--lv-warn); }
+    .live-note { max-width: 1280px; margin: 0.4rem auto 1rem; font-size: 0.75rem; color: var(--lv-muted); }
+    #live-body { max-width: 1280px; margin: 0 auto; }
+    .live-empty { color: var(--lv-muted); padding: 2rem 0; }
+    .live-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 0.6rem; }
+    .live-card { background: var(--lv-card); border: 1px solid var(--lv-line); border-radius: 10px; padding: 0.6rem 0.75rem; }
+    .live-card.is-idle { border-color: var(--lv-warn); }
+    .live-card.is-done { border-color: var(--lv-ok); }
+    .live-card-top { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; }
+    .live-name { font-family: var(--lv-font-head); font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .live-chip { font-size: 0.68rem; font-weight: 700; padding: 1px 7px; border-radius: 999px; white-space: nowrap; border: 1px solid currentColor; }
+    .live-chip.done { color: var(--lv-ok); background: color-mix(in srgb, var(--lv-ok) 12%, transparent); }
+    .live-chip.idle { color: var(--lv-warn); background: color-mix(in srgb, var(--lv-warn) 12%, transparent); }
+    .live-bar { height: 8px; background: color-mix(in srgb, var(--lv-text) 12%, transparent); border-radius: 999px; margin: 0.5rem 0 0.35rem; overflow: hidden; }
+    .live-bar span { display: block; height: 100%; background: var(--lv-accent); border-radius: inherit; transition: width .6s; }
+    .live-card.is-done .live-bar span { background: var(--lv-gold); }
+    .live-meta { display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--lv-muted); }
+    .live-board-pick { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 1rem; }
+    .live-board-pick button { background: var(--lv-card); color: var(--lv-muted); border: 1px solid var(--lv-line); border-radius: 999px; padding: 0.3rem 0.8rem; font: inherit; font-size: 0.8rem; cursor: pointer; }
+    .live-board-pick button.on { color: var(--lv-text); border-color: var(--lv-accent); font-weight: 700; }
+    .live-board-title { font-family: var(--lv-font-head); text-align: center; font-size: clamp(1.4rem, 3vw, 2.2rem); margin-bottom: 1rem; }
+    .live-board { list-style: none; max-width: 760px; margin: 0 auto; display: grid; gap: 0.5rem; }
+    .live-board li {
+      display: grid; grid-template-columns: 3.2rem 1fr auto; align-items: center; gap: 0.8rem;
+      background: var(--lv-card); border: 1px solid var(--lv-line); border-radius: 12px;
+      padding: 0.55rem 1.1rem; font-size: clamp(1.05rem, 2.2vw, 1.6rem);
+    }
+    .live-board li.top { border-color: var(--lv-accent); box-shadow: inset 4px 0 0 var(--lv-accent); }
+    .live-rank { text-align: center; font-weight: 800; color: var(--lv-muted); }
+    .live-who { font-family: var(--lv-font-head); font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .live-pts { font-weight: 800; color: var(--lv-gold); font-variant-numeric: tabular-nums; }
+    #live-panel:is([data-year="7"], [data-year="8"], [data-year="10"]) .live-pts { color: var(--accent-dark); }
+
+    /* Station Zero (Y9 Python): the chapters' green-phosphor terminal, hull-black cards. */
+    #live-panel[data-skin="station-zero"] {
+      --crt: #5cff8f; --crt-dim: #3fcf6e; --crt-faint: #1f7a40;
+      --crt-glow: 0 0 3px rgba(92,255,143,0.55), 0 0 12px rgba(92,255,143,0.2);
+      --lv-bg: #0b0e12; --lv-card: #141a20; --lv-line: #26303a; --lv-text: #e3e8ec; --lv-muted: #94a3b0;
+      --lv-accent: #2dd4bf; --lv-gold: #f5a524; --lv-ok: #6ee7a0; --lv-warn: #ffc95c;
+      --lv-head-bg: radial-gradient(ellipse at 30% 50%, #04170a 0%, #010903 75%);
+      --lv-head-text: var(--crt); --lv-head-dim: var(--crt-dim); --lv-control: #020704;
+      --lv-font: 'Segoe UI', system-ui, sans-serif;
+      --lv-font-head: 'Cascadia Code', Consolas, 'Courier New', monospace;
+    }
+    [data-skin="station-zero"] .live-top { border-bottom: 1px solid var(--crt-faint); text-shadow: var(--crt-glow); }
+    [data-skin="station-zero"] .live-top::after {
+      content: ''; position: absolute; inset: 0; pointer-events: none;
+      background: repeating-linear-gradient(0deg, rgba(0,0,0,0.28) 0 1px, transparent 1px 3px),
+                  radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,0.4) 100%);
+    }
+    [data-skin="station-zero"] .live-head h2 { text-transform: uppercase; letter-spacing: 0.14em; font-size: 1.05rem; }
+    [data-skin="station-zero"] .live-head h2::before { content: '> '; color: var(--crt-dim); }
+    [data-skin="station-zero"] .live-head select,
+    [data-skin="station-zero"] .live-head .btn-inline-ghost,
+    [data-skin="station-zero"] .live-tabs {
+      border-color: var(--crt-faint); font-family: var(--lv-font-head);
+      text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.78rem;
+    }
+    [data-skin="station-zero"] .live-tabs button.on { background: rgba(92,255,143,0.12); color: var(--crt); }
+    [data-skin="station-zero"] :is(.live-name, .live-chip, .live-meta, #live-summary, .live-board-title) { font-family: var(--lv-font-head); letter-spacing: 0.05em; }
+    [data-skin="station-zero"] :is(.live-chip, .live-board-title) { text-transform: uppercase; }
+    [data-skin="station-zero"] .live-chip { border-radius: 3px; }
+    [data-skin="station-zero"] .live-bar { border-radius: 2px; }
+    [data-skin="station-zero"] .live-bar span { background: var(--crt); box-shadow: 0 0 6px rgba(92,255,143,0.6); border-radius: 0; }
+    [data-skin="station-zero"] .live-card.is-done .live-bar span { background: var(--lv-gold); box-shadow: 0 0 6px rgba(245,165,36,0.5); }
+    [data-skin="station-zero"] .live-board-title { color: var(--crt); text-shadow: var(--crt-glow); letter-spacing: 0.12em; }
+    [data-skin="station-zero"] .live-board li { background: #020704; border-color: var(--crt-faint); border-radius: 6px; font-family: var(--lv-font-head); }
+    [data-skin="station-zero"] .live-board li.top { border-color: var(--crt); box-shadow: inset 4px 0 0 var(--crt), 0 0 12px rgba(92,255,143,0.12); }
+    [data-skin="station-zero"] .live-who { color: var(--crt); text-shadow: var(--crt-glow); }
+
+    /* Forensic workstation (Y9 Digital Forensics): navy console, mint accent, mono labels. */
+    #live-panel[data-skin="workstation"] {
+      --lv-bg: #06101b; --lv-card: #0d1d30; --lv-line: #1c3a5c; --lv-text: #e2f1ee; --lv-muted: #7c95a8;
+      --lv-accent: #2ee6b0; --lv-gold: #f59e0b; --lv-ok: #34d399; --lv-warn: #fcd34d;
+      --lv-head-bg: #0a1726; --lv-head-text: #e2f1ee; --lv-head-dim: #7c95a8; --lv-control: #0d1d30;
+      --lv-font: 'Segoe UI', system-ui, sans-serif; --lv-font-head: 'Cascadia Mono', Consolas, monospace;
+    }
+    [data-skin="workstation"] .live-top { border-bottom: 1px solid #15304d; }
+    [data-skin="workstation"] .live-head h2 { text-transform: uppercase; letter-spacing: 0.12em; font-size: 0.95rem; color: var(--lv-accent); }
+    [data-skin="workstation"] .live-head h2::before { content: '● '; color: #f87171; }
+    [data-skin="workstation"] .live-tabs button.on { color: #04110c; }
+    [data-skin="workstation"] :is(.live-chip, .live-board-title, #live-summary) { font-family: var(--lv-font-head); text-transform: uppercase; letter-spacing: 0.08em; }
+    [data-skin="workstation"] #live-summary { font-size: 0.8rem; }
+    [data-skin="workstation"] :is(.live-name, .live-who) { font-family: var(--lv-font); }
+
+    @media (max-width: 600px) {
+      .live-top, .live-main { padding-left: 1rem; padding-right: 1rem; }
+      .live-board li { grid-template-columns: 2.4rem 1fr auto; padding: 0.5rem 0.8rem; }
+    }
     #build-meta {
       font-size: 0.7rem;
       color: #1e3048;
@@ -334,6 +479,7 @@
       </label>
       <span id="teacher-status"></span>
       <button id="btn-sync" class="btn-inline-ghost" onclick="onSyncClick()" hidden>⟳ Sync grades</button>
+      <button id="btn-live" class="btn-inline-ghost" title="See how far each student has got, and game leaderboards, while the lesson runs" hidden>📡 Live</button>
       <span id="sync-status"></span>
       <a href="getting-started.html" class="guide-link" title="How students' scores reach Classroom">How Grading Works →</a>
     </div>
@@ -399,6 +545,7 @@
 
     fetchCourses();
     document.getElementById('btn-sync').hidden = false;
+    document.getElementById('btn-live').hidden = false;
     document.getElementById('attach-slides-label').hidden = false;
     syncGrades('changed');
   }
@@ -1237,6 +1384,40 @@
 
   // Restore sign-in state on every page load (handles redirect return and tab reloads).
   checkPendingHubToken();
+</script>
+
+<!-- Live view (hub-live.js): progress for the teacher's screen, leaderboard for the board. -->
+<section id="live-panel" hidden aria-labelledby="live-title">
+  <div class="live-top"><div class="live-head">
+    <h2 id="live-title"><span id="live-heading">📡 Live</span> · <span id="live-class"></span></h2>
+    <select id="live-work" aria-label="Assignment"></select>
+    <div class="live-tabs" role="tablist">
+      <button type="button" id="live-tab-progress" class="on">Progress</button>
+      <button type="button" id="live-tab-board" hidden>🏆 Leaderboard</button>
+    </div>
+    <select id="live-order" aria-label="Order">
+      <option value="help">Needs help first</option>
+      <option value="name">A–Z</option>
+    </select>
+    <button type="button" id="live-refresh" class="btn-inline-ghost">⟳ Check now</button>
+    <button type="button" id="live-close" class="btn-inline-ghost" aria-label="Close the Live view">✕ Close</button>
+  </div></div>
+  <div class="live-main">
+  <div class="live-sub"><span id="live-summary"></span><span id="live-status"></span></div>
+  <p class="live-note">Progress shows every student's score: keep it on your own screen. The leaderboard shows only the top 10 names, for the board. Scores arrive within about 40 seconds of students saving them, and only from students who are signed in.</p>
+  <div id="live-body"></div>
+  </div>
+</section>
+
+<script type="module">
+  import { initLive } from './hub-live.js';
+  initLive({
+    getCourseId: () => selectedCourseId,
+    getCourseName: () => document.getElementById('course-search').value,
+    listAll,
+    googleGet,
+    alert: (title, body) => showAssignModal(title, body),
+  });
 </script>
 
 <div id="assign-modal-backdrop">

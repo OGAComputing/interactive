@@ -7,6 +7,7 @@
 //   3  Hex → binary      5 steps: each hex digit → denary → a 4-bit nibble, join
 //   4  No help           6 conversions in a row (both ways), nothing on screen
 //   5  Plenary           5 in a row: conversions and key ideas
+// Hex Rush (extension, not scored) mixes in binary adding (L2) and binary ↔ denary (L1) too.
 // The hex digits and both methods are modelled from the deck first.
 
 export const TASK_COUNT = 6;
@@ -261,46 +262,124 @@ export function cooldownSeconds(wrongInARow) {
   return [5, 10, 15][Math.min(Math.max(wrongInARow, 1), 3) - 1];
 }
 
-// ── Typed conversions (chains and Hex Rush) ──
-// item = { type: 'b2h' | 'h2b' | 'nib2h' | 'h2nib', n }
+// ── Binary adding and denary (recapped from Lessons 1 and 2, for Hex Rush) ──
+export const HEADINGS8 = [128, 64, 32, 16, 8, 4, 2, 1];
+export const ones = n => toBinary(n).split('').filter(b => b === '1').length;
+
+// Column addition, right to left: cols[k] = { x, y, c (carry in), write }; final = the carry out of the left column.
+export function addColumns(a, b, width) {
+  const A = toBinary(a, width), B = toBinary(b, width);
+  const cols = new Array(width);
+  let c = 0;
+  for (let k = width - 1; k >= 0; k--) {
+    const x = +A[k], y = +B[k], s = x + y + c;
+    cols[k] = { x, y, c, write: s % 2 };
+    c = s >> 1;
+  }
+  return { A, B, cols, final: c };
+}
+export const carryCount = (a, b, width) => {
+  const r = addColumns(a, b, width);
+  return r.cols.filter(col => col.c).length + r.final;
+};
+// The answer in bits: width bits, with one more on the left when there is a final carry.
+export const addAnswer = (a, b, width) => toBinary(a + b, a + b >= 1 << width ? width + 1 : width);
+
+export function addWorking(a, b, width) {
+  const r = addColumns(a, b, width);
+  const steps = [];
+  for (let k = width - 1; k >= 0; k--) {
+    const { x, y, c } = r.cols[k], s = x + y + c;
+    const sum = `${[x, y, ...(c ? [c] : [])].join(' + ')} = ${s}`;
+    steps.push(`${k === width - 1 ? 'Right column' : 'Next'}: ${sum}: write ${s % 2}${s >= 2 ? ', carry 1' : ''}`);
+  }
+  const fin = r.final ? ' The final carry becomes a new bit on the left.' : '';
+  return `${steps.join('. ')}.${fin} Answer: ${addAnswer(a, b, width)} (${a} + ${b} = ${a + b}).`;
+}
+
+export function b2dWorking(n, width) {
+  const bits = toBinary(n, width);
+  const used = (width === 8 ? HEADINGS8 : HEADINGS4).filter((_, k) => bits[k] === '1');
+  return `${bits} has a 1 under ${used.join(', ')}. ${used.join(' + ')} = ${n}.`;
+}
+
+export function d2bWorking(n, width) {
+  let left = n;
+  const steps = (width === 8 ? HEADINGS8 : HEADINGS4).map(h => {
+    if (h <= left) { left -= h; return `${h} fits: 1, ${left} left`; }
+    return `${h} doesn't fit: 0`;
+  });
+  return `${n}: ${steps.join('. ')}. So ${n} = ${toBinary(n, width)}.`;
+}
+
+// ── Typed questions (chains and Hex Rush) ──
+// item = { type, n }, or { type: 'add4' | 'add8', a, b, n: a + b }.
+// Hex: 'nib2h' 4 bits → digit, 'h2nib' digit → 4 bits, 'b2h' 8 bits → 2 digits, 'h2b' 2 digits → 8 bits.
+// Denary: 'b2d4' | 'b2d8' binary → denary, 'd2b4' | 'd2b8' denary → binary. Adding: 'add4' | 'add8'.
+export const typeWidth = t => (t === 'nib2h' || t === 'h2nib' || t.endsWith('4') ? 4 : 8);
+const isAdd = t => t.startsWith('add');
+
 export function itemAnswer(item) {
-  if (item.type === 'b2h') return toHex(item.n);
-  if (item.type === 'h2b') return toBinary(item.n, 8);
-  if (item.type === 'nib2h') return hexDigit(item.n);
-  return toBinary(item.n, 4);
+  const t = item.type, w = typeWidth(t);
+  if (t === 'b2h') return toHex(item.n);
+  if (t === 'nib2h') return hexDigit(item.n);
+  if (isAdd(t)) return addAnswer(item.a, item.b, w);
+  if (t.startsWith('b2d')) return String(item.n);
+  return toBinary(item.n, w);   // h2b, h2nib, d2b
 }
 export function itemShown(item) {
-  if (item.type === 'b2h') return toBinary(item.n, 8);
-  if (item.type === 'h2b') return toHex(item.n);
-  if (item.type === 'nib2h') return toBinary(item.n, 4);
-  return hexDigit(item.n);
+  const t = item.type, w = typeWidth(t);
+  if (t === 'h2b') return toHex(item.n);
+  if (t === 'h2nib') return hexDigit(item.n);
+  if (isAdd(t)) return `${toBinary(item.a, w)} + ${toBinary(item.b, w)}`;
+  if (t.startsWith('d2b')) return String(item.n);
+  return toBinary(item.n, w);   // b2h, nib2h, b2d
 }
 export const toHexType = t => t === 'b2h' || t === 'nib2h';
 
 // 'ok' | 'wrong' | 'format'. A wrongly shaped answer (115 for B5, or 111010 for 00111010) isn't marked wrong.
 export function checkTyped(item, text) {
-  const want = itemAnswer(item);
-  if (toHexType(item.type)) {
-    const t = cleanHex(text);
-    if (!isHex(t) || t.length !== want.length) return 'format';
-    return t === want ? 'ok' : 'wrong';
+  const t = item.type, want = itemAnswer(item);
+  if (toHexType(t)) {
+    const h = cleanHex(text);
+    if (!isHex(h) || h.length !== want.length) return 'format';
+    return h === want ? 'ok' : 'wrong';
   }
-  const t = cleanBits(text);
-  if (!isBits(t) || t.length !== want.length) return 'format';
-  return t === want ? 'ok' : 'wrong';
+  if (t.startsWith('b2d')) {
+    const d = cleanNumber(text);
+    if (!/^\d+$/.test(d)) return 'format';
+    return String(+d) === want ? 'ok' : 'wrong';
+  }
+  const b = cleanBits(text);
+  if (isAdd(t)) {
+    // width bits, or one more for a final carry. Dropping the final carry gives the wrong value, so it's wrong.
+    const w = typeWidth(t);
+    if (!isBits(b) || b.length < w || b.length > w + 1) return 'format';
+    return toDenary(b) === item.a + item.b ? 'ok' : 'wrong';
+  }
+  if (!isBits(b) || b.length !== want.length) return 'format';
+  return b === want ? 'ok' : 'wrong';
 }
 
 export function formatHint(item) {
-  if (item.type === 'b2h') return 'Type two hex digits, one for each group of 4 bits (0–9 or A–F), like B5.';
-  if (item.type === 'nib2h') return 'Type one hex digit: 0–9 or A–F.';
-  if (item.type === 'h2b') return 'Type 8 bits (1s and 0s): 4 for each hex digit, leading 0s included.';
+  const t = item.type, w = typeWidth(t);
+  if (t === 'b2h') return 'Type two hex digits, one for each group of 4 bits (0–9 or A–F), like B5.';
+  if (t === 'nib2h') return 'Type one hex digit: 0–9 or A–F.';
+  if (t === 'h2b') return 'Type 8 bits (1s and 0s): 4 for each hex digit, leading 0s included.';
+  if (isAdd(t)) return `Type the answer in bits (1s and 0s): ${w} bits, or ${w + 1} if there is a final carry.`;
+  if (t.startsWith('b2d')) return 'Type a denary number, using the digits 0–9.';
+  if (t.startsWith('d2b')) return `Type exactly ${w} bits: one 1 or 0 for each heading.`;
   return 'Type 4 bits (1s and 0s), leading 0s included.';
 }
 
 export function itemWorking(item) {
-  if (item.type === 'b2h') return b2hWorking(item.n);
-  if (item.type === 'h2b') return h2bWorking(item.n);
-  if (item.type === 'nib2h') return nibbleWorking(item.n);
+  const t = item.type, w = typeWidth(t);
+  if (t === 'b2h') return b2hWorking(item.n);
+  if (t === 'h2b') return h2bWorking(item.n);
+  if (t === 'nib2h') return nibbleWorking(item.n);
+  if (isAdd(t)) return addWorking(item.a, item.b, w);
+  if (t.startsWith('b2d')) return b2dWorking(item.n, w);
+  if (t.startsWith('d2b')) return d2bWorking(item.n, w);
   const n = item.n, parts = HEADINGS4.filter(h => n & h);
   return `${n >= 10 ? `${hexDigit(n)} = ${n} = ` : `${n} = `}${parts.length ? parts.join(' + ') : '0'} → ${toBinary(n, 4)}.`;
 }
@@ -363,14 +442,45 @@ export function drawPlenary(seed, attempt) {
 }
 
 // ── Extension game: Hex Rush ──
-// Not scored for Classroom. Questions get harder as the run goes on (by question number, not score,
+// Not scored for Classroom. It mixes the whole unit: hex (this lesson), binary adding (Lesson 2) and
+// binary ↔ denary (Lesson 1). Questions get harder as the run goes on (by question number, not score,
 // so a class challenge code gives everyone the same questions in the same order).
+const pairs = (as, bs, keep) => as.flatMap(a => bs.filter(b => keep(a, b)).map(b => [a, b]));
+const n4 = range(1, 15);
+const busy4 = (a, b) => ones(a) + ones(b) >= 3;   // never too easy to read off
+export const GAME_POOLS = {
+  nibAny:    POOLS.nibAny,
+  anyLetter: POOLS.anyLetter,
+  add4easy:  pairs(n4, n4, (a, b) => busy4(a, b) && a + b <= 15 && carryCount(a, b, 4) <= 1),
+  add4:      pairs(n4, n4, (a, b) => busy4(a, b) && carryCount(a, b, 4) >= 2),   // some have a final carry
+  add8:      pairs(range(20, 230), range(20, 230), (a, b) =>
+               a + b <= 255 && ones(a) >= 3 && ones(b) >= 3 && carryCount(a, b, 8) >= 2 && carryCount(a, b, 8) <= 4),
+  b2d4:      range(3, 15).filter(n => ones(n) >= 2),
+  d2b4:      range(5, 14).filter(n => ones(n) >= 2),
+  // 8-bit denary stops at 120, as in Lesson 1.
+  b2d8:      range(33, 120).filter(n => ones(n) >= 3 && ones(n) <= 5),
+  d2b8:      range(20, 120).filter(n => ones(n) >= 3 && ones(n) <= 5),
+};
+
+// Seconds per question type.
+export const TYPE_TIME = {
+  nib2h: 20, h2nib: 25, b2d4: 25, d2b4: 30, add4: 35,
+  b2h: 35, h2b: 40, b2d8: 45, d2b8: 50, add8: 60,
+};
+
+// mix: 'type:pool' entries, one picked at random per question. Level 1 is a fixed opener, one of each kind in order.
+// intro: the toast when the level starts.
 export const GAME_LEVELS = [
-  { from: 0,  name: 'Level 1', types: ['nib2h'],        pool: 'nibAny',    time: 20, base: 100 },  // nibble → one digit
-  { from: 6,  name: 'Level 2', types: ['h2nib'],        pool: 'nibAny',    time: 25, base: 120 },  // one digit → nibble
-  { from: 12, name: 'Level 3', types: ['b2h'],          pool: 'anyLetter', time: 35, base: 150 },
-  { from: 20, name: 'Level 4', types: ['h2b'],          pool: 'anyLetter', time: 40, base: 180 },
-  { from: 28, name: 'Level 5', types: ['b2h', 'h2b'],   pool: 'anyLetter', time: 35, base: 220 },
+  { from: 0,  name: 'Level 1', base: 100, fixed: true,
+    mix: ['nib2h:nibAny', 'h2nib:nibAny', 'add4:add4easy', 'b2d4:b2d4'] },
+  { from: 4,  name: 'Level 2', base: 120, intro: 'Level 2: all mixed up, and denary → binary joins in',
+    mix: ['nib2h:nibAny', 'h2nib:nibAny', 'add4:add4easy', 'b2d4:b2d4', 'd2b4:d2b4'] },
+  { from: 12, name: 'Level 3', base: 150, intro: 'Level 3: more carries in the adding. Watch for a final carry!',
+    mix: ['nib2h:nibAny', 'h2nib:nibAny', 'add4:add4', 'b2d4:b2d4', 'd2b4:d2b4'] },
+  { from: 20, name: 'Level 4', base: 180, intro: 'Level 4: 8 bits arrive, for hex and for binary → denary',
+    mix: ['b2h:anyLetter', 'h2b:anyLetter', 'add4:add4', 'b2d8:b2d8', 'd2b4:d2b4'] },
+  { from: 30, name: 'Level 5', base: 220, intro: 'Level 5: everything in 8 bits, and it speeds up',
+    mix: ['b2h:anyLetter', 'h2b:anyLetter', 'add8:add8', 'b2d8:b2d8', 'd2b8:d2b8'] },
 ];
 export const GAME_LIVES = 3;
 
@@ -380,27 +490,33 @@ export function gameLevel(i) {
   return lvl;
 }
 
-// Seconds for question i: the level's time, and at the last level it shrinks by 3 s every 5 questions, never below 20.
-export function gameTime(i) {
-  const lvl = gameLevel(i);
-  if (lvl !== GAME_LEVELS.at(-1)) return lvl.time;
-  return Math.max(20, lvl.time - 3 * Math.floor((i - lvl.from) / 5));
+// Seconds for question i of this type. At the last level the time shrinks by 8% every 5 questions, to 60% at most.
+export function gameTime(i, type) {
+  const lvl = gameLevel(i), t = TYPE_TIME[type];
+  if (lvl !== GAME_LEVELS.at(-1)) return t;
+  return Math.round(t * Math.max(0.6, 1 - 0.08 * Math.floor((i - lvl.from) / 5)));
 }
 
-function rawQ(seed, i, salt = 0) {
+function rawQ(seed, i, salt) {
   const lvl = gameLevel(i);
   const rnd = seededRandom(`${seed}|rush|${i}|${salt}`);
-  const type = pick(lvl.types, rnd);
-  return { i, type, n: pick(POOLS[lvl.pool], rnd), level: lvl.name };
+  const [type, pool] = (lvl.fixed ? lvl.mix[i - lvl.from] : pick(lvl.mix, rnd)).split(':');
+  const v = pick(GAME_POOLS[pool], rnd);
+  const q = Array.isArray(v) ? { type, a: v[0], b: v[1], n: v[0] + v[1] } : { type, n: v };
+  return { i, ...q, level: lvl.name, time: gameTime(i, type) };
 }
 
-// Question i of a run. The same seed (a class code) always gives the same question; never the same one twice running.
+// Question i of a run. The same seed (a class code) always gives the same questions;
+// two in a row are never the same kind of question.
 export function gameQuestion(seed, i) {
-  const prev = i > 0 ? rawQ(seed, i - 1) : null;
-  for (let salt = 0; ; salt++) {
-    const q = rawQ(seed, i, salt);
-    if (!prev || q.n !== prev.n || q.type !== prev.type) return q;
+  let prev = null;
+  for (let k = 0; k <= i; k++) {
+    for (let salt = 0; ; salt++) {
+      const q = rawQ(seed, k, salt);
+      if (!prev || q.type !== prev.type) { prev = q; break; }
+    }
   }
+  return prev;
 }
 
 // Streak multiplier: x1, then x2 from 3 in a row, x3 from 6, x4 from 10.
@@ -434,8 +550,8 @@ export const GAME_BADGES = [
   ['first',    '🎖 First Run',      'Finish a run'],
   ['streak5',  '🔥 On a Roll',      '5 right in a row'],
   ['streak10', '⚡ Unstoppable',    '10 right in a row'],
-  ['bytes',    '🧩 Full Byte',      'Reach the 8-bit questions (Level 3)'],
-  ['mixed',    '🔀 Both Ways',      'Reach the mixed questions (Level 5)'],
+  ['bytes',    '🧩 Full Byte',      'Reach the 8-bit questions (Level 4)'],
+  ['mixed',    '🔀 All 8 Bits',     'Reach Level 5: everything in 8 bits'],
   ['speed',    '🏎 Lightning',      '5 right in under 5 seconds each, in one run'],
   ['perfect',  '💎 Flawless 20',    'The first 20 questions all right'],
   ['score10k', '🏛 10,000 Club',    '10,000+ points in one run'],
@@ -447,7 +563,7 @@ export function runBadges(run) {
     first: true,
     streak5: run.maxStreak >= 5,
     streak10: run.maxStreak >= 10,
-    bytes: run.played > GAME_LEVELS[2].from,
+    bytes: run.played > GAME_LEVELS[3].from,
     mixed: run.played > GAME_LEVELS[4].from,
     speed: run.fast >= 5,
     perfect: run.played >= 20 && run.perfect,

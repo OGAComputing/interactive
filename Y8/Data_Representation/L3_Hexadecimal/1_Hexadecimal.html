@@ -350,6 +350,9 @@ color:  indigo
   .rush-ask { font-family: var(--font-head); font-weight: 700; font-size: 1.05rem; margin-bottom: 8px; }
   .rush-show { font: 700 2.2rem var(--font-mono); letter-spacing: .12em; color: var(--accent-dark); margin: 4px 0 12px; }
   .rush-card .num-in.wide { width: 220px; }
+  .rush-sum { display: inline-grid; justify-items: end; line-height: 1.25; }
+  .rush-sum > span:last-child { border-bottom: 3px solid currentColor; padding-bottom: 2px; }
+  .rush-sum i { font-style: normal; margin-right: .5em; }
   .tbar { height: 8px; border-radius: 4px; background: #D5E3F0; overflow: hidden; margin-bottom: 12px; }
   .tbar > div { height: 100%; width: 100%; background: var(--gold); }
   .tbar > div.low { background: var(--red); }
@@ -560,7 +563,7 @@ color:  indigo
     <!-- Menu -->
     <div class="rush-screen on" id="rush-menu">
       <h2>⚡ HEX RUSH</h2>
-      <p>Conversions are coming at you. Type each answer before the timer runs out. Build a streak to multiply your score. Three wrong and you're out.</p>
+      <p>Hex, binary adding and denary questions are coming at you. Type each answer before the timer runs out. Build a streak to multiply your score. Three wrong and you're out.</p>
       <div class="rush-stats">
         <div class="rush-stat"><div class="v" id="rush-best">0</div><div class="k">Solo best</div></div>
         <div class="rush-stat"><div class="v" id="rush-rank">Trainee</div><div class="k">Rank</div></div>
@@ -583,7 +586,7 @@ color:  indigo
       </div>
       <div class="rush-sub">🏅 Badges</div>
       <div class="badges" id="rush-badges"></div>
-      <p class="rush-rules">Scoring: a right answer scores the level's points plus a speed bonus (the faster, the more), × your streak (×2 at 3 in a row, ×3 at 6, ×4 at 10). The questions grow: 4 bits → hex digit, hex digit → 4 bits, then 8 bits → hex, hex → 8 bits, then both mixed and faster. <b>Enter</b> checks.</p>
+      <p class="rush-rules">Scoring: a right answer scores the level's points plus a speed bonus (the faster, the more), × your streak (×2 at 3 in a row, ×3 at 6, ×4 at 10). It starts with one of each: 4 bits → hex, hex → 4 bits, a 4-bit sum, then 4 bits → denary. Then they mix, both ways (denary → binary too), the adding gets more carries, and 4 bits grow to 8 bits. At Level 5 it speeds up. <b>Enter</b> checks.</p>
     </div>
 
     <!-- Game -->
@@ -646,7 +649,7 @@ import {
   STEP_COUNT, ladderQuestion, checkLadder as markLadder, shapeHint, workingFor, cooldownSeconds,
   itemShown, itemAnswer, itemWorking, checkTyped, formatHint,
   NOHELP_LENGTH, drawNoHelp, PLENARY_LENGTH, drawPlenary, plenaryQuestion, optionOrder,
-  gameQuestion, gameLevel, gameTime, gamePoints, multiplier, GAME_LIVES, RANKS, rankFor,
+  gameQuestion, gameLevel, gamePoints, multiplier, GAME_LIVES, RANKS, rankFor,
   GAME_BADGES, runBadges, cleanCode,
   GLOSSARY, glossaryDef, NO_GLOSS,
 } from './checkers.js';
@@ -1188,6 +1191,8 @@ function calcScore() {
 function submitScore() {
   const pct = calcScore();
   window.ActivityUI?.setScore(pct);
+  // Tasks done, for the teacher's Live view on the hub (sent with the grade).
+  window.Classroom?.setLive?.({ task: `${state.completed.filter(Boolean).length}/${TASK_COUNT}` }, ACTIVITY_TITLE);
   window.Classroom?.submitGrade(pct, ACTIVITY_TITLE);
 }
 
@@ -1259,7 +1264,21 @@ const ASK = {
   h2nib: 'Turn this hex digit into 4 bits:',
   b2h:   'Convert to hex:',
   h2b:   'Convert to binary (8 bits):',
+  add4:  'Add these binary numbers:',
+  add8:  'Add these binary numbers:',
+  b2d4:  'Convert to denary:',
+  b2d8:  'Convert to denary:',
+  d2b4:  'Convert to binary (4 bits):',
+  d2b8:  'Convert to binary (8 bits):',
 };
+
+// An adding question is shown as a column sum, so the bits line up.
+function showQuestion(q) {
+  const el = $('rush-show');
+  if (!q.type.startsWith('add')) { el.textContent = itemShown(q); return; }
+  const [a, b] = itemShown(q).split(' + ');
+  el.innerHTML = `<span class="rush-sum"><span>${a}</span><span><i>+</i>${b}</span></span>`;
+}
 
 function rushShow(id) {
   document.querySelectorAll('.rush-screen').forEach(s => s.classList.toggle('on', s.id === id));
@@ -1338,16 +1357,18 @@ function rushHud() {
 
 function rushNext() {
   const q = game.q = gameQuestion(game.seed, game.i);
-  game.limit = gameTime(game.i);
+  game.limit = q.time;
   game.locked = false;
+  const lvl = gameLevel(game.i);
+  if (game.i === lvl.from && lvl.intro) window.ActivityUI?.showToast('⬆ ' + lvl.intro);
   $('rush-ask').textContent = ASK[q.type];
-  $('rush-show').textContent = itemShown(q);
+  showQuestion(q);
   const input = $('rush-in');
   input.value = '';
   input.disabled = false;
   input.classList.remove('is-right', 'is-wrong');
-  input.maxLength = q.type === 'h2b' ? 10 : q.type === 'b2h' ? 4 : q.type === 'h2nib' ? 6 : 2;
-  input.inputMode = (q.type === 'h2b' || q.type === 'h2nib') ? 'numeric' : 'text';
+  input.maxLength = itemAnswer(q).length + (q.type.startsWith('add') ? 3 : 2);   // room for spaces and a final carry
+  input.inputMode = (q.type === 'b2h' || q.type === 'nib2h') ? 'text' : 'numeric';
   $('rush-go').disabled = false;
   input.focus();
   $('verdict').innerHTML = '';
@@ -1426,6 +1447,11 @@ function rushOver() {
   } else pb = `Personal best: ${fmt(rush.best)}`;
   rushSave();
   renderBestChip();
+  // The hub's Live view ranks each board separately: solo runs on one, each class challenge code on its own.
+  window.Classroom?.setLive?.({
+    board: g.code ? rush.codes[g.code] || 0 : rush.best,
+    boardLabel: g.code ? `Hex Rush ${g.code}` : 'Hex Rush',
+  }, ACTIVITY_TITLE);
 
   $('over-mode').textContent = g.code ? `CLASS CHALLENGE · ${g.code}` : 'SOLO RUN';
   $('over-score').textContent = fmt(g.score);

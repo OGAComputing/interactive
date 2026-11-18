@@ -8,7 +8,7 @@ Interactive Computing Education Platform — a static web hub serving self-conta
 
 ## Architecture
 
-- **`index.html`** — Hub page that fetches `activities.json` and `meta.json` to render activity cards grouped by year, topic and lesson
+- **`index.html`** — Hub page that fetches `activities.json` and `meta.json` to render activity cards grouped by year, topic and lesson. Its **📡 Live** button (`hub-live.js`, tested by `hub-live.test.js` + `tests/live-view.spec.js`) shows, for one hub-made assignment, each student's score and task, and a leaderboard for games, checking Drive every 20 s. It takes the look of the lesson it is watching: the linked page's year theme and topic accent from `shared.css` (imported into the hub as a CSS layer), or a skin of its own (`SKINS` in `hub-live.js` + `#live-panel[data-skin]` in `index.html`: Station Zero for Y9 Python, the forensic workstation for Y9 Digital Forensics)
 - **`Y7/` … `Y13/`, `RS/`** — Activity folders: `<Year>/<Topic>/[L<n>_Lesson/]file.html`. `Demo/` and `Animations/` hold teacher demos
 - **`activities.json`** / **`meta.json`** — Rebuilt by `.github/workflows/build-manifest.yml` (from each page's `<!-- ACTIVITY -->` block) in a `[skip ci]` commit after every push to main; never edit them by hand
 - **`.github/workflows/test.yml`** — Runs Vitest and Playwright (4 parallel runners), then deploys to GitHub Pages only if both pass
@@ -150,6 +150,10 @@ The score travels on that file as `appProperties.ogaScore` (plus `ogaCourse`/`og
 - `submitGrade` is a no-op without a `?courseId=` param, so it is safe to call unconditionally.
 - Activities with custom scoring (weighted tasks, the 80 % completion + 20 % first-attempt mastery split in the general templates, PRIMM's `calcScore`) pass the real calculated percentage.
 - Do **not** call `submitGrade` from inside `allComplete()` — `markDone` already fires it for the last task. Calling it twice wastes a Drive upload.
+
+### Live fields (optional)
+
+`window.Classroom?.setLive?.({ task: '3/5' }, ACTIVITY_TITLE)` puts small fields on the evidence file (as `ogaL<key>` appProperties) for the hub's Live view. They never change the grade. Call it just **before** `submitGrade` so both go in one upload; on its own it uploads at most once every 20 s. Known keys: `task` (tasks done, shown on each student's card), `board` + `boardLabel` (a game's best score; the hub ranks each label separately, e.g. `'Carry Rush X7'` for a class challenge code; highest wins), and `boardUnit: 'ms'` for a time where lowest wins. Every extension game sends its best this way: Carry Rush, Hex Rush, Breach Defence (Y9 Searching the Computer) and Rapid Response Unit (Y9 Criminal Database, a time).
 
 ### The evidence report
 

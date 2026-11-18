@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { expectPageTitle, expectNoClassroomBanner } from './helpers/activityHelpers.js';
+import { expectPageTitle, expectNoClassroomBanner, recordLiveCalls, lastLiveCall } from './helpers/activityHelpers.js';
 import { toBinary, addColumns, fullAnswer, gameSum, PLENARY_POOL } from '../Y8/Data_Representation/L2_Binary_Addition/checkers.js';
 
 const URL = '/Y8/Data_Representation/L2_Binary_Addition/1_Binary_Addition.html';
@@ -206,6 +206,7 @@ const rushBoxes = page => page.locator('#rush-sum .rans').allTextContents();
 test('Carry Rush: a class challenge, badges, game over and the best score in the header', async ({ page }) => {
   test.setTimeout(60_000);
   await openRush(page);
+  await recordLiveCalls(page);
   await page.locator('#rush-code').fill('bin-7');
   await page.locator('[data-rush="challenge"]').click();
   await expect(page.locator('#rush-game')).toBeVisible();
@@ -238,6 +239,8 @@ test('Carry Rush: a class challenge, badges, game over and the best score in the
   const score = (await page.locator('#over-score').textContent()).trim();
   await expect(page.locator('#best-chip')).toBeVisible();
   await expect(page.locator('#best-chip')).toContainText(`BIN7: ${score}`);
+  // The best goes to the hub's Live view leaderboard, on this code's own board.
+  expect(await lastLiveCall(page)).toEqual({ board: +score.replace(/,/g, ''), boardLabel: 'Carry Rush BIN7' });
 
   // The best is kept after a reload and shown on every tab
   await page.reload();

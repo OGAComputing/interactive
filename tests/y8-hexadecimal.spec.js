@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { expectPageTitle, expectNoClassroomBanner } from './helpers/activityHelpers.js';
+import { expectPageTitle, expectNoClassroomBanner, recordLiveCalls, lastLiveCall } from './helpers/activityHelpers.js';
 import {
   ladderQuestion, hexDigit, hi, lo, toHex, toBinary, SPLIT_GAP, itemAnswer, PLENARY_POOL, gameQuestion,
 } from '../Y8/Data_Representation/L3_Hexadecimal/checkers.js';
@@ -202,6 +202,7 @@ test('Hex Rush: a class challenge, game over and the best score in the header', 
   }, KEY);
   await page.reload();
   await openTab(page, 6);
+  await recordLiveCalls(page);
   await page.locator('#rush-code').fill('hex-1');
   await page.locator('[data-rush="challenge"]').click();
   const q0 = gameQuestion('HEX1', 0);
@@ -213,7 +214,10 @@ test('Hex Rush: a class challenge, game over and the best score in the header', 
   for (const i of [1, 2, 3]) {
     await expect(page.locator('#hud-q')).toHaveText(String(i + 1));
     const q = gameQuestion('HEX1', i);
-    await page.locator('#rush-in').fill(itemAnswer(q) === 'F' ? 'E' : 'F');
+    // Q2 hex → 4 bits, Q3 a 4-bit sum, Q4 4 bits → denary: a wrong answer of the right shape for each.
+    const a = itemAnswer(q);
+    const wrong = q.type.startsWith('b2d') ? String(+a + 1) : a.slice(0, -1) + (a.at(-1) === '1' ? '0' : '1');
+    await page.locator('#rush-in').fill(wrong);
     await page.locator('#rush-in').press('Enter');
     await expect(page.locator('#verdict')).toContainText('The answer is');
   }
@@ -221,6 +225,7 @@ test('Hex Rush: a class challenge, game over and the best score in the header', 
   await expect(page.locator('#over-mode')).toContainText('HEX1');
   const score = (await page.locator('#over-score').textContent()).trim();
   await expect(page.locator('#best-chip')).toContainText(`HEX1: ${score}`);
+  expect(await lastLiveCall(page)).toEqual({ board: +score.replace(/,/g, ''), boardLabel: 'Hex Rush HEX1' });
   const r = await page.evaluate(() => JSON.parse(localStorage.getItem('y8_datarep_l3_hex_rush')));
   expect(r.codes.HEX1).toBe(+score.replace(/,/g, ''));
 });

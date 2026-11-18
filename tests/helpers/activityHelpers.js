@@ -30,3 +30,18 @@ export async function expectActiveStage(page, stageId) {
 export async function expectDoneStage(page, stageId) {
   await expect(page.locator(`[data-stage="${stageId}"]`)).toHaveClass(/done/);
 }
+
+// ─── Live view fields ────────────────────────────────────────────────────────
+// Records what the page passes to Classroom.setLive (the hub's Live view), so a
+// spec can check a game sends its best. Call after the last page load/reload.
+export async function recordLiveCalls(page) {
+  await page.evaluate(() => {
+    window.__live = [];
+    const real = window.Classroom.setLive.bind(window.Classroom);
+    window.Classroom.setLive = (fields, name) => { window.__live.push(fields); return real(fields, name); };
+  });
+}
+
+export async function lastLiveCall(page) {
+  return page.evaluate(() => window.__live.at(-1));
+}

@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { recordLiveCalls, lastLiveCall } from './helpers/activityHelpers.js';
 import {
   ANSWERS, GATES, CHECKPOINTS, THREATS, ATTACK_TARGETS, fallsWithinHour, DEMO_PREDICT, CARVE_BLOCKS, isHistoryBlock,
 } from '../Y9/Digital_Forensics/L5_Searching_the_Computer/searching-checkers.js';
@@ -269,6 +270,7 @@ test('Breach Defence: a challenge run ends after three breaches and records a be
   }, KEY);
   await page.reload();
   await expect(page.locator('#bd-menu')).toHaveClass(/on/);
+  await recordLiveCalls(page);
   await page.fill('#bd-code', 'test9');
   await page.click('button:has-text("Start challenge")');
   await expect(page.locator('#bd-game')).toHaveClass(/on/);
@@ -292,6 +294,7 @@ test('Breach Defence: a challenge run ends after three breaches and records a be
   const store = await page.evaluate(() => JSON.parse(localStorage.getItem('y9-breach-defence-v1')));
   expect(store.codes.TEST9).toBeGreaterThan(0);
   expect(store.badges.first).toBe(true);
+  expect(await lastLiveCall(page)).toEqual({ board: store.codes.TEST9, boardLabel: 'Breach Defence TEST9' });
 
   // Same code → same first threat.
   await page.click('button:has-text("Play again")');

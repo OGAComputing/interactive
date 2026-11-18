@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { recordLiveCalls, lastLiveCall } from './helpers/activityHelpers.js';
 
 const URL = '/Y9/Digital_Forensics/L4_Criminal_Database/Criminal_Database_Investigation.html';
 
@@ -39,12 +40,15 @@ test('extension keeps the fastest time across shifts', async ({ page }) => {
     localStorage.setItem('crimdb-ext-shifts', JSON.stringify([{ total: 95000, wrong: 0, when: Date.now() }]));
     gotoStage(11);
   });
+  await recordLiveCalls(page);
   await expect(page.locator('#ext-history .ext-pb-val')).toHaveText('1:35.0');
 
   // Finish a slower shift: best stays, both shown on the summary
   await page.evaluate(() => { extStartShift(); ext.times = Array(10).fill(12000); extShowSummary(); });
   await expect(page.locator('#ext-pb .ext-pb-cell.best .ext-pb-val')).toHaveText('1:35.0');
   await expect(page.locator('#ext-pb .ext-pb-cell:not(.best) .ext-pb-val')).toHaveText('2:00.0');
+  // The hub's leaderboard gets the best time, not this slower shift (lowest wins).
+  expect(await lastLiveCall(page)).toEqual({ board: 95000, boardLabel: 'Rapid Response Unit', boardUnit: 'ms' });
 
   // Finish a faster shift: becomes the new best and shows during the next shift
   await page.evaluate(() => { extStartShift(); ext.times = Array(10).fill(8000); extShowSummary(); });

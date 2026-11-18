@@ -1162,6 +1162,8 @@ function calcScore() {
 function submitScore() {
   const pct = calcScore();
   window.ActivityUI?.setScore(pct);
+  // Tasks done, for the teacher's Live view on the hub (sent with the grade).
+  window.Classroom?.setLive?.({ task: `${state.completed.filter(Boolean).length}/${TASK_COUNT}` }, ACTIVITY_TITLE);
   window.Classroom?.submitGrade(pct, ACTIVITY_TITLE);
 }
 
@@ -1461,6 +1463,11 @@ function rushOver() {
   } else pb = `Personal best: ${fmt(rush.best)}`;
   rushSave();
   renderBestChip();
+  // The hub's Live view ranks each board separately: solo runs on one, each class challenge code on its own.
+  window.Classroom?.setLive?.({
+    board: g.code ? rush.codes[g.code] || 0 : rush.best,
+    boardLabel: g.code ? `Carry Rush ${g.code}` : 'Carry Rush',
+  }, ACTIVITY_TITLE);
 
   $('over-mode').textContent = g.code ? `CLASS CHALLENGE · ${g.code}` : 'SOLO RUN';
   $('over-score').textContent = fmt(g.score);

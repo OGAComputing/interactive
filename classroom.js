@@ -17,6 +17,8 @@
  *      score on the student's work evidence file (appProperties.ogaScore). The
  *      teacher's Activities Hub reads it and writes the draft grade (syncGrades
  *      in index.html), so there is no per-teacher setup.
+ *   7. Exposes window.Classroom.setLive(fields, activityName) — small live
+ *      fields (task reached, a game's best score) for the hub's Live view.
  *
  * If no courseId URL param is present, nothing is injected and all API calls
  * are no-ops, so activities work identically for students not using Classroom.
@@ -73,7 +75,9 @@
 
   let userInfo             = null; // { email, name } fetched from Google userinfo after sign-in
   let isTeacherMode        = false; // true once detectTeacher confirms the signed-in user is a teacher
-  const CLASSROOM_SYNC_INTERVAL_MS = 60 * 1000;
+  // Drive takes far more than this; it keeps whole-document uploads (and Doc revisions)
+  // down. It used to be a minute, to spare the old Apps Script grade proxy's quotas.
+  const CLASSROOM_SYNC_INTERVAL_MS = 20 * 1000;
   const AUTH_HEARTBEAT_INTERVAL_MS = 60 * 1000;
   // Drop the token this long before it runs out, so a save never goes out with
   // a token that dies in flight. Keep it tiny: while a token is still valid
@@ -85,6 +89,14 @@
   const AUTH_RENEWAL_MARGIN_MS     = 10 * 1000;
 
   let _lastGradePercent = null;
+  // Live fields (setLive) ride on the evidence file as appProperties ogaL<key>, for the
+  // hub's Live view. Drive allows 30 properties per app per file, 124 bytes per key + value.
+  const LIVE_MAX_FIELDS = 8;
+  const LIVE_KEY_RE = /^[a-z][a-zA-Z0-9]{0,15}$/;
+  const liveProps = {};
+  let liveDirty = false;   // changed since the last upload
+  let liveTimer = null;
+  let _lastActivityName = null;
 
   let pendingClassroomSyncTimer = null;
   let pendingClassroomSyncPayload = null;
@@ -1120,10 +1132,14 @@
     let fileId = (saved?.fileId && saved?.isGoogleDoc) ? saved.fileId : null;
     let newFile = false;
     // ogaSync + the IDs let the hub find every changed file with one Drive search.
+    // score is null for a live-only update before any grade this visit: leaving ogaScore
+    // out keeps the one already on the file (Drive merges appProperties on update).
     const appProperties = {
-      ogaScore: String(Math.round(Math.min(100, Math.max(0, Number(score) || 0)))),
+      ...(score === null || score === undefined ? {} : { ogaScore: String(Math.round(Math.min(100, Math.max(0, Number(score) || 0)))) }),
       ogaSync: '1', ogaCourse: courseId, ogaWork: courseWorkId, ogaSub: submissionId
     };
+    for (const [k, v] of Object.entries(liveProps)) appProperties['ogaL' + k] = v;
+    liveDirty = false;
     try {
       if (fileId) {
         try {
@@ -1171,15 +1187,18 @@
 
   // Grade and evidence uploads share one scheduler so Google receives the
   // latest score and DOM snapshot together. The first update and completion
-  // update flush immediately; all intermediate updates are capped at once a minute.
-  function scheduleClassroomSync(activityName, gradePercent) {
+  // update flush immediately; all intermediate updates are capped at one per CLASSROOM_SYNC_INTERVAL_MS.
+  // liveOnly (from setLive) never replaces a queued grade and never jumps the
+  // upload limit, so a game played at 100% doesn't upload after every run.
+  function scheduleClassroomSync(activityName, gradePercent, liveOnly = false) {
     if (!accessToken) return;
 
-    const payload = { activityName, gradePercent };
-    pendingClassroomSyncPayload = payload;
+    if (!(liveOnly && pendingClassroomSyncPayload)) {
+      pendingClassroomSyncPayload = { activityName, gradePercent };
+    }
 
     const firstSync = !hasFlushedClassroomSync;
-    const completed = isCompletionGrade(gradePercent);
+    const completed = !liveOnly && isCompletionGrade(gradePercent);
     const now = Date.now();
     const elapsed = now - lastClassroomSyncAt;
 
@@ -1646,17 +1665,51 @@
     /**
      * Queue a draft grade and work-evidence snapshot for Classroom.
      * The first update and a 100% update are sent immediately; intermediate
-     * updates are coalesced and sent at most once a minute.
+     * updates are coalesced and sent at most once every 20 seconds.
      *
      * @param {number} gradePercent  0–100
      * @param {string} activityName  Logged to console for debugging
      */
     async submitGrade(gradePercent, activityName) {
       _lastGradePercent = gradePercent;
+      _lastActivityName = activityName;
       if (window.ActivityUI?.setScore) window.ActivityUI.setScore(gradePercent);
       if (!accessToken) return;
       if (isAssessment() && !(await checkAuthHealth('Google sign-in could not be verified while saving. Assessment paused until you sign in again.'))) return;
       scheduleClassroomSync(activityName, gradePercent);
+    },
+
+    /**
+     * Set small live fields for the teacher's Live view on the hub. They are saved
+     * on the work evidence file with the next upload (at most once every 20 s), and
+     * never change the grade. Call setLive before submitGrade to send both together.
+     *
+     * Known fields: task ('3/5', furthest task reached), board (a number for the
+     * leaderboard) and boardLabel (which board, e.g. 'Carry Rush' or 'Carry Rush X7'
+     * for a class challenge code: the hub ranks each label separately) and
+     * boardUnit ('ms' for a time in milliseconds: lowest wins, shown as m:ss.s).
+     *
+     * @param {object} fields        { key: string|number }, keys /^[a-z][a-zA-Z0-9]{0,15}$/
+     * @param {string} activityName  Same name passed to submitGrade
+     */
+    setLive(fields, activityName) {
+      let changed = false;
+      for (const [k, raw] of Object.entries(fields || {})) {
+        if (!LIVE_KEY_RE.test(k) || raw === null || raw === undefined) continue;
+        if (!(k in liveProps) && Object.keys(liveProps).length >= LIVE_MAX_FIELDS) continue;
+        const v = String(raw).replace(/[\x00-\x1f]/g, ' ').slice(0, 60);
+        if (liveProps[k] !== v) { liveProps[k] = v; changed = true; }
+      }
+      if (changed) liveDirty = true;
+      const name = activityName || _lastActivityName;
+      if (!liveDirty || !accessToken || !name) return;
+      // Wait a moment: a submitGrade straight after takes the fields with it, instead of
+      // a live-only upload going first and pushing the grade back a minute.
+      clearTimeout(liveTimer);
+      liveTimer = setTimeout(() => {
+        liveTimer = null;
+        if (liveDirty) scheduleClassroomSync(name, _lastGradePercent, true);
+      }, 1000);
     },
 
     /**
