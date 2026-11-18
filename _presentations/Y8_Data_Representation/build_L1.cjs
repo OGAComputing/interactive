@@ -151,6 +151,8 @@ S.questionsSlide(K, { section: 'Intro', topic: TOPIC, lesson: LESSON,
 // 6 · Binary and bits
 {
   const s = K.newSlide('SZ_DARK', 'Denary and binary', 'Binary: only 0 and 1');
+  K.isys(s, { term: 'Binary', fact: 'only 0 and 1', say: 'Binary uses only 0 and 1, because every switch is on or off.' });
+  K.isys(s, { term: 'Bit', fact: 'one binary digit', say: 'A bit is one binary digit: a 0 or a 1.' });
   K.text(s, [{ text: 'A computer is made of switches: ', options: { bold: true } }, { text: 'on = 1, off = 0' , options: { color: P.gold, bold: true } }],
     { x: M, y: 1.6, w: 12, h: 0.6, fontSize: 28, valign: 'middle' });
   const states = [1, 0, 1, 0];
@@ -172,6 +174,7 @@ S.questionsSlide(K, { section: 'Intro', topic: TOPIC, lesson: LESSON,
 // 7 · The headings double
 {
   const s = K.newSlide('SZ_DARK', 'Denary and binary', 'Binary headings double');
+  K.isys(s, { term: '4-bit headings', fact: '8 4 2 1', say: 'The 4-bit headings are 8 4 2 1: each one doubles the one on its right.' });
   const g0 = { x: M + 1.5, y: 2.7, heads: H4, cw: 1.9, size: 40, ch: 1.0, gap: 0.6 };
   headRow(s, g0);
   K.onClick(s, 1, () => doubleArrows(s, g0));

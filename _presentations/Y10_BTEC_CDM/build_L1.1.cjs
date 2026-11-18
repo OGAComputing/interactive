@@ -41,15 +41,18 @@ K.info({ title: 'What counts as media?', standfirst: 'A media product is anythin
   img: img('tiktok.jpg'), imgLabel: 'TikTok feed (App Store screenshot)',
   notes: 'The three sectors are Pearson\'s (spec A1). Contemporary = post-2000, historical = pre-2000 (spec wording). TikTok: interactive, contemporary (2016).' });
 
-K.keyTerm({ term: 'Audio / moving image', definition: 'Products you watch or listen to: sound, moving pictures, or both.',
+const sIsys0 = K.keyTerm({ term: 'Audio / moving image', definition: 'Products you watch or listen to: sound, moving pictures, or both.',
   example: 'A MrBeast YouTube video, Stranger Things on Netflix, a Radio 1 breakfast show.', img: img('mrbeast.jpg'), imgLabel: 'MrBeast video thumbnail',
   notes: 'Includes radio and podcasts (sound only) as well as film, TV, music videos, animation and adverts.' });
-K.keyTerm({ term: 'Print', definition: 'Products printed on paper: you read and look at them.',
+K.isys(sIsys0, { term: "Audio / moving image", fact: "watch or listen", say: "Audio / moving image products are ones you watch or listen to." });
+const sIsys1 = K.keyTerm({ term: 'Print', definition: 'Products printed on paper: you read and look at them.',
   example: 'Match of the Day magazine, a McDonald\'s billboard, a newspaper front page.', img: img('motd_mag.jpg'), imgLabel: 'Match of the Day magazine cover (2026)',
   notes: 'Includes newspapers, magazines, comics, brochures, posters, packaging and print adverts. Their FIZZIKAL cover was print.' });
-K.keyTerm({ term: 'Interactive', definition: 'Products where the user makes choices and changes what happens next.',
+K.isys(sIsys1, { term: "Print", fact: "printed on paper", say: "Print products are printed on paper." });
+const sIsys2 = K.keyTerm({ term: 'Interactive', definition: 'Products where the user makes choices and changes what happens next.',
   example: 'Minecraft, TikTok, a website: nothing happens until you click, tap or play.', img: img('minecraft.jpg'), imgLabel: 'Minecraft village screenshot',
   notes: 'Includes video, mobile and online games, apps, websites, interactive magazines and adverts.' });
+K.isys(sIsys2, { term: "Interactive", fact: "user makes choices", say: "In an interactive product, the user makes choices." });
 
 K.compare({ title: 'One sector, 37 years apart', a: { name: 'Pac-Man · 1980', img: img('pacman_1980.png') }, b: { name: 'Fortnite · 2017', img: img('fortnite.jpg') },
   rows: [['Sector', 'Interactive', 'Interactive'], ['Where you play', 'An arcade machine', 'Console, PC or phone'], ['Who with', '', ''], ['How it looks', '', '']],

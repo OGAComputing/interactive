@@ -249,7 +249,7 @@ export const GLOSSARY = [
   // Lesson terms
   ['primary audiences?', 'The main group of people a media product is made for'],
   ['secondary audiences?', 'Other people it appeals to as well, though it isn\'t mainly made for them'],
-  ['socio-economic groups?', 'Groups of people sorted by the kind of job they do, and so their income'],
+  ['socio-economic groups?', 'Groups of people sorted by their job, and so their income'],
   ['ABC1', 'Groups A, B and C1 together: managers, professionals and office jobs'],
   ['C2DE', 'Groups C2, D and E together: trades, manual jobs and people not working'],
   ['lifestyle', 'How someone lives: their interests, attitudes, values and behaviour'],

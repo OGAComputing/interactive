@@ -10,7 +10,7 @@ const { createDeck } = require('./sz_kit.cjs');
 const R = require('./sz_slides.cjs');
 
 const OUT = process.env.DECK_OUT || path.join(__dirname, 'Y9_Python_Deck_Template.pptx');
-const K = createDeck({ title: 'Station Zero — Y9 Python deck template', footerText: 'STATION ZERO  ·  Y9 PYTHON  ·  DECK TEMPLATE' });
+const K = createDeck({ title: 'Station Zero — Y9 Python deck template', footerText: 'STATION ZERO  ·  Y9 PYTHON  ·  DECK TEMPLATE', template: true });
 const { P, M, HEAD, MONO, newSlide, addIcon, text, box, badge, terminal, templateNote } = K;
 
 // ── Rules and feedback log, from README.md ──────────────────────────────────
@@ -170,7 +170,7 @@ const RUN_NAME = [
     memory: [{ name: 'name', type: 'str', value: '"Riley"' }],
     memoryNote: 'No change' },
 ];
-tag(R.runLinesSlide(K, {
+const sRunLines = R.runLinesSlide(K, {
   section: EX, lines: RUN_NAME,
   notes: guide([
     'WHEN: showing what a short program does, before students predict or trace one themselves.',
@@ -181,7 +181,10 @@ tag(R.runLinesSlide(K, {
     'ANIMATED: each part fades in on click — code, then screen, then memory (3 clicks per line, 6 for two). Ask "what will appear?" before each click. animate: false turns it off.',
     'Any slide type can do this: wrap what should appear in K.onClick(s, clickNumber, () => { …draw… }).',
   ]),
-}), 'runLinesSlide', 'Run it line by line');
+});
+tag(sRunLines, 'runLinesSlide', 'Run it line by line');
+// ISYS (ppt-guidelines.md §10): 1–3 per lesson, on the slide where the term is taught. Draws the dot and writes the script into the notes.
+K.isys(sRunLines, { term: 'Variable', fact: 'a named box', say: 'A variable is a named box in memory that stores a value.' });
 
 tag(R.pairSlide(K, {
   section: EX, title: 'Quotes: the word, or what’s stored?', memory: { name: 'name', type: 'str', value: '"Riley"' },

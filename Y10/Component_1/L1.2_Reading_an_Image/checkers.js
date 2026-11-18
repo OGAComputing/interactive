@@ -151,8 +151,8 @@ export const SPOTS = {};
 // (shareholders, poverty, box office); leave out words students know (entertain, volunteers, streaming).
 export const GLOSSARY = [
   // Lesson terms, wherever they turn up as answers
-  ['denotation', 'What you can actually see or hear, with no opinions'],
-  ['connotations?', 'What something suggests: the ideas and feelings it gives you'],
+  ['denotation', 'What you see or hear, with no opinions'],
+  ['connotations?', 'What it suggests: the ideas and feelings it gives you'],
   ['anchorage|anchors?|anchored', "Words that fix an image's meaning, so we read it one way"],
   ['polysemy', 'When an image can be read in more than one way'],
   ['encod(?:e|es|ed|ing)', 'Putting a meaning in on purpose, through the choices you make'],

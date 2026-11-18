@@ -27,6 +27,10 @@ node build_L1.cjs                 → L1_Binary_And_Denary.pptx
 
 Close the `.pptx` in PowerPoint first. To check it: `soffice --headless --convert-to pdf L1_Binary_And_Denary.pptx`, then turn the pages into images with Python `pdfplumber`.
 
+## ISYS (I Say, You Say)
+
+Each lesson flags 1–3 phrases with `K.isys(slide, { term, fact, say })` (`ppt-guidelines.md` §10): a dot by the slide number, the teacher script in the notes, the list at the top of slide 1's notes. L1: Binary, Bit, 4-bit headings. L2: Carry, 1 + 1, 1 + 1 + 1. L3: Hexadecimal, A, One hex digit.
+
 ## Publishing to Drive
 
 Decks are published as Google Slides to the [Data Representation](https://drive.google.com/drive/folders/1ZPf7_uq6PWK69OaGfLnPw1QVT2v1cRKJ) Drive folder. `node publish_to_drive.cjs` rebuilds every `build_L<n>.cjs` deck, uploads each deck whose slides changed to a folder named after it (`L1_Binary_And_Denary/L1_Binary_And_Denary`), and writes its Slides ID into `../lesson-slides.json` under `Y8/Data_Representation/<deck>`, so the hub's Assign button attaches it to the lesson's Classroom post. **A deck's name must match its lesson folder** (`L2_Binary_Addition.pptx` for `Y8/Data_Representation/L2_Binary_Addition/`). Commit `drive.json` and `lesson-slides.json`. A republish replaces the same Slides file, so posted links keep working, but edits made in Slides are lost: change the builder. `--dry-run` lists what would go up. Sign-in setup is shared with Y10 (see `../Y10_BTEC_CDM/README.md`).

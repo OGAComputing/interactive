@@ -119,14 +119,17 @@ S.questionsSlide(K, { section: 'Intro', topic: TOPIC, lesson: LESSON,
   notes: 'Same topic question as Lesson 1; today\'s lesson question underneath.' });
 
 // 5–6 · The four rules (modelled here, then straight into a worked example; the page starts with whole sums)
-addSlide({ section: 'The four rules', title: 'Adding in columns: denary', a: '47', b: '38', base: 10,
+const sCarry = addSlide({ section: 'The four rules', title: 'Adding in columns: denary', a: '47', b: '38', base: 10,
   end: [{ text: 'Carry: ', options: { bold: true, color: P.gold } },
-    { text: 'the column reached 10, so a 1 moves into the next column on the left.' }],
+    { text: 'the column reached 10, so a 1 moves left into the next column.' }],
   notes: 'Recall Q4, in columns. Click 1: start on the right, 7 + 8 = 15. 15 is too big for one column: write 5, and the 1 (the ten) '
     + 'is carried: write it above the next column on the left. Click 2: 4 + 3 + the carried 1 = 8. Click 3: that 1 is a carry, '
     + 'today\'s keyword. Binary works exactly like this, right to left, but it carries sooner.' });
+K.isys(sCarry, { term: 'Carry', fact: 'a 1 moves left', say: 'A carry is when a column is full and a 1 moves left into the next column.' });
 {
   const s = K.newSlide('SZ_DARK', 'The four rules', 'Binary carries at 2');
+  K.isys(s, { term: '1 + 1', fact: 'write 0, carry 1', say: 'In binary, 1 + 1: write 0, carry 1.' });
+  K.isys(s, { term: '1 + 1 + 1', fact: 'write 1, carry 1', say: 'In binary, 1 + 1 + 1: write 1, carry 1.' });
   const RULES = [
     ['0 + 0', 'write 0', ''],
     ['0 + 1', 'write 1', ''],

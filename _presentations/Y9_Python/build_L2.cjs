@@ -86,6 +86,7 @@ const C = 'Conditions';
 // the right, rejoining below. The else's lines sit on the False path, under the diamond.
 {
   const s = newSlide('SZ_DARK', C, 'Sequence and selection');
+  K.isys(s, { term: "Selection", fact: "makes a decision", say: "Selection makes a decision: the program chooses which lines to run." });
   const lab = (t, x, color = P.dim) => text(s, t, { x, y: 1.55, w: 5.6, h: 0.3, fontSize: 13, bold: true, color, charSpacing: 2 });
   const NH = 0.6, DW = 2.6, DH = 1.2, BW = 2.2, GAP = 0.5;
   const node = (t, x, y, w, line = P.line) => {
@@ -139,6 +140,8 @@ Ask: "Where would a proximity sensor need this?" (Close → alarm; far → all c
 // 6. A condition is True or False (one-off: operator key + two examples)
 {
   const s = newSlide('SZ_DARK', C, 'A condition is True or False');
+  K.isys(s, { term: "Condition", fact: "True or False", say: "A condition is always True or False." });
+  K.isys(s, { term: "==", fact: "is equal to", say: "== means is equal to." });
   text(s, 'COMPARISON OPERATORS', { x: M, y: 1.6, w: 5, h: 0.3, fontSize: 13, bold: true, color: P.dim, charSpacing: 2 });
   const ops = [['==', 'is equal to'], ['<', 'is less than'], ['>', 'is more than'], ['<=', 'is less than or equal to'],
     ['>=', 'is more than or equal to']];

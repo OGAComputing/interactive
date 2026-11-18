@@ -7,7 +7,7 @@ const path = require('path');
 const { createDeck } = require('./c1_kit.cjs');
 
 const OUT = process.env.DECK_OUT || path.join(__dirname, 'C1_Deck_Template.pptx');
-const K = createDeck({ lesson: 0, footerText: 'COMPONENT 1  ·  EXPLORING MEDIA PRODUCTS', title: 'Component 1 deck template' });
+const K = createDeck({ lesson: 0, footerText: 'COMPONENT 1  ·  EXPLORING MEDIA PRODUCTS', title: 'Component 1 deck template', template: true });
 const { P, HEAD, BODY, QUOTE, M, CW, W, newSlide, text, box, rule, kicker, note } = K;
 const recipe = (s, name, dark) => note(s, 'TEMPLATE  ·  ' + name, dark);
 
@@ -83,10 +83,13 @@ recipe(K.info({ title: 'Three ways to describe an audience', standfirst: 'Produc
   imgLabel: 'Optional image: a real product aimed at a clear audience',
   notes: 'info — New Information. A one-sentence standfirst, then up to 4 numbered points (bold lead-in + one line). Leave imgLabel and img out for a full-width text slide.' }), 'info');
 
-recipe(K.keyTerm({ term: 'Psychographics', say: 'say: SY-ko-GRAF-iks', definition: 'Describing an audience by how they live and think: interests, attitudes, values and behaviour.',
+const sKeyTerm = K.keyTerm({ term: 'Psychographics', say: 'say: SY-ko-GRAF-iks', definition: 'Describing an audience by how they live and think: interests, attitudes, values and behaviour.',
   example: 'This Girl Can shows real women sweating and red-faced, for women who feel judged when they exercise.',
   imgLabel: 'This Girl Can campaign still',
-  notes: 'keyTerm — one key term or theory per slide: the word, how to say it if needed, a plain definition, and a REAL example with its image (ask Nick for the image). Abstract terms need a concrete model first (README rule).' }), 'keyTerm');
+  notes: 'keyTerm — one key term or theory per slide: the word, how to say it if needed, a plain definition, and a REAL example with its image (ask Nick for the image). Abstract terms need a concrete model first (README rule).' });
+recipe(sKeyTerm, 'keyTerm');
+// ISYS (ppt-guidelines.md §10): 1–3 per lesson, on the slide where the term is taught. Draws the dot and writes the script into the notes.
+K.isys(sKeyTerm, { term: 'Psychographics', fact: 'how they live', say: 'Psychographics describes an audience by how they live and think.' });
 
 recipe(K.readingScaffold({ title: 'Read the brief', step: 1, source: 'From the assignment brief (sample text)',
   chunk: 'The client wants a campaign that encourages teenagers who do not usually take part in sport to try a new activity. The products must feel welcoming and must not suggest that being "sporty" matters.',

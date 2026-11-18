@@ -67,7 +67,7 @@ export const CHOICES = {
       q: 'Wallace & Gromit: Vengeance Most Fowl was first shown on BBC One on Christmas Day 2024. Why does the BBC put films like this on Christmas Day?',
       a: 'fam', opts: [['fam', 'Lots of families watch TV together that day'], ['few', 'Fewer people have a TV on at Christmas'], ['cheap', 'Films cost less to show on a bank holiday']] },
     s_mean: { q: 'In media, what does a product\'s situation mean?',
-      a: 'www', opts: [['www', 'Where, when and who with it is used'], ['cost', 'How much it costs to buy or watch'], ['kind', 'What kind of product it is, like a game']] },
+      a: 'www', opts: [['www', 'Where, when, who with: how it is used'], ['cost', 'How much it costs to buy or watch'], ['kind', 'What kind of product it is, like a game']] },
   },
 };
 
@@ -313,7 +313,7 @@ export const PILOTS = {};
 // Include the lesson's spec terms wherever they turn up as answer options, plus everyday-but-tricky words
 // (shareholders, poverty, box office); leave out words students know (entertain, volunteers, streaming).
 export const GLOSSARY = [
-  ['situation', 'Where, when and who with someone uses a media product'],
+  ['situation', 'Where, when, who with: the setting someone uses a media product in'],
   ['passive', 'Taking it in without doing anything back'],
   ['active', 'Taking part: choosing, talking, voting or making something'],
   ['involvement|involved', 'How much the audience takes part in a product'],

@@ -211,8 +211,8 @@ export const WRITING = {
 // ── Glossary: hover, focus or tap shows the meaning (list shown to Nick, 2026-11-06) ──
 export const GLOSSARY = [
   // Lesson terms
-  ['primary research', 'Research you do yourself: you collect new information first-hand'],
-  ['secondary research', 'Research someone else has already done, that you find and use'],
+  ['primary research', 'Research where you collect it yourself: new information, first-hand'],
+  ['secondary research', 'Research where someone else collected it: you find it and use it'],
   ['surveys?', 'The same questions asked to lots of people'],
   ['interviews?', 'Lots of questions asked to one person, with their answers recorded'],
   ['observations?', 'Watching what people do and noting it down'],

@@ -29,6 +29,10 @@ Build or update the deck for `$ARGUMENTS`.
   "Images to supply" list the build prints before filling the slides. One deck per lesson, even in a
   double.
 - Other units: follow §9 of `ppt-guidelines.md` and copy the nearest existing build script.
+- **ISYS (I Say, You Say), every lesson:** pick 1–3 key terms, definitions or short rules
+  (`ppt-guidelines.md` §10), each side 1–4 words, and call `K.isys(slide, { term, fact, say })` on
+  each slide where the moment happens. Word them the same on every slide and on the activity page.
+  Show Nick the phrases before building if he hasn't chosen them.
 - Build: `node build_L<n>.cjs` in the unit folder (needs `npm install -g pptxgenjs`). If it
   can't save, the deck is open in PowerPoint: ask the user to close it.
 
@@ -50,6 +54,9 @@ Build or update the deck for `$ARGUMENTS`.
   while ago), four options each, and no question that gives its answer away: read each question
   for the answer itself or a word from its definition ("the main group…" → primary). See
   `Y10/CLAUDE.md`.
+- **ISYS:** the dot is on the ISYS slides only (just left of the slide number) and overlaps nothing;
+  each phrase is worded the same everywhere it appears in the deck and on the page; the Check and
+  Reverse lines read naturally.
 - Y10 decks: check in PowerPoint itself with `render_slides.ps1` (the README says how).
 - Fix and rebuild until clean. Report the slide list (number · recipe · one-line purpose).
 

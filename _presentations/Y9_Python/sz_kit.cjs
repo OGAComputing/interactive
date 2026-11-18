@@ -19,7 +19,8 @@ const pptxgen = requireGlobal('pptxgenjs');
 
 // fonts: { head, body, mono } to swap the typefaces (other units use Google fonts; Y9 keeps Cambria / Calibri / Consolas).
 // palette: overrides any of P's colours below, so another unit can have its own look (Y9 keeps the defaults).
-function createDeck({ title, footerText, author = 'Nicholas Houlton', station: startState = 'none', fonts = {}, palette = {} }) {
+// template: true for the deck template only (it shows one ISYS example; a lesson needs 1–3 phrases, see ../isys.cjs).
+function createDeck({ title, footerText, author = 'Nicholas Houlton', station: startState = 'none', fonts = {}, palette = {}, template = false }) {
 // ── Palette ─────────────────────────────────────────────────────────────────
 // Approved: charcoal / gold / off-white. Station Zero adds phosphor green (story text only)
 // and alarm red (error messages only).
@@ -123,10 +124,11 @@ station(startState);
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 let slideNo = 0;
-const sections = new Set();
+const sections = new Set(), masterOf = new WeakMap();
 function newSlide(master, section, title) {
   if (!sections.has(section)) { pres.addSection({ title: section }); sections.add(section); }
   const s = pres.addSlide({ masterName: master, sectionTitle: section });
+  masterOf.set(s, master);
   slideNo++;
   drawStation(s, master);
   if (title) s.addText(title, { placeholder: 'title' });
@@ -356,6 +358,14 @@ function traceTable(s, o) {
   s.addTable(rows, { x, y, w: cws.reduce((a, b) => a + b), colW: cws, rowH: rh, margin: [0.04, 0.15, 0.04, 0.15] });
 }
 
+// ISYS (I Say, You Say): ppt-guidelines.md §10. isys(s, { term, fact, say }) on each slide where the moment
+// happens. The dot sits just left of the slide number, in its colour: a teacher looks for it, students don't.
+const ISYS = require('../isys.cjs')(pres);
+function isys(s, o) {
+  ISYS.add(s, o, () => s.addShape(pres.shapes.OVAL, { x: 12.3, y: 7.09, w: 0.08, h: 0.08,
+    fill: { color: masterOf.get(s) === 'SZ_LIGHT' ? P.paperDim : P.dim }, line: { type: 'none' }, objectName: 'isys' }));
+}
+
 // Template deck only: a one-line note in the footer row saying which recipe this is (see README.md).
 function templateNote(s, t, light = false) {
   text(s, t, { x: 4.6, y: 6.95, w: 7.45, h: 0.35, fontSize: 13, italic: true, bold: true,
@@ -363,6 +373,7 @@ function templateNote(s, t, light = false) {
 }
 
 async function write(out, theme = THEME) {
+  ISYS.finish({ template });
   await pres.writeFile({ fileName: out });
   await addClickAnimations(out, beatSlides);
   if (process.env.APPLY_THEME) {
@@ -373,7 +384,7 @@ async function write(out, theme = THEME) {
 }
 
 return { pres, P, THEME, HEAD, BODY, MONO, W, M, newSlide, addIcon, text, box, chip, timer, arrow, pyRuns,
-  codePanel, terminal, varBox, badge, recallCards, chapterTask, traceTable, templateNote, onClick, station, beat,
+  codePanel, terminal, varBox, badge, recallCards, chapterTask, traceTable, templateNote, isys, onClick, station, beat,
   STATES: Object.keys(STATION), write };
 }
 

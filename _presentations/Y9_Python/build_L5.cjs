@@ -95,6 +95,7 @@ const F = 'Define, then call';
 // → back to after the call. "Python knows" fills on line 1; the output builds up.
 {
   const s = newSlide('SZ_DARK', F, 'Watch it run');
+  K.isys(s, { term: "Function", fact: "named lines of code", say: "A function is named lines of code that you can run by name." });
   const cx = 1.35, cw = 6.4;
   const cp = codePanel(s, DRONE, { x: cx, y: 1.7, w: cw, size: 24, lh: 0.74 });
   // what Python has learnt: the command's name
@@ -156,6 +157,7 @@ const backOut = (s, cp, cx, cw, lines, size, from, to, color = P.muted) => {
 };
 {
   const s = newSlide('SZ_DARK', F, 'Two commands: watch it jump');
+  K.isys(s, { term: "Call", fact: "run it by name", say: "To call a function is to run it by name." });
   const cx = 1.35, cw = 6.4, size = 21;
   const cp = codePanel(s, TWO, { x: cx, y: 1.6, w: cw, size, lh: 0.49 });
   const kx = 8.2, kw = 4.53;

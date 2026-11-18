@@ -200,6 +200,7 @@ const F1 = 'For loops in action';
 // shows each jump back to the for line.
 {
   const s = newSlide('SZ_DARK', F1, 'Watch it run');
+  K.isys(s, { term: "for loop", fact: "set number of times", say: "A for loop repeats its lines a set number of times." });
   const cx = 1.35, cw = 6.4;
   const cp = codePanel(s, BEACON, { x: cx, y: 1.7, w: cw, size: 24, lh: 0.74 });
   K.varBox(s, { name: 'i', type: 'int', value: '', x: 8.2, y: 1.95, w: 2.0, h: 1.0 });
@@ -360,7 +361,7 @@ int(input()) is from Lessons 2 and 3: the user types 3, int() makes it the numbe
 New: range(n). The number of times round doesn't have to be written in the code: it can come from a variable, so the USER decides.
 Boards up after a minute.`,
 });
-R.predictRevealSlide(K, {
+const sIsys1 = R.predictRevealSlide(K, {
   section: B, title: 'range(n): n decides how many times', code: BEEP, hl: [2],
   output: [[{ text: 'Beeps? ', color: P.muted }, { text: '3', color: P.str, bold: true }], 'Beep', 'Beep', 'Beep'],
   mistakes: [
@@ -371,6 +372,7 @@ R.predictRevealSlide(K, {
 Without int(), n holds the TEXT "3", and range(n) stops with a TypeError ('str' object cannot be interpreted as an integer).
 Modification 4 uses exactly this: ask how many sides, then the loop runs that many times. Remember what each turn has to be: 360 ÷ the number of sides (Investigate step 2). That's all the help on the slides: the step itself has no code.`,
 });
+K.isys(sIsys1, { term: "range(n)", fact: "n times", say: "range(n) goes round n times." });
 R.chapterSlide(K, {
   section: B, kicker: 'CHAPTER 4  ·  BACK IN', title: 'Distress Signal', activity: 'Distress Signal', time: '≈15 MIN', logLabel: 'NAVIGATION',
   log: ['The beacon is sending.', '', 'The ship needs to know', 'how many sides', 'the next signal has.'],
@@ -388,6 +390,7 @@ Fast finishers: the extension (a growing starburst).`,
 const FB = 'Feedback';
 {
   const s = newSlide('SZ_DARK', FB, 'A bug with no error message');
+  K.isys(s, { term: "Indented lines", fact: "inside the loop", say: "Indented lines are inside the loop; only they repeat." });
   const code = ['import turtle', 't = turtle.Turtle()', 'for i in range(4):', '    t.forward(100)', 't.left(90)'];
   const cp = codePanel(s, code, { x: M, y: 1.7, w: 5.6, size: 22, lh: 0.62, hl: [5] });
   text(s, '← not indented', { x: M + 2.6, y: cp.ys[4] - cp.lh / 2, w: 2.9, h: cp.lh, fontSize: 18, bold: true, color: P.gold,

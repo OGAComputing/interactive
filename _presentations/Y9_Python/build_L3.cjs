@@ -78,6 +78,7 @@ const C = 'Iteration';
 // difference is where the True path comes back in: below the diamond (if) or above it (while).
 {
   const s = newSlide('SZ_DARK', C, 'Selection and iteration');
+  K.isys(s, { term: "Iteration", fact: "repeating code", say: "Iteration means repeating code." });
   const lab = (t, x, color = P.dim) => text(s, t, { x, y: 1.55, w: 5.6, h: 0.3, fontSize: 13, bold: true, color, charSpacing: 2 });
   const node = (t, x, y, w, line = P.line) => {
     box(s, { x, y, w, h: NH, fill: P.panel, line, lw: line === P.line ? 1.25 : 2, r: 0.08 });
@@ -320,6 +321,7 @@ const NE = 'Not equal';
 // != (one-off: the two "equal" operators + two examples)
 {
   const s = newSlide('SZ_DARK', NE, 'One new operator: !=');
+  K.isys(s, { term: "!=", fact: "is not equal to", say: "!= means is not equal to." });
   text(s, 'EQUAL, OR NOT EQUAL?', { x: M, y: 1.6, w: 5, h: 0.3, fontSize: 13, bold: true, color: P.dim, charSpacing: 2 });
   [['==', 'is equal to', P.dim], ['!=', 'is NOT equal to', P.gold]].forEach(([op, say, line], i) => {
     const y = 2.05 + i * 1.0;
@@ -426,7 +428,7 @@ Circulate. During Investigate, point students back to the debugging recipe befor
 Fast finishers: the Make extension (Too high / Too low hints: an if INSIDE the while).`,
 });
 
-R.errorFeedbackSlide(K, {
+const sIsys2 = R.errorFeedbackSlide(K, {
   section: A, title: 'A loop that never ends',
   code: ['code = input("Code: ")', 'while code != "4271":', '    print("ACCESS DENIED")'], hl: [2],
   error: [[{ text: 'InfiniteLoopError: ', color: P.red, bold: true },
@@ -439,6 +441,7 @@ Ask: "What's in code?" (the text "1234") "Is "1234" != "4271"?" (True) "What cha
 Our editor stops a loop after 4 seconds. Real Python doesn't: the program just hangs. In IDLE or a terminal, Ctrl+C stops it.
 The fix is the missing line, INDENTED, inside the loop: code = input("Code: "). Put it after the loop and it never runs while the loop repeats.`,
 });
+K.isys(sIsys2, { term: "Infinite loop", fact: "never ends", say: "An infinite loop never ends, because its condition never becomes False." });
 
 K.beat('L4'); // the cliffhanger: lights out, then scanlines and static (Chapter 4: Distress Signal)
 R.plenarySlide(K, {

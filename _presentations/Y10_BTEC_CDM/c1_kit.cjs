@@ -68,7 +68,8 @@ function imageSize(file) {
   return null;
 }
 
-function createDeck({ lesson, footerText, title = 'Component 1 lesson', author = 'Nicholas Houlton' }) {
+// template: true for the deck template only (it shows one ISYS example; a lesson needs 1–3 phrases, see ../isys.cjs).
+function createDeck({ lesson, footerText, title = 'Component 1 lesson', author = 'Nicholas Houlton', template = false }) {
   const pres = new pptxgen();
   pres.layout = 'LAYOUT_WIDE';
   pres.title = title; pres.author = author;
@@ -99,10 +100,11 @@ function createDeck({ lesson, footerText, title = 'Component 1 lesson', author =
 
   // ── Drawing parts ─────────────────────────────────────────────────────────
   let slideNo = 0;
-  const sections = new Set(), imagesNeeded = [], clipsUnlinked = [];
+  const sections = new Set(), imagesNeeded = [], clipsUnlinked = [], masterOf = new WeakMap();
   function newSlide(master, section, t) {
     if (!sections.has(section)) { pres.addSection({ title: section }); sections.add(section); }
     const s = pres.addSlide({ masterName: master, sectionTitle: section });
+    masterOf.set(s, master);
     slideNo++;
     if (t) s.addText(t, { placeholder: 'title' });
     return s;
@@ -479,7 +481,16 @@ function createDeck({ lesson, footerText, title = 'Component 1 lesson', author =
     return s;
   }
 
+  // ISYS (I Say, You Say): ppt-guidelines.md §10. isys(s, { term, fact, say }) on each slide where the moment
+  // happens. The dot sits just left of the slide number, in its colour: a teacher looks for it, students don't.
+  const ISYS = require('../isys.cjs')(pres);
+  function isys(s, o) {
+    ISYS.add(s, o, () => s.addShape(pres.shapes.OVAL, { x: 12.3, y: 7.11, w: 0.08, h: 0.08,
+      fill: { color: masterOf.get(s) === 'C1_INK' ? P.greyLt : P.grey }, line: { type: 'none' }, objectName: 'isys' }));
+  }
+
   async function write(out) {
+    ISYS.finish({ template });
     fs.writeFileSync(out, await addReveals(await pres.write({ outputType: 'nodebuffer' })));
     console.log(`Wrote ${out} (${slideNo} slides)`);
     if (imagesNeeded.length) console.log('Images to supply:\n  ' + imagesNeeded.join('\n  '));
@@ -488,7 +499,7 @@ function createDeck({ lesson, footerText, title = 'Component 1 lesson', author =
 
   return { pres, P, HEAD, BODY, QUOTE, W, M, CW, newSlide, text, box, rule, kicker, tag, timer, addIcon, imageSlot, note,
     recallStarter, recallAnswers, titleSlide, questions, info, keyTerm, annotate, compare, clip, choice, readingScaffold,
-    turnTalk, task, modelAnswer, plenary, write, get slideNo() { return slideNo; } };
+    turnTalk, task, modelAnswer, plenary, isys, write, get slideNo() { return slideNo; } };
 }
 
 // Turns shapes named reveal-<n> into click-to-reveal animations: every shape with the same n fades in

@@ -241,6 +241,7 @@ S.questionsSlide(K, { section: 'Intro', topic: TOPIC, lesson: LESSON,
 // 6 · The sixteen digits (Task 1)
 {
   const s = K.newSlide('SZ_DARK', 'The hex digits', 'Hex has sixteen digits');
+  K.isys(s, { term: 'Hexadecimal', fact: 'sixteen digits', say: 'Hexadecimal has sixteen digits: 0 to 9, then A to F.' });
   const cw = 0.6, gap = 0.06, x0 = M + 1.3, yH = 2.0, yD = 2.82, h = 0.72;
   K.text(s, 'HEX', { x: M, y: yH, w: 1.25, h, fontSize: 13, bold: true, color: P.dim, charSpacing: 2, valign: 'middle' });
   K.text(s, 'DENARY', { x: M, y: yD, w: 1.25, h, fontSize: 13, bold: true, color: P.dim, charSpacing: 2, valign: 'middle' });
@@ -268,9 +269,10 @@ const DIGITS_YOU = [
 ];
 youDoSlide({ section: 'The hex digits', items: DIGITS_YOU, qSize: 38, prompt: 'hide the table. Count on from A = 10.', time: '1 MIN',
   notes: 'Boards, no table on screen. Watch for 12 written as "12": in hex one digit only, so it must be a letter.' });
-youDoSlide({ section: 'The hex digits', items: DIGITS_YOU, qSize: 38, reveal: true,
+K.isys(youDoSlide({ section: 'The hex digits', items: DIGITS_YOU, qSize: 38, reveal: true,
   takeaway: [{ text: '10 to 15 are one letter each: ', options: { bold: true, color: P.gold } }, { text: 'A B C D E F.' }],
-  notes: 'Anyone who wrote two digits for 12: hex needs one character per digit, that is why the letters exist.' });
+  notes: 'Anyone who wrote two digits for 12: hex needs one character per digit, that is why the letters exist.' }),
+  { term: 'A', fact: '10', say: 'In hex, A is 10: count on from there.' });
 
 // 9–12 · 4 bits → one hex digit (Task 2)
 b2hSlide({ section: '4 bits → hex', title: '4 bits make one hex digit', mode: 'I DO', bits: '1011',
@@ -286,9 +288,10 @@ const FOUR_YOU = [
 ];
 youDoSlide({ section: '4 bits → hex', items: FOUR_YOU, prompt: 'turn each into one hex digit. Write 8 4 2 1 above the bits first.', time: '2 MIN',
   notes: 'Boards: headings above the bits, the denary total, then the letter.' });
-youDoSlide({ section: '4 bits → hex', items: FOUR_YOU, reveal: true,
+K.isys(youDoSlide({ section: '4 bits → hex', items: FOUR_YOU, reveal: true,
   takeaway: [{ text: 'One hex digit stands for exactly 4 bits: ', options: { bold: true, color: P.gold } }, { text: '0000 is 0, 1111 is F.' }],
-  notes: 'Common slip: stopping at the denary number (12 instead of C). The answer is one hex digit.' });
+  notes: 'Common slip: stopping at the denary number (12 instead of C). The answer is one hex digit.' }),
+  { term: 'One hex digit', fact: '4 bits', say: 'One hex digit stands for exactly 4 bits.' });
 taskSlide({ section: '4 bits → hex', time: '10 MIN',
   tasks: [[1, 'Hex digits', '4 steps, the table fades away'], [2, '4-bit binary → hex', '4 steps, every answer a letter']],
   note: 'A wrong answer shows the working and gives you a new question after a short wait.',

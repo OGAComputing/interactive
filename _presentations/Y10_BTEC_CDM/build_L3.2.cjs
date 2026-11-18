@@ -63,11 +63,13 @@ K.info({ title: 'Five needs', standfirst: 'Each reason is a need that the produc
     ['Social interaction', 'Something to share, play or talk about with others: Leo.']],
   notes: 'One per click: name each need, then point back to the person. Entertainment and escapism feel close: entertainment is about the fun; escapism is about getting AWAY from something (stress, boredom, a test). These five are the Warm-up\'s five boxes, and the definitions stay open on the page.' });
 
-K.keyTerm({ term: 'Uses and gratifications', say: 'gra-ti-fi-KAY-shuns',
+const sIsys0 = K.keyTerm({ term: 'Uses and gratifications', say: 'gra-ti-fi-KAY-shuns',
   definition: 'The theory behind the five needs: the audience is active. People choose media to meet their own needs. The need it meets is their gratification: their reward.',
   example: 'Stardew Valley: one player farms to relax after school, another to share a farm with friends online. Same game, different rewards.',
   img: img('stardew_valley.png'), imgLabel: 'Stardew Valley · ConcernedApe',
   notes: 'Spec A1: audience uses and gratifications. Now the label goes on what they have just seen. "Uses" = what people use media for; "gratifications" = what they get out of it. Example on click: like Amir, Jess, Kai, Priya and Leo, nobody makes a Stardew Valley player open it; each chooses it for their own reward. Ben comes back in the Part 2 hinge question.' });
+K.isys(sIsys0, { term: "Uses and gratifications", fact: "the audience is active", say: "Uses and gratifications says the audience is active: people choose media to meet their needs." });
+K.isys(sIsys0, { term: "Gratification", fact: "their reward", say: "The need a product meets is their gratification: their reward." });
 
 K.info({ title: 'One game, five needs', standfirst: 'Five players, one Mario Kart World. The need belongs to the player, not the game.',
   points: [['Information', 'Mo checks the kart stats to find the fastest set-up.'],

@@ -3,7 +3,7 @@
 Use this document when creating lesson slides for Year 8 Python Unit 1.
 It covers the school's pedagogical framework, lesson structure, cognitive load principles, and design constraints.
 
-**Sections 1, 2, 4–7 and 9 apply to every lesson deck** (any year, any unit). Section 9 is the approved build system: slide order, palette, fonts, sizes and icon rules.
+**Sections 1, 2, 4–7, 9 and 10 apply to every lesson deck** (any year, any unit). Section 9 is the approved build system: slide order, palette, fonts, sizes and icon rules. Section 10 is ISYS (I Say, You Say).
 
 ---
 
@@ -190,3 +190,34 @@ A unit with a story layer can restyle the deck to match it, but keeps the slide 
 - **Y9 Python — *Station Zero*** (survival horror, `Y9/Python/`): charcoal stays the base, gold is used as the station's hazard/warning colour, and a dim phosphor green (Consolas) is kept for story text only: chapter cards and terminal logs. Alarm red appears **only** on error messages. The Recap & Recall starter stays light (off-white) so the answers slide can be the dark one. The story appears in two places only, as in the activities: a chapter card before the task and a cliffhanger at the end. Content slides carry no decorative horror imagery. Code uses Consolas, coloured like the activities' memory view: strings in Okabe-Ito orange (`str`), numbers in sky blue (`int`), so slides and activities use the same type colours.
   - **Start from `_presentations/Y9_Python/README.md` and `Y9_Python_Deck_Template.pptx`** (one example of every slide type, with guidance in the speaker notes). The README holds the unit's rules and the running feedback log; the template's rules slides are generated from it.
   - Slide types are functions in `sz_slides.cjs`, drawing parts in `sz_kit.cjs`. A lesson deck is one builder script (`build_deck.cjs` is Lesson 1); copy it for a new lesson. On Windows, call `soffice.exe --headless --convert-to pdf` directly — the pptx skill's `soffice.py` wrapper uses Unix sockets and fails.
+
+---
+
+## 10. ISYS (I Say, You Say) — every lesson deck
+
+Nick's directive, 2026-11-18. Every lesson has **at least one and at most three** ISYS moments.
+
+**Choosing what to flag**
+- The 1–3 most important pieces of **declarative** knowledge in the lesson: key vocabulary, definitions, facts or short rules ("Bit … one binary digit", "Condition … True or False").
+- Term and fact are each **1–4 words**, with exactly one correct answer, and **worded identically** every time they appear in the lesson: slides, notes, questions, worksheets and the activity page. If a slide says it differently, change the slide.
+- Never flag reasoning, explanations, "why" questions or multi-step processes. In a procedural lesson (tracing, writing code, converting numbers) flag the term or rule the procedure relies on ("Selection … makes a decision"), not the steps.
+- Word the pair so the script reads naturally both ways: "What is *fact*?" → *term*, and "What does *term* mean?" → *fact*.
+
+**Marking the slide: the ISYS dot**
+- A small filled dot (0.08″) at the bottom right, just left of the slide number, in the slide number's own colour. Students read it as part of the footer; teachers learn to look for it.
+- Only on slides where an ISYS moment happens. Never on any other slide, and never over content.
+- The same dot in every deck (all units use it), so teachers recognise it anywhere.
+
+**Teacher script** (in that slide's speaker notes, exactly this format):
+
+```
+ISYS:
+- Say: "[full sentence containing the phrase]"
+- I say, you say: "[term]" … "[definition/fact]"
+- Check (in 3, 2, 1): "What is [definition/fact]?" → "[term]"
+- Reverse (in 3, 2, 1): "What does [term] mean?" → "[definition/fact]"
+```
+
+**Lesson summary**: the first slide's notes start with the lesson's ISYS phrases and the slide each is on.
+
+**How to build it**: both kits have `K.isys(slide, { term, fact, say })` (shared code in `_presentations/isys.cjs`). It draws the dot, writes the script into the notes and the summary onto slide 1 when the deck is written. The build fails if the deck has no phrase or more than three, a term or fact is over 4 words, one term gets two different facts, or the Say line doesn't contain both word for word. Deck templates pass `createDeck({ template: true })` and show one example.

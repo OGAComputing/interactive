@@ -33,16 +33,19 @@ K.titleSlide({ coverLine: 'Reading an Image', issueLine: 'Lesson 1.2  ·  Y10 BT
 K.questions({ topic: TOPIC, lesson: LESSON,
   notes: 'The topic question stays for the whole of Component 1; today\'s question comes back in the plenary.' });
 
-K.keyTerm({ term: 'Denotation', say: 'say: dee-noh-TAY-shun', definition: 'What you can actually see or hear. Just describe it, no opinions.',
+const sIsys0 = K.keyTerm({ term: 'Denotation', say: 'say: dee-noh-TAY-shun', definition: 'What you see or hear. Just describe it, no opinions.',
   example: 'On the Jaws poster: a woman swims at the top of the sea; a huge shark rises below her, mouth open.', img: img('jaws_1975.jpg'), imgLabel: 'Jaws poster (1975)',
   notes: 'Spec textual analysis: denotation and connotation, encoding, anchorage, polysemy. Test: could two people argue about it? If not, it is denotation.' });
-K.keyTerm({ term: 'Connotation', say: 'say: con-oh-TAY-shun', definition: 'What it suggests: the ideas and feelings it gives you.',
+K.isys(sIsys0, { term: "Denotation", fact: "what you see", say: "Denotation is what you see: just describe it." });
+const sIsys1 = K.keyTerm({ term: 'Connotation', say: 'say: con-oh-TAY-shun', definition: 'What it suggests: the ideas and feelings it gives you.',
   example: 'She has no idea what is below her. Danger is coming, and we know before she does, so we feel tense.', img: img('jaws_1975.jpg'), imgLabel: 'Jaws poster (1975)',
   notes: 'Connotations come from denotations: always point to the thing you can see first.' });
+K.isys(sIsys1, { term: "Connotation", fact: "what it suggests", say: "Connotation is what it suggests: the ideas and feelings it gives you." });
 
-K.keyTerm({ term: 'Anchorage', definition: 'Words (a caption, title or tagline) that fix the meaning of an image, so we read it the way the producer wants.',
+const sIsys2 = K.keyTerm({ term: 'Anchorage', definition: 'Words that fix meaning: a caption, title or tagline makes us read the image the way the producer wants.',
   example: '"She\'s everything. He\'s just Ken." tells us whose film this is: Barbie is the star.', img: img('barbie_ken_2023.jpg'), imgLabel: 'Barbie poster (2023)',
   notes: 'Without the caption: two smiling people on a pink B. With it: a joke about who matters.' });
+K.isys(sIsys2, { term: "Anchorage", fact: "words that fix meaning", say: "Anchorage is words that fix meaning, like a caption or a tagline." });
 
 K.annotate({ title: 'Worked model: the Jaws poster', pillar: 'info', img: img('jaws_1975.jpg'), imgLabel: 'Jaws poster (1975)',
   marks: [{ at: [0.09, 0.105], label: 'Tagline', note: '"Terrifying" → this is horror (anchorage)' }, { at: [0.86, 0.22], label: 'Title', note: 'Red capitals → blood, danger' },

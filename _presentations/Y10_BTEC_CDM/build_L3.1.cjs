@@ -42,10 +42,11 @@ K.questions({ topic: TOPIC, lesson: LESSON,
   notes: 'Topic question for the whole of Component 1; today\'s question comes back in the plenary. Two halves: SITUATION (where, when, who with), then INVOLVEMENT (passive or active).' });
 
 // ── Part 1: situation (Warm-up, Tasks 1–2, ★ Then and now) ──
-K.keyTerm({ term: 'Situation', definition: 'Where, when and who with someone uses a media product. It changes how they use it and how it feels.',
+const sIsys0 = K.keyTerm({ term: 'Situation', definition: 'Where, when, who with: the setting someone uses a media product in. It changes how they use it and how it feels.',
   example: 'Radio 1 Weekend Breakfast: live in the car with your family on Saturday morning, or on BBC Sounds on your own on Monday.',
   img: img('radio1_breakfast.jpg'), imgLabel: 'Radio 1 Weekend Breakfast',
   notes: 'Spec A1: the situation in which a product is used. Example on click. Ask: which is the same in both? (the show) Which is different? (where, when, who with). In the car, everyone hears it; on Sounds, you can skip the bits you don\'t like.' });
+K.isys(sIsys0, { term: "Situation", fact: "where, when, who with", say: "Situation is where, when, who with: the setting someone uses a product in." });
 
 K.info({ title: 'Three questions about any situation', standfirst: 'Ask all three about every product you use.',
   points: [['Where?', 'At home, on the move, in a stadium or a cinema.'],
@@ -67,7 +68,7 @@ K.task({ title: 'Log your situations', mins: 20, where: WHERE,
     'Task 1 · Same product, new situation: seven questions on five real products.',
     'Task 2 · My media diary: three products you used yesterday, each with its situation.',
     'Finished? Try ★ Then and now. Tasks 3–5 open later.'],
-  criteria: ['Where, when and who with for every entry', 'A different product for each entry', 'What else you were doing at the time'],
+  criteria: ['Where, when, who with for every entry', 'A different product for each entry', 'What else you were doing at the time'],
   notes: 'Warm-up is optional: the three meanings are open on the page. The diary is completion-marked, but each situation needs a real sentence (10+ words). Keep the diaries: students read them to a partner in Task 5.\n★ Then and now: the Sony Walkman (1979) and Game Boy (1989) changed where people could use music and games, compared with Spotify and a Switch 2 today. Tasks 3–5 are locked (Part 2) until the unlock word.' });
 
 // ── Part 2: involvement (Tasks 3–5, ★ Spot the slip) ──
@@ -76,10 +77,12 @@ K.keyTerm({ term: 'Audience involvement', definition: 'How much the audience tak
   img: img('countdown_board.jpg'), imgLabel: 'Countdown',
   notes: 'Spec A1: audience involvement, passive and active. Example on click. Passive isn\'t "bad": sometimes you want something on in the background. Active means doing something back: choosing, talking, voting, making.' });
 
-K.info({ title: 'Passive or active?', standfirst: 'Ask: is the audience doing anything back?',
+const sIsys1 = K.info({ title: 'Passive or active?', standfirst: 'Ask: is the audience doing anything back?',
   points: [['Passive audience', 'Takes it in without doing anything back: on in the background, or just sitting and watching.'],
     ['Active audience', 'Takes part: chooses, talks about it, votes, chats, or makes something with it.']],
   notes: 'One per click. It\'s a line, not two boxes: most people are somewhere in between. The situation matters too: alone and half asleep is more passive than shouting answers with your grandad. Task 4 puts real products on this line.' });
+K.isys(sIsys1, { term: "Passive audience", fact: "takes it in", say: "A passive audience takes it in without doing anything back." });
+K.isys(sIsys1, { term: "Active audience", fact: "takes part", say: "An active audience takes part." });
 
 K.info({ title: 'Three ways to get involved', standfirst: 'Products give their audience ways to take part.',
   points: [['Interactive features', 'Parts you click, tap or choose that respond to you: liking a YouTube video brings you more like it.'],

@@ -35,15 +35,17 @@ K.titleSlide({ coverLine: 'Welcome to Creative Media', issueLine: 'Lesson 1.0  �
 K.questions({ topic: TOPIC, lesson: LESSON,
   notes: 'The topic question runs through all of Component 1.' });
 
-K.keyTerm({ term: 'Media product', definition: 'Anything made to reach an audience through sound, moving pictures, print or a screen.',
+const sIsys0 = K.keyTerm({ term: 'Media product', definition: 'Anything made for an audience, through sound, moving pictures, print or a screen.',
   example: 'A Fortnite season, a Smash Hits cover from 1989, a Radio 1 breakfast show: all media products.', img: img('fortnite.jpg'), imgLabel: 'Fortnite screenshot',
   notes: 'Ask for examples from their last 24 hours before revealing the example line.' });
+K.isys(sIsys0, { term: "Media product", fact: "made for an audience", say: "A media product is anything made for an audience." });
 
-K.info({ title: 'Three components', standfirst: 'The BTEC Tech Award in Creative Media Production has three parts. You need all three.',
+const sIsys1 = K.info({ title: 'Three components', standfirst: 'The BTEC Tech Award in Creative Media Production has three parts. You need all three.',
   points: [['Component 1 · Exploring Media Products', 'How real media products are made for their audiences. Now until the spring.'],
     ['Component 2 · Developing Digital Media Production Skills', 'Hands-on skills in one sector: video, print or interactive.'],
     ['Component 3 · Create a Media Product in Response to a Brief', 'Make your own product for a client. Set and marked by Pearson.']],
   notes: 'From the specification: C1 and C2 are internally assessed (36 guided hours each); C3 is external and synoptic (48 hours). They did a C3-style mock with FIZZIKAL.' });
+K.isys(sIsys1, { term: "Component 1", fact: "Exploring Media Products", say: "Component 1 is Exploring Media Products." });
 
 K.info({ title: 'Component 1: what you will learn', standfirst: 'Real media products you know, and some made before you were born.',
   points: [['Three sectors', 'Audio / moving image, print and interactive.'],

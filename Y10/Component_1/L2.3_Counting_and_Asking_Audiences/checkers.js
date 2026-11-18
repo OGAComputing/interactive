@@ -285,7 +285,7 @@ export const GLOSSARY = [
   ['ranking', 'A question where people put things in order, favourite first'],
   ['open-ended', 'A question people answer in their own words, like "Why…?"'],
   ['follow-up', 'A question that asks for more about the answer someone just gave'],
-  ['sample', 'The people you choose to answer your survey or interview'],
+  ['sample', 'The people you ask in your survey or interview'],
   ['research log', 'Your record of what you found, where you found it and when'],
   // Everyday-but-tricky words
   ['BFI', 'The British Film Institute: it collects the UK\'s official film figures'],

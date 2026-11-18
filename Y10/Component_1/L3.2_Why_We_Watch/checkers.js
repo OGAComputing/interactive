@@ -205,7 +205,7 @@ export const PILOTS = {};
 // ── Glossary: [pattern, meaning] for every word a typical 13-year-old might not know ──
 // Spec terms wherever they are answer options, plus everyday-but-tricky words. Meanings ≤ 80 characters.
 export const GLOSSARY = [
-  ['uses and gratifications', 'A theory: people choose media to meet their own needs'],
+  ['uses and gratifications', 'A theory: the audience is active, choosing media to meet its needs'],
   ['gratifications?|gratify', 'A reward or need met: what you get out of using a product'],
   ['information', 'A need: finding out facts or what is happening in the world'],
   ['entertainment', 'A need: enjoyment, fun or a laugh'],

@@ -67,6 +67,8 @@ K.info({ title: 'Purpose, motivation, aim', standfirst: 'Three questions to ask 
 {
   // The spec words, one column per question, colour-matched to the page's worked model (purpose blue, motivation red, aim green).
   const s = newSlide('C1_PAPER', 'Content', 'The words to use');
+  K.isys(s, { term: "Purpose", fact: "for the audience", say: "Purpose is for the audience: what the product does for them." });
+  K.isys(s, { term: "Motivation", fact: "for the producer", say: "Motivation is for the producer: what they want or get." });
   const cols = [
     ['Purpose', 'for the audience', '1F5FAD', [['entertain', 'fun, a laugh, a story'], ['inform', 'give facts'], ['educate', 'teach'],
       ['persuade', 'get you to do or buy'], ['inspire', 'make you feel you could too'], ['challenge', 'question an idea']]],
