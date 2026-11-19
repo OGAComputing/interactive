@@ -20,7 +20,8 @@
 //
 // On an animated slide, click: k ties a phrase to the click where you teach it. The corner shows only the
 // phrases of the current step: the phrases without a click until the first click that has one, then each
-// click's phrases until the next (the dot stays throughout). The notes say which click each script is at.
+// click's phrases until the next (the dot stays throughout). A slide whose only phrase has a click shows just the
+// dot until that click. The notes say which click each script is at.
 //   K.isys(s, { term: 'Call', fact: 'runs the function', click: 2, say: '…', check: '…', reverse: '…' });
 
 const path = require('path');
@@ -91,7 +92,7 @@ module.exports = function createIsys(pres, kit) {
       const steps = [...new Set(here.map((m) => m.click))].sort((a, b) => a - b);
       // kit.mark(s, text, { from, until, dot }): the phrase shows from click `from` until click `until`.
       steps.forEach((from, i) => kit.mark(s, here.filter((m) => m.click === from).map(label).join('  ·  '),
-        steps.length > 1 ? { from, until: steps[i + 1], dot: i === 0 } : undefined));
+        steps.length > 1 || from ? { from, until: steps[i + 1], dot: i === 0 } : undefined));   // until undefined: to the end
     }
     moments.forEach((m) => m.s._slideObjects.push(note((hasNotes(m.s) ? '\n\n' : '') + script(m))));
 

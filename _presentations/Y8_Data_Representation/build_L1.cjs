@@ -152,7 +152,7 @@ S.questionsSlide(K, { section: 'Intro', topic: TOPIC, lesson: LESSON,
 {
   const s = K.newSlide('SZ_DARK', 'Denary and binary', 'Binary: only 0 and 1');
   K.isys(s, { term: 'Binary', fact: 'only 0 and 1', check: "Which number system uses only 0 and 1?", reverse: "Which digits does binary use?", say: 'Binary uses only 0 and 1, because every switch is on or off.' });
-  K.isys(s, { term: 'Bit', fact: 'one binary digit', say: 'A bit is one binary digit: a 0 or a 1.' });
+  K.isys(s, { term: 'Bit', fact: 'one binary digit', click: 1, say: 'A bit is one binary digit: a 0 or a 1.' });
   K.text(s, [{ text: 'A computer is made of switches: ', options: { bold: true } }, { text: 'on = 1, off = 0' , options: { color: P.gold, bold: true } }],
     { x: M, y: 1.6, w: 12, h: 0.6, fontSize: 28, valign: 'middle' });
   const states = [1, 0, 1, 0];

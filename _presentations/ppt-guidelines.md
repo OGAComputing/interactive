@@ -209,6 +209,7 @@ Nick's directive, 2026-11-18. Every lesson has **at least one and at most three*
 - Only on slides where an ISYS moment happens. Never on any other slide, and never over content (keep that corner of the footer row clear).
 - The same mark in every deck (all units use it), so teachers recognise it anywhere.
 - On an animated slide, tie a phrase to the click where you teach it (`click: k`; Y9/Y8 kit). The corner then swaps with the animation, showing only the phrase being taught now (Nick, 2026-11-19).
+- Flag a phrase where it is taught, not on a later slide (an answers slide, the next example): once the class has already used the word, the ISYS feels like a repeat (Y9 L5 Call, 2026-11-19). If the corner would give away a click reveal, tie the phrase to that click. Y10's kit has no click animations, so `click:` stops its build.
 
 **Teacher script** (in that slide's speaker notes, exactly this format):
 

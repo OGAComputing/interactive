@@ -241,7 +241,10 @@ S.questionsSlide(K, { section: 'Intro', topic: TOPIC, lesson: LESSON,
 // 6 · The sixteen digits (Task 1)
 {
   const s = K.newSlide('SZ_DARK', 'The hex digits', 'Hex has sixteen digits');
-  K.isys(s, { term: 'Hexadecimal', fact: 'sixteen digits', check: "Which number system has sixteen digits?", reverse: "How many digits does hexadecimal have?", say: 'Hexadecimal has sixteen digits: 0 to 9, then A to F.' });
+  // A … 10 at click 2, when A appears; the corner swaps to Hexadecimal at click 8, the keyword banner (Nick, 2026-11-19:
+  // flag a word where it is taught, not on a later slide).
+  K.isys(s, { term: 'A', fact: '10', click: 2, check: "What is 10 in hex?", reverse: "What is A in denary?", say: 'In hex, A is 10: count on from there.' });
+  K.isys(s, { term: 'Hexadecimal', fact: 'sixteen digits', click: 8, check: "Which number system has sixteen digits?", reverse: "How many digits does hexadecimal have?", say: 'Hexadecimal has sixteen digits: 0 to 9, then A to F.' });
   const cw = 0.6, gap = 0.06, x0 = M + 1.3, yH = 2.0, yD = 2.82, h = 0.72;
   K.text(s, 'HEX', { x: M, y: yH, w: 1.25, h, fontSize: 13, bold: true, color: P.dim, charSpacing: 2, valign: 'middle' });
   K.text(s, 'DENARY', { x: M, y: yD, w: 1.25, h, fontSize: 13, bold: true, color: P.dim, charSpacing: 2, valign: 'middle' });
@@ -269,10 +272,9 @@ const DIGITS_YOU = [
 ];
 youDoSlide({ section: 'The hex digits', items: DIGITS_YOU, qSize: 38, prompt: 'hide the table. Count on from A = 10.', time: '1 MIN',
   notes: 'Boards, no table on screen. Watch for 12 written as "12": in hex one digit only, so it must be a letter.' });
-K.isys(youDoSlide({ section: 'The hex digits', items: DIGITS_YOU, qSize: 38, reveal: true,
+youDoSlide({ section: 'The hex digits', items: DIGITS_YOU, qSize: 38, reveal: true,
   takeaway: [{ text: '10 to 15 are one letter each: ', options: { bold: true, color: P.gold } }, { text: 'A B C D E F.' }],
-  notes: 'Anyone who wrote two digits for 12: hex needs one character per digit, that is why the letters exist.' }),
-  { term: 'A', fact: '10', check: "What is 10 in hex?", reverse: "What is A in denary?", say: 'In hex, A is 10: count on from there.' });
+  notes: 'Anyone who wrote two digits for 12: hex needs one character per digit, that is why the letters exist.' });
 
 // 9–12 · 4 bits → one hex digit (Task 2)
 b2hSlide({ section: '4 bits → hex', title: '4 bits make one hex digit', mode: 'I DO', bits: '1011',

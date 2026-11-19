@@ -491,7 +491,8 @@ function createDeck({ lesson, footerText, title = 'Component 1 lesson', author =
   const isysLib = require('../isys.cjs');
   const ISYS = isysLib(pres, {
     teacherSlide,
-    mark(s, label) {
+    mark(s, label, when) {
+      if (when) throw new Error(`ISYS click: is not supported in the Y10 kit (it has no click animations): "${label}"`);
       const color = masterOf.get(s) === 'C1_INK' ? P.greyLt : P.grey;
       text(s, label, { x: 2.6, y: 7.0, w: 9.6, h: 0.3, fontSize: label.length > 70 ? 11 : 12, color, align: 'right',
         valign: 'middle', objectName: 'isys phrase' });

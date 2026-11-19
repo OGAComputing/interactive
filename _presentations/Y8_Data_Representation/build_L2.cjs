@@ -125,11 +125,11 @@ const sCarry = addSlide({ section: 'The four rules', title: 'Adding in columns: 
   notes: 'Recall Q4, in columns. Click 1: start on the right, 7 + 8 = 15. 15 is too big for one column: write 5, and the 1 (the ten) '
     + 'is carried: write it above the next column on the left. Click 2: 4 + 3 + the carried 1 = 8. Click 3: that 1 is a carry, '
     + 'today\'s keyword. Binary works exactly like this, right to left, but it carries sooner.' });
-K.isys(sCarry, { term: 'Carry', fact: 'a 1 moves left', check: "What is it called when a 1 moves left?", reverse: "What happens in a carry?", say: 'A carry is when a column is full and a 1 moves left into the next column.' });
+K.isys(sCarry, { term: 'Carry', fact: 'a 1 moves left', click: 3, check: "What is it called when a 1 moves left?", reverse: "What happens in a carry?", say: 'A carry is when a column is full and a 1 moves left into the next column.' });
 {
   const s = K.newSlide('SZ_DARK', 'The four rules', 'Binary carries at 2');
-  K.isys(s, { term: '1 + 1', fact: 'write 0, carry 1', check: "When do you write 0, carry 1?", reverse: "What is 1 + 1 in binary?", say: 'In binary, 1 + 1: write 0, carry 1.' });
-  K.isys(s, { term: '1 + 1 + 1', fact: 'write 1, carry 1', check: "When do you write 1, carry 1?", reverse: "What is 1 + 1 + 1 in binary?", say: 'In binary, 1 + 1 + 1: write 1, carry 1.' });
+  K.isys(s, { term: '1 + 1', fact: 'write 0, carry 1', click: 3, check: "When do you write 0, carry 1?", reverse: "What is 1 + 1 in binary?", say: 'In binary, 1 + 1: write 0, carry 1.' });
+  K.isys(s, { term: '1 + 1 + 1', fact: 'write 1, carry 1', click: 4, check: "When do you write 1, carry 1?", reverse: "What is 1 + 1 + 1 in binary?", say: 'In binary, 1 + 1 + 1: write 1, carry 1.' });
   const RULES = [
     ['0 + 0', 'write 0', ''],
     ['0 + 1', 'write 1', ''],
