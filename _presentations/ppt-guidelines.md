@@ -208,6 +208,7 @@ Nick's directive, 2026-11-18. Every lesson has **at least one and at most three*
 - In the bottom-right corner: the phrase ("Bit … one binary digit"), then a small filled dot (0.08″) just left of the slide number, both small and in the slide number's own colour. Students read it as part of the footer; teachers learn to look for it.
 - Only on slides where an ISYS moment happens. Never on any other slide, and never over content (keep that corner of the footer row clear).
 - The same mark in every deck (all units use it), so teachers recognise it anywhere.
+- On an animated slide, tie a phrase to the click where you teach it (`click: k`; Y9/Y8 kit). The corner then swaps with the animation, showing only the phrase being taught now (Nick, 2026-11-19).
 
 **Teacher script** (in that slide's speaker notes, exactly this format):
 

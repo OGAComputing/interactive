@@ -97,6 +97,9 @@ const F = 'Define, then call';
   const s = newSlide('SZ_DARK', F, 'Watch it run');
   K.isys(s, { term: "Function", fact: "named chunk of code", check: "What is a named chunk of code?", say: "A function is a named chunk of code; we make one with def." });
   K.isys(s, { term: "Indentation", fact: "lines moved inwards", check: "What are lines moved inwards?", say: "Indentation is lines moved inwards; it shows which lines are inside the function." });
+  // Call at click 2, when the bar lands on the call: the corner swaps to it (Nick, 2026-11-19: Call on its own slide,
+  // after the word was already used here, didn't work; all three on one slide link up: name it, indent it, call it).
+  K.isys(s, { term: "Call", fact: "runs the function", click: 2, check: "What runs a function?", reverse: "What does a call do?", say: "A call runs the function: write its name and brackets, like drone_status()." });
   const cx = 1.35, cw = 6.4;
   const cp = codePanel(s, DRONE, { x: cx, y: 1.7, w: cw, size: 24, lh: 0.74 });
   // what Python has learnt: the command's name
@@ -126,9 +129,9 @@ const F = 'Define, then call';
   R.modeChip(K, s, 'I DO');
   addIcon(s, 'info');
   s.addNotes(`I DO — the drone's first command, one step per click (5 clicks). Students just watch; you narrate.
-Before click 1, point at the shape: def, a name, brackets, a colon; the indented lines belong to it, like the body of a loop.
+Before click 1, point at the shape: def, a name, brackets, a colon; the indented lines belong to it, like the body of a loop. ISYS Function, then Indentation, here (scripts below; the corner shows both).
 1 Line 1 lights up: "def means DEFINE. Python learns a new command called drone_status and remembers the indented lines. Does anything print?" No: the output stays empty.
-2 "Python skips the indented lines and goes on to line 5: drone_status() is a CALL. The name with brackets means: run it now."
+2 "Python skips the indented lines and goes on to line 5: drone_status() is a CALL. The name with brackets means: run it now." ISYS Call now (the corner swaps to it), then click on: the call is what makes the drone run. Link the three: a function is a named chunk of code, indentation shows its lines, a call runs it.
 3 The gold arrow: "The call jumps UP into the command." Line 2 runs: DRONE ONLINE.
 4 Line 3: Battery: 100%.
 5 The grey arrow: "The command is finished, so Python carries on after the call. Nothing else, so the program ends."
@@ -158,7 +161,6 @@ const backOut = (s, cp, cx, cw, lines, size, from, to, color = P.muted) => {
 };
 {
   const s = newSlide('SZ_DARK', F, 'Two commands: watch it jump');
-  K.isys(s, { term: "Call", fact: "its name and brackets", check: "Writing a function's name and brackets is a…?", reverse: "How do you call a function?", say: "To call a function, write its name and brackets, like scan()." });
   const cx = 1.35, cw = 6.4, size = 21;
   const cp = codePanel(s, TWO, { x: cx, y: 1.6, w: cw, size, lh: 0.49 });
   const kx = 8.2, kw = 4.53;

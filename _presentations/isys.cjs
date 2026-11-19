@@ -17,6 +17,11 @@
 //   K.isys(s, { term: 'Variable', fact: 'stores data', say: '…',
 //               check: 'What stores data?', reverse: 'What does a variable do?' });
 // The build prints every Check and Reverse question: read each one aloud before you keep it.
+//
+// On an animated slide, click: k ties a phrase to the click where you teach it. The corner shows only the
+// phrases of the current step: the phrases without a click until the first click that has one, then each
+// click's phrases until the next (the dot stays throughout). The notes say which click each script is at.
+//   K.isys(s, { term: 'Call', fact: 'runs the function', click: 2, say: '…', check: '…', reverse: '…' });
 
 const path = require('path');
 const requireGlobal = (name) => {
@@ -39,7 +44,7 @@ module.exports = function createIsys(pres, kit) {
   const facts = new Map();
 
   const asked = new Map();
-  function add(s, { term, fact, say, check, reverse } = {}) {
+  function add(s, { term, fact, say, check, reverse, click = 0 } = {}) {
     if (!term || !fact || !say) throw new Error('isys() needs term, fact and say');
     check = check || `What is ${fact}?`;
     reverse = reverse || `What does ${term} mean?`;
@@ -61,11 +66,11 @@ module.exports = function createIsys(pres, kit) {
     if (s === kit.teacherSlide) throw new Error('ISYS goes on the slide where the term is taught, not the teacher slide');
     facts.set(term, fact);
     asked.set(term, check + '|' + reverse);
-    moments.push({ s, term, fact, say, check, reverse });
+    moments.push({ s, term, fact, say, check, reverse, click });
   }
 
-  const script = ({ term, fact, say, check, reverse }) => [
-    'ISYS:',
+  const script = ({ term, fact, say, check, reverse, click }) => [
+    click ? `ISYS (at click ${click}):` : 'ISYS:',
     `- Say: "${say}"`,
     `- I say, you say: "${term}" … "${fact}"`,
     `- Check (in 3, 2, 1): "${check}" → "${term}"`,
@@ -81,7 +86,13 @@ module.exports = function createIsys(pres, kit) {
       throw new Error(`A lesson needs 1–3 ISYS phrases; this deck has ${facts.size}. Add them with K.isys(slide, { term, fact, say }).`);
     }
     const slides = [...new Set(moments.map((m) => m.s))];
-    for (const s of slides) kit.mark(s, moments.filter((m) => m.s === s).map(label).join('  ·  '));
+    for (const s of slides) {
+      const here = moments.filter((m) => m.s === s);
+      const steps = [...new Set(here.map((m) => m.click))].sort((a, b) => a - b);
+      // kit.mark(s, text, { from, until, dot }): the phrase shows from click `from` until click `until`.
+      steps.forEach((from, i) => kit.mark(s, here.filter((m) => m.click === from).map(label).join('  ·  '),
+        steps.length > 1 ? { from, until: steps[i + 1], dot: i === 0 } : undefined));
+    }
     moments.forEach((m) => m.s._slideObjects.push(note((hasNotes(m.s) ? '\n\n' : '') + script(m))));
 
     const first = new Map();

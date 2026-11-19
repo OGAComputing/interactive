@@ -374,11 +374,12 @@ function traceTable(s, o) {
 const isysLib = require('../isys.cjs');
 const ISYS = isysLib(pres, {
   teacherSlide,
-  mark(s, label) {
+  mark(s, label, { from = 0, until, dot = true } = {}) {
     const color = masterOf.get(s) === 'SZ_LIGHT' ? P.paperDim : P.dim;
-    text(s, label, { x: 4.7, y: 6.98, w: 7.5, h: 0.3, fontSize: label.length > 60 ? 11 : 12, color, align: 'right',
+    const draw = () => text(s, label, { x: 4.7, y: 6.98, w: 7.5, h: 0.3, fontSize: label.length > 60 ? 11 : 12, color, align: 'right',
       valign: 'middle', objectName: 'isys phrase' });
-    s.addShape(pres.shapes.OVAL, { x: 12.3, y: 7.09, w: 0.08, h: 0.08, fill: { color }, line: { type: 'none' }, objectName: 'isys' });
+    if (from || until) onClick(s, from, draw, until); else draw();   // a phrase tied to a click (see ../isys.cjs)
+    if (dot) s.addShape(pres.shapes.OVAL, { x: 12.3, y: 7.09, w: 0.08, h: 0.08, fill: { color }, line: { type: 'none' }, objectName: 'isys' });
   },
   teacher(s, phrases) {
     text(s, 'TEACHER ONLY  ·  HIDDEN SLIDE: IT DOES NOT SHOW IN THE SLIDESHOW', { x: M, y: 0.45, w: 12, h: 0.35,
@@ -428,6 +429,7 @@ return { pres, P, THEME, HEAD, BODY, MONO, W, M, newSlide, addIcon, text, box, c
 // click1 shapes together, then click 2, and so on; "hide<j>" in a name also fades it out on click j. Shapes named "auto…" (new station damage on a
 // story beat) fade in by themselves as the slide opens, before any click. Beat slides (1-based
 // numbers in beats) also get a slow fade-through-black transition: the lights go out.
+// "click0 hide<j>" (onClick(s, 0, draw, j)) is on screen as the slide opens and fades out on click j.
 async function addClickAnimations(file, beats = []) {
   const fs = require('fs');
   const JSZip = requireGlobal('jszip');
@@ -450,8 +452,9 @@ async function addClickAnimations(file, beats = []) {
     const put = (k, spid, dir) => { if (!groups.has(k)) groups.set(k, []); groups.get(k).push([spid, dir]); };
     for (const m of xml.matchAll(/<p:(sp|pic|cxnSp)>\s*<p:nv\w+Pr>\s*<p:cNvPr id="(\d+)" name="(?:click(\d+)(?: hide(\d+))?|(auto))[^"]*"[\s\S]*?<\/p:\1>/g)) {
       const hasText = m[1] === 'sp' && m[0].includes('<p:txBody>');
-      put(m[5] ? 0 : +m[3], m[2], 'in');
-      if (hasText) textIds.add(m[2]);
+      const shown = !m[5] && m[3] === '0';   // "click0 hide<j>": on screen from the start, fades out on click j
+      if (!shown) put(m[5] ? 0 : +m[3], m[2], 'in');
+      if (hasText && !shown) textIds.add(m[2]);
       if (m[4]) { put(+m[4], m[2], 'out'); if (hasText) exitTextIds.add(m[2]); }
     }
     if (!groups.size && !isBeat) continue;
