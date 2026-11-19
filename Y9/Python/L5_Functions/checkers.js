@@ -191,10 +191,10 @@ export const INV_CHECKS = {
   inv2: {
     reqs: [
       { test: raw => { const d = defOf(raw, 'drone_status'); return !!d && donePrintsIn(d) >= 3; },
-        hint: 'Add print("Camera: ready") as the last line inside drone_status(), indented like the two prints above it.',
+        hint: 'The function drone_status is its indented lines, and line 3 is the last of them. Put print("Camera: ready") just under it, indented the same.',
         wrong: raw => { const d = defOf(raw, 'drone_status'); return !!d && printsIn(d) < 3 && codeLines(raw).some((l, i) => i > d.at && /^print\s*\(/.test(l)); } },
       { test: raw => callsAfterDef(raw, 'drone_status').filter(c => c.indent === 0).length >= 2,
-        hint: 'Keep both drone_status() calls at the bottom.' },
+        hint: 'Don\'t change the two drone_status() calls at the bottom.' },
       { test: (raw, ctx) => ranThis(raw, ctx), hint: RUN_HINT('Press ▶ Run code again: the code has changed since you last ran it.', 'Press ▶ Run code and count the lines it prints.') },
     ],
   },
