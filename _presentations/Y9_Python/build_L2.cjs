@@ -338,7 +338,7 @@ Click 4 — All clear, and that's all: Scan complete is gone.
 Ask: "What would it print if distance were 10?" (Too close, Scan complete: the else block runs, both of its lines.)
 This is exactly Investigate step 2 in today's activity (run it with 85, then 10). Students get stuck on the spaces: line 6 must line up exactly with line 5. Press Tab once; don't mix Tab and spaces.`,
 });
-K.isys(sIndent, { term: "Indentation", fact: "shows what's inside", say: "Indentation shows what's inside the if or the else." });
+K.isys(sIndent, { term: "Indentation", fact: "lines moved inwards", say: "Indentation is lines moved inwards; it shows which lines are inside the if." });
 
 // ════════════════════════════════════════════════════════════════════════════
 //  input() gives text → int() (casting, moved here from Lesson 1's Life Support round)

@@ -324,7 +324,7 @@ Fast finishers: the extension (a growing starburst).`,
 const FB = 'Feedback';
 {
   const s = newSlide('SZ_DARK', FB, 'A bug with no error message');
-  K.isys(s, { term: "Indentation", fact: "shows what's inside", say: "Indentation shows what's inside the loop: only those lines repeat." });
+  K.isys(s, { term: "Indentation", fact: "lines moved inwards", say: "Indentation is lines moved inwards; it shows which lines are inside the loop." });
   const code = ['import turtle', 't = turtle.Turtle()', 'for i in range(4):', '    t.forward(100)', 't.left(90)'];
   const cp = codePanel(s, code, { x: M, y: 1.7, w: 5.6, size: 22, lh: 0.62, hl: [5] });
   text(s, '← not indented', { x: M + 2.6, y: cp.ys[4] - cp.lh / 2, w: 2.9, h: cp.lh, fontSize: 18, bold: true, color: P.gold,
