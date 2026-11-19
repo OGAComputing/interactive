@@ -374,7 +374,13 @@ function createDeck({ lesson, footerText, title = 'Component 1 lesson', author =
     return s;
   }
   // Hinge question: 2–4 lettered options. Students show A/B/C on fingers or whiteboards.
-  function choice({ question, options, pillar = 'feedback', notes: n }) {
+  // `answer` is the right letter. Students noticed the answer was nearly always A (2026-11-19), so vary where the
+  // right option sits: hinge-answers.test.js checks the spread across the course. The notes' "Answer X" must match.
+  function choice({ question, options, answer, pillar = 'feedback', notes: n }) {
+    const letters = 'ABCD'.slice(0, options.length);
+    if (!answer || !letters.includes(answer)) throw new Error(`choice "${question}": answer must be one of ${letters.split('').join('/')}`);
+    const said = /\bAnswer ([A-D])\b/.exec(n || '');
+    if (said && said[1] !== answer) throw new Error(`choice "${question}": answer is ${answer} but the notes say Answer ${said[1]}`);
     const s = newSlide('C1_PAPER', 'Content', 'Which one?');
     text(s, question, { x: M, y: 1.8, w: CW, h: 1.3, fontFace: HEAD, fontSize: 32, valign: 'middle', fit: 'shrink' });
     const gap = 0.3, ow = (CW - gap * (options.length - 1)) / options.length;

@@ -55,7 +55,7 @@ K.info({ title: 'Four ways to do primary research', standfirst: 'All four: you c
   notes: 'Spec examples of primary sources. One per click. The test: lots of people with the same questions = survey; one person, many questions = interview; watching, not asking = observation; a group talking together = discussion. Surveys and interviews come back in 2.3, where students write and record their own.' });
 
 K.choice({ question: 'You read an Empire magazine review of Inside Out 2. What kind of research is this?',
-  options: ['A survey', 'An interview', 'An observation', 'Secondary research'],
+  options: ['A survey', 'An interview', 'An observation', 'Secondary research'], answer: 'D',
   notes: 'Answer D: someone else wrote it. If anyone says B ("the reviewer interviewed people"): maybe, but YOU didn\'t collect it, so for you it\'s secondary. ★ It depends on the page explores exactly this.' });
 
 K.task({ title: 'Which research?', mins: 10, where: WHERE,
@@ -82,9 +82,9 @@ K.info({ title: 'The four checks', standfirst: 'Run all four on every secondary 
 AI chatbots: they can sound sure and still be wrong, and often give no source. Treat an AI answer as a claim to fact-check, never as the source.
 Wikipedia: anyone can edit it, so don't quote it as your source, but follow its references to the real ones.` });
 
-K.choice({ question: 'A 2019 news article gives the number of Roblox players. Why shouldn\'t you use it as today\'s number?',
-  options: ['It is out of date', 'It is anonymous', 'It is an opinion'],
-  notes: 'Answer A. It was true when it was written, so the source isn\'t "bad", but it fails the "When?" check. Find a figure from this year. The same slip is hiding in Jay\'s log (Task 3).' });
+K.choice({ question: 'A BBC News article by its technology reporter says Roblox has 50 million daily players. It was written in 2019. Which check does it fail?',
+  options: ['Who made it?', 'When?', 'Fact or opinion?', 'Can you check it?'], answer: 'B',
+  notes: 'Answer B. Who: the BBC and a named reporter, so it passes. Fact: a number you can check. When: 2019, so it is out of date. It was true when it was written, so the source isn\'t "bad": find a figure from this year. The same slip is hiding in Jay\'s log (Task 3).' });
 
 K.task({ title: 'Trust it?', mins: 12, unlock: 'detective', where: WHERE,
   steps: ['Task 2 · Trust it? Place seven Minecraft sources on the line, from Trust it to Don\'t trust it.',
@@ -121,7 +121,7 @@ K.info({ title: 'Screenshots and screen recordings', standfirst: 'Show it, don\'
 The school PCs' Snipping Tool is an old version with no video, so record with PowerPoint 2024: Insert › Screen Recording, Select Area, Record (Windows + Shift + Q stops). The video lands on the slide: right-click it › Save Media As to save the MP4. Streaming services such as Netflix block capture and record black: use the trailer on YouTube or a still instead.` });
 
 K.choice({ question: 'You copy one sentence from a review into your log. What else does it need?',
-  options: ['Quotation marks and a reference', 'Nothing: it is only one sentence', 'A few words changed around'],
+  options: ['Quotation marks and a reference', 'Nothing: it is only one sentence', 'A few words changed around'], answer: 'A',
   notes: 'Answer A. Changing a few words is still someone else\'s work (C); one sentence still needs its source (B).' });
 
 K.task({ title: 'Check a log, then start yours', mins: 25, unlock: 'credit', where: WHERE,

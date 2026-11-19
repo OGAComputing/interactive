@@ -45,9 +45,9 @@ K.info({ title: 'Four kinds of producer', standfirst: 'The producer is whoever m
   notes: `Spec A1 producer types. One per click. For each, ask: who owns it, and how is it paid for? Those two questions decide the type.
 Conglomerate: Disney owns Pixar, Marvel, Star Wars. Public service broadcaster: paid for by the TV licence (BBC) or adverts but owned by the public (Channel 4), with a duty to inform, educate and entertain. Independent: Toby Fox made Undertale almost alone. Community: often volunteers.` });
 
-K.choice({ question: 'BBC Radio 1 is paid for by the TV licence and plays no adverts. Which kind of producer makes it?',
-  options: ['A media conglomerate', 'A public service broadcaster', 'An independent producer', 'Community media'],
-  notes: 'Answer B. The TV licence and the duty to serve everyone make it a public service broadcaster. If anyone says A: the BBC is big, but size alone isn\'t the test; who pays and who it must serve is.' });
+K.choice({ question: 'S4C makes Welsh-language TV. It is owned by the public, paid for by the TV licence and adverts, and must serve all of Wales. Which kind of producer?',
+  options: ['A media conglomerate', 'A public service broadcaster', 'An independent producer', 'Community media'], answer: 'B',
+  notes: 'Answer B. Who owns it (the public) and its duty to serve everyone make it a public service broadcaster, like the BBC and Channel 4. If anyone says D: it is for Welsh speakers, but community media is made by the group itself, not for profit, often by volunteers; S4C is a national channel with a public duty. Adverts don\'t make it a conglomerate: Channel 4 has adverts too.' });
 
 K.task({ title: 'Name the producer', mins: 12, where: 'Hub › Year 10 › Lesson 1.3 › Who Made It and Why?',
   steps: ['The page opens on the Warm-up tab: sort 8 examples, two per kind of producer.',
@@ -99,8 +99,8 @@ K.annotate({ title: 'Worked model: the McCrispy billboard', pillar: 'info', img:
   notes: 'Model aloud, in this order: what does it do to me (purpose), what does McDonald\'s get (motivation), what did they want it to look like (aim)? Hub Task 2 repeats this model before students spot Sam\'s slips.' });
 
 K.choice({ question: 'Sam writes: "The purpose of the billboard is to make money." What has Sam got wrong?',
-  options: ['Making money is a motivation', 'A billboard has no purpose', 'Making money is an aim'],
-  notes: 'Answer A, and the most common slip moderators see. The audience doesn\'t get the money; McDonald\'s does, so it is a motivation. The purpose is to persuade. Task 2 has four slips like this in Sam\'s paragraph about A Minecraft Movie.' });
+  options: ['A billboard has no purpose', 'Making money is an aim', 'Making money is a motivation'], answer: 'C',
+  notes: 'Answer C, and the most common slip moderators see. The audience doesn\'t get the money; McDonald\'s does, so it is a motivation. The purpose is to persuade. Task 2 has four slips like this in Sam\'s paragraph about A Minecraft Movie.' });
 
 K.modelAnswer({ title: 'What a good answer sounds like', question: 'Who made Stardew Valley, and what is its purpose?', key: ['Producer', 'Purpose', 'Reason'],
   parts: [['Producer', 'Stardew Valley was made by ConcernedApe, which is an independent producer.'],

@@ -81,7 +81,7 @@ K.info({ title: 'One game, five needs', standfirst: 'Five players, one Mario Kar
   notes: 'The worked model: one product, all five needs. One per click; before each reveal, read the person\'s line and ask which need it is. The point to land: you can\'t tell the need from the product, only from the person\'s reason. That is how Task 1 works: wait for the clue that tells you WHY.' });
 
 K.choice({ question: 'Aisha streams KPop Demon Hunters songs on repeat and dresses as Rumi on non-uniform day, so everyone knows she\'s a fan. Which need?',
-  options: ['Personal identity', 'Entertainment', 'Information'],
+  options: ['Personal identity', 'Entertainment', 'Information'], answer: 'A',
   notes: 'Answer A: dressing up so people know she\'s a fan shows who she is. She may also enjoy the songs (entertainment), but the clue that decides it is "so everyone knows". ' });
 
 K.turnTalk({ lead: 'Think of one thing you watched, played or listened to yesterday.',
@@ -106,8 +106,8 @@ K.info({ title: 'Same product, different needs', standfirst: 'Different people, 
   notes: 'One per click. Point 2 links back to 3.1: where, when and who with can change the need. Point 3 links to producers (1.3): more needs met = a bigger audience. Task 3 asks about eight people like these.' });
 
 K.choice({ question: 'Ben usually plays Stardew Valley alone to relax. Tonight he plays online with two friends, building one farm together. Which need tonight?',
-  options: ['Social interaction', 'Escapism', 'Information'],
-  notes: 'Answer A. Usually it is escapism (alone, to relax); tonight the situation (who with) changes it. Some Task 3 questions name two people or two situations: read which one the question asks about.' });
+  options: ['Escapism', 'Information', 'Social interaction'], answer: 'C',
+  notes: 'Answer C. Usually it is escapism (alone, to relax); tonight the situation (who with) changes it. Some Task 3 questions name two people or two situations: read which one the question asks about.' });
 
 K.turnTalk({ lead: 'Pick a product you love.',
   prompt: 'Could it meet a different need for someone else? Who, and which need?',

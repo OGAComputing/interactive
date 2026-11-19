@@ -59,8 +59,8 @@ K.compare({ title: 'One sector, 37 years apart', a: { name: 'Pac-Man · 1980', i
   notes: 'Worked example for the first two rows; students fill in the last two (mini whiteboards). Who with: on your own / up to 100 players online. How it looks: flat pixel maze / 3D world, skins, live events.' });
 
 K.choice({ question: 'Pokémon Red came out in the UK in 1999. Which box does it go in?',
-  options: ['Interactive · before 2000', 'Interactive · 2000 onwards', 'Print · before 2000'],
-  notes: 'Hinge. Answer A: a Game Boy game (interactive), released 1996 in Japan and 1999 in the UK, so historical. B = era slip; C = thinks the box art makes it print.' });
+  options: ['Print · before 2000', 'Interactive · 2000 onwards', 'Interactive · before 2000'], answer: 'C',
+  notes: 'Hinge. Answer C: a Game Boy game (interactive), released 1996 in Japan and 1999 in the UK, so historical. A = thinks the box art makes it print; B = era slip.' });
 
 K.turnTalk({ lead: 'The Jaws poster is print. Jaws the film is audio / moving image.',
   prompt: 'Name another product that lives in more than one sector.',

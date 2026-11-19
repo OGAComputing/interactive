@@ -126,8 +126,8 @@ recipe(K.task({ title: 'Profile your audience', mins: 15, where: 'Classroom › 
   notes: 'task — Deliberate Practice. Numbered steps (3–4), where to find the worksheet, success criteria on the right, optional timer.' }), 'task');
 
 recipe(K.choice({ question: 'Which detail best shows the audience\'s values, not just their age?',
-  options: ['The price on the cover', 'A cover line about saving the planet', 'The model\'s age'],
-  notes: 'choice — hinge question with 2–4 options; students show A/B/C on fingers or whiteboards. Use it to check before moving on. Make every option plausible and a similar length.' }), 'choice');
+  options: ['The price on the cover', 'A cover line about saving the planet', 'The model\'s age'], answer: 'B',
+  notes: 'choice — hinge question with 2–4 options; students show A/B/C on fingers or whiteboards. Use it to check before moving on. Make every option plausible and a similar length. `answer` is the right letter (required): vary it, never mostly A; hinge-answers.test.js checks the spread across the course.' }), 'choice');
 
 recipe(K.modelAnswer({ title: 'What a good analysis sounds like', question: 'Explain how the product targets its audience.',
   key: ['Point', 'Evidence', 'Explain'],

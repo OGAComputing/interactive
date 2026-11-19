@@ -54,9 +54,9 @@ K.info({ title: 'Three questions about any situation', standfirst: 'Ask all thre
     ['Who with?', 'On your own, with family or friends, or with thousands of other fans.']],
   notes: 'One per click. These are the three boxes of the Warm-up, and the help panel in Task 1 has the same three questions. "When" includes the day: a film on Christmas Day, a final on a Saturday night.' });
 
-K.choice({ question: 'You hear Radio 1 Weekend Breakfast live on Saturday, then the same show on BBC Sounds on Monday. What has changed?',
-  options: ['When you listen', 'Who made the show', 'What the show is about'],
-  notes: 'Answer A: when. The show and its producer (the BBC) are the same. Follow-up: and if you listened on Monday with your mates? (who with changes too).' });
+K.choice({ question: 'Mo and his dad watch every Arsenal match live on TV at home. For the cup final, they watch it live at Wembley. What has changed?',
+  options: ['Where?', 'When?', 'Who with?'], answer: 'A',
+  notes: 'Answer A: where. It is still live (when) and still with his dad (who with). Follow-up: and watching the final on catch-up the next day with his mates? (when and who with both change).' });
 
 K.turnTalk({ lead: 'The same film: at the cinema with friends, or on your phone on the bus.',
   prompt: 'How does the situation change how you watch it?',
@@ -92,8 +92,8 @@ K.info({ title: 'Three ways to get involved', standfirst: 'Products give their a
   notes: 'Spec: interactive features, online voting, consumer-generated content (CGC). One per click. "Consumer" = the audience; "generated" = made. These are Task 3\'s three boxes.' });
 
 K.choice({ question: 'A BBC Bitesize quiz shows your score after every question. Which kind of involvement is it?',
-  options: ['Interactive features', 'Online voting', 'Consumer-generated content'],
-  notes: 'Answer A: it responds to what you click. Not voting (your answers don\'t change the programme), not CGC (you didn\'t make the quiz).' });
+  options: ['Online voting', 'Interactive features', 'Consumer-generated content'], answer: 'B',
+  notes: 'Answer B: it responds to what you click. Not voting (your answers don\'t change the programme), not CGC (you didn\'t make the quiz).' });
 
 K.turnTalk({ lead: 'The same Countdown episode: alone, half asleep after tea, or playing along with your grandad.',
   prompt: 'Which audience is more active? How did the situation make the difference?',

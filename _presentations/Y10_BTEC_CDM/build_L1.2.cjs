@@ -54,7 +54,7 @@ K.annotate({ title: 'Worked model: the Jaws poster', pillar: 'info', img: img('j
   notes: 'Markers sit beside the feature they label. Model aloud: say the denotation, then "this suggests…", then how the words anchor it. Hub Task 1 repeats this model, then students sort 8 new statements.' });
 
 K.choice({ question: '"The swimmer is about to be attacked." Is that denotation, connotation or anchorage?',
-  options: ['Denotation: we can see it', 'Connotation: it is suggested', 'Anchorage: the words say so'],
+  options: ['Denotation: we can see it', 'Connotation: it is suggested', 'Anchorage: the words say so'], answer: 'B',
   notes: 'Answer B. We never see an attack: we see a shark and a swimmer, and we read danger into it.' });
 
 K.keyTerm({ term: 'Encoding', say: 'say: en-KOH-ding', definition: 'The producer chooses every detail on purpose to put a meaning in. We decode it when we read it.',

@@ -60,7 +60,7 @@ K.info({ title: 'Counting people online', standfirst: 'Three statistics for webs
   notes: 'One per click. A YouTube channel\'s "subscribers" are subscriptions too, even though they don\'t pay. The Warm-up on the page has these six meanings open while students sort examples.' });
 
 K.choice({ question: 'Spotify wants to show how big its audience is. Which statistic should it use?',
-  options: ['Box office', 'Circulation', 'Subscriptions', 'Hits'],
+  options: ['Box office', 'Circulation', 'Subscriptions', 'Hits'], answer: 'C',
   notes: 'Answer C: people sign up to Spotify Premium every month. Follow-up: and for a film? (box office). A magazine? (circulation).' });
 
 K.info({ title: 'Reading the numbers', standfirst: 'Three sums you\'ll need for real tables.',
@@ -112,8 +112,8 @@ K.turnTalk({ lead: 'A survey asks: "Don\'t you think TikTok is a waste of time?"
   notes: `It pushes people towards an answer ("Don't you think…", "waste of time"). Fairer: "How much time do you spend on TikTok a day?" or "What do you get out of TikTok?"
 Task 5 tests a whole survey like this: students see the results come back, click the ones that are no use, then rewrite those questions.` });
 
-K.choice({ question: 'You want to know in detail why one friend stopped watching a series. Which method?',
-  options: ['Interview', 'Focus group', 'Survey'],
+K.choice({ question: 'Sam gave up on Stranger Things after two episodes. You want to find out why, with a follow-up question after each answer. Which method?',
+  options: ['Interview', 'Focus group', 'Survey'], answer: 'A',
   notes: 'Answer A: one person, in detail, with follow-ups. A survey counts many answers; a focus group is a group discussion.' });
 
 K.info({ title: 'Record your interview', standfirst: 'In PowerPoint, with your partner, about 2 minutes each.',

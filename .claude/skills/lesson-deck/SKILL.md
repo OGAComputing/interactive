@@ -54,6 +54,8 @@ Build or update the deck for `$ARGUMENTS`.
   (labels, prompts, hinge options, task steps) before the slide that introduces or defines it. The
   lesson-question slide may pose it; speaker notes don't count. Move the defining slide earlier, or
   reword the earlier slide in plain words.
+- **Hinge questions:** vary the right letter (Y10 `choice` needs `answer:`; never mostly A), make
+  the options the categories just taught, and use a fresh example, not the one on the teaching slide.
 - **Y10 Recap & Recall:** four questions from four different earlier lessons (at least two from a
   while ago), four options each, and no question that gives its answer away: read each question
   for the answer itself or a word from its definition ("the main group…" → primary). See

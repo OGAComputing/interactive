@@ -65,9 +65,9 @@ ABC1 = A, B and C1 together; C2DE = C2, D and E. Clues to a product's group: wha
 The same boxes are on hub Task 1, so students can look back.` });
 K.isys(sIsys1, { term: "Socio-economic group", fact: "sorted by their job", check: "What is a group of people sorted by their job?", say: "A socio-economic group is people sorted by their job." });
 
-K.choice({ question: 'Aisha is a head teacher. Which socio-economic group is she in?',
-  options: ['A/B: managers, professionals', 'C1: office and admin', 'C2: skilled trades', 'D/E: manual, not working'],
-  notes: 'Answer A: a senior professional who runs a school. Quick follow-up: and a plumber? (C2). A receptionist? (C1).' });
+K.choice({ question: 'Aisha is an electrician. Which socio-economic group is she in?',
+  options: ['A/B: managers, professionals', 'C1: office and admin', 'C2: skilled trades', 'D/E: manual, not working'], answer: 'C',
+  notes: 'Answer C: a skilled trade, like the plumbers and mechanics on the last slide. If anyone says D/E: she works with her hands, but it is a trade she trained for. Quick follow-up: and a dentist? (A/B). A receptionist? (C1).' });
 
 K.annotate({ title: 'Read the evidence: who is it for?', img: img('motd_mag.jpg'), imgLabel: 'Match of the Day magazine cover', pillar: 'info', tall: true,
   marks: [{ at: [0.22, 0.12], label: 'Masthead', note: 'BBC Match of the Day: for people who love football' },
@@ -108,7 +108,7 @@ K.turnTalk({ lead: 'An attitude is an opinion about one thing. A value is the bi
   notes: 'It\'s an attitude (an opinion about leaving early); the value behind it is loyalty. Attitudes and values are the pair students mix up most: listen for "it\'s what they think" (attitude) vs "it\'s what matters most" (value).' });
 
 K.choice({ question: '"Wears the club scarf to school on match days." Which part of the lifestyle profile is this?',
-  options: ['Interests', 'Attitudes', 'Values', 'Behaviour'],
+  options: ['Interests', 'Attitudes', 'Values', 'Behaviour'], answer: 'D',
   notes: 'Answer D: something you could watch them do. If anyone says C (loyalty): that\'s the value BEHIND the behaviour. Good: say both.' });
 
 K.task({ title: 'Profile the audience', mins: 25, unlock: 'superfan', where: WHERE,
