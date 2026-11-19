@@ -87,7 +87,7 @@ const STATION = {
   L2:  { edge: 'amber', dot: P.str, hud: ['SENSOR OPS', 'MOTION DETECTED', 'BIO-SCAN: NOT HUMAN'] },
   L3:  { edge: 'red', hazard: true, dot: P.red, hud: ['LOCKDOWN', 'AIRLOCK CYCLING', 'WARDEN: NO RESPONSE'] },
   L4:  { static: true, dot: P.int, hud: ['NAV BEACON', 'SIGNAL WEAK ▂▁▃▁', 'RESCUE SHIP: NO REPLY'] },
-  L5:  { cracks: true, edge: 'red', dot: P.red, hud: ['HULL BREACH · DECK 2', 'DRONE ONLINE', 'O2 VENTING'] },
+  L5:  { cracks: true, edge: 'red_thin', dot: P.red, hud: ['HULL BREACH · DECK 2', 'DRONE ONLINE', 'O2 VENTING'] },
   L6:  { dot: P.gold, hud: ['SYSTEMS CHECK', 'DIAGNOSTIC MODE'] },
   L7:  { cracks: true, edge: 'red', static: true, dot: P.red, hud: ['LAST STAND', 'SYSTEMS DAMAGED', 'RESCUE SHIP DOCKING'] },
 };

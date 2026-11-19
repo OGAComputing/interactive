@@ -161,7 +161,7 @@ const F1 = 'For loops in action';
     if (stp.seg) onClick(s, k, () => seg(s, ...stp.seg));
     if (stp.pose) onClick(s, k, () => turtleAt(s, ...stp.pose), nextAfter(i, 'pose'));
   });
-  onClick(s, steps.length + 1, () => R.banner(K, s, [{ text: 'range(4) gives 0, 1, 2, 3. ', options: { bold: true, color: P.gold } },
+  onClick(s, steps.length + 1, () => R.banner(K, s, [{ text: 'range(4): four times round. ', options: { bold: true, color: P.gold } },
     { text: 'Four times round: lines 4 and 5 run 4 times.' }], 6.0, 0.7, 22));
   R.modeChip(K, s, 'I DO');
   addIcon(s, 'info');
@@ -172,7 +172,7 @@ Before click 1, point at the shape: for, a name (i), in range(4), a colon; the i
 4 "t.forward(100): the first side." 5 "t.left(90): turn. End of the body…"
 6 The gold arrow: "…so BACK TO THE FOR LINE. i gets the next number: 1." 7–8: side two, turn.
 9 "Back up: i is 2." 10–11. 12 "Back up: i is 3." 13–14: the last side and turn.
-15 The takeaway. Ask: "Why does i stop at 3, not 4?" range(4) gives four numbers, starting at 0 and stopping BEFORE 4.
+15 The takeaway. Ask: "How many times did lines 4 and 5 run?" Four: range(4) means four times round.
 Compare with last lesson: no counter to set up, no n = n + 1, no condition to get wrong. for counts for you.`);
 }
 
@@ -186,12 +186,12 @@ Compare with last lesson: no counter to set up, no n = n + 1, no condition to ge
   s.addShape(K.pres.shapes.RECTANGLE, { x: M + 3.12, y: cp.ys[2] - cp.lh / 2 + 0.05, w: 0.32, h: cp.lh - 0.1,
     fill: { type: 'none' }, line: { color: P.gold, width: 2 } });
   const qx = 6.65, qw = 6.08;
-  const qs = [['How many times round?', '3'], ['What is in i, the last time round?', '2']];
+  const qs = [['How many times round?', '3'], ['Which lines repeat?', '4, 5']];
   qs.forEach(([q, a], j) => {
     const y = 1.7 + j * 0.8;
     badge(s, j + 1, qx, y + 0.11, 0.44);
-    text(s, q, { x: qx + 0.6, y, w: qw - 1.6, h: 0.66, fontSize: 20, valign: 'middle' });
-    onClick(s, j + 1, () => text(s, a, { x: qx + qw - 0.9, y, w: 0.9, h: 0.66, fontFace: MONO, fontSize: 32, bold: true,
+    text(s, q, { x: qx + 0.6, y, w: qw - 2.1, h: 0.66, fontSize: 20, valign: 'middle' });
+    onClick(s, j + 1, () => text(s, a, { x: qx + qw - 1.5, y, w: 1.5, h: 0.66, fontFace: MONO, fontSize: 32, bold: true,
       color: P.ok, align: 'center', valign: 'middle' }));
   });
   badge(s, 3, qx, 3.41, 0.44);
@@ -206,16 +206,17 @@ Compare with last lesson: no counter to set up, no n = n + 1, no condition to ge
   addIcon(s, 'practice');
   s.addNotes(`WE DO — the beacon program with ONE change: range(3) instead of range(4) (outlined). Boards up after each question, THEN click.
 1 → 3: range(3) means 3 times round.
-2 → 2: i is 0, 1, 2. The last time round it's 2, not 3. (The most common slip.)
+2 → lines 4 and 5: they're indented under the for line. Each runs 3 times.
 3 → three sides of the square, with the last side missing: the turtle ends at the top left, facing down.
-Ask: "Which lines repeat?" (4 and 5: they're indented.) "What would make it a square again?" (range(4).)`);
+Ask: "What would make it a square again?" (range(4).)`);
 }
 
 // 7–8. You do: three short programs, then the answers. Card 1 is sketched, cards 2–3 are written.
 const YOU = [
   { code: ['import turtle', 't = turtle.Turtle()', 'for i in range(2):', '    t.forward(100)', '    t.left(90)'],
     draw: times(2, [['fd', 100], ['lt', 90]]), why: '2 times round: two sides' },
-  { code: ['for i in range(3):', '    print(i)'], out: ['0', '1', '2'], why: 'starts at 0, stops before 3' },
+  { code: ['for i in range(3):', '    print("Ping")', '    print("Pong")'], out: ['Ping', 'Pong', 'Ping', 'Pong', 'Ping', 'Pong'],
+    why: 'both indented: 3 times each' },
   { code: ['for i in range(4):', '    print("Beacon")', 'print("Sent")'], out: ['Beacon', 'Beacon', 'Beacon', 'Beacon', 'Sent'],
     why: 'Sent isn’t indented: once' },
 ];
@@ -250,7 +251,7 @@ youDo(false).addNotes(`YOU DO — silent, 3 minutes. Boards up together on 3-2-1
 Card 1 is a drawing: sketch it. Cards 2 and 3 print: write exactly what appears, one line each.`);
 youDo(true).addNotes(`Go through any the class split on.
 1: range(2) → only 2 times round: forward, left, forward, left. Two sides of the square: a corner, with the turtle facing left at the end.
-2: 0, 1, 2. Not 1, 2, 3 and not 0 to 3: range(3) starts at 0 and stops BEFORE 3. Still 3 numbers.
+2: Ping, Pong three times over, in that order. Not three Pings then three Pongs: each time round runs BOTH indented lines before going back up.
 3: Beacon four times, then Sent ONCE. Only the indented line repeats; Sent is after the loop. In the activity, a turn that isn't indented has the same effect on a drawing.`);
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -272,7 +273,7 @@ R.chapterSlide(K, {
   note: [{ text: 'Three calls again: ', options: { bold: true, color: P.gold } },
     { text: 'in Investigate, Modify and Make. They change the story, not your score.' }],
   notes: `Students open "Distress Signal — For Loops" from Google Classroom (Y9 › Python › Lesson 4).
-Predict (4 questions on the beacon program: what it draws, the values of i, which lines repeat, the total turn; the "How for works" card appears after question 2) → Run (three runs, each followed by a question; i is in the Memory box) → Investigate (4 steps: range(8) draws the square twice; a triangle with range(3) and 120°, then turn = 360 ÷ sides; print(i) and range(1, 4); then Break it: the turn moves out of the loop, a straight line and NO error message) → Modify (4 steps: the signal choice, a hexagon or an octagon with the code given; red and pensize(3) with the code given; a pentagon at the bottom; the number of sides from int(input())) → Make (the flare: ask for a colour, draw any regular shape in it, plus the flare call).
+Predict (4 questions on the beacon program: what it draws, how many times line 4 runs, which lines repeat, the total turn; the "How for works" card appears after question 2) → Run (three runs, each followed by a question; on run 2, watch the highlight jump back to line 3) → Investigate (4 steps: range(8) draws the square twice; a triangle with range(3) and 120°, then turn = 360 ÷ sides; print("PING") in the loop and print("SENT") after it: which repeats?; then Break it: the turn moves out of the loop, a straight line and NO error message) → Modify (4 steps: the signal choice, a hexagon or an octagon with the code given; red and pensize(3) with the code given; a pentagon at the bottom; the number of sides from int(input())) → Make (the flare: ask for a colour, draw any regular shape in it, plus the flare call).
 The Beacon display draws in step with the code. Black lines show green on it (the page says so). When the code has no print or input, the display takes the output panel's place.
 The three calls: Investigate step 1 opens with the CRISIS — the storm is dragging the station down. Hold the orbit (the cryo pods drop to reserve power) or keep the pods powered (the orbit decays). Either way only a FAST ship beats the countdown. Modify 1: MAYDAY (fast, medics) or QUARANTINE (slower, containment). Make: a warning flare or a medical flare — the better call covers what the ship's reply is missing. Don't tell them that.
 Circulate. In Investigate step 2, the chain asks for 360 ÷ sides: send stuck students back to the square (4 × 90 = 360).

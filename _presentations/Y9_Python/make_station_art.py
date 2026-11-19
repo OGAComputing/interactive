@@ -152,6 +152,7 @@ def cracks():
 frost()
 edge('edge_amber', (230, 159, 0), 0.58, reach=0.35)  # narrower than the red: L2 slides felt crowded (2026-11-04)
 edge('edge_red', (220, 50, 50), 0.64)
+edge('edge_red_thin', (220, 50, 50), 0.64, reach=0.35)  # L5: same red, kept nearer the edge (2026-11-19)
 hazard()
 static()
 cracks()
