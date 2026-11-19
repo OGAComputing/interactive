@@ -86,7 +86,7 @@ const C = 'Conditions';
 // the right, rejoining below. The else's lines sit on the False path, under the diamond.
 {
   const s = newSlide('SZ_DARK', C, 'Sequence and selection');
-  K.isys(s, { term: "Selection", fact: "makes a decision", say: "Selection makes a decision: the program chooses which lines to run." });
+  K.isys(s, { term: "Selection", fact: "choosing which code runs", say: "Selection is choosing which code runs, using if." });
   const lab = (t, x, color = P.dim) => text(s, t, { x, y: 1.55, w: 5.6, h: 0.3, fontSize: 13, bold: true, color, charSpacing: 2 });
   const NH = 0.6, DW = 2.6, DH = 1.2, BW = 2.2, GAP = 0.5;
   const node = (t, x, y, w, line = P.line) => {

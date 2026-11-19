@@ -134,6 +134,13 @@ function newSlide(master, section, title) {
   if (title) s.addText(title, { placeholder: 'title' });
   return s;
 }
+// Slide 1 is the hidden teacher slide (ISYS phrases, filled in by write()): made first, before any
+// builder slide, so slide numbers and story beats line up. It is numbered 0 (see ../isys.cjs).
+const teacherSlide = pres.addSlide({ masterName: 'SZ_COVER', sectionTitle: (pres.addSection({ title: 'Teacher (hidden)' }), sections.add('Teacher (hidden)'), 'Teacher (hidden)') });
+teacherSlide.hidden = !process.env.DECK_SHOW_HIDDEN;   // DECK_SHOW_HIDDEN=1 shows it, to render and check it
+slideNo++;
+masterOf.set(teacherSlide, 'SZ_COVER');
+
 // Click animation: everything draw() adds to the slide fades in on click k (1, 2, 3 …), and fades out
 // again on click `until` if given (a moving highlight, a value that gets replaced).
 // pptxgenjs can't write animations, so this only names the shapes "click<k>[ hide<until>]"; write() adds the timing XML.
@@ -282,6 +289,9 @@ function recallCards(s, questions, reveal) {
     text(s, q.q, { x: x + 0.25, y: y + 0.7, w: CARD.w - 0.5, h: 0.45, fontSize: 20, bold: true, color: ink });
     // body: code and/or options
     let by = y + 1.15;
+    // hint: one line of help under the question, on the starter only (the answers slide puts the answer there).
+    // Nick added the first one by hand in Slides (Y8 L2 Q1, 2026-11-17); keep hints here so a republish keeps them.
+    if (q.hint && !reveal) text(s, q.hint, { x: x + 0.25, y: by, w: CARD.w - 0.5, h: 0.4, fontSize: 20, color: ink });
     // a write-it card with 3+ code lines has no room for the answer underneath: code on the left, answer beside it
     const side = q.type === 'write' && (q.code?.length || 0) >= 3;
     const codeW = q.type === 'mcq' && q.code?.length ? 2.5 : side ? 3.1 : CARD.w - 0.5;
@@ -360,11 +370,36 @@ function traceTable(s, o) {
 
 // ISYS (I Say, You Say): ppt-guidelines.md §10. isys(s, { term, fact, say }) on each slide where the moment
 // happens. The dot sits just left of the slide number, in its colour: a teacher looks for it, students don't.
-const ISYS = require('../isys.cjs')(pres);
-function isys(s, o) {
-  ISYS.add(s, o, () => s.addShape(pres.shapes.OVAL, { x: 12.3, y: 7.09, w: 0.08, h: 0.08,
-    fill: { color: masterOf.get(s) === 'SZ_LIGHT' ? P.paperDim : P.dim }, line: { type: 'none' }, objectName: 'isys' }));
-}
+// The phrase sits in the bottom-right corner, ending just before the dot, both in the slide number's colour.
+const isysLib = require('../isys.cjs');
+const ISYS = isysLib(pres, {
+  teacherSlide,
+  mark(s, label) {
+    const color = masterOf.get(s) === 'SZ_LIGHT' ? P.paperDim : P.dim;
+    text(s, label, { x: 4.7, y: 6.98, w: 7.5, h: 0.3, fontSize: label.length > 60 ? 11 : 12, color, align: 'right',
+      valign: 'middle', objectName: 'isys phrase' });
+    s.addShape(pres.shapes.OVAL, { x: 12.3, y: 7.09, w: 0.08, h: 0.08, fill: { color }, line: { type: 'none' }, objectName: 'isys' });
+  },
+  teacher(s, phrases) {
+    text(s, 'TEACHER ONLY  ·  HIDDEN SLIDE: IT DOES NOT SHOW IN THE SLIDESHOW', { x: M, y: 0.45, w: 12, h: 0.35,
+      fontSize: 14, bold: true, color: P.gold, charSpacing: 2 });
+    text(s, 'ISYS: I say, you say', { x: M, y: 0.85, w: 12, h: 0.8, fontFace: HEAD, fontSize: 36, bold: true, color: P.off });
+    text(s, 'On each ISYS slide: the phrase and a dot by the slide number. The full script is in that slide’s notes.',
+      { x: M, y: 1.65, w: 12, h: 0.4, fontSize: 16, color: P.muted });
+    const rh = Math.min(1.6, 4.9 / Math.max(1, phrases.length));
+    phrases.forEach((m, i) => {
+      const y = 2.3 + i * rh;
+      box(s, { x: M, y, w: 12.13, h: rh - 0.15, fill: P.panel, line: P.line, r: 0.06 });
+      text(s, [{ text: m.term, options: { color: P.gold, bold: true } }, { text: '  …  ' + m.fact, options: { color: P.off, bold: true } },
+        { text: `     slide ${m.n}`, options: { color: P.dim, fontSize: 16 } }],
+      { x: M + 0.25, y: y + 0.1, w: 11.6, h: 0.5, fontSize: 24, valign: 'middle' });
+      text(s, `Say: "${m.say}"
+Check (3, 2, 1): "What is ${m.fact}?" → ${m.term}     Reverse: "What does ${m.term} mean?" → ${m.fact}`,
+        { x: M + 0.25, y: y + 0.6, w: 11.6, h: rh - 0.8, fontSize: 14, color: P.muted, valign: 'top' });
+    });
+  },
+});
+function isys(s, o) { ISYS.add(s, o); }
 
 // Template deck only: a one-line note in the footer row saying which recipe this is (see README.md).
 function templateNote(s, t, light = false) {
@@ -376,6 +411,7 @@ async function write(out, theme = THEME) {
   ISYS.finish({ template });
   await pres.writeFile({ fileName: out });
   await addClickAnimations(out, beatSlides);
+  require('fs').writeFileSync(out, await isysLib.numberFromZero(require('fs').readFileSync(out)));
   if (process.env.APPLY_THEME) {
     const { applyTheme } = require(process.env.APPLY_THEME);
     await applyTheme(out, theme);

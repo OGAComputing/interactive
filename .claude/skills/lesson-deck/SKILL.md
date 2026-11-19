@@ -54,7 +54,8 @@ Build or update the deck for `$ARGUMENTS`.
   while ago), four options each, and no question that gives its answer away: read each question
   for the answer itself or a word from its definition ("the main group…" → primary). See
   `Y10/CLAUDE.md`.
-- **ISYS:** the dot is on the ISYS slides only (just left of the slide number) and overlaps nothing;
+- **ISYS:** the phrase and dot are on the ISYS slides only (bottom right, by the slide number) and overlap
+  nothing; the hidden teacher slide (slide 1; render it with `DECK_SHOW_HIDDEN=1`) lists every phrase;
   each phrase is worded the same everywhere it appears in the deck and on the page; the Check and
   Reverse lines read naturally.
 - Y10 decks: check in PowerPoint itself with `render_slides.ps1` (the README says how).

@@ -5,8 +5,8 @@
 //
 // Output: L4_For_Loops.pptx beside this file. Activity: Y9/Python/L4_For_Loops/1_Distress_Signal_PRIMM.html.
 // Teaching order (built with Lesson 3's feedback): only what Predict, Run and Investigate need before the
-// activity. Meet the turtle (forward, left) → why loop (eight lines become three) → one animated run of the
-// beacon program, the page's own code (I do, "Watch it run": the turtle draws as the bar steps) → one We do
+// activity. One animated run of the beacon program, the page's own code (I do, "Watch it run": the turtle
+// draws as the bar steps; Nick cut "Meet the turtle" and the eight-lines-to-a-loop slide, 2026-11-12) → one We do
 // and a You do of three short questions (no trace tables) → Story so far → the chapter card.
 // A mid-activity stop before Modification 4 teaches range() with a variable in a non-turtle example (so
 // Modify 4, which has no code, isn't given away). After the activity: the logic error (the bug step), then
@@ -125,82 +125,16 @@ We come back to this question in the plenary.`,
 });
 
 // ════════════════════════════════════════════════════════════════════════════
-//  The turtle: a pen you steer (only what the beacon program uses: forward and left)
-// ════════════════════════════════════════════════════════════════════════════
-const T = 'The turtle';
-
-// 5. Meet the turtle (I do, animated): one line per click, its label beside it, the display changes.
-{
-  const s = newSlide('SZ_DARK', T, 'Meet the turtle');
-  const code = ['import turtle', 't = turtle.Turtle()', 't.forward(100)', 't.left(90)'];
-  const labels = ['load the turtle', 'make a turtle called t', 'move 100, drawing a line', 'turn left 90°'];
-  const cx = M, cw = 7.9;
-  const cp = codePanel(s, code, { x: cx, y: 1.75, w: cw, size: 24, lh: 0.78 });
-  const d = { x: 8.75, y: 1.75, w: 3.98, h: cp.h };
-  display(s, d);
-  const geo = { ox: d.x + d.w / 2 - 0.75, oy: d.y + d.h / 2 + 0.55, sc: 0.015 };
-  const st = simulate([['fd', 100], ['lt', 90]], geo);
-  const poses = [[geo.ox, geo.oy, 0], st[0].pose, st[1].pose];
-  code.forEach((_, i) => {
-    const k = i + 1;
-    onClick(s, k, () => runBar(s, cp, cx, cw, k), k < code.length ? k + 1 : undefined);
-    onClick(s, k, () => text(s, labels[i], { x: cx + 4.45, y: cp.ys[i] - cp.lh / 2, w: cw - 4.6, h: cp.lh, fontSize: 18,
-      italic: true, color: P.gold, valign: 'middle' }));
-  });
-  onClick(s, 3, () => seg(s, ...st[0].line));
-  poses.forEach((p, j) => onClick(s, j + 2, () => turtleAt(s, ...p), j < 2 ? j + 3 : undefined));
-  R.banner(K, s, [{ text: 'A turtle is a pen you steer: ', options: { bold: true, color: P.gold } },
-    { text: 'it draws a line wherever it moves.' }], 5.55, 0.8, 24);
-  R.modeChip(K, s, 'I DO');
-  addIcon(s, 'info');
-  s.addNotes(`Some of you met the turtle in Year 8. One line per click.
-1 import turtle: load Python's turtle drawing tools. Nothing appears yet.
-2 t = turtle.Turtle(): make a turtle and call it t. It appears in the middle, facing right (east).
-3 t.forward(100): move forward 100 steps. The pen is down, so it draws a line.
-4 t.left(90): turn left 90° on the spot. A turn draws nothing; it only changes where the turtle faces.
-Ask: "What would t.forward(100) do now?" (Draw a line upwards.) In the activity, this screen is the station's Beacon display.`);
-}
-
-// 6. Same square, fewer lines: eight lines that repeat a pair four times → a for loop of three lines.
-{
-  const s = newSlide('SZ_DARK', T, 'A square: the same two lines, 4 times');
-  const long = times(4, ['t.forward(100)', 't.left(90)']);
-  const cp = codePanel(s, long, { x: M, y: 1.65, w: 3.75, size: 20, lh: 0.535, first: 3 });
-  // a bracket and a count beside each repeated pair
-  onClick(s, 1, () => [0, 1, 2, 3].forEach((p) => {
-    const y1 = cp.ys[2 * p] - 0.17, y2 = cp.ys[2 * p + 1] + 0.17, bx = M + 3.95;
-    s.addShape(K.pres.shapes.LINE, { x: bx, y: y1, w: 0, h: y2 - y1, line: { color: P.gold, width: 2.5 } });
-    [y1, y2].forEach((yy) => s.addShape(K.pres.shapes.LINE, { x: bx - 0.12, y: yy, w: 0.12, h: 0, line: { color: P.gold, width: 2.5 } }));
-    badge(s, p + 1, bx + 0.15, (y1 + y2) / 2 - 0.2, 0.4);
-  }));
-  onClick(s, 2, () => {
-    arrow(s, 5.35, 3.85, 6.15, 3.85, P.gold);
-    label(s, 'THE SAME SQUARE, WITH A LOOP', 6.35, 2.35, 6.3);
-    const lp = codePanel(s, BEACON.slice(2), { x: 6.35, y: 2.75, w: 6.38, size: 26, lh: 0.8, first: 3 });
-    text(s, '4 times', { x: 11.2, y: lp.ys[0] - 0.3, w: 1.45, h: 0.6, fontSize: 22, bold: true, color: P.gold, valign: 'middle' });
-    text(s, [{ text: 'The indented lines repeat. ', options: { bold: true, color: P.gold } },
-      { text: 'Change 4, and they repeat a different number of times.' }],
-      { x: 6.35, y: 5.75, w: 6.38, h: 0.95, fontSize: 21, valign: 'middle' });
-  });
-  addIcon(s, 'info');
-  s.addNotes(`(Lines 1–2, import and make the turtle, are left off here: they don't change.)
-Before click 1, ask: "How do you draw a square with the turtle?" Forward, turn, four times over: eight lines.
-Click 1: the same two lines, four times. Copying lines is slow, and easy to get wrong: miss one turn and the square breaks.
-Click 2: a for loop says it once. for i in range(4): repeats the indented lines 4 times. It's the same colon and the same indent as your while loops last lesson; what's new is that it counts for you.
-This is the beacon program from today's activity: lines 3 to 5.`);
-}
-
-// ════════════════════════════════════════════════════════════════════════════
 //  For loops in action: watch one run (I do), then short questions, not trace tables (Lesson 3 feedback)
 // ════════════════════════════════════════════════════════════════════════════
 const F1 = 'For loops in action';
 
-// 7. Watch it run (one-off, animated): the beacon program. A gold bar steps through it one line per click,
+// 5. Watch it run (one-off, animated): the beacon program. A gold bar steps through it one line per click,
 // i's box changes, the turtle draws each side as line 4 runs and turns as line 5 runs, and a gold arrow
 // shows each jump back to the for line.
 {
   const s = newSlide('SZ_DARK', F1, 'Watch it run');
-  K.isys(s, { term: "for loop", fact: "set number of times", say: "A for loop repeats its lines a set number of times." });
+  K.isys(s, { term: "for loop", fact: "set number of times", say: "A for loop repeats a set number of times." });
   const cx = 1.35, cw = 6.4;
   const cp = codePanel(s, BEACON, { x: cx, y: 1.7, w: cw, size: 24, lh: 0.74 });
   K.varBox(s, { name: 'i', type: 'int', value: '', x: 8.2, y: 1.95, w: 2.0, h: 1.0 });
@@ -242,7 +176,7 @@ Before click 1, point at the shape: for, a name (i), in range(4), a colon; the i
 Compare with last lesson: no counter to set up, no n = n + 1, no condition to get wrong. for counts for you.`);
 }
 
-// 8. We do: one change, the count (range(3)): only things the class has just seen (README 2026-11-05). Three questions
+// 6. We do: one change, the count (range(3)): only things the class has just seen (README 2026-11-05). Three questions
 // on boards, one answer per click.
 {
   const s = newSlide('SZ_DARK', F1, 'One change: range(3)');
@@ -277,7 +211,7 @@ Compare with last lesson: no counter to set up, no n = n + 1, no condition to ge
 Ask: "Which lines repeat?" (4 and 5: they're indented.) "What would make it a square again?" (range(4).)`);
 }
 
-// 9–10. You do: three short programs, then the answers. Card 1 is sketched, cards 2–3 are written.
+// 7–8. You do: three short programs, then the answers. Card 1 is sketched, cards 2–3 are written.
 const YOU = [
   { code: ['import turtle', 't = turtle.Turtle()', 'for i in range(2):', '    t.forward(100)', '    t.left(90)'],
     draw: times(2, [['fd', 100], ['lt', 90]]), why: '2 times round: two sides' },
@@ -361,7 +295,7 @@ int(input()) is from Lessons 2 and 3: the user types 3, int() makes it the numbe
 New: range(n). The number of times round doesn't have to be written in the code: it can come from a variable, so the USER decides.
 Boards up after a minute.`,
 });
-const sIsys1 = R.predictRevealSlide(K, {
+R.predictRevealSlide(K, {
   section: B, title: 'range(n): n decides how many times', code: BEEP, hl: [2],
   output: [[{ text: 'Beeps? ', color: P.muted }, { text: '3', color: P.str, bold: true }], 'Beep', 'Beep', 'Beep'],
   mistakes: [
@@ -372,7 +306,6 @@ const sIsys1 = R.predictRevealSlide(K, {
 Without int(), n holds the TEXT "3", and range(n) stops with a TypeError ('str' object cannot be interpreted as an integer).
 Modification 4 uses exactly this: ask how many sides, then the loop runs that many times. Remember what each turn has to be: 360 ÷ the number of sides (Investigate step 2). That's all the help on the slides: the step itself has no code.`,
 });
-K.isys(sIsys1, { term: "range(n)", fact: "n times", say: "range(n) goes round n times." });
 R.chapterSlide(K, {
   section: B, kicker: 'CHAPTER 4  ·  BACK IN', title: 'Distress Signal', activity: 'Distress Signal', time: '≈15 MIN', logLabel: 'NAVIGATION',
   log: ['The beacon is sending.', '', 'The ship needs to know', 'how many sides', 'the next signal has.'],
@@ -390,7 +323,7 @@ Fast finishers: the extension (a growing starburst).`,
 const FB = 'Feedback';
 {
   const s = newSlide('SZ_DARK', FB, 'A bug with no error message');
-  K.isys(s, { term: "Indented lines", fact: "inside the loop", say: "Indented lines are inside the loop; only they repeat." });
+  K.isys(s, { term: "Indentation", fact: "shows what's inside", say: "Indentation shows what's inside the loop: only those lines repeat." });
   const code = ['import turtle', 't = turtle.Turtle()', 'for i in range(4):', '    t.forward(100)', 't.left(90)'];
   const cp = codePanel(s, code, { x: M, y: 1.7, w: 5.6, size: 22, lh: 0.62, hl: [5] });
   text(s, '← not indented', { x: M + 2.6, y: cp.ys[4] - cp.lh / 2, w: 2.9, h: cp.lh, fontSize: 18, bold: true, color: P.gold,

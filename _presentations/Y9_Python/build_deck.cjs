@@ -88,7 +88,7 @@ const RUN_NAME = [
 
 // Variables first: storing a value and reading it back, before input() fills the box.
 const sIsys0 = R.runLinesSlide(K, {
-  section: P1, title: 'A variable is a named box in memory',
+  section: P1, title: 'A variable stores data, under a name',
   lines: [
     { code: 'name = "Riley"',
       say: [verb('Stores'), { text: ' "Riley" in a box called ' }, code('name'), { text: '. Here = means store, not equals' }],
@@ -106,7 +106,7 @@ Click 4–6 (line 2): no quotes round name, so Python looks in the box and print
 Link to the Do Now (Q2): score = 5 then score = 9 — a box holds one value, so the new one replaces the old.
 The orange box is how the activity's memory panel shows a string (str). Next slide: the same box, but the USER fills it.`,
 });
-K.isys(sIsys0, { term: "Variable", fact: "a named box", say: "A variable is a named box in memory that stores a value." });
+K.isys(sIsys0, { term: "Variable", fact: "stores data", say: "A variable stores data under a name, like a labelled box." });
 
 R.runLinesSlide(K, {
   section: P1, title: 'input(): the user fills the box',
@@ -220,6 +220,8 @@ Take two or three answers. Don't confirm yet.`,
 // 13. + joins text, adds numbers (one-off diagram)
 {
   const s = newSlide('SZ_DARK', P2, '+ joins text, adds numbers');
+  K.isys(s, { term: "String", fact: "text", say: "A string (str) is text, and input() always gives you a string." });
+  K.isys(s, { term: "Integer", fact: "a whole number", say: "An integer (int) is a whole number; int() turns a string into one." });
   const rows = [
     { a: ['str', '"5"'], b: ['str', '"5"'], r: ['str', '"55"'], note: 'join' },
     { a: ['int', '5'], b: ['int', '5'], r: ['int', '10'], note: 'add' },
@@ -249,8 +251,6 @@ Mixing them crashes: TypeError. Remember this — it's the planted bug in Life S
 // 14. input() gives text → int() / str() convert (one-off diagram)
 {
   const s = newSlide('SZ_DARK', P2, 'input() gives text — so convert it');
-  K.isys(s, { term: "input()", fact: "gives text", say: "input() always gives text, even when the user types a number." });
-  K.isys(s, { term: "int()", fact: "makes it a number", say: "int() makes it a number, so you can do maths with it." });
   const y1 = 2.25, y2 = 4.75;
   text(s, 'TEXT → NUMBER', { x: M, y: y1 - 0.6, w: 4, h: 0.3, fontSize: 13, bold: true, color: P.dim, charSpacing: 2 });
   terminal(s, [[{ text: 'Hours? ' }, { text: '6', color: P.str, bold: true }]], { x: M, y: y1, w: 2.4, size: 22, h: 0.95 });

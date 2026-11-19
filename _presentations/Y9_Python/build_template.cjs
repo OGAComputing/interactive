@@ -182,9 +182,10 @@ const sRunLines = R.runLinesSlide(K, {
     'Any slide type can do this: wrap what should appear in K.onClick(s, clickNumber, () => { …draw… }).',
   ]),
 });
-tag(sRunLines, 'runLinesSlide', 'Run it line by line');
+// No footer label on this one: the ISYS phrase takes that corner, so the recipe name goes in the notes.
+sRunLines.addNotes('\n\nRECIPE: runLinesSlide() · Run it line by line. Its footer shows the ISYS phrase instead of the recipe name.');
 // ISYS (ppt-guidelines.md §10): 1–3 per lesson, on the slide where the term is taught. Draws the dot and writes the script into the notes.
-K.isys(sRunLines, { term: 'Variable', fact: 'a named box', say: 'A variable is a named box in memory that stores a value.' });
+K.isys(sRunLines, { term: 'Variable', fact: 'stores data', say: 'A variable stores data under a name, like a labelled box.' });
 
 tag(R.pairSlide(K, {
   section: EX, title: 'Quotes: the word, or what’s stored?', memory: { name: 'name', type: 'str', value: '"Riley"' },

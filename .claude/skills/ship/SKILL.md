@@ -23,6 +23,9 @@ Pushing to `main` deploys to students, so stop and report at the first failure.
    those whose slides changed, as Google Slides, to the unit's Drive folder, and updates `drive.json`
    (Y9 and Y8 also `_presentations/lesson-slides.json`): include `drive.json`, `lesson-slides.json` and any
    rebuilt deck whose slides changed in the commit; `git restore` decks that differ only by the rebuild. If a build fails because a deck is open in PowerPoint, ask the user to close it and rerun.
+   If it stops because a deck **was edited in Google Slides since it was published**, nothing has been
+   uploaded: tell the user which decks, find the edits in that deck's Slides version history, move them into its
+   builder and rebuild; never pass `--discard-slides-edits` unless the user says to drop those Slides edits.
    If publishing fails (no OAuth client, sign-in refused), report it and carry on shipping the site; the
    decks can be published later with the same command.
 4. **Commit:** stage the agreed files by name (not `git add -A`). Message: `$ARGUMENTS` if

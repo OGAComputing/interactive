@@ -109,6 +109,10 @@ function createDeck({ lesson, footerText, title = 'Component 1 lesson', author =
     if (t) s.addText(t, { placeholder: 'title' });
     return s;
   }
+  // Slide 1 is the hidden teacher slide (ISYS phrases, filled in by write()), numbered 0 (see ../isys.cjs).
+  // DECK_SHOW_HIDDEN=1 shows it, to render and check it.
+  const teacherSlide = newSlide('C1_COVER', 'Teacher (hidden)');
+  teacherSlide.hidden = !process.env.DECK_SHOW_HIDDEN;
   const text = (s, t, o) => {
     if (o.fit === 'shrink' && typeof t === 'string' && WIDTHS[o.fontFace]) o = { ...o, fontSize: fitFont(t, o.fontFace, o.w, o.h, o.fontSize) };
     return s.addText(t, { isTextBox: true, margin: 0, fontFace: BODY, color: P.ink, valign: 'top', ...o });
@@ -483,15 +487,39 @@ function createDeck({ lesson, footerText, title = 'Component 1 lesson', author =
 
   // ISYS (I Say, You Say): ppt-guidelines.md §10. isys(s, { term, fact, say }) on each slide where the moment
   // happens. The dot sits just left of the slide number, in its colour: a teacher looks for it, students don't.
-  const ISYS = require('../isys.cjs')(pres);
-  function isys(s, o) {
-    ISYS.add(s, o, () => s.addShape(pres.shapes.OVAL, { x: 12.3, y: 7.11, w: 0.08, h: 0.08,
-      fill: { color: masterOf.get(s) === 'C1_INK' ? P.greyLt : P.grey }, line: { type: 'none' }, objectName: 'isys' }));
-  }
+  // The phrase sits in the bottom-right corner, ending just before the dot, both in the slide number's colour.
+  const isysLib = require('../isys.cjs');
+  const ISYS = isysLib(pres, {
+    teacherSlide,
+    mark(s, label) {
+      const color = masterOf.get(s) === 'C1_INK' ? P.greyLt : P.grey;
+      text(s, label, { x: 2.6, y: 7.0, w: 9.6, h: 0.3, fontSize: label.length > 70 ? 11 : 12, color, align: 'right',
+        valign: 'middle', objectName: 'isys phrase' });
+      s.addShape(pres.shapes.OVAL, { x: 12.3, y: 7.11, w: 0.08, h: 0.08, fill: { color }, line: { type: 'none' }, objectName: 'isys' });
+    },
+    teacher(s, phrases) {
+      kicker(s, 'Teacher only  ·  hidden slide: it does not show in the slideshow', { x: M, y: 0.45, w: 12, color: P.redLt });
+      text(s, 'ISYS: I say, you say', { x: M, y: 0.8, w: 12, h: 0.9, fontFace: HEAD, fontSize: 44, color: P.paper, valign: 'middle' });
+      text(s, 'On each ISYS slide: the phrase and a dot by the slide number. The full script is in that slide’s notes.',
+        { x: M, y: 1.7, w: 12, h: 0.4, fontSize: 16, color: P.greyLt });
+      const rh = Math.min(1.6, 4.9 / Math.max(1, phrases.length));
+      phrases.forEach((m, i) => {
+        const y = 2.3 + i * rh;
+        rule(s, M, y, CW, P.ruleLt, 1.5);
+        text(s, [{ text: m.term, options: { color: P.redLt, bold: true } }, { text: '  …  ' + m.fact, options: { color: P.paper, bold: true } },
+          { text: '     slide ' + m.n, options: { color: P.greyLt, fontSize: 16 } }],
+        { x: M, y: y + 0.1, w: CW, h: 0.5, fontSize: 24, valign: 'middle' });
+        text(s, [{ text: 'Say: "' + m.say + '"', options: { breakLine: true } },
+          { text: 'Check (3, 2, 1): "What is ' + m.fact + '?" → ' + m.term + '     Reverse: "What does ' + m.term + ' mean?" → ' + m.fact }],
+        { x: M, y: y + 0.6, w: CW, h: rh - 0.8, fontSize: 14, color: P.greyLt });
+      });
+    },
+  });
+  function isys(s, o) { ISYS.add(s, o); }
 
   async function write(out) {
     ISYS.finish({ template });
-    fs.writeFileSync(out, await addReveals(await pres.write({ outputType: 'nodebuffer' })));
+    fs.writeFileSync(out, await isysLib.numberFromZero(await addReveals(await pres.write({ outputType: 'nodebuffer' }))));
     console.log(`Wrote ${out} (${slideNo} slides)`);
     if (imagesNeeded.length) console.log('Images to supply:\n  ' + imagesNeeded.join('\n  '));
     if (clipsUnlinked.length) console.log('Clips with no video link (add video: <Drive ID> from Y10/media.md):\n  ' + clipsUnlinked.join('\n  '));

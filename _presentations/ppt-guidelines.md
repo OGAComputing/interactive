@@ -200,13 +200,13 @@ Nick's directive, 2026-11-18. Every lesson has **at least one and at most three*
 **Choosing what to flag**
 - The 1–3 most important pieces of **declarative** knowledge in the lesson: key vocabulary, definitions, facts or short rules ("Bit … one binary digit", "Condition … True or False").
 - Term and fact are each **1–4 words**, with exactly one correct answer, and **worded identically** every time they appear in the lesson: slides, notes, questions, worksheets and the activity page. If a slide says it differently, change the slide.
-- Never flag reasoning, explanations, "why" questions or multi-step processes. In a procedural lesson (tracing, writing code, converting numbers) flag the term or rule the procedure relies on ("Selection … makes a decision"), not the steps.
+- Never flag reasoning, explanations, "why" questions or multi-step processes. In a procedural lesson (tracing, writing code, converting numbers) flag the term or rule the procedure relies on ("Selection … choosing which code runs"), not the steps.
 - Word the pair so the script reads naturally both ways: "What is *fact*?" → *term*, and "What does *term* mean?" → *fact*.
 
-**Marking the slide: the ISYS dot**
-- A small filled dot (0.08″) at the bottom right, just left of the slide number, in the slide number's own colour. Students read it as part of the footer; teachers learn to look for it.
-- Only on slides where an ISYS moment happens. Never on any other slide, and never over content.
-- The same dot in every deck (all units use it), so teachers recognise it anywhere.
+**Marking the slide: the phrase and the ISYS dot** (Nick, 2026-11-18)
+- In the bottom-right corner: the phrase ("Bit … one binary digit"), then a small filled dot (0.08″) just left of the slide number, both small and in the slide number's own colour. Students read it as part of the footer; teachers learn to look for it.
+- Only on slides where an ISYS moment happens. Never on any other slide, and never over content (keep that corner of the footer row clear).
+- The same mark in every deck (all units use it), so teachers recognise it anywhere.
 
 **Teacher script** (in that slide's speaker notes, exactly this format):
 
@@ -218,6 +218,6 @@ ISYS:
 - Reverse (in 3, 2, 1): "What does [term] mean?" → "[definition/fact]"
 ```
 
-**Lesson summary**: the first slide's notes start with the lesson's ISYS phrases and the slide each is on.
+**Lesson summary: a hidden teacher slide** (Nick, 2026-11-18). Slide 1 of every deck is hidden (it never shows in the slideshow) and lists the lesson's ISYS phrases: term … fact, the slide it's on, the Say line, Check and Reverse. Its notes start with the same list. Slides are numbered from 0, so the hidden slide is 0 and Recap & Recall is still slide 1 in PowerPoint.
 
-**How to build it**: both kits have `K.isys(slide, { term, fact, say })` (shared code in `_presentations/isys.cjs`). It draws the dot, writes the script into the notes and the summary onto slide 1 when the deck is written. The build fails if the deck has no phrase or more than three, a term or fact is over 4 words, one term gets two different facts, or the Say line doesn't contain both word for word. Deck templates pass `createDeck({ template: true })` and show one example.
+**How to build it**: both kits have `K.isys(slide, { term, fact, say })` (shared code in `_presentations/isys.cjs`). It draws the phrase and the dot, writes the script into the notes, and fills the hidden teacher slide when the deck is written (`DECK_SHOW_HIDDEN=1` builds it visible, to render and check it). The build fails if the deck has no phrase or more than three, a term or fact is over 4 words, one term gets two different facts, or the Say line doesn't contain both word for word. Deck templates pass `createDeck({ template: true })` and show one example.

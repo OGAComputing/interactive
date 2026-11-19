@@ -4,6 +4,7 @@
 //   node publish_to_drive.cjs                  rebuild every lesson deck, then upload each deck (and its resources) that changed
 //   node publish_to_drive.cjs L3_While_Loops.pptx [--force]
 //   node publish_to_drive.cjs --dry-run        rebuild and list what would be uploaded, without signing in
+//   node publish_to_drive.cjs --discard-slides-edits   replace decks even if someone has edited them in Google Slides
 //
 // Every deck is rebuilt from its build_L<n>.cjs first, so Drive always gets the latest builder and kit; a build
 // that fails (usually: the deck is open in PowerPoint) stops the run before anything is uploaded.
@@ -11,7 +12,10 @@
 // resources/<deck name>/ go in the same folder (Word, Excel and PowerPoint files are converted to Docs, Sheets and
 // Slides). Drive IDs and content hashes are kept in the unit's drive.json, so a republish replaces the contents of
 // the same Slides file and links posted in Classroom keep working. Decks listed in drive.json's "manual" were put on
-// Drive by hand and are left alone. Anything changed by hand in the Slides copy is overwritten: edit the builder.
+// Drive by hand and are left alone. Anything changed by hand in the Slides copy would be overwritten, so each upload
+// records the Slides file's modifiedTime; if a deck has been edited in Slides since, the run stops before uploading
+// anything and names it. Move those edits into the builder (or check them), then use --discard-slides-edits.
+// (2026-11-18: an ISYS republish replaced hand edits made to the Y9 L4 deck in Slides.)
 //
 // One-time setup (see Y10_BTEC_CDM/README.md): a Desktop OAuth client JSON at ~/.oga-drive/client_secret.json. The
 // first run opens a browser to sign in; the token is kept in ~/.oga-drive/token.json, outside the repo.
@@ -40,7 +44,7 @@ const CONVERT = {
 const PLAIN = { '.pdf': 'application/pdf', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.mp4': 'video/mp4', '.txt': 'text/plain' };
 
 const args = process.argv.slice(2);
-const force = args.includes('--force'), dryRun = args.includes('--dry-run');
+const force = args.includes('--force'), dryRun = args.includes('--dry-run'), discardEdits = args.includes('--discard-slides-edits');
 const named = args.filter((a) => !a.startsWith('--')).map((a) => path.basename(a));
 
 const sha = (file) => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
@@ -241,6 +245,22 @@ module.exports = (unit) => (async () => {
   if (dryRun) return;
 
   TOKEN = await accessToken();
+
+  // Edited in Slides since it was last published? Stop before anything is replaced.
+  const modified = async (id) => (await drive(`${API}/files/${id}?${ALL_DRIVES}&fields=modifiedTime`)).modifiedTime;
+  const edited = [];
+  for (const { key, todo } of jobs) {
+    const rec = cfg.lessons[key];
+    if (!todo.some((t) => t.slot === 'deck') || !rec?.slidesId || !(await exists(rec.slidesId))) continue;
+    const now = await modified(rec.slidesId);
+    if (!rec.modified) { rec.modified = now; continue; }   // published before this check existed: nothing to compare
+    if (now !== rec.modified) edited.push(`${key} (edited ${now}, published ${rec.modified}): ${rec.link}`);
+  }
+  if (edited.length && !discardEdits) {
+    throw new Error('These decks have been edited in Google Slides since they were published, and uploading would '
+      + 'replace those edits:\n  ' + edited.join('\n  ') + '\nCopy the edits into the deck’s builder (or check the Slides '
+      + 'version history), then run again with --discard-slides-edits.');
+  }
   const parent = cfg.termFolder ? (cfg.termId = await folder(cfg.courseFolderId, cfg.termFolder, cfg.termId)) : cfg.courseFolderId;
   const save = () => fs.writeFileSync(CONFIG, JSON.stringify(cfg, null, 2) + '\n');
   for (const { deck, key, todo } of jobs) {
@@ -250,7 +270,7 @@ module.exports = (unit) => (async () => {
       const prev = t.slot === 'deck' ? rec.slidesId : rec.resources?.[t.slot]?.id;
       const f = await (t.slot === 'deck' ? uploadDeck : upload)(t.file, { parentId: rec.folderId, name: t.name, existingId: prev });
       if (t.slot === 'deck') {
-        Object.assign(rec, { slidesId: f.id, sha: t.sha, link: f.webViewLink });
+        Object.assign(rec, { slidesId: f.id, sha: t.sha, link: f.webViewLink, modified: await modified(f.id) });
         if (unit.lessonSlides) recordLessonSlides(`${unit.lessonSlides}/${key}`, f.id, key);
       }
       else (rec.resources ||= {})[t.slot] = { id: f.id, sha: t.sha };

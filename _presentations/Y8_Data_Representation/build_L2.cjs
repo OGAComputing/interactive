@@ -92,7 +92,7 @@ function addSlide(o) {
 
 // 1–2 · Recap & Recall: Lesson 1's conversions (used to check every sum today) and denary carrying.
 const RECALL = [
-  { pill: 'LAST LESSON', type: 'write', q: 'Convert 0101 to denary', a: '5', why: '4 + 1' },
+  { pill: 'LAST LESSON', type: 'write', q: 'Convert 0101 to denary', hint: 'Remember 8 4 2 1 along the top', a: '5', why: '4 + 1' },
   { pill: 'LAST LESSON', type: 'mcq', q: 'Which is 6 written with 4 bits?', opts: ['110', '0110', '1100'], optsMono: true,
     a: 'B — 0110', why: 'Every column gets a bit, 0s too' },
   { pill: 'LAST LESSON', type: 'mcq', q: 'The biggest number 4 bits can hold?', opts: ['16', '15', '8'], a: 'B — 15', why: '1111 = 8 + 4 + 2 + 1' },
