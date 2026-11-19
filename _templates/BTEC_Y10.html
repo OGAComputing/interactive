@@ -1382,6 +1382,7 @@ function checkTask(i) {
   const notYet = blocker(i);
   if (notYet) { fb.textContent = notYet; fb.className = 'feedback'; return; }
   const res = gatherAndMark(i);
+  if (TASKS[i].once) return handIn(i, res, fb);
   if (kind === 'spot' && spotStage(key) !== 'fix' && !allCorrect(res)) return spotFlagFeedback(i, key, fb);
   if (kind === 'fix') return checkFix(i, key, fb);
   if (kind === 'pilot') {
@@ -1448,6 +1449,30 @@ function checkTask(i) {
   fb.textContent = `❌ ${hard.length - hardWrong} of ${hard.length} right. Fix the ones in red: you can check again in ${secs} seconds.`;
 }
 
+// An assessment task (once: true): marked once, with no cooldown and no Try for Gold. The first click asks the
+// student to be sure; a second click within 6 s hands it in. Every question then goes green or red, but the right
+// option isn't shown, so a neighbour still answering can't copy it: the teacher goes over the answers afterwards.
+const handInArmed = {};
+function handIn(i, res, fb) {
+  const btn = document.getElementById('check-' + i);
+  if (!handInArmed[i]) {
+    handInArmed[i] = true;
+    btn.textContent = 'Sure? Click again to hand in';
+    fb.textContent = '📋 You only get one go. Look over your answers, then click again to hand in.';
+    fb.className = 'feedback';
+    setTimeout(() => { handInArmed[i] = false; if (!state.completed[i]) btn.textContent = btn.dataset.label; }, 6000);
+    return;
+  }
+  handInArmed[i] = false;
+  btn.textContent = btn.dataset.label;
+  highlight(i, res);
+  state.firstAttempt[i] = allCorrect(res);
+  fb.textContent = handedInText(res);
+  fb.className = 'feedback correct';
+  markDone(i);
+}
+const handedInText = res => `📋 Handed in: ${Object.values(res).filter(Boolean).length} of ${Object.keys(res).length} right. Your teacher will go over the answers.`;
+
 // Spot the slip / test a survey, stage 1: only the flagged items turn green or red, so a wrong check
 // never shows where the missed ones are; the message says how many are still to find.
 function spotFlagFeedback(i, key, fb) {
@@ -1474,7 +1499,7 @@ function flagFeedback(i, fb, parts, noun) {
 
 // ── Scoring and Classroom ──────────────────────────────
 function submitScore() {
-  const pct = calcScore(state.completed, state.firstAttempt);
+  const pct = calcScore(state.completed, state.firstAttempt, state.answers);
   window.ActivityUI?.setScore(pct);
   window.Classroom?.submitGrade(pct, ACTIVITY_TITLE);
 }
@@ -1484,7 +1509,7 @@ function showDone(i) {
   document.getElementById('dot-' + i).className = 'pdot ' + (TASKS[i].level ? 'optional ' : '') + (gold ? 'gold' : 'correct');
   document.querySelector(`.tab[data-idx="${i}"]`).classList.add('done', ...(gold ? ['gold'] : []));
   const reset = document.getElementById('reset-' + i);
-  if (reset) reset.style.display = gold ? 'none' : '';
+  if (reset) reset.style.display = gold || TASKS[i].once ? 'none' : '';
   if (['choice', 'spot', 'profile', 'numbers'].includes(TASKS[i].kind)) document.querySelectorAll(`#panel-${i} .q input`).forEach(r => { r.disabled = true; });
   if (TASKS[i].kind === 'pilot') document.querySelectorAll(`#panel-${i} .pilot textarea`).forEach(t => { t.disabled = true; });
   if (TASKS[i].kind === 'fix') document.querySelectorAll(`#panel-${i} .fix`).forEach(box => {
@@ -1547,7 +1572,7 @@ function showAllDone() {
 }
 function allComplete() {
   showAllDone();
-  window.ActivityUI?.launchCelebration({ percent: calcScore(state.completed, state.firstAttempt) });
+  window.ActivityUI?.launchCelebration({ percent: calcScore(state.completed, state.firstAttempt, state.answers) });
 }
 
 // ── Tabs ───────────────────────────────────────────────
@@ -1653,9 +1678,10 @@ function init() {
     if (coolLeft(i)) startCooldown(i);
     if (state.completed[i]) {
       showDone(i);
-      highlight(i, gatherAndMark(i));
+      const res = gatherAndMark(i);
+      highlight(i, res);
       const fb = document.getElementById('feedback-' + i);
-      fb.textContent = TASKS[i].kind === 'write' ? '✅ Saved and sent to your teacher.' : state.firstAttempt[i] ? '🥇 Completed first time' : '✅ Completed';
+      fb.textContent = TASKS[i].once ? handedInText(res) : TASKS[i].kind === 'write' ? '✅ Saved and sent to your teacher.' : state.firstAttempt[i] ? '🥇 Completed first time' : '✅ Completed';
       fb.className = 'feedback correct';
     }
   }
@@ -1668,7 +1694,7 @@ function init() {
   if (linked >= 0) document.querySelector(`.tab[data-idx="${linked}"]`)?.click();
   // Restore the finished look without re-firing the celebration or a Classroom upload.
   if (coreDone(state.completed)) showAllDone();
-  window.ActivityUI?.setScore(calcScore(state.completed, state.firstAttempt));
+  window.ActivityUI?.setScore(calcScore(state.completed, state.firstAttempt, state.answers));
 }
 init();
 </script>

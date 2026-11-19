@@ -10,6 +10,10 @@
 // two ends), 'hunt' (live research: find a fact, paste its link), 'profile' (an audience profile card) or
 // 'numbers' (questions answered from a real table of statistics). Vary them: no lesson should run the
 // same kind in two tabs in a row (Y10/CLAUDE.md).
+// once: true makes a choice task an assessment (a check of what students remember): it is marked once, every
+// question goes green or red without showing the right option, there is no cooldown or Try for Gold, and it scores
+// the share of questions right (onceShare) instead of 80 for finishing + 20 for first time. weight: n counts a
+// task n times in the score (default 1). Built for 3.3's Unit A check (Nick, 2026-11-19).
 // Optional extra tabs take level: 'support' (a Warm-up for students who need a way in) or
 // 'challenge' (an extension). They don't count towards the score; put them at the END of this
 // list so the core tasks keep indexes 0, 1, 2…, and give their tabs class="tab support|challenge".
@@ -430,12 +434,19 @@ export function cooldownSeconds() {
   return 10;
 }
 
-// House scoring: 80 for finishing every task, 20 more for getting them right first time.
-export function calcScore(completed, firstAttempt) {
-  const idx = coreTasks(), n = idx.length;
-  const done = idx.filter(i => completed[i]).length;
-  const mastered = idx.filter(i => completed[i] && firstAttempt[i]).length;
-  return Math.round(done / n * 80 + mastered / n * 20);
+// House scoring: 80 for finishing every task, 20 more for getting them right first time. An assessment task
+// (once: true) scores the share of its questions right instead; weight: n counts a task n times.
+export function calcScore(completed, firstAttempt, answers = {}) {
+  const idx = coreTasks(), w = i => TASKS[i].weight || 1;
+  const total = idx.reduce((sum, i) => sum + w(i), 0);
+  const pts = idx.filter(i => completed[i]).reduce((sum, i) =>
+    sum + w(i) * (TASKS[i].once ? onceShare(TASKS[i].key, answers) * 100 : 80 + (firstAttempt[i] ? 20 : 0)), 0);
+  return Math.round(pts / total);
+}
+// The share (0–1) of an assessment choice task's questions answered right.
+export function onceShare(taskKey, given) {
+  const v = Object.values(markChoices(taskKey, given));
+  return v.length ? v.filter(Boolean).length / v.length : 0;
 }
 
 // Optional tasks (level: 'support' or 'challenge') never count towards the score, gold or "all done",

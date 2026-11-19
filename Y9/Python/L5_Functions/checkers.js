@@ -151,6 +151,13 @@ const bugTarget = raw => { const ds = defsIn(raw); return ds.length ? ds[ds.leng
 
 // The bug step: Break it puts a call to the newest function on line 1, above every def. Python
 // meets the call before it has read the def: NameError. The fix moves the call below the def.
+// What the bug step's text names: the student's own command (step 3 takes any name, e.g. alarm)
+// and the first message it prints (null if it has no plain print("…")).
+export function bugCommand(raw) {
+  const name = bugTarget(raw);
+  const d = defOf(raw, name);
+  return { name, says: (d && literalsIn(d)[0]) || null };
+}
 export const hasBugLine = raw => !!callBeforeDef(raw);
 export const hasFixedLine = raw => calledAfterDef(raw, bugTarget(raw));
 export const isBugFixed = raw => hasFixedLine(raw) && !hasBugLine(raw);
@@ -205,7 +212,7 @@ export const INV_CHECKS = {
       { test: (raw, ctx) => !!ctx.ranBroken, hint: 'Run the broken program and read the red error message.' },
       { test: (raw, ctx) => ctx.fixes > 0 || (ctx.breaks > 0 && isBugFixed(raw) && ranThis(raw, ctx)),
         hint: raw => (isBugFixed(raw)
-          ? 'Now press ▶ Run code to check DOCKING prints at the end.'
+          ? `Now press ▶ Run code to check ${bugCommand(raw).says || 'its message'} prints at the end.`
           : `Move the ${bugTarget(raw)}() call from line 1 to the very bottom, below its def, then press ▶ Run code.`) },
     ],
   },

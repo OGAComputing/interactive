@@ -379,7 +379,10 @@ color:  blue
   /* The current step's instructions stay in view while the student scrolls down to the
      output, so they can watch each tick go green or red (Break it → Fix it especially).
      Short screens keep the old layout, where a stuck card would hide the editor. */
-  #i_steps { position: sticky; top: calc(var(--cr-banner-h, 0px) + 10px); z-index: 6; max-height: 55vh; overflow-y: auto; }
+  /* The 55vh cap applies only once pinned: an unpinned tall card got its own scrollbar, and
+     pinning snapped that inner scroll back to the top (scrolling near the pin point jumped). */
+  #i_steps { position: sticky; top: calc(var(--cr-banner-h, 0px) + 10px); z-index: 6; display: flow-root; }   /* keeps child margins inside, so the pin spacer is exact */
+  #i_steps.is-stuck { max-height: 55vh; overflow-y: auto; }
   @media (max-height: 640px), (max-width: 640px) { #i_steps { position: static; max-height: none; overflow: visible; } }
   /* Once pinned (.is-stuck, set by syncInvSticky), only the requirement list shows: the step
      heading, the grey notes and any "Remind me" card hide, so the card stays small. A "Your

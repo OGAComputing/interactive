@@ -1,6 +1,6 @@
 import { describe as group, it, expect } from 'vitest';
 import {
-  defsIn, callsIn, callBeforeDef, runKind, breakCode, isBugFixed, hasBugLine, evalInv, segments,
+  defsIn, callsIn, callBeforeDef, runKind, breakCode, bugCommand, isBugFixed, hasBugLine, evalInv, segments,
   evalMod, MOD_CHECKS, JOBS, evalMake, MAKE_TEST_BANK, MAKE_CHECK, PRIORITY_CHOICES, VALID_PODS,
   evalExt, EXT_TEST_BANK, EXT_CHECK, evalParams, PARAMS_CHECK, polygonsIn, placesOf, describe, mod4LinesAdded,
 } from './checkers.js';
@@ -189,6 +189,16 @@ group('the bug step', () => {
     expect(evalInv(4, fixed, { breaks: 1, ranBroken: true, ...ran(fixed) }).pass).toBe(true);
     expect(evalInv(4, fixed, { breaks: 0, ...ran(fixed) }).pass).toBe(false);
     expect(evalInv(4, breakCode(STEP3).code, { breaks: 1, ranBroken: true }).msg).toMatch(/Move the drone_dock\(\) call/);
+  });
+  it('a student\'s own command name (def alarm():) is the one the step names', () => {
+    const own = STEP3.replace('drone_dock', 'alarm').replace('DOCKING', 'BEEP');
+    expect(bugCommand(own)).toEqual({ name: 'alarm', says: 'BEEP' });
+    expect(bugCommand(STEP3)).toEqual({ name: 'drone_dock', says: 'DOCKING' });
+    const broken = breakCode(own).code;
+    expect(broken.split('\n')[0]).toBe('alarm()');
+    expect(evalInv(4, broken, { breaks: 1, ranBroken: true }).msg).toMatch(/Move the alarm\(\) call/);
+    const fixed = own + '\nalarm()';
+    expect(evalInv(4, fixed, { breaks: 1, ranBroken: true }).msg).toMatch(/check BEEP prints/);
   });
 });
 

@@ -380,7 +380,12 @@ color:  teal
   /* The current step's instructions stay in view while the student scrolls down to the
      output, so they can watch each tick go green or red (Break it → Fix it especially).
      Short screens keep the old layout, where a stuck card would hide the editor. */
-  #i_steps { position: sticky; top: calc(var(--cr-banner-h, 0px) + 10px); z-index: 6; max-height: 55vh; overflow-y: auto; }
+  /* The 55vh cap applies only once pinned: on the unpinned card it gave a tall card (a "Your
+     call" plus its task, ~570px) its own scrollbar on a 1080p screen, and the wheel scrolled
+     inside the card; pinning then shrank it and snapped that inner scroll back to the top, so
+     scrolling near the pin point jumped (L5 Modify 1, 2026-11-19). */
+  #i_steps { position: sticky; top: calc(var(--cr-banner-h, 0px) + 10px); z-index: 6; display: flow-root; }   /* keeps child margins inside, so the pin spacer is exact */
+  #i_steps.is-stuck { max-height: 55vh; overflow-y: auto; }
   @media (max-height: 640px), (max-width: 640px) { #i_steps { position: static; max-height: none; overflow: visible; } }
   /* Once pinned (.is-stuck, set by syncInvSticky), only the requirement list shows: the step
      heading, the grey notes and any "Remind me" card hide, so the card stays small. A "Your
@@ -401,7 +406,8 @@ color:  teal
   /* Modify's steps pin the same way (trial, 2026-11-16; syncModSticky), but only while the
      trimmed card fits in 45% of the screen (.too-big otherwise). Pinned, only the requirement
      list shows, and a code checklist shows just the NEW lines still to add. */
-  #m1_steps { position: sticky; top: calc(var(--cr-banner-h, 0px) + 10px); z-index: 6; max-height: 55vh; overflow-y: auto; }
+  #m1_steps { position: sticky; top: calc(var(--cr-banner-h, 0px) + 10px); z-index: 6; display: flow-root; }   /* keeps child margins inside, so the pin spacer is exact */
+  #m1_steps.is-stuck { max-height: 55vh; overflow-y: auto; }
   @media (max-height: 640px), (max-width: 640px) { #m1_steps { position: static; max-height: none; overflow: visible; } }
   #m1_steps.reqs-met, #m1_steps.too-big { position: static; max-height: none; overflow: visible; }
   #m1_steps.is-stuck .modify-task { padding-top: 0.55rem; padding-bottom: 0.55rem; }
@@ -1634,9 +1640,9 @@ color:  teal
     <div class="q-card step-hidden" id="qcard_i4_prompt" style="border-left-color:var(--stage-i)">
       <label class="q-label"><span class="q-num" style="background:var(--stage-i)">4</span> Storm damage: a command in the wrong place. Read the error, then fix it.</label>
       <ul class="req-list" id="req_i_4">
-        <li><span>1</span><span class="req-text">Press <button class="btn btn-check btn-inline" type="button" onclick="breakItDemo()">😈 Break it</button> It puts a <code>drone_dock()</code> call on <strong>line <span id="ibug_line">1</span></strong>, above every def, and runs it.</span></li>
+        <li><span>1</span><span class="req-text">Press <button class="btn btn-check btn-inline" type="button" onclick="breakItDemo()">😈 Break it</button> It puts a <code><span class="ibug-fn">drone_dock</span>()</code> call on <strong>line <span id="ibug_line">1</span></strong>, above every def, and runs it.</span></li>
         <li><span>2</span><span class="req-text">Read the <strong>red error</strong>: which line, and what kind of error?</span></li>
-        <li><span>3</span><span class="req-text"><strong>Fix it</strong>: move the <code>drone_dock()</code> call to the very <strong>bottom</strong>, below its def<br>Then press <strong>▶ Run code</strong> until <code>DOCKING</code> prints last.</span></li>
+        <li><span>3</span><span class="req-text"><strong>Fix it</strong>: move the <code><span class="ibug-fn">drone_dock</span>()</code> call to the very <strong>bottom</strong>, below its def<br>Then press <strong>▶ Run code</strong> until <code class="ibug-says">DOCKING</code> prints last.</span></li>
       </ul>
       <details class="remind" style="margin:0.6rem 0 0">
         <summary>Remind me: reading an error</summary>
@@ -3226,7 +3232,7 @@ else:
 */
 import { MOD_CHECKS, MOD_TEST_BANK, evalMod, JOBS, JOB_LINES, MAKE_CHECK, MAKE_TEST_BANK, evalMake,
          PRIORITY_CHOICES, EXT_CHECK, EXT_TEST_BANK, evalExt, PARAMS_CHECK, evalParams, evalInv, isBugFixed,
-         isBugPairLine, hasBugLine, breakCode, runKind, mod4LinesAdded } from './checkers.js';
+         isBugPairLine, hasBugLine, breakCode, bugCommand, runKind, mod4LinesAdded } from './checkers.js';
 import { runPython, preload } from '../../../pyodide-runner.js';
 import { setupEditors, clearSyntaxHint, setEditorOutput, refreshEditor, runCode, replayRun } from '../../../code-editor.js';
 import { attachTurtle, turtleReady, readDrawing } from '../../../turtle-canvas.js';
@@ -4117,6 +4123,7 @@ function breakItDemo() {
   state.iBugPlantedLineNo = lineNo;
   const lineSpan = document.getElementById('ibug_line');
   if (lineSpan) lineSpan.textContent = String(lineNo);
+  syncBugCommandLabel();
   const bp = invBugProgress(stepI);
   bp.breaks++;
   bp.pending = true;   // the next successful run of fixed code counts as a fix
@@ -4133,6 +4140,17 @@ function breakItDemo() {
 function syncBugLineLabel() {
   const lineSpan = document.getElementById('ibug_line');
   if (lineSpan && state.iBugPlantedLineNo) lineSpan.textContent = String(state.iBugPlantedLineNo);
+  syncBugCommandLabel();
+}
+
+// Step 3 accepts any command name (a student who wrote def alarm(): gets alarm() planted), so
+// the bug step's text names the student's own command and its message, not drone_dock / DOCKING.
+function syncBugCommandLabel() {
+  const ta = document.getElementById('i_editor');
+  if (!ta) return;
+  const { name, says } = bugCommand(ta.value);
+  document.querySelectorAll('.ibug-fn').forEach(s => { s.textContent = name; });
+  document.querySelectorAll('.ibug-says').forEach(s => { s.textContent = says || 'its message'; });
 }
 
 // Remove the auto-planted/broken-or-fixed demo line once the bug step has done its
