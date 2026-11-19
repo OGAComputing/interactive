@@ -455,7 +455,7 @@ function _injectStyles() {
 
     /* Step-through run (opt-in via setupEditors(..., {stepThrough:true})): a bar
        behind the line that is running, its number lit in the gutter, and a
-       status row with a Skip button at the top of the output panel. */
+       status row (Next line / Skip) under the editor row, outside the output panel. */
     :where(.exec-line) {
       position: absolute;
       left: 0; right: 0;
@@ -474,8 +474,8 @@ function _injectStyles() {
       align-items: center;
       justify-content: space-between;
       gap: 0.6rem;
-      margin: -0.2rem 0 0.5rem;
-      font-size: 0.72rem;
+      margin: 0.5rem 0 0;
+      font-size: 0.78rem;
       color: #5eead4;
     }
     :where(.step-status[hidden]) { display: none; }
@@ -605,6 +605,7 @@ const _errHelpBtnMap = new Map(); // textarea → "Get help" button shown after 
 // ── Memory view state ─────────────────────────────────────────────────────────
 const _memOn   = new Set(); // textareas opted into the memory view
 const _memMap  = new Map(); // textarea → .memory-view element
+const _stepBarMap = new Map(); // textarea → .step-status row (under the editor, never in the output panel)
 const _memPrev = new Map(); // textarea → Map(name → {type, display}) from the last render, to spot changes
 
 // ── Step-through run state ────────────────────────────────────────────────────
@@ -1153,9 +1154,11 @@ function _hideExecLine(ta) {
   _updateNums(ta, _numsMap.get(ta));
 }
 
-// The status row ("Running line 3" + Skip) at the top of the output panel.
+// The status row ("Running line 3" + Next line + Skip) under the editor. It stays out of
+// the output panel so that panel only ever shows what the program printed: when a
+// question asks "what's in the output?", an empty program output must look empty.
 function _stepStatus(ta, text) {
-  const row = _outputMap.get(ta)?.querySelector('.step-status');
+  const row = _stepBarMap.get(ta);
   if (!row) return;
   row.hidden = text === null;
   if (text !== null) row.querySelector('.step-label').textContent = text;
@@ -1178,7 +1181,7 @@ function _stopStepping(ta) {
   run.fast = true;
   run.wake?.();
   _stepStatus(ta, null);
-  const nextBtn = _outputMap.get(ta)?.querySelector('.step-next');
+  const nextBtn = _stepBarMap.get(ta)?.querySelector('.step-next');
   if (nextBtn) nextBtn.hidden = true;
 }
 
@@ -1283,7 +1286,7 @@ async function _replaySteps(ta, run, r, from, trackVars, fed = null) {
   const trace = r.trace || [];
   if (from >= trace.length) return true;
   const stepMs = Math.min(STEP_MS, MAX_REPLAY_MS / (trace.length - from));
-  const nextBtn = _outputMap.get(ta)?.querySelector('.step-next');
+  const nextBtn = _stepBarMap.get(ta)?.querySelector('.step-next');
   // Output from before the first new step (e.g. the echo of the answer just
   // typed) belongs to the input line, which has already been shown.
   _writeStepOutput(ta, out.slice(0, trace[from].at), fed);
@@ -1547,19 +1550,6 @@ export function setupEditors(selector = '.checker-textarea', opts = {}) {
     _outputMap.set(ta, output);
     _followOutput(output.querySelector('.output-content'));
 
-    if (_stepEnabled(ta)) {
-      const status = document.createElement('div');
-      status.className = 'step-status';
-      status.hidden = true;
-      status.innerHTML =
-        '<span class="step-label" aria-live="polite"></span>' +
-        '<span class="step-buttons"><button type="button" class="step-next" hidden>Next line ▶</button>' +
-        '<button type="button" class="step-skip">⏩ Skip to end</button></span>';
-      status.querySelector('.step-skip').addEventListener('click', () => _skipStepping(ta));
-      status.querySelector('.step-next').addEventListener('click', () => _stepRuns.get(ta)?.wake?.());
-      output.querySelector('.output-header').insertAdjacentElement('afterend', status);
-    }
-
     if (opts.memoryView) _memOn.add(ta);
     if (_memEnabled(ta)) {
       const mem = document.createElement('div');
@@ -1581,6 +1571,22 @@ export function setupEditors(selector = '.checker-textarea', opts = {}) {
     hint.className = 'syntax-hint';
     wrap.insertAdjacentElement('afterend', hint);
     _hintMap.set(ta, hint);
+
+    // Step-through controls sit under the editor row (after the hint, so a full-width
+    // turtle screen still goes straight under the editor), never inside the output panel.
+    if (_stepEnabled(ta)) {
+      const status = document.createElement('div');
+      status.className = 'step-status';
+      status.hidden = true;
+      status.innerHTML =
+        '<span class="step-label" aria-live="polite"></span>' +
+        '<span class="step-buttons"><button type="button" class="step-next" hidden>Next line ▶</button>' +
+        '<button type="button" class="step-skip">⏩ Skip to end</button></span>';
+      status.querySelector('.step-skip').addEventListener('click', () => _skipStepping(ta));
+      status.querySelector('.step-next').addEventListener('click', () => _stepRuns.get(ta)?.wake?.());
+      hint.insertAdjacentElement('afterend', status);
+      _stepBarMap.set(ta, status);
+    }
 
     // ── Events ────────────────────────────────────────────────────────────
     ta.addEventListener('copy', e => {
