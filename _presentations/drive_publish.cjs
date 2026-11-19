@@ -254,7 +254,9 @@ module.exports = (unit) => (async () => {
     if (!todo.some((t) => t.slot === 'deck') || !rec?.slidesId || !(await exists(rec.slidesId))) continue;
     const now = await modified(rec.slidesId);
     if (!rec.modified) { rec.modified = now; continue; }   // published before this check existed: nothing to compare
-    if (now !== rec.modified) edited.push(`${key} (edited ${now}, published ${rec.modified}): ${rec.link}`);
+    // Google finishes converting an upload a few seconds after it returns, which moves modifiedTime on
+    // again; only a change more than a minute after the publish counts as an edit made in Slides.
+    if (Date.parse(now) - Date.parse(rec.modified) > 60000) edited.push(`${key} (edited ${now}, published ${rec.modified}): ${rec.link}`);
   }
   if (edited.length && !discardEdits) {
     throw new Error('These decks have been edited in Google Slides since they were published, and uploading would '

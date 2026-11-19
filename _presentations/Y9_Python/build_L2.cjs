@@ -141,7 +141,6 @@ Ask: "Where would a proximity sensor need this?" (Close → alarm; far → all c
 {
   const s = newSlide('SZ_DARK', C, 'A condition is True or False');
   K.isys(s, { term: "Condition", fact: "True or False", say: "A condition is always True or False." });
-  K.isys(s, { term: "==", fact: "is equal to", say: "== means is equal to." });
   text(s, 'COMPARISON OPERATORS', { x: M, y: 1.6, w: 5, h: 0.3, fontSize: 13, bold: true, color: P.dim, charSpacing: 2 });
   const ops = [['==', 'is equal to'], ['<', 'is less than'], ['>', 'is more than'], ['<=', 'is less than or equal to'],
     ['>=', 'is more than or equal to']];
@@ -326,7 +325,7 @@ const R2 = 'Indentation';
 const STEPS_2 = ['Look in the box', 'True or False?', 'Which lines run?', 'What is printed?'];
 
 // Indentation decides the block: the activity's Investigate step 2 (indent print("Scan complete") into the else).
-R.whatPrintedSlide(K, {
+const sIndent = R.whatPrintedSlide(K, {
   section: R2, mode: 'I DO', title: 'Spaces decide what is inside the else', size: 21,
   code: ['distance = 85', 'if distance >= 50:', '    print("All clear")', 'else:', '    print("Too close")', '    print("Scan complete")'],
   memory: { line: 1, name: 'distance', type: 'int', value: '85' },
@@ -339,6 +338,7 @@ Click 4 — All clear, and that's all: Scan complete is gone.
 Ask: "What would it print if distance were 10?" (Too close, Scan complete: the else block runs, both of its lines.)
 This is exactly Investigate step 2 in today's activity (run it with 85, then 10). Students get stuck on the spaces: line 6 must line up exactly with line 5. Press Tab once; don't mix Tab and spaces.`,
 });
+K.isys(sIndent, { term: "Indentation", fact: "shows what's inside", say: "Indentation shows what's inside the if or the else." });
 
 // ════════════════════════════════════════════════════════════════════════════
 //  input() gives text → int() (casting, moved here from Lesson 1's Life Support round)

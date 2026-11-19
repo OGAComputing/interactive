@@ -95,7 +95,7 @@ const F = 'Define, then call';
 // → back to after the call. "Python knows" fills on line 1; the output builds up.
 {
   const s = newSlide('SZ_DARK', F, 'Watch it run');
-  K.isys(s, { term: "Subprogram", fact: "named chunk of code", say: "A subprogram is a named chunk of code; in Python we make one with def." });
+  K.isys(s, { term: "Function", fact: "named chunk of code", say: "A function is a named chunk of code; we make one with def." });
   const cx = 1.35, cw = 6.4;
   const cp = codePanel(s, DRONE, { x: cx, y: 1.7, w: cw, size: 24, lh: 0.74 });
   // what Python has learnt: the command's name
@@ -157,7 +157,7 @@ const backOut = (s, cp, cx, cw, lines, size, from, to, color = P.muted) => {
 };
 {
   const s = newSlide('SZ_DARK', F, 'Two commands: watch it jump');
-  K.isys(s, { term: "Call", fact: "its name and brackets", say: "To call a subprogram, write its name and brackets, like scan()." });
+  K.isys(s, { term: "Call", fact: "its name and brackets", say: "To call a function, write its name and brackets, like scan()." });
   const cx = 1.35, cw = 6.4, size = 21;
   const cp = codePanel(s, TWO, { x: cx, y: 1.6, w: cw, size, lh: 0.49 });
   const kx = 8.2, kw = 4.53;
@@ -255,10 +255,11 @@ Follow-ups: "What does the whole program print?" LIGHTS OFF, DOORS LOCKED, ALARM
 }
 
 // You do: three short programs, then the answers (one idea each: two calls · def runs nothing until called · no call).
+// go() has two lines (Nick, 2026-11-19), so the whole block is skipped, not just one print.
 const YOU = [
   { code: ['def hi():', '    print("Hi")', '', 'hi()', 'hi()'], output: ['Hi', 'Hi'], why: 'two calls: it runs twice' },
   { code: ['def a():', '    print("A")', '', 'print("B")', 'a()'], output: ['B', 'A'], why: 'a() is called last' },
-  { code: ['def go():', '    print("Go")', '', 'print("Done")'], output: ['Done'], why: 'go() is never called' },
+  { code: ['def go():', '    print("Ready")', '    print("Go")', '', 'print("Done")'], output: ['Done'], why: 'go() is never called' },
 ];
 R.whatPrintedGridSlide(K, { section: F, title: 'What is printed? Your turn', items: YOU, time: '3 MIN',
   notes: `YOU DO — silent, 3 minutes. Boards up together on 3-2-1. Write exactly what appears, one line each.` });
@@ -266,7 +267,7 @@ R.whatPrintedGridSlide(K, { section: F, title: 'What is printed? — answers', i
   notes: `Go through any the class split on.
 1: Hi, Hi. Each call runs the whole command: two calls, two Hi.
 2: B, then A. The def comes first, but it only DEFINES: nothing prints until a(), which is the last line.
-3: only Done. go() is defined but never called, so Go never prints. In the activity, Investigate step 3 asks the same thing: "DOCKING didn't print. Why not?"` });
+3: only Done. go() is defined but never called, so neither of its lines runs: no Ready, no Go. In the activity, Investigate step 3 asks the same thing: "DOCKING didn't print. Why not?"` });
 
 // ════════════════════════════════════════════════════════════════════════════
 //  The activity
