@@ -137,10 +137,10 @@ Next lesson's loop uses this same flowchart, so keep the shape: down for False, 
 Ask: "Where would a proximity sensor need this?" (Close → alarm; far → all clear.)`);
 }
 
-// 6. A condition is True or False (one-off: operator key + two examples)
+// 6. A condition is a True/False test (one-off: operator key + two examples)
 {
-  const s = newSlide('SZ_DARK', C, 'A condition is True or False');
-  K.isys(s, { term: "Condition", fact: "True or False", say: "A condition is always True or False." });
+  const s = newSlide('SZ_DARK', C, 'A condition is a True/False test');
+  K.isys(s, { term: "Condition", fact: "a True/False test", say: "A condition is a True/False test: Python checks it and gets True or False." });
   text(s, 'COMPARISON OPERATORS', { x: M, y: 1.6, w: 5, h: 0.3, fontSize: 13, bold: true, color: P.dim, charSpacing: 2 });
   const ops = [['==', 'is equal to'], ['<', 'is less than'], ['>', 'is more than'], ['<=', 'is less than or equal to'],
     ['>=', 'is more than or equal to']];
@@ -338,7 +338,7 @@ Click 4 — All clear, and that's all: Scan complete is gone.
 Ask: "What would it print if distance were 10?" (Too close, Scan complete: the else block runs, both of its lines.)
 This is exactly Investigate step 2 in today's activity (run it with 85, then 10). Students get stuck on the spaces: line 6 must line up exactly with line 5. Press Tab once; don't mix Tab and spaces.`,
 });
-K.isys(sIndent, { term: "Indentation", fact: "lines moved inwards", say: "Indentation is lines moved inwards; it shows which lines are inside the if." });
+K.isys(sIndent, { term: "Indentation", fact: "lines moved inwards", check: "What are lines moved inwards?", say: "Indentation is lines moved inwards; it shows which lines are inside the if." });
 
 // ════════════════════════════════════════════════════════════════════════════
 //  input() gives text → int() (casting, moved here from Lesson 1's Life Support round)

@@ -510,7 +510,7 @@ function createDeck({ lesson, footerText, title = 'Component 1 lesson', author =
           { text: '     slide ' + m.n, options: { color: P.greyLt, fontSize: 16 } }],
         { x: M, y: y + 0.1, w: CW, h: 0.5, fontSize: 24, valign: 'middle' });
         text(s, [{ text: 'Say: "' + m.say + '"', options: { breakLine: true } },
-          { text: 'Check (3, 2, 1): "What is ' + m.fact + '?" → ' + m.term + '     Reverse: "What does ' + m.term + ' mean?" → ' + m.fact }],
+          { text: 'Check (3, 2, 1): "' + m.check + '" → ' + m.term + '     Reverse: "' + m.reverse + '" → ' + m.fact }],
         { x: M, y: y + 0.6, w: CW, h: rh - 0.8, fontSize: 14, color: P.greyLt });
       });
     },

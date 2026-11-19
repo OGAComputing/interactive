@@ -46,7 +46,8 @@ before building the deck. If they ask for changes, make them and re-run `/test-p
 - Run `/lesson-deck <unit> <n>`, building from the page as it is now (it reads the page and
   the MTP section itself).
 - ISYS: the lesson's 1–3 ISYS phrases (`ppt-guidelines.md` §10) are worded identically on the
-  page and the deck.
+  page and the deck, and each one's Check and Reverse questions (printed by the build) read as
+  natural questions with one answer.
 - Check the deck against the page: every code sample, term and question the page's
   Predict/Run/Investigate (or Task 1…) stages need is on a slide before students meet it, and
   nothing on the slides contradicts the page.

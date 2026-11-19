@@ -134,7 +134,7 @@ const F1 = 'For loops in action';
 // shows each jump back to the for line.
 {
   const s = newSlide('SZ_DARK', F1, 'Watch it run');
-  K.isys(s, { term: "for loop", fact: "set number of times", say: "A for loop repeats a set number of times." });
+  K.isys(s, { term: "for loop", fact: "set number of times", check: "What repeats a set number of times?", reverse: "How many times does a for loop repeat?", say: "A for loop repeats a set number of times." });
   const cx = 1.35, cw = 6.4;
   const cp = codePanel(s, BEACON, { x: cx, y: 1.7, w: cw, size: 24, lh: 0.74 });
   K.varBox(s, { name: 'i', type: 'int', value: '', x: 8.2, y: 1.95, w: 2.0, h: 1.0 });
@@ -324,7 +324,7 @@ Fast finishers: the extension (a growing starburst).`,
 const FB = 'Feedback';
 {
   const s = newSlide('SZ_DARK', FB, 'A bug with no error message');
-  K.isys(s, { term: "Indentation", fact: "lines moved inwards", say: "Indentation is lines moved inwards; it shows which lines are inside the loop." });
+  K.isys(s, { term: "Indentation", fact: "lines moved inwards", check: "What are lines moved inwards?", say: "Indentation is lines moved inwards; it shows which lines are inside the loop." });
   const code = ['import turtle', 't = turtle.Turtle()', 'for i in range(4):', '    t.forward(100)', 't.left(90)'];
   const cp = codePanel(s, code, { x: M, y: 1.7, w: 5.6, size: 22, lh: 0.62, hl: [5] });
   text(s, '← not indented', { x: M + 2.6, y: cp.ys[4] - cp.lh / 2, w: 2.9, h: cp.lh, fontSize: 18, bold: true, color: P.gold,

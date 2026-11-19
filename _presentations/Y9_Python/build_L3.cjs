@@ -156,7 +156,7 @@ const R1 = 'Loops in action';
 const FUEL = ['fuel = 0', 'while fuel < 3:', '    fuel = fuel + 1', '    print(fuel)', 'print("Full")'];
 {
   const s = newSlide('SZ_DARK', R1, 'Watch it run');
-  K.isys(s, { term: "while loop", fact: "repeats while True", say: "A while loop repeats while True: it checks its condition each time round." });
+  K.isys(s, { term: "while loop", fact: "repeats while True", check: "What repeats while True?", reverse: "What does a while loop do?", say: "A while loop repeats while True: it checks its condition each time round." });
   const cx = 1.35, cw = 6.4;
   const cp = codePanel(s, FUEL, { x: cx, y: 1.7, w: cw, size: 24, lh: 0.74 });
   K.varBox(s, { name: 'fuel', type: 'int', value: '', x: 8.2, y: 1.95, w: 2.4, h: 1.0 });

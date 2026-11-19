@@ -394,7 +394,7 @@ const ISYS = isysLib(pres, {
         { text: `     slide ${m.n}`, options: { color: P.dim, fontSize: 16 } }],
       { x: M + 0.25, y: y + 0.1, w: 11.6, h: 0.5, fontSize: 24, valign: 'middle' });
       text(s, `Say: "${m.say}"
-Check (3, 2, 1): "What is ${m.fact}?" → ${m.term}     Reverse: "What does ${m.term} mean?" → ${m.fact}`,
+Check (3, 2, 1): "${m.check}" → ${m.term}     Reverse: "${m.reverse}" → ${m.fact}`,
         { x: M + 0.25, y: y + 0.6, w: 11.6, h: rh - 0.8, fontSize: 14, color: P.muted, valign: 'top' });
     });
   },

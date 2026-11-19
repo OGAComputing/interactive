@@ -38,7 +38,7 @@ Rules and feedback live in README.md (same folder). Rebuild this deck with: node
   const s = newSlide('SZ_DARK', 'How to use', 'How to use this template');
   const cards = [
     ['Look', 'Each example is labelled in its footer with the slide type. Its speaker notes say when to use it.'],
-    ['Build', 'Copy build_deck.cjs, change only the content, then run node to make the .pptx.'],
+    ['Build', 'Copy build_L1.cjs, change only the content, then run node to make the .pptx.'],
     ['Feed back', 'Add feedback to the log in README.md. Rebuild this template and it appears on the rules slides.'],
   ];
   const cw = 3.87, cg = 0.26;
@@ -54,7 +54,7 @@ Rules and feedback live in README.md (same folder). Rebuild this deck with: node
 - README.md: the rules, the feedback log and the list of slide types.
 - sz_slides.cjs: one function per slide type ("recipe").
 - sz_kit.cjs: the drawing parts (palette, code panels, variable boxes, badges).
-- build_deck.cjs: Lesson 1. Copy it for a new lesson.
+- build_L1.cjs: Lesson 1. Copy it for a new lesson.
 Needs: npm install -g pptxgenjs. Close the .pptx in PowerPoint before rebuilding.`);
 }
 
@@ -185,7 +185,7 @@ const sRunLines = R.runLinesSlide(K, {
 // No footer label on this one: the ISYS phrase takes that corner, so the recipe name goes in the notes.
 sRunLines.addNotes('\n\nRECIPE: runLinesSlide() · Run it line by line. Its footer shows the ISYS phrase instead of the recipe name.');
 // ISYS (ppt-guidelines.md §10): 1–3 per lesson, on the slide where the term is taught. Draws the dot and writes the script into the notes.
-K.isys(sRunLines, { term: 'Variable', fact: 'stores data', say: 'A variable stores data under a name, like a labelled box.' });
+K.isys(sRunLines, { term: 'Variable', fact: 'stores data', check: "What stores data?", reverse: "What does a variable do?", say: 'A variable stores data under a name, like a labelled box.' });
 
 tag(R.pairSlide(K, {
   section: EX, title: 'Quotes: the word, or what’s stored?', memory: { name: 'name', type: 'str', value: '"Riley"' },

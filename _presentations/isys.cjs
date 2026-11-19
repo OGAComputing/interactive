@@ -10,6 +10,13 @@
 // slide is 0 and the first slide students see (Recap & Recall) is still 1.
 // The build fails if a lesson has no phrase or more than three, a phrase is longer than 4 words,
 // one term is given two different facts, or the Say line doesn't contain the term and the fact.
+//
+// Check and Reverse default to "What is <fact>?" and "What does <term> mean?". Those only read well
+// when the fact is a noun phrase ("a whole number"). When it is a verb or a clause ("stores data",
+// "takes it in"), give the questions yourself; the answers stay the term and the fact:
+//   K.isys(s, { term: 'Variable', fact: 'stores data', say: '…',
+//               check: 'What stores data?', reverse: 'What does a variable do?' });
+// The build prints every Check and Reverse question: read each one aloud before you keep it.
 
 const path = require('path');
 const requireGlobal = (name) => {
@@ -21,6 +28,9 @@ const requireGlobal = (name) => {
 
 const words = (t) => String(t).split(/\s+/).filter((w) => /[\p{L}\p{N}]/u.test(w)).length;
 const label = ({ term, fact }) => `${term} … ${fact}`;
+// Does text contain phrase as whole words ("Print" is not in "printed", "A" is not in "What")?
+const escape = (t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const has = (text, phrase) => new RegExp(`(^|[^\\p{L}\\p{N}])${escape(phrase)}($|[^\\p{L}\\p{N}])`, 'iu').test(text);
 
 // kit: { teacherSlide, mark(s, text), teacher(s, phrases) } — the kit draws in its own look.
 // phrases: [{ term, fact, say, n }] in slide order, n = the slide number students see.
@@ -28,8 +38,16 @@ module.exports = function createIsys(pres, kit) {
   const moments = [];
   const facts = new Map();
 
-  function add(s, { term, fact, say } = {}) {
+  const asked = new Map();
+  function add(s, { term, fact, say, check, reverse } = {}) {
     if (!term || !fact || !say) throw new Error('isys() needs term, fact and say');
+    check = check || `What is ${fact}?`;
+    reverse = reverse || `What does ${term} mean?`;
+    if (has(check, term)) throw new Error(`ISYS Check question gives away its answer "${term}": "${check}"`);
+    if (has(reverse, fact)) throw new Error(`ISYS Reverse question gives away its answer "${fact}": "${reverse}"`);
+    if (asked.has(term) && asked.get(term) !== check + '|' + reverse) {
+      throw new Error(`ISYS "${term}" is asked two different ways: give it the same Check and Reverse questions every time`);
+    }
     for (const [name, t] of [['term', term], ['fact', fact]]) {
       if (words(t) > 4) throw new Error(`ISYS ${name} "${t}" is ${words(t)} words: keep it to 1–4`);
     }
@@ -42,15 +60,16 @@ module.exports = function createIsys(pres, kit) {
     }
     if (s === kit.teacherSlide) throw new Error('ISYS goes on the slide where the term is taught, not the teacher slide');
     facts.set(term, fact);
-    moments.push({ s, term, fact, say });
+    asked.set(term, check + '|' + reverse);
+    moments.push({ s, term, fact, say, check, reverse });
   }
 
-  const script = ({ term, fact, say }) => [
+  const script = ({ term, fact, say, check, reverse }) => [
     'ISYS:',
     `- Say: "${say}"`,
     `- I say, you say: "${term}" … "${fact}"`,
-    `- Check (in 3, 2, 1): "What is ${fact}?" → "${term}"`,
-    `- Reverse (in 3, 2, 1): "What does ${term} mean?" → "${fact}"`,
+    `- Check (in 3, 2, 1): "${check}" → "${term}"`,
+    `- Reverse (in 3, 2, 1): "${reverse}" → "${fact}"`,
   ].join('\n');
   const hasNotes = (s) => s._slideObjects.some((o) => o._type === 'notes');
   const note = (text) => ({ _type: 'notes', text: [{ text }] });
@@ -69,6 +88,10 @@ module.exports = function createIsys(pres, kit) {
     moments.forEach((m) => { if (!first.has(m.term)) first.set(m.term, { ...m, n: pres.slides.indexOf(m.s) }); });
     const phrases = [...first.values()].sort((a, b) => a.n - b.n);
     kit.teacher(kit.teacherSlide, phrases);
+    // Read these aloud: each must sound like a real question with exactly one answer.
+    phrases.forEach((m) => console.log(`ISYS  ${label(m)}
+      Check:   ${m.check} → ${m.term}
+      Reverse: ${m.reverse} → ${m.fact}`));
     const summary = ['ISYS THIS LESSON (I say, you say). This slide is hidden: students never see it. '
       + 'ISYS slides show the phrase and a dot by the slide number.',
     ...phrases.map((m) => `- "${m.term}" … "${m.fact}" (slide ${m.n})`),

@@ -95,7 +95,7 @@ const F = 'Define, then call';
 // → back to after the call. "Python knows" fills on line 1; the output builds up.
 {
   const s = newSlide('SZ_DARK', F, 'Watch it run');
-  K.isys(s, { term: "Function", fact: "named chunk of code", say: "A function is a named chunk of code; we make one with def." });
+  K.isys(s, { term: "Function", fact: "named chunk of code", check: "What is a named chunk of code?", say: "A function is a named chunk of code; we make one with def." });
   const cx = 1.35, cw = 6.4;
   const cp = codePanel(s, DRONE, { x: cx, y: 1.7, w: cw, size: 24, lh: 0.74 });
   // what Python has learnt: the command's name
@@ -157,7 +157,8 @@ const backOut = (s, cp, cx, cw, lines, size, from, to, color = P.muted) => {
 };
 {
   const s = newSlide('SZ_DARK', F, 'Two commands: watch it jump');
-  K.isys(s, { term: "Call", fact: "its name and brackets", say: "To call a function, write its name and brackets, like scan()." });
+  K.isys(s, { term: "Call", fact: "its name and brackets", check: "Writing a function's name and brackets is a…?", reverse: "How do you call a function?", say: "To call a function, write its name and brackets, like scan()." });
+  K.isys(s, { term: "Indentation", fact: "lines moved inwards", check: "What are lines moved inwards?", say: "Indentation is lines moved inwards; it shows which lines are inside the function." });
   const cx = 1.35, cw = 6.4, size = 21;
   const cp = codePanel(s, TWO, { x: cx, y: 1.6, w: cw, size, lh: 0.49 });
   const kx = 8.2, kw = 4.53;

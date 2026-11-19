@@ -44,8 +44,8 @@ const sIsys0 = K.info({ title: 'Two kinds of research', standfirst: 'Ask one que
     ['Secondary research', 'Someone else collected it: websites, articles, reviews, videos.']],
   notes: `Spec A1: primary sources (observations, discussions, interviews, surveys) and secondary sources (internet, film, TV, magazines). One per click.
 Example: what Year 10s think of EA Sports FC? Only primary research can tell you: ask them. How much Barbie made at the box office? Secondary: it's already in the news.` });
-K.isys(sIsys0, { term: "Primary research", fact: "you collect it yourself", say: "Primary research is when you collect it yourself." });
-K.isys(sIsys0, { term: "Secondary research", fact: "someone else collected it", say: "Secondary research is when someone else collected it." });
+K.isys(sIsys0, { term: "Primary research", fact: "you collect it yourself", check: "What is research you collect yourself?", say: "Primary research is when you collect it yourself." });
+K.isys(sIsys0, { term: "Secondary research", fact: "someone else collected it", check: "What is research someone else collected?", say: "Secondary research is when someone else collected it." });
 
 K.info({ title: 'Four ways to do primary research', standfirst: 'All four: you collect it yourself.',
   points: [['Survey', 'The same questions to lots of people. 20 classmates: which streaming service?'],
@@ -71,7 +71,7 @@ const sIsys1 = K.keyTerm({ term: 'Reliable', definition: 'A source is reliable i
   example: 'Minecraft\'s official website says it has sold over 300 million copies, and a 2023 news article says the same.',
   img: img('minecraft.jpg'), imgLabel: 'Minecraft screenshot',
   notes: 'The teacher guide: judge secondary sources by who wrote them (official or trusted, anonymous, possible bias), fact or opinion, how up to date they are, and fact-checking. Example on click: two independent sources that agree. Next slide: the four checks.' });
-K.isys(sIsys1, { term: "Reliable", fact: "you can trust it", say: "A source is reliable if you can trust it to be true." });
+K.isys(sIsys1, { term: "Reliable", fact: "you can trust it", check: "What word means you can trust it?", reverse: "When is a source reliable?", say: "A source is reliable if you can trust it to be true." });
 
 K.info({ title: 'The four checks', standfirst: 'Run all four on every secondary source.',
   points: [['Who made it?', 'Official or a trusted name? Anonymous? Could they be biased: only showing the side that suits them?'],

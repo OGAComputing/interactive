@@ -189,7 +189,7 @@ A unit with a story layer can restyle the deck to match it, but keeps the slide 
 
 - **Y9 Python — *Station Zero*** (survival horror, `Y9/Python/`): charcoal stays the base, gold is used as the station's hazard/warning colour, and a dim phosphor green (Consolas) is kept for story text only: chapter cards and terminal logs. Alarm red appears **only** on error messages. The Recap & Recall starter stays light (off-white) so the answers slide can be the dark one. The story appears in two places only, as in the activities: a chapter card before the task and a cliffhanger at the end. Content slides carry no decorative horror imagery. Code uses Consolas, coloured like the activities' memory view: strings in Okabe-Ito orange (`str`), numbers in sky blue (`int`), so slides and activities use the same type colours.
   - **Start from `_presentations/Y9_Python/README.md` and `Y9_Python_Deck_Template.pptx`** (one example of every slide type, with guidance in the speaker notes). The README holds the unit's rules and the running feedback log; the template's rules slides are generated from it.
-  - Slide types are functions in `sz_slides.cjs`, drawing parts in `sz_kit.cjs`. A lesson deck is one builder script (`build_deck.cjs` is Lesson 1); copy it for a new lesson. On Windows, call `soffice.exe --headless --convert-to pdf` directly — the pptx skill's `soffice.py` wrapper uses Unix sockets and fails.
+  - Slide types are functions in `sz_slides.cjs`, drawing parts in `sz_kit.cjs`. A lesson deck is one builder script (`build_L1.cjs` is Lesson 1); copy it for a new lesson. On Windows, call `soffice.exe --headless --convert-to pdf` directly — the pptx skill's `soffice.py` wrapper uses Unix sockets and fails.
 
 ---
 
@@ -198,10 +198,11 @@ A unit with a story layer can restyle the deck to match it, but keeps the slide 
 Nick's directive, 2026-11-18. Every lesson has **at least one and at most three** ISYS moments.
 
 **Choosing what to flag**
-- The 1–3 most important pieces of **declarative** knowledge in the lesson: key vocabulary, definitions, facts or short rules ("Bit … one binary digit", "Condition … True or False").
+- The 1–3 most important pieces of **declarative** knowledge in the lesson: key vocabulary, definitions, facts or short rules ("Bit … one binary digit", "Condition … a True/False test").
 - Term and fact are each **1–4 words**, with exactly one correct answer, and **worded identically** every time they appear in the lesson: slides, notes, questions, worksheets and the activity page. If a slide says it differently, change the slide.
 - Never flag reasoning, explanations, "why" questions or multi-step processes. In a procedural lesson (tracing, writing code, converting numbers) flag the term or rule the procedure relies on ("Selection … choosing which code runs"), not the steps.
-- Word the pair so the script reads naturally both ways: "What is *fact*?" → *term*, and "What does *term* mean?" → *fact*.
+- **Plain words, exam keyword** (Nick, 2026-11-19): the term is the subject's exam keyword where there is one (for Computing, check the OCR J277 glossary in the Question-Engine repo, `knowledge/ocr-j277/*.organiser.yaml`), and the fact is a short definition a student that age can say back, never an abstract one ("Variable … stores data", not "named storage location"). The fact says what the thing **is**; what it does goes in the Say line ("Indentation … lines moved inwards"). Drop details that are only syntax (`==`, `range(n)`) rather than flag them.
+- **Read the Check and Reverse questions aloud before keeping a phrase** (Nick, 2026-11-19). Each must sound like a real question with exactly one answer. The defaults, "What is *fact*?" → *term* and "What does *term* mean?" → *fact*, only work when the fact is a noun phrase ("a whole number"). When it is a verb or a clause ("stores data", "takes it in") or the default is ambiguous ("What is 4 bits?"), write the questions: `check: 'What stores data?'`, `reverse: 'What does a variable do?'`. The answers stay the term and the fact, word for word.
 
 **Marking the slide: the phrase and the ISYS dot** (Nick, 2026-11-18)
 - In the bottom-right corner: the phrase ("Bit … one binary digit"), then a small filled dot (0.08″) just left of the slide number, both small and in the slide number's own colour. Students read it as part of the footer; teachers learn to look for it.
@@ -214,10 +215,10 @@ Nick's directive, 2026-11-18. Every lesson has **at least one and at most three*
 ISYS:
 - Say: "[full sentence containing the phrase]"
 - I say, you say: "[term]" … "[definition/fact]"
-- Check (in 3, 2, 1): "What is [definition/fact]?" → "[term]"
-- Reverse (in 3, 2, 1): "What does [term] mean?" → "[definition/fact]"
+- Check (in 3, 2, 1): "What is [definition/fact]?" → "[term]"      (or the phrase's own check question)
+- Reverse (in 3, 2, 1): "What does [term] mean?" → "[definition/fact]"   (or its own reverse question)
 ```
 
 **Lesson summary: a hidden teacher slide** (Nick, 2026-11-18). Slide 1 of every deck is hidden (it never shows in the slideshow) and lists the lesson's ISYS phrases: term … fact, the slide it's on, the Say line, Check and Reverse. Its notes start with the same list. Slides are numbered from 0, so the hidden slide is 0 and Recap & Recall is still slide 1 in PowerPoint.
 
-**How to build it**: both kits have `K.isys(slide, { term, fact, say })` (shared code in `_presentations/isys.cjs`). It draws the phrase and the dot, writes the script into the notes, and fills the hidden teacher slide when the deck is written (`DECK_SHOW_HIDDEN=1` builds it visible, to render and check it). The build fails if the deck has no phrase or more than three, a term or fact is over 4 words, one term gets two different facts, or the Say line doesn't contain both word for word. Deck templates pass `createDeck({ template: true })` and show one example.
+**How to build it**: both kits have `K.isys(slide, { term, fact, say, check?, reverse? })` (shared code in `_presentations/isys.cjs`). It draws the phrase and the dot, writes the script into the notes, and fills the hidden teacher slide when the deck is written (`DECK_SHOW_HIDDEN=1` builds it visible, to render and check it). The build fails if the deck has no phrase or more than three, a term or fact is over 4 words, one term gets two different facts, the Say line doesn't contain both word for word, a Check question contains its answer (the term) or a Reverse question its answer (the fact), or one term is asked two different ways. Every build prints each phrase's Check and Reverse questions: read them aloud. Deck templates pass `createDeck({ template: true })` and show one example.

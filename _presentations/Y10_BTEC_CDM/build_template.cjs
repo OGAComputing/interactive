@@ -89,7 +89,7 @@ const sKeyTerm = K.keyTerm({ term: 'Psychographics', say: 'say: SY-ko-GRAF-iks',
   notes: 'keyTerm — one key term or theory per slide: the word, how to say it if needed, a plain definition, and a REAL example with its image (ask Nick for the image). Abstract terms need a concrete model first (README rule).' });
 recipe(sKeyTerm, 'keyTerm');
 // ISYS (ppt-guidelines.md §10): 1–3 per lesson, on the slide where the term is taught. Draws the dot and writes the script into the notes.
-K.isys(sKeyTerm, { term: 'Psychographics', fact: 'how they live', say: 'Psychographics describes an audience by how they live and think.' });
+K.isys(sKeyTerm, { term: 'Psychographics', fact: 'how they live', check: "What describes an audience by how they live?", reverse: "What are psychographics about?", say: 'Psychographics describes an audience by how they live and think.' });
 
 recipe(K.readingScaffold({ title: 'Read the brief', step: 1, source: 'From the assignment brief (sample text)',
   chunk: 'The client wants a campaign that encourages teenagers who do not usually take part in sport to try a new activity. The products must feel welcoming and must not suggest that being "sporty" matters.',

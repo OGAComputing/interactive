@@ -46,7 +46,7 @@ const sIsys0 = K.keyTerm({ term: 'Situation', definition: 'Where, when, who with
   example: 'Radio 1 Weekend Breakfast: live in the car with your family on Saturday morning, or on BBC Sounds on your own on Monday.',
   img: img('radio1_breakfast.jpg'), imgLabel: 'Radio 1 Weekend Breakfast',
   notes: 'Spec A1: the situation in which a product is used. Example on click. Ask: which is the same in both? (the show) Which is different? (where, when, who with). In the car, everyone hears it; on Sounds, you can skip the bits you don\'t like.' });
-K.isys(sIsys0, { term: "Situation", fact: "where, when, who with", say: "Situation is where, when, who with: the setting someone uses a product in." });
+K.isys(sIsys0, { term: "Situation", fact: "where, when, who with", check: "What word means where, when, who with?", say: "Situation is where, when, who with: the setting someone uses a product in." });
 
 K.info({ title: 'Three questions about any situation', standfirst: 'Ask all three about every product you use.',
   points: [['Where?', 'At home, on the move, in a stadium or a cinema.'],
@@ -81,8 +81,8 @@ const sIsys1 = K.info({ title: 'Passive or active?', standfirst: 'Ask: is the au
   points: [['Passive audience', 'Takes it in without doing anything back: on in the background, or just sitting and watching.'],
     ['Active audience', 'Takes part: chooses, talks about it, votes, chats, or makes something with it.']],
   notes: 'One per click. It\'s a line, not two boxes: most people are somewhere in between. The situation matters too: alone and half asleep is more passive than shouting answers with your grandad. Task 4 puts real products on this line.' });
-K.isys(sIsys1, { term: "Passive audience", fact: "takes it in", say: "A passive audience takes it in without doing anything back." });
-K.isys(sIsys1, { term: "Active audience", fact: "takes part", say: "An active audience takes part." });
+K.isys(sIsys1, { term: "Passive audience", fact: "takes it in", check: "What kind of audience takes it in?", reverse: "What does a passive audience do?", say: "A passive audience takes it in without doing anything back." });
+K.isys(sIsys1, { term: "Active audience", fact: "takes part", check: "What kind of audience takes part?", reverse: "What does an active audience do?", say: "An active audience takes part." });
 
 K.info({ title: 'Three ways to get involved', standfirst: 'Products give their audience ways to take part.',
   points: [['Interactive features', 'Parts you click, tap or choose that respond to you: liking a YouTube video brings you more like it.'],

@@ -47,7 +47,7 @@ const sIsys0 = K.info({ title: 'Two audiences', standfirst: 'Every product has a
   notes: `Spec A1: defining primary and secondary audiences. One per click.
 Not the same "primary" as primary research last lesson: here it means MAIN.
 Example to say: Match of the Day magazine is made for children who love football (primary). Parents and grandparents who buy it, and flick through it, are a secondary audience. Why do producers care? A secondary audience means more sales, more money.` });
-K.isys(sIsys0, { term: "Primary audience", fact: "the main group", say: "The primary audience is the main group a product is made for." });
+K.isys(sIsys0, { term: "Primary audience", fact: "the main group", check: "What is the main group a product is for?", say: "The primary audience is the main group a product is made for." });
 
 K.info({ title: 'Describing an audience', standfirst: 'Three things to say about any audience.',
   points: [['Age', 'An age range: 8 to 12, or 16 to 34. Not just "young".'],
@@ -63,7 +63,7 @@ const sIsys1 = K.info({ title: 'Socio-economic groups', standfirst: 'People sort
   notes: `The NRS social grades, simplified (A and B, and D and E, are joined). Moderator-praised Component 1 work uses them: "aimed at C1 and above because it is expensive".
 ABC1 = A, B and C1 together; C2DE = C2, D and E. Clues to a product's group: what it costs, and what its adverts sell. Free or cheap → all groups.
 The same boxes are on hub Task 1, so students can look back.` });
-K.isys(sIsys1, { term: "Socio-economic group", fact: "sorted by their job", say: "A socio-economic group is people sorted by their job." });
+K.isys(sIsys1, { term: "Socio-economic group", fact: "sorted by their job", check: "What is a group of people sorted by their job?", say: "A socio-economic group is people sorted by their job." });
 
 K.choice({ question: 'Aisha is a head teacher. Which socio-economic group is she in?',
   options: ['A/B: managers, professionals', 'C1: office and admin', 'C2: skilled trades', 'D/E: manual, not working'],

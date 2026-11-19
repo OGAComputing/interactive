@@ -32,7 +32,11 @@ Build or update the deck for `$ARGUMENTS`.
 - **ISYS (I Say, You Say), every lesson:** pick 1–3 key terms, definitions or short rules
   (`ppt-guidelines.md` §10), each side 1–4 words, and call `K.isys(slide, { term, fact, say })` on
   each slide where the moment happens. Word them the same on every slide and on the activity page.
-  Show Nick the phrases before building if he hasn't chosen them.
+  The term is the exam keyword (Computing: the J277 glossary in the Question-Engine repo), the fact a
+  plain definition of what it **is**, at the students' reading age. Read both questions aloud
+  ("What is *fact*?" → term, "What does *term* mean?" → fact); if either is not a natural question
+  with one answer (a verb or clause fact, an ambiguous one), pass `check:` / `reverse:` questions.
+  Show Nick each phrase with its Check and Reverse questions before building if he hasn't chosen them.
 - Build: `node build_L<n>.cjs` in the unit folder (needs `npm install -g pptxgenjs`). If it
   can't save, the deck is open in PowerPoint: ask the user to close it.
 

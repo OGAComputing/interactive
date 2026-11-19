@@ -15,7 +15,7 @@ PowerPoint decks for the Y9 Python unit, themed for the unit's *Station Zero* su
 | `L4_For_Loops.pptx` | Lesson 4 deck (Distress Signal) |
 | `L5_Functions.pptx` | Lesson 5 deck (The Drone) |
 | `build_template.cjs` | Builds the template deck (re-reads this README for the rules slides) |
-| `build_deck.cjs` | Builds the Lesson 1 deck: copy this file to start a new lesson's deck |
+| `build_L1.cjs` | Builds the Lesson 1 deck: copy this file to start a new lesson's deck |
 | `build_L2.cjs` | Builds the Lesson 2 deck (draws by hand: the selection flowchart, on L3's geometry, and two animated "Watch it run" models of one if / else, True then False, and a "Which line runs next?" We do on a new one) |
 | `build_L3.cjs` | Builds the Lesson 3 deck (draws by hand: the selection/iteration flowcharts, the animated "Watch it run" trace, "Which line runs next?" (We do and You do)) |
 | `build_L4.cjs` | Builds the Lesson 4 deck (draws by hand: a beacon display where the turtle draws in step with the animated "Watch it run", the We do / You do with sketched answers, the logic-error feedback) |
@@ -30,7 +30,7 @@ PowerPoint decks for the Y9 Python unit, themed for the unit's *Station Zero* su
 
 ```
 npm install -g pptxgenjs          (once)
-node build_deck.cjs               → L1_Python_Refresh.pptx
+node build_L1.cjs                 → L1_Python_Refresh.pptx
 node build_L2.cjs                 → L2_Selection.pptx
 node build_L3.cjs                 → L3_While_Loops.pptx
 node build_L4.cjs                 → L4_For_Loops.pptx
@@ -46,9 +46,9 @@ A render shows every click at once. To check one moment of an animated slide, bu
 
 ## Publishing to Drive
 
-Lessons are taught from Google Slides in the [Y9 Python Unit 1](https://drive.google.com/drive/folders/19JnPbF7xfcnIQVQkoz4rG7Uv9Mdqja9E) Drive folder. `node publish_to_drive.cjs` rebuilds every `build_L<n>.cjs` deck, then uploads each deck whose slides changed to a folder named after it (`L3_While_Loops/L3_While_Loops`), converted to Google Slides, and writes its Slides ID into `../lesson-slides.json` so the hub's Assign button attaches it. Commit `drive.json` and `lesson-slides.json`. A republish replaces the contents of the same Slides file, so links in Classroom keep working, but **edits made in Slides are lost**: change the builder instead. `--dry-run` lists what would go up; name a deck to publish only that one; `--force` republishes unchanged files. `/ship` and `/lesson-deck` run it. Decks in `drive.json`'s `manual` list (L1) were put on Drive by hand and are left alone. Click animations, exit fades included, and the fonts survive the import (L3 played correctly in Google Slides, 2026-11-04). The script shares `../drive_publish.cjs` and the one-time sign-in setup with Y10 (see `../Y10_BTEC_CDM/README.md`). **Edit the builder, not the Slides copy:** a publish replaces the Slides file's contents, so the publisher stops, naming the deck, if it has been edited in Slides since it was published (move the edit into the builder, then `--discard-slides-edits`).
+Lessons are taught from Google Slides in the [Y9 Python Unit 1](https://drive.google.com/drive/folders/19JnPbF7xfcnIQVQkoz4rG7Uv9Mdqja9E) Drive folder. `node publish_to_drive.cjs` rebuilds every `build_L<n>.cjs` deck, then uploads each deck whose slides changed to a folder named after it (`L3_While_Loops/L3_While_Loops`), converted to Google Slides, and writes its Slides ID into `../lesson-slides.json` so the hub's Assign button attaches it. Commit `drive.json` and `lesson-slides.json`. A republish replaces the contents of the same Slides file, so links in Classroom keep working, but **edits made in Slides are lost**: change the builder instead. `--dry-run` lists what would go up; name a deck to publish only that one; `--force` republishes unchanged files. `/ship` and `/lesson-deck` run it. Decks in `drive.json`'s `manual` list were put on Drive by hand and are left alone (none now: L1 joined the publisher on 2026-11-19, keeping its two Slides edits). Click animations, exit fades included, and the fonts survive the import (L3 played correctly in Google Slides, 2026-11-04). The script shares `../drive_publish.cjs` and the one-time sign-in setup with Y10 (see `../Y10_BTEC_CDM/README.md`). **Edit the builder, not the Slides copy:** a publish replaces the Slides file's contents, so the publisher stops, naming the deck, if it has been edited in Slides since it was published (move the edit into the builder, then `--discard-slides-edits`).
 
-**Making a new lesson's deck:** copy `build_deck.cjs` to e.g. `build_L2.cjs`, change the output name, footer and content, and keep the slide order. Every slide is one recipe call with its content and speaker notes. Only draw a slide by hand (as L1 does for slides 14–16) when no recipe fits, and use the kit's parts (`varBox`, `codePanel`, `terminal`, `badge`, `arrow`) so it still matches.
+**Making a new lesson's deck:** copy `build_L1.cjs` to e.g. `build_L2.cjs`, change the output name, footer and content, and keep the slide order. Every slide is one recipe call with its content and speaker notes. Only draw a slide by hand (as L1 does for slides 14–16) when no recipe fits, and use the kit's parts (`varBox`, `codePanel`, `terminal`, `badge`, `arrow`) so it still matches.
 
 ## Slide order
 

@@ -44,7 +44,7 @@ const sIsys0 = K.keyTerm({ term: 'Audience statistic', definition: 'A number tha
   example: 'A Minecraft Movie took £56.9 million at UK and Ireland cinemas in 2025: the top film of the year (BFI).',
   img: img('minecraft_movie_2025.jpg'), imgLabel: 'A Minecraft Movie poster',
   notes: 'Spec A1: audience statistics. Example on click. Why do producers care? A big number sells advertising and persuades people to try it. Each sector counts its audience in its own way: six kinds, over the next two slides.' });
-K.isys(sIsys0, { term: "Audience statistic", fact: "a number that counts", say: "An audience statistic is a number that counts a product's audience." });
+K.isys(sIsys0, { term: "Audience statistic", fact: "a number that counts", check: "What is a number that counts an audience?", say: "An audience statistic is a number that counts a product's audience." });
 
 K.info({ title: 'Counting what people pay for', standfirst: 'Three statistics for films, print and games.',
   points: [['Box office', 'Money taken from cinema tickets for a film.'],
@@ -104,7 +104,7 @@ const sIsys1 = K.info({ title: 'Follow-ups and samples', standfirst: 'Two more t
   points: [['Follow-up question', 'Asks for more about the answer someone just gave. "I play it on the bus." "Who with?"'],
     ['Sample', 'The people you ask: choose enough of them, from the target audience, and different from each other.']],
   notes: 'One per click. Follow-ups are where interviews get interesting: plan "Why do you say that?" in advance. Sample: three best mates who all love the game will all say the same thing.' });
-K.isys(sIsys1, { term: "Sample", fact: "the people you ask", say: "Your sample is the people you ask." });
+K.isys(sIsys1, { term: "Sample", fact: "the people you ask", check: "What do we call the people you ask?", say: "Your sample is the people you ask." });
 
 K.turnTalk({ lead: 'A survey asks: "Don\'t you think TikTok is a waste of time?"',
   prompt: 'What\'s wrong with this question? How would you fix it?',

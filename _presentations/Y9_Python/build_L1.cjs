@@ -1,7 +1,7 @@
 // Y9 Python — Lesson 1 (Python Refresh) deck, Station Zero theme.
 // Follows _presentations/ppt-guidelines.md §9 and this folder's README.md (rules + feedback log).
 //
-//   node build_deck.cjs   (needs `npm install -g pptxgenjs`)
+//   node build_L1.cjs   (needs `npm install -g pptxgenjs`)
 //
 // Output: L1_Python_Refresh.pptx beside this file. Slide types come from sz_slides.cjs,
 // drawing parts from sz_kit.cjs. Slides 14–16 are one-off diagrams drawn here.
@@ -15,7 +15,7 @@ const K = createDeck({ title: 'Station Zero — Y9 Python Lesson 1: Python Refre
   footerText: 'STATION ZERO  ·  Y9 PYTHON  ·  LESSON 1' });
 const { P, HEAD, MONO, M, newSlide, addIcon, text, box, arrow, pyRuns, codePanel, terminal, varBox } = K;
 
-const LESSON_Q = 'How do we ask for, store and calculate with what a user types?';
+const LESSON_Q = 'How do we ask for, store, and process user input?';   // Slides edit, Oct 2026
 
 // ════════════════════════════════════════════════════════════════════════════
 //  1–2. Recap & Recall (first lesson of the unit, so: basic Y8 Python)
@@ -76,16 +76,17 @@ const code = (t) => ({ text: t, options: { fontFace: MONO, color: P.off } });
 const RUN_NAME = [
   { code: 'name = input("Name? ")',
     say: [verb('Asks'), { text: ' the question and waits. Then ' }, verb('stores'), { text: ' what the user typed in ' }, code('name')],
-    screen: [[{ text: 'Name? ' }, { text: 'Riley', color: P.str, bold: true }]],
-    screenNote: 'The user typed Riley',
-    memory: [{ name: 'name', type: 'str', value: '"Riley"' }] },
+    screen: [[{ text: 'Name? ' }, { text: 'Hale', color: P.str, bold: true }]],
+    screenNote: 'The user typed Hale',
+    memory: [{ name: 'name', type: 'str', value: '"Hale"' }] },
   { code: 'print("Hi " + name)',
     say: [verb('Joins'), { text: ' "Hi " to what’s in ' }, code('name'), { text: ', then ' }, verb('prints'), { text: ' it' }],
-    screen: [[{ text: 'Name? Riley', color: P.dim }], [{ text: 'Hi Riley', bold: true }]],
-    memory: [{ name: 'name', type: 'str', value: '"Riley"' }],
+    screen: [[{ text: 'Name? Hale', color: P.dim }], [{ text: 'Hi Hale', bold: true }]],
+    memory: [{ name: 'name', type: 'str', value: '"Hale"' }],
     memoryNote: 'No change' },
 ];
 
+// The typed name is Hale (a Slides edit, Oct 2026, kept when L1 moved to the publisher on 2026-11-19).
 // Variables first: storing a value and reading it back, before input() fills the box.
 const sIsys0 = R.runLinesSlide(K, {
   section: P1, title: 'A variable stores data, under a name',
@@ -106,13 +107,13 @@ Click 4–6 (line 2): no quotes round name, so Python looks in the box and print
 Link to the Do Now (Q2): score = 5 then score = 9 — a box holds one value, so the new one replaces the old.
 The orange box is how the activity's memory panel shows a string (str). Next slide: the same box, but the USER fills it.`,
 });
-K.isys(sIsys0, { term: "Variable", fact: "stores data", say: "A variable stores data under a name, like a labelled box." });
+K.isys(sIsys0, { term: "Variable", fact: "stores data", check: "What stores data?", reverse: "What does a variable do?", say: "A variable stores data under a name, like a labelled box." });
 
 R.runLinesSlide(K, {
   section: P1, title: 'input(): the user fills the box',
   lines: RUN_NAME,
   notes: `6 clicks: each line, then what's on screen after it, then what's in memory after it. Before each click, ask "what will appear?"
-Click 1–3 (line 1): input() shows the question and WAITS. The user types Riley and presses Enter. = stores what they typed in name.
+Click 1–3 (line 1): input() shows the question and WAITS. The user types Hale and presses Enter. = stores what they typed in name.
 Click 4–6 (line 2): + joins "Hi " to what's stored in name, and print() shows the result. Memory doesn't change — print only reads name.
 The four verbs in gold are today's sub-goals: ASK, STORE, JOIN, PRINT. Say them every time you live-code.
 The orange box is how the activity's memory panel shows a string (str) — the same colours they'll see later.
