@@ -37,6 +37,7 @@ These are the only files an activity may reference. They are allowed because act
 
 ## Running and testing locally
 
+- **Node version:** 26 (LTS), set in `.nvmrc`. CI's `setup-node` reads it (`ci-config.test.js` fails on a hard-coded `node-version:`), so change the version there and nowhere else.
 - **Static pages:** open the HTML file directly.
 - **Python, pseudocode and module pages** need a server (ES modules and Pyodide don't load from `file://`): `node test-server.mjs` → http://localhost:3000.
 - **Unit tests (Vitest, seconds):** `npm run test:unit`. Covers each page's `checkers.js`, the transpiler, error hints, `activity-dependencies.test.js` (every graded page loads `classroom.js` + `activity-ui.js`, loads nothing from another site, and every `fonts/` link exists) and `primm-templates.test.js` (the Y8 and Y9 PRIMM templates keep one module script).

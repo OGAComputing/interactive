@@ -26,11 +26,11 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
-          node-version: 20
+          node-version-file: .nvmrc
           cache: npm
 
       - name: Install dependencies
@@ -43,9 +43,14 @@ jobs:
     # The E2E suite is CPU-bound (each Python activity boots Pyodide), so it is split
     # across four runners that work in parallel. Deploy waits for all four to pass.
     name: test (shard ${{ matrix.shard }}/4)
-    # Pinned: ubuntu-latest moved to 26.04, which Playwright 1.59 can't install
-    # browser dependencies for. Move back once Playwright supports it.
     runs-on: ubuntu-24.04
+    # Playwright's own image has Chromium and its system libraries already installed.
+    # `playwright install --with-deps` took 25 s to 10 min per shard (apt mirrors), and
+    # deploy waits for the slowest shard. The tag must match @playwright/test in
+    # package-lock.json (ci-config.test.js checks); bump both together.
+    container:
+      image: mcr.microsoft.com/playwright:v1.59.1-noble
+      options: --user 1001
     permissions:
       contents: read
     strategy:
@@ -53,24 +58,21 @@ jobs:
       matrix:
         shard: [1, 2, 3, 4]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
-          node-version: 20
+          node-version-file: .nvmrc
           cache: npm
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium
-
       - name: Run tests
         run: npx playwright test --shard=${{ matrix.shard }}/4
 
       - name: Upload test report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: playwright-report-shard-${{ matrix.shard }}
@@ -97,21 +99,21 @@ jobs:
       # deploy job runs that commit is already on main. Pinning to the
       # trigger SHA (the default) would publish the *previous* manifest and
       # leave the site permanently one activity behind.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: main
 
-      - uses: actions/configure-pages@v4
+      - uses: actions/configure-pages@v6
 
       # Name the artifact per attempt: a re-run keeps the earlier attempt's
       # artifact, and deploy-pages refuses to choose between two with the
       # same name ("Multiple artifacts named github-pages").
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: '.'
           name: github-pages-${{ github.run_attempt }}
 
-      - uses: actions/deploy-pages@v4
+      - uses: actions/deploy-pages@v5
         id: deployment
         with:
           artifact_name: github-pages-${{ github.run_attempt }}
