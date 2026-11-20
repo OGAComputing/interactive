@@ -73,7 +73,8 @@ export const CHOICES = {
 
 // ── Task 2 (apply it) and the ★ challenge: open writing about The Great British Bake Off ──
 // Assessment-light: one question per box and a word bank, but no sentence starters (the PSA has none).
-// Every answer must use a word from each bank; the teacher reads them and judges working towards / secure / strong.
+// The word banks are help only: an answer is accepted once it is long enough (minWords), as in the coursework,
+// where nothing checks for set words (Nick, 2026-11-20). The teacher reads them and judges working towards / secure / strong.
 export const PRODUCER_TYPES = ['media conglomerate', 'public service broadcaster', 'independent producer', 'community media'];
 export const PURPOSES = ['entertain', 'inform', 'educate', 'inspire', 'persuade', 'challenge', 'raise awareness'];
 export const MOTIVATIONS = ['generate profit', 'raise awareness', 'benefit a community', 'self-expression', 'innovation', 'public service responsibilities'];
@@ -206,9 +207,10 @@ export function markChoices(taskKey, given) {
 export function markSort(taskKey, given) {
   return Object.fromEntries(SORTS[taskKey].items.map(it => [it.id, given[it.id] === it.bin]));
 }
+// This page only: writing is accepted on length alone (Nick, 2026-11-20), not on the word banks or the template's other guards.
+export const longEnough = (w, text) => wordsOf(text).length >= (w.minWords || 4);
 export function markWriting(taskKey, given) {
-  const twice = pastedTwice(WRITING[taskKey], given);
-  return Object.fromEntries(WRITING[taskKey].map(w => [w.id, markWriteQ(w, given) && !twice.has(w.id)]));
+  return Object.fromEntries(WRITING[taskKey].map(w => [w.id, longEnough(w, given[w.id])]));
 }
 export function markWriteQ(w, given) {
   const real = w.short ? isRealName(given[w.id]) : isRealSentence(given[w.id], w.minWords) && ownWords(w, given[w.id]);

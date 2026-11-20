@@ -102,13 +102,14 @@ describe('Task 2 and the challenge: writing', () => {
   test('a full answer passes', () => {
     expect(allCorrect(markWriting('apply', good))).toBe(true);
   });
-  test('missing a word bank fails (no producer type; no secondary audience; no need)', () => {
-    expect(markWriting('apply', { ...good, a_who: 'Channel 4 makes it. The purpose of Bake Off is to entertain, and the motivation is to generate profit from the adverts in the breaks.' }).a_who).toBe(false);
-    expect(markWriting('apply', { ...good, a_aud: 'The primary audience is families and adults aged 25 to 60 who like baking, and they watch it every single Tuesday at home.' }).a_aud).toBe(false);
-    expect(markWriting('apply', { ...good, a_use: 'Families watch it together on a Tuesday night in the living room, and keen bakers watch on their own and then try the recipes later in the week.' }).a_use).toBe(false);
+  test('the word banks are help only: an answer without them passes once it is long enough', () => {
+    expect(markWriting('apply', { ...good, a_who: 'Channel 4 shows it, and they want lots of people to watch it so that companies pay to put their adverts in the breaks.' }).a_who).toBe(true);
+    expect(markWriting('apply', { ...good, a_aud: good.a_use }).a_aud).toBe(true);
   });
-  test('the same text in two boxes fails the second', () => {
-    expect(markWriting('apply', { ...good, a_aud: good.a_use }).a_aud).toBe(false);
+  test('an answer under its minimum word count fails', () => {
+    expect(markWriting('apply', { ...good, a_aud: 'Families and students watch it.' }).a_aud).toBe(false);
+    expect(markWriting('apply', { ...good, a_use: '' }).a_use).toBe(false);
+    expect(markWriting('then', { c_move: 'They want more money now.' }).c_move).toBe(false);
   });
   test('no sentence starters (the real assessment has none), but every box has a prompt, a question to ask and word banks', () => {
     for (const w of [...WRITING.apply, ...WRITING.then]) {

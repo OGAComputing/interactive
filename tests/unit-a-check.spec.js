@@ -38,17 +38,18 @@ test('Task 1 is one go: blanks are refused, the first click asks to be sure, the
   await expect(panel.locator('.q.is-wrong')).toHaveCount(3);
 });
 
-test('Task 2: the evidence file shows; a box missing its word bank goes red, then a full answer saves', async ({ page }) => {
+test('Task 2: the evidence file shows; a box that is too short goes red, then a long enough answer saves', async ({ page }) => {
   await page.goto(URL);
   await page.locator('.tab[data-idx="1"]').click();
   await expect(page.locator('#panel-1 .evidence-file li')).toHaveCount(6);
   await expect(page.locator('#panel-1 .starter')).toHaveCount(0);
   await page.fill('#a_who', 'Channel 4 is a public service broadcaster. The purpose of Bake Off is to entertain, and the motivation is to generate profit from the adverts in the breaks.');
-  await page.fill('#a_aud', 'The primary audience is families and adults aged 25 to 60 who like baking, and they watch it every single Tuesday at home.');
+  await page.fill('#a_aud', 'Families and students watch it.');
   await page.fill('#a_use', 'Families watch it together on a Tuesday night in the living room, which meets a need for social interaction. Keen bakers watch on their own and try the recipes, so it meets a need for information.');
   await page.locator('#check-1').click();
   await expect(page.locator('#panel-1 [data-qw="a_aud"]')).toHaveClass(/is-wrong/);
-  await page.fill('#a_aud', 'The primary audience is families and adults aged 25 to 60 who like baking. A secondary audience is students, who watch it for the jokes and the memes online.');
+  await expect(page.locator('#feedback-1')).toContainText('too short: write at least 20 words');
+  await page.fill('#a_aud', 'Families and adults who like baking watch it every week, and lots of students watch it too because they like the jokes and the memes online.');
   await page.locator('#check-1').click();
   await expect(page.locator('#feedback-1')).toContainText('Saved and sent to your teacher');
   await expect(page.locator('.tab[data-idx="1"]')).toHaveClass(/done/);
