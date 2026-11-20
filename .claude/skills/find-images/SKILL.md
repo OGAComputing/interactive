@@ -69,12 +69,11 @@ Aim for at least 1200 px on the long side: a 260 px Wikipedia poster looked too 
 ## 5. Drive
 
 Master copies go in the course Drive folder (`Y10/CLAUDE.md`): products in `Images/`, free photos in
-`Photo Bank/`. If the Drive connector's session has expired, upload with the deck publisher's saved sign-in
-(`~/.oga-drive`, as in `_presentations/drive_publish.cjs`: refresh the token, then a resumable upload with
-`supportsAllDrives=true`).
+`Photo Bank/`. Upload them with `node Y10/upload_media.cjs --to Images <files…>` (or `--to "Photo Bank"`):
+it uses the deck publisher's saved sign-in, replaces a file of the same name in place, and prints each ID
+and its sharing (Outwood-only).
 
 ## 6. Report
 
-Which images are in (size and source), anything still missing and why, and remind Nick to copy the
-new files to the Drive folder's `Images/` (the master copies), including any a task tells students
-to open from there.
+Which images are in (size and source), anything still missing and why, and which files went to the Drive folder's `Images/` (the master copies), including any a task
+tells students to open from there.

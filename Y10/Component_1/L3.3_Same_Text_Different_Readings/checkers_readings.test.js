@@ -71,7 +71,7 @@ describe('page identity and tabs', () => {
 
 describe('Task 1: War of the Worlds and a passive audience', () => {
   test('four options each, the answer among them; right answers pass and a wrong one fails', () => {
-    expect(qs).toHaveLength(5);
+    expect(qs).toHaveLength(7);
     for (const [id, c] of qs) {
       expect(c.opts, id).toHaveLength(4);
       expect(c.opts.map(o => o[0]), id).toContain(c.a);

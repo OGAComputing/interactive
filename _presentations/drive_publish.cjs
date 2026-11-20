@@ -41,7 +41,7 @@ const CONVERT = {
   '.docx': ['application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/vnd.google-apps.document'],
   '.xlsx': ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.google-apps.spreadsheet'],
 };
-const PLAIN = { '.pdf': 'application/pdf', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.mp4': 'video/mp4', '.txt': 'text/plain' };
+const PLAIN = { '.pdf': 'application/pdf', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.mp4': 'video/mp4', '.mp3': 'audio/mpeg', '.webp': 'image/webp', '.gif': 'image/gif', '.txt': 'text/plain' };
 
 const args = process.argv.slice(2);
 const force = args.includes('--force'), dryRun = args.includes('--dry-run'), discardEdits = args.includes('--discard-slides-edits');
@@ -282,3 +282,10 @@ module.exports = (unit) => (async () => {
     console.log(`  folder: https://drive.google.com/drive/folders/${rec.folderId}`);
   }
 })().catch((e) => { console.error(e.message); process.exit(1); });
+
+// For other scripts (Y10/upload_media.cjs): sign in once, then upload a plain file or call the Drive API.
+module.exports.signIn = async () => { TOKEN ||= await accessToken(); };
+module.exports.upload = (file, opts) => upload(file, opts);
+module.exports.drive = (url, opts) => drive(url, opts);
+module.exports.API = API;
+module.exports.ALL_DRIVES = ALL_DRIVES;

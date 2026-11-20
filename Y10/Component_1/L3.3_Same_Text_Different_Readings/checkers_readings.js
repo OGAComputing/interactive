@@ -43,8 +43,21 @@ export const ISYS = [
 ];
 
 // ── Task 1: multiple choice ──
+// The first two follow the two audio clips: two listeners, two reactions (Nick, 2026-11-20: the part didn't land without
+// hearing it). Frank is Cantril's (1940) finding: many listeners switched over from a comedy show on another station at
+// about 8:12, so they missed the opening announcement that it was a play.
 export const CHOICES = {
   panic: {
+    n_ruth: { q: 'Ruth turned on her radio at 8 pm and heard Clip 1 from the very start. How was she most likely to react when the bulletins began?', a: 'play', opts: [
+      ['play', 'She enjoyed it as a story: it had said it was a play'],
+      ['flee', 'She ran out of the house to get away from the Martians'],
+      ['police', 'She phoned the police to warn them about the explosions'],
+      ['off', 'She switched off, sure the radio had broken down']] },
+    n_frank: { q: 'Frank was listening to a comedy show on another station. At about 8:12 he switched over, a few minutes before Clip 2. Why might he be scared, when Ruth was not?', a: 'missed', opts: [
+      ['missed', 'He missed the start, which said it was a play'],
+      ['loud', 'His radio set was much louder than the one Ruth had'],
+      ['version', 'His station played a scarier version of the play'],
+      ['paper', 'He had read about Martians in that morning\'s paper']] },
     n_theory: { q: 'In 1938 many people believed the media puts one message into everyone\'s head, and they all react the same way. What kind of audience did they think it was?', a: 'pas', opts: [
       ['pas', 'A passive audience'], ['act', 'An active audience'],
       ['sec', 'A secondary audience'], ['pri', 'A primary audience']] },
@@ -168,6 +181,7 @@ export const GLOSSARY = [
   ['panic(?:ked)?', 'Sudden, wild fear that stops people thinking clearly'],
   ['researchers?', 'People who study something carefully to find out what is true'],
   ['bulletins?', 'A short news report that breaks into a programme'],
+  ['announcer', 'The person on the radio who says what is coming next'],
   ['exaggerated?', 'Made to sound bigger or worse than it really was'],
   ['advertisers?', 'Companies that pay to put their adverts somewhere'],
   ['generative AI', 'Software that makes new pictures, video or text when you ask it to'],

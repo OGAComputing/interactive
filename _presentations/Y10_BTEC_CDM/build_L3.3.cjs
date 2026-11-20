@@ -48,7 +48,19 @@ K.info({ title: 'Halloween, 1938', standfirst: 'American radio played War of the
     ['The next morning', 'Newspapers said thousands of terrified listeners had run from their homes.'],
     ['The big idea', 'If that was true, one radio play had put the same fear into everyone who heard it.']],
   img: img('war_of_the_worlds_nyt_1938.jpg'), imgLabel: 'The New York Times, 31 October 1938 (cropped)',
-  notes: 'One per click. Read the headline aloud: "Radio Listeners in Panic, Taking War Drama as Fact". Ask: would YOU have believed it? Why or why not? Hold the answers: we test the story next.' });
+  notes: 'One per click. Read the headline aloud: "Radio Listeners in Panic, Taking War Drama as Fact". Now play both clips: would YOU have believed it?' });
+
+// The two War of the Worlds audio clips (Y10/media.md; Nick, 2026-11-20: Part 1 didn't land without hearing it).
+// Clip 1 = the opening announcement + the first bulletin cutting into the dance music; Clip 2 = the reporter at Grover's Mill.
+const WOTW1 = '1vFs_eSi9inl54f0t7gudL_ssxo7Ap2PH', WOTW2 = '108NZP67okjuR4-Z_Fe_ZrSzCwGYDu44Y';   // Drive › Clips (Y10/media.md)
+K.clip({ title: 'Listen: 8 pm, the start', from: '0:00', to: 'end', where: 'Click the picture to play', video: WOTW1,
+  img: img('orson_welles_reporters_1938.jpg'), imgLabel: 'Orson Welles, 1938 · public domain',
+  questions: ['What does the announcer say at the very start?', 'What happens to the dance music?', 'If you heard it from the start, would you believe it?'],
+  notes: 'Drive clip "War of the Worlds 1 - The start.mp3" (1½ min, Y10/media.md): the CBS announcement that this is Orson Welles and the Mercury Theatre in a play, then (after a jump) dance music cut off by the first "bulletin". Q1 matters: anyone listening from 8 pm was told it was a play.' });
+K.clip({ title: 'Listen: about 8:15 pm, Grover\'s Mill', from: '0:00', to: 'end', where: 'Click the picture to play', video: WOTW2,
+  img: img('orson_welles_reporters_1938.jpg'), imgLabel: 'Orson Welles, 1938 · public domain',
+  questions: ['What does the reporter say he can see?', 'What happens at the end of the clip?', 'You switched over at 8:12 from a comedy show. How might you react?'],
+  notes: 'Drive clip "War of the Worlds 2 - Grovers Mill.mp3" (1½ min): a few seconds of studio piano, back to the "live" reporter at the farm; jump to the Martians turning on the crowd, the heat ray (about 0:37), dead air, then the studio: "some difficulty with our field transmission". Q3 is the real finding (Cantril, 1940): many listeners switched over from a comedy show on another station at about 8:12, so they missed the announcement that it was a play. Take two or three answers: some would panic, some would check another station or ring someone. Did everyone react the same way? Hold that: we test the newspapers\' story after the key term.' });
 
 const sPassive = K.keyTerm({ term: 'Passive audience', say: 'PASS-iv',
   definition: 'Takes the message in, without questioning it. An old idea said every audience is passive: one message goes into every head, and everyone reacts the same way.',
@@ -72,10 +84,10 @@ K.choice({ question: 'A news report says one TikTok trend made thousands of teen
 
 K.task({ title: 'The panic that wasn\'t', mins: 8, where: `${HUB} › Same Text, Different Readings`,
   steps: ['Open the second page. It starts on the Warm-up: passive or active? The meanings are open.',
-    'Task 1 · The panic that wasn\'t: read the story, then five questions.',
+    'Task 1 · The panic that wasn\'t: replay the clips if you need to, read the story, then seven questions.',
     'Finished? ★ Why did the papers say panic? Tasks 2 and 3 open later.'],
-  criteria: ['Did everyone react the same way?', 'All five right first time for gold'],
-  notes: 'Warm-up is optional (from 3.1). Task 1 is five questions; a wrong check makes them wait 10 s. The ★ challenge has a clue box: radio was new, and advertisers were moving their money from newspapers to radio. Tasks 2 and 3 are locked until the Part 2 word.' });
+  criteria: ['Did everyone react the same way?', 'All seven right first time for gold'],
+  notes: 'Warm-up is optional (from 3.1). Task 1 is seven questions (first Ruth, who heard the start, and Frank, who switched over at 8:12); a wrong check makes them wait 10 s. The ★ challenge has a clue box: radio was new, and advertisers were moving their money from newspapers to radio. Tasks 2 and 3 are locked until the Part 2 word.' });
 
 // ── Part 2: three readings (Task 2 Coca-Cola sort, Task 3 Snapper, ★ This year's advert) ──
 // Concrete first (README 2026-11-17): three real-sounding viewers of one product, then the names.

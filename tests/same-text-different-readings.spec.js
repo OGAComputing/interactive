@@ -33,7 +33,7 @@ test('opens on the warm-up with its definitions open; Part 2 is locked until its
   await expect(page.locator('.tab.locked')).toHaveCount(0);
 });
 
-test('Task 1: all five right goes green and finishes the task', async ({ page }) => {
+test('Task 1: all seven right goes green and finishes the task', async ({ page }) => {
   await page.goto(URL);
   await page.locator('.tab[data-idx="0"]').click();
   const panel = page.locator('#panel-0');
