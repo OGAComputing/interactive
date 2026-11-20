@@ -77,7 +77,6 @@ export const hasIf      = src => /\bif\b/.test(src);
 export const hasLoop    = src => /\bfor\b|\bwhile\b|\bdo\b/.test(src);
 export const extracts   = src => /\.substring\s*\(|\bleft\s*\(|\bright\s*\(/.test(src);
 export const usesLength = src => /\.length\b/.test(src);
-export const declaresArray = src => /\barray\s+\w+\s*\[/.test(src);
 // Assigns to an array element (scores[i] = … or scores[0] = …).
 export const storesByIndex = src => /\b\w+\s*\[[^\]]+\]\s*=(?!=)/.test(src);
 
@@ -172,8 +171,6 @@ export const QUESTIONS = {
       { inputs: ['Russo', 'Hemp', 'Bronze', 'Toone', 'Earps'], expected: ['Russo', 'Earps'] },
     ],
     criteria: [
-      { text: 'Declares an array to hold the five players', marks: 1,
-        check: ({ src }) => declaresArray(src) },
       { text: 'Inputs all five player names', marks: 1,
         check: ({ runs }) => runs.every(consumedAll) },
       { text: 'Outputs the first player entered (Kane, Russo)', marks: 1,
@@ -208,8 +205,6 @@ export const QUESTIONS = {
       { inputs: ['10', '2', '0', '0', '8', '1', '7'], expected: ['28', '4'] },
     ],
     criteria: [
-      { text: 'Declares an array to hold the rainfall', marks: 1,
-        check: ({ src }) => declaresArray(src) },
       { text: 'Attempts to use iteration (any loop present)', marks: 1,
         check: ({ src }) => hasLoop(src) },
       { text: 'Inputs seven values and stores each one in the array', marks: 1,
@@ -316,8 +311,6 @@ export const QUESTIONS = {
       { inputs: ['ring', 'sing', 'king', 'ping', 'wing'],          expected: ['ring', '5'] },
     ],
     criteria: [
-      { text: 'Declares an array to hold the five words', marks: 1,
-        check: ({ src }) => declaresArray(src) },
       { text: 'Inputs five words and stores each one in the array', marks: 1,
         check: ({ src, runs }) => storesByIndex(src) && runs.every(consumedAll) },
       { text: 'Attempts to use iteration (any loop present)', marks: 1,

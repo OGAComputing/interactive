@@ -41,9 +41,17 @@ class _PscStr(str):
     def __le__(self, other): return False if isinstance(other, (int, float)) else str.__le__(self, other)
     def __gt__(self, other): return False if isinstance(other, (int, float)) else str.__gt__(self, other)
     def __ge__(self, other): return False if isinstance(other, (int, float)) else str.__ge__(self, other)
-def _psc_substr(s, start, count): return _PscStr(_psc_text(s)[start:start + count])
-def _psc_left(s, n): return _PscStr(_psc_text(s)[:n])
-def _psc_right(s, n): return _PscStr(_psc_text(s)[-n:]) if n > 0 else _PscStr('')
+# OCR "/" always gives a real (word.length / 2 → 2.5, 10 / 2 → 5.0), and a
+# mark scheme accepts it as a position, so drop the fraction instead of
+# crashing with "slice indices must be integers": 2.5 → 2, the same as DIV.
+def _psc_pos(n): return int(n) if isinstance(n, float) else n
+def _psc_substr(s, start, count):
+    start, count = _psc_pos(start), _psc_pos(count)
+    return _PscStr(_psc_text(s)[start:start + count])
+def _psc_left(s, n): return _PscStr(_psc_text(s)[:_psc_pos(n)])
+def _psc_right(s, n):
+    n = _psc_pos(n)
+    return _PscStr(_psc_text(s)[-n:]) if n > 0 else _PscStr('')
 def _psc_upper(s): return _PscStr(str(s).upper())
 def _psc_lower(s): return _PscStr(str(s).lower())
 _psc_files = globals().get('_psc_files', {})
@@ -89,10 +97,6 @@ def _psc_tick():
         raise Exception("_psc_loop_limit")`;
 
 // ── Utilities ─────────────────────────────────────────────────────────────────
-
-function _esc(s) {
-  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
 
 // Python keywords that are not OCR keywords, so students may use them as
 // names (e.g. `pass = 0` for a count of passes). Renamed to _psc_<word>.
@@ -342,33 +346,36 @@ function _rewriteClassAttributes(code, ctx) {
   return out;
 }
 
+// name[a, b] → name[a][b] for ANY name, not only arrays declared with
+// `array name[R,C]`: a 2D array passed to a function arrives under its
+// parameter name (function rowTotal(arr, row, cols) … arr[row, c]). Two
+// indices in brackets after a name only ever mean 2D access in OCR
+// pseudocode, and a Python list can't be indexed by a tuple anyway.
+function _rewrite2DAccess(s) {
+  const re = /\b([A-Za-z_]\w*)\s*\[/g;
+  let out = '';
+  let last = 0;
+  let m;
+  while ((m = re.exec(s)) !== null) {
+    const openBracket = m.index + m[0].length - 1;
+    const closeBracket = _findClose(s, openBracket, '[', ']');
+    if (closeBracket === -1) continue;
+    const args = _splitArgs(s.slice(openBracket + 1, closeBracket));
+    if (args.length !== 2) continue;
+    out += s.slice(last, m.index) +
+      `${m[1]}[${_rewrite2DAccess(args[0].trim())}][${_rewrite2DAccess(args[1].trim())}]`;
+    last = closeBracket + 1;
+    re.lastIndex = last;
+  }
+  return out + s.slice(last);
+}
+
 // ── Operator + syntax rewrites (applied to code segments only) ────────────────
 function rewriteOperators(code, ctx) {
   let s = code;
 
-  // 2D array access: board[a,b] → board[a][b] for declared 2D arrays
-  if (ctx && ctx.twoDArrNames.size > 0) {
-    const reps = [];
-    for (const name of ctx.twoDArrNames) {
-      const re = new RegExp(`\\b${_esc(name)}\\s*\\[`, 'g');
-      let m;
-      while ((m = re.exec(s)) !== null) {
-        const openBracket = m.index + m[0].length - 1;
-        const closeBracket = _findClose(s, openBracket, '[', ']');
-        if (closeBracket === -1) continue;
-        const inner = s.slice(openBracket + 1, closeBracket);
-        const args = _splitArgs(inner);
-        if (args.length !== 2) continue;
-        reps.push({
-          start: m.index,
-          end: closeBracket + 1,
-          replacement: `${name}[${args[0].trim()}][${args[1].trim()}]`,
-        });
-      }
-    }
-    reps.sort((a, b) => b.start - a.start);
-    for (const r of reps) s = s.slice(0, r.start) + r.replacement + s.slice(r.end);
-  }
+  // 2D array access: board[a,b] → board[a][b]
+  s = _rewrite2DAccess(s);
 
   // Token rewrites must not reach inside string literals: conditions and
   // assignments arrive here unsegmented, so `x == "false"` would otherwise

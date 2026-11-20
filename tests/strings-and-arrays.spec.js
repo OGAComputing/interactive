@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 const ACTIVITY = '/Y11/2.1 Algorithms/Strings_and_Arrays.html';
 
 // One model answer per question — each must score full marks. Questions with
-// given array data (Q6, Q8, Q11) keep the starter program and add to the end.
+// a given array keep the starter program and add to the end.
 const MODEL = [
 `first = input("Enter first name: ")
 surname = input("Enter surname: ")
@@ -25,8 +25,7 @@ print("Inward code: " + inward)`,
 mid = word.length DIV 2
 print("Middle letter: " + word.substring(mid, 1))`,
 
-`array players[5]
-for i = 0 to 4
+`for i = 0 to 4
   players[i] = input("Enter player " + str(i + 1) + ": ")
 next i
 print("Captain: " + players[0])
@@ -35,11 +34,10 @@ print("Goalkeeper: " + players[4])`,
 `num = input("Enter a day number (1-7): ")
 print(days[num - 1])`,
 
-`array rain[7]
-total = 0
+`total = 0
 for day = 0 to 6
-  rain[day] = input("Rainfall for day " + str(day + 1) + ": ")
-  total = total + rain[day]
+  rainfall[day] = input("Rainfall for day " + str(day + 1) + ": ")
+  total = total + rainfall[day]
 next day
 print("Total: " + str(total))
 print("Average: " + str(total / 7))`,
@@ -77,8 +75,7 @@ if found == false then
   print("Not found")
 endif`,
 
-`array words[5]
-for i = 0 to 4
+`for i = 0 to 4
   words[i] = input("Enter word " + str(i + 1) + ": ")
 next i
 longest = words[0]

@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 const ACTIVITY = '/Y11/2.1 Algorithms/String_Functions_and_Arrays.html';
 
 // One model answer per question — each must score full marks. Questions with
-// given array data (Q6, Q7, Q8, Q9, Q11) keep the starter program and add to the end.
+// a given array keep the starter program and add to the end.
 const MODEL = [
 `sentence = input("Enter a sentence: ")
 print(sentence.upper)
@@ -23,8 +23,7 @@ print("Arrival: " + route.right(3).upper)`,
 tidy = name.left(1).upper + name.right(name.length - 1).lower
 print("Welcome " + tidy)`,
 
-`array items[4]
-for i = 0 to 3
+`for i = 0 to 3
   items[i] = input("Enter item " + str(i + 1) + ": ")
 next i
 for i = 3 to 0 step -1
@@ -67,9 +66,7 @@ if found == false then
   print("No names")
 endif`,
 
-`array firstNames[3]
-array surnames[3]
-for i = 0 to 2
+`for i = 0 to 2
   firstNames[i] = input("First name: ")
   surnames[i] = input("Surname: ")
 next i
@@ -91,8 +88,7 @@ else
   print("Strong")
 endif`,
 
-`array words[4]
-for i = 0 to 3
+`for i = 0 to 3
   words[i] = input("Enter word " + str(i + 1) + ": ")
 next i
 acronym = ""

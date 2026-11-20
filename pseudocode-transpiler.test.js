@@ -64,6 +64,16 @@ describe('2D array access rewriting', () => {
     expect(out).not.toContain('names[2][]');
   });
 
+  test('a 2D array passed to a function is indexed under its parameter name', () => {
+    const src = 'array scores[3,3]\nfunction rowTotal(arr, row, cols)\n  t = arr[row, 0] + arr[row, cols - 1]\n  return t\nendfunction';
+    expect(py(src)).toContain('t = arr[row][0] + arr[row][cols - 1]');
+  });
+
+  test('2D access inside an index is rewritten too', () => {
+    const src = 'array a[2,2]\narray b[2,2]\nx = a[b[0, 1], 1]';
+    expect(py(src)).toContain('x = a[b[0][1]][1]');
+  });
+
   test('undeclared name with comma syntax is left alone', () => {
     const src = 'x = f(1,2)';
     // f is not a 2D array, should not be rewritten
@@ -128,8 +138,19 @@ describe('.length and .substring receiver walking', () => {
     const out = py('print(x.substring(0, 2))');
     expect(out).toContain('def _psc_text(x): return str(x) if isinstance(x, (int, float)) else x');
     for (const fn of ['_psc_len', '_psc_substr', '_psc_left', '_psc_right']) {
-      expect(out).toMatch(new RegExp(`def ${fn}\\(.*_psc_text\\(`));
+      // the def line plus its indented body
+      const body = out.match(new RegExp(`def ${fn}\\(.*(?:\\n {4}.*)*`))[0];
+      expect(body, fn).toContain('_psc_text(');
     }
+  });
+
+  // word.substring(word.length / 2, 1): OCR "/" gives 2.5, which Python can't slice with.
+  test('string helpers drop the fraction from a real-number position or length', () => {
+    const out = py('print(x.substring(0, 2))');
+    expect(out).toContain('def _psc_pos(n): return int(n) if isinstance(n, float) else n');
+    expect(out).toContain('start, count = _psc_pos(start), _psc_pos(count)');
+    expect(out).toContain('def _psc_left(s, n): return _PscStr(_psc_text(s)[:_psc_pos(n)])');
+    expect(out).toMatch(/def _psc_right\(s, n\):\n    n = _psc_pos\(n\)/);
   });
 
   test('chained call .substring: getName().substring(0,3)', () => {

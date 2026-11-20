@@ -209,6 +209,15 @@ test.describe('Running code', () => {
     await expect(output).toHaveText('5', { timeout: 30000 });
   });
 
+  // A student's word.length / 2 gave 2.5, and Python's slice crashed on it.
+  test('substring, left and right accept the real number "/" gives', async ({ page }) => {
+    const code = 'word = "apple"\nmid = word.length / 2\nprint(word.substring(mid, 1))\nprint(word.left(mid))\nprint(word.right(10 / 4))';
+    await page.locator('#pscEditor').fill(code);
+    await page.locator('#runBtn').click();
+    const output = page.locator('.output-content');
+    await expect(output).toHaveText('p\nap\nle', { timeout: 30000 });
+  });
+
   test('2D array write+read works', async ({ page }) => {
     const code = 'array g[2,2]\ng[1,0] = 42\nprint(g[1,0])';
     await page.locator('#pscEditor').fill(code);

@@ -94,7 +94,6 @@ export const inputs     = src => (src.match(/\binput\s*\(/g) || []).length;
 export const hasIf      = src => /\bif\b/.test(src);
 export const hasLoop    = src => /\bfor\b|\bwhile\b|\bdo\b/.test(src);
 export const extracts   = src => /\.substring\s*\(|\.left\s*\(|\.right\s*\(/.test(src);
-export const declaresArray = src => /\barray\s+\w+\s*\[/.test(src);
 // Assigns to an array element (items[i] = … or items[0] = …).
 export const storesByIndex = src => /\b\w+\s*\[[^\]]+\]\s*=(?!=)/.test(src);
 
@@ -208,8 +207,6 @@ export const QUESTIONS = {
       { inputs: ['apples', 'rice', 'tea', 'soup'],  expected: ['soup', 'apples'] },
     ],
     criteria: [
-      { text: 'Declares an array to hold the four items', marks: 1,
-        check: ({ src }) => declaresArray(src) },
       { text: 'Inputs four items and stores each one in the array', marks: 1,
         check: ({ src, runs }) => storesByIndex(src) && runs.every(consumedAll) },
       { text: 'Attempts to use iteration (any loop present)', marks: 1,
@@ -321,8 +318,6 @@ export const QUESTIONS = {
         expected: ['tberners@school.org', 'mseacole@school.org', 'kjohnson@school.org'] },
     ],
     criteria: [
-      { text: 'Declares an array to hold the names', marks: 1,
-        check: ({ src }) => declaresArray(src) },
       { text: 'Inputs three first names and surnames and stores them in arrays', marks: 1,
         check: ({ src, runs }) => storesByIndex(src) && runs.every(consumedAll) },
       { text: 'Attempts to use iteration (any loop present)', marks: 1,
@@ -366,8 +361,6 @@ export const QUESTIONS = {
       { inputs: ['Bring', 'Your', 'own', 'Device'], expected: 'BYOD' },
     ],
     criteria: [
-      { text: 'Declares an array to hold the four words', marks: 1,
-        check: ({ src }) => declaresArray(src) },
       { text: 'Inputs four words and stores each one in the array', marks: 1,
         check: ({ src, runs }) => storesByIndex(src) && runs.every(consumedAll) },
       { text: 'Attempts to use iteration (any loop present)', marks: 1,

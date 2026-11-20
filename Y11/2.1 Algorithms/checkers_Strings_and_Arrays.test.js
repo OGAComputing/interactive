@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { QUESTIONS, markQuestion, maxMarks, printed, isEcho } from './checkers_Strings_and_Arrays.js';
+import { QUESTIONS, markQuestion, maxMarks, printed, isEcho, storesByIndex } from './checkers_Strings_and_Arrays.js';
 
 // Build the runs a program would produce: `program(ask, say, inputs)` calls
 // ask(prompt) for each input (echoed as prompt + value, like the mocked input())
@@ -151,4 +151,11 @@ test('a check that throws counts as not passed', () => {
   const { earned, passed } = markQuestion('username', SRC.username, []);
   expect(earned).toBe(2);
   expect(passed).toEqual([true, true, false, false]);
+});
+
+// The array is given in the editor (OCR exams never ask for a declaration),
+// so the starter alone must not earn the "stores each one in the array" mark.
+test('the given array declaration does not count as storing in the array', () => {
+  expect(storesByIndex('array players[5]\n\n// Write your code below\n')).toBe(false);
+  expect(storesByIndex('array players[5]\nplayers[i] = input("")')).toBe(true);
 });
