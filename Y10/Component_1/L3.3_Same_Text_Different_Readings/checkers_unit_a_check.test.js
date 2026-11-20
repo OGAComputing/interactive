@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import {
   TASKS, TASK_COUNT, CHOICES, WRITING, EVIDENCE, markChoices, markWriting, allCorrect, calcScore, onceShare,
   GLOSSARY, glossaryDef, coreDone,
-} from './checkers.js';
+} from './checkers_unit_a_check.js';
 
 const html = readFileSync(new URL('./1_Unit_A_Check.html', import.meta.url), 'utf8');
 const qs = Object.entries(CHOICES.terms);

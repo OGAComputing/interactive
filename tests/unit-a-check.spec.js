@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { CHOICES } from '../Y10/Component_1/L3.3_Same_Text_Different_Readings/checkers.js';
+import { CHOICES } from '../Y10/Component_1/L3.3_Same_Text_Different_Readings/checkers_unit_a_check.js';
 
 const URL = '/Y10/Component_1/L3.3_Same_Text_Different_Readings/1_Unit_A_Check.html';
 const qs = Object.entries(CHOICES.terms);
