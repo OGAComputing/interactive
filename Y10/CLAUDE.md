@@ -81,7 +81,7 @@ Rules for everything in `Y10/` and the Y10 decks. They add to the root `CLAUDE.m
 - The page can set the start time only. It can't pause, stop at an end time or tell whether a clip was watched, so state "watch 0:45–1:30" in the task, or trim the clip, and put questions after the clip.
 - **Every deck slide that uses a clip links to it** (Nick, 2026-11-03: to get to the media quickly while teaching). Use the `clip` recipe with `video: '<Drive file ID>'`: the picture and a play button open the clip in Drive at the slide's start time. Never just name the clip ("Drive › Clips"); the build lists any `clip` slide with no link.
 - Every clip used goes in `Y10/media.md` (ID, start/end, lessons that use it). Check a new clip's sharing with the Drive connector before using it.
-- Keep clips short, school-only and for teaching (UK fair dealing, CDPA s32): **90 s at most** (Nick, 2026-11-20). Audio clips work the same way (an MP3 in Clips plays in Drive's player; 3.3's War of the Worlds clips).
+- Keep clips short, school-only and for teaching (UK fair dealing, CDPA s32): **90 s at most, and as short as the moment needs**: cut music and padding rather than filling up to 90 s (Nick, 2026-11-20; 3.3 Clip 1 went from 1:30 to 1:02). Audio clips work the same way (an MP3 in Clips plays in Drive's player; 3.3's War of the Worlds clips).
 - **`/add-clip`** does all of this: Nick picks the moments from a check file (nobody here can hear the audio), `Y10/cut_audio.cjs` cuts an MP3 at pauses (no ffmpeg; video is trimmed by Nick), and `Y10/upload_media.cjs --to Clips` uploads with the deck publisher's saved sign-in, replacing a file of the same name in place and checking its sharing. `/find-images` uses `upload_media.cjs --to Images` for its master copies.
 
 ## Feedback

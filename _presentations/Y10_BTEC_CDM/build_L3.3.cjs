@@ -56,7 +56,7 @@ const WOTW1 = '1vFs_eSi9inl54f0t7gudL_ssxo7Ap2PH', WOTW2 = '108NZP67okjuR4-Z_Fe_
 K.clip({ title: 'Listen: 8 pm, the start', from: '0:00', to: 'end', where: 'Click the picture to play', video: WOTW1,
   img: img('orson_welles_reporters_1938.jpg'), imgLabel: 'Orson Welles, 1938 · public domain',
   questions: ['What does the announcer say at the very start?', 'What happens to the dance music?', 'If you heard it from the start, would you believe it?'],
-  notes: 'Drive clip "War of the Worlds 1 - The start.mp3" (1½ min, Y10/media.md): the CBS announcement that this is Orson Welles and the Mercury Theatre in a play, then (after a jump) dance music cut off by the first "bulletin". Q1 matters: anyone listening from 8 pm was told it was a play.' });
+  notes: 'Drive clip "War of the Worlds 1 - The start.mp3" (1 min, Y10/media.md): the CBS announcement that this is Orson Welles and the Mercury Theatre in a play, then (after a jump) dance music cut off by the first "bulletin". Q1 matters: anyone listening from 8 pm was told it was a play.' });
 K.clip({ title: 'Listen: about 8:15 pm, Grover\'s Mill', from: '0:00', to: 'end', where: 'Click the picture to play', video: WOTW2,
   img: img('orson_welles_reporters_1938.jpg'), imgLabel: 'Orson Welles, 1938 · public domain',
   questions: ['What does the reporter say he can see?', 'What happens at the end of the clip?', 'You switched over at 8:12 from a comedy show. How might you react?'],

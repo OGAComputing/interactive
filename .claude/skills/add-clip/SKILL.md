@@ -8,7 +8,7 @@ argument-hint: <page.html> <what the clip should show>
 
 Add the clip described in `$ARGUMENTS` to that page and its deck. The rules are in `Y10/CLAUDE.md`
 ("Video clips (Google Drive)"): clips live in Drive › Clips, shared view-only with the Outwood domain,
-**never in this repo**, short and for teaching (CDPA s32). **Each clip is 90 s at most** (Nick, 2026-11-20).
+**never in this repo**, short and for teaching (CDPA s32). **Each clip is 90 s at most, and as short as it can be**: 90 s is a limit, not a target, so cut long music and padding (Nick, 2026-11-20).
 Images are not clips: they go through `/find-images`.
 
 Work in the scratchpad (`clips/` for outputs, its own folder for each download). Nothing here is committed
