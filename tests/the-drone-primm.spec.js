@@ -376,6 +376,24 @@ test('Modify: the task card pins while scrolling to the editor; a failed bullet 
   await expect(reqs.nth(1)).toBeHidden();
 });
 
+// 2026-11-23: pinning measured the trimmed card before its spacer margin was set, so the page was
+// briefly ~360px shorter and the browser pulled the scroll position back (students on a 1080p screen
+// were thrown up the page on Modify 1, short page). Chrome's scroll anchoring hid it here, so it's off.
+test('Modify: pinning the card does not move the page', async ({ page }) => {
+  await page.setViewportSize({ width: 1902, height: 924 });
+  await openAt(page, { currentStage: 'M1', completedStages: ['P', 'R', 'I'], radio_m1_choice: 'scout' });
+  await page.addStyleTag({ content: 'html, body { overflow-anchor: none; }' });
+  const pin = await page.locator('#m1_steps').evaluate(e => {
+    scrollTo(0, 0);
+    return Math.ceil(e.getBoundingClientRect().top - parseFloat(getComputedStyle(e).top) + 20);
+  });
+  expect(await page.evaluate(() => document.documentElement.scrollHeight - innerHeight)).toBeGreaterThan(pin);
+  await page.evaluate(y => scrollTo(0, y), pin);
+  await expect(page.locator('#m1_steps')).toHaveClass(/is-stuck/);
+  await page.waitForTimeout(100);
+  expect(await page.evaluate(() => Math.round(scrollY))).toBe(pin);
+});
+
 test('Modify: a card too tall to pin scrolls away like normal content', async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 768 });
   await openAt(page, { currentStage: 'M1', completedStages: ['P', 'R', 'I'], stepM1: 3, maxStepM1: 3, radio_m1_choice: 'scout',
