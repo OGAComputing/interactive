@@ -216,6 +216,9 @@ test('Carry Rush: a class challenge, badges, game over and the best score in the
   await expect(page.locator('#rush-sum .cell.bit').first()).toHaveText(toBinary(s0.a, s0.width)[0]);
   await answerRush(page, 0, 'BIN7');
   await expect(page.locator('#verdict')).toContainText('Right');
+  // The score goes to the Live view during the run, not only at game over.
+  expect(await lastLiveCall(page)).toMatchObject({ boardLabel: 'Carry Rush BIN7' });
+  expect((await lastLiveCall(page)).board).toBeGreaterThan(0);
   await answerRush(page, 1, 'BIN7');
   await expect(page.locator('#verdict')).toContainText('Right');
 

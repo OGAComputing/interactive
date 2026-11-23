@@ -154,7 +154,7 @@ The score travels on that file as `appProperties.ogaScore` (plus `ogaCourse`/`og
 
 ### Live fields (optional)
 
-`window.Classroom?.setLive?.({ task: '3/5' }, ACTIVITY_TITLE)` puts small fields on the evidence file (as `ogaL<key>` appProperties) for the hub's Live view. They never change the grade. Call it just **before** `submitGrade` so both go in one upload; on its own it uploads at most once every 20 s. Known keys: `task` (tasks done, shown on each student's card), `board` + `boardLabel` (a game's best score; the hub ranks each label separately, e.g. `'Carry Rush X7'` for a class challenge code; highest wins), and `boardUnit: 'ms'` for a time where lowest wins. Every extension game sends its best this way: Carry Rush, Hex Rush, Breach Defence (Y9 Searching the Computer) and Rapid Response Unit (Y9 Criminal Database, a time).
+`window.Classroom?.setLive?.({ task: '3/5' }, ACTIVITY_TITLE)` puts small fields on the evidence file (as `ogaL<key>` appProperties) for the hub's Live view. They never change the grade. Call it just **before** `submitGrade` so both go in one upload; on its own it uploads at most once every 20 s. Known keys: `task` (tasks done, shown on each student's card), `board` + `boardLabel` (a game's best score; the hub ranks each label separately, e.g. `'Carry Rush X7'` for a class challenge code; highest wins), and `boardUnit: 'ms'` for a time where lowest wins. Every extension game sends its best this way: Carry Rush, Hex Rush and Breach Defence (Y9 Searching the Computer) after every scoring answer, so the board moves during a run (the run's score once it beats the student's best), and Rapid Response Unit (Y9 Criminal Database, a time) when a run ends.
 
 ### The evidence report
 

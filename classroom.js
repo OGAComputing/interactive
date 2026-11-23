@@ -1704,8 +1704,9 @@
       const name = activityName || _lastActivityName;
       if (!liveDirty || !accessToken || !name) return;
       // Wait a moment: a submitGrade straight after takes the fields with it, instead of
-      // a live-only upload going first and pushing the grade back a minute.
-      clearTimeout(liveTimer);
+      // a live-only upload going first and pushing the grade back a minute. A timer already
+      // waiting is kept, so a game calling this on every answer can't keep pushing it back.
+      if (liveTimer) return;
       liveTimer = setTimeout(() => {
         liveTimer = null;
         if (liveDirty) scheduleClassroomSync(name, _lastGradePercent, true);

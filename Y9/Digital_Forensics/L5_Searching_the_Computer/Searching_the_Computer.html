@@ -2347,6 +2347,7 @@ function bdPlay(defId) {
   const res = defId ? scorePlay(t, defId, left, game.limit, game.streak, game.level.strict)
                     : { result: 'wrong', points: 0, streak: 0, lifeLost: true };
   game.score += res.points;
+  if (res.points) bdLive(game.code, game.score);
   game.streak = res.streak;
   game.maxStreak = Math.max(game.maxStreak, game.streak);
   if (res.result === 'best') { game.bestCount++; if (used < 1.5) game.fast++; }
@@ -2370,6 +2371,15 @@ function bdPlay(defId) {
     bdCard();
   }, res.result === 'best' ? 1100 : 2600);
 }
+// The hub's Live view ranks each board separately: solo runs on one, each class challenge code on its own.
+// Sent after every scoring card too (the run's score once it beats the best), so the board moves during
+// a run; classroom.js uploads at most once every 20 s.
+function bdLive(code, score = 0) {
+  window.Classroom?.setLive?.({
+    board: Math.max(score, code ? bd.codes[code] || 0 : bd.best),
+    boardLabel: code ? `Breach Defence ${code}` : 'Breach Defence',
+  }, ACTIVITY_TITLE);
+}
 function bdOver() {
   bdStop();
   const g = game;
@@ -2392,11 +2402,7 @@ function bdOver() {
     else pbMsg = `Personal best: ${bd.best.toLocaleString()}`;
   }
   bdSave();
-  // The hub's Live view ranks each board separately: solo runs on one, each class challenge code on its own.
-  window.Classroom?.setLive?.({
-    board: g.code ? bd.codes[g.code] || 0 : bd.best,
-    boardLabel: g.code ? `Breach Defence ${g.code}` : 'Breach Defence',
-  }, ACTIVITY_TITLE);
+  bdLive(g.code);
 
   document.getElementById('over-mode').textContent = g.code ? `CLASS CHALLENGE · ${g.code}` : 'SOLO RUN';
   document.getElementById('over-score').textContent = g.score.toLocaleString();

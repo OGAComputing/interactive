@@ -1423,6 +1423,7 @@ function rushAnswer(timedOut = false) {
     if (answer.length > s.width) game.overflow++;
     const pts = gamePoints(game.i, game.limit - used, game.limit, game.streak);
     game.score += pts;
+    rushLive(game.code, game.score);
     markBoxes();
     v.innerHTML = `✅ Right! <span class="pts">+${fmt(pts)}</span>`;
   } else {
@@ -1441,6 +1442,16 @@ function rushAnswer(timedOut = false) {
     game.i++;
     rushNext();
   }, verdict === 'ok' ? (reduceMotion ? 500 : 900) : 4500);
+}
+
+// The hub's Live view ranks each board separately: solo runs on one, each class challenge code on its own.
+// Sent after every right answer too (the run's score once it beats the best), so the board moves during
+// a run; classroom.js uploads at most once every 20 s.
+function rushLive(code, score = 0) {
+  window.Classroom?.setLive?.({
+    board: Math.max(score, code ? rush.codes[code] || 0 : rush.best),
+    boardLabel: code ? `Carry Rush ${code}` : 'Carry Rush',
+  }, ACTIVITY_TITLE);
 }
 
 function rushOver() {
@@ -1463,11 +1474,7 @@ function rushOver() {
   } else pb = `Personal best: ${fmt(rush.best)}`;
   rushSave();
   renderBestChip();
-  // The hub's Live view ranks each board separately: solo runs on one, each class challenge code on its own.
-  window.Classroom?.setLive?.({
-    board: g.code ? rush.codes[g.code] || 0 : rush.best,
-    boardLabel: g.code ? `Carry Rush ${g.code}` : 'Carry Rush',
-  }, ACTIVITY_TITLE);
+  rushLive(g.code);
 
   $('over-mode').textContent = g.code ? `CLASS CHALLENGE · ${g.code}` : 'SOLO RUN';
   $('over-score').textContent = fmt(g.score);

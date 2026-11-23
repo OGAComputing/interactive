@@ -284,7 +284,11 @@ test('Breach Defence: a challenge run ends after three breaches and records a be
     const cards = await page.locator('#hand .dcard').evaluateAll(bs => bs.map(b => b.dataset.def));
     const pick = n === 0 ? threat.best : cards.find(d => d !== threat.best && !threat.ok.includes(d));
     await page.click(`#hand .dcard[data-def="${pick}"]`);
-    if (n === 0) await expect(page.locator('#hud-score')).not.toHaveText('0');
+    if (n === 0) {
+      await expect(page.locator('#hud-score')).not.toHaveText('0');
+      // The score goes to the Live view during the run, not only at game over.
+      expect(await lastLiveCall(page)).toEqual({ board: +(await page.locator('#hud-score').textContent()).replace(/\D/g, ''), boardLabel: 'Breach Defence TEST9' });
+    }
     if (n < 3) await expect(page.locator('#threat-txt')).not.toHaveText(txt, { timeout: 5000 });
   }
   await expect(page.locator('#bd-over')).toHaveClass(/on/, { timeout: 5000 });

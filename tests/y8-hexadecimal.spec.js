@@ -210,6 +210,9 @@ test('Hex Rush: a class challenge, game over and the best score in the header', 
   await page.locator('#rush-in').fill(itemAnswer(q0).toLowerCase());
   await page.locator('#rush-in').press('Enter');
   await expect(page.locator('#verdict')).toContainText('Right');
+  // The score goes to the Live view during the run, not only at game over.
+  expect(await lastLiveCall(page)).toMatchObject({ boardLabel: 'Hex Rush HEX1' });
+  expect((await lastLiveCall(page)).board).toBeGreaterThan(0);
 
   for (const i of [1, 2, 3]) {
     await expect(page.locator('#hud-q')).toHaveText(String(i + 1));
