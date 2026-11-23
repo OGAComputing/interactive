@@ -122,7 +122,10 @@
         props.ogaLboardLabel = s.i % 9 === 4 ? w.game.replace(/ X7$/, '') : w.game;   // a few play solo
       }
     }
-    props.ogaScore = String(done * (100 / TASKS));
+    // 80% for finishing every task + 20% for first-attempt golds; some students miss a gold or two,
+    // so the Progress board shows both "✓ Done" (all green) and "★ 100% perfect" (all gold).
+    const golds = Math.max(0, done - Math.floor(rand(key + '|gold') * 3 * (1.2 - ability)));
+    props.ogaScore = String(Math.round((done * 80 + golds * 20) / TASKS));
     props.ogaLtask = `${done}/${TASKS}`;
     return {
       id: `demo-file-${w.id}-${s.i}`, modifiedTime: new Date(Math.min(modified, now)).toISOString(), appProperties: props,

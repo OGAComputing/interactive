@@ -60,10 +60,17 @@ describe('buildRows', () => {
     const [r] = buildRows([file('a', 'Amelia Smith', 1, { ogaScore: '60', ogaLtask: '3/5', ogaLboard: '1840', ogaLboardLabel: 'Carry Rush' })], NOW);
     expect(r).toMatchObject({ short: 'Amelia S.', score: 60, task: '3/5', board: 1840, boardLabel: 'Carry Rush', done: false, idle: false });
   });
-  it('marks 100% as done and never idle', () => {
+  it('marks 100% as done and perfect, and never idle', () => {
     const [r] = buildRows([file('a', 'A B', 60, { ogaScore: '100' })], NOW);
-    expect(r.done).toBe(true);
-    expect(r.idle).toBe(false);
+    expect(r).toMatchObject({ done: true, perfect: true, idle: false });
+  });
+  it('marks every task finished below 100% as done but not perfect', () => {
+    const [r] = buildRows([file('a', 'A B', 60, { ogaScore: '84', ogaLtask: '5/5' })], NOW);
+    expect(r).toMatchObject({ done: true, perfect: false, idle: false });
+  });
+  it('is not done with tasks left, or with no task field below 100%', () => {
+    expect(buildRows([file('a', 'A B', 1, { ogaScore: '84', ogaLtask: '4/5' })], NOW)[0].done).toBe(false);
+    expect(buildRows([file('a', 'A B', 1, { ogaScore: '84' })], NOW)[0].done).toBe(false);
   });
   it('marks a student idle after IDLE_MS with no save', () => {
     const mins = IDLE_MS / 60000;

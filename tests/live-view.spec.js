@@ -74,7 +74,7 @@ const FILES = [
   evidence('s1', 'Amelia Smith', 1, { ogaScore: '100', ogaLtask: '5/5', ogaLboard: '2400', ogaLboardLabel: 'Carry Rush X7' }),
   evidence('s2', 'Ben Jones', 2, { ogaScore: '60', ogaLtask: '3/5', ogaLboard: '3100', ogaLboardLabel: 'Carry Rush X7' }),
   evidence('s3', 'Cara Lee', 25, { ogaScore: '20', ogaLtask: '1/5' }),
-  evidence('s4', 'Dan Ward', 3, { ogaScore: '80', ogaLtask: '4/5' }),
+  evidence('s4', 'Dan Ward', 3, { ogaScore: '80', ogaLtask: '5/5' }),
   // Another class's file must not show up.
   { ...evidence('s9', 'Zed Other', 1, { ogaScore: '90' }), appProperties: { ogaCourse: 'other', ogaWork: 'cw-new', ogaSub: 's9' } },
 ];
@@ -128,12 +128,13 @@ test.describe('Hub Live panel', () => {
     await expect(page.locator('#live-work option')).toHaveCount(2);   // the hand-made post is left out
     expect(driveQueries.some(q => q.includes("key='ogaWork' and value='cw-new'"))).toBe(true);
 
-    await expect(page.locator('#live-summary')).toHaveText('4 of 4 started · 1 finished · 1 with no save in 10 min');
-    // Needs help first: Cara (20%, idle), Ben (60%), Dan (80%), Amelia (done).
+    await expect(page.locator('#live-summary')).toHaveText('4 of 4 started · 2 finished · 1 with no save in 10 min');
+    // Needs help first: Cara (20%, idle), Ben (60%), then the finished: Dan (80%, all done), Amelia (100%).
     await expect(page.locator('.live-card .live-name')).toHaveText(['Cara L.', 'Ben J.', 'Dan W.', 'Amelia S.']);
     await expect(page.locator('.live-card').first()).toContainText('No save 10 min');
     await expect(page.locator('.live-card').nth(1)).toContainText('60% · Task 3/5');
-    await expect(page.locator('.live-card').last()).toContainText('✓ Done');
+    await expect(page.locator('.live-card').nth(2).locator('.live-chip.done')).toHaveText('✓ Done');
+    await expect(page.locator('.live-card').last().locator('.live-chip.perfect')).toHaveText('★ 100% perfect');
     await expect(panel).not.toContainText('Zed');
 
     await page.locator('#live-tab-board').click();

@@ -84,7 +84,11 @@ export function buildRows(files, now = Date.now()) {
   const shorts = shortNames(rows.map(r => r.name));
   rows.forEach((r, i) => {
     r.short = shorts[i];
-    r.done = r.score === 100;
+    // Perfect = 100% (gold on every task). Done = every task finished (green or better), known from
+    // the page's live task field ("5/5"); a page that doesn't send one is only done at 100%.
+    const [got, of] = (r.task.match(/^(\d+)\s*\/\s*(\d+)$/) || []).slice(1).map(Number);
+    r.perfect = r.score === 100;
+    r.done = r.perfect || (of > 0 && got >= of);
     r.idle = !r.done && now - r.modified > IDLE_MS;
   });
   return rows.sort((a, b) => a.name.localeCompare(b.name));
@@ -406,11 +410,12 @@ export function initLive(deps) {
     const now = Date.now();
     return `<div class="live-grid">${rows.map(r => {
       const pct = r.score ?? 0;
-      const status = r.done ? '<span class="live-chip done">✓ Done</span>'
+      const status = r.perfect ? '<span class="live-chip perfect" title="Gold on every task">★ 100% perfect</span>'
+        : r.done ? '<span class="live-chip done" title="Every task done">✓ Done</span>'
         : r.idle ? '<span class="live-chip idle" title="No task finished in the last 10 minutes">No save 10 min</span>' : '';
       const hide = `<button type="button" class="live-hide" data-hide="${esc(r.who)}" data-name="${esc(r.name)}"
           aria-label="Hide ${esc(r.name)} from the Live view" title="Hide from the Live view and leaderboards">${ICON_EYE}</button>`;
-      return `<div class="live-card${r.done ? ' is-done' : ''}${r.idle ? ' is-idle' : ''}" title="${esc(r.name)}">
+      return `<div class="live-card${r.done ? ' is-done' : ''}${r.perfect ? ' is-perfect' : ''}${r.idle ? ' is-idle' : ''}" title="${esc(r.name)}">
         <div class="live-card-top"><span class="live-name">${esc(r.short)}</span><span class="live-card-tags">${status}${hide}</span></div>
         <div class="live-bar" role="img" aria-label="${pct}%"><span style="width:${pct}%"></span></div>
         <div class="live-meta"><span>${r.score == null ? '–' : pct + '%'}${r.task ? ` · Task ${esc(r.task)}` : ''}</span><span>${ago(now - r.modified)}</span></div>
@@ -431,7 +436,7 @@ export function initLive(deps) {
     const byWho = new Map(state.rows.map(r => [r.who, r]));
     pop.innerHTML = `<p class="live-pop-title">Hidden from the Live view and leaderboards (every class)</p><ul>${list.map(([who, name]) => {
       const r = byWho.get(who);
-      const now = r ? `${r.score == null ? '–' : r.score + '%'}${r.task ? ` · Task ${esc(r.task)}` : ''}${r.done ? ' · ✓ Done' : r.idle ? ' · no save in 10 min' : ''}` : 'Not in this assignment';
+      const now = r ? `${r.score == null ? '–' : r.score + '%'}${r.task ? ` · Task ${esc(r.task)}` : ''}${r.perfect ? ' · ★ 100% perfect' : r.done ? ' · ✓ Done' : r.idle ? ' · no save in 10 min' : ''}` : 'Not in this assignment';
       return `<li><span><strong>${esc(name)}</strong><span class="live-pop-now">${now}</span></span>
         <button type="button" data-hide="${esc(who)}" data-name="${esc(name)}" aria-label="Show ${esc(name)} again">Show again</button></li>`;
     }).join('')}</ul>`;
