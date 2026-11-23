@@ -70,18 +70,62 @@
       display: flex; align-items: center; gap: 0.5rem 0.75rem; flex-wrap: wrap;
       margin-left: auto;
     }
-    .teacher-label { font-size: 0.72rem; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.06em; }
     .btn-google {
       background: #fff; color: #000; padding: 6px 12px; border-radius: 6px;
       font-size: 0.8rem; font-weight: 700; border: none; cursor: pointer;
     }
-    .guide-link { font-size: 0.75rem; color: var(--muted); text-decoration: none; white-space: nowrap; }
-    .guide-link:hover { color: var(--text); }
-    #teacher-status, #sync-status { font-size: 0.8rem; color: var(--muted); }
-    .attach-slides { display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.8rem; color: var(--muted); cursor: pointer; white-space: nowrap; }
-    .attach-slides[hidden] { display: none; }
-    .attach-slides input { accent-color: var(--accent); margin: 0; }
+    #teacher-status { font-size: 0.8rem; color: var(--muted); }
     #teacher-status:empty, #sync-status:empty { display: none; }
+    .btn-bar {
+      background: var(--surface); color: var(--text); border: 1px solid var(--line);
+      border-radius: 6px; padding: 6px 12px; font: inherit; font-size: 0.8rem; font-weight: 700;
+      cursor: pointer; white-space: nowrap; transition: border-color .15s, color .15s;
+    }
+    .btn-bar:hover, .btn-bar[aria-expanded="true"] { border-color: var(--accent); }
+    .btn-bar[hidden] { display: none; }
+    .btn-icon { position: relative; display: inline-flex; align-items: center; justify-content: center; padding: 4px; width: 32px; height: 32px; color: var(--muted); }
+    .btn-icon:hover, .btn-icon[aria-expanded="true"] { color: var(--text); }
+    .busy-dot { display: none; position: absolute; top: 3px; right: 3px; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); animation: busy-pulse 1s ease-in-out infinite alternate; }
+    .settings.busy .busy-dot { display: block; }
+    @keyframes busy-pulse { from { opacity: 0.35; } to { opacity: 1; } }
+
+    /* ── Settings menu (⚙) ── */
+    .settings { position: relative; }
+    .settings-menu {
+      position: absolute; top: calc(100% + 6px); right: 0; z-index: 120;
+      width: min(300px, calc(100vw - 2rem));
+      background: #0d1828; border: 1px solid var(--line); border-radius: 8px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5); padding: 0.35rem 0;
+      display: flex; flex-direction: column;
+    }
+    .settings-menu[hidden], .settings-menu [hidden] { display: none; }
+    #settings-account { padding: 0.55rem 0.9rem 0.6rem; font-size: 0.75rem; color: var(--dim); border-bottom: 1px solid var(--line); overflow-wrap: anywhere; }
+    #settings-account strong { display: block; color: var(--muted); font-weight: 600; font-size: 0.8rem; }
+    .settings-row { display: flex; gap: 0.6rem; align-items: flex-start; padding: 0.6rem 0.9rem; font-size: 0.82rem; color: var(--text); }
+    label.settings-row { cursor: pointer; }
+    label.settings-row:hover { background: var(--surface); }
+    .settings-row input { accent-color: var(--accent); margin-top: 0.2rem; width: 16px; height: 16px; flex-shrink: 0; }
+    .settings-row strong { display: block; font-weight: 600; }
+    .settings-row small { display: block; color: var(--dim); font-size: 0.72rem; line-height: 1.4; margin-top: 0.15rem; }
+    .settings-sync { flex-direction: column; gap: 0.2rem; border-top: 1px solid var(--line); }
+    .settings-sync .btn-inline-ghost { padding: 5px 10px; font-size: 0.8rem; color: var(--text); }
+    .settings-sync .btn-inline-ghost:disabled { opacity: 0.6; cursor: progress; }
+    #sync-status { font-size: 0.75rem; color: var(--muted); }
+    .settings-link {
+      display: block; width: 100%; text-align: left; background: none; border: none; border-top: 1px solid var(--line);
+      padding: 0.6rem 0.9rem; font: inherit; font-size: 0.82rem; color: var(--muted); text-decoration: none; cursor: pointer;
+    }
+    .settings-link:hover { background: var(--surface); color: var(--text); }
+    .settings-signout:hover { color: #f08080; }
+
+    /* ── Toast (grade sync results) ── */
+    .hub-toast {
+      position: fixed; right: 20px; bottom: 20px; z-index: 9000; max-width: min(360px, calc(100vw - 40px));
+      background: var(--surface-2); color: var(--text); border: 1px solid var(--line); border-radius: 8px;
+      padding: 10px 16px; font-size: 0.85rem; box-shadow: 0 6px 20px rgba(0,0,0,0.45);
+      opacity: 0; transform: translateY(12px); pointer-events: none; transition: opacity .2s ease-out, transform .2s ease-out;
+    }
+    .hub-toast.show { opacity: 1; transform: none; }
     #course-combobox, #topic-combobox {
       position: relative;
       display: none;
@@ -97,9 +141,10 @@
     #course-search.attention { border-color: var(--star); box-shadow: 0 0 0 3px rgba(245,166,35,0.3); }
     #course-search::placeholder, #topic-search::placeholder { color: var(--dim); }
     #course-chevron, #topic-chevron {
-      position: absolute; right: 7px; top: 50%; transform: translateY(-50%);
-      pointer-events: none; color: var(--dim); font-size: 0.6rem;
+      position: absolute; right: 1px; top: 50%; transform: translateY(-50%);
+      padding: 6px 7px; cursor: pointer; color: var(--dim); font-size: 0.6rem;
     }
+    #course-chevron:hover, #topic-chevron:hover { color: var(--text); }
     #course-dropdown, #topic-dropdown {
       display: none;
       position: absolute;
@@ -535,7 +580,7 @@
     }
     @media (max-width: 600px) {
       .topbar-row { padding: 0.5rem 1rem 0.35rem; gap: 0.5rem; }
-      .brand, .teacher-label, .guide-link { display: none; }
+      .brand { display: none; }
       .page { padding-left: 1rem; padding-right: 1rem; }
       .sidebar { margin: 0 -1rem; padding: 0.5rem 1rem; }
       #year-tabs { padding: 0 1rem; }
@@ -554,26 +599,39 @@
     </label>
 
     <div class="teacher-tools">
-      <span class="teacher-label">Teacher Tools</span>
       <button id="btnLogin" class="btn-google" onclick="requestPermission()">Sign in to Assign to Classroom</button>
       <div id="course-combobox">
         <input id="course-search" type="text" placeholder="Select a class…" autocomplete="off" readonly aria-label="Class to assign to">
-        <span id="course-chevron">▼</span>
+        <span id="course-chevron" class="cb-chevron" aria-hidden="true">▼</span>
         <div id="course-dropdown"></div>
       </div>
       <div id="topic-combobox">
         <input id="topic-search" type="text" placeholder="Classroom topic (optional)…" autocomplete="off" aria-label="Classroom topic">
-        <span id="topic-chevron">▼</span>
+        <span id="topic-chevron" class="cb-chevron" aria-hidden="true">▼</span>
         <div id="topic-dropdown"></div>
       </div>
-      <label id="attach-slides-label" class="attach-slides" title="Add the lesson's Google Slides deck to the Classroom post (first page of each lesson that has one)" hidden>
-        <input id="attach-slides" type="checkbox"> Attach lesson slides
-      </label>
       <span id="teacher-status"></span>
-      <button id="btn-sync" class="btn-inline-ghost" onclick="onSyncClick()" hidden>⟳ Sync grades</button>
-      <button id="btn-live" class="btn-inline-ghost" title="See how far each student has got, and game leaderboards, while the lesson runs" hidden>📡 Live</button>
-      <span id="sync-status"></span>
-      <a href="getting-started.html" class="guide-link" title="How students' scores reach Classroom">How Grading Works →</a>
+      <button id="btn-live" class="btn-bar" title="See how far each student has got, and game leaderboards, while the lesson runs" hidden>📡 Live</button>
+      <div class="settings">
+        <button type="button" id="btn-settings" class="btn-bar btn-icon" aria-expanded="false" aria-controls="settings-menu" aria-label="Teacher settings" title="Teacher settings">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          <span class="busy-dot" aria-hidden="true"></span>
+        </button>
+        <div id="settings-menu" class="settings-menu" hidden>
+          <div class="teacher-only" id="settings-account" hidden></div>
+          <label class="settings-row teacher-only" hidden>
+            <input id="attach-slides" type="checkbox">
+            <span><strong>Attach lesson slides</strong><small>Adds the lesson's Google Slides deck to each Classroom post</small></span>
+          </label>
+          <div class="settings-row settings-sync teacher-only" hidden>
+            <button type="button" id="btn-sync" class="btn-inline-ghost" onclick="onSyncClick()">⟳ Sync grades now</button>
+            <small>Runs by itself when you sign in. With a class chosen, it rechecks that whole class.</small>
+            <span id="sync-status" role="status"></span>
+          </div>
+          <a href="getting-started.html" class="settings-link">How grading works →</a>
+          <button type="button" id="btn-signout" class="settings-link settings-signout teacher-only" hidden>Sign out</button>
+        </div>
+      </div>
     </div>
   </div>
   <nav id="year-tabs" role="tablist" aria-label="Year group"></nav>
@@ -588,6 +646,8 @@
     <div id="status">Loading activities…</div>
   </main>
 </div>
+
+<div id="hub-toast" class="hub-toast" role="status" aria-live="polite"></div>
 
 <footer>
   Outwood Grange Academies Trust — CS Activities Hub &nbsp;|&nbsp;
@@ -636,9 +696,9 @@
     document.body.classList.add('teacher-mode');
 
     fetchCourses();
-    document.getElementById('btn-sync').hidden = false;
     document.getElementById('btn-live').hidden = false;
-    document.getElementById('attach-slides-label').hidden = false;
+    document.querySelectorAll('#settings-menu .teacher-only').forEach(el => { el.hidden = false; });
+    showSignedInAccount();
     syncGrades('changed');
   }
 
@@ -688,7 +748,6 @@
 
   let allCourses = [];
   let selectedCourseId = '';
-  let focusedIndex = -1;
 
   let allTopics = [];
   let selectedTopicId = '';
@@ -700,7 +759,108 @@
   attachSlides.addEventListener('change', () => {
     try { localStorage.setItem('oga_hub_attach_slides', attachSlides.checked ? '1' : '0'); } catch (_) {}
   });
-  let topicFocusedIndex = -1;
+
+  // ── Search-and-pick boxes (class, Classroom topic) ───────
+  // They behave like an ordinary searchable drop-down: opening one lists every option with
+  // the current pick highlighted (the text is selected, so typing replaces it); typing
+  // filters; Enter or a click picks; Esc or leaving the box puts the last pick back.
+  // allowNone: emptying the box and leaving it picks nothing (the topic is optional).
+  function makeCombobox({ wrap, input, list, items, selectedId, onPick, noMatch, allowNone }) {
+    let active = -1, shown = [], filtering = false, focusByMouse = false;
+    const isOpen = () => list.classList.contains('open');
+    const nameOf = id => (items().find(it => it.id === id) || {}).name || '';
+
+    input.setAttribute('role', 'combobox');
+    input.setAttribute('aria-autocomplete', 'list');
+    input.setAttribute('aria-expanded', 'false');
+    input.setAttribute('aria-controls', list.id);
+    list.setAttribute('role', 'listbox');
+    // Keep focus in the box while clicking an option or the list's scrollbar.
+    list.addEventListener('mousedown', e => e.preventDefault());
+
+    function render() {
+      const q = filtering ? input.value.trim().toLowerCase() : '';
+      shown = q ? items().filter(it => it.name.toLowerCase().includes(q)) : items();
+      list.innerHTML = '';
+      if (!shown.length) {
+        list.innerHTML = `<div class="course-no-match">${noMatch}</div>`;
+        active = -1;
+        return highlight();
+      }
+      shown.forEach((it, i) => {
+        const el = document.createElement('div');
+        const sel = it.id === selectedId();
+        el.className = 'course-option' + (sel ? ' selected' : '');
+        el.id = `${list.id}-opt-${i}`;
+        el.setAttribute('role', 'option');
+        el.setAttribute('aria-selected', sel ? 'true' : 'false');
+        el.textContent = it.name;
+        el.addEventListener('click', () => pick(it));
+        list.appendChild(el);
+      });
+      active = q ? 0 : shown.findIndex(it => it.id === selectedId());
+      highlight();
+    }
+    function highlight() {
+      list.querySelectorAll('.course-option').forEach((el, i) => el.classList.toggle('focused', i === active));
+      const el = list.querySelector('.course-option.focused');
+      if (el) { el.scrollIntoView({ block: 'nearest' }); input.setAttribute('aria-activedescendant', el.id); }
+      else input.removeAttribute('aria-activedescendant');
+    }
+    function open() {
+      if (isOpen()) return;
+      filtering = false;
+      list.classList.add('open');
+      input.setAttribute('aria-expanded', 'true');
+      render();
+    }
+    function close({ cancel = false } = {}) {
+      list.classList.remove('open');
+      input.setAttribute('aria-expanded', 'false');
+      input.removeAttribute('aria-activedescendant');
+      if (allowNone && !cancel && !input.value.trim() && selectedId()) onPick(null);
+      input.value = nameOf(selectedId());
+      filtering = false;
+    }
+    function pick(it) {
+      if (it.id !== selectedId()) onPick(it);
+      close({ cancel: true });
+    }
+
+    input.addEventListener('mousedown', () => { focusByMouse = document.activeElement !== input; });
+    input.addEventListener('focus', () => { open(); input.select(); });
+    // A click would otherwise drop the caret into the text and undo the select-all.
+    input.addEventListener('mouseup', e => { if (focusByMouse) { e.preventDefault(); focusByMouse = false; } });
+    input.addEventListener('click', open);   // reopens after Esc while still focused
+    input.addEventListener('input', () => {
+      filtering = true;
+      if (!isOpen()) { list.classList.add('open'); input.setAttribute('aria-expanded', 'true'); }
+      render();
+    });
+    input.addEventListener('keydown', e => {
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (!isOpen()) return open();
+        if (!shown.length) return;
+        active = e.key === 'ArrowDown' ? Math.min(active + 1, shown.length - 1) : Math.max(active - 1, 0);
+        highlight();
+      } else if (e.key === 'Enter') {
+        if (isOpen() && shown[active]) { e.preventDefault(); pick(shown[active]); }
+      } else if (e.key === 'Escape' && isOpen()) {
+        e.preventDefault();
+        e.stopPropagation();
+        close({ cancel: true });
+        input.select();
+      }
+    });
+    input.addEventListener('blur', () => { if (isOpen() || filtering) close(); });
+    wrap.querySelector('.cb-chevron')?.addEventListener('mousedown', e => {
+      e.preventDefault();
+      if (isOpen()) close({ cancel: true });
+      else { input.focus(); open(); }
+    });
+    return { sync: () => { input.value = nameOf(selectedId()); } };
+  }
 
   async function fetchCourses() {
     const response = await fetch('https://classroom.googleapis.com/v1/courses?courseStates=ACTIVE', {
@@ -712,107 +872,74 @@
     initTopicCombobox();
   }
 
+  let topicBox = null;
+
   async function fetchTopics(courseId) {
     const topicCombobox = document.getElementById('topic-combobox');
-    const topicSearch   = document.getElementById('topic-search');
-    topicSearch.value = '';
     selectedTopicId   = '';
     allTopics         = [];
+    topicBox?.sync();
     topicCombobox.style.display = 'none';
     try {
       const res  = await fetch(`https://classroom.googleapis.com/v1/courses/${courseId}/topics`, {
         headers: { 'Authorization': `Bearer ${accessToken}` }
       });
       const data = await res.json();
+      if (courseId !== selectedCourseId) return;   // the teacher picked another class meanwhile
       allTopics  = (data.topic || []).sort((a, b) => a.name.localeCompare(b.name));
       if (allTopics.length > 0) {
         topicCombobox.style.display = 'inline-block';
-        const lastTopicId = localStorage.getItem(`oga_last_topic_${courseId}`);
-        if (lastTopicId) {
-          const lastTopic = allTopics.find(t => t.topicId === lastTopicId);
-          if (lastTopic) {
-            selectedTopicId = lastTopic.topicId;
-            topicSearch.value = lastTopic.name;
-          }
-        }
+        let lastTopicId = null;
+        try { lastTopicId = localStorage.getItem(`oga_last_topic_${courseId}`); } catch (_) {}
+        if (allTopics.some(t => t.topicId === lastTopicId)) selectedTopicId = lastTopicId;
       }
+      topicBox?.sync();
     } catch (e) {
       console.error('Failed to fetch topics:', e);
     }
   }
 
   function initTopicCombobox() {
-    const searchEl = document.getElementById('topic-search');
-    const dropdown = document.getElementById('topic-dropdown');
-
-    searchEl.addEventListener('focus', () => {
-      renderTopicDropdown(searchEl.value);
-      dropdown.classList.add('open');
-      topicFocusedIndex = -1;
+    if (topicBox) return;
+    topicBox = makeCombobox({
+      wrap:  document.getElementById('topic-combobox'),
+      input: document.getElementById('topic-search'),
+      list:  document.getElementById('topic-dropdown'),
+      items: () => allTopics.map(t => ({ id: t.topicId, name: t.name })),
+      selectedId: () => selectedTopicId,
+      noMatch: 'No topics match',
+      allowNone: true,
+      onPick: it => {
+        selectedTopicId = it ? it.id : '';
+        try {
+          if (it) localStorage.setItem(`oga_last_topic_${selectedCourseId}`, selectedTopicId);
+          else localStorage.removeItem(`oga_last_topic_${selectedCourseId}`);
+        } catch (_) {}
+      },
     });
-    searchEl.addEventListener('input', () => {
-      selectedTopicId = '';
-      renderTopicDropdown(searchEl.value);
-      dropdown.classList.add('open');
-      topicFocusedIndex = -1;
-    });
-    searchEl.addEventListener('keydown', e => {
-      const items = dropdown.querySelectorAll('.course-option');
-      if (e.key === 'ArrowDown') {
-        e.preventDefault();
-        topicFocusedIndex = Math.min(topicFocusedIndex + 1, items.length - 1);
-        updateTopicFocus(items);
-      } else if (e.key === 'ArrowUp') {
-        e.preventDefault();
-        topicFocusedIndex = Math.max(topicFocusedIndex - 1, 0);
-        updateTopicFocus(items);
-      } else if (e.key === 'Enter') {
-        if (topicFocusedIndex >= 0 && items[topicFocusedIndex]) items[topicFocusedIndex].click();
-      } else if (e.key === 'Escape') {
-        dropdown.classList.remove('open');
-      }
-    });
-    document.addEventListener('click', e => {
-      if (!document.getElementById('topic-combobox').contains(e.target)) {
-        dropdown.classList.remove('open');
-        if (!selectedTopicId) searchEl.value = '';
-      }
-    });
+    topicBox.sync();
   }
 
-  function renderTopicDropdown(query) {
-    const dropdown = document.getElementById('topic-dropdown');
-    const q = query.trim().toLowerCase();
-    const filtered = q ? allTopics.filter(t => t.name.toLowerCase().includes(q)) : allTopics;
-    if (filtered.length === 0) {
-      dropdown.innerHTML = '<div class="course-no-match">No topics match</div>';
-      return;
-    }
-    dropdown.innerHTML = filtered.map(t => {
-      const sel = t.topicId === selectedTopicId ? ' selected' : '';
-      return `<div class="course-option${sel}" data-id="${t.topicId}" data-name="${t.name.replace(/"/g,'&quot;')}">${t.name}</div>`;
-    }).join('');
-    dropdown.querySelectorAll('.course-option').forEach(el => {
-      el.addEventListener('click', () => {
-        selectedTopicId = el.dataset.id;
-        document.getElementById('topic-search').value = el.dataset.name;
-        dropdown.classList.remove('open');
-        topicFocusedIndex = -1;
-        try { localStorage.setItem(`oga_last_topic_${selectedCourseId}`, selectedTopicId); } catch (_) {}
-      });
-    });
-  }
-
-  function updateTopicFocus(items) {
-    items.forEach((el, i) => el.classList.toggle('focused', i === topicFocusedIndex));
-    if (items[topicFocusedIndex]) items[topicFocusedIndex].scrollIntoView({ block: 'nearest' });
-  }
+  let courseBox = null;
 
   function initCombobox() {
     const searchEl = document.getElementById('course-search');
-    const dropdown = document.getElementById('course-dropdown');
-
-    renderDropdown('');
+    if (!courseBox) {
+      courseBox = makeCombobox({
+        wrap:  document.getElementById('course-combobox'),
+        input: searchEl,
+        list:  document.getElementById('course-dropdown'),
+        items: () => allCourses.map(c => ({ id: c.id, name: c.name })),
+        selectedId: () => selectedCourseId,
+        noMatch: 'No classes match',
+        onPick: it => {
+          selectedCourseId = it.id;
+          try { localStorage.setItem('oga_hub_last_course', selectedCourseId); } catch (_) {}
+          refreshAssignButtons();
+          fetchTopics(selectedCourseId);
+        },
+      });
+    }
 
     // Reselect the class this teacher last assigned to on this device.
     let lastCourseId = '';
@@ -820,79 +947,11 @@
     const lastCourse = allCourses.find(c => c.id === lastCourseId);
     if (lastCourse && !selectedCourseId) {
       selectedCourseId = lastCourse.id;
-      searchEl.value = lastCourse.name;
       refreshAssignButtons();
       fetchTopics(selectedCourseId);
     }
-
+    courseBox.sync();
     searchEl.removeAttribute('readonly');
-    searchEl.addEventListener('focus', () => {
-      renderDropdown(searchEl.value);
-      dropdown.classList.add('open');
-      focusedIndex = -1;
-    });
-
-    searchEl.addEventListener('input', () => {
-      selectedCourseId = '';
-      refreshAssignButtons();
-      renderDropdown(searchEl.value);
-      dropdown.classList.add('open');
-      focusedIndex = -1;
-    });
-
-    searchEl.addEventListener('keydown', e => {
-      const items = dropdown.querySelectorAll('.course-option');
-      if (e.key === 'ArrowDown') {
-        e.preventDefault();
-        focusedIndex = Math.min(focusedIndex + 1, items.length - 1);
-        updateFocus(items);
-      } else if (e.key === 'ArrowUp') {
-        e.preventDefault();
-        focusedIndex = Math.max(focusedIndex - 1, 0);
-        updateFocus(items);
-      } else if (e.key === 'Enter') {
-        if (focusedIndex >= 0 && items[focusedIndex]) items[focusedIndex].click();
-      } else if (e.key === 'Escape') {
-        dropdown.classList.remove('open');
-      }
-    });
-
-    document.addEventListener('click', e => {
-      if (!document.getElementById('course-combobox').contains(e.target)) {
-        dropdown.classList.remove('open');
-        if (!selectedCourseId) searchEl.value = '';
-      }
-    });
-  }
-
-  function renderDropdown(query) {
-    const dropdown = document.getElementById('course-dropdown');
-    const q = query.trim().toLowerCase();
-    const filtered = q ? allCourses.filter(c => c.name.toLowerCase().includes(q)) : allCourses;
-    if (filtered.length === 0) {
-      dropdown.innerHTML = '<div class="course-no-match">No classes match</div>';
-      return;
-    }
-    dropdown.innerHTML = filtered.map(c => {
-      const sel = c.id === selectedCourseId ? ' selected' : '';
-      return `<div class="course-option${sel}" data-id="${c.id}" data-name="${c.name.replace(/"/g,'&quot;')}">${c.name}</div>`;
-    }).join('');
-    dropdown.querySelectorAll('.course-option').forEach(el => {
-      el.addEventListener('click', () => {
-        selectedCourseId = el.dataset.id;
-        document.getElementById('course-search').value = el.dataset.name;
-        dropdown.classList.remove('open');
-        focusedIndex = -1;
-        try { localStorage.setItem('oga_hub_last_course', selectedCourseId); } catch (_) {}
-        refreshAssignButtons();
-        fetchTopics(selectedCourseId);
-      });
-    });
-  }
-
-  function updateFocus(items) {
-    items.forEach((el, i) => el.classList.toggle('focused', i === focusedIndex));
-    if (items[focusedIndex]) items[focusedIndex].scrollIntoView({ block: 'nearest' });
   }
 
   // ── Assign modal helpers ─────────────────────────────────
@@ -1141,7 +1200,10 @@
     syncRunning = true;
     const statusEl = document.getElementById('sync-status');
     const btn = document.getElementById('btn-sync');
+    const settingsEl = document.querySelector('.settings');
+    const manual = mode !== 'changed';
     btn.disabled = true;
+    settingsEl.classList.add('busy');
     const counts = { raised: 0, same: 0, failed: 0 };
     try {
       statusEl.textContent = '⟳ Checking for new scores…';
@@ -1167,12 +1229,69 @@
     } finally {
       syncRunning = false;
       btn.disabled = false;
+      settingsEl.classList.remove('busy');
+      // The sign-in sync only speaks up when it wrote grades or something failed.
+      if (manual || counts.raised || counts.failed || /failed/.test(statusEl.textContent)) hubToast(statusEl.textContent);
     }
   }
 
   // The button rechecks the last AUTO_SYNC_DAYS for every class, or fully scans the chosen class.
   function onSyncClick() {
     syncGrades(selectedCourseId ? { courseId: selectedCourseId } : 'recent');
+  }
+
+  // ── Toast ────────────────────────────────────────────────
+  let toastTimer = 0;
+  function hubToast(text) {
+    const el = document.getElementById('hub-toast');
+    el.textContent = text;
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('show'), 5000);
+  }
+
+  // ── Settings menu (⚙): what a teacher sets once or rarely needs ──
+  (function initSettingsMenu() {
+    const btn  = document.getElementById('btn-settings');
+    const menu = document.getElementById('settings-menu');
+    const setOpen = open => {
+      menu.hidden = !open;
+      btn.setAttribute('aria-expanded', String(open));
+    };
+    btn.addEventListener('click', () => setOpen(menu.hidden));
+    document.addEventListener('click', e => {
+      if (!menu.hidden && !e.target.closest('.settings')) setOpen(false);
+    });
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && !menu.hidden) { setOpen(false); btn.focus(); }
+    });
+    document.getElementById('btn-signout').addEventListener('click', signOut);
+  })();
+
+  async function showSignedInAccount() {
+    const el = document.getElementById('settings-account');
+    const me = await googleGet('https://www.googleapis.com/oauth2/v3/userinfo').catch(() => null);
+    if (me && me.email) {
+      el.innerHTML = 'Signed in as <strong></strong>';
+      el.querySelector('strong').textContent = me.email;
+    } else el.hidden = true;
+  }
+
+  // Forget this device's sign-in (no silent sign-in next visit) and tell Google the token
+  // is finished with. The next Sign in asks which account to use.
+  async function signOut() {
+    const token = accessToken;
+    accessToken = null;
+    try { sessionStorage.removeItem('oga_hub_token'); } catch (_) {}
+    try { localStorage.removeItem('oga_hub_autosignin'); } catch (_) {}
+    if (token) {
+      await fetch('https://oauth2.googleapis.com/revoke', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'token=' + encodeURIComponent(token),
+      }).catch(() => {});
+    }
+    location.reload();
   }
 
   // ── Topic colours ────────────────────────────────────────
