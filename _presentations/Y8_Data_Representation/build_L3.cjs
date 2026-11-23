@@ -25,7 +25,7 @@ const K = createDeck({
   },
 });
 const { P, M, HEAD, MONO } = K;
-const { strip, youDoSlide, taskSlide } = require('./dr_kit.cjs')(K, S, { activity: 'Hexadecimal' });
+const { strip, youDoSlide, taskSlide, recallQuestions } = require('./dr_kit.cjs')(K, S, { activity: 'Hexadecimal' });
 
 const TOPIC = 'How do computers represent and process different types of data using binary?';
 const LESSON = 'How do I represent binary numbers with fewer digits using hexadecimal?';
@@ -160,14 +160,14 @@ function h2bSlide(o) {
 // ═══════════════ THE DECK ═══════════════
 
 // 1–2 · Recap & Recall: Lesson 1's 4-bit conversions (today's method converts 4 bits at a time) and Lesson 2.
-const RECALL = [
+const RECALL = recallQuestions([
   { pill: 'LESSON 1', type: 'write', q: 'Convert 1101 to denary', a: '13', why: '8 + 4 + 1' },
   { pill: 'LESSON 1', type: 'mcq', q: 'Which is 3 written with 4 bits?', opts: ['11', '0011', '1100'], optsMono: true,
     a: 'B — 0011', why: 'Every column gets a bit, 0s too' },
   // Q3's sum is drawn in columns by missingBitSum (below), so the card itself only holds the question.
   { pill: 'LAST LESSON', type: 'write', q: 'What is the missing bit?', a: '', why: '' },
   { pill: 'LAST LESSON', type: 'write', q: 'Add 0101 + 0011', a: '1000', why: '5 + 3 = 8' },
-];
+]);
 // Q3 as a column addition, as in Lesson 2: each bit in its own column, the + on the left, a line, the answer.
 // Card 3 sits bottom-left of the 2×2 recall grid (sz_kit.cjs CARD): x = M, y = 4.4, 5.92 × 2.5.
 function missingBitSum(s, reveal) {

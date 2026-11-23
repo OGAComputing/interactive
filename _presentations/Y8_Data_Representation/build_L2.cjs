@@ -23,7 +23,7 @@ const K = createDeck({
   },
 });
 const { P, M, HEAD, MONO } = K;
-const { gridGeom, rowLabel, cellRow, strip, youDoSlide, taskSlide } = require('./dr_kit.cjs')(K, S, { activity: 'Binary Addition' });
+const { gridGeom, rowLabel, cellRow, strip, youDoSlide, taskSlide, recallQuestions } = require('./dr_kit.cjs')(K, S, { activity: 'Binary Addition' });
 
 const TOPIC = 'How do computers represent and process different types of data using binary?';
 const LESSON = 'How do I add two binary numbers?';
@@ -91,13 +91,13 @@ function addSlide(o) {
 // ═══════════════ THE DECK ═══════════════
 
 // 1–2 · Recap & Recall: Lesson 1's conversions (used to check every sum today) and denary carrying.
-const RECALL = [
-  { pill: 'LAST LESSON', type: 'write', q: 'Convert 0101 to denary', hint: 'Remember 8 4 2 1 along the top', a: '5', why: '4 + 1' },
+const RECALL = recallQuestions([
+  { pill: 'LAST LESSON', type: 'write', q: 'Convert 0101 to denary', a: '5', why: '4 + 1' },
   { pill: 'LAST LESSON', type: 'mcq', q: 'Which is 6 written with 4 bits?', opts: ['110', '0110', '1100'], optsMono: true,
     a: 'B — 0110', why: 'Every column gets a bit, 0s too' },
   { pill: 'LAST LESSON', type: 'mcq', q: 'The biggest number 4 bits can hold?', opts: ['16', '15', '8'], a: 'B — 15', why: '1111 = 8 + 4 + 2 + 1' },
   { pill: 'KS2 MATHS', type: 'write', q: 'Work out 47 + 38', a: '85', why: '7 + 8 = 15: write 5, carry 1' },
-];
+]);
 S.recallStarter(K, { section: 'Recap & Recall', questions: RECALL, time: '4 MIN',
   notes: 'Do Now, no notes. Q1–3 are Lesson 1: today every sum gets checked by converting to denary, so they need it. '
     + 'Q4 is column addition from primary school; the next slides build binary addition on it. Insist on an answer for every card.' });

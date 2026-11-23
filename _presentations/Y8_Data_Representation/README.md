@@ -33,8 +33,13 @@ Each lesson flags 1–3 phrases with `K.isys(slide, { term, fact, say })` (`ppt-
 
 On an animated slide each phrase is tied to the click where it is taught (`click: k`), so the corner never gives away a reveal: L1 slide 6 Binary, then Bit at click 1 · L2 Carry at click 3; 1 + 1 at click 3, 1 + 1 + 1 at click 4 · L3 slide 6 A at click 2, Hexadecimal at click 8 (A … 10 moved there from the answers slide, where it came after the class had already used it).
 
+## Recap & Recall
+
+Build each deck's recall questions with `recallQuestions([...])` from `dr_kit.cjs`. **Every binary → denary question carries the hint "Remember 8 4 2 1 along the top"** under it: `recallQuestions` adds it to any write-it card whose question has a binary number and "denary" (e.g. "Convert 1101 to denary"), so new decks get it without asking. A card's own `hint` wins; `hint: ''` leaves it off. Ask binary → denary as a write-it card: an MCQ card has no room for the hint.
+
 ## Feedback
 
+- **2026-11-23 · 8 4 2 1 hint is standard** — Nick always tells the class to put 8 4 2 1 at the top for a binary → denary recall question; it gets them off on the right footing. Now automatic (see Recap & Recall above); L3 Q1 gained it.
 - **2026-11-19 · ISYS follows the clicks** — After the Y9 L5 lesson (Call flagged a slide after it was taught didn't work): flag a phrase on the slide, and at the click, where it is taught. See ISYS above.
 - **2026-11-17 · L2 recap** — Q1 (convert 0101) carries the hint "Remember 8 4 2 1 along the top" (Nick added it in Slides; it now lives in `build_L2.cjs` as the card's `hint`). Edit the builders, not the Slides copies: a publish replaces Slides edits, and the publisher now refuses to while one is there.
 

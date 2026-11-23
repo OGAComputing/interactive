@@ -32,7 +32,7 @@ const H8 = [128, 64, 32, 16, 8, 4, 2, 1];
 const bin = (n, w) => n.toString(2).padStart(w, '0');
 
 // ── Drawing parts for this unit (dr_kit.cjs) ──────────────────────────────
-const { gridGeom, headRow, cellRow, litColumns, doubleArrows, strip, youDoSlide, taskSlide } =
+const { gridGeom, headRow, cellRow, litColumns, doubleArrows, strip, youDoSlide, taskSlide, recallQuestions } =
   require('./dr_kit.cjs')(K, S, { activity: 'Binary and Denary' });
 
 const B2D_STEPS = ['Write the headings', 'Each bit under its heading', 'Add the headings with a 1'];
@@ -107,12 +107,12 @@ function d2bSlide(o) {
 // ═══════════════ THE DECK ═══════════════
 
 // 1–2 · Recap & Recall: the maths today's two methods are built on (place value, doubling, adding).
-const RECALL = [
+const RECALL = recallQuestions([
   { pill: 'KS2 MATHS', type: 'mcq', q: 'In 352, what is the 5 worth?', opts: ['5', '50', '500'], a: 'B — 50', why: '5 tens' },
   { pill: 'KS2 MATHS', type: 'mcq', q: 'What comes next?  1, 2, 4, 8, …', opts: ['10', '12', '16'], a: 'C — 16', why: 'Each one doubles' },
   { pill: 'KS2 MATHS', type: 'write', q: 'What is 8 + 2 + 1?', a: '11', why: 'Add them up' },
   { pill: 'KS2 MATHS', type: 'write', q: 'Write 6 hundreds, no tens, 4 ones', a: '604', why: 'The 0 holds the tens place' },
-];
+]);
 S.recallStarter(K, { section: 'Recap & Recall', questions: RECALL, time: '4 MIN',
   notes: 'Do Now, no notes. Every question is maths they already know, and each one is a piece of today\'s method: '
     + 'place value (Q1, Q4), doubling (Q2) and adding a few numbers (Q3). Insist on an answer for every card: a guess beats a blank.' });
