@@ -164,6 +164,10 @@ color:  red
   .reveal-game .more { margin-top: 10px; padding: 8px 14px; font: inherit; font-weight: 700; border: 1.5px solid var(--text); border-radius: 0;
     background: #fff; color: var(--text); cursor: pointer; }
   .reveal-game .more:hover, .reveal-game .more:focus-visible { background: var(--text); color: var(--text-inv); }
+  .reveal-game .clue-timer { height: 8px; background: #DDD6C8; margin: 0 0 4px; }
+  .reveal-game .clue-timer .bar { display: block; height: 100%; width: 100%; background: var(--accent); transition: width .2s linear; }
+  .reveal-game .clue-next { font-size: .85rem; font-weight: 700; color: var(--muted); margin: 0 0 10px; }
+  @media (prefers-reduced-motion: reduce) { .reveal-game .clue-timer .bar { transition: none; } }
   .reveal-game .cool-msg { font-weight: 700; color: var(--red); margin-top: 8px; min-height: 1.2em; }
   .reveal-game .files { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; margin-top: 6px; }
   .reveal-game .file { background: #fff; border: 1.5px solid var(--text); padding: 8px; font-size: .85rem; display: grid; gap: 3px; align-content: start; }
@@ -277,6 +281,36 @@ color:  red
   .num-q .num-in input { width: 150px; font: inherit; font-weight: 700; padding: 6px 10px; border: 1.5px solid #A9A293; background: var(--bg); }
   .num-q .num-in input:focus { outline: 3px solid var(--accent); outline-offset: 0; border-color: var(--text); }
   .num-q .num-in span { font-weight: 700; }
+  /* ── Hotspot: pick a numbered pin, then click the part of the picture that shows it (kind 'hotspot') ── */
+  .hs-pic { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 16px; align-items: start; background: #fff; border: 1.5px solid var(--text); padding: 12px 14px; margin: 0 0 18px; }
+  .hs-pic h3 { grid-column: 1 / -1; font-family: var(--font-head); font-weight: 600; font-size: 1.4rem; line-height: 1.1; margin: 0; }
+  .hs-stage { position: relative; line-height: 0; cursor: crosshair; justify-self: center; max-width: 100%; touch-action: manipulation; }
+  .hs-stage img { display: block; max-width: 100%; max-height: 72vh; width: auto; height: auto; user-select: none; -webkit-user-drag: none; }
+  .hs-stage:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+  .hs-pic.done .hs-stage { cursor: default; }
+  .pin { position: absolute; width: 34px; height: 34px; margin: -17px 0 0 -17px; display: grid; place-items: center; border-radius: 50%;
+    background: var(--text); color: #fff; font: 800 1rem/1 var(--font-body); border: 3px solid #fff; box-shadow: 0 2px 6px rgba(0,0,0,.55); pointer-events: none; }
+  .pin.active { background: var(--accent); }
+  .pin.is-correct { background: var(--green) !important; }
+  .pin.is-wrong { background: var(--red) !important; }
+  .hs-zone { position: absolute; border: 3px solid var(--green); background: rgba(46,125,79,.12); pointer-events: none; }
+  .hs-zone span { position: absolute; left: -3px; top: -3px; transform: translateY(-100%); background: var(--green); color: #fff;
+    font: 700 .74rem/1.3 var(--font-body); padding: 1px 6px; white-space: nowrap; }
+  .hs-zone.debug { border: 2px dashed #E0218A; background: rgba(224,33,138,.08); }
+  .hs-zone.debug span { background: #E0218A; }
+  .hs-finds { display: grid; gap: 8px; align-content: start; }
+  .hs-find { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 4px 10px; align-items: center; text-align: left; padding: 8px 10px;
+    font: inherit; font-size: .95rem; border: 1.5px solid #CFC8BA; background: var(--bg); color: var(--text); cursor: pointer; }
+  .hs-find:hover, .hs-find:focus-visible { border-color: var(--text); }
+  .hs-find[aria-pressed="true"] { border-color: var(--accent); background: #fff; box-shadow: inset 5px 0 0 var(--accent); }
+  .hs-find .pin { position: static; margin: 0; width: 30px; height: 30px; border-width: 2px; box-shadow: none; }
+  .hs-find .hs-state { grid-column: 2; font-size: .78rem; font-weight: 700; color: var(--muted); }
+  .hs-find.is-correct .hs-state { color: var(--green-dark); }
+  .hs-find.is-wrong .hs-state { color: var(--red); }
+  .hs-pic.done .hs-find { cursor: default; }
+  .hs-pic .credit { grid-column: 1 / -1; margin: 0; }
+  @media (max-width: 760px) { .hs-pic { grid-template-columns: 1fr; } }
+
   /* ── Test a survey: run it, spot the useless results, rewrite and run again (kind 'pilot') ── */
   .pilot-plan { background: #fff; border: 1.5px solid var(--text); padding: 14px 18px; margin: 0 0 14px; font-family: var(--font-quote); font-size: 1.08rem; }
   .pilot-plan .by { display: block; font-family: var(--font-body); font-size: .78rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
@@ -482,6 +516,7 @@ import {
   markChoices, markSort, markWriting, markReveal, markSpectrum, markHunt, markProfile, markNumbers, softIds, isSearchLink,
   markSpot, markSpotFlags, markPilot, markPilotFlags, pilotProblem, pilotAgain, starsFor, allCorrect, cooldownSeconds, calcScore, coreDone, coreGold, seededRandom, shuffled,
   binCounts, sortBlocker, unansweredBlocker, overBlocker, tooManyWrong,
+  HOTSPOTS, markHotspot, zoneAt, hotspotBlocker,
 } from './checkers.js';
 
 // ── Activity identity ──────────────────────────────────
@@ -522,7 +557,7 @@ function fillImages() {
 // ── Glossary: words from GLOSSARY get a dotted underline and show their meaning on hover, focus or tap ──
 // Task content only: the definition boxes (.terms) and help panels already explain the words.
 const GL_RE = GLOSSARY.length ? new RegExp(`\\b(?:${GLOSSARY.map(g => g[0]).join('|')})\\b`, 'gi') : null;
-const GL_SKIP = '.lockbox, .terms, .key, .help, .wordbank, .gl, textarea, select, button, summary, figcaption, .credit, .level, .task-head, .pf-group';
+const GL_SKIP = '.lockbox, .terms, .key, .help, .wordbank, .gl, textarea, select, button, summary, figcaption, .credit, .level, .task-head, .pf-group, .hs-stage';
 function glossify(root) {
   if (!GL_RE) return;
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT,
@@ -788,7 +823,8 @@ function renderReveal(box) {
       <p class="q-text">${esc(game.prompt.replace('{who}', cur.who || 'it'))}</p>
       <div class="guesses">${shuffled(game.opts, rng(cur.id)).map(([k, t]) => `
         <button type="button" class="guess${tried.includes(k) ? ' is-wrong' : ''}" data-guess="${k}"${tried.includes(k) ? ' disabled' : ''}>${esc(t)}</button>`).join('')}</div>
-      ${shown < cur.clues.length ? '<button type="button" class="more">Show the next clue ›</button>' : ''}
+      ${shown < cur.clues.length ? (game.auto ? `<div class="clue-timer" aria-hidden="true"><span class="bar"></span></div><p class="clue-next">Clue ${shown + 1} in ${game.auto} s</p>`
+        : '<button type="button" class="more">Show the next clue ›</button>') : ''}
       <p class="cool-msg" aria-live="polite"></p>
     </div>`;
   }
@@ -803,7 +839,35 @@ function renderReveal(box) {
   glossify(box);
   const i = taskOf(box);
   if (coolLeft(i)) startCooldown(i);
+  if (cur && game.auto) {
+    const t = clueTimer[key], shown = shownOf(cur);
+    if (!t || t.id !== cur.id || t.n !== shown) clueTimer[key] = { id: cur.id, n: shown, left: game.auto * 1000 };
+    drawClueTimer(box);
+  }
 }
+// auto: n (seconds) in a reveal's data shows the next clue by itself after n seconds, with a shrinking bar (Nick, 2026-11-24:
+// students guessed on clue 1 without reading). Keep n under the cooldown, so a wild guess costs more than waiting; a wrong
+// guess then shows no extra clue. The countdown only runs while its tab is open and the page is in view.
+const clueTimer = {};   // task key → { id, n: clues shown, left: ms to the next clue }
+function drawClueTimer(box) {
+  const t = clueTimer[box.dataset.reveal], secs = REVEALS[box.dataset.reveal].auto;
+  const bar = box.querySelector('.clue-timer .bar'), next = box.querySelector('.clue-next');
+  if (!t || !bar) return;
+  bar.style.width = `${Math.max(0, t.left / (secs * 1000)) * 100}%`;
+  next.textContent = `Clue ${t.n + 1} in ${Math.ceil(Math.max(0, t.left) / 1000)} s`;
+}
+setInterval(() => {
+  if (document.hidden) return;
+  document.querySelectorAll('.panel.active .reveal-game[data-reveal]').forEach(box => {
+    const key = box.dataset.reveal, t = clueTimer[key];
+    if (!REVEALS[key].auto || !t || state.completed[taskOf(box)] || box.closest('.panel.locked')) return;
+    t.left -= 200;
+    if (t.left > 0) return drawClueTimer(box);
+    state.answers[t.id + '_clues'] = t.n + 1;
+    save();
+    renderReveal(box);
+  });
+}, 200);
 document.addEventListener('click', e => {
   const btn = e.target.closest('.reveal-game .guess, .reveal-game .more');
   if (!btn) return;
@@ -832,13 +896,87 @@ document.addEventListener('click', e => {
     return;
   }
   state.answers[r.id + '_tried'] = [...(state.answers[r.id + '_tried'] || []), btn.dataset.guess];
-  nextClue();
+  const auto = REVEALS[key].auto;
+  if (!auto) nextClue();
   const secs = penalise(i);
   renderReveal(box);
   fb.className = 'feedback';
   void fb.offsetWidth;
   fb.className = 'feedback wrong';
-  fb.textContent = `❌ Not that one. Here's another clue: you can guess again in ${secs} seconds.`;
+  fb.textContent = auto ? `❌ Not that one. Read the clues as they come: you can guess again in ${secs} seconds.`
+    : `❌ Not that one. Here's another clue: you can guess again in ${secs} seconds.`;
+});
+
+// ── Hotspot: pick a numbered pin, then click the part of the picture that shows it ──
+// state.answers[findId] = the zone under the pin ('miss' if none); [findId + '_at'] = [x, y] in percent.
+// A hidden select per find puts what was clicked in the Classroom evidence.
+const SHOW_ZONES = new URLSearchParams(location.search).get('zones') === 'show';
+const hsActive = {};   // task key → the find whose pin the next click places
+function renderHotspot(box) {
+  const key = box.dataset.hotspot, hs = HOTSPOTS[key], i = taskOf(box), done = state.completed[i];
+  const finds = hs.pics.flatMap(p => p.finds);
+  if (!finds.some(f => f.id === hsActive[key])) hsActive[key] = (finds.find(f => !state.answers[f.id]) || finds[0]).id;
+  let n = 0;
+  box.innerHTML = hs.pics.map(p => {
+    const nums = p.finds.map(() => ++n);
+    const zoneBox = (z, cls) => { const [x, y, w, h] = z.box;
+      return `<div class="hs-zone${cls}" style="left:${x}%;top:${y}%;width:${w}%;height:${h}%"><span>${esc(z.label)}</span></div>`; };
+    // Done: outline only the zones the pins landed in (all the right zones at once was too busy; Nick, 2026-11-24).
+    const right = done ? [...new Set(p.finds.map(f => state.answers[f.id]).filter(z => p.zones[z]))].map(z => zoneBox(p.zones[z], '')).join('') : '';
+    const debug = SHOW_ZONES ? Object.values(p.zones).map(z => zoneBox(z, ' debug')).join('') : '';
+    const pins = p.finds.map((f, k) => { const at = state.answers[f.id + '_at'];
+      return at ? `<span class="pin${!done && hsActive[key] === f.id ? ' active' : ''}" data-pin="${f.id}" style="left:${at[0]}%;top:${at[1]}%">${nums[k]}</span>` : ''; }).join('');
+    return `<div class="hs-pic${done ? ' done' : ''}" data-pic="${p.id}">
+      <h3>${esc(p.label)}</h3>
+      <div class="hs-stage" tabindex="0" aria-label="${esc(p.alt || p.label)}. Click to place the chosen pin; arrow keys move it.">${imgTag(p.img, p.alt || p.label)}${right}${debug}${pins}</div>
+      <div class="hs-finds">${p.finds.map((f, k) => { const g = state.answers[f.id];
+        const what = g ? (p.zones[g]?.label || 'Somewhere else in the picture') : 'Not placed';
+        return `<button type="button" class="hs-find" data-find="${f.id}" data-qw="${f.id}" aria-pressed="${!done && hsActive[key] === f.id}">
+          <span class="pin">${nums[k]}</span><span>${esc(f.q)}</span><span class="hs-state">${g ? (done ? '📍 ' + esc(what) : '📍 Placed') : 'Not placed yet'}</span>
+          <select class="sr-only" data-q="${f.id}" aria-label="${esc(f.q)}" tabindex="-1"><option>${esc(what)}</option></select></button>`; }).join('')}</div>
+      ${p.credit ? `<p class="credit">${esc(p.credit)}</p>` : ''}
+    </div>`;
+  }).join('');
+}
+function hsPlace(box, x, y) {
+  const key = box.dataset.hotspot, i = taskOf(box), id = hsActive[key];
+  if (state.completed[i] || isLocked(box)) return;
+  const pic = HOTSPOTS[key].pics.find(p => p.finds.some(f => f.id === id));
+  const cx = Math.round(Math.min(100, Math.max(0, x)) * 10) / 10, cy = Math.round(Math.min(100, Math.max(0, y)) * 10) / 10;
+  state.answers[id] = zoneAt(pic, cx, cy);
+  state.answers[id + '_at'] = [cx, cy];
+  save();
+  return pic;
+}
+document.addEventListener('click', e => {
+  const box = e.target.closest('.hotspot');
+  if (!box || isLocked(box) || state.completed[taskOf(box)]) return;
+  const key = box.dataset.hotspot, findBtn = e.target.closest('.hs-find');
+  if (findBtn) { hsActive[key] = findBtn.dataset.find; renderHotspot(box); return; }
+  const stage = e.target.closest('.hs-stage');
+  if (!stage) return;
+  const picId = stage.closest('.hs-pic').dataset.pic, pic = HOTSPOTS[key].pics.find(p => p.id === picId);
+  // A click on another picture moves to that picture's first unplaced pin (or its first pin).
+  if (!pic.finds.some(f => f.id === hsActive[key])) hsActive[key] = (pic.finds.find(f => !state.answers[f.id]) || pic.finds[0]).id;
+  const r = stage.querySelector('img').getBoundingClientRect();
+  hsPlace(box, (e.clientX - r.left) / r.width * 100, (e.clientY - r.top) / r.height * 100);
+  const next = pic.finds.find(f => !state.answers[f.id]) || HOTSPOTS[key].pics.flatMap(p => p.finds).find(f => !state.answers[f.id]);
+  if (next) hsActive[key] = next.id;
+  document.getElementById('feedback-' + taskOf(box)).textContent = '';
+  renderHotspot(box);
+});
+document.addEventListener('keydown', e => {
+  const stage = e.target.closest?.('.hs-stage');
+  const d = { ArrowLeft: [-2, 0], ArrowRight: [2, 0], ArrowUp: [0, -2], ArrowDown: [0, 2] }[e.key];
+  if (!stage || !d) return;
+  const box = stage.closest('.hotspot'), key = box.dataset.hotspot, picId = stage.closest('.hs-pic').dataset.pic;
+  const pic = HOTSPOTS[key].pics.find(p => p.id === picId);
+  if (!pic.finds.some(f => f.id === hsActive[key])) hsActive[key] = pic.finds[0].id;
+  e.preventDefault();
+  const at = state.answers[hsActive[key] + '_at'] || [50, 50];
+  if (!hsPlace(box, at[0] + d[0], at[1] + d[1])) return;
+  renderHotspot(box);
+  box.querySelector(`.hs-pic[data-pic="${picId}"] .hs-stage`)?.focus();
 });
 
 // ── Spot the slip: flag the wrong sentences, then (once all are found) pick each fix ──
@@ -1280,6 +1418,7 @@ function gatherAndMark(i) {
   if (kind === 'hunt') return markHunt(key, state.answers);
   if (kind === 'profile') return markProfile(key, state.answers);
   if (kind === 'numbers') return markNumbers(key, state.answers);
+  if (kind === 'hotspot') return markHotspot(key, state.answers);
   return markWriting(key, state.answers);
 }
 
@@ -1303,10 +1442,10 @@ function softMessage(i, res) {
 function highlight(i, res) {
   const panel = document.getElementById('panel-' + i);
   for (const [id, ok] of Object.entries(res)) {
-    const el = panel.querySelector(`[data-qw="${id}"]`);
-    if (!el) continue;
-    el.classList.toggle('is-correct', ok);
-    el.classList.toggle('is-wrong', !ok);
+    for (const el of panel.querySelectorAll(`[data-qw="${id}"], [data-pin="${id}"]`)) {
+      el.classList.toggle('is-correct', ok);
+      el.classList.toggle('is-wrong', !ok);
+    }
   }
 }
 
@@ -1320,6 +1459,7 @@ function blocker(i) {
   if (kind === 'choice') return unansweredBlocker(Object.keys(CHOICES[key]), a);
   if (kind === 'profile') return unansweredBlocker(PROFILES[key].cards.flatMap(c => c.fields.map(f => f.id)), a);
   if (kind === 'numbers') return unansweredBlocker(NUMBERS[key].qs.map(q => q.id), a);
+  if (kind === 'hotspot') return hotspotBlocker(HOTSPOTS[key], a);
   if (kind === 'spot') {
     const parts = SPOTS[key].parts;
     return spotStage(key) === 'fix' ? unansweredBlocker(parts.filter(p => p.fix).map(p => p.id + '_fix'), a)
@@ -1340,7 +1480,7 @@ function blocker(i) {
 function blindIds(i, res) {
   const { key, kind } = TASKS[i];
   if (kind === 'spot') return spotStage(key) === 'fix' ? Object.keys(res).filter(id => id.endsWith('_fix')) : null;
-  if (!['choice', 'sort', 'spectrum', 'profile', 'numbers'].includes(kind)) return null;
+  if (!['choice', 'sort', 'spectrum', 'profile', 'numbers', 'hotspot'].includes(kind)) return null;
   const soft = typeof softIds === 'function' ? softIds(TASKS[i]) : new Set();
   return Object.keys(res).filter(id => !soft.has(id));
 }
@@ -1349,7 +1489,7 @@ const clearMarks = i => document.querySelectorAll(`#panel-${i} .is-correct, #pan
 // More than half wrong: say how many, not which, so moving the red ones round can't stand in for reading.
 function blindFeedback(i, res, ids, fb) {
   clearMarks(i);
-  const right = ids.filter(id => res[id]).length, noun = ['sort', 'spectrum'].includes(TASKS[i].kind) ? 'card' : 'answer';
+  const right = ids.filter(id => res[id]).length, noun = ['sort', 'spectrum'].includes(TASKS[i].kind) ? 'card' : TASKS[i].kind === 'hotspot' ? 'pin' : 'answer';
   fb.className = 'feedback';
   void fb.offsetWidth;
   fb.className = 'feedback wrong';
@@ -1512,6 +1652,7 @@ function showDone(i) {
   if (reset) reset.style.display = gold || TASKS[i].once ? 'none' : '';
   if (['choice', 'spot', 'profile', 'numbers'].includes(TASKS[i].kind)) document.querySelectorAll(`#panel-${i} .q input`).forEach(r => { r.disabled = true; });
   if (TASKS[i].kind === 'pilot') document.querySelectorAll(`#panel-${i} .pilot textarea`).forEach(t => { t.disabled = true; });
+  if (TASKS[i].kind === 'hotspot') document.querySelectorAll(`#panel-${i} [data-hotspot]`).forEach(box => { renderHotspot(box); highlight(i, gatherAndMark(i)); });
   if (TASKS[i].kind === 'fix') document.querySelectorAll(`#panel-${i} .fix`).forEach(box => {
     closeFixTray(box);
     box.querySelectorAll('.fix-menu input').forEach(r => { r.disabled = true; });
@@ -1547,6 +1688,7 @@ function resetTask(i) {
     : kind === 'spectrum' ? SPECTRUMS[key].items.map(x => x.id)
     : kind === 'profile' ? PROFILES[key].cards.flatMap(c => c.fields.map(f => f.id))
     : kind === 'numbers' ? NUMBERS[key].qs.map(q => q.id)
+    : kind === 'hotspot' ? HOTSPOTS[key].pics.flatMap(p => p.finds.flatMap(f => [f.id, f.id + '_at']))
     // A hunt keeps the student's research: only the checked facts are cleared, to find again.
     : kind === 'hunt' ? HUNTS[key].rows.filter(r => r.accept).map(r => r.id + '_fact') : [];
   ids.forEach(id => delete state.answers[id]);
@@ -1658,6 +1800,7 @@ function renderTask(i) {
   panel.querySelectorAll('[data-hunt]').forEach(renderHunt);
   panel.querySelectorAll('[data-profile]').forEach(renderProfile);
   panel.querySelectorAll('[data-numbers]').forEach(renderNumbers);
+  panel.querySelectorAll('[data-hotspot]').forEach(renderHotspot);
   glossify(panel);
 }
 

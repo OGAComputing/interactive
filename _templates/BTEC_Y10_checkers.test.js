@@ -103,3 +103,27 @@ describe('guards: writing must be the student\'s own words', () => {
     expect(pastedTwice(list, { a: 'One answer here.', b: 'A different one.' }).size).toBe(0);
   });
 });
+
+describe('hotspot', async () => {
+  const { zoneAt, hotspotBlocker, hotspotDataProblems } = await import('./BTEC_Y10_checkers.js');
+  const PIC = { id: 'p', zones: {
+    poster: { box: [0, 0, 100, 100], label: 'The rest of the poster' },
+    mask: { box: [40, 10, 20, 30], label: 'The mask' },
+    eye: { box: [45, 15, 5, 5], label: 'An eye' },
+  }, finds: [{ id: 'f1', q: 'Click the mask', ok: ['mask', 'eye'] }, { id: 'f2', q: 'Click the eye', ok: ['eye'] }] };
+  it('finds the smallest zone under a point, or a miss outside them all', () => {
+    expect(zoneAt(PIC, 47, 17)).toBe('eye');
+    expect(zoneAt(PIC, 55, 35)).toBe('mask');
+    expect(zoneAt(PIC, 5, 90)).toBe('poster');
+    expect(zoneAt({ zones: { a: { box: [10, 10, 10, 10] } } }, 50, 50)).toBe('miss');
+  });
+  it('blocks a check until every pin is placed', () => {
+    expect(hotspotBlocker({ pics: [PIC] }, { f1: 'mask' })).toMatch(/every pin/);
+    expect(hotspotBlocker({ pics: [PIC] }, { f1: 'mask', f2: 'miss' })).toBe('');
+  });
+  it('hotspotDataProblems passes good data and catches a missing zone or a box off the picture', () => {
+    expect(hotspotDataProblems({ pics: [PIC] })).toEqual([]);
+    const bad = { ...PIC, zones: { ...PIC.zones, wide: { box: [80, 0, 30, 10], label: 'Too wide' } }, finds: [{ id: 'f3', q: 'x', ok: ['nope'] }] };
+    expect(hotspotDataProblems({ pics: [bad] })).toEqual(['p.wide: box off the picture', "f3: 'nope' isn't a zone of p"]);
+  });
+});

@@ -8,7 +8,8 @@
 // rounds), 'spot' (find and fix the slips in a paragraph), 'fix' (the harder spot: change any line to the
 // right version), 'spectrum' (cards placed on a line between
 // two ends), 'hunt' (live research: find a fact, paste its link), 'profile' (an audience profile card) or
-// 'numbers' (questions answered from a real table of statistics). Vary them: no lesson should run the
+// 'numbers' (questions answered from a real table of statistics) or 'hotspot' (click the part of a picture
+// that shows X). Vary them: no lesson should run the
 // same kind in two tabs in a row (Y10/CLAUDE.md).
 // once: true makes a choice task an assessment (a check of what students remember): it is marked once, every
 // question goes green or red without showing the right option, there is no cooldown or Try for Gold, and it scores
@@ -83,6 +84,8 @@ export const WRITING = {
 // Students guess after any clue: earlier = more stars (starsFor); a wrong guess shows the next clue, costs
 // gold and starts the cooldown. Solved rounds become "case files" showing img, label, answer and note.
 // Markup: <div class="reveal-game" data-reveal="t3"></div>, a feedback div and a reset button, but no check-N button.
+// auto: n shows the next clue by itself every n seconds, with a shrinking bar, and a wrong guess then shows no extra clue
+// (Nick, 2026-11-24: students guessed on clue 1 without reading). Keep n under cooldownSeconds(), so waiting beats guessing.
 // Use for: identifying from evidence (producer type, genre from the first shot, audience from clues).
 export const REVEALS = {};
 
@@ -169,6 +172,20 @@ export const NUMBERS = {};
 // that doesn't work costs time. Markup: <div class="pilot" data-pilot="t5"></div>, with the usual check, reset and
 // feedback. Built for 2.3 (Jay's Fortnite survey); use for any question-writing slip (surveys, interviews).
 export const PILOTS = {};
+
+// ── Hotspot (kind 'hotspot'): click the part of a real poster, still or screen that shows X ──
+// { taskKey: { pics: [{ id, img, label, alt?, credit?, zones: { zoneId: { box: [x, y, w, h], label } },
+//   finds: [{ id, q, ok: [zoneId, …] }] }] } }
+// box = a rectangle in percent of the picture (x, y = its top-left corner), so it fits at any size. Give every
+// part a student might click its own zone, not only the right ones: a click in a wrong zone or in no zone
+// is wrong, and zone labels name what was clicked in the evidence. Where zones overlap, the smallest wins.
+// Students pick a find (a numbered pin), then click the picture to place it; the next unplaced find is picked
+// for them. Check marks each pin; a wrong one costs the cooldown. Done pictures outline the right zones.
+// ?zones=show outlines every zone, for setting the boxes. hotspotDataProblems(HOTSPOTS.t2) in checkers.test.js
+// catches a find whose answer isn't a zone and a box off the picture. Markup: <div class="hotspot"
+// data-hotspot="t2"></div> with the usual check, reset and feedback. Built for 4.1 (iconography on a poster).
+// Use for: iconography, anchorage, a layout's parts, a camera shot's framing, a game or app screen's parts.
+export const HOTSPOTS = {};
 
 // ── Glossary: [pattern, meaning] for every word a typical 13-year-old might not know ──
 // The page underlines each match in the task content (questions, options, clues, paragraphs, prompts,
@@ -345,6 +362,40 @@ export function markProfile(taskKey, given) {
   for (const c of pr.cards) for (const f of c.fields) res[f.id] = f.ok.includes(given[f.id]);
   for (const w of pr.why || []) res[w.id] = markWriteQ(w, given);
   return res;
+}
+
+// The zone under a point (x, y in percent of the picture): the smallest box holding it, or 'miss'.
+export function zoneAt(pic, x, y) {
+  let best = 'miss', area = Infinity;
+  for (const [id, z] of Object.entries(pic.zones)) {
+    const [zx, zy, w, h] = z.box;
+    if (x >= zx && x <= zx + w && y >= zy && y <= zy + h && w * h < area) { best = id; area = w * h; }
+  }
+  return best;
+}
+// given[findId] = the zone its pin is in ('miss' outside every zone).
+export function markHotspot(taskKey, given) {
+  return Object.fromEntries(HOTSPOTS[taskKey].pics.flatMap(p => p.finds.map(f => [f.id, f.ok.includes(given[f.id])])));
+}
+// '' when every pin has been placed.
+export function hotspotBlocker(hs, given) {
+  return hs.pics.some(p => p.finds.some(f => !given[f.id])) ? '📍 Place every pin on its picture first.' : '';
+}
+// Data mistakes: a find whose answer isn't one of its picture's zones, or a box off the picture. [] when fine.
+export function hotspotDataProblems(hs) {
+  const out = [];
+  for (const p of hs.pics) {
+    for (const [id, z] of Object.entries(p.zones)) {
+      const [x, y, w, h] = z.box;
+      if (!(w > 0 && h > 0 && x >= 0 && y >= 0 && x + w <= 100.01 && y + h <= 100.01)) out.push(`${p.id}.${id}: box off the picture`);
+      if (!z.label) out.push(`${p.id}.${id}: no label`);
+    }
+    for (const f of p.finds) {
+      if (!f.ok.length) out.push(`${f.id}: no right zone`);
+      for (const z of f.ok) if (!p.zones[z]) out.push(`${f.id}: '${z}' isn't a zone of ${p.id}`);
+    }
+  }
+  return out;
 }
 
 export function markHunt(taskKey, given) {
