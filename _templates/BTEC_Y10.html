@@ -839,11 +839,13 @@ function renderReveal(box) {
   glossify(box);
   const i = taskOf(box);
   if (coolLeft(i)) startCooldown(i);
-  if (cur && game.auto) {
+  // The countdown runs only while a clue is still to come: after the last one it stops (a timer left running
+  // re-rendered the round every tick, so the newest clue's slide-in replayed and it flashed; Nick, 2026-11-24).
+  if (cur && game.auto && shownOf(cur) < cur.clues.length) {
     const t = clueTimer[key], shown = shownOf(cur);
     if (!t || t.id !== cur.id || t.n !== shown) clueTimer[key] = { id: cur.id, n: shown, left: game.auto * 1000 };
     drawClueTimer(box);
-  }
+  } else delete clueTimer[key];
 }
 // auto: n (seconds) in a reveal's data shows the next clue by itself after n seconds, with a shrinking bar (Nick, 2026-11-24:
 // students guessed on clue 1 without reading). Keep n under the cooldown, so a wild guess costs more than waiting; a wrong

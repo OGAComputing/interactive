@@ -139,3 +139,21 @@ test('★ Breaking a convention: two examples with posters are on show before th
   await expect(page.locator('#panel-6 .example-card img[src^="data:image"]')).toHaveCount(2);
   await expect(page.locator('#panel-6 details')).toHaveCount(0);
 });
+
+test('Task 3: once every clue is showing, the timer stops and the round is not redrawn (the last clue used to flash)', async ({ page }) => {
+  await page.goto(URL);
+  await unlock(page, 2);
+  await page.evaluate(([k, rounds]) => {
+    const s = JSON.parse(localStorage.getItem(k));
+    for (const r of rounds) s.answers[r.id + '_clues'] = r.n;
+    localStorage.setItem(k, JSON.stringify(s));
+  }, [KEY, REVEALS.conv.rounds.map(r => ({ id: r.id, n: r.clues.length }))]);
+  await page.reload();
+  await page.locator('.tab[data-idx="2"]').click();
+  const round = page.locator('#panel-2 .round');
+  await expect(round.locator('.clues li')).toHaveCount(3);
+  await expect(round.locator('.clue-timer')).toHaveCount(0);
+  const last = await round.locator('.clues li').last().elementHandle();
+  await page.waitForTimeout(1500);
+  expect(await last.evaluate(el => el.isConnected)).toBe(true);
+});
