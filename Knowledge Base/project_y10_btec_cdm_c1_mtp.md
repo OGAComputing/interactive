@@ -6,21 +6,21 @@
 
 - **Series:** May 2027. Marks and the sample are due **15 May 2027**. The live PSA has been released (kept in `Knowledge Base/BTEC_CDM/secure/PSA_June2027/`, git-ignored, never committed).
 - **Each week: a double (lessons x.1–x.2) then a single later in the week (x.3)**, numbered week.lesson. Week 1 = w/c 2 Nov 2026.
-- **Two classes.** Class A has the double first, class B the single first. Class B runs **one lesson behind** so both follow the same sequence: B's first single (this week) is a course introduction / baseline, and every later B lesson is the one class A had just before it. So B's week 8 single is 7.3 (Knowledge Check), B's practise singles fall early in the week with their feedback-and-assess double a few days later, and B finishes the PSA on its week 18 single (≈ Mon 22 Mar), leaving only the week 18 double for B's catch-up. One feedback sheet per class (B's mocks arrive a few days after A's).
+- **Two classes.** Class A has the double first, class B the single first. Class B runs **one lesson behind** so both follow the same sequence: B's first single (this week) is a course introduction / baseline, and every later B lesson is the one class A had just before it. So B's week 8 single is 7.3 (Knowledge Check), B's respond-to-feedback single falls early in the following week, with a longer marking gap (about a week, not a few days), and B finishes the PSA on its week 18 single (≈ Mon 22 Mar), leaving only the week 18 double for B's catch-up. One feedback sheet per class (B's practice tasks arrive a few days after A's).
 - **Term dates** (grange.outwood.com, 2026-27): Christmas 19 Dec – 3 Jan · February half term 13–21 Feb · Easter 26 Mar – 11 Apr (last day Thu 25 Mar) · May Day 3 May · May half term 29 May – 6 Jun.
 
 | Phase | Weeks | Dates | What |
 |---|---|---|---|
 | 1. Theory | 1–7 (1.1–7.3) | 2 Nov – 18 Dec | Everything the PSA draws on, taught through media students already know |
-| 2. Walking mock + PSA, interleaved | 8–17 | 4 Jan – 19 Mar | Section by section: practise on the sample PSA → feedback → the same section of the live PSA under supervision |
+| 2. Walking mock + PSA, interleaved | 8–17 | 4 Jan – 19 Mar | Section by section: recap + a practice task on the sample PSA → marked → students respond to the feedback → that section of the live PSA under supervision the next week |
 | 3. Catch-up | 17–18 | 17 – 25 Mar | Supervised catch-up for absent students; everyone else starts Component 2 |
 | 4. Marking | — | Easter – Fri 16 Apr | Marking done by 16 Apr, so a resubmission (one chance, 15 working days, authorised by the Lead IV) fits in 19 Apr – 10 May (3 May is a bank holiday); internal verification; submit by Fri 14 May (15 May is a Saturday) |
 
 **Interleaving is assumed acceptable (Nick to confirm with Pearson, 2026-11-02).** Pearson's wording leans the other way: the PSA is a "distinct periods of assessment that are separate from the practice, exploration activities and formative assessments" (spec p.38), and formative tasks with feedback come "before the Set Assignment is distributed" (sample PSA p.8). Get the subject advisor's or Standards Verifier's OK in writing and keep it with the assessment records. If the answer is no: run all the mock sections first, then the assessed hours in the same order.
 
-## Assessed time: planned at up to 15 hours
+## Assessed time: 13 hours planned (up to 15 allowed)
 
-Pearson gives timings **per task only**: Task 1 ≈ 3 h, Task 2 ≈ 7 h, "for guidance only". This plan allows +50% (Nick's decision, 2026-11-02, to be confirmed with Pearson along with the interleaving): **Task 1 up to 4.5 h, Task 2 up to 10.5 h**. The split into sections is ours. Within Task 2 it follows the marking grid: LO B is marked on three equal 12-mark strands (genre/narrative/representation; production techniques; how they combine), so each strand gets a similar share. If Pearson says the 10 hours is firm, scale every section back by a third and use the freed lessons for catch-up and reasonable adjustments.
+Pearson gives timings **per task only**: Task 1 ≈ 3 h, Task 2 ≈ 7 h, "for guidance only". This plan allows up to +50% (Nick's decision, 2026-11-02, to be confirmed with Pearson along with the interleaving): **Task 1 up to 4.5 h, Task 2 up to 10.5 h**. Since 2026-11-20 the coursework only gets the second half of each double, so the plan uses **13 h**: Task 1 3 h, Task 2 10 h (including a final hour to finish any section). The split into sections is ours. Within Task 2 it follows the marking grid: LO B is marked on three equal 12-mark strands (genre/narrative/representation; production techniques; how they combine), so each strand gets a similar share. If Pearson says the 10 hours is firm, scale every section back by a third and use the freed lessons for catch-up and reasonable adjustments.
 
 ## The sections
 
@@ -28,52 +28,54 @@ Section names use only the task's own bullet points: no extra headings, prompts 
 
 | Section | Covers | Marking strand (12 marks each) | Pearson ≈ | +50% | Planned |
 |---|---|---|---|---|---|
-| 1A | Choose products (one per sector) using primary and secondary research; start the research log | A: research techniques | Task 1: 3 h | 4.5 h | 1.5 |
-| 1B | Forms of the products and their purposes (incl. producer context) | A: products, purpose, audience | | | 1.5 |
-| 1C | Audiences: who, how they interpret and respond; the product–purpose–audience relationship | A: products, purpose, audience | | | 1.5 |
-| 2A | Genre | B: genre, narrative, representation | Task 2: 7 h | 10.5 h | 1.5 |
-| 2B | Narrative | B: genre, narrative, representation | | | 1.5 |
-| 2C | Representation | B: genre, narrative, representation | | | 1.5 |
+| 1A | Choose products (one per sector) using primary and secondary research; start the research log | A: research techniques | Task 1: 3 h | 4.5 h | 1 |
+| 1B | Forms of the products and their purposes (incl. producer context) | A: products, purpose, audience | | | 1 |
+| 1C | Audiences: who, how they interpret and respond; the product–purpose–audience relationship | A: products, purpose, audience | | | 1 |
+| 2A | Genre | B: genre, narrative, representation | Task 2: 7 h | 10.5 h | 1 |
+| 2B | Narrative | B: genre, narrative, representation | | | 1 |
+| 2C | Representation | B: genre, narrative, representation | | | 1 |
 | 2D | Media production techniques, incl. their own practical experiment (recorded sound) | B: production techniques | | | 3 |
-| 2E | How they combine to create meaning and engage audiences | B: combined meaning | | | 2.5 |
-| | | | **10 h** | **15 h** | **14.5** |
+| 2E | How they combine to create meaning and engage audiences | B: combined meaning | | | 3 |
+| Finish | Any unfinished section (week 17 single) | — | | | 1 |
+| | | | **10 h** | **15 h** | **13** |
 
-Task 1 gets its full 4.5 h. Task 2 gets 10 h of the 10.5; a student who needs the last half hour gets it in the week 18 catch-up. Task 2's evidence may include "practical experiments and responses" and "annotated practical work", so students can record their own sound experiment in the assessed 2D hours, having practised it on the mock.
+Task 1 gets Pearson's 3 h. Task 2 gets 10 h, and its three LO B strands now get an equal 3 h each (2A–2C, 2D, 2E). Students who need more go to the week 18 catch-up, up to the 15 h allowance. Task 2's evidence may include "practical experiments and responses" and "annotated practical work", so students can record their own sound experiment in the assessed 2D hours, having practised it on the mock.
 
 **Keep the links.** Small sections risk list-like answers, but the top bands reward "effective links between products, purpose and audience". Feedback on 1C and 2E should push students to connect sections, not add to them.
 
 ## The weekly rhythm
 
-One section a week. **Single = practise the next section; double = feedback then assess.**
+One section a week (Nick, 2026-11-20). **Double = recap the next section, then this section's coursework; single = respond to feedback on the recap task.** What gets marked and responded to is always the practice task on the sample brief, **never the live coursework**: Pearson allows no feedback on live work, and no acting on feedback, while it is in progress.
 
-1. **Single (end of week): Practise** on the mock. A 10-minute worked model on a product that is in neither the mock nor anything a student might choose for the live theme, then students do the section on their mock products. Live verbal feedback while circulating.
-2. **Between the single and the next double (≈ 30 min of Nick's time):** skim every mock and fill in a one-page **whole-class feedback sheet**: what went well, the 3 most common slips, a model paragraph on a mock product, 3–4 numbered improvement codes. Only the code numbers go on each student's work (Classroom comment bank).
-3. **Double: Feedback (≈ 30 min) → switch → Assess (≈ 90 min).** Students see what good looks like and improve their mock, then go straight into the same section of the live PSA. Switch protocol: mock work closed and handed in, register, "formal supervision starts now" slide with the time, live work opened. Record actual supervised minutes.
+1. **Double, first half (≈ 1 h): Recap + practice task** on the *next* section. Remind students of the Phase 1 content it draws on (Recap & Recall, a 10-minute worked model on a product that is in neither the mock nor anything a student might choose for the live theme), then students do that section on their mock products. Mock work closed and handed in.
+2. **Double, second half (≈ 1 h): Coursework.** Switch protocol: register, "formal supervision starts now" slide with the time, live work opened. Students do *this week's* section of the live PSA, the one they practised and had feedback on last week. Record actual supervised minutes.
+3. **Between the double and the single (≈ 30 min of Nick's time):** skim the practice tasks and fill in a one-page **whole-class feedback sheet**: what went well, the 3 most common slips, a model paragraph on a mock product, 3–4 numbered improvement codes. Only the code numbers go on each student's mock work (Classroom comment bank).
+4. **Single: Respond to feedback.** Go through the sheet; students find their codes and improve their practice task. This is the section they do for real in the next double, so the feedback is days old, not weeks. The live work stays closed.
 
 Why this catches students at their best:
-- Assessed work sits mainly in the doubles: one log-in and set-up instead of two, and a long run of focused time.
-- 90 minutes of silent independent work is long for Year 10: allow a 5-minute supervised stretch break (screens locked, no talking about the work); log it so it isn't counted as assessed time.
-- Feedback comes **minutes** before the assessed section, not a week before.
-- The two assessed singles continue a section started that week.
+- Every section is met three times before it is assessed: recap, practice, response.
+- The coursework hour comes straight after a recap, with students already settled at their computers.
+- An hour of silent independent work is manageable for Year 10; the 2-hour assessed doubles (weeks 16–17) get a 5-minute supervised stretch break (screens locked, no talking about the work), logged so it isn't counted as assessed time.
+- Weeks 15–17 run out of sections to practise, so the coursework takes over: 2D and 2E get 3 h each, and the week 17 single finishes any section.
 - Week 18 (the last week before Easter) has no planned assessment. Check for Year 10 exam weeks, trips or events in weeks 9–17 and move an assessed double away from them.
 
 ## Phase 2 week by week
 
 | Week (w/c) | Double (x.1–x.2) | Single (x.3) | Assessed h |
 |---|---|---|---|
-| 8 (4 Jan) | Launch: how the phase works, Pearson's student guide, mock brief · Practise 1A | Mock: plan primary research (survey / interview questions) | — |
-| 9 (11 Jan) | Feedback 1A → **Assess 1A** (PSA start date; live brief issued) | Practise 1B | 1.5 |
-| 10 (18 Jan) | Feedback 1B → **Assess 1B** | Practise 1C | 1.5 |
-| 11 (25 Jan) | Feedback 1C → **Assess 1C** (end of Task 1) | Practise 2A | 1.5 |
-| 12 (1 Feb) | Feedback 2A → **Assess 2A** | Practise 2B | 1.5 |
-| 13 (8 Feb) | Feedback 2B → **Assess 2B** | Practise 2C | 1.5 |
+| 8 (4 Jan) | Launch: how the phase works, Pearson's student guide, mock brief · Recap + practice 1A (incl. planning primary research: survey / interview questions) | Respond to feedback 1A | — |
+| 9 (11 Jan) | Recap + practice 1B → **Coursework 1A** (PSA start date; live brief issued) | Respond to feedback 1B | 1 |
+| 10 (18 Jan) | Recap + practice 1C → **Coursework 1B** | Respond to feedback 1C | 1 |
+| 11 (25 Jan) | Recap + practice 2A → **Coursework 1C** (end of Task 1) | Respond to feedback 2A | 1 |
+| 12 (1 Feb) | Recap + practice 2B → **Coursework 2A** | Respond to feedback 2B | 1 |
+| 13 (8 Feb) | Recap + practice 2C → **Coursework 2B** | Respond to feedback 2C | 1 |
 | *half term* | | | |
-| 14 (22 Feb) | Feedback 2C → **Assess 2C** | Practise 2D (analysis) | 1.5 |
-| 15 (1 Mar) | Mock practical: record sound · Feedback 2D | **Assess 2D** | 1 |
-| 16 (8 Mar) | **Assess 2D** (2 h, incl. their own sound experiment) | Practise 2E | 2 |
-| 17 (15 Mar) | Feedback 2E → **Assess 2E** | **Assess 2E** — PSA completion date; declarations signed | 2.5 |
-| 18 (22 Mar) | Catch-up (absences, last half hour of Task 2) / Component 2 | Catch-up (if before Fri 26 Mar) | — |
-| | | | **14.5** |
+| 14 (22 Feb) | Recap + practice 2D (analysis + mock practical: record sound) → **Coursework 2C** | Respond to feedback 2D | 1 |
+| 15 (1 Mar) | Recap + practice 2E → **Coursework 2D** | Respond to feedback 2E | 1 |
+| 16 (8 Mar) | **Coursework 2D** (2 h, incl. their own sound experiment) | **Coursework 2E** | 3 |
+| 17 (15 Mar) | **Coursework 2E** (2 h) | **Finish any section** — PSA completion date; declarations signed | 3 |
+| 18 (22 Mar) | Catch-up (absences; anyone needing more time, up to 15 h) / Component 2 | Catch-up (if before Fri 26 Mar) | — |
+| | | | **13** |
 
 ## Phase 1 — Theory (Autumn 2)
 
@@ -131,14 +133,14 @@ An optional Photoshop task (10–15 minutes) at the end of each week's **second 
 
 **The live PSA**
 - Confidential: stored only on school secure storage and this git-ignored folder; never committed, put on slides, posted in Classroom early or pasted into AI tools (Pearson's notice forbids AI use of its content).
-- Set and record a start date (week 9 double) and completion date (week 17 double) before it starts. Give students the written guide Pearson requires: how the PSA is assessed, how it relates to the teaching, referencing and plagiarism, how to submit, extensions.
+- Set and record a start date (week 9 double) and completion date (week 17 single, Fri 19 Mar) before it starts. Give students the written guide Pearson requires: how the PSA is assessed, how it relates to the teaching, referencing and plagiarism, how to submit, extensions.
 - Issue the brief at the start of the first supervised session (week 9 double), not before.
 
 **Keeping the mock separate (matters more when interleaved)**
-- All the specification content is taught in Phase 1, before the brief is issued (the sample PSA requires a learning programme covering the content first). Phase 2 lessons give feedback on the mock; they don't teach new content.
+- All the specification content is taught in Phase 1, before the brief is issued (the sample PSA requires a learning programme covering the content first). Phase 2 recaps remind students of that content and give feedback on the mock; they don't teach new content.
 - The mock uses the **sample** PSA (technology), which Pearson allows for practice, with a different audience from the live brief.
 - No product used in the mock or as a teaching example may be used in the PSA (house rule: removes any "adapted from teaching" doubt).
-- Feedback is about the mock work only. It never mentions a student's live products or answers. If a student asks about their live work in a feedback lesson, answer only what the task requires, as in a supervised session.
+- Feedback is about the mock work only: only practice tasks are marked before the completion date, never live coursework, and the respond-to-feedback single is mock work only, with the live work closed. It never mentions a student's live products or answers. If a student asks about their live work in a feedback lesson, answer only what the task requires, as in a supervised session.
 - Live PSA work is only open during supervised sessions, so nobody can edit it after a feedback lesson. Mock work and feedback are kept in a separate Classroom assignment / folder and are not in the room during assessed sessions.
 - Scaffolds fade during the mock: from 2C on, mock sections are done without frames or templates, as the PSA will be.
 - Write the interleaved schedule into the assessment plan, agreed by the Lead IV, with Pearson's written OK attached.
@@ -183,3 +185,4 @@ An optional Photoshop task (10–15 minutes) at the end of each week's **second 
 - 2026-11-17: 3.2's Photoshop work became a core Part 3 task for everyone (~25 min) instead of a 10–15 min early-finisher filler, and uses adjustment layers, the Type tool and a cut-out with a layer mask (Nick: one tool alone wasn't engaging). To make room, Part 1 was trimmed (Task 1 four rounds, Task 2 two diary products) and Task 4's writing (one product, two needs) became a Part 2 ★ challenge. Weeks 4 (Place Embedded), 5 (selection + mask) and 6.3 (Type) now revisit skills first met here: build on them rather than introduce them.
 - 2026-11-19: 3.3 opens with a light-touch **Unit A check** (page 1 in the 3.3 folder) covering 1.1–3.2, before the readings are taught, so the readings get ~30 min. Task 1: 15 term questions, one per term group, each on a real product, marked once (no retry, no cooldown, no right answer shown, the teacher goes over them), scored by the share right. Task 2: three short written answers on The Great British Bake Off (producer/purpose/motivation; audiences; situation and needs) with word banks but no starters; the teacher bands each working towards / secure / strong by eye. Score: terms two thirds, writing one third. The readings themselves are tested in 4.x Recap & Recall and 7.3. Weak terms go into the 4.1–7.2 Recap & Recall slots.
 - 2026-11-20: 3.3's readings page (`2_Same_Text_Different_Readings.html`, ~30 min after the check) runs the old idea first, then the one that replaced it. Part 1: War of the Worlds (1938): was its audience passive? (5 questions; the hypodermic needle model is in the Teacher Guide but not the spec, so it is not named; Warm-up = passive/active from 3.1; ★ why the papers said panic). Part 2 (word `trucks`): sort nine imaginary viewers' comments on Coca-Cola's AI "Holidays Are Coming" (2024) into preferred/negotiated/oppositional, then write the three readings of John Lewis's Snapper (2023) plus whether its viewers were one passive audience (★ this year's Christmas advert). The two pages now use `checkers_unit_a_check.js` and `checkers_readings.js`.
+- 2026-11-20: New Phase 2 rhythm (Nick). **Double:** first half recaps the *next* section's Phase 1 content with a practice task on the sample brief; second half is the live coursework for *this* section (practised and fed back on the week before). **Between the double and the single:** Nick marks the practice task (whole-class sheet + codes). **Single:** students respond to that feedback. Nick first asked for the live coursework itself to be marked and responded to; that was changed because Pearson allows no feedback on live work, and no acting on feedback, during the PSA. Assessed time falls from 14.5 h to 13 h (Task 1 3 h; Task 2 10 h, 3 h per LO B strand, with weeks 16–17 all coursework); the week 18 catch-up can take anyone up to the 15 h allowance.

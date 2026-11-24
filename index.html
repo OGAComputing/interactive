@@ -169,6 +169,9 @@
     }
     .course-option:hover, .course-option.focused { background: var(--surface); color: #fff; }
     .course-option.selected { color: var(--accent); }
+    .course-option.cb-special { color: var(--muted); font-style: italic; }
+    .course-option.cb-special.selected { color: var(--accent); }
+    .cb-special + .course-option:not(.cb-special) { border-top: 1px solid var(--line); }
     .course-no-match { padding: 7px 10px; font-size: 0.8rem; color: var(--dim); }
 
     /* ── Year tabs ── */
@@ -609,7 +612,7 @@
         <div id="course-dropdown"></div>
       </div>
       <div id="topic-combobox">
-        <input id="topic-search" type="text" placeholder="Classroom topic (optional)…" autocomplete="off" aria-label="Classroom topic">
+        <input id="topic-search" type="text" placeholder="Classroom topic…" autocomplete="off" aria-label="Classroom topic" title="Automatic: a unit's first lesson goes under a topic named after the unit (made if the class hasn't got it); later lessons go under the unit's topic, or the class's last assignment's topic">
         <span id="topic-chevron" class="cb-chevron" aria-hidden="true">▼</span>
         <div id="topic-dropdown"></div>
       </div>
@@ -767,8 +770,7 @@
   // They behave like an ordinary searchable drop-down: opening one lists every option with
   // the current pick highlighted (the text is selected, so typing replaces it); typing
   // filters; Enter or a click picks; Esc or leaving the box puts the last pick back.
-  // allowNone: emptying the box and leaving it picks nothing (the topic is optional).
-  function makeCombobox({ wrap, input, list, items, selectedId, onPick, noMatch, allowNone }) {
+  function makeCombobox({ wrap, input, list, items, selectedId, onPick, noMatch }) {
     let active = -1, shown = [], filtering = false, focusByMouse = false;
     const isOpen = () => list.classList.contains('open');
     const nameOf = id => (items().find(it => it.id === id) || {}).name || '';
@@ -793,7 +795,7 @@
       shown.forEach((it, i) => {
         const el = document.createElement('div');
         const sel = it.id === selectedId();
-        el.className = 'course-option' + (sel ? ' selected' : '');
+        el.className = 'course-option' + (sel ? ' selected' : '') + (it.cls ? ' ' + it.cls : '');
         el.id = `${list.id}-opt-${i}`;
         el.setAttribute('role', 'option');
         el.setAttribute('aria-selected', sel ? 'true' : 'false');
@@ -821,7 +823,6 @@
       list.classList.remove('open');
       input.setAttribute('aria-expanded', 'false');
       input.removeAttribute('aria-activedescendant');
-      if (allowNone && !cancel && !input.value.trim() && selectedId()) onPick(null);
       input.value = nameOf(selectedId());
       filtering = false;
     }
@@ -876,26 +877,25 @@
   }
 
   let topicBox = null;
+  // The topic box starts on Automatic (hub-topics.js chooses per activity) after every class
+  // change and every assignment; No topic or a named topic applies to the next assignment.
+  const TOPIC_AUTO = '__auto__', TOPIC_NONE = '__none__';   // hub-topics.js AUTO / NONE
+  const recentWorkByCourse = {};   // courseId → its latest courseWork, for the last topic used
 
   async function fetchTopics(courseId) {
     const topicCombobox = document.getElementById('topic-combobox');
-    selectedTopicId   = '';
-    allTopics         = [];
+    selectedTopicId = TOPIC_AUTO;
+    allTopics       = [];
     topicBox?.sync();
-    topicCombobox.style.display = 'none';
+    topicCombobox.style.display = 'inline-block';
     try {
-      const res  = await fetch(`https://classroom.googleapis.com/v1/courses/${courseId}/topics`, {
-        headers: { 'Authorization': `Bearer ${accessToken}` }
-      });
-      const data = await res.json();
+      const [topics, work] = await Promise.all([
+        listAll(`https://classroom.googleapis.com/v1/courses/${courseId}/topics`, 'topic'),
+        googleGet(`https://classroom.googleapis.com/v1/courses/${courseId}/courseWork?pageSize=30`).catch(() => ({})),
+      ]);
       if (courseId !== selectedCourseId) return;   // the teacher picked another class meanwhile
-      allTopics  = (data.topic || []).sort((a, b) => a.name.localeCompare(b.name));
-      if (allTopics.length > 0) {
-        topicCombobox.style.display = 'inline-block';
-        let lastTopicId = null;
-        try { lastTopicId = localStorage.getItem(`oga_last_topic_${courseId}`); } catch (_) {}
-        if (allTopics.some(t => t.topicId === lastTopicId)) selectedTopicId = lastTopicId;
-      }
+      allTopics = topics.sort((a, b) => a.name.localeCompare(b.name));
+      recentWorkByCourse[courseId] = work.courseWork || [];
       topicBox?.sync();
     } catch (e) {
       console.error('Failed to fetch topics:', e);
@@ -908,19 +908,52 @@
       wrap:  document.getElementById('topic-combobox'),
       input: document.getElementById('topic-search'),
       list:  document.getElementById('topic-dropdown'),
-      items: () => allTopics.map(t => ({ id: t.topicId, name: t.name })),
+      items: () => [
+        { id: TOPIC_AUTO, name: 'Automatic (by lesson)', cls: 'cb-special' },
+        { id: TOPIC_NONE, name: 'No topic', cls: 'cb-special' },
+        ...allTopics.map(t => ({ id: t.topicId, name: t.name })),
+      ],
       selectedId: () => selectedTopicId,
       noMatch: 'No topics match',
-      allowNone: true,
-      onPick: it => {
-        selectedTopicId = it ? it.id : '';
-        try {
-          if (it) localStorage.setItem(`oga_last_topic_${selectedCourseId}`, selectedTopicId);
-          else localStorage.removeItem(`oga_last_topic_${selectedCourseId}`);
-        } catch (_) {}
-      },
+      onPick: it => { selectedTopicId = it.id; },
     });
     topicBox.sync();
+  }
+
+  // The topic for one assignment → { topicId, note } (note: HTML for the Assigned message).
+  async function resolveTopic(courseId, activityPath) {
+    const under = name => ` It's under the topic <strong>${esc(name)}</strong>.`;
+    if (selectedTopicId === TOPIC_NONE) return { topicId: '', note: '' };
+    if (selectedTopicId !== TOPIC_AUTO) {
+      const t = allTopics.find(t => t.topicId === selectedTopicId);
+      return { topicId: selectedTopicId, note: t ? under(t.name) : '' };
+    }
+    const H = window.HubTopics;
+    if (!H) return { topicId: '', note: '' };
+    const pick = H.chooseTopic({
+      activity: ALL.find(a => a.path === activityPath),
+      activities: ALL,
+      topics: allTopics,
+      lastId: H.lastTopicId(recentWorkByCourse[courseId]),
+    });
+    if (pick.create) {
+      const res = await googleFetch(`https://classroom.googleapis.com/v1/courses/${courseId}/topics`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: pick.name }),
+      });
+      if (!res.ok) {
+        console.warn('Creating the topic failed:', await res.text().catch(() => ''));
+        return { topicId: '', note: `<br><br>The topic <strong>${esc(pick.name)}</strong> couldn't be made, so the post has no topic.` };
+      }
+      const t = await res.json();
+      if (courseId === selectedCourseId) {
+        allTopics.push(t);
+        allTopics.sort((a, b) => a.name.localeCompare(b.name));
+      }
+      return { topicId: t.topicId, note: ` It's under a new topic, <strong>${esc(t.name)}</strong>, as this is the unit's first lesson.` };
+    }
+    return pick.topicId ? { topicId: pick.topicId, note: under(pick.name) } : { topicId: '', note: '' };
   }
 
   let courseBox = null;
@@ -995,6 +1028,8 @@
     if (btn) { btn.textContent = '⏳ Assigning…'; btn.disabled = true; }
     const restoreBtn = () => { if (btn) { btn.innerHTML = assignLabel(); btn.disabled = false; } };
 
+    const topic = await resolveTopic(courseId, activityPath);
+
     const baseUrl = window.location.origin + window.location.pathname.replace('index.html', '') + activityPath;
     const activityUrl = `${baseUrl}?courseId=${courseId}`;
 
@@ -1017,7 +1052,7 @@
         workType: "ASSIGNMENT",
         state: "PUBLISHED",
         maxPoints: 100,
-        ...(selectedTopicId ? { topicId: selectedTopicId } : {})
+        ...(topic.topicId ? { topicId: topic.topicId } : {})
       })
     });
 
@@ -1037,7 +1072,11 @@
     }
 
     if (res.ok) {
-      showAssignModal(deckMissing ? '⚠️ Assigned without slides' : '✅ Assigned!', `"${esc(title)}" has been published to your class. Scores reach Classroom each time you open this hub (or click ⟳ Sync grades).${deckNote}`);
+      // The next assignment follows on from this one; the box goes back to Automatic.
+      const made = await res.clone().json().catch(() => ({}));
+      (recentWorkByCourse[courseId] ||= []).unshift({ topicId: topic.topicId, creationTime: made.creationTime || new Date().toISOString() });
+      if (courseId === selectedCourseId) { selectedTopicId = TOPIC_AUTO; topicBox?.sync(); }
+      showAssignModal(deckMissing ? '⚠️ Assigned without slides' : '✅ Assigned!', `"${esc(title)}" has been published to your class.${topic.note} Scores reach Classroom each time you open this hub (or click ⟳ Sync grades).${deckNote}`);
     } else {
       console.error('Assignment creation failed:', await res.text());
       showAssignModal('❌ Assignment failed', 'Could not create the assignment. Check the browser console for details.');
@@ -1634,6 +1673,8 @@
 
 <script type="module">
   import { initLive } from './hub-live.js';
+  import * as HubTopics from './hub-topics.js';
+  window.HubTopics = HubTopics;   // the Assign button's Automatic topic (resolveTopic)
   initLive({
     getCourseId: () => selectedCourseId,
     getCourses: () => allCourses,
