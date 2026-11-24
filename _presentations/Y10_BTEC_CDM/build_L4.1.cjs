@@ -115,11 +115,19 @@ K.compare({ title: 'Newspapers: two genres',
     ['Stories', 'Short and punchy', 'Long, with lots of detail']],
   notes: 'Spec B1: conventions of national newspapers. One row per click. The masthead is the name across the top of the front page; tabloids with a red one are called "red tops". Today\'s tabloids: The Sun, Daily Mirror, Daily Star; broadsheets (many now printed smaller, but written the same way): The Times, The Guardian, The Telegraph.' });
 
-K.info({ title: 'Every sector has conventions', standfirst: 'You expect them before you even look properly.', points: [
-  ['A web page', 'A logo in the top left, a navigation bar of links across the top, a search box.'],
-  ['A game screen', 'Your score, your lives or health, a small map in the corner.'],
-  ['A TV show', 'The same opening music, the same set and the same parts in the same order, every episode.']],
-  notes: 'Spec B1: components of a web page. One per click. Ask for a real example of each from their own phones and consoles. Task 3 hides six real products and gives one convention at a time: they name the genre.' });
+// Deliberate practice, not a list (Nick, 2026-11-24: the old "Every sector has conventions" slide only told them).
+// Students find the conventions first; the markers come one per click afterwards.
+K.annotate({ title: 'Your turn: spot the conventions', img: img('youtube_watch_page.png'),
+  imgLabel: 'A YouTube video page (Rocket League Season 11 trailer) · screenshot, 24 November 2026',
+  marks: [{ at: [0.165, 0.035], label: 'Logo', note: 'Top left: takes you back to the start' },
+    { at: [0.5, 0.03], label: 'Search box', note: 'Across the top, in the middle' },
+    { at: [0.35, 0.38], label: 'The video', note: 'The biggest thing on the page' },
+    { at: [0.245, 0.775], label: 'Subscribe', note: 'Next to the channel name' },
+    { at: [0.85, 0.45], label: 'Up next', note: 'More videos down the side' }],
+  prompt: 'Before any clicks: list five things you expect on every YouTube video page.',
+  notes: `Spec B1: components of a web page. Give them 90 seconds with mini-whiteboards or books BEFORE any clicks: "List five things you would expect to find on ANY YouTube video page, not just this one."
+Then reveal one marker per click and ask who had it. Push for others: like and share buttons, the title under the video, the view count, comments below. They are conventions because every video page has them, so you know where to look before you have even read anything.
+Task 3 hides six real products and gives one convention at a time: they name the genre.` });
 
 K.choice({ question: 'Every new Pokémon game starts with you choosing one of three starter Pokémon. What is that?',
   options: ['A sector', 'A convention', 'An audience', 'A genre'], answer: 'B',
