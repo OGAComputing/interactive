@@ -14,12 +14,14 @@ PowerPoint decks for the Y9 Python unit, themed for the unit's *Station Zero* su
 | `L3_While_Loops.pptx` | Lesson 3 deck (Locked In) |
 | `L4_For_Loops.pptx` | Lesson 4 deck (Distress Signal) |
 | `L5_Functions.pptx` | Lesson 5 deck (The Drone) |
+| `L6_Assessment.pptx` | Lesson 6 deck (Systems Check, the assessment) |
 | `build_template.cjs` | Builds the template deck (re-reads this README for the rules slides) |
 | `build_L1.cjs` | Builds the Lesson 1 deck: copy this file to start a new lesson's deck |
 | `build_L2.cjs` | Builds the Lesson 2 deck (draws by hand: the selection flowchart, on L3's geometry, and two animated "Watch it run" models of one if / else, True then False, and a "Which line runs next?" We do on a new one) |
 | `build_L3.cjs` | Builds the Lesson 3 deck (draws by hand: the selection/iteration flowcharts, the animated "Watch it run" trace, "Which line runs next?" (We do and You do)) |
 | `build_L4.cjs` | Builds the Lesson 4 deck (draws by hand: a beacon display where the turtle draws in step with the animated "Watch it run", the We do / You do with sketched answers, the logic-error feedback) |
 | `build_L5.cjs` | Builds the Lesson 5 deck (draws by hand: an animated "Watch it run" of a def and its call (Python learns the name, the call jumps in, then carries on), an animated I do with two functions (the bar jumps between them, an arrow for each jump in and back), a "Which line runs next?" We do on two functions, and the mid-activity stop on a loop inside a function and one function calling another) |
+| `build_L6.cjs` | Builds the Lesson 6 deck (draws by hand: how the assessment works, the task card with the seven sections in place of the P-R-I-M-M strip, two kinds of error side by side, and the breach: the cliffhanger for the whole class, MTP Decision 18) |
 | `sz_slides.cjs` | The slide types ("recipes"), one function each |
 | `sz_kit.cjs` | Drawing parts: palette, layouts, code panels, terminals, variable boxes, badges |
 | `publish_to_drive.cjs` + `drive.json` | Uploads lesson decks to the "Y9 Python Unit 1" Drive folder as Google Slides (see Publishing to Drive) |
@@ -35,6 +37,7 @@ node build_L2.cjs                 → L2_Selection.pptx
 node build_L3.cjs                 → L3_While_Loops.pptx
 node build_L4.cjs                 → L4_For_Loops.pptx
 node build_L5.cjs                 → L5_Functions.pptx
+node build_L6.cjs                 → L6_Assessment.pptx
 node build_template.cjs           → Y9_Python_Deck_Template.pptx
 ```
 
