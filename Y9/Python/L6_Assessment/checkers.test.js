@@ -3,7 +3,7 @@ import {
   ITEMS, LIVE_ITEMS, SECTIONS, itemById, itemMax, summarise, variantOf, evalCode,
   branchChoices, branchAnswer, checkTraceValue, checkTraceOutput,
   usesElif, usesWhile, usesFor, definedFunctions, calledAfterDef, drewOnly,
-  cleanChoices, mergeChoices, stationState, inventoryRows, breachTools,
+  cleanChoices, mergeChoices, stationState, inventoryRows, breachTools, VERSION,
 } from './checkers.js';
 
 // A run as runPython() reports it: each input() echoes "prompt + answer" on its own line.
@@ -28,10 +28,10 @@ const line = { used: true, segs: [[0, 0, 100, 0, 'black', 1, 0], [100, 0, 200, 0
 describe('question bank', () => {
   test('every item belongs to a section, ids are unique and prefixed by section', () => {
     const ids = SECTIONS.map(s => s.id);
-    const PREFIX = { errors: 'e_', sequence: 'v_', selection: 's_', while: 'w_', for: 'f_', functions: 'd_', program: 'p_', ext: 'x_' };
+    const PREFIX = { errors: 'e_', sequence: 'v_', selection: 's_', while: 'w_', for: 'f_', functions: 'd_', ext: ['x_', 'p_'] };   // p_till became a bonus in v2
     for (const it of ITEMS) {
       expect(ids).toContain(it.section);
-      expect(it.id.startsWith(PREFIX[it.section])).toBe(true);
+      expect([PREFIX[it.section]].flat().some(p => it.id.startsWith(p)), it.id).toBe(true);
     }
     expect(new Set(ITEMS.map(i => i.id)).size).toBe(ITEMS.length);
   });
@@ -61,16 +61,16 @@ describe('question bank', () => {
     }
   });
 
-  test('54 marks across 7 sections, and the bonus is outside them', () => {
+  test('46 marks across 6 sections (v2), and the bonus (cinema till + guessing game) is outside them', () => {
     for (const seed of [0, 1, 2, 3]) {
       const s = summarise({}, seed);
-      expect(s.max).toBe(54);
-      expect(s.sections.ext.max).toBe(3);
+      expect(s.max).toBe(46);
+      expect(s.sections.ext.max).toBe(8);
     }
   });
 
   test('each section opens with something to click and has a guided or worked code task', () => {
-    for (const s of SECTIONS.filter(x => !x.bonus && x.id !== 'program')) {
+    for (const s of SECTIONS.filter(x => !x.bonus)) {
       const items = LIVE_ITEMS.filter(i => i.section === s.id);
       expect(['mcq', 'trace', 'branch']).toContain(items[0].kind);
       expect(items.some(i => i.howto)).toBe(true);
@@ -78,7 +78,7 @@ describe('question bank', () => {
   });
 
   test('every code task that starts from code has a worked example (how-to)', () => {
-    for (const it of ITEMS.filter(i => (i.kind === 'fix' || i.resettable) && !i.bonus && i.section !== 'program')) {
+    for (const it of ITEMS.filter(i => (i.kind === 'fix' || i.resettable) && !i.bonus && !i.retired)) {
       expect(it.howto, it.id).toBeTruthy();
     }
   });
@@ -88,7 +88,51 @@ describe('question bank', () => {
     expect(s.sections.errors.earned).toBe(2);
     expect(s.earned).toBe(6);
     expect(s.bonus).toBe(3);
-    expect(s.pct).toBe(Math.round(6 / 54 * 100));
+    expect(s.pct).toBe(Math.round(6 / 46 * 100));
+  });
+});
+
+// Version 2: the changes made after the first sitting (MTP, Lesson 6, "Version 2").
+describe('version 2', () => {
+  test('is saved as version 2, and the trap and duplicate items are retired but kept for L7', () => {
+    expect(VERSION).toBe(2);
+    for (const id of ['s_order', 's_fix', 'd_fix']) {
+      expect(itemById(id).retired, id).toBe(true);
+      expect(LIVE_ITEMS.map(i => i.id)).not.toContain(id);
+    }
+  });
+
+  test('the cinema till is a bonus and does not count in the %', () => {
+    expect(itemById('p_till').bonus).toBe(true);
+    const s = summarise({ p_till: 5, x_guess: 3 });
+    expect(s.earned).toBe(0);
+    expect(s.bonus).toBe(8);
+  });
+
+  test('every trace question has a worked example from a different program', () => {
+    for (const it of LIVE_ITEMS.filter(i => i.kind === 'trace')) {
+      expect(it.example?.code, it.id).toBeTruthy();
+      for (const v of it.variants) expect(v.lines.join('\n')).not.toBe(it.example.code);
+    }
+  });
+
+  test('f_which: only the right answer names a while loop', () => {
+    expect(itemById('f_which').opts.filter(o => o.startsWith('while'))).toHaveLength(1);
+  });
+
+  test('versions are the same shape: w_runs all <=, s_branch all >= with top, boundary, just under', () => {
+    for (const v of itemById('w_runs').variants) expect(v.code).toMatch(/count = 1\nwhile count <= \d/);
+    for (const v of itemById('s_branch').variants) {
+      expect(v.code).not.toMatch(/ > /);
+      const [, [bound], [under]] = v.rows;
+      expect(+bound - +under).toBe(1);
+    }
+  });
+
+  test('v_pick and f_angle no longer offer the distractors that caught strong students', () => {
+    expect(itemById('v_pick').opts.join()).not.toMatch(/\* 2/);
+    const angle = itemById('f_angle');
+    angle.variants.forEach((v, k) => { if (k) expect(v.opts).not.toContain('45'); });
   });
 });
 

@@ -17,9 +17,13 @@
 //   • What a code task prints is marked on letters and numbers only (loose), with a "no marks
 //     lost" note and "Nearly: …" for a line a letter or two out. A program that prints the same
 //     thing whatever is typed is told to use the variables. The bonus stays word for word.
-//   • The one longer program (section 7) starts from step comments, never a blank editor.
+//   • The one longer program (the ★ cinema till) starts from step comments, never a blank editor.
 //   • One-try MCQ/trace/branch answers lock at once; options and versions come from a saved
 //     seed; opts[0] is always the right answer here, and it isn't the longest on half or more.
+//   • Version 2 (after the first sitting, 26 Nov 2026: 20 students, mean 31%): see "Version 2"
+//     in project_y9_python_mtp.md, Lesson 6. Trace questions carry a worked example; code
+//     How-tos say they are a different program; trick and duplicate items are retired; the
+//     cinema till is a bonus; versions of one question are equally hard.
 //   • One section per lesson topic so L7 (SRT) can route. Item ids are prefixed by section:
 //     e_ errors · v_ sequence · s_ selection · w_ while · f_ for · d_ functions · p_ program ·
 //     x_ bonus.
@@ -375,8 +379,6 @@ export const SECTIONS = [
     story: 'The beacon must repeat its signal exactly.' },
   { id: 'functions', n: '6', label: 'Functions',                 lesson: 'Lesson 5',    room: 'Drone Bay',
     story: 'The drone only runs the commands it is given, in the order it is given them.' },
-  { id: 'program',   n: '7', label: 'Write a program',           lesson: 'Lessons 1–5', room: 'Docking control',
-    story: 'One last program before the rescue ship can dock.' },
   { id: 'ext',       n: '★', label: 'Bonus',                     lesson: 'Bonus', bonus: true, room: 'Spare systems',
     story: 'Spare power. Only if every other system has passed.' },
 ];
@@ -434,8 +436,12 @@ export const ITEMS = [
 
   // ── 2 · Variables, input & casting (L1–L3) ── 9 marks
   // Only reassignment, never a self-join (9% in the Y8 first sitting); boxes first.
+  // First sitting: 15 of 20 put the FIRST value in the changed box (even 5 who printed both
+  // lines right), and 8 wrote code or names as printed lines. Hence the worked example.
   { id: 'v_trace', section: 'sequence', kind: 'trace',
     q: 'Play computer: run this program in your head, line by line.',
+    example: { code: 'pet = "cat"\nprint("I like " + pet)\npet = "dog"',
+      text: 'Box <code>pet</code>: <strong>dog</strong>. A box keeps only the <strong>last</strong> value put in it: dog replaced cat.<br>1st printed: <strong>I like cat</strong>. Write what appears on the screen, not the code.' },
     variants: [
       { lines: ['song = "Jump"', 'singer = "Mo"', 'print(singer + " sings " + song)', 'song = "Fly"', 'print(singer + " sings " + song)'],
         vars: [{ name: 'song', type: 'str', value: 'Fly' }, { name: 'singer', type: 'str', value: 'Mo' }],
@@ -450,7 +456,9 @@ export const ITEMS = [
   { id: 'v_pick', section: 'sequence', kind: 'mcq', pts: 1,
     q: 'Type <strong>5</strong> and this program prints <strong>55</strong>, not 10. Which <strong>line 1</strong> makes it print <strong>10</strong>?',
     code: 'num = input("Pick a number: ")\nprint(num * 2)',
-    opts: ['num = int(input("Pick a number: "))', 'num = input(int("Pick a number: "))', 'num = int("Pick a number: ")', 'num = input("Pick a number: ") * 2'],
+    opts: ['num = int(input("Pick a number: "))', 'num = input(int("Pick a number: "))', 'num = int("Pick a number: ")', 'num = str(input("Pick a number: "))'],
+    // v2: 'input(...) * 2' (picked by 8, five of whom wrote int(input()) correctly in v_write)
+    // became str(): it tested reading a trick, not casting.
     why: 'int() goes round the whole input(...), so the answer typed becomes a number before it is stored. Then num * 2 does maths.' },
   // Students typed the numbers into their code in the Y8 third sitting: this asks for the line
   // that works whatever is typed.
@@ -494,7 +502,7 @@ export const ITEMS = [
         test: (raw, runs) => allOk(runs) && runs.every(r => printedNumbers(r).includes(Number(r.inputs[0]) + 1)) },
     ] },
 
-  // ── 3 · Selection: elif, order of conditions, boundaries (L2) ── 9 marks
+  // ── 3 · Selection: elif and boundaries (L2) ── 7 marks (v1: 9)
   { id: 's_pick', section: 'selection', kind: 'mcq', pts: 1,
     q: 'This program should print <strong>Hot</strong> at 25 or more, <strong>Warm</strong> from 15 to 24, and <strong>Cold</strong> below 15. Which line goes in the gap?',
     code: 'temp = int(input("Temperature? "))\nif temp >= 25:\n    print("Hot")\n_______\n    print("Warm")\nelse:\n    print("Cold")',
@@ -502,17 +510,21 @@ export const ITEMS = [
     why: 'elif means "else, if": it has its own test, lines up with the if, and ends with a colon.' },
   // Rows: [typed, index of the message that prints]. The 4th choice (two messages) is the
   // "elif runs too" misconception.
+  // v2: every version has the same shape (above the top band, the elif's boundary, just under)
+  // and uses >=. In v1 the > speed version averaged 1.0/3 and Hot/Warm/Cold 2.75/3.
   { id: 's_branch', section: 'selection', kind: 'branch',
     q: 'For each answer the user types, what does the program print?',
     variants: [
       { code: 'temp = int(input("Temperature? "))\nif temp >= 25:\n    print("Hot")\nelif temp >= 15:\n    print("Warm")\nelse:\n    print("Cold")\nprint("Have a nice day")',
         msgs: ['Hot', 'Warm', 'Cold'], after: 'Have a nice day', rows: [['30', 0], ['15', 1], ['14', 2]] },
       { code: 'score = int(input("Score? "))\nif score >= 80:\n    print("Gold")\nelif score >= 50:\n    print("Silver")\nelse:\n    print("Bronze")\nprint("Well played")',
-        msgs: ['Gold', 'Silver', 'Bronze'], after: 'Well played', rows: [['80', 0], ['65', 1], ['49', 2]] },
-      { code: 'speed = int(input("Speed? "))\nif speed > 70:\n    print("Too fast")\nelif speed > 60:\n    print("Slow down")\nelse:\n    print("OK")\nprint("Drive safely")',
-        msgs: ['Too fast', 'Slow down', 'OK'], after: 'Drive safely', rows: [['71', 0], ['70', 1], ['60', 2]] },
+        msgs: ['Gold', 'Silver', 'Bronze'], after: 'Well played', rows: [['90', 0], ['50', 1], ['49', 2]] },
+      { code: 'speed = int(input("Speed? "))\nif speed >= 70:\n    print("Too fast")\nelif speed >= 60:\n    print("Slow down")\nelse:\n    print("OK")\nprint("Drive safely")',
+        msgs: ['Too fast', 'Slow down', 'OK'], after: 'Drive safely', rows: [['75', 0], ['60', 1], ['59', 2]] },
     ] },
-  { id: 's_order', section: 'selection', kind: 'mcq', pts: 1,
+  // Retired in v2: 1/20 (the 87% and 70% students too). A badly ordered program is a trap,
+  // and "only the first True test runs" was never said in L2. Practise it in L7.
+  { id: 's_order', section: 'selection', kind: 'mcq', pts: 1, retired: true,
     q: 'The user types <strong>90</strong>. What is printed?',
     code: 'score = int(input("Score? "))\nif score >= 50:\n    print("Pass")\nelif score >= 80:\n    print("Distinction")',
     opts: ['Pass: only the first True test runs', 'Distinction: 90 is 80 or more', 'Pass, then Distinction: both are True', 'Nothing: 90 is above both tests'],
@@ -535,7 +547,8 @@ export const ITEMS = [
             && !close(msg('45'), 'Pass') && !close(msg('45'), 'Try again') && close(msg('45'), msg('40'));
         } },
     ] },
-  { id: 's_fix', section: 'selection', kind: 'fix',
+  // Retired in v2 to shorten the paper (6/20; s_guide and s_branch test the same elif idea).
+  { id: 's_fix', section: 'selection', kind: 'fix', retired: true,
     title: 'Fix it: the thermostat',
     goal: '30 or more should print only <code>Hot</code>, 15 to 29 <code>Warm</code>, and under 15 <code>Cold</code>. But typing 35 prints Hot <strong>and</strong> Warm. There is no error message. Fix it.',
     howto: { text: 'In one <code>if</code> / <code>elif</code> / <code>else</code>, only the first True test runs. A second <code>if</code> starts a new, separate question. For example:',
@@ -563,16 +576,21 @@ export const ITEMS = [
     ] },
 
   // ── 4 · while loops (L3) ── 9 marks
+  // v2: every version is count = 1 … <= n (v1: the <= version 7/8 right, the < ones 3/11).
   { id: 'w_runs', section: 'while', kind: 'mcq', pts: 1,
     q: 'How many times does this program print <strong>Beep</strong>?',
     variants: [
       { code: 'count = 1\nwhile count <= 3:\n    print("Beep")\n    count = count + 1', opts: ['3', '4', '2', 'It never stops'] },
-      { code: 'count = 0\nwhile count < 4:\n    print("Beep")\n    count = count + 1', opts: ['4', '5', '3', 'It never stops'] },
-      { code: 'count = 1\nwhile count < 5:\n    print("Beep")\n    count = count + 1', opts: ['4', '5', '3', 'It never stops'] },
+      { code: 'count = 1\nwhile count <= 4:\n    print("Beep")\n    count = count + 1', opts: ['4', '5', '3', 'It never stops'] },
+      { code: 'count = 1\nwhile count <= 5:\n    print("Beep")\n    count = count + 1', opts: ['5', '6', '4', 'It never stops'] },
     ],
     why: 'The test is checked at the top, each time round. Count the values of count that pass the test: the loop stops as soon as the test is False.' },
+  // First sitting: 4/20 had the box right (most wrote its starting value), and many printed
+  // lines were code or names (lives, count, n=n+1). Hence the worked example.
   { id: 'w_trace', section: 'while', kind: 'trace',
     q: 'Play computer: run this program in your head. Go round the loop until the test is False.',
+    example: { code: 'k = 5\nwhile k > 3:\n    print(k)\n    k = k - 1',
+      text: 'Round 1: 5 &gt; 3 is True, so it prints <strong>5</strong> and k becomes 4. Round 2: 4 &gt; 3, so it prints <strong>4</strong> and k becomes 3. Then 3 &gt; 3 is False, so the loop stops.<br>Box <code>k</code>: <strong>3</strong> (its last value). It printed <strong>5</strong> then <strong>4</strong>: the numbers, not <code>k</code> or <code>print(k)</code>.' },
     variants: [
       { lines: ['lives = 2', 'while lives > 0:', '    print(lives)', '    lives = lives - 1', 'print("Game over")'],
         vars: [{ name: 'lives', type: 'int', value: 0 }], output: ['2', '1', 'Game over'] },
@@ -616,9 +634,11 @@ export const ITEMS = [
 
   // ── 5 · for loops & turtle (L4) ── 8 marks
   // The MTP's "which loop is appropriate and why?" item.
+  // v2: "while: a for loop can never use input()" (the right loop, a wrong reason; 4 picked it)
+  // became an if option, so only one answer names while.
   { id: 'f_which', section: 'for', kind: 'mcq', pts: 1,
     q: 'A game asks for the password again and again until it is typed correctly. Which loop fits best, and why?',
-    opts: ['while: nobody knows how many tries it takes', 'for: it repeats a fixed number of times', 'while: a for loop can never use input()', 'for: range() stops when the answer is right'],
+    opts: ['while: nobody knows how many tries it takes', 'for: it repeats a fixed number of times', 'if: it checks the password once', 'for: range() stops when the answer is right'],
     why: 'Use for when you know how many times to repeat, and while when it repeats until something happens.' },
   { id: 'f_range', section: 'for', kind: 'mcq', pts: 1,
     q: 'What does this program print? (Each number goes on its own line.)',
@@ -636,11 +656,13 @@ export const ITEMS = [
       { code: turtleStart + 'for i in range(4):\n    t.forward(100)\n    t.left(90)', opts: ['A square', 'A triangle', 'A hexagon', 'A straight line'] },
     ],
     why: 'The loop runs once per side: range() gives the number of sides, and each turn is 360 ÷ that number.' },
+  // v2: the nonagon (360 ÷ 9, 0/3) became 12 sides, and 45 is only offered for the octagon
+  // (3 students gave the octagon's 45 for the others).
   { id: 'f_angle', section: 'for', kind: 'mcq', pts: 1,
     variants: [
       { q: 'To draw a regular <strong>octagon</strong> (8 sides), how far must the turtle turn after each side?', opts: ['45', '60', '90', '135'] },
-      { q: 'To draw a regular <strong>decagon</strong> (10 sides), how far must the turtle turn after each side?', opts: ['36', '30', '45', '144'] },
-      { q: 'To draw a regular <strong>nonagon</strong> (9 sides), how far must the turtle turn after each side?', opts: ['40', '30', '45', '140'] },
+      { q: 'To draw a regular <strong>decagon</strong> (10 sides), how far must the turtle turn after each side?', opts: ['36', '30', '60', '144'] },
+      { q: 'To draw a regular <strong>12-sided shape</strong> (a dodecagon), how far must the turtle turn after each side?', opts: ['30', '36', '60', '150'] },
     ],
     why: 'To get back to the start, the turtle turns a full 360° altogether, so each turn is 360 ÷ the number of sides.' },
   { id: 'f_guide', section: 'for', kind: 'reqs', resettable: true,
@@ -681,25 +703,31 @@ export const ITEMS = [
         test: (raw, runs) => allOk(runs) && drewOnly(runs[0], 5) },
     ] },
 
-  // ── 6 · Functions (L5) ── 9 marks
+  // ── 6 · Functions (L5) ── 8 marks (v1: 9)
   { id: 'd_def', section: 'functions', kind: 'mcq', pts: 1,
     q: 'This is the whole program. What happens when it runs?',
     code: 'def beep():\n    print("Beep")',
     opts: ['Nothing: def stores it but does not run it', 'Beep, once: def runs the code inside it', 'Beep, twice: once to save it, once to run it', 'A NameError: beep is used before it exists'],
     why: 'def only DEFINES the function: Python learns the name but does not run it. Nothing runs until the function is called.' },
   { id: 'd_call', section: 'functions', kind: 'mcq', pts: 1,
-    q: 'Which line <strong>runs</strong> (calls) the function <code>beep</code>?',
+    // v2: "Which line runs (calls)…" (3/13): four students who wrote cheer() twice correctly
+    // still picked def beep():. Now it asks for the line to add at the bottom.
+    q: 'This program prints nothing. Which line, added at the <strong>bottom</strong>, calls <code>beep</code> so that it prints Beep?',
     code: 'def beep():\n    print("Beep")',
     opts: ['beep()', 'def beep():', 'print(beep)', 'run beep'],
     why: 'A call is the name followed by round brackets, on its own line. def beep(): only defines it.' },
+  // First sitting: 10/60; students printed the def's lines first (as if def ran straight away).
   { id: 'd_trace', section: 'functions', kind: 'trace',
     q: 'Play computer: what does this program print, in order?',
+    example: { code: 'def tick():\n    print("Tick")\nprint("Go")\ntick()',
+      text: 'Python skips the indented lines under <code>def</code> until the function is <strong>called</strong>. So it prints <strong>Go</strong> first, then <strong>Tick</strong> when <code>tick()</code> runs.' },
     variants: [
       { lines: ['def greet():', '    print("Hi")', 'print("Start")', 'greet()', 'print("End")'], vars: [], output: ['Start', 'Hi', 'End'] },
       { lines: ['def alarm():', '    print("Beep")', 'print("Ready")', 'alarm()', 'alarm()'], vars: [], output: ['Ready', 'Beep', 'Beep'] },
       { lines: ['def cheer():', '    print("Hooray")', 'cheer()', 'print("Done")', 'cheer()'], vars: [], output: ['Hooray', 'Done', 'Hooray'] },
     ] },
-  { id: 'd_fix', section: 'functions', kind: 'fix',
+  // Retired in v2 to shorten the paper (3/20; d_guide and d_write also need the call under the def).
+  { id: 'd_fix', section: 'functions', kind: 'fix', retired: true,
     title: 'Fix it: define before you call',
     goal: 'This program should print the two lines below, but it stops with a NameError. Fix it (don\'t delete anything).',
     howto: { text: 'Python runs from the top, so it must read the <code>def</code> before the call. Put the call underneath the function. For example:',
@@ -736,10 +764,11 @@ export const ITEMS = [
         test: (raw, runs) => calledAfterDef(raw, 'goodbye') && printsExactly(() => ['See you soon'])(raw, runs) },
     ] },
 
-  // ── 7 · Write a program (L1–L5) ── 5 marks. Step comments, never a blank editor (Y8: 27%
-  // from blank). One requirement per step, each its own mark.
-  { id: 'p_till', section: 'program', kind: 'reqs', resettable: true, title: 'Write it: the cinema till',
-    goal: 'Write a program for the cinema till. The comments in the editor give you the steps: write the code for each one under it. Here are two sample runs (yellow = typed by the customer):',
+  // ── ★ Bonus (not in the grade) ── the cinema till (5) and the guessing game (3).
+  // The till was section 7 (5 marks) in v1, but only 1 of 20 reached it, so in v2 it is the
+  // first bonus. Step comments, never a blank editor (Y8: 27% from blank). One mark per step.
+  { id: 'p_till', section: 'ext', kind: 'reqs', resettable: true, bonus: true, title: 'Write it: the cinema till',
+    goal: 'Write a program for the cinema till. The comments in the editor give you the steps: write the code for each one under it, and press ✓ Check after each one: every step you get right is a bonus mark. Here are two sample runs (yellow = typed by the customer):',
     samples: [
       [['Welcome to the cinema!'], ['How many tickets? ', '2'], ['Ticket'], ['Ticket']],
       [['Welcome to the cinema!'], ['How many tickets? ', '5'], ['Ticket'], ['Ticket'], ['Ticket'], ['Ticket'], ['Ticket'], ['Group discount!']],
@@ -761,7 +790,7 @@ export const ITEMS = [
         test: (raw, runs) => allOk(runs) && runs.every(r => printedLines(r).some(l => close(l, 'Group discount!')) === (+r.inputs[0] >= 5)) },
     ] },
 
-  // ── ★ Bonus (not in the grade) ── 3 bonus marks: while + if/elif, word for word.
+  // The guessing game: 3 bonus marks, while + if/elif, word for word.
   { id: 'x_guess', section: 'ext', kind: 'reqs', bonus: true, title: 'Copy the machine: the guessing game',
     goal: 'The secret number is <strong>7</strong>. All that is left of this game is two sample runs. Write a program that behaves <strong>exactly</strong> the same way.',
     samples: [
@@ -789,11 +818,12 @@ export const ITEMS = [
 ];
 
 export const itemById = id => ITEMS.find(i => i.id === id);
-// Retired questions (none yet) stay in ITEMS for L7 and are left out here; see the Y8 page.
+// Retired questions (s_order, s_fix, d_fix in v2) stay in ITEMS, so L7 can still read a v1
+// sitting, and are left out here; see the Y8 page.
 export const LIVE_ITEMS = ITEMS.filter(i => !i.retired);
 // Saved with every attempt, so L7 knows which version a student sat. Bump it when the
 // questions change, as the Y8 assessment did.
-export const VERSION = 1;
+export const VERSION = 2;
 
 // Marks available for an item (for this student's version).
 export function itemMax(item, seed = 0) {

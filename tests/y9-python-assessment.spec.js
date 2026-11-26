@@ -30,7 +30,7 @@ async function setCode(page, id, src) {
 const tab = (page, i) => page.locator(`.tab[data-idx="${i}"]`).click();
 const tabOf = id => SECTIONS.findIndex(s => s.id === ITEMS.find(i => i.id === id).section);
 
-test('page shell: opens on Start; seven sections, a bonus and a review tab, each with its story line', async ({ page }) => {
+test('page shell: opens on Start; six sections (v2), a bonus and a review tab, each with its story line', async ({ page }) => {
   await openWith(page, { seed: SEED });   // a fresh start: no tab saved yet
   await expectPageTitle(page, /Systems Check/);
   await expectNoClassroomBanner(page);
@@ -39,7 +39,7 @@ test('page shell: opens on Start; seven sections, a bonus and a review tab, each
   await expect(page.locator('#panel-start')).toContainText('How this assessment works');
   await expect(page.locator('#panel-0')).not.toContainText('How this assessment works');
   await page.click('#panel-start [data-goto="0"]');
-  await expect(page.locator('#score-pill')).toHaveText('Score: 0 / 54 (0%)');
+  await expect(page.locator('#score-pill')).toHaveText('Score: 0 / 46 (0%)');
   await expect(page.locator('#panel-0 .sz-line')).toContainText('WARDEN Core');
   await expect(page.locator('#sz-report')).toBeHidden();
 });
@@ -66,29 +66,28 @@ test('elif rows and the loop trace are marked row by row and box by box', async 
 
   await tab(page, tabOf('w_trace'));
   const t = V('w_trace');
+  await expect(page.locator('#card_w_trace .howto')).toContainText('Worked example');   // v2
   await page.fill(`#tr_w_trace_v_${t.vars[0].name}`, String(t.vars[0].value));
   for (let i = 0; i < t.output.length; i++) await page.fill(`#tr_w_trace_o_${i}`, i === 0 ? 'nope' : t.output[i]);
   await expect(page.locator('#card_w_trace .out-line .n').first()).toHaveText('1st printed');
   await page.click('#lock_w_trace');
   await expect(page.locator('#fb_w_trace')).toContainText('3 of 4');
-  await expect(page.locator('#score-pill')).toContainText('Score: 6 / 54');
+  await expect(page.locator('#score-pill')).toContainText('Score: 6 / 46');
 });
 
-// Every code question in real Python: the starter scores 0 and a model answer scores full marks.
+// Every live code question in real Python (s_fix and d_fix are retired in v2): the starter scores 0 and a model answer scores full marks.
 const MODELS = {
   e_fix: 'name = input("What is your name? ")\nprint("Welcome aboard, " + name)',
   e_colon: 'print("Starting the scan")\nfor i in range(2):\n    print("Scanning...")\nprint("Scan complete")',
   v_str: 'tries = 3\nprint("Tries: " + str(tries))',
   v_write: 'age = int(input("How old are you? "))\nprint("Next year you will be", age + 1)',
   s_guide: 'score = int(input("Score? "))\nif score >= 50:\n    print("Pass")\nelif score >= 40:\n    print("Nearly")\nelse:\n    print("Try again")',
-  s_fix: 'temp = int(input("Temperature? "))\nif temp >= 30:\n    print("Hot")\nelif temp >= 15:\n    print("Warm")\nelse:\n    print("Cold")',
   s_write: 'points = int(input("Points? "))\nif points >= 100:\n    print("Gold")\nelif points >= 50:\n    print("Silver")\nelse:\n    print("Bronze")',
   w_fix: 'pin = input("PIN? ")\nwhile pin != "1234":\n    print("Wrong PIN")\n    pin = input("PIN? ")\nprint("Unlocked")',
   w_write: 'start = int(input("Count down from? "))\nwhile start > 0:\n    print(start)\n    start = start - 1\nprint("Lift off!")',
   f_guide: 'for i in range(5):\n    print("Ping")',
   f_fix: 'import turtle\nt = turtle.Turtle()\nfor i in range(4):\n    t.forward(100)\n    t.left(90)',
   f_write: 'import turtle\nt = turtle.Turtle()\nfor i in range(5):\n    t.forward(80)\n    t.right(72)',
-  d_fix: 'def say_hello():\n    print("Hello there")\n    print("Nice to meet you")\n\nsay_hello()',
   d_guide: 'def cheer():\n    print("Hip hip hooray!")\n\ncheer()\ncheer()',
   d_write: 'def goodbye():\n    print("See you soon")\n\ngoodbye()',
   p_till: 'def welcome():\n    print("Welcome to the cinema!")\n\nwelcome()\ntickets = int(input("How many tickets? "))\nfor i in range(tickets):\n    print("Ticket")\nif tickets >= 5:\n    print("Group discount!")',
@@ -131,7 +130,7 @@ test('review: answering the last question shows the finished banner', async ({ p
   await page.locator('#card_e_line .opt[data-k="0"]').click();
   await page.click('#lock_e_line');
   await expect(page.locator('#done-banner')).toContainText('full marks');
-  await expect(page.locator('#score-pill')).toHaveText('Score: 54 / 54 (100%)');
+  await expect(page.locator('#score-pill')).toHaveText('Score: 46 / 46 (100%)');
 });
 
 test('transmit: the inventory and the breach follow the story choices, never the score', async ({ page }) => {

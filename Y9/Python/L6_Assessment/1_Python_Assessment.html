@@ -244,6 +244,8 @@ color:  teal
   .test-note { font-size: 0.84rem; color: var(--muted); margin: 6px 0; }
   .howto { background: var(--gold-bg); border: 1px solid var(--gold); border-radius: 8px; padding: 10px 14px; margin: 10px 0; font-size: 0.9rem; line-height: 1.5; }
   .howto-h { font-weight: 700; color: var(--gold-text); margin-bottom: 4px; }
+  .howto-note { font-weight: 400; font-size: 0.85rem; }
+  .howto-answer { margin-top: 6px; }
   .howto .listing { margin: 8px 0 2px; }
   .lock-msg { display: none; background: var(--green-bg); border: 1px solid var(--green); color: var(--green-text); border-radius: 6px; padding: 8px 12px; font-size: 0.86rem; font-weight: 700; margin-top: 8px; }
   .code-locked .lock-msg { display: block; }
@@ -391,7 +393,7 @@ color:  teal
     </div>
   </div>
   <div class="score-row">
-    <div class="score-pill" id="score-pill">Score: 0 / 54 (0%)</div>
+    <div class="score-pill" id="score-pill">Score: 0 / 46 (0%)</div>
     <div class="score-bar-wrap"><div class="score-bar" id="score-bar"></div></div>
     <div class="bonus-pill" id="bonus-pill"></div>
   </div>
@@ -501,6 +503,10 @@ function renderTrace(id) {
   // "line 1" / "line 2" right under the program, the printed lines fell from 52% to 22%: students
   // typed the program's line 1 and 2, or a box's value. So they are "1st print" / "2nd print".
   const ORD = ['1st', '2nd', '3rd', '4th', '5th'];
+  // v2: a worked example from a different program. In the first sitting most students put the
+  // box's FIRST value, and wrote code or variable names (lives, n=n+1) as the printed lines.
+  const example = v.example ? `<div class="howto"><div class="howto-h">💡 Worked example <span class="howto-note">(a different program)</span></div>
+    ${listing(v.example.code)}<div class="howto-answer">${v.example.text}</div></div>` : '';
   const boxes = v.vars.length ? `
     <span class="q-label" style="margin-top:10px">📦 What is in each box after the <strong>last</strong> line has run?</span>
     <div class="rule-box">Write just what is in the box, like <code>Sam</code> (you can put quotes round text if you like)</div>
@@ -510,7 +516,7 @@ function renderTrace(id) {
       <div class="cell-msg" id="msg_${id}_v_${x.name}"></div></div>`).join('')}</div>` : '';
   const outs = `
     <span class="q-label" style="margin-top:10px">🖥️ What does it print?</span>
-    ${v.output.length > 1 ? '<div class="rule-box">Only <code>print()</code> shows anything on screen. Write each line it shows, in the order they appear, one per box.</div>' : ''}
+    <div class="rule-box">Only <code>print()</code> shows anything on screen. Write what appears on the screen (like <code>3</code> or <code>Hi</code>), not the code or a variable's name${v.output.length > 1 ? ', one line per box, in the order they appear' : ''}.</div>
     ${v.output.map((_, i) => `<div class="out-line"><span class="n">${v.output.length > 1 ? ORD[i] + ' printed' : 'printed'}</span><div>
       <input type="text" id="tr_${id}_o_${i}" data-trace="${id}" data-title="${evTitle(id, 'printed line ' + (i + 1))}" autocomplete="off" spellcheck="false" placeholder="exactly what is printed">
       <div class="cell-msg" id="msg_${id}_o_${i}"></div></div></div>`).join('')}`;
@@ -518,7 +524,7 @@ function renderTrace(id) {
     <span class="q-label">${v.q}</span>
     ${listing(v.lines.join('\n'), notes)}
     ${isVariant(id) ? evNote(id, 'version shown', v.lines.join('\n') + Object.entries(v.typed || {}).map(([i, t]) => `\n(line ${+i + 1}: the user types ${t})`).join('')) : ''}
-    ${boxes}${outs}
+    ${example}${boxes}${outs}
     ${lockBtn(id, '🔒 Lock in my trace')}
     <div class="feedback" id="fb_${id}"></div></div>`;
 }
@@ -560,7 +566,9 @@ function renderCodeItem(id) {
   const reqs = v.reqs ? `<p style="font-weight:700;color:var(--heading);margin-top:10px">Your program must (${v.reqs.length > 1 ? '1 mark each' : '1 mark'}):</p>
     <ul class="req-list" id="req_${id}">${v.reqs.map((r, i) => `<li><span class="tick">${i + 1}</span><span>${r.text}</span></li>`).join('')}</ul>` : '';
   const resettable = v.kind === 'fix' || v.resettable;
-  const howto = v.howto ? `<div class="howto"><div class="howto-h">💡 How to do it</div>${v.howto.text}${listing(v.howto.code)}</div>` : '';
+  // v2: "a different program" is said out loud. In the first sitting five students pasted the
+  // example in as their answer (the count-up loop into the countdown, menu() into goodbye).
+  const howto = v.howto ? `<div class="howto"><div class="howto-h">💡 How to do it <span class="howto-note">(an example from a different program: use the idea, don't copy it)</span></div>${v.howto.text}${listing(v.howto.code)}</div>` : '';
   return `<div class="question-card" id="card_${id}">${head(id)}
     <div class="code-title">${esc(v.title)}</div>
     <div class="goal-line">🎯 ${v.goal}</div>
@@ -592,7 +600,7 @@ $('#panels').innerHTML = `<div class="panel" id="panel-start">
     <div class="task-header"><div class="task-badge">📋</div>
       <div><div class="task-title">How this assessment works</div><div class="task-sub">Read this first</div></div></div>
     <ul class="how-list">
-      <li>There are <strong>7 sections</strong>, one for each thing you learned, plus a ★ bonus. Do them in <strong>any order</strong>. The number on each tab shows how many questions you have answered.</li>
+      <li>There are <strong>6 sections</strong>, one for each thing you learned, plus a ★ bonus. Do them in <strong>any order</strong>. The number on each tab shows how many questions you have answered.</li>
       <li><strong>Multiple choice and trace questions: one try only.</strong> When you press <strong>🔒 Lock in</strong> your answer is final, and then you are shown the right answer.</li>
       <li><strong>Code questions:</strong> press <strong>▶ Run code</strong> and <strong>✓ Check</strong> as often as you like. Your best mark is kept. Full marks locks the question.</li>
       <li>If you get an error, read the <strong>last line</strong> first, then find the line number it gives. Still stuck? Press <strong>💡 Get help</strong> to see what the error means.</li>
@@ -610,7 +618,6 @@ $('#panels').innerHTML = `<div class="panel" id="panel-start">
     </div>
     <div class="sz-line"><span class="sz-room">${esc(s.room)}</span> ${esc(s.story)}</div>
     ${s.bonus ? '<div class="goal">🎯 Only try this once you have finished everything else. It is a bonus, so it can only add to how well you did.</div>' : ''}
-    ${s.id === 'program' ? '<div class="goal">🎯 Write one step at a time, and press ✓ Check after each one: every step you get right is a mark. You can use your own words for the welcome message.</div>' : ''}
     ${items.map(it => RENDER[V[it.id].kind](it.id)).join('')}
     <div class="next-row"><button class="ac-btn" data-goto="${i + 1}">${i + 1 < REVIEW ? `Next: ${esc(SECTIONS[i + 1].label)} →` : 'Go to ✓ Review →'}</button></div>
   </div>`;
