@@ -71,7 +71,7 @@ Next lesson uses the results: everyone practises the sections they found hardest
 //  How the assessment works (New Information): three rules, one card each, side by side
 // ════════════════════════════════════════════════════════════════════════════
 {
-  const s = newSlide('SZ_DARK', 'How it works', 'How the systems check works');
+  const s = newSlide('SZ_DARK', 'How it works', 'How the assessment works');
   const cards = [
     ['🔒', 'Click questions', 'One try. Lock in, then it’s final.'],
     ['▶  ✓', 'Code questions', 'Check as often as you like. Best mark kept.'],
@@ -85,13 +85,14 @@ Next lesson uses the results: everyone practises the sections they found hardest
     text(s, head, { x: x + 0.3, y: cy + 1.35, w: cw - 0.6, h: 0.55, fontFace: HEAD, fontSize: 26, bold: true, color: P.gold, align: 'center' });
     text(s, body, { x: x + 0.3, y: cy + 2.0, w: cw - 0.6, h: 1.3, fontSize: 22, align: 'center', valign: 'top' });
   });
-  R.banner(K, s, [{ text: 'Do the sections in any order. ', options: { bold: true, color: P.gold } },
-    { text: 'Finished? Open ✓ Review to check nothing is left.' }], 5.6, 1.05, 24);
+  R.banner(K, s, [{ text: 'Stuck? Look back at your work from that lesson.', options: { bold: true, color: P.gold, breakLine: true } },
+    { text: 'Any order. Finished? Open ✓ Review to check nothing is left.' }], 5.6, 1.05, 22);
   addIcon(s, 'info');
   s.addNotes(`Two minutes, then straight in. The page's Start here tab says the same, so students can look back.
 Click questions (multiple choice, trace, the selection rows): ONE try. Pressing Lock in makes the answer final, then shows the right answer for a few seconds before hiding it, so nobody can copy it from a neighbour's screen.
 Code questions: Run code and Check as often as they like; the best mark is kept, and full marks locks the question. Every code question has a How to do it box with an example from a different program: tell them to use it.
 Errors: read the LAST line first, then find the line number (the debugging recipe). The Get help button explains what a Python error means, but never says how to do the task.
+Stuck: they can, and should, look back at their own work from earlier lessons (their Lesson 1–5 pages, their books). Each section's heading says which lesson it comes from. Today shows what they can do with what they've made, not what they remember cold.
 Any order: one section per thing we've learned. A tab turns red if they skip a question and move on, so they can find it again. Review lists anything left.
 Every answer saves and goes to Classroom as they work: nothing to submit.`);
 }
@@ -110,23 +111,24 @@ Every answer saves and goes to Classroom as they work: nothing to submit.`);
   text(s, 'YOUR TASK', { x: x + 0.35, y: 1.8, w: 3, h: 0.3, fontSize: 13, bold: true, color: P.dim, charSpacing: 2 });
   text(s, [{ text: 'Open ' }, { text: ACTIVITY, options: { bold: true, color: P.gold } }, { text: ' from Google Classroom' }],
     { x: x + 0.35, y: 2.15, w: w - 0.7, h: 1.2, fontSize: 24, valign: 'middle' });
-  // The seven sections, as numbered chips (the same numbers as the page's tabs)
-  const secs = ['Errors', 'Casting', 'Selection', 'while', 'for', 'Functions', 'Program'];
+  // The six sections, as numbered chips (the same numbers as the page's tabs), then the ★ bonus
+  const secs = ['Errors', 'Casting', 'Selection', 'while', 'for', 'Functions', 'Bonus'];
   const pw = 0.73, pg = 0.06;
   secs.forEach((n, i) => {
     const px = x + 0.35 + i * (pw + pg);
     box(s, { x: px, y: 3.55, w: pw, h: 0.7, fill: P.charcoal, line: P.gold, r: 0.06 });
-    text(s, String(i + 1), { x: px, y: 3.55, w: pw, h: 0.7, fontFace: HEAD, fontSize: 26, bold: true, color: P.gold, align: 'center', valign: 'middle' });
+    text(s, i < 6 ? String(i + 1) : '★', { x: px, y: 3.55, w: pw, h: 0.7, fontFace: HEAD, fontSize: 26, bold: true, color: P.gold, align: 'center', valign: 'middle' });
     text(s, n, { x: px - 0.12, y: 4.3, w: pw + 0.24, h: 0.3, fontSize: 12, color: P.muted, align: 'center' });
   });
-  text(s, [{ text: 'On your own, in silence. ', options: { bold: true, color: P.gold } }, { text: 'Then the ★ bonus.' }],
+  text(s, [{ text: 'On your own, in silence.', options: { bold: true, color: P.gold, breakLine: true } },
+    { text: 'Stuck? Look back at your work from that lesson.' }],
     { x: x + 0.35, y: 4.85, w: w - 0.7, h: 1.3, fontSize: 22, valign: 'middle' });
   K.chip(s, '⏱  ≈45 MIN', { x: x + w - 1.65, y: 1.78, w: 1.4, fill: P.charcoal, line: P.gold, color: P.gold, size: 14 });
   addIcon(s, 'practice');
   s.addNotes(`Students open "${ACTIVITY}" from Google Classroom (Y9 › Python › Lesson 6). It opens on its Start here tab.
-Assessment conditions: silent, on their own, no notes. Leave this slide up.
-54 marks in 7 sections: 1 Errors (5) · 2 Variables, input & casting (9) · 3 Selection with elif (9) · 4 while loops (9) · 5 for loops & turtle (8) · 6 Functions (9) · 7 Write a program, the cinema till (5). The ★ bonus (a guessing game) is extra marks outside the percentage, for anyone who finishes.
-Each section starts with questions to click, then a guided code task with a How to do it box, and ends with a Write it. If someone is stuck on code, point them at the How to do it box, nothing more.
+Assessment conditions: silent, on their own. They may, and should, look back at their own work from earlier lessons when stuck (each section heading names its lesson): remind them of that, never of the answer. Leave this slide up.
+46 marks in 6 sections: 1 Errors (5) · 2 Variables, input & casting (9) · 3 Selection with elif (7) · 4 while loops (9) · 5 for loops & turtle (8) · 6 Functions (8). The ★ bonus is extra marks outside the percentage, for anyone who finishes: ★1 the cinema till (5) and ★2 a guessing game (3).
+Each section starts with questions to click, then a guided code task with a How to do it box, and ends with a Write it. If someone is stuck on code, point them at the How to do it box and their own work from that lesson, nothing more.
 Circulate. Watch for students who answer the click questions and skip every code task (the Y8 pattern): nudge them to try each section's first code task, worth 1 mark and guided.
 At about 45 minutes, stop the class for the last slides.`);
 }
