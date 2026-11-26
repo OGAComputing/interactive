@@ -39,7 +39,7 @@ test('page shell: opens on Start; six sections (v2), a bonus and a review tab, e
   await expect(page.locator('#panel-start')).toContainText('How this assessment works');
   await expect(page.locator('#panel-0')).not.toContainText('How this assessment works');
   await page.click('#panel-start [data-goto="0"]');
-  await expect(page.locator('#score-pill')).toHaveText('Score: 0 / 48 (0%)');
+  await expect(page.locator('#score-pill')).toHaveText('Score: 0 / 49 (0%)');
   await expect(page.locator('#panel-0 .sz-line')).toContainText('WARDEN Core');
   await expect(page.locator('#sz-report')).toBeHidden();
 });
@@ -68,11 +68,14 @@ test('elif rows and the loop trace are marked row by row and box by box', async 
   const t = V('w_trace');
   await expect(page.locator('#card_w_trace .howto')).toHaveCount(0);   // v2: no worked example
   await page.fill(`#tr_w_trace_v_${t.vars[0].name}`, String(t.vars[0].value));
-  for (let i = 0; i < t.output.length; i++) await page.fill(`#tr_w_trace_o_${i}`, i === 0 ? 'nope' : t.output[i]);
+  // v5: printed lines are chips. The first gets a wrong chip (the variable's name).
+  for (let i = 0; i < t.output.length; i++) {
+    await page.locator(`#card_w_trace input[name="tr_w_trace_o_${i}"][value="${i === 0 ? t.wrong[1] : t.output[i]}"]`).check();
+  }
   await expect(page.locator('#card_w_trace .out-line .n').first()).toHaveText('1st printed');
   await page.click('#lock_w_trace');
   await expect(page.locator('#fb_w_trace')).toContainText('3 of 4');
-  await expect(page.locator('#score-pill')).toContainText('Score: 6 / 48');
+  await expect(page.locator('#score-pill')).toContainText('Score: 6 / 49');
 });
 
 // Every live code question in real Python, in paper order, so the bonus unlocks before its own (s_fix, d_fix, s_guide and w_fix are retired in v2): the starter scores 0 and a model answer scores full marks.
@@ -145,7 +148,7 @@ test('review: answering the last question shows the finished banner', async ({ p
   await page.locator('#card_e_line .opt[data-k="0"]').click();
   await page.click('#lock_e_line');
   await expect(page.locator('#done-banner')).toContainText('full marks');
-  await expect(page.locator('#score-pill')).toHaveText('Score: 48 / 48 (100%)');
+  await expect(page.locator('#score-pill')).toHaveText('Score: 49 / 49 (100%)');
 });
 
 test('transmit: the inventory and the breach follow the story choices, never the score', async ({ page }) => {

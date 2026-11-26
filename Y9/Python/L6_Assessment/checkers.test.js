@@ -3,7 +3,7 @@ import {
   ITEMS, LIVE_ITEMS, SECTIONS, itemById, itemMax, summarise, variantOf, evalCode,
   branchChoices, branchAnswer, checkTraceValue, checkTraceOutput,
   usesElif, usesWhile, usesFor, definedFunctions, calledAfterDef, drewOnly,
-  cleanChoices, mergeChoices, stationState, inventoryRows, breachTools, VERSION, bonusBlockers,
+  cleanChoices, mergeChoices, stationState, inventoryRows, breachTools, VERSION, bonusBlockers, traceChips,
 } from './checkers.js';
 
 // A run as runPython() reports it: each input() echoes "prompt + answer" on its own line.
@@ -61,10 +61,10 @@ describe('question bank', () => {
     }
   });
 
-  test('48 marks across 6 sections (v4), and the bonus (cinema till + guessing game) is outside them', () => {
+  test('49 marks across 6 sections (v5), and the bonus (cinema till + guessing game) is outside them', () => {
     for (const seed of [0, 1, 2, 3]) {
       const s = summarise({}, seed);
-      expect(s.max).toBe(48);
+      expect(s.max).toBe(49);
       expect(s.sections.ext.max).toBe(8);
     }
   });
@@ -88,15 +88,15 @@ describe('question bank', () => {
     expect(s.sections.errors.earned).toBe(2);
     expect(s.earned).toBe(6);
     expect(s.bonus).toBe(3);
-    expect(s.pct).toBe(Math.round(6 / 48 * 100));
+    expect(s.pct).toBe(Math.round(6 / 49 * 100));
   });
 });
 
 // Version 2: the changes made after the first sitting (MTP, Lesson 6, "Version 2").
 describe('version 2', () => {
-  test('is saved as version 4, and the trap and duplicate items are retired but kept for L7', () => {
-    expect(VERSION).toBe(4);
-    for (const id of ['s_order', 's_fix', 'd_fix', 'e_kind', 's_pick', 'f_range', 's_guide', 'w_fix', 'w_forever']) {
+  test('is saved as version 5, and the trap and duplicate items are retired but kept for L7', () => {
+    expect(VERSION).toBe(5);
+    for (const id of ['s_order', 's_fix', 'd_fix', 'e_kind', 's_pick', 'f_range', 's_guide', 'w_fix', 'w_forever', 'f_which']) {
       expect(itemById(id).retired, id).toBe(true);
       expect(LIVE_ITEMS.map(i => i.id)).not.toContain(id);
     }
@@ -149,6 +149,37 @@ describe('version 2', () => {
     expect(bonusBlockers({ ...full, w_write: 1 })).toEqual(['w_write']);
     // Click questions don't hold it back
     expect(bonusBlockers({ ...full, e_line: 0 })).toEqual([]);
+  });
+
+  test('v5: every printed line is chosen from chips: all the real lines plus 2-3 wrong ones, no repeats', () => {
+    for (const it of LIVE_ITEMS.filter(i => i.kind === 'trace')) {
+      for (const v of it.variants) {
+        const chips = traceChips(v);
+        expect(new Set(chips).size, it.id).toBe(chips.length);
+        for (const line of v.output) expect(chips, it.id).toContain(line);
+        expect(v.wrong.length, it.id).toBeGreaterThanOrEqual(2);
+        for (const w of v.wrong) expect(v.output, it.id).not.toContain(w);
+        expect(chips.length, it.id).toBeLessThanOrEqual(6);
+      }
+    }
+  });
+
+  test('v5: while opens with the word while, then counting (w_runs is 4.2)', () => {
+    const ids = LIVE_ITEMS.filter(i => i.section === 'while').map(i => i.id);
+    expect(ids.slice(0, 2)).toEqual(['w_word', 'w_runs']);
+    expect(itemById('w_word').opts[0]).toBe('while');
+  });
+
+  test('v5: a fair "which loop?" replaces f_which; v_total has no quoted option', () => {
+    expect(itemById('f_which').retired).toBe(true);
+    expect(itemById('f_pick').opts[0]).toMatch(/^for: /);
+    expect(itemById('f_pick').opts.filter(o => o.startsWith('for'))).toHaveLength(1);
+    for (const v of itemById('v_total').variants) expect(v.opts.join()).not.toMatch(/"/);
+  });
+
+  test('v5: 3.3 changes a message, and the countdown starts from step comments', () => {
+    expect(itemById('s_easy').starter).toMatch(/elif score >= 40:\n {4}print\("\.\.\."\)/);
+    expect(itemById('w_write').starter).toMatch(/# Step 1/);
   });
 
   test('v_total casts round the input, as taught', () => {

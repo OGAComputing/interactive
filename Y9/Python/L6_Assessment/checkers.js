@@ -448,13 +448,13 @@ export const ITEMS = [
     variants: [
       { lines: ['name = "Mo"', 'food = "pizza"', 'print(name)', 'print(name + " likes " + food)'],
         vars: [{ name: 'name', type: 'str', value: 'Mo' }, { name: 'food', type: 'str', value: 'pizza' }],
-        output: ['Mo', 'Mo likes pizza'] },
+        output: ['Mo', 'Mo likes pizza'], wrong: ['name','pizza','name likes food'] },
       { lines: ['player = "Kai"', 'game = "chess"', 'print(player)', 'print(player + " plays " + game)'],
         vars: [{ name: 'player', type: 'str', value: 'Kai' }, { name: 'game', type: 'str', value: 'chess' }],
-        output: ['Kai', 'Kai plays chess'] },
+        output: ['Kai', 'Kai plays chess'], wrong: ['player','chess','player plays game'] },
       { lines: ['coach = "Bo"', 'sport = "golf"', 'print(coach)', 'print(coach + " teaches " + sport)'],
         vars: [{ name: 'coach', type: 'str', value: 'Bo' }, { name: 'sport', type: 'str', value: 'golf' }],
-        output: ['Bo', 'Bo teaches golf'] },
+        output: ['Bo', 'Bo teaches golf'], wrong: ['coach','golf','coach teaches sport'] },
     ] },
   // v3: reassignment gets its own question, after the confidence one. One variable changes
   // value (v1: 15 of 20 put its FIRST value in the box). v4: no worked example (the v2 class
@@ -463,11 +463,11 @@ export const ITEMS = [
     q: 'Play computer again. This time a box gets a new value.',
     variants: [
       { lines: ['song = "Jump"', 'print("Mo sings " + song)', 'song = "Fly"', 'print("Mo sings " + song)'],
-        vars: [{ name: 'song', type: 'str', value: 'Fly' }], output: ['Mo sings Jump', 'Mo sings Fly'] },
+        vars: [{ name: 'song', type: 'str', value: 'Fly' }], output: ['Mo sings Jump', 'Mo sings Fly'], wrong: ['Mo sings song','song','Jump'] },
       { lines: ['game = "chess"', 'print("Kai plays " + game)', 'game = "darts"', 'print("Kai plays " + game)'],
-        vars: [{ name: 'game', type: 'str', value: 'darts' }], output: ['Kai plays chess', 'Kai plays darts'] },
+        vars: [{ name: 'game', type: 'str', value: 'darts' }], output: ['Kai plays chess', 'Kai plays darts'], wrong: ['Kai plays game','game','chess'] },
       { lines: ['sport = "tennis"', 'print("Bo teaches " + sport)', 'sport = "golf"', 'print("Bo teaches " + sport)'],
-        vars: [{ name: 'sport', type: 'str', value: 'golf' }], output: ['Bo teaches tennis', 'Bo teaches golf'] },
+        vars: [{ name: 'sport', type: 'str', value: 'golf' }], output: ['Bo teaches tennis', 'Bo teaches golf'], wrong: ['Bo teaches sport','sport','tennis'] },
     ] },
   { id: 'v_pick', section: 'sequence', kind: 'mcq', pts: 1,
     q: 'Type <strong>5</strong> and this program prints <strong>55</strong>, not 10. Which <strong>line 1</strong> makes it print <strong>10</strong>?',
@@ -481,11 +481,11 @@ export const ITEMS = [
   { id: 'v_total', section: 'sequence', kind: 'mcq', pts: 1,
     variants: [
       { q: 'The user types <strong>4</strong>, then <strong>5</strong>. The last line must print their total, <strong>9</strong>, and still be right when other numbers are typed. Which line is it?',
-        opts: ['print(a + b)', 'print(4 + 5)', 'print("a + b")', 'print(a, b)'] },
+        opts: ['print(a + b)', 'print(4 + 5)', 'print(a - b)', 'print(a, b)'] },
       { q: 'The user types <strong>2</strong>, then <strong>6</strong>. The last line must print their total, <strong>8</strong>, and still be right when other numbers are typed. Which line is it?',
-        opts: ['print(a + b)', 'print(2 + 6)', 'print("a + b")', 'print(a, b)'] },
+        opts: ['print(a + b)', 'print(2 + 6)', 'print(a - b)', 'print(a, b)'] },
       { q: 'The user types <strong>3</strong>, then <strong>7</strong>. The last line must print their total, <strong>10</strong>, and still be right when other numbers are typed. Which line is it?',
-        opts: ['print(a + b)', 'print(3 + 7)', 'print("a + b")', 'print(a, b)'] },
+        opts: ['print(a + b)', 'print(3 + 7)', 'print(a - b)', 'print(a, b)'] },
     ],
     // v2: int() round the input(), as taught (v1 cast after it: int(a) + int(b)).
     code: 'a = int(input("First number? "))\nb = int(input("Second number? "))',
@@ -551,13 +551,13 @@ export const ITEMS = [
     opts: ['Pass: only the first True test runs', 'Distinction: 90 is 80 or more', 'Pass, then Distinction: both are True', 'Nothing: 90 is above both tests'],
     why: 'Python checks the tests from the top and runs only the FIRST one that is True. 90 >= 50 is True, so it prints Pass and skips the elif. The order of the tests matters.' },
   // v2: the section's first code task is very easy: the elif line is given, and the student
-  // adds the one line it runs (v1: 0 of the 14 lowest scorers tried any selection code).
+  // fills in the one line it runs (v5: change "..." to Nearly; 13 of 28 never added a line) (v1: 0 of the 14 lowest scorers tried any selection code).
   // s_guide (write the whole elif) is retired, kept for L7; s_write still needs an elif.
   { id: 's_easy', section: 'selection', kind: 'reqs', resettable: true,
     title: 'Write it: finish the elif',
-    goal: 'The <code>elif</code> has no line under it yet, so Python stops with an error. Add one line under it so a score from <strong>40 to 49</strong> prints <strong>Nearly</strong>',
+    goal: 'The <code>elif</code> prints <code>...</code> at the moment. Change the <code>...</code> so a score from <strong>40 to 49</strong> prints <strong>Nearly</strong>',
     howto: { code: 'if age >= 18:\n    print("Adult")\nelif age >= 13:\n    print("Teen")\nelse:\n    print("Child")' },
-    starter: 'score = int(input("Score? "))\nif score >= 50:\n    print("Pass")\nelif score >= 40:\n\nelse:\n    print("Try again")\n',
+    starter: 'score = int(input("Score? "))\nif score >= 50:\n    print("Pass")\nelif score >= 40:\n    print("...")\nelse:\n    print("Try again")\n',
     tests: [['70'], ['45'], ['39']],
     testNote: 'Checked by running it with 70, 45 and 39.',
     reqs: [
@@ -607,7 +607,13 @@ export const ITEMS = [
         test: printsExactly(([p]) => [+p >= 100 ? 'Gold' : +p >= 50 ? 'Silver' : 'Bronze']) },
     ] },
 
-  // ── 4 · while loops (L3) ── 9 marks
+  // ── 4 · while loops (L3) ── 9 marks (v4: 8)
+  // v5: the section opens with the word while (w_runs is now 4.2: about half counted one too few).
+  { id: 'w_word', section: 'while', kind: 'mcq', pts: 1,
+    q: 'This program should print <strong>Beep</strong> 3 times. Which word goes in the gap?',
+    code: 'count = 1\n____ count <= 3:\n    print("Beep")\n    count = count + 1',
+    opts: ['while', 'if', 'for', 'def'],
+    why: 'while repeats the indented lines for as long as its test is True.' },
   // v2: every version is count = 1 … <= n (v1: the <= version 7/8 right, the < ones 3/11).
   { id: 'w_runs', section: 'while', kind: 'mcq', pts: 1,
     q: 'How many times does this program print <strong>Beep</strong>?',
@@ -623,11 +629,11 @@ export const ITEMS = [
     q: 'Play computer: run this program in your head. Go round the loop until the test is False.',
     variants: [
       { lines: ['lives = 2', 'while lives > 0:', '    print(lives)', '    lives = lives - 1', 'print("Game over")'],
-        vars: [{ name: 'lives', type: 'int', value: 0 }], output: ['2', '1', 'Game over'] },
+        vars: [{ name: 'lives', type: 'int', value: 0 }], output: ['2', '1', 'Game over'], wrong: ['0','lives','3'] },
       { lines: ['count = 3', 'while count > 1:', '    print(count)', '    count = count - 1', 'print("Go!")'],
-        vars: [{ name: 'count', type: 'int', value: 1 }], output: ['3', '2', 'Go!'] },
+        vars: [{ name: 'count', type: 'int', value: 1 }], output: ['3', '2', 'Go!'], wrong: ['1','count','4'] },
       { lines: ['n = 1', 'while n < 3:', '    print(n)', '    n = n + 1', 'print("Done")'],
-        vars: [{ name: 'n', type: 'int', value: 3 }], output: ['1', '2', 'Done'] },
+        vars: [{ name: 'n', type: 'int', value: 3 }], output: ['1', '2', 'Done'], wrong: ['3','n','0'] },
     ] },
   // v4: retired, kept for L7. 6 of 24 in the second sitting (4 of 20 in the first), the 93% and
   // 85% students among the wrong: an infinite loop isn't being learnt from L3.
@@ -664,7 +670,8 @@ export const ITEMS = [
     goal: 'Use a <code>while</code> loop to count down from the number typed to 1, then print <code>Lift off!</code>',
     howto: { code: 'n = 1\nwhile n <= 3:\n    print(n)\n    n = n + 1' },
     samples: [[['Count down from? ', '3'], ['3'], ['2'], ['1'], ['Lift off!']]],
-    starter: 'start = int(input("Count down from? "))\n',
+    // v5: step comments (5 of 28 in the third sitting; most wrote a count-up loop or nothing)
+    starter: 'start = int(input("Count down from? "))\n# Step 1: a while loop that runs while start is 1 or more\n\n# Step 2 (indented): print start\n\n# Step 3 (indented): take 1 off start\n\n# Step 4 (not indented): print Lift off!\n',
     tests: [['3'], ['5'], ['1']],
     testNote: 'Checked by running it with 3, 5 and 1.',
     reqs: [
@@ -696,7 +703,13 @@ export const ITEMS = [
   // The MTP's "which loop is appropriate and why?" item.
   // v2: "while: a for loop can never use input()" (the right loop, a wrong reason; 4 picked it)
   // became an if option, so only one answer names while.
-  { id: 'f_which', section: 'for', kind: 'mcq', pts: 1,
+  // v5: f_which retired (kept for L7): "for: range() stops when the answer is right" caught
+  // nearly everyone. A plain job with a set number of repeats instead.
+  { id: 'f_pick', section: 'for', kind: 'mcq', pts: 1,
+    q: 'A turtle draws a square by repeating the same two lines <strong>4 times</strong>. Which loop fits best, and why?',
+    opts: ['for: it repeats a set number of times', 'while: it keeps going until you stop it', 'if: it checks one test, just once', 'def: it gives the code its own name'],
+    why: 'Use for when you know how many times to repeat (here 4), and while when it repeats until something happens.' },
+  { id: 'f_which', section: 'for', kind: 'mcq', pts: 1, retired: true,
     q: 'A game asks for the password again and again until it is typed correctly. Which loop fits best, and why?',
     opts: ['while: nobody knows how many tries it takes', 'for: it repeats a fixed number of times', 'if: it checks the password once', 'for: range() stops when the answer is right'],
     why: 'Use for when you know how many times to repeat, and while when it repeats until something happens.' },
@@ -771,9 +784,9 @@ export const ITEMS = [
   { id: 'd_trace', section: 'functions', kind: 'trace',
     q: 'Play computer: what does this program print, in order?',
     variants: [
-      { lines: ['def greet():', '    print("Hi")', 'print("Start")', 'greet()', 'print("End")'], vars: [], output: ['Start', 'Hi', 'End'] },
-      { lines: ['def alarm():', '    print("Beep")', 'print("Ready")', 'alarm()', 'alarm()'], vars: [], output: ['Ready', 'Beep', 'Beep'] },
-      { lines: ['def cheer():', '    print("Hooray")', 'cheer()', 'print("Done")', 'cheer()'], vars: [], output: ['Hooray', 'Done', 'Hooray'] },
+      { lines: ['def greet():', '    print("Hi")', 'print("Start")', 'greet()', 'print("End")'], vars: [], output: ['Start', 'Hi', 'End'], wrong: ['greet','def greet():'] },
+      { lines: ['def alarm():', '    print("Beep")', 'print("Ready")', 'alarm()', 'alarm()'], vars: [], output: ['Ready', 'Beep', 'Beep'], wrong: ['alarm','def alarm():'] },
+      { lines: ['def cheer():', '    print("Hooray")', 'cheer()', 'print("Done")', 'cheer()'], vars: [], output: ['Hooray', 'Done', 'Hooray'], wrong: ['cheer','def cheer():'] },
     ] },
   // Retired in v2 to shorten the paper (3/20; d_guide and d_write also need the call under the def).
   { id: 'd_fix', section: 'functions', kind: 'fix', retired: true,
@@ -868,6 +881,12 @@ export const itemById = id => ITEMS.find(i => i.id === id);
 // sitting, and are left out here; see the Y8 page.
 export const LIVE_ITEMS = ITEMS.filter(i => !i.retired);
 
+// v5: the chips a printed line is chosen from: every line the program prints, once each, and
+// the variant's wrong ones (names and code the third class typed instead of the output).
+export function traceChips(variant) {
+  return [...new Set([...(variant.output || []), ...(variant.wrong || [])])];
+}
+
 // The ★ bonus stays locked until every code question in sections 1–6 has full marks
 // ("finished", as the Review tab says). Returns the ids still to finish, in paper order.
 export function bonusBlockers(pts, seed = 0) {
@@ -876,7 +895,7 @@ export function bonusBlockers(pts, seed = 0) {
 }
 // Saved with every attempt, so L7 knows which version a student sat. Bump it when the
 // questions change, as the Y8 assessment did.
-export const VERSION = 4;   // 1: first class (26 Nov); 2: second class; 3: teacher review (easier openers, bonus lock); 4: after the second class
+export const VERSION = 5;   // 1: first class (26 Nov); 2: second class; 3: teacher review (easier openers, bonus lock); 4: after the second class; 5: after the third class (printed lines as chips)
 
 // Marks available for an item (for this student's version).
 export function itemMax(item, seed = 0) {
