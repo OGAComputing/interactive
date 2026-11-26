@@ -127,7 +127,7 @@ Every answer saves and goes to Classroom as they work: nothing to submit.`);
   addIcon(s, 'practice');
   s.addNotes(`Students open "${ACTIVITY}" from Google Classroom (Y9 › Python › Lesson 6). It opens on its Start here tab.
 Assessment conditions: silent, on their own. They may, and should, look back at their own work from earlier lessons when stuck (each section heading names its lesson): remind them of that, never of the answer. Leave this slide up.
-49 marks in 6 sections: 1 Errors (5) · 2 Variables, input & casting (12) · 3 Selection with elif (7) · 4 while loops (9) · 5 for loops & turtle (8) · 6 Functions (8). The ★ bonus is extra marks outside the percentage: ★1 the cinema till (5) and ★2 a guessing game (3). It stays locked until every code question in sections 1–6 has full marks.
+48 marks in 6 sections: 1 Errors (5) · 2 Variables, input & casting (12) · 3 Selection with elif (7) · 4 while loops (8) · 5 for loops & turtle (8) · 6 Functions (8). The ★ bonus is extra marks outside the percentage: ★1 the cinema till (5) and ★2 a guessing game (3). It stays locked until every code question in sections 1–6 has full marks.
 Each section starts with questions to click, then a guided code task with an example underneath, and ends with a Write it. If someone is stuck on code, point them at the example under the task and their own work from that lesson, nothing more.
 Circulate. Watch for students who answer the click questions and skip every code task (the Y8 pattern): nudge them to try each section's first code task, worth 1 mark and guided.
 At about 45 minutes, stop the class for the last slides.`);
