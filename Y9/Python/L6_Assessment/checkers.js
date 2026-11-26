@@ -456,12 +456,11 @@ export const ITEMS = [
         vars: [{ name: 'coach', type: 'str', value: 'Bo' }, { name: 'sport', type: 'str', value: 'golf' }],
         output: ['Bo', 'Bo teaches golf'] },
     ] },
-  // v2: reassignment gets its own question, after the confidence one. One variable changes
-  // value (v1: 15 of 20 put its FIRST value in the box), with a one-line worked example.
+  // v3: reassignment gets its own question, after the confidence one. One variable changes
+  // value (v1: 15 of 20 put its FIRST value in the box). v4: no worked example (the v2 class
+  // copied the trace examples in as their answers: 7 wrote d_trace's Tick/Go).
   { id: 'v_change', section: 'sequence', kind: 'trace',
     q: 'Play computer again. This time a box gets a new value.',
-    example: { code: 'x = 5\nprint(x)\nx = 7\nprint(x)',
-      text: 'Box <code>x</code>: <strong>7</strong> (its last value) · Printed: <strong>5</strong>, then <strong>7</strong>' },
     variants: [
       { lines: ['song = "Jump"', 'print("Mo sings " + song)', 'song = "Fly"', 'print("Mo sings " + song)'],
         vars: [{ name: 'song', type: 'str', value: 'Fly' }], output: ['Mo sings Jump', 'Mo sings Fly'] },
@@ -630,7 +629,9 @@ export const ITEMS = [
       { lines: ['n = 1', 'while n < 3:', '    print(n)', '    n = n + 1', 'print("Done")'],
         vars: [{ name: 'n', type: 'int', value: 3 }], output: ['1', '2', 'Done'] },
     ] },
-  { id: 'w_forever', section: 'while', kind: 'mcq', pts: 1,
+  // v4: retired, kept for L7. 6 of 24 in the second sitting (4 of 20 in the first), the 93% and
+  // 85% students among the wrong: an infinite loop isn't being learnt from L3.
+  { id: 'w_forever', section: 'while', kind: 'mcq', pts: 1, retired: true,
     q: 'The user types <strong>1111</strong>. What happens?',
     code: 'pin = input("PIN? ")\nwhile pin != "1234":\n    print("Wrong PIN")\nprint("Unlocked")',
     opts: ['Wrong PIN for ever: pin never changes', 'Wrong PIN once: then the loop ends', 'It asks again: the loop asks for the PIN', 'Unlocked: the test is checked only once'],
@@ -766,10 +767,9 @@ export const ITEMS = [
     opts: ['Nothing: def stores it but does not run it', 'Beep, once: def runs the code inside it', 'Beep, twice: once to save it, once to run it', 'A NameError: beep is used before it exists'],
     why: 'def only DEFINES the function: Python learns the name but does not run it. Nothing runs until the function is called.' },
   // First sitting: 10/60; students printed the def's lines first (as if def ran straight away).
+  // v4: the worked example is gone: in the second sitting 7 of 20 wrote its Tick / Go as their answer.
   { id: 'd_trace', section: 'functions', kind: 'trace',
     q: 'Play computer: what does this program print, in order?',
-    example: { code: 'def tick():\n    print("Tick")\nprint("Go")\ntick()',
-      text: 'Printed: <strong>Go</strong>, then <strong>Tick</strong> (def waits until it is called)' },
     variants: [
       { lines: ['def greet():', '    print("Hi")', 'print("Start")', 'greet()', 'print("End")'], vars: [], output: ['Start', 'Hi', 'End'] },
       { lines: ['def alarm():', '    print("Beep")', 'print("Ready")', 'alarm()', 'alarm()'], vars: [], output: ['Ready', 'Beep', 'Beep'] },
@@ -876,7 +876,7 @@ export function bonusBlockers(pts, seed = 0) {
 }
 // Saved with every attempt, so L7 knows which version a student sat. Bump it when the
 // questions change, as the Y8 assessment did.
-export const VERSION = 3;   // 1: first class (26 Nov); 2: second class; 3: teacher review (easier openers, bonus lock)
+export const VERSION = 4;   // 1: first class (26 Nov); 2: second class; 3: teacher review (easier openers, bonus lock); 4: after the second class
 
 // Marks available for an item (for this student's version).
 export function itemMax(item, seed = 0) {

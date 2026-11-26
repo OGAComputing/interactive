@@ -61,10 +61,10 @@ describe('question bank', () => {
     }
   });
 
-  test('49 marks across 6 sections (v2), and the bonus (cinema till + guessing game) is outside them', () => {
+  test('48 marks across 6 sections (v4), and the bonus (cinema till + guessing game) is outside them', () => {
     for (const seed of [0, 1, 2, 3]) {
       const s = summarise({}, seed);
-      expect(s.max).toBe(49);
+      expect(s.max).toBe(48);
       expect(s.sections.ext.max).toBe(8);
     }
   });
@@ -88,15 +88,15 @@ describe('question bank', () => {
     expect(s.sections.errors.earned).toBe(2);
     expect(s.earned).toBe(6);
     expect(s.bonus).toBe(3);
-    expect(s.pct).toBe(Math.round(6 / 49 * 100));
+    expect(s.pct).toBe(Math.round(6 / 48 * 100));
   });
 });
 
 // Version 2: the changes made after the first sitting (MTP, Lesson 6, "Version 2").
 describe('version 2', () => {
-  test('is saved as version 3, and the trap and duplicate items are retired but kept for L7', () => {
-    expect(VERSION).toBe(3);
-    for (const id of ['s_order', 's_fix', 'd_fix', 'e_kind', 's_pick', 'f_range', 's_guide', 'w_fix']) {
+  test('is saved as version 4, and the trap and duplicate items are retired but kept for L7', () => {
+    expect(VERSION).toBe(4);
+    for (const id of ['s_order', 's_fix', 'd_fix', 'e_kind', 's_pick', 'f_range', 's_guide', 'w_fix', 'w_forever']) {
       expect(itemById(id).retired, id).toBe(true);
       expect(LIVE_ITEMS.map(i => i.id)).not.toContain(id);
     }
@@ -109,13 +109,8 @@ describe('version 2', () => {
     expect(s.bonus).toBe(8);
   });
 
-  test('the reassignment and functions traces have a short worked example from a different program', () => {
-    for (const id of ['v_change', 'd_trace']) {
-      const it = itemById(id);
-      expect(it.example?.code, id).toBeTruthy();
-      expect(it.example.text.replace(/<[^>]+>/g, '').length, id).toBeLessThan(70);
-      for (const v of it.variants) expect(v.lines.join('\n')).not.toBe(it.example.code);
-    }
+  test('no trace question has a worked example (v4: the second class copied them as answers)', () => {
+    for (const it of LIVE_ITEMS.filter(i => i.kind === 'trace')) expect(it.example, it.id).toBeUndefined();
   });
 
   test('v_trace builds confidence: no variable changes value, and no worked example', () => {
