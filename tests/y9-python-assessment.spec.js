@@ -39,7 +39,7 @@ test('page shell: opens on Start; six sections (v2), a bonus and a review tab, e
   await expect(page.locator('#panel-start')).toContainText('How this assessment works');
   await expect(page.locator('#panel-0')).not.toContainText('How this assessment works');
   await page.click('#panel-start [data-goto="0"]');
-  await expect(page.locator('#score-pill')).toHaveText('Score: 0 / 46 (0%)');
+  await expect(page.locator('#score-pill')).toHaveText('Score: 0 / 49 (0%)');
   await expect(page.locator('#panel-0 .sz-line')).toContainText('WARDEN Core');
   await expect(page.locator('#sz-report')).toBeHidden();
 });
@@ -66,24 +66,24 @@ test('elif rows and the loop trace are marked row by row and box by box', async 
 
   await tab(page, tabOf('w_trace'));
   const t = V('w_trace');
-  await expect(page.locator('#card_w_trace .howto')).toContainText('Worked example');   // v2
+  await expect(page.locator('#card_w_trace .howto')).toHaveCount(0);   // v2: no worked example
   await page.fill(`#tr_w_trace_v_${t.vars[0].name}`, String(t.vars[0].value));
   for (let i = 0; i < t.output.length; i++) await page.fill(`#tr_w_trace_o_${i}`, i === 0 ? 'nope' : t.output[i]);
   await expect(page.locator('#card_w_trace .out-line .n').first()).toHaveText('1st printed');
   await page.click('#lock_w_trace');
   await expect(page.locator('#fb_w_trace')).toContainText('3 of 4');
-  await expect(page.locator('#score-pill')).toContainText('Score: 6 / 46');
+  await expect(page.locator('#score-pill')).toContainText('Score: 6 / 49');
 });
 
-// Every live code question in real Python (s_fix and d_fix are retired in v2): the starter scores 0 and a model answer scores full marks.
+// Every live code question in real Python, in paper order, so the bonus unlocks before its own (s_fix, d_fix, s_guide and w_fix are retired in v2): the starter scores 0 and a model answer scores full marks.
 const MODELS = {
   e_fix: 'name = input("What is your name? ")\nprint("Welcome aboard, " + name)',
   e_colon: 'print("Starting the scan")\nfor i in range(2):\n    print("Scanning...")\nprint("Scan complete")',
   v_str: 'tries = 3\nprint("Tries: " + str(tries))',
   v_write: 'age = int(input("How old are you? "))\nprint("Next year you will be", age + 1)',
-  s_guide: 'score = int(input("Score? "))\nif score >= 50:\n    print("Pass")\nelif score >= 40:\n    print("Nearly")\nelse:\n    print("Try again")',
+  s_easy: 'score = int(input("Score? "))\nif score >= 50:\n    print("Pass")\nelif score >= 40:\n    print("Nearly")\nelse:\n    print("Try again")',
   s_write: 'points = int(input("Points? "))\nif points >= 100:\n    print("Gold")\nelif points >= 50:\n    print("Silver")\nelse:\n    print("Bronze")',
-  w_fix: 'pin = input("PIN? ")\nwhile pin != "1234":\n    print("Wrong PIN")\n    pin = input("PIN? ")\nprint("Unlocked")',
+  w_guide: 'count = 1\nwhile count <= 5:\n    print("Beep")\n    count = count + 1',
   w_write: 'start = int(input("Count down from? "))\nwhile start > 0:\n    print(start)\n    start = start - 1\nprint("Lift off!")',
   f_guide: 'for i in range(5):\n    print("Ping")',
   f_fix: 'import turtle\nt = turtle.Turtle()\nfor i in range(4):\n    t.forward(100)\n    t.left(90)',
@@ -110,6 +110,21 @@ test('every code question: starter scores 0, model answer scores full marks', as
   }
 });
 
+test('the bonus is locked until every core code question has full marks', async ({ page }) => {
+  const core = ITEMS.filter(i => !i.bonus && ['fix', 'reqs'].includes(i.kind));
+  const pts = Object.fromEntries(core.map(i => [i.id, itemMax(i, SEED)]));
+  const last = core[core.length - 1].id;
+  await openWith(page, { seed: SEED, tab: tabOf('p_till'), pts: { ...pts, [last]: 0 } });
+  await expect(page.locator('#bonus-items')).toBeHidden();
+  await expect(page.locator('#bonus-lock')).toContainText('Locked');
+  await expect(page.locator('#bonus-lock button')).toHaveCount(1);
+  await expect(page.locator('#count_ext')).toHaveText('🔒');
+  await page.evaluate(([k, id, m]) => { const st = JSON.parse(localStorage.getItem(k)); st.pts[id] = m; localStorage.setItem(k, JSON.stringify(st)); }, [KEY, last, itemMax(core[core.length - 1], SEED)]);
+  await page.reload();
+  await expect(page.locator('#bonus-items')).toBeVisible();
+  await expect(page.locator('#bonus-lock')).toBeHidden();
+});
+
 test('turtle: a wrong shape says what was drawn, on the beacon display', async ({ page }) => {
   await openWith(page, { seed: SEED, tab: tabOf('f_write') });
   await waitForPython(page);
@@ -130,7 +145,7 @@ test('review: answering the last question shows the finished banner', async ({ p
   await page.locator('#card_e_line .opt[data-k="0"]').click();
   await page.click('#lock_e_line');
   await expect(page.locator('#done-banner')).toContainText('full marks');
-  await expect(page.locator('#score-pill')).toHaveText('Score: 46 / 46 (100%)');
+  await expect(page.locator('#score-pill')).toHaveText('Score: 49 / 49 (100%)');
 });
 
 test('transmit: the inventory and the breach follow the story choices, never the score', async ({ page }) => {

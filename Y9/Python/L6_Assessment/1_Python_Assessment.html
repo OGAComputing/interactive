@@ -104,6 +104,8 @@ color:  teal
   .score-row { display: flex; align-items: center; gap: 14px; margin-top: 10px; flex-wrap: wrap; }
   .score-pill { background: #0b1013; border: 1px solid var(--cobalt); border-radius: 20px; padding: 4px 16px; font-size: 0.85rem; font-weight: 700; color: #ffffff; }
   .bonus-pill { font-size: 0.8rem; font-weight: 700; color: #fcd34d; }
+  .bonus-lock { background: var(--card-raised); border: 1px dashed var(--line-strong); border-radius: 10px; padding: 14px 16px; margin: 12px 0; }
+  .bonus-lock-h { font-weight: 700; color: var(--heading); margin-bottom: 6px; }
   .score-bar-wrap { flex: 1; min-width: 120px; max-width: 260px; height: 8px; background: #1b2329; border-radius: 4px; overflow: hidden; }
   .score-bar { height: 100%; background: var(--cobalt); border-radius: 4px; width: 0%; transition: width .5s ease; }
   /* The header shows the score; activity-ui's corner badge says "Go for Gold", which can't apply to one-try answers. */
@@ -393,7 +395,7 @@ color:  teal
     </div>
   </div>
   <div class="score-row">
-    <div class="score-pill" id="score-pill">Score: 0 / 46 (0%)</div>
+    <div class="score-pill" id="score-pill">Score: 0 / 49 (0%)</div>
     <div class="score-bar-wrap"><div class="score-bar" id="score-bar"></div></div>
     <div class="bonus-pill" id="bonus-pill"></div>
   </div>
@@ -411,7 +413,7 @@ color:  teal
 
 <script type="module">
 import {
-  LIVE_ITEMS as ITEMS, VERSION, SECTIONS, itemById, variantOf, optionOrder, itemMax, summarise,
+  LIVE_ITEMS as ITEMS, VERSION, SECTIONS, itemById, variantOf, optionOrder, itemMax, summarise, bonusBlockers,
   checkTraceValue, checkTraceOutput, showValue, markSort, evalCode,
   branchChoices, branchAnswer, mulberry32, shuffle, hashId,
   mergeChoices, stationState, inventoryRows, breachTools,
@@ -524,7 +526,7 @@ function renderTrace(id) {
     <span class="q-label">${v.q}</span>
     ${listing(v.lines.join('\n'), notes)}
     ${isVariant(id) ? evNote(id, 'version shown', v.lines.join('\n') + Object.entries(v.typed || {}).map(([i, t]) => `\n(line ${+i + 1}: the user types ${t})`).join('')) : ''}
-    ${example}${boxes}${outs}
+    ${boxes}${outs}${example}
     ${lockBtn(id, '🔒 Lock in my trace')}
     <div class="feedback" id="fb_${id}"></div></div>`;
 }
@@ -568,11 +570,15 @@ function renderCodeItem(id) {
   const resettable = v.kind === 'fix' || v.resettable;
   // v2: "a different program" is said out loud. In the first sitting five students pasted the
   // example in as their answer (the count-up loop into the countdown, menu() into goodbye).
-  const howto = v.howto ? `<div class="howto"><div class="howto-h">💡 How to do it <span class="howto-note">(an example from a different program: use the idea, don't copy it)</span></div>${v.howto.text}${listing(v.howto.code)}</div>` : '';
+  // The example is just code, under the requirements: the words round it were too much to read.
+  // A how-to with no code is a one-line reminder.
+  const howto = !v.howto ? '' : v.howto.code
+    ? `<div class="howto"><div class="howto-h">💡 An example from a different program: use the idea, don't copy it</div>${listing(v.howto.code)}</div>`
+    : `<div class="howto">💡 ${v.howto.text}</div>`;
   return `<div class="question-card" id="card_${id}">${head(id)}
     <div class="code-title">${esc(v.title)}</div>
     <div class="goal-line">🎯 ${v.goal}</div>
-    ${howto}${samples}${reqs}
+    ${samples}${reqs}${howto}
     ${v.testNote || v.note ? `<div class="test-note">${esc(v.testNote || v.note)}</div>` : ''}
     <div class="code-checker">
       <textarea class="checker-textarea" id="ed_${id}" data-title="${evTitle(id, v.title)}">${esc(v.starter)}</textarea>
@@ -617,8 +623,8 @@ $('#panels').innerHTML = `<div class="panel" id="panel-start">
         <div class="task-sub">${esc(s.lesson)} · ${marks} ${s.bonus ? 'bonus marks — not part of your score' : 'marks'}</div></div>
     </div>
     <div class="sz-line"><span class="sz-room">${esc(s.room)}</span> ${esc(s.story)}</div>
-    ${s.bonus ? '<div class="goal">🎯 Only try this once you have finished everything else. It is a bonus, so it can only add to how well you did.</div>' : ''}
-    ${items.map(it => RENDER[V[it.id].kind](it.id)).join('')}
+    ${s.bonus ? '<div class="goal">🎯 A bonus, so it can only add to how well you did. It unlocks when every code question in sections 1–6 has full marks.</div><div id="bonus-lock" class="bonus-lock"></div>' : ''}
+    ${s.bonus ? '<div id="bonus-items">' : ''}${items.map(it => RENDER[V[it.id].kind](it.id)).join('')}${s.bonus ? '</div>' : ''}
     <div class="next-row"><button class="ac-btn" data-goto="${i + 1}">${i + 1 < REVIEW ? `Next: ${esc(SECTIONS[i + 1].label)} →` : 'Go to ✓ Review →'}</button></div>
   </div>`;
 }).join('') + `<div class="panel" id="panel-${REVIEW}">
@@ -656,8 +662,20 @@ function refreshScore() {
     tab.title = !left ? 'All done' : skipped ? 'You skipped something here — there are still marks to get'
       : partial ? 'Started — there are still marks to get' : '';
   });
+  renderBonusLock();
   renderReview(s);
   return s;
+}
+// v2: the ★ bonus is locked until every code question in sections 1–6 has full marks, so it
+// never pulls a student away from marks that count.
+function renderBonusLock() {
+  const left = bonusBlockers(S.pts, S.seed);
+  const locked = left.length > 0;
+  $('#bonus-items').hidden = locked;
+  $('#count_ext').textContent = locked ? '🔒' : $('#count_ext').textContent;
+  $('#bonus-lock').hidden = !locked;
+  $('#bonus-lock').innerHTML = locked ? `<div class="bonus-lock-h">🔒 Locked: finish these code questions first (full marks on each)</div>
+    <ul class="todo-list">${left.map(id => `<li><button data-goto-item="${id}">Question ${QNO[id]} — ${esc(V[id].title)} (${S.pts[id] || 0} / ${MAX[id]}) →</button></li>`).join('')}</ul>` : '';
 }
 // Called after every answer is locked or checked: grade + evidence + per-section results.
 // The answers themselves (seed, sel, sort, code, results) go too, so the L7 Targeted Practice
@@ -693,7 +711,7 @@ function renderReview(s) {
     const se = s.sections[sec.id];
     const left = ids.filter(outstanding);
     const unanswered = left.filter(id => !answered(id)).length, codeLeft = left.length - unanswered;
-    const status = sec.bonus ? (left.length ? 'Optional' : '✓ Done')
+    const status = sec.bonus ? (bonusBlockers(S.pts, S.seed).length ? '🔒 Locked' : left.length ? 'Optional' : '✓ Done')
       : !left.length ? '✓ Done'
       : [unanswered && `${unanswered} not answered`, codeLeft && `${codeLeft} code task${codeLeft > 1 ? 's' : ''} not finished`].filter(Boolean).join(' · ');
     const cls = sec.bonus ? '' : left.length ? 'row-todo' : 'row-ok';

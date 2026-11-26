@@ -90,7 +90,7 @@ Next lesson uses the results: everyone practises the sections they found hardest
   addIcon(s, 'info');
   s.addNotes(`Two minutes, then straight in. The page's Start here tab says the same, so students can look back.
 Click questions (multiple choice, trace, the selection rows): ONE try. Pressing Lock in makes the answer final, then shows the right answer for a few seconds before hiding it, so nobody can copy it from a neighbour's screen.
-Code questions: Run code and Check as often as they like; the best mark is kept, and full marks locks the question. Every code question has a How to do it box with an example from a different program: tell them to use it.
+Code questions: Run code and Check as often as they like; the best mark is kept, and full marks locks the question. Every code question has an example from a different program under its requirements (just the code; the colon fix has a one-line reminder instead): tell them to use the idea, not copy it.
 Errors: read the LAST line first, then find the line number (the debugging recipe). The Get help button explains what a Python error means, but never says how to do the task.
 Stuck: they can, and should, look back at their own work from earlier lessons (their Lesson 1–5 pages, their books). Each section's heading says which lesson it comes from. Today shows what they can do with what they've made, not what they remember cold.
 Any order: one section per thing we've learned. A tab turns red if they skip a question and move on, so they can find it again. Review lists anything left.
@@ -127,8 +127,8 @@ Every answer saves and goes to Classroom as they work: nothing to submit.`);
   addIcon(s, 'practice');
   s.addNotes(`Students open "${ACTIVITY}" from Google Classroom (Y9 › Python › Lesson 6). It opens on its Start here tab.
 Assessment conditions: silent, on their own. They may, and should, look back at their own work from earlier lessons when stuck (each section heading names its lesson): remind them of that, never of the answer. Leave this slide up.
-46 marks in 6 sections: 1 Errors (5) · 2 Variables, input & casting (9) · 3 Selection with elif (7) · 4 while loops (9) · 5 for loops & turtle (8) · 6 Functions (8). The ★ bonus is extra marks outside the percentage, for anyone who finishes: ★1 the cinema till (5) and ★2 a guessing game (3).
-Each section starts with questions to click, then a guided code task with a How to do it box, and ends with a Write it. If someone is stuck on code, point them at the How to do it box and their own work from that lesson, nothing more.
+49 marks in 6 sections: 1 Errors (5) · 2 Variables, input & casting (12) · 3 Selection with elif (7) · 4 while loops (9) · 5 for loops & turtle (8) · 6 Functions (8). The ★ bonus is extra marks outside the percentage: ★1 the cinema till (5) and ★2 a guessing game (3). It stays locked until every code question in sections 1–6 has full marks.
+Each section starts with questions to click, then a guided code task with an example underneath, and ends with a Write it. If someone is stuck on code, point them at the example under the task and their own work from that lesson, nothing more.
 Circulate. Watch for students who answer the click questions and skip every code task (the Y8 pattern): nudge them to try each section's first code task, worth 1 mark and guided.
 At about 45 minutes, stop the class for the last slides.`);
 }
@@ -151,7 +151,7 @@ At about 45 minutes, stop the class for the last slides.`);
   K.isys(s, { term: 'Logic error', fact: 'runs, but wrong output', check: 'Which error runs, but gives the wrong output?', reverse: 'What happens with a logic error?',
     say: 'A logic error runs, but wrong output comes out: Done was meant to print once, after the loop.' });
   addIcon(s, 'feedback');
-  s.addNotes(`After the assessment: everyone stops, screens down. These are the OCR exam words for the two errors they met today (questions 1.3 and 1.5, and the square that came out as a straight line in section 5).
+  s.addNotes(`After the assessment: everyone stops, screens down. These are the OCR exam words for the two errors they met today (the missing bracket in 1.3 and the missing colon in 1.5 were syntax errors; the square that came out as a straight line in section 5 was a logic error).
 Left: a syntax error. The code breaks Python's rules (here, a bracket that's never closed), so Python stops and nothing runs. The error message tells you where.
 Right: a logic error. Python runs every line, with no message at all, but the output is wrong: "Done" was meant to print once, at the end, but it's indented, so it's inside the loop. Ask: "Which one line would you change?" (take the indent off print("Done"), so Done prints once, after Go, Go).
 The worst errors are the ones with no message: always check the output against what you meant.`);

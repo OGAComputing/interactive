@@ -3,7 +3,7 @@ import {
   ITEMS, LIVE_ITEMS, SECTIONS, itemById, itemMax, summarise, variantOf, evalCode,
   branchChoices, branchAnswer, checkTraceValue, checkTraceOutput,
   usesElif, usesWhile, usesFor, definedFunctions, calledAfterDef, drewOnly,
-  cleanChoices, mergeChoices, stationState, inventoryRows, breachTools, VERSION,
+  cleanChoices, mergeChoices, stationState, inventoryRows, breachTools, VERSION, bonusBlockers,
 } from './checkers.js';
 
 // A run as runPython() reports it: each input() echoes "prompt + answer" on its own line.
@@ -61,10 +61,10 @@ describe('question bank', () => {
     }
   });
 
-  test('46 marks across 6 sections (v2), and the bonus (cinema till + guessing game) is outside them', () => {
+  test('49 marks across 6 sections (v2), and the bonus (cinema till + guessing game) is outside them', () => {
     for (const seed of [0, 1, 2, 3]) {
       const s = summarise({}, seed);
-      expect(s.max).toBe(46);
+      expect(s.max).toBe(49);
       expect(s.sections.ext.max).toBe(8);
     }
   });
@@ -88,15 +88,15 @@ describe('question bank', () => {
     expect(s.sections.errors.earned).toBe(2);
     expect(s.earned).toBe(6);
     expect(s.bonus).toBe(3);
-    expect(s.pct).toBe(Math.round(6 / 46 * 100));
+    expect(s.pct).toBe(Math.round(6 / 49 * 100));
   });
 });
 
 // Version 2: the changes made after the first sitting (MTP, Lesson 6, "Version 2").
 describe('version 2', () => {
-  test('is saved as version 2, and the trap and duplicate items are retired but kept for L7', () => {
-    expect(VERSION).toBe(2);
-    for (const id of ['s_order', 's_fix', 'd_fix']) {
+  test('is saved as version 3, and the trap and duplicate items are retired but kept for L7', () => {
+    expect(VERSION).toBe(3);
+    for (const id of ['s_order', 's_fix', 'd_fix', 'e_kind', 's_pick', 'f_range', 's_guide', 'w_fix']) {
       expect(itemById(id).retired, id).toBe(true);
       expect(LIVE_ITEMS.map(i => i.id)).not.toContain(id);
     }
@@ -109,11 +109,65 @@ describe('version 2', () => {
     expect(s.bonus).toBe(8);
   });
 
-  test('every trace question has a worked example from a different program', () => {
-    for (const it of LIVE_ITEMS.filter(i => i.kind === 'trace')) {
-      expect(it.example?.code, it.id).toBeTruthy();
+  test('the reassignment and functions traces have a short worked example from a different program', () => {
+    for (const id of ['v_change', 'd_trace']) {
+      const it = itemById(id);
+      expect(it.example?.code, id).toBeTruthy();
+      expect(it.example.text.replace(/<[^>]+>/g, '').length, id).toBeLessThan(70);
       for (const v of it.variants) expect(v.lines.join('\n')).not.toBe(it.example.code);
     }
+  });
+
+  test('v_trace builds confidence: no variable changes value, and no worked example', () => {
+    const it = itemById('v_trace');
+    expect(it.example).toBeUndefined();
+    for (const v of it.variants) {
+      const assigned = v.lines.map(l => l.match(/^(\w+) =/)?.[1]).filter(Boolean);
+      expect(new Set(assigned).size).toBe(assigned.length);
+    }
+  });
+
+  test('each section opens with a basic question: if (not elif), how many times a for loop runs, the call', () => {
+    const first = sec => LIVE_ITEMS.find(i => i.section === sec).id;
+    expect(first('selection')).toBe('s_if');
+    expect(itemById('s_if').opts[0]).toBe('if');
+    expect(first('for')).toBe('f_times');
+    expect(first('functions')).toBe('d_call');
+    expect(first('errors')).toBe('e_line');
+  });
+
+  test('the first code task in each section is a one-line change', () => {
+    const firstCode = sec => LIVE_ITEMS.find(i => i.section === sec && ['fix', 'reqs'].includes(i.kind));
+    const expected = { errors: 'e_fix', sequence: 'v_str', selection: 's_easy', while: 'w_guide', for: 'f_guide', functions: 'd_guide' };
+    for (const [sec, id] of Object.entries(expected)) {
+      const it = firstCode(sec);
+      expect(it.id, sec).toBe(id);
+      expect(it.reqs, id).toHaveLength(1);
+    }
+  });
+
+  test('the bonus is locked until every core code question has full marks', () => {
+    const core = LIVE_ITEMS.filter(i => !i.bonus && ['fix', 'reqs'].includes(i.kind));
+    const full = Object.fromEntries(core.map(i => [i.id, itemMax(i)]));
+    expect(bonusBlockers({})).toEqual(core.map(i => i.id));
+    expect(bonusBlockers(full)).toEqual([]);
+    expect(bonusBlockers({ ...full, w_write: 1 })).toEqual(['w_write']);
+    // Click questions don't hold it back
+    expect(bonusBlockers({ ...full, e_line: 0 })).toEqual([]);
+  });
+
+  test('v_total casts round the input, as taught', () => {
+    const it = itemById('v_total');
+    expect(it.code).toMatch(/= int\(input\(/);
+    for (const v of it.variants) expect(v.opts.join()).not.toMatch(/\bint\(a/);
+  });
+
+  test('code examples are just code; the colon fix is a one-line reminder about for', () => {
+    for (const it of LIVE_ITEMS.filter(i => i.howto)) {
+      if (it.howto.code) expect(it.howto.text, it.id).toBeUndefined();
+      else expect(it.howto.text, it.id).toMatch(/colon/);
+    }
+    expect(itemById('e_colon').howto.text).toMatch(/for.*colon/);
   });
 
   test('f_which: only the right answer names a while loop', () => {
