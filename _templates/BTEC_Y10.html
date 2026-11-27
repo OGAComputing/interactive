@@ -311,6 +311,36 @@ color:  red
   .hs-pic .credit { grid-column: 1 / -1; margin: 0; }
   @media (max-width: 760px) { .hs-pic { grid-template-columns: 1fr; } }
 
+  /* ── Order: put cards into a running order, by drag or ▲ ▼ (kind 'order') ── */
+  .order-list { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 12px 16px; align-items: start; background: #fff;
+    border: 1.5px solid var(--text); padding: 12px 14px; margin: 0 0 18px; }
+  .order-list.no-img { grid-template-columns: 1fr; }
+  .order-list h3 { grid-column: 1 / -1; font-family: var(--font-head); font-weight: 600; font-size: 1.4rem; line-height: 1.1; margin: 0; }
+  .order-pic { margin: 0; }
+  .order-pic img { display: block; width: 100%; max-height: 320px; object-fit: contain; background: var(--bg); }
+  .order-pic figcaption { margin-top: 4px; }
+  .order-end { margin: 0; font-size: .76rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
+  .olist { list-style: none; margin: 6px 0; padding: 0; display: grid; gap: 6px; }
+  .ocard { display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; gap: 4px 10px; align-items: center; padding: 8px 10px;
+    border: 1.5px solid var(--text); background: var(--bg); cursor: grab; user-select: none; }
+  .ocard:hover { background: #fff; }
+  .ocard:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+  .ocard .opos { font-family: var(--font-head); font-size: 1.5rem; line-height: 1; color: var(--accent); text-align: center; }
+  .ocard .omove { display: flex; gap: 4px; }
+  .ocard .omove button { width: 40px; height: 40px; padding: 0; border: 1.5px solid var(--text); border-radius: 0; background: #fff;
+    color: var(--text); font-size: 1rem; cursor: pointer; }
+  .ocard .omove button:hover:not(:disabled), .ocard .omove button:focus-visible { background: var(--text); color: var(--text-inv); }
+  .ocard .omove button:disabled { opacity: .3; cursor: default; }
+  .ocard .onote { grid-column: 2 / -1; font-size: .85rem; font-weight: 700; color: var(--accent); }
+  .ocard.dragging { opacity: .45; }
+  .ocard.drop-before { box-shadow: 0 -5px 0 var(--accent); }
+  .ocard.drop-after { box-shadow: 0 5px 0 var(--accent); }
+  .ocard.is-correct .opos { color: var(--green); }
+  .ocard.is-wrong .opos { color: var(--red); }
+  .order-list.done .ocard { cursor: default; }
+  .order-list > .credit { grid-column: 1 / -1; margin: 0; }
+  @media (max-width: 700px) { .order-list { grid-template-columns: 1fr; } .order-pic img { max-height: 200px; } }
+
   /* ── Test a survey: run it, spot the useless results, rewrite and run again (kind 'pilot') ── */
   .pilot-plan { background: #fff; border: 1.5px solid var(--text); padding: 14px 18px; margin: 0 0 14px; font-family: var(--font-quote); font-size: 1.08rem; }
   .pilot-plan .by { display: block; font-family: var(--font-body); font-size: .78rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
@@ -517,6 +547,7 @@ import {
   markSpot, markSpotFlags, markPilot, markPilotFlags, pilotProblem, pilotAgain, starsFor, allCorrect, cooldownSeconds, calcScore, coreDone, coreGold, seededRandom, shuffled,
   binCounts, sortBlocker, unansweredBlocker, overBlocker, tooManyWrong,
   HOTSPOTS, markHotspot, zoneAt, hotspotBlocker,
+  ORDERS, markOrder, orderStart, orderBlocker,
 } from './checkers.js';
 
 // ── Activity identity ──────────────────────────────────
@@ -568,7 +599,7 @@ function glossify(root) {
     const hits = [...n.data.matchAll(GL_RE)];
     if (!hits.length) continue;
     // Inside a radio label or a clickable sentence the word is hover-only, so Tab still goes option to option.
-    const focusable = !n.parentElement.closest('label, .sent, [role="button"]');
+    const focusable = !n.parentElement.closest('label, .sent, [role="button"], .ocard');
     const frag = document.createDocumentFragment();
     let last = 0;
     for (const m of hits) {
@@ -979,6 +1010,99 @@ document.addEventListener('keydown', e => {
   if (!hsPlace(box, at[0] + d[0], at[1] + d[1])) return;
   renderHotspot(box);
   box.querySelector(`.hs-pic[data-pic="${picId}"] .hs-stage`)?.focus();
+});
+
+// ── Order: put cards into a running order (drag, ▲ ▼, or the arrow keys on a focused card) ──
+// state.answers[listId] = the item ids in the student's order, top first (the start order is saved on first
+// render); [listId + '_moved'] = 1 once a card has moved, since a check needs a real attempt. Each card's hidden
+// select puts its place in the Classroom evidence.
+function renderOrder(box) {
+  const key = box.dataset.order, done = state.completed[taskOf(box)];
+  box.innerHTML = ORDERS[key].lists.map(l => {
+    const saved = state.answers[l.id];
+    if (!Array.isArray(saved) || saved.length !== l.items.length || !l.items.every(it => saved.includes(it.id))) {
+      state.answers[l.id] = orderStart(l, rng(l.id));
+      delete state.answers[l.id + '_moved'];
+      save();
+    }
+    const ids = state.answers[l.id], n = ids.length, pic = imgTag(l.img, l.alt || l.title || '');
+    return `<div class="order-list${pic ? '' : ' no-img'}${done ? ' done' : ''}" data-list="${l.id}">
+      ${l.title ? `<h3>${esc(l.title)}</h3>` : ''}
+      ${pic ? `<figure class="order-pic">${pic}${l.credit ? `<figcaption class="credit">${esc(l.credit)}</figcaption>` : ''}</figure>` : ''}
+      <div><p class="order-end">▲ ${esc(l.ends[0])}</p>
+        <ol class="olist">${ids.map((id, k) => {
+          const it = l.items.find(x => x.id === id);
+          return `<li class="ocard" data-qw="${id}" tabindex="0" draggable="${!done}" aria-label="Place ${k + 1} of ${n}: ${esc(it.label)}">
+            <span class="opos" aria-hidden="true">${k + 1}</span><span class="olbl">${esc(it.label)}</span>
+            <span class="omove"><button type="button" data-move="-1" aria-label="Move up" title="Move up"${done || !k ? ' disabled' : ''}>▲</button><button type="button" data-move="1" aria-label="Move down" title="Move down"${done || k === n - 1 ? ' disabled' : ''}>▼</button></span>
+            ${done && it.note ? `<small class="onote">${esc(it.note)}</small>` : ''}
+            <select class="sr-only" data-q="${id}" aria-label="${esc(it.label)}" tabindex="-1"><option>Place ${k + 1} of ${n}</option></select></li>`;
+        }).join('')}</ol>
+        <p class="order-end">▼ ${esc(l.ends[1])}</p></div>
+      ${!pic && l.credit ? `<p class="credit">${esc(l.credit)}</p>` : ''}
+    </div>`;
+  }).join('');
+  glossify(box);
+}
+// Move a card to place `to` (0 = top) in its list; false if it can't go there.
+function moveCard(card, to) {
+  const box = card.closest('.order'), listId = card.closest('.order-list').dataset.list, ids = state.answers[listId];
+  const from = ids.indexOf(card.dataset.qw);
+  if (isLocked(box) || to < 0 || to >= ids.length || to === from) return false;
+  ids.splice(from, 1);
+  ids.splice(to, 0, card.dataset.qw);
+  state.answers[listId + '_moved'] = 1;
+  save();
+  renderOrder(box);
+  return box.querySelector(`.ocard[data-qw="${card.dataset.qw}"]`);
+}
+document.addEventListener('click', e => {
+  const btn = e.target.closest('.order .omove button');
+  if (!btn) return;
+  const card = btn.closest('.ocard'), d = +btn.dataset.move;
+  const moved = moveCard(card, [...card.parentElement.children].indexOf(card) + d);
+  if (moved) (moved.querySelector(`[data-move="${d}"]:not(:disabled)`) || moved).focus();
+});
+document.addEventListener('keydown', e => {
+  const card = e.target.closest?.('.order .ocard');
+  const d = { ArrowUp: -1, ArrowDown: 1 }[e.key];
+  if (!card || e.target !== card || !d || isLocked(card)) return;
+  e.preventDefault();
+  moveCard(card, [...card.parentElement.children].indexOf(card) + d)?.focus();
+});
+let oDragged = null;
+const oClearDrop = () => document.querySelectorAll('.drop-before, .drop-after').forEach(x => x.classList.remove('drop-before', 'drop-after'));
+const oTarget = e => {
+  const c = e.target.closest?.('.ocard');
+  return oDragged && c && c !== oDragged && c.parentElement === oDragged.parentElement ? c : null;
+};
+document.addEventListener('dragstart', e => {
+  const card = e.target.closest?.('.ocard');
+  if (!card || isLocked(card)) return;
+  oDragged = card;
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', card.dataset.qw);
+  card.classList.add('dragging');
+});
+document.addEventListener('dragend', () => { oDragged?.classList.remove('dragging'); oDragged = null; oClearDrop(); });
+document.addEventListener('dragover', e => {
+  const c = oTarget(e);
+  if (!c) return;
+  e.preventDefault();
+  const after = e.clientY > c.getBoundingClientRect().top + c.offsetHeight / 2;
+  oClearDrop();
+  c.classList.add(after ? 'drop-after' : 'drop-before');
+});
+document.addEventListener('drop', e => {
+  const c = oTarget(e);
+  if (!c) return;
+  e.preventDefault();
+  // The side the last dragover marked (the drop event's own position isn't always the pointer's).
+  const cards = [...c.parentElement.children], from = cards.indexOf(oDragged);
+  let to = cards.indexOf(c) + (c.classList.contains('drop-after') ? 1 : 0);
+  if (from < to) to--;
+  oClearDrop();
+  moveCard(oDragged, to);
 });
 
 // ── Spot the slip: flag the wrong sentences, then (once all are found) pick each fix ──
@@ -1421,6 +1545,7 @@ function gatherAndMark(i) {
   if (kind === 'profile') return markProfile(key, state.answers);
   if (kind === 'numbers') return markNumbers(key, state.answers);
   if (kind === 'hotspot') return markHotspot(key, state.answers);
+  if (kind === 'order') return markOrder(key, state.answers);
   return markWriting(key, state.answers);
 }
 
@@ -1462,6 +1587,7 @@ function blocker(i) {
   if (kind === 'profile') return unansweredBlocker(PROFILES[key].cards.flatMap(c => c.fields.map(f => f.id)), a);
   if (kind === 'numbers') return unansweredBlocker(NUMBERS[key].qs.map(q => q.id), a);
   if (kind === 'hotspot') return hotspotBlocker(HOTSPOTS[key], a);
+  if (kind === 'order') return orderBlocker(ORDERS[key], a);
   if (kind === 'spot') {
     const parts = SPOTS[key].parts;
     return spotStage(key) === 'fix' ? unansweredBlocker(parts.filter(p => p.fix).map(p => p.id + '_fix'), a)
@@ -1482,7 +1608,7 @@ function blocker(i) {
 function blindIds(i, res) {
   const { key, kind } = TASKS[i];
   if (kind === 'spot') return spotStage(key) === 'fix' ? Object.keys(res).filter(id => id.endsWith('_fix')) : null;
-  if (!['choice', 'sort', 'spectrum', 'profile', 'numbers', 'hotspot'].includes(kind)) return null;
+  if (!['choice', 'sort', 'spectrum', 'profile', 'numbers', 'hotspot', 'order'].includes(kind)) return null;
   const soft = typeof softIds === 'function' ? softIds(TASKS[i]) : new Set();
   return Object.keys(res).filter(id => !soft.has(id));
 }
@@ -1491,7 +1617,7 @@ const clearMarks = i => document.querySelectorAll(`#panel-${i} .is-correct, #pan
 // More than half wrong: say how many, not which, so moving the red ones round can't stand in for reading.
 function blindFeedback(i, res, ids, fb) {
   clearMarks(i);
-  const right = ids.filter(id => res[id]).length, noun = ['sort', 'spectrum'].includes(TASKS[i].kind) ? 'card' : TASKS[i].kind === 'hotspot' ? 'pin' : 'answer';
+  const right = ids.filter(id => res[id]).length, noun = ['sort', 'spectrum', 'order'].includes(TASKS[i].kind) ? 'card' : TASKS[i].kind === 'hotspot' ? 'pin' : 'answer';
   fb.className = 'feedback';
   void fb.offsetWidth;
   fb.className = 'feedback wrong';
@@ -1655,6 +1781,8 @@ function showDone(i) {
   if (['choice', 'spot', 'profile', 'numbers'].includes(TASKS[i].kind)) document.querySelectorAll(`#panel-${i} .q input`).forEach(r => { r.disabled = true; });
   if (TASKS[i].kind === 'pilot') document.querySelectorAll(`#panel-${i} .pilot textarea`).forEach(t => { t.disabled = true; });
   if (TASKS[i].kind === 'hotspot') document.querySelectorAll(`#panel-${i} [data-hotspot]`).forEach(box => { renderHotspot(box); highlight(i, gatherAndMark(i)); });
+  // A done order locks its cards and shows each card's note.
+  if (TASKS[i].kind === 'order') document.querySelectorAll(`#panel-${i} [data-order]`).forEach(box => { renderOrder(box); highlight(i, gatherAndMark(i)); });
   if (TASKS[i].kind === 'fix') document.querySelectorAll(`#panel-${i} .fix`).forEach(box => {
     closeFixTray(box);
     box.querySelectorAll('.fix-menu input').forEach(r => { r.disabled = true; });
@@ -1691,6 +1819,7 @@ function resetTask(i) {
     : kind === 'profile' ? PROFILES[key].cards.flatMap(c => c.fields.map(f => f.id))
     : kind === 'numbers' ? NUMBERS[key].qs.map(q => q.id)
     : kind === 'hotspot' ? HOTSPOTS[key].pics.flatMap(p => p.finds.flatMap(f => [f.id, f.id + '_at']))
+    : kind === 'order' ? ORDERS[key].lists.flatMap(l => [l.id, l.id + '_moved'])
     // A hunt keeps the student's research: only the checked facts are cleared, to find again.
     : kind === 'hunt' ? HUNTS[key].rows.filter(r => r.accept).map(r => r.id + '_fact') : [];
   ids.forEach(id => delete state.answers[id]);
@@ -1803,6 +1932,7 @@ function renderTask(i) {
   panel.querySelectorAll('[data-profile]').forEach(renderProfile);
   panel.querySelectorAll('[data-numbers]').forEach(renderNumbers);
   panel.querySelectorAll('[data-hotspot]').forEach(renderHotspot);
+  panel.querySelectorAll('[data-order]').forEach(renderOrder);
   glossify(panel);
 }
 

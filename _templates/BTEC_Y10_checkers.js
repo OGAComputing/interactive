@@ -8,8 +8,8 @@
 // rounds), 'spot' (find and fix the slips in a paragraph), 'fix' (the harder spot: change any line to the
 // right version), 'spectrum' (cards placed on a line between
 // two ends), 'hunt' (live research: find a fact, paste its link), 'profile' (an audience profile card) or
-// 'numbers' (questions answered from a real table of statistics) or 'hotspot' (click the part of a picture
-// that shows X). Vary them: no lesson should run the
+// 'numbers' (questions answered from a real table of statistics), 'hotspot' (click the part of a picture
+// that shows X) or 'order' (put cards into a running order). Vary them: no lesson should run the
 // same kind in two tabs in a row (Y10/CLAUDE.md).
 // once: true makes a choice task an assessment (a check of what students remember): it is marked once, every
 // question goes green or red without showing the right option, there is no cooldown or Try for Gold, and it scores
@@ -186,6 +186,19 @@ export const PILOTS = {};
 // data-hotspot="t2"></div> with the usual check, reset and feedback. Built for 4.1 (iconography on a poster).
 // Use for: iconography, anchorage, a layout's parts, a camera shot's framing, a game or app screen's parts.
 export const HOTSPOTS = {};
+
+// ── Order (kind 'order'): put cards into a running order, marked position by position ──
+// { taskKey: { lists: [{ id, title?, img?, alt?, credit?, ends: [top label, bottom label], keep?: true,
+//   items: [{ id, label, at: n | [n, …], note? }] }] } }
+// at = the card's right place, counting from the top (1 = first); a list of places where two cards could fairly
+// swap (two details of a news story). Cards start in a seeded shuffle with fewer than half in a right place;
+// keep: true starts them in the order listed instead (e.g. the order a film shows its scenes, to be put in story
+// order). Students drag a card, or use its ▲ ▼ buttons (or the arrow keys on a focused card). Check needs a card
+// moved in every list; each card then goes green or red for its place (more than half wrong: how many, not which),
+// and a wrong check costs the cooldown. note shows on each card once the task is done. Markup: <div class="order"
+// data-order="t3"></div> with the usual check, reset and feedback. Put expect(orderDataProblems(ORDERS.t3)).toEqual([])
+// in the page's checkers.test.js. Built for 4.3 (a film's story order; an inverted-pyramid news story); use for 6.2 editing.
+export const ORDERS = {};
 
 // ── Glossary: [pattern, meaning] for every word a typical 13-year-old might not know ──
 // The page underlines each match in the task content (questions, options, clues, paragraphs, prompts,
@@ -394,6 +407,50 @@ export function hotspotDataProblems(hs) {
       if (!f.ok.length) out.push(`${f.id}: no right zone`);
       for (const z of f.ok) if (!p.zones[z]) out.push(`${f.id}: '${z}' isn't a zone of ${p.id}`);
     }
+  }
+  return out;
+}
+
+// ── Order ──
+const placesOf = it => [].concat(it.at);
+// { itemId: true/false } for the cards in this order (item ids, top first).
+export function markOrderList(list, ids) {
+  const order = Array.isArray(ids) ? ids : [];
+  return Object.fromEntries(list.items.map(it => [it.id, placesOf(it).includes(order.indexOf(it.id) + 1)]));
+}
+// given[listId] = the student's order (item ids, top first).
+export function markOrder(taskKey, given) {
+  return Object.assign({}, ...ORDERS[taskKey].lists.map(l => markOrderList(l, given[l.id])));
+}
+// One right order (cards sorted by their first right place).
+export const orderAnswer = list => list.items.slice().sort((a, b) => Math.min(...placesOf(a)) - Math.min(...placesOf(b))).map(it => it.id);
+// The order the cards start in: as listed (keep), or a seeded shuffle with fewer than half in a right place.
+export function orderStart(list, rnd = Math.random) {
+  if (list.keep) return list.items.map(it => it.id);
+  let ids = list.items.map(it => it.id);
+  for (let k = 0; k < 60; k++) {
+    ids = shuffled(list.items, rnd).map(it => it.id);
+    if (Object.values(markOrderList(list, ids)).filter(Boolean).length * 2 < ids.length) break;
+  }
+  return ids;
+}
+// '' once a card has been moved in every list (given[listId + '_moved']).
+export const orderBlocker = (od, given) =>
+  od.lists.some(l => !given[l.id + '_moved']) ? '📥 Put the cards in order first: drag them, or use the ▲ ▼ buttons.' : '';
+// Data mistakes: a place off the list, no right order, a duplicate id, or a kept start that is already right.
+export function orderDataProblems(od) {
+  const out = [], seen = new Set();
+  for (const l of od.lists) {
+    const n = l.items.length;
+    if (n < 3) out.push(`${l.id}: needs at least 3 cards`);
+    if (!Array.isArray(l.ends) || l.ends.length !== 2) out.push(`${l.id}: needs ends: [top, bottom]`);
+    for (const it of l.items) {
+      if (seen.has(it.id)) out.push(`${it.id}: id used twice`);
+      seen.add(it.id);
+      if (!placesOf(it).length || placesOf(it).some(p => !Number.isInteger(p) || p < 1 || p > n)) out.push(`${it.id}: at must be places 1–${n}`);
+    }
+    if (!Object.values(markOrderList(l, orderAnswer(l))).every(Boolean)) out.push(`${l.id}: the places don't make one right order`);
+    if (l.keep && Object.values(markOrderList(l, orderStart(l))).every(Boolean)) out.push(`${l.id}: keep starts it already in order`);
   }
   return out;
 }

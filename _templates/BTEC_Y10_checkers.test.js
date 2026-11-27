@@ -127,3 +127,42 @@ describe('hotspot', async () => {
     expect(hotspotDataProblems({ pics: [bad] })).toEqual(['p.wide: box off the picture', "f3: 'nope' isn't a zone of p"]);
   });
 });
+
+describe('order', async () => {
+  const { markOrderList, orderAnswer, orderStart, orderBlocker, orderDataProblems, seededRandom } = await import('./BTEC_Y10_checkers.js');
+  // A news story: the lead first, two details that may swap, then the background.
+  const NEWS = { id: 'n', ends: ['Top', 'Bottom'], items: [
+    { id: 'lead', label: 'What happened', at: 1 },
+    { id: 'd1', label: 'A detail', at: [2, 3] },
+    { id: 'd2', label: 'Another detail', at: [2, 3] },
+    { id: 'bg', label: 'Background', at: 4 },
+  ] };
+  it('marks each card by its place, and accepts a fair swap', () => {
+    expect(markOrderList(NEWS, ['lead', 'd1', 'd2', 'bg'])).toEqual({ lead: true, d1: true, d2: true, bg: true });
+    expect(markOrderList(NEWS, ['lead', 'd2', 'd1', 'bg'])).toEqual({ lead: true, d1: true, d2: true, bg: true });
+    expect(markOrderList(NEWS, ['bg', 'd1', 'd2', 'lead'])).toEqual({ lead: false, d1: true, d2: true, bg: false });
+    expect(Object.values(markOrderList(NEWS, undefined)).some(Boolean)).toBe(false);
+  });
+  it('a shuffled start has fewer than half in a right place, and is the same for the same seed', () => {
+    for (const seed of ['a', 'b', 'c', 'zz9', 'q1']) {
+      const ids = orderStart(NEWS, seededRandom(seed));
+      expect([...ids].sort()).toEqual(NEWS.items.map(it => it.id).sort());
+      expect(Object.values(markOrderList(NEWS, ids)).filter(Boolean).length * 2).toBeLessThan(4);
+      expect(orderStart(NEWS, seededRandom(seed))).toEqual(ids);
+    }
+    expect(orderStart({ ...NEWS, keep: true })).toEqual(['lead', 'd1', 'd2', 'bg']);
+  });
+  it('blocks a check until a card has moved in every list', () => {
+    expect(orderBlocker({ lists: [NEWS] }, {})).toMatch(/in order first/);
+    expect(orderBlocker({ lists: [NEWS] }, { n_moved: 1 })).toBe('');
+  });
+  it('orderDataProblems passes good data and catches bad places, no right order and a kept start already right', () => {
+    expect(orderAnswer(NEWS)).toEqual(['lead', 'd1', 'd2', 'bg']);
+    expect(orderDataProblems({ lists: [NEWS] })).toEqual([]);
+    const clash = { ...NEWS, items: NEWS.items.map(it => (it.id === 'bg' ? { ...it, at: 1 } : it)) };
+    expect(orderDataProblems({ lists: [clash] })).toEqual(["n: the places don't make one right order"]);
+    const off = { ...NEWS, items: NEWS.items.map(it => (it.id === 'bg' ? { ...it, at: 9 } : it)) };
+    expect(orderDataProblems({ lists: [off] })[0]).toMatch(/bg: at must be places 1–4/);
+    expect(orderDataProblems({ lists: [{ ...NEWS, keep: true }] })).toEqual(['n: keep starts it already in order']);
+  });
+});
