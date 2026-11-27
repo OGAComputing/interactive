@@ -129,7 +129,7 @@ describe('hotspot', async () => {
 });
 
 describe('order', async () => {
-  const { markOrderList, orderAnswer, orderStart, orderBlocker, orderDataProblems, orderHints, seededRandom } = await import('./BTEC_Y10_checkers.js');
+  const { markOrderList, orderAnswer, orderStart, orderBlocker, orderDataProblems, orderHints, orderMoved, ordinal, seededRandom } = await import('./BTEC_Y10_checkers.js');
   // A news story: the lead first, two details that may swap, then the background.
   const NEWS = { id: 'n', ends: ['Top', 'Bottom'], items: [
     { id: 'lead', label: 'What happened', at: 1 },
@@ -142,6 +142,18 @@ describe('order', async () => {
     expect(markOrderList(NEWS, ['lead', 'd2', 'd1', 'bg'])).toEqual({ lead: true, d1: true, d2: true, bg: true });
     expect(markOrderList(NEWS, ['bg', 'd1', 'd2', 'lead'])).toEqual({ lead: false, d1: true, d2: true, bg: false });
     expect(Object.values(markOrderList(NEWS, undefined)).some(Boolean)).toBe(false);
+  });
+  it('finds the cards one order moves compared with another, and names places', () => {
+    expect(orderMoved(['g', 'a', 'b', 'c', 'd', 'e', 'f'], ['a', 'b', 'c', 'd', 'e', 'f', 'g'])).toEqual(['g']);
+    expect(orderMoved(['a', 'b', 'c'], ['a', 'b', 'c'])).toEqual([]);
+    expect(orderMoved(['c', 'b', 'a'], ['a', 'b', 'c'])).toHaveLength(2);
+    expect([1, 2, 3, 4, 7, 11, 12, 13, 21, 22].map(ordinal)).toEqual(['1st', '2nd', '3rd', '4th', '7th', '11th', '12th', '13th', '21st', '22nd']);
+  });
+  it('checks a shown order: every card once, different from the right order, with a title and summary', () => {
+    const base = { ...NEWS, shown: { title: 'Plot', summary: 'Moved one.', order: ['bg', 'lead', 'd1', 'd2'] } };
+    expect(orderDataProblems({ lists: [base] })).toEqual([]);
+    expect(orderDataProblems({ lists: [{ ...base, shown: { ...base.shown, order: ['lead', 'd1'] } }] })[0]).toMatch(/every card once/);
+    expect(orderDataProblems({ lists: [{ ...base, shown: { ...base.shown, order: ['lead', 'd1', 'd2', 'bg'] } }] })[0]).toMatch(/same as the right order/);
   });
   it('tells each misplaced card which way to go, towards its nearest right place, and leaves right ones out', () => {
     expect(orderHints(NEWS, ['lead', 'd1', 'd2', 'bg'])).toEqual({});

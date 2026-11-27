@@ -188,14 +188,16 @@ export const PILOTS = {};
 export const HOTSPOTS = {};
 
 // ── Order (kind 'order'): put cards into a running order, marked position by position ──
-// { taskKey: { lists: [{ id, title?, img?, alt?, credit?, ends: [top label, bottom label], keep?: true,
+// { taskKey: { lists: [{ id, title?, img?, alt?, credit?, ends: [top label, bottom label], keep?: true, shown?,
 //   items: [{ id, label, at: n | [n, …], note? }] }] } }
 // at = the card's right place, counting from the top (1 = first); a list of places where two cards could fairly
 // swap (two details of a news story). Cards start in a seeded shuffle with fewer than half in a right place;
 // keep: true starts them in the order listed instead (e.g. the order a film shows its scenes, to be put in story
 // order). Students drag a card, or use its ▲ ▼ buttons (or the arrow keys on a focused card). Check needs a card
-// moved in every list; each card then goes green or red for its place (more than half wrong: how many, not which),
-// and a wrong check costs the cooldown. note shows on each card once the task is done. Markup: <div class="order"
+// moved in every list; each card then goes green or red for its place, and each red one says "goes earlier" or
+// "goes later" (orderHints); a wrong check costs the cooldown. note shows on each card once the task is done.
+// shown: { title, rightTitle?, whereShown?, order: [ids], summary } puts another order of the same cards (a film's
+// plot) beside the right one (its story) once done, with the cards it moves picked out (orderMoved) and the summary. Markup: <div class="order"
 // data-order="t3"></div> with the usual check, reset and feedback. Put expect(orderDataProblems(ORDERS.t3)).toEqual([])
 // in the page's checkers.test.js. Built for 4.3 (a film's story order; an inverted-pyramid news story); use for 6.2 editing.
 export const ORDERS = {};
@@ -424,6 +426,22 @@ export function markOrder(taskKey, given) {
 }
 // One right order (cards sorted by their first right place).
 export const orderAnswer = list => list.items.slice().sort((a, b) => Math.min(...placesOf(a)) - Math.min(...placesOf(b))).map(it => it.id);
+// The cards one order moves compared with another: those outside the longest run both keep in the same order.
+// Used for a done list's `shown` order (the plot beside the story): Wicked's plot moves one card, the party.
+export function orderMoved(from, to) {
+  const n = from.length, m = to.length, L = Array.from({ length: n + 1 }, () => new Array(m + 1).fill(0));
+  for (let i = n - 1; i >= 0; i--) for (let j = m - 1; j >= 0; j--)
+    L[i][j] = from[i] === to[j] ? L[i + 1][j + 1] + 1 : Math.max(L[i + 1][j], L[i][j + 1]);
+  const kept = new Set();
+  for (let i = 0, j = 0; i < n && j < m;) {
+    if (from[i] === to[j]) { kept.add(from[i]); i++; j++; } else if (L[i + 1][j] >= L[i][j + 1]) i++; else j++;
+  }
+  return from.filter(id => !kept.has(id));
+}
+export function ordinal(n) {
+  if (n % 100 >= 11 && n % 100 <= 13) return n + 'th';
+  return n + (['th', 'st', 'nd', 'rd'][n % 10] || 'th');
+}
 // Which way each misplaced card should move: { id: 'up' | 'down' } (cards already in a right place are left out).
 // Position marking is harsh (one card too high pushes every card under it a place down), so a wrong check shows
 // every card's mark plus these arrows rather than hiding which are wrong (Nick, 2026-11-27: 4.3's Wicked task).
@@ -464,6 +482,12 @@ export function orderDataProblems(od) {
     }
     if (!Object.values(markOrderList(l, orderAnswer(l))).every(Boolean)) out.push(`${l.id}: the places don't make one right order`);
     if (l.keep && Object.values(markOrderList(l, orderStart(l))).every(Boolean)) out.push(`${l.id}: keep starts it already in order`);
+    if (l.shown) {
+      const ids = l.items.map(it => it.id), o = l.shown.order || [];
+      if (o.length !== ids.length || !ids.every(id => o.includes(id))) out.push(`${l.id}: shown.order must list every card once`);
+      else if (!orderMoved(o, orderAnswer(l)).length) out.push(`${l.id}: shown.order is the same as the right order`);
+      if (!l.shown.title || !l.shown.summary) out.push(`${l.id}: shown needs a title and a summary`);
+    }
   }
   return out;
 }

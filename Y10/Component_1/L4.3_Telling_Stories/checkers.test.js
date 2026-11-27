@@ -80,6 +80,11 @@ describe('Task 1: Wicked in story order (order)', () => {
     expect(l.items).toHaveLength(7);
     expect(l.items.every(it => typeof it.at === 'number')).toBe(true);
   });
+  test('once done, the film plot order shows beside it: the same seven cards, with only the party moved', async () => {
+    const { orderMoved } = await import('./checkers.js');
+    expect(l.shown.order).toEqual(['s_party', ...orderAnswer(l).slice(0, -1)]);
+    expect(orderMoved(l.shown.order, orderAnswer(l))).toEqual(['s_party']);
+  });
   test('the opening party goes last in the story; the right order passes and the plot order fails', () => {
     expect(orderAnswer(l).at(-1)).toBe('s_party');
     expect(allCorrect(markOrder('story', answerOf('story')))).toBe(true);

@@ -340,6 +340,14 @@ color:  red
   .ohint { display: block; margin-top: 2px; font-size: .82rem; font-weight: 700; color: var(--red); }
   .order-list.done .ocard { cursor: default; }
   .order-list > .credit { grid-column: 1 / -1; margin: 0; }
+  .ocompare { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 14px; align-items: start; }
+  .ocompare .olist { margin-top: 4px; }
+  .ocompare .ocard { grid-template-columns: 28px minmax(0, 1fr); font-size: .92rem; padding: 6px 8px; }
+  .ocompare .ocard .opos { font-size: 1.2rem; }
+  .ocard.omoved { outline: 3px solid var(--accent); outline-offset: -3px; background: #FFF6E0; }
+  .otag { display: block; margin-top: 3px; font-size: .8rem; font-weight: 800; color: var(--accent); }
+  .osum { grid-column: 1 / -1; margin: 4px 0 0; font-weight: 700; }
+  @media (max-width: 700px) { .ocompare { grid-template-columns: 1fr; } }
   @media (max-width: 700px) { .order-list { grid-template-columns: 1fr; } .order-pic img { max-height: 200px; } }
 
   /* ── Test a survey: run it, spot the useless results, rewrite and run again (kind 'pilot') ── */
@@ -656,7 +664,7 @@ import {
   markSpot, markSpotFlags, markPilot, markPilotFlags, pilotProblem, pilotAgain, starsFor, allCorrect, cooldownSeconds, calcScore, coreDone, coreGold, seededRandom, shuffled,
   binCounts, sortBlocker, unansweredBlocker, overBlocker, tooManyWrong,
   HOTSPOTS, markHotspot, zoneAt, hotspotBlocker,
-  ORDERS, markOrder, orderStart, orderBlocker, orderHints,
+  ORDERS, markOrder, orderStart, orderBlocker, orderHints, orderMoved, orderAnswer, ordinal,
 } from './checkers.js';
 
 // ── Activity identity ──────────────────────────────────
@@ -1138,7 +1146,7 @@ function renderOrder(box) {
     return `<div class="order-list${pic ? '' : ' no-img'}${done ? ' done' : ''}" data-list="${l.id}">
       ${l.title ? `<h3>${esc(l.title)}</h3>` : ''}
       ${pic ? `<figure class="order-pic">${pic}${l.credit ? `<figcaption class="credit">${esc(l.credit)}</figcaption>` : ''}</figure>` : ''}
-      <div><p class="order-end">▲ ${esc(l.ends[0])}</p>
+      ${done && l.shown ? orderCompare(l, ids) : `<div><p class="order-end">▲ ${esc(l.ends[0])}</p>
         <ol class="olist">${ids.map((id, k) => {
           const it = l.items.find(x => x.id === id);
           return `<li class="ocard" data-qw="${id}" tabindex="0" draggable="${!done}" aria-label="Place ${k + 1} of ${n}: ${esc(it.label)}">
@@ -1147,11 +1155,28 @@ function renderOrder(box) {
             ${done && it.note ? `<small class="onote">${esc(it.note)}</small>` : ''}
             <select class="sr-only" data-q="${id}" aria-label="${esc(it.label)}" tabindex="-1"><option>Place ${k + 1} of ${n}</option></select></li>`;
         }).join('')}</ol>
-        <p class="order-end">▼ ${esc(l.ends[1])}</p></div>
+        <p class="order-end">▼ ${esc(l.ends[1])}</p></div>`}
       ${!pic && l.credit ? `<p class="credit">${esc(l.credit)}</p>` : ''}
     </div>`;
   }).join('');
   glossify(box);
+}
+// A done list with a `shown` order (e.g. the plot): that order beside the right one (the story), the same cards
+// in the same words, with the cards it moves picked out in both (Nick, 2026-11-27: show story vs plot side by side).
+// Only the right-order cards carry data-qw, so marks, notes and the evidence report work as before.
+function orderCompare(l, ids) {
+  const shown = l.shown.order, moved = new Set(orderMoved(shown, orderAnswer(l))), label = id => esc(l.items.find(x => x.id === id).label);
+  const col = (title, order, other, tag, right) => `<div class="ocol"><p class="order-end">${esc(title)}</p>
+    <ol class="olist">${order.map((id, k) => {
+      const it = l.items.find(x => x.id === id), mv = moved.has(id);
+      return `<li class="ocard${mv ? ' omoved' : ''}"${right ? ` data-qw="${id}"` : ''}><span class="opos" aria-hidden="true">${k + 1}</span>
+        <span class="olbl">${label(id)}${mv && !(right && it.note) ? `<span class="otag">${tag(ordinal(other.indexOf(id) + 1))}</span>` : ''}</span>
+        ${right && it.note ? `<small class="onote">${esc(it.note)}</small>` : ''}</li>`;
+    }).join('')}</ol></div>`;
+  return `<div class="ocompare">
+    ${col(l.shown.title, shown, ids, n => `In the story it comes ${n}`, false)}
+    ${col(l.shown.rightTitle || 'The right order', ids, shown, n => `${l.shown.whereShown || 'Shown'} ${n}`, true)}
+    <p class="osum">${esc(l.shown.summary)}</p></div>`;
 }
 // Move a card to place `to` (0 = top) in its list; false if it can't go there.
 function moveCard(card, to) {

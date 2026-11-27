@@ -64,6 +64,12 @@ test('Task 1: Check waits for a move; the plot order goes red with arrows and co
   await expect(page.locator('#feedback-0')).toContainText('All correct');
   await expect(panel.locator('.ocard.is-correct')).toHaveCount(7);
   await expect(panel.locator('.ocard[data-qw="s_party"] .onote')).toContainText('opens with this scene');
+  // The plot beside the story: the same cards, the party picked out in both.
+  await expect(panel.locator('.ocompare .ocol')).toHaveCount(2);
+  await expect(panel.locator('.ocompare .ocol').first()).toContainText('Plot: what the film shows');
+  await expect(panel.locator('.ocard.omoved')).toHaveCount(2);
+  await expect(panel.locator('.ocompare .ocol').first().locator('.omoved .otag')).toHaveText('In the story it comes 7th');
+  await expect(panel.locator('.osum')).toContainText('non-linear');
   await expect(panel.locator('.omove button:not(:disabled)')).toHaveCount(0);
   await page.reload();
   await expect(page.locator('#panel-0 .ocard.is-correct')).toHaveCount(7);
