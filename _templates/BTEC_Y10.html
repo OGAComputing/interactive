@@ -337,6 +337,7 @@ color:  red
   .ocard.drop-after { box-shadow: 0 5px 0 var(--accent); }
   .ocard.is-correct .opos { color: var(--green); }
   .ocard.is-wrong .opos { color: var(--red); }
+  .ohint { display: block; margin-top: 2px; font-size: .82rem; font-weight: 700; color: var(--red); }
   .order-list.done .ocard { cursor: default; }
   .order-list > .credit { grid-column: 1 / -1; margin: 0; }
   @media (max-width: 700px) { .order-list { grid-template-columns: 1fr; } .order-pic img { max-height: 200px; } }
@@ -547,7 +548,7 @@ import {
   markSpot, markSpotFlags, markPilot, markPilotFlags, pilotProblem, pilotAgain, starsFor, allCorrect, cooldownSeconds, calcScore, coreDone, coreGold, seededRandom, shuffled,
   binCounts, sortBlocker, unansweredBlocker, overBlocker, tooManyWrong,
   HOTSPOTS, markHotspot, zoneAt, hotspotBlocker,
-  ORDERS, markOrder, orderStart, orderBlocker,
+  ORDERS, markOrder, orderStart, orderBlocker, orderHints,
 } from './checkers.js';
 
 // ── Activity identity ──────────────────────────────────
@@ -1566,6 +1567,17 @@ function softMessage(i, res) {
   return `✍ Nearly: ${bits.join('; ')}.`;
 }
 
+// A wrong order check: each misplaced card says which way it goes. Moving a card re-draws the list, which clears them.
+function showOrderHints(i) {
+  const box = document.querySelector(`#panel-${i} .order`);
+  for (const l of ORDERS[box.dataset.order].lists) {
+    for (const [id, dir] of Object.entries(orderHints(l, state.answers[l.id]))) {
+      const card = box.querySelector(`.ocard[data-qw="${id}"]`);
+      card?.querySelector('.olbl').insertAdjacentHTML('beforeend',
+        `<span class="ohint">${dir === 'up' ? '⬆ goes earlier' : '⬇ goes later'}</span>`);
+    }
+  }
+}
 function highlight(i, res) {
   const panel = document.getElementById('panel-' + i);
   for (const [id, ok] of Object.entries(res)) {
@@ -1608,7 +1620,8 @@ function blocker(i) {
 function blindIds(i, res) {
   const { key, kind } = TASKS[i];
   if (kind === 'spot') return spotStage(key) === 'fix' ? Object.keys(res).filter(id => id.endsWith('_fix')) : null;
-  if (!['choice', 'sort', 'spectrum', 'profile', 'numbers', 'hotspot', 'order'].includes(kind)) return null;
+  // Not order: one misplaced card shifts the rest, so its marks always show, with arrows (orderHints).
+  if (!['choice', 'sort', 'spectrum', 'profile', 'numbers', 'hotspot'].includes(kind)) return null;
   const soft = typeof softIds === 'function' ? softIds(TASKS[i]) : new Set();
   return Object.keys(res).filter(id => !soft.has(id));
 }
@@ -1674,6 +1687,7 @@ function checkTask(i) {
   const blind = blindIds(i, res);
   if (blind && tooManyWrong(res, blind)) return blindFeedback(i, res, blind, fb);
   highlight(i, res);
+  if (kind === 'order') showOrderHints(i);
   const right = Object.values(res).filter(Boolean).length, total = Object.keys(res).length;
   if (allCorrect(res) && kind === 'spot' && spotStage(key) !== 'fix') {
     // Every slip found and nothing else flagged: now the fixes appear.
@@ -1712,6 +1726,10 @@ function checkTask(i) {
   }
   if (kind === 'pilot') {
     fb.textContent = `❌ ${hardWrong} rewrite${hardWrong === 1 ? '' : 's'} in red still ${hardWrong === 1 ? 'needs' : 'need'} work: read the note under ${hardWrong === 1 ? 'it' : 'each one'}. You can check again in ${secs} seconds.`;
+    return;
+  }
+  if (kind === 'order') {
+    fb.textContent = `❌ ${hard.length - hardWrong} of ${hard.length} in the right place. Each red card says which way it goes: you can check again in ${secs} seconds.`;
     return;
   }
   fb.textContent = `❌ ${hard.length - hardWrong} of ${hard.length} right. Fix the ones in red: you can check again in ${secs} seconds.`;

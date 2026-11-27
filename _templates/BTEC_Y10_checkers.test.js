@@ -129,7 +129,7 @@ describe('hotspot', async () => {
 });
 
 describe('order', async () => {
-  const { markOrderList, orderAnswer, orderStart, orderBlocker, orderDataProblems, seededRandom } = await import('./BTEC_Y10_checkers.js');
+  const { markOrderList, orderAnswer, orderStart, orderBlocker, orderDataProblems, orderHints, seededRandom } = await import('./BTEC_Y10_checkers.js');
   // A news story: the lead first, two details that may swap, then the background.
   const NEWS = { id: 'n', ends: ['Top', 'Bottom'], items: [
     { id: 'lead', label: 'What happened', at: 1 },
@@ -142,6 +142,12 @@ describe('order', async () => {
     expect(markOrderList(NEWS, ['lead', 'd2', 'd1', 'bg'])).toEqual({ lead: true, d1: true, d2: true, bg: true });
     expect(markOrderList(NEWS, ['bg', 'd1', 'd2', 'lead'])).toEqual({ lead: false, d1: true, d2: true, bg: false });
     expect(Object.values(markOrderList(NEWS, undefined)).some(Boolean)).toBe(false);
+  });
+  it('tells each misplaced card which way to go, towards its nearest right place, and leaves right ones out', () => {
+    expect(orderHints(NEWS, ['lead', 'd1', 'd2', 'bg'])).toEqual({});
+    expect(orderHints(NEWS, ['bg', 'd1', 'd2', 'lead'])).toEqual({ bg: 'down', lead: 'up' });
+    expect(orderHints(NEWS, ['d1', 'lead', 'd2', 'bg'])).toEqual({ d1: 'down', lead: 'up' });
+    expect(orderHints(NEWS, ['lead', 'bg', 'd1', 'd2'])).toEqual({ bg: 'down', d2: 'up' });
   });
   it('a shuffled start has fewer than half in a right place, and is the same for the same seed', () => {
     for (const seed of ['a', 'b', 'c', 'zz9', 'q1']) {

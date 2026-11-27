@@ -129,7 +129,7 @@ K.info({ title: 'Wicked: the story, in order', standfirst: 'The film opens with 
   points: [['Born', 'Elphaba is born green, and her father turns away from her.'],
     ['Shiz University', 'She has to share a room with Galinda. They hate each other, then become best friends.'],
     ['The Emerald City', 'The Wizard has no magic. Elphaba flies away. The film ends here.'],
-    ['Later', 'Oz has a party: the Wicked Witch is dead. The film opens here.']],
+    ['Later', 'Oz has a party: Elphaba, the Wicked Witch, is dead. The film opens here.']],
   img: img('wicked_2024.jpg'), imgLabel: 'Wicked (2024) poster · Universal Pictures',
   notes: 'One per click, as the answer to Task 1. Ask first: what does the film show first? (the party) Where does that come in the story? (at the very end) The plot opens at the end of the story: that is why the film is non-linear. Point 4 is the one most students put first, because the film shows it first: that is the difference between story and plot.' });
 

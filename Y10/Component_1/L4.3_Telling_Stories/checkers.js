@@ -277,7 +277,7 @@ export const ORDERS = {
       { id: 's_wizard', label: 'Now best friends, the two of them travel to the Emerald City, because the Wizard wants to meet Elphaba.', at: 5 },
       { id: 's_fraud', label: 'Once she meets him, Elphaba finds out the Wizard has no magic at all, and flies away on a broomstick.', at: 6,
         note: 'The film ends here, but the story doesn\'t.' },
-      { id: 's_party', label: 'The people of Oz have a party: the Wicked Witch is dead. Glinda is asked if she was the witch\'s friend.', at: 7,
+      { id: 's_party', label: 'The people of Oz have a party: Elphaba, now called the Wicked Witch, is dead. Galinda, now called Glinda, is asked if she was ever Elphaba\'s friend.', at: 7,
         note: 'The film opens with this scene, but it happens last in the story: after the film ends.' },
     ] }] },
   // Task 3: a news story from 21 July 1969, rewritten for this lesson from what was reported. The top tells the
@@ -543,6 +543,19 @@ export function markOrder(taskKey, given) {
 }
 // One right order (cards sorted by their first right place).
 export const orderAnswer = list => list.items.slice().sort((a, b) => Math.min(...placesOf(a)) - Math.min(...placesOf(b))).map(it => it.id);
+// Which way each misplaced card should move: { id: 'up' | 'down' } (cards already in a right place are left out).
+// Position marking is harsh (one card too high pushes every card under it a place down), so a wrong check shows
+// every card's mark plus these arrows rather than hiding which are wrong (Nick, 2026-11-27: 4.3's Wicked task).
+export function orderHints(list, ids) {
+  const order = Array.isArray(ids) ? ids : [], out = {};
+  for (const it of list.items) {
+    const pos = order.indexOf(it.id) + 1, places = placesOf(it);
+    if (!pos || places.includes(pos)) continue;
+    const near = places.reduce((best, p) => Math.abs(p - pos) < Math.abs(best - pos) ? p : best);
+    out[it.id] = near < pos ? 'up' : 'down';
+  }
+  return out;
+}
 // The order the cards start in: as listed (keep), or a seeded shuffle with fewer than half in a right place.
 export function orderStart(list, rnd = Math.random) {
   if (list.keep) return list.items.map(it => it.id);

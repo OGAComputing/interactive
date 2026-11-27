@@ -40,7 +40,7 @@ test('opens on the warm-up with its definitions; Part 2 opens with its word; the
   await expect(page.locator('.tab.locked')).toHaveCount(0);
 });
 
-test('Task 1: Check waits for a move; the plot order goes red and costs time; story order finishes it and shows the notes', async ({ page }) => {
+test('Task 1: Check waits for a move; the plot order goes red with arrows and costs time; story order finishes it and shows the notes', async ({ page }) => {
   await page.goto(URL);
   await page.locator('.tab[data-idx="0"]').click();
   const panel = page.locator('#panel-0'), list = ORDERS.story.lists[0], right = orderAnswer(list);
@@ -48,11 +48,13 @@ test('Task 1: Check waits for a move; the plot order goes red and costs time; st
   await page.locator('#check-0').click();
   await expect(page.locator('#feedback-0')).toContainText('in order first');
   await expect(page.locator('#check-0')).toBeEnabled();
-  // The order the film shows them puts every card one place out: too many wrong to show which.
+  // The order the film shows them puts every card one place out: all red, each saying which way it goes.
   await arrange(panel, ['s_party', ...right.slice(0, -1)]);
   await page.locator('#check-0').click();
-  await expect(page.locator('#feedback-0')).toContainText('Only 0 of 7 right');
-  await expect(panel.locator('.ocard.is-wrong')).toHaveCount(0);
+  await expect(page.locator('#feedback-0')).toContainText('0 of 7 in the right place');
+  await expect(panel.locator('.ocard.is-wrong')).toHaveCount(7);
+  await expect(panel.locator('.ocard[data-qw="s_party"] .ohint')).toHaveText('⬇ goes later');
+  await expect(panel.locator('.ocard[data-qw="s_birth"] .ohint')).toHaveText('⬆ goes earlier');
   await expect(page.locator('#check-0')).toBeDisabled();
   await skipCooldown(page);
   await page.locator('.tab[data-idx="0"]').click();
