@@ -82,9 +82,10 @@ module.exports = function createIsys(pres, kit) {
 
   // Called by the kit's write(), after every slide is made. template: true skips the 1–3 rule
   // (the deck template shows one example of everything, not a lesson).
-  function finish({ template = false } = {}) {
-    if (!template && (facts.size < 1 || facts.size > 3)) {
-      throw new Error(`A lesson needs 1–3 ISYS phrases; this deck has ${facts.size}. Add them with K.isys(slide, { term, fact, say }).`);
+  // max: 3, unless Nick allows a lesson one more (createDeck({ isysMax: 4 }); Y8 L4 Logic Gates, 2026-11-27).
+  function finish({ template = false, max = 3 } = {}) {
+    if (!template && (facts.size < 1 || facts.size > max)) {
+      throw new Error(`A lesson needs 1–${max} ISYS phrases; this deck has ${facts.size}. Add them with K.isys(slide, { term, fact, say }).`);
     }
     const slides = [...new Set(moments.map((m) => m.s))];
     for (const s of slides) {

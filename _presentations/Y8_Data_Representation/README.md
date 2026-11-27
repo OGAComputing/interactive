@@ -16,6 +16,8 @@ PowerPoint decks for the Y8 Data Representation unit (`Knowledge Base/project_y8
 | `build_L1.cjs` | Builds `L1_Binary_And_Denary.pptx` from the L1 activity page and MTP section |
 | `build_L2.cjs` | Builds `L2_Binary_Addition.pptx` from the L2 activity page and MTP section |
 | `build_L3.cjs` | Builds `L3_Hexadecimal.pptx` from the L3 activity page and MTP section. Lesson-only slide types: `b2hSlide` (4 or 8 bits → hex in the page's grid: split, 8 4 2 1, denary, hex digit, join) and `h2bSlide` (hex → 8 bits). Never says "nibble" (MTP decision, 2026-11-16) |
+| `build_L4.cjs` | Builds `L4_Logic_Gates.pptx` from the L4 activity page and MTP section. Lesson-only parts: `circuit` (the page's circuit layouts, gates and input letters appearing on a click over dashed empty boxes, a bulb that lights), `ttable` (truth table, outputs one row per click), `lifeSlide` (a gate rule as a sentence + a table of situations) and `traceSlide` (circuit + P/Q table) |
+| `make_gate_images.cjs` → `gates/` | Draws the AND, OR and NOT symbols as PNGs from the L4 page's own SVG, so slides and page match. Rerun if the page's symbols change |
 | `publish_to_drive.cjs` + `drive.json` | Uploads lesson decks to the "Data Representation" Drive folder as Google Slides (see Publishing to Drive) |
 
 ## Building
@@ -29,16 +31,17 @@ Close the `.pptx` in PowerPoint first. To check it: `soffice --headless --conver
 
 ## ISYS (I Say, You Say)
 
-Each lesson flags 1–3 phrases with `K.isys(slide, { term, fact, say })` (`ppt-guidelines.md` §10): the phrase and a dot by the slide number, the teacher script in the notes, the list on a hidden teacher slide 1. L1: Binary, Bit, 4-bit headings. L2: Carry, 1 + 1, 1 + 1 + 1. L3: Hexadecimal, A, One hex digit.
+Each lesson flags 1–3 phrases with `K.isys(slide, { term, fact, say })` (`ppt-guidelines.md` §10): the phrase and a dot by the slide number, the teacher script in the notes, the list on a hidden teacher slide 1. L1: Binary, Bit, 4-bit headings. L2: Carry, 1 + 1, 1 + 1 + 1. L3: Hexadecimal, A, One hex digit. L4: AND gate, OR gate, Truth table (Nick chose them, 2026-11-27).
 
 On an animated slide each phrase is tied to the click where it is taught (`click: k`), so the corner never gives away a reveal: L1 slide 6 Binary, then Bit at click 1 · L2 Carry at click 3; 1 + 1 at click 3, 1 + 1 + 1 at click 4 · L3 slide 6 A at click 2, Hexadecimal at click 8 (A … 10 moved there from the answers slide, where it came after the class had already used it).
 
 ## Recap & Recall
 
-Build each deck's recall questions with `recallQuestions([...])` from `dr_kit.cjs`. **Every binary → denary question carries the hint "Remember 8 4 2 1 along the top"** under it: `recallQuestions` adds it to any write-it card whose question has a binary number and "denary" (e.g. "Convert 1101 to denary"), so new decks get it without asking. A card's own `hint` wins; `hint: ''` leaves it off. Ask binary → denary as a write-it card: an MCQ card has no room for the hint.
+Build each deck's recall questions with `recallQuestions([...])` from `dr_kit.cjs`. **Every binary → denary or binary → hex question carries the hint "Remember 8 4 2 1 along the top"** under it: `recallQuestions` adds it to any write-it card whose question has a binary number and "denary" or "hex" (e.g. "Convert 1101 to denary"), so new decks get it without asking. A card's own `hint` wins; `hint: ''` leaves it off. Ask binary → denary as a write-it card: an MCQ card has no room for the hint.
 
 ## Feedback
 
+- **2026-11-27 · L4 recap: 8 4 2 1 on binary → hex too, and no two cards on one method** — Binary → one hex digit starts with the same 8 4 2 1 step, so it gets the hint as well (now automatic in `recallQuestions`). L4 had 1011 → hex and 1010 → denary, effectively the same question, so Q4 became denary → binary (6 → 0110).
 - **2026-11-23 · 8 4 2 1 hint is standard** — Nick always tells the class to put 8 4 2 1 at the top for a binary → denary recall question; it gets them off on the right footing. Now automatic (see Recap & Recall above); L3 Q1 gained it.
 - **2026-11-19 · ISYS follows the clicks** — After the Y9 L5 lesson (Call flagged a slide after it was taught didn't work): flag a phrase on the slide, and at the click, where it is taught. See ISYS above.
 - **2026-11-17 · L2 recap** — Q1 (convert 0101) carries the hint "Remember 8 4 2 1 along the top" (Nick added it in Slides; it now lives in `build_L2.cjs` as the card's `hint`). Edit the builders, not the Slides copies: a publish replaces Slides edits, and the publisher now refuses to while one is there.

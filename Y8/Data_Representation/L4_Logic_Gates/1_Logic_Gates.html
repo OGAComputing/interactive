@@ -1,0 +1,1854 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- ACTIVITY
+title:  Logic Gates and Truth Tables
+type:   Practice
+stars:  2
+desc:   AND, OR and NOT in real life, their symbols and truth tables, tracing two-gate circuits, then building circuits by drag and drop.
+color:  indigo
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Logic Gates and Truth Tables — Year 8</title>
+
+<link rel="stylesheet" href="../../../shared.css">
+
+<style>
+  /* Colours of a live circuit: a wire carrying 1 is lit; 0 is grey. Every wire also shows its 1 or 0 as text. */
+  :root { --on: #0EA5E9; --on-dark: #0369A1; --off: #94A3B8; --bulb: #FACC15; }
+
+  /* ── Activity header ─────────────────────────────────── */
+
+  .header {
+    background: var(--surface);
+    padding: 18px 28px 14px;
+    border-bottom: 4px solid var(--accent);
+  }
+  .header-title { font-family: var(--font-head); font-size: 1.5rem; font-weight: 700; color: var(--text-inv); }
+  .header-sub { font-size: 0.85rem; color: var(--accent-light); margin-top: 3px; }
+  .header-q { font-size: 0.9rem; color: #fff; margin-top: 6px; }
+  .progress-row { display: flex; gap: 6px; margin-top: 10px; align-items: center; }
+  .pdot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--surface-dim); border: 2px solid #3a5a7a;
+    transition: background 0.3s, border-color 0.3s;
+  }
+  .pdot.correct { background: var(--green);  border-color: var(--green); }
+  .pdot.gold    { background: var(--gold);   border-color: var(--gold);  }
+
+  /* ── Glow overlay (green = green tier, gold = gold tier) ── */
+
+  #glow-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none; z-index: 0; opacity: 0;
+    transition: opacity 1.8s ease;
+  }
+  #glow-overlay.gold  { background: radial-gradient(ellipse at 50% 55%, rgba(251,191,36,.24) 0%, transparent 65%); }
+  #glow-overlay.green { background: radial-gradient(ellipse at 50% 55%, rgba(16,185,129,.20) 0%, transparent 65%); }
+  #glow-overlay.show  { opacity: 1; }
+
+  /* ── Tab bar (underline style — Year 8 standard) ─────── */
+
+  .tab-bar {
+    display: flex; background: var(--surface-mid); padding: 0 20px; gap: 2px;
+    overflow-x: auto; border-bottom: 1px solid #2a4060;
+  }
+  .tab {
+    padding: 10px 16px 9px; border: none; background: transparent; color: #B8CCE0;
+    font-family: var(--font-body); font-size: 0.9rem; font-weight: 600; cursor: pointer;
+    border-bottom: 3px solid transparent; transition: color 0.15s, border-color 0.15s;
+    white-space: nowrap; user-select: none;
+  }
+  .tab:hover  { color: var(--accent-light); }
+  .tab.active { color: var(--text-inv); border-bottom-color: var(--accent); }
+  .tab.done   { color: var(--gold); border-bottom-color: var(--gold); }
+  .tab .lock  { font-size: .8em; margin-left: 4px; }
+
+  /* ── Panels ──────────────────────────────────────────── */
+
+  .panel { display: none; position: relative; z-index: 1; padding: 28px 20px 48px; max-width: 920px; margin: 0 auto; }
+  .panel.active { display: block; animation: ac-fade-in .2s ease; }
+
+  .task-header { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
+  .task-badge {
+    width: 42px; height: 42px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-head); font-size: 1.1rem; font-weight: 700; color: var(--text-inv);
+    background: var(--accent); flex-shrink: 0;
+  }
+  .task-title { font-family: var(--font-head); font-size: 1.25rem; font-weight: 700; color: var(--surface); }
+
+  .goal {
+    display: flex; align-items: flex-start; gap: 8px; background: #fff;
+    border-left: 4px solid var(--accent); padding: 10px 14px; border-radius: 0 6px 6px 0;
+    font-size: 0.95rem; font-weight: 600; color: var(--surface); margin-bottom: 18px;
+  }
+
+  details.method { background: #fff; border: 1.5px solid #D5E3F0; border-radius: 10px; padding: 10px 16px; margin-bottom: 18px; }
+  details.method summary { cursor: pointer; font-weight: 700; color: var(--accent-dark); }
+  details.method ol, details.method ul { margin: 8px 0 2px 22px; line-height: 1.6; }
+  details.method p { margin: 8px 0 2px; line-height: 1.5; }
+  .mono { font-family: var(--font-mono); font-weight: 700; color: var(--surface); }
+  .keyword { background: #EEF0FF; border-radius: 8px; padding: 8px 12px; margin-top: 10px; }
+
+  .feedback { min-height: 1.4em; font-size: 0.92rem; font-weight: 600; margin-top: 10px; }
+  .feedback.correct { color: var(--green-dark); }
+  .feedback.wrong   { color: var(--red); animation: ac-shake 0.35s ease; }
+
+  .q-card {
+    border: 2px solid #D5E3F0; border-radius: 12px; padding: 18px; margin: 10px 0; background: #fff;
+    transition: border-color .25s, background .25s;
+  }
+  .q-card > h3 { font-family: var(--font-head); font-size: 1.1rem; color: var(--surface); margin-bottom: 14px; line-height: 1.5; }
+  .q-card.is-wrong { border-color: var(--red);   background: var(--red-bg); }
+  .q-card.is-right { border-color: var(--green); background: var(--green-bg); animation: success-pulse 0.8s ease forwards; }
+  @keyframes success-pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(16,185,129,0); }
+    40%  { box-shadow: 0 0 0 8px rgba(16,185,129,.45); }
+    70%  { box-shadow: 0 0 0 14px rgba(16,185,129,.18); }
+    100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); }
+  }
+  @media (prefers-reduced-motion: reduce) { .q-card.is-right { animation: none; } }
+
+  .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 12px; }
+  .ev { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; left: 0; top: 0; }
+
+  .step-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-size: .85rem; font-weight: 700; color: var(--muted); margin-bottom: 6px; }
+  .pips { display: flex; gap: 5px; }
+  .pip { width: 22px; height: 8px; border-radius: 4px; background: #D5E3F0; }
+  .pip.on  { background: var(--green); }
+  .pip.now { background: var(--accent); }
+  .help { font-size: .95rem; color: var(--text); background: #EEF0FF; border-radius: 8px; padding: 9px 14px; margin-bottom: 6px; }
+  .tap-note { font-size: .85rem; color: var(--muted); margin: -4px 0 10px; }
+  .rule { display: inline-block; margin: 0 0 12px; padding: 6px 14px; border-radius: 8px; background: #EEF0FF; border: 1.5px solid var(--accent); font-weight: 700; color: var(--accent-dark); }
+
+  /* ── 0/1 toggles (? → 0 → 1) ─────────────────────────── */
+
+  button.bit-toggle {
+    height: 44px; min-width: 52px; border-radius: 8px; touch-action: manipulation;
+    font-family: var(--font-mono); font-size: 1.15rem; font-weight: 700;
+    border: 2px dashed #8FA9C4; background: #fff; color: var(--surface); cursor: pointer;
+    transition: border-color .15s, background .15s;
+  }
+  button.bit-toggle.set { border-style: solid; border-color: var(--accent); }
+  button.bit-toggle:focus-visible { outline: 3px solid var(--accent-light); }
+  .is-right.bit-toggle, .is-right.drop { border-color: var(--green) !important; background: var(--green-bg) !important; }
+  .is-wrong.bit-toggle, .is-wrong.drop { border-color: var(--red) !important;   background: var(--red-bg) !important; }
+
+  /* ── Truth tables ────────────────────────────────────── */
+
+  table.tt { border-collapse: separate; border-spacing: 0; margin: 6px 0 4px; font-family: var(--font-mono); }
+  table.tt th, table.tt td { padding: 5px 12px; text-align: center; border-bottom: 1px solid #E2EAF3; }
+  table.tt th { font-family: var(--font-body); font-size: .85rem; color: var(--muted); font-weight: 700; border-bottom: 2px solid #B9CCE0; }
+  table.tt td { font-size: 1.1rem; font-weight: 700; color: var(--surface); }
+  table.tt .sep { border-left: 2px solid #B9CCE0; }
+  table.tt th.outh { color: var(--accent-dark); }
+  table.tt th.words { font-size: .8rem; max-width: 150px; line-height: 1.25; }
+  table.tt td.word { font-family: var(--font-body); font-size: .95rem; font-weight: 600; }
+  table.tt td.word b { font-family: var(--font-mono); color: var(--accent-dark); }
+  table.tt tr.is-right td { background: var(--green-bg); }
+  table.tt tr.is-wrong td { background: var(--red-bg); }
+  table.tt td.given { color: var(--accent-dark); }
+  table.tt th.wk { white-space: nowrap; background: #F8FAFD; }
+  table.tt td.wk { background: #F8FAFD; }
+  .wk-head { width: 104px; height: 34px; padding: 0 6px; border: 2px solid #B9CCE0; border-radius: 6px; font: 700 .85rem var(--font-mono); color: var(--surface); text-transform: uppercase; }
+  .wk-head:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-light); }
+  .wk-x { width: 30px; height: 30px; margin-left: 2px; border: none; border-radius: 6px; background: transparent; color: var(--muted); cursor: pointer; font-size: .9rem; }
+  .wk-x:hover { background: var(--red-bg); color: var(--red); }
+  .wk-add { margin: 6px 0 2px; font-size: .85rem; }
+
+  /* ── Gate symbols ────────────────────────────────────── */
+
+  svg.gsym { display: block; overflow: visible; }
+  .gbody { fill: #fff; stroke: var(--surface); stroke-width: 3; stroke-linejoin: round; }
+  .gstub { stroke: var(--surface); stroke-width: 3; }
+  .sym-row { display: flex; gap: 18px; flex-wrap: wrap; justify-content: flex-start; margin: 6px 0 4px; }
+  .sym-tile { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 12px 10px; border: 1.5px solid #D5E3F0; border-radius: 12px; background: #F8FAFD; }
+  .sym-tile svg.gsym { width: 120px; height: 76px; }
+  .shape-key { list-style: none; margin: 0 0 12px; display: grid; gap: 4px; font-size: .92rem; }
+  .shape-key b { font-family: var(--font-mono); color: var(--accent-dark); margin-right: 6px; }
+  .wg-row { display: flex; gap: 16px; flex-wrap: wrap; }
+  .wg { border: 1.5px solid #D5E3F0; border-radius: 12px; padding: 10px 14px; background: #F8FAFD; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+
+  /* ── Drag and drop: chips in a tray, boxes to drop them in ── */
+
+  .palette {
+    display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
+    background: #F3F6FB; border: 1.5px dashed #B9CCE0; border-radius: 12px; padding: 10px 12px; margin: 4px 0 12px;
+  }
+  .palette .pl { font-size: .78rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; margin-right: 4px; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 8px; min-height: 44px; min-width: 44px; padding: 6px 14px;
+    border-radius: 10px; border: 2px solid var(--accent); background: #fff; color: var(--surface);
+    font: 700 1rem var(--font-mono); cursor: grab; touch-action: none; user-select: none;
+    box-shadow: 0 2px 0 #C7D2FE; transition: transform .15s ease-out, box-shadow .15s, background .15s;
+  }
+  .chip svg.gsym { width: 46px; height: 30px; }
+  .chip:hover { background: #F4F6FF; }
+  .chip:active { transform: scale(.97); }
+  .chip.picked { background: var(--accent); color: #fff; box-shadow: 0 0 0 4px var(--accent-light); }
+  .chip.picked .gbody { fill: #EEF0FF; }
+  .chip:focus-visible { outline: 3px solid var(--accent-light); outline-offset: 2px; }
+  .chip.input { border-color: var(--on-dark); box-shadow: 0 2px 0 #BAE6FD; }
+
+  .drop {
+    min-height: 44px; min-width: 60px; padding: 4px 12px; border-radius: 10px; cursor: pointer;
+    border: 2px dashed #8FA9C4; background: #fff; color: var(--muted); touch-action: manipulation;
+    font: 700 1rem var(--font-mono); transition: border-color .15s, background .15s, box-shadow .15s;
+  }
+  .drop.filled { border-style: solid; border-color: var(--accent); color: var(--surface); }
+  .drop.can-drop { border-color: var(--accent); background: #EEF0FF; box-shadow: 0 0 0 3px var(--accent-light); }
+  .drop.hover { background: #E0E7FF; }
+  .drop:focus-visible { outline: 3px solid var(--accent-light); outline-offset: 2px; }
+  .drop.word-gap { min-width: 72px; margin: 0 4px; vertical-align: middle; }
+  .drag-ghost { position: fixed; z-index: 80; pointer-events: none; transform: translate(-50%, -50%) scale(1.06); opacity: .92; box-shadow: 0 8px 20px rgba(0,0,0,.25); }
+  body.dragging, body.dragging * { cursor: grabbing !important; }
+
+  /* ── Circuits: wires and terminals in an SVG, boxes and pins laid over it ── */
+
+  /* Phones: the circuit keeps a usable size and scrolls sideways in its own box (the page never does). */
+  .circ-scroll { overflow-x: auto; margin: 4px 0 8px; padding-bottom: 4px; }
+  .circ { position: relative; width: 100%; max-width: 680px; min-width: 520px; }
+  .circ > svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .wire { fill: none; stroke: #8FA9C4; stroke-width: 3; stroke-linejoin: round; }
+  .wire.on  { stroke: var(--on); stroke-width: 4; }
+  .wire.off { stroke: var(--off); }
+  .term circle { fill: #fff; stroke: var(--surface); stroke-width: 2.5; }
+  .term text, .glabel, .vtag, .plabel { font-family: var(--font-mono); font-weight: 700; text-anchor: middle; dominant-baseline: central; }
+  .term text { font-size: 14px; fill: var(--surface); }
+  .glabel { font-size: 13px; fill: var(--accent-dark); }
+  .vtag { font-size: 13px; }
+  .vtag.on { fill: var(--on-dark); }
+  .vtag.off { fill: #64748B; }
+  .plabel { font-size: 15px; fill: var(--accent-dark); }
+  .slot-empty { fill: #F8FAFD; stroke: #8FA9C4; stroke-width: 2; stroke-dasharray: 6 5; }
+  .bulb circle { stroke: var(--surface); stroke-width: 2.5; fill: #fff; transition: fill .25s ease-out; }
+  .bulb.lit circle { fill: var(--bulb); }
+  .bulb text { font: 700 14px var(--font-mono); fill: var(--surface); text-anchor: middle; dominant-baseline: central; }
+  .bulb .glow { fill: var(--bulb); opacity: 0; transition: opacity .25s; }
+  .bulb.lit .glow { opacity: .35; }
+  @media (prefers-reduced-motion: reduce) { .bulb circle, .bulb .glow { transition: none; } }
+
+  .circ .ov { position: absolute; transform: translate(-50%, -50%); }
+  .circ .drop.slot { padding: 0; min-width: 0; display: flex; align-items: center; justify-content: center; font-size: .72rem; line-height: 1.1; }
+  .circ .drop.slot svg.gsym { width: 100%; height: 100%; }
+  .circ .drop.slot.filled { border-color: transparent; background: transparent; }
+  .circ .drop.slot.filled.can-drop { border-color: var(--accent); background: rgba(238,240,255,.7); }
+  .circ .drop.pin { width: 40px; height: 40px; min-width: 0; min-height: 0; border-radius: 50%; padding: 0; font-size: 1.05rem; background: #fff; }
+  .circ .drop.name { min-width: 64px; min-height: 36px; padding: 2px 8px; font-size: .95rem; }
+
+  .switches { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin: 4px 0 6px; }
+  .switches .pl { font-size: .78rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+  .sw {
+    display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 4px 12px 4px 6px;
+    border-radius: 999px; border: 2px solid #B9CCE0; background: #fff; cursor: pointer; touch-action: manipulation;
+    font: 700 1rem var(--font-mono); color: var(--surface);
+  }
+  .sw .knob { width: 34px; height: 20px; border-radius: 999px; background: var(--off); position: relative; transition: background .2s; }
+  .sw .knob::after { content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: transform .2s ease-out; }
+  .sw.on { border-color: var(--on); }
+  .sw.on .knob { background: var(--on); }
+  .sw.on .knob::after { transform: translateX(14px); }
+  .sw:focus-visible { outline: 3px solid var(--accent-light); }
+  @media (prefers-reduced-motion: reduce) { .sw .knob, .sw .knob::after { transition: none; } }
+  .bulb-read { font-weight: 700; color: var(--surface); margin-left: 6px; }
+  .story { font-size: 1.02rem; line-height: 1.5; margin-bottom: 8px; }
+  .story-ins { font-size: .9rem; color: var(--text); margin: 0 0 10px; display: flex; flex-wrap: wrap; gap: 6px 16px; }
+  .story-ins b { font-family: var(--font-mono); color: var(--on-dark); }
+  .result-box { margin-top: 10px; }
+  .result-box .rl { font-size: .78rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+
+  /* ── Real life: situations and gaps ──────────────────── */
+
+  .scenario { font-size: 1.08rem; line-height: 1.5; font-weight: 600; color: var(--surface); margin-bottom: 10px; }
+  .gap-card { border: 1.5px solid #D5E3F0; border-radius: 10px; padding: 12px 14px; margin: 8px 0; background: #F8FAFD; }
+  .gap-s { font-size: 1.02rem; font-weight: 600; line-height: 2; color: var(--surface); }
+  .evid { list-style: none; margin: 4px 0 0; font-size: .9rem; color: var(--text); display: grid; gap: 3px; }
+  .evid b { color: var(--accent-dark); }
+
+  /* ── Checkpoint chains ───────────────────────────────── */
+
+  .cp-bar { height: 10px; background: #D5E3F0; border-radius: 999px; overflow: hidden; margin-bottom: 14px; }
+  .cp-bar div { height: 100%; background: var(--accent); transition: width .3s; }
+  .cp-q { font-family: var(--font-head); font-size: 1.2rem; font-weight: 700; color: var(--surface); margin: 6px 0 14px; line-height: 1.4; }
+  .cp-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  @media (max-width: 560px) { .cp-opts { grid-template-columns: 1fr; } }
+  .cp-opt {
+    padding: 13px 14px; border-radius: 10px; cursor: pointer; text-align: left;
+    background: #fff; border: 2px solid #D5E3F0; color: var(--surface);
+    font-family: var(--font-body); font-size: 1rem; font-weight: 600; transition: border-color .15s, background .15s;
+  }
+  .cp-opt:hover:not(:disabled) { border-color: var(--accent); background: #F4F6FF; }
+  .cp-opt:disabled { cursor: default; }
+  .cp-opt.right { border-color: var(--green); background: var(--green-bg); }
+  .cp-opt.wrong { border-color: var(--red);   background: var(--red-bg); }
+  .cp-msg { min-height: 1.4em; margin-top: 12px; font-weight: 700; font-size: .98rem; }
+  .cp-msg.good { color: var(--green-dark); }
+  .cp-msg.bad  { color: var(--red); }
+  .cp-msg .why { display: block; font-weight: 400; color: var(--text); margin-top: 4px; }
+  .cp-done, .lock-card { text-align: center; padding: 26px 16px; border-radius: 12px; font-family: var(--font-head); font-size: 1.1rem; font-weight: 700; }
+  .cp-done { background: var(--green-bg); border: 2px solid var(--green); color: var(--green-dark); }
+  .cp-done .big { display: block; font-size: 2.4rem; margin-bottom: 6px; }
+  .lock-card { background: #fff; border: 2px dashed #B9CCE0; color: var(--muted); }
+  .lock-card p { font-family: var(--font-body); font-weight: 400; font-size: .95rem; margin-top: 6px; color: var(--text); }
+
+  /* ── Logic Rush (extension game) ─────────────────────── */
+
+  .best-chip { display: none; margin-left: 10px; padding: 3px 12px; border-radius: 999px; background: var(--gold); color: #1a1a1a; font-family: var(--font-head); font-weight: 700; font-size: .85rem; }
+  .best-chip.show { display: inline-block; }
+  .rush { border: 2px solid var(--gold); border-radius: 14px; padding: 22px; color: #fff; background: radial-gradient(ellipse at top, rgba(251,191,36,.16), transparent 60%), var(--surface); }
+  .rush h2 { font-family: var(--font-head); color: var(--gold); letter-spacing: 3px; font-size: 1.3rem; margin-bottom: 8px; }
+  .rush p { line-height: 1.5; }
+  .rush .muted { color: #B8CCE0; }
+  .rush-screen { display: none; }
+  .rush-screen.on { display: block; animation: ac-fade-in .25s; }
+  .rush-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 12px 0 16px; }
+  .rush-stat { background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.15); border-radius: 8px; padding: 8px 10px; text-align: center; }
+  .rush-stat .v { font: 700 1.25rem var(--font-head); }
+  .rush-stat .k { font-size: .68rem; color: #B8CCE0; text-transform: uppercase; letter-spacing: .08em; }
+  .rush-modes { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 16px 0; }
+  .rush-mode { border: 1px solid rgba(255,255,255,.18); border-radius: 10px; padding: 14px; background: rgba(255,255,255,.04); }
+  .rush-mode h3 { font-size: 1rem; margin-bottom: 4px; }
+  .rush-mode p { font-size: .86rem; color: #B8CCE0; margin-bottom: 10px; }
+  .rush-mode input { padding: 8px 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,.3); background: #0d1b2e; color: #fff; font: 700 1rem var(--font-mono); text-transform: uppercase; letter-spacing: 2px; width: 130px; }
+  .rush-sub { font-family: var(--font-head); font-weight: 700; margin: 6px 0 8px; }
+  .badges { display: flex; flex-wrap: wrap; gap: 8px; }
+  .badge { border: 1px solid rgba(255,255,255,.25); border-radius: 20px; padding: 5px 11px; font-size: .8rem; color: #B8CCE0; opacity: .55; }
+  .badge.got { opacity: 1; color: #fff; border-color: var(--gold); background: rgba(251,191,36,.15); }
+  .badge.new { animation: ac-pulse-gold 1.2s 2; }
+  .rush-rules { font-size: .8rem; color: #B8CCE0; margin-top: 14px; }
+  .rush-path { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 12px; font-size: .8rem; }
+  .rush-path span { border: 1px solid rgba(255,255,255,.25); border-radius: 6px; padding: 3px 8px; color: #D5E3F0; }
+
+  .hud { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; font-family: var(--font-head); margin-bottom: 12px; }
+  .hud .score { font-size: 1.6rem; color: var(--gold); font-weight: 700; }
+  .hud .mult { padding: 3px 10px; border-radius: 12px; background: rgba(255,255,255,.12); }
+  .hud .mult.hot { background: var(--gold); color: #111; animation: ac-pulse-gold 1s infinite; }
+  .hud .lvl { font-size: .75rem; letter-spacing: 2px; padding: 3px 10px; border-radius: 12px; border: 1px solid #B8CCE0; color: #B8CCE0; }
+  .hud .lives { font-size: 1.15rem; letter-spacing: 3px; }
+  .hud .hud-best { font-size: .8rem; color: #B8CCE0; }
+  .rush-card { background: #fff; color: var(--surface); border-radius: 12px; padding: 16px 18px; }
+  .rush-ask { font-family: var(--font-head); font-weight: 700; font-size: 1.05rem; margin-bottom: 8px; }
+  .rush-show { font: 700 2.2rem var(--font-mono); letter-spacing: .08em; color: var(--accent-dark); margin: 4px 0 12px; }
+  .rush-show.lg { font-size: 1.5rem; letter-spacing: .02em; }
+  .rush-show .rush-expr { font-size: 1.3rem; margin-bottom: 4px; }
+  .rush-show table.tt { letter-spacing: 0; }
+  .rush-show table.tt td { font-size: 1rem; padding: 2px 12px; }
+  .rush-sum { display: inline-grid; justify-items: end; line-height: 1.25; }
+  .rush-sum > span:last-child { border-bottom: 3px solid currentColor; padding-bottom: 2px; }
+  .rush-sum i { font-style: normal; margin-right: .5em; }
+  .num-in {
+    height: 44px; padding: 0 10px; border: 2px solid #B9CCE0; border-radius: 8px; background: #fff;
+    font-family: var(--font-mono); font-size: 1.15rem; font-weight: 700; color: var(--surface); text-transform: uppercase;
+  }
+  .num-in.wide { width: 220px; letter-spacing: .08em; }
+  .num-in:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-light); }
+  .is-right.num-in { border-color: var(--green); background: var(--green-bg); }
+  .is-wrong.num-in { border-color: var(--red);   background: var(--red-bg); }
+  .answer-line { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-weight: 600; margin-top: 8px; }
+  .tbar { height: 8px; border-radius: 4px; background: #D5E3F0; overflow: hidden; margin-bottom: 12px; }
+  .tbar > div { height: 100%; width: 100%; background: var(--gold); }
+  .tbar > div.low { background: var(--red); }
+  .verdict { min-height: 3.2em; margin-top: 12px; font-weight: 600; line-height: 1.5; }
+  .verdict .pts { font-family: var(--font-head); color: var(--gold); }
+  .verdict .why { display: block; font-weight: 400; color: #D5E3F0; font-size: .9rem; }
+  .final { text-align: center; }
+  .final .big { font: 700 3rem var(--font-head); color: var(--gold); }
+  .final .rank { font-size: 1.2rem; font-weight: 700; margin: 4px 0; }
+  .final .pb { color: var(--accent-light); font-weight: 700; min-height: 1.4em; }
+  .ladder { list-style: none; margin: 14px auto; max-width: 340px; text-align: left; font-size: .85rem; }
+  .ladder li { display: flex; justify-content: space-between; padding: 4px 10px; border-radius: 6px; color: #B8CCE0; }
+  .ladder li.me { background: rgba(251,191,36,.18); color: #fff; font-weight: 700; }
+  .missed { text-align: left; max-width: 640px; margin: 10px auto; font-size: .86rem; }
+  .missed li { margin: 6px 0 6px 18px; line-height: 1.45; }
+
+  @media (max-width: 560px) {
+    .panel { padding: 20px 12px 40px; }
+    .q-card { padding: 14px 10px; }
+    table.tt th, table.tt td { padding: 4px 7px; }
+    .sym-tile svg.gsym { width: 90px; height: 58px; }
+    .circ .drop.pin { width: 34px; height: 34px; font-size: .9rem; }
+    .circ .drop.name { min-width: 48px; font-size: .8rem; }
+    .rush { padding: 14px 10px; }
+    .rush-stats { grid-template-columns: 1fr 1fr; }
+    .rush-modes { grid-template-columns: 1fr; }
+    .rush-show { font-size: 1.6rem; }
+    .num-in.wide { width: 170px; }
+  }
+
+  /* ── Hover definitions: dotted words show their meaning on hover, focus or tap ── */
+  .gl { border-bottom: 2px dotted currentColor; cursor: help; }
+  .gl:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
+  .gl-tip { position: fixed; z-index: 60; pointer-events: none; max-width: min(300px, 90vw); background: var(--surface); color: var(--text-inv);
+    border-left: 5px solid var(--accent); border-radius: 6px; padding: 8px 12px; font: 400 .92rem/1.4 var(--font-body);
+    box-shadow: 0 6px 18px rgba(0,0,0,.25); opacity: 0; transition: opacity .12s ease-out; }
+  .gl-tip b { display: block; color: var(--accent-light); font-weight: 700; }
+  .gl-tip.show { opacity: 1; }
+  @media (prefers-reduced-motion: reduce) { .gl-tip { transition: none; } }
+</style>
+</head>
+
+<body>
+
+<div id="done-banner" class="ac-banner gold">
+  🏆 All tasks complete: you can read, trace and build logic circuits!
+</div>
+<div id="glow-overlay"></div>
+
+<div class="header">
+  <div class="header-title">Logic Gates and Truth Tables</div>
+  <div class="header-sub">Year 8 · Data Representation · Lesson 4<span class="best-chip" id="best-chip" title="Your best Logic Rush score"></span></div>
+  <div class="header-q">❓ How is binary logic used to represent a real-world problem?</div>
+  <div class="progress-row" id="progress-row">
+    <span class="pdot" id="dot-0"></span>
+    <span class="pdot" id="dot-1"></span>
+    <span class="pdot" id="dot-2"></span>
+    <span class="pdot" id="dot-3"></span>
+    <span class="pdot" id="dot-4"></span>
+    <span class="pdot" id="dot-5"></span>
+  </div>
+</div>
+
+<div class="tab-bar" id="tab-bar">
+  <button class="tab active" data-idx="0">1 · Gates in real life</button>
+  <button class="tab" data-idx="1">2 · Gate symbols</button>
+  <button class="tab" data-idx="2">3 · Truth tables</button>
+  <button class="tab" data-idx="3">4 · Trace a circuit<span class="lock" id="lock-3">🔒</span></button>
+  <button class="tab" data-idx="4">5 · Build it<span class="lock" id="lock-4">🔒</span></button>
+  <button class="tab" data-idx="5">6 · Plenary<span class="lock" id="lock-5">🔒</span></button>
+  <button class="tab" data-idx="6">🎮 Logic Rush<span class="lock" id="lock-6">🔒</span></button>
+</div>
+
+<!-- ── Task 1 ───────────────────────────────────────────── -->
+<div class="panel active" id="panel-0">
+  <div class="task-header">
+    <div class="task-badge">1</div>
+    <div class="task-title">Gates in real life</div>
+  </div>
+  <div class="goal">🎯 Use AND, OR and NOT to decide what happens in everyday situations, with 1 for yes and 0 for no.</div>
+  <details class="method" id="method-0" open>
+    <summary>AND, OR and NOT</summary>
+    <ul>
+      <li>In logic, <span class="mono">1</span> means yes (on, true) and <span class="mono">0</span> means no (off, false).</li>
+      <li><strong>AND</strong>: the output is 1 only when <strong>both</strong> inputs are 1.</li>
+      <li><strong>OR</strong>: the output is 1 when the inputs have <strong>at least one 1</strong>.</li>
+      <li><strong>NOT</strong>: one input, and the output is the <strong>opposite</strong>.</li>
+    </ul>
+    <p class="keyword"><strong>Logic gate</strong>: makes a decision. It takes inputs of 1 or 0 and gives one output.</p>
+  </details>
+  <div id="area-0"></div>
+  <div class="feedback" id="feedback-0"></div>
+  <div class="row"><button class="ac-btn-secondary" id="reset-0" data-action="reset" data-task="0" style="display:none;font-size:0.8rem;">&#8634; Try for Gold</button></div>
+  <input type="text" class="ev" id="ev-0" readonly tabindex="-1" data-title="Task 1 Gates in real life: answers">
+</div>
+
+<!-- ── Task 2 ───────────────────────────────────────────── -->
+<div class="panel" id="panel-1">
+  <div class="task-header">
+    <div class="task-badge">2</div>
+    <div class="task-title">Gate symbols</div>
+  </div>
+  <div class="goal">🎯 Name each gate from its symbol, on its own and inside a circuit.</div>
+  <details class="method" id="method-1" open>
+    <summary>How to tell the symbols apart</summary>
+    <ul>
+      <li><strong>AND</strong>: flat back, round front, like a letter D.</li>
+      <li><strong>OR</strong>: curved back, pointed front.</li>
+      <li><strong>NOT</strong>: a triangle with a small circle on its tip. It has only one input.</li>
+    </ul>
+    <p class="tap-note" style="margin-top:8px">Drag a name onto a box, or tap a name and then tap the box. Tap a filled box to empty it.</p>
+  </details>
+  <div id="area-1"></div>
+  <div class="feedback" id="feedback-1"></div>
+  <div class="row"><button class="ac-btn-secondary" id="reset-1" data-action="reset" data-task="1" style="display:none;font-size:0.8rem;">&#8634; Try for Gold</button></div>
+  <input type="text" class="ev" id="ev-1" readonly tabindex="-1" data-title="Task 2 Gate symbols: answers">
+</div>
+
+<!-- ── Task 3 ───────────────────────────────────────────── -->
+<div class="panel" id="panel-2">
+  <div class="task-header">
+    <div class="task-badge">3</div>
+    <div class="task-title">Truth tables</div>
+  </div>
+  <div class="goal">🎯 Complete the truth tables for AND, OR and NOT, then name a gate from its table.</div>
+  <details class="method" id="method-2" open>
+    <summary>Truth tables</summary>
+    <ol>
+      <li>List every combination of inputs. Two inputs make 4 rows: <span class="mono">00, 01, 10, 11</span> (count up in binary). One input makes 2 rows: <span class="mono">0, 1</span>.</li>
+      <li>For each row, use the gate's rule to work out the output.</li>
+    </ol>
+    <p class="keyword"><strong>Truth table</strong>: shows the output for every input combination.</p>
+  </details>
+  <div id="area-2"></div>
+  <div class="feedback" id="feedback-2"></div>
+  <div class="row"><button class="ac-btn-secondary" id="reset-2" data-action="reset" data-task="2" style="display:none;font-size:0.8rem;">&#8634; Try for Gold</button></div>
+  <input type="text" class="ev" id="ev-2" readonly tabindex="-1" data-title="Task 3 Truth tables: answers">
+</div>
+
+<!-- ── Task 4 ───────────────────────────────────────────── -->
+<div class="panel" id="panel-3">
+  <div class="task-header">
+    <div class="task-badge">4</div>
+    <div class="task-title">Trace a circuit</div>
+  </div>
+  <div class="goal">🎯 In a circuit, one gate's output is the next gate's input. Work out P, the wire in the middle, then Q, the output.</div>
+  <details class="method" id="method-3" open>
+    <summary>Tracing a two-gate circuit</summary>
+    <ol>
+      <li>Fill in <span class="mono">P</span> for every row: the first gate's output, using its inputs.</li>
+      <li>Use <span class="mono">P</span> as an input to the second gate.</li>
+      <li>Fill in <span class="mono">Q</span>, the final output, for every row.</li>
+    </ol>
+  </details>
+  <div id="area-3"></div>
+  <div class="feedback" id="feedback-3"></div>
+  <div class="row"><button class="ac-btn-secondary" id="reset-3" data-action="reset" data-task="3" style="display:none;font-size:0.8rem;">&#8634; Try for Gold</button></div>
+  <input type="text" class="ev" id="ev-3" readonly tabindex="-1" data-title="Task 4 Trace a circuit: answers">
+</div>
+
+<!-- ── Task 5 ───────────────────────────────────────────── -->
+<div class="panel" id="panel-4">
+  <div class="task-header">
+    <div class="task-badge">5</div>
+    <div class="task-title">Build it</div>
+  </div>
+  <div class="goal">🎯 Build a logic circuit for a real problem: drag in the gates and the inputs, test it with the switches, then check it.</div>
+  <details class="method" id="method-4" open>
+    <summary>Building a circuit</summary>
+    <ol>
+      <li>Read the rule. Find the AND, OR and NOT in it, and which input each one uses.</li>
+      <li>Drag a gate into each box (or tap the gate, then tap the box). A box with one input wire only fits NOT.</li>
+      <li>Drag A, B or C onto each empty input circle.</li>
+      <li>Flip the switches to test it: the wires carrying 1 light up, and so does the bulb.</li>
+      <li><strong>Check</strong> tries every row of the truth table. Any circuit that gives the right output on every row is right.</li>
+    </ol>
+  </details>
+  <div id="area-4"></div>
+  <div class="feedback" id="feedback-4"></div>
+  <div class="row"><button class="ac-btn-secondary" id="reset-4" data-action="reset" data-task="4" style="display:none;font-size:0.8rem;">&#8634; Try for Gold</button></div>
+  <input type="text" class="ev" id="ev-4" readonly tabindex="-1" data-title="Task 5 Build it: circuits">
+</div>
+
+<!-- ── Task 6 ───────────────────────────────────────────── -->
+<div class="panel" id="panel-5">
+  <div class="task-header">
+    <div class="task-badge">6</div>
+    <div class="task-title">Plenary</div>
+  </div>
+  <div class="goal">🎯 5 in a row: the big ideas and two truth tables. One wrong answer starts you again.</div>
+  <div id="area-5"></div>
+  <div class="feedback" id="feedback-5"></div>
+  <div class="row"><button class="ac-btn-secondary" id="reset-5" data-action="reset" data-task="5" style="display:none;font-size:0.8rem;">&#8634; Try for Gold</button></div>
+  <input type="text" class="ev" id="ev-5" readonly tabindex="-1" data-title="Task 6 Plenary: answers">
+</div>
+
+<!-- ── Extension: Logic Rush (not scored) ───────────────── -->
+<div class="panel" id="panel-6">
+  <div class="task-header">
+    <div class="task-badge">🎮</div>
+    <div class="task-title">Logic Rush</div>
+  </div>
+  <div id="rush-lock"></div>
+  <div class="rush" id="rush">
+    <div class="rush-screen on" id="rush-menu">
+      <h2>⚡ LOGIC RUSH</h2>
+      <p>Logic questions are coming at you, then the rest of the unit joins in. Type each answer before the timer runs out. Build a streak to multiply your score. Three wrong and you're out.</p>
+      <div class="rush-path" aria-label="How a run builds up">
+        <span>1 · Logic gates</span><span>2 · + Hex</span><span>3 · + Binary adding</span><span>4 · + Binary ↔ denary</span><span>5 · Everything, 8 bits</span>
+      </div>
+      <div class="rush-stats">
+        <div class="rush-stat"><div class="v" id="rush-best">0</div><div class="k">Solo best</div></div>
+        <div class="rush-stat"><div class="v" id="rush-rank">Trainee</div><div class="k">Rank</div></div>
+        <div class="rush-stat"><div class="v" id="rush-streak">0</div><div class="k">Best streak</div></div>
+        <div class="rush-stat"><div class="v" id="rush-runs">0</div><div class="k">Runs played</div></div>
+      </div>
+      <div class="rush-modes">
+        <div class="rush-mode">
+          <h3>🎲 Solo run</h3>
+          <p>New questions every time. Climb the ranks and beat your personal best.</p>
+          <button type="button" class="ac-btn" data-rush="solo">Start solo run</button>
+        </div>
+        <div class="rush-mode">
+          <h3>🏆 Class challenge</h3>
+          <p>Type the code on the board. Everyone with the same code gets the <b>same questions in the same order</b>, so it's a fair race for the top score.</p>
+          <input id="rush-code" maxlength="8" placeholder="CODE" aria-label="Class challenge code" autocomplete="off">
+          <button type="button" class="ac-btn" data-rush="challenge">Start challenge</button>
+          <p class="muted" id="rush-code-best" style="margin-top:8px;font-size:.8rem"></p>
+        </div>
+      </div>
+      <div class="rush-sub">🏅 Badges</div>
+      <div class="badges" id="rush-badges"></div>
+      <p class="rush-rules">Scoring: a right answer scores the level's points plus a speed bonus (the faster, the more), × your streak (×2 at 3 in a row, ×3 at 6, ×4 at 10). For three sums, type the three answers in order (like <b>101</b>). For a table, type the output for each row, top to bottom. At Level 5 it speeds up. <b>Enter</b> checks.</p>
+    </div>
+
+    <div class="rush-screen" id="rush-game">
+      <div class="hud">
+        <div class="score" id="hud-score">0</div>
+        <div class="mult" id="hud-mult">×1</div>
+        <div class="muted">Question <b id="hud-q">1</b> · Streak <b id="hud-streak">0</b></div>
+        <div class="lvl" id="hud-lvl">LEVEL 1</div>
+        <div class="lives" id="hud-lives">❤️❤️❤️</div>
+        <div class="hud-best" id="hud-best"></div>
+      </div>
+      <div class="rush-card">
+        <div class="tbar"><div id="tbar"></div></div>
+        <div class="rush-ask" id="rush-ask"></div>
+        <div class="rush-show" id="rush-show"></div>
+        <div class="answer-line">
+          <input class="num-in wide" id="rush-in" autocomplete="off" aria-label="Your answer" data-title="Logic Rush answer">
+          <button type="button" class="ac-btn" id="rush-go">Go ⏎</button>
+        </div>
+      </div>
+      <div class="verdict" id="verdict" aria-live="polite"></div>
+    </div>
+
+    <div class="rush-screen" id="rush-over">
+      <div class="final">
+        <div class="muted" id="over-mode">SOLO RUN</div>
+        <div class="big" id="over-score">0</div>
+        <div class="rank" id="over-rank"></div>
+        <div class="pb" id="over-pb"></div>
+        <div class="rush-stats">
+          <div class="rush-stat"><div class="v" id="over-qs">0</div><div class="k">Questions</div></div>
+          <div class="rush-stat"><div class="v" id="over-acc">0%</div><div class="k">Right</div></div>
+          <div class="rush-stat"><div class="v" id="over-streak">0</div><div class="k">Longest streak</div></div>
+          <div class="rush-stat"><div class="v" id="over-next">—</div><div class="k">To next rank</div></div>
+        </div>
+        <div class="badges" id="over-badges" style="justify-content:center"></div>
+        <ol class="ladder" id="over-ladder"></ol>
+        <div id="over-missed"></div>
+        <div class="row" style="justify-content:center">
+          <button type="button" class="ac-btn" data-rush="again">↻ Play again</button>
+          <button type="button" class="ac-btn ac-btn-secondary" data-rush="menu">Menu</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <input type="text" class="ev" id="ev-rush" readonly tabindex="-1" data-title="Logic Rush (extension game): best scores">
+</div>
+
+<div class="ac-toast" id="toast"></div>
+
+<script src="../../../error-reporter.js"></script>
+<script src="../../../activity-ui.js"></script>
+<script src="../../../classroom.js"></script>
+
+<script type="module">
+import {
+  TASK_COUNT, GATE_NAMES, arity, RULES, SHAPES, inputRows, gateColumn,
+  LAYOUTS, slotIds, fits, evalCircuit, circuitColumn, envFor, exprString,
+  scenario, gapText, BUILDS, buildItem,
+  STEP_COUNT, ladderQuestion, checkLadder as markLadder, shapeHint, workingFor, cooldownSeconds,
+  PLENARY_LENGTH, drawPlenary, plenaryQuestion, optionOrder, tcolAnswer, tableWorking,
+  itemShown, itemAnswer, itemWorking, itemRows, checkTyped, formatHint, toHexType,
+  gameQuestion, gameLevel, gamePoints, multiplier, GAME_LIVES, RANKS, rankFor,
+  GAME_BADGES, runBadges, cleanCode, seededRandom, shuffled,
+  GLOSSARY, glossaryDef, NO_GLOSS,
+} from './checkers.js';
+
+// ── Activity identity ──────────────────────────────────
+const STORAGE_KEY    = 'y8_datarep_l4_logic_gates';
+const ACTIVITY_TITLE = 'Logic Gates and Truth Tables';   // must match <!-- ACTIVITY title: --> above
+
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const CHAIN = 5;                          // the plenary
+const LADDER_TASKS = [0, 1, 2, 3, 4];
+const UNLOCKED_BY = { 3: 2, 4: 3, 5: 4, 6: 5 };   // tracing needs the tables; building needs tracing; then the plenary; then the game
+const RUSH_TAB = 6;
+
+// ── State (saved on every change) ──────────────────────
+function blankState() {
+  return {
+    seed: Math.random().toString(36).slice(2, 10),   // per-student questions and order
+    tab: 0,
+    completed:    new Array(TASK_COUNT).fill(false),
+    firstAttempt: new Array(TASK_COUNT).fill(true),
+    passed: [],
+    cp: { attempt: 0, pos: 0 },
+    ld: Object.fromEntries(LADDER_TASKS.map(i => [i, { step: 0, retry: 0 }])),
+    draft: Object.fromEntries(LADDER_TASKS.map(i => [i, {}])),
+    chainDraft: {},
+    wait: {},
+    wrongRun: {},
+    log: Object.fromEntries([...LADDER_TASKS, CHAIN].map(i => [i, []])),
+  };
+}
+
+function loadState() {
+  const b = blankState();
+  let s;
+  try { s = JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch (e) {}
+  if (!s || typeof s !== 'object') return b;
+  const merge = (def, got) => Object.fromEntries(Object.entries(def).map(([k, v]) => [k, { ...v, ...got?.[k] }]));
+  return {
+    ...b, ...s,
+    completed:    b.completed.map((_, i) => !!s.completed?.[i]),
+    firstAttempt: b.firstAttempt.map((_, i) => s.firstAttempt?.[i] ?? true),
+    passed: Array.isArray(s.passed) ? s.passed : [],
+    cp: { ...b.cp, ...s.cp },
+    ld: merge(b.ld, s.ld),
+    draft: merge(b.draft, s.draft),
+    log: Object.fromEntries(Object.keys(b.log).map(k => [k, Array.isArray(s.log?.[k]) ? s.log[k] : []])),
+  };
+}
+
+const state = loadState();
+function save() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {} }
+
+function logAnswer(i, line) {
+  state.log[i].push(line);
+  if (state.log[i].length > 16) state.log[i].shift();
+  $('ev-' + i).value = state.log[i].join(' | ');
+}
+
+// ── Tabs ───────────────────────────────────────────────
+function showTab(idx) {
+  if (idx !== RUSH_TAB && game && !game.over) rushMenu();
+  state.tab = idx;
+  clearPick();
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', +t.dataset.idx === idx));
+  document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + idx));
+  save();
+}
+$('tab-bar').addEventListener('click', e => {
+  const tab = e.target.closest('.tab');
+  if (tab) showTab(+tab.dataset.idx);
+});
+
+function isLocked(i) {
+  const need = UNLOCKED_BY[i];
+  return need !== undefined && !state.completed[need] && !state.passed.includes(need);
+}
+function renderLocks() {
+  for (const i of Object.keys(UNLOCKED_BY)) $('lock-' + i).style.display = isLocked(+i) ? '' : 'none';
+}
+const LOCK_TEXT = {
+  3: ['Pass Task 3 first', 'Tracing a circuit uses the truth tables for AND, OR and NOT, so finish Task 3 first.'],
+  4: ['Pass Task 4 first', 'To build a circuit you need to trace one, so finish Task 4 first.'],
+  5: ['Pass Task 5 first', 'Build your circuits first. Then you are ready for the plenary.'],
+  6: ['Pass the plenary first', 'Finish all 6 tasks to unlock Logic Rush, then race the class for the top score.'],
+};
+const lockHtml = i => `<div class="lock-card">🔒 ${LOCK_TEXT[i][0]}<p>${LOCK_TEXT[i][1]}</p></div>`;
+
+function doneHtml(i, what) {
+  return `<div class="cp-done"><span class="big">${state.firstAttempt[i] ? '🥇' : '🎉'}</span>
+    ${what}${state.firstAttempt[i] ? ', first time' : ''}!</div>`;
+}
+
+// After a wrong answer: show the working and hold the button for 5, 10 then 15 s (wrong answers in a row).
+const waitLeft = i => Math.max(0, Math.ceil(((state.wait[i]?.until || 0) - Date.now()) / 1000));
+
+function msgBad(i, text, why, label) {
+  state.wrongRun[i] = (state.wrongRun[i] || 0) + 1;
+  state.wait[i] = { until: Date.now() + cooldownSeconds(state.wrongRun[i]) * 1000, text, why, label };
+  save();
+  showWait(i);
+}
+
+function showWait(i) {
+  const w = state.wait[i];
+  const box = $('msg-' + i);
+  box.className = 'cp-msg bad';
+  box.innerHTML = `${esc(w.text)}<span class="why">${esc(w.why)}</span>
+    <button type="button" class="ac-btn ac-btn-secondary" disabled style="margin-top:10px">Read the working…</button>`;
+  const btn = box.querySelector('button');
+  const tick = () => {
+    if (!btn.isConnected) return;
+    const left = waitLeft(i);
+    if (left > 0) { btn.textContent = `Read the working… ${left}`; setTimeout(tick, 250); }
+    else { btn.disabled = false; btn.textContent = w.label; btn.focus(); }
+  };
+  tick();
+  btn.onclick = () => {
+    delete state.wait[i];
+    save();
+    i === CHAIN ? renderChain() : renderLadder(i);
+  };
+}
+
+function renderWaiting(i) {
+  if (!state.wait[i]) return false;
+  if (!waitLeft(i)) { delete state.wait[i]; save(); return false; }
+  $('area-' + i).innerHTML = `<div class="cp-msg" id="msg-${i}" role="status"></div>`;
+  showWait(i);
+  return true;
+}
+
+// ═══════════════ DRAWING: GATES ═══════════════
+// Each gate is drawn in a box 84 × 60 centred on (0, 0): input wires on the left, output on the right.
+const GATE_SVG = {
+  AND: `<line class="gstub" x1="-42" y1="-15" x2="-28" y2="-15"/><line class="gstub" x1="-42" y1="15" x2="-28" y2="15"/>
+        <path class="gbody" d="M-28,-24 H2 A24,24 0 0 1 2,24 H-28 Z"/><line class="gstub" x1="26" y1="0" x2="42" y2="0"/>`,
+  OR:  `<line class="gstub" x1="-42" y1="-15" x2="-24" y2="-15"/><line class="gstub" x1="-42" y1="15" x2="-24" y2="15"/>
+        <path class="gbody" d="M-30,-24 Q2,-24 26,0 Q2,24 -30,24 Q-16,0 -30,-24 Z"/><line class="gstub" x1="26" y1="0" x2="42" y2="0"/>`,
+  NOT: `<line class="gstub" x1="-42" y1="0" x2="-26" y2="0"/>
+        <path class="gbody" d="M-26,-22 L14,0 L-26,22 Z"/><circle class="gbody" cx="20" cy="0" r="6"/><line class="gstub" x1="26" y1="0" x2="42" y2="0"/>`,
+};
+const gateSvg = (g, label = `${g} gate symbol`) =>
+  `<svg class="gsym" viewBox="-44 -30 88 60" role="img" aria-label="${esc(label)}">${GATE_SVG[g]}</svg>`;
+const symbolSvg = g => `<svg class="gsym" viewBox="-44 -30 88 60" role="img" aria-label="A logic gate symbol">${GATE_SVG[g]}</svg>`;
+
+// ═══════════════ DRAWING: CIRCUITS ═══════════════
+// Positions in a 640-wide drawing. Each gate box is 84 × 60; an input terminal sits 34 to the left of its box.
+const W = 640, GW = 42, GH = 30, STUB = 34, BULB_X = 592;
+const GEO = {
+  one:      { H: 170, g: { g1: [300, 85] } },
+  notIn:    { H: 185, g: { g1: [190, 60], g2: [410, 100] } },
+  notOut:   { H: 170, g: { g1: [230, 85], g2: [430, 85] } },
+  three:    { H: 195, g: { g1: [210, 70], g2: [430, 112] } },
+  threeNot: { H: 250, g: { g1: [200, 68], g2: [200, 190], g3: [440, 125] } },
+};
+const isSlotSrc = src => /^g\d$/.test(src);
+const pct = (v, of) => `${(v / of * 100).toFixed(3)}%`;
+const inYs = (y, n) => (n === 1 ? [y] : [y - 15, y + 15]);
+
+function geometry(id) {
+  const L = LAYOUTS[id], G = GEO[id];
+  const wires = [], terms = [];
+  for (const [g, ins] of Object.entries(L.slots)) {
+    const [x, y] = G.g[g];
+    const ys = inYs(y, ins.length);
+    ins.forEach((src, k) => {
+      if (isSlotSrc(src)) {
+        const [sx, sy] = G.g[src];
+        const x1 = sx + GW, x2 = x - GW, mid = Math.round((x1 + x2) / 2) + (k ? 14 : -6);
+        wires.push({ from: src, d: `M${x1},${sy} H${mid} V${ys[k]} H${x2}`, tx: x1 + 12, ty: sy - 10, mx: mid, my: (sy + ys[k]) / 2 });
+      } else {
+        // The two inputs of a gate are spread apart, so their circles (and pins) don't touch; the wire bends in.
+        const ty = ins.length === 1 ? ys[k] : ys[k] + (k ? 12 : -12);
+        terms.push({ g, k, letter: src, key: `${g}.${k}`, x: x - GW - STUB, y: ty, sy: ys[k], x2: x - GW });
+      }
+    });
+  }
+  const [ox, oy] = G.g[L.out];
+  return { H: G.H, wires, terms, out: { x1: ox + GW, y: oy } };
+}
+
+// opts: { task, mode: 'build' | 'fixed', build, pins, env, names: 'drop' | 'show' | 'hide', draft, pLabel }
+function circuitHtml(id, opts) {
+  const { task, build = {}, pins = false, env = null, names = 'hide', pLabel = false } = opts;
+  const slots = opts.mode === 'build';
+  const L = LAYOUTS[id], G = GEO[id], geo = geometry(id);
+  const res = env ? evalCircuit(id, build, env, pins) : null;
+  const cls = v => (v === 1 ? 'on' : v === 0 ? 'off' : '');
+  const tag = (v, x, y) => (v === 0 || v === 1 ? `<text class="vtag ${cls(v)}" x="${x}" y="${y}">${v}</text>` : '');
+  let svg = '', ov = '';
+
+  // Wires between gates, and to the bulb
+  for (const w of geo.wires) {
+    const v = res?.vals[w.from];
+    svg += `<path class="wire ${cls(v)}" d="${w.d}"/>${env ? tag(v, w.tx, w.ty) : ''}`;
+    if (pLabel && w.from === 'g1') svg += `<text class="plabel" x="${w.mx + 12}" y="${w.my}">P</text>`;
+  }
+  const outV = res?.out;
+  svg += `<path class="wire ${cls(outV)}" d="M${geo.out.x1},${geo.out.y} H${BULB_X - 20}"/>${env ? tag(outV, geo.out.x1 + 14, geo.out.y - 10) : ''}`;
+  svg += `<g class="bulb ${outV === 1 ? 'lit' : ''}"><circle class="glow" cx="${BULB_X}" cy="${geo.out.y}" r="30"/>
+    <circle cx="${BULB_X}" cy="${geo.out.y}" r="19"/><text x="${BULB_X}" y="${geo.out.y}">Q</text></g>`;
+
+  // Input terminals: a letter circle on a short wire into the gate, or an empty pin to drop a letter on
+  for (const t of geo.terms) {
+    const letter = pins ? build[t.key] : t.letter;
+    const v = env && letter ? env[letter] : undefined;
+    svg += `<path class="wire ${cls(v)}" d="M${t.x},${t.y} H${t.x2 - 12} V${t.sy} H${t.x2}"/>${env ? tag(v, t.x2 - 20, t.y + (t.y < t.sy ? -10 : 10)) : ''}`;
+    if (pins) {
+      ov += `<button type="button" class="drop pin ov ${letter ? 'filled' : ''}" data-drop="${t.key}" data-accept="input" data-task="${task}"
+        data-part="${t.key}" style="left:${pct(t.x, W)};top:${pct(t.y, G.H)}" aria-label="Input to ${t.g === L.out ? 'the last gate' : 'gate ' + t.g.slice(1)}: ${letter || 'empty'}">${letter || '?'}</button>`;
+    } else {
+      svg += `<g class="term"><circle cx="${t.x}" cy="${t.y}" r="12"/><text x="${t.x}" y="${t.y}">${t.letter}</text></g>`;
+    }
+  }
+
+  // Gate boxes
+  for (const [g, ins] of Object.entries(L.slots)) {
+    const [x, y] = G.g[g];
+    const kind = build[g];
+    if (slots) {
+      const box = `left:${pct(x, W)};top:${pct(y, G.H)};width:${pct(2 * GW + 4, W)};height:${pct(2 * GH + 4, G.H)}`;
+      if (!kind) {
+        // An empty box still shows how many input wires it has.
+        svg += inYs(y, ins.length).map(sy => `<line class="wire" x1="${x - GW}" y1="${sy}" x2="${x - GW + 10}" y2="${sy}"/>`).join('');
+        svg += `<rect class="slot-empty" x="${x - GW + 10}" y="${y - GH}" width="${2 * GW - 20}" height="${2 * GH}" rx="10"/>`;
+      }
+      ov += `<button type="button" class="drop slot ov ${kind ? 'filled' : ''}" data-drop="${g}" data-accept="gate" data-task="${task}" data-part="${g}"
+        style="${box}" aria-label="Gate box ${g.slice(1)} (${ins.length} input${ins.length > 1 ? 's' : ''}): ${kind || 'empty'}">${kind ? gateSvg(kind) : `<span>drop a<br>gate</span>`}</button>`;
+    } else {
+      svg += `<g transform="translate(${x},${y})">${GATE_SVG[kind]}</g>`;
+      if (names === 'show') svg += `<text class="glabel" x="${x}" y="${y + GH + 12}">${kind}</text>`;
+      if (names === 'drop') {
+        const v = opts.draft?.slots?.[g];
+        ov += `<button type="button" class="drop name ov ${v ? 'filled' : ''}" data-drop="${g}" data-accept="name" data-task="${task}" data-part="${g}"
+          style="left:${pct(x, W)};top:${pct(y + GH + 22, G.H + 30)}" aria-label="Name of gate ${g.slice(1)}: ${v || 'empty'}">${v || '?'}</button>`;
+      }
+    }
+  }
+  const H = G.H + (names === 'drop' ? 30 : 0);
+  const desc = names === 'drop' ? 'A logic circuit' : `Logic circuit: Q = ${esc(slots ? 'your circuit' : exprString(id, build, pins))}`;
+  return `<div class="circ-scroll"><div class="circ"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${desc}">${svg}</svg>${ov}</div></div>`;
+}
+
+// ═══════════════ DRAWING: TABLES, TOGGLES, CHIPS ═══════════════
+const toggle = (i, key, v) => `<button type="button" class="bit-toggle ${v ? 'set' : ''}" data-action="toggle" data-task="${i}" data-k="${key}"
+  data-part="${key}" aria-label="Output ${key}: ${v || 'not set'}">${v || '?'}</button>`;
+
+// cols: [{ head, cls, cell(rowIndex, row) }]
+function tableHtml(heads, rows, cols) {
+  const th = heads.map(h => `<th>${h}</th>`).join('') + cols.map((c, k) => `<th class="${k === 0 ? 'sep ' : ''}${c.cls || ''}">${c.head}</th>`).join('');
+  const body = rows.map((r, k) => `<tr data-row="${k}">${r.map(v => `<td>${v}</td>`).join('')}${cols.map((c, j) =>
+    `<td class="${j === 0 ? 'sep ' : ''}${c.tdCls || ''}">${c.cell(k, r)}</td>`).join('')}</tr>`).join('');
+  return `<table class="tt"><thead><tr>${th}</tr></thead><tbody>${body}</tbody></table>`;
+}
+
+const chip = (i, kind, value, inner = esc(value)) =>
+  `<button type="button" class="chip ${kind === 'input' ? 'input' : ''}" data-chip="${esc(value)}" data-kind="${kind}" data-task="${i}"
+    aria-label="${kind === 'gate' ? value + ' gate' : value}">${inner}</button>`;
+const gateOrder = i => shuffled(GATE_NAMES, seededRandom(`${state.seed}|palette|${i}`));
+function palette(i, kind, values, label) {
+  const inner = v => (kind === 'gate' ? `${gateSvg(v, '')}<span>${v}</span>` : esc(v));
+  return `<div class="palette" data-task="${i}"><span class="pl">${label}</span>${values.map(v => chip(i, kind, v, inner(v))).join('')}</div>`;
+}
+const dropBtn = (i, key, accept, v, extra = '', label = '') => `<button type="button" class="drop ${extra} ${v ? 'filled' : ''}" data-drop="${key}"
+  data-accept="${accept}" data-task="${i}" data-part="${key}" aria-label="${esc(label || 'Drop box')}: ${v || 'empty'}">${v ? esc(v) : '?'}</button>`;
+
+// ═══════════════ LADDERS (Tasks 1–5) ═══════════════
+const busy = {};
+
+function ladderQ(i) {
+  const s = state.ld[i];
+  return ladderQuestion(i, s.step, state.seed, s.retry);
+}
+
+function draftFor(i) {
+  const s = state.ld[i];
+  const key = `${s.step}|${s.retry}`;
+  if (state.draft[i].key !== key) state.draft[i] = { key, bits: {}, slots: {}, env: { A: 0, B: 0, C: 0 } };
+  return state.draft[i];
+}
+
+function stepHead(i, step) {
+  const n = STEP_COUNT[i];
+  const pips = Array.from({ length: n }, (_, k) => `<span class="pip ${k < step ? 'on' : ''} ${k === step ? 'now' : ''}"></span>`).join('');
+  return `<div class="step-head"><span>Step ${step + 1} of ${n}</span><span class="pips" aria-hidden="true">${pips}</span></div>`;
+}
+
+const yn = v => (v ? 'Yes <b>(1)</b>' : 'No <b>(0)</b>');
+const word = v => (v ? 'yes' : 'no');
+
+function situBody(q, d, i) {
+  const sc = scenario(q.scenario);
+  const heads = q.gate === 'NOT' ? [sc.a] : [sc.a, sc.b];
+  const th = heads.map(h => `<th class="words">${esc(h)}?</th>`).join('');
+  const body = q.rows.map((r, k) => `<tr data-row="${k}">${r.map(v => `<td class="word">${yn(v)}</td>`).join('')}
+    <td class="sep">${toggle(i, 'q' + k, d.bits['q' + k])}</td></tr>`).join('');
+  return `<p class="scenario">${esc(sc.text)}</p>
+    <table class="tt"><thead><tr>${th}<th class="sep outh words">${esc(sc.q)}? (1 = yes, 0 = no)</th></tr></thead><tbody>${body}</tbody></table>`;
+}
+
+function gapBody(q, d, i) {
+  const cards = q.ids.map((id, k) => {
+    const sc = scenario(id);
+    const [before, after] = gapText(sc).split('___');
+    const ev = q.evidence[k].map(({ r, out }) => {
+      const parts = sc.b ? `${esc(sc.a)}: <b>${word(r[0])}</b> · ${esc(sc.b)}: <b>${word(r[1])}</b>` : `${esc(sc.a)}: <b>${word(r[0])}</b>`;
+      return `<li>${parts} → ${esc(sc.q)}: <b>${word(out)}</b></li>`;
+    }).join('');
+    return `<div class="gap-card"><p class="gap-s">${esc(before)}${dropBtn(i, 's' + k, 'word', d.slots['s' + k], 'word-gap', `Gap in sentence ${k + 1}`)}${esc(after)}</p>
+      <ul class="evid">${ev}</ul></div>`;
+  }).join('');
+  return palette(i, 'word', gateOrder(i), 'Words') + cards;
+}
+
+function name3Body(q, d, i) {
+  const key = q.showKey ? `<ul class="shape-key">${GATE_NAMES.map(g => `<li><b>${g}</b>${SHAPES[g]}</li>`).join('')}</ul>` : '';
+  const tiles = q.order.map((g, k) => `<div class="sym-tile">${symbolSvg(g)}${dropBtn(i, 's' + k, 'name', d.slots['s' + k], '', `Name of symbol ${k + 1}`)}</div>`).join('');
+  return `${key}${palette(i, 'name', gateOrder(i), 'Names')}<div class="sym-row">${tiles}</div>`;
+}
+
+function nameCircuitBody(q, d, i) {
+  return palette(i, 'name', gateOrder(i), 'Names') + circuitHtml(q.layout, { task: i, mode: 'fixed', build: q.build, names: 'drop', draft: d });
+}
+
+function tableBody(q, d, i) {
+  const heads = arity(q.gate) === 1 ? ['A'] : ['A', 'B'];
+  const sym = `<div class="sym-tile" style="display:inline-flex;margin-bottom:10px">${q.rule ? gateSvg(q.gate) : symbolSvg(q.gate)}${q.rule ? `<b>${q.gate}</b>` : ''}</div>`;
+  const rule = q.rule ? `<div class="rule">${q.gate}: ${RULES[q.gate]}</div>` : '';
+  return `${sym}<br>${rule}${tableHtml(heads, inputRows(heads.length), [{ head: 'Q', cls: 'outh', cell: k => toggle(i, 'q' + k, d.bits['q' + k]) }])}`;
+}
+
+function whichGateBody(q, d, i) {
+  const tables = q.order.map((g, k) => {
+    const heads = arity(g) === 1 ? ['A'] : ['A', 'B'];
+    const col = gateColumn(g);
+    return `<div class="wg">${tableHtml(heads, inputRows(heads.length), [{ head: 'Q', cls: 'outh', tdCls: 'given', cell: r => col[r] }])}
+      ${dropBtn(i, 's' + k, 'name', d.slots['s' + k], '', `Gate for table ${k + 1}`)}</div>`;
+  }).join('');
+  return `${palette(i, 'name', gateOrder(i), 'Names')}<div class="wg-row">${tables}</div>`;
+}
+
+function traceBody(q, d, i) {
+  const L = LAYOUTS[q.layout];
+  const cols = [
+    { head: 'P', cls: 'outh', tdCls: q.giveP ? 'given' : '', cell: k => (q.giveP ? q.P[k] : toggle(i, 'P' + k, d.bits['P' + k])) },
+    { head: 'Q', cls: 'outh', cell: k => toggle(i, 'Q' + k, d.bits['Q' + k]) },
+  ];
+  return circuitHtml(q.layout, { task: i, mode: 'fixed', build: q.build, names: 'show', pLabel: true })
+    + tableHtml(L.inputs, inputRows(L.inputs.length), cols);
+}
+
+function buildBody(q, d, i) {
+  const L = LAYOUTS[q.layout];
+  const it = buildItem(q.layout, q.item);
+  let top;
+  if (q.from === 'story') {
+    top = `<p class="story">${esc(it.text)}</p><p class="story-ins">${L.inputs.map(x => `<span><b>${x}</b> = ${esc(it.ins[x])}</span>`).join('')}
+      <span><b>Q</b> = ${esc(it.q)}</span></p>`;
+  } else {
+    // Working columns (not marked): the student names one (e.g. "A AND B") and fills it in row by row,
+    // like P in Task 4, so a three-gate table can be worked out one gate at a time.
+    const n = d.work || 0;
+    const workCols = Array.from({ length: n }, (_, c) => ({
+      head: `<input class="wk-head" data-work="${c}" data-task="${i}" maxlength="12" autocomplete="off" spellcheck="false"
+        placeholder="e.g. A AND B" aria-label="Working column ${c + 1} heading" data-title="Working column ${c + 1}" value="${esc(d.heads?.[c] ?? '')}">
+        <button type="button" class="wk-x" data-action="work-remove" data-task="${i}" data-k="${c}" aria-label="Remove working column ${c + 1}">✕</button>`,
+      cls: 'wk', cell: k => toggle(i, `w${c}_${k}`, d.bits[`w${c}_${k}`]),
+    }));
+    top = `<p class="story">Build a circuit that gives this truth table:</p>`
+      + tableHtml(L.inputs, inputRows(L.inputs.length), [...workCols, { head: 'Q', cls: 'outh', tdCls: 'given', cell: k => q.target[k] }])
+      + (n < 2 ? `<button type="button" class="ac-btn ac-btn-secondary wk-add" data-action="work-add" data-task="${i}">+ Add a working column</button>
+        <p class="tap-note">Working columns aren't marked. Use one for the first gate, like <b>A AND B</b> or <b>A OR B</b>.</p>` : '');
+  }
+  const res = evalCircuit(q.layout, d.slots, d.env, q.pins);
+  const sw = L.inputs.map(x => `<button type="button" class="sw ${d.env[x] ? 'on' : ''}" data-action="switch" data-task="${i}" data-k="${x}"
+    aria-pressed="${!!d.env[x]}" aria-label="Switch ${x}: ${d.env[x]}"><span class="knob"></span>${x} = ${d.env[x]}</button>`).join('');
+  const bulb = res.out === undefined ? 'Q = ? (finish the circuit)' : `Q = ${res.out}${res.out ? ' 💡' : ''}`;
+  return `${top}
+    ${palette(i, 'gate', gateOrder(i), 'Gates')}
+    ${q.pins ? palette(i, 'input', L.inputs, 'Inputs') : ''}
+    ${circuitHtml(q.layout, { task: i, mode: 'build', build: d.slots, pins: q.pins, env: d.env })}
+    <div class="switches"><span class="pl">Test it</span>${sw}<span class="bulb-read" aria-live="polite">${bulb}</span></div>
+    <div class="result-box" id="result-${i}"></div>`;
+}
+
+const BODY = { situ: situBody, gap: gapBody, name3: name3Body, nameCircuit: nameCircuitBody, table: tableBody,
+  whichGate: whichGateBody, trace: traceBody, build: buildBody };
+
+const PROMPT = {
+  situ: 'What happens? Tap 1 or 0 for each situation.',
+  gap: 'Fill each gap with AND, OR or NOT.',
+  name3: 'Name each symbol.',
+  nameCircuit: 'Name every gate in this circuit.',
+  table: 'Complete the truth table.',
+  whichGate: 'Which gate makes each table?',
+  trace: 'Complete P and Q for every row.',
+  build: 'Build the circuit.',
+};
+
+function renderLadder(i, focusSel) {
+  const area = $('area-' + i);
+  if (isLocked(i)) { area.innerHTML = lockHtml(i); return; }
+  if (state.completed[i]) { area.innerHTML = doneHtml(i, `All ${STEP_COUNT[i]} steps done`); return; }
+  if (renderWaiting(i)) return;
+  const s = state.ld[i];
+  const q = ladderQ(i);
+  const d = draftFor(i);
+  const m = $('method-' + i);
+  if (m && q.fold && m.dataset.closedFor !== String(s.step)) { m.open = false; m.dataset.closedFor = String(s.step); }
+  const tapNote = ['gap', 'name3', 'nameCircuit', 'whichGate', 'build'].includes(q.kind)
+    ? '<p class="tap-note">Drag from the tray, or tap one and then tap a box. Tap a filled box to empty it.</p>' : '';
+  area.innerHTML = `${stepHead(i, s.step)}
+    <p class="help">${esc(q.help)}</p>
+    <div class="q-card" id="qc-${i}" data-key="${esc(q.key)}" data-kind="${q.kind}" data-step="${s.step}">
+      <h3>${PROMPT[q.kind]}</h3>${tapNote}
+      ${BODY[q.kind](q, d, i)}
+    </div>
+    <div class="row"><button type="button" class="ac-btn" id="check-${i}" data-action="ladder-check" data-task="${i}">Check</button></div>
+    <div class="cp-msg" id="msg-${i}" role="status"></div>`;
+  busy[i] = false;
+  glossify(area.querySelector('.help'));
+  glossify(area.querySelector('.scenario'));
+  area.querySelectorAll('.gap-card, .story').forEach(glossify);
+  paintPick();
+  if (focusSel) area.querySelector(focusSel)?.focus();
+}
+
+function answerText(q, d) {
+  const b = d.bits, sl = d.slots;
+  if (q.kind === 'situ' || q.kind === 'table') return `${q.kind === 'situ' ? scenario(q.scenario).id : q.gate}: ${q.answers.map((_, k) => b['q' + k] ?? '?').join('')}`;
+  if (q.kind === 'gap' || q.kind === 'name3' || q.kind === 'whichGate') return q.answers.map((_, k) => sl['s' + k] ?? '?').join(', ');
+  if (q.kind === 'nameCircuit') return slotIds(q.layout).map(g => sl[g] ?? '?').join(', ');
+  if (q.kind === 'trace') return `P ${q.giveP ? q.P : q.P.split('').map((_, k) => b['P' + k] ?? '?').join('')}, Q ${q.Q.split('').map((_, k) => b['Q' + k] ?? '?').join('')}`;
+  return `Q = ${exprString(q.layout, sl, q.pins)}`;
+}
+
+function highlightParts(i, results) {
+  const card = $('qc-' + i);
+  for (const [part, ok] of Object.entries(results)) {
+    const el = card.querySelector(`[data-part="${part}"]`);
+    if (el) { el.classList.toggle('is-right', ok); el.classList.toggle('is-wrong', !ok); }
+  }
+  const all = Object.values(results).every(Boolean);
+  card.classList.toggle('is-right', all);
+  card.classList.toggle('is-wrong', !all);
+}
+
+// A build is checked on every row: show the student's outputs beside the ones needed, row by row.
+function showBuildResult(i, q, d, results) {
+  const L = LAYOUTS[q.layout];
+  const col = circuitColumn(q.layout, d.slots, q.pins);
+  $('result-' + i).innerHTML = `<div class="rl">Every row tested</div>` + tableHtml(L.inputs, inputRows(L.inputs.length), [
+    { head: 'Your Q', cls: 'outh', cell: k => col[k] },
+    { head: 'Needed', cls: 'outh', tdCls: 'given', cell: k => q.target[k] },
+  ]);
+  $('result-' + i).querySelectorAll('tr[data-row]').forEach(tr => {
+    const ok = results['r' + tr.dataset.row];
+    tr.classList.add(ok ? 'is-right' : 'is-wrong');
+  });
+}
+
+function checkLadder(i) {
+  if (busy[i] || state.completed[i] || isLocked(i)) return;
+  if (window.Classroom?.verifyAuth() === false) return;
+  clearPick();
+  const q = ladderQ(i);
+  const d = draftFor(i);
+  const msg = $('msg-' + i);
+  const hint = shapeHint(q, d);
+  if (hint) { msg.className = 'cp-msg bad'; msg.textContent = hint; return; }
+  busy[i] = true;
+  const { ok, results } = markLadder(q, d);
+  if (q.kind === 'build') {
+    showBuildResult(i, q, d, results);
+    $('qc-' + i).classList.toggle('is-right', ok);
+    $('qc-' + i).classList.toggle('is-wrong', !ok);
+  } else highlightParts(i, results);
+  $('check-' + i).disabled = true;
+  $('qc-' + i).querySelectorAll('button, input').forEach(el => { el.disabled = true; });
+  const s = state.ld[i];
+
+  if (ok) {
+    logAnswer(i, `Step ${s.step + 1}: ${answerText(q, d)} ✓`);
+    window.ActivityUI?.miniCelebration($('qc-' + i));
+    msg.className = 'cp-msg good';
+    msg.innerHTML = `✓ Correct.<span class="why">${esc(q.kind === 'build' ? `Your circuit, Q = ${exprString(q.layout, d.slots, q.pins)}, gives the right output on every row.` : workingFor(q))}</span>`;
+    s.step++;
+    s.retry = 0;
+    state.wrongRun[i] = 0;
+    save();
+    if (s.step >= STEP_COUNT[i]) {
+      setTimeout(() => {
+        $('feedback-' + i).textContent = state.firstAttempt[i] ? '🥇 Every step right first time!' : '✅ All steps done.';
+        $('feedback-' + i).className = 'feedback correct';
+        markDone(i);
+      }, reduceMotion ? 300 : 1200);
+    } else {
+      setTimeout(() => renderLadder(i), reduceMotion ? 600 : (q.kind === 'build' ? 2200 : 1500));
+    }
+    return;
+  }
+
+  logAnswer(i, `Step ${s.step + 1}: ${answerText(q, d)} ✗`);
+  state.firstAttempt[i] = false;
+  s.retry++;
+  save();
+  const lead = q.kind === 'build'
+    ? '✗ Not quite: the rows in red give the wrong output.'
+    : '✗ Not quite: the parts in red are wrong. Here is the working:';
+  msgBad(i, lead, workingFor(q), '↻ Try another one');
+}
+
+// 0/1 boxes go ? → 0 → 1 → 0 …
+function toggleBit(i, k) {
+  if (i === CHAIN) return toggleChainBit(k);
+  if (busy[i] || state.completed[i]) return;
+  const d = draftFor(i);
+  const v = d.bits[k] = d.bits[k] === '0' ? '1' : '0';
+  save();
+  const card = $('qc-' + i);
+  const btn = card.querySelector(`[data-action="toggle"][data-k="${k}"]`);
+  btn.textContent = v;
+  btn.classList.add('set');
+  btn.classList.remove('is-right', 'is-wrong');
+  btn.setAttribute('aria-label', btn.getAttribute('aria-label').replace(/: [^:]*$/, `: ${v}`));
+  card.classList.remove('is-wrong');
+  $('msg-' + i).textContent = '';
+}
+
+function flipSwitch(i, x) {
+  if (busy[i] || state.completed[i]) return;
+  const d = draftFor(i);
+  d.env[x] = d.env[x] ? 0 : 1;
+  save();
+  renderLadder(i, `[data-action="switch"][data-k="${x}"]`);
+}
+
+// Working columns on a build-from-a-table step: up to two, each with a heading and a 0/1 per row.
+function changeWork(i, how, c) {
+  if (busy[i] || state.completed[i]) return;
+  const d = draftFor(i);
+  d.heads = d.heads || {};
+  const n = d.work || 0;
+  if (how === 'add' && n < 2) { d.work = n + 1; save(); return renderLadder(i, `.wk-head[data-work="${n}"]`); }
+  if (how === 'remove') {
+    // Column 2 slides into column 1's place when column 1 goes.
+    for (let k = c; k < n - 1; k++) {
+      d.heads[k] = d.heads[k + 1];
+      for (const key of Object.keys(d.bits)) if (key.startsWith(`w${k + 1}_`)) d.bits[`w${k}_${key.split('_')[1]}`] = d.bits[key];
+    }
+    delete d.heads[n - 1];
+    for (const key of Object.keys(d.bits)) if (key.startsWith(`w${n - 1}_`)) delete d.bits[key];
+    d.work = n - 1;
+    save();
+    renderLadder(i);
+  }
+}
+document.addEventListener('input', e => {
+  const el = e.target.closest('.wk-head');
+  if (!el) return;
+  const d = draftFor(+el.dataset.task);
+  (d.heads = d.heads || {})[+el.dataset.work] = el.value;
+  save();
+});
+
+// ═══════════════ DRAG AND DROP ═══════════════
+// Three ways to place a chip: drag it onto a box; tap (or Enter on) it and then tap the box; or Esc to put it back.
+// Tapping a filled box with nothing picked empties it.
+let pick = null;   // { task, kind, value }
+
+function paintPick() {
+  document.querySelectorAll('.chip').forEach(c => c.classList.toggle('picked',
+    !!pick && +c.dataset.task === pick.task && c.dataset.chip === pick.value && c.dataset.kind === pick.kind));
+  document.querySelectorAll('.drop').forEach(t => t.classList.toggle('can-drop',
+    !!pick && +t.dataset.task === pick.task && t.dataset.accept === pick.kind && !t.disabled));
+}
+function clearPick() { pick = null; paintPick(); }
+
+function place(i, key, value, kind) {
+  if (busy[i] || state.completed[i]) return;
+  const q = ladderQ(i);
+  if (kind === 'gate' && !fits(q.layout, key, value)) {
+    const msg = $('msg-' + i);
+    msg.className = 'cp-msg bad';
+    msg.textContent = value === 'NOT'
+      ? 'NOT has only one input, so it can only go in a box with one input wire.'
+      : `${value} needs two inputs, so it can't go in a box with only one input wire.`;
+    return;
+  }
+  draftFor(i).slots[key] = value;
+  save();
+  clearPick();
+  renderLadder(i, `[data-drop="${key}"]`);
+}
+
+function emptySlot(i, key) {
+  if (busy[i] || state.completed[i]) return;
+  delete draftFor(i).slots[key];
+  save();
+  renderLadder(i, `[data-drop="${key}"]`);
+}
+
+function clickChip(el) {
+  const p = { task: +el.dataset.task, kind: el.dataset.kind, value: el.dataset.chip };
+  pick = pick && pick.task === p.task && pick.kind === p.kind && pick.value === p.value ? null : p;
+  paintPick();
+}
+
+function clickDrop(el) {
+  const i = +el.dataset.task, key = el.dataset.drop;
+  if (pick && pick.task === i && pick.kind === el.dataset.accept) return place(i, key, pick.value, pick.kind);
+  if (el.classList.contains('filled')) return emptySlot(i, key);
+  window.ActivityUI?.showToast('Tap something in the tray first, then tap this box');
+}
+
+// Dragging: a short move turns a press into a drag, so a tap still picks the chip.
+let drag = null, swallowClick = false;
+document.addEventListener('pointerdown', e => {
+  const c = e.target.closest('.chip');
+  swallowClick = false;   // a new press: only the click that ends a drag is swallowed
+  if (!c || c.disabled || e.button > 0) return;
+  drag = { chip: c, x: e.clientX, y: e.clientY, ghost: null, over: null, id: e.pointerId };
+});
+document.addEventListener('pointermove', e => {
+  if (!drag || e.pointerId !== drag.id) return;
+  if (!drag.ghost) {
+    if (Math.hypot(e.clientX - drag.x, e.clientY - drag.y) < 6) return;
+    drag.ghost = drag.chip.cloneNode(true);
+    drag.ghost.classList.add('drag-ghost');
+    drag.ghost.removeAttribute('data-chip');
+    document.body.appendChild(drag.ghost);
+    document.body.classList.add('dragging');
+    pick = { task: +drag.chip.dataset.task, kind: drag.chip.dataset.kind, value: drag.chip.dataset.chip };
+    paintPick();
+  }
+  e.preventDefault();
+  // Near the top or bottom of the window, scroll, so a box just off screen can still be reached.
+  if (e.clientY > innerHeight - 50) scrollBy(0, 14);
+  else if (e.clientY < 50) scrollBy(0, -14);
+  drag.ghost.style.left = e.clientX + 'px';
+  drag.ghost.style.top = e.clientY + 'px';
+  const t = document.elementFromPoint(e.clientX, e.clientY)?.closest('.drop.can-drop');
+  if (drag.over !== t) { drag.over?.classList.remove('hover'); t?.classList.add('hover'); drag.over = t; }
+}, { passive: false });
+function endDrag(e, cancelled) {
+  if (!drag || e.pointerId !== drag.id) return;
+  const d = drag;
+  drag = null;
+  if (!d.ghost) return;   // a tap: the click event picks the chip
+  d.ghost.remove();
+  document.body.classList.remove('dragging');
+  d.over?.classList.remove('hover');
+  swallowClick = true;
+  setTimeout(() => { swallowClick = false; }, 60);
+  if (!cancelled && d.over && pick) place(+d.over.dataset.task, d.over.dataset.drop, pick.value, pick.kind);
+  else clearPick();
+}
+document.addEventListener('pointerup', e => endDrag(e, false));
+document.addEventListener('pointercancel', e => endDrag(e, true));
+
+// ═══════════════ PLENARY (Task 6) ═══════════════
+// 5 in a row, one at a time. A wrong answer is saved straight away as a restart (so refreshing doesn't
+// dodge it), shows why, then starts again with a new draw.
+const chainItems = () => drawPlenary(state.seed, state.cp.attempt);
+
+function chainDraft() {
+  const key = `${state.cp.attempt}|${state.cp.pos}`;
+  if (state.chainDraft.key !== key) state.chainDraft = { key, bits: {} };
+  return state.chainDraft;
+}
+
+function renderChain() {
+  const i = CHAIN, area = $('area-' + i);
+  if (isLocked(i)) { area.innerHTML = lockHtml(i); return; }
+  if (state.completed[i]) { area.innerHTML = doneHtml(i, `${PLENARY_LENGTH} in a row`); return; }
+  if (renderWaiting(i)) return;
+  const s = state.cp;
+  const item = chainItems()[s.pos];
+  let body;
+  if (item.type === 'mcq') {
+    const q = plenaryQuestion(item.id);
+    body = `<p class="cp-q">${esc(q.q)}</p>
+      <div class="cp-opts">${optionOrder(q, state.seed, s.attempt).map(k =>
+        `<button type="button" class="cp-opt" data-action="chain-mcq" data-task="${i}" data-k="${k}">${esc(q.opts.find(o => o[0] === k)[1])}</button>`).join('')}</div>`;
+  } else {
+    const d = chainDraft(), L = LAYOUTS[item.layout];
+    body = `<p class="cp-q">Complete the truth table for this circuit.</p>
+      ${circuitHtml(item.layout, { task: i, mode: 'fixed', build: item.build, names: 'hide' })}
+      ${tableHtml(L.inputs, inputRows(L.inputs.length), [{ head: 'Q', cls: 'outh', cell: k => toggle(i, 'q' + k, d.bits['q' + k]) }])}
+      <div class="row"><button type="button" class="ac-btn" id="check-${i}" data-action="chain-table" data-task="${i}">Check</button></div>`;
+  }
+  area.innerHTML = `<div class="step-head"><span>Question ${s.pos + 1} of ${PLENARY_LENGTH}</span><span>${s.pos} / ${PLENARY_LENGTH} right</span></div>
+    <div class="cp-bar"><div style="width:${s.pos / PLENARY_LENGTH * 100}%"></div></div>
+    <div class="q-card" id="qc-${i}" data-type="${item.type}" data-id="${item.id ?? ''}">
+      <h3>Question ${s.pos + 1}</h3>${body}
+    </div>
+    <div class="cp-msg" id="msg-${i}" role="status"></div>`;
+  busy[i] = false;
+  glossify(area.querySelector('.q-card'));
+}
+
+function toggleChainBit(k) {
+  const i = CHAIN;
+  if (busy[i] || state.completed[i]) return;
+  const d = chainDraft();
+  const v = d.bits[k] = d.bits[k] === '0' ? '1' : '0';
+  save();
+  const btn = $('qc-' + i).querySelector(`[data-k="${k}"]`);
+  btn.textContent = v;
+  btn.classList.add('set');
+  btn.classList.remove('is-right', 'is-wrong');
+  $('msg-' + i).textContent = '';
+}
+
+function chainRight(why) {
+  const i = CHAIN, s = state.cp, msg = $('msg-' + i);
+  $('qc-' + i).classList.add('is-right');
+  msg.className = 'cp-msg good';
+  msg.innerHTML = `✓ Correct.<span class="why">${esc(why)}</span>`;
+  state.wrongRun[i] = 0;
+  s.pos++;
+  save();
+  if (s.pos >= PLENARY_LENGTH) {
+    setTimeout(() => {
+      $('feedback-' + i).textContent = state.firstAttempt[i] ? `🥇 ${PLENARY_LENGTH} in a row, first time!` : `✅ ${PLENARY_LENGTH} in a row: passed.`;
+      $('feedback-' + i).className = 'feedback correct';
+      markDone(i);
+    }, reduceMotion ? 300 : 1200);
+  } else setTimeout(renderChain, reduceMotion ? 600 : 1500);
+}
+
+function chainWrong(why) {
+  const i = CHAIN;
+  $('qc-' + i).classList.add('is-wrong');
+  state.firstAttempt[i] = false;
+  state.cp.attempt++;
+  state.cp.pos = 0;
+  state.chainDraft = {};
+  save();
+  msgBad(i, '✗ Not quite. Back to question 1 with new questions.', why, '↺ Start again from question 1');
+}
+
+function answerMcq(k) {
+  const i = CHAIN;
+  if (busy[i] || state.completed[i]) return;
+  if (window.Classroom?.verifyAuth() === false) return;
+  busy[i] = true;
+  const q = plenaryQuestion(chainItems()[state.cp.pos].id);
+  const card = $('qc-' + i);
+  card.querySelectorAll('.cp-opt').forEach(b => { b.disabled = true; });
+  const chosen = q.opts.find(o => o[0] === k)[1];
+  card.querySelector(`[data-k="${k}"]`).classList.add(k === q.a ? 'right' : 'wrong');
+  card.querySelector(`[data-k="${q.a}"]`).classList.add('right');
+  logAnswer(i, `${q.q} ${chosen} ${k === q.a ? '✓' : '✗'}`);
+  k === q.a ? chainRight(q.why) : chainWrong(q.why);
+}
+
+function answerChainTable() {
+  const i = CHAIN;
+  if (busy[i] || state.completed[i]) return;
+  if (window.Classroom?.verifyAuth() === false) return;
+  const item = chainItems()[state.cp.pos];
+  const want = tcolAnswer(item), d = chainDraft();
+  const got = [...want].map((_, k) => d.bits['q' + k]);
+  if (got.some(v => v !== '0' && v !== '1')) { $('msg-' + i).className = 'cp-msg bad'; $('msg-' + i).textContent = 'Tap every output box to set it to 0 or 1 first.'; return; }
+  busy[i] = true;
+  const card = $('qc-' + i);
+  card.querySelectorAll('button').forEach(b => { b.disabled = true; });
+  got.forEach((v, k) => { const b = card.querySelector(`[data-k="q${k}"]`); b.classList.add(v === want[k] ? 'is-right' : 'is-wrong'); });
+  const ok = got.join('') === want;
+  const expr = exprString(item.layout, item.build);
+  logAnswer(i, `Q = ${expr}: ${got.join('')} ${ok ? '✓' : '✗'}`);
+  const why = item.layout === 'one' ? `This is ${item.build.g1}. ${tableWorking(item.build.g1)}` : `Q = ${expr}, so Q is ${want} (top to bottom).`;
+  ok ? chainRight(why) : chainWrong(why);
+}
+
+// ═══════════════ SCORING AND COMPLETION ═══════════════
+function calcScore() {
+  const done     = state.completed.filter(Boolean).length;
+  const mastered = state.completed.filter((c, i) => c && state.firstAttempt[i]).length;
+  return Math.round((done / TASK_COUNT * 80) + (mastered / TASK_COUNT * 20));
+}
+
+function submitScore() {
+  const pct = calcScore();
+  window.ActivityUI?.setScore(pct);
+  window.Classroom?.setLive?.({ task: `${state.completed.filter(Boolean).length}/${TASK_COUNT}` }, ACTIVITY_TITLE);
+  window.Classroom?.submitGrade(pct, ACTIVITY_TITLE);
+}
+
+function showDone(i) {
+  const isGold = state.firstAttempt[i];
+  $('dot-' + i).className = 'pdot ' + (isGold ? 'gold' : 'correct');
+  document.querySelector(`.tab[data-idx="${i}"]`).classList.add('done');
+  $('reset-' + i).style.display = isGold ? 'none' : '';
+}
+
+function markDone(i) {
+  if (state.completed[i]) return;
+  state.completed[i] = true;
+  if (!state.passed.includes(i)) state.passed.push(i);
+  showDone(i);
+  save();
+  submitScore();
+  renderAll();
+  if (state.completed.every(Boolean)) allComplete();
+}
+
+function resetTask(i) {
+  state.completed[i] = false;
+  state.firstAttempt[i] = true;
+  delete state.wait[i];
+  state.wrongRun[i] = 0;
+  if (i === CHAIN) { state.cp.attempt++; state.cp.pos = 0; state.chainDraft = {}; }
+  else { state.ld[i].step = 0; state.ld[i].retry++; }
+  $('dot-' + i).className = 'pdot';
+  document.querySelector(`.tab[data-idx="${i}"]`).classList.remove('done');
+  $('feedback-' + i).textContent = '';
+  $('feedback-' + i).className = 'feedback';
+  $('reset-' + i).style.display = 'none';
+  const m = $('method-' + i);
+  if (m) { m.open = true; delete m.dataset.closedFor; }
+  $('done-banner').classList.remove('show', 'gold', 'green');
+  $('glow-overlay').classList.remove('show', 'gold', 'green');
+  window.ActivityUI?.resetCelebration();
+  save();
+  renderAll();
+  submitScore();
+}
+
+function showAllDone() {
+  const tier = state.firstAttempt.every(Boolean) ? 'gold' : 'green';
+  $('done-banner').classList.add('show', tier);
+  $('glow-overlay').classList.add(tier, 'show');
+}
+
+function allComplete() {
+  showAllDone();
+  window.ActivityUI?.launchCelebration({ percent: calcScore() });
+}
+
+// ═══════════════ LOGIC RUSH (extension game, not scored) ═══════════════
+// Saved apart from the lesson, so "Try for Gold" never wipes a high score.
+const RUSH_KEY = 'y8_datarep_l4_logic_rush';
+const rush = { best: 0, bestStreak: 0, runs: 0, codes: {}, badges: {}, lastCode: '' };
+try { Object.assign(rush, JSON.parse(localStorage.getItem(RUSH_KEY)) || {}); } catch (e) {}
+const rushSave = () => { try { localStorage.setItem(RUSH_KEY, JSON.stringify(rush)); } catch (e) {} };
+
+let game = null;
+const fmt = n => n.toLocaleString('en-GB');
+const ASK = {
+  trio:  'Work out each one. Type the 3 answers in order:',
+  trio2: 'Work out each one (brackets first). Type the 3 answers in order:',
+  col:   'Type the output for each row, top to bottom:',
+  col2:  'Type Q for each row, top to bottom:',
+  name:  'Which gate makes this table? Type AND, OR or NOT:',
+  nib2h: 'Turn these 4 bits into one hex digit:',
+  h2nib: 'Turn this hex digit into 4 bits:',
+  b2h:   'Convert to hex:',
+  h2b:   'Convert to binary (8 bits):',
+  add4:  'Add these binary numbers:',
+  add8:  'Add these binary numbers:',
+  b2d4:  'Convert to denary:',
+  b2d8:  'Convert to denary:',
+  d2b4:  'Convert to binary (4 bits):',
+  d2b8:  'Convert to binary (8 bits):',
+};
+
+function showQuestion(q) {
+  const el = $('rush-show');
+  el.classList.toggle('lg', q.type.startsWith('trio'));
+  if (q.type.startsWith('add')) {
+    const [a, b] = itemShown(q).split(' + ');
+    el.innerHTML = `<span class="rush-sum"><span>${a}</span><span><i>+</i>${b}</span></span>`;
+    return;
+  }
+  const rows = itemRows(q);
+  if (!rows) { el.textContent = itemShown(q); return; }
+  const heads = q.type === 'col2' ? LAYOUTS[q.layout].inputs : rows[0].length === 1 ? ['A'] : ['A', 'B'];
+  const given = q.type === 'name' ? gateColumn(q.g) : null;
+  el.innerHTML = `<div class="rush-expr">${q.type === 'name' ? 'Q = ? gate' : `Q = ${esc(itemShown(q))}`}</div>`
+    + tableHtml(heads, rows, [{ head: 'Q', cls: 'outh', tdCls: given ? 'given' : '', cell: k => (given ? given[k] : '?') }]);
+}
+
+function rushShow(id) { document.querySelectorAll('.rush-screen').forEach(s => s.classList.toggle('on', s.id === id)); }
+function rushStop() { if (game) { cancelAnimationFrame(game.raf); clearTimeout(game.next); game.over = true; } }
+
+function renderBestChip() {
+  const code = rush.lastCode;
+  const best = code ? rush.codes[code] || 0 : rush.best;
+  const chip = $('best-chip');
+  chip.classList.toggle('show', rush.runs > 0);
+  chip.textContent = code ? `🏆 Logic Rush ${code}: ${fmt(best)}` : `🏆 Logic Rush best: ${fmt(best)}`;
+  const codes = Object.entries(rush.codes).map(([c, s]) => `${c} ${fmt(s)}`).join(', ');
+  $('ev-rush').value = rush.runs
+    ? `Solo best ${fmt(rush.best)} (${rankFor(rush.best)}), best streak ${rush.bestStreak}, ${rush.runs} runs${codes ? `. Class challenges: ${codes}` : ''}`
+    : '';
+}
+
+function badgeHtml(fresh = []) {
+  return GAME_BADGES.map(([id, name, how]) =>
+    `<span class="badge ${rush.badges[id] ? 'got' : ''} ${fresh.includes(id) ? 'new' : ''}" title="${esc(how)}">${name}</span>`).join('');
+}
+
+function rushMenu() {
+  rushStop();
+  $('rush-best').textContent = fmt(rush.best);
+  $('rush-rank').textContent = rankFor(rush.best);
+  $('rush-streak').textContent = rush.bestStreak;
+  $('rush-runs').textContent = rush.runs;
+  $('rush-badges').innerHTML = badgeHtml();
+  const codes = Object.entries(rush.codes);
+  $('rush-code-best').textContent = codes.length ? 'Your challenge bests: ' + codes.slice(-3).map(([c, s]) => `${c} ${fmt(s)}`).join(' · ') : '';
+  if (rush.lastCode && !$('rush-code').value) $('rush-code').value = rush.lastCode;
+  rushShow('rush-menu');
+}
+
+function renderRush() {
+  const locked = isLocked(RUSH_TAB);
+  $('rush-lock').innerHTML = locked ? lockHtml(RUSH_TAB) : '';
+  $('rush').style.display = locked ? 'none' : '';
+  if (locked) rushStop();
+  else if (!game || game.over) rushMenu();
+  renderBestChip();
+}
+
+function rushStart(code) {
+  rushStop();
+  game = {
+    code, seed: code || Math.random().toString(36).slice(2, 10),
+    i: 0, score: 0, lives: GAME_LIVES, streak: 0, maxStreak: 0, right: 0, fast: 0, perfect: true,
+    missed: [], locked: false, over: false, raf: 0, next: 0,
+  };
+  rush.lastCode = code;
+  rushSave();
+  rushShow('rush-game');
+  rushNext();
+}
+
+function rushHud() {
+  $('hud-score').textContent = fmt(game.score);
+  const m = multiplier(game.streak);
+  $('hud-mult').textContent = '×' + m;
+  $('hud-mult').classList.toggle('hot', m >= 2);
+  $('hud-q').textContent = game.i + 1;
+  $('hud-streak').textContent = game.streak;
+  $('hud-lvl').textContent = gameLevel(game.i).name.toUpperCase();
+  $('hud-lives').textContent = '❤️'.repeat(game.lives) + '🖤'.repeat(GAME_LIVES - game.lives);
+  const best = game.code ? rush.codes[game.code] || 0 : rush.best;
+  $('hud-best').textContent = `Best: ${fmt(best)}`;
+}
+
+function rushNext() {
+  const q = game.q = gameQuestion(game.seed, game.i);
+  game.limit = q.time;
+  game.locked = false;
+  const lvl = gameLevel(game.i);
+  if (game.i === lvl.from && lvl.intro) window.ActivityUI?.showToast('⬆ ' + lvl.intro);
+  $('rush-ask').textContent = ASK[q.type];
+  showQuestion(q);
+  const input = $('rush-in');
+  input.value = '';
+  input.disabled = false;
+  input.classList.remove('is-right', 'is-wrong');
+  input.maxLength = itemAnswer(q).length + (q.type.startsWith('add') ? 3 : 4);
+  input.inputMode = (toHexType(q.type) || q.type === 'name') ? 'text' : 'numeric';
+  $('rush-go').disabled = false;
+  input.focus();
+  $('verdict').innerHTML = '';
+  rushHud();
+  game.start = performance.now();
+  const bar = $('tbar');
+  const tick = () => {
+    if (game.over || game.locked) return;
+    const left = game.limit - (performance.now() - game.start) / 1000;
+    bar.style.width = Math.max(0, left / game.limit * 100) + '%';
+    bar.classList.toggle('low', left < 5);
+    if (left <= 0) { rushAnswer(true); return; }
+    game.raf = requestAnimationFrame(tick);
+  };
+  tick();
+}
+
+function rushAnswer(timedOut = false) {
+  if (!game || game.locked || game.over) return;
+  const q = game.q;
+  const input = $('rush-in');
+  const verdict = timedOut ? 'wrong' : checkTyped(q, input.value);
+  if (verdict === 'format') { $('verdict').innerHTML = `<span class="why">${esc(formatHint(q))}</span>`; return; }
+  game.locked = true;
+  cancelAnimationFrame(game.raf);
+  input.disabled = true;
+  $('rush-go').disabled = true;
+  const used = (performance.now() - game.start) / 1000;
+  const v = $('verdict');
+  if (verdict === 'ok') {
+    game.streak++;
+    game.right++;
+    game.maxStreak = Math.max(game.maxStreak, game.streak);
+    if (used < 5) game.fast++;
+    const pts = gamePoints(game.i, game.limit - used, game.limit, game.streak);
+    game.score += pts;
+    rushLive(game.code, game.score);
+    input.classList.add('is-right');
+    v.innerHTML = `✅ Right! <span class="pts">+${fmt(pts)}</span>`;
+  } else {
+    game.streak = 0;
+    game.lives--;
+    if (game.i < 20) game.perfect = false;
+    game.missed.push(q);
+    input.classList.add('is-wrong');
+    v.innerHTML = `${timedOut ? '⏱ Too slow!' : '💥 Not quite.'} You lose a life. The answer is <b>${esc(itemAnswer(q))}</b>.
+      <span class="why">${esc(itemWorking(q))}</span>`;
+  }
+  rushHud();
+  game.next = setTimeout(() => {
+    if (game.lives <= 0) return rushOver();
+    game.i++;
+    rushNext();
+  }, verdict === 'ok' ? (reduceMotion ? 500 : 900) : 4500);
+}
+
+// The hub's Live view ranks each board separately: solo runs on one, each class challenge code on its own.
+function rushLive(code, score = 0) {
+  window.Classroom?.setLive?.({
+    board: Math.max(score, code ? rush.codes[code] || 0 : rush.best),
+    boardLabel: code ? `Logic Rush ${code}` : 'Logic Rush',
+  }, ACTIVITY_TITLE);
+}
+
+function rushOver() {
+  rushStop();
+  const g = game;
+  const played = g.i + 1;
+  const earned = runBadges({ played, maxStreak: g.maxStreak, fast: g.fast, perfect: g.perfect, score: g.score });
+  const fresh = Object.keys(earned).filter(k => earned[k] && !rush.badges[k]);
+  fresh.forEach(k => { rush.badges[k] = true; });
+  rush.runs++;
+  rush.bestStreak = Math.max(rush.bestStreak, g.maxStreak);
+  let pb;
+  if (g.code) {
+    const prev = rush.codes[g.code] || 0;
+    if (g.score > prev) { rush.codes[g.code] = g.score; pb = prev ? `🏆 New best on challenge ${g.code}!` : `Challenge ${g.code}: score recorded`; }
+    else pb = `Your best on ${g.code}: ${fmt(prev)}`;
+  } else if (g.score > rush.best) {
+    pb = rush.best ? '🏆 New personal best!' : 'First score recorded!';
+    rush.best = g.score;
+  } else pb = `Personal best: ${fmt(rush.best)}`;
+  rushSave();
+  renderBestChip();
+  rushLive(g.code);
+
+  $('over-mode').textContent = g.code ? `CLASS CHALLENGE · ${g.code}` : 'SOLO RUN';
+  $('over-score').textContent = fmt(g.score);
+  $('over-rank').textContent = rankFor(g.score);
+  $('over-pb').textContent = pb;
+  $('over-qs').textContent = played;
+  $('over-acc').textContent = Math.round(g.right / played * 100) + '%';
+  $('over-streak').textContent = g.maxStreak;
+  const next = RANKS.find(([min]) => min > g.score);
+  $('over-next').textContent = next ? fmt(next[0] - g.score) : 'MAX';
+  $('over-badges').innerHTML = badgeHtml(fresh);
+  const mine = rankFor(g.score);
+  $('over-ladder').innerHTML = RANKS.slice().reverse().map(([min, name]) =>
+    `<li class="${name === mine ? 'me' : ''}"><span>${name}</span><span>${fmt(min)}+</span></li>`).join('');
+  $('over-missed').innerHTML = g.missed.length
+    ? `<div class="rush-sub">📚 Learn from the ones you missed</div><ul class="missed">${g.missed.slice(-4).map(q =>
+        `<li><b>${esc(itemShown(q))} → ${esc(itemAnswer(q))}</b><br><span class="muted">${esc(itemWorking(q))}</span></li>`).join('')}</ul>`
+    : '';
+  rushShow('rush-over');
+  if (fresh.length) window.ActivityUI?.showToast('🏅 New badge: ' + fresh.map(k => GAME_BADGES.find(b => b[0] === k)[1]).join(', '));
+}
+
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-rush]');
+  if (!b) return;
+  const act = b.dataset.rush;
+  if (act === 'solo') rushStart('');
+  if (act === 'challenge') {
+    const code = cleanCode($('rush-code').value);
+    if (!code) { window.ActivityUI?.showToast('Type the challenge code from the board first'); return; }
+    rushStart(code);
+  }
+  if (act === 'again') rushStart(game?.code || '');
+  if (act === 'menu') rushMenu();
+});
+$('rush-go').addEventListener('click', () => rushAnswer());
+$('rush-in').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); rushAnswer(); } });
+$('rush-in').addEventListener('input', () => { $('verdict').innerHTML = ''; });
+$('rush-code').addEventListener('keydown', e => { if (e.key === 'Enter') $('rush').querySelector('[data-rush="challenge"]').click(); });
+
+// ═══════════════ HOVER DEFINITIONS ═══════════════
+// Words from GLOSSARY get a dotted underline and show their meaning on hover, focus or tap: once per word in each
+// goal, help line or question. Never in the method boxes, the circuits, tables, trays or Logic Rush (it's timed),
+// nor on a question that tests what a word means (NO_GLOSS).
+const GL_RE = new RegExp(`\\b(?:${GLOSSARY.map(g => g[0]).join('|')})\\b`, 'gi');
+const GL_SKIP = '.method, .circ-scroll, table, .palette, .drop, .rush, .cp-msg, .lock-card, .step-head, .gl, input, .ev, .sym-row, .wg-row';
+function glossify(root) {
+  if (glAnchor && !glAnchor.isConnected) hideTip();
+  if (!root || root.closest(GL_SKIP)) return;
+  const card = root.matches('.q-card[data-id]') ? root : root.querySelector('.q-card[data-id]');
+  if (card && NO_GLOSS.includes(card.dataset.id)) return;
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT,
+    { acceptNode: n => (n.parentElement.closest(GL_SKIP) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT) });
+  const nodes = [];
+  while (walker.nextNode()) nodes.push(walker.currentNode);
+  const seen = new Set();
+  for (const n of nodes) {
+    const hits = [...n.data.matchAll(GL_RE)].filter(m => {
+      const def = glossaryDef(m[0]);
+      if (seen.has(def)) return false;
+      seen.add(def);
+      return true;
+    });
+    if (!hits.length) continue;
+    const focusable = !n.parentElement.closest('button');
+    const frag = document.createDocumentFragment();
+    let last = 0;
+    for (const m of hits) {
+      frag.append(n.data.slice(last, m.index));
+      const s = Object.assign(document.createElement('span'), { className: 'gl', textContent: m[0] });
+      s.dataset.def = glossaryDef(m[0]);
+      if (focusable) s.tabIndex = 0;
+      frag.append(s);
+      last = m.index + m[0].length;
+    }
+    frag.append(n.data.slice(last));
+    n.replaceWith(frag);
+  }
+}
+const glTip = Object.assign(document.createElement('div'), { className: 'gl-tip', id: 'gl-tip', role: 'tooltip' });
+let glAnchor = null;
+function showTip(el) {
+  glTip.innerHTML = `<b>${esc(el.textContent)}</b>${esc(el.dataset.def)}`;
+  if (!glTip.isConnected) document.body.appendChild(glTip);
+  el.setAttribute('aria-describedby', 'gl-tip');
+  glAnchor = el;
+  placeTip();
+  glTip.classList.add('show');
+}
+function placeTip() {
+  const r = glAnchor.getBoundingClientRect(), t = glTip.getBoundingClientRect(), gap = 8;
+  if (r.bottom < 0 || r.top > innerHeight) return hideTip();
+  const below = r.bottom + gap + t.height < innerHeight;
+  glTip.style.top = (below ? r.bottom + gap : Math.max(4, r.top - gap - t.height)) + 'px';
+  glTip.style.left = Math.max(4, Math.min(r.left, innerWidth - t.width - 4)) + 'px';
+}
+function hideTip() { glTip.classList.remove('show'); glAnchor = null; }
+for (const ev of ['mouseover', 'focusin']) document.addEventListener(ev, e => { const g = e.target.closest?.('.gl'); if (g) showTip(g); });
+for (const ev of ['mouseout', 'focusout']) document.addEventListener(ev, e => { if (e.target.closest?.('.gl')) hideTip(); });
+addEventListener('scroll', () => { if (glAnchor) placeTip(); }, { passive: true, capture: true });
+
+// ═══════════════ EVENTS ═══════════════
+document.addEventListener('click', e => {
+  if (swallowClick) return;
+  const c = e.target.closest('.chip');
+  if (c) { clickChip(c); return; }
+  const dr = e.target.closest('.drop');
+  if (dr) { clickDrop(dr); return; }
+  const btn = e.target.closest('[data-action]');
+  if (!btn) return;
+  const i = +btn.dataset.task;
+  const act = btn.dataset.action;
+  if (act === 'ladder-check') checkLadder(i);
+  if (act === 'toggle')       toggleBit(i, btn.dataset.k);
+  if (act === 'switch')       flipSwitch(i, btn.dataset.k);
+  if (act === 'work-add')     changeWork(i, 'add');
+  if (act === 'work-remove')  changeWork(i, 'remove', +btn.dataset.k);
+  if (act === 'chain-mcq')    answerMcq(btn.dataset.k);
+  if (act === 'chain-table')  answerChainTable();
+  if (act === 'reset')        resetTask(i);
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { hideTip(); if (pick) clearPick(); }
+});
+
+// ═══════════════ START UP ═══════════════
+function renderAll() {
+  renderLocks();
+  renderChain();
+  for (const i of LADDER_TASKS) renderLadder(i);
+  renderRush();
+}
+
+renderAll();
+document.querySelectorAll('.goal').forEach(g => {
+  const text = document.createElement('span');
+  text.append(...g.childNodes);
+  g.append(text);
+  glossify(text);
+});
+
+for (let i = 0; i < TASK_COUNT; i++) {
+  $('ev-' + i).value = state.log[i].join(' | ');
+  if (!state.completed[i]) continue;
+  showDone(i);
+  $('feedback-' + i).textContent = '✅ Done!';
+  $('feedback-' + i).className = 'feedback correct';
+}
+if (state.completed.every(Boolean)) showAllDone();
+window.ActivityUI?.setScore(calcScore());
+showTab(Math.min(Math.max(+state.tab || 0, 0), RUSH_TAB));
+save();
+</script>
+</body>
+</html>

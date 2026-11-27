@@ -126,6 +126,8 @@ step where adding the 0s is the task.
 - A truth table lists the output for every combination of inputs (4 rows for two inputs, 2 for one).
 - In a circuit, one gate's output becomes the next gate's input.
 
+*Decision (Nick, 2026-11-25): the lesson ends with students **building** circuits by drag and drop (gates into boxes, then A/B/C onto the inputs, tested with switches; building from a truth table stays at two gates and two inputs, as a three-gate build from a table was too hard for Y8), after naming gates, truth tables and tracing. The extension game (Logic Rush) **builds over the unit**: about the first two minutes are this lesson only, then the earlier lessons join in newest first (hex, then binary adding, then binary ↔ denary), and the last level is everything in 8 bits. Later lessons' games follow the same pattern.*
+
 ### Procedural
 - Apply AND, OR and NOT to everyday conditions.
 - Name a gate from its symbol.

@@ -108,6 +108,7 @@ Each teaching lesson (1–4) runs a **complete PRIMM cycle**: Predict → Run �
 - Questions must draw on knowledge from previous lessons in the unit (or prior units where that knowledge is being built on today). Do not recap content from the current lesson.
 - **At least one question must be highly guessable** — a true/false, a fill-in-the-blank with a strong contextual cue, or a multiple-choice option. If every question is open-ended, students who feel uncertain will write nothing ("?" or "idk") and the retrieval practice is lost. A guessable question forces a committed answer from every student and gives you something to correct.
 - Open-ended questions are fine alongside guessable ones, but should be short and concrete (e.g. "What does `print()` do?" not "Explain how Python programs work").
+- **No two questions practise the same method** (Nick, 2026-11-27). Binary → hex and binary → denary both start with 8 4 2 1 over the bits, so together they are one question twice; turn one round (denary → binary) or swap it for another lesson's skill.
 - Avoid questions that reward vague answers. "What did we learn last lesson?" invites nothing. "What is the word for a named storage location in a program?" does not.
 | Learning intentions | Clarity of Learning Intentions | Topic question (unit-level); lesson question (today) |
 | Declarative knowledge | New Information | Key term + visual or analogy; max 2 bullets |
@@ -195,7 +196,7 @@ A unit with a story layer can restyle the deck to match it, but keeps the slide 
 
 ## 10. ISYS (I Say, You Say) — every lesson deck
 
-Nick's directive, 2026-11-18. Every lesson has **at least one and at most three** ISYS moments.
+Nick's directive, 2026-11-18. Every lesson has **at least one and at most three** ISYS moments. Nick can allow a lesson a fourth (Y8 Data Representation L4 Logic Gates, 2026-11-27: Logic gate, AND gate, OR gate, Truth table); the builder then passes `createDeck({ isysMax: 4 })`.
 
 **Choosing what to flag**
 - The 1–3 most important pieces of **declarative** knowledge in the lesson: key vocabulary, definitions, facts or short rules ("Bit … one binary digit", "Condition … a True/False test").

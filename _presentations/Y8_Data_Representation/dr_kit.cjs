@@ -113,11 +113,12 @@ module.exports = function drKit(K, S, { activity }) {
   // Recap & Recall questions for S.recallStarter / S.recallAnswers. Every binary → denary card gets the hint
   // "Remember 8 4 2 1 along the top" under it (Nick, 2026-11-23: it gets the method off on the right footing).
   // A binary → denary card is a write-it card whose question has a binary number (3+ bits) and "denary".
+  // Binary → hex cards get it too: they start with the same 8 4 2 1 step (Nick, 2026-11-27).
   // A card's own hint wins; hint: '' leaves it off. (MCQ cards have no room: the options sit where the hint goes.)
   const B2D_HINT = 'Remember 8 4 2 1 along the top';
   function recallQuestions(qs) {
     return qs.map((q) => (q.hint === undefined && q.type === 'write' && !q.code?.length
-      && /\b[01]{3,}\b/.test(q.q) && /\bdenary\b/i.test(q.q)) ? { ...q, hint: B2D_HINT } : q);
+      && /\b[01]{3,}\b/.test(q.q) && /\b(denary|hex)\b/i.test(q.q)) ? { ...q, hint: B2D_HINT } : q);
   }
 
   return { gridGeom, rowLabel, headRow, cellRow, litColumns, doubleArrows, strip, youDoSlide, taskSlide, recallQuestions };

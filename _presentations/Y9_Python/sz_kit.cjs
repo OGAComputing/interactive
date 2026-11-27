@@ -20,7 +20,8 @@ const pptxgen = requireGlobal('pptxgenjs');
 // fonts: { head, body, mono } to swap the typefaces (other units use Google fonts; Y9 keeps Cambria / Calibri / Consolas).
 // palette: overrides any of P's colours below, so another unit can have its own look (Y9 keeps the defaults).
 // template: true for the deck template only (it shows one ISYS example; a lesson needs 1–3 phrases, see ../isys.cjs).
-function createDeck({ title, footerText, author = 'Nicholas Houlton', station: startState = 'none', fonts = {}, palette = {}, template = false }) {
+// isysMax: 4 only where Nick has allowed a lesson a fourth phrase (ppt-guidelines.md §10).
+function createDeck({ title, footerText, author = 'Nicholas Houlton', station: startState = 'none', fonts = {}, palette = {}, template = false, isysMax = 3 }) {
 // ── Palette ─────────────────────────────────────────────────────────────────
 // Approved: charcoal / gold / off-white. Station Zero adds phosphor green (story text only)
 // and alarm red (error messages only).
@@ -387,16 +388,19 @@ const ISYS = isysLib(pres, {
     text(s, 'ISYS: I say, you say', { x: M, y: 0.85, w: 12, h: 0.8, fontFace: HEAD, fontSize: 36, bold: true, color: P.off });
     text(s, 'On each ISYS slide: the phrase and a dot by the slide number. The full script is in that slide’s notes.',
       { x: M, y: 1.65, w: 12, h: 0.4, fontSize: 16, color: P.muted });
-    const rh = Math.min(1.6, 4.9 / Math.max(1, phrases.length));
+    // Four phrases (a lesson Nick allowed one more, isysMax) need smaller text, with Check and Reverse on their own lines.
+    const four = phrases.length > 3;
+    const rh = Math.min(1.6, 4.95 / Math.max(1, phrases.length)), top = four ? 2.15 : 2.3, hh = four ? 0.4 : 0.5;
     phrases.forEach((m, i) => {
-      const y = 2.3 + i * rh;
-      box(s, { x: M, y, w: 12.13, h: rh - 0.15, fill: P.panel, line: P.line, r: 0.06 });
+      const y = top + i * rh;
+      box(s, { x: M, y, w: 12.13, h: rh - 0.12, fill: P.panel, line: P.line, r: 0.06 });
       text(s, [{ text: m.term, options: { color: P.gold, bold: true } }, { text: '  …  ' + m.fact, options: { color: P.off, bold: true } },
-        { text: `     slide ${m.n}`, options: { color: P.dim, fontSize: 16 } }],
-      { x: M + 0.25, y: y + 0.1, w: 11.6, h: 0.5, fontSize: 24, valign: 'middle' });
-      text(s, `Say: "${m.say}"
-Check (3, 2, 1): "${m.check}" → ${m.term}     Reverse: "${m.reverse}" → ${m.fact}`,
-        { x: M + 0.25, y: y + 0.6, w: 11.6, h: rh - 0.8, fontSize: 14, color: P.muted, valign: 'top' });
+        { text: `     slide ${m.n}`, options: { color: P.dim, fontSize: four ? 14 : 16 } }],
+      { x: M + 0.25, y: y + 0.08, w: 11.6, h: hh, fontSize: four ? 20 : 24, valign: 'middle' });
+      const script = four
+        ? `Say: "${m.say}"\nCheck (3, 2, 1): "${m.check}" → ${m.term}\nReverse: "${m.reverse}" → ${m.fact}`
+        : `Say: "${m.say}"\nCheck (3, 2, 1): "${m.check}" → ${m.term}     Reverse: "${m.reverse}" → ${m.fact}`;
+      text(s, script, { x: M + 0.25, y: y + 0.1 + hh, w: 11.6, h: rh - hh - 0.25, fontSize: four ? 12 : 14, color: P.muted, valign: 'top' });
     });
   },
 });
@@ -409,7 +413,7 @@ function templateNote(s, t, light = false) {
 }
 
 async function write(out, theme = THEME) {
-  ISYS.finish({ template });
+  ISYS.finish({ template, max: isysMax });
   await pres.writeFile({ fileName: out });
   await addClickAnimations(out, beatSlides);
   require('fs').writeFileSync(out, await isysLib.numberFromZero(require('fs').readFileSync(out)));
