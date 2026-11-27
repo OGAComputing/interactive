@@ -7,7 +7,7 @@
 // The page's own answers are not worked through here: the structures are taught on other products (Encanto,
 // Toy Story, Paddington in Peru, Stranger Things, Spider-Verse, Harry Potter, Shrek, Pokémon Red), so Task 2's
 // seven (Moana 2, The Lion King, You vs. Wild, Infinity War, Lilo & Stitch, Bluey, Waterloo Road) stay unanswered.
-// Wicked: who's who before Task 1 (enough to follow it without having seen the film, no order given away);
+// Wicked: a 60-second recap clip before Task 1, so students who haven't seen it know the film (Nick, 2026-11-27);
 // the story in order after it, as the feedback. The Lion King opening clip is Task 2's feedback.
 // Toy Story is linear on the page too (Task 4's help panel), so the deck uses it for linear only.
 //
@@ -24,8 +24,9 @@ const TOPIC = 'How are media products made to reach and engage their audiences?'
 const LESSON = 'How do media products tell their stories?';
 const WHERE = 'Hub › Year 10 › Lesson 4.3 › Telling Stories';
 
-// Clips (Y10/media.md). Wicked's opening has no official upload (only the Shiz scenes and the trailer), so it isn't
-// a clip; the Lion King ending has none either, so its clip is the opening and the slide tells the ending.
+// Clips (Y10/media.md). Wicked has no official upload of its opening or an official recap, so its clip is a recap
+// from MovieWeb+; the Lion King ending has no upload either, so its clip is the opening and the slide tells the ending.
+const WICKED_CLIP = '15xdrvX4dRaXkA0c-cNhH5b0Y8IDPTbIc'; // "Wicked - the story in 60 seconds.mp4" (1:02), a MovieWeb+ recap cut down
 const LION_CLIP = '1AnmNPe50KNRzeT54HH8xNYVPGHCN26fM';   // "The Lion King - the opening.mp4" (47 s)
 const MOON_CLIP = '19lwOrcek26U8sIX7CFelheqvcf_5jfsg';   // "Apollo 11 - one small step.mp4" (30 s), also on the page in Task 3
 
@@ -111,12 +112,10 @@ K.choice({ question: 'A film opens with the hero in hospital. Then it jumps back
   options: ['Linear', 'Circular', 'Non-linear', 'Interactive'], answer: 'C',
   notes: 'Answer C: the plot starts near the end of the story, then jumps back. A is the slip: the rest of the film may run in order, but starting at the end makes it non-linear. B would need the ending to come back to the beginning.' });
 
-K.info({ title: 'Who\'s who in Wicked', standfirst: 'Wicked (2024) is set in the Land of Oz, long before The Wizard of Oz.',
-  points: [['Elphaba', 'Born with green skin. She grows up to be the Wicked Witch of the West.'],
-    ['Galinda', 'The most popular girl at Shiz University. Later she calls herself Glinda.'],
-    ['The Wizard', 'Rules Oz from the Emerald City. Everyone believes he is magic.']],
-  img: img('wicked_2024.jpg'), imgLabel: 'Wicked (2024) poster · Universal Pictures',
-  notes: 'One per click: enough to follow Task 1 without having seen the film. Don\'t give the order of events: that is the task. Each card on the page has a time clue ("on her first day", "for weeks", "at last", "now", "once"); tell them to look for those.' });
+K.clip({ title: 'Wicked in 60 seconds', from: '0:00', to: 'end', where: 'Click to play · recap: MovieWeb+', video: WICKED_CLIP,
+  img: img('wicked_2024.jpg'), imgLabel: 'Wicked (2024) · Universal Pictures',
+  questions: ['Who are Elphaba and Galinda?', 'What does the film show first?'],
+  notes: 'Drive clip "Wicked - the story in 60 seconds.mp4" (1:02, Y10/media.md): a narrated recap over the film, cut from MovieWeb+\'s "Wicked in 3 minutes or less". It opens as the film does, with Oz celebrating the Wicked Witch\'s death, then flashes back: Shiz, the shared room, the green skin, friends at last, the Wizard a phony, Elphaba flying away as the film ends. Left out: Nessarose, Dr Dillamond and Fiyero. Before Task 1, so everyone knows the film; Task 1 then asks them to put its scenes back in story order, not the order the film shows them. The cards also have time clues ("on her first day", "for weeks", "at last", "now", "once").' });
 
 K.task({ title: 'Story order', mins: 15, where: WHERE,
   steps: ['The page opens on the Warm-up: linear, non-linear or circular? The meanings are open.',
