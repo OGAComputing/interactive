@@ -189,6 +189,10 @@ export const BUILDS = {
 // ═══════════════ LADDERS ═══════════════
 // One question at a time. A right answer moves on a step (with less help); a wrong one shows the working
 // and gives a new question at the same step. fold: the method box is folded away.
+// Trace and build steps are the exception (keepsOnRetry): a wrong answer keeps the same circuit and the student's
+// answers, with only the wrong boxes emptied, and a hint instead of the answer (Nick, 2026-11-27: a new circuit on
+// every retry flipped AND/OR under students who were fixing their table). ext: a ★ extension step after the task
+// is done; it is not needed to pass and doesn't count against gold.
 export const LADDERS = {
   0: [
     { kind: 'situ', gate: 'AND', help: 'AND: it only happens when both things are true. Tap 1 (yes) or 0 (no) for each situation.' },
@@ -213,7 +217,7 @@ export const LADDERS = {
     { kind: 'trace', layout: 'notIn', giveP: true, help: 'P is the first gate\'s output, and it is done for you. Use P and B as the inputs to the second gate to fill in Q.' },
     { kind: 'trace', layout: 'notIn', giveP: false, help: 'Now fill in P first (the first gate), then use it to fill in Q.' },
     { kind: 'trace', layout: 'notOut', giveP: false, help: 'This time the NOT gate comes last. Work out P, then Q is the opposite of P.' },
-    { kind: 'trace', layout: 'three', giveP: false, fold: true, help: 'Three inputs, so 8 rows. P uses A and B; Q uses P and C.' },
+    { kind: 'trace', layout: 'three', giveP: false, fold: true, ext: true, help: 'Three inputs, so 8 rows. P uses A and B; Q uses P and C.' },
   ],
   4: [
     { kind: 'build', layout: 'one', pins: false, from: 'story', help: 'Drag the gate that matches the rule into the box. Flip the switches to test it.' },
@@ -222,7 +226,10 @@ export const LADDERS = {
     { kind: 'build', layout: 'three', pins: true, from: 'story', fold: true, help: 'Three inputs. Which two go into the first gate? Build it, then test it.' },
   ],
 };
-export const STEP_COUNT = Object.fromEntries(Object.entries(LADDERS).map(([t, steps]) => [t, steps.length]));
+// Steps needed to pass a task (★ extension steps come after these and don't count).
+export const STEP_COUNT = Object.fromEntries(Object.entries(LADDERS).map(([t, steps]) => [t, steps.filter(st => !st.ext).length]));
+export const isExtStep = (task, step) => !!LADDERS[task][step]?.ext;
+export const keepsOnRetry = kind => kind === 'trace' || kind === 'build';
 
 // Build a random circuit of gates that fit (for the naming and tracing steps).
 function randomBuild(id, rnd) {
@@ -377,6 +384,23 @@ export function workingFor(q) {
 }
 
 // Wait after a wrong answer (wrong answers in a row on this task: 1, 2, 3+), so guessing is slow.
+// The first gate written out, for the P column heading: "NOT A", "A AND B".
+export const pExpr = (id, build) => exprString(id, build, false, 'g1');
+
+// After a wrong trace or build (the same circuit comes back): what to look at, without giving the answer.
+export function fixHint(q, results) {
+  const L = LAYOUTS[q.layout];
+  const rows = inputRows(L.inputs.length);
+  if (q.kind === 'trace') {
+    const gates = [...new Set(Object.values(q.build))];
+    return `P = ${pExpr(q.layout, q.build)}, then Q = ${outWithP(q.layout, q.build)}. `
+      + gates.map(g => `${g}: ${RULES[g]}`).join(' ')
+      + ' The wrong boxes are now empty: on each of those rows, read the inputs and use the rule.';
+  }
+  const bad = rows.filter((_, k) => !results['r' + k]).map(r => r.map((v, k) => `${L.inputs[k]} = ${v}`).join(', '));
+  return `Wrong output when ${bad.join('; ')}. Set the switches to that row and follow it through your circuit: which gate gives the wrong value?`;
+}
+
 export function cooldownSeconds(wrongInARow) {
   return [5, 10, 15][Math.min(Math.max(wrongInARow, 1), 3) - 1];
 }

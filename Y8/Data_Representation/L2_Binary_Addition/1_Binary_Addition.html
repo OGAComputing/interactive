@@ -1171,7 +1171,14 @@ function showDone(i) {
   const isGold = state.firstAttempt[i];
   $('dot-' + i).className = 'pdot ' + (isGold ? 'gold' : 'correct');
   document.querySelector(`.tab[data-idx="${i}"]`).classList.add('done');
-  $('reset-' + i).style.display = isGold ? 'none' : '';
+  showResets();
+}
+
+// "Try for Gold" only appears once every task is done, so it never pulls a student back to an earlier
+// task mid-lesson (Nick, 2026-11-27, after Y8 Logic Gates: stuck students went back for gold instead of moving on).
+function showResets() {
+  const all = state.completed.every(Boolean);
+  state.completed.forEach((c, k) => { const b = $('reset-' + k); if (b) b.style.display = all && c && !state.firstAttempt[k] ? '' : 'none'; });
 }
 
 function markDone(i) {
@@ -1650,6 +1657,7 @@ function renderAll() {
   for (const i of Object.keys(CHAINS)) renderChain(+i);
   for (const i of LADDER_TASKS) renderLadder(i);
   renderRush();
+  showResets();
 }
 
 renderAll();

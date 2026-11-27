@@ -3,7 +3,7 @@ import {
   TASK_COUNT, GATE_NAMES, gate, arity, inputRows, gateColumn, gateFromColumn,
   LAYOUTS, slotIds, pinKeys, fits, evalCircuit, circuitColumn, slotColumn, exprString, allBuilds, outWithP,
   SCENARIOS, scenario, gapText, scenarioGate, BUILDS, buildItem,
-  LADDERS, STEP_COUNT, ladderQuestion, checkLadder, shapeHint, workingFor, cooldownSeconds,
+  LADDERS, STEP_COUNT, isExtStep, keepsOnRetry, pExpr, fixHint, ladderQuestion, checkLadder, shapeHint, workingFor, cooldownSeconds,
   PLENARY_POOL, PLENARY_LENGTH, drawPlenary, tcolAnswer, optionOrder,
   itemAnswer, itemShown, itemWorking, itemRows, checkTyped, formatHint, sumValue, sumText,
   GAME_LEVELS, TYPE_TIME, gameQuestion, gameLevel, gameTime, gamePoints, multiplier, rankFor, runBadges, cleanCode, isLogic,
@@ -23,7 +23,7 @@ function rightDraft(q) {
   return { bits, slots };
 }
 const allQuestions = () => SEEDS.flatMap(seed => Object.keys(LADDERS).flatMap(t =>
-  Array.from({ length: STEP_COUNT[t] }, (_, st) => [0, 1, 2].map(r => ladderQuestion(t, st, seed, r))).flat()));
+  Array.from({ length: LADDERS[t].length }, (_, st) => [0, 1, 2].map(r => ladderQuestion(t, st, seed, r))).flat()));
 
 describe('gates', () => {
   it('follow their rules', () => {
@@ -116,13 +116,13 @@ describe('scenarios and build items', () => {
 
 describe('ladders', () => {
   it('step counts', () => {
-    expect(STEP_COUNT).toEqual({ 0: 4, 1: 4, 2: 5, 3: 4, 4: 4 });
+    expect(STEP_COUNT).toEqual({ 0: 4, 1: 4, 2: 5, 3: 3, 4: 4 });
     expect(TASK_COUNT).toBe(6);
     // No three-gate build from a table: too hard for Year 8 (Nick, 2026-11-25).
     expect(LADDERS[4].map(s => s.layout)).toEqual(['one', 'notIn', 'notOut', 'three']);
   });
   it('the same seed gives the same question; a retry gives a different one where it can', () => {
-    for (const seed of SEEDS) for (const t of Object.keys(LADDERS)) for (let st = 0; st < STEP_COUNT[t]; st++) {
+    for (const seed of SEEDS) for (const t of Object.keys(LADDERS)) for (let st = 0; st < LADDERS[t].length; st++) {
       expect(ladderQuestion(t, st, seed, 1)).toEqual(ladderQuestion(t, st, seed, 1));
       const a = ladderQuestion(t, st, seed, 0), b = ladderQuestion(t, st, seed, 1);
       const fixed = LADDERS[t][st].kind === 'table' && LADDERS[t][st].gate !== 'pick';
@@ -195,6 +195,37 @@ describe('ladders', () => {
     const ride = { ...LADDERS[4][3], task: 4, step: 3, item: 'ride', target: circuitColumn('three', buildItem('three', 'ride').build, true) };
     expect(checkLadder(ride, { slots: { g1: 'AND', g2: 'OR', 'g1.0': 'B', 'g1.1': 'A', 'g2.1': 'C' } }).ok).toBe(true);
     expect(shapeHint(ride, { slots: { g1: 'AND', g2: 'OR' } })).toContain('input');
+  });
+  it('the three-input trace is a ★ extension after Task 4, not a step needed to pass it', () => {
+    expect(LADDERS[3].map(st => st.layout)).toEqual(['notIn', 'notIn', 'notOut', 'three']);
+    expect([0, 1, 2, 3].map(st => isExtStep(3, st))).toEqual([false, false, false, true]);
+    // Extension steps only ever come after the required ones.
+    for (const t of Object.keys(LADDERS)) LADDERS[t].forEach((st, k) => { if (k < STEP_COUNT[t]) expect(st.ext).toBeFalsy(); });
+  });
+  it('trace and build keep the same circuit on a retry; the hint names the gates but never gives the answer', () => {
+    expect(['trace', 'build'].every(keepsOnRetry)).toBe(true);
+    expect(['situ', 'table', 'name3', 'nameCircuit', 'gap', 'whichGate'].some(keepsOnRetry)).toBe(false);
+    for (const seed of SEEDS) for (let st = 0; st < LADDERS[3].length; st++) {
+      const q = ladderQuestion(3, st, seed, 0);
+      const d = rightDraft(q);
+      d.bits.Q0 = d.bits.Q0 === '1' ? '0' : '1';
+      const { results } = checkLadder(q, d);
+      const hint = fixHint(q, results);
+      expect(hint).toContain(`P = ${pExpr(q.layout, q.build)}`);
+      expect(hint).toContain(`Q = ${outWithP(q.layout, q.build)}`);
+      expect(hint).not.toContain(q.Q);          // the answer column isn't in it
+      expect(hint).not.toMatch(/Q = [01]/);
+    }
+    const q = { ...LADDERS[4][1], task: 4, step: 1, item: 'heat', target: '0100' };
+    const { results } = checkLadder(q, { slots: { g1: 'NOT', g2: 'AND', 'g1.0': 'B', 'g2.1': 'A' } });
+    const hint = fixHint(q, results);
+    expect(hint).toContain('A = 0, B = 1; A = 1, B = 0');
+    expect(hint).not.toContain('NOT A');      // not the circuit that works
+  });
+  it('the P heading is the first gate', () => {
+    expect(pExpr('notIn', { g1: 'NOT', g2: 'AND' })).toBe('NOT A');
+    expect(pExpr('three', { g1: 'OR', g2: 'AND' })).toBe('A OR B');
+    expect(outWithP('three', { g1: 'OR', g2: 'AND' })).toBe('P AND C');
   });
   it('cooldowns grow 5, 10, 15', () => {
     expect([1, 2, 3, 7].map(cooldownSeconds)).toEqual([5, 10, 15, 15]);

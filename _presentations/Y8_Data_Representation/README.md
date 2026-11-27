@@ -31,7 +31,7 @@ Close the `.pptx` in PowerPoint first. To check it: `soffice --headless --conver
 
 ## ISYS (I Say, You Say)
 
-Each lesson flags 1–3 phrases with `K.isys(slide, { term, fact, say })` (`ppt-guidelines.md` §10): the phrase and a dot by the slide number, the teacher script in the notes, the list on a hidden teacher slide 1. L1: Binary, Bit, 4-bit headings. L2: Carry, 1 + 1, 1 + 1 + 1. L3: Hexadecimal, A, One hex digit. L4: AND gate, OR gate, Truth table (Nick chose them, 2026-11-27).
+Each lesson flags 1–3 phrases with `K.isys(slide, { term, fact, say })` (`ppt-guidelines.md` §10): the phrase and a dot by the slide number, the teacher script in the notes, the list on a hidden teacher slide 1. L1: Binary, Bit, 4-bit headings. L2: Carry, 1 + 1, 1 + 1 + 1. L3: Hexadecimal, A, One hex digit. L4: Logic gate, AND gate, OR gate, Truth table (Nick chose them and allowed a fourth by exception, 2026-11-27).
 
 On an animated slide each phrase is tied to the click where it is taught (`click: k`), so the corner never gives away a reveal: L1 slide 6 Binary, then Bit at click 1 · L2 Carry at click 3; 1 + 1 at click 3, 1 + 1 + 1 at click 4 · L3 slide 6 A at click 2, Hexadecimal at click 8 (A … 10 moved there from the answers slide, where it came after the class had already used it).
 
@@ -41,6 +41,7 @@ Build each deck's recall questions with `recallQuestions([...])` from `dr_kit.cj
 
 ## Feedback
 
+- **2026-11-27 · L4 after the first class: trace before tracing alone** — Higher-ability students stalled at Task 4 (Trace): wrong Q columns were copies of B or P, not P and B put into the second gate. The deck now has a "we do" on the NOT-first circuit ("P and B go into the next gate", one row at a time, boards up for each Q) before the NOT-last one, and the P and Q table headings say what each column is (`P = NOT A`, `Q = P OR B`), as on the page. The You do moved to the NOT-last circuit (AND then NOT).
 - **2026-11-27 · L4 recap: 8 4 2 1 on binary → hex too, and no two cards on one method** — Binary → one hex digit starts with the same 8 4 2 1 step, so it gets the hint as well (now automatic in `recallQuestions`). L4 had 1011 → hex and 1010 → denary, effectively the same question, so Q4 became denary → binary (6 → 0110).
 - **2026-11-23 · 8 4 2 1 hint is standard** — Nick always tells the class to put 8 4 2 1 at the top for a binary → denary recall question; it gets them off on the right footing. Now automatic (see Recap & Recall above); L3 Q1 gained it.
 - **2026-11-19 · ISYS follows the clicks** — After the Y9 L5 lesson (Call flagged a slide after it was taught didn't work): flag a phrase on the slide, and at the click, where it is taught. See ISYS above.

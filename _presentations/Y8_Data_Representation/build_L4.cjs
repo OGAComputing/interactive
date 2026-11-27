@@ -120,7 +120,7 @@ function ttable(s, o) {
   const widths = [...o.heads.map(() => cw), ...o.cols.map((c) => c.w || cw)];
   const xs = widths.map((_, i) => o.x + widths.slice(0, i).reduce((a, b) => a + b + 0.06, 0));
   const all = [...o.heads, ...o.cols.map((c) => c.head)];
-  all.forEach((h, i) => K.text(s, h, { x: xs[i], y: o.y, w: widths[i], h: 0.45, fontFace: MONO, fontSize: 18, bold: true,
+  all.forEach((h, i) => K.text(s, h, { x: xs[i], y: o.y, w: widths[i], h: 0.45, fontFace: MONO, fontSize: o.cols[i - o.heads.length]?.hs || 18, bold: true,
     color: i >= o.heads.length ? P.gold : P.dim, align: 'center', valign: 'middle' }));
   const sepX = xs[o.heads.length] - 0.06;
   K.box(s, { x: sepX - 0.015, y: o.y + 0.05, w: 0.03, h: 0.45 + o.rows.length * rh, fill: P.line });
@@ -197,9 +197,12 @@ function traceSlide(o) {
   const q = rs.map((r, k) => (o.layout === 'notOut' ? gate('NOT', p[k]) : gate(o.build.g2, p[k], r[1])));
   const anim = o.mode !== 'YOU DO';
   const show = anim || o.reveal;
-  ttable(s, { x: 8.2, y: 1.6, heads: ['A', 'B'], rows: rs, rh: 0.6, cols: [
-    { head: 'P', vals: show ? p.join('') : undefined, at: anim ? rs.map((_, k) => 2 * k + 1) : undefined },
-    { head: 'Q', vals: show ? q.join('') : undefined, at: anim ? rs.map((_, k) => 2 * k + 2) : undefined, color: P.ok },
+  // Headings say what each column is, as on the page (Nick, 2026-11-27): P = NOT A, Q = P AND B.
+  const pHead = L.slots.g1.length === 1 ? 'P = NOT A' : `P = A ${o.build.g1} B`;
+  const qHead = o.layout === 'notOut' ? 'Q = NOT P' : `Q = P ${o.build.g2} B`;
+  ttable(s, { x: 7.75, y: 1.6, heads: ['A', 'B'], rows: rs, rh: 0.6, cols: [
+    { head: pHead, w: 1.6, hs: 16, vals: show ? p.join('') : undefined, at: anim ? rs.map((_, k) => 2 * k + 1) : undefined },
+    { head: qHead, w: 1.6, hs: 16, vals: show ? q.join('') : undefined, at: anim ? rs.map((_, k) => 2 * k + 2) : undefined, color: P.ok },
   ] });
   if (anim) strip(s, TRACE_STEPS, [1, 2, 2]);
   else if (!o.reveal) S.banner(K, s, [{ text: 'On your board: ', options: { bold: true, color: P.gold } },
@@ -435,22 +438,29 @@ taskSlide({ section: 'Symbols and truth tables', time: '12 MIN',
   notes: 'Task 2: a shape key on step 1, then none; steps 3–4 name every gate in a circuit. Task 3: tap each output box to set 0 or 1; '
     + 'step 4 shows only the symbol; step 5 is "which gate?". Task 4 stays locked until Task 3 is passed.' });
 
-// 18–23 · Trace a circuit (Task 4)
+// 18–24 · Trace a circuit (Task 4)
 traceSlide({ title: 'One gate feeds the next', layout: 'notIn', build: { g1: 'NOT', g2: 'AND' }, mode: 'I DO',
   notes: 'I do. In a circuit, one gate\'s output becomes the next gate\'s input. We call the middle wire P. '
     + 'Each row: P first (NOT A), then Q (P AND B). Row 00: P = NOT 0 = 1, Q = 1 AND 0 = 0. Row 01: P = 1, Q = 1 AND 1 = 1. '
     + 'Rows 10 and 11: P = 0, so Q = 0. Point at the strip each time: P, P goes in, Q.' });
+// We do on the same shape as the I do (Nick, 2026-11-27, after the first class: students copied B or P into Q
+// instead of putting P and B into the second gate). One row at a time, boards up for each Q.
+traceSlide({ title: 'P and B go into the next gate', layout: 'notIn', build: { g1: 'NOT', g2: 'OR' }, mode: 'WE DO',
+  notes: 'We do, one row at a time, boards up before each click. Ask for P (NOT A), click. Then point at the two wires going '
+    + 'into the OR gate: P and B. Read them out ("P is 1, B is 0"), then ask for Q: 1 OR 0 = 1. Click. '
+    + 'Row 10 is the one people get wrong: A = 1, so P = 0, and 0 OR 0 = 0. Q is never just a copy of B or of P.' });
 traceSlide({ title: 'One gate feeds the next', layout: 'notOut', build: { g1: 'OR', g2: 'NOT' }, mode: 'WE DO',
   notes: 'We do: this time the NOT comes last. Ask for P before each click: A OR B. Then Q is just the opposite of P.' });
-traceSlide({ title: 'Your turn', layout: 'notIn', build: { g1: 'NOT', g2: 'OR' }, mode: 'YOU DO',
-  notes: 'Boards: copy the four rows of A and B, add P and Q. P = NOT A, then Q = P OR B.' });
-traceSlide({ title: 'Answers', layout: 'notIn', build: { g1: 'NOT', g2: 'OR' }, mode: 'YOU DO', reveal: true,
+traceSlide({ title: 'Your turn', layout: 'notOut', build: { g1: 'AND', g2: 'NOT' }, mode: 'YOU DO',
+  notes: 'Boards: copy the four rows of A and B, add P and Q. P = A AND B, then Q = NOT P.' });
+traceSlide({ title: 'Answers', layout: 'notOut', build: { g1: 'AND', g2: 'NOT' }, mode: 'YOU DO', reveal: true,
   takeaway: [{ text: 'P first, then Q: ', options: { bold: true, color: P.gold } }, { text: 'the middle wire is the next gate\'s input.' }],
-  notes: 'Row 10 is the one people get wrong: A = 1, so P = 0, and 0 OR 0 = 0. Doing P first stops that.' });
+  notes: 'Only row 11 gives P = 1, so only row 11 gives Q = 0. Anyone with 0001 for Q forgot the NOT at the end.' });
 taskSlide({ section: 'Trace a circuit', time: '10 MIN',
   tasks: [[4, 'Trace a circuit', 'fill in P, then Q, for every row']],
-  note: 'Step 4 has three inputs, so 8 rows. P uses A and B; Q uses P and C.',
-  notes: 'Task 4. Step 1 gives P; from step 2 they fill both. Step 4 has 8 rows: the inputs still count up in binary.' });
+  note: 'Got one wrong? The same circuit comes back: fix the empty boxes. ★ Extension: three inputs, 8 rows.',
+  notes: 'Task 4. Step 1 gives P; from step 2 they fill both. A wrong answer brings the same circuit back with the wrong boxes '
+    + 'emptied; after fixing it they do one more new circuit. The ★ extension has three inputs and 8 rows; it is not needed to pass.' });
 
 // 24–26 · Build it (Task 5)
 {

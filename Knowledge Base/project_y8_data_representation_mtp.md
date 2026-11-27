@@ -128,6 +128,8 @@ step where adding the 0s is the task.
 
 *Decision (Nick, 2026-11-25): the lesson ends with students **building** circuits by drag and drop (gates into boxes, then A/B/C onto the inputs, tested with switches; building from a truth table stays at two gates and two inputs, as a three-gate build from a table was too hard for Y8), after naming gates, truth tables and tracing. The extension game (Logic Rush) **builds over the unit**: about the first two minutes are this lesson only, then the earlier lessons join in newest first (hex, then binary adding, then binary ↔ denary), and the last level is everything in 8 bits. Later lessons' games follow the same pattern.*
 
+*Decision (Nick, 2026-11-27, after teaching L4 to the first class): every student finished Tasks 1–3 within 3–10 minutes, but only 7 of 23 finished Task 4 (Trace), so even the strongest didn't reach the build. Two causes: a wrong trace answer swapped the circuit (AND ↔ OR) and cleared the table, so students were fixing a table that had changed under them; and many didn't yet put P and B into the second gate (they copied B or P into Q). Changes: a wrong trace or build brings the same circuit back with the student's answers kept and only the wrong boxes emptied, plus a hint (not the answer); after fixing a trace they do one more fresh circuit. The P and Q headings say what each column is. The three-input trace is a ★ extension, not needed to pass Task 4. "Try for Gold" only appears once every task is done (stuck students went back for gold instead of moving on). The deck gained a "we do" trace on the NOT-first circuit.*
+
 ### Procedural
 - Apply AND, OR and NOT to everyday conditions.
 - Name a gate from its symbol.

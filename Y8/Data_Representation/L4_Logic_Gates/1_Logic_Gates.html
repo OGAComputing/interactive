@@ -144,6 +144,8 @@ color:  indigo
   table.tt td { font-size: 1.1rem; font-weight: 700; color: var(--surface); }
   table.tt .sep { border-left: 2px solid #B9CCE0; }
   table.tt th.outh { color: var(--accent-dark); }
+  table.tt th .colx { display: block; font-family: var(--font-mono, monospace); font-size: .75rem; font-weight: 700; white-space: nowrap; }
+  .step-head .ext { color: var(--accent-dark); font-weight: 800; }
   table.tt th.words { font-size: .8rem; max-width: 150px; line-height: 1.25; }
   table.tt td.word { font-family: var(--font-body); font-size: .95rem; font-weight: 600; }
   table.tt td.word b { font-family: var(--font-mono); color: var(--accent-dark); }
@@ -639,7 +641,8 @@ import {
   TASK_COUNT, GATE_NAMES, arity, RULES, SHAPES, inputRows, gateColumn,
   LAYOUTS, slotIds, fits, evalCircuit, circuitColumn, envFor, exprString,
   scenario, gapText, BUILDS, buildItem,
-  STEP_COUNT, ladderQuestion, checkLadder as markLadder, shapeHint, workingFor, cooldownSeconds,
+  STEP_COUNT, LADDERS, isExtStep, keepsOnRetry, pExpr, outWithP, fixHint,
+  ladderQuestion, checkLadder as markLadder, shapeHint, workingFor, cooldownSeconds,
   PLENARY_LENGTH, drawPlenary, plenaryQuestion, optionOrder, tcolAnswer, tableWorking,
   itemShown, itemAnswer, itemWorking, itemRows, checkTyped, formatHint, toHexType,
   gameQuestion, gameLevel, gamePoints, multiplier, GAME_LIVES, RANKS, rankFor,
@@ -697,6 +700,13 @@ function loadState() {
 
 const state = loadState();
 function save() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {} }
+// Saved progress from before the ★ extension: a task whose required steps are all done is passed.
+for (const i of LADDER_TASKS) {
+  if (!state.completed[i] && state.ld[i].step >= STEP_COUNT[i]) {
+    state.completed[i] = true;
+    if (!state.passed.includes(i)) state.passed.push(i);
+  }
+}
 
 function logAnswer(i, line) {
   state.log[i].push(line);
@@ -915,19 +925,24 @@ const dropBtn = (i, key, accept, v, extra = '', label = '') => `<button type="bu
 // ═══════════════ LADDERS (Tasks 1–5) ═══════════════
 const busy = {};
 
+// Trace and build steps keep the same circuit after a wrong answer: they move on by round (a new circuit), not retry.
+const keeps = i => keepsOnRetry(LADDERS[i][state.ld[i].step]?.kind);
+// A passed task takes no more input, except on its ★ extension step.
+const doneWith = i => state.completed[i] && !(state.ld[i] && isExtStep(i, state.ld[i].step));
 function ladderQ(i) {
   const s = state.ld[i];
-  return ladderQuestion(i, s.step, state.seed, s.retry);
+  return ladderQuestion(i, s.step, state.seed, keeps(i) ? (s.round || 0) : s.retry);
 }
 
 function draftFor(i) {
   const s = state.ld[i];
-  const key = `${s.step}|${s.retry}`;
+  const key = `${s.step}|${keeps(i) ? 'r' + (s.round || 0) : s.retry}`;
   if (state.draft[i].key !== key) state.draft[i] = { key, bits: {}, slots: {}, env: { A: 0, B: 0, C: 0 } };
   return state.draft[i];
 }
 
 function stepHead(i, step) {
+  if (isExtStep(i, step)) return '<div class="step-head"><span class="ext">★ Extension: you have passed this task. Try this one if you have time.</span></div>';
   const n = STEP_COUNT[i];
   const pips = Array.from({ length: n }, (_, k) => `<span class="pip ${k < step ? 'on' : ''} ${k === step ? 'now' : ''}"></span>`).join('');
   return `<div class="step-head"><span>Step ${step + 1} of ${n}</span><span class="pips" aria-hidden="true">${pips}</span></div>`;
@@ -990,8 +1005,9 @@ function whichGateBody(q, d, i) {
 function traceBody(q, d, i) {
   const L = LAYOUTS[q.layout];
   const cols = [
-    { head: 'P', cls: 'outh', tdCls: q.giveP ? 'given' : '', cell: k => (q.giveP ? q.P[k] : toggle(i, 'P' + k, d.bits['P' + k])) },
-    { head: 'Q', cls: 'outh', cell: k => toggle(i, 'Q' + k, d.bits['Q' + k]) },
+    { head: `P<span class="colx">= ${esc(pExpr(q.layout, q.build))}</span>`, cls: 'outh', tdCls: q.giveP ? 'given' : '',
+      cell: k => (q.giveP ? q.P[k] : toggle(i, 'P' + k, d.bits['P' + k])) },
+    { head: `Q<span class="colx">= ${esc(outWithP(q.layout, q.build))}</span>`, cls: 'outh', cell: k => toggle(i, 'Q' + k, d.bits['Q' + k]) },
   ];
   return circuitHtml(q.layout, { task: i, mode: 'fixed', build: q.build, names: 'show', pLabel: true })
     + tableHtml(L.inputs, inputRows(L.inputs.length), cols);
@@ -1048,16 +1064,21 @@ const PROMPT = {
 function renderLadder(i, focusSel) {
   const area = $('area-' + i);
   if (isLocked(i)) { area.innerHTML = lockHtml(i); return; }
-  if (state.completed[i]) { area.innerHTML = doneHtml(i, `All ${STEP_COUNT[i]} steps done`); return; }
-  if (renderWaiting(i)) return;
   const s = state.ld[i];
+  const extLeft = isExtStep(i, s.step);
+  if (state.completed[i] && !extLeft) {
+    area.innerHTML = doneHtml(i, `All ${STEP_COUNT[i]} steps done`)
+      + (LADDERS[i].some(st => st.ext) ? '<p class="help">★ Extension done. Brilliant!</p>' : '');
+    return;
+  }
+  if (renderWaiting(i)) return;
   const q = ladderQ(i);
   const d = draftFor(i);
   const m = $('method-' + i);
   if (m && q.fold && m.dataset.closedFor !== String(s.step)) { m.open = false; m.dataset.closedFor = String(s.step); }
   const tapNote = ['gap', 'name3', 'nameCircuit', 'whichGate', 'build'].includes(q.kind)
     ? '<p class="tap-note">Drag from the tray, or tap one and then tap a box. Tap a filled box to empty it.</p>' : '';
-  area.innerHTML = `${stepHead(i, s.step)}
+  area.innerHTML = `${state.completed[i] ? doneHtml(i, `All ${STEP_COUNT[i]} steps done`) : ''}${stepHead(i, s.step)}
     <p class="help">${esc(q.help)}</p>
     <div class="q-card" id="qc-${i}" data-key="${esc(q.key)}" data-kind="${q.kind}" data-step="${s.step}">
       <h3>${PROMPT[q.kind]}</h3>${tapNote}
@@ -1108,7 +1129,9 @@ function showBuildResult(i, q, d, results) {
 }
 
 function checkLadder(i) {
-  if (busy[i] || state.completed[i] || isLocked(i)) return;
+  if (busy[i] || isLocked(i)) return;
+  const ext = isExtStep(i, state.ld[i].step);
+  if (state.completed[i] && !ext) return;
   if (window.Classroom?.verifyAuth() === false) return;
   clearPick();
   const q = ladderQ(i);
@@ -1132,11 +1155,21 @@ function checkLadder(i) {
     window.ActivityUI?.miniCelebration($('qc-' + i));
     msg.className = 'cp-msg good';
     msg.innerHTML = `✓ Correct.<span class="why">${esc(q.kind === 'build' ? `Your circuit, Q = ${exprString(q.layout, d.slots, q.pins)}, gives the right output on every row.` : workingFor(q))}</span>`;
-    s.step++;
-    s.retry = 0;
     state.wrongRun[i] = 0;
+    // A trace fixed after a wrong answer: one more, a new circuit, to show it wasn't just flipping the red boxes.
+    if (q.kind === 'trace' && s.fixed && !s.proving && !ext) {
+      Object.assign(s, { round: (s.round || 0) + 1, retry: 0, fixed: false, proving: true });
+      save();
+      msg.innerHTML += '<span class="why"><b>Now one more like it, with a new circuit.</b></span>';
+      setTimeout(() => renderLadder(i), reduceMotion ? 600 : 2600);
+      return;
+    }
+    s.step++;
+    Object.assign(s, { retry: 0, round: 0, fixed: false, proving: false });
     save();
-    if (s.step >= STEP_COUNT[i]) {
+    if (ext) {
+      setTimeout(() => renderLadder(i), reduceMotion ? 600 : 1500);
+    } else if (s.step >= STEP_COUNT[i]) {
       setTimeout(() => {
         $('feedback-' + i).textContent = state.firstAttempt[i] ? '🥇 Every step right first time!' : '✅ All steps done.';
         $('feedback-' + i).className = 'feedback correct';
@@ -1149,8 +1182,17 @@ function checkLadder(i) {
   }
 
   logAnswer(i, `Step ${s.step + 1}: ${answerText(q, d)} ✗`);
-  state.firstAttempt[i] = false;
+  if (!ext) state.firstAttempt[i] = false;
   s.retry++;
+  if (keepsOnRetry(q.kind)) {
+    // Same circuit back, with the student's answers kept and only the wrong boxes emptied.
+    s.fixed = true;
+    if (q.kind === 'trace') for (const [k, good] of Object.entries(results)) if (!good) delete d.bits[k];
+    save();
+    const lead = q.kind === 'build' ? '✗ Not quite: the rows in red give the wrong output.' : '✗ Not quite: the boxes in red are wrong.';
+    msgBad(i, lead, fixHint(q, results), q.kind === 'build' ? '↻ Fix your circuit' : '↻ Fix the wrong boxes');
+    return;
+  }
   save();
   const lead = q.kind === 'build'
     ? '✗ Not quite: the rows in red give the wrong output.'
@@ -1161,7 +1203,7 @@ function checkLadder(i) {
 // 0/1 boxes go ? → 0 → 1 → 0 …
 function toggleBit(i, k) {
   if (i === CHAIN) return toggleChainBit(k);
-  if (busy[i] || state.completed[i]) return;
+  if (busy[i] || doneWith(i)) return;
   const d = draftFor(i);
   const v = d.bits[k] = d.bits[k] === '0' ? '1' : '0';
   save();
@@ -1176,7 +1218,7 @@ function toggleBit(i, k) {
 }
 
 function flipSwitch(i, x) {
-  if (busy[i] || state.completed[i]) return;
+  if (busy[i] || doneWith(i)) return;
   const d = draftFor(i);
   d.env[x] = d.env[x] ? 0 : 1;
   save();
@@ -1185,7 +1227,7 @@ function flipSwitch(i, x) {
 
 // Working columns on a build-from-a-table step: up to two, each with a heading and a 0/1 per row.
 function changeWork(i, how, c) {
-  if (busy[i] || state.completed[i]) return;
+  if (busy[i] || doneWith(i)) return;
   const d = draftFor(i);
   d.heads = d.heads || {};
   const n = d.work || 0;
@@ -1225,7 +1267,7 @@ function paintPick() {
 function clearPick() { pick = null; paintPick(); }
 
 function place(i, key, value, kind) {
-  if (busy[i] || state.completed[i]) return;
+  if (busy[i] || doneWith(i)) return;
   const q = ladderQ(i);
   if (kind === 'gate' && !fits(q.layout, key, value)) {
     const msg = $('msg-' + i);
@@ -1242,7 +1284,7 @@ function place(i, key, value, kind) {
 }
 
 function emptySlot(i, key) {
-  if (busy[i] || state.completed[i]) return;
+  if (busy[i] || doneWith(i)) return;
   delete draftFor(i).slots[key];
   save();
   renderLadder(i, `[data-drop="${key}"]`);
@@ -1349,7 +1391,7 @@ function renderChain() {
 
 function toggleChainBit(k) {
   const i = CHAIN;
-  if (busy[i] || state.completed[i]) return;
+  if (busy[i] || doneWith(i)) return;
   const d = chainDraft();
   const v = d.bits[k] = d.bits[k] === '0' ? '1' : '0';
   save();
@@ -1390,7 +1432,7 @@ function chainWrong(why) {
 
 function answerMcq(k) {
   const i = CHAIN;
-  if (busy[i] || state.completed[i]) return;
+  if (busy[i] || doneWith(i)) return;
   if (window.Classroom?.verifyAuth() === false) return;
   busy[i] = true;
   const q = plenaryQuestion(chainItems()[state.cp.pos].id);
@@ -1405,7 +1447,7 @@ function answerMcq(k) {
 
 function answerChainTable() {
   const i = CHAIN;
-  if (busy[i] || state.completed[i]) return;
+  if (busy[i] || doneWith(i)) return;
   if (window.Classroom?.verifyAuth() === false) return;
   const item = chainItems()[state.cp.pos];
   const want = tcolAnswer(item), d = chainDraft();
@@ -1440,7 +1482,14 @@ function showDone(i) {
   const isGold = state.firstAttempt[i];
   $('dot-' + i).className = 'pdot ' + (isGold ? 'gold' : 'correct');
   document.querySelector(`.tab[data-idx="${i}"]`).classList.add('done');
-  $('reset-' + i).style.display = isGold ? 'none' : '';
+  showResets();
+}
+
+// "Try for Gold" only appears once every task is done (Nick, 2026-11-27: stuck students went back for gold
+// instead of moving on).
+function showResets() {
+  const all = state.completed.every(Boolean);
+  state.completed.forEach((c, k) => { $('reset-' + k).style.display = all && c && !state.firstAttempt[k] ? '' : 'none'; });
 }
 
 function markDone(i) {
@@ -1828,6 +1877,7 @@ function renderAll() {
   renderChain();
   for (const i of LADDER_TASKS) renderLadder(i);
   renderRush();
+  showResets();
 }
 
 renderAll();

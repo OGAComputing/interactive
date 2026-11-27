@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { expectPageTitle, expectNoClassroomBanner, recordLiveCalls, lastLiveCall } from './helpers/activityHelpers.js';
 import {
-  ladderQuestion, slotIds, pinKeys, buildItem, PLENARY_POOL, drawPlenary, tcolAnswer, gameQuestion, itemAnswer, isLogic, GAME_LEVELS,
+  ladderQuestion, LADDERS, keepsOnRetry, slotIds, pinKeys, buildItem, PLENARY_POOL, drawPlenary, tcolAnswer, gameQuestion, itemAnswer, isLogic, GAME_LEVELS,
 } from '../Y8/Data_Representation/L4_Logic_Gates/checkers.js';
 
 const URL = '/Y8/Data_Representation/L4_Logic_Gates/1_Logic_Gates.html';
@@ -37,7 +37,8 @@ async function place(page, i, kind, value, key) {
 
 async function currentQ(page, i) {
   const s = await saved(page);
-  return ladderQuestion(i, s.ld[i].step, s.seed, s.ld[i].retry);
+  const st = s.ld[i];
+  return ladderQuestion(i, st.step, s.seed, keepsOnRetry(LADDERS[i][st.step]?.kind) ? (st.round || 0) : st.retry);
 }
 
 async function fillLadder(page, i) {
@@ -172,7 +173,7 @@ test('build by dragging: a gate drops into its box, NOT is refused by a two-inpu
   await expect(page.locator('#area-4 .drop[data-drop="g1"]')).not.toHaveClass(/filled/);
 });
 
-test('a wrong circuit marks the wrong rows red, costs gold, waits, and gives a new question', async ({ page }) => {
+test('a wrong circuit marks the wrong rows red, costs gold, waits, and comes back to fix with the circuit kept', async ({ page }) => {
   await page.goto(URL);
   await patch(page, s => { s.passed = [0, 1, 2, 3]; s.ld[4] = { step: 0, retry: 0 }; s.tab = 4; });
   const q = await currentQ(page, 4);
@@ -184,8 +185,64 @@ test('a wrong circuit marks the wrong rows red, costs gold, waits, and gives a n
   await expect(page.locator('#msg-4 button')).toBeDisabled();
   expect((await saved(page)).firstAttempt[4]).toBe(false);
   await expect(page.locator('#msg-4 button')).toBeEnabled({ timeout: 8000 });
+  await expect(page.locator('#msg-4')).toContainText('Wrong output when');
+  await expect(page.locator('#msg-4')).not.toContainText('One circuit that works');
   await page.locator('#msg-4 button').click();
-  expect(await page.locator('#qc-4').getAttribute('data-key')).not.toBe(q.key);
+  expect(await page.locator('#qc-4').getAttribute('data-key')).toBe(q.key);
+  await expect(page.locator('#area-4 .drop[data-drop="g1"]')).toHaveClass(/filled/);
+  // Fixing it passes the step.
+  await page.locator('#area-4 .drop[data-drop="g1"]').click();
+  await place(page, 4, 'gate', buildItem('one', q.item).build.g1, 'g1');
+  await page.locator('#check-4').click();
+  await expect(page.locator('#msg-4')).toHaveClass(/good/);
+});
+
+test('a wrong trace keeps the circuit and the right boxes, empties the wrong ones, then gives one more new circuit', async ({ page }) => {
+  await page.goto(URL);
+  await patch(page, s => { s.passed = [0, 1, 2]; s.ld[3] = { step: 1, retry: 0 }; s.tab = 3; });
+  const q = await currentQ(page, 3);
+  // Column headings say what each column is.
+  await expect(page.locator('#qc-3 th').filter({ hasText: /^P/ })).toContainText('= NOT A');
+  await expect(page.locator('#qc-3 th').filter({ hasText: /^Q/ })).toContainText(`= P ${q.build.g2} B`);
+  const tog = (k, v) => setToggle(page.locator(`#qc-3 [data-action="toggle"][data-k="${k}"]`), String(v));
+  for (let k = 0; k < 4; k++) { await tog('P' + k, q.P[k]); await tog('Q' + k, k === 0 ? 1 - q.Q[0] : q.Q[k]); }
+  await page.locator('#check-3').click();
+  await expect(page.locator('#qc-3 [data-k="Q0"]')).toHaveClass(/is-wrong/);
+  await expect(page.locator('#msg-3')).toContainText(`Q = P ${q.build.g2} B`);
+  await expect(page.locator('#msg-3')).not.toContainText(q.Q);
+  await expect(page.locator('#msg-3 button')).toBeEnabled({ timeout: 8000 });
+  await page.locator('#msg-3 button').click();
+  expect(await page.locator('#qc-3').getAttribute('data-key')).toBe(q.key);
+  await expect(page.locator('#qc-3 [data-k="Q0"]')).toHaveText('?');
+  await expect(page.locator('#qc-3 [data-k="Q1"]')).toHaveText(String(q.Q[1]));
+  await expect(page.locator('#qc-3 [data-k="P0"]')).toHaveText(String(q.P[0]));
+  await tog('Q0', q.Q[0]);
+  await page.locator('#check-3').click();
+  await expect(page.locator('#msg-3')).toContainText('one more like it');
+  // The next one is a new circuit at the same step.
+  await expect(async () => expect(await page.locator('#qc-3').getAttribute('data-key')).not.toBe(q.key)).toPass({ timeout: 6000 });
+  const s = await saved(page);
+  expect(s.ld[3].step).toBe(1);
+  expect(s.ld[3].round).toBe(1);
+  // Try for Gold stays hidden while other tasks are still to do.
+  await expect(page.locator('#reset-3')).toBeHidden();
+});
+
+test('Task 4 passes after three steps; the three-input trace is a ★ extension and Task 5 is open', async ({ page }) => {
+  await page.goto(URL);
+  await patch(page, s => { s.passed = [0, 1, 2]; s.ld[3] = { step: 2, retry: 0 }; s.tab = 3; });
+  await fillLadder(page, 3);
+  await expect(page.locator('#area-3 .cp-done')).toBeVisible({ timeout: 6000 });
+  await expect(page.locator('#area-3 .step-head')).toContainText('★ Extension');
+  await expect(page.locator('#lock-4')).toBeHidden();
+  const s = await saved(page);
+  expect(s.completed[3]).toBe(true);
+  // A wrong extension answer doesn't cost gold.
+  for (let k = 0; k < 8; k++) await setToggle(page.locator(`#qc-3 [data-action="toggle"][data-k="P${k}"]`), '0');
+  for (let k = 0; k < 8; k++) await setToggle(page.locator(`#qc-3 [data-action="toggle"][data-k="Q${k}"]`), '1');
+  await page.locator('#check-3').click();
+  await expect(page.locator('#msg-3')).toHaveClass(/bad/);
+  expect((await saved(page)).firstAttempt[3]).toBe(true);
 });
 
 test('Logic Rush: logic only to start, a class challenge, game over and the best in the header', async ({ page }) => {

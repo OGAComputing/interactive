@@ -403,9 +403,18 @@ color:  teal
     const tab = document.querySelector('.tab[data-idx="' + idx + '"]');
     if (tab) tab.classList.add('done');
 
-    // Reveal "Try for Gold" button only when the task was completed without first-attempt
-    const resetBtn = document.getElementById('reset-' + idx);
-    if (resetBtn) resetBtn.style.display = isGold ? 'none' : '';
+    showResets();
+  }
+
+  // "Try for Gold" only appears once every task is done, and then only on tasks finished without first-attempt,
+  // so it never pulls a student back to an earlier task mid-lesson (Nick, 2026-11-27: stuck students went back
+  // for gold instead of moving on).
+  function showResets() {
+    const all = completed.every(Boolean);
+    completed.forEach((c, k) => {
+      const b = document.getElementById('reset-' + k);
+      if (b) b.style.display = all && c && !firstAttempt[k] ? '' : 'none';
+    });
   }
 
   function markDone(idx) {
@@ -427,7 +436,7 @@ color:  teal
     if (tab) tab.classList.remove('done');
     const fb = document.getElementById('feedback-' + idx);
     fb.textContent = ''; fb.className = 'feedback';
-    document.getElementById('reset-' + idx).style.display = 'none';
+    showResets();
     clearAnswerState('q-' + idx);
 
     // Hide all-done state so it can fire again after the retry
